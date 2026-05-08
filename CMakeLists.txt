@@ -29,9 +29,12 @@ target_sources(CoolSynth
         src/standalone/StandaloneMidiInput.cpp
         src/synth/SynthEngine.cpp
         src/synth/SynthVoice.cpp
+        src/ui/HardwareFader.cpp
+        src/ui/HardwareKnob.cpp
         src/ui/MidiMonitorPanel.cpp
         src/ui/StandaloneAudioStatusPanel.cpp
-        src/ui/StandaloneMidiInputPanel.cpp)
+        src/ui/StandaloneMidiInputPanel.cpp
+        src/ui/SynthSection.cpp)
 
 target_include_directories(CoolSynth
     PRIVATE

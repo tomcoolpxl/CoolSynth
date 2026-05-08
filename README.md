@@ -26,11 +26,10 @@ cmake --build build --config Debug
 
 ### Current Status
 
-**Phase 4: Playable Sine Synth Voice Path** is complete.
+**Phase 5: Parameter-Driven Core Synth UI** is complete.
 
-- The shared synth engine is now implemented with a fixed 8-voice pool.
-- Audible sine-wave rendering is driven from incoming MIDI note events.
-- Per-voice ADSR and velocity-to-amplitude scaling are active.
-- A custom voice-stealing policy (release-first, then oldest-active) is enforced.
-- A global panic action is available in the UI and automatically triggers on MIDI device disconnect.
-- Both Standalone and VST3 targets remain valid and build successfully.
+- The editor now features a hardware-style layout with dedicated sections for Oscillator, Envelope, and Output.
+- Added waveform support for sine, square, and saw, selectable via the UI.
+- All controls (waveform, ADSR, master gain) are linked to the APVTS parameter model via thread-safe attachments.
+- Real-time value displays show meaningful units (ms, s, %, dB) driven directly by parameter metadata.
+- Both standalone and VST3 targets build and function correctly with the new shared control surface.

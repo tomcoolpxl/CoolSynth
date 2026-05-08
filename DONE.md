@@ -36,3 +36,13 @@
 - [x] Added panic handling that clears active voices and held-note state.
 - [x] Verified that standalone MIDI input produces audible notes (via code review and build validation).
 - [x] Implemented a bridge to request panic when a selected MIDI device is disconnected.
+
+## Phase 5: Parameter-driven core synth UI
+
+- [x] Added waveform support for sine, square, and saw in the synth engine.
+- [x] Created reusable UI primitives: `HardwareKnob`, `HardwareFader`, and `SynthSection`.
+- [x] Implemented a sectioned editor layout (Oscillator, Envelope, Output) with parameter-linked controls.
+- [x] Used APVTS attachments for thread-safe UI-to-parameter communication.
+- [x] Implemented a timer-based value display refresh using canonical parameter text.
+- [x] Verified that UI changes are audible and the editor remains responsive during playback.
+- [x] Confirmed the VST3 target remains compatible with the shared editor.

@@ -114,13 +114,13 @@ namespace coolsynth::synth
         }
     }
 
-    void SynthEngine::applyMasterGain(juce::AudioBuffer<float>& outputBuffer, float targetLinearGain) noexcept
+    void SynthEngine::pushWaveformToVoices(coolsynth::parameters::WaveformChoice waveform) noexcept
     {
-        masterGainLinear.setTargetValue(targetLinearGain);
-        masterGainLinear.applyGain(outputBuffer, outputBuffer.getNumSamples());
-    }
-}
-);
+        for (int i = 0; i < synthesiser.getNumVoices(); ++i)
+        {
+            if (auto* voice = dynamic_cast<SynthVoice*>(synthesiser.getVoice(i)))
+            {
+                voice->setWaveform(waveform);
             }
         }
     }
