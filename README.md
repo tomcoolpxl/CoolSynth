@@ -26,4 +26,10 @@ cmake --build build --config Debug
 
 ### Current Status
 
-Phase 1 provides a reproducible JUCE build skeleton only. The standalone app should open a placeholder window, but audio-device, MIDI-device, and synth behavior arrive in later phases.
+**Phase 2: Standalone Audio Device Shell** is complete.
+
+- The standalone app now includes an audio-device status panel.
+- It prefers **WASAPI (Windows Audio)** shared mode on first launch.
+- You can configure the output device, sample rate, and buffer size via the **Audio Settings...** button.
+- The app handles device changes and missing output devices gracefully.
+- The VST3 target remains a silent placeholder for now.

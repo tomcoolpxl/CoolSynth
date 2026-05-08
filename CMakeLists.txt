@@ -22,7 +22,10 @@ target_sources(CoolSynth
     PRIVATE
         src/parameters/ParameterLayout.cpp
         src/plugin/SynthAudioProcessor.cpp
-        src/plugin/SynthAudioProcessorEditor.cpp)
+        src/plugin/SynthAudioProcessorEditor.cpp
+        src/standalone/CoolSynthStandaloneApp.cpp
+        src/standalone/StandaloneAudioSupport.cpp
+        src/ui/StandaloneAudioStatusPanel.cpp)
 
 target_include_directories(CoolSynth
     PRIVATE
@@ -34,7 +37,9 @@ target_compile_definitions(CoolSynth
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
-        JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1)
+        JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
+    PRIVATE
+        JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1)
 
 target_link_libraries(CoolSynth
     PRIVATE
