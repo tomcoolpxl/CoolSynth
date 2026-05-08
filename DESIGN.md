@@ -1,6 +1,6 @@
 # DESIGN.md
 
-# MiniLab Synth Design
+# CoolSynth Design
 
 This document describes the software design for a JUCE, C++, and CMake synthesizer project targeting Windows 11. The synth is designed for the Arturia MiniLab 3 MIDI controller, but the core engine should remain generic enough to work with any MIDI controller or DAW host.
 
@@ -134,9 +134,11 @@ Plugin-only code:
 
 The project should use CMake only. It should not require Projucer.
 
-Recommended dependency strategy:
+The JUCE dependency acquisition method is an implementation detail, but it must be reproducible from a clean checkout and documented in the repository.
 
-- Use CMake `FetchContent` to fetch JUCE.
+Recommended build strategy:
+
+- Use a documented, reproducible JUCE acquisition method.
 - Pin JUCE to a known tag or commit once the first skeleton builds.
 - Use `juce_add_plugin` to create one target with `FORMATS Standalone VST3`.
 
@@ -170,74 +172,17 @@ FORMATS Standalone VST3
 
 The plugin should avoid MIDI output initially. MIDI output can be revisited later if arpeggiator or MIDI tools are added.
 
-# Proposed Repository Layout
+# Directory Layout Guidance
 
-```text
-minilab-synth/
-  CMakeLists.txt
-  README.md
-  DESIGN.md
-  docs/
-    REQUIREMENTS.md
-  src/
-    processor/
-      SynthAudioProcessor.h
-      SynthAudioProcessor.cpp
-      SynthAudioProcessorEditor.h
-      SynthAudioProcessorEditor.cpp
-    parameters/
-      ParameterIDs.h
-      ParameterLayout.h
-      ParameterLayout.cpp
-      ParameterAccess.h
-    synth/
-      SynthEngine.h
-      SynthEngine.cpp
-      SynthVoice.h
-      SynthVoice.cpp
-      SynthSound.h
-      SynthSound.cpp
-    midi/
-      MidiMappingEngine.h
-      MidiMappingEngine.cpp
-      MidiMonitorModel.h
-      MidiMonitorModel.cpp
-      Minilab3Profile.h
-      Minilab3Profile.cpp
-    effects/
-      DelayEffect.h
-      DelayEffect.cpp
-    ui/
-      MainSynthView.h
-      MainSynthView.cpp
-      OscillatorPanel.h
-      OscillatorPanel.cpp
-      FilterPanel.h
-      FilterPanel.cpp
-      EnvelopePanel.h
-      EnvelopePanel.cpp
-      DelayPanel.h
-      DelayPanel.cpp
-      MasterPanel.h
-      MasterPanel.cpp
-      PadPanel.h
-      PadPanel.cpp
-      MidiMonitorPanel.h
-      MidiMonitorPanel.cpp
-      controls/
-        HardwareKnob.h
-        HardwareKnob.cpp
-        HardwareFader.h
-        HardwareFader.cpp
-        PadButton.h
-        PadButton.cpp
-    util/
-      NoteUtils.h
-      ValueFormatters.h
-      Realtime.h
-```
+The exact repository tree is not a design requirement. The implementation should keep these concerns separated enough for independent review:
 
-This is modular enough to avoid early design debt, but still small enough to understand. If implementation becomes too fragmented, some UI panel files may be merged temporarily.
+- Shared processor and state.
+- Synth engine, voices, and DSP.
+- MIDI mapping and monitor support.
+- UI components and editor wiring.
+- Standalone shell concerns such as device selectors and persisted settings.
+
+Folder names are an implementation detail. If implementation becomes too fragmented, small files may be merged as long as the separation of concerns remains clear.
 
 # Processor Design
 
@@ -340,56 +285,40 @@ Parameter IDs must be treated as persistent API. Renaming an ID can break saved 
 # Initial Parameters
 
 ```text
-osc.waveform
-osc.gain
-
-amp.attack
-amp.decay
-amp.sustain
-amp.release
-
-filter.enabled
-filter.cutoff
-filter.resonance
-filter.velocity_amount
-
-delay.enabled
-delay.time_ms
-delay.feedback
-delay.mix
-
-master.gain_db
-
-utility.panic_request, not necessarily a normal automatable parameter
+waveform
+ampAttackMs
+ampDecayMs
+ampSustain
+ampReleaseMs
+filterCutoffHz
+filterResonance
+delayTimeMs
+delayFeedback
+delayMix
+masterGainDb
 ```
 
-The `panic_request` should probably not be a normal automatable float parameter. A button action in the UI can call a safe processor method that schedules all voices to stop. If a parameter is used, it needs edge-trigger handling to avoid repeated triggering.
+Panic is an explicit action, not an automatable parameter. The UI should call a safe processor method that schedules all voices to stop and clears held-note state.
 
 # Parameter Ranges
 
 Recommended ranges:
 
 ```text
-osc.waveform: choice, sine/square/saw
-osc.gain: -inf or -60 dB to 0 dB, default -6 dB
-
-amp.attack: 0.001 s to 10.0 s, skewed, default 0.010 s
-amp.decay: 0.001 s to 10.0 s, skewed, default 0.200 s
-amp.sustain: 0.0 to 1.0, default 0.8
-amp.release: 0.001 s to 10.0 s, skewed, default 0.300 s
-
-filter.enabled: bool, default true
-filter.cutoff: 20 Hz to 20000 Hz, logarithmic/skewed, default 10000 Hz
-filter.resonance: 0.1 to 10.0 or JUCE filter-appropriate range, default low
-filter.velocity_amount: 0.0 to 1.0, default 0.0 or 0.25
-
-delay.enabled: bool, default false
-delay.time_ms: 1 ms to 2000 ms, skewed, default 350 ms
-delay.feedback: 0.0 to 0.95, default 0.25
-delay.mix: 0.0 to 1.0, default 0.0
-
-master.gain_db: -60 dB to 0 dB, default -12 dB
+waveform: choice, sine/square/saw, default saw
+ampAttackMs: 1 ms to 5000 ms, skewed, default 10 ms
+ampDecayMs: 5 ms to 5000 ms, skewed, default 200 ms
+ampSustain: 0.0 to 1.0, default 0.8
+ampReleaseMs: 5 ms to 5000 ms, skewed, default 300 ms
+filterCutoffHz: 20 Hz to 20000 Hz, logarithmic/skewed, default 10000 Hz
+filterResonance: 0.0 to 1.0, default 0.1, mapped internally to a stable JUCE-appropriate range
+delayTimeMs: 1 ms to 1000 ms, skewed, default 250 ms
+delayFeedback: 0.0 to 0.85, default 0.25
+delayMix: 0.0 to 1.0, default 0.0
+masterGainDb: -60 dB to 0 dB, default -12 dB
 ```
+
+The first release should not add separate filter-enable or delay-enable parameters unless a clear functional need appears. High cutoff and zero delay mix provide the practical bypass behavior.
 
 # Parameter Reading In Audio Code
 
@@ -411,9 +340,8 @@ For parameters that can click or zipper, use smoothing:
 
 - Master gain.
 - Filter cutoff.
-- Delay mix.
-- Delay feedback.
-- Possibly delay time.
+
+Delay parameters may be updated at control rate if stable. Delay-time changes do not need seamless modulation behavior in the first release, but they must remain real-time safe.
 
 # MIDI Design
 
@@ -452,6 +380,13 @@ Other MIDI
 
 Do not send CC messages directly to voices unless a specific voice-level feature requires it. For now, CCs modify parameters.
 
+For the first functional release:
+
+- Support note on, note off, note-on with velocity zero treated as note-off, velocity, and CC messages.
+- Ignore pitch bend, aftertouch, program change, and other deferred MIDI safely.
+- Accept notes and CCs on any MIDI channel.
+- Defer user-selectable channel filtering until later.
+
 # Fixed MiniLab 3 Mapping
 
 The first mapping is fixed by MiniLab control role, with exact CC values verified through the MIDI monitor.
@@ -459,8 +394,8 @@ The first mapping is fixed by MiniLab control role, with exact CC values verifie
 `Minilab3Profile` should contain:
 
 - Device name match hints.
-- CC-to-parameter bindings.
-- Pad note/CC-to-action bindings.
+- Verified CC-to-parameter bindings for the implemented control set.
+- Deferred pad and main-encoder status until the actual device messages are captured.
 - Reserved controls.
 
 Example design:
@@ -468,14 +403,13 @@ Example design:
 ```cpp
 struct ControlBinding
 {
-    int midiChannel;        // 1-16 or 0 for omni
     int controllerNumber;   // CC number
     const char* parameterID;
     MappingCurve curve;
 };
 ```
 
-Pad actions should not be hardwired into the processor. They should become commands:
+Pad actions are deferred for the first functional release. If later the default pad messages are simple and reliable, they should be modeled as commands rather than hardwired processor branches:
 
 ```text
 Pad event
@@ -484,16 +418,7 @@ Pad event
   -> Processor or UI-safe command handler
 ```
 
-Candidate commands:
-
-- Set waveform sine.
-- Set waveform square.
-- Set waveform saw.
-- Toggle filter.
-- Toggle delay.
-- Init patch.
-- Panic.
-- Reserved.
+If pad support is added later, the first candidate commands should be waveform direct-select and panic. The main encoder should remain unassigned initially.
 
 # MIDI Monitor Design
 
@@ -552,9 +477,9 @@ Each voice should contain:
 
 - One oscillator.
 - One amplitude envelope.
-- Optional per-voice filter.
+- One per-voice low-pass filter.
 - Current note frequency.
-- Current velocity.
+- Current velocity-derived gain scalar.
 - Temporary mono voice buffer if needed.
 
 Initial voice signal path:
@@ -567,9 +492,9 @@ MIDI note
 
 per sample or block
   -> oscillator
-  -> filter, if enabled
+  -> filter
   -> amplitude envelope
-  -> velocity scaling
+  -> velocity scaling, amplitude only
   -> add to output buffer
 
 noteOff
@@ -582,12 +507,12 @@ noteOff
 Default voice count:
 
 ```text
-16 voices
+8 voices
 ```
 
-This is enough for simple playing and not expensive for one oscillator per voice.
+This matches the first playable milestone and keeps the initial engine simple while still supporting practical polyphony.
 
-If motherboard audio has stability issues, CPU cost is unlikely to be caused by 16 simple voices. Buffer size and driver behavior are more likely.
+Voice stealing should prefer a voice already in release. If none are available, steal the oldest active voice. Panic should clear active voices and held-note state immediately.
 
 # Oscillator Design
 
@@ -633,7 +558,7 @@ Parameter updates:
 
 # Filter Design
 
-Preferred design:
+Required design:
 
 ```text
 per-voice low-pass filter
@@ -643,36 +568,18 @@ Why per voice:
 
 - More synth-like behavior.
 - Notes do not all share one cutoff state.
-- Future filter envelope/velocity behavior is cleaner.
-
-Acceptable fallback:
-
-```text
-global low-pass filter after voice mix
-```
-
-Use global filtering temporarily only if per-voice JUCE DSP setup creates too much implementation complexity early.
+- It matches the first functional release architecture.
 
 Filter parameters:
 
-- Enabled.
 - Cutoff.
 - Resonance.
-- Velocity amount, optional after amplitude velocity works.
 
-Velocity influence design:
+There is no separate filter-enable parameter in the first release. A high cutoff should act as the practical bypass behavior.
 
-```text
-finalCutoff = baseCutoff + velocityScaledOffset
-```
+Resonance should be exposed as a normalized 0.0 to 1.0 parameter and mapped internally to a stable JUCE-appropriate range.
 
-Better later design:
-
-```text
-finalCutoff = baseCutoff * velocityMultiplier
-```
-
-Cutoff should be clamped to a safe range before applying it.
+Cutoff should be clamped to a safe range and smoothed before applying it.
 
 # Delay Design
 
@@ -691,23 +598,25 @@ Global delay is simpler and cheaper than per-voice delay. It also matches typica
 
 Delay parameters:
 
-- Enabled.
 - Time in milliseconds.
 - Feedback.
 - Mix.
+
+There is no separate delay-enable parameter in the first release. Delay mix at 0.0 should behave as effectively dry.
 
 Stereo delay is preferred. If the implementation starts mono internally, it should still output stereo correctly.
 
 Delay safety:
 
-- Feedback must be capped below 1.0.
+- Feedback must be capped at or below 0.85.
 - Delay buffers must be prepared outside the audio callback or during `prepareToPlay`.
 - Delay buffer resizing must not occur during normal audio processing.
 
 Delay time changes:
 
-- First version can use direct changes if stable.
-- Later versions should smooth or interpolate delay time changes.
+- First version can use direct user-control changes if stable.
+- Brief artifacts during manual delay-time changes are acceptable.
+- Delay-time changes must not allocate in the audio thread, crash the app, or cause runaway feedback.
 
 # Master Output Design
 
@@ -728,7 +637,7 @@ No limiter is required initially, but a simple meter is useful later.
 
 # Panic Design
 
-Panic should stop all voices and optionally clear effect tails.
+Panic should stop all voices and clear held-note state.
 
 Design:
 
@@ -742,12 +651,13 @@ Panic behavior:
 
 - Stop all active voices.
 - Clear pending note state.
-- Optional: clear delay buffer if the user expects silence immediately.
+
+Clearing the residual delay tail is not required for the first release.
 
 Recommended first behavior:
 
 - Stop voices.
-- Clear delay only if the panic button is explicitly meant as full silence.
+- Leave the delay tail alone unless a later full-silence command is added explicitly.
 
 # Audio Thread And Real-Time Safety
 
@@ -805,10 +715,10 @@ The UI should feel like a small hardware synth/controller panel rather than a ge
 It should be loosely modeled on the MiniLab 3 layout:
 
 - Knobs grouped in the upper area.
-- Fader-like controls for level/effect parameters.
-- Pad-like buttons for feature toggles and shortcuts.
+- Fader-like or linear controls where they help readability.
+- A dedicated output/action area for master gain and panic.
 - Clear device/status strip.
-- Optional debug MIDI monitor.
+- Optional debug MIDI monitor in standalone mode.
 
 It should not try to exactly clone Arturia's visual design. That may create unnecessary visual work and possible trademark/design concerns. The goal is functional similarity, not visual copying.
 
@@ -818,18 +728,18 @@ Recommended layout:
 
 ```text
 +--------------------------------------------------------------------+
-| MiniLab Synth        MIDI: MiniLab 3        Audio: WASAPI 256       |
+| CoolSynth            MIDI: MiniLab 3        Audio: WASAPI 256       |
 +--------------------------------------------------------------------+
 | Oscillator       Filter             Envelope            Delay       |
 | [Waveform]       [Cutoff knob]      [Attack knob]       [Time]      |
-| [Gain knob]      [Res knob]         [Decay knob]        [Feedback]  |
-|                  [Enable pad]       [Sustain knob]      [Mix knob]  |
-|                                     [Release knob]      [Enable]    |
+|                  [Res knob]         [Decay knob]        [Feedback]  |
+|                                     [Sustain knob]      [Mix knob]  |
+|                                     [Release knob]                   |
 +--------------------------------------------------------------------+
-| Pads / Functions                          Master                   |
-| [Sine] [Square] [Saw] [Filter] [Delay]    [Volume fader] [Panic]    |
+| Output                                    Actions                  |
+| [Master gain fader]                       [Panic]                  |
 +--------------------------------------------------------------------+
-| MIDI Monitor, collapsible in later versions                         |
+| MIDI Monitor, collapsible in standalone builds                      |
 +--------------------------------------------------------------------+
 ```
 
@@ -848,10 +758,6 @@ HardwareFader
   -> wraps juce::Slider in linear vertical mode
   -> label
   -> value text
-
-PadButton
-  -> wraps juce::Button or TextButton
-  -> supports momentary and toggle modes
 
 StatusStrip
   -> MIDI device status
@@ -872,11 +778,10 @@ Examples:
 
 ```text
 SliderAttachment for knobs/faders
-ButtonAttachment for toggles
 ComboBoxAttachment for waveform selection
 ```
 
-Pad commands such as panic or init patch may not be normal parameter attachments. They may call explicit command methods.
+Panic should be an explicit button action, not a normal parameter attachment. If an Init Patch action is added later, it should also call an explicit command that resets automatable parameters to their defaults.
 
 # Standalone UI Differences
 
@@ -893,12 +798,12 @@ Plugin mode should hide or simplify:
 
 - Hardware MIDI input selector.
 - Audio backend/device controls.
+- MIDI monitor.
 
-Plugin mode may still show:
+Plugin mode should still show:
 
 - Synth controls.
-- Mapping status.
-- MIDI monitor if host MIDI debugging is useful.
+- Panic action.
 
 # State And Persistence Design
 
@@ -931,8 +836,12 @@ Standalone settings:
 
 - Last MIDI input device.
 - Last audio device configuration, if supported through JUCE device manager.
+
+Deferred standalone persistence:
+
 - Window size and position.
-- MIDI monitor visibility.
+- Last loaded patch.
+- Recent files.
 
 These should not become VST3 plugin state unless there is a clear reason.
 
@@ -950,7 +859,8 @@ Preset should not necessarily include:
 
 - Audio device.
 - MIDI device.
-- Window position.
+
+If an Init Patch action exists before full preset support, it should simply reset the automatable parameters to their default values.
 
 Controller mapping should probably be separate from sound presets.
 
@@ -1174,7 +1084,7 @@ Create CMake/JUCE skeleton
   -> verify VST3 builds
   -> add audio device/status UI for standalone
   -> add MIDI monitor
-  -> add juce::Synthesiser with 16 simple voices
+  -> add juce::Synthesiser with 8 preallocated voices
   -> add oscillator/envelope parameters
   -> add filter
   -> add delay
@@ -1194,7 +1104,7 @@ The first code milestone should be considered successful when:
 - The standalone app opens.
 - The VST3 target builds.
 - The editor shows a hardware-style placeholder layout.
-- APVTS parameters exist for oscillator, envelope, filter, delay, and master.
+- An initial APVTS parameter layout exists for the first-release parameter set.
 - No actual sound is required yet, unless a test tone is added for convenience.
 
 # Current Open Technical Decisions
@@ -1205,8 +1115,7 @@ These decisions can be made during implementation:
 |---|---|
 | Exact JUCE version | Use latest stable release or pin after skeleton works |
 | CMake generator | Ninja if available, Visual Studio generator otherwise |
-| Per-voice filter | Preferred |
-| Global filter fallback | Allowed temporarily |
+| Per-voice filter | Required for the first functional release |
 | Stereo delay | Preferred |
 | Full virtual keyboard | Not initially |
 | Metering | Later |
