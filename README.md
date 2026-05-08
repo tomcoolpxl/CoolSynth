@@ -26,10 +26,10 @@ cmake --build build --config Debug
 
 ### Current Status
 
-**Phase 2: Standalone Audio Device Shell** is complete.
+**Phase 3: Standalone MIDI Shell and Monitor** is complete.
 
-- The standalone app now includes an audio-device status panel.
-- It prefers **WASAPI (Windows Audio)** shared mode on first launch.
-- You can configure the output device, sample rate, and buffer size via the **Audio Settings...** button.
-- The app handles device changes and missing output devices gracefully.
-- The VST3 target remains a silent placeholder for now.
+- The standalone app now exposes one-device MIDI input selection.
+- The last selected MIDI input is remembered by device identifier when available.
+- Missing remembered devices show an unavailable state instead of silently falling back.
+- The standalone app now includes a bounded MIDI monitor for note and CC bring-up.
+- Unsupported MIDI message types are ignored safely.

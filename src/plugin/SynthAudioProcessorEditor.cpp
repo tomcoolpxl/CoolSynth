@@ -1,7 +1,9 @@
 #include "SynthAudioProcessorEditor.h"
 
 #include "SynthAudioProcessor.h"
+#include "ui/MidiMonitorPanel.h"
 #include "ui/StandaloneAudioStatusPanel.h"
+#include "ui/StandaloneMidiInputPanel.h"
 
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
@@ -11,7 +13,7 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     titleLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(titleLabel);
 
-    statusLabel.setText("Phase 2 standalone audio shell", juce::dontSendNotification);
+    statusLabel.setText("Phase 3 standalone MIDI shell and monitor", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(statusLabel);
 
@@ -19,9 +21,17 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     {
         standaloneAudioPanel = std::make_unique<StandaloneAudioStatusPanel>();
         addAndMakeVisible(*standaloneAudioPanel);
+
+        auto midiInputPanel = std::make_unique<StandaloneMidiInputPanel>();
+        auto* monitorBuffer = &midiInputPanel->getMonitorBuffer();
+        standaloneMidiInputPanel = std::move(midiInputPanel);
+        addAndMakeVisible(*standaloneMidiInputPanel);
+
+        standaloneMidiMonitorPanel = std::make_unique<MidiMonitorPanel>(*monitorBuffer);
+        addAndMakeVisible(*standaloneMidiMonitorPanel);
     }
 
-    setSize(900, 600);
+    setSize(900, 700);
 }
 
 void SynthAudioProcessorEditor::paint(juce::Graphics& g)
@@ -41,5 +51,17 @@ void SynthAudioProcessorEditor::resized()
     {
         area.removeFromTop(16);
         standaloneAudioPanel->setBounds(area.removeFromTop(160));
+    }
+
+    if (standaloneMidiInputPanel != nullptr)
+    {
+        area.removeFromTop(16);
+        standaloneMidiInputPanel->setBounds(area.removeFromTop(80));
+    }
+
+    if (standaloneMidiMonitorPanel != nullptr)
+    {
+        area.removeFromTop(16);
+        standaloneMidiMonitorPanel->setBounds(area);
     }
 }

@@ -39,6 +39,16 @@ namespace coolsynth::standalone
         return nullptr;
     }
 
+    juce::PropertySet* getStandaloneSettings() noexcept
+    {
+       #if JucePlugin_Build_Standalone
+        if (auto* holder = getStandalonePluginHolder())
+            return holder->settings.get();
+       #endif
+
+        return nullptr;
+    }
+
     AudioDeviceSnapshot captureCurrentAudioDeviceSnapshot()
     {
         if (auto* deviceManager = getStandaloneAudioDeviceManager())

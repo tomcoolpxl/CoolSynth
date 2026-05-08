@@ -33,6 +33,7 @@ namespace coolsynth::standalone
 
     bool isStandaloneRuntimeAvailable() noexcept;
     juce::AudioDeviceManager* getStandaloneAudioDeviceManager() noexcept;
+    juce::PropertySet* getStandaloneSettings() noexcept;
 
     AudioDeviceSnapshot captureCurrentAudioDeviceSnapshot();
     AudioDeviceSnapshot captureAudioDeviceSnapshot(const juce::AudioDeviceManager& deviceManager);

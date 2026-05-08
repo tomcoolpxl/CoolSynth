@@ -20,6 +20,8 @@ private:
     juce::Label statusLabel;
 
     std::unique_ptr<juce::Component> standaloneAudioPanel;
+    std::unique_ptr<juce::Component> standaloneMidiInputPanel;
+    std::unique_ptr<juce::Component> standaloneMidiMonitorPanel;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessorEditor)
 };

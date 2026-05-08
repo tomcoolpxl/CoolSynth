@@ -17,3 +17,12 @@
 - [x] Handle output-device, sample-rate, and buffer-size changes without crashing.
 - [x] Keep the standalone app running when no valid output device is available.
 - [x] Verify the audio shell build and manual bring-up checks.
+
+## Phase 3: Standalone MIDI input shell and monitor
+
+- [x] Add standalone MIDI input selection for one active device at a time.
+- [x] Add standalone MIDI device status reporting.
+- [x] Add a bounded MIDI monitor that shows timestamp or order, type, channel, and message values.
+- [x] Ignore unsupported MIDI messages safely.
+- [x] Addressed runtime disconnects and missing remembered devices.
+- [x] Verify MiniLab 3 note and CC events appear in the monitor.

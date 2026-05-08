@@ -20,12 +20,16 @@ juce_add_plugin(CoolSynth
 
 target_sources(CoolSynth
     PRIVATE
+        src/midi/MidiMonitor.cpp
         src/parameters/ParameterLayout.cpp
         src/plugin/SynthAudioProcessor.cpp
         src/plugin/SynthAudioProcessorEditor.cpp
         src/standalone/CoolSynthStandaloneApp.cpp
         src/standalone/StandaloneAudioSupport.cpp
-        src/ui/StandaloneAudioStatusPanel.cpp)
+        src/standalone/StandaloneMidiInput.cpp
+        src/ui/MidiMonitorPanel.cpp
+        src/ui/StandaloneAudioStatusPanel.cpp
+        src/ui/StandaloneMidiInputPanel.cpp)
 
 target_include_directories(CoolSynth
     PRIVATE

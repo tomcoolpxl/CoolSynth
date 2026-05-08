@@ -17,3 +17,12 @@
 - [x] Ensure the editor layout adapts conditionally to standalone and plugin runtimes.
 - [x] Verify that the app remains stable during audio device changes or when no device is available.
 - [x] Preserve the shared processor and editor boundary so the VST3 target remains free of standalone hardware assumptions.
+
+## Phase 3: Standalone MIDI input shell and monitor
+
+- [x] Expose standalone MIDI input selection for one active device at a time.
+- [x] Persist selected MIDI device by identifier and handle missing remembered devices gracefully.
+- [x] Implement real-time MIDI status reporting (connected, disconnected, unavailable).
+- [x] Create a bounded MIDI monitor for note-on, note-off, and CC events.
+- [x] Use a thread-safe, lock-free queue for routing MIDI events from the callback to the UI monitor.
+- [x] Verify that the VST3 target remains unaffected by standalone-only MIDI UI.
