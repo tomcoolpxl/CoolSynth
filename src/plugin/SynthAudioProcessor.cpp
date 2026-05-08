@@ -68,11 +68,18 @@ void SynthAudioProcessor::requestPanic() noexcept
     panicRequested.store(true, std::memory_order_release);
 }
 
+static coolsynth::parameters::WaveformChoice decodeWaveformChoice(float rawValue) noexcept
+{
+    const int choice = juce::jlimit(0, 2, static_cast<int>(std::round(rawValue)));
+    return static_cast<coolsynth::parameters::WaveformChoice>(choice);
+}
+
 coolsynth::synth::BlockRenderParameters SynthAudioProcessor::makeBlockRenderParameters() const noexcept
 {
     using namespace coolsynth::parameters;
 
     coolsynth::synth::BlockRenderParameters params;
+    params.waveform = decodeWaveformChoice(parameterValues.waveform->load());
     params.ampEnvelope.attackSeconds = juce::jmax(0.001f, parameterValues.ampAttackMs->load() * 0.001f);
     params.ampEnvelope.decaySeconds = juce::jmax(0.005f, parameterValues.ampDecayMs->load() * 0.001f);
     params.ampEnvelope.sustainLevel = juce::jlimit(0.0f, 1.0f, parameterValues.ampSustain->load());
@@ -86,6 +93,7 @@ coolsynth::synth::ParameterValuePointers SynthAudioProcessor::bindParameterPoint
     namespace ids = coolsynth::parameters::ids;
 
     coolsynth::synth::ParameterValuePointers pointers;
+    pointers.waveform = state.getRawParameterValue(ids::waveform);
     pointers.ampAttackMs = state.getRawParameterValue(ids::ampAttackMs);
     pointers.ampDecayMs = state.getRawParameterValue(ids::ampDecayMs);
     pointers.ampSustain = state.getRawParameterValue(ids::ampSustain);
