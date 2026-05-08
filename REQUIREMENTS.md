@@ -118,6 +118,7 @@ Additional separation rules:
   - MIDI normalization and controller mapping.
   - UI components and editor wiring.
   - Standalone shell concerns such as device selectors.
+- Although unit tests are deferred, the architecture shall keep core logic sufficiently separated that later tests can cover note-to-frequency conversion, MIDI CC scaling, voice allocation, parameter range conversion, and processor state serialization without requiring a running UI or audio device.
 - The project shall avoid speculative framework layers or custom abstraction stacks above JUCE.
 - The exact directory layout is an implementation detail. The requirement is separation of concerns, not a specific folder tree.
 - UI-to-audio interaction shall occur through parameters or preallocated thread-safe messaging only.
