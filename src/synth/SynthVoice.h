@@ -17,6 +17,7 @@ namespace coolsynth::synth
 
         void prepare(const juce::dsp::ProcessSpec& spec);
         void setNextEnvelopeParameters(const EnvelopeParameters& parameters) noexcept;
+        void setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept;
 
         bool canPlaySound(juce::SynthesiserSound* sound) override;
         void startNote(int midiNoteNumber,
@@ -32,10 +33,15 @@ namespace coolsynth::synth
 
     private:
         juce::ADSR::Parameters makeJuceEnvelopeParameters() const noexcept;
+        static float renderWaveSample(float phase,
+                                      coolsynth::parameters::WaveformChoice waveform) noexcept;
 
         juce::dsp::Oscillator<float> oscillator;
         juce::ADSR ampEnvelope;
         EnvelopeParameters nextEnvelopeParameters;
+        coolsynth::parameters::WaveformChoice currentWaveform =
+            coolsynth::parameters::WaveformChoice::saw;
+
         double currentSampleRate = 0.0;
         float currentFrequencyHz = 0.0f;
         float velocityGain = 0.0f;

@@ -86,6 +86,33 @@ namespace coolsynth::synth
         }
     }
 
+    void SynthVoice::setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept
+    {
+        currentWaveform = waveform;
+    }
+
+    float SynthVoice::renderWaveSample(float phase,
+                                       coolsynth::parameters::WaveformChoice waveform) noexcept
+    {
+        switch (waveform)
+        {
+            case coolsynth::parameters::WaveformChoice::sine:
+                return std::sin(phase);
+
+            case coolsynth::parameters::WaveformChoice::square:
+                return phase < 0.0f ? -1.0f : 1.0f;
+
+            case coolsynth::parameters::WaveformChoice::saw:
+                return juce::jmap(phase,
+                                  -juce::MathConstants<float>::pi,
+                                  juce::MathConstants<float>::pi,
+                                  -1.0f,
+                                  1.0f);
+        }
+
+        return std::sin(phase);
+    }
+
     juce::ADSR::Parameters SynthVoice::makeJuceEnvelopeParameters() const noexcept
     {
         juce::ADSR::Parameters p;

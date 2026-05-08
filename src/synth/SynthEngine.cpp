@@ -75,6 +75,7 @@ namespace coolsynth::synth
             return;
 
         pushEnvelopeParametersToVoices(parameters.ampEnvelope);
+        pushWaveformToVoices(parameters.waveform);
         
         synthesiser.renderNextBlock(outputBuffer, midiMessages, 0, outputBuffer.getNumSamples());
         
@@ -109,6 +110,17 @@ namespace coolsynth::synth
             if (auto* voice = dynamic_cast<SynthVoice*>(synthesiser.getVoice(i)))
             {
                 voice->setNextEnvelopeParameters(parameters);
+            }
+        }
+    }
+
+    void SynthEngine::applyMasterGain(juce::AudioBuffer<float>& outputBuffer, float targetLinearGain) noexcept
+    {
+        masterGainLinear.setTargetValue(targetLinearGain);
+        masterGainLinear.applyGain(outputBuffer, outputBuffer.getNumSamples());
+    }
+}
+);
             }
         }
     }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include "parameters/ParameterIDs.h"
 
 namespace coolsynth::synth
 {
@@ -15,11 +16,13 @@ namespace coolsynth::synth
     struct BlockRenderParameters
     {
         EnvelopeParameters ampEnvelope;
+        coolsynth::parameters::WaveformChoice waveform = coolsynth::parameters::WaveformChoice::saw;
         float masterGainLinear = 1.0f;
     };
 
     struct ParameterValuePointers
     {
+        std::atomic<float>* waveform = nullptr;
         std::atomic<float>* ampAttackMs = nullptr;
         std::atomic<float>* ampDecayMs = nullptr;
         std::atomic<float>* ampSustain = nullptr;
