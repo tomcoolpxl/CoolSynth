@@ -2,6 +2,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include "synth/SynthEngine.h"
+
 class SynthAudioProcessor final : public juce::AudioProcessor
 {
 public:
@@ -33,11 +35,19 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    void requestPanic() noexcept;
+
     APVTS& getValueTreeState() noexcept { return parameters; }
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
 private:
+    coolsynth::synth::BlockRenderParameters makeBlockRenderParameters() const noexcept;
+    static coolsynth::synth::ParameterValuePointers bindParameterPointers(APVTS& state);
+
     APVTS parameters;
+    coolsynth::synth::ParameterValuePointers parameterValues;
+    coolsynth::synth::SynthEngine synthEngine;
+    std::atomic<bool> panicRequested { false };
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)
 };

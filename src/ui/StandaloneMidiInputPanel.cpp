@@ -2,7 +2,7 @@
 #include "standalone/StandaloneAudioSupport.h"
 #include "standalone/StandaloneMidiInput.h"
 
-StandaloneMidiInputPanel::StandaloneMidiInputPanel()
+StandaloneMidiInputPanel::StandaloneMidiInputPanel(std::function<void()> onDisconnected)
 {
     deviceTitleLabel.setText("MIDI Input:", juce::dontSendNotification);
     addAndMakeVisible(deviceTitleLabel);
@@ -20,7 +20,11 @@ StandaloneMidiInputPanel::StandaloneMidiInputPanel()
     if (auto* deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager())
     {
         auto* settings = coolsynth::standalone::getStandaloneSettings();
-        controller = std::make_unique<coolsynth::standalone::StandaloneMidiInputController>(*deviceManager, settings, monitorBuffer);
+        controller = std::make_unique<coolsynth::standalone::StandaloneMidiInputController>(
+            *deviceManager, 
+            settings, 
+            monitorBuffer, 
+            std::move(onDisconnected));
         controller->addChangeListener(this);
         refreshFromController();
     }

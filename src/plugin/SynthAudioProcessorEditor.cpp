@@ -13,16 +13,19 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     titleLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(titleLabel);
 
-    statusLabel.setText("Phase 3 standalone MIDI shell and monitor", juce::dontSendNotification);
+    statusLabel.setText("Phase 4 playable sine synth voice path", juce::dontSendNotification);
     statusLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(statusLabel);
+
+    panicButton.onClick = [this] { processor.requestPanic(); };
+    addAndMakeVisible(panicButton);
 
     if (juce::JUCEApplicationBase::isStandaloneApp())
     {
         standaloneAudioPanel = std::make_unique<StandaloneAudioStatusPanel>();
         addAndMakeVisible(*standaloneAudioPanel);
 
-        auto midiInputPanel = std::make_unique<StandaloneMidiInputPanel>();
+        auto midiInputPanel = std::make_unique<StandaloneMidiInputPanel>([this] { processor.requestPanic(); });
         auto* monitorBuffer = &midiInputPanel->getMonitorBuffer();
         standaloneMidiInputPanel = std::move(midiInputPanel);
         addAndMakeVisible(*standaloneMidiInputPanel);
@@ -46,6 +49,10 @@ void SynthAudioProcessorEditor::resized()
     auto area = getLocalBounds().reduced(24);
     titleLabel.setBounds(area.removeFromTop(48));
     statusLabel.setBounds(area.removeFromTop(32));
+
+    area.removeFromTop(8);
+    auto panicArea = area.removeFromTop(32);
+    panicButton.setBounds(panicArea.withSizeKeepingCentre(100, 32));
 
     if (standaloneAudioPanel != nullptr)
     {

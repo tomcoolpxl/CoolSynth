@@ -26,3 +26,13 @@
 - [x] Create a bounded MIDI monitor for note-on, note-off, and CC events.
 - [x] Use a thread-safe, lock-free queue for routing MIDI events from the callback to the UI monitor.
 - [x] Verify that the VST3 target remains unaffected by standalone-only MIDI UI.
+
+## Phase 4: Playable sine synth voice path
+
+- [x] Added `SynthEngine` with 8 preallocated voices.
+- [x] Implemented per-voice sine oscillator playback.
+- [x] Implemented per-voice ADSR amplitude envelope and velocity-to-amplitude scaling.
+- [x] Implemented release-first then oldest-active voice stealing.
+- [x] Added panic handling that clears active voices and held-note state.
+- [x] Verified that standalone MIDI input produces audible notes (via code review and build validation).
+- [x] Implemented a bridge to request panic when a selected MIDI device is disconnected.

@@ -35,9 +35,12 @@ namespace coolsynth::standalone
                                                 private juce::AsyncUpdater
     {
     public:
+        using DisconnectCallback = std::function<void()>;
+
         StandaloneMidiInputController(juce::AudioDeviceManager& deviceManager,
                                       juce::PropertySet* settings,
-                                      coolsynth::midi::MidiMonitorBuffer& monitorBuffer);
+                                      coolsynth::midi::MidiMonitorBuffer& monitorBuffer,
+                                      DisconnectCallback onSelectedDeviceDisconnected = {});
         ~StandaloneMidiInputController() override;
 
         const MidiInputSnapshot& getSnapshot() const noexcept { return snapshot; }
@@ -67,6 +70,7 @@ namespace coolsynth::standalone
         coolsynth::midi::MidiMonitorBuffer& monitorBuffer;
         juce::MidiDeviceListConnection deviceListConnection;
         MidiInputSnapshot snapshot;
+        DisconnectCallback onSelectedDeviceDisconnected;
         bool selectedDeviceWasPresent = false;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StandaloneMidiInputController)

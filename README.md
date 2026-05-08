@@ -26,10 +26,11 @@ cmake --build build --config Debug
 
 ### Current Status
 
-**Phase 3: Standalone MIDI Shell and Monitor** is complete.
+**Phase 4: Playable Sine Synth Voice Path** is complete.
 
-- The standalone app now exposes one-device MIDI input selection.
-- The last selected MIDI input is remembered by device identifier when available.
-- Missing remembered devices show an unavailable state instead of silently falling back.
-- The standalone app now includes a bounded MIDI monitor for note and CC bring-up.
-- Unsupported MIDI message types are ignored safely.
+- The shared synth engine is now implemented with a fixed 8-voice pool.
+- Audible sine-wave rendering is driven from incoming MIDI note events.
+- Per-voice ADSR and velocity-to-amplitude scaling are active.
+- A custom voice-stealing policy (release-first, then oldest-active) is enforced.
+- A global panic action is available in the UI and automatically triggers on MIDI device disconnect.
+- Both Standalone and VST3 targets remain valid and build successfully.

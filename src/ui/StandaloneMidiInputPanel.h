@@ -13,7 +13,7 @@ class StandaloneMidiInputPanel final : public juce::Component,
                                        private juce::ChangeListener
 {
 public:
-    StandaloneMidiInputPanel();
+    explicit StandaloneMidiInputPanel(std::function<void()> onSelectedDeviceDisconnected = {});
     ~StandaloneMidiInputPanel() override;
 
     coolsynth::midi::MidiMonitorBuffer& getMonitorBuffer() noexcept { return monitorBuffer; }

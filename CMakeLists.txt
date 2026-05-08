@@ -27,6 +27,8 @@ target_sources(CoolSynth
         src/standalone/CoolSynthStandaloneApp.cpp
         src/standalone/StandaloneAudioSupport.cpp
         src/standalone/StandaloneMidiInput.cpp
+        src/synth/SynthEngine.cpp
+        src/synth/SynthVoice.cpp
         src/ui/MidiMonitorPanel.cpp
         src/ui/StandaloneAudioStatusPanel.cpp
         src/ui/StandaloneMidiInputPanel.cpp)
@@ -48,5 +50,6 @@ target_compile_definitions(CoolSynth
 target_link_libraries(CoolSynth
     PRIVATE
         juce::juce_audio_utils
+        juce::juce_dsp
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)

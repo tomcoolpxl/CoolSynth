@@ -4,10 +4,12 @@ namespace coolsynth::standalone
 {
     StandaloneMidiInputController::StandaloneMidiInputController(juce::AudioDeviceManager& dm,
                                                                  juce::PropertySet* s,
-                                                                 coolsynth::midi::MidiMonitorBuffer& mb)
+                                                                 coolsynth::midi::MidiMonitorBuffer& mb,
+                                                                 DisconnectCallback onDisconnected)
         : deviceManager(dm)
         , settings(s)
         , monitorBuffer(mb)
+        , onSelectedDeviceDisconnected(std::move(onDisconnected))
     {
         deviceListConnection = juce::MidiDeviceListConnection::make([this] { triggerAsyncUpdate(); });
         
@@ -94,6 +96,20 @@ namespace coolsynth::standalone
         }
 
         applyOneDeviceEnabledPolicy();
+
+        const bool wasConnected = selectedDeviceWasPresent;
+        const bool isConnectedNow = snapshot.selectedDevicePresent;
+
+        if (wasConnected && !isConnectedNow)
+        {
+            selectedDeviceWasPresent = false;
+            if (onSelectedDeviceDisconnected)
+                onSelectedDeviceDisconnected();
+        }
+        else if (isConnectedNow)
+        {
+            selectedDeviceWasPresent = true;
+        }
 
         // Determine status
         if (snapshot.availableInputs.isEmpty())

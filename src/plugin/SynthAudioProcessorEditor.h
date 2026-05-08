@@ -18,6 +18,7 @@ private:
     SynthAudioProcessor& processor;
     juce::Label titleLabel;
     juce::Label statusLabel;
+    juce::TextButton panicButton { "Panic" };
 
     std::unique_ptr<juce::Component> standaloneAudioPanel;
     std::unique_ptr<juce::Component> standaloneMidiInputPanel;
