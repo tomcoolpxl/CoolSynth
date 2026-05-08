@@ -87,7 +87,7 @@ Responsibilities:
 - Allow testing the MiniLab 3 without a DAW.
 - Use the same synth processor and editor as the plugin where practical.
 
-The standalone app should expose JUCE audio device settings. Since the target hardware is motherboard line-out to active speakers, the app should be usable with WASAPI. ASIO should not be required.
+The standalone app should expose JUCE audio device settings. It should default to WASAPI shared mode when available. Since the target hardware is motherboard line-out to active speakers, the app should be usable with WASAPI. ASIO should not be required.
 
 # VST3 Plugin
 
@@ -98,7 +98,7 @@ Responsibilities:
 - Receive MIDI from the DAW host.
 - Render audio through the same `SynthAudioProcessor`.
 - Expose plugin parameters through the same parameter model.
-- Show the same synth UI, except standalone-only device controls should be hidden or disabled.
+- Reuse the same synth-control components where practical, but omit standalone-only device configuration panels from the plugin editor.
 
 The plugin should not open hardware MIDI devices directly. In plugin mode, MIDI comes from the host.
 
@@ -362,6 +362,8 @@ VST3 host MIDI
 
 The synth engine should not care whether MIDI came from the MiniLab 3 directly or from a DAW.
 
+For the first functional release, controller-driven sound changes must always land in the same canonical parameter model used by the UI, plugin automation, and serialized state. The design shall not introduce a separate shadow set of controller-only sound values.
+
 # MIDI Message Split
 
 During processing, MIDI should be split conceptually:
@@ -380,6 +382,14 @@ Other MIDI
 
 Do not send CC messages directly to voices unless a specific voice-level feature requires it. For now, CCs modify parameters.
 
+The required behavior is:
+
+- Fixed MiniLab mappings resolve to the stable APVTS parameter IDs.
+- UI attachments, standalone hardware MIDI input, and host automation all observe the same parameter values.
+- If controller input arrives off the audio thread, it may be normalized there and forwarded through a preallocated path.
+- If MIDI CC handling occurs in or near `processBlock`, it must still update the canonical plugin parameters rather than a controller-only mirror state.
+- The first release should avoid inventing a second control plane just to work around APVTS update mechanics.
+
 For the first functional release:
 
 - Support note on, note off, note-on with velocity zero treated as note-off, velocity, and CC messages.
@@ -397,6 +407,13 @@ The first mapping is fixed by MiniLab control role, with exact CC values verifie
 - Verified CC-to-parameter bindings for the implemented control set.
 - Deferred pad and main-encoder status until the actual device messages are captured.
 - Reserved controls.
+
+`MidiMappingEngine` should convert verified controller messages into one of two outputs only:
+
+- Stable parameter changes addressed by parameter ID.
+- Explicit commands such as panic.
+
+It should not write directly into synth voices or hold alternate controller-only copies of synth parameter values.
 
 Example design:
 
@@ -430,6 +447,16 @@ Design:
 - Event summaries should be plain data, not large strings created in the audio callback.
 - UI converts summaries to text on the message thread.
 - Limit size, for example 128 recent events.
+
+Each stored event summary should carry enough raw data to display the required monitor fields:
+
+- Event order or timestamp.
+- Message type.
+- MIDI channel.
+- Primary data value.
+- Secondary data value.
+- Note number so the UI can format note names for note events.
+- Controller number so the UI can label CC events correctly.
 
 For a simple first version, the monitor can be updated from the standalone MIDI callback, not from `processBlock`. In plugin mode it can be hidden or show host MIDI events if easy.
 
@@ -513,6 +540,8 @@ Default voice count:
 This matches the first playable milestone and keeps the initial engine simple while still supporting practical polyphony.
 
 Voice stealing should prefer a voice already in release. If none are available, steal the oldest active voice. Panic should clear active voices and held-note state immediately.
+
+This requires custom behavior above JUCE's default synthesiser stealing rules. The implementation should override the relevant `juce::Synthesiser` stealing path, most likely `findVoiceToSteal()`, so the actual runtime policy matches the documented release-first rule instead of relying on JUCE defaults.
 
 # Oscillator Design
 
@@ -644,6 +673,7 @@ Design:
 - UI button calls a processor method on the message thread.
 - Processor sets an atomic flag or posts a command.
 - `processBlock` sees the flag and calls `SynthEngine::panic()` safely.
+- Panic handling must also clear processor-held note state used for standalone disconnect recovery and voice bookkeeping.
 
 Avoid directly manipulating audio objects from the UI thread while the audio thread is processing.
 
@@ -728,7 +758,7 @@ Recommended layout:
 
 ```text
 +--------------------------------------------------------------------+
-| CoolSynth            MIDI: MiniLab 3        Audio: WASAPI 256       |
+| CoolSynth   MIDI: MiniLab 3   Audio: WASAPI / Speakers / 48 kHz / 256 |
 +--------------------------------------------------------------------+
 | Oscillator       Filter             Envelope            Delay       |
 | [Waveform]       [Cutoff knob]      [Attack knob]       [Time]      |
@@ -762,7 +792,9 @@ HardwareFader
 StatusStrip
   -> MIDI device status
   -> audio backend status
+  -> active output device
   -> sample rate and buffer size
+  -> disconnected/unavailable state when remembered devices are missing
 
 MidiMonitorPanel
   -> small scrolling list of recent messages
@@ -791,14 +823,17 @@ Standalone mode should show:
 - Audio device settings button or panel.
 - MIDI monitor.
 - Device status.
+- One active MIDI input device at a time.
+- A disconnected or unavailable state when the remembered MIDI device is missing.
 
 # Plugin UI Differences
 
-Plugin mode should hide or simplify:
+Plugin mode should omit:
 
-- Hardware MIDI input selector.
-- Audio backend/device controls.
-- MIDI monitor.
+- Hardware MIDI input selector, omitted.
+- Audio backend/device controls, omitted.
+- Standalone-only status panels for hardware/device state, omitted.
+- MIDI monitor, omitted.
 
 Plugin mode should still show:
 
@@ -835,7 +870,19 @@ Standalone-specific settings are not the same as synth/plugin state.
 Standalone settings:
 
 - Last MIDI input device.
-- Last audio device configuration, if supported through JUCE device manager.
+- Last selected audio backend.
+- Last selected output device.
+- Last selected sample rate.
+- Last selected buffer size.
+
+These settings are required for the standalone app, not optional best-effort extras. On startup, invalid or missing persisted settings should fall back to safe defaults while leaving the app running and surfacing unavailable-device status in the standalone UI.
+
+When restoring MIDI settings:
+
+- Only one active MIDI input device should be selected at a time.
+- If the remembered device is missing, the app should show a disconnected or unavailable state rather than silently selecting a different device.
+
+When the active MIDI device disconnects during playback, processor-side note bookkeeping should clear held-note state so stuck notes do not survive the disconnect.
 
 Deferred standalone persistence:
 
@@ -874,10 +921,20 @@ Handle gracefully:
 - MiniLab 3 not connected.
 - MIDI device disconnected.
 - Audio device unavailable.
+- Remembered MIDI device missing at startup.
+- Standalone settings file missing or malformed.
+- Audio device restart or sample-rate change.
 - Unsupported sample rate.
 - Buffer size too small for stable audio.
 
 UI should show status, not crash.
+
+Expected behavior:
+
+- The app remains running in these cases.
+- Invalid persisted settings fall back to safe defaults.
+- Audio-device restart, sample-rate change, or buffer-size change triggers a safe reprepare/reset path instead of callback-time recovery work.
+- MIDI-device disconnect clears held-note state and leaves the app usable.
 
 # Plugin Errors
 
@@ -1000,14 +1057,14 @@ If CC mapping is handled inside `processBlock`, changing APVTS parameters direct
 
 Mitigation:
 
-- For the first version, process CCs conservatively.
-- Prefer host-compatible parameter update paths where possible.
-- Consider storing controller-derived values separately if APVTS mutation from audio processing proves unsafe or awkward.
+- Prefer parameter-update paths that preserve one canonical parameter state shared by hardware MIDI, UI attachments, automation, and serialization.
+- If direct APVTS mutation from the audio callback proves unsafe or awkward, move the controller-to-parameter handoff to a preallocated queue or other thread-safe boundary rather than storing controller-derived values separately.
+- Do not introduce a second controller-only sound state for the first release.
 
 Practical first decision:
 
 - Use CC mapping in standalone for learning.
-- Keep DAW automation and UI attachments as the main parameter control path.
+- Keep hardware MIDI, DAW automation, and UI attachments on the same parameter control path.
 - Revisit the cleanest CC-to-parameter method during implementation.
 
 # Risk: Hardware Default CC Map Unknown
