@@ -1,1137 +1,719 @@
 # Requirements Document: CoolSynth
 
-# Purpose
+## 1. Purpose
 
-This document defines the requirements for a custom software synthesizer built with JUCE, C++, and CMake on Windows 11. The project is intended as a learning-oriented but cleanly designed synthesizer that connects to an Arturia MiniLab 3 MIDI controller, responds to notes and hardware controls, and provides simple synthesis building blocks such as oscillators, envelopes, filters, and delay.
+This document defines the product and implementation requirements for CoolSynth, a learning-oriented software synthesizer for Windows 11 built with JUCE, C++20, and CMake.
 
-The project should be structured from day one so the same core engine can support both a standalone application and a VST3 plugin. The first usable build should still prioritize the standalone application because it is easier to test audio devices, MIDI input, and controller behavior outside a DAW.
+The project has two product targets from day one:
 
-The goal is both educational and practical: the software should teach how a synthesizer is structured while remaining simple, maintainable, and playable.
-
-# Project Goals
-
-The software shall:
-
-- Run on Windows 11.
-- Be built using C++ and JUCE.
-- Use CMake as the build system.
-- Be structured to support both standalone and VST3 targets from day one.
-- Initially focus on the standalone target for easier testing.
-- Receive MIDI input from the Arturia MiniLab 3.
-- Respond to keyboard note input with playable synthesized sound.
-- Support basic oscillator types: sine, square, sawtooth, and optionally triangle/noise later.
-- Use JUCE DSP building blocks where practical instead of implementing DSP from scratch.
-- Prioritize simplicity, correctness, and clean architecture over deep custom DSP implementation.
-- Support polyphonic playback.
-- Provide a graphical user interface inspired by a hardware synth layout and the MiniLab 3 control layout.
-- Provide initial fixed mappings between MiniLab 3 hardware controls and synth parameters.
-- Add MIDI learn later, after the core synth works.
-- Include an ADSR amplitude envelope.
-- Include at least one low-pass filter with cutoff and resonance.
-- Include a simple delay effect.
-- Include a MIDI event monitor for early development and debugging.
-- Include a panic/all-notes-off control.
-- Avoid unsafe real-time audio practices such as blocking, heap allocation, or mutex locking in the audio callback.
-
-# Non-Goals for the First Version
-
-The first version shall not attempt to provide:
-
-- Custom DSP implementation from scratch.
-- Commercial-grade preset management.
-- Complex modulation matrix.
-- Wavetable synthesis.
-- FM synthesis.
-- Granular synthesis.
-- MPE support.
-- Advanced DAW automation behavior beyond basic plugin parameters.
-- AU/AAX plugin formats.
-- Advanced oversampling.
-- Fully band-limited custom oscillators.
-- Hardware-specific Arturia integration beyond normal MIDI messages.
-- Cloud sync or online functionality.
-- Electron, web UI, or browser-based audio.
-- CI setup in the first version.
-- Unit tests in the first version.
-
-These may be considered later after the standalone and VST3 architecture is stable.
-
-# Target Platform
-
-## Operating System
-
-- Windows 11, 64-bit.
-
-## Development Environment
-
-Recommended development setup:
-
-- Visual Studio Code as the editor.
-- Visual Studio 2022 Build Tools or full Visual Studio 2022 for the MSVC compiler and Windows SDK.
-- CMake.
-- Git.
-- JUCE.
-- Optional: Ninja build system.
-
-Visual Studio Code should use the CMake Tools extension or equivalent CMake workflow.
-
-## Audio Hardware Assumption
-
-The initial user environment is:
-
-- No external audio interface.
-- No dedicated ASIO hardware driver.
-- Motherboard line-out connected to active speakers.
-- Latency target: as small as practical on this hardware.
-
-This means the app should not assume ASIO is available. WASAPI should be the primary practical Windows audio backend. ASIO support can remain available through JUCE if installed/configured later, but it is not required for the first milestone.
-
-## Audio Backends
-
-The application should support the audio device types available through JUCE on Windows.
-
-Preferred practical runtime order for the current hardware:
-
-- WASAPI, if available and stable.
-- DirectSound only as fallback.
-- ASIO later if an external audio interface becomes available.
-
-The app shall expose an audio device settings panel so the user can choose device type, output device, sample rate, and buffer size.
-
-# Product Form
-
-## Targets From Day One
-
-The project shall be structured around a JUCE `AudioProcessor` so the same synth engine can be used for:
-
-- Standalone application.
+- Standalone desktop application.
 - VST3 plugin.
 
-The repository and CMake setup should define both targets from the start if this does not add excessive complexity.
+The first practical target is the standalone application. It is the primary environment for bringing up audio, MIDI, controller mapping, and the first playable synth behavior. The architecture shall still be shared from the start so the same processor and synth engine can later run as a VST3 plugin without a redesign.
 
-The standalone target shall be the first target tested and used.
+The project is intended to be educational, cleanly structured, and practically playable. Simplicity and correct behavior take priority over feature breadth.
 
-## First Usable Target
+## 2. Fixed Project Constraints
 
-The first usable deliverable shall be a standalone desktop application.
+The following decisions are fixed and are not open for redesign in the first planning cycle:
 
-Rationale:
+- Operating system: Windows 11, 64-bit.
+- Framework: JUCE.
+- Language: C++20.
+- Build system: CMake.
+- Editor workflow: Visual Studio Code.
+- Compiler and SDK: MSVC via Visual Studio 2022 Build Tools or Visual Studio 2022.
+- Product targets from day one: Standalone and VST3.
+- First runtime target: Standalone.
+- Initial audio hardware: motherboard line-out to active speakers.
+- External audio interface: not available.
+- Practical first Windows backend: WASAPI shared mode.
+- ASIO: optional later, not required for the first functional release.
+- MIDI controller: Arturia MiniLab 3.
+- Controller strategy: fixed MiniLab mapping first, MIDI learn later.
+- UI direction: hardware-synth-like, loosely inspired by the MiniLab 3 layout.
+- Initial synth scope: one oscillator per voice.
+- Priority order: core synth first, LFO and broader modulation later.
+- DSP strategy: prefer JUCE-provided DSP and infrastructure over custom DSP from scratch.
+- Unit tests: not required initially.
+- CI: not required initially.
 
-- Easier to debug than a plugin.
-- No DAW required.
-- Easier to add a MIDI monitor.
-- Easier to expose audio/MIDI device settings.
-- Lower friction during learning.
+## 3. Scope
 
-## VST3 Target
+### 3.1 In Scope for the First Functional Release
 
-The VST3 target should exist early, but it does not need to be fully polished in the first milestones.
+The first functional release shall provide:
 
-The VST3 target should eventually:
+- A JUCE-based standalone application that can produce audible synth output on Windows 11.
+- A JUCE-based VST3 target built from the same shared processor codebase.
+- Polyphonic note playback from MIDI input.
+- One oscillator per voice with sine, square, and saw waveforms.
+- A per-voice ADSR amplitude envelope.
+- A per-voice low-pass filter with cutoff and resonance control.
+- A global delay effect with time, feedback, and mix control.
+- A fixed MiniLab 3 mapping for the core synth parameters once the controller's default messages have been confirmed on the actual device.
+- A hardware-synth-like UI built with JUCE components.
+- A standalone MIDI monitor for bring-up and debugging.
+- A panic or all-notes-off control.
+- Real-time-safe audio behavior appropriate for JUCE audio callbacks.
 
-- Receive MIDI from the DAW.
-- Expose synth parameters to the DAW.
-- Render the same sound engine as the standalone app.
-- Share the same UI where practical.
+### 3.2 Explicitly Deferred
 
-The VST3 plugin should not be the primary testing target until the standalone version works reliably.
+The following features are out of scope for the first functional release and shall not drive the initial architecture:
 
-# High-Level Architecture
+- Custom oscillator DSP and custom anti-aliased oscillator design.
+- Wavetable, FM, granular, and sample-based synthesis.
+- MPE, aftertouch handling, and advanced expressive MIDI support.
+- MIDI learn.
+- Preset browser and commercial-grade preset management.
+- Modulation matrix.
+- LFO.
+- AU and AAX targets.
+- Advanced host automation behavior beyond exposing stable plugin parameters.
+- ASIO-specific optimization work.
+- Oversampling and advanced anti-aliasing.
+- Multi-controller management.
+- Multiple simultaneous MIDI input devices in standalone mode.
+- Cloud, network, or online features.
+- Unit test suite.
+- CI pipeline.
 
-The application should be organized around a reusable audio processor architecture:
+Pitch bend support is also deferred until the core synth, fixed mapping, and VST3 smoke test are stable.
 
-```text
-Standalone app / VST3 plugin
-  -> SynthAudioProcessor
-  -> parameter state
-  -> MIDI handling
-  -> controller mapping
-  -> synth engine
-  -> voice allocator
-  -> JUCE DSP oscillators
-  -> JUCE envelope/filter helpers where practical
-  -> effects
-  -> output
-```
+## 4. Target Separation
 
-The standalone app and VST3 plugin shall share the same processor, parameter model, synth engine, and UI components where possible.
+This project must separate shared synth behavior from standalone-specific and VST3-specific responsibilities.
 
-The user interface shall interact with the synth engine through JUCE parameters and safe state transfer, not by directly mutating audio-thread state unsafely.
+| Area | Shared Core | Standalone | VST3 |
+| --- | --- | --- | --- |
+| Audio rendering | Required | Uses shared core | Uses shared core |
+| Parameter model | Required | Uses shared core | Uses shared core |
+| Synth engine and voices | Required | Uses shared core | Uses shared core |
+| Fixed MiniLab mapping logic | Required | Consumes hardware MIDI | Consumes host-provided MIDI if present |
+| Audio device selection | Not part of shared core | Required | Not applicable |
+| MIDI device selection | Not part of shared core | Required | Not applicable |
+| MIDI monitor UI | Optional event capture support only | Required in early milestones | Not required |
+| Host automation | Not part of standalone shell | Not applicable | Required |
+| Host state save and restore | Shared processor responsibility | Used indirectly | Required |
+| Standalone app settings persistence | Not part of shared core | Required later | Not applicable |
 
-# Architectural Principles
+Additional separation rules:
 
-The codebase should be designed cleanly from the start.
+- The plugin shall not expose audio-device configuration UI.
+- The plugin shall not expose a hardware MIDI device selector.
+- Standalone-only status panels may include audio and MIDI device state.
+- Shared UI components may be reused, but the standalone shell and plugin editor wrapper do not need to be identical.
+- The VST3 target must share the same sound engine and parameter definitions as the standalone target.
 
-The architecture should be modular, but not over-engineered.
+## 5. Shared Architecture Requirements
 
-Core principles:
+- A single JUCE AudioProcessor implementation shall own the synth parameter model, MIDI processing, synth engine, global effects, and state serialization.
+- The build shall generate both Standalone and VST3 outputs from the same shared processor codebase.
+- All sound-shaping controls that need UI access or DAW automation shall be represented as stable parameters from day one.
+- Debug state, device-selection state, and monitor visibility are not synth parameters.
+- The project shall use JUCE's parameter infrastructure, with AudioProcessorValueTreeState or an equivalent JUCE-native parameter model, for all plugin-visible parameters.
+- The architecture shall keep the following concerns separate:
+  - Shared processor and state management.
+  - Synth voice and DSP code.
+  - MIDI normalization and controller mapping.
+  - UI components and editor wiring.
+  - Standalone shell concerns such as device selectors.
+- The project shall avoid speculative framework layers or custom abstraction stacks above JUCE.
+- The exact directory layout is an implementation detail. The requirement is separation of concerns, not a specific folder tree.
+- UI-to-audio interaction shall occur through parameters or preallocated thread-safe messaging only.
 
-- Keep UI code separate from audio processing code.
-- Keep MiniLab-specific mappings separate from generic MIDI handling.
-- Keep synth voice logic separate from plugin wrapper code.
-- Prefer JUCE DSP classes for oscillators, filters, envelopes, and effects where suitable.
-- Prefer explicit parameter definitions with clear ranges and units.
-- Use an `AudioProcessorValueTreeState`-style parameter model where appropriate.
-- Avoid custom framework abstractions until a real need appears.
-- Optimize for readable, maintainable code rather than cleverness.
+## 6. Parameter Requirements
 
-# Core Functional Requirements
+The first parameter set shall be intentionally small and stable.
 
-# MIDI Input Requirements
+Required automatable parameters:
 
-## MIDI Device Selection
+| Parameter ID | Type | User-Facing Range or Values | Default | Notes |
+| --- | --- | --- | --- | --- |
+| waveform | Choice | sine, square, saw | saw | Exposed as a discrete choice parameter |
+| ampAttackMs | Float | 1 ms to 5000 ms | 10 ms | Skewed or logarithmic control mapping |
+| ampDecayMs | Float | 5 ms to 5000 ms | 200 ms | Skewed or logarithmic control mapping |
+| ampSustain | Float | 0.0 to 1.0 | 0.8 | Linear |
+| ampReleaseMs | Float | 5 ms to 5000 ms | 300 ms | Skewed or logarithmic control mapping |
+| filterCutoffHz | Float | 20 Hz to 20000 Hz | 10000 Hz | Logarithmic mapping |
+| filterResonance | Float | 0.0 to 1.0 | 0.1 | Mapped internally to a stable filter-specific range |
+| delayTimeMs | Float | 1 ms to 1000 ms | 250 ms | Control-rate parameter, not an audio-rate modulation target |
+| delayFeedback | Float | 0.0 to 0.85 | 0.25 | Hard-clamped to a safe maximum |
+| delayMix | Float | 0.0 to 1.0 | 0.0 | 0 means effectively bypassed |
+| masterGainDb | Float | -60 dB to 0 dB | -12 dB | Final output gain |
 
-For the standalone app, the app shall display available MIDI input devices.
+Parameter rules:
 
-The app shall allow the user to select the Arturia MiniLab 3 as a MIDI input device.
+- Parameter IDs shall be treated as stable once VST3 smoke testing begins.
+- Waveform shall be a discrete choice parameter, not a free-running float interpreted ad hoc.
+- Panic is an action, not an automatable parameter.
+- Audio device settings are not plugin parameters.
+- MIDI monitor state is not a plugin parameter.
+- The first version shall not add separate filter-enable or delay-enable parameters unless a clear functional need appears. High cutoff and zero delay mix are sufficient for the first version.
 
-The app should remember the last selected MIDI input device between runs.
+## 7. Audio Requirements
 
-If the previous MIDI device is unavailable at startup, the app should show a clear disconnected state and allow selecting a new device.
+### 7.1 Standalone Audio Configuration
 
-For the VST3 plugin, MIDI input will normally be provided by the DAW. The plugin does not need its own hardware MIDI device selector.
+The standalone application shall:
 
-## MIDI Message Handling
+- Expose a JUCE audio-device configuration panel or an equivalent JUCE-native control surface.
+- Allow the user to select:
+  - Audio backend or device type.
+  - Output device.
+  - Sample rate.
+  - Buffer size.
+- Display the currently active backend, output device, sample rate, and buffer size.
+- Default to WASAPI shared mode when available.
+- Continue to run if no valid output device is currently available.
 
-The app shall handle:
+DirectSound may be used as a fallback backend if WASAPI is unavailable or unusable on the development machine.
+
+ASIO support is not an acceptance requirement for the first functional release.
+
+### 7.2 Audio Performance and Practical Latency
+
+The project shall optimize for reliable manual playability on motherboard audio, not for benchmark latency numbers.
+
+The practical acceptance target is:
+
+- Stable playback at 44.1 kHz or 48 kHz.
+- Stable playback at 256-sample or 512-sample buffers on the development machine.
+
+128-sample buffers are desirable if stable, but they are not a release requirement.
+
+The application shall handle sample-rate changes and device restarts without crashing.
+
+## 8. MIDI Requirements
+
+### 8.1 Standalone MIDI Device Handling
+
+To keep the first version simple, the standalone app shall support one active MIDI input device at a time.
+
+The standalone app shall:
+
+- List available MIDI input devices.
+- Allow the user to select one active MIDI input device.
+- Remember the last selected MIDI input device between runs when the stored device is still available.
+- Show a disconnected or unavailable state if the remembered device is missing at startup.
+- Remain running if the selected device is unplugged during use.
+- Clear held-note state when the selected MIDI device is disconnected during playback.
+
+### 8.2 Supported MIDI Messages for the First Functional Release
+
+The first functional release shall support:
 
 - Note on.
 - Note off.
+- Note-on with velocity zero treated as note-off.
 - Velocity.
 - Control Change messages.
-- Pitch bend, optional for first version.
-- Program change, optional for first version.
 
-The app shall treat note-on with velocity zero as note-off.
+The first functional release shall not require support for:
 
-The app shall ignore unsupported MIDI message types safely.
+- Pitch bend.
+- Channel aftertouch.
+- Poly aftertouch.
+- Program change.
 
-The app shall support configurable MIDI channel behavior:
+Unsupported or deferred MIDI messages shall be ignored safely.
 
-- Omni mode: accept notes and CCs from all MIDI channels.
-- Single-channel mode: accept only one selected channel.
+To reduce early complexity, the first functional release shall accept notes and CCs on any MIDI channel. User-selectable channel filtering is deferred.
 
-Omni mode should be the default for the first version.
+### 8.3 MIDI Monitor
 
-## MIDI Event Monitor
+The standalone application shall include a MIDI monitor during early development and the fixed-mapping milestone.
 
-The standalone app shall include a MIDI monitor panel during early development.
+The MIDI monitor shall display, for each captured event:
 
-For each event, the monitor should show:
-
+- Event order or timestamp.
 - Message type.
 - MIDI channel.
-- Note number or CC number.
-- Note name, where applicable.
-- Velocity or CC value.
-- Timestamp or relative order.
+- Primary data value.
+- Secondary data value.
+- Note name for note events.
+- CC number for control-change events.
 
-The monitor shall be useful for discovering what the MiniLab 3 sends from each key, knob, fader, pad, encoder, or touch strip.
+The monitor shall keep a bounded recent-history buffer. A fixed-size ring buffer is sufficient.
+
+The plugin editor does not need a MIDI monitor.
+
+### 8.4 MiniLab 3 Fixed Mapping
+
+The first controller strategy is a fixed MiniLab 3 mapping.
 
-The MIDI monitor may be hidden behind a debug/developer panel in later versions if it clutters the hardware-style UI.
+The mapping milestone is not complete until the actual MiniLab 3 default template messages used on the developer's device have been captured with the MIDI monitor and recorded in code or documentation.
+
+The preferred first fixed mapping is:
+
+| MiniLab 3 Control | Target | Status for First Release |
+| --- | --- | --- |
+| Keyboard | Note on and note off | Required |
+| Velocity | Voice amplitude | Required |
+| Knob 1 | Waveform selection | Required |
+| Knob 2 | Filter cutoff | Required |
+| Knob 3 | Filter resonance | Required |
+| Knob 4 | Amp attack | Required |
+| Knob 5 | Amp decay | Required |
+| Knob 6 | Amp sustain | Required |
+| Knob 7 | Amp release | Required |
+| Knob 8 | Delay mix | Required after delay milestone |
+| Fader 1 | Master gain | Required |
+| Fader 2 | Delay feedback | Required after delay milestone |
+| Fader 3 | Delay time | Required after delay milestone |
+| Fader 4 | Unassigned | Deferred |
+| Pads | Optional fixed assignments after actual pad message behavior is confirmed | Deferred |
+| Main encoder | Unassigned | Deferred |
+
+Pad mapping rules:
+
+- Pads shall not block the first playable synth milestone.
+- If the MiniLab 3 default pads emit simple note or CC messages on the developer's device, the preferred first pad assignments are waveform direct-select and panic.
+- If the default pad behavior is not simple or reliable, pad mapping remains deferred rather than forcing controller-specific workarounds into the core synth architecture.
+
+Mapping rules:
 
-# MiniLab 3 Controller Mapping Requirements
+- MiniLab-specific CC and note constants shall be isolated from generic synth code.
+- The synth engine and voice code shall not contain controller-specific message numbers.
+- Velocity shall affect amplitude only in the first functional release.
+- Velocity-to-filter modulation is deferred.
 
-## Mapping Strategy
+### 8.5 MIDI Learn
 
-The first version shall use a fixed MiniLab 3 mapping.
+MIDI learn is a later milestone.
 
-MIDI learn shall be added later.
+When implemented, MIDI learn shall:
 
-The initial assumption is that the MiniLab 3 will use its default MIDI template. Because the exact default CC values may need to be verified on the user’s unit, the MIDI monitor shall be used to confirm the actual CCs before hardening the default map.
+- Bind only CC messages to continuous parameters.
+- Not bind note-on or note-off events to continuous parameters.
+- Allow clearing an existing mapping.
+- Persist mappings between runs.
+- Store mappings separately from synth parameter values.
 
-The mapping layer shall be designed so the fixed map can later be replaced or extended by MIDI learn without rewriting the synth engine.
+## 9. Synth Engine Requirements
 
-## Default Mapping
+### 9.1 Voice Model
 
-The app shall provide an initial fixed mapping suitable for the Arturia MiniLab 3.
+- The synth shall be polyphonic.
+- The first playable implementation shall preallocate 8 voices.
+- Each voice shall contain:
+  - One oscillator.
+  - One ADSR amplitude envelope.
+  - One low-pass filter.
+- Delay and master gain shall be global post-voice stages.
+- MIDI note numbers shall be converted to frequency using equal temperament with A4 = 440 Hz.
+- Velocity shall affect amplitude only in the first functional release.
 
-Proposed initial mapping by physical control role:
+Voice-allocation rules:
 
-| MiniLab 3 Control | Synth Parameter |
-|---|---|
-| Keyboard notes | MIDI note on/off |
-| Velocity | Voice amplitude and optional filter influence |
-| Knob 1 | Oscillator waveform |
-| Knob 2 | Filter cutoff |
-| Knob 3 | Filter resonance |
-| Knob 4 | Amp attack |
-| Knob 5 | Amp decay |
-| Knob 6 | Amp sustain |
-| Knob 7 | Amp release |
-| Knob 8 | Delay mix |
-| Fader 1 | Master volume |
-| Fader 2 | Delay feedback |
-| Fader 3 | Delay time |
-| Fader 4 | Reserved for future feature, likely modulation or effect amount |
-| Pads | Feature toggles, preset actions, or waveform/effect shortcuts |
-| Main encoder | Reserved, likely preset selection or focused parameter control |
+- Voice count shall remain fixed during playback.
+- Voice stealing shall prefer a voice that is already in release.
+- If no released voice is available, the oldest active voice shall be stolen.
+- Panic shall clear active voices and held-note state immediately.
 
-The exact CC numbers shall be discovered with the MIDI monitor and then encoded into the fixed MiniLab profile.
+### 9.2 Oscillator
 
-## Pads
+- The first functional release shall use one oscillator per voice.
+- Required waveforms are:
+  - Sine.
+  - Square.
+  - Saw.
+- Triangle and noise are deferred.
+- JUCE oscillator support is preferred.
+- The first release may accept the aliasing limitations of simple waveform generation.
+- Advanced band-limiting work is explicitly deferred.
 
-The pads shall be treated as feature controls rather than drums in the first design.
+### 9.3 Amplitude Envelope
 
-Candidate pad actions:
+- Each voice shall use a per-voice ADSR amplitude envelope.
+- Envelope parameters shall correspond to the parameter table in Section 6.
+- Reusing a voice for a new note shall retrigger the envelope correctly.
+- Note release shall stop sound without obvious clicks under normal manual use.
 
-| Pad Role | Candidate Function |
-|---|---|
-| Pad 1 | Select sine waveform |
-| Pad 2 | Select square waveform |
-| Pad 3 | Select sawtooth waveform |
-| Pad 4 | Toggle filter on/off |
-| Pad 5 | Toggle delay on/off |
-| Pad 6 | Init patch |
-| Pad 7 | Panic/all notes off |
-| Pad 8 | Reserved |
+### 9.4 Filter
 
-This mapping may change after the actual MiniLab 3 default pad behavior is observed.
+- The synth shall use a per-voice low-pass filter.
+- A temporary global filter is not an acceptable substitute for the first functional release because it changes the intended synth architecture and note behavior.
+- The first filter implementation shall use JUCE DSP functionality.
+- Required user-facing controls are cutoff and resonance.
+- The user-facing resonance parameter may be normalized as long as the mapping remains stable and musically usable.
+- The filter implementation shall remain stable at the supported sample rates and parameter ranges.
 
-## MIDI Learn
+### 9.5 Delay
 
-The app should support MIDI learn in a later milestone.
+- The delay effect shall be global and applied after voice mixing.
+- Delay parameters shall match the parameter table in Section 6.
+- Feedback shall be hard-limited to the allowed maximum.
+- Delay mix at 0.0 shall behave as effectively bypassed.
+- Delay-time changes in the first release are treated as user control changes, not modulation targets.
+- Seamless, artifact-free delay-time modulation is not required for the first release.
+- Manual delay-time changes may produce a brief artifact, but they shall not crash the app, allocate in the audio thread, or cause runaway feedback.
 
-MIDI learn behavior:
+### 9.6 Master Output and Panic
 
-- User activates MIDI learn for a parameter.
-- User moves a hardware control.
-- The app captures the incoming CC number and channel.
-- The app binds that CC to the selected parameter.
-- The app exits MIDI learn mode for that parameter.
+- Master gain shall be the final output stage.
+- The default patch shall be audible without being excessively hot.
+- The panic or all-notes-off control shall silence active notes immediately.
+- Clearing the residual delay tail is not required for the first release.
 
-The app should show the currently mapped CC number for each assignable parameter.
+## 10. UI Requirements
 
-The app should allow clearing a MIDI mapping.
+### 10.1 General UI Direction
 
-MIDI learn shall not bind note-on/note-off events to continuous parameters in the first implementation.
+- The UI shall be built with JUCE components.
+- The UI shall be hardware-synth-like in layout and grouping.
+- The UI shall be loosely inspired by the MiniLab 3 physical layout, but it shall not attempt to be a literal visual replica.
+- Early milestones may use standard JUCE sliders, buttons, and labels with light styling.
+- Heavy custom graphics, photorealistic controls, and skinning systems are out of scope.
+- The first version may use a fixed-size window or editor.
 
-## Parameter Scaling
+### 10.2 Required UI Sections
 
-Incoming MIDI CC values range from 0 to 127.
+The standalone UI shall include:
 
-The app shall scale CC values to parameter ranges.
-
-Examples:
-
-- Filter cutoff: logarithmic mapping, for example 20 Hz to 20,000 Hz.
-- Resonance: linear or musically useful range.
-- ADSR times: nonlinear mapping, for example 1 ms to 10 s.
-- Sustain: linear 0.0 to 1.0.
-- Delay mix: linear 0.0 to 1.0.
-- Delay feedback: limited to a safe range, for example 0.0 to 0.95.
-- Master volume: limited to avoid clipping, with dB scaling preferred.
-
-# Audio Requirements
-
-## Audio Device Configuration
-
-The standalone app shall expose audio settings through a JUCE audio device selector.
-
-The user shall be able to select:
-
-- Audio backend/device type.
-- Output device.
-- Sample rate.
-- Buffer size.
-
-The app should display the current sample rate and buffer size.
-
-The app should handle sample-rate changes correctly.
-
-The app should handle audio-device restarts without crashing.
-
-For VST3, audio device configuration is handled by the host DAW.
-
-## Latency Requirements
-
-The app should be playable with the lowest practical latency on motherboard audio.
-
-Target practical latency:
-
-- Try 128 or 256 sample buffers first if stable.
-- Accept 512 samples if needed for stable motherboard audio.
-- Do not require ASIO for the first version.
-
-The app shall not block the audio callback.
-
-The app shall not allocate memory in the audio callback during normal operation.
-
-The app shall avoid locks in the audio callback.
-
-The app shall use parameter smoothing where abrupt parameter changes can cause clicks.
-
-# Synth Engine Requirements
-
-## Polyphony
-
-The synth shall support polyphonic playback.
-
-Initial polyphony target:
-
-- Preferred: 16 voices.
-- Acceptable early implementation: 8 voices.
-
-The voice allocator shall handle:
-
-- Free voice selection.
-- Note release.
-- Voice stealing when all voices are active.
-- All-notes-off behavior.
-
-Voice stealing should prefer voices that are already released or lowest amplitude.
-
-## Notes and Tuning
-
-The synth shall convert MIDI note numbers to frequency using standard equal temperament tuning.
-
-A4 shall default to 440 Hz.
-
-A4 tuning may be made configurable later.
-
-The synth shall support velocity-sensitive note triggering.
-
-Velocity should initially affect both:
-
-- Voice amplitude.
-- Filter behavior, such as cutoff modulation or envelope amount, if simple to implement.
-
-If this complicates the first version, velocity shall affect amplitude first, and filter velocity influence shall be added later.
-
-## Oscillators
-
-The synth shall support one oscillator per voice in the first version.
-
-Required waveforms:
-
-- Sine.
-- Square.
-- Sawtooth.
-
-Optional later waveforms:
-
-- Triangle.
-- Noise.
-
-The oscillator should use JUCE DSP functionality where practical.
-
-The project shall not prioritize writing oscillator DSP from scratch in the first version.
-
-The initial oscillator may accept the limitations of simple waveform generation, but should not spend significant time on advanced anti-aliasing until the rest of the synth works.
-
-## Amplitude Envelope
-
-Each voice shall include an ADSR amplitude envelope.
-
-Parameters:
-
-- Attack.
-- Decay.
-- Sustain.
-- Release.
-
-The envelope shall be applied per voice.
-
-The envelope shall avoid clicks during note on/off.
-
-The envelope shall support retriggering behavior when a voice is reused.
-
-JUCE ADSR may be used.
-
-Proposed ranges:
-
-| Parameter | Range |
-|---|---|
-| Attack | 1 ms to 10 s |
-| Decay | 1 ms to 10 s |
-| Sustain | 0.0 to 1.0 |
-| Release | 1 ms to 10 s |
-
-## Filter
-
-The synth shall include a low-pass filter.
-
-The first implementation shall use a JUCE DSP filter rather than a custom filter.
-
-Initial design choice:
-
-- One filter per voice, if straightforward with the selected voice architecture.
-- A global filter is acceptable temporarily if it simplifies the first implementation, but per-voice filtering is preferred for a synth-like result.
-
-Required parameters:
-
-- Cutoff frequency.
-- Resonance.
-
-Proposed cutoff range:
-
-- 20 Hz to 20,000 Hz.
-
-The cutoff control should use logarithmic scaling.
-
-The filter should remain stable across common sample rates and cutoff/resonance settings.
-
-## Delay Effect
-
-The synth shall include a simple delay effect.
-
-Initial design choice:
-
-- Global delay effect after voice mixing.
-
-The delay may use JUCE DSP delay functionality or a simple JUCE-based implementation.
-
-Required parameters:
-
-- Delay time.
-- Feedback.
-- Wet/dry mix.
-
-Proposed ranges:
-
-| Parameter | Range |
-|---|---|
-| Delay time | 1 ms to 2000 ms |
-| Feedback | 0.0 to 0.95 |
-| Mix | 0.0 to 1.0 |
-
-The delay shall avoid runaway feedback.
-
-The delay shall handle sample-rate changes correctly.
-
-Delay time changes should be smoothed or handled carefully to avoid zipper noise and pitch artifacts.
-
-## LFO and Modulation
-
-LFO support shall not be included before the core synth works.
-
-A later version may add:
-
-- One global LFO.
-- LFO rate.
-- LFO amount.
-- LFO target selection.
-- Mapping from Fader 4 to LFO rate or amount.
-
-## Master Output
-
-The synth shall include a master output gain parameter.
-
-The app shall avoid excessive clipping where practical.
-
-A simple output meter may be added later.
-
-The app shall include a panic button that:
-
-- Stops all active voices.
-- Clears stuck notes.
-- Optionally resets delay buffers.
-
-# UI Requirements
-
-## General UI Requirements
-
-The GUI shall be built using JUCE components.
-
-The UI shall be more hardware-synth-like than a generic desktop form.
-
-The UI shall be visually inspired by the MiniLab 3 layout where practical:
-
-- Keyboard/controller status area.
-- Top-row knob-like controls.
-- Fader-like controls where appropriate.
-- Pad-like buttons for feature actions.
-- Clear grouping into oscillator, filter, envelope, delay, and master sections.
-
-The UI shall still prioritize clarity and maintainability over heavy custom graphics.
-
-The UI shall show the current state of core synth parameters.
-
-The UI shall update when parameters change from hardware MIDI controls.
-
-The UI shall remain responsive during audio playback.
-
-## Main UI Sections
-
-The main window should contain the following sections:
-
-- Device/status strip.
+- Status strip for current audio and MIDI device state.
 - Oscillator section.
 - Filter section.
 - Envelope section.
 - Delay section.
-- Master/output section.
-- Pad/function section.
-- MIDI monitor, initially visible or available in a collapsible debug area.
-- Panic button.
+- Output section.
+- Panic action.
+- MIDI monitor, visible or collapsible.
 
-Proposed rough layout:
+The VST3 editor shall include:
 
-```text
-+----------------------------------------------------------------+
-| MiniLab Synth              MIDI: MiniLab 3     Audio: WASAPI   |
-+----------------------------------------------------------------+
-| [ Oscillator ] [ Filter ] [ Envelope ] [ Delay ] [ Master ]    |
-|   Knob 1       Knob 2     Knob 4      Knob 8    Fader 1       |
-|                Knob 3     Knob 5      Fader 2                 |
-|                           Knob 6      Fader 3                 |
-|                           Knob 7                              |
-+----------------------------------------------------------------+
-| [ Pad 1 ] [ Pad 2 ] [ Pad 3 ] [ Pad 4 ] [ Pad 5 ] [ Panic ]   |
-+----------------------------------------------------------------+
-| MIDI Monitor / Debug                                           |
-+----------------------------------------------------------------+
-```
+- Oscillator section.
+- Filter section.
+- Envelope section.
+- Delay section.
+- Output section.
+- Panic action.
 
-## Controls
+The plugin editor does not need standalone device selectors or hardware status panels.
 
-The UI shall use a mix of control types inspired by the MiniLab 3:
+### 10.3 Control and Display Rules
 
-| Parameter | UI Control |
-|---|---|
-| Waveform | Pad buttons, combo box, or segmented selector |
-| Cutoff | Rotary slider |
-| Resonance | Rotary slider |
-| Attack | Rotary slider |
-| Decay | Rotary slider |
-| Sustain | Rotary slider |
-| Release | Rotary slider |
-| Delay time | Vertical fader or rotary slider |
-| Delay feedback | Vertical fader or rotary slider |
-| Delay mix | Rotary slider |
-| Master volume | Vertical fader |
-| Panic | Pad-like button |
-| MIDI learn | Hidden initially; later button per parameter or context action |
-
-The UI should display exact values where this helps learning and debugging.
-
-At minimum, these should show meaningful units:
-
-- Cutoff in Hz/kHz.
-- Delay time in ms.
-- ADSR times in ms/s.
-- Sustain as percentage.
-- Master volume in dB or normalized value.
-
-## Virtual Keyboard
-
-A virtual on-screen keyboard is optional.
-
-It is not required in the first version because the MiniLab 3 is the primary input device.
-
-A small note activity display may be more useful than a full virtual keyboard in early versions.
-
-# State and Preset Requirements
-
-## Parameter Model
-
-The synth shall use a central parameter model suitable for both standalone and VST3.
-
-Recommended approach:
-
-- `juce::AudioProcessorValueTreeState` for plugin-compatible parameters.
-- Parameter attachments for UI controls.
-- Safe parameter reading in the audio processor.
-
-The parameter model shall define:
-
-- Parameter ID.
-- Display name.
-- Range.
-- Default value.
-- Unit/display conversion.
-
-## Initial State
-
-The app shall start with a safe, audible initial patch.
-
-Proposed initial patch:
-
-- Waveform: sawtooth or sine.
-- Attack: 10 ms.
-- Decay: 200 ms.
-- Sustain: 0.8.
-- Release: 300 ms.
-- Filter cutoff: 10 kHz.
-- Resonance: low.
-- Delay mix: 0.
-- Master volume: moderate.
-
-## Presets
-
-Preset management is optional for the first version, but the internal parameter model should not prevent it.
-
-A later version should support:
-
-- Init patch.
-- Save preset.
-- Load preset.
-- Preset file stored as JUCE ValueTree or XML/JSON.
-- MIDI mappings saved with or separate from presets.
-
-Recommended distinction:
-
-- Synth preset: sound design parameters.
-- Controller mapping: hardware CC assignments.
-
-# Persistence Requirements
-
-The app should remember basic application settings:
-
-- Last selected MIDI device.
-- Last selected audio device configuration, where possible.
-- Last window size and position, optional.
-- MIDI mappings, once MIDI learn is implemented.
-- Last loaded patch, optional.
-
-Persistence may use JUCE `ApplicationProperties`, ValueTree state, or another JUCE-friendly configuration approach.
-
-# Real-Time Safety Requirements
-
-The audio callback shall not:
-
-- Perform heap allocations during normal processing.
-- Open files.
-- Write logs.
-- Update UI directly.
-- Block on mutexes.
-- Wait on condition variables.
-- Perform expensive string operations.
-- Call slow system APIs.
-
-Communication from UI/MIDI threads to the audio thread shall use safe mechanisms such as:
-
-- JUCE parameter values.
-- Atomic parameter access.
-- Lock-free queues if needed.
-- Preallocated buffers.
-
-Parameter changes that affect sound should be smoothed where necessary.
-
-# Error Handling Requirements
-
-The app shall handle these conditions gracefully:
-
-- No MIDI device connected.
-- MiniLab 3 disconnected while the app is running.
-- Audio device unavailable.
-- Audio device changes sample rate.
-- Invalid or unsupported MIDI message.
-- MIDI mapping conflict.
-- Preset/config file missing or malformed.
-- VST3 loaded without MIDI input from host.
-
-The app should show clear status messages rather than crashing.
-
-# Testing Requirements
-
-## Manual Test Cases
-
-The following manual tests should be possible:
-
-- Launch app with no MIDI controller connected.
-- Launch app with MiniLab 3 connected.
-- Select MiniLab 3 as MIDI input.
-- Press each key and verify note messages appear in the monitor.
-- Press keys and hear sound.
-- Release keys and verify sound stops cleanly.
-- Move each knob/fader and verify CC messages appear.
-- Verify fixed mapped controls change parameters.
-- Play multiple notes at once.
-- Exceed voice count and verify voice stealing works.
-- Change audio buffer size and verify continued playback.
-- Press panic and verify stuck notes stop.
-- Disconnect MIDI controller and verify app does not crash.
-- Build the VST3 target.
-- Load the VST3 in a DAW later and verify MIDI note input produces sound.
-
-## Automated Unit Tests
-
-Unit tests are not required at the beginning.
-
-The code should still be structured so unit tests can be added later for:
-
-- MIDI note-to-frequency conversion.
-- MIDI CC scaling to parameter values.
-- Voice allocation and stealing logic.
-- Preset serialization/deserialization.
-- Parameter range conversion.
-
-# Build and Repository Requirements
-
-## Build System
-
-The project shall use CMake.
-
-The repository should build without requiring the JUCE Projucer.
-
-Recommended approach:
-
-- Use CMake FetchContent for JUCE initially.
-
-Rationale:
-
-- Easier for a VS Code workflow.
-- Less manual setup than requiring a local JUCE path.
-- Avoids managing a Git submodule in the first project stage.
-
-If reproducibility becomes a concern, JUCE can later be pinned to a specific tag or changed to a Git submodule.
-
-The CMake project shall generate:
-
-- A standalone application target.
-- A VST3 plugin target, if practical from the start.
-
-## Repository Structure
-
-A modular structure is preferred from the start.
-
-Proposed structure:
-
-```text
-minilab-synth/
-  CMakeLists.txt
-  README.md
-  docs/
-    requirements.md
-  assets/
-  src/
-    processor/
-      SynthAudioProcessor.h
-      SynthAudioProcessor.cpp
-      SynthAudioProcessorEditor.h
-      SynthAudioProcessorEditor.cpp
-    synth/
-      SynthEngine.h
-      SynthEngine.cpp
-      SynthVoice.h
-      SynthVoice.cpp
-      SynthSound.h
-      SynthSound.cpp
-    midi/
-      MidiMapper.h
-      MidiMapper.cpp
-      Minilab3Profile.h
-      Minilab3Profile.cpp
-      MidiMonitor.h
-      MidiMonitor.cpp
-    parameters/
-      ParameterIDs.h
-      ParameterLayout.h
-      ParameterLayout.cpp
-    ui/
-      MainSynthView.h
-      MainSynthView.cpp
-      KnobControl.h
-      KnobControl.cpp
-      PadButton.h
-      PadButton.cpp
-      MeterView.h
-      MeterView.cpp
-    util/
-      NoteUtils.h
-      ValueFormatters.h
-```
-
-The exact structure may be simplified during implementation if it becomes too heavy, but the separation between processor, synth, MIDI, parameters, and UI should remain.
-
-# Code Quality Requirements
-
-The code shall:
-
-- Use modern C++20 where appropriate.
-- Avoid unnecessary inheritance outside JUCE requirements.
-- Keep DSP code separate from UI code.
-- Keep MIDI mapping separate from synth voice logic.
-- Keep MiniLab-specific assumptions isolated in a profile file.
-- Prefer explicit parameter ranges and units.
-- Use clear names rather than clever abstractions.
-- Avoid global mutable state.
-- Minimize audio-thread risk.
-- Compile cleanly on Windows 11.
-- Support a VS Code plus CMake workflow.
-
-Warnings should be treated seriously.
-
-# Milestones
-
-## Milestone 1: Build Skeleton
+- Every user-facing control shall have a text label.
+- The following values shall be shown in meaningful units:
+  - Filter cutoff in Hz or kHz.
+  - Envelope times in ms or s.
+  - Sustain as a percentage or normalized value.
+  - Delay time in ms.
+  - Delay feedback as a percentage or normalized value.
+  - Master gain in dB.
+- The UI shall reflect parameter changes originating from hardware MIDI input.
+- The VST3 editor shall reflect parameter changes originating from host automation.
+- Color shall not be the only way to convey state.
+- A full virtual keyboard is not required.
+- A small activity indicator for incoming notes is optional.
+
+## 11. State and Persistence Requirements
+
+State handling must be separated by responsibility.
+
+Shared synth state:
+
+- All automatable synth parameters shall serialize through the AudioProcessor state mechanism.
+- This is required before the VST3 smoke test milestone.
+- VST3 save and restore shall restore all parameters in Section 6.
+
+Standalone-only persisted settings:
+
+- Last selected audio backend, device, sample rate, and buffer size, when the stored configuration is still valid.
+- Last selected MIDI input device, when the stored device is still available.
+
+Deferred standalone persistence:
+
+- Window size and position.
+- Last loaded patch.
+- Recent files.
+
+Preset rules:
+
+- Preset file management is not required for the first functional release.
+- If an Init Patch action exists before file-based presets, it shall simply reset all automatable parameters to their default values.
+- Later preset files shall not implicitly overwrite standalone audio-device or MIDI-device selection.
+
+## 12. Real-Time Audio Safety Requirements
+
+The following are hard requirements for the audio thread and audio callback path:
+
+- No heap allocation during normal playback in processBlock, voice rendering, or per-sample DSP code.
+- No mutex locking.
+- No condition-variable waits.
+- No file I/O.
+- No device enumeration.
+- No logging.
+- No expensive string formatting.
+- No direct UI updates.
+
+Additional real-time rules:
+
+- Voices, filters, delay buffers, temporary processing buffers, and MIDI-monitor storage shall be preallocated during initialization or prepareToPlay.
+- MIDI monitor collection shall store lightweight event records only. String formatting for the monitor shall happen on the message thread.
+- UI code shall not mutate live voice objects directly.
+- Audio-thread parameter reads shall use JUCE parameter APIs or atomics without requiring locks.
+- Continuous parameters that can click when jumped, including master gain and filter cutoff, shall use smoothing or another safe control-rate strategy.
+- Delay-time changes do not need seamless modulation behavior in the first release, but they must remain real-time safe.
+- The audio callback shall not depend on device-selection or persistence code.
+- Debug logging, if present elsewhere, shall be disabled from the audio thread.
+
+## 13. Error Handling Requirements
+
+The application shall fail softly in the following cases:
+
+- No audio device available at startup.
+- No MIDI device available at startup.
+- Remembered MIDI device is missing.
+- MIDI device is disconnected during playback.
+- Audio device restarts or changes sample rate.
+- Unsupported MIDI messages are received.
+- Standalone settings file is missing or malformed.
+- VST3 plugin is opened without incoming MIDI from the host.
+
+Expected behavior:
+
+- The app or plugin remains running.
+- The user gets a clear status indication where a standalone status panel exists.
+- Invalid settings fall back to safe defaults.
+- The audio thread does not attempt recovery by doing heavy work directly inside the callback.
+
+## 14. Build and Tooling Requirements
+
+- The project shall configure and build on Windows 11 with CMake and MSVC.
+- The project shall not depend on JUCE Projucer.
+- The JUCE dependency acquisition method is an implementation detail, but it must be reproducible from a clean checkout and documented in the repository.
+- Visual Studio Code with a CMake-based workflow shall be a supported development path.
+- The build shall generate Standalone and VST3 outputs from the shared processor codebase.
+- The codebase shall keep processor, synth, MIDI mapping, parameter, and UI concerns separated enough for independent review.
+- New warnings introduced by current work shall be treated as defects.
+
+## 15. Manual Validation Requirements
+
+The following manual tests shall be possible by the time the relevant milestone is complete:
+
+| Scenario | Expected Result |
+| --- | --- |
+| Launch standalone app with no MIDI controller connected | App opens, shows disconnected MIDI state, remains usable |
+| Launch standalone app with no usable audio device | App opens, shows audio problem state, does not crash |
+| Select MiniLab 3 as MIDI input | App reports MiniLab 3 as active input |
+| Press MiniLab keys | MIDI monitor shows note events and audible notes are produced once the synth milestone is complete |
+| Move MiniLab knobs and faders | MIDI monitor shows CC events |
+| Play a 4-note chord | Notes sound simultaneously without stealing below the configured voice limit |
+| Exceed available voices | Voice stealing occurs according to the documented policy |
+| Change sample rate or buffer size | Audio engine reprepares and app remains stable |
+| Press panic | Active notes stop immediately |
+| Unplug MiniLab during playback | App remains running and clears held-note state |
+| Build the VST3 target | VST3 binary is produced |
+| Load the VST3 target in a host | Plugin loads, opens editor, and accepts host MIDI once the VST3 smoke milestone is reached |
+
+## 16. Milestones
+
+### Milestone 1: Build Skeleton
 
 Deliverables:
 
-- JUCE CMake project builds on Windows 11.
-- VS Code workflow works.
+- JUCE CMake project configures on Windows 11 with MSVC.
+- Shared processor target exists.
 - Standalone target builds.
-- VST3 target builds if practical.
-- Standalone window opens.
-- Basic parameter model exists.
-- Basic app status is shown.
+- VST3 target builds.
+- Placeholder editor or window opens.
+- Initial parameter layout exists.
 
 Acceptance criteria:
 
-- App launches without crashing.
-- Project builds from CMake.
-- Processor/editor structure is in place.
+- A Debug build succeeds through the CMake workflow used in Visual Studio Code.
+- Launching the standalone target opens a window without crashing.
+- The VST3 binary is generated even though it is not yet host-validated.
 
-## Milestone 2: Audio and Device Setup
+### Milestone 2: Standalone Audio Shell
 
 Deliverables:
 
-- Audio device selector in standalone app.
-- Current audio backend, output device, sample rate, and buffer size visible.
-- WASAPI output tested on motherboard audio.
+- Standalone audio-device selector.
+- Current backend, output device, sample rate, and buffer size display.
+- WASAPI used as the first practical backend.
+- Optional test tone or silence path for audio verification.
 
 Acceptance criteria:
 
-- App can produce test audio or silence reliably through selected output.
-- User can change buffer size/sample rate where supported.
+- The user can select a WASAPI output device.
+- The app displays the currently active backend, output device, sample rate, and buffer size.
+- Changing output device, sample rate, or buffer size does not crash the app.
+- The app remains open if no usable output device is available.
 
-## Milestone 3: MIDI Monitor
+### Milestone 3: Standalone MIDI Shell and Monitor
 
 Deliverables:
 
-- MIDI input device selector for standalone app.
-- MIDI monitor panel.
-- MiniLab 3 events visible in the app.
+- Standalone MIDI input selector.
+- MIDI monitor with bounded history.
+- Standalone MIDI status display.
 
 Acceptance criteria:
 
-- Pressing keys shows note events.
-- Moving knobs/faders shows CC events.
-- Unsupported events do not crash the app.
+- Selecting the MiniLab 3 as input causes incoming note events to appear in the monitor.
+- Moving MiniLab knobs or faders causes CC events to appear in the monitor.
+- Unsupported MIDI messages are ignored safely.
+- Disconnecting the device does not crash the app.
 
-## Milestone 4: Basic Polyphonic Synth
+### Milestone 4: First Playable Synth
 
 Deliverables:
 
-- One oscillator per voice.
-- Sine waveform initially.
-- 8 to 16 voice polyphony.
-- Note on/off handling.
-- Basic amplitude envelope.
-- Panic button.
+- 8 preallocated voices.
+- One sine oscillator per voice.
+- ADSR amplitude envelope wired into note playback.
+- Master gain.
+- Panic action.
 
 Acceptance criteria:
 
-- Pressing MiniLab keys produces audible tones.
-- Releasing keys stops tones cleanly.
-- Multiple notes can be played simultaneously.
-- Panic button stops sound.
+- Pressing MiniLab keys produces audible sine-wave notes.
+- Releasing notes stops sound cleanly.
+- At least four simultaneous notes can be played before voice stealing occurs.
+- Panic silences active notes immediately.
 
-## Milestone 5: Hardware-Style UI
+### Milestone 5: Core Parameter UI
 
 Deliverables:
 
-- Hardware-synth-like layout.
-- Rotary controls for oscillator/filter/envelope parameters.
-- Fader-style controls for master and delay-related values.
-- Pad-like buttons for feature controls.
+- Functional UI controls for waveform, ADSR, and master gain.
+- Parameter value display with meaningful units.
+- Initial hardware-synth-like layout.
 
 Acceptance criteria:
 
-- UI resembles a simple controller/synth panel rather than a generic form.
-- Parameter controls update the synth.
+- Switching waveform changes between sine, square, and saw.
+- Attack, decay, sustain, and release changes are audibly reflected.
+- Master gain changes are audible and reflected in the UI.
 - UI remains responsive during playback.
 
-## Milestone 6: Oscillator Waveforms
+### Milestone 6: Fixed MiniLab 3 Mapping
 
 Deliverables:
 
-- Sine, square, and sawtooth waveforms.
-- UI control for waveform.
-- Fixed MiniLab mapping for waveform selection/change.
+- Confirmed MiniLab 3 default message table for the controls used in the fixed mapping.
+- Fixed mappings for the controls tied to already implemented parameters.
+- Controller mapping code isolated from synth engine code.
 
 Acceptance criteria:
 
-- User can switch waveform from UI.
-- Hardware control or pad can change waveform if mapping is confirmed.
+- Knob 1 updates waveform selection.
+- Knobs 4 through 7 update the ADSR parameters.
+- Fader 1 updates master gain.
+- Unmapped controls do not produce harmful behavior.
+- The fixed mapping works without embedding MiniLab-specific message numbers in voice code.
 
-## Milestone 7: ADSR and Velocity
+### Milestone 7: Filter
 
 Deliverables:
 
-- Attack, decay, sustain, release controls.
-- Velocity affects amplitude.
-- Optional velocity influence on filter if simple.
+- Per-voice low-pass filter.
+- Cutoff and resonance UI controls.
+- MiniLab mapping for cutoff and resonance.
 
 Acceptance criteria:
 
-- Envelope changes are audible.
-- Release phase works correctly.
-- Velocity changes are audible.
+- Cutoff changes are clearly audible.
+- Resonance changes are clearly audible.
+- Knob 2 updates cutoff and Knob 3 updates resonance.
+- The filter remains stable at 44.1 kHz and 48 kHz across the user-facing parameter range.
 
-## Milestone 8: Filter
-
-Deliverables:
-
-- Low-pass filter using JUCE DSP.
-- Cutoff and resonance controls.
-- Fixed MiniLab mapping for cutoff and resonance.
-
-Acceptance criteria:
-
-- Cutoff changes are audible.
-- Resonance changes are audible.
-- Filter remains stable across tested settings.
-
-## Milestone 9: Delay
+### Milestone 8: Delay
 
 Deliverables:
 
 - Global delay effect.
 - Delay time, feedback, and mix controls.
-- Safe feedback limiting.
+- Delay-related MiniLab mapping for the confirmed controls.
 
 Acceptance criteria:
 
-- Delay effect is audible.
-- Feedback does not run away uncontrollably.
-- Delay can be bypassed or mixed out.
+- Delay mix above zero produces an audible delayed signal.
+- Delay mix at zero produces effectively dry output.
+- Feedback remains bounded and does not run away.
+- Knob 8, Fader 2, and Fader 3 update the intended delay parameters.
+- Manual delay-time changes do not crash the app.
 
-## Milestone 10: Fixed MiniLab 3 Profile
+### Milestone 9: Hardware-Style UI Refinement
 
 Deliverables:
 
-- Confirmed default MiniLab 3 CC map.
-- Encoded MiniLab 3 profile.
-- Pad feature assignments decided and implemented.
+- Clear grouping for oscillator, filter, envelope, delay, and output sections.
+- Standalone status strip.
+- Collapsible or visually contained MIDI monitor.
 
 Acceptance criteria:
 
-- Default MiniLab controls operate the intended synth parameters.
-- The profile is isolated from generic synth code.
+- The standalone UI reads as a synth panel rather than a generic form.
+- Labels are readable and values are understandable without inspecting raw parameter ranges.
+- The plugin editor omits standalone-only device configuration panels.
 
-## Milestone 11: VST3 Smoke Test
+### Milestone 10: VST3 Smoke Test
 
 Deliverables:
 
-- VST3 target builds.
-- Plugin loads in at least one DAW or plugin host.
-- MIDI note input from host triggers sound.
-- UI opens in host.
+- VST3 loads in at least one host or plugin host.
+- Host MIDI note input produces sound.
+- Editor opens in host.
+- Host can automate at least cutoff and master gain.
+- Plugin state save and restore works for the parameters in Section 6.
 
 Acceptance criteria:
 
-- VST3 can be loaded and played.
-- Shared processor behaves similarly to standalone version.
+- The plugin loads and opens its editor in one host environment.
+- Host MIDI note input produces audible sound.
+- At least cutoff and master gain respond to host automation.
+- Saving and reopening the host project restores the plugin parameter state.
 
-## Milestone 12: MIDI Learn and Persistence
+### Milestone 11: Standalone Persistence
 
 Deliverables:
 
-- MIDI learn mode.
-- Mappings stored between runs.
-- Configurable default mappings.
+- Standalone app remembers the last valid audio configuration.
+- Standalone app remembers the last valid MIDI input selection.
 
 Acceptance criteria:
 
-- User can map a MiniLab control to a parameter.
-- Mapping remains after app restart.
+- Restarting the app restores the last valid audio selection when available.
+- Restarting the app restores the last valid MIDI input selection when available.
+- Missing devices are handled gracefully and shown as unavailable rather than causing failure.
 
-## Milestone 13: Presets
+### Milestone 12: MIDI Learn
 
 Deliverables:
 
-- Save and load synth patches.
-- Init patch.
-- Basic preset selector.
+- Per-parameter MIDI learn mode.
+- Clear-mapping action.
+- Mapping persistence.
 
 Acceptance criteria:
 
-- User can save a sound.
-- User can reload it later.
-- Preset loading updates UI and sound engine.
+- The user can enter learn mode for a parameter and bind a CC by moving a control.
+- The learned mapping survives an app restart.
+- Note events are not accepted as continuous-parameter mappings.
 
-## Milestone 14: CI
+### Milestone 13: Presets
 
 Deliverables:
 
-- GitHub Actions workflow or equivalent CI.
-- Windows build verification.
+- Init Patch action.
+- Save patch.
+- Load patch.
 
 Acceptance criteria:
 
-- Repository builds automatically on commit or pull request.
+- The user can store the current synth parameter state as a patch.
+- Loading a stored patch restores both sound and UI state.
+- Preset loading does not overwrite standalone audio-device or MIDI-device selections.
 
-# Initial Technical Decisions
+### Milestone 14: CI
 
-The following decisions are currently accepted:
+Deliverables:
 
-| Area | Decision |
-|---|---|
-| Language | C++20 |
-| Framework | JUCE |
-| Build system | CMake |
-| Editor | Visual Studio Code |
-| Compiler/toolchain | MSVC via Visual Studio 2022 Build Tools or Visual Studio 2022 |
-| First usable target | Standalone app |
-| Architecture target | Standalone plus VST3 from day one |
-| UI | JUCE Components, hardware-synth-like layout |
-| MIDI | JUCE MIDI input for standalone, host MIDI for VST3 |
-| Audio | JUCE audio device system |
-| Primary Windows backend | WASAPI on motherboard audio |
-| Oscillator | JUCE DSP/simple JUCE-supported implementation |
-| Envelope | JUCE ADSR or JUCE-compatible implementation |
-| Filter | JUCE DSP filter |
-| Delay | JUCE DSP delay or simple JUCE-based delay |
-| Presets | ValueTree/XML/JSON later |
-| MiniLab mapping | Fixed default profile first, MIDI learn later |
-| Unit tests | Not initially |
-| CI | Later |
-| Code layout | Modular from the start |
+- Windows CI build.
 
-# Resolved User Decisions
+Acceptance criteria:
 
-The following decisions have been made:
-
-- Scope should support both standalone and VST3 from day one.
-- The project should be both educational and practically playable.
-- DSP should not be implemented from scratch initially.
-- Simplicity should be prioritized.
-- No external audio interface is currently available.
-- Audio output is motherboard line-out to active speakers.
-- Latency should be as small as practical on that hardware.
-- MiniLab 3 default template should be assumed initially.
-- Fixed MiniLab mapping should come first.
-- MIDI learn should come later.
-- Pads should be used for features rather than drums initially.
-- One oscillator per voice should be used initially.
-- LFO/modulation should wait until the core synth works.
-- UI should be more hardware-synth-like and modeled loosely on the MiniLab 3 layout.
-- Controls should use a mix similar to the MiniLab 3, including knobs, faders, and pads.
-- Visual Studio Code should be the editor.
-- The assistant may decide the JUCE dependency strategy.
-- A modular architecture should be used from the start.
-- Unit tests are not required initially.
-- CI can be added later.
-- Complete code should be provided at each implementation milestone.
-- DSP math explanations are not required unless needed.
-- Code should be designed cleanly from the start.
-
-# Remaining Design Defaults
-
-Some items are not yet fully decided. The following defaults shall be used unless changed:
-
-| Question | Default |
-|---|---|
-| MiniLab pads | Feature toggles and shortcuts |
-| Main encoder | Reserved initially |
-| Velocity routing | Amplitude first, filter influence later if simple |
-| Filter placement | Per voice preferred; global acceptable temporarily |
-| Delay channel mode | Stereo global delay preferred |
-| MIDI monitor | Visible in early builds, collapsible later |
-| Exact value display | Show exact values for learning/debugging |
-| Virtual keyboard | Not required initially |
-
-# Next Implementation Step
-
-The next step is to create the initial repository skeleton:
-
-- CMake project.
-- JUCE fetched through CMake.
-- Standalone target.
-- VST3 target if practical.
-- `SynthAudioProcessor` and editor classes.
-- Basic hardware-style placeholder UI.
-- No sound engine yet, unless a minimal test tone is useful for verifying audio output.
-
+- The repository automatically builds the Windows target on the configured CI system.
