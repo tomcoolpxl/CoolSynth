@@ -89,7 +89,7 @@ This project must separate shared synth behavior from standalone-specific and VS
 | Audio rendering | Required | Uses shared core | Uses shared core |
 | Parameter model | Required | Uses shared core | Uses shared core |
 | Synth engine and voices | Required | Uses shared core | Uses shared core |
-| Fixed MiniLab mapping logic | Required | Consumes hardware MIDI | Consumes host-provided MIDI if present |
+| Fixed MiniLab mapping logic | Required | Consumes hardware MIDI | First release focuses on host MIDI notes; host CC remapping deferred |
 | Audio device selection | Not part of shared core | Required | Not applicable |
 | MIDI device selection | Not part of shared core | Required | Not applicable |
 | MIDI monitor UI | Optional event capture support only | Required in early milestones | Not required |
@@ -244,6 +244,8 @@ The plugin editor does not need a MIDI monitor.
 The first controller strategy is a fixed MiniLab 3 mapping.
 
 The mapping milestone is not complete until the actual MiniLab 3 default template messages used on the developer's device have been captured with the MIDI monitor and recorded in code or documentation.
+
+For the first functional release, this mapping milestone is satisfied by standalone behavior. The VST3 smoke milestone requires host MIDI note input and host automation, but it does not require host-provided MiniLab CC remapping.
 
 The preferred first fixed mapping is:
 
@@ -454,9 +456,11 @@ Additional real-time rules:
 - MIDI monitor collection shall store lightweight event records only. String formatting for the monitor shall happen on the message thread.
 - UI code shall not mutate live voice objects directly.
 - Audio-thread parameter reads shall use JUCE parameter APIs or atomics without requiring locks.
+- Controller-driven parameter writes for the fixed MiniLab mapping shall occur off the audio thread in the first release.
 - Continuous parameters that can click when jumped, including master gain and filter cutoff, shall use smoothing or another safe control-rate strategy.
 - Delay-time changes do not need seamless modulation behavior in the first release, but they must remain real-time safe.
 - The audio callback shall not depend on device-selection or persistence code.
+- The audio callback shall not call host-notifying parameter APIs such as `setValueNotifyingHost()`, or APVTS state-copy and state-replace APIs such as `copyState()` or `replaceState()`.
 - Debug logging, if present elsewhere, shall be disabled from the audio thread.
 
 ## 13. Error Handling Requirements

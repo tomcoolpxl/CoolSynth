@@ -364,6 +364,13 @@ The synth engine should not care whether MIDI came from the MiniLab 3 directly o
 
 For the first functional release, controller-driven sound changes must always land in the same canonical parameter model used by the UI, plugin automation, and serialized state. The design shall not introduce a separate shadow set of controller-only sound values.
 
+First-release controller path:
+
+- `MidiMappingEngine` resolves CCs to stable parameter IDs and cached `juce::RangedAudioParameter*` targets prepared outside the audio callback.
+- In standalone mode, the MIDI input callback or another non-audio control thread owns the actual parameter mutation step. It shall bracket user-style changes with `beginChangeGesture()` and `endChangeGesture()` and call `setValueNotifyingHost()` off the audio thread so the UI and stored parameter state stay in sync.
+- `processBlock` reads cached raw parameter atomics and renders audio. It shall not call `setValueNotifyingHost()`, `copyState()`, `replaceState()`, or other parameter-notification or state-copy APIs.
+- The first VST3 smoke milestone requires host MIDI note input and host automation. Host-provided CC-to-parameter remapping is deferred until a validated realtime-safe handoff is in place; the plugin must not work around this by adding a controller-only mirror state.
+
 # MIDI Message Split
 
 During processing, MIDI should be split conceptually:
@@ -374,7 +381,7 @@ MIDI notes
 
 MIDI CCs
   -> MidiMappingEngine
-  -> APVTS parameter changes
+  -> canonical parameter updates outside the audio callback
 
 Other MIDI
   -> ignore or future handling
@@ -386,9 +393,9 @@ The required behavior is:
 
 - Fixed MiniLab mappings resolve to the stable APVTS parameter IDs.
 - UI attachments, standalone hardware MIDI input, and host automation all observe the same parameter values.
-- If controller input arrives off the audio thread, it may be normalized there and forwarded through a preallocated path.
-- If MIDI CC handling occurs in or near `processBlock`, it must still update the canonical plugin parameters rather than a controller-only mirror state.
-- The first release should avoid inventing a second control plane just to work around APVTS update mechanics.
+- In the first release, fixed CC-to-parameter mapping is validated in standalone mode, where controller input arrives off the audio thread.
+- The first VST3 smoke test requires host MIDI note input and host automation, not host-provided CC remapping.
+- The design shall not invent a second control plane just to work around parameter-update constraints.
 
 For the first functional release:
 
@@ -414,6 +421,8 @@ The first mapping is fixed by MiniLab control role, with exact CC values verifie
 - Explicit commands such as panic.
 
 It should not write directly into synth voices or hold alternate controller-only copies of synth parameter values.
+
+In the first release, parameter-change outputs are consumed by the standalone control-thread parameter-update path described above rather than from `processBlock`.
 
 Example design:
 
@@ -458,7 +467,7 @@ Each stored event summary should carry enough raw data to display the required m
 - Note number so the UI can format note names for note events.
 - Controller number so the UI can label CC events correctly.
 
-For a simple first version, the monitor can be updated from the standalone MIDI callback, not from `processBlock`. In plugin mode it can be hidden or show host MIDI events if easy.
+For a simple first version, the monitor can be updated from the standalone MIDI callback rather than from `processBlock`. In plugin mode it is omitted.
 
 # MIDI Learn Later
 
@@ -748,7 +757,7 @@ It should be loosely modeled on the MiniLab 3 layout:
 - Fader-like or linear controls where they help readability.
 - A dedicated output/action area for master gain and panic.
 - Clear device/status strip.
-- Optional debug MIDI monitor in standalone mode.
+- A required standalone MIDI monitor during early development and fixed-mapping work.
 
 It should not try to exactly clone Arturia's visual design. That may create unnecessary visual work and possible trademark/design concerns. The goal is functional similarity, not visual copying.
 
@@ -875,7 +884,7 @@ Standalone settings:
 - Last selected sample rate.
 - Last selected buffer size.
 
-These settings are required for the standalone app, not optional best-effort extras. On startup, invalid or missing persisted settings should fall back to safe defaults while leaving the app running and surfacing unavailable-device status in the standalone UI.
+These settings are a required later standalone milestone, not optional best-effort extras once implemented. When the standalone persistence milestone is reached, invalid or missing persisted settings should fall back to safe defaults while leaving the app running and surfacing unavailable-device status in the standalone UI.
 
 When restoring MIDI settings:
 
@@ -1051,21 +1060,16 @@ Mitigation:
 - Use it for the first implementation.
 - Keep `SynthEngine` as a wrapper so a future custom voice manager can replace it if needed.
 
-# Risk: MIDI CC Updating Parameters From Audio Thread
+# Decision: First-Release CC-To-Parameter Path
 
-If CC mapping is handled inside `processBlock`, changing APVTS parameters directly from the audio thread may be questionable depending on implementation details.
+JUCE host-notifying parameter APIs are not audio-thread APIs for this project.
 
-Mitigation:
+Decision:
 
-- Prefer parameter-update paths that preserve one canonical parameter state shared by hardware MIDI, UI attachments, automation, and serialization.
-- If direct APVTS mutation from the audio callback proves unsafe or awkward, move the controller-to-parameter handoff to a preallocated queue or other thread-safe boundary rather than storing controller-derived values separately.
-- Do not introduce a second controller-only sound state for the first release.
-
-Practical first decision:
-
-- Use CC mapping in standalone for learning.
-- Keep hardware MIDI, DAW automation, and UI attachments on the same parameter control path.
-- Revisit the cleanest CC-to-parameter method during implementation.
+- The first-release fixed MiniLab mapping updates processor parameters from the standalone MIDI callback or another non-audio control thread.
+- `processBlock` reads parameter atomics and renders audio, but it does not perform host-notifying parameter writes.
+- The first VST3 smoke milestone requires host MIDI note input and host automation. Host-provided CC-to-parameter remapping is deferred until a validated realtime-safe handoff exists.
+- The design still keeps one canonical parameter model. Deferred plugin CC remapping does not justify adding a controller-only mirror state.
 
 # Risk: Hardware Default CC Map Unknown
 

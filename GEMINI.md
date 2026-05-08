@@ -1,5 +1,7 @@
 # CoolSynth Project Rules
 
+This is the main repo or agent memory file. If you need to adapt your memory file, adapt this file.
+
 Authoritative project files:
 
 - `REQUIREMENTS.md`
