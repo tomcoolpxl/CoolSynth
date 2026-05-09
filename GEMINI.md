@@ -78,3 +78,11 @@ For multi-step tasks, state a brief plan:
 3. [Step] → verify: [check]
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## Current Project State
+
+- `Phase 15` is complete: the repository now has a manual-only Windows validation workflow and a tag-only Windows release workflow backed by `scripts/ci/*.ps1` and isolated CI CMake presets.
+- Live proof completed on GitHub on 2026-05-09:
+  - Manual validation run `25614177697` passed and produced diagnostics plus packaged artifacts.
+  - Release run `25614334076` passed, published a disposable prerelease, and a rerun updated that same release rather than creating a duplicate.
+- Current GitHub Actions warning to remember for a future tooling refresh: the pinned `actions/*` and `softprops/action-gh-release` revisions emit Node 20 deprecation warnings on GitHub-hosted runners, even though the workflows currently pass.

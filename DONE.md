@@ -114,4 +114,6 @@
 - [x] Added a tag-only Windows release workflow that publishes standalone, VST3, and checksum assets with generated GitHub release notes.
 - [x] Verified the shared JUCE submodule bootstrap path is reused in automation without a second JUCE download path.
 - [x] Verified local CI-style Release configure, build, `ctest`, and packaging using the new scripts.
+- [x] Verified a live manual validation run on GitHub (`Windows Manual Validation`, run `25614177697`) and downloaded the diagnostics plus package artifacts.
+- [x] Verified a live tag-triggered prerelease publish on GitHub (`Windows Release`, run `25614334076`), confirmed generated notes and assets, reran it successfully without creating a duplicate release, downloaded the published assets, and cleaned up the disposable prerelease tag.
 
