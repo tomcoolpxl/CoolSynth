@@ -709,20 +709,25 @@ Add the required global delay effect with safe time, feedback, and mix control a
 
 ### Goal
 
-Refine the standalone and plugin editors into the intended hardware-synth-like layout with clear section grouping and the correct mode-specific surfaces.
+Refine the standalone and plugin editors into the intended hardware-synth-like layout, keep the primary synth surface focused on sound controls, and consolidate standalone-only utility surfaces into one settings workflow.
 
 ### Scope
 
-- Refine the editor layout into oscillator, filter, envelope, delay, output, and action sections.
-- Add the standalone status strip and a visible or collapsible MIDI monitor presentation.
-- Ensure the plugin editor omits standalone-only device selectors and monitor surfaces.
+- Keep the primary editor layout focused on oscillator, filter, envelope, delay, output, and global action surfaces, with panic presented as a standalone action rather than embedded in the output section.
+- Move standalone-only audio backend selection, output-device configuration, MIDI input selection, and MIDI monitor presentation into one dedicated settings surface instead of placing them in the main synth panel.
+- Replace the large standalone status panel with a compact bottom status bar that shows audio state, MIDI-device state, and a live-updating summary of the most recent MIDI event.
+- Remove redundant standalone entry points so one settings workflow owns audio and MIDI utility controls.
+- Ensure the plugin editor omits standalone-only device selectors, settings entry points, status surfaces, and monitor surfaces.
 - Improve readability of labels and value displays without introducing heavy custom graphics or skinning systems.
 
 ### Expected files to change
 
 - `src/plugin/SynthAudioProcessorEditor.{h,cpp}`
-- `src/ui/StatusStrip*.{h,cpp}`
+- `src/ui/StatusBar*.{h,cpp}` or `src/ui/StatusStrip*.{h,cpp}`
 - `src/ui/MidiMonitorPanel*.{h,cpp}`
+- `src/ui/StandaloneSettings*.{h,cpp}`
+- `src/ui/StandaloneMidiInputPanel*.{h,cpp}`
+- `src/ui/StandaloneAudioStatusPanel*.{h,cpp}` or a replacement settings component
 - `src/ui/Hardware*.{h,cpp}`
 - `src/ui/SynthSection*.{h,cpp}`
 - `README.md`
@@ -745,14 +750,16 @@ Refine the standalone and plugin editors into the intended hardware-synth-like l
 
 - `cmake --build build --config Debug`
 - Launch the standalone app and confirm the UI reads as a synth panel with clear section grouping.
-- Confirm the standalone status strip and MIDI monitor are visible or intentionally collapsible.
+- Open the standalone settings workflow and confirm audio backend or device controls, MIDI input selection, and the MIDI monitor all live there rather than in the main synth panel.
+- Confirm the bottom status bar stays visible during normal use and updates when audio or MIDI device state changes.
+- Press keys and move MiniLab controls and confirm the bottom status bar updates a last-MIDI-event summary without requiring the monitor to stay open.
 - Load the VST3 editor in a host or plugin preview path if available and confirm standalone-only panels are absent.
 - Confirm labels and value displays remain readable without relying on color alone.
 
 ### Review check before moving work to `DONE.md`
 
 - Confirm the phase is layout refinement only and does not introduce new synth features.
-- Trace the grouped layout and mode-specific editor surfaces back to the UI requirements.
+- Trace the grouped layout, settings-surface consolidation, and mode-specific editor surfaces back to the UI requirements.
 - Review regression risk around editor divergence and accidental standalone-only UI in the plugin.
 - Confirm any user-facing layout changes are reflected in docs if needed.
 - Confirm unfinished follow-up work is written back to `TODO.md`.
@@ -760,17 +767,21 @@ Refine the standalone and plugin editors into the intended hardware-synth-like l
 
 ### Exact `TODO.md` entries to refresh from this phase
 
-- [ ] Refine the editor into grouped oscillator, filter, envelope, delay, output, and action sections.
-- [ ] Add or refine the standalone status strip.
-- [ ] Add or refine the standalone MIDI monitor panel presentation.
-- [ ] Ensure the plugin editor omits standalone-only device and monitor UI.
+- [ ] Refine the editor into grouped oscillator, filter, envelope, delay, output, and global action sections.
+- [ ] Move standalone audio and MIDI utility controls into one dedicated settings surface.
+- [ ] Replace the large standalone status panel with a compact bottom status bar.
+- [ ] Add live last-MIDI-event status text to the standalone status bar.
+- [ ] Remove redundant standalone audio or MIDI settings entry points.
+- [ ] Ensure the plugin editor omits standalone-only device, settings, status, and monitor UI.
 - [ ] Improve control labels and value readability.
 - [ ] Verify the refined UI remains usable during playback.
 
 ### Exit criteria for moving items to `DONE.md`
 
 - The standalone UI reads as a synth panel rather than a generic form.
-- Standalone status and monitor surfaces are present and plugin-only editors omit them.
+- Standalone-only audio and MIDI utilities live behind one settings workflow rather than occupying the primary synth surface.
+- The standalone status bar exposes current audio state, MIDI-device state, and a live last-MIDI-event summary.
+- Plugin-only editors omit standalone settings, status, and monitor surfaces.
 - Labels and value displays are readable and meaningful.
 - No new features were bundled into the refinement phase.
 - Manual layout checks pass, docs are current, and review is complete.

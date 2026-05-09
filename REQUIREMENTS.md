@@ -374,14 +374,14 @@ Voice-allocation rules:
 
 The standalone UI shall include:
 
-- Status strip for current audio and MIDI device state.
 - Oscillator section.
 - Filter section.
 - Envelope section.
 - Delay section.
 - Output section.
 - Panic action.
-- MIDI monitor, visible or collapsible.
+- Bottom status bar for current audio state, MIDI-device state, and the most recent MIDI event summary.
+- A dedicated standalone settings surface that contains audio-device configuration, MIDI input selection, and the MIDI monitor during early development and fixed-mapping work.
 
 The VST3 editor shall include:
 
@@ -392,7 +392,7 @@ The VST3 editor shall include:
 - Output section.
 - Panic action.
 
-The plugin editor does not need standalone device selectors or hardware status panels.
+The plugin editor does not need standalone device selectors, hardware status panels, or the standalone settings surface.
 
 ### 10.3 Control and Display Rules
 
@@ -409,6 +409,8 @@ The plugin editor does not need standalone device selectors or hardware status p
 - Color shall not be the only way to convey state.
 - A full virtual keyboard is not required.
 - A small activity indicator for incoming notes is optional.
+- The standalone status bar shall update on the message thread from lightweight event snapshots and must not require the full MIDI monitor to remain visible.
+- The standalone main editor shall not duplicate audio or MIDI configuration controls that already exist in the standalone settings surface.
 
 ## 11. State and Persistence Requirements
 
@@ -646,14 +648,18 @@ Acceptance criteria:
 Deliverables:
 
 - Clear grouping for oscillator, filter, envelope, delay, and output sections.
-- Standalone status strip.
-- Collapsible or visually contained MIDI monitor.
+- Panic presented as a global action rather than embedded inside the output section.
+- Compact standalone bottom status bar.
+- Dedicated standalone settings surface for audio configuration, MIDI input selection, and MIDI monitor access.
 
 Acceptance criteria:
 
 - The standalone UI reads as a synth panel rather than a generic form.
+- The main standalone editor keeps synth controls visible without embedding audio-backend or MIDI-device selectors alongside them.
+- The standalone settings surface provides audio backend or device configuration, MIDI input selection, and MIDI monitor access without redundant secondary dialogs.
+- The bottom status bar shows current audio state, MIDI-device state, and a live summary of the last received MIDI event.
 - Labels are readable and values are understandable without inspecting raw parameter ranges.
-- The plugin editor omits standalone-only device configuration panels.
+- The plugin editor omits standalone-only device configuration panels, status surfaces, and monitor surfaces.
 
 ### Milestone 10: VST3 Smoke Test
 

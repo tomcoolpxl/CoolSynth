@@ -26,7 +26,14 @@ Standalone wrapper or VST3 wrapper
   -> SynthAudioProcessorEditor
      -> hardware-style JUCE UI
      -> parameter attachments
-     -> MIDI monitor view for standalone/debug
+    -> standalone settings surface (standalone only)
+      -> audio configuration
+      -> MIDI input selection
+      -> MIDI monitor view for standalone/debug
+    -> standalone status bar (standalone only)
+      -> audio summary
+      -> MIDI-device summary
+      -> last MIDI event summary
 ```
 
 The synth should use JUCE-provided DSP and audio infrastructure where practical. The first version should not implement custom oscillator, filter, envelope, or delay DSP from scratch. The goal is to keep the code clean and playable while still exposing the architecture of a real synth.
@@ -82,8 +89,8 @@ Responsibilities:
 
 - Own audio device setup.
 - Own MIDI hardware input setup.
-- Show audio and MIDI device status.
-- Show a MIDI monitor.
+- Show audio and MIDI device status through a compact bottom status bar.
+- Expose one dedicated settings surface for audio configuration, MIDI input selection, and the MIDI monitor.
 - Allow testing the MiniLab 3 without a DAW.
 - Use the same synth processor and editor as the plugin where practical.
 
@@ -118,8 +125,10 @@ Standalone-only code:
 
 - Hardware MIDI input selection.
 - Audio device configuration UI.
+- Standalone settings-window or settings-panel composition.
 - MIDI monitor input source display.
 - Runtime device-disconnect handling.
+- Standalone status-bar presentation.
 
 Plugin-only code:
 
@@ -755,9 +764,10 @@ It should be loosely modeled on the MiniLab 3 layout:
 
 - Knobs grouped in the upper area.
 - Fader-like or linear controls where they help readability.
-- A dedicated output/action area for master gain and panic.
-- Clear device/status strip.
-- A required standalone MIDI monitor during early development and fixed-mapping work.
+- A dedicated output area for master gain.
+- A separate global action area for panic.
+- A compact bottom status bar.
+- A required standalone settings surface for audio or MIDI utilities and MIDI monitor access during early development and fixed-mapping work.
 
 It should not try to exactly clone Arturia's visual design. That may create unnecessary visual work and possible trademark/design concerns. The goal is functional similarity, not visual copying.
 
@@ -766,9 +776,6 @@ It should not try to exactly clone Arturia's visual design. That may create unne
 Recommended layout:
 
 ```text
-+--------------------------------------------------------------------+
-| CoolSynth   MIDI: MiniLab 3   Audio: WASAPI / Speakers / 48 kHz / 256 |
-+--------------------------------------------------------------------+
 | Oscillator       Filter             Envelope            Delay       |
 | [Waveform]       [Cutoff knob]      [Attack knob]       [Time]      |
 |                  [Res knob]         [Decay knob]        [Feedback]  |
@@ -778,7 +785,10 @@ Recommended layout:
 | Output                                    Actions                  |
 | [Master gain fader]                       [Panic]                  |
 +--------------------------------------------------------------------+
-| MIDI Monitor, collapsible in standalone builds                      |
+| Settings...                                                         |
++--------------------------------------------------------------------+
+| Status: MIDI MiniLab 3 connected | Audio WASAPI / Speakers / 48/256 |
+| Last MIDI: CC 74 ch1 value 92                                       |
 +--------------------------------------------------------------------+
 ```
 
@@ -803,10 +813,17 @@ StatusStrip
   -> audio backend status
   -> active output device
   -> sample rate and buffer size
+  -> last MIDI event summary
   -> disconnected/unavailable state when remembered devices are missing
 
 MidiMonitorPanel
   -> small scrolling list of recent messages
+
+StandaloneSettingsSurface
+  -> audio configuration section
+  -> MIDI input selection section
+  -> MIDI monitor section
+  -> single source of truth for standalone utility controls
 ```
 
 Do not over-invest in custom drawing in the first version. A basic LookAndFeel can provide a coherent hardware-like feel without turning the UI into the main project.
@@ -828,12 +845,20 @@ Panic should be an explicit button action, not a normal parameter attachment. If
 
 Standalone mode should show:
 
-- MIDI input selector.
-- Audio device settings button or panel.
-- MIDI monitor.
-- Device status.
+- Primary synth editor with synth controls only.
+- One settings entry point that opens the standalone settings surface.
+- MIDI monitor inside the standalone settings surface.
+- Audio-device configuration inside the standalone settings surface.
+- MIDI input selector inside the standalone settings surface.
+- Bottom status bar with audio summary, MIDI-device summary, and last MIDI event summary.
 - One active MIDI input device at a time.
 - A disconnected or unavailable state when the remembered MIDI device is missing.
+
+Standalone mode should not show:
+
+- Duplicate audio-settings entry points that open overlapping controls.
+- Audio backend or MIDI input selectors embedded directly into the main synth panel.
+- A full-height standalone status panel that competes with the synth sections for space.
 
 # Plugin UI Differences
 
@@ -843,6 +868,7 @@ Plugin mode should omit:
 - Audio backend/device controls, omitted.
 - Standalone-only status panels for hardware/device state, omitted.
 - MIDI monitor, omitted.
+- Standalone settings surface, omitted.
 
 Plugin mode should still show:
 
