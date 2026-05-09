@@ -93,20 +93,58 @@ namespace coolsynth::midi
 
             if (b.target.parameter != nullptr)
             {
-                float incomingNormalizedValue = 0.0f;
+                float incoming = 0.0f;
                 if (b.target.curve == MappingCurve::waveformChoice3Step)
-                    incomingNormalizedValue = mapWaveformChoice(event.data2);
+                    incoming = mapWaveformChoice(event.data2);
                 else
-                    incomingNormalizedValue = mapControllerValue(event.data2, b.target);
+                    incoming = mapControllerValue(event.data2, b.target);
 
-                // TEMPORARY: Disable Soft Takeover to diagnose the issue
-                b.isLatched = true;
-                b.lastIncomingNormalizedValue = incomingNormalizedValue;
+                if (b.state == TakeoverState::waitingForFirstTouch)
+                {
+                    b.initialHardwareValue = incoming;
+                    b.initialSoftwareValue = b.target.parameter->getValue();
+                    
+                    if (std::abs(incoming - b.initialSoftwareValue) < 0.05f)
+                        b.state = TakeoverState::latched;
+                    else
+                        b.state = TakeoverState::scaling;
+                }
+
+                float finalValue = incoming;
+
+                if (b.state == TakeoverState::scaling)
+                {
+                    // Latch if hardware hits the extremes or crosses the software value
+                    if (incoming >= 0.99f || incoming <= 0.01f || std::abs(incoming - b.initialSoftwareValue) < 0.05f)
+                    {
+                        b.state = TakeoverState::latched;
+                        finalValue = incoming;
+                    }
+                    else
+                    {
+                        if (incoming > b.initialHardwareValue)
+                        {
+                            // Scale up
+                            float hardwareTravel = (incoming - b.initialHardwareValue) / (1.0f - b.initialHardwareValue);
+                            finalValue = b.initialSoftwareValue + hardwareTravel * (1.0f - b.initialSoftwareValue);
+                        }
+                        else if (incoming < b.initialHardwareValue)
+                        {
+                            // Scale down
+                            float hardwareTravel = (b.initialHardwareValue - incoming) / b.initialHardwareValue;
+                            finalValue = b.initialSoftwareValue - hardwareTravel * b.initialSoftwareValue;
+                        }
+                        else
+                        {
+                            finalValue = b.initialSoftwareValue;
+                        }
+                    }
+                }
 
                 MappedAction action;
                 action.kind = MappedAction::Kind::parameterChange;
                 action.parameterChange.parameter = b.target.parameter;
-                action.parameterChange.normalizedValue = incomingNormalizedValue;
+                action.parameterChange.normalizedValue = finalValue;
                 
                 return action;
             }

@@ -76,13 +76,21 @@ namespace coolsynth::midi
 
         std::span<const Minilab3Binding> bindings;
         
-        struct BindingWithTarget
-        {
-            Minilab3Binding binding;
-            ParameterTarget target;
-            mutable bool isLatched = false;
-            mutable float lastIncomingNormalizedValue = -1.0f;
-        };
+    enum class TakeoverState : uint8_t
+    {
+        waitingForFirstTouch,
+        scaling,
+        latched
+    };
+
+    struct BindingWithTarget
+    {
+        Minilab3Binding binding;
+        ParameterTarget target;
+        mutable TakeoverState state = TakeoverState::waitingForFirstTouch;
+        mutable float initialHardwareValue = 0.0f;
+        mutable float initialSoftwareValue = 0.0f;
+    };
 
         std::array<BindingWithTarget, 13> activeBindings {};
 
