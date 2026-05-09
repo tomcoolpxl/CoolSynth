@@ -1,0 +1,77 @@
+name: Windows Manual Validation
+
+on:
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Build configuration
+        type: choice
+        required: true
+        default: Release
+        options:
+          - Debug
+          - Release
+      run_tests:
+        description: Run CTest
+        type: boolean
+        required: true
+        default: true
+      package_assets:
+        description: Package standalone and VST3 artefacts
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-manual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-windows-build:
+    runs-on: windows-2022
+    env:
+      COOLSYNTH_RUNNER_IMAGE: windows-2022
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Build and test
+        shell: pwsh
+        run: ./scripts/ci/BuildAndTest.ps1 -Configuration "${{ inputs.configuration }}" -RunTests:${{ inputs.run_tests }}
+
+      - name: Package release artefacts
+        if: ${{ inputs.package_assets }}
+        shell: pwsh
+        run: ./scripts/ci/PackageRelease.ps1 -Configuration "${{ inputs.configuration }}"
+
+      - name: Upload diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: windows-manual-${{ github.run_id }}-diagnostics
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            build/ci-debug/logs/**
+            build/ci-release/logs/**
+            build/ci-debug/Testing/ctest-results.xml
+            build/ci-release/Testing/ctest-results.xml
+
+      - name: Upload packaged artefacts
+        if: ${{ always() && inputs.package_assets }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: windows-manual-${{ github.run_id }}-packages
+          if-no-files-found: ignore
+          retention-days: 7
+          path: |
+            build/ci-debug/packages/**
+            build/ci-release/packages/**
+            build/ci-debug/CoolSynth_artefacts/Debug/Standalone/*.pdb
+            build/ci-release/CoolSynth_artefacts/Release/Standalone/*.pdb

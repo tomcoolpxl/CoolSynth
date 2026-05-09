@@ -106,3 +106,12 @@
 - [x] Added automated unit tests for patch wrapping, parsing, round-trip, and state boundary enforcement.
 - [x] Wired patch actions to standalone editor buttons.
 
+## Phase 15: Windows CI build pipeline
+
+- [x] Added a manual-only Windows validation workflow for clean-checkout configure, build, test, and optional packaging.
+- [x] Added isolated CI CMake presets for Debug and Release with `BUILD_TESTING=ON` and `COOLSYNTH_ENABLE_VST3_USER_INSTALL=OFF`.
+- [x] Added repository-owned PowerShell CI scripts for bootstrap, configure, build, test, packaging, checksums, and manifest generation.
+- [x] Added a tag-only Windows release workflow that publishes standalone, VST3, and checksum assets with generated GitHub release notes.
+- [x] Verified the shared JUCE submodule bootstrap path is reused in automation without a second JUCE download path.
+- [x] Verified local CI-style Release configure, build, `ctest`, and packaging using the new scripts.
+

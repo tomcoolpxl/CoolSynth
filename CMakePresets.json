@@ -31,6 +31,34 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
       }
+    },
+    {
+      "name": "ci-debug",
+      "displayName": "Windows CI Debug",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build/ci-debug",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "COOLSYNTH_ENABLE_VST3_USER_INSTALL": "OFF"
+      }
+    },
+    {
+      "name": "ci-release",
+      "displayName": "Windows CI Release",
+      "generator": "Visual Studio 17 2022",
+      "binaryDir": "${sourceDir}/build/ci-release",
+      "architecture": {
+        "value": "x64",
+        "strategy": "external"
+      },
+      "cacheVariables": {
+        "BUILD_TESTING": "ON",
+        "COOLSYNTH_ENABLE_VST3_USER_INSTALL": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -42,6 +70,16 @@
     {
       "name": "build-release",
       "configurePreset": "vs2022-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "ci-build-debug",
+      "configurePreset": "ci-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "ci-build-release",
+      "configurePreset": "ci-release",
       "configuration": "Release"
     }
   ]
