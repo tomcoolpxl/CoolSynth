@@ -13,9 +13,16 @@ namespace coolsynth::synth
         float releaseSeconds = 0.3f;
     };
 
+    struct FilterParameters
+    {
+        float cutoffHz = 10000.0f;
+        float resonanceNormalized = 0.1f;
+    };
+
     struct BlockRenderParameters
     {
         EnvelopeParameters ampEnvelope;
+        FilterParameters filter;
         coolsynth::parameters::WaveformChoice waveform = coolsynth::parameters::WaveformChoice::saw;
         float masterGainLinear = 1.0f;
     };
@@ -27,6 +34,8 @@ namespace coolsynth::synth
         std::atomic<float>* ampDecayMs = nullptr;
         std::atomic<float>* ampSustain = nullptr;
         std::atomic<float>* ampReleaseMs = nullptr;
+        std::atomic<float>* filterCutoffHz = nullptr;
+        std::atomic<float>* filterResonance = nullptr;
         std::atomic<float>* masterGainDb = nullptr;
     };
 }

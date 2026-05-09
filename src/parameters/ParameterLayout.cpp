@@ -103,7 +103,8 @@ juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::creat
         juce::ParameterID { filterResonance, versionHint },
         "Resonance",
         juce::NormalisableRange<float>(0.0f, 1.0f),
-        0.1f));
+        0.1f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int) { return formatPercent(v); })));
 
     layout.add(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { delayTimeMs, versionHint },

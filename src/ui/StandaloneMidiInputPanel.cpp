@@ -2,7 +2,8 @@
 #include "standalone/StandaloneAudioSupport.h"
 #include "standalone/StandaloneMidiInput.h"
 
-StandaloneMidiInputPanel::StandaloneMidiInputPanel(std::function<void()> onDisconnected)
+StandaloneMidiInputPanel::StandaloneMidiInputPanel(ControllerEventHandler onControllerEvent,
+                                                   std::function<void()> onDisconnected)
 {
     deviceTitleLabel.setText("MIDI Input:", juce::dontSendNotification);
     addAndMakeVisible(deviceTitleLabel);
@@ -24,6 +25,7 @@ StandaloneMidiInputPanel::StandaloneMidiInputPanel(std::function<void()> onDisco
             *deviceManager, 
             settings, 
             monitorBuffer, 
+            std::move(onControllerEvent),
             std::move(onDisconnected));
         controller->addChangeListener(this);
         refreshFromController();

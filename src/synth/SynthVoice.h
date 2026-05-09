@@ -17,6 +17,7 @@ namespace coolsynth::synth
 
         void prepare(const juce::dsp::ProcessSpec& spec);
         void setNextEnvelopeParameters(const EnvelopeParameters& parameters) noexcept;
+        void setNextFilterParameters(const FilterParameters& parameters) noexcept;
         void setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept;
 
         bool canPlaySound(juce::SynthesiserSound* sound) override;
@@ -35,10 +36,18 @@ namespace coolsynth::synth
         juce::ADSR::Parameters makeJuceEnvelopeParameters() const noexcept;
         static float renderWaveSample(float phase,
                                       coolsynth::parameters::WaveformChoice waveform) noexcept;
+        static float mapNormalizedResonanceToQ(float normalized) noexcept;
+        float clampCutoffToPreparedRange(float cutoffHz) const noexcept;
+        void primeFilterForCurrentTargets() noexcept;
+        void resetVoiceState() noexcept;
 
         juce::dsp::Oscillator<float> oscillator;
+        juce::dsp::StateVariableTPTFilter<float> lowPassFilter;
+        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoffHzSmoother;
         juce::ADSR ampEnvelope;
         EnvelopeParameters nextEnvelopeParameters;
+        FilterParameters nextFilterParameters;
+        float lastAppliedResonanceQ = 0.0f;
         coolsynth::parameters::WaveformChoice currentWaveform =
             coolsynth::parameters::WaveformChoice::saw;
 

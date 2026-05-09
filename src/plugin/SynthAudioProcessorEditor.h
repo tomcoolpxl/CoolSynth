@@ -26,6 +26,8 @@ private:
     struct ParameterRefs
     {
         juce::RangedAudioParameter* waveform = nullptr;
+        juce::RangedAudioParameter* filterCutoffHz = nullptr;
+        juce::RangedAudioParameter* filterResonance = nullptr;
         juce::RangedAudioParameter* ampAttackMs = nullptr;
         juce::RangedAudioParameter* ampDecayMs = nullptr;
         juce::RangedAudioParameter* ampSustain = nullptr;
@@ -43,11 +45,14 @@ private:
     juce::Label titleLabel;
 
     coolsynth::ui::SynthSection oscillatorSection { "Oscillator" };
+    coolsynth::ui::SynthSection filterSection { "Filter" };
     coolsynth::ui::SynthSection envelopeSection { "Envelope" };
     coolsynth::ui::SynthSection outputSection { "Output" };
 
     juce::Label waveformLabel;
     juce::ComboBox waveformSelector;
+    coolsynth::ui::HardwareKnob cutoffKnob { "Cutoff" };
+    coolsynth::ui::HardwareKnob resonanceKnob { "Resonance" };
     coolsynth::ui::HardwareKnob attackKnob { "Attack" };
     coolsynth::ui::HardwareKnob decayKnob { "Decay" };
     coolsynth::ui::HardwareKnob sustainKnob { "Sustain" };
@@ -56,6 +61,8 @@ private:
     juce::TextButton panicButton { "Panic" };
 
     std::unique_ptr<ComboBoxAttachment> waveformAttachment;
+    std::unique_ptr<SliderAttachment> cutoffAttachment;
+    std::unique_ptr<SliderAttachment> resonanceAttachment;
     std::unique_ptr<SliderAttachment> attackAttachment;
     std::unique_ptr<SliderAttachment> decayAttachment;
     std::unique_ptr<SliderAttachment> sustainAttachment;

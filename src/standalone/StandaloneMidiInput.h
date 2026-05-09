@@ -4,6 +4,7 @@
 #include <juce_events/juce_events.h>
 
 #include "midi/MidiMonitor.h"
+#include "midi/MidiMappingEngine.h"
 
 namespace coolsynth::standalone
 {
@@ -36,10 +37,12 @@ namespace coolsynth::standalone
     {
     public:
         using DisconnectCallback = std::function<void()>;
+        using ControllerEventHandler = std::function<void(const coolsynth::midi::ControllerMidiEvent&)>;
 
         StandaloneMidiInputController(juce::AudioDeviceManager& deviceManager,
                                       juce::PropertySet* settings,
                                       coolsynth::midi::MidiMonitorBuffer& monitorBuffer,
+                                      ControllerEventHandler onControllerEvent,
                                       DisconnectCallback onSelectedDeviceDisconnected = {});
         ~StandaloneMidiInputController() override;
 
@@ -65,13 +68,22 @@ namespace coolsynth::standalone
         void persistSelection() const;
         void clearPersistedSelection() const;
 
+        void enqueueControllerEvent(const juce::MidiMessage& message) noexcept;
+        int drainControllerEvents(coolsynth::midi::ControllerMidiEvent* destination, int maxEvents) noexcept;
+
         juce::AudioDeviceManager& deviceManager;
         juce::PropertySet* settings = nullptr;
         coolsynth::midi::MidiMonitorBuffer& monitorBuffer;
+        ControllerEventHandler onControllerEvent;
         juce::MidiDeviceListConnection deviceListConnection;
         MidiInputSnapshot snapshot;
         DisconnectCallback onSelectedDeviceDisconnected;
+        
+        std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingControllerEvents {};
+        juce::AbstractFifo pendingControllerEventQueue { 128 };
+        
         bool selectedDeviceWasPresent = false;
+        std::atomic<bool> deviceRefreshPending { false };
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(StandaloneMidiInputController)
     };

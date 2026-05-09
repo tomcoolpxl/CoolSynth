@@ -46,3 +46,23 @@
 - [x] Implemented a timer-based value display refresh using canonical parameter text.
 - [x] Verified that UI changes are audible and the editor remains responsive during playback.
 - [x] Confirmed the VST3 target remains compatible with the shared editor.
+
+## Phase 7: Fixed MiniLab core controller mapping
+
+- [x] Implemented `MidiMappingEngine` for fixed MiniLab 3 controller routing.
+- [x] Routed verified MiniLab waveform, ADSR, and master-gain controls to APVTS parameters.
+- [x] Routed the panic action through an explicit command path (Pad 8, Bank A).
+- [x] Isolated MiniLab-specific constants in `Minilab3Profile.cpp`.
+- [x] Verified controller-driven parameter changes update the UI in standalone mode via APVTS attachments.
+- [x] Confirmed no host-notifying parameter writes occur in the audio callback.
+- [x] Updated `TODO.md` and documented mappings in `docs/minilab3-default-messages.md`.
+
+## Phase 8: Per-voice low-pass filter slice
+
+- [x] Implemented per-voice `juce::dsp::StateVariableTPTFilter` in `SynthVoice`.
+- [x] Added logarithmic cutoff smoothing and squared resonance-to-Q mapping for musical response.
+- [x] Wired filter parameters to APVTS and extended the render-time snapshot plumbing.
+- [x] Added a dedicated "Filter" section to the UI with attached knobs for cutoff and resonance.
+- [x] Extended MiniLab 3 mapping: `Knob 2` (Timbre/CC 71) to Cutoff, `Knob 3` (Variation/CC 76) to Resonance.
+- [x] Verified filter stability across sample rates (44.1/48 kHz) and audible response in standalone.
+- [x] Adjusted editor layout and dimensions to accommodate the expanded control set.

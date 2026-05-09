@@ -3,6 +3,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "midi/MidiMonitor.h"
+#include "midi/MidiMappingEngine.h"
 
 namespace coolsynth::standalone
 {
@@ -13,7 +14,10 @@ class StandaloneMidiInputPanel final : public juce::Component,
                                        private juce::ChangeListener
 {
 public:
-    explicit StandaloneMidiInputPanel(std::function<void()> onSelectedDeviceDisconnected = {});
+    using ControllerEventHandler = std::function<void(const coolsynth::midi::ControllerMidiEvent&)>;
+
+    explicit StandaloneMidiInputPanel(ControllerEventHandler onControllerEvent,
+                                      std::function<void()> onSelectedDeviceDisconnected = {});
     ~StandaloneMidiInputPanel() override;
 
     coolsynth::midi::MidiMonitorBuffer& getMonitorBuffer() noexcept { return monitorBuffer; }

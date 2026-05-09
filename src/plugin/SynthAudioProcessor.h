@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "synth/SynthEngine.h"
+#include "midi/MidiMappingEngine.h"
 
 class SynthAudioProcessor final : public juce::AudioProcessor
 {
@@ -35,16 +36,22 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
     void requestPanic() noexcept;
 
     APVTS& getValueTreeState() noexcept { return parameters; }
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
 private:
+    void applyMappedAction(const coolsynth::midi::MappedAction& action);
+    void applyParameterChange(const coolsynth::midi::MappedParameterChange& change);
+    void applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept;
+
     coolsynth::synth::BlockRenderParameters makeBlockRenderParameters() const noexcept;
     static coolsynth::synth::ParameterValuePointers bindParameterPointers(APVTS& state);
 
     APVTS parameters;
+    coolsynth::midi::MidiMappingEngine midiMappingEngine;
     coolsynth::synth::ParameterValuePointers parameterValues;
     coolsynth::synth::SynthEngine synthEngine;
     std::atomic<bool> panicRequested { false };

@@ -9,18 +9,27 @@ namespace coolsynth::synth
         {
             return renderWaveSample(phase, currentWaveform);
         });
+
+        lowPassFilter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
     }
 
     void SynthVoice::prepare(const juce::dsp::ProcessSpec& spec)
     {
         currentSampleRate = spec.sampleRate;
         oscillator.prepare(spec);
+        lowPassFilter.prepare(spec);
         ampEnvelope.setSampleRate(spec.sampleRate);
+        cutoffHzSmoother.reset(spec.sampleRate, 0.02);
     }
 
     void SynthVoice::setNextEnvelopeParameters(const EnvelopeParameters& parameters) noexcept
     {
         nextEnvelopeParameters = parameters;
+    }
+
+    void SynthVoice::setNextFilterParameters(const FilterParameters& parameters) noexcept
+    {
+        nextFilterParameters = parameters;
     }
 
     bool SynthVoice::canPlaySound(juce::SynthesiserSound* sound)
@@ -37,6 +46,8 @@ namespace coolsynth::synth
         oscillator.setFrequency(currentFrequencyHz);
         oscillator.reset();
 
+        resetVoiceState();
+
         ampEnvelope.setParameters(makeJuceEnvelopeParameters());
         ampEnvelope.noteOn();
 
@@ -52,6 +63,7 @@ namespace coolsynth::synth
         else
         {
             ampEnvelope.reset();
+            resetVoiceState();
             clearCurrentNote();
         }
     }
@@ -69,13 +81,24 @@ namespace coolsynth::synth
 
         ampEnvelope.setParameters(makeJuceEnvelopeParameters());
 
-        // Note: JUCE's dsp::Oscillator process expects a ProcessContext.
-        // For simplicity in Phase 4, we use the sample-by-sample approach as requested.
+        const auto clampedCutoffHz = clampCutoffToPreparedRange(nextFilterParameters.cutoffHz);
+        cutoffHzSmoother.setTargetValue(clampedCutoffHz);
+
+        const auto nextQ = mapNormalizedResonanceToQ(nextFilterParameters.resonanceNormalized);
+        if (nextQ != lastAppliedResonanceQ)
+        {
+            lowPassFilter.setResonance(nextQ);
+            lastAppliedResonanceQ = nextQ;
+        }
+
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            const float envValue = ampEnvelope.getNextSample();
+            lowPassFilter.setCutoffFrequency(cutoffHzSmoother.getNextValue());
+
             const float oscValue = oscillator.processSample(0.0f);
-            const float sampleValue = oscValue * envValue * velocityGain;
+            const float filteredValue = lowPassFilter.processSample(0, oscValue);
+            const float envValue = ampEnvelope.getNextSample();
+            const float sampleValue = filteredValue * envValue * velocityGain;
 
             for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
             {
@@ -84,11 +107,13 @@ namespace coolsynth::synth
 
             if (!ampEnvelope.isActive())
             {
+                resetVoiceState();
                 clearCurrentNote();
-                oscillator.reset();
                 break;
             }
         }
+
+        lowPassFilter.snapToZero();
     }
 
     void SynthVoice::setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept
@@ -116,6 +141,37 @@ namespace coolsynth::synth
         }
 
         return std::sin(phase);
+    }
+
+    float SynthVoice::mapNormalizedResonanceToQ(float normalized) noexcept
+    {
+        const float qMin = 1.0f / std::sqrt(2.0f);
+        const float qMax = 8.0f;
+        const float r = juce::jlimit(0.0f, 1.0f, normalized);
+        return qMin + (qMax - qMin) * (r * r);
+    }
+
+    float SynthVoice::clampCutoffToPreparedRange(float cutoffHz) const noexcept
+    {
+        const float minCutoffHz = 20.0f;
+        const float maxCutoffHz = std::min(20000.0f, static_cast<float>(0.45 * currentSampleRate));
+        return juce::jlimit(minCutoffHz, maxCutoffHz, cutoffHz);
+    }
+
+    void SynthVoice::primeFilterForCurrentTargets() noexcept
+    {
+        const auto clampedCutoffHz = clampCutoffToPreparedRange(nextFilterParameters.cutoffHz);
+        cutoffHzSmoother.setCurrentAndTargetValue(clampedCutoffHz);
+
+        const auto q = mapNormalizedResonanceToQ(nextFilterParameters.resonanceNormalized);
+        lowPassFilter.setResonance(q);
+        lastAppliedResonanceQ = q;
+    }
+
+    void SynthVoice::resetVoiceState() noexcept
+    {
+        lowPassFilter.reset();
+        primeFilterForCurrentTargets();
     }
 
     juce::ADSR::Parameters SynthVoice::makeJuceEnvelopeParameters() const noexcept

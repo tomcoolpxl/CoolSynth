@@ -14,6 +14,8 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     auto& apvts = processor.getValueTreeState();
 
     parameterRefs.waveform = apvts.getParameter(ids::waveform);
+    parameterRefs.filterCutoffHz = apvts.getParameter(ids::filterCutoffHz);
+    parameterRefs.filterResonance = apvts.getParameter(ids::filterResonance);
     parameterRefs.ampAttackMs = apvts.getParameter(ids::ampAttackMs);
     parameterRefs.ampDecayMs = apvts.getParameter(ids::ampDecayMs);
     parameterRefs.ampSustain = apvts.getParameter(ids::ampSustain);
@@ -32,6 +34,13 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     waveformSelector.addItemList({ "sine", "square", "saw" }, 1);
     addAndMakeVisible(waveformSelector);
     waveformAttachment = std::make_unique<ComboBoxAttachment>(apvts, ids::waveform, waveformSelector);
+
+    // --- Filter Section ---
+    addAndMakeVisible(filterSection);
+    addAndMakeVisible(cutoffKnob);
+    addAndMakeVisible(resonanceKnob);
+    cutoffAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterCutoffHz, cutoffKnob.slider());
+    resonanceAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterResonance, resonanceKnob.slider());
 
     // --- Envelope Section ---
     addAndMakeVisible(envelopeSection);
@@ -56,7 +65,16 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
         standaloneAudioPanel = std::make_unique<StandaloneAudioStatusPanel>();
         addAndMakeVisible(*standaloneAudioPanel);
 
-        auto midiInputPanel = std::make_unique<StandaloneMidiInputPanel>([this] { processor.requestPanic(); });
+        auto midiInputPanel = std::make_unique<StandaloneMidiInputPanel>(
+            [this](const coolsynth::midi::ControllerMidiEvent& event)
+            {
+                processor.handleStandaloneControllerEvent(event);
+            },
+            [this]
+            {
+                processor.requestPanic();
+            });
+
         auto* monitorBuffer = &midiInputPanel->getMonitorBuffer();
         standaloneMidiInputPanel = std::move(midiInputPanel);
         addAndMakeVisible(*standaloneMidiInputPanel);
@@ -64,11 +82,11 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
         standaloneMidiMonitorPanel = std::make_unique<MidiMonitorPanel>(*monitorBuffer);
         addAndMakeVisible(*standaloneMidiMonitorPanel);
 
-        setSize(900, 850);
+        setSize(1040, 850);
     }
     else
     {
-        setSize(900, 400);
+        setSize(1040, 420);
     }
 
     startTimerHz(24);
@@ -94,7 +112,7 @@ void SynthAudioProcessorEditor::resized()
     auto synthRow = area.removeFromTop(240);
     
     // Oscillator
-    auto oscArea = synthRow.removeFromLeft(180);
+    auto oscArea = synthRow.removeFromLeft(160);
     oscillatorSection.setBounds(oscArea);
     auto oscContent = oscArea.reduced(12);
     oscContent.removeFromTop(24); // Title space
@@ -103,8 +121,19 @@ void SynthAudioProcessorEditor::resized()
 
     synthRow.removeFromLeft(16);
 
+    // Filter
+    auto filterArea = synthRow.removeFromLeft(200);
+    filterSection.setBounds(filterArea);
+    auto filterContent = filterArea.reduced(12);
+    filterContent.removeFromTop(24); // Title space
+    auto filterGrid = filterContent.withSizeKeepingCentre(filterContent.getWidth(), 120);
+    cutoffKnob.setBounds(filterGrid.removeFromLeft(filterGrid.getWidth() / 2));
+    resonanceKnob.setBounds(filterGrid);
+
+    synthRow.removeFromLeft(16);
+
     // Envelope
-    auto envArea = synthRow.removeFromLeft(400);
+    auto envArea = synthRow.removeFromLeft(360);
     envelopeSection.setBounds(envArea);
     auto envContent = envArea.reduced(12);
     envContent.removeFromTop(24); // Title space
@@ -145,6 +174,8 @@ void SynthAudioProcessorEditor::timerCallback()
 
 void SynthAudioProcessorEditor::refreshValueDisplays()
 {
+    cutoffKnob.setValueText(getCurrentParameterText(parameterRefs.filterCutoffHz));
+    resonanceKnob.setValueText(getCurrentParameterText(parameterRefs.filterResonance));
     attackKnob.setValueText(getCurrentParameterText(parameterRefs.ampAttackMs));
     decayKnob.setValueText(getCurrentParameterText(parameterRefs.ampDecayMs));
     sustainKnob.setValueText(getCurrentParameterText(parameterRefs.ampSustain));

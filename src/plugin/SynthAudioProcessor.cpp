@@ -7,6 +7,7 @@
 SynthAudioProcessor::SynthAudioProcessor()
     : juce::AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true))
     , parameters(*this, nullptr, "CoolSynthState", coolsynth::parameters::createParameterLayout())
+    , midiMappingEngine(parameters)
     , parameterValues(bindParameterPointers(parameters))
 {
 }
@@ -63,6 +64,47 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
             parameters.replaceState(juce::ValueTree::fromXml(*xml));
 }
 
+void SynthAudioProcessor::handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event)
+{
+    const auto action = midiMappingEngine.translate(event);
+    applyMappedAction(action);
+}
+
+void SynthAudioProcessor::applyMappedAction(const coolsynth::midi::MappedAction& action)
+{
+    using Kind = coolsynth::midi::MappedAction::Kind;
+
+    switch (action.kind)
+    {
+        case Kind::parameterChange: applyParameterChange(action.parameterChange); break;
+        case Kind::command:         applyMappedCommand(action.command); break;
+        case Kind::none:
+        default: break;
+    }
+}
+
+void SynthAudioProcessor::applyParameterChange(const coolsynth::midi::MappedParameterChange& change)
+{
+    if (change.parameter == nullptr)
+        return;
+
+    change.parameter->beginChangeGesture();
+    change.parameter->setValueNotifyingHost(change.normalizedValue);
+    change.parameter->endChangeGesture();
+}
+
+void SynthAudioProcessor::applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept
+{
+    using Command = coolsynth::midi::MappedCommand;
+
+    switch (command)
+    {
+        case Command::panic: requestPanic(); break;
+        case Command::none:
+        default: break;
+    }
+}
+
 void SynthAudioProcessor::requestPanic() noexcept
 {
     panicRequested.store(true, std::memory_order_release);
@@ -84,6 +126,8 @@ coolsynth::synth::BlockRenderParameters SynthAudioProcessor::makeBlockRenderPara
     params.ampEnvelope.decaySeconds = juce::jmax(0.005f, parameterValues.ampDecayMs->load() * 0.001f);
     params.ampEnvelope.sustainLevel = juce::jlimit(0.0f, 1.0f, parameterValues.ampSustain->load());
     params.ampEnvelope.releaseSeconds = juce::jmax(0.005f, parameterValues.ampReleaseMs->load() * 0.001f);
+    params.filter.cutoffHz = juce::jlimit(20.0f, 20000.0f, parameterValues.filterCutoffHz->load());
+    params.filter.resonanceNormalized = juce::jlimit(0.0f, 1.0f, parameterValues.filterResonance->load());
     params.masterGainLinear = juce::Decibels::decibelsToGain(parameterValues.masterGainDb->load());
     return params;
 }
@@ -98,6 +142,8 @@ coolsynth::synth::ParameterValuePointers SynthAudioProcessor::bindParameterPoint
     pointers.ampDecayMs = state.getRawParameterValue(ids::ampDecayMs);
     pointers.ampSustain = state.getRawParameterValue(ids::ampSustain);
     pointers.ampReleaseMs = state.getRawParameterValue(ids::ampReleaseMs);
+    pointers.filterCutoffHz = state.getRawParameterValue(ids::filterCutoffHz);
+    pointers.filterResonance = state.getRawParameterValue(ids::filterResonance);
     pointers.masterGainDb = state.getRawParameterValue(ids::masterGainDb);
     return pointers;
 }

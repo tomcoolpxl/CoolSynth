@@ -77,6 +77,7 @@ namespace coolsynth::synth
             return;
 
         pushEnvelopeParametersToVoices(parameters.ampEnvelope);
+        pushFilterParametersToVoices(parameters.filter);
         pushWaveformToVoices(parameters.waveform);
         
         synthesiser.renderNextBlock(outputBuffer, midiMessages, 0, outputBuffer.getNumSamples());
@@ -107,6 +108,14 @@ namespace coolsynth::synth
         for (auto* voice : synthVoices)
         {
             voice->setNextEnvelopeParameters(parameters);
+        }
+    }
+
+    void SynthEngine::pushFilterParametersToVoices(const FilterParameters& parameters) noexcept
+    {
+        for (auto* voice : synthVoices)
+        {
+            voice->setNextFilterParameters(parameters);
         }
     }
 

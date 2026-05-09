@@ -37,6 +37,7 @@ namespace coolsynth::synth
     private:
         void prepareVoices(double sampleRate, int samplesPerBlock);
         void pushEnvelopeParametersToVoices(const EnvelopeParameters& parameters) noexcept;
+        void pushFilterParametersToVoices(const FilterParameters& parameters) noexcept;
         void pushWaveformToVoices(coolsynth::parameters::WaveformChoice waveform) noexcept;
         void applyMasterGain(juce::AudioBuffer<float>& outputBuffer, float targetLinearGain) noexcept;
 

@@ -20,7 +20,9 @@ juce_add_plugin(CoolSynth
 
 target_sources(CoolSynth
     PRIVATE
+        src/midi/MidiMappingEngine.cpp
         src/midi/MidiMonitor.cpp
+        src/midi/Minilab3Profile.cpp
         src/parameters/ParameterLayout.cpp
         src/plugin/SynthAudioProcessor.cpp
         src/plugin/SynthAudioProcessorEditor.cpp
