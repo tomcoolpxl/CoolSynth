@@ -99,22 +99,9 @@ namespace coolsynth::midi
                 else
                     incomingNormalizedValue = mapControllerValue(event.data2, b.target);
 
-                if (!b.isLatched)
-                {
-                    const float softwareValue = b.target.parameter->getValue();
-                    const float diff = std::abs(incomingNormalizedValue - softwareValue);
-                    
-                    // 5% threshold for soft takeover
-                    if (diff <= 0.05f)
-                    {
-                        b.isLatched = true;
-                    }
-                    else
-                    {
-                        // Ignore input until it catches up
-                        return {};
-                    }
-                }
+                // TEMPORARY: Disable Soft Takeover to diagnose the issue
+                b.isLatched = true;
+                b.lastIncomingNormalizedValue = incomingNormalizedValue;
 
                 MappedAction action;
                 action.kind = MappedAction::Kind::parameterChange;

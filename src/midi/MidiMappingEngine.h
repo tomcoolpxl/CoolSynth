@@ -81,9 +81,10 @@ namespace coolsynth::midi
             Minilab3Binding binding;
             ParameterTarget target;
             mutable bool isLatched = false;
+            mutable float lastIncomingNormalizedValue = -1.0f;
         };
 
-        std::array<BindingWithTarget, 12> activeBindings {};
+        std::array<BindingWithTarget, 13> activeBindings {};
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiMappingEngine)
     };

@@ -9,17 +9,18 @@ Capture surface: Simulated/Researched Arturia Mode CCs
 | Control | Category | Message kind | Channel | Primary data | Secondary behavior | Preferred target | Disposition | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Keyboard | keyboard | note | 1 | 0..127 | velocity 1..127 | note input | requiredForPhase7 | Standard MIDI notes |
-| Knob 1 | knob | controlChange | 1 | 74 | absolute 0..127 | waveform | requiredForPhase7 | "Brightness" in Arturia mode |
-| Knob 2 | knob | controlChange | 1 | 71 | absolute 0..127 | filter cutoff | requiredForPhase7 | "Timbre" in Arturia mode |
-| Knob 3 | knob | controlChange | 1 | 76 | absolute 0..127 | filter resonance | requiredForPhase7 | "Variation" in Arturia mode |
-| Knob 4 | knob | controlChange | 1 | 77 | absolute 0..127 | amp attack | requiredForPhase7 | "Movement" in Arturia mode |
-| Knob 5 | knob | controlChange | 1 | 93 | absolute 0..127 | amp decay | requiredForPhase7 | "FX A" in Arturia mode |
-| Knob 6 | knob | controlChange | 1 | 18 | absolute 0..127 | amp sustain | requiredForPhase7 | "FX B" in Arturia mode |
-| Knob 7 | knob | controlChange | 1 | 19 | absolute 0..127 | amp release | requiredForPhase7 | "Delay" in Arturia mode |
-| Knob 8 | knob | controlChange | 1 | 16 | absolute 0..127 | delay mix | requiredForPhase9 | "Reverb" in Arturia mode |
+| Knob 1 | knob | controlChange | 1 | 74 | absolute 0..127 | filter cutoff | requiredForPhase7 | "Brightness" in Arturia mode |
+| Knob 2 | knob | controlChange | 1 | 71 | absolute 0..127 | filter resonance | requiredForPhase7 | "Timbre" in Arturia mode |
+| Knob 3 | knob | controlChange | 1 | 76 | absolute 0..127 | delay time | requiredForPhase7 | "Variation" in Arturia mode |
+| Knob 4 | knob | controlChange | 1 | 77 | absolute 0..127 | delay feedback | requiredForPhase7 | "Movement" in Arturia mode |
+| Knob 5 | knob | controlChange | 1 | 93 | absolute 0..127 | amp attack | requiredForPhase7 | "FX A" in Arturia mode |
+| Knob 6 | knob | controlChange | 1 | 18 | absolute 0..127 | amp decay | requiredForPhase7 | "FX B" in Arturia mode |
+| Knob 7 | knob | controlChange | 1 | 19 | absolute 0..127 | amp sustain | requiredForPhase7 | "Delay" in Arturia mode |
+| Knob 8 | knob | controlChange | 1 | 16 | absolute 0..127 | amp release | requiredForPhase9 | "Reverb" in Arturia mode |
 | Fader 1 | fader | controlChange | 1 | 82 | absolute 0..127 | master gain | requiredForPhase7 | "Bass EQ" in Arturia mode |
-| Fader 2 | fader | controlChange | 1 | 83 | absolute 0..127 | delay feedback | requiredForPhase9 | "Mid EQ" in Arturia mode |
-| Fader 3 | fader | controlChange | 1 | 85 | absolute 0..127 | delay time | requiredForPhase9 | "High EQ" in Arturia mode |
+| Fader 2 | fader | controlChange | 1 | 83 | absolute 0..127 | delay mix | requiredForPhase9 | "Mid EQ" in Arturia mode |
+| Fader 3 | fader | controlChange | 1 | 85 | absolute 0..127 | unassigned | requiredForPhase9 | "High EQ" in Arturia mode |
+| Encoder | encoder | controlChange | 1 | 114 | absolute 0..127 | waveform | requiredForPhase7 | Main Clicky Knob |
 | Pad 8 | pad | note | 10 | 43 | velocity 1..127 | panic | requiredForPhase7 | Bank A, G1 (note 43) |
 
 ## Deviations From Preferred Assumptions
