@@ -4,6 +4,16 @@ project(CoolSynth VERSION 0.1.0 LANGUAGES CXX)
 
 add_subdirectory(external/JUCE)
 
+option(COOLSYNTH_ENABLE_VST3_USER_INSTALL
+    "Copy CoolSynth.vst3 to the per-user Windows VST3 folder after build"
+    OFF)
+
+if (WIN32)
+    file(TO_CMAKE_PATH
+        "$ENV{LOCALAPPDATA}/Programs/Common/VST3"
+        COOLSYNTH_VST3_USER_DIR)
+endif()
+
 juce_add_plugin(CoolSynth
     COMPANY_NAME "tomcoolpxl"
     PRODUCT_NAME "CoolSynth"
@@ -16,7 +26,8 @@ juce_add_plugin(CoolSynth
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     VST3_CATEGORIES Instrument Synth
-    COPY_PLUGIN_AFTER_BUILD FALSE)
+    COPY_PLUGIN_AFTER_BUILD ${COOLSYNTH_ENABLE_VST3_USER_INSTALL}
+    VST3_COPY_DIR "${COOLSYNTH_VST3_USER_DIR}")
 
 target_sources(CoolSynth
     PRIVATE
