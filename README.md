@@ -26,12 +26,12 @@ cmake --build build --config Debug
 
 ### Current Status
 
-**Phase 12: Standalone Device Persistence** is complete.
+**Phase 13: MIDI learn workflow** is complete.
 
-- Persisted the last valid standalone audio backend, output device, sample rate, and buffer size.
-- Persisted the last valid standalone MIDI input selection.
-- Restored persisted standalone device settings when still available.
-- Supported and displayed missing remembered devices gracefully.
+- Implemented per-parameter MIDI learn mode for continuous controls in the standalone app.
+- Added visual states for armed and mapped controls via a context menu.
+- Persisted learned MIDI mappings separately from the synth parameter state.
+- Maintained precedence between learned CCs and the default MiniLab mappings.
 
 ## Standalone Persistence
 
@@ -42,8 +42,18 @@ CoolSynth remembers these standalone-only settings between runs:
 - sample rate
 - buffer size
 - one selected MIDI input device
+- custom MIDI CC learned mappings
 
 If a remembered audio or MIDI device is unavailable at startup, the app stays open and shows the unavailable state in the standalone UI.
+
+## MIDI Learn
+
+In standalone mode, right-clicking on any continuous control (like knobs and faders) will open a context menu with options to:
+- **Learn MIDI CC:** Click this, then move a knob/fader on your MIDI controller to map it.
+- **Cancel MIDI Learn:** If you changed your mind while the parameter is armed (highlighted yellow).
+- **Clear MIDI CC Mapping:** To restore the default mapping behavior for this parameter.
+
+*Note: Learned mappings only apply in the Standalone application and are not shared with the VST3 plugin.*
 
 CoolSynth does not currently persist:
 

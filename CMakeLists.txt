@@ -31,6 +31,7 @@ juce_add_plugin(CoolSynth
 
 target_sources(CoolSynth
     PRIVATE
+        src/midi/MidiLearn.cpp
         src/midi/MidiMappingEngine.cpp
         src/midi/MidiMonitor.cpp
         src/midi/Minilab3Profile.cpp
@@ -73,3 +74,37 @@ target_link_libraries(CoolSynth
         juce::juce_dsp
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
+
+include(CTest)
+if(BUILD_TESTING)
+    juce_add_console_app(CoolSynthMidiLearnTests)
+    
+    target_sources(CoolSynthMidiLearnTests
+        PRIVATE
+            tests/MidiLearnTests.cpp
+            src/midi/MidiLearn.cpp
+            src/midi/MidiMappingEngine.cpp
+            src/midi/Minilab3Profile.cpp
+            src/standalone/SettingsStore.cpp
+            src/parameters/ParameterLayout.cpp
+    )
+
+    target_include_directories(CoolSynthMidiLearnTests
+        PRIVATE
+            src
+    )
+
+    target_compile_features(CoolSynthMidiLearnTests PUBLIC cxx_std_20)
+
+    target_link_libraries(CoolSynthMidiLearnTests
+        PRIVATE
+            juce::juce_core
+            juce::juce_audio_basics
+            juce::juce_audio_devices
+            juce::juce_audio_processors
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_warning_flags
+    )
+
+    add_test(NAME CoolSynthMidiLearnTests COMMAND CoolSynthMidiLearnTests)
+endif()

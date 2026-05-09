@@ -36,6 +36,9 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    void setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
+    void clearLearnedMidiBinding(juce::StringRef parameterId);
+
     void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
     void requestPanic() noexcept;
 

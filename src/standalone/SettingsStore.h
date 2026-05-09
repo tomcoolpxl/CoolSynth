@@ -1,9 +1,13 @@
 #pragma once
 
 #include <optional>
+#include <span>
+#include <vector>
 
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_core/juce_core.h>
+
+#include "midi/MidiLearn.h"
 
 namespace coolsynth::standalone
 {
@@ -63,6 +67,10 @@ namespace coolsynth::standalone
             propertySet.removeValue("midiInputIdentifier");
             propertySet.removeValue("midiInputName");
         }
+
+        std::vector<coolsynth::midi::LearnedCcBinding> loadLearnedMidiMappings() const;
+        void saveLearnedMidiMappings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
+        void clearLearnedMidiMappings();
 
     private:
         juce::PropertySet& propertySet;

@@ -44,4 +44,54 @@ namespace coolsynth::standalone
 
         return selection;
     }
+
+    std::vector<coolsynth::midi::LearnedCcBinding> StandaloneSettingsStore::loadLearnedMidiMappings() const
+    {
+        std::vector<coolsynth::midi::LearnedCcBinding> mappings;
+        auto xml = propertySet.getXmlValue("midiLearnMappings");
+
+        if (xml == nullptr || !xml->hasTagName("MIDI_LEARN_MAPPINGS"))
+            return mappings;
+
+        for (auto* child : xml->getChildIterator())
+        {
+            if (child->hasTagName("MAPPING"))
+            {
+                juce::String paramId = child->getStringAttribute("parameterId");
+                int channel = child->getIntAttribute("channel", 0);
+                int controller = child->getIntAttribute("controller", -1);
+
+                coolsynth::midi::MidiCcKey cc{ static_cast<uint8_t>(channel), static_cast<uint8_t>(controller) };
+                coolsynth::midi::LearnedCcBinding binding{ paramId, cc };
+
+                if (binding.isValid() && controller >= 0 && controller <= 127)
+                {
+                    mappings.push_back(binding);
+                }
+            }
+        }
+
+        return mappings;
+    }
+
+    void StandaloneSettingsStore::saveLearnedMidiMappings(std::span<const coolsynth::midi::LearnedCcBinding> bindings)
+    {
+        auto xml = std::make_unique<juce::XmlElement>("MIDI_LEARN_MAPPINGS");
+        xml->setAttribute("version", 1);
+
+        for (const auto& binding : bindings)
+        {
+            auto* child = xml->createNewChildElement("MAPPING");
+            child->setAttribute("parameterId", binding.parameterId);
+            child->setAttribute("channel", static_cast<int>(binding.cc.channel));
+            child->setAttribute("controller", static_cast<int>(binding.cc.controllerNumber));
+        }
+
+        propertySet.setValue("midiLearnMappings", xml.get());
+    }
+
+    void StandaloneSettingsStore::clearLearnedMidiMappings()
+    {
+        propertySet.removeValue("midiLearnMappings");
+    }
 }

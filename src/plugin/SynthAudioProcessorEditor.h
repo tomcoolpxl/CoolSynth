@@ -6,6 +6,7 @@
 #include "ui/HardwareFader.h"
 #include "ui/HardwareKnob.h"
 #include "ui/SynthSection.h"
+#include "midi/MidiLearn.h"
 
 class SynthAudioProcessor;
 
@@ -43,14 +44,33 @@ private:
         juce::RangedAudioParameter* masterGainDb = nullptr;
     };
 
+    struct LearnableControlRegistration
+    {
+        juce::String parameterId;
+        juce::String displayName;
+        juce::Component* surface = nullptr;
+        std::function<void(bool isArmed, juce::String badgeText)> applyVisualState;
+    };
+
     void timerCallback() override;
     void refreshValueDisplays();
     juce::String getCurrentParameterText(juce::RangedAudioParameter* parameter) const;
+
+    void registerLearnableControl(juce::Component& surface,
+                                  juce::String parameterId,
+                                  juce::String displayName,
+                                  std::function<void(bool, juce::String)> applyVisualState);
+    void mouseUp(const juce::MouseEvent& event) override;
+    void showMidiLearnMenu(const LearnableControlRegistration& registration,
+                           juce::Point<int> screenPosition);
+    void refreshMidiLearnVisuals();
+    void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
 
     SynthAudioProcessor& processor;
     ParameterRefs parameterRefs;
 
     juce::Label titleLabel;
+    juce::Label midiLearnStatusLabel;
 
     coolsynth::ui::SynthSection oscillatorSection { "Oscillator" };
     coolsynth::ui::SynthSection filterSection { "Filter" };
@@ -83,6 +103,9 @@ private:
     std::unique_ptr<SliderAttachment> delayFeedbackAttachment;
     std::unique_ptr<SliderAttachment> delayMixAttachment;
     std::unique_ptr<SliderAttachment> masterGainAttachment;
+
+    std::unique_ptr<coolsynth::midi::MidiLearnManager> midiLearnManager;
+    std::vector<LearnableControlRegistration> learnableControls;
 
     std::unique_ptr<coolsynth::standalone::StandaloneMidiInputController> standaloneMidiController;
     std::unique_ptr<juce::Component> standaloneStatusBar;

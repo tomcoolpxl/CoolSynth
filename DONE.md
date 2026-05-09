@@ -86,3 +86,12 @@
 - [x] Show unavailable state when saved devices are missing.
 - [x] Clear held-note state when the active MIDI device disconnects during playback.
 - [x] Verify standalone restart and missing-device behavior.
+
+## Phase 13: MIDI learn workflow
+
+- [x] Add per-parameter MIDI learn mode for continuous parameters.
+- [x] Capture only CC messages for learned mappings.
+- [x] Reject note events as continuous-parameter mappings.
+- [x] Add a clear-mapping action.
+- [x] Persist learned mappings separately from synth parameter state.
+- [x] Verify learned mappings survive an app restart.

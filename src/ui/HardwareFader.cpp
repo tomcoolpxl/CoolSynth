@@ -20,6 +20,16 @@ namespace coolsynth::ui
         valueLabel.setText(text, juce::dontSendNotification);
     }
 
+    void HardwareFader::setLearnState(bool armed, const juce::String& badgeText)
+    {
+        if (isArmed != armed || learnedBadge != badgeText)
+        {
+            isArmed = armed;
+            learnedBadge = badgeText;
+            repaint();
+        }
+    }
+
     void HardwareFader::resized()
     {
         auto area = getLocalBounds();
@@ -28,7 +38,23 @@ namespace coolsynth::ui
         fader.setBounds(area);
     }
 
-    void HardwareFader::paint(juce::Graphics& /*g*/)
+    void HardwareFader::paint(juce::Graphics& g)
     {
+        if (isArmed)
+        {
+            g.setColour(juce::Colours::yellow.withAlpha(0.3f));
+            g.fillRoundedRectangle(getLocalBounds().toFloat(), 5.0f);
+            g.setColour(juce::Colours::yellow);
+            g.drawRoundedRectangle(getLocalBounds().toFloat(), 5.0f, 2.0f);
+        }
+        else if (learnedBadge.isNotEmpty())
+        {
+            g.setColour(juce::Colours::lightblue.withAlpha(0.2f));
+            g.fillRoundedRectangle(getLocalBounds().toFloat(), 5.0f);
+            
+            g.setColour(juce::Colours::lightblue);
+            g.setFont(10.0f);
+            g.drawText(learnedBadge, getLocalBounds().withSizeKeepingCentre(40, 16).translated(0, -15), juce::Justification::centred, false);
+        }
     }
 }

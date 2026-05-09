@@ -64,6 +64,16 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
             parameters.replaceState(juce::ValueTree::fromXml(*xml));
 }
 
+void SynthAudioProcessor::setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings)
+{
+    midiMappingEngine.setLearnedBindings(bindings);
+}
+
+void SynthAudioProcessor::clearLearnedMidiBinding(juce::StringRef parameterId)
+{
+    midiMappingEngine.clearLearnedBinding(parameterId);
+}
+
 void SynthAudioProcessor::handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event)
 {
     const auto action = midiMappingEngine.translate(event);

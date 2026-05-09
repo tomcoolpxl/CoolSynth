@@ -11,6 +11,7 @@ namespace coolsynth::ui
 
         juce::Slider& slider() noexcept { return fader; }
         void setValueText(const juce::String& text);
+        void setLearnState(bool isArmed, const juce::String& badgeText);
 
         void resized() override;
         void paint(juce::Graphics& g) override;
@@ -19,5 +20,7 @@ namespace coolsynth::ui
         juce::Label titleLabel;
         juce::Slider fader { juce::Slider::LinearVertical, juce::Slider::NoTextBox };
         juce::Label valueLabel;
+        bool isArmed = false;
+        juce::String learnedBadge;
     };
 }
