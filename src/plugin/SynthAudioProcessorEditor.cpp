@@ -20,10 +20,13 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     parameterRefs.ampDecayMs = apvts.getParameter(ids::ampDecayMs);
     parameterRefs.ampSustain = apvts.getParameter(ids::ampSustain);
     parameterRefs.ampReleaseMs = apvts.getParameter(ids::ampReleaseMs);
+    parameterRefs.delayTimeMs = apvts.getParameter(ids::delayTimeMs);
+    parameterRefs.delayFeedback = apvts.getParameter(ids::delayFeedback);
+    parameterRefs.delayMix = apvts.getParameter(ids::delayMix);
     parameterRefs.masterGainDb = apvts.getParameter(ids::masterGainDb);
 
     titleLabel.setText("CoolSynth", juce::dontSendNotification);
-    titleLabel.setFont(juce::Font(32.0f, juce::Font::bold));
+    titleLabel.setFont(juce::FontOptions(32.0f, juce::Font::bold));
     titleLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(titleLabel);
 
@@ -52,6 +55,15 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     decayAttachment = std::make_unique<SliderAttachment>(apvts, ids::ampDecayMs, decayKnob.slider());
     sustainAttachment = std::make_unique<SliderAttachment>(apvts, ids::ampSustain, sustainKnob.slider());
     releaseAttachment = std::make_unique<SliderAttachment>(apvts, ids::ampReleaseMs, releaseKnob.slider());
+
+    // --- Delay Section ---
+    addAndMakeVisible(delaySection);
+    addAndMakeVisible(delayTimeKnob);
+    addAndMakeVisible(delayFeedbackKnob);
+    addAndMakeVisible(delayMixKnob);
+    delayTimeAttachment = std::make_unique<SliderAttachment>(apvts, ids::delayTimeMs, delayTimeKnob.slider());
+    delayFeedbackAttachment = std::make_unique<SliderAttachment>(apvts, ids::delayFeedback, delayFeedbackKnob.slider());
+    delayMixAttachment = std::make_unique<SliderAttachment>(apvts, ids::delayMix, delayMixKnob.slider());
 
     // --- Output Section ---
     addAndMakeVisible(outputSection);
@@ -82,11 +94,11 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
         standaloneMidiMonitorPanel = std::make_unique<MidiMonitorPanel>(*monitorBuffer);
         addAndMakeVisible(*standaloneMidiMonitorPanel);
 
-        setSize(1040, 850);
+        setSize(1280, 850);
     }
     else
     {
-        setSize(1040, 420);
+        setSize(1280, 420);
     }
 
     startTimerHz(24);
@@ -133,7 +145,7 @@ void SynthAudioProcessorEditor::resized()
     synthRow.removeFromLeft(16);
 
     // Envelope
-    auto envArea = synthRow.removeFromLeft(360);
+    auto envArea = synthRow.removeFromLeft(300);
     envelopeSection.setBounds(envArea);
     auto envContent = envArea.reduced(12);
     envContent.removeFromTop(24); // Title space
@@ -142,6 +154,18 @@ void SynthAudioProcessorEditor::resized()
     decayKnob.setBounds(envGrid.removeFromLeft(envGrid.getWidth() / 3));
     sustainKnob.setBounds(envGrid.removeFromLeft(envGrid.getWidth() / 2));
     releaseKnob.setBounds(envGrid);
+
+    synthRow.removeFromLeft(16);
+
+    // Delay
+    auto delayArea = synthRow.removeFromLeft(220);
+    delaySection.setBounds(delayArea);
+    auto delayContent = delayArea.reduced(12);
+    delayContent.removeFromTop(24); // Title space
+    auto delayGrid = delayContent.withSizeKeepingCentre(delayContent.getWidth(), 120);
+    delayTimeKnob.setBounds(delayGrid.removeFromLeft(delayGrid.getWidth() / 3));
+    delayFeedbackKnob.setBounds(delayGrid.removeFromLeft(delayGrid.getWidth() / 2));
+    delayMixKnob.setBounds(delayGrid);
 
     synthRow.removeFromLeft(16);
 
@@ -180,6 +204,9 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     decayKnob.setValueText(getCurrentParameterText(parameterRefs.ampDecayMs));
     sustainKnob.setValueText(getCurrentParameterText(parameterRefs.ampSustain));
     releaseKnob.setValueText(getCurrentParameterText(parameterRefs.ampReleaseMs));
+    delayTimeKnob.setValueText(getCurrentParameterText(parameterRefs.delayTimeMs));
+    delayFeedbackKnob.setValueText(getCurrentParameterText(parameterRefs.delayFeedback));
+    delayMixKnob.setValueText(getCurrentParameterText(parameterRefs.delayMix));
     masterGainFader.setValueText(getCurrentParameterText(parameterRefs.masterGainDb));
 }
 

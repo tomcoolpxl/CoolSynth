@@ -32,6 +32,9 @@ private:
         juce::RangedAudioParameter* ampDecayMs = nullptr;
         juce::RangedAudioParameter* ampSustain = nullptr;
         juce::RangedAudioParameter* ampReleaseMs = nullptr;
+        juce::RangedAudioParameter* delayTimeMs = nullptr;
+        juce::RangedAudioParameter* delayFeedback = nullptr;
+        juce::RangedAudioParameter* delayMix = nullptr;
         juce::RangedAudioParameter* masterGainDb = nullptr;
     };
 
@@ -47,6 +50,7 @@ private:
     coolsynth::ui::SynthSection oscillatorSection { "Oscillator" };
     coolsynth::ui::SynthSection filterSection { "Filter" };
     coolsynth::ui::SynthSection envelopeSection { "Envelope" };
+    coolsynth::ui::SynthSection delaySection { "Delay" };
     coolsynth::ui::SynthSection outputSection { "Output" };
 
     juce::Label waveformLabel;
@@ -57,6 +61,9 @@ private:
     coolsynth::ui::HardwareKnob decayKnob { "Decay" };
     coolsynth::ui::HardwareKnob sustainKnob { "Sustain" };
     coolsynth::ui::HardwareKnob releaseKnob { "Release" };
+    coolsynth::ui::HardwareKnob delayTimeKnob { "Time" };
+    coolsynth::ui::HardwareKnob delayFeedbackKnob { "Feedback" };
+    coolsynth::ui::HardwareKnob delayMixKnob { "Mix" };
     coolsynth::ui::HardwareFader masterGainFader { "Master" };
     juce::TextButton panicButton { "Panic" };
 
@@ -67,6 +74,9 @@ private:
     std::unique_ptr<SliderAttachment> decayAttachment;
     std::unique_ptr<SliderAttachment> sustainAttachment;
     std::unique_ptr<SliderAttachment> releaseAttachment;
+    std::unique_ptr<SliderAttachment> delayTimeAttachment;
+    std::unique_ptr<SliderAttachment> delayFeedbackAttachment;
+    std::unique_ptr<SliderAttachment> delayMixAttachment;
     std::unique_ptr<SliderAttachment> masterGainAttachment;
 
     std::unique_ptr<juce::Component> standaloneAudioPanel;

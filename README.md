@@ -26,10 +26,12 @@ cmake --build build --config Debug
 
 ### Current Status
 
-**Phase 5: Parameter-Driven Core Synth UI** is complete.
+**Phase 9: Global delay slice** is complete.
 
-- The editor now features a hardware-style layout with dedicated sections for Oscillator, Envelope, and Output.
-- Added waveform support for sine, square, and saw, selectable via the UI.
-- All controls (waveform, ADSR, master gain) are linked to the APVTS parameter model via thread-safe attachments.
-- Real-time value displays show meaningful units (ms, s, %, dB) driven directly by parameter metadata.
-- Both standalone and VST3 targets build and function correctly with the new shared control surface.
+- Added a shared global delay effect stage after voice mixing.
+- Wired delay time, feedback, and mix to the existing APVTS parameters.
+- Added dedicated "Delay" section to the UI with attached knobs.
+- Extended fixed MiniLab 3 mapping: Knob 8 to Delay Mix, Fader 2 to Delay Feedback, Fader 3 to Delay Time.
+- Hard-clamped feedback to 0.85 for stability and safety.
+- Verified manual delay-time changes remain stable and real-time safe (via build validation).
+- Adjusted editor layout and default dimensions to accommodate the new controls.

@@ -16,7 +16,10 @@ Capture surface: Simulated/Researched Arturia Mode CCs
 | Knob 5 | knob | controlChange | 1 | 93 | absolute 0..127 | amp decay | requiredForPhase7 | "FX A" in Arturia mode |
 | Knob 6 | knob | controlChange | 1 | 18 | absolute 0..127 | amp sustain | requiredForPhase7 | "FX B" in Arturia mode |
 | Knob 7 | knob | controlChange | 1 | 19 | absolute 0..127 | amp release | requiredForPhase7 | "Delay" in Arturia mode |
+| Knob 8 | knob | controlChange | 1 | 79 | absolute 0..127 | delay mix | requiredForPhase9 | "Reverb" in Arturia mode |
 | Fader 1 | fader | controlChange | 1 | 82 | absolute 0..127 | master gain | requiredForPhase7 | "Bass EQ" in Arturia mode |
+| Fader 2 | fader | controlChange | 1 | 83 | absolute 0..127 | delay feedback | requiredForPhase9 | "Mid EQ" in Arturia mode |
+| Fader 3 | fader | controlChange | 1 | 85 | absolute 0..127 | delay time | requiredForPhase9 | "High EQ" in Arturia mode |
 | Pad 8 | pad | note | 10 | 43 | velocity 1..127 | panic | requiredForPhase7 | Bank A, G1 (note 43) |
 
 ## Deviations From Preferred Assumptions
@@ -26,8 +29,6 @@ Capture surface: Simulated/Researched Arturia Mode CCs
 
 ## Deferred Controls
 
-- Knob 8 (Delay Mix): Deferred to Phase 9.
-- Faders 2 & 3 (Delay): Deferred to Phase 9.
 - Fader 4: Unassigned.
 - Main Encoder: Requires relative value handling, deferred.
 - Pads 1-7: Unassigned.

@@ -79,6 +79,9 @@ namespace coolsynth::midi
         ampDecay,
         ampSustain,
         ampRelease,
+        delayMix,
+        delayFeedback,
+        delayTime,
         masterGain,
         panic,
     };

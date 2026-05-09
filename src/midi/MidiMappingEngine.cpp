@@ -33,6 +33,9 @@ namespace coolsynth::midi
                     case Minilab3LogicalTarget::ampDecay:   paramId = parameters::ids::ampDecayMs; break;
                     case Minilab3LogicalTarget::ampSustain: paramId = parameters::ids::ampSustain; break;
                     case Minilab3LogicalTarget::ampRelease: paramId = parameters::ids::ampReleaseMs; break;
+                    case Minilab3LogicalTarget::delayMix: paramId = parameters::ids::delayMix; break;
+                    case Minilab3LogicalTarget::delayFeedback: paramId = parameters::ids::delayFeedback; break;
+                    case Minilab3LogicalTarget::delayTime: paramId = parameters::ids::delayTimeMs; break;
                     case Minilab3LogicalTarget::masterGain: paramId = parameters::ids::masterGainDb; break;
                     default: break;
                 }
@@ -69,7 +72,8 @@ namespace coolsynth::midi
             if (b.binding.primaryData != event.data1)
                 continue;
 
-            if (b.binding.channel != event.channel)
+            // Channel 0 means Omni
+            if (b.binding.channel != 0 && b.binding.channel != event.channel)
                 continue;
 
             // Found a match

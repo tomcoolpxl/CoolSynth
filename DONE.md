@@ -57,12 +57,12 @@
 - [x] Confirmed no host-notifying parameter writes occur in the audio callback.
 - [x] Updated `TODO.md` and documented mappings in `docs/minilab3-default-messages.md`.
 
-## Phase 8: Per-voice low-pass filter slice
+## Phase 9: Global delay slice
 
-- [x] Implemented per-voice `juce::dsp::StateVariableTPTFilter` in `SynthVoice`.
-- [x] Added logarithmic cutoff smoothing and squared resonance-to-Q mapping for musical response.
-- [x] Wired filter parameters to APVTS and extended the render-time snapshot plumbing.
-- [x] Added a dedicated "Filter" section to the UI with attached knobs for cutoff and resonance.
-- [x] Extended MiniLab 3 mapping: `Knob 2` (Timbre/CC 71) to Cutoff, `Knob 3` (Variation/CC 76) to Resonance.
-- [x] Verified filter stability across sample rates (44.1/48 kHz) and audible response in standalone.
-- [x] Adjusted editor layout and dimensions to accommodate the expanded control set.
+- [x] Added a shared global delay effect stage after voice mixing.
+- [x] Wired delay time, feedback, and mix to the existing APVTS parameters.
+- [x] Added dedicated "Delay" section to the UI with attached knobs.
+- [x] Extended fixed MiniLab 3 mapping: Knob 8 to Delay Mix, Fader 2 to Delay Feedback, Fader 3 to Delay Time.
+- [x] Hard-clamped feedback to 0.85 for stability and safety.
+- [x] Verified manual delay-time changes remain stable and real-time safe (via build validation).
+- [x] Adjusted editor layout and default dimensions to accommodate the new controls.

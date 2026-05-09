@@ -4,6 +4,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "SynthVoice.h"
+#include "GlobalDelay.h"
 #include "SynthParameters.h"
 
 namespace coolsynth::synth
@@ -43,6 +44,7 @@ namespace coolsynth::synth
 
         ReleaseFirstSynthesiser synthesiser;
         std::vector<SynthVoice*> synthVoices;
+        GlobalDelay globalDelay;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGainLinear;
         int outputChannels = 0;
         bool prepared = false;

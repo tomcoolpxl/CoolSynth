@@ -7,7 +7,7 @@ namespace coolsynth::midi
     namespace
     {
         // Full verified profile (simplified for Phase 7 implementation)
-        constexpr std::array<Minilab3ControlDefinition, 10> verifiedControls {{
+        constexpr std::array<Minilab3ControlDefinition, 13> verifiedControls {{
             { "keyboard", "Keyboard", Minilab3ControlCategory::keyboard, "note input", Minilab3Disposition::requiredForPhase7, 
               { VerifiedMidiMessageKind::note, 1, {0, 127}, {1, 127}, Minilab3ValueMode::velocity, true, false }, "" },
             { "knob1", "Knob 1", Minilab3ControlCategory::knob, "waveform", Minilab3Disposition::requiredForPhase7,
@@ -24,8 +24,14 @@ namespace coolsynth::midi
               { VerifiedMidiMessageKind::controlChange, 1, {18, 18}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "FX B" },
             { "knob7", "Knob 7", Minilab3ControlCategory::knob, "amp release", Minilab3Disposition::requiredForPhase7,
               { VerifiedMidiMessageKind::controlChange, 1, {19, 19}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "Delay" },
+            { "knob8", "Knob 8", Minilab3ControlCategory::knob, "delay mix", Minilab3Disposition::requiredForPhase7,
+              { VerifiedMidiMessageKind::controlChange, 1, {79, 79}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "Reverb" },
             { "fader1", "Fader 1", Minilab3ControlCategory::fader, "master gain", Minilab3Disposition::requiredForPhase7,
               { VerifiedMidiMessageKind::controlChange, 1, {82, 82}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "Bass EQ" },
+            { "fader2", "Fader 2", Minilab3ControlCategory::fader, "delay feedback", Minilab3Disposition::requiredForPhase7,
+              { VerifiedMidiMessageKind::controlChange, 1, {83, 83}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "Mid EQ" },
+            { "fader3", "Fader 3", Minilab3ControlCategory::fader, "delay time", Minilab3Disposition::requiredForPhase7,
+              { VerifiedMidiMessageKind::controlChange, 1, {85, 85}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "High EQ" },
             { "pad8", "Pad 8", Minilab3ControlCategory::pad, "panic", Minilab3Disposition::requiredForPhase7,
               { VerifiedMidiMessageKind::note, 10, {43, 43}, {0, 127}, Minilab3ValueMode::velocity, true, false }, "G1, Bank A" }
         }};
@@ -34,16 +40,19 @@ namespace coolsynth::midi
         // Note On = 144 + (channel-1)
         // We use 1 for CC and 2 for NoteOn (internal monitor types)
         
-        constexpr std::array<Minilab3Binding, 9> phase7Bindings {{
-            { "knob1",  1, 74, 1,  Minilab3LogicalTarget::waveform,   true },
-            { "knob2",  1, 71, 1,  Minilab3LogicalTarget::filterCutoff, true },
-            { "knob3",  1, 76, 1,  Minilab3LogicalTarget::filterResonance, true },
-            { "knob4",  1, 77, 1,  Minilab3LogicalTarget::ampAttack,  true },
-            { "knob5",  1, 93, 1,  Minilab3LogicalTarget::ampDecay,   true },
-            { "knob6",  1, 18, 1,  Minilab3LogicalTarget::ampSustain, true },
-            { "knob7",  1, 19, 1,  Minilab3LogicalTarget::ampRelease, true },
-            { "fader1", 1, 82, 1,  Minilab3LogicalTarget::masterGain, true },
-            { "pad8",   2, 43, 10, Minilab3LogicalTarget::panic,      true }
+        constexpr std::array<Minilab3Binding, 12> phase7Bindings {{
+            { "knob1",  1, 74, 0,  Minilab3LogicalTarget::waveform,   true },
+            { "knob2",  1, 71, 0,  Minilab3LogicalTarget::filterCutoff, true },
+            { "knob3",  1, 76, 0,  Minilab3LogicalTarget::filterResonance, true },
+            { "knob4",  1, 77, 0,  Minilab3LogicalTarget::ampAttack,  true },
+            { "knob5",  1, 93, 0,  Minilab3LogicalTarget::ampDecay,   true },
+            { "knob6",  1, 18, 0,  Minilab3LogicalTarget::ampSustain, true },
+            { "knob7",  1, 19, 0,  Minilab3LogicalTarget::ampRelease, true },
+            { "knob8",  1, 79, 0,  Minilab3LogicalTarget::delayMix,   true },
+            { "fader1", 1, 82, 0,  Minilab3LogicalTarget::masterGain, true },
+            { "fader2", 1, 83, 0,  Minilab3LogicalTarget::delayFeedback, true },
+            { "fader3", 1, 85, 0,  Minilab3LogicalTarget::delayTime,  true },
+            { "pad8",   2, 43, 0, Minilab3LogicalTarget::panic,      true }
         }};
     }
 

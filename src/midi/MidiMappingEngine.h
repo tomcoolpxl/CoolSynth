@@ -82,7 +82,7 @@ namespace coolsynth::midi
             ParameterTarget target;
         };
 
-        std::array<BindingWithTarget, 9> activeBindings {};
+        std::array<BindingWithTarget, 12> activeBindings {};
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiMappingEngine)
     };

@@ -60,12 +60,14 @@ namespace coolsynth::synth
         masterGainLinear.reset(sampleRate, masterGainRampSeconds);
         
         prepareVoices(sampleRate, samplesPerBlock);
+        globalDelay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         
         prepared = true;
     }
 
     void SynthEngine::releaseResources() noexcept
     {
+        globalDelay.reset();
         prepared = false;
     }
 
@@ -81,6 +83,8 @@ namespace coolsynth::synth
         pushWaveformToVoices(parameters.waveform);
         
         synthesiser.renderNextBlock(outputBuffer, midiMessages, 0, outputBuffer.getNumSamples());
+        
+        globalDelay.process(outputBuffer, parameters.delay);
         
         applyMasterGain(outputBuffer, parameters.masterGainLinear);
     }

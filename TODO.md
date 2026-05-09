@@ -17,3 +17,12 @@
 - [x] Extend fixed MiniLab mapping so Knob 2 controls cutoff and Knob 3 controls resonance.
 - [x] Verify filter stability at 44.1 kHz and 48 kHz.
 - [x] Verify cutoff and resonance are audibly reflected in standalone playback.
+
+## Phase 9: Global delay slice
+
+- [x] Add the global delay effect after voice mixing.
+- [x] Wire delay time, feedback, and mix to the shared parameter model.
+- [x] Add delay controls to the editor.
+- [x] Extend fixed MiniLab mapping for delay mix, feedback, and time.
+- [x] Clamp feedback to the safe maximum.
+- [x] Verify manual delay-time changes remain stable and real-time safe.

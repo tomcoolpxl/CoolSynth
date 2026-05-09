@@ -128,6 +128,11 @@ coolsynth::synth::BlockRenderParameters SynthAudioProcessor::makeBlockRenderPara
     params.ampEnvelope.releaseSeconds = juce::jmax(0.005f, parameterValues.ampReleaseMs->load() * 0.001f);
     params.filter.cutoffHz = juce::jlimit(20.0f, 20000.0f, parameterValues.filterCutoffHz->load());
     params.filter.resonanceNormalized = juce::jlimit(0.0f, 1.0f, parameterValues.filterResonance->load());
+    
+    params.delay.timeMs = juce::jlimit(1.0f, 1000.0f, parameterValues.delayTimeMs->load());
+    params.delay.feedback = juce::jlimit(0.0f, 0.85f, parameterValues.delayFeedback->load());
+    params.delay.mix = juce::jlimit(0.0f, 1.0f, parameterValues.delayMix->load());
+
     params.masterGainLinear = juce::Decibels::decibelsToGain(parameterValues.masterGainDb->load());
     return params;
 }
@@ -144,6 +149,9 @@ coolsynth::synth::ParameterValuePointers SynthAudioProcessor::bindParameterPoint
     pointers.ampReleaseMs = state.getRawParameterValue(ids::ampReleaseMs);
     pointers.filterCutoffHz = state.getRawParameterValue(ids::filterCutoffHz);
     pointers.filterResonance = state.getRawParameterValue(ids::filterResonance);
+    pointers.delayTimeMs = state.getRawParameterValue(ids::delayTimeMs);
+    pointers.delayFeedback = state.getRawParameterValue(ids::delayFeedback);
+    pointers.delayMix = state.getRawParameterValue(ids::delayMix);
     pointers.masterGainDb = state.getRawParameterValue(ids::masterGainDb);
     return pointers;
 }

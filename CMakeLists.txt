@@ -30,7 +30,9 @@ target_sources(CoolSynth
         src/standalone/StandaloneAudioSupport.cpp
         src/standalone/StandaloneMidiInput.cpp
         src/synth/SynthEngine.cpp
+        src/synth/GlobalDelay.cpp
         src/synth/SynthVoice.cpp
+
         src/ui/HardwareFader.cpp
         src/ui/HardwareKnob.cpp
         src/ui/MidiMonitorPanel.cpp
