@@ -26,12 +26,12 @@ cmake --build build --config Debug
 
 ### Current Status
 
-**Phase 9: Global delay slice** is complete.
+**Phase 10: Hardware-style UI refinement** is complete.
 
-- Added a shared global delay effect stage after voice mixing.
-- Wired delay time, feedback, and mix to the existing APVTS parameters.
-- Added dedicated "Delay" section to the UI with attached knobs.
-- Extended fixed MiniLab 3 mapping: Knob 8 to Delay Mix, Fader 2 to Delay Feedback, Fader 3 to Delay Time.
-- Hard-clamped feedback to 0.85 for stability and safety.
-- Verified manual delay-time changes remain stable and real-time safe (via build validation).
-- Adjusted editor layout and default dimensions to accommodate the new controls.
+- Refined the editor into grouped oscillator, filter, envelope, delay, output, and global action sections.
+- Moved standalone audio and MIDI utility controls into one dedicated settings dialog.
+- Replaced the large standalone status panel with a compact bottom status bar.
+- Added live last-MIDI-event status text to the standalone status bar.
+- Removed redundant standalone audio or MIDI settings entry points.
+- Ensured the plugin editor omits standalone-only device, settings, status, and monitor UI.
+- Improved control labels and value readability.

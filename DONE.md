@@ -66,3 +66,14 @@
 - [x] Hard-clamped feedback to 0.85 for stability and safety.
 - [x] Verified manual delay-time changes remain stable and real-time safe (via build validation).
 - [x] Adjusted editor layout and default dimensions to accommodate the new controls.
+
+## Phase 10: Hardware-style UI refinement
+
+- [x] Refined the editor into grouped oscillator, filter, envelope, delay, output, and global action sections.
+- [x] Moved standalone audio and MIDI utility controls into one dedicated settings surface.
+- [x] Replaced the large standalone status panel with a compact bottom status bar.
+- [x] Added live last-MIDI-event status text to the standalone status bar.
+- [x] Removed redundant standalone audio or MIDI settings entry points.
+- [x] Ensured the plugin editor omits standalone-only device, settings, status, and monitor UI.
+- [x] Improved control labels and value readability.
+- [x] Verified the refined UI remains usable during playback.

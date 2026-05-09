@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_events/juce_events.h>
 
@@ -31,6 +32,19 @@ namespace coolsynth::standalone
         juce::String statusMessage;
     };
 
+    struct LastMidiEventSnapshot
+    {
+        bool hasEvent = false;
+        uint64_t eventOrder = 0;
+        coolsynth::midi::MidiMonitorMessageType type =
+            coolsynth::midi::MidiMonitorMessageType::noteOn;
+        int channel = 0;
+        int primaryValue = 0;
+        int secondaryValue = 0;
+        int noteNumber = -1;
+        int controllerNumber = -1;
+    };
+
     class StandaloneMidiInputController final : public juce::ChangeBroadcaster,
                                                 private juce::MidiInputCallback,
                                                 private juce::AsyncUpdater
@@ -41,12 +55,14 @@ namespace coolsynth::standalone
 
         StandaloneMidiInputController(juce::AudioDeviceManager& deviceManager,
                                       juce::PropertySet* settings,
-                                      coolsynth::midi::MidiMonitorBuffer& monitorBuffer,
                                       ControllerEventHandler onControllerEvent,
                                       DisconnectCallback onSelectedDeviceDisconnected = {});
         ~StandaloneMidiInputController() override;
 
         const MidiInputSnapshot& getSnapshot() const noexcept { return snapshot; }
+        coolsynth::midi::MidiMonitorBuffer& getMonitorBuffer() noexcept { return monitorBuffer; }
+        LastMidiEventSnapshot getLastMidiEventSnapshot() const noexcept;
+
         void refreshDevices();
         bool selectDeviceByIdentifier(const juce::String& deviceIdentifier);
         void clearSelection();
@@ -57,6 +73,17 @@ namespace coolsynth::standalone
             initialLoad,
             userSelection,
             deviceListChanged,
+        };
+
+        struct AtomicLastMidiEventState
+        {
+            std::atomic<uint64_t> eventOrder { 0 };
+            std::atomic<uint8_t> type { 0 };
+            std::atomic<uint8_t> channel { 0 };
+            std::atomic<int> primaryValue { 0 };
+            std::atomic<int> secondaryValue { 0 };
+            std::atomic<int> noteNumber { -1 };
+            std::atomic<int> controllerNumber { -1 };
         };
 
         void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
@@ -70,10 +97,11 @@ namespace coolsynth::standalone
 
         void enqueueControllerEvent(const juce::MidiMessage& message) noexcept;
         int drainControllerEvents(coolsynth::midi::ControllerMidiEvent* destination, int maxEvents) noexcept;
+        void updateLastMidiEventSnapshot(const juce::MidiMessage& message) noexcept;
 
         juce::AudioDeviceManager& deviceManager;
         juce::PropertySet* settings = nullptr;
-        coolsynth::midi::MidiMonitorBuffer& monitorBuffer;
+        coolsynth::midi::MidiMonitorBuffer monitorBuffer;
         ControllerEventHandler onControllerEvent;
         juce::MidiDeviceListConnection deviceListConnection;
         MidiInputSnapshot snapshot;
@@ -81,6 +109,7 @@ namespace coolsynth::standalone
         
         std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingControllerEvents {};
         juce::AbstractFifo pendingControllerEventQueue { 128 };
+        AtomicLastMidiEventState lastMidiEventState;
         
         bool selectedDeviceWasPresent = false;
         std::atomic<bool> deviceRefreshPending { false };

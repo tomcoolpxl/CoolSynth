@@ -9,6 +9,11 @@
 
 class SynthAudioProcessor;
 
+namespace coolsynth::standalone
+{
+    class StandaloneMidiInputController;
+}
+
 class SynthAudioProcessorEditor final : public juce::AudioProcessorEditor,
                                         private juce::Timer
 {
@@ -65,7 +70,7 @@ private:
     coolsynth::ui::HardwareKnob delayFeedbackKnob { "Feedback" };
     coolsynth::ui::HardwareKnob delayMixKnob { "Mix" };
     coolsynth::ui::HardwareFader masterGainFader { "Master" };
-    juce::TextButton panicButton { "Panic" };
+    juce::TextButton allNotesOffButton { "All Notes Off" };
 
     std::unique_ptr<ComboBoxAttachment> waveformAttachment;
     std::unique_ptr<SliderAttachment> cutoffAttachment;
@@ -79,9 +84,8 @@ private:
     std::unique_ptr<SliderAttachment> delayMixAttachment;
     std::unique_ptr<SliderAttachment> masterGainAttachment;
 
-    std::unique_ptr<juce::Component> standaloneAudioPanel;
-    std::unique_ptr<juce::Component> standaloneMidiInputPanel;
-    std::unique_ptr<juce::Component> standaloneMidiMonitorPanel;
+    std::unique_ptr<coolsynth::standalone::StandaloneMidiInputController> standaloneMidiController;
+    std::unique_ptr<juce::Component> standaloneStatusBar;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessorEditor)
 };

@@ -2,9 +2,9 @@
 
 #include "SynthAudioProcessor.h"
 #include "parameters/ParameterIDs.h"
-#include "ui/MidiMonitorPanel.h"
-#include "ui/StandaloneAudioStatusPanel.h"
-#include "ui/StandaloneMidiInputPanel.h"
+#include "ui/StandaloneSettingsDialog.h"
+#include "ui/StandaloneStatusBar.h"
+#include "standalone/StandaloneAudioSupport.h"
 
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
@@ -68,16 +68,21 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     // --- Output Section ---
     addAndMakeVisible(outputSection);
     addAndMakeVisible(masterGainFader);
-    panicButton.onClick = [this] { processor.requestPanic(); };
-    addAndMakeVisible(panicButton);
     masterGainAttachment = std::make_unique<SliderAttachment>(apvts, ids::masterGainDb, masterGainFader.slider());
+
+    allNotesOffButton.onClick = [this] { processor.requestPanic(); };
+    addAndMakeVisible(allNotesOffButton);
 
     if (juce::JUCEApplicationBase::isStandaloneApp())
     {
-        standaloneAudioPanel = std::make_unique<StandaloneAudioStatusPanel>();
-        addAndMakeVisible(*standaloneAudioPanel);
+        auto* deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager();
+        auto* settings = coolsynth::standalone::getStandaloneSettings();
 
-        auto midiInputPanel = std::make_unique<StandaloneMidiInputPanel>(
+        jassert(deviceManager != nullptr);
+
+        standaloneMidiController = std::make_unique<coolsynth::standalone::StandaloneMidiInputController>(
+            *deviceManager,
+            settings,
             [this](const coolsynth::midi::ControllerMidiEvent& event)
             {
                 processor.handleStandaloneControllerEvent(event);
@@ -87,14 +92,10 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
                 processor.requestPanic();
             });
 
-        auto* monitorBuffer = &midiInputPanel->getMonitorBuffer();
-        standaloneMidiInputPanel = std::move(midiInputPanel);
-        addAndMakeVisible(*standaloneMidiInputPanel);
+        standaloneStatusBar = std::make_unique<StandaloneStatusBar>(*standaloneMidiController);
+        addAndMakeVisible(*standaloneStatusBar);
 
-        standaloneMidiMonitorPanel = std::make_unique<MidiMonitorPanel>(*monitorBuffer);
-        addAndMakeVisible(*standaloneMidiMonitorPanel);
-
-        setSize(1280, 850);
+        setSize(1280, 480);
     }
     else
     {
@@ -118,7 +119,9 @@ void SynthAudioProcessorEditor::paint(juce::Graphics& g)
 void SynthAudioProcessorEditor::resized()
 {
     auto area = getLocalBounds().reduced(24);
-    titleLabel.setBounds(area.removeFromTop(48));
+    auto titleArea = area.removeFromTop(48);
+    titleLabel.setBounds(titleArea);
+    allNotesOffButton.setBounds(titleArea.removeFromRight(120).withSizeKeepingCentre(100, 24));
     area.removeFromTop(16);
 
     auto synthRow = area.removeFromTop(240);
@@ -174,20 +177,12 @@ void SynthAudioProcessorEditor::resized()
     outputSection.setBounds(outArea);
     auto outContent = outArea.reduced(12);
     outContent.removeFromTop(24); // Title space
-    masterGainFader.setBounds(outContent.removeFromLeft(80));
-    outContent.removeFromLeft(16);
-    panicButton.setBounds(outContent.withSizeKeepingCentre(outContent.getWidth(), 32));
+    masterGainFader.setBounds(outContent.withSizeKeepingCentre(80, outContent.getHeight()));
 
-    if (standaloneAudioPanel != nullptr)
+    if (standaloneStatusBar != nullptr)
     {
-        area.removeFromTop(24);
-        standaloneAudioPanel->setBounds(area.removeFromTop(160));
-        
-        area.removeFromTop(16);
-        standaloneMidiInputPanel->setBounds(area.removeFromTop(80));
-        
-        area.removeFromTop(16);
-        standaloneMidiMonitorPanel->setBounds(area);
+        auto bounds = getLocalBounds();
+        standaloneStatusBar->setBounds(bounds.removeFromBottom(28));
     }
 }
 

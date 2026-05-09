@@ -2,8 +2,8 @@
 #include "standalone/StandaloneAudioSupport.h"
 #include "standalone/StandaloneMidiInput.h"
 
-StandaloneMidiInputPanel::StandaloneMidiInputPanel(ControllerEventHandler onControllerEvent,
-                                                   std::function<void()> onDisconnected)
+StandaloneMidiInputPanel::StandaloneMidiInputPanel(coolsynth::standalone::StandaloneMidiInputController& refController)
+    : controller(refController)
 {
     deviceTitleLabel.setText("MIDI Input:", juce::dontSendNotification);
     addAndMakeVisible(deviceTitleLabel);
@@ -18,24 +18,13 @@ StandaloneMidiInputPanel::StandaloneMidiInputPanel(ControllerEventHandler onCont
     statusValueLabel.setText("-", juce::dontSendNotification);
     addAndMakeVisible(statusValueLabel);
 
-    if (auto* deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager())
-    {
-        auto* settings = coolsynth::standalone::getStandaloneSettings();
-        controller = std::make_unique<coolsynth::standalone::StandaloneMidiInputController>(
-            *deviceManager, 
-            settings, 
-            monitorBuffer, 
-            std::move(onControllerEvent),
-            std::move(onDisconnected));
-        controller->addChangeListener(this);
-        refreshFromController();
-    }
+    controller.addChangeListener(this);
+    refreshFromController();
 }
 
 StandaloneMidiInputPanel::~StandaloneMidiInputPanel()
 {
-    if (controller != nullptr)
-        controller->removeChangeListener(this);
+    controller.removeChangeListener(this);
 }
 
 void StandaloneMidiInputPanel::resized()
@@ -65,10 +54,7 @@ void StandaloneMidiInputPanel::changeListenerCallback(juce::ChangeBroadcaster* /
 
 void StandaloneMidiInputPanel::refreshFromController()
 {
-    if (controller == nullptr)
-        return;
-
-    const auto& snapshot = controller->getSnapshot();
+    const auto& snapshot = controller.getSnapshot();
 
     repopulateDeviceSelector();
 
@@ -86,10 +72,7 @@ void StandaloneMidiInputPanel::refreshFromController()
 
 void StandaloneMidiInputPanel::repopulateDeviceSelector()
 {
-    if (controller == nullptr)
-        return;
-
-    const auto& snapshot = controller->getSnapshot();
+    const auto& snapshot = controller.getSnapshot();
 
     isRefreshingSelector = true;
     deviceSelector.clear(juce::dontSendNotification);
@@ -112,21 +95,21 @@ void StandaloneMidiInputPanel::repopulateDeviceSelector()
 
 void StandaloneMidiInputPanel::handleDeviceSelectionChanged()
 {
-    if (isRefreshingSelector || controller == nullptr)
+    if (isRefreshingSelector)
         return;
 
     int selectedId = deviceSelector.getSelectedId();
     if (selectedId <= 1)
     {
-        controller->clearSelection();
+        controller.clearSelection();
     }
     else
     {
-        const auto& snapshot = controller->getSnapshot();
+        const auto& snapshot = controller.getSnapshot();
         int index = selectedId - 2;
         if (index >= 0 && index < snapshot.availableInputs.size())
         {
-            controller->selectDeviceByIdentifier(snapshot.availableInputs[index].identifier);
+            controller.selectDeviceByIdentifier(snapshot.availableInputs[index].identifier);
         }
     }
 }

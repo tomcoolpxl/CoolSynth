@@ -36,8 +36,9 @@ target_sources(CoolSynth
         src/ui/HardwareFader.cpp
         src/ui/HardwareKnob.cpp
         src/ui/MidiMonitorPanel.cpp
-        src/ui/StandaloneAudioStatusPanel.cpp
         src/ui/StandaloneMidiInputPanel.cpp
+        src/ui/StandaloneSettingsDialog.cpp
+        src/ui/StandaloneStatusBar.cpp
         src/ui/SynthSection.cpp)
 
 target_include_directories(CoolSynth

@@ -1,0 +1,155 @@
+#include "StandaloneStatusBar.h"
+
+StandaloneStatusBar::StandaloneStatusBar(coolsynth::standalone::StandaloneMidiInputController& controller)
+    : midiController(controller)
+{
+    addAndMakeVisible(audioStatusLabel);
+    audioStatusLabel.setFont(juce::FontOptions(12.0f));
+    audioStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    audioStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+
+    addAndMakeVisible(midiStatusLabel);
+    midiStatusLabel.setFont(juce::FontOptions(12.0f));
+    midiStatusLabel.setJustificationType(juce::Justification::centred);
+    midiStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+
+    addAndMakeVisible(lastMidiStatusLabel);
+    lastMidiStatusLabel.setFont(juce::FontOptions(12.0f));
+    lastMidiStatusLabel.setJustificationType(juce::Justification::centredRight);
+    lastMidiStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+
+    deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager();
+    attachToDeviceManager();
+
+    midiController.addChangeListener(this);
+
+    refreshAudioSnapshot();
+    refreshMidiSnapshot();
+    lastMidiSnapshot = midiController.getLastMidiEventSnapshot();
+    refreshLastMidiSnapshot();
+    refreshLabels();
+
+    startTimerHz(20);
+}
+
+StandaloneStatusBar::~StandaloneStatusBar()
+{
+    stopTimer();
+    detachFromDeviceManager();
+    midiController.removeChangeListener(this);
+}
+
+void StandaloneStatusBar::resized()
+{
+    auto bounds = getLocalBounds().reduced(8, 0);
+    const int portion = bounds.getWidth() / 3;
+
+    audioStatusLabel.setBounds(bounds.removeFromLeft(portion));
+    lastMidiStatusLabel.setBounds(bounds.removeFromRight(portion));
+    midiStatusLabel.setBounds(bounds);
+}
+
+void StandaloneStatusBar::paint(juce::Graphics& g)
+{
+    g.fillAll(juce::Colours::black.withAlpha(0.2f));
+    g.setColour(juce::Colours::white.withAlpha(0.1f));
+    g.drawLine(0.0f, 0.0f, static_cast<float>(getWidth()), 0.0f, 1.0f);
+}
+
+void StandaloneStatusBar::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    if (source == deviceManager)
+    {
+        refreshAudioSnapshot();
+        refreshLabels();
+    }
+    else if (source == &midiController)
+    {
+        refreshMidiSnapshot();
+        refreshLabels();
+    }
+}
+
+void StandaloneStatusBar::timerCallback()
+{
+    auto snap = midiController.getLastMidiEventSnapshot();
+    if (snap.eventOrder != lastMidiSnapshot.eventOrder)
+    {
+        lastMidiSnapshot = snap;
+        refreshLastMidiSnapshot();
+    }
+}
+
+void StandaloneStatusBar::attachToDeviceManager()
+{
+    if (deviceManager != nullptr)
+        deviceManager->addChangeListener(this);
+}
+
+void StandaloneStatusBar::detachFromDeviceManager()
+{
+    if (deviceManager != nullptr)
+        deviceManager->removeChangeListener(this);
+}
+
+void StandaloneStatusBar::refreshAudioSnapshot()
+{
+    if (deviceManager != nullptr)
+        audioSnapshot = coolsynth::standalone::captureAudioDeviceSnapshot(*deviceManager);
+    else
+        audioSnapshot = coolsynth::standalone::captureCurrentAudioDeviceSnapshot();
+}
+
+void StandaloneStatusBar::refreshMidiSnapshot()
+{
+    midiSnapshot = midiController.getSnapshot();
+}
+
+void StandaloneStatusBar::refreshLastMidiSnapshot()
+{
+    lastMidiStatusLabel.setText(formatLastMidiSummary(lastMidiSnapshot), juce::dontSendNotification);
+}
+
+void StandaloneStatusBar::refreshLabels()
+{
+    audioStatusLabel.setText(formatAudioSummary(audioSnapshot), juce::dontSendNotification);
+    midiStatusLabel.setText(formatMidiSummary(midiSnapshot), juce::dontSendNotification);
+}
+
+juce::String StandaloneStatusBar::formatAudioSummary(const coolsynth::standalone::AudioDeviceSnapshot& snapshot) const
+{
+    if (!snapshot.hasCurrentDevice)
+        return "Audio: Off";
+
+    juce::String text = "Audio: ";
+    text << coolsynth::standalone::formatSampleRateHz(snapshot.sampleRateHz);
+    text << ", " << coolsynth::standalone::formatBufferSizeSamples(snapshot.bufferSizeSamples);
+    return text;
+}
+
+juce::String StandaloneStatusBar::formatMidiSummary(const coolsynth::standalone::MidiInputSnapshot& snapshot) const
+{
+    if (snapshot.status == coolsynth::standalone::MidiInputStatus::connected)
+        return "MIDI: " + snapshot.selectedDeviceName;
+    return "MIDI: -";
+}
+
+juce::String StandaloneStatusBar::formatLastMidiSummary(const coolsynth::standalone::LastMidiEventSnapshot& snapshot) const
+{
+    if (!snapshot.hasEvent)
+        return "Last MIDI: -";
+
+    juce::String text = "Last MIDI: ";
+    using namespace coolsynth::midi;
+
+    if (snapshot.type == MidiMonitorMessageType::noteOn)
+        text << "Note On " << snapshot.primaryValue << " vel " << snapshot.secondaryValue;
+    else if (snapshot.type == MidiMonitorMessageType::noteOff)
+        text << "Note Off " << snapshot.primaryValue << " vel " << snapshot.secondaryValue;
+    else if (snapshot.type == MidiMonitorMessageType::controlChange)
+        text << "CC " << snapshot.primaryValue << " val " << snapshot.secondaryValue;
+    else
+        text << "Unknown";
+
+    return text;
+}

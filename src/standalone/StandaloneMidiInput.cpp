@@ -4,12 +4,10 @@ namespace coolsynth::standalone
 {
     StandaloneMidiInputController::StandaloneMidiInputController(juce::AudioDeviceManager& dm,
                                                                  juce::PropertySet* s,
-                                                                 coolsynth::midi::MidiMonitorBuffer& mb,
                                                                  ControllerEventHandler onControllerEvent,
                                                                  DisconnectCallback onDisconnected)
         : deviceManager(dm)
         , settings(s)
-        , monitorBuffer(mb)
         , onControllerEvent(std::move(onControllerEvent))
         , onSelectedDeviceDisconnected(std::move(onDisconnected))
     {
@@ -27,6 +25,25 @@ namespace coolsynth::standalone
     StandaloneMidiInputController::~StandaloneMidiInputController()
     {
         deviceManager.removeMidiInputDeviceCallback({}, this);
+    }
+
+    LastMidiEventSnapshot StandaloneMidiInputController::getLastMidiEventSnapshot() const noexcept
+    {
+        LastMidiEventSnapshot snap;
+        snap.eventOrder = lastMidiEventState.eventOrder.load(std::memory_order_acquire);
+        snap.hasEvent = (snap.eventOrder > 0);
+        
+        if (snap.hasEvent)
+        {
+            snap.type = static_cast<coolsynth::midi::MidiMonitorMessageType>(lastMidiEventState.type.load(std::memory_order_relaxed));
+            snap.channel = lastMidiEventState.channel.load(std::memory_order_relaxed);
+            snap.primaryValue = lastMidiEventState.primaryValue.load(std::memory_order_relaxed);
+            snap.secondaryValue = lastMidiEventState.secondaryValue.load(std::memory_order_relaxed);
+            snap.noteNumber = lastMidiEventState.noteNumber.load(std::memory_order_relaxed);
+            snap.controllerNumber = lastMidiEventState.controllerNumber.load(std::memory_order_relaxed);
+        }
+        
+        return snap;
     }
 
     void StandaloneMidiInputController::refreshDevices()
@@ -71,7 +88,55 @@ namespace coolsynth::standalone
     void StandaloneMidiInputController::handleIncomingMidiMessage(juce::MidiInput* /*source*/, const juce::MidiMessage& message)
     {
         monitorBuffer.pushMessage(message, juce::Time::getMillisecondCounterHiRes() * 0.001);
+        updateLastMidiEventSnapshot(message);
         enqueueControllerEvent(message);
+    }
+
+    void StandaloneMidiInputController::updateLastMidiEventSnapshot(const juce::MidiMessage& message) noexcept
+    {
+        using namespace coolsynth::midi;
+        
+        uint8_t type = 0;
+        int primary = 0;
+        int secondary = 0;
+        int noteNum = -1;
+        int ccNum = -1;
+        
+        if (message.isNoteOn())
+        {
+            type = static_cast<uint8_t>(MidiMonitorMessageType::noteOn);
+            noteNum = message.getNoteNumber();
+            primary = noteNum;
+            secondary = message.getVelocity();
+        }
+        else if (message.isNoteOff())
+        {
+            type = static_cast<uint8_t>(MidiMonitorMessageType::noteOff);
+            noteNum = message.getNoteNumber();
+            primary = noteNum;
+            secondary = message.getVelocity();
+        }
+        else if (message.isController())
+        {
+            type = static_cast<uint8_t>(MidiMonitorMessageType::controlChange);
+            ccNum = message.getControllerNumber();
+            primary = ccNum;
+            secondary = message.getControllerValue();
+        }
+        else
+        {
+            return;
+        }
+        
+        lastMidiEventState.type.store(type, std::memory_order_relaxed);
+        lastMidiEventState.channel.store(static_cast<uint8_t>(message.getChannel()), std::memory_order_relaxed);
+        lastMidiEventState.primaryValue.store(primary, std::memory_order_relaxed);
+        lastMidiEventState.secondaryValue.store(secondary, std::memory_order_relaxed);
+        lastMidiEventState.noteNumber.store(noteNum, std::memory_order_relaxed);
+        lastMidiEventState.controllerNumber.store(ccNum, std::memory_order_relaxed);
+        
+        // Publish event order last
+        lastMidiEventState.eventOrder.fetch_add(1, std::memory_order_release);
     }
 
     void StandaloneMidiInputController::handleAsyncUpdate()

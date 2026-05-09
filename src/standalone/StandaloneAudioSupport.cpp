@@ -135,39 +135,6 @@ namespace coolsynth::standalone
         return result;
     }
 
-    bool showStandaloneAudioSettingsDialog()
-    {
-       #if JucePlugin_Build_Standalone
-        if (auto* holder = getStandalonePluginHolder())
-        {
-            juce::AudioDeviceSelectorComponent selector (holder->deviceManager,
-                                                         0, 0, // input channels
-                                                         1, 2, // output channels
-                                                         false, // showMidiInputOptions
-                                                         false, // showMidiOutputOptions
-                                                         false, // showChannelsAsStereoPairs
-                                                         false); // hideAdvancedOptions
-
-            selector.setSize (500, 450);
-
-            juce::DialogWindow::LaunchOptions dialog;
-            dialog.content.setNonOwned (&selector);
-            dialog.dialogTitle = "Audio Settings";
-            dialog.componentToCentreAround = nullptr;
-            dialog.dialogBackgroundColour = juce::LookAndFeel::getDefaultLookAndFeel().findColour (juce::ResizableWindow::backgroundColourId);
-            dialog.escapeKeyTriggersCloseButton = true;
-            dialog.useNativeTitleBar = true;
-            dialog.resizable = false;
-
-            dialog.launchAsync();
-            
-            return true;
-        }
-       #endif
-
-        return false;
-    }
-
     juce::String formatSampleRateHz(double sampleRateHz)
     {
         if (sampleRateHz <= 0)

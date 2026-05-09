@@ -2,25 +2,14 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
-#include "midi/MidiMonitor.h"
-#include "midi/MidiMappingEngine.h"
-
-namespace coolsynth::standalone
-{
-    class StandaloneMidiInputController;
-}
+#include "standalone/StandaloneMidiInput.h"
 
 class StandaloneMidiInputPanel final : public juce::Component,
                                        private juce::ChangeListener
 {
 public:
-    using ControllerEventHandler = std::function<void(const coolsynth::midi::ControllerMidiEvent&)>;
-
-    explicit StandaloneMidiInputPanel(ControllerEventHandler onControllerEvent,
-                                      std::function<void()> onSelectedDeviceDisconnected = {});
+    explicit StandaloneMidiInputPanel(coolsynth::standalone::StandaloneMidiInputController& controller);
     ~StandaloneMidiInputPanel() override;
-
-    coolsynth::midi::MidiMonitorBuffer& getMonitorBuffer() noexcept { return monitorBuffer; }
 
     void resized() override;
     void paint(juce::Graphics& g) override;
@@ -31,9 +20,8 @@ private:
     void repopulateDeviceSelector();
     void handleDeviceSelectionChanged();
 
+    coolsynth::standalone::StandaloneMidiInputController& controller;
     bool isRefreshingSelector = false;
-    coolsynth::midi::MidiMonitorBuffer monitorBuffer;
-    std::unique_ptr<coolsynth::standalone::StandaloneMidiInputController> controller;
 
     juce::Label deviceTitleLabel;
     juce::ComboBox deviceSelector;

@@ -41,8 +41,6 @@ namespace coolsynth::standalone
     BackendSelectionResult maybeApplyPreferredAudioBackend(juce::AudioDeviceManager& deviceManager,
                                                            juce::PropertySet* settings);
 
-    bool showStandaloneAudioSettingsDialog();
-
     juce::String formatSampleRateHz(double sampleRateHz);
     juce::String formatBufferSizeSamples(int bufferSizeSamples);
 }
