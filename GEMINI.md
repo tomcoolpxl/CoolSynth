@@ -85,4 +85,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Live proof completed on GitHub on 2026-05-09:
   - Manual validation run `25614177697` passed and produced diagnostics plus packaged artifacts.
   - Release run `25614334076` passed, published a disposable prerelease, and a rerun updated that same release rather than creating a duplicate.
-- Current GitHub Actions warning to remember for a future tooling refresh: the pinned `actions/*` and `softprops/action-gh-release` revisions emit Node 20 deprecation warnings on GitHub-hosted runners, even though the workflows currently pass.
+- The workflow action pins now target the Node 24-compatible lines:
+  - `actions/checkout` pinned to `v6.0.2`
+  - `actions/upload-artifact` pinned to `v7.0.0`
+  - `actions/download-artifact` pinned to `v5.0.0`
+  - `softprops/action-gh-release` pinned to `v3`
