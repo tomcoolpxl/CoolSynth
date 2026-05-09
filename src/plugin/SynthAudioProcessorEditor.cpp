@@ -96,7 +96,8 @@ void SynthAudioProcessorEditor::resized()
     // Oscillator
     auto oscArea = synthRow.removeFromLeft(180);
     oscillatorSection.setBounds(oscArea);
-    auto oscContent = oscillatorSection.getContentBounds();
+    auto oscContent = oscArea.reduced(12);
+    oscContent.removeFromTop(24); // Title space
     waveformLabel.setBounds(oscContent.removeFromTop(24));
     waveformSelector.setBounds(oscContent.removeFromTop(32));
 
@@ -105,7 +106,8 @@ void SynthAudioProcessorEditor::resized()
     // Envelope
     auto envArea = synthRow.removeFromLeft(400);
     envelopeSection.setBounds(envArea);
-    auto envContent = envelopeSection.getContentBounds();
+    auto envContent = envArea.reduced(12);
+    envContent.removeFromTop(24); // Title space
     auto envGrid = envContent.withSizeKeepingCentre(envContent.getWidth(), 120);
     attackKnob.setBounds(envGrid.removeFromLeft(envGrid.getWidth() / 4));
     decayKnob.setBounds(envGrid.removeFromLeft(envGrid.getWidth() / 3));
@@ -115,8 +117,10 @@ void SynthAudioProcessorEditor::resized()
     synthRow.removeFromLeft(16);
 
     // Output
-    outputSection.setBounds(synthRow);
-    auto outContent = outputSection.getContentBounds();
+    auto outArea = synthRow; // Remaining area
+    outputSection.setBounds(outArea);
+    auto outContent = outArea.reduced(12);
+    outContent.removeFromTop(24); // Title space
     masterGainFader.setBounds(outContent.removeFromLeft(80));
     outContent.removeFromLeft(16);
     panicButton.setBounds(outContent.withSizeKeepingCentre(outContent.getWidth(), 32));

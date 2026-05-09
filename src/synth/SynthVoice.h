@@ -8,7 +8,7 @@
 namespace coolsynth::synth
 {
     /**
-     * A single synthesizer voice responsible for rendering one sine wave note.
+     * A single synthesizer voice responsible for rendering one selectable waveform note.
      */
     class SynthVoice final : public juce::SynthesiserVoice
     {

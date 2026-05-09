@@ -41,6 +41,7 @@ namespace coolsynth::synth
         void applyMasterGain(juce::AudioBuffer<float>& outputBuffer, float targetLinearGain) noexcept;
 
         ReleaseFirstSynthesiser synthesiser;
+        std::vector<SynthVoice*> synthVoices;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGainLinear;
         int outputChannels = 0;
         bool prepared = false;

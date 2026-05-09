@@ -5,7 +5,10 @@ namespace coolsynth::synth
 {
     SynthVoice::SynthVoice()
     {
-        oscillator.initialise([](float x) { return std::sin(x); });
+        oscillator.initialise([this](float phase)
+        {
+            return renderWaveSample(phase, currentWaveform);
+        });
     }
 
     void SynthVoice::prepare(const juce::dsp::ProcessSpec& spec)
@@ -63,6 +66,8 @@ namespace coolsynth::synth
     {
         if (!isVoiceActive())
             return;
+
+        ampEnvelope.setParameters(makeJuceEnvelopeParameters());
 
         // Note: JUCE's dsp::Oscillator process expects a ProcessContext.
         // For simplicity in Phase 4, we use the sample-by-sample approach as requested.

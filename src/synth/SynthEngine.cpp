@@ -47,7 +47,9 @@ namespace coolsynth::synth
 
         for (int i = 0; i < defaultVoiceCount; ++i)
         {
-            synthesiser.addVoice(new SynthVoice());
+            auto* voice = new SynthVoice();
+            synthVoices.push_back(voice);
+            synthesiser.addVoice(voice);
         }
     }
 
@@ -94,34 +96,25 @@ namespace coolsynth::synth
         spec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
         spec.numChannels = 1; // Voices render mono
 
-        for (int i = 0; i < synthesiser.getNumVoices(); ++i)
+        for (auto* voice : synthVoices)
         {
-            if (auto* voice = dynamic_cast<SynthVoice*>(synthesiser.getVoice(i)))
-            {
-                voice->prepare(spec);
-            }
+            voice->prepare(spec);
         }
     }
 
     void SynthEngine::pushEnvelopeParametersToVoices(const EnvelopeParameters& parameters) noexcept
     {
-        for (int i = 0; i < synthesiser.getNumVoices(); ++i)
+        for (auto* voice : synthVoices)
         {
-            if (auto* voice = dynamic_cast<SynthVoice*>(synthesiser.getVoice(i)))
-            {
-                voice->setNextEnvelopeParameters(parameters);
-            }
+            voice->setNextEnvelopeParameters(parameters);
         }
     }
 
     void SynthEngine::pushWaveformToVoices(coolsynth::parameters::WaveformChoice waveform) noexcept
     {
-        for (int i = 0; i < synthesiser.getNumVoices(); ++i)
+        for (auto* voice : synthVoices)
         {
-            if (auto* voice = dynamic_cast<SynthVoice*>(synthesiser.getVoice(i)))
-            {
-                voice->setWaveform(waveform);
-            }
+            voice->setWaveform(waveform);
         }
     }
 
