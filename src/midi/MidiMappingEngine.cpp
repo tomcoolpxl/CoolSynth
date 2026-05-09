@@ -93,14 +93,33 @@ namespace coolsynth::midi
 
             if (b.target.parameter != nullptr)
             {
+                float incomingNormalizedValue = 0.0f;
+                if (b.target.curve == MappingCurve::waveformChoice3Step)
+                    incomingNormalizedValue = mapWaveformChoice(event.data2);
+                else
+                    incomingNormalizedValue = mapControllerValue(event.data2, b.target);
+
+                if (!b.isLatched)
+                {
+                    const float softwareValue = b.target.parameter->getValue();
+                    const float diff = std::abs(incomingNormalizedValue - softwareValue);
+                    
+                    // 5% threshold for soft takeover
+                    if (diff <= 0.05f)
+                    {
+                        b.isLatched = true;
+                    }
+                    else
+                    {
+                        // Ignore input until it catches up
+                        return {};
+                    }
+                }
+
                 MappedAction action;
                 action.kind = MappedAction::Kind::parameterChange;
                 action.parameterChange.parameter = b.target.parameter;
-                
-                if (b.target.curve == MappingCurve::waveformChoice3Step)
-                    action.parameterChange.normalizedValue = mapWaveformChoice(event.data2);
-                else
-                    action.parameterChange.normalizedValue = mapControllerValue(event.data2, b.target);
+                action.parameterChange.normalizedValue = incomingNormalizedValue;
                 
                 return action;
             }

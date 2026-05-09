@@ -80,6 +80,7 @@ namespace coolsynth::midi
         {
             Minilab3Binding binding;
             ParameterTarget target;
+            mutable bool isLatched = false;
         };
 
         std::array<BindingWithTarget, 12> activeBindings {};

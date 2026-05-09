@@ -111,6 +111,7 @@ void MidiMonitorPanel::drainPendingEvents()
         }
 
         table.updateContent();
+        table.repaint();
         table.scrollToEnsureRowIsOnscreen(recentEvents.size() - 1);
     }
 }
