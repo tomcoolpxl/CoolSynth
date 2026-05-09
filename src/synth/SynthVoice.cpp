@@ -145,10 +145,15 @@ namespace coolsynth::synth
 
     float SynthVoice::mapNormalizedResonanceToQ(float normalized) noexcept
     {
+        // qMin is Butterworth (1/sqrt(2) ~= 0.707)
+        // qMax increased to 25.0 for more aggressive synth resonance.
         const float qMin = 1.0f / std::sqrt(2.0f);
-        const float qMax = 8.0f;
+        const float qMax = 25.0f;
         const float r = juce::jlimit(0.0f, 1.0f, normalized);
-        return qMin + (qMax - qMin) * (r * r);
+        
+        // Use cubic mapping (r^3) to give more resolution at the low end 
+        // while allowing the high end to reach more extreme values.
+        return qMin + (qMax - qMin) * (r * r * r);
     }
 
     float SynthVoice::clampCutoffToPreparedRange(float cutoffHz) const noexcept
