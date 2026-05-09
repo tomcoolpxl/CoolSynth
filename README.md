@@ -58,6 +58,17 @@ In standalone mode, right-clicking on any continuous control (like knobs and fad
 CoolSynth does not currently persist:
 
 - window size or position
+- recent files
+- MIDI monitor UI state
+r MIDI controller to map it.
+- **Cancel MIDI Learn:** If you changed your mind while the parameter is armed (highlighted yellow).
+- **Clear MIDI CC Mapping:** To restore the default mapping behavior for this parameter.
+
+*Note: Learned mappings only apply in the Standalone application and are not shared with the VST3 plugin.*
+
+CoolSynth does not currently persist:
+
+- window size or position
 - preset files
 - recent files
 - MIDI monitor UI state

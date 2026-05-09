@@ -95,3 +95,14 @@
 - [x] Add a clear-mapping action.
 - [x] Persist learned mappings separately from synth parameter state.
 - [x] Verify learned mappings survive an app restart.
+
+## Phase 14: Patch save/load workflow
+
+- [x] Added an `Init Patch` action that resets all automatable parameters to defaults.
+- [x] Implemented patch save and load using a minimal `.cspatch` XML format.
+- [x] Ensured patch files contain only synth parameter state (APVTS).
+- [x] Verified that standalone device settings and learned mappings are excluded from patches and survive loads.
+- [x] Implemented immediate UI restoration upon patch load.
+- [x] Added automated unit tests for patch wrapping, parsing, round-trip, and state boundary enforcement.
+- [x] Wired patch actions to standalone editor buttons.
+

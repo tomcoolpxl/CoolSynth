@@ -83,6 +83,16 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
 
     if (juce::JUCEApplicationBase::isStandaloneApp())
     {
+        patchActionsVisible = true;
+
+        initPatchButton.onClick = [this] { triggerInitPatch(); };
+        savePatchButton.onClick = [this] { triggerSavePatch(); };
+        loadPatchButton.onClick = [this] { triggerLoadPatch(); };
+
+        addAndMakeVisible(initPatchButton);
+        addAndMakeVisible(savePatchButton);
+        addAndMakeVisible(loadPatchButton);
+
         auto* deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager();
         auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore();
 
@@ -319,6 +329,16 @@ void SynthAudioProcessorEditor::resized()
         titleArea.removeFromRight(16);
     }
     allNotesOffButton.setBounds(titleArea.removeFromRight(120).withSizeKeepingCentre(100, 24));
+    
+    if (patchActionsVisible)
+    {
+        titleArea.removeFromRight(16);
+        loadPatchButton.setBounds(titleArea.removeFromRight(90).withSizeKeepingCentre(80, 24));
+        titleArea.removeFromRight(8);
+        savePatchButton.setBounds(titleArea.removeFromRight(90).withSizeKeepingCentre(80, 24));
+        titleArea.removeFromRight(8);
+        initPatchButton.setBounds(titleArea.removeFromRight(90).withSizeKeepingCentre(80, 24));
+    }
     area.removeFromTop(16);
 
     auto synthRow = area.removeFromTop(240);
