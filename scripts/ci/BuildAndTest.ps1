@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory)][ValidateSet('Debug', 'Release')][string]$Configuration,
-    [switch]$RunTests
+    [bool]$RunTests = $false
 )
 
 . "$PSScriptRoot/Common.ps1"
@@ -19,6 +19,6 @@ Invoke-CoolSynthBootstrap -SourceRoot $context.SourceRoot
 Invoke-CoolSynthConfigure -BuildContext $context
 Invoke-CoolSynthBuild -BuildContext $context
 
-if ($RunTests.IsPresent) {
+if ($RunTests) {
     Invoke-CoolSynthTests -BuildContext $context
 }

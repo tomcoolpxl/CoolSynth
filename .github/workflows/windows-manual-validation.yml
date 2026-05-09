@@ -43,7 +43,7 @@ jobs:
 
       - name: Build and test
         shell: pwsh
-        run: ./scripts/ci/BuildAndTest.ps1 -Configuration "${{ inputs.configuration }}" -RunTests:${{ inputs.run_tests }}
+        run: ./scripts/ci/BuildAndTest.ps1 -Configuration "${{ inputs.configuration }}" -RunTests ${{ inputs.run_tests }}
 
       - name: Package release artefacts
         if: ${{ inputs.package_assets }}
@@ -55,7 +55,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: windows-manual-${{ github.run_id }}-diagnostics
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
           path: |
             build/ci-debug/logs/**

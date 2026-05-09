@@ -27,7 +27,7 @@ jobs:
 
       - name: Build and test
         shell: pwsh
-        run: ./scripts/ci/BuildAndTest.ps1 -Configuration Release -RunTests
+        run: ./scripts/ci/BuildAndTest.ps1 -Configuration Release -RunTests $true
 
       - name: Package release artefacts
         shell: pwsh
@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: windows-release-${{ github.ref_name }}-diagnostics
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 7
           path: |
             build/ci-release/logs/**
