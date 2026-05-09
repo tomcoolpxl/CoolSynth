@@ -99,44 +99,48 @@ namespace coolsynth::midi
                 else
                     incoming = mapControllerValue(event.data2, b.target);
 
-                if (b.state == TakeoverState::waitingForFirstTouch)
-                {
-                    b.initialHardwareValue = incoming;
-                    b.initialSoftwareValue = b.target.parameter->getValue();
-                    
-                    if (std::abs(incoming - b.initialSoftwareValue) < 0.05f)
-                        b.state = TakeoverState::latched;
-                    else
-                        b.state = TakeoverState::scaling;
-                }
-
                 float finalValue = incoming;
 
-                if (b.state == TakeoverState::scaling)
+                // Bypass soft takeover for discrete parameters
+                if (b.target.curve != MappingCurve::waveformChoice3Step)
                 {
-                    // Latch if hardware hits the extremes or crosses the software value
-                    if (incoming >= 0.99f || incoming <= 0.01f || std::abs(incoming - b.initialSoftwareValue) < 0.05f)
+                    if (b.state == TakeoverState::waitingForFirstTouch)
                     {
-                        b.state = TakeoverState::latched;
-                        finalValue = incoming;
+                        b.initialHardwareValue = incoming;
+                        b.initialSoftwareValue = b.target.parameter->getValue();
+                        
+                        if (std::abs(incoming - b.initialSoftwareValue) < 0.05f)
+                            b.state = TakeoverState::latched;
+                        else
+                            b.state = TakeoverState::scaling;
                     }
-                    else
+
+                    if (b.state == TakeoverState::scaling)
                     {
-                        if (incoming > b.initialHardwareValue)
+                        // Latch if hardware hits the extremes or crosses the software value
+                        if (incoming >= 0.99f || incoming <= 0.01f || std::abs(incoming - b.initialSoftwareValue) < 0.05f)
                         {
-                            // Scale up
-                            float hardwareTravel = (incoming - b.initialHardwareValue) / (1.0f - b.initialHardwareValue);
-                            finalValue = b.initialSoftwareValue + hardwareTravel * (1.0f - b.initialSoftwareValue);
-                        }
-                        else if (incoming < b.initialHardwareValue)
-                        {
-                            // Scale down
-                            float hardwareTravel = (b.initialHardwareValue - incoming) / b.initialHardwareValue;
-                            finalValue = b.initialSoftwareValue - hardwareTravel * b.initialSoftwareValue;
+                            b.state = TakeoverState::latched;
+                            finalValue = incoming;
                         }
                         else
                         {
-                            finalValue = b.initialSoftwareValue;
+                            if (incoming > b.initialHardwareValue)
+                            {
+                                // Scale up
+                                float hardwareTravel = (incoming - b.initialHardwareValue) / (1.0f - b.initialHardwareValue);
+                                finalValue = b.initialSoftwareValue + hardwareTravel * (1.0f - b.initialSoftwareValue);
+                            }
+                            else if (incoming < b.initialHardwareValue)
+                            {
+                                // Scale down
+                                float hardwareTravel = (b.initialHardwareValue - incoming) / b.initialHardwareValue;
+                                finalValue = b.initialSoftwareValue - hardwareTravel * b.initialSoftwareValue;
+                            }
+                            else
+                            {
+                                finalValue = b.initialSoftwareValue;
+                            }
                         }
                     }
                 }
