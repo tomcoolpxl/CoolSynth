@@ -31,6 +31,7 @@ juce_add_plugin(CoolSynth
 
 target_sources(CoolSynth
     PRIVATE
+        src/presets/PatchState.cpp
         src/midi/MidiLearn.cpp
         src/midi/MidiMappingEngine.cpp
         src/midi/MidiMonitor.cpp
@@ -82,11 +83,28 @@ if(BUILD_TESTING)
     target_sources(CoolSynthMidiLearnTests
         PRIVATE
             tests/MidiLearnTests.cpp
+            tests/PatchStateTests.cpp
+            src/presets/PatchState.cpp
+            src/plugin/SynthAudioProcessor.cpp
+            src/plugin/SynthAudioProcessorEditor.cpp
             src/midi/MidiLearn.cpp
             src/midi/MidiMappingEngine.cpp
+            src/midi/MidiMonitor.cpp
             src/midi/Minilab3Profile.cpp
             src/standalone/SettingsStore.cpp
+            src/standalone/StandaloneAudioSupport.cpp
+            src/standalone/StandaloneMidiInput.cpp
             src/parameters/ParameterLayout.cpp
+            src/synth/SynthEngine.cpp
+            src/synth/GlobalDelay.cpp
+            src/synth/SynthVoice.cpp
+            src/ui/HardwareFader.cpp
+            src/ui/HardwareKnob.cpp
+            src/ui/MidiMonitorPanel.cpp
+            src/ui/StandaloneMidiInputPanel.cpp
+            src/ui/StandaloneSettingsDialog.cpp
+            src/ui/StandaloneStatusBar.cpp
+            src/ui/SynthSection.cpp
     )
 
     target_include_directories(CoolSynthMidiLearnTests
@@ -102,6 +120,9 @@ if(BUILD_TESTING)
             juce::juce_audio_basics
             juce::juce_audio_devices
             juce::juce_audio_processors
+            juce::juce_audio_utils
+            juce::juce_gui_basics
+            juce::juce_dsp
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags
     )

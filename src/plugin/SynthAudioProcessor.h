@@ -36,6 +36,11 @@ public:
     void getStateInformation(juce::MemoryBlock& destData) override;
     void setStateInformation(const void* data, int sizeInBytes) override;
 
+    std::unique_ptr<juce::XmlElement> createParameterStateXml();
+    bool applyParameterStateXml(const juce::XmlElement& stateXml);
+    void resetAutomatableParametersToDefaults();
+    juce::String getParameterStateTypeName() const;
+
     void setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
     void clearLearnedMidiBinding(juce::StringRef parameterId);
 
@@ -47,6 +52,8 @@ public:
 
 private:
     void applyMappedAction(const coolsynth::midi::MappedAction& action);
+    void applyNormalizedParameterValue(juce::RangedAudioParameter& parameter,
+                                      float normalizedValue);
     void applyParameterChange(const coolsynth::midi::MappedParameterChange& change);
     void applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept;
 

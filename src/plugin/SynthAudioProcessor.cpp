@@ -52,16 +52,53 @@ juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()
 
 void SynthAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
-    auto state = parameters.copyState();
-    if (auto xml = state.createXml())
+    if (auto xml = createParameterStateXml())
         copyXmlToBinary(*xml, destData);
 }
 
 void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary(data, sizeInBytes))
-        if (xml->hasTagName(parameters.state.getType()))
-            parameters.replaceState(juce::ValueTree::fromXml(*xml));
+        applyParameterStateXml(*xml);
+}
+
+std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createParameterStateXml()
+{
+    auto state = parameters.copyState();
+    return state.createXml();
+}
+
+bool SynthAudioProcessor::applyParameterStateXml(const juce::XmlElement& stateXml)
+{
+    if (!stateXml.hasTagName(parameters.state.getType()))
+        return false;
+
+    auto tree = juce::ValueTree::fromXml(stateXml);
+    if (!tree.isValid())
+        return false;
+
+    parameters.replaceState(tree);
+    return true;
+}
+
+juce::String SynthAudioProcessor::getParameterStateTypeName() const
+{
+    return parameters.state.getType().toString();
+}
+
+void SynthAudioProcessor::applyNormalizedParameterValue(juce::RangedAudioParameter& parameter,
+                                                        float normalizedValue)
+{
+    parameter.beginChangeGesture();
+    parameter.setValueNotifyingHost(normalizedValue);
+    parameter.endChangeGesture();
+}
+
+void SynthAudioProcessor::resetAutomatableParametersToDefaults()
+{
+    for (auto* parameterBase : getParameters())
+        if (auto* parameter = dynamic_cast<juce::RangedAudioParameter*>(parameterBase))
+            applyNormalizedParameterValue(*parameter, parameter->getDefaultValue());
 }
 
 void SynthAudioProcessor::setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings)

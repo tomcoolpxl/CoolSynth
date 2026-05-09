@@ -113,6 +113,21 @@ private:
     int badgeVisibilityCounter = 0;
     bool lastShowCcLabelsSetting = true;
 
+    void triggerInitPatch();
+    void triggerSavePatch();
+    void triggerLoadPatch();
+    void launchPatchSaveChooser();
+    void launchPatchLoadChooser();
+    void handlePatchSaveSelection(const juce::File& selectedFile);
+    void handlePatchLoadSelection(const juce::File& selectedFile);
+    void showPatchError(juce::String message);
+
+    juce::TextButton initPatchButton { "Init Patch" };
+    juce::TextButton savePatchButton { "Save Patch" };
+    juce::TextButton loadPatchButton { "Load Patch" };
+    std::unique_ptr<juce::FileChooser> activePatchChooser;
+    bool patchActionsVisible = false;
+
 public:
     coolsynth::standalone::StandaloneMidiInputController* getStandaloneMidiController() const noexcept
     {

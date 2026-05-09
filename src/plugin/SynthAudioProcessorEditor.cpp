@@ -6,6 +6,7 @@
 #include "ui/StandaloneStatusBar.h"
 #include "standalone/StandaloneAudioSupport.h"
 #include "standalone/SettingsStore.h"
+#include "presets/PatchState.h"
 
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
@@ -427,4 +428,93 @@ juce::String SynthAudioProcessorEditor::getCurrentParameterText(juce::RangedAudi
         return "-";
     
     return parameter->getCurrentValueAsText();
+}
+
+void SynthAudioProcessorEditor::triggerInitPatch()
+{
+    processor.resetAutomatableParametersToDefaults();
+    refreshValueDisplays();
+}
+
+void SynthAudioProcessorEditor::triggerSavePatch()
+{
+    launchPatchSaveChooser();
+}
+
+void SynthAudioProcessorEditor::triggerLoadPatch()
+{
+    launchPatchLoadChooser();
+}
+
+void SynthAudioProcessorEditor::launchPatchSaveChooser()
+{
+    activePatchChooser = std::make_unique<juce::FileChooser>(
+        "Save Patch", juce::File(), "*" + juce::String(coolsynth::presets::defaultPatchExtension));
+
+    auto flags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles;
+    activePatchChooser->launchAsync(flags, [this](const juce::FileChooser& chooser)
+    {
+        if (chooser.getResult() != juce::File())
+            handlePatchSaveSelection(chooser.getResult());
+    });
+}
+
+void SynthAudioProcessorEditor::launchPatchLoadChooser()
+{
+    activePatchChooser = std::make_unique<juce::FileChooser>(
+        "Load Patch", juce::File(), "*" + juce::String(coolsynth::presets::defaultPatchExtension));
+
+    auto flags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+    activePatchChooser->launchAsync(flags, [this](const juce::FileChooser& chooser)
+    {
+        if (chooser.getResult() != juce::File())
+            handlePatchLoadSelection(chooser.getResult());
+    });
+}
+
+void SynthAudioProcessorEditor::handlePatchSaveSelection(const juce::File& selectedFile)
+{
+    auto destination = selectedFile;
+    if (!destination.hasFileExtension(coolsynth::presets::defaultPatchExtension))
+        destination = destination.withFileExtension(coolsynth::presets::defaultPatchExtension);
+
+    auto stateXml = processor.createParameterStateXml();
+    if (stateXml == nullptr)
+    {
+        showPatchError("Failed to capture synth parameter state.");
+        return;
+    }
+
+    auto patchXml = coolsynth::presets::createWrappedPatchXml(*stateXml,
+                                                              processor.getParameterStateTypeName());
+    auto result = coolsynth::presets::writePatchFile(destination, *patchXml);
+    if (!result.succeeded())
+        showPatchError(result.message);
+}
+
+void SynthAudioProcessorEditor::handlePatchLoadSelection(const juce::File& selectedFile)
+{
+    auto result = coolsynth::presets::readPatchFile(selectedFile,
+                                                    processor.getParameterStateTypeName());
+    if (!result.succeeded() || result.parameterStateXml == nullptr)
+    {
+        showPatchError(result.message);
+        return;
+    }
+
+    if (!processor.applyParameterStateXml(*result.parameterStateXml))
+    {
+        showPatchError("Patch file contained incompatible parameter state.");
+        return;
+    }
+
+    refreshValueDisplays();
+}
+
+void SynthAudioProcessorEditor::showPatchError(juce::String message)
+{
+    juce::NativeMessageBox::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon,
+                                                "Patch Error",
+                                                message,
+                                                this);
 }
