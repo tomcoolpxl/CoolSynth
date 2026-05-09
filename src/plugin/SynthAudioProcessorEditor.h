@@ -110,5 +110,15 @@ private:
     std::unique_ptr<coolsynth::standalone::StandaloneMidiInputController> standaloneMidiController;
     std::unique_ptr<juce::Component> standaloneStatusBar;
 
+    int badgeVisibilityCounter = 0;
+    bool lastShowCcLabelsSetting = true;
+
+public:
+    coolsynth::standalone::StandaloneMidiInputController* getStandaloneMidiController() const noexcept
+    {
+        return standaloneMidiController.get();
+    }
+private:
+
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessorEditor)
 };

@@ -49,12 +49,13 @@ namespace coolsynth::ui
         }
         else if (learnedBadge.isNotEmpty())
         {
-            g.setColour(juce::Colours::lightblue.withAlpha(0.2f));
-            g.fillRoundedRectangle(getLocalBounds().toFloat(), 5.0f);
+            auto badgeArea = getLocalBounds().withSizeKeepingCentre(40, 16);
+            g.setColour(juce::Colours::lightblue.withAlpha(0.8f));
+            g.fillRoundedRectangle(badgeArea.toFloat(), 4.0f);
             
-            g.setColour(juce::Colours::lightblue);
-            g.setFont(10.0f);
-            g.drawText(learnedBadge, getLocalBounds().withSizeKeepingCentre(40, 16).translated(0, -15), juce::Justification::centred, false);
+            g.setColour(juce::Colours::black);
+            g.setFont(12.0f);
+            g.drawText(learnedBadge, badgeArea, juce::Justification::centred, false);
         }
     }
 }

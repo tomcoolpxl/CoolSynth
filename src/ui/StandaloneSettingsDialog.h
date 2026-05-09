@@ -25,6 +25,7 @@ private:
     private:
         StandaloneMidiInputPanel midiInputPanel;
         MidiMonitorPanel midiMonitorPanel;
+        juce::ToggleButton showCcLabelsToggle { "Show CC Labels on Controls" };
     };
 
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };

@@ -166,7 +166,28 @@ void SynthAudioProcessorEditor::handleStandaloneControllerEvent(const coolsynth:
                 settingsStore->saveLearnedMidiMappings(midiLearnManager->getBindings());
             }
             processor.setLearnedMidiBindings(midiLearnManager->getBindings());
+            badgeVisibilityCounter = 72; // Show briefly if settings hide them
             refreshMidiLearnVisuals();
+        }
+
+        if (event.type == coolsynth::midi::ControllerMidiEventType::controlChange)
+        {
+            for (const auto& b : midiLearnManager->getBindings())
+            {
+                if (b.cc.channel == event.channel && b.cc.controllerNumber == event.data1)
+                {
+                    if (!lastShowCcLabelsSetting && badgeVisibilityCounter == 0)
+                    {
+                        badgeVisibilityCounter = 72;
+                        refreshMidiLearnVisuals();
+                    }
+                    else
+                    {
+                        badgeVisibilityCounter = 72;
+                    }
+                    break;
+                }
+            }
         }
 
         if (outcome.result == coolsynth::midi::MidiLearnCaptureResult::captured)
@@ -190,14 +211,19 @@ void SynthAudioProcessorEditor::refreshMidiLearnVisuals()
     auto session = midiLearnManager->getSession();
     midiLearnStatusLabel.setText(session.statusText, juce::dontSendNotification);
 
+    bool shouldShowBadges = lastShowCcLabelsSetting || session.armed || badgeVisibilityCounter > 0;
+
     for (auto& ctrl : learnableControls)
     {
         bool isArmed = session.armed && session.parameterId == ctrl.parameterId;
         juce::String badge = "";
         
-        if (auto* binding = midiLearnManager->findBindingForParameter(ctrl.parameterId))
+        if (shouldShowBadges)
         {
-            badge = "CC" + juce::String(binding->cc.controllerNumber);
+            if (auto* binding = midiLearnManager->findBindingForParameter(ctrl.parameterId))
+            {
+                badge = "CC" + juce::String(binding->cc.controllerNumber);
+            }
         }
         
         if (ctrl.applyVisualState)
@@ -286,6 +312,11 @@ void SynthAudioProcessorEditor::resized()
     auto titleArea = area.removeFromTop(48);
     titleLabel.setBounds(titleArea.removeFromLeft(200));
     midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(400).withTrimmedTop(12));
+    
+    if (juce::JUCEApplicationBase::isStandaloneApp())
+    {
+        titleArea.removeFromRight(16);
+    }
     allNotesOffButton.setBounds(titleArea.removeFromRight(120).withSizeKeepingCentre(100, 24));
     area.removeFromTop(16);
 
@@ -354,6 +385,26 @@ void SynthAudioProcessorEditor::resized()
 void SynthAudioProcessorEditor::timerCallback()
 {
     refreshValueDisplays();
+    
+    if (badgeVisibilityCounter > 0)
+    {
+        badgeVisibilityCounter--;
+        if (badgeVisibilityCounter == 0)
+            refreshMidiLearnVisuals();
+    }
+    else
+    {
+        auto* store = coolsynth::standalone::getStandaloneSettingsStore();
+        if (store != nullptr)
+        {
+            bool currentSetting = store->getShowCcLabels();
+            if (currentSetting != lastShowCcLabelsSetting)
+            {
+                lastShowCcLabelsSetting = currentSetting;
+                refreshMidiLearnVisuals();
+            }
+        }
+    }
 }
 
 void SynthAudioProcessorEditor::refreshValueDisplays()

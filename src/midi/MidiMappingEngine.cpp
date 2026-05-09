@@ -256,9 +256,26 @@ namespace coolsynth::midi
             {
                 float incoming = 0.0f;
                 if (b.target.curve == MappingCurve::waveformChoice3Step)
-                    incoming = mapWaveformChoice(event.data2);
+                {
+                    if (b.binding.primaryData == 114 && event.data2 >= 60 && event.data2 <= 68)
+                    {
+                        float current = b.target.parameter->getValue();
+                        if (event.data2 < 64)
+                            incoming = current > 0.6f ? 0.5f : 0.0f;
+                        else if (event.data2 > 64)
+                            incoming = current < 0.4f ? 0.5f : 1.0f;
+                        else
+                            incoming = current;
+                    }
+                    else
+                    {
+                        incoming = mapWaveformChoice(event.data2);
+                    }
+                }
                 else
+                {
                     incoming = mapControllerValue(event.data2, b.target);
+                }
 
                 float finalValue = incoming;
 

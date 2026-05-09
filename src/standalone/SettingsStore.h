@@ -68,6 +68,16 @@ namespace coolsynth::standalone
             propertySet.removeValue("midiInputName");
         }
 
+        bool getShowCcLabels() const
+        {
+            return propertySet.getBoolValue("showCcLabels", true);
+        }
+
+        void setShowCcLabels(bool show)
+        {
+            propertySet.setValue("showCcLabels", show);
+        }
+
         std::vector<coolsynth::midi::LearnedCcBinding> loadLearnedMidiMappings() const;
         void saveLearnedMidiMappings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
         void clearLearnedMidiMappings();

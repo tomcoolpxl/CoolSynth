@@ -9,9 +9,70 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
+#include "ui/StandaloneSettingsDialog.h"
+#include "plugin/SynthAudioProcessorEditor.h"
 
 namespace
 {
+
+class CoolSynthStandaloneWindow final : public juce::StandaloneFilterWindow
+{
+public:
+    CoolSynthStandaloneWindow(const juce::String& title, juce::Colour bgColour, std::unique_ptr<juce::StandalonePluginHolder> holder)
+        : juce::StandaloneFilterWindow(title, bgColour, std::move(holder))
+    {
+        // Intercept the default JUCE StandaloneFilterWindow "Options" button
+        // by hiding it and overlaying our own
+        for (auto* child : getChildren())
+        {
+            if (auto* button = dynamic_cast<juce::Button*>(child))
+            {
+                if (button->getName() == "Options" || button->getButtonText() == "Options")
+                {
+                    button->setVisible(false);
+                    originalOptionsButton = button;
+                }
+            }
+        }
+
+        customOptionsButton.setButtonText("Options");
+        customOptionsButton.onClick = [this] { openCustomSettings(); };
+        addAndMakeVisible(&customOptionsButton);
+    }
+
+    void resized() override
+    {
+        juce::StandaloneFilterWindow::resized();
+
+        if (originalOptionsButton != nullptr)
+        {
+            customOptionsButton.setBounds(originalOptionsButton->getBounds());
+        }
+    }
+
+private:
+    juce::TextButton customOptionsButton;
+    juce::Button* originalOptionsButton = nullptr;
+    void openCustomSettings()
+    {
+        if (auto* holder = getPluginHolder())
+        {
+            if (auto* processor = holder->processor.get())
+            {
+                if (auto* editor = dynamic_cast<SynthAudioProcessorEditor*>(processor->getActiveEditor()))
+                {
+                    auto* deviceManager = &holder->deviceManager;
+                    auto* midiController = editor->getStandaloneMidiController();
+                    if (deviceManager != nullptr && midiController != nullptr)
+                    {
+                        showStandaloneSettingsDialog(this, *deviceManager, *midiController);
+                    }
+                }
+            }
+        }
+    }
+};
+
 class CoolSynthStandaloneApp final : public juce::JUCEApplication
 {
 public:
@@ -40,7 +101,7 @@ public:
             coolsynth::standalone::bindStandaloneSettingsStore(settingsStore.get());
         }
 
-        mainWindow = std::make_unique<juce::StandaloneFilterWindow>(
+        mainWindow = std::make_unique<CoolSynthStandaloneWindow>(
             getApplicationName(),
             juce::LookAndFeel::getDefaultLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId),
             createPluginHolder());
@@ -79,7 +140,7 @@ private:
 
     juce::ApplicationProperties appProperties;
     std::unique_ptr<coolsynth::standalone::StandaloneSettingsStore> settingsStore;
-    std::unique_ptr<juce::StandaloneFilterWindow> mainWindow;
+    std::unique_ptr<CoolSynthStandaloneWindow> mainWindow;
 };
 }
 

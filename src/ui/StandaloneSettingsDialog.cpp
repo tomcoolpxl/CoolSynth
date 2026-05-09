@@ -5,13 +5,30 @@ StandaloneSettingsDialog::MidiTab::MidiTab(coolsynth::standalone::StandaloneMidi
     , midiMonitorPanel(midiController.getMonitorBuffer())
 {
     addAndMakeVisible(midiInputPanel);
+    addAndMakeVisible(showCcLabelsToggle);
     addAndMakeVisible(midiMonitorPanel);
+
+    auto* store = coolsynth::standalone::getStandaloneSettingsStore();
+    if (store != nullptr)
+    {
+        showCcLabelsToggle.setToggleState(store->getShowCcLabels(), juce::dontSendNotification);
+    }
+
+    showCcLabelsToggle.onClick = [this] {
+        auto* store = coolsynth::standalone::getStandaloneSettingsStore();
+        if (store != nullptr)
+        {
+            store->setShowCcLabels(showCcLabelsToggle.getToggleState());
+        }
+    };
 }
 
 void StandaloneSettingsDialog::MidiTab::resized()
 {
     auto bounds = getLocalBounds();
     midiInputPanel.setBounds(bounds.removeFromTop(70));
+    bounds.removeFromTop(5);
+    showCcLabelsToggle.setBounds(bounds.removeFromTop(24).reduced(4, 0));
     bounds.removeFromTop(10); // spacing
     midiMonitorPanel.setBounds(bounds);
 }
