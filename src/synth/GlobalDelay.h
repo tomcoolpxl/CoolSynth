@@ -15,6 +15,7 @@ namespace coolsynth::synth
     public:
         void prepare(double sampleRate, int samplesPerBlock, int outputChannelCount);
         void reset() noexcept;
+        void clear() noexcept;
         void process(juce::AudioBuffer<float>& buffer,
                      const DelayParameters& parameters) noexcept;
 

@@ -26,12 +26,28 @@ cmake --build build --config Debug
 
 ### Current Status
 
-**Phase 10: Hardware-style UI refinement** is complete.
+**Phase 12: Standalone Device Persistence** is complete.
 
-- Refined the editor into grouped oscillator, filter, envelope, delay, output, and global action sections.
-- Moved standalone audio and MIDI utility controls into one dedicated settings dialog.
-- Replaced the large standalone status panel with a compact bottom status bar.
-- Added live last-MIDI-event status text to the standalone status bar.
-- Removed redundant standalone audio or MIDI settings entry points.
-- Ensured the plugin editor omits standalone-only device, settings, status, and monitor UI.
-- Improved control labels and value readability.
+- Persisted the last valid standalone audio backend, output device, sample rate, and buffer size.
+- Persisted the last valid standalone MIDI input selection.
+- Restored persisted standalone device settings when still available.
+- Supported and displayed missing remembered devices gracefully.
+
+## Standalone Persistence
+
+CoolSynth remembers these standalone-only settings between runs:
+
+- audio backend
+- output device
+- sample rate
+- buffer size
+- one selected MIDI input device
+
+If a remembered audio or MIDI device is unavailable at startup, the app stays open and shows the unavailable state in the standalone UI.
+
+CoolSynth does not currently persist:
+
+- window size or position
+- preset files
+- recent files
+- MIDI monitor UI state

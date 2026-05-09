@@ -118,10 +118,19 @@ void StandaloneStatusBar::refreshLabels()
 
 juce::String StandaloneStatusBar::formatAudioSummary(const coolsynth::standalone::AudioDeviceSnapshot& snapshot) const
 {
-    if (!snapshot.hasCurrentDevice)
-        return "Audio: Off";
+    using Status = coolsynth::standalone::AudioDeviceStatus;
+
+    if (snapshot.status == Status::managerUnavailable)
+        return "Audio: Unavailable";
+    if (snapshot.status == Status::rememberedConfigurationUnavailable)
+        return "Audio: Remembered config unavailable";
+    if (snapshot.status == Status::noOutputDeviceAvailable)
+        return "Audio: No output";
 
     juce::String text = "Audio: ";
+    if (snapshot.status == Status::fallbackConfigurationActive)
+        text << "(Fallback) ";
+
     text << coolsynth::standalone::formatSampleRateHz(snapshot.sampleRateHz);
     text << ", " << coolsynth::standalone::formatBufferSizeSamples(snapshot.bufferSizeSamples);
     return text;
@@ -129,8 +138,15 @@ juce::String StandaloneStatusBar::formatAudioSummary(const coolsynth::standalone
 
 juce::String StandaloneStatusBar::formatMidiSummary(const coolsynth::standalone::MidiInputSnapshot& snapshot) const
 {
-    if (snapshot.status == coolsynth::standalone::MidiInputStatus::connected)
+    using Status = coolsynth::standalone::MidiInputStatus;
+    
+    if (snapshot.status == Status::connected)
         return "MIDI: " + snapshot.selectedDeviceName;
+    if (snapshot.status == Status::rememberedDeviceUnavailable)
+        return "MIDI: Unavailable (" + snapshot.selectedDeviceName + ")";
+    if (snapshot.status == Status::disconnected)
+        return "MIDI: Disconnected (" + snapshot.selectedDeviceName + ")";
+        
     return "MIDI: -";
 }
 

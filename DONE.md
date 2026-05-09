@@ -77,3 +77,12 @@
 - [x] Ensured the plugin editor omits standalone-only device, settings, status, and monitor UI.
 - [x] Improved control labels and value readability.
 - [x] Verified the refined UI remains usable during playback.
+
+## Phase 12: Standalone Device Persistence
+
+- [x] Persist the last valid standalone audio backend, output device, sample rate, and buffer size.
+- [x] Persist the last valid standalone MIDI input selection.
+- [x] Restore persisted standalone device settings when still available.
+- [x] Show unavailable state when saved devices are missing.
+- [x] Clear held-note state when the active MIDI device disconnects during playback.
+- [x] Verify standalone restart and missing-device behavior.

@@ -76,13 +76,13 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     if (juce::JUCEApplicationBase::isStandaloneApp())
     {
         auto* deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager();
-        auto* settings = coolsynth::standalone::getStandaloneSettings();
+        auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore();
 
         jassert(deviceManager != nullptr);
 
         standaloneMidiController = std::make_unique<coolsynth::standalone::StandaloneMidiInputController>(
             *deviceManager,
-            settings,
+            settingsStore,
             [this](const coolsynth::midi::ControllerMidiEvent& event)
             {
                 processor.handleStandaloneControllerEvent(event);

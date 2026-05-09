@@ -92,6 +92,7 @@ namespace coolsynth::synth
     void SynthEngine::panic() noexcept
     {
         synthesiser.allNotesOff(0, false);
+        globalDelay.clear();
     }
 
     void SynthEngine::prepareVoices(double sampleRate, int samplesPerBlock)

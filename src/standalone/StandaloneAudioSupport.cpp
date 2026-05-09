@@ -52,7 +52,7 @@ namespace coolsynth::standalone
     AudioDeviceSnapshot captureCurrentAudioDeviceSnapshot()
     {
         if (auto* deviceManager = getStandaloneAudioDeviceManager())
-            return captureAudioDeviceSnapshot(*deviceManager);
+            return captureAudioDeviceSnapshot(*deviceManager, getStandaloneSettingsStore());
 
         AudioDeviceSnapshot snapshot;
         snapshot.runningInStandalone = juce::JUCEApplicationBase::isStandaloneApp();
@@ -60,11 +60,21 @@ namespace coolsynth::standalone
         return snapshot;
     }
 
-    AudioDeviceSnapshot captureAudioDeviceSnapshot(const juce::AudioDeviceManager& deviceManager)
+    AudioDeviceSnapshot captureAudioDeviceSnapshot(const juce::AudioDeviceManager& deviceManager,
+                                                   const StandaloneSettingsStore* settingsStore)
     {
         AudioDeviceSnapshot snapshot;
         snapshot.runningInStandalone = juce::JUCEApplicationBase::isStandaloneApp();
         snapshot.backendName = deviceManager.getCurrentAudioDeviceType();
+
+        if (settingsStore != nullptr)
+        {
+            if (auto persisted = settingsStore->loadPersistedAudioSelection())
+            {
+                snapshot.persistedConfigurationFound = true;
+                snapshot.persistedSelection = *persisted;
+            }
+        }
 
         if (auto* currentDevice = deviceManager.getCurrentAudioDevice())
         {
@@ -73,10 +83,44 @@ namespace coolsynth::standalone
             snapshot.outputDeviceName = currentDevice->getName();
             snapshot.sampleRateHz = currentDevice->getCurrentSampleRate();
             snapshot.bufferSizeSamples = currentDevice->getCurrentBufferSizeSamples();
-            snapshot.statusMessage = snapshot.hasActiveOutput ? "Ready" : "Device open with no active output channels";
+            
+            if (snapshot.persistedConfigurationFound)
+            {
+                snapshot.currentMatchesPersistedConfiguration = 
+                    snapshot.backendName == snapshot.persistedSelection.deviceTypeName &&
+                    snapshot.outputDeviceName == snapshot.persistedSelection.outputDeviceName &&
+                    juce::approximatelyEqual(snapshot.sampleRateHz, snapshot.persistedSelection.sampleRateHz) &&
+                    snapshot.bufferSizeSamples == snapshot.persistedSelection.bufferSizeSamples;
+            }
+
+            if (!snapshot.hasActiveOutput)
+            {
+                snapshot.statusMessage = "Device open with no active output channels";
+            }
+        }
+
+        if (!snapshot.runningInStandalone)
+        {
+            snapshot.status = AudioDeviceStatus::managerUnavailable;
+            snapshot.statusMessage = "Not running in standalone mode";
+        }
+        else if (snapshot.hasActiveOutput)
+        {
+            snapshot.status = (snapshot.persistedConfigurationFound && !snapshot.currentMatchesPersistedConfiguration)
+                ? AudioDeviceStatus::fallbackConfigurationActive
+                : AudioDeviceStatus::ready;
+            
+            if (snapshot.statusMessage.isEmpty())
+                snapshot.statusMessage = "Ready";
+        }
+        else if (snapshot.persistedConfigurationFound)
+        {
+            snapshot.status = AudioDeviceStatus::rememberedConfigurationUnavailable;
+            snapshot.statusMessage = "Remembered configuration unavailable";
         }
         else
         {
+            snapshot.status = AudioDeviceStatus::noOutputDeviceAvailable;
             snapshot.statusMessage = "No output device available";
         }
 
@@ -84,12 +128,12 @@ namespace coolsynth::standalone
     }
 
     BackendSelectionResult maybeApplyPreferredAudioBackend(juce::AudioDeviceManager& deviceManager,
-                                                           juce::PropertySet* settings)
+                                                           const StandaloneSettingsStore* settingsStore)
     {
         BackendSelectionResult result;
         result.initialBackendName = deviceManager.getCurrentAudioDeviceType();
 
-        if (settings != nullptr && settings->containsKey(audioSetupPropertyKey))
+        if (settingsStore != nullptr && settingsStore->hasPersistedAudioSetup())
         {
             result.persistedAudioSetupFound = true;
             result.activeBackendName = result.initialBackendName;

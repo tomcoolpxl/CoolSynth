@@ -6,12 +6,10 @@
 
 #include "midi/MidiMonitor.h"
 #include "midi/MidiMappingEngine.h"
+#include "SettingsStore.h"
 
 namespace coolsynth::standalone
 {
-    inline constexpr char midiInputIdentifierPropertyKey[] = "midiInputIdentifier";
-    inline constexpr char midiInputNamePropertyKey[] = "midiInputName";
-
     enum class MidiInputStatus
     {
         noDevicesAvailable,
@@ -54,7 +52,7 @@ namespace coolsynth::standalone
         using ControllerEventHandler = std::function<void(const coolsynth::midi::ControllerMidiEvent&)>;
 
         StandaloneMidiInputController(juce::AudioDeviceManager& deviceManager,
-                                      juce::PropertySet* settings,
+                                      StandaloneSettingsStore* settingsStore,
                                       ControllerEventHandler onControllerEvent,
                                       DisconnectCallback onSelectedDeviceDisconnected = {});
         ~StandaloneMidiInputController() override;
@@ -100,7 +98,7 @@ namespace coolsynth::standalone
         void updateLastMidiEventSnapshot(const juce::MidiMessage& message) noexcept;
 
         juce::AudioDeviceManager& deviceManager;
-        juce::PropertySet* settings = nullptr;
+        StandaloneSettingsStore* settingsStore = nullptr;
         coolsynth::midi::MidiMonitorBuffer monitorBuffer;
         ControllerEventHandler onControllerEvent;
         juce::MidiDeviceListConnection deviceListConnection;

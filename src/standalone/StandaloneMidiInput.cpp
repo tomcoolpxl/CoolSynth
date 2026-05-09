@@ -3,11 +3,11 @@
 namespace coolsynth::standalone
 {
     StandaloneMidiInputController::StandaloneMidiInputController(juce::AudioDeviceManager& dm,
-                                                                 juce::PropertySet* s,
+                                                                 StandaloneSettingsStore* s,
                                                                  ControllerEventHandler onControllerEvent,
                                                                  DisconnectCallback onDisconnected)
         : deviceManager(dm)
-        , settings(s)
+        , settingsStore(s)
         , onControllerEvent(std::move(onControllerEvent))
         , onSelectedDeviceDisconnected(std::move(onDisconnected))
     {
@@ -60,17 +60,23 @@ namespace coolsynth::standalone
             return true;
         }
 
-        snapshot.selectedDeviceIdentifier = deviceIdentifier;
-        
-        // Find the name for persistence
+        bool found = false;
+        juce::String foundName;
         for (const auto& info : snapshot.availableInputs)
         {
             if (info.identifier == deviceIdentifier)
             {
-                snapshot.selectedDeviceName = info.name;
+                foundName = info.name;
+                found = true;
                 break;
             }
         }
+
+        if (!found)
+            return false;
+
+        snapshot.selectedDeviceIdentifier = deviceIdentifier;
+        snapshot.selectedDeviceName = foundName;
 
         persistSelection();
         refreshDevices(RefreshReason::userSelection);
@@ -222,10 +228,13 @@ namespace coolsynth::standalone
         snapshot.runningInStandalone = juce::JUCEApplicationBase::isStandaloneApp();
         snapshot.availableInputs = juce::MidiInput::getAvailableDevices();
 
-        if (reason == RefreshReason::initialLoad && settings != nullptr)
+        if (reason == RefreshReason::initialLoad && settingsStore != nullptr)
         {
-            snapshot.selectedDeviceIdentifier = settings->getValue(midiInputIdentifierPropertyKey);
-            snapshot.selectedDeviceName = settings->getValue(midiInputNamePropertyKey);
+            if (auto persisted = settingsStore->loadPersistedMidiInputSelection())
+            {
+                snapshot.selectedDeviceIdentifier = persisted->identifier;
+                snapshot.selectedDeviceName = persisted->name;
+            }
         }
 
         snapshot.selectedDevicePresent = false;
@@ -311,19 +320,20 @@ namespace coolsynth::standalone
 
     void StandaloneMidiInputController::persistSelection() const
     {
-        if (settings != nullptr)
+        if (settingsStore != nullptr)
         {
-            settings->setValue(midiInputIdentifierPropertyKey, snapshot.selectedDeviceIdentifier);
-            settings->setValue(midiInputNamePropertyKey, snapshot.selectedDeviceName);
+            juce::MidiDeviceInfo info;
+            info.identifier = snapshot.selectedDeviceIdentifier;
+            info.name = snapshot.selectedDeviceName;
+            settingsStore->savePersistedMidiInputSelection(info);
         }
     }
 
     void StandaloneMidiInputController::clearPersistedSelection() const
     {
-        if (settings != nullptr)
+        if (settingsStore != nullptr)
         {
-            settings->removeValue(midiInputIdentifierPropertyKey);
-            settings->removeValue(midiInputNamePropertyKey);
+            settingsStore->clearPersistedMidiInputSelection();
         }
     }
 }

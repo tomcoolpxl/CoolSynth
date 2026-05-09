@@ -29,11 +29,16 @@ namespace coolsynth::synth
 
     void GlobalDelay::reset() noexcept
     {
-        delayLine.reset();
+        clear();
         
         delaySamplesSmoother.setCurrentAndTargetValue(delayMsToSamples(250.0f));
         feedbackSmoother.setCurrentAndTargetValue(0.25f);
         mixSmoother.setCurrentAndTargetValue(0.0f);
+    }
+
+    void GlobalDelay::clear() noexcept
+    {
+        delayLine.reset();
     }
 
     void GlobalDelay::process(juce::AudioBuffer<float>& buffer,

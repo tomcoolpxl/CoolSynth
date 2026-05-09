@@ -1,6 +1,7 @@
 #if JucePlugin_Build_Standalone
 
 #include "StandaloneAudioSupport.h"
+#include "SettingsStore.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -33,6 +34,12 @@ public:
 
         appProperties.setStorageParameters (options);
 
+        if (auto* userSettings = appProperties.getUserSettings())
+        {
+            settingsStore = std::make_unique<coolsynth::standalone::StandaloneSettingsStore>(*userSettings);
+            coolsynth::standalone::bindStandaloneSettingsStore(settingsStore.get());
+        }
+
         mainWindow = std::make_unique<juce::StandaloneFilterWindow>(
             getApplicationName(),
             juce::LookAndFeel::getDefaultLookAndFeel().findColour(juce::ResizableWindow::backgroundColourId),
@@ -44,6 +51,8 @@ public:
     void shutdown() override
     {
         mainWindow = nullptr;
+        coolsynth::standalone::bindStandaloneSettingsStore(nullptr);
+        settingsStore = nullptr;
         appProperties.saveIfNeeded();
     }
 
@@ -64,11 +73,12 @@ private:
             false);
 
         coolsynth::standalone::maybeApplyPreferredAudioBackend(holder->deviceManager,
-                                                               appProperties.getUserSettings());
+                                                               settingsStore.get());
         return holder;
     }
 
     juce::ApplicationProperties appProperties;
+    std::unique_ptr<coolsynth::standalone::StandaloneSettingsStore> settingsStore;
     std::unique_ptr<juce::StandaloneFilterWindow> mainWindow;
 };
 }

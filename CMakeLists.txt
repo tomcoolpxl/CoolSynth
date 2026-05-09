@@ -38,6 +38,7 @@ target_sources(CoolSynth
         src/plugin/SynthAudioProcessor.cpp
         src/plugin/SynthAudioProcessorEditor.cpp
         src/standalone/CoolSynthStandaloneApp.cpp
+        src/standalone/SettingsStore.cpp
         src/standalone/StandaloneAudioSupport.cpp
         src/standalone/StandaloneMidiInput.cpp
         src/synth/SynthEngine.cpp
