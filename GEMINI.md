@@ -88,5 +88,5 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - The workflow action pins now target the Node 24-compatible lines:
   - `actions/checkout` pinned to `v6.0.2`
   - `actions/upload-artifact` pinned to `v7.0.0`
-  - `actions/download-artifact` pinned to `v5.0.0`
+  - `actions/download-artifact` pinned to `v8.0.1`
   - `softprops/action-gh-release` pinned to `v3`
