@@ -90,3 +90,6 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - `actions/upload-artifact` pinned to `v7.0.0`
   - `actions/download-artifact` pinned to `v8.0.1`
   - `softprops/action-gh-release` pinned to `v3`
+- Node-runtime validation completed on 2026-05-10:
+  - Manual validation run `25614878512` passed with the updated action pins and no Node 20 deprecation annotation.
+  - Release run `25625463636` passed with the updated release workflow pins and no Node 20 deprecation annotation.

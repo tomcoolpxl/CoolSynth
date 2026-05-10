@@ -14,6 +14,14 @@ The main design is:
 
 ```text
 Standalone wrapper or VST3 wrapper
+  -> standalone window shell (standalone only)
+    -> Options entry point
+    -> settings dialog
+      -> audio configuration tab
+      -> MIDI tab
+        -> MIDI input selection
+        -> show-CC-labels toggle
+        -> MIDI monitor view
   -> SynthAudioProcessor
      -> AudioProcessorValueTreeState parameters
      -> SynthEngine
@@ -24,16 +32,15 @@ Standalone wrapper or VST3 wrapper
      -> MidiMappingEngine
      -> runtime status model
   -> SynthAudioProcessorEditor
-     -> hardware-style JUCE UI
-     -> parameter attachments
-    -> standalone settings surface (standalone only)
-      -> audio configuration
-      -> MIDI input selection
-      -> MIDI monitor view for standalone/debug
-    -> standalone status bar (standalone only)
-      -> audio summary
-      -> MIDI-device summary
-      -> last MIDI event summary
+      -> editor surface
+        -> hardware-style JUCE UI
+        -> parameter attachments
+        -> standalone-only patch actions
+        -> standalone-only MIDI learn status and CC badges
+        -> standalone status bar (standalone only)
+          -> audio summary
+          -> MIDI-device summary
+          -> last MIDI event summary
 ```
 
 The synth should use JUCE-provided DSP and audio infrastructure where practical. The first version should not implement custom oscillator, filter, envelope, or delay DSP from scratch. The goal is to keep the code clean and playable while still exposing the architecture of a real synth.
@@ -47,7 +54,7 @@ The design shall optimize for:
 - Safe real-time audio behavior.
 - Simple but practical synthesis.
 - A hardware-synth-like UI inspired by the MiniLab 3 layout.
-- Fixed MiniLab 3 mapping first, MIDI learn later.
+- Fixed MiniLab 3 mapping with standalone MIDI learn overrides for continuous controls.
 - Maintainable code that can grow without immediate redesign.
 
 The design shall not optimize for:
@@ -90,7 +97,8 @@ Responsibilities:
 - Own audio device setup.
 - Own MIDI hardware input setup.
 - Show audio and MIDI device status through a compact bottom status bar.
-- Expose one dedicated settings surface for audio configuration, MIDI input selection, and the MIDI monitor.
+- Expose one dedicated settings dialog from the standalone window's Options button, with separate Audio and MIDI tabs.
+- Surface standalone patch actions and standalone MIDI learn affordances in the main synth editor.
 - Allow testing the MiniLab 3 without a DAW.
 - Use the same synth processor and editor as the plugin where practical.
 
@@ -118,14 +126,16 @@ Shared code:
 - Parameters.
 - UI controls.
 - UI layout, except device panels.
-- Fixed MiniLab mapping logic for MIDI CCs.
-- Preset/state logic.
+- Default MiniLab mapping logic plus learned-binding application for MIDI CCs.
+- Parameter-state serialization and patch-format utilities.
 
 Standalone-only code:
 
 - Hardware MIDI input selection.
 - Audio device configuration UI.
-- Standalone settings-window or settings-panel composition.
+- Standalone window Options-button integration and settings-dialog composition.
+- Standalone MIDI learn UI and mapping persistence.
+- Standalone patch file chooser integration.
 - MIDI monitor input source display.
 - Runtime device-disconnect handling.
 - Standalone status-bar presentation.
@@ -164,6 +174,34 @@ Development environment:
 - Optional Ninja generator.
 
 The project should build from the command line as well as from VS Code.
+
+# Windows CI/CD
+
+The repository now uses two Windows-only GitHub Actions workflows backed by repository-owned PowerShell scripts in `scripts/ci`.
+
+Design rules:
+
+- `windows-manual-validation.yml` runs only on `workflow_dispatch`.
+- `windows-release.yml` runs only on version-tag pushes.
+- Neither workflow runs on branch pushes, pull requests, or schedules in the first release.
+- Both workflows use isolated CI presets and build directories under `build/ci-debug` and `build/ci-release`.
+
+Manual validation path:
+
+- Check out the repository with recursive submodules.
+- Reuse the checked-in JUCE submodule under `external/JUCE`.
+- Invoke `BuildAndTest.ps1` with the selected configuration.
+- Optionally invoke `PackageRelease.ps1`.
+- Upload logs, test results, and optional packages as workflow artifacts.
+
+Release path:
+
+- Check out the repository with recursive submodules.
+- Build and test Release from the `ci-release` preset.
+- Package standalone and VST3 zip assets plus checksum and manifest files.
+- Publish or update the GitHub release with generated notes using `.github/release.yml`.
+
+Packaging must fail loudly when expected artifacts or test results are missing.
 
 # Plugin Metadata
 
@@ -478,19 +516,28 @@ Each stored event summary should carry enough raw data to display the required m
 
 For a simple first version, the monitor can be updated from the standalone MIDI callback rather than from `processBlock`. In plugin mode it is omitted.
 
-# MIDI Learn Later
+# Standalone MIDI Learn
 
-The initial design should leave room for MIDI learn.
+The current design includes standalone MIDI learn for continuous parameters without changing the synth engine.
 
-Future mapping model:
+Mapping model:
 
 ```text
 Default profile
-  + user overrides
-  + persisted mapping file
+  + standalone user overrides
+  + persisted mappings in StandaloneSettingsStore
 ```
 
-MIDI learn should not require changing the synth engine. It should only update `MidiMappingEngine` configuration.
+Standalone MIDI learn rules:
+
+- Learn mode is entered per control from a context menu on learnable knobs and faders.
+- Only CC messages are captured for continuous parameters.
+- Learned bindings override the default standalone mapping for matching parameters.
+- Learned bindings are saved separately from synth parameter state.
+- The standalone editor surfaces an armed status label plus optional per-control CC badges.
+- The VST3 editor omits the MIDI learn affordances in the first release.
+
+`MidiLearnManager` and `MidiMappingEngine` own binding validation and application. MIDI learn should not require changing the synth engine.
 
 # Synth Engine Design
 
@@ -766,8 +813,9 @@ It should be loosely modeled on the MiniLab 3 layout:
 - Fader-like or linear controls where they help readability.
 - A dedicated output area for master gain.
 - A separate global action area for panic.
+- A compact header area for title, MIDI learn status, and standalone patch actions.
 - A compact bottom status bar.
-- A required standalone settings surface for audio or MIDI utilities and MIDI monitor access during early development and fixed-mapping work.
+- A required standalone settings dialog, opened from the standalone window shell, for audio or MIDI utilities and MIDI monitor access during early development and fixed-mapping work.
 
 It should not try to exactly clone Arturia's visual design. That may create unnecessary visual work and possible trademark/design concerns. The goal is functional similarity, not visual copying.
 
@@ -776,20 +824,15 @@ It should not try to exactly clone Arturia's visual design. That may create unne
 Recommended layout:
 
 ```text
-| Oscillator       Filter             Envelope            Delay       |
-| [Waveform]       [Cutoff knob]      [Attack knob]       [Time]      |
-|                  [Res knob]         [Decay knob]        [Feedback]  |
-|                                     [Sustain knob]      [Mix knob]  |
-|                                     [Release knob]                   |
-+--------------------------------------------------------------------+
-| Output                                    Actions                  |
-| [Master gain fader]                       [Panic]                  |
-+--------------------------------------------------------------------+
-| Settings...                                                         |
-+--------------------------------------------------------------------+
-| Status: MIDI MiniLab 3 connected | Audio WASAPI / Speakers / 48/256 |
-| Last MIDI: CC 74 ch1 value 92                                       |
-+--------------------------------------------------------------------+
+| CoolSynth   [MIDI learn status]   [Init Patch] [Save Patch] [Load Patch] [All Notes Off] |
++-------------------------------------------------------------------------------------------+
+| Oscillator | Filter | Envelope | Delay | Output                                           |
+| [Waveform] | [Cutoff] [Res] | [Attack] [Decay] [Sustain] [Release] | [Time] [Feedback] [Mix] | [Master] |
++-------------------------------------------------------------------------------------------+
+| Status: Audio 48 kHz / 256 | MIDI: MiniLab 3 | Last MIDI: CC 74 val 92                    |
++-------------------------------------------------------------------------------------------+
+| Standalone window Options button -> Settings dialog -> Audio tab / MIDI tab               |
++-------------------------------------------------------------------------------------------+
 ```
 
 # UI Components
@@ -801,17 +844,20 @@ HardwareKnob
   -> wraps juce::Slider in rotary mode
   -> label
   -> value text
-  -> optional mapped CC display later
+  -> optional learned-CC badge
 
 HardwareFader
   -> wraps juce::Slider in linear vertical mode
   -> label
   -> value text
+  -> optional learned-CC badge
 
-StatusStrip
+MidiLearnStatusLabel
+  -> standalone-only learn state text
+
+StandaloneStatusBar
   -> MIDI device status
   -> audio backend status
-  -> active output device
   -> sample rate and buffer size
   -> last MIDI event summary
   -> disconnected/unavailable state when remembered devices are missing
@@ -819,10 +865,13 @@ StatusStrip
 MidiMonitorPanel
   -> small scrolling list of recent messages
 
-StandaloneSettingsSurface
-  -> audio configuration section
-  -> MIDI input selection section
-  -> MIDI monitor section
+StandaloneSettingsDialog
+  -> Audio tab
+     -> audio configuration section
+  -> MIDI tab
+     -> MIDI input selection section
+     -> show-CC-labels toggle
+     -> MIDI monitor section
   -> single source of truth for standalone utility controls
 ```
 
@@ -839,17 +888,19 @@ SliderAttachment for knobs/faders
 ComboBoxAttachment for waveform selection
 ```
 
-Panic should be an explicit button action, not a normal parameter attachment. If an Init Patch action is added later, it should also call an explicit command that resets automatable parameters to their defaults.
+Panic should be an explicit button action, not a normal parameter attachment. `Init Patch` should likewise call an explicit command that resets automatable parameters to their defaults. `Save Patch` and `Load Patch` remain standalone file actions layered on top of parameter-state serialization rather than normal parameter attachments.
 
 # Standalone UI Differences
 
 Standalone mode should show:
 
 - Primary synth editor with synth controls only.
-- One settings entry point that opens the standalone settings surface.
-- MIDI monitor inside the standalone settings surface.
-- Audio-device configuration inside the standalone settings surface.
-- MIDI input selector inside the standalone settings surface.
+- Standalone patch actions in the editor header.
+- Standalone MIDI learn status text and per-control CC badges for learnable continuous controls.
+- One settings entry point on the standalone window shell that opens the standalone settings dialog.
+- MIDI monitor inside the standalone settings dialog.
+- Audio-device configuration inside the standalone settings dialog.
+- MIDI input selector and CC-label toggle inside the standalone settings dialog.
 - Bottom status bar with audio summary, MIDI-device summary, and last MIDI event summary.
 - One active MIDI input device at a time.
 - A disconnected or unavailable state when the remembered MIDI device is missing.
@@ -868,7 +919,9 @@ Plugin mode should omit:
 - Audio backend/device controls, omitted.
 - Standalone-only status panels for hardware/device state, omitted.
 - MIDI monitor, omitted.
-- Standalone settings surface, omitted.
+- Standalone settings dialog, omitted.
+- Standalone patch actions, omitted.
+- Standalone MIDI learn affordances, omitted.
 
 Plugin mode should still show:
 
@@ -909,8 +962,10 @@ Standalone settings:
 - Last selected output device.
 - Last selected sample rate.
 - Last selected buffer size.
+- Learned CC mappings.
+- Show-CC-labels preference.
 
-These settings are a required later standalone milestone, not optional best-effort extras once implemented. When the standalone persistence milestone is reached, invalid or missing persisted settings should fall back to safe defaults while leaving the app running and surfacing unavailable-device status in the standalone UI.
+These settings are required standalone behavior. Invalid or missing persisted settings should fall back to safe defaults while leaving the app running and surfacing unavailable-device status in the standalone UI.
 
 When restoring MIDI settings:
 
@@ -929,20 +984,22 @@ These should not become VST3 plugin state unless there is a clear reason.
 
 # Presets
 
-Presets should be added later.
+The current patch workflow is intentionally minimal and file-based.
 
-Design now so presets can be implemented as parameter state snapshots.
-
-Preset should include:
+Patch files should include:
 
 - Synth parameters.
 
-Preset should not necessarily include:
+Patch files should not include:
 
 - Audio device.
 - MIDI device.
+- Learned CC mappings.
+- Show-CC-labels preference.
 
-If an Init Patch action exists before full preset support, it should simply reset the automatable parameters to their default values.
+`Init Patch` should reset the automatable parameters to their default values.
+`Save Patch` should write a `.cspatch` wrapper around the processor parameter state.
+`Load Patch` should restore that parameter state immediately.
 
 Controller mapping should probably be separate from sound presets.
 
@@ -1105,7 +1162,7 @@ Mitigation:
 
 - Use the MIDI monitor first.
 - Encode a profile only after observing actual CCs.
-- Add MIDI learn later.
+- Keep standalone MIDI learn overrides available when the hardware template differs from the default profile.
 
 # Risk: Motherboard Audio Latency
 
@@ -1177,9 +1234,10 @@ Create CMake/JUCE skeleton
   -> add delay
   -> add fixed MiniLab profile
   -> add VST3 smoke test
-  -> add persistence/presets
-  -> add MIDI learn
-  -> add CI
+  -> add standalone persistence
+  -> add minimal patch workflow
+  -> add standalone MIDI learn
+  -> add manual/tag-only Windows CI/CD
 ```
 
 # First Skeleton Acceptance Criteria
@@ -1206,9 +1264,9 @@ These decisions can be made during implementation:
 | Stereo delay | Preferred |
 | Full virtual keyboard | Not initially |
 | Metering | Later |
-| MIDI learn | Later |
-| Presets | Later |
-| CI | Later |
+| MIDI learn | Standalone CC learn for continuous controls; plugin learn later |
+| Presets | Minimal `.cspatch` init/save/load now; browser later |
+| CI | Manual validation plus tag-triggered Windows release on GitHub Actions |
 
 # Final Design Position
 

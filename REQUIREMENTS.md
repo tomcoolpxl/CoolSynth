@@ -30,13 +30,13 @@ The following decisions are fixed and are not open for redesign in the first pla
 - Practical first Windows backend: WASAPI shared mode.
 - ASIO: optional later, not required for the first functional release.
 - MIDI controller: Arturia MiniLab 3.
-- Controller strategy: fixed MiniLab mapping first, MIDI learn later.
+- Controller strategy: fixed MiniLab mapping plus standalone MIDI learn overrides for continuous controls.
 - UI direction: hardware-synth-like, loosely inspired by the MiniLab 3 layout.
 - Initial synth scope: one oscillator per voice.
 - Priority order: core synth first, LFO and broader modulation later.
 - DSP strategy: prefer JUCE-provided DSP and infrastructure over custom DSP from scratch.
 - Unit tests: not required initially.
-- CI: not required initially.
+- Windows CI/CD: required as manual validation and tag-triggered release workflows only; no branch or pull-request automation in the first release.
 
 ## 3. Scope
 
@@ -52,9 +52,13 @@ The first functional release shall provide:
 - A per-voice low-pass filter with cutoff and resonance control.
 - A global delay effect with time, feedback, and mix control.
 - A fixed MiniLab 3 mapping for the core synth parameters once the controller's default messages have been confirmed on the actual device.
-- A hardware-synth-like UI built with JUCE components.
+- Standalone MIDI learn for continuous controls, including per-parameter learn mode, clear mapping, and persisted learned CC bindings.
+- A hardware-synth-like UI built with JUCE components, including a standalone bottom status bar and a standalone settings dialog reached from the standalone shell's Options entry point.
 - A standalone MIDI monitor for bring-up and debugging.
+- Standalone patch actions for init, save, and load of synth parameter snapshots.
 - A panic or all-notes-off control.
+- A manual Windows validation workflow that runs only on `workflow_dispatch`, reuses the checked-in JUCE submodule path, builds from isolated CI presets, runs `ctest`, and uploads diagnostics plus optional release packages.
+- A tag-triggered Windows release workflow that builds and tests the Release configuration from a clean checkout, packages standalone and VST3 Windows assets, and publishes a GitHub release with generated notes and checksums.
 - Real-time-safe audio behavior appropriate for JUCE audio callbacks.
 
 ### 3.2 Explicitly Deferred
@@ -64,8 +68,8 @@ The following features are out of scope for the first functional release and sha
 - Custom oscillator DSP and custom anti-aliased oscillator design.
 - Wavetable, FM, granular, and sample-based synthesis.
 - MPE, aftertouch handling, and advanced expressive MIDI support.
-- MIDI learn.
 - Preset browser and commercial-grade preset management.
+- Plugin-side MIDI learn, note or pad learn targets, and non-CC learn sources.
 - Modulation matrix.
 - LFO.
 - AU and AAX targets.
@@ -76,7 +80,7 @@ The following features are out of scope for the first functional release and sha
 - Multiple simultaneous MIDI input devices in standalone mode.
 - Cloud, network, or online features.
 - Unit test suite.
-- CI pipeline.
+- Branch-triggered, pull-request-triggered, scheduled, or non-Windows CI expansion.
 
 Pitch bend support is also deferred until the core synth, fixed mapping, and VST3 smoke test are stable.
 
@@ -89,13 +93,14 @@ This project must separate shared synth behavior from standalone-specific and VS
 | Audio rendering | Required | Uses shared core | Uses shared core |
 | Parameter model | Required | Uses shared core | Uses shared core |
 | Synth engine and voices | Required | Uses shared core | Uses shared core |
-| Fixed MiniLab mapping logic | Required | Consumes hardware MIDI | First release focuses on host MIDI notes; host CC remapping deferred |
+| Controller mapping logic | Required | Consumes hardware MIDI and may apply learned CC overrides | First release focuses on host MIDI notes; host CC remapping deferred |
 | Audio device selection | Not part of shared core | Required | Not applicable |
 | MIDI device selection | Not part of shared core | Required | Not applicable |
 | MIDI monitor UI | Optional event capture support only | Required in early milestones | Not required |
+| Standalone MIDI learn UI and mapping persistence | Binding model only | Required | Not applicable |
 | Host automation | Not part of standalone shell | Not applicable | Required |
 | Host state save and restore | Shared processor responsibility | Used indirectly | Required |
-| Standalone app settings persistence | Not part of shared core | Required later | Not applicable |
+| Standalone app settings persistence | Not part of shared core | Required | Not applicable |
 
 Additional separation rules:
 
@@ -281,17 +286,19 @@ Mapping rules:
 - Velocity shall affect amplitude only in the first functional release.
 - Velocity-to-filter modulation is deferred.
 
-### 8.5 MIDI Learn
+### 8.5 Standalone MIDI Learn
 
-MIDI learn is a later milestone.
+The first functional release shall include standalone MIDI learn for continuous parameters.
 
-When implemented, MIDI learn shall:
+Standalone MIDI learn shall:
 
 - Bind only CC messages to continuous parameters.
 - Not bind note-on or note-off events to continuous parameters.
 - Allow clearing an existing mapping.
 - Persist mappings between runs.
 - Store mappings separately from synth parameter values.
+- Surface the armed or learned state in the standalone editor with text badges or labels in addition to color.
+- Remain omitted from the VST3 editor in the first functional release.
 
 ## 9. Synth Engine Requirements
 
@@ -380,8 +387,10 @@ The standalone UI shall include:
 - Delay section.
 - Output section.
 - Panic action.
+- Standalone-only patch actions for `Init Patch`, `Save Patch`, and `Load Patch`.
+- Standalone MIDI learn status text plus per-control learned CC affordances for learnable controls.
 - Bottom status bar for current audio state, MIDI-device state, and the most recent MIDI event summary.
-- A dedicated standalone settings surface that contains audio-device configuration, MIDI input selection, and the MIDI monitor during early development and fixed-mapping work.
+- A dedicated standalone settings dialog, opened from the standalone shell's Options entry point, that contains an Audio tab and a MIDI tab for device configuration, MIDI input selection, MIDI monitor access, and the standalone CC-label visibility toggle.
 
 The VST3 editor shall include:
 
@@ -392,7 +401,7 @@ The VST3 editor shall include:
 - Output section.
 - Panic action.
 
-The plugin editor does not need standalone device selectors, hardware status panels, or the standalone settings surface.
+The plugin editor does not need standalone device selectors, hardware status panels, patch actions, standalone MIDI learn controls, or the standalone settings dialog.
 
 ### 10.3 Control and Display Rules
 
@@ -409,8 +418,9 @@ The plugin editor does not need standalone device selectors, hardware status pan
 - Color shall not be the only way to convey state.
 - A full virtual keyboard is not required.
 - A small activity indicator for incoming notes is optional.
+- Standalone MIDI learn shall make the currently armed parameter and any learned CC assignment understandable without relying on color alone.
 - The standalone status bar shall update on the message thread from lightweight event snapshots and must not require the full MIDI monitor to remain visible.
-- The standalone main editor shall not duplicate audio or MIDI configuration controls that already exist in the standalone settings surface.
+- The standalone main editor shall not duplicate audio or MIDI configuration controls that already exist in the standalone settings dialog.
 
 ## 11. State and Persistence Requirements
 
@@ -426,6 +436,8 @@ Standalone-only persisted settings:
 
 - Last selected audio backend, device, sample rate, and buffer size, when the stored configuration is still valid.
 - Last selected MIDI input device, when the stored device is still available.
+- Learned MIDI CC mappings.
+- Standalone CC-label visibility preference.
 
 Deferred standalone persistence:
 
@@ -435,9 +447,10 @@ Deferred standalone persistence:
 
 Preset rules:
 
-- Preset file management is not required for the first functional release.
-- If an Init Patch action exists before file-based presets, it shall simply reset all automatable parameters to their default values.
-- Later preset files shall not implicitly overwrite standalone audio-device or MIDI-device selection.
+- A minimal patch workflow is required for the first functional release.
+- `Init Patch` shall reset all automatable parameters to their default values.
+- `Save Patch` and `Load Patch` shall operate on synth parameter state only.
+- Patch files shall not implicitly overwrite standalone audio-device settings, MIDI-device selection, learned MIDI mappings, or standalone UI preferences.
 
 ## 12. Real-Time Audio Safety Requirements
 
@@ -493,6 +506,12 @@ Expected behavior:
 - Visual Studio Code with a CMake-based workflow shall be a supported development path.
 - The build shall generate Standalone and VST3 outputs from the shared processor codebase.
 - The codebase shall keep processor, synth, MIDI mapping, parameter, and UI concerns separated enough for independent review.
+- The repository shall provide a manual Windows validation workflow that runs only on `workflow_dispatch`.
+- The repository shall provide a tag-triggered Windows release workflow that runs only for version tags.
+- CI builds shall use repository-owned PowerShell scripts plus isolated `ci-debug` and `ci-release` CMake presets.
+- The manual validation workflow shall upload diagnostics and may optionally upload packaged assets.
+- The release workflow shall build and test Release, package standalone and VST3 zip assets, and publish or update a GitHub release with generated notes and checksum downloads.
+- The first-release CI/CD design shall not run on branch pushes, pull requests, or schedules.
 - New warnings introduced by current work shall be treated as defects.
 
 ## 15. Manual Validation Requirements
@@ -506,10 +525,12 @@ The following manual tests shall be possible by the time the relevant milestone 
 | Select MiniLab 3 as MIDI input | App reports MiniLab 3 as active input |
 | Press MiniLab keys | MIDI monitor shows note events and audible notes are produced once the synth milestone is complete |
 | Move MiniLab knobs and faders | MIDI monitor shows CC events |
+| Arm MIDI learn on a continuous control and move a MIDI knob or fader | The control binds to the received CC, the standalone UI surfaces the learned mapping, and the mapping survives an app restart |
 | Play a 4-note chord | Notes sound simultaneously without stealing below the configured voice limit |
 | Exceed available voices | Voice stealing occurs according to the documented policy |
 | Change sample rate or buffer size | Audio engine reprepares and app remains stable |
 | Press panic | Active notes stop immediately |
+| Save a patch, change parameters, and load the saved patch | Synth sound and visible control state are restored without changing standalone audio or MIDI device selections |
 | Unplug MiniLab during playback | App remains running and clears held-note state |
 | Build the VST3 target | VST3 binary is produced |
 | Load the VST3 target in a host | Plugin loads, opens editor, and accepts host MIDI once the VST3 smoke milestone is reached |
@@ -650,13 +671,13 @@ Deliverables:
 - Clear grouping for oscillator, filter, envelope, delay, and output sections.
 - Panic presented as a global action rather than embedded inside the output section.
 - Compact standalone bottom status bar.
-- Dedicated standalone settings surface for audio configuration, MIDI input selection, and MIDI monitor access.
+- Dedicated standalone settings dialog for audio configuration, MIDI input selection, and MIDI monitor access.
 
 Acceptance criteria:
 
 - The standalone UI reads as a synth panel rather than a generic form.
 - The main standalone editor keeps synth controls visible without embedding audio-backend or MIDI-device selectors alongside them.
-- The standalone settings surface provides audio backend or device configuration, MIDI input selection, and MIDI monitor access without redundant secondary dialogs.
+- The standalone settings dialog provides audio backend or device configuration, MIDI input selection, and MIDI monitor access without redundant secondary dialogs.
 - The bottom status bar shows current audio state, MIDI-device state, and a live summary of the last received MIDI event.
 - Labels are readable and values are understandable without inspecting raw parameter ranges.
 - The plugin editor omits standalone-only device configuration panels, status surfaces, and monitor surfaces.
@@ -717,14 +738,18 @@ Acceptance criteria:
 
 - The user can store the current synth parameter state as a patch.
 - Loading a stored patch restores both sound and UI state.
-- Preset loading does not overwrite standalone audio-device or MIDI-device selections.
+- Patch loading does not overwrite standalone audio-device settings, MIDI-device selection, learned MIDI mappings, or standalone UI preferences.
 
-### Milestone 14: CI
+### Milestone 14: Windows CI/CD
 
 Deliverables:
 
-- Windows CI build.
+- Manual Windows validation workflow.
+- Tag-triggered Windows release workflow.
+- Repository-owned CI build, test, and packaging scripts.
 
 Acceptance criteria:
 
-- The repository automatically builds the Windows target on the configured CI system.
+- No workflow runs on branch push, pull request, or schedule.
+- A manual workflow run configures, builds, tests, and uploads diagnostics from a clean Windows checkout.
+- A release-tag workflow run configures, builds, tests, packages standalone and VST3 assets, and publishes or updates a GitHub release with generated notes and checksum downloads.
