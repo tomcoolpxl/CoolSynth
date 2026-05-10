@@ -44,12 +44,8 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
 
     // --- Oscillator Section ---
     addAndMakeVisible(oscillatorSection);
-    waveformLabel.setText("Waveform", juce::dontSendNotification);
-    addAndMakeVisible(waveformLabel);
-    waveformSelector.addItemList({ "sine", "square", "saw" }, 1);
-    addAndMakeVisible(waveformSelector);
-    waveformAttachment = std::make_unique<ComboBoxAttachment>(apvts, ids::waveform, waveformSelector);
-    registerParameterSurface(waveformSelector, ids::waveform);
+    addAndMakeVisible(waveformKnob);
+    waveformAttachment = std::make_unique<SliderAttachment>(apvts, ids::waveform, waveformKnob.slider());
 
     // --- Filter Section ---
     addAndMakeVisible(filterSection);
@@ -492,9 +488,9 @@ void SynthAudioProcessorEditor::showParameterContextMenu(juce::String parameterI
 
     if (auto* parameter = findParameterForId(parameterId))
     {
-        if (auto* hostContext = getHostContext())
+        if (auto* context = getHostContext())
         {
-            if (auto hostMenu = hostContext->getContextMenuForParameter(parameter))
+            if (auto hostMenu = context->getContextMenuForParameter(parameter))
             {
                 auto hostPopup = hostMenu->getEquivalentPopupMenu();
                 if (hostPopup.getNumItems() > 0)
@@ -582,8 +578,7 @@ void SynthAudioProcessorEditor::resized()
     oscillatorSection.setBounds(oscArea);
     auto oscContent = oscArea.reduced(12);
     oscContent.removeFromTop(24); // Title space
-    waveformLabel.setBounds(oscContent.removeFromTop(24));
-    waveformSelector.setBounds(oscContent.removeFromTop(32));
+    waveformKnob.setBounds(oscContent.withSizeKeepingCentre(80, 120));
 
     synthRow.removeFromLeft(16);
 
@@ -668,6 +663,7 @@ void SynthAudioProcessorEditor::timerCallback()
 
 void SynthAudioProcessorEditor::refreshValueDisplays()
 {
+    waveformKnob.setValueText(getCurrentParameterText(parameterRefs.waveform));
     cutoffKnob.setValueText(getCurrentParameterText(parameterRefs.filterCutoffHz));
     resonanceKnob.setValueText(getCurrentParameterText(parameterRefs.filterResonance));
     attackKnob.setValueText(getCurrentParameterText(parameterRefs.ampAttackMs));
@@ -709,8 +705,8 @@ void SynthAudioProcessorEditor::launchPatchSaveChooser()
     activePatchChooser = std::make_unique<juce::FileChooser>(
         "Save Patch", juce::File(), "*" + juce::String(coolsynth::presets::defaultPatchExtension));
 
-    auto flags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles;
-    activePatchChooser->launchAsync(flags, [this](const juce::FileChooser& chooser)
+    auto chooserFlags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles;
+    activePatchChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)
     {
         if (chooser.getResult() != juce::File())
             handlePatchSaveSelection(chooser.getResult());
@@ -722,8 +718,8 @@ void SynthAudioProcessorEditor::launchPatchLoadChooser()
     activePatchChooser = std::make_unique<juce::FileChooser>(
         "Load Patch", juce::File(), "*" + juce::String(coolsynth::presets::defaultPatchExtension));
 
-    auto flags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
-    activePatchChooser->launchAsync(flags, [this](const juce::FileChooser& chooser)
+    auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
+    activePatchChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)
     {
         if (chooser.getResult() != juce::File())
             handlePatchLoadSelection(chooser.getResult());

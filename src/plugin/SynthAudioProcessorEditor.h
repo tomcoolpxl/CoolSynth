@@ -97,8 +97,7 @@ private:
     coolsynth::ui::SynthSection delaySection { "Delay" };
     coolsynth::ui::SynthSection outputSection { "Output" };
 
-    juce::Label waveformLabel;
-    juce::ComboBox waveformSelector;
+    coolsynth::ui::HardwareKnob waveformKnob { "Waveform" };
     coolsynth::ui::HardwareKnob cutoffKnob { "Cutoff" };
     coolsynth::ui::HardwareKnob resonanceKnob { "Resonance" };
     coolsynth::ui::HardwareKnob attackKnob { "Attack" };
@@ -111,7 +110,7 @@ private:
     coolsynth::ui::HardwareFader masterGainFader { "Master" };
     juce::TextButton allNotesOffButton { "All Notes Off" };
 
-    std::unique_ptr<ComboBoxAttachment> waveformAttachment;
+    std::unique_ptr<SliderAttachment> waveformAttachment;
     std::unique_ptr<SliderAttachment> cutoffAttachment;
     std::unique_ptr<SliderAttachment> resonanceAttachment;
     std::unique_ptr<SliderAttachment> attackAttachment;
