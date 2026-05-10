@@ -4,6 +4,10 @@ project(CoolSynth VERSION 0.1.0 LANGUAGES CXX)
 
 add_subdirectory(external/JUCE)
 
+juce_add_binary_data(CoolSynthControllerProfiles
+    SOURCES
+        resources/controller_profiles/minilab3_arturia_mode.json)
+
 option(COOLSYNTH_ENABLE_VST3_USER_INSTALL
     "Copy CoolSynth.vst3 to the per-user Windows VST3 folder after build"
     OFF)
@@ -32,6 +36,7 @@ juce_add_plugin(CoolSynth
 target_sources(CoolSynth
     PRIVATE
         src/presets/PatchState.cpp
+        src/midi/ControllerProfile.cpp
         src/midi/MidiLearn.cpp
         src/midi/MidiMappingEngine.cpp
         src/midi/MidiMonitor.cpp
@@ -73,6 +78,7 @@ target_link_libraries(CoolSynth
     PRIVATE
         juce::juce_audio_utils
         juce::juce_dsp
+        CoolSynthControllerProfiles
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
@@ -86,6 +92,7 @@ if(BUILD_TESTING)
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp
             src/presets/PatchState.cpp
+            src/midi/ControllerProfile.cpp
             src/plugin/SynthAudioProcessor.cpp
             src/plugin/SynthAudioProcessorEditor.cpp
             src/midi/MidiLearn.cpp
@@ -124,6 +131,7 @@ if(BUILD_TESTING)
             juce::juce_audio_utils
             juce::juce_gui_basics
             juce::juce_dsp
+            CoolSynthControllerProfiles
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags
     )

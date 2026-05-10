@@ -7,25 +7,43 @@
 #include "ui/StandaloneMidiInputPanel.h"
 #include "ui/MidiMonitorPanel.h"
 
+class SynthAudioProcessorEditor;
+
 class StandaloneSettingsDialog final : public juce::Component
 {
 public:
     StandaloneSettingsDialog(juce::AudioDeviceManager& deviceManager,
-                             coolsynth::standalone::StandaloneMidiInputController& midiController);
+                             coolsynth::standalone::StandaloneMidiInputController& midiController,
+                             SynthAudioProcessorEditor& editor);
 
     void resized() override;
 
 private:
-    class MidiTab final : public juce::Component
+    class MidiTab final : public juce::Component,
+                          private juce::ChangeListener
     {
     public:
-        explicit MidiTab(coolsynth::standalone::StandaloneMidiInputController& midiController);
+        MidiTab(coolsynth::standalone::StandaloneMidiInputController& midiController,
+                SynthAudioProcessorEditor& editor);
+        ~MidiTab() override;
         void resized() override;
 
     private:
+        void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+        void applyPersistedControllerProfileSelection();
+        void populateControllerProfileOptions();
+        void updateResolvedProfileLabel();
+
+        coolsynth::standalone::StandaloneMidiInputController& midiController;
+        SynthAudioProcessorEditor& editor;
         StandaloneMidiInputPanel midiInputPanel;
         MidiMonitorPanel midiMonitorPanel;
         juce::ToggleButton showCcLabelsToggle { "Show CC Labels on Controls" };
+        juce::Label controllerProfileLabel;
+        juce::ComboBox controllerProfileCombo;
+        juce::Label resolvedProfileLabel;
+        juce::Label resolvedProfileValueLabel;
+        std::vector<juce::String> explicitProfileIds;
     };
 
     juce::TabbedComponent tabs { juce::TabbedButtonBar::TabsAtTop };
@@ -35,4 +53,5 @@ private:
 
 bool showStandaloneSettingsDialog(juce::Component* parentComponent,
                                   juce::AudioDeviceManager& deviceManager,
-                                  coolsynth::standalone::StandaloneMidiInputController& midiController);
+                                  coolsynth::standalone::StandaloneMidiInputController& midiController,
+                                  SynthAudioProcessorEditor& editor);

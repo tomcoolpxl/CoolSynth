@@ -1,6 +1,8 @@
 #include <juce_core/juce_core.h>
 #include "midi/MidiLearn.h"
+#include "midi/ControllerProfile.h"
 #include "midi/MidiMappingEngine.h"
+#include "plugin/SynthAudioProcessor.h"
 #include "standalone/SettingsStore.h"
 #include "parameters/ParameterIDs.h"
 
@@ -126,6 +128,65 @@ public:
             // Should only keep the valid one
             expectEquals((int)normalized.size(), 1);
             expect(normalized[0].parameterId == coolsynth::parameters::ids::filterCutoffHz);
+        }
+
+        beginTest("controller_profile_registry_loads_builtin_minilab_profile");
+        {
+            const auto& registry = coolsynth::midi::ControllerProfileRegistry::get();
+            const auto* profile = registry.findProfileById("arturia.minilab3.arturia-mode.v1");
+
+            expect(profile != nullptr);
+            expect(profile != nullptr && profile->displayName == "MiniLab 3 / Arturia Mode");
+            expectEquals(registry.findBestProfileIdForDevice({ "MiniLab 3 MIDI", "test-id" }),
+                         juce::String("arturia.minilab3.arturia-mode.v1"));
+        }
+
+        beginTest("settings_store_round_trips_controller_profile_selection");
+        {
+            juce::PropertySet props;
+            coolsynth::standalone::StandaloneSettingsStore store(props);
+
+            store.savePersistedControllerProfileSelection({});
+            auto autoSelection = store.loadPersistedControllerProfileSelection();
+            expectEquals((int) autoSelection.mode,
+                         (int) coolsynth::standalone::ControllerProfileSelectionMode::autoDetect);
+            expect(autoSelection.profileId.isEmpty());
+
+            store.savePersistedControllerProfileSelection(
+                { coolsynth::standalone::ControllerProfileSelectionMode::explicitProfile,
+                  "arturia.minilab3.arturia-mode.v1" });
+            auto explicitSelection = store.loadPersistedControllerProfileSelection();
+            expectEquals((int) explicitSelection.mode,
+                         (int) coolsynth::standalone::ControllerProfileSelectionMode::explicitProfile);
+            expect(explicitSelection.profileId == "arturia.minilab3.arturia-mode.v1");
+
+            store.savePersistedControllerProfileSelection(
+                { coolsynth::standalone::ControllerProfileSelectionMode::none, {} });
+            auto noneSelection = store.loadPersistedControllerProfileSelection();
+            expectEquals((int) noneSelection.mode,
+                         (int) coolsynth::standalone::ControllerProfileSelectionMode::none);
+            expect(noneSelection.profileId.isEmpty());
+        }
+
+        beginTest("processor_applies_factory_profile_cc_mappings");
+        {
+            SynthAudioProcessor processor;
+            auto& state = processor.getValueTreeState();
+            auto* waveform = state.getParameter(coolsynth::parameters::ids::waveform);
+            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
+
+            expect(waveform != nullptr);
+            expect(cutoff != nullptr);
+            expect(processor.setActiveControllerProfile("arturia.minilab3.arturia-mode.v1"));
+
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 114, 63 });
+            expectWithinAbsoluteError(waveform->getValue(), 0.5f, 0.001f);
+
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 74, 0 });
+            expectWithinAbsoluteError(cutoff->getValue(), 0.0f, 0.001f);
+
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 74, 127 });
+            expectWithinAbsoluteError(cutoff->getValue(), 1.0f, 0.001f);
         }
     }
 };

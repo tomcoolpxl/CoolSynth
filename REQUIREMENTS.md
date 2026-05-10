@@ -30,7 +30,7 @@ The following decisions are fixed and are not open for redesign in the first pla
 - Practical first Windows backend: WASAPI shared mode.
 - ASIO: optional later, not required for the first functional release.
 - MIDI controller: Arturia MiniLab 3.
-- Controller strategy: fixed MiniLab mapping plus standalone MIDI learn overrides for continuous controls.
+- Controller strategy: bundled MiniLab factory profile plus standalone MIDI learn overrides for continuous controls.
 - UI direction: hardware-synth-like, loosely inspired by the MiniLab 3 layout.
 - Initial synth scope: one oscillator per voice.
 - Priority order: core synth first, LFO and broader modulation later.
@@ -51,7 +51,7 @@ The first functional release shall provide:
 - A per-voice ADSR amplitude envelope.
 - A per-voice low-pass filter with cutoff and resonance control.
 - A global delay effect with time, feedback, and mix control.
-- A fixed MiniLab 3 mapping for the core synth parameters once the controller's default messages have been confirmed on the actual device.
+- A bundled MiniLab 3 Arturia-mode factory profile for the core synth parameters once the controller's default messages have been confirmed on the actual device.
 - Standalone MIDI learn for continuous controls, including per-parameter learn mode, clear mapping, and persisted learned CC bindings.
 - A hardware-synth-like UI built with JUCE components, including a standalone bottom status bar and a standalone settings dialog reached from the standalone shell's Options entry point.
 - A standalone MIDI monitor for bring-up and debugging.
@@ -93,7 +93,7 @@ This project must separate shared synth behavior from standalone-specific and VS
 | Audio rendering | Required | Uses shared core | Uses shared core |
 | Parameter model | Required | Uses shared core | Uses shared core |
 | Synth engine and voices | Required | Uses shared core | Uses shared core |
-| Controller mapping logic | Required | Consumes hardware MIDI and may apply learned CC overrides | First release focuses on host MIDI notes; host CC remapping deferred |
+| Controller mapping logic | Required | Consumes hardware MIDI, resolves bundled factory profiles, and may apply learned CC overrides | First release focuses on host MIDI notes plus host parameter integration; plugin-side CC learn/remapping deferred |
 | Audio device selection | Not part of shared core | Required | Not applicable |
 | MIDI device selection | Not part of shared core | Required | Not applicable |
 | MIDI monitor UI | Optional event capture support only | Required in early milestones | Not required |
@@ -246,32 +246,33 @@ The plugin editor does not need a MIDI monitor.
 
 ### 8.4 MiniLab 3 Fixed Mapping
 
-The first controller strategy is a fixed MiniLab 3 mapping.
+The first controller strategy is a bundled MiniLab 3 Arturia-mode factory profile.
 
-The mapping milestone is not complete until the actual MiniLab 3 default template messages used on the developer's device have been captured with the MIDI monitor and recorded in code or documentation.
+The mapping milestone is not complete until the actual MiniLab 3 Arturia-mode messages used on the developer's device have been captured with the MIDI monitor and recorded in the bundled profile data plus documentation.
 
 For the first functional release, this mapping milestone is satisfied by standalone behavior. The VST3 smoke milestone requires host MIDI note input and host automation, but it does not require host-provided MiniLab CC remapping.
 
-The preferred first fixed mapping is:
+The preferred first bundled MiniLab 3 Arturia-mode mapping is:
 
 | MiniLab 3 Control | Target | Status for First Release |
 | --- | --- | --- |
 | Keyboard | Note on and note off | Required |
 | Velocity | Voice amplitude | Required |
-| Knob 1 | Waveform selection | Required |
-| Knob 2 | Filter cutoff | Required |
-| Knob 3 | Filter resonance | Required |
-| Knob 4 | Amp attack | Required |
-| Knob 5 | Amp decay | Required |
-| Knob 6 | Amp sustain | Required |
-| Knob 7 | Amp release | Required |
-| Knob 8 | Delay mix | Required after delay milestone |
+| Knob 1 | Filter cutoff | Required |
+| Knob 2 | Filter resonance | Required |
+| Knob 3 | Delay time | Required |
+| Knob 4 | Delay feedback | Required |
+| Knob 5 | Amp attack | Required |
+| Knob 6 | Amp decay | Required |
+| Knob 7 | Amp sustain | Required |
+| Knob 8 | Amp release | Required |
 | Fader 1 | Master gain | Required |
-| Fader 2 | Delay feedback | Required after delay milestone |
-| Fader 3 | Delay time | Required after delay milestone |
+| Fader 2 | Delay mix | Required |
+| Fader 3 | Unassigned | Deferred |
 | Fader 4 | Unassigned | Deferred |
-| Pads | Optional fixed assignments after actual pad message behavior is confirmed | Deferred |
-| Main encoder | Unassigned | Deferred |
+| Pad 8 | Panic | Required |
+| Main encoder | Waveform | Required |
+| Pads 1-7 | Unassigned | Deferred |
 
 Pad mapping rules:
 
@@ -297,6 +298,7 @@ Standalone MIDI learn shall:
 - Allow clearing an existing mapping.
 - Persist mappings between runs.
 - Store mappings separately from synth parameter values.
+- Override the active standalone factory profile on a per-parameter basis.
 - Surface the armed or learned state in the standalone editor with text badges or labels in addition to color.
 - Remain omitted from the VST3 editor in the first functional release.
 
@@ -400,6 +402,7 @@ The VST3 editor shall include:
 - Delay section.
 - Output section.
 - Panic action.
+- Host-provided parameter context menus and parameter-under-mouse support where the host format exposes them.
 
 The plugin editor does not need standalone device selectors, hardware status panels, patch actions, standalone MIDI learn controls, or the standalone settings dialog.
 
@@ -471,7 +474,7 @@ Additional real-time rules:
 - MIDI monitor collection shall store lightweight event records only. String formatting for the monitor shall happen on the message thread.
 - UI code shall not mutate live voice objects directly.
 - Audio-thread parameter reads shall use JUCE parameter APIs or atomics without requiring locks.
-- Controller-driven parameter writes for the fixed MiniLab mapping shall occur off the audio thread in the first release.
+- Controller-driven parameter writes for the bundled MiniLab factory profile shall occur off the audio thread in the first release.
 - Continuous parameters that can click when jumped, including master gain and filter cutoff, shall use smoothing or another safe control-rate strategy.
 - Delay-time changes do not need seamless modulation behavior in the first release, but they must remain real-time safe.
 - The audio callback shall not depend on device-selection or persistence code.
@@ -622,14 +625,15 @@ Acceptance criteria:
 Deliverables:
 
 - Confirmed MiniLab 3 default message table for the controls used in the fixed mapping.
-- Fixed mappings for the controls tied to already implemented parameters.
+- Bundled factory-profile mappings for the controls tied to already implemented parameters.
 - Controller mapping code isolated from synth engine code.
 
 Acceptance criteria:
 
-- Knob 1 updates waveform selection.
-- Knobs 4 through 7 update the ADSR parameters.
+- Knobs 1 and 2 update cutoff and resonance.
+- Knobs 5 through 8 update the ADSR parameters.
 - Fader 1 updates master gain.
+- Main encoder updates waveform selection.
 - Unmapped controls do not produce harmful behavior.
 - The fixed mapping works without embedding MiniLab-specific message numbers in voice code.
 
@@ -645,7 +649,7 @@ Acceptance criteria:
 
 - Cutoff changes are clearly audible.
 - Resonance changes are clearly audible.
-- Knob 2 updates cutoff and Knob 3 updates resonance.
+- Knob 1 updates cutoff and Knob 2 updates resonance.
 - The filter remains stable at 44.1 kHz and 48 kHz across the user-facing parameter range.
 
 ### Milestone 8: Delay
@@ -661,7 +665,7 @@ Acceptance criteria:
 - Delay mix above zero produces an audible delayed signal.
 - Delay mix at zero produces effectively dry output.
 - Feedback remains bounded and does not run away.
-- Knob 8, Fader 2, and Fader 3 update the intended delay parameters.
+- Knob 3, Knob 4, and Fader 2 update the intended delay parameters.
 - Manual delay-time changes do not crash the app.
 
 ### Milestone 9: Hardware-Style UI Refinement

@@ -1,12 +1,11 @@
 #pragma once
 
-#include <array>
 #include <span>
 #include <vector>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "midi/Minilab3Profile.h"
+#include "midi/ControllerProfile.h"
 #include "midi/MidiLearn.h"
 
 namespace coolsynth::midi
@@ -27,22 +26,11 @@ namespace coolsynth::midi
         uint8_t data2 = 0;
     };
 
-    enum class MappingCurve : uint8_t
-    {
-        linearNormalized,
-        waveformChoice3Step,
-    };
-
-    enum class MappedCommand : uint8_t
-    {
-        none,
-        panic,
-    };
+    using MappedCommand = ControllerCommandId;
 
     struct ParameterTarget
     {
         juce::RangedAudioParameter* parameter = nullptr;
-        MappingCurve curve = MappingCurve::linearNormalized;
     };
 
     struct MappedParameterChange
@@ -68,7 +56,18 @@ namespace coolsynth::midi
     class MidiMappingEngine
     {
     public:
+        enum class TakeoverState : uint8_t
+        {
+            waitingForFirstTouch,
+            scaling,
+            latched
+        };
+
         explicit MidiMappingEngine(juce::AudioProcessorValueTreeState& state);
+
+        bool setActiveProfile(juce::StringRef profileId);
+        juce::String getActiveProfileId() const;
+        juce::String getActiveProfileDisplayName() const;
 
         void setLearnedBindings(std::span<const LearnedCcBinding> bindings);
         bool clearLearnedBinding(juce::StringRef parameterId);
@@ -78,42 +77,37 @@ namespace coolsynth::midi
 
     private:
         ParameterTarget resolveParameterTarget(juce::StringRef parameterId) const noexcept;
-        bool isFixedBindingShadowedByLearnedTarget(const Minilab3Binding& binding) const noexcept;
-        bool isFixedBindingShadowedByLearnedSignature(uint8_t expectedMidiType,
-                                                      uint8_t channel,
-                                                      uint8_t primaryData) const noexcept;
+        void rebuildActiveBindings();
+        bool isFactoryBindingShadowedByLearnedTarget(const ControllerBinding& binding) const noexcept;
+        bool isFactoryBindingShadowedByLearnedSignature(const ControllerMessageSignature& signature) const noexcept;
 
-        static float mapControllerValue(uint8_t midiValue, const ParameterTarget& target) noexcept;
-        static float mapWaveformChoice(uint8_t midiValue) noexcept;
+        static float mapAbsoluteControllerValue(uint8_t midiValue) noexcept;
+        static float mapThreeStepValue(uint8_t midiValue) noexcept;
+        static bool shouldUseSoftTakeover(const juce::RangedAudioParameter& parameter,
+                                          ControllerValueMode valueMode) noexcept;
 
-        std::span<const Minilab3Binding> bindings;
-        
-    enum class TakeoverState : uint8_t
-    {
-        waitingForFirstTouch,
-        scaling,
-        latched
-    };
+        juce::AudioProcessorValueTreeState& parameterState;
+        const ControllerProfile* activeProfile = nullptr;
 
-    struct BindingWithTarget
-    {
-        Minilab3Binding binding;
-        ParameterTarget target;
-        mutable TakeoverState state = TakeoverState::waitingForFirstTouch;
-        mutable float initialHardwareValue = 0.0f;
-        mutable float initialSoftwareValue = 0.0f;
-    };
+        struct BindingWithTarget
+        {
+            ControllerBinding binding;
+            ParameterTarget target;
+            mutable TakeoverState state = TakeoverState::waitingForFirstTouch;
+            mutable float initialHardwareValue = 0.0f;
+            mutable float initialSoftwareValue = 0.0f;
+        };
 
-    struct LearnedBindingWithTarget
-    {
-        LearnedCcBinding binding;
-        ParameterTarget target;
-        mutable TakeoverState state = TakeoverState::waitingForFirstTouch;
-        mutable float initialHardwareValue = 0.0f;
-        mutable float initialSoftwareValue = 0.0f;
-    };
+        struct LearnedBindingWithTarget
+        {
+            LearnedCcBinding binding;
+            ParameterTarget target;
+            mutable TakeoverState state = TakeoverState::waitingForFirstTouch;
+            mutable float initialHardwareValue = 0.0f;
+            mutable float initialSoftwareValue = 0.0f;
+        };
 
-        std::array<BindingWithTarget, 13> activeBindings {};
+        std::vector<BindingWithTarget> activeBindings;
         std::vector<LearnedBindingWithTarget> learnedBindings;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MidiMappingEngine)

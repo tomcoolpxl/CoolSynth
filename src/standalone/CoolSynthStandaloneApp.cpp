@@ -65,7 +65,7 @@ private:
                     auto* midiController = editor->getStandaloneMidiController();
                     if (deviceManager != nullptr && midiController != nullptr)
                     {
-                        showStandaloneSettingsDialog(this, *deviceManager, *midiController);
+                        showStandaloneSettingsDialog(this, *deviceManager, *midiController, *editor);
                     }
                 }
             }

@@ -4,6 +4,33 @@ namespace coolsynth::standalone
 {
     static StandaloneSettingsStore* globalSettingsStore = nullptr;
 
+    namespace
+    {
+        juce::String toSelectionModeString(ControllerProfileSelectionMode mode)
+        {
+            switch (mode)
+            {
+                case ControllerProfileSelectionMode::none:            return "none";
+                case ControllerProfileSelectionMode::explicitProfile: return "explicit";
+                case ControllerProfileSelectionMode::autoDetect:
+                default: return "auto";
+            }
+        }
+
+        ControllerProfileSelectionMode parseSelectionMode(juce::StringRef mode) noexcept
+        {
+            const juce::String value(mode);
+
+            if (value == "none")
+                return ControllerProfileSelectionMode::none;
+
+            if (value == "explicit")
+                return ControllerProfileSelectionMode::explicitProfile;
+
+            return ControllerProfileSelectionMode::autoDetect;
+        }
+    }
+
     void bindStandaloneSettingsStore(StandaloneSettingsStore* store) noexcept
     {
         globalSettingsStore = store;
@@ -29,6 +56,18 @@ namespace coolsynth::standalone
 
         if (!selection.isValid())
             return std::nullopt;
+
+        return selection;
+    }
+
+    PersistedControllerProfileSelection StandaloneSettingsStore::loadPersistedControllerProfileSelection() const
+    {
+        PersistedControllerProfileSelection selection;
+        selection.mode = parseSelectionMode(propertySet.getValue("controllerProfileSelectionMode", "auto"));
+        selection.profileId = propertySet.getValue("controllerProfileId");
+
+        if (!selection.isValid())
+            selection = {};
 
         return selection;
     }
@@ -88,6 +127,15 @@ namespace coolsynth::standalone
         }
 
         propertySet.setValue("midiLearnMappings", xml.get());
+    }
+
+    void StandaloneSettingsStore::savePersistedControllerProfileSelection(PersistedControllerProfileSelection selection)
+    {
+        if (!selection.isValid())
+            selection = {};
+
+        propertySet.setValue("controllerProfileSelectionMode", toSelectionModeString(selection.mode));
+        propertySet.setValue("controllerProfileId", selection.profileId);
     }
 
     void StandaloneSettingsStore::clearLearnedMidiMappings()

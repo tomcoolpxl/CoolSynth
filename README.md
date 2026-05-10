@@ -24,21 +24,22 @@ In standalone mode, CoolSynth provides:
 
 - audio backend, output device, sample rate, and buffer-size configuration
 - one active MIDI input device at a time
+- bundled factory controller profiles, including MiniLab 3 Arturia-mode auto-detect
 - a MIDI monitor for incoming events
-- remembered standalone settings for audio configuration, selected MIDI input, and learned MIDI CC mappings
+- remembered standalone settings for audio configuration, selected MIDI input, controller-profile selection, and learned MIDI CC mappings
 - clear unavailable-state reporting if a remembered audio or MIDI device is missing when the app starts
 
-The VST3 build uses the same synth engine and parameters inside a DAW. Audio routing, MIDI routing, and session management are handled by the host instead of the standalone UI.
+The VST3 build uses the same synth engine and parameters inside a DAW. Audio routing, MIDI routing, and session management are handled by the host instead of the standalone UI. In plugin mode, the editor also exposes host-provided parameter context menus and parameter-under-mouse lookup when the host format supports them.
 
 ## MIDI Learn
 
-In standalone mode, continuous controls such as knobs and faders support MIDI learn from a right-click context menu.
+In standalone mode, CoolSynth ships with a bundled MiniLab 3 / Arturia Mode factory profile and allows continuous controls such as knobs and faders to override that profile with MIDI learn from a right-click context menu.
 
 - `Learn MIDI CC` arms the control and waits for an incoming CC message.
 - `Cancel MIDI Learn` exits the armed state without changing the mapping.
 - `Clear MIDI CC Mapping` removes the learned assignment for that control.
 
-Learned mappings are stored with standalone settings and apply to the standalone instrument only.
+Learned mappings are stored with standalone settings, override the active standalone factory profile for the mapped parameter, and apply to the standalone instrument only.
 
 ## Patch Workflow
 

@@ -68,33 +68,4 @@ namespace coolsynth::midi
     std::span<const Minilab3ControlDefinition> getVerifiedMinilab3Profile() noexcept;
     const Minilab3ControlDefinition* findVerifiedMinilab3Control(std::string_view controlId) noexcept;
     bool validateMinilab3Profile() noexcept;
-
-    // Phase 7 specific bindings
-    enum class Minilab3LogicalTarget : uint8_t
-    {
-        waveform,
-        filterCutoff,
-        filterResonance,
-        ampAttack,
-        ampDecay,
-        ampSustain,
-        ampRelease,
-        delayMix,
-        delayFeedback,
-        delayTime,
-        masterGain,
-        panic,
-    };
-
-    struct Minilab3Binding
-    {
-        std::string_view controlId;
-        uint8_t expectedMidiType = 0; // MidiMonitorMessageType or similar
-        uint8_t primaryData = 0;      // CC number or Note number
-        uint8_t channel = 1;
-        Minilab3LogicalTarget target = Minilab3LogicalTarget::waveform;
-        bool enabled = true;
-    };
-
-    std::span<const Minilab3Binding> getPhase7Bindings() noexcept;
 }

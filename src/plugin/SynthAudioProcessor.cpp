@@ -156,6 +156,21 @@ void SynthAudioProcessor::resetAutomatableParametersToDefaults()
             applyNormalizedParameterValue(*parameter, parameter->getDefaultValue());
 }
 
+bool SynthAudioProcessor::setActiveControllerProfile(juce::StringRef profileId)
+{
+    return midiMappingEngine.setActiveProfile(profileId);
+}
+
+juce::String SynthAudioProcessor::getActiveControllerProfileId() const
+{
+    return midiMappingEngine.getActiveProfileId();
+}
+
+juce::String SynthAudioProcessor::getActiveControllerProfileDisplayName() const
+{
+    return midiMappingEngine.getActiveProfileDisplayName();
+}
+
 void SynthAudioProcessor::setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings)
 {
     midiMappingEngine.setLearnedBindings(bindings);

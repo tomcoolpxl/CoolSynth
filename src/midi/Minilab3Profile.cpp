@@ -37,27 +37,6 @@ namespace coolsynth::midi
             { "pad8", "Pad 8", Minilab3ControlCategory::pad, "panic", Minilab3Disposition::requiredForPhase7,
               { VerifiedMidiMessageKind::note, 10, {43, 43}, {0, 127}, Minilab3ValueMode::velocity, true, false }, "G1, Bank A" }
         }};
-
-        // CC mapping for Phase 7/8 (Control Change = 176 + (channel-1))
-        // Note On = 144 + (channel-1)
-        // We use 1 for CC and 2 for NoteOn (internal monitor types)
-        
-        constexpr std::array<Minilab3Binding, 13> phase7Bindings {{
-            { "knob1",  1, 74, 0,  Minilab3LogicalTarget::filterCutoff, true },
-            { "knob2",  1, 71, 0,  Minilab3LogicalTarget::filterResonance, true },
-            { "knob5",  1, 93, 0,  Minilab3LogicalTarget::ampAttack,  true },
-            { "knob6",  1, 18, 0,  Minilab3LogicalTarget::ampDecay,   true },
-            { "knob7",  1, 19, 0,  Minilab3LogicalTarget::ampSustain, true },
-            { "knob8",  1, 16, 0,  Minilab3LogicalTarget::ampRelease, true },
-            { "knob3",  1, 76, 0,  Minilab3LogicalTarget::delayTime,   true },
-            { "knob4",  1, 77, 0,  Minilab3LogicalTarget::delayFeedback,  true },
-            { "fader1", 1, 82, 0,  Minilab3LogicalTarget::masterGain, true },
-            { "fader2", 1, 83, 0,  Minilab3LogicalTarget::delayMix, true },
-            { "encoder", 1, 114, 0, Minilab3LogicalTarget::waveform, true },
-            { "pad8",   2, 43, 0, Minilab3LogicalTarget::panic,      true },
-            { "fader3", 1, 85, 0, Minilab3LogicalTarget::waveform,  false }
-        }};
-
     }
 
     std::span<const Minilab3ControlDefinition> getVerifiedMinilab3Profile() noexcept
@@ -77,10 +56,5 @@ namespace coolsynth::midi
     bool validateMinilab3Profile() noexcept
     {
         return !verifiedControls.empty();
-    }
-
-    std::span<const Minilab3Binding> getPhase7Bindings() noexcept
-    {
-        return phase7Bindings;
     }
 }

@@ -1,12 +1,13 @@
 #include "SynthAudioProcessorEditor.h"
 
 #include "SynthAudioProcessor.h"
+#include "midi/ControllerProfile.h"
 #include "parameters/ParameterIDs.h"
+#include "presets/PatchState.h"
+#include "standalone/SettingsStore.h"
+#include "standalone/StandaloneAudioSupport.h"
 #include "ui/StandaloneSettingsDialog.h"
 #include "ui/StandaloneStatusBar.h"
-#include "standalone/StandaloneAudioSupport.h"
-#include "standalone/SettingsStore.h"
-#include "presets/PatchState.h"
 
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
@@ -45,6 +46,7 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     waveformSelector.addItemList({ "sine", "square", "saw" }, 1);
     addAndMakeVisible(waveformSelector);
     waveformAttachment = std::make_unique<ComboBoxAttachment>(apvts, ids::waveform, waveformSelector);
+    registerParameterSurface(waveformSelector, ids::waveform);
 
     // --- Filter Section ---
     addAndMakeVisible(filterSection);
@@ -78,6 +80,26 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     addAndMakeVisible(masterGainFader);
     masterGainAttachment = std::make_unique<SliderAttachment>(apvts, ids::masterGainDb, masterGainFader.slider());
 
+    auto applyKnobState = [](coolsynth::ui::HardwareKnob& knob, bool armed, juce::String badge)
+    {
+        knob.setLearnState(armed, badge);
+    };
+    auto applyFaderState = [](coolsynth::ui::HardwareFader& fader, bool armed, juce::String badge)
+    {
+        fader.setLearnState(armed, badge);
+    };
+
+    registerLearnableControl(cutoffKnob, ids::filterCutoffHz, "Cutoff", [&](bool a, juce::String b) { applyKnobState(cutoffKnob, a, b); });
+    registerLearnableControl(resonanceKnob, ids::filterResonance, "Resonance", [&](bool a, juce::String b) { applyKnobState(resonanceKnob, a, b); });
+    registerLearnableControl(attackKnob, ids::ampAttackMs, "Attack", [&](bool a, juce::String b) { applyKnobState(attackKnob, a, b); });
+    registerLearnableControl(decayKnob, ids::ampDecayMs, "Decay", [&](bool a, juce::String b) { applyKnobState(decayKnob, a, b); });
+    registerLearnableControl(sustainKnob, ids::ampSustain, "Sustain", [&](bool a, juce::String b) { applyKnobState(sustainKnob, a, b); });
+    registerLearnableControl(releaseKnob, ids::ampReleaseMs, "Release", [&](bool a, juce::String b) { applyKnobState(releaseKnob, a, b); });
+    registerLearnableControl(delayTimeKnob, ids::delayTimeMs, "Delay Time", [&](bool a, juce::String b) { applyKnobState(delayTimeKnob, a, b); });
+    registerLearnableControl(delayFeedbackKnob, ids::delayFeedback, "Delay Feedback", [&](bool a, juce::String b) { applyKnobState(delayFeedbackKnob, a, b); });
+    registerLearnableControl(delayMixKnob, ids::delayMix, "Delay Mix", [&](bool a, juce::String b) { applyKnobState(delayMixKnob, a, b); });
+    registerLearnableControl(masterGainFader, ids::masterGainDb, "Master Gain", [&](bool a, juce::String b) { applyFaderState(masterGainFader, a, b); });
+
     allNotesOffButton.onClick = [this] { processor.requestPanic(); };
     addAndMakeVisible(allNotesOffButton);
 
@@ -100,28 +122,12 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
 
         midiLearnManager = std::make_unique<coolsynth::midi::MidiLearnManager>();
 
-        auto applyKnobState = [](coolsynth::ui::HardwareKnob& knob, bool armed, juce::String badge) { knob.setLearnState(armed, badge); };
-        auto applyFaderState = [](coolsynth::ui::HardwareFader& fader, bool armed, juce::String badge) { fader.setLearnState(armed, badge); };
-
-        registerLearnableControl(cutoffKnob, ids::filterCutoffHz, "Cutoff", [&](bool a, juce::String b) { applyKnobState(cutoffKnob, a, b); });
-        registerLearnableControl(resonanceKnob, ids::filterResonance, "Resonance", [&](bool a, juce::String b) { applyKnobState(resonanceKnob, a, b); });
-        registerLearnableControl(attackKnob, ids::ampAttackMs, "Attack", [&](bool a, juce::String b) { applyKnobState(attackKnob, a, b); });
-        registerLearnableControl(decayKnob, ids::ampDecayMs, "Decay", [&](bool a, juce::String b) { applyKnobState(decayKnob, a, b); });
-        registerLearnableControl(sustainKnob, ids::ampSustain, "Sustain", [&](bool a, juce::String b) { applyKnobState(sustainKnob, a, b); });
-        registerLearnableControl(releaseKnob, ids::ampReleaseMs, "Release", [&](bool a, juce::String b) { applyKnobState(releaseKnob, a, b); });
-        registerLearnableControl(delayTimeKnob, ids::delayTimeMs, "Delay Time", [&](bool a, juce::String b) { applyKnobState(delayTimeKnob, a, b); });
-        registerLearnableControl(delayFeedbackKnob, ids::delayFeedback, "Delay Feedback", [&](bool a, juce::String b) { applyKnobState(delayFeedbackKnob, a, b); });
-        registerLearnableControl(delayMixKnob, ids::delayMix, "Delay Mix", [&](bool a, juce::String b) { applyKnobState(delayMixKnob, a, b); });
-        registerLearnableControl(masterGainFader, ids::masterGainDb, "Master Gain", [&](bool a, juce::String b) { applyFaderState(masterGainFader, a, b); });
-
         if (settingsStore != nullptr)
         {
             auto mappings = settingsStore->loadLearnedMidiMappings();
             midiLearnManager->replaceBindings(mappings);
             processor.setLearnedMidiBindings(midiLearnManager->getBindings());
         }
-
-        refreshMidiLearnVisuals();
 
         standaloneMidiController = std::make_unique<coolsynth::standalone::StandaloneMidiInputController>(
             *deviceManager,
@@ -135,6 +141,9 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
                 processor.requestPanic();
             });
 
+        standaloneMidiController->addChangeListener(this);
+        refreshStandaloneControllerProfileSelection();
+
         standaloneStatusBar = std::make_unique<StandaloneStatusBar>(*standaloneMidiController);
         addAndMakeVisible(*standaloneStatusBar);
 
@@ -146,12 +155,98 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     }
 
     startTimerHz(24);
+    refreshMidiLearnVisuals();
     refreshValueDisplays();
 }
 
 SynthAudioProcessorEditor::~SynthAudioProcessorEditor()
 {
+    if (standaloneMidiController != nullptr)
+        standaloneMidiController->removeChangeListener(this);
+
     stopTimer();
+}
+
+int SynthAudioProcessorEditor::getControlParameterIndex(juce::Component& component)
+{
+    if (const auto* registration = findParameterSurfaceForComponent(&component))
+        if (auto* parameter = findParameterForId(registration->parameterId))
+            return parameter->getParameterIndex();
+
+    return -1;
+}
+
+void SynthAudioProcessorEditor::refreshStandaloneControllerProfileSelection()
+{
+    if (standaloneMidiController == nullptr)
+        return;
+
+    juce::String resolvedProfileId;
+    auto selection = coolsynth::standalone::PersistedControllerProfileSelection {};
+
+    if (auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore())
+        selection = settingsStore->loadPersistedControllerProfileSelection();
+
+    switch (selection.mode)
+    {
+        case coolsynth::standalone::ControllerProfileSelectionMode::none:
+            break;
+
+        case coolsynth::standalone::ControllerProfileSelectionMode::explicitProfile:
+            resolvedProfileId = selection.profileId;
+            break;
+
+        case coolsynth::standalone::ControllerProfileSelectionMode::autoDetect:
+        default:
+        {
+            const auto& snapshot = standaloneMidiController->getSnapshot();
+            if (snapshot.selectedDeviceIdentifier.isNotEmpty() || snapshot.selectedDeviceName.isNotEmpty())
+            {
+                const juce::MidiDeviceInfo device(snapshot.selectedDeviceName,
+                                                  snapshot.selectedDeviceIdentifier);
+                resolvedProfileId = coolsynth::midi::ControllerProfileRegistry::get()
+                                        .findBestProfileIdForDevice(device);
+            }
+            break;
+        }
+    }
+
+    if (!processor.setActiveControllerProfile(resolvedProfileId))
+        processor.setActiveControllerProfile({});
+
+    refreshMidiLearnVisuals();
+}
+
+juce::String SynthAudioProcessorEditor::getResolvedStandaloneControllerProfileDisplayName() const
+{
+    auto displayName = processor.getActiveControllerProfileDisplayName();
+    return displayName.isNotEmpty() ? displayName : "None";
+}
+
+void SynthAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
+{
+    if (source == standaloneMidiController.get())
+        refreshStandaloneControllerProfileSelection();
+}
+
+juce::RangedAudioParameter* SynthAudioProcessorEditor::findParameterForId(juce::StringRef parameterId) const noexcept
+{
+    return processor.getValueTreeState().getParameter(parameterId);
+}
+
+void SynthAudioProcessorEditor::registerParameterSurface(juce::Component& surface, juce::String parameterId)
+{
+    for (auto& registration : parameterSurfaces)
+    {
+        if (registration.surface == &surface)
+        {
+            registration.parameterId = std::move(parameterId);
+            return;
+        }
+    }
+
+    parameterSurfaces.push_back({ std::move(parameterId), &surface });
+    surface.addMouseListener(this, true);
 }
 
 void SynthAudioProcessorEditor::registerLearnableControl(juce::Component& surface,
@@ -159,8 +254,29 @@ void SynthAudioProcessorEditor::registerLearnableControl(juce::Component& surfac
                                                          juce::String displayName,
                                                          std::function<void(bool, juce::String)> applyVisualState)
 {
+    registerParameterSurface(surface, parameterId);
     learnableControls.push_back({ parameterId, displayName, &surface, std::move(applyVisualState) });
-    surface.addMouseListener(this, true);
+}
+
+const SynthAudioProcessorEditor::ParameterSurfaceRegistration*
+SynthAudioProcessorEditor::findParameterSurfaceForComponent(const juce::Component* component) const noexcept
+{
+    for (auto* current = component; current != nullptr; current = current->getParentComponent())
+        for (const auto& registration : parameterSurfaces)
+            if (registration.surface == current)
+                return &registration;
+
+    return nullptr;
+}
+
+const SynthAudioProcessorEditor::LearnableControlRegistration*
+SynthAudioProcessorEditor::findLearnableControl(juce::StringRef parameterId) const noexcept
+{
+    for (const auto& registration : learnableControls)
+        if (registration.parameterId == parameterId)
+            return &registration;
+
+    return nullptr;
 }
 
 void SynthAudioProcessorEditor::handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event)
@@ -217,19 +333,25 @@ void SynthAudioProcessorEditor::handleStandaloneControllerEvent(const coolsynth:
 
 void SynthAudioProcessorEditor::refreshMidiLearnVisuals()
 {
-    if (midiLearnManager == nullptr) return;
-    
-    auto session = midiLearnManager->getSession();
-    midiLearnStatusLabel.setText(session.statusText, juce::dontSendNotification);
+    auto session = coolsynth::midi::MidiLearnSession {};
+    if (midiLearnManager != nullptr)
+        session = midiLearnManager->getSession();
 
-    bool shouldShowBadges = lastShowCcLabelsSetting || session.armed || badgeVisibilityCounter > 0;
+    auto statusText = session.statusText;
+    if (statusText.isEmpty() && standaloneMidiController != nullptr)
+        statusText = "Profile: " + getResolvedStandaloneControllerProfileDisplayName();
+
+    midiLearnStatusLabel.setText(statusText, juce::dontSendNotification);
+
+    const bool shouldShowBadges = midiLearnManager != nullptr
+                               && (lastShowCcLabelsSetting || session.armed || badgeVisibilityCounter > 0);
 
     for (auto& ctrl : learnableControls)
     {
         bool isArmed = session.armed && session.parameterId == ctrl.parameterId;
         juce::String badge = "";
         
-        if (shouldShowBadges)
+        if (shouldShowBadges && midiLearnManager != nullptr)
         {
             if (auto* binding = midiLearnManager->findBindingForParameter(ctrl.parameterId))
             {
@@ -249,56 +371,88 @@ void SynthAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
     if (!event.mods.isPopupMenu())
         return;
 
-    if (midiLearnManager == nullptr)
+    const auto* registration = findParameterSurfaceForComponent(event.eventComponent);
+    if (registration == nullptr)
         return;
 
-    for (const auto& ctrl : learnableControls)
-    {
-        if (event.eventComponent == ctrl.surface || ctrl.surface->isParentOf(event.eventComponent))
-        {
-            showMidiLearnMenu(ctrl, event.getScreenPosition());
-            return;
-        }
-    }
+    juce::String displayName = registration->parameterId;
+    if (const auto* learnable = findLearnableControl(registration->parameterId))
+        displayName = learnable->displayName;
+    else if (auto* parameter = findParameterForId(registration->parameterId))
+        displayName = parameter->getName(64);
+
+    showParameterContextMenu(registration->parameterId, displayName, event.getScreenPosition());
 }
 
-void SynthAudioProcessorEditor::showMidiLearnMenu(const LearnableControlRegistration& registration, juce::Point<int> screenPosition)
+void SynthAudioProcessorEditor::showParameterContextMenu(juce::String parameterId,
+                                                         juce::String displayName,
+                                                         juce::Point<int> screenPosition)
 {
     juce::PopupMenu menu;
-    
-    auto session = midiLearnManager->getSession();
-    bool isCurrentlyArmed = session.armed && session.parameterId == registration.parameterId;
-    
-    if (isCurrentlyArmed)
+    constexpr int cancelMidiLearnItemId = 1001;
+    constexpr int startMidiLearnItemId = 1002;
+    constexpr int clearMidiLearnItemId = 1003;
+
+    if (midiLearnManager != nullptr)
     {
-        menu.addItem(1, "Cancel MIDI Learn", true, false);
-    }
-    else
-    {
-        menu.addItem(2, "Learn MIDI CC", true, false);
-    }
-    
-    if (midiLearnManager->findBindingForParameter(registration.parameterId) != nullptr)
-    {
-        menu.addItem(3, "Clear MIDI CC Mapping", true, false);
-    }
-    
-    menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea({screenPosition.x, screenPosition.y, 1, 1}),
-        [this, paramId = registration.parameterId, paramName = registration.displayName](int result)
+        if (const auto* learnable = findLearnableControl(parameterId))
         {
-            if (result == 1)
+            const auto session = midiLearnManager->getSession();
+            const bool isCurrentlyArmed = session.armed && session.parameterId == parameterId;
+
+            if (isCurrentlyArmed)
+                menu.addItem(cancelMidiLearnItemId, "Cancel MIDI Learn", true, false);
+            else
+                menu.addItem(startMidiLearnItemId, "Learn MIDI CC", true, false);
+
+            if (midiLearnManager->findBindingForParameter(parameterId) != nullptr)
+                menu.addItem(clearMidiLearnItemId, "Clear MIDI CC Mapping", true, false);
+        }
+    }
+
+    if (auto* parameter = findParameterForId(parameterId))
+    {
+        if (auto* hostContext = getHostContext())
+        {
+            if (auto hostMenu = hostContext->getContextMenuForParameter(parameter))
             {
-                midiLearnManager->cancelLearning();
-                refreshMidiLearnVisuals();
+                auto hostPopup = hostMenu->getEquivalentPopupMenu();
+                if (hostPopup.getNumItems() > 0)
+                {
+                    if (menu.getNumItems() > 0)
+                        menu.addSeparator();
+
+                    menu.addSubMenu("Host", hostPopup);
+                }
             }
-            else if (result == 2)
+        }
+    }
+
+    if (menu.getNumItems() == 0)
+        return;
+
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea({screenPosition.x, screenPosition.y, 1, 1}),
+        [this, parameterId = std::move(parameterId), displayName = std::move(displayName)](int result)
+        {
+            if (result == cancelMidiLearnItemId)
             {
-                midiLearnManager->beginLearning(paramId, paramName);
-                refreshMidiLearnVisuals();
+                if (midiLearnManager != nullptr)
+                {
+                    midiLearnManager->cancelLearning();
+                    refreshMidiLearnVisuals();
+                }
             }
-            else if (result == 3)
+            else if (result == startMidiLearnItemId)
             {
-                if (midiLearnManager->clearBinding(paramId))
+                if (midiLearnManager != nullptr)
+                {
+                    midiLearnManager->beginLearning(parameterId, displayName);
+                    refreshMidiLearnVisuals();
+                }
+            }
+            else if (result == clearMidiLearnItemId)
+            {
+                if (midiLearnManager != nullptr && midiLearnManager->clearBinding(parameterId))
                 {
                     auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore();
                     if (settingsStore != nullptr)

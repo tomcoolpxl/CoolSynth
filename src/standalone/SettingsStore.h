@@ -40,6 +40,24 @@ namespace coolsynth::standalone
         }
     };
 
+    enum class ControllerProfileSelectionMode : uint8_t
+    {
+        autoDetect,
+        none,
+        explicitProfile,
+    };
+
+    struct PersistedControllerProfileSelection
+    {
+        ControllerProfileSelectionMode mode = ControllerProfileSelectionMode::autoDetect;
+        juce::String profileId;
+
+        bool isValid() const noexcept
+        {
+            return mode != ControllerProfileSelectionMode::explicitProfile || profileId.isNotEmpty();
+        }
+    };
+
     class StandaloneSettingsStore final
     {
     public:
@@ -55,6 +73,7 @@ namespace coolsynth::standalone
 
         std::optional<PersistedAudioSelection> loadPersistedAudioSelection() const;
         std::optional<PersistedMidiInputSelection> loadPersistedMidiInputSelection() const;
+        PersistedControllerProfileSelection loadPersistedControllerProfileSelection() const;
 
         void savePersistedMidiInputSelection(const juce::MidiDeviceInfo& device)
         {
@@ -77,6 +96,8 @@ namespace coolsynth::standalone
         {
             propertySet.setValue("showCcLabels", show);
         }
+
+        void savePersistedControllerProfileSelection(PersistedControllerProfileSelection selection);
 
         std::vector<coolsynth::midi::LearnedCcBinding> loadLearnedMidiMappings() const;
         void saveLearnedMidiMappings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);

@@ -54,7 +54,7 @@ The design shall optimize for:
 - Safe real-time audio behavior.
 - Simple but practical synthesis.
 - A hardware-synth-like UI inspired by the MiniLab 3 layout.
-- Fixed MiniLab 3 mapping with standalone MIDI learn overrides for continuous controls.
+- Bundled factory controller profiles with standalone MIDI learn overrides for continuous controls.
 - Maintainable code that can grow without immediate redesign.
 
 The design shall not optimize for:
@@ -99,6 +99,7 @@ Responsibilities:
 - Show audio and MIDI device status through a compact bottom status bar.
 - Expose one dedicated settings dialog from the standalone window's Options button, with separate Audio and MIDI tabs.
 - Surface standalone patch actions and standalone MIDI learn affordances in the main synth editor.
+- Auto-detect the bundled MiniLab 3 Arturia-mode factory profile when the selected standalone MIDI device matches.
 - Allow testing the MiniLab 3 without a DAW.
 - Use the same synth processor and editor as the plugin where practical.
 
@@ -126,7 +127,7 @@ Shared code:
 - Parameters.
 - UI controls.
 - UI layout, except device panels.
-- Default MiniLab mapping logic plus learned-binding application for MIDI CCs.
+- Data-driven factory controller profiles plus learned-binding application for MIDI CCs.
 - Parameter-state serialization and patch-format utilities.
 
 Standalone-only code:
@@ -453,16 +454,16 @@ For the first functional release:
 
 # Fixed MiniLab 3 Mapping
 
-The first mapping is fixed by MiniLab control role, with exact CC values verified through the MIDI monitor.
+The first shipped mapping is a bundled factory controller profile for MiniLab 3 Arturia Mode, with exact messages verified through the MIDI monitor and stored as profile data rather than hardcoded mapping logic.
 
-`Minilab3Profile` should contain:
+The bundled profile should include:
 
-- Device name match hints.
-- Verified CC-to-parameter bindings for the implemented control set.
-- Deferred pad and main-encoder status until the actual device messages are captured.
-- Reserved controls.
+- Device name match hints for standalone auto-detection.
+- Verified bindings for the implemented control set.
+- Explicit value modes for absolute knobs, stepped waveform selection, and relative encoders.
+- Deferred or disabled controls that are not part of the shipped default map.
 
-`MidiMappingEngine` should convert verified controller messages into one of two outputs only:
+`MidiMappingEngine` should convert resolved controller-profile bindings into one of two outputs only:
 
 - Stable parameter changes addressed by parameter ID.
 - Explicit commands such as panic.
@@ -471,16 +472,20 @@ It should not write directly into synth voices or hold alternate controller-only
 
 In the first release, parameter-change outputs are consumed by the standalone control-thread parameter-update path described above rather than from `processBlock`.
 
-Example design:
+The shipped MiniLab 3 Arturia-mode profile is:
 
-```cpp
-struct ControlBinding
-{
-    int controllerNumber;   // CC number
-    const char* parameterID;
-    MappingCurve curve;
-};
-```
+- Knob 1 -> filter cutoff
+- Knob 2 -> filter resonance
+- Knob 3 -> delay time
+- Knob 4 -> delay feedback
+- Knob 5 -> amp attack
+- Knob 6 -> amp decay
+- Knob 7 -> amp sustain
+- Knob 8 -> amp release
+- Fader 1 -> master gain
+- Fader 2 -> delay mix
+- Main encoder -> waveform
+- Pad 8 -> panic
 
 Pad actions are deferred for the first functional release. If later the default pad messages are simple and reliable, they should be modeled as commands rather than hardwired processor branches:
 
@@ -491,7 +496,7 @@ Pad event
   -> Processor or UI-safe command handler
 ```
 
-If pad support is added later, the first candidate commands should be waveform direct-select and panic. The main encoder should remain unassigned initially.
+If additional pad support is added later, the first candidate commands should be waveform direct-select and panic. The shipped profile already uses the main encoder for waveform stepping.
 
 # MIDI Monitor Design
 
@@ -523,7 +528,7 @@ The current design includes standalone MIDI learn for continuous parameters with
 Mapping model:
 
 ```text
-Default profile
+Factory profile
   + standalone user overrides
   + persisted mappings in StandaloneSettingsStore
 ```
@@ -532,7 +537,7 @@ Standalone MIDI learn rules:
 
 - Learn mode is entered per control from a context menu on learnable knobs and faders.
 - Only CC messages are captured for continuous parameters.
-- Learned bindings override the default standalone mapping for matching parameters.
+- Learned bindings override the active standalone factory profile for matching parameters.
 - Learned bindings are saved separately from synth parameter state.
 - The standalone editor surfaces an armed status label plus optional per-control CC badges.
 - The VST3 editor omits the MIDI learn affordances in the first release.
@@ -824,7 +829,7 @@ It should not try to exactly clone Arturia's visual design. That may create unne
 Recommended layout:
 
 ```text
-| CoolSynth   [MIDI learn status]   [Init Patch] [Save Patch] [Load Patch] [All Notes Off] |
+| CoolSynth   [profile / MIDI learn status]   [Init Patch] [Save Patch] [Load Patch] [All Notes Off] |
 +-------------------------------------------------------------------------------------------+
 | Oscillator | Filter | Envelope | Delay | Output                                           |
 | [Waveform] | [Cutoff] [Res] | [Attack] [Decay] [Sustain] [Release] | [Time] [Feedback] [Mix] | [Master] |
@@ -870,6 +875,7 @@ StandaloneSettingsDialog
      -> audio configuration section
   -> MIDI tab
      -> MIDI input selection section
+     -> controller-profile selection section
      -> show-CC-labels toggle
      -> MIDI monitor section
   -> single source of truth for standalone utility controls
@@ -927,6 +933,7 @@ Plugin mode should still show:
 
 - Synth controls.
 - Panic action.
+- Host-provided parameter context menus and parameter-under-mouse support where the format exposes them.
 
 # State And Persistence Design
 
@@ -1103,14 +1110,14 @@ parameters -> ui
 
 # MiniLab Isolation
 
-MiniLab-specific knowledge should live in:
+Bundled controller-profile knowledge should live in:
 
 ```text
-midi/Minilab3Profile.h
-midi/Minilab3Profile.cpp
+resources/controller_profiles/*.json
+src/midi/ControllerProfile.*
 ```
 
-The synth should not care whether a CC came from MiniLab 3, another controller, or a DAW automation lane.
+The synth should not care whether a CC came from MiniLab 3, another controller, or a DAW automation lane. `Minilab3Profile.cpp` may retain verified surface metadata, but the shipped runtime mapping should come from bundled profile data.
 
 # Parameter ID Isolation
 
@@ -1149,7 +1156,7 @@ JUCE host-notifying parameter APIs are not audio-thread APIs for this project.
 
 Decision:
 
-- The first-release fixed MiniLab mapping updates processor parameters from the standalone MIDI callback or another non-audio control thread.
+- The first-release bundled MiniLab factory profile updates processor parameters from the standalone MIDI callback or another non-audio control thread.
 - `processBlock` reads parameter atomics and renders audio, but it does not perform host-notifying parameter writes.
 - The first VST3 smoke milestone requires host MIDI note input and host automation. Host-provided CC-to-parameter remapping is deferred until a validated realtime-safe handoff exists.
 - The design still keeps one canonical parameter model. Deferred plugin CC remapping does not justify adding a controller-only mirror state.

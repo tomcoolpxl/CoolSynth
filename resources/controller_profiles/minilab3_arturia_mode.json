@@ -1,0 +1,94 @@
+{
+  "profileId": "arturia.minilab3.arturia-mode.v1",
+  "displayName": "MiniLab 3 / Arturia Mode",
+  "deviceHints": {
+    "nameContains": ["MiniLab 3", "Minilab3"],
+    "identifierContains": []
+  },
+  "bindings": [
+    {
+      "bindingId": "knob1-filter-cutoff",
+      "displayName": "Knob 1",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 74 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "filterCutoffHz" }
+    },
+    {
+      "bindingId": "knob2-filter-resonance",
+      "displayName": "Knob 2",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 71 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "filterResonance" }
+    },
+    {
+      "bindingId": "knob3-delay-time",
+      "displayName": "Knob 3",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 76 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "delayTimeMs" }
+    },
+    {
+      "bindingId": "knob4-delay-feedback",
+      "displayName": "Knob 4",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 77 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "delayFeedback" }
+    },
+    {
+      "bindingId": "knob5-amp-attack",
+      "displayName": "Knob 5",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 93 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "ampAttackMs" }
+    },
+    {
+      "bindingId": "knob6-amp-decay",
+      "displayName": "Knob 6",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 18 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "ampDecayMs" }
+    },
+    {
+      "bindingId": "knob7-amp-sustain",
+      "displayName": "Knob 7",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 19 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "ampSustain" }
+    },
+    {
+      "bindingId": "knob8-amp-release",
+      "displayName": "Knob 8",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 16 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "ampReleaseMs" }
+    },
+    {
+      "bindingId": "fader1-master-gain",
+      "displayName": "Fader 1",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 82 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "masterGainDb" }
+    },
+    {
+      "bindingId": "fader2-delay-mix",
+      "displayName": "Fader 2",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 83 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "delayMix" }
+    },
+    {
+      "bindingId": "encoder-waveform",
+      "displayName": "Main Encoder",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 114 },
+      "valueMode": "relativeBinaryOffset",
+      "target": { "kind": "parameter", "parameterId": "waveform" }
+    },
+    {
+      "bindingId": "pad8-panic",
+      "displayName": "Pad 8",
+      "signature": { "kind": "noteOn", "channel": 10, "data1": 43 },
+      "valueMode": "noteGate",
+      "target": { "kind": "command", "command": "panic" }
+    }
+  ]
+}

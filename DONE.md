@@ -126,3 +126,12 @@
 - [x] Added automated regressions for disconnect recovery, crafted patch sanitization, supported-sample-rate filter stress, abrupt cutoff/resonance jumps, delay-time jumps, and master-gain jumps.
 - [x] Verified the updated `CoolSynthMidiLearnTests` executable passes locally after the stabilization changes.
 
+## Controller profile refactor foundation
+
+- [x] Replaced hardcoded MiniLab runtime bindings with a bundled data-driven controller profile resource.
+- [x] Added controller-profile selection persistence for standalone mode, including MiniLab 3 auto-detect and an explicit "no factory profile" option.
+- [x] Extended the standalone MIDI settings tab with controller-profile selection and resolved-profile display.
+- [x] Added host parameter context menus and `getControlParameterIndex()` support in the shared editor for host formats that expose them.
+- [x] Verified the shared plugin target and `CoolSynthMidiLearnTests` build in Debug.
+- [x] Verified `ctest --test-dir build -C Debug --output-on-failure` passes locally, including new controller-profile and factory-mapping tests.
+

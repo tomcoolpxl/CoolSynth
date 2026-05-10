@@ -16,7 +16,8 @@ namespace coolsynth::standalone
 }
 
 class SynthAudioProcessorEditor final : public juce::AudioProcessorEditor,
-                                        private juce::Timer
+                                        private juce::Timer,
+                                        private juce::ChangeListener
 {
 public:
     explicit SynthAudioProcessorEditor(SynthAudioProcessor& processor);
@@ -24,6 +25,9 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
+    int getControlParameterIndex(juce::Component& component) override;
+    void refreshStandaloneControllerProfileSelection();
+    juce::String getResolvedStandaloneControllerProfileDisplayName() const;
 
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -52,17 +56,29 @@ private:
         std::function<void(bool isArmed, juce::String badgeText)> applyVisualState;
     };
 
+    struct ParameterSurfaceRegistration
+    {
+        juce::String parameterId;
+        juce::Component* surface = nullptr;
+    };
+
     void timerCallback() override;
+    void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     void refreshValueDisplays();
     juce::String getCurrentParameterText(juce::RangedAudioParameter* parameter) const;
+    juce::RangedAudioParameter* findParameterForId(juce::StringRef parameterId) const noexcept;
+    void registerParameterSurface(juce::Component& surface, juce::String parameterId);
 
     void registerLearnableControl(juce::Component& surface,
                                   juce::String parameterId,
                                   juce::String displayName,
                                   std::function<void(bool, juce::String)> applyVisualState);
+    const ParameterSurfaceRegistration* findParameterSurfaceForComponent(const juce::Component* component) const noexcept;
+    const LearnableControlRegistration* findLearnableControl(juce::StringRef parameterId) const noexcept;
     void mouseUp(const juce::MouseEvent& event) override;
-    void showMidiLearnMenu(const LearnableControlRegistration& registration,
-                           juce::Point<int> screenPosition);
+    void showParameterContextMenu(juce::String parameterId,
+                                  juce::String displayName,
+                                  juce::Point<int> screenPosition);
     void refreshMidiLearnVisuals();
     void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
 
@@ -106,6 +122,7 @@ private:
 
     std::unique_ptr<coolsynth::midi::MidiLearnManager> midiLearnManager;
     std::vector<LearnableControlRegistration> learnableControls;
+    std::vector<ParameterSurfaceRegistration> parameterSurfaces;
 
     std::unique_ptr<coolsynth::standalone::StandaloneMidiInputController> standaloneMidiController;
     std::unique_ptr<juce::Component> standaloneStatusBar;

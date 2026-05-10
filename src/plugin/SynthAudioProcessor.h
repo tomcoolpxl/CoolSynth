@@ -41,6 +41,10 @@ public:
     void resetAutomatableParametersToDefaults();
     juce::String getParameterStateTypeName() const;
 
+    bool setActiveControllerProfile(juce::StringRef profileId);
+    juce::String getActiveControllerProfileId() const;
+    juce::String getActiveControllerProfileDisplayName() const;
+
     void setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
     void clearLearnedMidiBinding(juce::StringRef parameterId);
 
