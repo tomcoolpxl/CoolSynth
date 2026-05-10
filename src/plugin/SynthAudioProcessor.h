@@ -51,9 +51,11 @@ public:
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
 private:
+    bool buildSanitizedParameterStateTree(const juce::ValueTree& incomingState,
+                                          juce::ValueTree& sanitizedState);
     void applyMappedAction(const coolsynth::midi::MappedAction& action);
     void applyNormalizedParameterValue(juce::RangedAudioParameter& parameter,
-                                      float normalizedValue);
+                                       float normalizedValue);
     void applyParameterChange(const coolsynth::midi::MappedParameterChange& change);
     void applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept;
 

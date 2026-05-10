@@ -20,6 +20,7 @@ namespace coolsynth::synth
         lowPassFilter.prepare(spec);
         ampEnvelope.setSampleRate(spec.sampleRate);
         cutoffHzSmoother.reset(spec.sampleRate, 0.02);
+        resonanceQSmoother.reset(spec.sampleRate, 0.02);
     }
 
     void SynthVoice::setNextEnvelopeParameters(const EnvelopeParameters& parameters) noexcept
@@ -85,15 +86,12 @@ namespace coolsynth::synth
         cutoffHzSmoother.setTargetValue(clampedCutoffHz);
 
         const auto nextQ = mapNormalizedResonanceToQ(nextFilterParameters.resonanceNormalized);
-        if (nextQ != lastAppliedResonanceQ)
-        {
-            lowPassFilter.setResonance(nextQ);
-            lastAppliedResonanceQ = nextQ;
-        }
+        resonanceQSmoother.setTargetValue(nextQ);
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
             lowPassFilter.setCutoffFrequency(cutoffHzSmoother.getNextValue());
+            lowPassFilter.setResonance(resonanceQSmoother.getNextValue());
 
             const float oscValue = oscillator.processSample(0.0f);
             const float filteredValue = lowPassFilter.processSample(0, oscValue);
@@ -169,8 +167,8 @@ namespace coolsynth::synth
         cutoffHzSmoother.setCurrentAndTargetValue(clampedCutoffHz);
 
         const auto q = mapNormalizedResonanceToQ(nextFilterParameters.resonanceNormalized);
+        resonanceQSmoother.setCurrentAndTargetValue(q);
         lowPassFilter.setResonance(q);
-        lastAppliedResonanceQ = q;
     }
 
     void SynthVoice::resetVoiceState() noexcept

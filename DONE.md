@@ -117,3 +117,12 @@
 - [x] Verified a live manual validation run on GitHub (`Windows Manual Validation`, run `25614177697`) and downloaded the diagnostics plus package artifacts.
 - [x] Verified a live tag-triggered prerelease publish on GitHub (`Windows Release`, run `25614334076`), confirmed generated notes and assets, reran it successfully without creating a duplicate release, downloaded the published assets, and cleaned up the disposable prerelease tag.
 
+## Phase 16: Final stabilization and release review
+
+- [x] Fixed standalone MIDI disconnect handling so an unplugged active device reports `disconnected` instead of degrading immediately to `rememberedDeviceUnavailable`.
+- [x] Cleared queued controller events and last-event snapshot state when the selected standalone MIDI device disconnects.
+- [x] Hardened patch loading by sanitizing APVTS state to known parameter children and rejecting duplicate parameter IDs in crafted patch XML.
+- [x] Added resonance smoothing in `SynthVoice` to reduce abrupt filter-control clicks during hardware or automation jumps.
+- [x] Added automated regressions for disconnect recovery, crafted patch sanitization, supported-sample-rate filter stress, abrupt cutoff/resonance jumps, delay-time jumps, and master-gain jumps.
+- [x] Verified the updated `CoolSynthMidiLearnTests` executable passes locally after the stabilization changes.
+

@@ -44,10 +44,10 @@ namespace coolsynth::synth
         juce::dsp::Oscillator<float> oscillator;
         juce::dsp::StateVariableTPTFilter<float> lowPassFilter;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoffHzSmoother;
+        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> resonanceQSmoother;
         juce::ADSR ampEnvelope;
         EnvelopeParameters nextEnvelopeParameters;
         FilterParameters nextFilterParameters;
-        float lastAppliedResonanceQ = 0.0f;
         coolsynth::parameters::WaveformChoice currentWaveform =
             coolsynth::parameters::WaveformChoice::saw;
 

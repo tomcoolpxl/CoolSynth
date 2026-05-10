@@ -1,5 +1,6 @@
 #include <juce_core/juce_core.h>
 
+#include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/PatchState.h"
 
@@ -79,6 +80,53 @@ public:
             expect(!xmlString.contains("midiInputIdentifier"));
             expect(!xmlString.contains("midiInputName"));
             expect(!xmlString.contains("midiLearnMappings"));
+        }
+
+        beginTest("patch_loader_sanitizes_extra_root_properties_and_unknown_children");
+        {
+            SynthAudioProcessor source;
+            SynthAudioProcessor target;
+
+            auto& sourceState = source.getValueTreeState();
+            sourceState.getParameter(coolsynth::parameters::ids::delayMix)->setValueNotifyingHost(0.65f);
+
+            auto stateXml = source.createParameterStateXml();
+            expect(stateXml != nullptr);
+
+            stateXml->setAttribute("midiInputIdentifier", "should-not-load");
+            auto* standaloneOnlyChild = stateXml->createNewChildElement("STANDALONE_ONLY");
+            standaloneOnlyChild->setAttribute("value", "bad");
+
+            expect(target.applyParameterStateXml(*stateXml));
+
+            auto& targetState = target.getValueTreeState();
+            expectWithinAbsoluteError(targetState.getRawParameterValue(coolsynth::parameters::ids::delayMix)->load(),
+                                      0.65f,
+                                      0.0001f);
+
+            auto sanitizedXml = target.createParameterStateXml();
+            auto xmlString = sanitizedXml->toString();
+            expect(!xmlString.contains("midiInputIdentifier"));
+            expect(!xmlString.contains("STANDALONE_ONLY"));
+        }
+
+        beginTest("patch_loader_rejects_duplicate_parameter_ids");
+        {
+            SynthAudioProcessor processor;
+            auto stateXml = processor.createParameterStateXml();
+            expect(stateXml != nullptr);
+
+            auto* firstChild = stateXml->getChildElement(0);
+            expect(firstChild != nullptr);
+
+            if (firstChild != nullptr)
+            {
+                auto* duplicateChild = new juce::XmlElement(*firstChild);
+                duplicateChild->setAttribute("value", 0.99f);
+                stateXml->addChildElement(duplicateChild);
+            }
+
+            expect(!processor.applyParameterStateXml(*stateXml));
         }
     }
 };

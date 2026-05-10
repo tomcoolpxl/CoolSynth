@@ -5,12 +5,24 @@ namespace coolsynth::standalone
     StandaloneMidiInputController::StandaloneMidiInputController(juce::AudioDeviceManager& dm,
                                                                  StandaloneSettingsStore* s,
                                                                  ControllerEventHandler onControllerEvent,
-                                                                 DisconnectCallback onDisconnected)
+                                                                 DisconnectCallback onDisconnected,
+                                                                 AvailableDevicesProvider devicesProvider,
+                                                                 DeviceEnableHandler enableHandler)
         : deviceManager(dm)
         , settingsStore(s)
         , onControllerEvent(std::move(onControllerEvent))
+        , availableDevicesProvider(std::move(devicesProvider))
+        , deviceEnableHandler(std::move(enableHandler))
         , onSelectedDeviceDisconnected(std::move(onDisconnected))
     {
+        if (deviceEnableHandler == nullptr)
+        {
+            deviceEnableHandler = [this](const juce::String& identifier, bool shouldBeEnabled)
+            {
+                deviceManager.setMidiInputDeviceEnabled(identifier, shouldBeEnabled);
+            };
+        }
+
         deviceListConnection = juce::MidiDeviceListConnection::make([this] 
         { 
             deviceRefreshPending = true;
@@ -226,7 +238,7 @@ namespace coolsynth::standalone
     void StandaloneMidiInputController::refreshDevices(RefreshReason reason)
     {
         snapshot.runningInStandalone = juce::JUCEApplicationBase::isStandaloneApp();
-        snapshot.availableInputs = juce::MidiInput::getAvailableDevices();
+        snapshot.availableInputs = availableDevicesProvider();
 
         if (reason == RefreshReason::initialLoad && settingsStore != nullptr)
         {
@@ -254,9 +266,11 @@ namespace coolsynth::standalone
 
         const bool wasConnected = selectedDeviceWasPresent;
         const bool isConnectedNow = snapshot.selectedDevicePresent;
+        const bool didDisconnect = wasConnected && !isConnectedNow;
 
-        if (wasConnected && !isConnectedNow)
+        if (didDisconnect)
         {
+            clearDisconnectTransientState();
             selectedDeviceWasPresent = false;
             if (onSelectedDeviceDisconnected)
                 onSelectedDeviceDisconnected();
@@ -273,6 +287,11 @@ namespace coolsynth::standalone
             {
                 snapshot.status = MidiInputStatus::noDevicesAvailable;
                 snapshot.statusMessage = "No MIDI input devices found";
+            }
+            else if (wasConnected)
+            {
+                snapshot.status = MidiInputStatus::disconnected;
+                snapshot.statusMessage = "Disconnected: " + snapshot.selectedDeviceName;
             }
             else
             {
@@ -293,7 +312,7 @@ namespace coolsynth::standalone
         }
         else
         {
-            if (selectedDeviceWasPresent)
+            if (wasConnected)
             {
                 snapshot.status = MidiInputStatus::disconnected;
                 snapshot.statusMessage = "Disconnected: " + snapshot.selectedDeviceName;
@@ -314,7 +333,7 @@ namespace coolsynth::standalone
         for (const auto& info : snapshot.availableInputs)
         {
             bool shouldBeEnabled = (info.identifier == snapshot.selectedDeviceIdentifier);
-            deviceManager.setMidiInputDeviceEnabled(info.identifier, shouldBeEnabled);
+            deviceEnableHandler(info.identifier, shouldBeEnabled);
         }
     }
 
@@ -335,5 +354,31 @@ namespace coolsynth::standalone
         {
             settingsStore->clearPersistedMidiInputSelection();
         }
+    }
+
+    void StandaloneMidiInputController::clearPendingControllerEvents() noexcept
+    {
+        std::array<coolsynth::midi::ControllerMidiEvent, 32> discardedEvents {};
+
+        while (drainControllerEvents(discardedEvents.data(), static_cast<int>(discardedEvents.size())) > 0)
+        {
+        }
+    }
+
+    void StandaloneMidiInputController::resetLastMidiEventSnapshot() noexcept
+    {
+        lastMidiEventState.type.store(static_cast<uint8_t>(coolsynth::midi::MidiMonitorMessageType::noteOn), std::memory_order_relaxed);
+        lastMidiEventState.channel.store(0, std::memory_order_relaxed);
+        lastMidiEventState.primaryValue.store(0, std::memory_order_relaxed);
+        lastMidiEventState.secondaryValue.store(0, std::memory_order_relaxed);
+        lastMidiEventState.noteNumber.store(-1, std::memory_order_relaxed);
+        lastMidiEventState.controllerNumber.store(-1, std::memory_order_relaxed);
+        lastMidiEventState.eventOrder.store(0, std::memory_order_release);
+    }
+
+    void StandaloneMidiInputController::clearDisconnectTransientState() noexcept
+    {
+        clearPendingControllerEvents();
+        resetLastMidiEventSnapshot();
     }
 }

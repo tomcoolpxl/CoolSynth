@@ -84,6 +84,7 @@ if(BUILD_TESTING)
         PRIVATE
             tests/MidiLearnTests.cpp
             tests/PatchStateTests.cpp
+            tests/StabilityAndDisconnectTests.cpp
             src/presets/PatchState.cpp
             src/plugin/SynthAudioProcessor.cpp
             src/plugin/SynthAudioProcessorEditor.cpp

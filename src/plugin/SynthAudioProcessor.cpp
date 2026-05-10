@@ -4,6 +4,13 @@
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 
+namespace
+{
+    inline constexpr char apvtsParameterChildType[] = "PARAM";
+    inline constexpr char apvtsParameterIdProperty[] = "id";
+    inline constexpr char apvtsParameterValueProperty[] = "value";
+}
+
 SynthAudioProcessor::SynthAudioProcessor()
     : juce::AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true))
     , parameters(*this, nullptr, "CoolSynthState", coolsynth::parameters::createParameterLayout())
@@ -77,8 +84,56 @@ bool SynthAudioProcessor::applyParameterStateXml(const juce::XmlElement& stateXm
     if (!tree.isValid())
         return false;
 
-    parameters.replaceState(tree);
+    juce::ValueTree sanitizedTree;
+    if (!buildSanitizedParameterStateTree(tree, sanitizedTree))
+        return false;
+
+    parameters.replaceState(sanitizedTree);
     return true;
+}
+
+bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree& incomingState,
+                                                           juce::ValueTree& sanitizedState)
+{
+    if (!incomingState.isValid() || !incomingState.hasType(parameters.state.getType()))
+        return false;
+
+    sanitizedState = parameters.copyState();
+    juce::StringArray seenParameterIds;
+    int appliedParameterCount = 0;
+
+    for (auto incomingChild : incomingState)
+    {
+        if (!incomingChild.hasType(apvtsParameterChildType)
+            || !incomingChild.hasProperty(apvtsParameterIdProperty)
+            || !incomingChild.hasProperty(apvtsParameterValueProperty))
+        {
+            continue;
+        }
+
+        const auto parameterId = incomingChild.getProperty(apvtsParameterIdProperty).toString();
+        if (parameterId.isEmpty())
+            continue;
+
+        if (seenParameterIds.contains(parameterId))
+            return false;
+
+        seenParameterIds.add(parameterId);
+
+        for (auto sanitizedChild : sanitizedState)
+        {
+            if (sanitizedChild.getProperty(apvtsParameterIdProperty).toString() != parameterId)
+                continue;
+
+            sanitizedChild.setProperty(apvtsParameterValueProperty,
+                                       incomingChild.getProperty(apvtsParameterValueProperty),
+                                       nullptr);
+            ++appliedParameterCount;
+            break;
+        }
+    }
+
+    return appliedParameterCount > 0;
 }
 
 juce::String SynthAudioProcessor::getParameterStateTypeName() const

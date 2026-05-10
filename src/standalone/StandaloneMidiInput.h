@@ -50,11 +50,15 @@ namespace coolsynth::standalone
     public:
         using DisconnectCallback = std::function<void()>;
         using ControllerEventHandler = std::function<void(const coolsynth::midi::ControllerMidiEvent&)>;
+        using AvailableDevicesProvider = std::function<juce::Array<juce::MidiDeviceInfo>()>;
+        using DeviceEnableHandler = std::function<void(const juce::String&, bool)>;
 
         StandaloneMidiInputController(juce::AudioDeviceManager& deviceManager,
                                       StandaloneSettingsStore* settingsStore,
                                       ControllerEventHandler onControllerEvent,
-                                      DisconnectCallback onSelectedDeviceDisconnected = {});
+                                      DisconnectCallback onSelectedDeviceDisconnected = {},
+                                      AvailableDevicesProvider availableDevicesProvider = [] { return juce::MidiInput::getAvailableDevices(); },
+                                      DeviceEnableHandler deviceEnableHandler = {});
         ~StandaloneMidiInputController() override;
 
         const MidiInputSnapshot& getSnapshot() const noexcept { return snapshot; }
@@ -64,6 +68,9 @@ namespace coolsynth::standalone
         void refreshDevices();
         bool selectDeviceByIdentifier(const juce::String& deviceIdentifier);
         void clearSelection();
+        void injectMidiMessageForTesting(const juce::MidiMessage& message) { handleIncomingMidiMessage(nullptr, message); }
+        void refreshDeviceListForTesting() { refreshDevices(RefreshReason::deviceListChanged); }
+        int getPendingControllerEventCountForTesting() const noexcept { return pendingControllerEventQueue.getNumReady(); }
 
     private:
         enum class RefreshReason
@@ -92,6 +99,9 @@ namespace coolsynth::standalone
         void disableAllAvailableDevices();
         void persistSelection() const;
         void clearPersistedSelection() const;
+        void clearPendingControllerEvents() noexcept;
+        void resetLastMidiEventSnapshot() noexcept;
+        void clearDisconnectTransientState() noexcept;
 
         void enqueueControllerEvent(const juce::MidiMessage& message) noexcept;
         int drainControllerEvents(coolsynth::midi::ControllerMidiEvent* destination, int maxEvents) noexcept;
@@ -101,6 +111,8 @@ namespace coolsynth::standalone
         StandaloneSettingsStore* settingsStore = nullptr;
         coolsynth::midi::MidiMonitorBuffer monitorBuffer;
         ControllerEventHandler onControllerEvent;
+        AvailableDevicesProvider availableDevicesProvider;
+        DeviceEnableHandler deviceEnableHandler;
         juce::MidiDeviceListConnection deviceListConnection;
         MidiInputSnapshot snapshot;
         DisconnectCallback onSelectedDeviceDisconnected;
