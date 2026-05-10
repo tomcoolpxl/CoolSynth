@@ -1,3 +1,4 @@
+#include <array>
 #include <juce_core/juce_core.h>
 #include "midi/MidiLearn.h"
 #include "midi/ControllerProfile.h"
@@ -168,6 +169,59 @@ public:
             expect(noneSelection.profileId.isEmpty());
         }
 
+        beginTest("settings_store_clears_all_standalone_midi_state");
+        {
+            juce::PropertySet props;
+            coolsynth::standalone::StandaloneSettingsStore store(props);
+
+            juce::MidiDeviceInfo midiDevice;
+            midiDevice.identifier = "minilab3-id";
+            midiDevice.name = "MiniLab 3 MIDI";
+            store.savePersistedMidiInputSelection(midiDevice);
+            store.savePersistedControllerProfileSelection(
+                { coolsynth::standalone::ControllerProfileSelectionMode::explicitProfile,
+                  "arturia.minilab3.arturia-mode.v1" });
+            store.setShowCcLabels(false);
+
+            std::vector<LearnedCcBinding> bindings = {
+                { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } }
+            };
+            store.saveLearnedMidiMappings(bindings);
+
+            auto audioSetup = std::make_unique<juce::XmlElement>("DEVICESETUP");
+            audioSetup->setAttribute("deviceType", "Windows Audio");
+            audioSetup->setAttribute("audioOutputDeviceName", "Speakers");
+            audioSetup->setAttribute("audioDeviceRate", 48000.0);
+            audioSetup->setAttribute("audioDeviceBufferSize", 480);
+            auto* midiInput = audioSetup->createNewChildElement("MIDIINPUT");
+            midiInput->setAttribute("name", "MiniLab 3 MIDI");
+            midiInput->setAttribute("identifier", "minilab3-id");
+            props.setValue("audioSetup", audioSetup.get());
+
+            store.clearStandaloneMidiState();
+
+            expect(!props.containsKey("midiInputIdentifier"));
+            expect(!props.containsKey("midiInputName"));
+            expect(!props.containsKey("midiLearnMappings"));
+            expect(!props.containsKey("controllerProfileSelectionMode"));
+            expect(!props.containsKey("controllerProfileId"));
+            expect(!props.containsKey("showCcLabels"));
+
+            expect(!store.loadPersistedMidiInputSelection().has_value());
+            expectEquals((int) store.loadLearnedMidiMappings().size(), 0);
+
+            const auto selection = store.loadPersistedControllerProfileSelection();
+            expectEquals((int) selection.mode,
+                         (int) coolsynth::standalone::ControllerProfileSelectionMode::autoDetect);
+            expect(selection.profileId.isEmpty());
+            expect(store.getShowCcLabels());
+
+            auto cleanedAudioSetup = props.getXmlValue("audioSetup");
+            expect(cleanedAudioSetup != nullptr);
+            expect(cleanedAudioSetup != nullptr && cleanedAudioSetup->hasTagName("DEVICESETUP"));
+            expect(cleanedAudioSetup != nullptr && cleanedAudioSetup->getChildByName("MIDIINPUT") == nullptr);
+        }
+
         beginTest("processor_applies_factory_profile_cc_mappings");
         {
             SynthAudioProcessor processor;
@@ -187,6 +241,67 @@ public:
 
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 74, 127 });
             expectWithinAbsoluteError(cutoff->getValue(), 1.0f, 0.001f);
+        }
+
+        beginTest("plugin_process_block_applies_learned_cc_mappings_via_async_handoff");
+        {
+            SynthAudioProcessor processor;
+            const std::array<LearnedCcBinding, 1> bindings {{
+                { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } }
+            }};
+            processor.setLearnedMidiBindings(bindings);
+
+            juce::AudioBuffer<float> buffer(2, 32);
+            juce::MidiBuffer midi;
+            midi.addEvent(juce::MidiMessage::controllerEvent(1, 74, 127), 0);
+
+            processor.processBlock(buffer, midi);
+            juce::Thread::sleep(20);
+
+            auto* cutoff = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            expect(cutoff != nullptr);
+            expectWithinAbsoluteError(cutoff->getValue(), 1.0f, 0.001f);
+
+            std::array<ControllerMidiEvent, 4> drained {};
+            const auto numDrained = processor.drainPendingPluginControllerEvents(drained.data(),
+                                                                                 static_cast<int>(drained.size()));
+            expectEquals(numDrained, 1);
+            if (numDrained == 1)
+            {
+                expectEquals((int) drained[0].type, (int) ControllerMidiEventType::controlChange);
+                expectEquals((int) drained[0].channel, 1);
+                expectEquals((int) drained[0].data1, 74);
+                expectEquals((int) drained[0].data2, 127);
+            }
+        }
+
+        beginTest("plugin_state_round_trip_restores_learned_midi_bindings");
+        {
+            SynthAudioProcessor source;
+            SynthAudioProcessor target;
+
+            const std::array<LearnedCcBinding, 2> bindings {{
+                { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } },
+                { coolsynth::parameters::ids::delayMix, { 2, 83 } }
+            }};
+            source.setLearnedMidiBindings(bindings);
+
+            juce::MemoryBlock state;
+            source.getStateInformation(state);
+            target.setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+
+            const auto restored = target.getLearnedMidiBindings();
+            expectEquals((int) restored.size(), 2);
+
+            if (restored.size() == 2)
+            {
+                expect(restored[0].parameterId == coolsynth::parameters::ids::filterCutoffHz);
+                expectEquals((int) restored[0].cc.channel, 1);
+                expectEquals((int) restored[0].cc.controllerNumber, 74);
+                expect(restored[1].parameterId == coolsynth::parameters::ids::delayMix);
+                expectEquals((int) restored[1].cc.channel, 2);
+                expectEquals((int) restored[1].cc.controllerNumber, 83);
+            }
         }
     }
 };

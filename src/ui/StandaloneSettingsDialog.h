@@ -30,6 +30,7 @@ private:
 
     private:
         void changeListenerCallback(juce::ChangeBroadcaster* source) override;
+        void handleResetMidiSettings();
         void applyPersistedControllerProfileSelection();
         void populateControllerProfileOptions();
         void updateResolvedProfileLabel();
@@ -43,6 +44,7 @@ private:
         juce::ComboBox controllerProfileCombo;
         juce::Label resolvedProfileLabel;
         juce::Label resolvedProfileValueLabel;
+        juce::TextButton resetMidiSettingsButton { "Reset MIDI Settings" };
         std::vector<juce::String> explicitProfileIds;
     };
 

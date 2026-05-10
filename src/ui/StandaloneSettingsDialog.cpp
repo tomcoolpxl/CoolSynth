@@ -26,6 +26,7 @@ StandaloneSettingsDialog::MidiTab::MidiTab(coolsynth::standalone::StandaloneMidi
     addAndMakeVisible(controllerProfileCombo);
     addAndMakeVisible(resolvedProfileLabel);
     addAndMakeVisible(resolvedProfileValueLabel);
+    addAndMakeVisible(resetMidiSettingsButton);
 
     controllerProfileLabel.setText("Controller Profile", juce::dontSendNotification);
     resolvedProfileLabel.setText("Resolved Profile", juce::dontSendNotification);
@@ -44,6 +45,8 @@ StandaloneSettingsDialog::MidiTab::MidiTab(coolsynth::standalone::StandaloneMidi
             store->setShowCcLabels(showCcLabelsToggle.getToggleState());
         }
     };
+
+    resetMidiSettingsButton.onClick = [this] { handleResetMidiSettings(); };
 
     populateControllerProfileOptions();
     applyPersistedControllerProfileSelection();
@@ -148,23 +151,43 @@ void StandaloneSettingsDialog::MidiTab::updateResolvedProfileLabel()
                                       juce::dontSendNotification);
 }
 
+void StandaloneSettingsDialog::MidiTab::handleResetMidiSettings()
+{
+    editor.resetStandaloneMidiSettings();
+    showCcLabelsToggle.setToggleState(true, juce::dontSendNotification);
+    controllerProfileCombo.setSelectedId(autoDetectProfileItemId, juce::dontSendNotification);
+    updateResolvedProfileLabel();
+}
 void StandaloneSettingsDialog::MidiTab::resized()
 {
-    auto bounds = getLocalBounds();
+    auto bounds = getLocalBounds().reduced(4);
+
+    // MIDI Input Selection (70px)
     midiInputPanel.setBounds(bounds.removeFromTop(70));
-    bounds.removeFromTop(5);
-    showCcLabelsToggle.setBounds(bounds.removeFromTop(24).reduced(4, 0));
     bounds.removeFromTop(10);
 
+    // CC Labels Toggle (24px)
+    showCcLabelsToggle.setBounds(bounds.removeFromTop(24).reduced(4, 0));
+    bounds.removeFromTop(12);
+
+    // Profile Selection (Label 20px + Combo 28px)
     controllerProfileLabel.setBounds(bounds.removeFromTop(20).reduced(4, 0));
     controllerProfileCombo.setBounds(bounds.removeFromTop(28).reduced(4, 0));
-    bounds.removeFromTop(6);
+    bounds.removeFromTop(8);
 
+    // Resolved Profile Info (24px)
     auto resolvedBounds = bounds.removeFromTop(24).reduced(4, 0);
     resolvedProfileLabel.setBounds(resolvedBounds.removeFromLeft(120));
     resolvedProfileValueLabel.setBounds(resolvedBounds);
 
-    bounds.removeFromTop(10);
+    bounds.removeFromTop(16);
+
+    // Reset Button (32px high for better visibility)
+    resetMidiSettingsButton.setBounds(bounds.removeFromTop(32).reduced(4, 0));
+
+    bounds.removeFromTop(16);
+
+    // MIDI Monitor takes the rest of the space
     midiMonitorPanel.setBounds(bounds);
 }
 

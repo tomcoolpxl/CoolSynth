@@ -36,7 +36,7 @@ Standalone wrapper or VST3 wrapper
         -> hardware-style JUCE UI
         -> parameter attachments
         -> standalone-only patch actions
-        -> standalone-only MIDI learn status and CC badges
+        -> MIDI learn status and CC badges
         -> standalone status bar (standalone only)
           -> audio summary
           -> MIDI-device summary
@@ -54,7 +54,7 @@ The design shall optimize for:
 - Safe real-time audio behavior.
 - Simple but practical synthesis.
 - A hardware-synth-like UI inspired by the MiniLab 3 layout.
-- Bundled factory controller profiles with standalone MIDI learn overrides for continuous controls.
+- Bundled factory controller profiles with standalone MIDI learn overrides and plugin DAW-routed MIDI learn for continuous controls.
 - Maintainable code that can grow without immediate redesign.
 
 The design shall not optimize for:
@@ -98,7 +98,7 @@ Responsibilities:
 - Own MIDI hardware input setup.
 - Show audio and MIDI device status through a compact bottom status bar.
 - Expose one dedicated settings dialog from the standalone window's Options button, with separate Audio and MIDI tabs.
-- Surface standalone patch actions and standalone MIDI learn affordances in the main synth editor.
+- Surface standalone patch actions and MIDI learn affordances in the main synth editor.
 - Auto-detect the bundled MiniLab 3 Arturia-mode factory profile when the selected standalone MIDI device matches.
 - Allow testing the MiniLab 3 without a DAW.
 - Use the same synth processor and editor as the plugin where practical.
@@ -135,7 +135,7 @@ Standalone-only code:
 - Hardware MIDI input selection.
 - Audio device configuration UI.
 - Standalone window Options-button integration and settings-dialog composition.
-- Standalone MIDI learn UI and mapping persistence.
+- MIDI learn UI plus standalone settings persistence or plugin-state persistence, depending on runtime.
 - Standalone patch file chooser integration.
 - MIDI monitor input source display.
 - Runtime device-disconnect handling.
@@ -521,26 +521,26 @@ Each stored event summary should carry enough raw data to display the required m
 
 For a simple first version, the monitor can be updated from the standalone MIDI callback rather than from `processBlock`. In plugin mode it is omitted.
 
-# Standalone MIDI Learn
+# MIDI Learn
 
-The current design includes standalone MIDI learn for continuous parameters without changing the synth engine.
+The current design includes MIDI learn for continuous parameters without changing the synth engine.
 
 Mapping model:
 
 ```text
 Factory profile
-  + standalone user overrides
-  + persisted mappings in StandaloneSettingsStore
+  + standalone user overrides in standalone mode
+  + plugin learned bindings in plugin mode
 ```
 
-Standalone MIDI learn rules:
+MIDI learn rules:
 
 - Learn mode is entered per control from a context menu on learnable knobs and faders.
 - Only CC messages are captured for continuous parameters.
-- Learned bindings override the active standalone factory profile for matching parameters.
+- Learned bindings override the active mapping for matching parameters.
 - Learned bindings are saved separately from synth parameter state.
 - The standalone editor surfaces an armed status label plus optional per-control CC badges.
-- The VST3 editor omits the MIDI learn affordances in the first release.
+- The plugin editor exposes MIDI learn for DAW-routed live CC input on learnable continuous controls.
 
 `MidiLearnManager` and `MidiMappingEngine` own binding validation and application. MIDI learn should not require changing the synth engine.
 
@@ -858,7 +858,7 @@ HardwareFader
   -> optional learned-CC badge
 
 MidiLearnStatusLabel
-  -> standalone-only learn state text
+  -> learn state text
 
 StandaloneStatusBar
   -> MIDI device status
@@ -902,7 +902,7 @@ Standalone mode should show:
 
 - Primary synth editor with synth controls only.
 - Standalone patch actions in the editor header.
-- Standalone MIDI learn status text and per-control CC badges for learnable continuous controls.
+- MIDI learn status text and per-control CC badges for learnable continuous controls.
 - One settings entry point on the standalone window shell that opens the standalone settings dialog.
 - MIDI monitor inside the standalone settings dialog.
 - Audio-device configuration inside the standalone settings dialog.
@@ -927,12 +927,11 @@ Plugin mode should omit:
 - MIDI monitor, omitted.
 - Standalone settings dialog, omitted.
 - Standalone patch actions, omitted.
-- Standalone MIDI learn affordances, omitted.
-
 Plugin mode should still show:
 
 - Synth controls.
 - Panic action.
+- MIDI learn affordances for DAW-routed live CC input on learnable continuous controls.
 - Host-provided parameter context menus and parameter-under-mouse support where the format exposes them.
 
 # State And Persistence Design
@@ -1169,7 +1168,7 @@ Mitigation:
 
 - Use the MIDI monitor first.
 - Encode a profile only after observing actual CCs.
-- Keep standalone MIDI learn overrides available when the hardware template differs from the default profile.
+- Keep standalone MIDI learn overrides available when the hardware template differs from the default profile, and keep plugin learn available when the host routes live CC input to the plugin.
 
 # Risk: Motherboard Audio Latency
 
@@ -1244,6 +1243,7 @@ Create CMake/JUCE skeleton
   -> add standalone persistence
   -> add minimal patch workflow
   -> add standalone MIDI learn
+  -> add plugin MIDI learn for DAW-routed live CC input
   -> add manual/tag-only Windows CI/CD
 ```
 
@@ -1271,7 +1271,7 @@ These decisions can be made during implementation:
 | Stereo delay | Preferred |
 | Full virtual keyboard | Not initially |
 | Metering | Later |
-| MIDI learn | Standalone CC learn for continuous controls; plugin learn later |
+| MIDI learn | Standalone CC learn plus plugin learn for DAW-routed live CC input |
 | Presets | Minimal `.cspatch` init/save/load now; browser later |
 | CI | Manual validation plus tag-triggered Windows release on GitHub Actions |
 

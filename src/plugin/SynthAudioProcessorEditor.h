@@ -6,6 +6,7 @@
 #include "ui/HardwareFader.h"
 #include "ui/HardwareKnob.h"
 #include "ui/SynthSection.h"
+#include "ui/PianoBarComponent.h"
 #include "midi/MidiLearn.h"
 
 class SynthAudioProcessor;
@@ -28,6 +29,7 @@ public:
     int getControlParameterIndex(juce::Component& component) override;
     void refreshStandaloneControllerProfileSelection();
     juce::String getResolvedStandaloneControllerProfileDisplayName() const;
+    void resetStandaloneMidiSettings();
 
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -79,6 +81,7 @@ private:
     void showParameterContextMenu(juce::String parameterId,
                                   juce::String displayName,
                                   juce::Point<int> screenPosition);
+    void pollPluginMidiLearnEvents();
     void refreshMidiLearnVisuals();
     void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
 
@@ -142,6 +145,7 @@ private:
     juce::TextButton initPatchButton { "Init Patch" };
     juce::TextButton savePatchButton { "Save Patch" };
     juce::TextButton loadPatchButton { "Load Patch" };
+    coolsynth::ui::PianoBarComponent pianoBar;
     std::unique_ptr<juce::FileChooser> activePatchChooser;
     bool patchActionsVisible = false;
 

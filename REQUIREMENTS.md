@@ -53,6 +53,7 @@ The first functional release shall provide:
 - A global delay effect with time, feedback, and mix control.
 - A bundled MiniLab 3 Arturia-mode factory profile for the core synth parameters once the controller's default messages have been confirmed on the actual device.
 - Standalone MIDI learn for continuous controls, including per-parameter learn mode, clear mapping, and persisted learned CC bindings.
+- Plugin MIDI learn for DAW-routed live CC input on continuous controls, with bindings persisted in plugin state.
 - A hardware-synth-like UI built with JUCE components, including a standalone bottom status bar and a standalone settings dialog reached from the standalone shell's Options entry point.
 - A standalone MIDI monitor for bring-up and debugging.
 - Standalone patch actions for init, save, and load of synth parameter snapshots.
@@ -69,7 +70,7 @@ The following features are out of scope for the first functional release and sha
 - Wavetable, FM, granular, and sample-based synthesis.
 - MPE, aftertouch handling, and advanced expressive MIDI support.
 - Preset browser and commercial-grade preset management.
-- Plugin-side MIDI learn, note or pad learn targets, and non-CC learn sources.
+- Wrapper-level VST3 `IMidiLearn` integration, note or pad learn targets, and non-CC learn sources.
 - Modulation matrix.
 - LFO.
 - AU and AAX targets.
@@ -97,7 +98,7 @@ This project must separate shared synth behavior from standalone-specific and VS
 | Audio device selection | Not part of shared core | Required | Not applicable |
 | MIDI device selection | Not part of shared core | Required | Not applicable |
 | MIDI monitor UI | Optional event capture support only | Required in early milestones | Not required |
-| Standalone MIDI learn UI and mapping persistence | Binding model only | Required | Not applicable |
+| MIDI learn UI and binding persistence | Binding model only | Required with standalone settings persistence | Required with plugin-state persistence for DAW-routed live CC input |
 | Host automation | Not part of standalone shell | Not applicable | Required |
 | Host state save and restore | Shared processor responsibility | Used indirectly | Required |
 | Standalone app settings persistence | Not part of shared core | Required | Not applicable |
@@ -287,11 +288,11 @@ Mapping rules:
 - Velocity shall affect amplitude only in the first functional release.
 - Velocity-to-filter modulation is deferred.
 
-### 8.5 Standalone MIDI Learn
+### 8.5 MIDI Learn
 
-The first functional release shall include standalone MIDI learn for continuous parameters.
+The first functional release shall include MIDI learn for continuous parameters in standalone mode and in plugin mode when the host routes live CC input to the plugin.
 
-Standalone MIDI learn shall:
+MIDI learn shall:
 
 - Bind only CC messages to continuous parameters.
 - Not bind note-on or note-off events to continuous parameters.
@@ -300,7 +301,8 @@ Standalone MIDI learn shall:
 - Store mappings separately from synth parameter values.
 - Override the active standalone factory profile on a per-parameter basis.
 - Surface the armed or learned state in the standalone editor with text badges or labels in addition to color.
-- Remain omitted from the VST3 editor in the first functional release.
+- Persist plugin learned bindings in plugin state so they restore with the host session.
+- In plugin mode, depend on live CC input reaching the plugin from the host or DAW routing path.
 
 ## 9. Synth Engine Requirements
 
@@ -404,7 +406,7 @@ The VST3 editor shall include:
 - Panic action.
 - Host-provided parameter context menus and parameter-under-mouse support where the host format exposes them.
 
-The plugin editor does not need standalone device selectors, hardware status panels, patch actions, standalone MIDI learn controls, or the standalone settings dialog.
+The plugin editor does not need standalone device selectors, hardware status panels, patch actions, or the standalone settings dialog.
 
 ### 10.3 Control and Display Rules
 

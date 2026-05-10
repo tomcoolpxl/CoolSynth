@@ -98,10 +98,16 @@ namespace coolsynth::standalone
         }
 
         void savePersistedControllerProfileSelection(PersistedControllerProfileSelection selection);
+        void clearPersistedControllerProfileSelection()
+        {
+            propertySet.removeValue("controllerProfileSelectionMode");
+            propertySet.removeValue("controllerProfileId");
+        }
 
         std::vector<coolsynth::midi::LearnedCcBinding> loadLearnedMidiMappings() const;
         void saveLearnedMidiMappings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
         void clearLearnedMidiMappings();
+        void clearStandaloneMidiState();
 
     private:
         juce::PropertySet& propertySet;

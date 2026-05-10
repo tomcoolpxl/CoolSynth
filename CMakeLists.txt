@@ -55,6 +55,7 @@ target_sources(CoolSynth
         src/ui/HardwareFader.cpp
         src/ui/HardwareKnob.cpp
         src/ui/MidiMonitorPanel.cpp
+        src/ui/PianoBarComponent.cpp
         src/ui/StandaloneMidiInputPanel.cpp
         src/ui/StandaloneSettingsDialog.cpp
         src/ui/StandaloneStatusBar.cpp
@@ -109,6 +110,7 @@ if(BUILD_TESTING)
             src/ui/HardwareFader.cpp
             src/ui/HardwareKnob.cpp
             src/ui/MidiMonitorPanel.cpp
+            src/ui/PianoBarComponent.cpp
             src/ui/StandaloneMidiInputPanel.cpp
             src/ui/StandaloneSettingsDialog.cpp
             src/ui/StandaloneStatusBar.cpp

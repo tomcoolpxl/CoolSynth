@@ -135,3 +135,20 @@
 - [x] Verified the shared plugin target and `CoolSynthMidiLearnTests` build in Debug.
 - [x] Verified `ctest --test-dir build -C Debug --output-on-failure` passes locally, including new controller-profile and factory-mapping tests.
 
+## Plugin MIDI learn
+
+- [x] Added plugin-mode MIDI learn for DAW-routed live CC input on learnable continuous controls.
+- [x] Persisted plugin learned MIDI bindings in plugin state and restored them in `setStateInformation()`.
+- [x] Added processor-owned lock-free queues for plugin controller-event capture and mapped-action dispatch.
+- [x] Applied plugin learned CC mappings off the audio thread through a dedicated dispatcher thread, preserving standalone behavior.
+- [x] Extended the plugin editor to load existing learned bindings, capture live plugin CC input, and apply the captured binding immediately.
+- [x] Verified local tests for plugin learned CC runtime application and plugin-state round-trip persistence.
+
+## Standalone MIDI settings reset
+
+- [x] Added a `Reset MIDI Settings` action to the standalone `Options -> MIDI` tab.
+- [x] Cleared persisted standalone MIDI input selection, learned MIDI CC mappings, controller-profile selection, and CC-label preference through one shared settings-store path.
+- [x] Stripped stale `MIDIINPUT` nodes from the standalone `audioSetup` XML while preserving audio-device settings.
+- [x] Reapplied the default live standalone MIDI state immediately after reset, without requiring an app restart.
+- [x] Verified the settings-reset behavior with a dedicated `CoolSynthMidiLearnTests` unit test plus local Debug build and `ctest`.
+

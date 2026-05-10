@@ -1,5 +1,7 @@
 #include "SettingsStore.h"
 
+#include <juce_data_structures/juce_data_structures.h>
+
 namespace coolsynth::standalone
 {
     static StandaloneSettingsStore* globalSettingsStore = nullptr;
@@ -28,6 +30,18 @@ namespace coolsynth::standalone
                 return ControllerProfileSelectionMode::explicitProfile;
 
             return ControllerProfileSelectionMode::autoDetect;
+        }
+
+        void removeMidiInputChildren(juce::XmlElement& xml)
+        {
+            for (auto* child = xml.getFirstChildElement(); child != nullptr;)
+            {
+                auto* next = child->getNextElement();
+                if (child->hasTagName("MIDIINPUT"))
+                    xml.removeChildElement(child, true);
+
+                child = next;
+            }
         }
     }
 
@@ -141,5 +155,25 @@ namespace coolsynth::standalone
     void StandaloneSettingsStore::clearLearnedMidiMappings()
     {
         propertySet.removeValue("midiLearnMappings");
+    }
+
+    void StandaloneSettingsStore::clearStandaloneMidiState()
+    {
+        clearPersistedMidiInputSelection();
+        clearPersistedControllerProfileSelection();
+        clearLearnedMidiMappings();
+        propertySet.removeValue("showCcLabels");
+
+        if (auto xml = propertySet.getXmlValue("audioSetup"))
+        {
+            if (xml->hasTagName("DEVICESETUP"))
+            {
+                removeMidiInputChildren(*xml);
+                propertySet.setValue("audioSetup", xml.get());
+            }
+        }
+
+        if (auto* propertiesFile = dynamic_cast<juce::PropertiesFile*>(&propertySet))
+            propertiesFile->saveIfNeeded();
     }
 }

@@ -1,5 +1,7 @@
 #include "SynthAudioProcessorEditor.h"
 
+#include <array>
+
 #include "SynthAudioProcessor.h"
 #include "midi/ControllerProfile.h"
 #include "parameters/ParameterIDs.h"
@@ -12,6 +14,7 @@
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
     , processor(inProcessor)
+    , pianoBar(processor.getKeyboardState())
 {
     namespace ids = coolsynth::parameters::ids;
     auto& apvts = processor.getValueTreeState();
@@ -103,6 +106,11 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     allNotesOffButton.onClick = [this] { processor.requestPanic(); };
     addAndMakeVisible(allNotesOffButton);
 
+    addAndMakeVisible(pianoBar);
+
+    midiLearnManager = std::make_unique<coolsynth::midi::MidiLearnManager>();
+    midiLearnManager->replaceBindings(processor.getLearnedMidiBindings());
+
     if (juce::JUCEApplicationBase::isStandaloneApp())
     {
         patchActionsVisible = true;
@@ -119,8 +127,6 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
         auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore();
 
         jassert(deviceManager != nullptr);
-
-        midiLearnManager = std::make_unique<coolsynth::midi::MidiLearnManager>();
 
         if (settingsStore != nullptr)
         {
@@ -147,11 +153,11 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
         standaloneStatusBar = std::make_unique<StandaloneStatusBar>(*standaloneMidiController);
         addAndMakeVisible(*standaloneStatusBar);
 
-        setSize(1280, 480);
+        setSize(1280, 540);
     }
     else
     {
-        setSize(1280, 420);
+        setSize(1280, 500);
     }
 
     startTimerHz(24);
@@ -221,6 +227,25 @@ juce::String SynthAudioProcessorEditor::getResolvedStandaloneControllerProfileDi
 {
     auto displayName = processor.getActiveControllerProfileDisplayName();
     return displayName.isNotEmpty() ? displayName : "None";
+}
+
+void SynthAudioProcessorEditor::resetStandaloneMidiSettings()
+{
+    if (auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore())
+        settingsStore->clearStandaloneMidiState();
+
+    if (midiLearnManager != nullptr)
+    {
+        midiLearnManager->cancelLearning();
+        midiLearnManager->replaceBindings({});
+    }
+
+    processor.setLearnedMidiBindings({});
+    badgeVisibilityCounter = 0;
+    lastShowCcLabelsSetting = true;
+
+    refreshStandaloneControllerProfileSelection();
+    refreshMidiLearnVisuals();
 }
 
 void SynthAudioProcessorEditor::changeListenerCallback(juce::ChangeBroadcaster* source)
@@ -364,6 +389,61 @@ void SynthAudioProcessorEditor::refreshMidiLearnVisuals()
             ctrl.applyVisualState(isArmed, badge);
         }
     }
+}
+
+void SynthAudioProcessorEditor::pollPluginMidiLearnEvents()
+{
+    if (standaloneMidiController != nullptr || midiLearnManager == nullptr)
+        return;
+
+    std::array<coolsynth::midi::ControllerMidiEvent, 32> localEvents {};
+    bool visualsChanged = false;
+
+    while (true)
+    {
+        const auto drained = processor.drainPendingPluginControllerEvents(localEvents.data(),
+                                                                          static_cast<int> (localEvents.size()));
+        if (drained == 0)
+            break;
+
+        for (int i = 0; i < drained; ++i)
+        {
+            const auto& event = localEvents[static_cast<size_t> (i)];
+            const auto outcome = midiLearnManager->handleIncomingEvent(event);
+
+            if (outcome.bindingsChanged)
+            {
+                processor.setLearnedMidiBindings(midiLearnManager->getBindings());
+                badgeVisibilityCounter = 72;
+                visualsChanged = true;
+            }
+
+            if (event.type == coolsynth::midi::ControllerMidiEventType::controlChange)
+            {
+                for (const auto& binding : midiLearnManager->getBindings())
+                {
+                    if (binding.cc.channel == event.channel && binding.cc.controllerNumber == event.data1)
+                    {
+                        badgeVisibilityCounter = 72;
+                        visualsChanged = true;
+                        break;
+                    }
+                }
+            }
+
+            if (outcome.result == coolsynth::midi::MidiLearnCaptureResult::captured)
+            {
+                processor.handleStandaloneControllerEvent(event);
+            }
+            else if (outcome.result == coolsynth::midi::MidiLearnCaptureResult::rejectedNonCc)
+            {
+                visualsChanged = true;
+            }
+        }
+    }
+
+    if (visualsChanged)
+        refreshMidiLearnVisuals();
 }
 
 void SynthAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
@@ -550,6 +630,9 @@ void SynthAudioProcessorEditor::resized()
     outContent.removeFromTop(24); // Title space
     masterGainFader.setBounds(outContent.withSizeKeepingCentre(80, outContent.getHeight()));
 
+    area.removeFromTop(16);
+    pianoBar.setBounds(area.removeFromTop(pianoBar.getDesiredHeight()));
+
     if (standaloneStatusBar != nullptr)
     {
         auto bounds = getLocalBounds();
@@ -559,6 +642,7 @@ void SynthAudioProcessorEditor::resized()
 
 void SynthAudioProcessorEditor::timerCallback()
 {
+    pollPluginMidiLearnEvents();
     refreshValueDisplays();
     
     if (badgeVisibilityCounter > 0)

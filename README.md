@@ -35,11 +35,14 @@ The VST3 build uses the same synth engine and parameters inside a DAW. Audio rou
 
 In standalone mode, CoolSynth ships with a bundled MiniLab 3 / Arturia Mode factory profile and allows continuous controls such as knobs and faders to override that profile with MIDI learn from a right-click context menu.
 
+In plugin mode, the same learnable controls can capture DAW-routed live MIDI CC input from the plugin editor. Plugin learned bindings are stored in plugin state, so they restore with the host session. Plugin mode does not auto-load a hardware-specific factory profile.
+
 - `Learn MIDI CC` arms the control and waits for an incoming CC message.
 - `Cancel MIDI Learn` exits the armed state without changing the mapping.
 - `Clear MIDI CC Mapping` removes the learned assignment for that control.
+- Standalone `Options -> MIDI -> Reset MIDI Settings` clears remembered MIDI input, learned MIDI CC mappings, controller-profile selection, and CC-label preference while keeping audio settings intact.
 
-Learned mappings are stored with standalone settings, override the active standalone factory profile for the mapped parameter, and apply to the standalone instrument only.
+Learned mappings are stored with standalone settings in standalone mode, and in plugin state in plugin mode. In both cases they override the active mapping for the mapped parameter.
 
 ## Patch Workflow
 

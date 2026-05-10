@@ -1,5 +1,7 @@
 #pragma once
 
+#include <array>
+
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "synth/SynthEngine.h"
@@ -11,7 +13,7 @@ public:
     using APVTS = juce::AudioProcessorValueTreeState;
 
     SynthAudioProcessor();
-    ~SynthAudioProcessor() override = default;
+    ~SynthAudioProcessor() override;
 
     void prepareToPlay(double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
@@ -46,7 +48,10 @@ public:
     juce::String getActiveControllerProfileDisplayName() const;
 
     void setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
+    std::vector<coolsynth::midi::LearnedCcBinding> getLearnedMidiBindings() const;
     void clearLearnedMidiBinding(juce::StringRef parameterId);
+    int drainPendingPluginControllerEvents(coolsynth::midi::ControllerMidiEvent* destination,
+                                           int maxEvents) noexcept;
 
     void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
     void requestPanic() noexcept;
@@ -54,9 +59,28 @@ public:
     APVTS& getValueTreeState() noexcept { return parameters; }
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
+    juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+
 private:
+    class PluginMappedActionDispatcher final : private juce::Thread
+    {
+    public:
+        explicit PluginMappedActionDispatcher(SynthAudioProcessor& ownerIn);
+        ~PluginMappedActionDispatcher() override;
+
+    private:
+        void run() override;
+        SynthAudioProcessor& owner;
+    };
+
     bool buildSanitizedParameterStateTree(const juce::ValueTree& incomingState,
                                           juce::ValueTree& sanitizedState);
+    void enqueuePluginControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept;
+    void enqueuePluginMappedAction(const coolsynth::midi::MappedAction& action) noexcept;
+    int drainPendingMappedActions(coolsynth::midi::MappedAction* destination, int maxActions) noexcept;
+    void dispatchPendingMappedActions();
+    std::unique_ptr<juce::XmlElement> createProcessorStateXml() const;
+    std::vector<coolsynth::midi::LearnedCcBinding> parseLearnedMidiBindingsXml(const juce::XmlElement& parent) const;
     void applyMappedAction(const coolsynth::midi::MappedAction& action);
     void applyNormalizedParameterValue(juce::RangedAudioParameter& parameter,
                                        float normalizedValue);
@@ -67,10 +91,17 @@ private:
     static coolsynth::synth::ParameterValuePointers bindParameterPointers(APVTS& state);
 
     APVTS parameters;
+    juce::MidiKeyboardState keyboardState;
     coolsynth::midi::MidiMappingEngine midiMappingEngine;
+    std::vector<coolsynth::midi::LearnedCcBinding> learnedMidiBindings;
     coolsynth::synth::ParameterValuePointers parameterValues;
     coolsynth::synth::SynthEngine synthEngine;
     std::atomic<bool> panicRequested { false };
+    std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};
+    juce::AbstractFifo pendingPluginControllerEventQueue { static_cast<int> (pendingPluginControllerEvents.size()) };
+    std::array<coolsynth::midi::MappedAction, 128> pendingMappedActions {};
+    juce::AbstractFifo pendingMappedActionQueue { static_cast<int> (pendingMappedActions.size()) };
+    PluginMappedActionDispatcher mappedActionDispatcher;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)
 };
