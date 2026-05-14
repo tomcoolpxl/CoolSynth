@@ -25,6 +25,7 @@ Project rules:
 - For narrow tasks, pass the exact authoritative files in the prompt instead of retyping context.
 - Ask before making a large refactor, changing the directory structure, or removing tests.
 - Before moving work to `DONE.md`, review the diff, run the required checks, and update docs if the change affected scope or structure.
+- In this workspace, keep terminal commands profile-free (`login: false` or PowerShell `-NoProfile`) to avoid irrelevant profile-side access-denied noise in the transcript.
 
 ## 1. Think Before Coding
 

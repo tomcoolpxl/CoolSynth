@@ -1486,30 +1486,14 @@ public:
             buffer.clear();
             engine.render(buffer, notes, parameters);
 
-            const auto mostRecentlyAllocatedNote = [&]() noexcept
-            {
-                std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-                engine.copyVoiceStatesForTesting(states);
-                int chosen = -1;
-                uint64_t bestOrder = 0;
-                for (const auto& s : states)
-                {
-                    if (s.active && s.startOrder > bestOrder)
-                    {
-                        bestOrder = s.startOrder;
-                        chosen = s.noteNumber;
-                    }
-                }
-                return chosen;
-            };
-
-            expectEquals(mostRecentlyAllocatedNote(), expectedNotes[0]);
+            expectEquals(engine.getLastPlayedNoteForTesting(), expectedNotes[0]);
 
             for (int step = 1; step < static_cast<int>(expectedNotes.size()); ++step)
             {
                 buffer.clear();
                 engine.render(buffer, {}, parameters);
-                expectEquals(mostRecentlyAllocatedNote(), expectedNotes[static_cast<size_t>(step)]);
+                expectEquals(engine.getLastPlayedNoteForTesting(),
+                             expectedNotes[static_cast<size_t>(step)]);
             }
         }
 
@@ -1538,29 +1522,13 @@ public:
             juce::AudioBuffer<float> buffer(2, stepLength);
             buffer.clear();
             engine.render(buffer, notes, parameters);
-            const auto pickNote = [&]() noexcept
-            {
-                std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-                engine.copyVoiceStatesForTesting(states);
-                int chosen = -1;
-                uint64_t bestOrder = 0;
-                for (const auto& s : states)
-                {
-                    if (s.active && s.startOrder > bestOrder)
-                    {
-                        bestOrder = s.startOrder;
-                        chosen = s.noteNumber;
-                    }
-                }
-                return chosen;
-            };
-
-            expectEquals(pickNote(), expectedNotes[0]);
+            expectEquals(engine.getLastPlayedNoteForTesting(), expectedNotes[0]);
             for (int step = 1; step < static_cast<int>(expectedNotes.size()); ++step)
             {
                 buffer.clear();
                 engine.render(buffer, {}, parameters);
-                expectEquals(pickNote(), expectedNotes[static_cast<size_t>(step)]);
+                expectEquals(engine.getLastPlayedNoteForTesting(),
+                             expectedNotes[static_cast<size_t>(step)]);
             }
         }
 
@@ -1591,29 +1559,13 @@ public:
             buffer.clear();
             engine.render(buffer, notes, parameters);
 
-            const auto pickNote = [&]() noexcept
-            {
-                std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-                engine.copyVoiceStatesForTesting(states);
-                int chosen = -1;
-                uint64_t bestOrder = 0;
-                for (const auto& s : states)
-                {
-                    if (s.active && s.startOrder > bestOrder)
-                    {
-                        bestOrder = s.startOrder;
-                        chosen = s.noteNumber;
-                    }
-                }
-                return chosen;
-            };
-
-            expectEquals(pickNote(), expectedNotes[0]);
+            expectEquals(engine.getLastPlayedNoteForTesting(), expectedNotes[0]);
             for (int step = 1; step < static_cast<int>(expectedNotes.size()); ++step)
             {
                 buffer.clear();
                 engine.render(buffer, {}, parameters);
-                expectEquals(pickNote(), expectedNotes[static_cast<size_t>(step)]);
+                expectEquals(engine.getLastPlayedNoteForTesting(),
+                             expectedNotes[static_cast<size_t>(step)]);
             }
         }
 
@@ -1644,29 +1596,13 @@ public:
             buffer.clear();
             engine.render(buffer, notes, parameters);
 
-            const auto pickNote = [&]() noexcept
-            {
-                std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-                engine.copyVoiceStatesForTesting(states);
-                int chosen = -1;
-                uint64_t bestOrder = 0;
-                for (const auto& s : states)
-                {
-                    if (s.active && s.startOrder > bestOrder)
-                    {
-                        bestOrder = s.startOrder;
-                        chosen = s.noteNumber;
-                    }
-                }
-                return chosen;
-            };
-
-            expectEquals(pickNote(), expectedNotes[0]);
+            expectEquals(engine.getLastPlayedNoteForTesting(), expectedNotes[0]);
             for (int step = 1; step < static_cast<int>(expectedNotes.size()); ++step)
             {
                 buffer.clear();
                 engine.render(buffer, {}, parameters);
-                expectEquals(pickNote(), expectedNotes[static_cast<size_t>(step)]);
+                expectEquals(engine.getLastPlayedNoteForTesting(),
+                             expectedNotes[static_cast<size_t>(step)]);
             }
         }
 
@@ -1694,29 +1630,13 @@ public:
             buffer.clear();
             engine.render(buffer, notes, parameters);
 
-            const auto pickNote = [&]() noexcept
-            {
-                std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-                engine.copyVoiceStatesForTesting(states);
-                int chosen = -1;
-                uint64_t bestOrder = 0;
-                for (const auto& s : states)
-                {
-                    if (s.active && s.startOrder > bestOrder)
-                    {
-                        bestOrder = s.startOrder;
-                        chosen = s.noteNumber;
-                    }
-                }
-                return chosen;
-            };
-
-            expectEquals(pickNote(), expected[0]);
+            expectEquals(engine.getLastPlayedNoteForTesting(), expected[0]);
             for (int step = 1; step < static_cast<int>(expected.size()); ++step)
             {
                 buffer.clear();
                 engine.render(buffer, {}, parameters);
-                expectEquals(pickNote(), expected[static_cast<size_t>(step)]);
+                expectEquals(engine.getLastPlayedNoteForTesting(),
+                             expected[static_cast<size_t>(step)]);
             }
         }
 
@@ -1749,31 +1669,14 @@ public:
             expectEquals(engine.getArpHeldNoteCountForTesting(), 0);
             expect(engine.getArpLatchedNoteCountForTesting() >= 2);
 
-            const auto pickNote = [&]() noexcept
-            {
-                std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-                engine.copyVoiceStatesForTesting(states);
-                int chosen = -1;
-                uint64_t bestOrder = 0;
-                for (const auto& s : states)
-                {
-                    if (s.active && s.startOrder > bestOrder)
-                    {
-                        bestOrder = s.startOrder;
-                        chosen = s.noteNumber;
-                    }
-                }
-                return chosen;
-            };
-
             // After release, pattern continues from latched [60, 64].
             // Next render with empty event stream advances by stepLength again.
             buffer.clear();
             engine.render(buffer, {}, parameters);
-            const int secondStep = pickNote();
+            const int secondStep = engine.getLastPlayedNoteForTesting();
             buffer.clear();
             engine.render(buffer, {}, parameters);
-            const int thirdStep = pickNote();
+            const int thirdStep = engine.getLastPlayedNoteForTesting();
             expect(secondStep == 60 || secondStep == 64);
             expect(thirdStep == 60 || thirdStep == 64);
             expect(secondStep != thirdStep);
@@ -1898,7 +1801,7 @@ public:
             // No transport info → internal-rate fallback.
             engine.render(buffer, noteOn, parameters);
 
-            expect(engine.getActiveVoiceCountForTesting() >= 1);
+            expectEquals(engine.getLastPlayedNoteForTesting(), 60);
         }
 
         beginTest("host_sync_aligns_first_step_to_ppq_grid");
@@ -1941,9 +1844,9 @@ public:
 
         beginTest("host_transport_stop_releases_currently_ringing_arp_note");
         {
-            constexpr int stepLength = 6000;
+            constexpr int blockSamples = 3000; // shorter than the long gate so the note is still held
             coolsynth::synth::SynthEngineV2 engine;
-            engine.prepare(48000.0, stepLength, 2);
+            engine.prepare(48000.0, blockSamples, 2);
 
             auto parameters = makeBasicParameters();
             parameters.arp.enabled = true;
@@ -1963,17 +1866,12 @@ public:
                 { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f, false }
             }};
 
-            juce::AudioBuffer<float> buffer(2, stepLength);
+            juce::AudioBuffer<float> buffer(2, blockSamples);
             buffer.clear();
             engine.render(buffer, noteOn, parameters, transport);
 
-            // Voice key-down, gate-off pending.
-            int keyDownCount = 0;
-            std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-            engine.copyVoiceStatesForTesting(states);
-            for (const auto& s : states)
-                if (s.active && s.keyDown) ++keyDownCount;
-            expect(keyDownCount >= 1);
+            // A note is ringing with a deferred gate-off that transport stop should release.
+            expect(engine.getArpRingingNoteCountForTesting() >= 1);
 
             // Now transport stops.
             transport.hostIsPlaying = false;
@@ -1981,18 +1879,20 @@ public:
             buffer.clear();
             engine.render(buffer, {}, parameters, transport);
 
+            int keyDownCount = 0;
+            std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
             engine.copyVoiceStatesForTesting(states);
-            keyDownCount = 0;
             for (const auto& s : states)
                 if (s.active && s.keyDown) ++keyDownCount;
+            expectEquals(engine.getArpRingingNoteCountForTesting(), 0);
             expectEquals(keyDownCount, 0);
         }
 
         beginTest("arp_disable_mid_play_releases_ringing_note");
         {
-            constexpr int stepLength = 6000;
+            constexpr int blockSamples = 3000; // shorter than the long gate so the note is still held
             coolsynth::synth::SynthEngineV2 engine;
-            engine.prepare(48000.0, stepLength, 2);
+            engine.prepare(48000.0, blockSamples, 2);
 
             auto parameters = makeBasicParameters();
             parameters.arp.enabled = true;
@@ -2006,26 +1906,23 @@ public:
                 { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f, false }
             }};
 
-            juce::AudioBuffer<float> buffer(2, stepLength);
+            juce::AudioBuffer<float> buffer(2, blockSamples);
             buffer.clear();
             engine.render(buffer, noteOn, parameters);
 
-            int keyDownCount = 0;
-            std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
-            engine.copyVoiceStatesForTesting(states);
-            for (const auto& s : states)
-                if (s.active && s.keyDown) ++keyDownCount;
-            expect(keyDownCount >= 1);
+            expect(engine.getArpRingingNoteCountForTesting() >= 1);
 
             // Disable arp; render again — ringing note should be released.
             parameters.arp.enabled = false;
             buffer.clear();
             engine.render(buffer, {}, parameters);
 
+            int keyDownCount = 0;
+            std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
             engine.copyVoiceStatesForTesting(states);
-            keyDownCount = 0;
             for (const auto& s : states)
                 if (s.active && s.keyDown) ++keyDownCount;
+            expectEquals(engine.getArpRingingNoteCountForTesting(), 0);
             expectEquals(keyDownCount, 0);
         }
 

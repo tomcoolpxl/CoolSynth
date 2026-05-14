@@ -54,6 +54,10 @@ namespace coolsynth::synth
         {
             return arpeggiator.getRingingNoteCountForTesting();
         }
+        [[nodiscard]] int getLastPlayedNoteForTesting() const noexcept
+        {
+            return lastPlayedNote;
+        }
 
     private:
         struct VoiceSlot
