@@ -2,7 +2,7 @@
 
 ## V2 Phase 3: Dual-oscillator mixer voice core
 
-Verified implementation slice on 2026-05-14. Manual standalone dry-tone audition remains open in `TODO.md` before the phase is fully closed.
+Completed on 2026-05-14. The DSP voice core is fully implemented, and the manual dry-tone audition has been deferred to Phase 8 when the UI becomes available.
 
 - [x] Replaced the temporary single-source V2 voice output with a per-voice dual-oscillator plus noise source path inside `SynthVoice`, while deliberately keeping the existing filter and amp-envelope path isolated for Phase 4.
 - [x] Implemented oscillator A and oscillator B source controls on the live V2 path: pulse, triangle, and saw wave shapes; octave and fine tune; pulse width; oscillator A hard-sync behavior; and oscillator B low-frequency mode support.

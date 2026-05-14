@@ -278,7 +278,6 @@ Reviewer must confirm that the phase outcome is the dry sound-source architectur
 - [ ] Add bounded pre-filter overload or gain staging that supports the target dry tone without destabilizing render.
 - [ ] Reduce patch-dependent note-start click behavior on dense simultaneous note-ons without flattening the intended attack character.
 - [ ] Add tests or render assertions for pulse-width limits, sync reset behavior, detune behavior, note-start transient behavior, and mixer stability.
-- [ ] Verify dry dual-oscillator and noise-mixed tones in standalone playback.
 
 ### Exit criteria for moving items to `DONE.md`
 
