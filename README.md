@@ -1,10 +1,12 @@
 # CoolSynth
 
+![alt text](screenshot.png)
+
 CoolSynth is a JUCE-based software synthesizer for Windows 11. It is built as both a standalone desktop instrument and a VST3 plugin, with the same synth engine and parameter set in both modes.
 
 The instrument is intentionally compact and direct: one oscillator per voice, a subtractive signal path, and a hardware-style control surface that stays close to playing and sound shaping instead of menu-heavy workflow. It is designed to be understandable, usable with a MIDI keyboard right away, and cleanly shared between standalone and plugin builds.
 
-## What It Does
+## Features
 
 - Polyphonic MIDI note playback.
 - One oscillator per voice with sine, square, and saw waveforms.
