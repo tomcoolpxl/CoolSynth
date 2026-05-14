@@ -633,10 +633,11 @@ Recommended:
 
 Recommended patch direction:
 
-- new patch extension such as `.cs2patch`, or
-- keep the extension but require a top-level V2 format version field and reject V1 explicitly
+- keep the existing `.cspatch` extension,
+- require a top-level V2 format version field, and
+- reject V1 explicitly unless an import path is built later
 
-The simpler and safer default is a new patch version and explicit rejection of V1 files unless an import path is built later.
+The simpler and safer default is to keep `.cspatch`, introduce a new patch version, and explicitly reject V1 files unless an import path is built later.
 
 ## 12. MIDI and Controller Design
 

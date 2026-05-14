@@ -175,7 +175,7 @@ Explicitly out of scope:
 
 - `Phase 1`
 - current standalone/plugin wrappers staying intact while the render path changes
-- unresolved final default voice count is not blocking if the allocator is implemented with configurable voice count
+- shipped default voice count is fixed at 8, but the allocator should still be implemented with configurable internal voice count to avoid brittle logic
 
 ### Risks
 
