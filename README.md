@@ -31,6 +31,8 @@ In standalone mode, CoolSynth provides:
 - remembered standalone settings for audio configuration, selected MIDI input, controller-profile selection, and learned MIDI CC mappings
 - clear unavailable-state reporting if a remembered audio or MIDI device is missing when the app starts
 
+![alt text](screenshot-vst3.png)
+
 The VST3 build uses the same synth engine and parameters inside a DAW. Audio routing, MIDI routing, and session management are handled by the host instead of the standalone UI. In plugin mode, the editor also exposes host-provided parameter context menus and parameter-under-mouse lookup when the host format supports them.
 
 ## MIDI Learn
