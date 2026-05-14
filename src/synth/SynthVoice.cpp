@@ -276,11 +276,18 @@ namespace coolsynth::synth
     float SynthVoice::nextNoiseSample() noexcept
     {
         const auto randomBits = advanceRandomState();
-        return juce::jmap(static_cast<float>(randomBits & 0x00ffffffu),
-                          0.0f,
-                          static_cast<float>(0x00ffffffu),
-                          -1.0f,
-                          1.0f);
+        const auto white = juce::jmap(static_cast<float>(randomBits & 0x00ffffffu),
+                                      0.0f,
+                                      static_cast<float>(0x00ffffffu),
+                                      -1.0f,
+                                      1.0f);
+
+        pinkB0 = 0.99765f * pinkB0 + white * 0.0990460f;
+        pinkB1 = 0.96300f * pinkB1 + white * 0.2965164f;
+        pinkB2 = 0.57000f * pinkB2 + white * 1.0526913f;
+        
+        const auto pink = pinkB0 + pinkB1 + pinkB2 + white * 0.1848f;
+        return juce::jlimit(-1.0f, 1.0f, pink * 0.2f);
     }
 
     uint32_t SynthVoice::advanceRandomState() noexcept

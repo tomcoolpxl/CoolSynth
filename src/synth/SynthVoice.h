@@ -105,6 +105,9 @@ namespace coolsynth::synth
         float currentPitchBendSemitones = 0.0f;
         uint32_t baseRandomSeed = 0x12345678u;
         uint32_t randomState = 0x12345678u;
+        float pinkB0 = 0.0f;
+        float pinkB1 = 0.0f;
+        float pinkB2 = 0.0f;
         int noteStartRampSamplesRemaining = 0;
         int noteStartRampMinSamples = 1;
         int noteStartRampTotalSamples = 1;

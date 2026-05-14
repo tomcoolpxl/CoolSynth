@@ -1,10 +1,10 @@
 # TODO
 
-`Phase 5` — V2 editor and panel workflow
+`Phase 6`
 
-- [ ] Redesign `SynthAudioProcessorEditor` as a one-page grouped V2 instrument panel first.
-- [ ] Add V2 control groups for oscillators, mixer, filter, filter envelope, amp envelope, modulation, performance, arp, FX, and output.
-- [ ] Rebind editor attachments, value displays, and labels to the V2 parameter contract.
-- [ ] Preserve standalone-only status, settings, and monitor surfaces outside the plugin editor.
-- [ ] Manually verify init-patch programming flow and plugin automation feedback in the V2 editor.
-- [ ] Verify Debug build and `ctest` still pass after the editor cutover.
+- [ ] Add the global LFO waveforms, rate control, and routed depth controls required by the V2 parameter contract.
+- [ ] Implement constrained Poly Mod sources and destinations for oscillator pitch, pulse width, and filter cutoff.
+- [ ] Add pitch bend and mod wheel handling in the engine performance state.
+- [ ] Implement glide, mono, unison, and key-priority behavior in the allocator.
+- [ ] Add bounded vintage/slop and pan-spread behavior with deterministic testable state.
+- [ ] Add tests for bend range, mono priority, unison stack count, glide behavior, and vintage variance bounds.

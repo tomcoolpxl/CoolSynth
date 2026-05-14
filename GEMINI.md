@@ -83,6 +83,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ## Current Project State
 
+- V2 `Phase 5` is complete: the editor has been redesigned into a 1400x600 single-page V2 instrument panel accommodating all 67 knobs and 1 fader for the new parameters, without paging. Standalone UI separation remains intact.
 - `Phase 15` is complete: the repository now has a manual-only Windows validation workflow and a tag-only Windows release workflow backed by `scripts/ci/*.ps1` and isolated CI CMake presets.
 - Live proof completed on GitHub on 2026-05-09:
   - Manual validation run `25614177697` passed and produced diagnostics plus packaged artifacts.
@@ -126,4 +127,4 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - The previously observed dense note-start click is now directly tracked as dry voice-core work and mitigated in code through a short de-click ramp plus per-voice randomized start phase, without changing allocator timing or host event offsets.
   - Added automated regressions for pulse-width limits, sync-enabled render divergence, dual-oscillator detune divergence, dense note-start transient containment, and full-mixer stability.
   - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
-- `TODO.md` now holds only the remaining V2 `Phase 3` manual standalone dry-tone audition. The dense note-start click is now tracked and mitigated as dry voice-core work rather than left as an implicit follow-up. REAPER remains part of later release-level host validation, but it is no longer a blocker for the already-closed allocator-only Phase 2 milestone.
+- `TODO.md` now points to Phase 6.
