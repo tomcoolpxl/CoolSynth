@@ -51,6 +51,7 @@ namespace coolsynth::synth
 
         juce::ADSR::Parameters makeJuceEnvelopeParameters() const noexcept;
         float computeOscillatorFrequencyHz(const OscillatorParametersV2& parameters) const noexcept;
+        int computeNoteStartRampSamples() const noexcept;
         float renderOscillatorSample(OscillatorState& oscillator,
                                      bool forcePhaseReset) noexcept;
         float renderMixedVoiceSample() noexcept;
@@ -101,6 +102,7 @@ namespace coolsynth::synth
         uint32_t baseRandomSeed = 0x12345678u;
         uint32_t randomState = 0x12345678u;
         int noteStartRampSamplesRemaining = 0;
+        int noteStartRampMinSamples = 1;
         int noteStartRampTotalSamples = 1;
         int currentMidiNoteNumber = -1;
         bool active = false;

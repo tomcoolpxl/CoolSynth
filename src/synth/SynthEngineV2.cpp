@@ -1,5 +1,6 @@
-#include "SynthEngineV2.h"
+#include "SynthEngineV2.h" 
 
+#include <cmath>
 #include <limits>
 
 namespace coolsynth::synth
@@ -340,7 +341,12 @@ namespace coolsynth::synth
     void SynthEngineV2::applyMasterGain(juce::AudioBuffer<float>& outputBuffer,
                                         float targetLinearGain) noexcept
     {
-        masterGainLinear.setTargetValue(targetLinearGain);
+        // 8 voices can peak around 8.0 before master gain.
+        // A static polyphony headroom factor of 0.35 prevents host DAC hard-clipping
+        // without introducing intermodulation distortion (which a master tanh causes).
+        const float polyphonyHeadroom = 0.35f;
+        
+        masterGainLinear.setTargetValue(targetLinearGain * polyphonyHeadroom);
         masterGainLinear.applyGain(outputBuffer, outputBuffer.getNumSamples());
     }
 

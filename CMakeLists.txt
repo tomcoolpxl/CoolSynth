@@ -33,8 +33,18 @@ juce_add_plugin(CoolSynth
     COPY_PLUGIN_AFTER_BUILD ${COOLSYNTH_ENABLE_VST3_USER_INSTALL}
     VST3_COPY_DIR "${COOLSYNTH_VST3_USER_DIR}")
 
+add_custom_target(UpdateBuildInfo ALL
+    COMMAND ${CMAKE_COMMAND}
+        -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
+        -DPROJECT_VERSION=${PROJECT_VERSION}
+        -DOUTPUT_FILE=${CMAKE_CURRENT_BINARY_DIR}/GeneratedBuildInfo.h
+        -P ${CMAKE_CURRENT_SOURCE_DIR}/scripts/GenerateBuildInfo.cmake
+    BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/GeneratedBuildInfo.h
+)
+
 target_sources(CoolSynth
     PRIVATE
+        src/BuildInfo.cpp
         src/presets/PatchState.cpp
         src/midi/ControllerProfile.cpp
         src/midi/MidiLearn.cpp
@@ -64,7 +74,8 @@ target_sources(CoolSynth
 
 target_include_directories(CoolSynth
     PRIVATE
-        src)
+        src
+        ${CMAKE_CURRENT_BINARY_DIR})
 
 target_compile_features(CoolSynth PUBLIC cxx_std_20)
 
@@ -74,8 +85,9 @@ target_compile_definitions(CoolSynth
         JUCE_USE_CURL=0
         JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
     PRIVATE
-        COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}"
         JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1)
+
+add_dependencies(CoolSynth UpdateBuildInfo)
 
 target_link_libraries(CoolSynth
     PRIVATE
@@ -94,6 +106,7 @@ if(BUILD_TESTING)
             tests/MidiLearnTests.cpp
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp
+            src/BuildInfo.cpp
             src/presets/PatchState.cpp
             src/midi/ControllerProfile.cpp
             src/plugin/SynthAudioProcessor.cpp
@@ -123,6 +136,7 @@ if(BUILD_TESTING)
     target_include_directories(CoolSynthMidiLearnTests
         PRIVATE
             src
+            ${CMAKE_CURRENT_BINARY_DIR}
     )
 
     target_compile_features(CoolSynthMidiLearnTests PUBLIC cxx_std_20)
@@ -130,6 +144,8 @@ if(BUILD_TESTING)
     target_compile_definitions(CoolSynthMidiLearnTests
         PRIVATE
             COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}")
+
+    add_dependencies(CoolSynthMidiLearnTests UpdateBuildInfo)
 
     target_link_libraries(CoolSynthMidiLearnTests
         PRIVATE

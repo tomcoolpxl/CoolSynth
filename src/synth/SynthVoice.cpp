@@ -16,7 +16,7 @@ namespace coolsynth::synth
         ampEnvelope.setSampleRate(spec.sampleRate);
         cutoffHzSmoother.reset(spec.sampleRate, 0.02);
         resonanceQSmoother.reset(spec.sampleRate, 0.02);
-        noteStartRampTotalSamples = juce::jlimit(8, 64, static_cast<int>(std::round(spec.sampleRate * 0.00035)));
+        noteStartRampMinSamples = juce::jlimit(8, 64, static_cast<int>(std::round(spec.sampleRate * 0.00035)));
         forceStop();
     }
 
@@ -91,6 +91,7 @@ namespace coolsynth::synth
         ampEnvelope.noteOn();
 
         velocityGain = juce::jlimit(0.0f, 1.0f, velocity);
+        noteStartRampTotalSamples = computeNoteStartRampSamples();
         noteStartRampSamplesRemaining = noteStartRampTotalSamples;
         active = true;
         releasing = false;
@@ -188,6 +189,31 @@ namespace coolsynth::synth
         return baseFrequencyHz * std::pow(2.0f, (octaveOffsetSemitones + fineTuneSemitones) / 12.0f);
     }
 
+    int SynthVoice::computeNoteStartRampSamples() const noexcept
+    {
+        const auto oscALevel = juce::jlimit(0.0f, 1.0f, nextOscillatorAParameters.level);
+        const auto oscBLevel = juce::jlimit(0.0f, 1.0f, nextOscillatorBParameters.level);
+        const auto noiseLevel = juce::jlimit(0.0f, 1.0f, nextMixerParameters.noiseLevel);
+        const auto totalLevel = oscALevel + oscBLevel + noiseLevel;
+
+        float extraMilliseconds = 0.0f;
+        if (nextOscillatorAParameters.waveShape == coolsynth::parameters::OscillatorWaveShape::pulse)
+            extraMilliseconds += 0.8f * oscALevel;
+
+        if (nextOscillatorBParameters.waveShape == coolsynth::parameters::OscillatorWaveShape::pulse)
+            extraMilliseconds += 0.8f * oscBLevel;
+
+        if (nextOscillatorAParameters.syncEnabled)
+            extraMilliseconds += 0.5f * juce::jmax(oscALevel, oscBLevel);
+
+        extraMilliseconds += 1.2f * noiseLevel;
+        extraMilliseconds += 0.4f * juce::jmax(0.0f, totalLevel - 1.0f);
+
+        const auto extraSamples = static_cast<int>(std::round((extraMilliseconds * 0.001f)
+                                                              * static_cast<float>(currentSampleRate)));
+        return juce::jlimit(noteStartRampMinSamples, 192, noteStartRampMinSamples + extraSamples);
+    }
+
     float SynthVoice::renderOscillatorSample(OscillatorState& oscillator,
                                              bool forcePhaseReset) noexcept
     {
@@ -231,13 +257,15 @@ namespace coolsynth::synth
 
     float SynthVoice::consumeNoteStartRamp() noexcept
     {
-        if (noteStartRampSamplesRemaining <= 0 || noteStartRampTotalSamples <= 0)
+        if (noteStartRampSamplesRemaining <= 0)
             return 1.0f;
 
-        const auto ramp = 1.0f - static_cast<float>(noteStartRampSamplesRemaining)
-                                / static_cast<float>(noteStartRampTotalSamples);
+        const auto totalSamples = juce::jmax(noteStartRampMinSamples, noteStartRampTotalSamples);
+        const auto linear = 1.0f - static_cast<float>(noteStartRampSamplesRemaining)
+                                  / static_cast<float>(totalSamples);
         --noteStartRampSamplesRemaining;
-        return juce::jlimit(0.0f, 1.0f, ramp);
+        const auto clamped = juce::jlimit(0.0f, 1.0f, linear);
+        return clamped * clamped * (3.0f - 2.0f * clamped);
     }
 
     float SynthVoice::nextNoiseSample() noexcept
@@ -265,7 +293,10 @@ namespace coolsynth::synth
         switch (waveShape)
         {
             case coolsynth::parameters::OscillatorWaveShape::pulse:
-                return phase < juce::jlimit(0.05f, 0.95f, pulseWidth) ? 1.0f : -1.0f;
+            {
+                const auto clampedPulseWidth = juce::jlimit(0.05f, 0.95f, pulseWidth);
+                return phase < clampedPulseWidth ? (1.0f - clampedPulseWidth) : -clampedPulseWidth;
+            }
 
             case coolsynth::parameters::OscillatorWaveShape::triangle:
                 return phase < 0.5f

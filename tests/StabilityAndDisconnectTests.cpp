@@ -69,6 +69,26 @@ namespace
 
         return difference;
     }
+
+    float computeMean(const juce::AudioBuffer<float>& buffer)
+    {
+        double sum = 0.0;
+        int count = 0;
+
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+            {
+                sum += buffer.getSample(channel, sample);
+                ++count;
+            }
+        }
+
+        if (count == 0)
+            return 0.0f;
+
+        return static_cast<float>(sum / static_cast<double>(count));
+    }
 }
 
 class StandaloneMidiInputTests final : public juce::UnitTest
@@ -550,6 +570,15 @@ public:
                 engine.render(buffer, noteOn, parameters);
                 expectBufferFiniteAndBounded(*this, buffer, 10.0f);
                 expect(computePeakAbs(buffer, 16, buffer.getNumSamples()) > 1.0e-3f);
+
+                buffer.clear();
+                for (int block = 0; block < 6; ++block)
+                {
+                    buffer.clear();
+                    engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+                }
+
+                expectWithinAbsoluteError(computeMean(buffer), 0.0f, 0.05f);
             }
         }
 
