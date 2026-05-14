@@ -19,7 +19,7 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     namespace ids = coolsynth::parameters::ids;
     auto& apvts = processor.getValueTreeState();
 
-    parameterRefs.waveform = apvts.getParameter(ids::waveform);
+    parameterRefs.waveform = apvts.getParameter(ids::oscAWave);
     parameterRefs.filterCutoffHz = apvts.getParameter(ids::filterCutoffHz);
     parameterRefs.filterResonance = apvts.getParameter(ids::filterResonance);
     parameterRefs.ampAttackMs = apvts.getParameter(ids::ampAttackMs);
@@ -45,7 +45,7 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     // --- Oscillator Section ---
     addAndMakeVisible(oscillatorSection);
     addAndMakeVisible(waveformKnob);
-    waveformAttachment = std::make_unique<SliderAttachment>(apvts, ids::waveform, waveformKnob.slider());
+    waveformAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscAWave, waveformKnob.slider());
 
     // --- Filter Section ---
     addAndMakeVisible(filterSection);

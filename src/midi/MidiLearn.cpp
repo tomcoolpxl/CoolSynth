@@ -9,17 +9,11 @@ namespace coolsynth::midi
 
     bool MidiLearnManager::isContinuousLearnEligible(juce::StringRef parameterId) noexcept
     {
-        // 10 continuous eligible parameters
-        return parameterId == juce::StringRef(parameters::ids::filterCutoffHz) ||
-               parameterId == juce::StringRef(parameters::ids::filterResonance) ||
-               parameterId == juce::StringRef(parameters::ids::ampAttackMs) ||
-               parameterId == juce::StringRef(parameters::ids::ampDecayMs) ||
-               parameterId == juce::StringRef(parameters::ids::ampSustain) ||
-               parameterId == juce::StringRef(parameters::ids::ampReleaseMs) ||
-               parameterId == juce::StringRef(parameters::ids::delayTimeMs) ||
-               parameterId == juce::StringRef(parameters::ids::delayFeedback) ||
-               parameterId == juce::StringRef(parameters::ids::delayMix) ||
-               parameterId == juce::StringRef(parameters::ids::masterGainDb);
+        for (const auto* knownId : parameters::continuousLearnableParameterIds)
+            if (parameterId == juce::StringRef(knownId))
+                return true;
+
+        return false;
     }
 
     bool MidiLearnManager::isLearnableParameter(juce::StringRef parameterId) const noexcept

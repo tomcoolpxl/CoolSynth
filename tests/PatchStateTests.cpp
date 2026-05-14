@@ -11,6 +11,29 @@ public:
 
     void runTest() override
     {
+        beginTest("v2_parameter_layout_registers_every_expected_id_exactly_once");
+        {
+            SynthAudioProcessor processor;
+            juce::StringArray registeredIds;
+
+            for (auto* parameterBase : processor.getParameters())
+            {
+                auto* parameter = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameterBase);
+                expect(parameter != nullptr);
+
+                if (parameter == nullptr)
+                    continue;
+
+                expect(!registeredIds.contains(parameter->paramID));
+                registeredIds.add(parameter->paramID);
+            }
+
+            expectEquals(registeredIds.size(), static_cast<int>(coolsynth::parameters::allParameterIds.size()));
+
+            for (const auto* expectedId : coolsynth::parameters::allParameterIds)
+                expect(registeredIds.contains(expectedId));
+        }
+
         beginTest("init_patch_resets_all_automatable_parameters_to_defaults");
         {
             SynthAudioProcessor processor;
@@ -31,6 +54,12 @@ public:
             SynthAudioProcessor source;
             SynthAudioProcessor target;
 
+            auto& sourceState = source.getValueTreeState();
+            sourceState.getParameter(coolsynth::parameters::ids::oscAWave)->setValueNotifyingHost(0.0f);
+            sourceState.getParameter(coolsynth::parameters::ids::filterEnvAmount)->setValueNotifyingHost(0.75f);
+            sourceState.getParameter(coolsynth::parameters::ids::arpEnabled)->setValueNotifyingHost(1.0f);
+            sourceState.getParameter(coolsynth::parameters::ids::reverbMix)->setValueNotifyingHost(0.35f);
+
             auto stateXml = source.createParameterStateXml();
             auto patchXml = coolsynth::presets::createWrappedPatchXml(*stateXml,
                                                                       source.getParameterStateTypeName());
@@ -40,6 +69,18 @@ public:
             expect(parsed.succeeded());
             expect(parsed.parameterStateXml != nullptr);
             expect(target.applyParameterStateXml(*parsed.parameterStateXml));
+            expectWithinAbsoluteError(target.getValueTreeState().getParameter(coolsynth::parameters::ids::oscAWave)->getValue(),
+                                      0.0f,
+                                      0.0001f);
+            expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::filterEnvAmount)->load(),
+                                      0.75f,
+                                      0.0001f);
+            expectWithinAbsoluteError(target.getValueTreeState().getParameter(coolsynth::parameters::ids::arpEnabled)->getValue(),
+                                      1.0f,
+                                      0.0001f);
+            expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::reverbMix)->load(),
+                                      0.35f,
+                                      0.0001f);
         }
 
         beginTest("patch_wrapper_contains_expected_root_and_single_apvts_child");
@@ -89,6 +130,7 @@ public:
 
             auto& sourceState = source.getValueTreeState();
             sourceState.getParameter(coolsynth::parameters::ids::delayMix)->setValueNotifyingHost(0.65f);
+            sourceState.getParameter(coolsynth::parameters::ids::driveEnabled)->setValueNotifyingHost(1.0f);
 
             auto stateXml = source.createParameterStateXml();
             expect(stateXml != nullptr);
@@ -102,6 +144,9 @@ public:
             auto& targetState = target.getValueTreeState();
             expectWithinAbsoluteError(targetState.getRawParameterValue(coolsynth::parameters::ids::delayMix)->load(),
                                       0.65f,
+                                      0.0001f);
+            expectWithinAbsoluteError(targetState.getParameter(coolsynth::parameters::ids::driveEnabled)->getValue(),
+                                      1.0f,
                                       0.0001f);
 
             auto sanitizedXml = target.createParameterStateXml();

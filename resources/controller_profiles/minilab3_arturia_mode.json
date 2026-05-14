@@ -81,7 +81,7 @@
       "displayName": "Main Encoder",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 114 },
       "valueMode": "relativeBinaryOffset",
-      "target": { "kind": "parameter", "parameterId": "waveform" }
+      "target": { "kind": "parameter", "parameterId": "oscAWave" }
     },
     {
       "bindingId": "pad8-panic",

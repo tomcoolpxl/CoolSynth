@@ -1,5 +1,15 @@
 # DONE
 
+## V2 Phase 1: V2 parameter contract and processor seam
+
+- [x] Added the stable V2 parameter IDs and grouped APVTS definitions for oscillators, mixer, filter, filter envelope, amp envelope, LFO, Poly Mod, performance, arp, drive, chorus, delay, reverb, and output.
+- [x] Rebuilt `ParameterLayout.cpp` around `juce::AudioProcessorParameterGroup` with a deliberate V2 compatibility split: semantically equivalent legacy parameters kept their original IDs and version hints, while new V2-only controls use new IDs and a higher version hint.
+- [x] Extended processor-side raw-parameter binding and V2 block snapshot decoding to cover the full Phase 1 parameter surface.
+- [x] Introduced `SynthEngineV2` as a seam in `SynthAudioProcessor` that preserves the current playable legacy engine underneath while Phase 2 replaces note dispatch and allocation.
+- [x] Updated controller-profile/runtime references and the existing editor subset to the new `oscAWave` V2 ID so the current shell stays operable during the staged cutover.
+- [x] Added tests for V2 parameter registration uniqueness and V2-state serialization through patch round-trip and sanitized APVTS restore paths.
+- [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14.
+
 ## Phase 1: Reproducible JUCE build skeleton
 
 - [x] Add the JUCE git submodule under `external/JUCE` and pin it to a known commit. (Commit 29396c22, JUCE 8.0.12)

@@ -32,7 +32,7 @@ public:
             MidiLearnManager manager;
             expect(manager.isLearnableParameter(coolsynth::parameters::ids::filterCutoffHz));
             expect(manager.isLearnableParameter(coolsynth::parameters::ids::masterGainDb));
-            expect(!manager.isLearnableParameter(coolsynth::parameters::ids::waveform));
+            expect(!manager.isLearnableParameter(coolsynth::parameters::ids::oscAWave));
             expect(!manager.isLearnableParameter("invalid_id"));
         }
 
@@ -226,7 +226,7 @@ public:
         {
             SynthAudioProcessor processor;
             auto& state = processor.getValueTreeState();
-            auto* waveform = state.getParameter(coolsynth::parameters::ids::waveform);
+            auto* waveform = state.getParameter(coolsynth::parameters::ids::oscAWave);
             auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
 
             expect(waveform != nullptr);

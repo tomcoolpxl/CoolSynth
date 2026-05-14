@@ -32,7 +32,7 @@ namespace coolsynth::midi
               { VerifiedMidiMessageKind::controlChange, 1, {83, 83}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "Mid EQ" },
             { "fader3", "Fader 3", Minilab3ControlCategory::fader, "unassigned", Minilab3Disposition::requiredForPhase7,
               { VerifiedMidiMessageKind::controlChange, 1, {85, 85}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "High EQ" },
-            { "encoder", "Main Encoder", Minilab3ControlCategory::encoder, "waveform", Minilab3Disposition::requiredForPhase7,
+            { "encoder", "Main Encoder", Minilab3ControlCategory::encoder, "oscillator A wave", Minilab3Disposition::requiredForPhase7,
               { VerifiedMidiMessageKind::controlChange, 1, {114, 114}, {0, 127}, Minilab3ValueMode::absolute, false, false }, "Arturia mode" },
             { "pad8", "Pad 8", Minilab3ControlCategory::pad, "panic", Minilab3Disposition::requiredForPhase7,
               { VerifiedMidiMessageKind::note, 10, {43, 43}, {0, 127}, Minilab3ValueMode::velocity, true, false }, "G1, Bank A" }

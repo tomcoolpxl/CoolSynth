@@ -4,8 +4,8 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "synth/SynthEngine.h"
 #include "midi/MidiMappingEngine.h"
+#include "synth/SynthEngineV2.h"
 
 class SynthAudioProcessor final : public juce::AudioProcessor
 {
@@ -87,15 +87,15 @@ private:
     void applyParameterChange(const coolsynth::midi::MappedParameterChange& change);
     void applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept;
 
-    coolsynth::synth::BlockRenderParameters makeBlockRenderParameters() const noexcept;
-    static coolsynth::synth::ParameterValuePointers bindParameterPointers(APVTS& state);
+    coolsynth::synth::BlockRenderParametersV2 makeBlockRenderParameters() const noexcept;
+    static coolsynth::synth::ParameterValuePointersV2 bindParameterPointers(APVTS& state);
 
     APVTS parameters;
     juce::MidiKeyboardState keyboardState;
     coolsynth::midi::MidiMappingEngine midiMappingEngine;
     std::vector<coolsynth::midi::LearnedCcBinding> learnedMidiBindings;
-    coolsynth::synth::ParameterValuePointers parameterValues;
-    coolsynth::synth::SynthEngine synthEngine;
+    coolsynth::synth::ParameterValuePointersV2 parameterValues;
+    coolsynth::synth::SynthEngineV2 synthEngine;
     std::atomic<bool> panicRequested { false };
     std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};
     juce::AbstractFifo pendingPluginControllerEventQueue { static_cast<int> (pendingPluginControllerEvents.size()) };

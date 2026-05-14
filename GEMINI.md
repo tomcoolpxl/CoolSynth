@@ -102,3 +102,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - First-release VST3 manual sign-off uses both Ableton Live Lite and REAPER on Windows.
   - The UI target is a one-page instrument panel first, with paging only as a fallback.
   - Aftertouch is a late V2 addition only if it remains straightforward after the main MIDI/controller path is stable.
+- V2 `Phase 1` completed on 2026-05-14:
+  - The APVTS surface now exposes the full grouped V2 parameter contract across oscillators, mixer, filter, dual envelopes, LFO, Poly Mod, performance, arp, drive, chorus, delay, reverb, and output.
+  - `SynthAudioProcessor` now decodes a full V2 block snapshot and renders through a new `SynthEngineV2` seam that still delegates audible output to the current legacy engine path.
+  - The current shared editor subset and bundled MiniLab 3 profile were retargeted from the old global `waveform` parameter to the new V2 `oscAWave` parameter so the shell remains usable during staged migration.
+  - Added test coverage for V2 parameter-ID uniqueness and V2 parameter-state round-trip/sanitized restore behavior.
+  - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
+- The next active V2 implementation chunk is `Phase 2`: custom allocator with basic V2 note playback. `TODO.md` has been refreshed to that phase only.
