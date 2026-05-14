@@ -7,10 +7,7 @@
 
 namespace coolsynth::synth
 {
-    /**
-     * A single synthesizer voice responsible for rendering one selectable waveform note.
-     */
-    class SynthVoice final : public juce::SynthesiserVoice
+    class SynthVoice final
     {
     public:
         SynthVoice();
@@ -19,18 +16,22 @@ namespace coolsynth::synth
         void setNextEnvelopeParameters(const EnvelopeParameters& parameters) noexcept;
         void setNextFilterParameters(const FilterParameters& parameters) noexcept;
         void setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept;
+        void setOutputLevel(float level) noexcept;
+        void setPitchBendSemitones(float semitones) noexcept;
 
-        bool canPlaySound(juce::SynthesiserSound* sound) override;
         void startNote(int midiNoteNumber,
                        float velocity,
-                       juce::SynthesiserSound* sound,
-                       int currentPitchWheelPosition) override;
-        void stopNote(float velocity, bool allowTailOff) override;
-        void pitchWheelMoved(int newPitchWheelValue) override;
-        void controllerMoved(int controllerNumber, int newControllerValue) override;
+                       juce::SynthesiserSound* sound = nullptr,
+                       int currentPitchWheelPosition = 0);
+        void stopNote(float velocity, bool allowTailOff);
         void renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                              int startSample,
-                             int numSamples) override;
+                             int numSamples);
+        void forceStop() noexcept;
+
+        [[nodiscard]] bool isActive() const noexcept { return active; }
+        [[nodiscard]] bool isReleasing() const noexcept { return releasing; }
+        [[nodiscard]] int getCurrentMidiNoteNumber() const noexcept { return currentMidiNoteNumber; }
 
     private:
         juce::ADSR::Parameters makeJuceEnvelopeParameters() const noexcept;
@@ -52,7 +53,12 @@ namespace coolsynth::synth
             coolsynth::parameters::WaveformChoice::saw;
 
         double currentSampleRate = 0.0;
-        float currentFrequencyHz = 0.0f;
+        float baseFrequencyHz = 0.0f;
         float velocityGain = 0.0f;
+        float outputLevel = 1.0f;
+        float currentPitchBendSemitones = 0.0f;
+        int currentMidiNoteNumber = -1;
+        bool active = false;
+        bool releasing = false;
     };
 }

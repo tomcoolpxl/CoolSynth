@@ -108,4 +108,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - The current shared editor subset and bundled MiniLab 3 profile were retargeted from the old global `waveform` parameter to the new V2 `oscAWave` parameter so the shell remains usable during staged migration.
   - Added test coverage for V2 parameter-ID uniqueness and V2 parameter-state round-trip/sanitized restore behavior.
   - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
-- The next active V2 implementation chunk is `Phase 2`: custom allocator with basic V2 note playback. `TODO.md` has been refreshed to that phase only.
+- V2 `Phase 2` is implemented and locally verified on 2026-05-14, but not fully closed yet:
+  - `SynthAudioProcessor::processBlock()` now converts MIDI into explicit sample-offset V2 engine events for note on/off, pitch bend, mod wheel, and sustain, then renders through a real `SynthEngineV2` event/allocation path instead of the old JUCE `Synthesiser` dispatch.
+  - `SynthEngineV2` now owns deterministic preallocated voice slots with release-first voice stealing, sustain handling, panic reset, and sample-accurate in-block event timing while keeping the audible voice intentionally simple for Phase 2.
+  - The old callback-lock-dependent live mapped-action path was removed from runtime MIDI handling. Plugin CC translation now happens off the audio thread through a raw controller-event bridge, and standalone/controller-profile translation no longer blocks the processor callback.
+  - Added automated regressions for V2 event timing, sustain release, panic, release-first stealing, oldest-held fallback stealing, processor-level note rendering, and reserved-performance-control learn rejection.
+  - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug --clean-first`, and `ctest --test-dir build -C Debug --output-on-failure`.
+- The remaining open item for `Phase 2` is manual standalone and VST3 basic note-playback smoke on the new allocator path. `TODO.md` is now narrowed to that check only.

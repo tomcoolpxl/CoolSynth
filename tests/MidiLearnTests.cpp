@@ -49,6 +49,22 @@ public:
             expectEquals((int)manager.getBindings().size(), 0);
         }
 
+        beginTest("learn_manager_rejects_reserved_performance_ccs_without_mutating_bindings");
+        {
+            MidiLearnManager manager;
+            manager.beginLearning(coolsynth::parameters::ids::filterCutoffHz, "Cutoff");
+
+            auto modWheelOutcome = manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 1, 100 });
+            expectEquals((int)modWheelOutcome.result, (int)MidiLearnCaptureResult::ignored);
+            expect(manager.getSession().armed);
+            expectEquals((int)manager.getBindings().size(), 0);
+
+            auto sustainOutcome = manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 64, 127 });
+            expectEquals((int)sustainOutcome.result, (int)MidiLearnCaptureResult::ignored);
+            expect(manager.getSession().armed);
+            expectEquals((int)manager.getBindings().size(), 0);
+        }
+
         beginTest("learn_manager_replaces_existing_binding_by_parameter");
         {
             MidiLearnManager manager;
@@ -273,6 +289,32 @@ public:
                 expectEquals((int) drained[0].data1, 74);
                 expectEquals((int) drained[0].data2, 127);
             }
+        }
+
+        beginTest("processor_process_block_routes_note_events_through_the_v2_allocator");
+        {
+            SynthAudioProcessor processor;
+            processor.prepareToPlay(48000.0, 128);
+
+            juce::AudioBuffer<float> buffer(2, 128);
+            juce::MidiBuffer midi;
+            midi.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8) 100), 48);
+
+            processor.processBlock(buffer, midi);
+
+            float firstHalfMax = 0.0f;
+            float secondHalfMax = 0.0f;
+            for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            {
+                for (int sample = 0; sample < 48; ++sample)
+                    firstHalfMax = juce::jmax(firstHalfMax, std::abs(buffer.getSample(channel, sample)));
+
+                for (int sample = 48; sample < buffer.getNumSamples(); ++sample)
+                    secondHalfMax = juce::jmax(secondHalfMax, std::abs(buffer.getSample(channel, sample)));
+            }
+
+            expectWithinAbsoluteError(firstHalfMax, 0.0f, 1.0e-6f);
+            expect(secondHalfMax > 1.0e-4f);
         }
 
         beginTest("plugin_state_round_trip_restores_learned_midi_bindings");

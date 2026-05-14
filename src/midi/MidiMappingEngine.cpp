@@ -269,6 +269,12 @@ namespace coolsynth::midi
 
     MappedAction MidiMappingEngine::translate(const ControllerMidiEvent& event) const noexcept
     {
+        if (event.type == ControllerMidiEventType::controlChange
+            && (event.data1 == 1 || event.data1 == 64))
+        {
+            return {};
+        }
+
         if (event.type == ControllerMidiEventType::controlChange)
         {
             for (const auto& binding : learnedBindings)

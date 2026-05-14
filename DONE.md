@@ -10,6 +10,17 @@
 - [x] Added tests for V2 parameter registration uniqueness and V2-state serialization through patch round-trip and sanitized APVTS restore paths.
 - [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14.
 
+## V2 Phase 2: Custom allocator and event-path cutover
+
+- [x] Added explicit V2 engine event records with per-event sample offsets for note on/off, pitch bend, mod wheel, and sustain input.
+- [x] Replaced the Phase 1 legacy-engine adapter with a real `SynthEngineV2` allocator that owns preallocated voice slots, release-first stealing, sustain state, panic reset, and in-block event-accurate rendering.
+- [x] Reworked `SynthVoice` into a direct reusable voice primitive for the custom allocator while keeping the audible path intentionally simple for this phase.
+- [x] Routed `SynthAudioProcessor::processBlock()` through the explicit V2 event path and render contract instead of forwarding raw MIDI into the old JUCE `Synthesiser` path.
+- [x] Removed callback-lock-dependent runtime mapped-action handling. Plugin controller translation now uses a raw controller-event bridge off the audio thread, and standalone/controller-profile translation no longer locks the processor callback.
+- [x] Added automated regressions for event-offset rendering, sustain hold-and-release behavior, panic silence, release-first voice stealing, oldest-held fallback stealing, processor-level note rendering through `processBlock()`, and reserved-performance-control learn rejection.
+- [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug --clean-first`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14.
+- Manual standalone and VST3 playback smoke remains in `TODO.md`, so Phase 2 is not closed yet.
+
 ## Phase 1: Reproducible JUCE build skeleton
 
 - [x] Add the JUCE git submodule under `external/JUCE` and pin it to a known commit. (Commit 29396c22, JUCE 8.0.12)

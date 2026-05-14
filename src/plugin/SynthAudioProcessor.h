@@ -76,9 +76,9 @@ private:
     bool buildSanitizedParameterStateTree(const juce::ValueTree& incomingState,
                                           juce::ValueTree& sanitizedState);
     void enqueuePluginControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept;
-    void enqueuePluginMappedAction(const coolsynth::midi::MappedAction& action) noexcept;
-    int drainPendingMappedActions(coolsynth::midi::MappedAction* destination, int maxActions) noexcept;
-    void dispatchPendingMappedActions();
+    void enqueuePluginMappedControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept;
+    int drainPendingMappedControllerEvents(coolsynth::midi::ControllerMidiEvent* destination, int maxEvents) noexcept;
+    void dispatchPendingMappedControllerEvents();
     std::unique_ptr<juce::XmlElement> createProcessorStateXml() const;
     std::vector<coolsynth::midi::LearnedCcBinding> parseLearnedMidiBindingsXml(const juce::XmlElement& parent) const;
     void applyMappedAction(const coolsynth::midi::MappedAction& action);
@@ -97,10 +97,11 @@ private:
     coolsynth::synth::ParameterValuePointersV2 parameterValues;
     coolsynth::synth::SynthEngineV2 synthEngine;
     std::atomic<bool> panicRequested { false };
+    mutable juce::CriticalSection midiMappingStateLock;
     std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};
     juce::AbstractFifo pendingPluginControllerEventQueue { static_cast<int> (pendingPluginControllerEvents.size()) };
-    std::array<coolsynth::midi::MappedAction, 128> pendingMappedActions {};
-    juce::AbstractFifo pendingMappedActionQueue { static_cast<int> (pendingMappedActions.size()) };
+    std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginMappedControllerEvents {};
+    juce::AbstractFifo pendingPluginMappedControllerEventQueue { static_cast<int> (pendingPluginMappedControllerEvents.size()) };
     PluginMappedActionDispatcher mappedActionDispatcher;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)

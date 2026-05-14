@@ -5,6 +5,15 @@
 
 namespace coolsynth::midi
 {
+    namespace
+    {
+        bool isReservedPerformanceCc(const ControllerMidiEvent& event) noexcept
+        {
+            return event.type == ControllerMidiEventType::controlChange
+                && (event.data1 == 1 || event.data1 == 64);
+        }
+    }
+
     MidiLearnManager::MidiLearnManager() = default;
 
     bool MidiLearnManager::isContinuousLearnEligible(juce::StringRef parameterId) noexcept
@@ -53,6 +62,12 @@ namespace coolsynth::midi
 
         if (event.type == ControllerMidiEventType::controlChange)
         {
+            if (isReservedPerformanceCc(event))
+            {
+                session.statusText = "Mod wheel and sustain are reserved performance controls";
+                return { MidiLearnCaptureResult::ignored, false, false, std::nullopt, session.statusText };
+            }
+
             MidiCcKey newKey{ event.channel, event.data1 };
             
             if (const auto* existing = findBindingForParameter(session.parameterId))

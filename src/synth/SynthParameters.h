@@ -1,10 +1,15 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include "parameters/ParameterIDs.h"
 
 namespace coolsynth::synth
 {
+    inline constexpr int defaultVoiceCount = 8;
+    inline constexpr double masterGainRampSeconds = 0.02;
+    inline constexpr int maxEngineEventsPerBlock = 1024;
+
     struct EnvelopeParameters
     {
         float attackSeconds = 0.01f;
@@ -172,6 +177,23 @@ namespace coolsynth::synth
         DelayParametersV2 delay;
         ReverbParametersV2 reverb;
         float masterGainLinear = 1.0f;
+    };
+
+    enum class EngineMidiEventType : uint8_t
+    {
+        noteOn,
+        noteOff,
+        pitchBend,
+        modWheel,
+        sustainPedal,
+    };
+
+    struct EngineMidiEvent
+    {
+        EngineMidiEventType type = EngineMidiEventType::noteOn;
+        int sampleOffset = 0;
+        uint8_t noteNumber = 0;
+        float value = 0.0f;
     };
 
     struct ParameterValuePointersV2

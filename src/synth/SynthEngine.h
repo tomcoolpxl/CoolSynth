@@ -1,32 +1,16 @@
 #pragma once
 
 #include <juce_audio_basics/juce_audio_basics.h>
-#include <juce_dsp/juce_dsp.h>
 
-#include "SynthVoice.h"
-#include "GlobalDelay.h"
+#include "SynthEngineV2.h"
 #include "SynthParameters.h"
 
 namespace coolsynth::synth
 {
-    /**
-     * Custom synthesizer that implements release-first then oldest-active voice stealing.
-     */
-    class ReleaseFirstSynthesiser final : public juce::Synthesiser
-    {
-    protected:
-        juce::SynthesiserVoice* findVoiceToSteal(juce::SynthesiserSound* soundToPlay,
-                                                int midiChannel,
-                                                int midiNoteNumber) const override;
-    };
-
-    inline constexpr int defaultVoiceCount = 8;
-    inline constexpr double masterGainRampSeconds = 0.02;
-
     class SynthEngine final
     {
     public:
-        SynthEngine();
+        SynthEngine() = default;
 
         void prepare(double sampleRate, int samplesPerBlock, int outputChannelCount);
         void releaseResources() noexcept;
@@ -36,17 +20,8 @@ namespace coolsynth::synth
         void panic() noexcept;
 
     private:
-        void prepareVoices(double sampleRate, int samplesPerBlock);
-        void pushEnvelopeParametersToVoices(const EnvelopeParameters& parameters) noexcept;
-        void pushFilterParametersToVoices(const FilterParameters& parameters) noexcept;
-        void pushWaveformToVoices(coolsynth::parameters::WaveformChoice waveform) noexcept;
-        void applyMasterGain(juce::AudioBuffer<float>& outputBuffer, float targetLinearGain) noexcept;
+        static BlockRenderParametersV2 mapToV2Parameters(const BlockRenderParameters& parameters) noexcept;
 
-        ReleaseFirstSynthesiser synthesiser;
-        std::vector<SynthVoice*> synthVoices;
-        GlobalDelay globalDelay;
-        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGainLinear;
-        int outputChannels = 0;
-        bool prepared = false;
+        SynthEngineV2 v2Engine;
     };
 }

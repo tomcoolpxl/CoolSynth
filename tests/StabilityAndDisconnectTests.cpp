@@ -5,7 +5,7 @@
 #include "standalone/StandaloneMidiInput.h"
 #include "standalone/SettingsStore.h"
 #include "synth/SynthEngine.h"
-#include "synth/SynthSound.h"
+#include "synth/SynthEngineV2.h"
 #include "synth/SynthVoice.h"
 
 namespace
@@ -119,8 +119,7 @@ public:
                 voice.setNextEnvelopeParameters(makeStressEnvelope());
                 voice.setNextFilterParameters({ 20000.0f, 1.0f });
 
-                coolsynth::synth::SynthSound sound;
-                voice.startNote(84, 1.0f, &sound, 0);
+                voice.startNote(84, 1.0f);
 
                 juce::AudioBuffer<float> buffer(1, 256);
                 for (int block = 0; block < 24; ++block)
@@ -141,8 +140,7 @@ public:
             voice.setNextEnvelopeParameters(makeStressEnvelope());
             voice.setNextFilterParameters({ 20000.0f, 0.0f });
 
-            coolsynth::synth::SynthSound sound;
-            voice.startNote(72, 1.0f, &sound, 0);
+            voice.startNote(72, 1.0f);
 
             juce::AudioBuffer<float> buffer(1, 256);
             for (int block = 0; block < 32; ++block)
@@ -219,5 +217,212 @@ public:
     }
 };
 
+class V2AllocatorTests final : public juce::UnitTest
+{
+public:
+    V2AllocatorTests() : juce::UnitTest("V2Allocator", "CoolSynth") {}
+
+    void runTest() override
+    {
+        beginTest("sample_offset_note_events_render_only_after_their_offset");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 128, 2);
+
+            auto parameters = makeBasicParameters();
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> events {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 64, 60, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 128);
+            buffer.clear();
+            engine.render(buffer, events, parameters);
+
+            float firstHalfMax = 0.0f;
+            float secondHalfMax = 0.0f;
+            for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            {
+                for (int sample = 0; sample < 64; ++sample)
+                    firstHalfMax = juce::jmax(firstHalfMax, std::abs(buffer.getSample(channel, sample)));
+
+                for (int sample = 64; sample < buffer.getNumSamples(); ++sample)
+                    secondHalfMax = juce::jmax(secondHalfMax, std::abs(buffer.getSample(channel, sample)));
+            }
+
+            expectWithinAbsoluteError(firstHalfMax, 0.0f, 1.0e-6f);
+            expect(secondHalfMax > 1.0e-4f);
+        }
+
+        beginTest("sustain_holds_released_notes_until_pedal_up");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 64, 2);
+
+            auto parameters = makeBasicParameters();
+            juce::AudioBuffer<float> buffer(2, 64);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+            expectEquals(engine.getActiveVoiceCountForTesting(), 1);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 2> sustainAndRelease {{
+                { coolsynth::synth::EngineMidiEventType::sustainPedal, 0, 0, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, sustainAndRelease, parameters);
+            expectEquals(engine.getActiveVoiceCountForTesting(), 1);
+
+            std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> debugStates {};
+            engine.copyVoiceStatesForTesting(debugStates);
+            bool sustainedVoiceFound = false;
+            for (const auto& state : debugStates)
+                sustainedVoiceFound = sustainedVoiceFound || (state.active && state.noteNumber == 60 && state.sustained);
+
+            expect(sustainedVoiceFound);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> sustainUp {{
+                { coolsynth::synth::EngineMidiEventType::sustainPedal, 0, 0, 0.0f }
+            }};
+            for (int block = 0; block < 12; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer, block == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(sustainUp)
+                                                 : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              parameters);
+            }
+
+            expectEquals(engine.getActiveVoiceCountForTesting(), 0);
+        }
+
+        beginTest("voice_stealing_prefers_released_voices_before_held_voices");
+        {
+            coolsynth::synth::SynthEngineV2 engine(2);
+            engine.prepare(48000.0, 64, 2);
+
+            auto parameters = makeBasicParameters();
+            juce::AudioBuffer<float> buffer(2, 64);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 2> firstChord {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 62, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, firstChord, parameters);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> releaseOldest {{
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, releaseOldest, parameters);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> stealReleased {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, stealReleased, parameters);
+
+            std::array<coolsynth::synth::VoiceDebugState, 2> debugStates {};
+            engine.copyVoiceStatesForTesting(debugStates);
+
+            bool sawHeld62 = false;
+            bool sawNew64 = false;
+            bool sawStolen60 = false;
+            for (const auto& state : debugStates)
+            {
+                sawHeld62 = sawHeld62 || (state.active && state.noteNumber == 62 && state.keyDown);
+                sawNew64 = sawNew64 || (state.active && state.noteNumber == 64 && state.keyDown);
+                sawStolen60 = sawStolen60 || (state.active && state.noteNumber == 60);
+            }
+
+            expect(sawHeld62);
+            expect(sawNew64);
+            expect(!sawStolen60);
+        }
+
+        beginTest("voice_stealing_falls_back_to_oldest_held_voice_when_none_are_released");
+        {
+            coolsynth::synth::SynthEngineV2 engine(2);
+            engine.prepare(48000.0, 64, 2);
+
+            auto parameters = makeBasicParameters();
+            juce::AudioBuffer<float> buffer(2, 64);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 3> notes {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 62, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, notes, parameters);
+
+            std::array<coolsynth::synth::VoiceDebugState, 2> debugStates {};
+            engine.copyVoiceStatesForTesting(debugStates);
+
+            bool saw62 = false;
+            bool saw64 = false;
+            bool saw60 = false;
+            for (const auto& state : debugStates)
+            {
+                saw60 = saw60 || (state.active && state.noteNumber == 60);
+                saw62 = saw62 || (state.active && state.noteNumber == 62);
+                saw64 = saw64 || (state.active && state.noteNumber == 64);
+            }
+
+            expect(!saw60);
+            expect(saw62);
+            expect(saw64);
+        }
+
+        beginTest("panic_clears_all_active_voices_immediately");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 64, 2);
+
+            auto parameters = makeBasicParameters();
+            juce::AudioBuffer<float> buffer(2, 64);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 67, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+            expect(engine.getActiveVoiceCountForTesting() > 0);
+
+            engine.panic();
+            buffer.clear();
+            engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+            expectEquals(engine.getActiveVoiceCountForTesting(), 0);
+
+            float maxAbs = 0.0f;
+            for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                    maxAbs = juce::jmax(maxAbs, std::abs(buffer.getSample(channel, sample)));
+
+            expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
+        }
+    }
+
+private:
+    static coolsynth::synth::BlockRenderParametersV2 makeBasicParameters() noexcept
+    {
+        coolsynth::synth::BlockRenderParametersV2 parameters;
+        parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+        parameters.oscA.level = 1.0f;
+        parameters.oscB.level = 0.0f;
+        parameters.ampEnvelope = makeStressEnvelope();
+        parameters.filter.cutoffHz = 8000.0f;
+        parameters.filter.resonanceNormalized = 0.1f;
+        parameters.delay.enabled = false;
+        parameters.masterGainLinear = 0.5f;
+        return parameters;
+    }
+};
+
 static StandaloneMidiInputTests standaloneMidiInputTests;
 static DspRegressionTests dspRegressionTests;
+static V2AllocatorTests v2AllocatorTests;

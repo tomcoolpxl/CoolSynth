@@ -1,5 +1,6 @@
 #include "SynthVoice.h"
-#include "SynthSound.h"
+
+#include <cmath>
 
 namespace coolsynth::synth
 {
@@ -21,6 +22,7 @@ namespace coolsynth::synth
         ampEnvelope.setSampleRate(spec.sampleRate);
         cutoffHzSmoother.reset(spec.sampleRate, 0.02);
         resonanceQSmoother.reset(spec.sampleRate, 0.02);
+        forceStop();
     }
 
     void SynthVoice::setNextEnvelopeParameters(const EnvelopeParameters& parameters) noexcept
@@ -33,18 +35,28 @@ namespace coolsynth::synth
         nextFilterParameters = parameters;
     }
 
-    bool SynthVoice::canPlaySound(juce::SynthesiserSound* sound)
+    void SynthVoice::setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept
     {
-        return dynamic_cast<SynthSound*>(sound) != nullptr;
+        currentWaveform = waveform;
+    }
+
+    void SynthVoice::setOutputLevel(float level) noexcept
+    {
+        outputLevel = juce::jlimit(0.0f, 1.0f, level);
+    }
+
+    void SynthVoice::setPitchBendSemitones(float semitones) noexcept
+    {
+        currentPitchBendSemitones = semitones;
     }
 
     void SynthVoice::startNote(int midiNoteNumber,
                                float velocity,
-                               juce::SynthesiserSound* /*sound*/,
-                               int /*currentPitchWheelPosition*/)
+                               juce::SynthesiserSound*,
+                               int)
     {
-        currentFrequencyHz = static_cast<float>(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber));
-        oscillator.setFrequency(currentFrequencyHz);
+        currentMidiNoteNumber = midiNoteNumber;
+        baseFrequencyHz = static_cast<float>(juce::MidiMessage::getMidiNoteInHertz(midiNoteNumber));
         oscillator.reset();
 
         resetVoiceState();
@@ -52,32 +64,31 @@ namespace coolsynth::synth
         ampEnvelope.setParameters(makeJuceEnvelopeParameters());
         ampEnvelope.noteOn();
 
-        velocityGain = velocity;
+        velocityGain = juce::jlimit(0.0f, 1.0f, velocity);
+        active = true;
+        releasing = false;
     }
 
-    void SynthVoice::stopNote(float /*velocity*/, bool allowTailOff)
+    void SynthVoice::stopNote(float, bool allowTailOff)
     {
+        if (! active)
+            return;
+
         if (allowTailOff)
         {
             ampEnvelope.noteOff();
+            releasing = true;
+            return;
         }
-        else
-        {
-            ampEnvelope.reset();
-            resetVoiceState();
-            clearCurrentNote();
-        }
+
+        forceStop();
     }
-
-    void SynthVoice::pitchWheelMoved(int /*newPitchWheelValue*/) {}
-
-    void SynthVoice::controllerMoved(int /*controllerNumber*/, int /*newControllerValue*/) {}
 
     void SynthVoice::renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                                      int startSample,
                                      int numSamples)
     {
-        if (!isVoiceActive())
+        if (! active || numSamples <= 0)
             return;
 
         ampEnvelope.setParameters(makeJuceEnvelopeParameters());
@@ -88,6 +99,9 @@ namespace coolsynth::synth
         const auto nextQ = mapNormalizedResonanceToQ(nextFilterParameters.resonanceNormalized);
         resonanceQSmoother.setTargetValue(nextQ);
 
+        const auto pitchRatio = std::pow(2.0f, currentPitchBendSemitones / 12.0f);
+        oscillator.setFrequency(baseFrequencyHz * pitchRatio, false);
+
         for (int sample = 0; sample < numSamples; ++sample)
         {
             lowPassFilter.setCutoffFrequency(cutoffHzSmoother.getNextValue());
@@ -96,17 +110,14 @@ namespace coolsynth::synth
             const float oscValue = oscillator.processSample(0.0f);
             const float filteredValue = lowPassFilter.processSample(0, oscValue);
             const float envValue = ampEnvelope.getNextSample();
-            const float sampleValue = filteredValue * envValue * velocityGain;
+            const float sampleValue = filteredValue * envValue * velocityGain * outputLevel;
 
             for (int channel = 0; channel < outputBuffer.getNumChannels(); ++channel)
-            {
                 outputBuffer.addSample(channel, startSample + sample, sampleValue);
-            }
 
-            if (!ampEnvelope.isActive())
+            if (! ampEnvelope.isActive())
             {
-                resetVoiceState();
-                clearCurrentNote();
+                forceStop();
                 break;
             }
         }
@@ -114,9 +125,15 @@ namespace coolsynth::synth
         lowPassFilter.snapToZero();
     }
 
-    void SynthVoice::setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept
+    void SynthVoice::forceStop() noexcept
     {
-        currentWaveform = waveform;
+        ampEnvelope.reset();
+        resetVoiceState();
+        currentMidiNoteNumber = -1;
+        active = false;
+        releasing = false;
+        velocityGain = 0.0f;
+        baseFrequencyHz = 0.0f;
     }
 
     float SynthVoice::renderWaveSample(float phase,
@@ -131,26 +148,20 @@ namespace coolsynth::synth
                 return phase < 0.0f ? -1.0f : 1.0f;
 
             case coolsynth::parameters::WaveformChoice::saw:
+            default:
                 return juce::jmap(phase,
                                   -juce::MathConstants<float>::pi,
                                   juce::MathConstants<float>::pi,
                                   -1.0f,
                                   1.0f);
         }
-
-        return std::sin(phase);
     }
 
     float SynthVoice::mapNormalizedResonanceToQ(float normalized) noexcept
     {
-        // qMin is Butterworth (1/sqrt(2) ~= 0.707)
-        // qMax increased to 25.0 for more aggressive synth resonance.
         const float qMin = 1.0f / std::sqrt(2.0f);
         const float qMax = 25.0f;
         const float r = juce::jlimit(0.0f, 1.0f, normalized);
-        
-        // Use cubic mapping (r^3) to give more resolution at the low end 
-        // while allowing the high end to reach more extreme values.
         return qMin + (qMax - qMin) * (r * r * r);
     }
 

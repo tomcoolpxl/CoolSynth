@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <optional>
+#include <span>
 
 #include "SynthAudioProcessorEditor.h"
 #include "parameters/ParameterIDs.h"
@@ -55,6 +56,61 @@ namespace
         event.channel = static_cast<uint8_t> (message.getChannel());
         return event;
     }
+
+    std::optional<coolsynth::synth::EngineMidiEvent> makeEngineMidiEvent(const juce::MidiMessage& message,
+                                                                         int sampleOffset) noexcept
+    {
+        using namespace coolsynth::synth;
+
+        EngineMidiEvent event;
+        event.sampleOffset = juce::jmax(0, sampleOffset);
+
+        if (message.isNoteOn())
+        {
+            event.type = EngineMidiEventType::noteOn;
+            event.noteNumber = static_cast<uint8_t> (message.getNoteNumber());
+            event.value = juce::jlimit(0.0f, 1.0f, message.getFloatVelocity());
+            return event;
+        }
+
+        if (message.isNoteOff())
+        {
+            event.type = EngineMidiEventType::noteOff;
+            event.noteNumber = static_cast<uint8_t> (message.getNoteNumber());
+            return event;
+        }
+
+        if (message.isPitchWheel())
+        {
+            event.type = EngineMidiEventType::pitchBend;
+            event.value = juce::jlimit(-1.0f,
+                                       1.0f,
+                                       static_cast<float> (message.getPitchWheelValue() - 8192) / 8192.0f);
+            return event;
+        }
+
+        if (message.isControllerOfType(1))
+        {
+            event.type = EngineMidiEventType::modWheel;
+            event.value = static_cast<float> (message.getControllerValue()) / 127.0f;
+            return event;
+        }
+
+        if (message.isControllerOfType(64))
+        {
+            event.type = EngineMidiEventType::sustainPedal;
+            event.value = message.getControllerValue() >= 64 ? 1.0f : 0.0f;
+            return event;
+        }
+
+        return std::nullopt;
+    }
+
+    bool isReservedPerformanceController(const coolsynth::midi::ControllerMidiEvent& event) noexcept
+    {
+        return event.type == coolsynth::midi::ControllerMidiEventType::controlChange
+            && (event.data1 == 1 || event.data1 == 64);
+    }
 }
 
 SynthAudioProcessor::SynthAudioProcessor()
@@ -101,22 +157,33 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 
     keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
 
-    if (! juce::JUCEApplicationBase::isStandaloneApp())
-    {
-        for (const auto metadata : midiMessages)
-        {
-            if (const auto event = makeControllerMidiEvent(metadata.getMessage()))
-            {
-                enqueuePluginControllerEvent(*event);
+    std::array<coolsynth::synth::EngineMidiEvent, coolsynth::synth::maxEngineEventsPerBlock> engineEvents {};
+    int engineEventCount = 0;
 
-                const auto action = midiMappingEngine.translate(*event);
-                if (action.kind != coolsynth::midi::MappedAction::Kind::none)
-                    enqueuePluginMappedAction(action);
-            }
+    for (const auto metadata : midiMessages)
+    {
+        if (engineEventCount < static_cast<int> (engineEvents.size()))
+        {
+            if (const auto event = makeEngineMidiEvent(metadata.getMessage(), metadata.samplePosition))
+                engineEvents[static_cast<size_t> (engineEventCount++)] = *event;
+        }
+
+        if (juce::JUCEApplicationBase::isStandaloneApp())
+            continue;
+
+        if (const auto event = makeControllerMidiEvent(metadata.getMessage()))
+        {
+            enqueuePluginControllerEvent(*event);
+
+            if (! isReservedPerformanceController(*event))
+                enqueuePluginMappedControllerEvent(*event);
         }
     }
 
-    synthEngine.render(buffer, midiMessages, makeBlockRenderParameters());
+    synthEngine.render(buffer,
+                       std::span<const coolsynth::synth::EngineMidiEvent>(engineEvents.data(),
+                                                                          static_cast<size_t> (engineEventCount)),
+                       makeBlockRenderParameters());
 }
 
 juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()
@@ -170,6 +237,7 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
     auto learnedMappings = std::make_unique<juce::XmlElement>(learnedMidiMappingsTag);
     learnedMappings->setAttribute("version", 1);
 
+    const juce::ScopedLock lock(midiMappingStateLock);
     for (const auto& binding : learnedMidiBindings)
     {
         if (! binding.isValid())
@@ -268,35 +336,38 @@ void SynthAudioProcessor::resetAutomatableParametersToDefaults()
 
 bool SynthAudioProcessor::setActiveControllerProfile(juce::StringRef profileId)
 {
-    const juce::ScopedLock lock(getCallbackLock());
+    const juce::ScopedLock lock(midiMappingStateLock);
     return midiMappingEngine.setActiveProfile(profileId);
 }
 
 juce::String SynthAudioProcessor::getActiveControllerProfileId() const
 {
+    const juce::ScopedLock lock(midiMappingStateLock);
     return midiMappingEngine.getActiveProfileId();
 }
 
 juce::String SynthAudioProcessor::getActiveControllerProfileDisplayName() const
 {
+    const juce::ScopedLock lock(midiMappingStateLock);
     return midiMappingEngine.getActiveProfileDisplayName();
 }
 
 void SynthAudioProcessor::setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings)
 {
-    const juce::ScopedLock lock(getCallbackLock());
+    const juce::ScopedLock lock(midiMappingStateLock);
     learnedMidiBindings.assign(bindings.begin(), bindings.end());
     midiMappingEngine.setLearnedBindings(bindings);
 }
 
 std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::getLearnedMidiBindings() const
 {
+    const juce::ScopedLock lock(midiMappingStateLock);
     return learnedMidiBindings;
 }
 
 void SynthAudioProcessor::clearLearnedMidiBinding(juce::StringRef parameterId)
 {
-    const juce::ScopedLock lock(getCallbackLock());
+    const juce::ScopedLock lock(midiMappingStateLock);
     learnedMidiBindings.erase(std::remove_if(learnedMidiBindings.begin(),
                                              learnedMidiBindings.end(),
                                              [&](const auto& binding)
@@ -326,8 +397,15 @@ int SynthAudioProcessor::drainPendingPluginControllerEvents(coolsynth::midi::Con
 
 void SynthAudioProcessor::handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event)
 {
-    const juce::ScopedLock lock(getCallbackLock());
-    const auto action = midiMappingEngine.translate(event);
+    if (isReservedPerformanceController(event))
+        return;
+
+    coolsynth::midi::MappedAction action;
+    {
+        const juce::ScopedLock lock(midiMappingStateLock);
+        action = midiMappingEngine.translate(event);
+    }
+
     applyMappedAction(action);
 }
 
@@ -343,49 +421,56 @@ void SynthAudioProcessor::enqueuePluginControllerEvent(const coolsynth::midi::Co
     }
 }
 
-void SynthAudioProcessor::enqueuePluginMappedAction(const coolsynth::midi::MappedAction& action) noexcept
+void SynthAudioProcessor::enqueuePluginMappedControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept
 {
     int start1, size1, start2, size2;
-    pendingMappedActionQueue.prepareToWrite(1, start1, size1, start2, size2);
+    pendingPluginMappedControllerEventQueue.prepareToWrite(1, start1, size1, start2, size2);
 
     if (size1 > 0)
     {
-        pendingMappedActions[static_cast<size_t> (start1)] = action;
-        pendingMappedActionQueue.finishedWrite(1);
+        pendingPluginMappedControllerEvents[static_cast<size_t> (start1)] = event;
+        pendingPluginMappedControllerEventQueue.finishedWrite(1);
     }
 }
 
-int SynthAudioProcessor::drainPendingMappedActions(coolsynth::midi::MappedAction* destination,
-                                                   int maxActions) noexcept
+int SynthAudioProcessor::drainPendingMappedControllerEvents(coolsynth::midi::ControllerMidiEvent* destination,
+                                                            int maxEvents) noexcept
 {
     int start1, size1, start2, size2;
-    pendingMappedActionQueue.prepareToRead(maxActions, start1, size1, start2, size2);
+    pendingPluginMappedControllerEventQueue.prepareToRead(maxEvents, start1, size1, start2, size2);
 
     int totalRead = 0;
     for (int i = 0; i < size1; ++i)
-        destination[totalRead++] = pendingMappedActions[static_cast<size_t> (start1 + i)];
+        destination[totalRead++] = pendingPluginMappedControllerEvents[static_cast<size_t> (start1 + i)];
 
     for (int i = 0; i < size2; ++i)
-        destination[totalRead++] = pendingMappedActions[static_cast<size_t> (start2 + i)];
+        destination[totalRead++] = pendingPluginMappedControllerEvents[static_cast<size_t> (start2 + i)];
 
-    pendingMappedActionQueue.finishedRead(totalRead);
+    pendingPluginMappedControllerEventQueue.finishedRead(totalRead);
     return totalRead;
 }
 
-void SynthAudioProcessor::dispatchPendingMappedActions()
+void SynthAudioProcessor::dispatchPendingMappedControllerEvents()
 {
-    const juce::ScopedLock lock(getCallbackLock());
-    std::array<coolsynth::midi::MappedAction, 32> localActions {};
+    std::array<coolsynth::midi::ControllerMidiEvent, 32> localEvents {};
 
     while (true)
     {
-        const auto drained = drainPendingMappedActions(localActions.data(),
-                                                       static_cast<int> (localActions.size()));
+        const auto drained = drainPendingMappedControllerEvents(localEvents.data(),
+                                                                static_cast<int> (localEvents.size()));
         if (drained == 0)
             break;
 
         for (int i = 0; i < drained; ++i)
-            applyMappedAction(localActions[static_cast<size_t> (i)]);
+        {
+            coolsynth::midi::MappedAction action;
+            {
+                const juce::ScopedLock lock(midiMappingStateLock);
+                action = midiMappingEngine.translate(localEvents[static_cast<size_t> (i)]);
+            }
+
+            applyMappedAction(action);
+        }
     }
 }
 
@@ -698,9 +783,9 @@ void SynthAudioProcessor::PluginMappedActionDispatcher::run()
 {
     while (! threadShouldExit())
     {
-        owner.dispatchPendingMappedActions();
+        owner.dispatchPendingMappedControllerEvents();
         wait(4);
     }
 
-    owner.dispatchPendingMappedActions();
+    owner.dispatchPendingMappedControllerEvents();
 }
