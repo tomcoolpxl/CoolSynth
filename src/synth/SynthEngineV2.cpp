@@ -159,6 +159,9 @@ namespace coolsynth::synth
             case EngineMidiEventType::pitchBend:     handlePitchBend(event, parameters); break;
             case EngineMidiEventType::modWheel:      handleModWheel(event); break;
             case EngineMidiEventType::sustainPedal:  handleSustainPedal(event); break;
+            case EngineMidiEventType::allNotesOff:   handleAllNotesOff(); break;
+            case EngineMidiEventType::allSoundOff:   handleAllSoundOff(); break;
+            case EngineMidiEventType::resetControllers: handleResetControllers(); break;
         }
     }
 
@@ -223,6 +226,35 @@ namespace coolsynth::synth
         sustainPedalDown = newSustainState;
         if (! sustainPedalDown)
             releaseSustainedVoices();
+    }
+
+    void SynthEngineV2::handleAllNotesOff() noexcept
+    {
+        for (auto& slot : voices)
+        {
+            if (! slot.voice.isActive())
+            {
+                clearVoiceSlot(slot);
+                continue;
+            }
+
+            slot.keyDown = false;
+            slot.sustained = false;
+            slot.voice.stopNote(0.0f, true);
+        }
+    }
+
+    void SynthEngineV2::handleAllSoundOff() noexcept
+    {
+        panic();
+    }
+
+    void SynthEngineV2::handleResetControllers() noexcept
+    {
+        pitchBendSemitones = 0.0f;
+        modWheelValue = 0.0f;
+        sustainPedalDown = false;
+        releaseSustainedVoices();
     }
 
     void SynthEngineV2::releaseSustainedVoices() noexcept

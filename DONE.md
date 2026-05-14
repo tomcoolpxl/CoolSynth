@@ -18,6 +18,8 @@
 - [x] Routed `SynthAudioProcessor::processBlock()` through the explicit V2 event path and render contract instead of forwarding raw MIDI into the old JUCE `Synthesiser` path.
 - [x] Removed callback-lock-dependent runtime mapped-action handling. Plugin controller translation now uses a raw controller-event bridge off the audio thread, and standalone/controller-profile translation no longer locks the processor callback.
 - [x] Added automated regressions for event-offset rendering, sustain hold-and-release behavior, panic silence, release-first voice stealing, oldest-held fallback stealing, processor-level note rendering through `processBlock()`, and reserved-performance-control learn rejection.
+- [x] Hardened the Phase 2 MIDI boundary so host `All Notes Off`, `All Sound Off`, and `Reset All Controllers` messages now flow into the V2 engine instead of being ignored, and kept those reserved synth controllers out of generic MIDI learn and runtime CC mapping.
+- [x] Fixed plugin controller-event FIFO wraparound handling and added regressions for queue wrap, reserved host-safety CC rejection, engine-level all-notes-off release, reset-controller sustain release, and processor-level all-sound-off silence.
 - [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug --clean-first`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14.
 - Manual standalone and VST3 playback smoke remains in `TODO.md`, so Phase 2 is not closed yet.
 

@@ -63,6 +63,11 @@ public:
             expectEquals((int)sustainOutcome.result, (int)MidiLearnCaptureResult::ignored);
             expect(manager.getSession().armed);
             expectEquals((int)manager.getBindings().size(), 0);
+
+            auto allNotesOffOutcome = manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 123, 0 });
+            expectEquals((int)allNotesOffOutcome.result, (int)MidiLearnCaptureResult::ignored);
+            expect(manager.getSession().armed);
+            expectEquals((int)manager.getBindings().size(), 0);
         }
 
         beginTest("learn_manager_replaces_existing_binding_by_parameter");
@@ -289,6 +294,93 @@ public:
                 expectEquals((int) drained[0].data1, 74);
                 expectEquals((int) drained[0].data2, 127);
             }
+        }
+
+        beginTest("plugin_controller_event_queue_survives_fifo_wraparound");
+        {
+            SynthAudioProcessor processor;
+            juce::AudioBuffer<float> buffer(2, 8);
+
+            for (int value = 0; value < 96; ++value)
+            {
+                juce::MidiBuffer midi;
+                midi.addEvent(juce::MidiMessage::controllerEvent(1, 74, value), 0);
+                processor.processBlock(buffer, midi);
+            }
+
+            std::array<ControllerMidiEvent, 80> drainedFirst {};
+            const auto firstCount = processor.drainPendingPluginControllerEvents(drainedFirst.data(),
+                                                                                 static_cast<int>(drainedFirst.size()));
+            expectEquals(firstCount, 80);
+
+            for (int value = 0; value < 64; ++value)
+            {
+                juce::MidiBuffer midi;
+                midi.addEvent(juce::MidiMessage::controllerEvent(1, 74, value), 0);
+                processor.processBlock(buffer, midi);
+            }
+
+            std::array<ControllerMidiEvent, 80> drainedSecond {};
+            const auto secondCount = processor.drainPendingPluginControllerEvents(drainedSecond.data(),
+                                                                                  static_cast<int>(drainedSecond.size()));
+            expectEquals(secondCount, 80);
+
+            if (secondCount == 80)
+            {
+                for (int i = 0; i < 16; ++i)
+                    expectEquals((int) drainedSecond[static_cast<size_t>(i)].data2, 80 + i);
+
+                for (int i = 0; i < 64; ++i)
+                    expectEquals((int) drainedSecond[static_cast<size_t>(16 + i)].data2, i);
+            }
+        }
+
+        beginTest("plugin_process_block_ignores_reserved_host_safety_cc_mappings");
+        {
+            SynthAudioProcessor processor;
+            const std::array<LearnedCcBinding, 1> bindings {{
+                { coolsynth::parameters::ids::filterCutoffHz, { 1, 123 } }
+            }};
+            processor.setLearnedMidiBindings(bindings);
+
+            auto* cutoff = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            expect(cutoff != nullptr);
+            const auto initialValue = cutoff != nullptr ? cutoff->getValue() : 0.0f;
+
+            juce::AudioBuffer<float> buffer(2, 32);
+            juce::MidiBuffer midi;
+            midi.addEvent(juce::MidiMessage::allNotesOff(1), 0);
+
+            processor.processBlock(buffer, midi);
+            juce::Thread::sleep(20);
+
+            if (cutoff != nullptr)
+                expectWithinAbsoluteError(cutoff->getValue(), initialValue, 1.0e-6f);
+        }
+
+        beginTest("plugin_process_block_treats_all_sound_off_as_immediate_engine_silence");
+        {
+            SynthAudioProcessor processor;
+            processor.prepareToPlay(48000.0, 128);
+
+            juce::AudioBuffer<float> buffer(2, 128);
+            juce::MidiBuffer noteOn;
+            noteOn.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8) 100), 0);
+            processor.processBlock(buffer, noteOn);
+
+            juce::MidiBuffer allSoundOff;
+            allSoundOff.addEvent(juce::MidiMessage::allSoundOff(1), 0);
+            buffer.clear();
+            processor.processBlock(buffer, allSoundOff);
+
+            float maxAbs = 0.0f;
+            for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            {
+                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                    maxAbs = juce::jmax(maxAbs, std::abs(buffer.getSample(channel, sample)));
+            }
+
+            expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
         }
 
         beginTest("processor_process_block_routes_note_events_through_the_v2_allocator");

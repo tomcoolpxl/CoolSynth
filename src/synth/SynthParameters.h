@@ -186,6 +186,9 @@ namespace coolsynth::synth
         pitchBend,
         modWheel,
         sustainPedal,
+        allNotesOff,
+        allSoundOff,
+        resetControllers,
     };
 
     struct EngineMidiEvent

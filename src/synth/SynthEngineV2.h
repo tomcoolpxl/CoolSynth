@@ -58,6 +58,9 @@ namespace coolsynth::synth
         void handlePitchBend(const EngineMidiEvent& event, const BlockRenderParametersV2& parameters) noexcept;
         void handleModWheel(const EngineMidiEvent& event) noexcept;
         void handleSustainPedal(const EngineMidiEvent& event) noexcept;
+        void handleAllNotesOff() noexcept;
+        void handleAllSoundOff() noexcept;
+        void handleResetControllers() noexcept;
         void releaseSustainedVoices() noexcept;
         int findVoiceIndexToAllocate() const noexcept;
         int findVoiceIndexForNoteOff(int midiNoteNumber) const noexcept;

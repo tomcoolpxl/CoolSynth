@@ -26,6 +26,28 @@ namespace coolsynth::midi
         uint8_t data2 = 0;
     };
 
+    constexpr bool isReservedSynthControllerNumber(uint8_t controllerNumber) noexcept
+    {
+        switch (controllerNumber)
+        {
+            case 1:   // mod wheel
+            case 64:  // sustain
+            case 120: // all sound off
+            case 121: // reset all controllers
+            case 123: // all notes off
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+    constexpr bool isReservedSynthControllerEvent(const ControllerMidiEvent& event) noexcept
+    {
+        return event.type == ControllerMidiEventType::controlChange
+            && isReservedSynthControllerNumber(event.data1);
+    }
+
     using MappedCommand = ControllerCommandId;
 
     struct ParameterTarget

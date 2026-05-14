@@ -405,6 +405,97 @@ public:
 
             expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
         }
+
+        beginTest("all_notes_off_releases_active_and_sustained_voices");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 64, 2);
+
+            auto parameters = makeBasicParameters();
+            juce::AudioBuffer<float> buffer(2, 64);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+            expectEquals(engine.getActiveVoiceCountForTesting(), 1);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 2> sustainAndRelease {{
+                { coolsynth::synth::EngineMidiEventType::sustainPedal, 0, 0, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, sustainAndRelease, parameters);
+            expectEquals(engine.getActiveVoiceCountForTesting(), 1);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> allNotesOff {{
+                { coolsynth::synth::EngineMidiEventType::allNotesOff, 0, 0, 0.0f }
+            }};
+            for (int block = 0; block < 12; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              block == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(allNotesOff)
+                                         : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              parameters);
+            }
+
+            expectEquals(engine.getActiveVoiceCountForTesting(), 0);
+        }
+
+        beginTest("reset_controllers_releases_sustained_voices");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 64, 2);
+
+            auto parameters = makeBasicParameters();
+            juce::AudioBuffer<float> buffer(2, 64);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 3> noteWithSustainAndBend {{
+                { coolsynth::synth::EngineMidiEventType::pitchBend, 0, 0, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::sustainPedal, 0, 0, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, noteWithSustainAndBend, parameters);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOff {{
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, noteOff, parameters);
+            expectEquals(engine.getActiveVoiceCountForTesting(), 1);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> resetControllers {{
+                { coolsynth::synth::EngineMidiEventType::resetControllers, 0, 0, 0.0f }
+            }};
+            for (int block = 0; block < 12; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              block == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(resetControllers)
+                                         : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              parameters);
+            }
+
+            expectEquals(engine.getActiveVoiceCountForTesting(), 0);
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> newNote {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+            buffer.clear();
+            engine.render(buffer, newNote, parameters);
+
+            float maxAbs = 0.0f;
+            for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            {
+                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                    maxAbs = juce::jmax(maxAbs, std::abs(buffer.getSample(channel, sample)));
+            }
+
+            expect(maxAbs > 1.0e-4f);
+        }
     }
 
 private:

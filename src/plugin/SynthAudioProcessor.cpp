@@ -103,13 +103,30 @@ namespace
             return event;
         }
 
+        if (message.isAllNotesOff())
+        {
+            event.type = EngineMidiEventType::allNotesOff;
+            return event;
+        }
+
+        if (message.isAllSoundOff())
+        {
+            event.type = EngineMidiEventType::allSoundOff;
+            return event;
+        }
+
+        if (message.isResetAllControllers())
+        {
+            event.type = EngineMidiEventType::resetControllers;
+            return event;
+        }
+
         return std::nullopt;
     }
 
-    bool isReservedPerformanceController(const coolsynth::midi::ControllerMidiEvent& event) noexcept
+    bool isReservedSynthController(const coolsynth::midi::ControllerMidiEvent& event) noexcept
     {
-        return event.type == coolsynth::midi::ControllerMidiEventType::controlChange
-            && (event.data1 == 1 || event.data1 == 64);
+        return coolsynth::midi::isReservedSynthControllerEvent(event);
     }
 }
 
@@ -175,7 +192,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         {
             enqueuePluginControllerEvent(*event);
 
-            if (! isReservedPerformanceController(*event))
+            if (! isReservedSynthController(*event))
                 enqueuePluginMappedControllerEvent(*event);
         }
     }
@@ -397,7 +414,7 @@ int SynthAudioProcessor::drainPendingPluginControllerEvents(coolsynth::midi::Con
 
 void SynthAudioProcessor::handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event)
 {
-    if (isReservedPerformanceController(event))
+    if (isReservedSynthController(event))
         return;
 
     coolsynth::midi::MappedAction action;
@@ -418,6 +435,13 @@ void SynthAudioProcessor::enqueuePluginControllerEvent(const coolsynth::midi::Co
     {
         pendingPluginControllerEvents[static_cast<size_t> (start1)] = event;
         pendingPluginControllerEventQueue.finishedWrite(1);
+        return;
+    }
+
+    if (size2 > 0)
+    {
+        pendingPluginControllerEvents[static_cast<size_t> (start2)] = event;
+        pendingPluginControllerEventQueue.finishedWrite(1);
     }
 }
 
@@ -429,6 +453,13 @@ void SynthAudioProcessor::enqueuePluginMappedControllerEvent(const coolsynth::mi
     if (size1 > 0)
     {
         pendingPluginMappedControllerEvents[static_cast<size_t> (start1)] = event;
+        pendingPluginMappedControllerEventQueue.finishedWrite(1);
+        return;
+    }
+
+    if (size2 > 0)
+    {
+        pendingPluginMappedControllerEvents[static_cast<size_t> (start2)] = event;
         pendingPluginMappedControllerEventQueue.finishedWrite(1);
     }
 }
