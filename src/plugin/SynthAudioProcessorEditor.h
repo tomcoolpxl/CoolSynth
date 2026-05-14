@@ -90,6 +90,8 @@ private:
 
     juce::Label titleLabel;
     juce::Label midiLearnStatusLabel;
+    juce::Label pluginStatusLabel;
+    juce::Label buildInfoLabel;
 
     coolsynth::ui::SynthSection oscillatorSection { "Oscillator" };
     coolsynth::ui::SynthSection filterSection { "Filter" };

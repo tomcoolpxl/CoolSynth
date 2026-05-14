@@ -22,8 +22,14 @@
 - [x] Fixed plugin controller-event FIFO wraparound handling and added regressions for queue wrap, reserved host-safety CC rejection, engine-level all-notes-off release, reset-controller sustain release, and processor-level all-sound-off silence.
 - [x] Implemented `SynthAudioProcessor::reset()` for the V2 path so host reset requests explicitly panic the allocator, clear active tails, and reset keyboard state instead of relying on the JUCE no-op default.
 - [x] Replaced the old hard-coded zero plugin tail report with a simple delay-aware V2 tail contract, and added processor-level regressions for reset-driven silence and nonzero tail reporting only when delay can actually ring.
+- [x] Verified the current standalone artifact launches on Windows without immediate crash, and confirmed both Ableton Live 12 Lite and REAPER discover `CoolSynth` as a VST3 instrument through their host-side scan state (`Live-plugins-1.db`, `PluginScanner.txt`, `reaper-vstplugins64.ini`, and `reaper-fxtags.ini`).
+- [x] Removed the environment blocker for first-release two-host VST3 smoke by downloading and installing REAPER from the official installer on 2026-05-14.
+- [x] Added visible build identity stamping to the standalone status bar and the plugin editor footer so manual smoke can confirm the tested standalone and VST3 binaries match the current build.
+- [x] Completed manual standalone and Ableton Live 12 Lite audible Phase 2 smoke on 2026-05-14: standalone note on or off, repeated notes, and panic passed; Ableton VST3 note playback, repeated notes, panic, and no stuck-note behavior passed.
+- [x] Noted one non-blocking patch-dependent artifact during standalone smoke: dense simultaneous key presses could produce a small note-start click with aggressive settings, but it disappeared after safer knob settings and did not reproduce as an allocator or stuck-note failure.
+- [x] Standalone sustain was not directly exercised during manual smoke because no CC64 pedal or equivalent controller source was available; existing automated sustain-path coverage remained in place, and the user accepted Phase 2 closure without a separate standalone sustain-pedal pass.
+- [x] Closed V2 Phase 2 on 2026-05-14 and advanced `TODO.md` to Phase 3.
 - [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug --clean-first`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14.
-- Manual standalone and VST3 playback smoke remains in `TODO.md`, so Phase 2 is not closed yet.
 
 ## Phase 1: Reproducible JUCE build skeleton
 

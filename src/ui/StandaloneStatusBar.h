@@ -2,6 +2,7 @@
 
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "BuildInfo.h"
 #include "standalone/StandaloneAudioSupport.h"
 #include "standalone/StandaloneMidiInput.h"
 
@@ -39,4 +40,5 @@ private:
     juce::Label audioStatusLabel;
     juce::Label midiStatusLabel;
     juce::Label lastMidiStatusLabel;
+    juce::Label buildStatusLabel;
 };

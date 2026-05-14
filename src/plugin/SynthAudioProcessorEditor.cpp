@@ -2,6 +2,7 @@
 
 #include <array>
 
+#include "BuildInfo.h"
 #include "SynthAudioProcessor.h"
 #include "midi/ControllerProfile.h"
 #include "parameters/ParameterIDs.h"
@@ -16,6 +17,7 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     , processor(inProcessor)
     , pianoBar(processor.getKeyboardState())
 {
+    const bool isStandalone = juce::JUCEApplicationBase::isStandaloneApp();
     namespace ids = coolsynth::parameters::ids;
     auto& apvts = processor.getValueTreeState();
 
@@ -41,6 +43,20 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     midiLearnStatusLabel.setColour(juce::Label::textColourId, juce::Colours::yellow);
     midiLearnStatusLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(midiLearnStatusLabel);
+
+    pluginStatusLabel.setText("Plugin Build", juce::dontSendNotification);
+    pluginStatusLabel.setFont(juce::FontOptions(12.0f));
+    pluginStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+    pluginStatusLabel.setJustificationType(juce::Justification::centredLeft);
+    pluginStatusLabel.setVisible(!isStandalone);
+    addAndMakeVisible(pluginStatusLabel);
+
+    buildInfoLabel.setText(coolsynth::build::getBuildIdentity(), juce::dontSendNotification);
+    buildInfoLabel.setFont(juce::FontOptions(13.0f));
+    buildInfoLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    buildInfoLabel.setJustificationType(juce::Justification::centredRight);
+    buildInfoLabel.setVisible(!isStandalone);
+    addAndMakeVisible(buildInfoLabel);
 
     // --- Oscillator Section ---
     addAndMakeVisible(oscillatorSection);
@@ -545,15 +561,39 @@ void SynthAudioProcessorEditor::showParameterContextMenu(juce::String parameterI
 void SynthAudioProcessorEditor::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colours::black);
+
+    if (!juce::JUCEApplicationBase::isStandaloneApp())
+    {
+        auto footerArea = getLocalBounds().removeFromBottom(30);
+        g.setColour(juce::Colours::black.withAlpha(0.35f));
+        g.fillRect(footerArea);
+        g.setColour(juce::Colours::white.withAlpha(0.1f));
+        g.drawLine(static_cast<float>(footerArea.getX()),
+                   static_cast<float>(footerArea.getY()),
+                   static_cast<float>(footerArea.getRight()),
+                   static_cast<float>(footerArea.getY()),
+                   1.0f);
+    }
 }
 
 void SynthAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced(24);
+    auto bounds = getLocalBounds();
+    if (standaloneStatusBar != nullptr)
+    {
+        standaloneStatusBar->setBounds(bounds.removeFromBottom(28));
+    }
+    else
+    {
+        auto footerArea = bounds.removeFromBottom(30).reduced(12, 0);
+        pluginStatusLabel.setBounds(footerArea.removeFromLeft(120));
+        buildInfoLabel.setBounds(footerArea);
+    }
+
+    auto area = bounds.reduced(24);
     auto titleArea = area.removeFromTop(48);
     titleLabel.setBounds(titleArea.removeFromLeft(200));
     midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(400).withTrimmedTop(12));
-    
     if (juce::JUCEApplicationBase::isStandaloneApp())
     {
         titleArea.removeFromRight(16);
@@ -627,12 +667,6 @@ void SynthAudioProcessorEditor::resized()
 
     area.removeFromTop(16);
     pianoBar.setBounds(area.removeFromTop(pianoBar.getDesiredHeight()));
-
-    if (standaloneStatusBar != nullptr)
-    {
-        auto bounds = getLocalBounds();
-        standaloneStatusBar->setBounds(bounds.removeFromBottom(28));
-    }
 }
 
 void SynthAudioProcessorEditor::timerCallback()

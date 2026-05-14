@@ -15,8 +15,14 @@ StandaloneStatusBar::StandaloneStatusBar(coolsynth::standalone::StandaloneMidiIn
 
     addAndMakeVisible(lastMidiStatusLabel);
     lastMidiStatusLabel.setFont(juce::FontOptions(12.0f));
-    lastMidiStatusLabel.setJustificationType(juce::Justification::centredRight);
+    lastMidiStatusLabel.setJustificationType(juce::Justification::centred);
     lastMidiStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+
+    addAndMakeVisible(buildStatusLabel);
+    buildStatusLabel.setFont(juce::FontOptions(12.0f));
+    buildStatusLabel.setJustificationType(juce::Justification::centredRight);
+    buildStatusLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    buildStatusLabel.setText(coolsynth::build::getBuildIdentity(), juce::dontSendNotification);
 
     deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager();
     attachToDeviceManager();
@@ -42,11 +48,12 @@ StandaloneStatusBar::~StandaloneStatusBar()
 void StandaloneStatusBar::resized()
 {
     auto bounds = getLocalBounds().reduced(8, 0);
-    const int portion = bounds.getWidth() / 3;
+    const int portion = bounds.getWidth() / 4;
 
     audioStatusLabel.setBounds(bounds.removeFromLeft(portion));
+    buildStatusLabel.setBounds(bounds.removeFromRight(portion));
     lastMidiStatusLabel.setBounds(bounds.removeFromRight(portion));
-    midiStatusLabel.setBounds(bounds);
+    midiStatusLabel.setBounds(bounds.removeFromRight(portion));
 }
 
 void StandaloneStatusBar::paint(juce::Graphics& g)

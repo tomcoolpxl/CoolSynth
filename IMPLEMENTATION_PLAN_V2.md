@@ -227,6 +227,7 @@ Included:
 - add per-oscillator tuning, pulse width, sync, and oscillator B low-frequency mode as required by the V2 surface
 - add per-voice noise source and explicit mixer levels
 - add bounded pre-filter overload behavior if needed for the target tone
+- reduce patch-dependent note-start click behavior on dense simultaneous note-ons without regressing intentional attack character or allocator timing
 
 Explicitly out of scope:
 
@@ -254,7 +255,7 @@ Explicitly out of scope:
 ### Risks
 
 - High risk because oscillator design can balloon quickly and because sync, pulse width, and low-frequency oscillator B behavior are easy places to overcomplicate the engine.
-- Likely failure modes are unstable sync resets, aliasing-prone behavior that is not musically useful, or an overly generic oscillator design that drifts away from the product target.
+- Likely failure modes are unstable sync resets, aliasing-prone behavior that is not musically useful, patch-dependent note-start clicks that remain too prominent under realistic programming, or an overly generic oscillator design that drifts away from the product target.
 
 ### Tests and checks to run
 
@@ -275,14 +276,15 @@ Reviewer must confirm that the phase outcome is the dry sound-source architectur
 - [ ] Implement oscillator B controls, low-frequency mode, and sync-support behavior required by the V2 parameter surface.
 - [ ] Add per-voice noise generation and explicit oscillator/noise mixer levels.
 - [ ] Add bounded pre-filter overload or gain staging that supports the target dry tone without destabilizing render.
-- [ ] Add tests or render assertions for pulse-width limits, sync reset behavior, detune behavior, and mixer stability.
+- [ ] Reduce patch-dependent note-start click behavior on dense simultaneous note-ons without flattening the intended attack character.
+- [ ] Add tests or render assertions for pulse-width limits, sync reset behavior, detune behavior, note-start transient behavior, and mixer stability.
 - [ ] Verify dry dual-oscillator and noise-mixed tones in standalone playback.
 
 ### Exit criteria for moving items to `DONE.md`
 
 - Oscillator A, oscillator B, and noise are all audible and independently controllable.
 - Required waveform categories, tuning controls, and sync-related controls exist and function.
-- Tests or render checks cover the highest-risk oscillator behaviors.
+- Dense simultaneous note-ons no longer produce an outsized patch-dependent click under normal programming, and tests or render checks cover the highest-risk oscillator behaviors.
 - Debug build succeeds and `ctest` passes.
 - Review is complete and deferred items are recorded in `TODO.md`.
 

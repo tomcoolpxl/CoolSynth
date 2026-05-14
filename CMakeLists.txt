@@ -74,6 +74,7 @@ target_compile_definitions(CoolSynth
         JUCE_USE_CURL=0
         JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
     PRIVATE
+        COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}"
         JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1)
 
 target_link_libraries(CoolSynth
@@ -125,6 +126,10 @@ if(BUILD_TESTING)
     )
 
     target_compile_features(CoolSynthMidiLearnTests PUBLIC cxx_std_20)
+
+    target_compile_definitions(CoolSynthMidiLearnTests
+        PRIVATE
+            COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}")
 
     target_link_libraries(CoolSynthMidiLearnTests
         PRIVATE
