@@ -46,10 +46,10 @@ This plan uses `hybrid delivery`.
 - `Phase 2` — Custom allocator with basic V2 note playback
 - `Phase 3` — Dual-oscillator mixer voice core
 - `Phase 4` — Filter and dual-envelope tone path
-- `Phase 5` — Performance modulation and play modes
-- `Phase 6` — Host-aware arpeggiator
-- `Phase 7` — Global V2 effects rack
-- `Phase 8` — V2 editor and panel workflow
+- `Phase 5` — V2 editor and panel workflow
+- `Phase 6` — Performance modulation and play modes
+- `Phase 7` — Host-aware arpeggiator
+- `Phase 8` — Global V2 effects rack
 - `Phase 9` — MIDI learn and controller integration for the V2 surface
 - `Phase 10` — V2 patch/state boundary and compatibility handling
 - `Phase 11` — Stabilization, release validation, and documentation reconciliation
@@ -357,7 +357,87 @@ Reviewer must confirm that this phase delivers only the dry tone-shaping path, t
 - Debug build succeeds and `ctest` passes.
 - Review is complete and deferred items are recorded in `TODO.md`.
 
-## Phase 5: Performance modulation and play modes
+## Phase 5: V2 editor and panel workflow
+
+### Goal
+
+Deliver the V2 editor layout so the full synth can be programmed coherently from the UI in standalone and plugin form.
+
+### Scope
+
+Included:
+
+- redesign the editor around the V2 one-page section model from `DESIGN_V2.md`
+- keep the full synth reachable on one page if reviewable layout density can be achieved
+- add control attachments, labels, and value displays for the V2 parameter surface
+- preserve the runtime split between standalone-only utility UI and plugin-only editor behavior
+
+Explicitly out of scope:
+
+- controller remapping
+- patch/state compatibility handling
+- new release workflow behavior
+
+### Expected files to change
+
+- `src/plugin/SynthAudioProcessorEditor.h`
+- `src/plugin/SynthAudioProcessorEditor.cpp`
+- `src/ui/SynthSection.h`
+- `src/ui/SynthSection.cpp`
+- `src/ui/HardwareKnob.h`
+- `src/ui/HardwareKnob.cpp`
+- `src/ui/HardwareFader.h`
+- `src/ui/HardwareFader.cpp`
+- `src/ui/StandaloneStatusBar.h`
+- `src/ui/StandaloneStatusBar.cpp`
+- `src/ui/StandaloneSettingsDialog.h`
+- `src/ui/StandaloneSettingsDialog.cpp`
+- `src/ui/MidiMonitorPanel.h`
+- `src/ui/MidiMonitorPanel.cpp`
+
+### Dependencies
+
+- `Phase 1`
+- `Phase 3`
+- `Phase 4`
+- one-page layout is the target; fallback paging is allowed only if review shows the one-page version is materially unusable
+
+### Risks
+
+- Medium risk because UI churn can hide missing parameter wiring, confuse review, or accidentally reintroduce standalone-only components into the plugin editor.
+- Likely failure modes are incomplete attachments, unusable dense layout, or divergence between standalone and plugin editor behavior.
+
+### Tests and checks to run
+
+- `cmake --build --preset build-debug --config Debug`
+- `ctest --test-dir build -C Debug --output-on-failure`
+- standalone manual UI checks for init-patch programming flow, section clarity, and status/settings behavior
+- plugin manual UI checks for parameter automation feedback and absence of standalone-only widgets
+
+### Review check before moving work to `DONE.md`
+
+Reviewer must confirm that the phase outcome is the UI cutover only, that core synth sections remain primary, that requirement traceability exists for grouped controls and workflow, that regression risk around shared standalone/plugin editor behavior is addressed, that docs are updated where UI workflow changed materially, that build and test results are attached, that no controller/state/release work is hidden in the phase, and that unfinished follow-up work is written back to `TODO.md`.
+
+### Exact `TODO.md` entries to refresh from this phase
+
+`Phase 5`
+
+- [ ] Redesign `SynthAudioProcessorEditor` as a one-page grouped V2 instrument panel first.
+- [ ] Add V2 control groups for oscillators, mixer, filter, filter envelope, amp envelope, modulation, performance, arp, FX, and output.
+- [ ] Rebind editor attachments, value displays, and labels to the V2 parameter contract.
+- [ ] Preserve standalone-only status, settings, and monitor surfaces outside the plugin editor.
+- [ ] Manually verify init-patch programming flow and plugin automation feedback in the V2 editor.
+- [ ] Verify Debug build and `ctest` still pass after the editor cutover.
+
+### Exit criteria for moving items to `DONE.md`
+
+- The full V2 parameter surface is reachable from the editor.
+- The plugin editor contains no standalone-only utility controls.
+- The standalone editor still exposes required device and status utilities.
+- Debug build succeeds and `ctest` passes.
+- Review is complete and deferred items are recorded in `TODO.md`.
+
+## Phase 6: Performance modulation and play modes
 
 ### Goal
 
@@ -416,7 +496,7 @@ Reviewer must confirm that the phase outcome is the performance behavior layer o
 
 ### Exact `TODO.md` entries to refresh from this phase
 
-`Phase 5`
+`Phase 6`
 
 - [ ] Add the global LFO waveforms, rate control, and routed depth controls required by the V2 parameter contract.
 - [ ] Implement constrained Poly Mod sources and destinations for oscillator pitch, pulse width, and filter cutoff.
@@ -433,7 +513,7 @@ Reviewer must confirm that the phase outcome is the performance behavior layer o
 - Debug build succeeds and `ctest` passes.
 - Review is complete and deferred items are recorded in `TODO.md`.
 
-## Phase 6: Host-aware arpeggiator
+## Phase 7: Host-aware arpeggiator
 
 ### Goal
 
@@ -469,7 +549,7 @@ Explicitly out of scope:
 ### Dependencies
 
 - `Phase 2`
-- `Phase 5`
+- `Phase 6`
 - JUCE playhead timing rules from current official docs
 - early arp bring-up can use one host, but final release sign-off must still cover both Ableton Live Lite and REAPER
 
@@ -492,7 +572,7 @@ Reviewer must confirm that the arpeggiator is the only primary outcome, that tim
 
 ### Exact `TODO.md` entries to refresh from this phase
 
-`Phase 6`
+`Phase 7`
 
 - [ ] Add held-note, latched-note, pattern, octave, and gate state for the V2 arpeggiator.
 - [ ] Read plugin transport and tempo in `processBlock()` and pass a transport snapshot into the engine.
@@ -509,7 +589,7 @@ Reviewer must confirm that the arpeggiator is the only primary outcome, that tim
 - Debug build succeeds and `ctest` passes.
 - Review is complete and deferred items are recorded in `TODO.md`.
 
-## Phase 7: Global V2 effects rack
+## Phase 8: Global V2 effects rack
 
 ### Goal
 
@@ -544,7 +624,7 @@ Explicitly out of scope:
 ### Dependencies
 
 - `Phase 4`
-- `Phase 5` for performance-sensitive interaction with the dry voice path
+- `Phase 6` for performance-sensitive interaction with the dry voice path
 - optional UI and controller work is not required before the rack exists
 
 ### Risks
@@ -565,7 +645,7 @@ Reviewer must confirm that the mandatory first-release FX rack is the only prima
 
 ### Exact `TODO.md` entries to refresh from this phase
 
-`Phase 7`
+`Phase 8`
 
 - [ ] Implement the global drive stage for the V2 output path.
 - [ ] Implement the global chorus or ensemble stage for the V2 output path.
@@ -579,88 +659,6 @@ Reviewer must confirm that the mandatory first-release FX rack is the only prima
 - Drive, chorus or ensemble, delay, reverb, and master output controls all exist and function.
 - The dry path remains musically strong with FX bypassed.
 - Reset, panic, and tail behavior are stable.
-- Debug build succeeds and `ctest` passes.
-- Review is complete and deferred items are recorded in `TODO.md`.
-
-## Phase 8: V2 editor and panel workflow
-
-### Goal
-
-Deliver the V2 editor layout so the full synth can be programmed coherently from the UI in standalone and plugin form.
-
-### Scope
-
-Included:
-
-- redesign the editor around the V2 one-page section model from `DESIGN_V2.md`
-- keep the full synth reachable on one page if reviewable layout density can be achieved
-- add control attachments, labels, and value displays for the V2 parameter surface
-- preserve the runtime split between standalone-only utility UI and plugin-only editor behavior
-
-Explicitly out of scope:
-
-- controller remapping
-- patch/state compatibility handling
-- new release workflow behavior
-
-### Expected files to change
-
-- `src/plugin/SynthAudioProcessorEditor.h`
-- `src/plugin/SynthAudioProcessorEditor.cpp`
-- `src/ui/SynthSection.h`
-- `src/ui/SynthSection.cpp`
-- `src/ui/HardwareKnob.h`
-- `src/ui/HardwareKnob.cpp`
-- `src/ui/HardwareFader.h`
-- `src/ui/HardwareFader.cpp`
-- `src/ui/StandaloneStatusBar.h`
-- `src/ui/StandaloneStatusBar.cpp`
-- `src/ui/StandaloneSettingsDialog.h`
-- `src/ui/StandaloneSettingsDialog.cpp`
-- `src/ui/MidiMonitorPanel.h`
-- `src/ui/MidiMonitorPanel.cpp`
-
-### Dependencies
-
-- `Phase 1`
-- `Phase 4`
-- `Phase 5`
-- `Phase 6`
-- `Phase 7`
-- one-page layout is the target; fallback paging is allowed only if review shows the one-page version is materially unusable
-
-### Risks
-
-- Medium risk because UI churn can hide missing parameter wiring, confuse review, or accidentally reintroduce standalone-only components into the plugin editor.
-- Likely failure modes are incomplete attachments, unusable dense layout, or divergence between standalone and plugin editor behavior.
-
-### Tests and checks to run
-
-- `cmake --build --preset build-debug --config Debug`
-- `ctest --test-dir build -C Debug --output-on-failure`
-- standalone manual UI checks for init-patch programming flow, section clarity, and status/settings behavior
-- plugin manual UI checks for parameter automation feedback and absence of standalone-only widgets
-
-### Review check before moving work to `DONE.md`
-
-Reviewer must confirm that the phase outcome is the UI cutover only, that core synth sections remain primary, that requirement traceability exists for grouped controls and workflow, that regression risk around shared standalone/plugin editor behavior is addressed, that docs are updated where UI workflow changed materially, that build and test results are attached, that no controller/state/release work is hidden in the phase, and that unfinished follow-up work is written back to `TODO.md`.
-
-### Exact `TODO.md` entries to refresh from this phase
-
-`Phase 8`
-
-- [ ] Redesign `SynthAudioProcessorEditor` as a one-page grouped V2 instrument panel first.
-- [ ] Add V2 control groups for oscillators, mixer, filter, filter envelope, amp envelope, modulation, performance, arp, FX, and output.
-- [ ] Rebind editor attachments, value displays, and labels to the V2 parameter contract.
-- [ ] Preserve standalone-only status, settings, and monitor surfaces outside the plugin editor.
-- [ ] Manually verify init-patch programming flow and plugin automation feedback in the V2 editor.
-- [ ] Verify Debug build and `ctest` still pass after the editor cutover.
-
-### Exit criteria for moving items to `DONE.md`
-
-- The full V2 parameter surface is reachable from the editor.
-- The plugin editor contains no standalone-only utility controls.
-- The standalone editor still exposes required device and status utilities.
 - Debug build succeeds and `ctest` passes.
 - Review is complete and deferred items are recorded in `TODO.md`.
 
@@ -704,8 +702,8 @@ Explicitly out of scope:
 ### Dependencies
 
 - `Phase 1`
-- `Phase 8`
-- stable V2 performance-control definitions from `Phase 5`
+- `Phase 5`
+- stable V2 performance-control definitions from `Phase 6`
 - exact final hardware-mapping layout is not blocking as long as the reserved-input rules stay fixed and aftertouch remains low-risk
 
 ### Risks
@@ -779,7 +777,7 @@ Explicitly out of scope:
 ### Dependencies
 
 - `Phase 1`
-- `Phase 8`
+- `Phase 5`
 - `Phase 9`
 - `.cspatch` retention is fixed; only the V2 versioned state boundary remains to be implemented
 
@@ -910,13 +908,13 @@ Reviewer must confirm that the phase outcome is stabilization and release readin
 # Dependency notes
 
 - `Phase 1` is the hard prerequisite for every other phase because it defines the V2 parameter contract.
-- `Phase 2` is the hard prerequisite for `Phase 3`, `Phase 5`, and `Phase 6` because allocator and event timing rules must exist before advanced voice behavior and arp routing.
+- `Phase 2` is the hard prerequisite for `Phase 3`, `Phase 6`, and `Phase 7` because allocator and event timing rules must exist before advanced voice behavior and arp routing.
 - `Phase 3` and `Phase 4` form the dry synth backbone; later musical validation is not meaningful until both are complete.
-- `Phase 5` depends on `Phase 4` because performance modulation should target the finished dry voice path, not a temporary one.
-- `Phase 6` depends on `Phase 2` and `Phase 5` because arp output must reuse the allocator and existing performance context cleanly.
-- `Phase 7` should not start before `Phase 4` because effects must be judged against a stable dry engine, not compensate for an unfinished one.
-- `Phase 8` intentionally waits until most engine behavior is present so the editor does not churn repeatedly while DSP contracts are still moving.
-- `Phase 9` depends on `Phase 8` because controller and learn behavior need the finalized exposed V2 control surface.
+- `Phase 5` intentionally waits until the basic voice core is present so the editor can be used to manually audition the synthesizer, even if remaining parameters silently update APVTS until later phases.
+- `Phase 6` depends on `Phase 4` because performance modulation should target the finished dry voice path, not a temporary one.
+- `Phase 7` depends on `Phase 2` and `Phase 6` because arp output must reuse the allocator and existing performance context cleanly.
+- `Phase 8` should not start before `Phase 4` because effects must be judged against a stable dry engine, not compensate for an unfinished one.
+- `Phase 9` depends on `Phase 5` because controller and learn behavior need the finalized exposed V2 control surface.
 - `Phase 10` depends on `Phase 9` because the V2 state boundary should lock in only after the parameter, UI, and controller surface is finalized.
 - `Phase 11` is a stabilization gate only. Net-new feature work may not enter that phase unchanged.
 

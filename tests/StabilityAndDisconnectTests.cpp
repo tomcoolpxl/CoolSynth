@@ -195,7 +195,7 @@ public:
             for (int block = 0; block < 32; ++block)
             {
                 const bool highState = (block % 2) != 0;
-                voice.setNextFilterParameters({ highState ? 18000.0f : 120.0f, highState ? 1.0f : 0.0f });
+                voice.setNextFilterParameters({ highState ? 18000.0f : 120.0f, highState ? 1.0f : 0.0f, 0.0f, coolsynth::parameters::FilterKeyTrackingMode::off });
 
                 buffer.clear();
                 voice.renderNextBlock(buffer, 0, buffer.getNumSamples());
@@ -736,8 +736,11 @@ private:
         parameters.oscA.level = 1.0f;
         parameters.oscB.level = 0.0f;
         parameters.ampEnvelope = makeStressEnvelope();
+        parameters.filterEnvelope = makeStressEnvelope();
         parameters.filter.cutoffHz = 8000.0f;
         parameters.filter.resonanceNormalized = 0.1f;
+        parameters.filter.envelopeAmount = 0.0f;
+        parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
         parameters.delay.enabled = false;
         parameters.masterGainLinear = 0.5f;
         return parameters;

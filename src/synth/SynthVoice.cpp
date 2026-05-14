@@ -40,7 +40,12 @@ namespace coolsynth::synth
         nextEnvelopeParameters = parameters;
     }
 
-    void SynthVoice::setNextFilterParameters(const FilterParameters& parameters) noexcept
+    void SynthVoice::setNextFilterEnvelopeParameters(const EnvelopeParameters& parameters) noexcept
+    {
+        nextFilterEnvelopeParameters = parameters;
+    }
+
+    void SynthVoice::setNextFilterParameters(const FilterParametersV2& parameters) noexcept
     {
         nextFilterParameters = parameters;
     }
@@ -357,6 +362,16 @@ namespace coolsynth::synth
         p.decay = nextEnvelopeParameters.decaySeconds;
         p.sustain = nextEnvelopeParameters.sustainLevel;
         p.release = nextEnvelopeParameters.releaseSeconds;
+        return p;
+    }
+
+    juce::ADSR::Parameters SynthVoice::makeJuceFilterEnvelopeParameters() const noexcept
+    {
+        juce::ADSR::Parameters p;
+        p.attack = nextFilterEnvelopeParameters.attackSeconds;
+        p.decay = nextFilterEnvelopeParameters.decaySeconds;
+        p.sustain = nextFilterEnvelopeParameters.sustainLevel;
+        p.release = nextFilterEnvelopeParameters.releaseSeconds;
         return p;
     }
 }

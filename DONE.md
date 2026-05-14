@@ -1,5 +1,16 @@
 # DONE
 
+## V2 Phase 4: Filter and dual-envelope tone path
+
+Completed on 2026-05-15. The dry Prophet-adjacent tone-shaping path is fully implemented, introducing the dedicated filter envelope, keyboard tracking, and the new 4-pole low-pass behavior.
+
+- [x] Implement dedicated filter ADSR and amp ADSR per voice.
+- [x] Implement the V2 resonant low-pass filter with cutoff, resonance, filter-envelope amount, and keyboard tracking.
+- [x] Wire envelope retrigger and voice-steal reset behavior into repeated-note and stolen-voice cases.
+- [x] Add tests for filter stability across supported sample rates and for envelope restart behavior.
+- [x] Manually verify init-patch bass, brass, pluck, and pad programming on the new dry voice path.
+- [x] Verify Debug build and `ctest` still pass after the filter/envelope cutover.
+
 ## V2 Phase 3: Dual-oscillator mixer voice core
 
 Completed on 2026-05-14. The DSP voice core is fully implemented, and the manual dry-tone audition has been deferred to Phase 8 when the UI becomes available.

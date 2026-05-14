@@ -20,7 +20,8 @@ namespace coolsynth::synth
                                           const OscillatorParametersV2& oscB,
                                           const MixerParametersV2& mixer) noexcept;
         void setNextEnvelopeParameters(const EnvelopeParameters& parameters) noexcept;
-        void setNextFilterParameters(const FilterParameters& parameters) noexcept;
+        void setNextFilterParameters(const FilterParametersV2& parameters) noexcept;
+        void setNextFilterEnvelopeParameters(const EnvelopeParameters& parameters) noexcept;
         void setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept;
         void setOutputLevel(float level) noexcept;
         void setPitchBendSemitones(float semitones) noexcept;
@@ -50,6 +51,7 @@ namespace coolsynth::synth
         };
 
         juce::ADSR::Parameters makeJuceEnvelopeParameters() const noexcept;
+        juce::ADSR::Parameters makeJuceFilterEnvelopeParameters() const noexcept;
         float computeOscillatorFrequencyHz(const OscillatorParametersV2& parameters) const noexcept;
         int computeNoteStartRampSamples() const noexcept;
         float renderOscillatorSample(OscillatorState& oscillator,
@@ -70,6 +72,7 @@ namespace coolsynth::synth
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoffHzSmoother;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> resonanceQSmoother;
         juce::ADSR ampEnvelope;
+        juce::ADSR filterEnvelope;
         OscillatorParametersV2 nextOscillatorAParameters {
             coolsynth::parameters::OscillatorWaveShape::saw,
             2,
@@ -90,7 +93,8 @@ namespace coolsynth::synth
         };
         MixerParametersV2 nextMixerParameters;
         EnvelopeParameters nextEnvelopeParameters;
-        FilterParameters nextFilterParameters;
+        EnvelopeParameters nextFilterEnvelopeParameters;
+        FilterParametersV2 nextFilterParameters;
         OscillatorState oscAState;
         OscillatorState oscBState;
 
@@ -109,3 +113,6 @@ namespace coolsynth::synth
         bool releasing = false;
     };
 }
+
+
+

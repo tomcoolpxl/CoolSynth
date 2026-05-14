@@ -124,7 +124,8 @@ namespace coolsynth::synth
             slot.voice.setNextVoiceSourceParameters(parameters.oscA, parameters.oscB, parameters.mixer);
             slot.voice.setOutputLevel(1.0f);
             slot.voice.setNextEnvelopeParameters(parameters.ampEnvelope);
-            slot.voice.setNextFilterParameters({ parameters.filter.cutoffHz, parameters.filter.resonanceNormalized });
+            slot.voice.setNextFilterEnvelopeParameters(parameters.filterEnvelope);
+            slot.voice.setNextFilterParameters(parameters.filter);
         }
     }
 
@@ -183,7 +184,8 @@ namespace coolsynth::synth
         slot.voice.setNextVoiceSourceParameters(parameters.oscA, parameters.oscB, parameters.mixer);
         slot.voice.setOutputLevel(1.0f);
         slot.voice.setNextEnvelopeParameters(parameters.ampEnvelope);
-        slot.voice.setNextFilterParameters({ parameters.filter.cutoffHz, parameters.filter.resonanceNormalized });
+        slot.voice.setNextFilterEnvelopeParameters(parameters.filterEnvelope);
+        slot.voice.setNextFilterParameters(parameters.filter);
         slot.voice.startNote(slot.noteNumber, juce::jlimit(0.0f, 1.0f, event.value));
         slot.voice.setPitchBendSemitones(pitchBendSemitones);
     }
