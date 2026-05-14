@@ -396,6 +396,8 @@ In plugin mode:
 If the host does not provide usable timing information:
 
 - fall back to internal-rate arp timing,
+- use the same patch-recallable internal BPM parameter used by standalone mode,
+- do not persist "last seen host tempo" as hidden arp state,
 - keep behavior deterministic,
 - do not make the arp silently stall.
 
@@ -615,6 +617,35 @@ The simpler and safer default is a new patch version and explicit rejection of V
 
 ## 12. MIDI and Controller Design
 
+## 12.0 Engine Event Model
+
+Once V2 stops depending on `juce::Synthesiser` note behavior, the processor-to-engine event boundary must become explicit.
+
+Recommended per-block flow:
+
+```text
+incoming MidiBuffer
+  -> parse into compact EngineMidiEvent records with sample offsets
+  -> split note events from performance/controller events
+  -> feed transport snapshot + event span into SynthEngineV2
+```
+
+Recommended `EngineMidiEvent` categories:
+
+- note on
+- note off
+- pitch bend
+- mod wheel
+- sustain pedal
+- optional later extensions such as aftertouch/channel pressure
+
+Design requirements for this event layer:
+
+- note and performance events keep their sample offsets within the current block,
+- arp consumes note events before allocator dispatch,
+- pitch bend, mod wheel, and sustain feed dedicated synth-engine performance state rather than APVTS automation writes,
+- `SynthAudioProcessor` remains responsible for parsing host MIDI, but `SynthEngineV2` owns the musical interpretation.
+
 ## 12.1 MIDI Split
 
 V2 should preserve the conceptual split:
@@ -647,7 +678,21 @@ Plugin mode should continue to:
 - use lock-free queues or equivalent handoff for mapped CC actions,
 - keep host-notifying parameter writes off the audio thread.
 
-The existing queued mapped-action strategy is still a valid pattern for plugin-side CC learn and CC-to-parameter translation.
+Important correction relative to the current codebase:
+
+- the current queued mapped-action implementation is not an acceptable V2 endpoint because it still routes mapped-action application through `getCallbackLock()`,
+- V2 should not treat that callback-lock-based dispatch path as a valid realtime-safe architecture,
+- V2 should replace it with a control-update bridge that preserves host-notifying parameter writes off the audio thread without introducing callback-lock contention against `processBlock()`.
+
+Recommended V2 pattern:
+
+```text
+audio thread MIDI parse
+  -> lock-free enqueue of mapped parameter intents / commands
+  -> non-audio thread host-notify application
+```
+
+The plugin MIDI learn UI may continue to observe incoming controller events through a queue, but the queue handoff itself must remain non-blocking and must not depend on the processor callback lock for routine operation.
 
 ## 13. UI Design
 
@@ -732,6 +777,35 @@ Additional V2-specific rules:
 - all voice, arp, and FX objects are preallocated,
 - modulation routing decisions should be represented as compact enums/bitmasks rather than string lookups,
 - any randomization used by vintage mode must use deterministic preallocated state.
+
+## 14.1 Reset and Tail Semantics
+
+Because V2 adds latch-capable arp behavior and longer global effects, host-facing lifecycle behavior must be explicit.
+
+`SynthAudioProcessor::reset()` in V2 should:
+
+- clear active voice output immediately,
+- clear glide/interpolation state,
+- clear sustain state,
+- clear or release arp-generated active notes,
+- clear latched arp state,
+- reset delay/reverb/chorus buffers and modulation phases to a safe baseline.
+
+`panic` should be stronger than musical stop behavior and should always force the full synth and FX system silent immediately.
+
+Transport-stop behavior should be defined separately from reset:
+
+- host transport stop may pause host-synced arp advancement,
+- host transport stop should not implicitly destroy patch state or rewrite latched settings,
+- reset and panic are the authoritative flush points.
+
+`getTailLengthSeconds()` should no longer remain a hard-coded zero in V2.
+
+Recommended contract:
+
+- if the enabled FX topology can ring out audibly, report a finite conservative tail estimate,
+- if tail length depends on parameters, report a conservative upper bound for the supported first-release FX design,
+- keep the estimate simple and host-friendly rather than perfectly analytical.
 
 ## 15. Migration from Current Code
 
