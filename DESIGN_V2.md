@@ -598,6 +598,26 @@ BlockParameterSnapshotV2
 - decode them into a compact block snapshot,
 - pass the snapshot to `SynthEngineV2`.
 
+The custom engine must not lose the timing precision that JUCE currently provides implicitly.
+
+Recommended render contract:
+
+```text
+processBlock()
+  -> build block parameter snapshot
+  -> parse MIDI/event input with sample offsets
+  -> render contiguous audio spans between event boundaries
+  -> apply events exactly at their offsets
+  -> continue until the block is complete
+```
+
+Design requirements:
+
+- note starts, note releases, pitch bend changes, sustain transitions, and arp-generated gates must be applied at their in-block sample offsets rather than quantized to the start of the host block,
+- the engine may coalesce events that share the same sample offset,
+- the engine may impose a small implementation-defined lower bound on subdivision size only if the first event in the block remains sample-accurate and musical timing does not regress materially,
+- V2 should preserve sample-accurate musical behavior even though it no longer relies on `juce::Synthesiser::renderNextBlock()` to do that work.
+
 ## 11.4 State Format
 
 V2 should use a new state identity.
@@ -646,6 +666,24 @@ Design requirements for this event layer:
 - pitch bend, mod wheel, and sustain feed dedicated synth-engine performance state rather than APVTS automation writes,
 - `SynthAudioProcessor` remains responsible for parsing host MIDI, but `SynthEngineV2` owns the musical interpretation.
 
+## 12.0.1 MIDI Channel Policy
+
+V2 is a monotimbral, non-MPE instrument, so its channel behavior must be explicit rather than inherited accidentally from JUCE synth helpers.
+
+Recommended first-release policy:
+
+- accept note and performance input from all MIDI channels by default,
+- normalize accepted events into one internal part-level performance context,
+- treat pitch bend, mod wheel, sustain pedal, and optional later channel-pressure support as global performance controls for that one part,
+- do not attempt per-channel independent bends or per-channel independent sustain behavior in first-release V2,
+- keep MPE and other per-note/per-channel expression models out of scope.
+
+Optional later refinement:
+
+- a receive-channel filter may be added later for users who want a single explicit input channel rather than omni-style reception.
+
+The important point is that channel handling in V2 must be deliberate and documented, not an accidental byproduct of whichever helper class happens to parse the MIDI stream.
+
 ## 12.1 MIDI Split
 
 V2 should preserve the conceptual split:
@@ -659,7 +697,15 @@ CC input
   -> parameter changes or commands
 ```
 
-Pitch bend and mod wheel are note-performance input, not generic CC mapping features.
+For V2 first release, the following inputs are reserved for the synth-engine performance path and are not ordinary MIDI-learn/controller-mapping sources:
+
+- note on/off
+- pitch bend
+- mod wheel
+- sustain pedal (CC64)
+- optional later channel pressure / aftertouch if enabled
+
+The mapping engine should handle generic learnable controller input only after those reserved performance controls have been recognized and removed from the generic CC-mapping path.
 
 ## 12.2 Standalone Hardware MIDI
 
@@ -788,10 +834,28 @@ Because V2 adds latch-capable arp behavior and longer global effects, host-facin
 - clear glide/interpolation state,
 - clear sustain state,
 - clear or release arp-generated active notes,
-- clear latched arp state,
 - reset delay/reverb/chorus buffers and modulation phases to a safe baseline.
 
+Important distinction:
+
+- generic host `reset()` should stop sounding notes, transport-derived timing state, and FX tails,
+- generic host `reset()` should not rewrite persistent patch parameters,
+- generic host `reset()` should not erase user latch-mode settings,
+- generic host `reset()` should not destructively clear stored latched-note memory by default.
+
+Recommended arp behavior after generic reset:
+
+- no sound should continue ringing,
+- arp phase/clock/gate state should return to a silent baseline,
+- if latched-note memory is preserved, it must remain silent until a new valid timing edge or explicit user interaction causes playback to resume.
+
 `panic` should be stronger than musical stop behavior and should always force the full synth and FX system silent immediately.
+
+`panic` or an explicit "clear performance state" action may additionally:
+
+- clear latched-note memory,
+- clear held-note trackers,
+- clear any other transient performance-state caches that should not survive a hard emergency stop.
 
 Transport-stop behavior should be defined separately from reset:
 
