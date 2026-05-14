@@ -204,10 +204,34 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         }
     }
 
+    coolsynth::synth::EngineTransportInfo transportInfo;
+
+    if (! juce::JUCEApplicationBase::isStandaloneApp())
+    {
+        if (auto* hostPlayHead = getPlayHead())
+        {
+            if (const auto position = hostPlayHead->getPosition())
+            {
+                if (const auto bpm = position->getBpm())
+                {
+                    transportInfo.hostHasTempo = true;
+                    transportInfo.hostBpm = *bpm;
+                }
+                if (const auto ppq = position->getPpqPosition())
+                {
+                    transportInfo.hostHasPpq = true;
+                    transportInfo.hostPpqAtBlockStart = *ppq;
+                }
+                transportInfo.hostIsPlaying = position->getIsPlaying();
+            }
+        }
+    }
+
     synthEngine.render(buffer,
                        std::span<const coolsynth::synth::EngineMidiEvent>(engineEvents.data(),
                                                                           static_cast<size_t> (engineEventCount)),
-                       makeBlockRenderParameters());
+                       makeBlockRenderParameters(),
+                       transportInfo);
 }
 
 juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()

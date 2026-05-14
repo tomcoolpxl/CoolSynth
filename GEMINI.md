@@ -127,4 +127,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - The previously observed dense note-start click is now directly tracked as dry voice-core work and mitigated in code through a short de-click ramp plus per-voice randomized start phase, without changing allocator timing or host event offsets.
   - Added automated regressions for pulse-width limits, sync-enabled render divergence, dual-oscillator detune divergence, dense note-start transient containment, and full-mixer stability.
   - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
-- `TODO.md` now points to Phase 6.
+- V2 `Phase 6` completed on 2026-05-15:
+  - Voice rendering now applies global LFO (sine/triangle/square), Poly Mod (Osc B and filter envelope to pitch, pulse width, filter cutoff), pitch bend, mod wheel, per-voice vintage drift, glide, and velocity-to-amp/filter modulation per sample. The cutoff smoother smooths the base cutoff per block while modulation acts directly per sample.
+  - `SynthEngineV2` now tracks `globalLfoPhase` and advances it across in-block event spans, broadcasts modulation parameters and the current mod-wheel value to all voices each render span, maintains a bounded held-note list, and supports poly/mono/unison play modes with Last/Low/High key priority.
+  - Mono mode retriggers from the held-note set on note-off using key priority; unison stacks all voices on the same note with deterministic vintage detune and balance-style pan spread.
+  - The voice's L/R pan is balance-style (1.0 at center, 0 at full opposite side) rather than equal-power, which preserves the prior dry-tone loudness with no spread while still producing real stereo motion under `panSpread > 0`.
+  - Added `V2Performance` test suite covering bend range, mono priority, mono low-priority fallback, unison stack count, glide rendering divergence, vintage variance bounds, and mod-wheel-driven LFO.
+  - Editor wiring was verified intact — all LFO/Poly Mod/Performance knobs already bind to the right V2 parameter IDs and lay out in the existing one-page panel.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
+- `TODO.md` now points to Phase 7.

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmake --build --preset build-debug --config Debug)",
+      "Bash(ctest --test-dir build -C Debug --output-on-failure)",
+      "Bash(ctest -C Debug -R \"V2Allocator\" --output-on-failure --verbose)",
+      "Bash(ctest -C Debug -R CoolSynthMidiLearnTests --output-on-failure)",
+      "Bash(build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe)",
+      "Bash(\"build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe\")",
+      "Bash(\"/c/Users/thraa/github/CoolSynth/build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe\")",
+      "WebFetch(domain:docs.juce.com)",
+      "Bash(cmake --build C:/Users/thraa/github/CoolSynth/build --preset build-debug --config Debug)",
+      "Bash(ctest --test-dir C:/Users/thraa/github/CoolSynth/build -C Debug --output-on-failure)",
+      "Bash(C:/Users/thraa/github/CoolSynth/build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)"
+    ]
+  }
+}

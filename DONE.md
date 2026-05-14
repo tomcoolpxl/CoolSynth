@@ -1,5 +1,18 @@
 # DONE
 
+## V2 Phase 6: Performance modulation and play modes
+
+Completed on 2026-05-15. The full V2 performance layer is now wired end-to-end: global LFO, Poly Mod cross-modulation, pitch bend and mod wheel, glide, mono/unison play modes with key priority, bounded vintage drift, and balance-style pan spread. The dry voice rendering loop was unified so all modulation sources mix per-sample without breaking the cutoff smoother.
+
+- [x] Global LFO routed per-sample through `SynthVoice` with sine/triangle/square waveforms, rate, pitch/PW/cutoff depths, and mod-wheel depth; engine now advances `globalLfoPhase` across event spans so all voices share a single coherent phase.
+- [x] Poly Mod sources (Osc B audio, filter envelope) reach the constrained destinations (osc pitch, pulse width, filter cutoff) per-sample, gated by the V2 Poly Mod depth controls.
+- [x] Pitch bend converts to semitone offset using the V2 `pitchBendRangeSemitones` parameter; mod wheel is now broadcast to every voice each render span instead of being silently ignored.
+- [x] Implemented mono and unison play modes with held-note tracking (bounded `std::array`, no audio-thread allocation) and key-priority fallback (Last/Low/High). Mono retriggers from the held-note set on release; unison stacks all voices on the same note with deterministic per-voice detune.
+- [x] Bounded vintage drift: per-voice deterministic cents offset scaled by `vintageAmount` (max ±25 cents). Pan spread uses balance-style L/R attenuation so center voices stay at unity, full-spread voices pan hard.
+- [x] Added Phase 6 regressions in `tests/StabilityAndDisconnectTests.cpp` (`V2Performance` suite): bend-range affects render, mono-mode keeps one active voice, mono low-priority falls back to lowest held note, unison stacks all voices on one note, glide produces different rendered output than no-glide, vintage drift stays finite/bounded, mod-wheel changes LFO modulation.
+- [x] UI verified: `SynthAudioProcessorEditor` already binds LFO/Poly Mod/Performance knobs to the correct V2 parameter IDs and `addAndMakeVisible`s them, so no editor changes were needed.
+- [x] Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
+
 ## V2 Phase 4: Filter and dual-envelope tone path
 
 Completed on 2026-05-15. The dry Prophet-adjacent tone-shaping path is fully implemented, introducing the dedicated filter envelope, keyboard tracking, and the new 4-pole low-pass behavior.

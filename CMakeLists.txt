@@ -58,6 +58,7 @@ target_sources(CoolSynth
         src/standalone/SettingsStore.cpp
         src/standalone/StandaloneAudioSupport.cpp
         src/standalone/StandaloneMidiInput.cpp
+        src/synth/Arpeggiator.cpp
         src/synth/SynthEngine.cpp
         src/synth/SynthEngineV2.cpp
         src/synth/GlobalDelay.cpp
@@ -119,6 +120,7 @@ if(BUILD_TESTING)
             src/standalone/StandaloneAudioSupport.cpp
             src/standalone/StandaloneMidiInput.cpp
             src/parameters/ParameterLayout.cpp
+            src/synth/Arpeggiator.cpp
             src/synth/SynthEngine.cpp
             src/synth/SynthEngineV2.cpp
             src/synth/GlobalDelay.cpp

@@ -197,6 +197,7 @@ namespace coolsynth::synth
         int sampleOffset = 0;
         uint8_t noteNumber = 0;
         float value = 0.0f;
+        bool fromArp = false;
     };
 
     struct ParameterValuePointersV2
