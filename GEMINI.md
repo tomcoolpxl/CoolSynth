@@ -95,3 +95,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Node-runtime validation completed on 2026-05-10:
   - Manual validation run `25614878512` passed with the updated action pins and no Node 20 deprecation annotation.
   - Release run `25625463636` passed with the updated release workflow pins and no Node 20 deprecation annotation.
+- Late V2 doc decisions fixed on 2026-05-14:
+  - V2 ships with 8 voices by default.
+  - A selectable 5-voice vintage-limited mode is not required for the first V2 release.
+  - V2 keeps the `.cspatch` extension while intentionally breaking V1 patch/state compatibility.
+  - First-release VST3 manual sign-off uses both Ableton Live Lite and REAPER on Windows.
+  - The UI target is a one-page instrument panel first, with paging only as a fallback.
+  - Aftertouch is a late V2 addition only if it remains straightforward after the main MIDI/controller path is stable.

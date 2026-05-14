@@ -26,10 +26,10 @@ Hard constraints that shape the plan:
 - Windows 11 remains the only required delivery platform for the first V2 release.
 - The existing manual validation and tag-driven release workflows remain the release path; the plan does not add always-on CI triggers.
 - The first V2 release includes the mandatory global FX set only: drive, chorus or ensemble, delay, and reverb.
+- V2 ships with 8 voices by default, and a selectable 5-voice vintage-limited mode is not part of the first V2 release.
 - A single review cycle should be able to absorb one phase worth of work after it is refreshed into atomic `TODO.md` entries.
-- Ableton Live Lite remains the default manual VST3 smoke-test host because it is already documented in `docs/vst3-smoke-test.md`.
-- The plan proceeds assuming an 8-voice default is acceptable until a higher default voice count is explicitly chosen.
-- The plan proceeds assuming V2 uses a new explicit state-format boundary even if the final patch filename extension is not yet decided.
+- Manual VST3 release sign-off uses both Ableton Live Lite and REAPER on Windows.
+- V2 keeps the `.cspatch` extension while intentionally breaking V1 patch and state compatibility through a new explicit version boundary.
 
 # Delivery strategy
 
@@ -394,8 +394,8 @@ Explicitly out of scope:
 
 - `Phase 4`
 - `Phase 2` allocator/event model
-- default voice-count decision remains open but is not blocking if stack count and voice count are parameterized
-- aftertouch remains unresolved but is not blocking if it stays out of first-release scope
+- shipped default voice count is fixed at 8, but stack count and internal voice count should still be parameterized enough to avoid brittle allocator logic
+- aftertouch is deferred from the core performance phase and should only be added later if the controller and host path remains low-risk
 
 ### Risks
 
@@ -470,7 +470,7 @@ Explicitly out of scope:
 - `Phase 2`
 - `Phase 5`
 - JUCE playhead timing rules from current official docs
-- exact manual host matrix is not blocking if Ableton Live Lite remains the default smoke-test host
+- early arp bring-up can use one host, but final release sign-off must still cover both Ableton Live Lite and REAPER
 
 ### Risks
 
@@ -483,6 +483,7 @@ Explicitly out of scope:
 - `ctest --test-dir build -C Debug --output-on-failure`
 - standalone manual arp checks for tempo, latch, gate length, octave range, and bypass behavior
 - Ableton Live Lite VST3 manual checks for host tempo sync, transport start/stop behavior, and internal-rate fallback behavior
+- REAPER VST3 manual checks during release-signoff once the arp path is otherwise stable
 
 ### Review check before moving work to `DONE.md`
 
@@ -497,7 +498,7 @@ Reviewer must confirm that the arpeggiator is the only primary outcome, that tim
 - [ ] Implement deterministic internal-rate fallback behavior for missing host timing.
 - [ ] Route arp-generated note events through the allocator with sample offsets.
 - [ ] Add tests for pattern ordering, latch behavior, gate timing, and tempo fallback.
-- [ ] Verify standalone and Ableton Live Lite VST3 arp behavior manually.
+- [ ] Verify standalone and Ableton Live Lite VST3 arp behavior manually before final multi-host release validation.
 
 ### Exit criteria for moving items to `DONE.md`
 
@@ -590,8 +591,8 @@ Deliver the V2 editor layout so the full synth can be programmed coherently from
 
 Included:
 
-- redesign the editor around the V2 section model from `DESIGN_V2.md`
-- keep the core synth sections always visible and contain denser controls in detail panels
+- redesign the editor around the V2 one-page section model from `DESIGN_V2.md`
+- keep the full synth reachable on one page if reviewable layout density can be achieved
 - add control attachments, labels, and value displays for the V2 parameter surface
 - preserve the runtime split between standalone-only utility UI and plugin-only editor behavior
 
@@ -625,7 +626,7 @@ Explicitly out of scope:
 - `Phase 5`
 - `Phase 6`
 - `Phase 7`
-- unresolved single-page versus detail-panel debate is not blocking because `DESIGN_V2.md` already recommends persistent core controls plus detail panels
+- one-page layout is the target; fallback paging is allowed only if review shows the one-page version is materially unusable
 
 ### Risks
 
@@ -647,7 +648,7 @@ Reviewer must confirm that the phase outcome is the UI cutover only, that core s
 
 `Phase 8`
 
-- [ ] Redesign `SynthAudioProcessorEditor` around persistent core sections plus detail panels for modulation, performance/arp, and FX.
+- [ ] Redesign `SynthAudioProcessorEditor` as a one-page grouped V2 instrument panel first.
 - [ ] Add V2 control groups for oscillators, mixer, filter, filter envelope, amp envelope, modulation, performance, arp, FX, and output.
 - [ ] Rebind editor attachments, value displays, and labels to the V2 parameter contract.
 - [ ] Preserve standalone-only status, settings, and monitor surfaces outside the plugin editor.
@@ -666,7 +667,7 @@ Reviewer must confirm that the phase outcome is the UI cutover only, that core s
 
 ### Goal
 
-Deliver controller-profile, MIDI learn, and plugin live-CC behavior that works across the expanded V2 control surface without colliding with reserved performance controls.
+Deliver controller-profile, MIDI learn, optional late-stage aftertouch, and plugin live-CC behavior that works across the expanded V2 control surface without colliding with reserved performance controls.
 
 ### Scope
 
@@ -676,6 +677,7 @@ Included:
 - preserve reserved performance inputs such as notes, bend, mod wheel, and sustain outside generic learn mapping
 - extend standalone and plugin MIDI learn behavior to the V2 controls
 - persist and restore V2 learned mappings in the correct standalone and plugin state paths
+- add channel aftertouch only if it layers into the stabilized MIDI and controller path without forcing broader rework
 
 Explicitly out of scope:
 
@@ -703,12 +705,12 @@ Explicitly out of scope:
 - `Phase 1`
 - `Phase 8`
 - stable V2 performance-control definitions from `Phase 5`
-- exact final hardware-mapping layout is not blocking as long as the reserved-input rules stay fixed
+- exact final hardware-mapping layout is not blocking as long as the reserved-input rules stay fixed and aftertouch remains low-risk
 
 ### Risks
 
-- Medium risk because the parameter surface is larger and because learned mappings must coexist cleanly with reserved performance input and host automation behavior.
-- Likely failure modes are learned mappings hijacking bend or sustain semantics, stale bindings after reload, or controller-profile updates that silently miss major V2 controls.
+- Medium risk because the parameter surface is larger and because learned mappings must coexist cleanly with reserved performance input, optional aftertouch, and host automation behavior.
+- Likely failure modes are learned mappings hijacking bend or sustain semantics, stale bindings after reload, controller-profile updates that silently miss major V2 controls, or late aftertouch work destabilizing the input path.
 
 ### Tests and checks to run
 
@@ -716,10 +718,11 @@ Explicitly out of scope:
 - `ctest --test-dir build -C Debug --output-on-failure`
 - standalone manual checks with the bundled MiniLab 3 profile or equivalent controller workflow
 - plugin manual checks for live CC learn, saved-session restore, and reserved-control behavior
+- manual aftertouch checks if aftertouch is added in this phase
 
 ### Review check before moving work to `DONE.md`
 
-Reviewer must confirm that the controller and learn behavior is the only primary outcome, that requirement traceability exists for reserved performance controls and learned mapping persistence, that regression risk around controller disconnects and host automation is addressed, that docs are updated where control-surface behavior changed, that build and test results are attached, that no patch-format or release work is hidden in the phase, and that unfinished follow-up work is written back to `TODO.md`.
+Reviewer must confirm that the controller and learn behavior remains the only primary outcome, that any aftertouch addition stayed small and low-risk, that requirement traceability exists for reserved performance controls and learned mapping persistence, that regression risk around controller disconnects and host automation is addressed, that docs are updated where control-surface behavior changed, that build and test results are attached, that no patch-format or release work is hidden in the phase, and that unfinished follow-up work is written back to `TODO.md`.
 
 ### Exact `TODO.md` entries to refresh from this phase
 
@@ -729,6 +732,7 @@ Reviewer must confirm that the controller and learn behavior is the only primary
 - [ ] Preserve notes, pitch bend, mod wheel, and sustain as reserved performance inputs outside generic MIDI learn.
 - [ ] Extend standalone and plugin MIDI learn to the V2 controls.
 - [ ] Persist and restore V2 learned mappings in standalone settings and plugin state.
+- [ ] Add channel aftertouch only if it fits the stabilized MIDI/controller path without broader redesign.
 - [ ] Add tests for learned-CC round-trip, controller-profile override precedence, and disconnect handling.
 - [ ] Verify controller workflows manually in standalone and plugin mode.
 
@@ -776,7 +780,7 @@ Explicitly out of scope:
 - `Phase 1`
 - `Phase 8`
 - `Phase 9`
-- final patch-extension naming decision blocks only the user-facing filename/documentation details, not the versioned state boundary itself
+- `.cspatch` retention is fixed; only the V2 versioned state boundary remains to be implemented
 
 ### Risks
 
@@ -856,7 +860,6 @@ Explicitly out of scope:
 ### Dependencies
 
 - `Phase 1` through `Phase 10`
-- exact default shipped voice count must be resolved before final release validation
 - any unresolved first-release scope decisions must be closed or explicitly deferred before this phase starts
 
 ### Risks
@@ -875,7 +878,8 @@ Explicitly out of scope:
 - `pwsh ./scripts/ci/BuildAndTest.ps1 -Configuration Release -RunTests $true`
 - `pwsh ./scripts/ci/PackageRelease.ps1 -Configuration Release -TagName manual-release-candidate`
 - full standalone manual smoke test
-- full `docs/vst3-smoke-test.md` manual smoke test
+- full `docs/vst3-smoke-test.md` manual smoke test in Ableton Live Lite
+- full `docs/vst3-smoke-test.md` manual smoke test in REAPER
 - GitHub `Windows Manual Validation` workflow run with diagnostics review
 
 ### Review check before moving work to `DONE.md`
@@ -937,13 +941,10 @@ Reviewer must confirm that the phase outcome is stabilization and release readin
 
 ## Blocking unknowns
 
-- Should V2 ship with `8`, `12`, or `16` voices by default, and is a selectable `5`-voice vintage-limited mode required in the first release?
-- Should V2 keep the `.cspatch` filename extension with a new version boundary, or switch to a V2-specific patch extension such as `.cs2patch`?
-- Does the first V2 release require any manual VST3 smoke host beyond Ableton Live Lite for release sign-off?
+- None at this time.
 
 ## Non-blocking open questions
 
-- Should aftertouch remain out of scope for the first V2 release, or be added if the controller and host paths are straightforward after `Phase 9`?
-- Should the first-release filter stay as one strong default 4-pole mode, or is there appetite for an optional character switch after the base mode is stable?
-- Are any optional later effects beyond drive, chorus or ensemble, delay, and reverb wanted immediately after the first V2 release?
-- Does the team want the final editor to expose the full synth on one page despite the current design recommendation for persistent core sections plus detail panels?
+- Which optional filter character switch should be first if the base 4-pole mode lands early enough to safely extend?
+- Which immediate follow-on FX should be first after the base V2 release: phaser, flanger, or tremolo?
+- If the first one-page editor review proves too dense, which sections are the least harmful candidates for a fallback secondary view?

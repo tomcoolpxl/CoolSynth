@@ -15,8 +15,11 @@ The intent is to produce a synth that is still understandable and maintainable, 
 The following product decisions are now fixed for V2:
 
 - Polyphony shall modernize beyond strict Prophet-5 limits.
+- V2 shall ship with 8 voices by default.
+- A selectable 5-voice vintage-limited mode is not required for the first V2 release.
 - The control set shall be a tasteful modern superset of the Prophet-5 model, not a strict historical replica.
 - V2 may break V1 preset, patch, and state compatibility.
+- V2 shall keep the `.cspatch` patch filename extension while using an explicit new V2 patch and state compatibility boundary.
 - V2 shall include a significantly expanded onboard effects section.
 - Implementation priority shall favor a strong dry synth engine first, then layer in the larger effects palette.
 
@@ -206,7 +209,7 @@ Strongly preferred:
 
 - A 4-pole Prophet-adjacent SSM/Curtis-style musical response rather than a neutral utility filter.
 - A subtle drive or nonlinearity stage somewhere around the filter path.
-- Optional filter character modes only if they do not significantly complicate the codebase.
+- One strong default 4-pole mode first, with appetite for optional later character modes after the base mode is stable and validated.
 
 V2 shall not rely on a single shared envelope for both loudness and filter motion.
 
@@ -309,9 +312,11 @@ Strongly preferred:
 - A software "Pan Spread" or equivalent stereo-width behavior, as long as the dry tone remains strong in mono.
 - Velocity routing at least to amplifier level, with optional routing to filter amount.
 
-Open implementation choice:
+Aftertouch direction for V2:
 
-- Whether aftertouch is required in V2 depends on controller and host expectations. It is useful, but not mandatory for the first V2 delivery.
+- Channel aftertouch is not an early engine blocker.
+- V2 should add aftertouch in the first V2 release if it remains straightforward after the main controller and host input paths are stable.
+- If aftertouch materially destabilizes the MIDI or controller path late in V2, it may slip rather than blocking the rest of the first V2 release.
 
 ### 6.9 Polyphony and Voice Behavior
 
@@ -319,15 +324,11 @@ V2 shall remain polyphonic.
 
 Default requirement:
 
-- V2 shall ship with a modern default voice count rather than a strict 5-voice limit.
+- V2 shall ship with 8 voices by default rather than a strict 5-voice limit.
 
 Minimum requirement:
 
 - At least 8 simultaneous voices.
-
-Strongly preferred:
-
-- A selectable vintage-limited mode such as 5 voices for users who want more original-style behavior.
 
 Required voice behavior:
 
@@ -396,6 +397,7 @@ Effects scope rules:
 
 - The mandatory first-release effects shall be global only.
 - Additional effects such as phaser, flanger, or tremolo are optional later-expansion candidates, not mandatory blockers for the first V2 release.
+- Phaser, flanger, and tremolo are the highest-priority immediate follow-on candidates after the first V2 release.
 - Lookahead, convolution, and other obviously latency-heavy effect designs are not required for the first V2 release.
 - Time-based effects may support host sync where practical, but host sync is not a release blocker except for the arpeggiator.
 
@@ -431,6 +433,9 @@ Required workflow qualities:
 
 The UI shall feel closer to a real instrument front panel than to a generic parameter inspector.
 
+The primary UI target for the first V2 release shall be a single-page instrument panel.
+Tabs, paging, or secondary views are fallback options only if review shows the full one-page panel is materially unusable.
+
 Because V2 includes more effects than V1, the UI shall also prevent effect sprawl from overwhelming the core synth controls. The oscillator, mixer, filter, envelope, and performance sections shall remain primary.
 
 ## 9. State, Compatibility, and Migration
@@ -442,6 +447,7 @@ Required decisions and behaviors:
 - Any parameter whose meaning, range, taper, unit, polarity, default, modulation role, or routing behavior changes materially from V1 shall receive a new V2 parameter ID.
 - Reusing a V1 parameter ID is permitted only for a semantically equivalent control and shall not be done merely for continuity.
 - New V2 parameters shall get stable IDs from the start.
+- V2 shall keep the existing `.cspatch` filename extension rather than introducing a V2-only patch extension.
 - V2 state, preset, and patch formats may intentionally diverge from V1.
 - The project shall document the compatibility break explicitly rather than attempting silent best-effort migration.
 - V1 states or patches shall either be rejected clearly or handled by an explicit import path. They shall not be loaded silently into mismatched V2 semantics.
@@ -494,14 +500,16 @@ V2 should be considered successful only if all of the following are true:
 - The expanded effects section meaningfully broadens the soundtrack palette without obscuring the core voice character.
 - The instrument remains playable and stable in standalone and plugin form.
 
-## 13. Remaining Design Questions
+## 13. Resolved Late V2 Decisions
 
-These questions remain open at the design level even after the core product direction is fixed:
+The following late V2 product decisions are now fixed:
 
-1. What exact default voice count should V2 ship with: 8, 12, or 16?
-2. How far should the analog-imperfection model go relative to code simplicity and educational readability?
-3. Should the expanded V2 panel stay single-page, or should effects move to tabs/pages while the synth core stays always visible?
-4. Which optional later-expansion effects, if any, should join the mandatory first-release set after delay, chorus or ensemble, drive, and reverb?
+1. V2 ships with 8 voices by default.
+2. A selectable 5-voice vintage-limited mode is not required for the first V2 release.
+3. V2 keeps the `.cspatch` extension while intentionally breaking V1 patch and state compatibility.
+4. The first V2 release targets a one-page instrument panel first, with paging or tabs only as a fallback.
+5. Aftertouch is a late V2 addition if it stays straightforward after the main MIDI and controller work stabilizes.
+6. Optional filter character modes and later FX expansion are desirable, but they remain secondary to landing the base V2 release cleanly.
 
 ## 14. Recommended Direction
 
@@ -513,8 +521,10 @@ If no further clarification is provided, the recommended V2 interpretation is:
 - Focused Poly Mod and LFO performance modulation, with a tasteful modern superset where useful.
 - Built-in arpeggiator included as a constrained musical tool rather than a sequencer.
 - Unison, glide, drift, noise, and modernized voice-count behavior included.
+- Eight voices by default with no first-release requirement for a dedicated 5-voice vintage-limited mode.
 - Delay retained and joined by a broader set of effects suitable for soundtrack work.
+- One-page panel target first, with fallback paging only if density review forces it.
 - Core implementation order remains source tone first, effects second.
-- Higher-than-5 default polyphony with a vintage-mode story.
+- Higher-than-5 default polyphony with explicit V1 compatibility-break handling under the existing `.cspatch` extension.
 
 That direction is the most likely to satisfy both the architecture reference and the musical target without turning V2 into a generic modern synth.

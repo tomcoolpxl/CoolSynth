@@ -71,7 +71,6 @@ That change is justified because V2 requires behavior that is awkward to express
 
 - mono/unison stacking,
 - explicit key-priority modes,
-- vintage-limited voice-count modes,
 - per-voice drift policy,
 - arp-generated note dispatch,
 - controlled retrigger and glide behavior.
@@ -91,10 +90,9 @@ Standalone wrapper or VST3 wrapper
         -> VoiceAllocator
         -> Voice instances
         -> FX rack
-     -> state serialization
+  -> state serialization
   -> SynthAudioProcessorEditor
-     -> persistent core synth panel
-     -> detail panel for modulation/performance/arp/fx
+     -> single-page grouped instrument panel
      -> standalone-only patch and settings surfaces
 ```
 
@@ -134,6 +132,7 @@ New V2 VST3 responsibilities:
 - Use host transport and tempo for arp sync when provided
 - Fall back to internal arp timing behavior when host timing is incomplete
 - Keep all new V2 sound-shaping parameters automatable and recallable
+- Pass manual release-signoff smoke checks in both Ableton Live Lite and REAPER on Windows, since both officially support VST3.
 
 ## 5. Core Architectural Decisions
 
@@ -187,7 +186,7 @@ Reasons:
 - mono mode needs explicit key priority,
 - glide policy depends on note history and allocation policy,
 - arp note generation needs direct note-dispatch ownership,
-- vintage-limited voice modes need deterministic voice-count control,
+- shipped 8-voice default behavior still needs deterministic voice-count control inside the allocator,
 - V2 should not be forced into emulating these behaviors via synthetic MIDI tricks.
 
 `SynthVoiceV2` does not need to inherit from `juce::SynthesiserVoice` if the allocator becomes fully custom.
@@ -455,6 +454,10 @@ Recommended first-release modes:
 - Mono
 - Unison
 
+Not required for first-release V2:
+
+- a dedicated selectable 5-voice vintage-limited mode
+
 Recommended key-priority options:
 
 - Last
@@ -657,7 +660,7 @@ Recommended `EngineMidiEvent` categories:
 - pitch bend
 - mod wheel
 - sustain pedal
-- optional later extensions such as aftertouch/channel pressure
+- late V2 channel-pressure or aftertouch event support if it fits cleanly after the main MIDI/control-surface work is stable
 
 Design requirements for this event layer:
 
@@ -703,7 +706,7 @@ For V2 first release, the following inputs are reserved for the synth-engine per
 - pitch bend
 - mod wheel
 - sustain pedal (CC64)
-- optional later channel pressure / aftertouch if enabled
+- channel pressure / aftertouch as a reserved performance control if it is added in late V2
 
 The mapping engine should handle generic learnable controller input only after those reserved performance controls have been recognized and removed from the generic CC-mapping path.
 
@@ -746,8 +749,10 @@ The V2 UI should preserve the "instrument panel" feel while acknowledging that V
 
 Recommended layout strategy:
 
-- keep the voice core always visible,
-- move dense secondary sections into a detail panel rather than forcing every control onto one flat page.
+- target one coherent single-page instrument panel first,
+- keep the voice core, modulation, performance, arp, FX, and output controls visible together if a readable layout can be achieved,
+- use compact grouping, alignment, and section framing before falling back to tabs or paging,
+- reserve secondary views only as a fallback if review shows that a one-page panel materially harms usability.
 
 Recommended shell:
 
@@ -758,27 +763,26 @@ Header
   -> MIDI learn status
   -> panic
 
-Persistent core panel
+Single-page instrument panel
   -> Oscillators
   -> Mixer
   -> Filter
   -> Filter Envelope
   -> Amp Envelope
-
-Detail panel switcher
   -> Mod
   -> Performance / Arp
   -> FX
+  -> Output
 
 Footer
   -> standalone status bar when applicable
 ```
 
-This resolves the current open UI tension:
+This resolves the current UI tension by trying the more instrument-like option first:
 
-- the synth core stays visible,
-- FX sprawl is contained,
-- the panel still reads as one instrument.
+- the panel still reads as one instrument,
+- the user can program most sounds without view switching,
+- FX and performance controls stay present but must not visually overpower the synth core.
 
 ## 13.1 Standalone-Only UI
 
@@ -937,8 +941,9 @@ Mitigation:
 
 Mitigation:
 
-- keep core voice controls always visible,
-- page dense secondary controls instead of collapsing everything into tabs that hide the instrument.
+- keep section grouping strict and visually legible,
+- use one-page layout first,
+- only introduce paging or secondary views if the one-page review proves materially worse.
 
 ## 17. Recommended Implementation Order
 
@@ -954,8 +959,9 @@ Create V2 parameter IDs and APVTS layout
   -> implement pitch bend / glide / unison / vintage
   -> implement arp with standalone and plugin timing paths
   -> implement global drive / chorus / delay / reverb
-  -> rebuild editor around grouped V2 sections
+  -> rebuild editor as a grouped one-page V2 instrument panel
   -> port MIDI learn / controller mapping to V2 parameter set
+  -> add aftertouch if the late V2 MIDI/controller path remains straightforward
   -> add V2 patch/state versioning
   -> remove V1 engine path when V2 validation is complete
 ```
