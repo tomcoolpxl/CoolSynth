@@ -383,6 +383,75 @@ public:
             expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
         }
 
+        beginTest("processor_reset_silences_allocator_path_and_clears_delay_tail");
+        {
+            SynthAudioProcessor processor;
+            processor.prepareToPlay(48000.0, 128);
+
+            auto& state = processor.getValueTreeState();
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
+                enabled->setValueNotifyingHost(1.0f);
+            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
+                feedback->setValueNotifyingHost(1.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
+                mix->setValueNotifyingHost(1.0f);
+
+            juce::AudioBuffer<float> buffer(2, 128);
+            juce::MidiBuffer noteOn;
+            noteOn.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8) 100), 0);
+            processor.processBlock(buffer, noteOn);
+
+            processor.reset();
+
+            juce::MidiBuffer emptyMidi;
+            buffer.clear();
+            processor.processBlock(buffer, emptyMidi);
+
+            float maxAbs = 0.0f;
+            for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            {
+                for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+                    maxAbs = juce::jmax(maxAbs, std::abs(buffer.getSample(channel, sample)));
+            }
+
+            expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
+        }
+
+        beginTest("processor_reports_nonzero_tail_only_when_delay_can_ring");
+        {
+            SynthAudioProcessor processor;
+            auto& state = processor.getValueTreeState();
+
+            const auto expectTailNear = [&](double expected)
+            {
+                expectWithinAbsoluteError(processor.getTailLengthSeconds(), expected, 1.0e-6);
+            };
+
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
+                enabled->setValueNotifyingHost(0.0f);
+            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
+                feedback->setValueNotifyingHost(1.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
+                mix->setValueNotifyingHost(1.0f);
+            expectTailNear(0.0);
+
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
+                enabled->setValueNotifyingHost(1.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
+                mix->setValueNotifyingHost(0.0f);
+            expectTailNear(0.0);
+
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
+                mix->setValueNotifyingHost(1.0f);
+            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
+                feedback->setValueNotifyingHost(0.0f);
+            expectTailNear(0.0);
+
+            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
+                feedback->setValueNotifyingHost(1.0f);
+            expectTailNear(48.0);
+        }
+
         beginTest("processor_process_block_routes_note_events_through_the_v2_allocator");
         {
             SynthAudioProcessor processor;

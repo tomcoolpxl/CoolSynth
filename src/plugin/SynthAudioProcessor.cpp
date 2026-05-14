@@ -151,6 +151,13 @@ void SynthAudioProcessor::releaseResources()
     synthEngine.releaseResources();
 }
 
+void SynthAudioProcessor::reset()
+{
+    panicRequested.store(false, std::memory_order_release);
+    synthEngine.panic();
+    keyboardState.reset();
+}
+
 bool SynthAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
 {
     if (!layouts.inputBuses.isEmpty())
@@ -543,6 +550,25 @@ void SynthAudioProcessor::applyMappedCommand(coolsynth::midi::MappedCommand comm
 void SynthAudioProcessor::requestPanic() noexcept
 {
     panicRequested.store(true, std::memory_order_release);
+}
+
+double SynthAudioProcessor::getTailLengthSeconds() const
+{
+    if (parameterValues.delayEnabled == nullptr
+        || parameterValues.delayMix == nullptr
+        || parameterValues.delayFeedback == nullptr)
+    {
+        return 0.0;
+    }
+
+    const auto delayEnabled = parameterValues.delayEnabled->load() >= 0.5f;
+    const auto delayMix = juce::jlimit(0.0f, 1.0f, parameterValues.delayMix->load());
+    const auto delayFeedback = juce::jlimit(0.0f, 0.85f, parameterValues.delayFeedback->load());
+
+    if (! delayEnabled || delayMix <= 0.0f || delayFeedback <= 0.0f)
+        return 0.0;
+
+    return 48.0;
 }
 
 std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::parseLearnedMidiBindingsXml(const juce::XmlElement& parent) const
