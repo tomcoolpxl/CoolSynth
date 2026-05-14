@@ -68,11 +68,13 @@ The main takeaways from those references are:
 
 - Prophet-5 identity is strongly tied to dual VCO voices, a resonant low-pass filter, separate filter and amp envelopes, Poly Mod, unison, glide, and voice-to-voice organic variance.
 - The Stranger Things / S U R V I V E sound is not just "80s synthwave." It depends on restraint, darkness, simple motifs, heavy use of analog tone sources, pulsing basses, eerie pads, arpeggiated figures, and selective use of modulation and filtering.
+- The Stranger Things score was created with multiple instruments and processing chains, so V2 should target that shared tonal center rather than promise one-synth reproduction of every cue.
 - V2 should prioritize strong raw tone and musical sweet spots over a large modulation matrix or a long feature list.
 
 ## 4. V2 Product Definition
 
 V2 shall be a polyphonic analog-style subtractive synthesizer with immediate panel-style control.
+V2 shall remain a single-part, monotimbral instrument.
 
 V2 shall feel closer to:
 
@@ -153,6 +155,8 @@ Required oscillator capabilities:
 - Per-oscillator tuning controls sufficient for interval and detune work.
 - Pulse-capable waveform support.
 - Saw-capable waveform support.
+- Triangle-capable waveform support.
+- Dedicated pulse-width control wherever pulse wave generation is supported.
 - A way to produce classic PWM and sync-style tones.
 - Oscillator B low-frequency mode or an equivalent architecture needed to support Prophet-style cross-mod behavior.
 - Oscillator sync.
@@ -161,6 +165,10 @@ Strongly preferred:
 
 - Prophet-like waveform behavior rather than arbitrary digital shape browsing.
 - A limited set of musically useful wave options instead of a large waveform list.
+- A constrained wave model that can cover Prophet-adjacent results without requiring a large modern wavetable-style browser.
+- Oscillator wave selection that either:
+  - supports simultaneous multi-wave combinations in a Prophet-adjacent way, or
+  - explicitly documents a simplified alternative and preserves the required tonal categories despite that simplification.
 - Per-voice oscillator drift/slop interaction with the vintage behavior model.
 
 V2 shall not keep the V1 model where one waveform parameter changes every voice's only oscillator shape globally.
@@ -196,7 +204,7 @@ Required filter capabilities:
 
 Strongly preferred:
 
-- A 4-pole ladder/Curtis-style musical response rather than a neutral utility filter.
+- A 4-pole Prophet-adjacent SSM/Curtis-style musical response rather than a neutral utility filter.
 - A subtle drive or nonlinearity stage somewhere around the filter path.
 - Optional filter character modes only if they do not significantly complicate the codebase.
 
@@ -247,7 +255,43 @@ Explicit non-requirement for V2:
 
 - No general-purpose modulation matrix.
 
-### 6.7 Performance Section
+### 6.7 Arpeggiator
+
+Because the musical target leans heavily on repeating pulse and sequence figures, V2 shall include a built-in arpeggiator.
+
+The V2 arpeggiator shall be intentionally constrained:
+
+- It shall be a musical performance tool, not a general-purpose step sequencer.
+- It shall be bypassable.
+- It shall not block ordinary non-arp keyboard play when disabled.
+
+Minimum required arpeggiator controls:
+
+- On/off
+- Rate
+- Pattern
+- Octave range
+- Gate length
+- Latch
+
+Minimum required arpeggiator behavior:
+
+- Up pattern
+- Down pattern
+- Up/down pattern
+- As-played or note-order-respecting pattern
+
+Timing requirements:
+
+- In plugin mode, the arpeggiator shall sync to host tempo and transport when the host provides that information.
+- In plugin mode, if the host does not provide usable tempo and/or transport information, the arpeggiator shall fall back to a clearly defined internal-rate behavior rather than becoming unusable or ambiguous.
+- In standalone mode, the arpeggiator shall provide its own tempo setting.
+
+Explicit non-requirement for V2:
+
+- No full piano-roll, tracker, or step-sequencer workflow.
+
+### 6.8 Performance Section
 
 V2 shall add a real performance layer missing from the current engine.
 
@@ -269,7 +313,7 @@ Open implementation choice:
 
 - Whether aftertouch is required in V2 depends on controller and host expectations. It is useful, but not mandatory for the first V2 delivery.
 
-### 6.8 Polyphony and Voice Behavior
+### 6.9 Polyphony and Voice Behavior
 
 V2 shall remain polyphonic.
 
@@ -291,15 +335,53 @@ Required voice behavior:
 - Mono/unison behavior is deliberate, not accidental reuse of polyphonic logic.
 - Drift, glide, and retrigger behavior do not create obvious bugs or stuck states.
 
+### 6.10 Minimum V2 Parameter Surface
+
+The V2 requirements are not satisfied unless the first V2 release defines an explicit parameter surface large enough to support automation, presets, MIDI learn, and controller mapping.
+
+All sound-shaping controls intended for:
+
+- UI editing,
+- host automation,
+- preset recall,
+- patch serialization,
+- MIDI learn,
+
+shall exist as stable V2 parameters from the start.
+
+The minimum required V2 parameter surface shall include:
+
+- Oscillator A: waveform or wave mode, pitch range or octave, fine tune where applicable, level, pulse width where applicable, sync enable.
+- Oscillator B: waveform or wave mode, pitch range or octave, fine tune, level, pulse width where applicable, low-frequency mode.
+- Mixer: noise level.
+- Filter: cutoff, resonance, envelope amount, keyboard tracking.
+- Filter envelope: attack, decay, sustain, release.
+- Amplifier envelope: attack, decay, sustain, release.
+- LFO: rate, waveform, and the routed depth controls required by the chosen constrained modulation design.
+- Poly Mod: the source amounts, routing selectors, or routing switches required by the chosen constrained modulation design.
+- Performance: glide amount or time, unison enable, pitch-bend range, vintage or slop amount, pan spread, velocity amount.
+- Arpeggiator: on/off, rate, pattern, octave range, gate length, latch.
+- Effects: delay controls, chorus or ensemble controls, saturation or drive controls, reverb controls, plus whatever mix, bypass, enable, or routing controls are required to make the mandatory first-release effects chain intentionally controllable rather than permanently on.
+- Output: master gain.
+
+The exact control names and ranges are a design task, but omitting any of those categories from the first V2 parameter contract would be a requirements miss.
+
 ## 7. Effects and Finishing Stage Requirements
 
 V2 shall include a materially larger global effects and finishing stage than V1, but the synth core must still matter more than the FX chain.
+
+For the first V2 release, the effects architecture shall remain global post-voice processing. Per-voice effects are out of scope for the first V2 release.
 
 Required:
 
 - Keep a delay stage or an equivalent echo effect.
 - Preserve a final output gain stage.
 - Add multiple additional effects beyond delay.
+- The first V2 release shall include at least:
+  - delay,
+  - chorus or ensemble,
+  - saturation or drive,
+  - reverb.
 
 Strongly preferred:
 
@@ -309,6 +391,13 @@ Strongly preferred:
 - Reverb appropriate for cinematic tails and space.
 - Modulation-capable effects such as phaser, flanger, or tremolo when they support the target palette.
 - An effects order and bypass strategy that keeps patch design understandable.
+
+Effects scope rules:
+
+- The mandatory first-release effects shall be global only.
+- Additional effects such as phaser, flanger, or tremolo are optional later-expansion candidates, not mandatory blockers for the first V2 release.
+- Lookahead, convolution, and other obviously latency-heavy effect designs are not required for the first V2 release.
+- Time-based effects may support host sync where practical, but host sync is not a release blocker except for the arpeggiator.
 
 V2 shall avoid turning into an "FX-first" synth where presets only sound impressive because of large ambience.
 
@@ -350,10 +439,12 @@ V2 introduces a fundamentally different sound engine, and V1 compatibility is no
 
 Required decisions and behaviors:
 
-- Existing V1 parameter IDs that keep the same meaning should remain stable where practical.
-- New V2-only parameters shall get stable IDs from the start.
+- Any parameter whose meaning, range, taper, unit, polarity, default, modulation role, or routing behavior changes materially from V1 shall receive a new V2 parameter ID.
+- Reusing a V1 parameter ID is permitted only for a semantically equivalent control and shall not be done merely for continuity.
+- New V2 parameters shall get stable IDs from the start.
 - V2 state, preset, and patch formats may intentionally diverge from V1.
 - The project shall document the compatibility break explicitly rather than attempting silent best-effort migration.
+- V1 states or patches shall either be rejected clearly or handled by an explicit import path. They shall not be loaded silently into mismatched V2 semantics.
 
 ## 10. Real-Time and Engineering Requirements
 
@@ -386,7 +477,6 @@ The following are not required for V2 unless a later decision changes scope:
 - Microtonal workflow
 - Multi-timbrality
 - Built-in sequencer
-- Built-in arpeggiator
 - Circuit-perfect Prophet-5 clone behavior
 
 V2 is inspired by the Prophet-5 and by the Stranger Things / S U R V I V E palette. It is not required to be a legal, visual, or circuit-level clone of any hardware instrument.
@@ -400,6 +490,7 @@ V2 should be considered successful only if all of the following are true:
 - Filter movement and cross-modulation can produce recognizably vintage and cinematic results.
 - The synth can cover core Prophet-adjacent categories: bass, brass, pad, sync lead, PWM motion, dark arp.
 - The synth can also reach Stranger Things / S U R V I V E-adjacent categories: ominous pulse, eerie pad, analog drone, score texture.
+- The built-in arpeggiator can generate musically useful repeating patterns without requiring an external sequencer or DAW MIDI effect.
 - The expanded effects section meaningfully broadens the soundtrack palette without obscuring the core voice character.
 - The instrument remains playable and stable in standalone and plugin form.
 
@@ -408,9 +499,9 @@ V2 should be considered successful only if all of the following are true:
 These questions remain open at the design level even after the core product direction is fixed:
 
 1. What exact default voice count should V2 ship with: 8, 12, or 16?
-2. Which extra effects are mandatory for the first V2 release versus later expansion?
-3. How far should the analog-imperfection model go relative to code simplicity and educational readability?
-4. Should the expanded V2 panel stay single-page, or should effects move to tabs/pages while the synth core stays always visible?
+2. How far should the analog-imperfection model go relative to code simplicity and educational readability?
+3. Should the expanded V2 panel stay single-page, or should effects move to tabs/pages while the synth core stays always visible?
+4. Which optional later-expansion effects, if any, should join the mandatory first-release set after delay, chorus or ensemble, drive, and reverb?
 
 ## 14. Recommended Direction
 
@@ -420,6 +511,7 @@ If no further clarification is provided, the recommended V2 interpretation is:
 - Strong dry dual-oscillator subtractive engine first.
 - Separate filter and amp envelopes.
 - Focused Poly Mod and LFO performance modulation, with a tasteful modern superset where useful.
+- Built-in arpeggiator included as a constrained musical tool rather than a sequencer.
 - Unison, glide, drift, noise, and modernized voice-count behavior included.
 - Delay retained and joined by a broader set of effects suitable for soundtrack work.
 - Core implementation order remains source tone first, effects second.
