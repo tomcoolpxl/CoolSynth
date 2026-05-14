@@ -1,5 +1,16 @@
 # DONE
 
+## V2 Phase 3: Dual-oscillator mixer voice core
+
+Verified implementation slice on 2026-05-14. Manual standalone dry-tone audition remains open in `TODO.md` before the phase is fully closed.
+
+- [x] Replaced the temporary single-source V2 voice output with a per-voice dual-oscillator plus noise source path inside `SynthVoice`, while deliberately keeping the existing filter and amp-envelope path isolated for Phase 4.
+- [x] Implemented oscillator A and oscillator B source controls on the live V2 path: pulse, triangle, and saw wave shapes; octave and fine tune; pulse width; oscillator A hard-sync behavior; and oscillator B low-frequency mode support.
+- [x] Added bounded pre-filter overload gain staging on the per-voice mixer path so stacked source levels can push the dry tone harder without destabilizing render.
+- [x] Added a short deterministic note-start de-click ramp plus per-voice phase randomization so dense simultaneous note-ons no longer produce the previously observed outsized startup transient under aggressive settings.
+- [x] Added render-level regressions for pulse-width edge settings, sync-enabled render divergence, dual-oscillator detune divergence, dense note-start transient containment, and full-mixer stability.
+- [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14 after the Phase 3 voice-core change.
+
 ## V2 Phase 1: V2 parameter contract and processor seam
 
 - [x] Added the stable V2 parameter IDs and grouped APVTS definitions for oscillators, mixer, filter, filter envelope, amp envelope, LFO, Poly Mod, performance, arp, drive, chorus, delay, reverb, and output.

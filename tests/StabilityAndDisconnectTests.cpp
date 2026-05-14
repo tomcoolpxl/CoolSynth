@@ -40,6 +40,35 @@ namespace
         test.expect(allFinite);
         test.expect(maxAbs < absoluteLimit);
     }
+
+    float computePeakAbs(const juce::AudioBuffer<float>& buffer,
+                         int startSample,
+                         int endSample)
+    {
+        float peak = 0.0f;
+        const auto clampedStart = juce::jlimit(0, buffer.getNumSamples(), startSample);
+        const auto clampedEnd = juce::jlimit(clampedStart, buffer.getNumSamples(), endSample);
+
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+            for (int sample = clampedStart; sample < clampedEnd; ++sample)
+                peak = juce::jmax(peak, std::abs(buffer.getSample(channel, sample)));
+
+        return peak;
+    }
+
+    float computeAbsoluteDifferenceSum(const juce::AudioBuffer<float>& left,
+                                       const juce::AudioBuffer<float>& right)
+    {
+        float difference = 0.0f;
+
+        for (int channel = 0; channel < juce::jmin(left.getNumChannels(), right.getNumChannels()); ++channel)
+        {
+            for (int sample = 0; sample < juce::jmin(left.getNumSamples(), right.getNumSamples()); ++sample)
+                difference += std::abs(left.getSample(channel, sample) - right.getSample(channel, sample));
+        }
+
+        return difference;
+    }
 }
 
 class StandaloneMidiInputTests final : public juce::UnitTest
@@ -495,6 +524,178 @@ public:
             }
 
             expect(maxAbs > 1.0e-4f);
+        }
+
+        beginTest("pulse_width_extremes_remain_audible_and_bounded");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::pulse;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
+            parameters.mixer.noiseLevel = 0.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+            juce::AudioBuffer<float> buffer(2, 256);
+
+            for (const float pulseWidth : { 0.05f, 0.95f })
+            {
+                parameters.oscA.pulseWidth = pulseWidth;
+                engine.panic();
+                buffer.clear();
+                engine.render(buffer, noteOn, parameters);
+                expectBufferFiniteAndBounded(*this, buffer, 10.0f);
+                expect(computePeakAbs(buffer, 16, buffer.getNumSamples()) > 1.0e-3f);
+            }
+        }
+
+        beginTest("oscillator_sync_changes_rendered_output_without_destabilizing_the_voice");
+        {
+            auto baseParameters = makeBasicParameters();
+            baseParameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            baseParameters.oscA.level = 0.9f;
+            baseParameters.oscA.octaveIndex = 3;
+            baseParameters.oscB.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            baseParameters.oscB.level = 0.8f;
+            baseParameters.oscB.octaveIndex = 2;
+            baseParameters.mixer.noiseLevel = 0.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 57, 1.0f }
+            }};
+
+            coolsynth::synth::SynthEngineV2 unsyncedEngine;
+            coolsynth::synth::SynthEngineV2 syncedEngine;
+            unsyncedEngine.prepare(48000.0, 256, 2);
+            syncedEngine.prepare(48000.0, 256, 2);
+
+            juce::AudioBuffer<float> unsyncedBuffer(2, 256);
+            juce::AudioBuffer<float> syncedBuffer(2, 256);
+
+            auto unsyncedParameters = baseParameters;
+            auto syncedParameters = baseParameters;
+            syncedParameters.oscA.syncEnabled = true;
+
+            unsyncedBuffer.clear();
+            unsyncedEngine.render(unsyncedBuffer, noteOn, unsyncedParameters);
+            syncedBuffer.clear();
+            syncedEngine.render(syncedBuffer, noteOn, syncedParameters);
+
+            expectBufferFiniteAndBounded(*this, unsyncedBuffer, 10.0f);
+            expectBufferFiniteAndBounded(*this, syncedBuffer, 10.0f);
+            expect(computeAbsoluteDifferenceSum(unsyncedBuffer, syncedBuffer) > 0.5f);
+        }
+
+        beginTest("oscillator_detune_changes_the_dual_oscillator_render");
+        {
+            auto tunedParameters = makeBasicParameters();
+            tunedParameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            tunedParameters.oscA.level = 0.85f;
+            tunedParameters.oscB.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            tunedParameters.oscB.level = 0.85f;
+            tunedParameters.oscB.fineCents = 0.0f;
+
+            auto detunedParameters = tunedParameters;
+            detunedParameters.oscB.fineCents = 18.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+
+            coolsynth::synth::SynthEngineV2 tunedEngine;
+            coolsynth::synth::SynthEngineV2 detunedEngine;
+            tunedEngine.prepare(48000.0, 256, 2);
+            detunedEngine.prepare(48000.0, 256, 2);
+
+            juce::AudioBuffer<float> tunedBuffer(2, 256);
+            juce::AudioBuffer<float> detunedBuffer(2, 256);
+            tunedBuffer.clear();
+            tunedEngine.render(tunedBuffer, noteOn, tunedParameters);
+            detunedBuffer.clear();
+            detunedEngine.render(detunedBuffer, noteOn, detunedParameters);
+
+            expectBufferFiniteAndBounded(*this, tunedBuffer, 10.0f);
+            expectBufferFiniteAndBounded(*this, detunedBuffer, 10.0f);
+            expect(computeAbsoluteDifferenceSum(tunedBuffer, detunedBuffer) > 0.5f);
+        }
+
+        beginTest("dense_simultaneous_note_ons_do_not_produce_an_oversized_start_click");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::pulse;
+            parameters.oscA.level = 1.0f;
+            parameters.oscA.pulseWidth = 0.12f;
+            parameters.oscB.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscB.level = 1.0f;
+            parameters.oscB.fineCents = 12.0f;
+            parameters.mixer.noiseLevel = 0.35f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, coolsynth::synth::defaultVoiceCount> noteOns {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 48, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 52, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 55, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 59, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 67, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 71, 1.0f },
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            buffer.clear();
+            engine.render(buffer, noteOns, parameters);
+
+            expectBufferFiniteAndBounded(*this, buffer, 10.0f);
+
+            const auto earlyPeak = computePeakAbs(buffer, 0, 8);
+            const auto laterPeak = computePeakAbs(buffer, 16, buffer.getNumSamples());
+            expect(earlyPeak < 0.35f);
+            expect(laterPeak > 1.0e-2f);
+        }
+
+        beginTest("full_mixer_overload_path_stays_finite_and_bounded");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscA.syncEnabled = true;
+            parameters.oscB.waveShape = coolsynth::parameters::OscillatorWaveShape::pulse;
+            parameters.oscB.level = 1.0f;
+            parameters.oscB.pulseWidth = 0.18f;
+            parameters.oscB.fineCents = 9.0f;
+            parameters.mixer.noiseLevel = 1.0f;
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            for (int block = 0; block < 20; ++block)
+            {
+                juce::HeapBlock<coolsynth::synth::EngineMidiEvent> eventStorage(1);
+                std::span<const coolsynth::synth::EngineMidiEvent> events;
+
+                if (block == 0)
+                {
+                    eventStorage[0] = { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f };
+                    events = std::span<const coolsynth::synth::EngineMidiEvent>(eventStorage.get(), 1);
+                }
+                else if (block == 12)
+                {
+                    eventStorage[0] = { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f };
+                    events = std::span<const coolsynth::synth::EngineMidiEvent>(eventStorage.get(), 1);
+                }
+
+                buffer.clear();
+                engine.render(buffer, events, parameters);
+                expectBufferFiniteAndBounded(*this, buffer, 10.0f);
+            }
         }
     }
 

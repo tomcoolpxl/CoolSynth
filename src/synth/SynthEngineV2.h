@@ -68,8 +68,6 @@ namespace coolsynth::synth
         void applyMasterGain(juce::AudioBuffer<float>& outputBuffer, float targetLinearGain) noexcept;
 
         static DelayParameters mapDelayParameters(const DelayParametersV2& parameters) noexcept;
-        static coolsynth::parameters::WaveformChoice chooseWaveform(const BlockRenderParametersV2& parameters) noexcept;
-        static float chooseOutputLevel(const BlockRenderParametersV2& parameters) noexcept;
 
         std::vector<VoiceSlot> voices;
         GlobalDelay globalDelay;

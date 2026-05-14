@@ -108,19 +108,20 @@ namespace coolsynth::synth
         spec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
         spec.numChannels = 1;
 
-        for (auto& slot : voices)
+        for (int i = 0; i < static_cast<int>(voices.size()); ++i)
+        {
+            auto& slot = voices[static_cast<size_t>(i)];
             slot.voice.prepare(spec);
+            slot.voice.setRandomSeed(0x9e3779b9u ^ static_cast<uint32_t>((i + 1) * 0x85ebca6bu));
+        }
     }
 
     void SynthEngineV2::applyVoiceParameters(const BlockRenderParametersV2& parameters) noexcept
     {
-        const auto waveform = chooseWaveform(parameters);
-        const auto outputLevel = chooseOutputLevel(parameters);
-
         for (auto& slot : voices)
         {
-            slot.voice.setWaveform(waveform);
-            slot.voice.setOutputLevel(outputLevel);
+            slot.voice.setNextVoiceSourceParameters(parameters.oscA, parameters.oscB, parameters.mixer);
+            slot.voice.setOutputLevel(1.0f);
             slot.voice.setNextEnvelopeParameters(parameters.ampEnvelope);
             slot.voice.setNextFilterParameters({ parameters.filter.cutoffHz, parameters.filter.resonanceNormalized });
         }
@@ -178,8 +179,8 @@ namespace coolsynth::synth
         slot.keyDown = true;
         slot.sustained = false;
         slot.startOrder = ++nextVoiceStartOrder;
-        slot.voice.setWaveform(chooseWaveform(parameters));
-        slot.voice.setOutputLevel(chooseOutputLevel(parameters));
+        slot.voice.setNextVoiceSourceParameters(parameters.oscA, parameters.oscB, parameters.mixer);
+        slot.voice.setOutputLevel(1.0f);
         slot.voice.setNextEnvelopeParameters(parameters.ampEnvelope);
         slot.voice.setNextFilterParameters({ parameters.filter.cutoffHz, parameters.filter.resonanceNormalized });
         slot.voice.startNote(slot.noteNumber, juce::jlimit(0.0f, 1.0f, event.value));
@@ -350,30 +351,5 @@ namespace coolsynth::synth
         delay.feedback = parameters.enabled ? parameters.feedback : 0.0f;
         delay.mix = parameters.enabled ? parameters.mix : 0.0f;
         return delay;
-    }
-
-    coolsynth::parameters::WaveformChoice SynthEngineV2::chooseWaveform(const BlockRenderParametersV2& parameters) noexcept
-    {
-        const auto dominantShape = parameters.oscB.level > parameters.oscA.level
-                                 ? parameters.oscB.waveShape
-                                 : parameters.oscA.waveShape;
-
-        switch (dominantShape)
-        {
-            case coolsynth::parameters::OscillatorWaveShape::pulse:
-                return coolsynth::parameters::WaveformChoice::square;
-
-            case coolsynth::parameters::OscillatorWaveShape::triangle:
-                return coolsynth::parameters::WaveformChoice::sine;
-
-            case coolsynth::parameters::OscillatorWaveShape::saw:
-            default:
-                return coolsynth::parameters::WaveformChoice::saw;
-        }
-    }
-
-    float SynthEngineV2::chooseOutputLevel(const BlockRenderParametersV2& parameters) noexcept
-    {
-        return juce::jlimit(0.0f, 1.0f, juce::jmax(parameters.oscA.level, parameters.oscB.level));
     }
 }
