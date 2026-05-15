@@ -1,5 +1,17 @@
 # DONE
 
+## Phase 11 Track B — Audio quality and DSP correctness
+
+Completed on 2026-05-15. All six WIs landed in a single commit, builds clean, all tests pass.
+
+- [x] **WI-B1**: Replaced naive aliased oscillators (saw, pulse, triangle) with PolyBLEP band-limited rendering. Triangle uses a per-voice leaky integrator (`triState`) to produce DC-stable output from an integrated bandlimited square wave. `OscillatorState` gains `phaseIncrement` (cached for PolyBLEP) and `triState` fields. `renderWaveSample` renamed to `renderNaiveWaveSample` (still used by LFO); new `renderBandlimitedWaveSample` and `polyBlep` helpers live in an anonymous namespace.
+- [x] **WI-B2**: Hard-sync discontinuity correction. When oscB resets oscA mid-sample, a sub-sample fractional time `bWrapFrac` is computed and an additive PolyBLEP correction is applied to oscA output to reduce the sync alias spike.
+- [x] **WI-B3**: Clamped cutoff-mod sum (env + LFO + poly-mod + velocity) to ±120 semitones before exponentiation. Replaced `std::pow(2.0f, …)` with `std::exp2`. Prevents silent overflow to 524288× at extreme settings.
+- [x] **WI-B4**: Resonance input-gain compensation. `filterInputGain = min(1, 1/√Q)` applied to the voice sample before `StateVariableTPTFilter::processSample`. At Q=25 this is −14 dB, bounding the resonant peak amplitude; at Q≤1 the gain is 1.0 (no attenuation).
+- [x] **WI-B5**: Per-voice-count master gain scaling. `applyMasterGain` now counts active voices and applies `1/√(activeCount)` instead of the hardcoded `0.35` scalar. Single notes play at full level; 8-voice unison yields ≈ 0.354 (same as before).
+- [x] **WI-B6**: Removed unison vintage floor. `jmax(vintageAmount, 0.35f)` → `vintageAmount` in `allocateUnisonNote`. Vintage=0 now produces clean phase-aligned unison voices; the hidden 0.35-cent drift floor is gone.
+- [x] Added `V2AudioQualityTests` class (9 tests) to `tests/StabilityAndDisconnectTests.cpp`: `cutoff_mod_clamp_finite`, `filter_stability_q25`, `filter_loudness_vs_Q`, `unison_vintage_zero_produces_valid_audio`, `aliasing_A4_saw`, `aliasing_A7_saw`, `triangle_no_dc`, `hard_sync_alias_bounded`, `polyphony_loudness_consistency`. All pass.
+
 ## Phase 11 Track A — Critical RT-safety fixes
 
 Completed on 2026-05-15. All five WIs landed, builds clean, all tests pass.

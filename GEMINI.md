@@ -188,3 +188,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Dropped-event counters added to both controller event enqueue paths; `V2ScopeFifoTests` added (WI-A4).
   - `MidiMappingEngine::translate()` locking contract documented in the header (WI-A5).
   - Local verification passed: `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, `ctest --test-dir build -C Debug --output-on-failure`.
+- Phase 11 Track B completed on 2026-05-15:
+  - PolyBLEP band-limited saw, pulse, and triangle oscillators replace naive aliased waveforms. Triangle uses a per-voice leaky integrator (`triState` in `OscillatorState`) to stay DC-stable (WI-B1).
+  - Hard-sync discontinuity corrected with sub-sample fractional PolyBLEP applied additively when oscB resets oscA (WI-B2).
+  - Cutoff-mod sum clamped to ±120 semitones before `std::exp2`; previously could overflow to 524288× (WI-B3).
+  - Resonance input-gain compensation: `min(1, 1/√Q)` applied before filter, bounds high-Q peaks to ≈ −14 dB at Q=25 (WI-B4).
+  - Master gain now scales as `1/√(activeVoiceCount)` instead of a hardcoded 0.35; single notes are full-level (WI-B5).
+  - Unison vintage floor removed: `jmax(vintage, 0.35f)` → `vintage`; vintage=0 yields zero drift (WI-B6).
+  - `V2AudioQualityTests` class added (9 tests); all pass. Commit: `fdd3f85`.
+  - Manual smoke still pending: cutoff sweep at Q=25, unison vintage=0, FX mix sweeps, high-note alias check (standalone + Ableton Live Lite + REAPER).

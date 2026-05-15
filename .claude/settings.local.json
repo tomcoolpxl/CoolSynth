@@ -18,7 +18,15 @@
       "Bash(./build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)",
       "Bash(echo \"EXIT: $?\")",
       "PowerShell(& \"C:\\\\Users\\\\thraa\\\\github\\\\CoolSynth\\\\build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\" 2>&1 | Select-Object -First 80)",
-      "Bash(\"build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe\" --help)"
+      "Bash(\"build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe\" --help)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\thraa\\\\github\\\\CoolSynth\\\\tests\" -Recurse | ForEach-Object { $_.FullName })",
+      "PowerShell(Get-Item *)",
+      "Bash(ctest *)",
+      "Bash(/c/Users/thraa/github/CoolSynth/build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)",
+      "Bash(echo \"Exit code: $?\")",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
