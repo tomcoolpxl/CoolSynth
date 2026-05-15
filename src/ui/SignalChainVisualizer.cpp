@@ -133,6 +133,8 @@ namespace coolsynth::ui
         const auto levelB = state.getRawParameterValue(ids::oscBLevel)->load();
         const auto detuneB = state.getRawParameterValue(ids::oscBFineCents)->load() / 100.0f;
 
+        const auto noiseLevel = state.getRawParameterValue(ids::noiseLevel)->load();
+
         const auto cutoff = state.getRawParameterValue(ids::filterCutoffHz)->load();
         const auto res = state.getRawParameterValue(ids::filterResonance)->load();
 
@@ -160,9 +162,12 @@ namespace coolsynth::ui
             float phaseB = std::fmod(phase * (1.0f + detuneB * 0.05f), 1.0f);
             float sB = renderIdealSample(phaseB, waveB, pwB);
             
+            // Add random noise component
+            float noiseSample = (random.nextFloat() * 2.0f - 1.0f);
+
             // Match SynthVoice Mixed/Normalized logic
-            float mixed = sA * levelA + sB * levelB;
-            float totalLevel = levelA + levelB;
+            float mixed = sA * levelA + sB * levelB + noiseSample * noiseLevel;
+            float totalLevel = levelA + levelB + noiseLevel;
             float overloadDrive = 1.0f + std::max(0.0f, totalLevel - 1.0f) * 1.75f;
             float normalized = mixed * (totalLevel > 0.0f ? 1.0f / std::max(1.0f, totalLevel) : 0.0f);
             float sourceVal = std::tanh(normalized * overloadDrive);

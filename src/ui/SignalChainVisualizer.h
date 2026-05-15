@@ -53,6 +53,7 @@ namespace coolsynth::ui
         std::vector<float> outputBuffer;
 
         uint32_t frameCount { 0 };
+        juce::Random random;
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SignalChainVisualizer)
     };
