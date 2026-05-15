@@ -12,7 +12,13 @@
       "Bash(cmake --build C:/Users/thraa/github/CoolSynth/build --preset build-debug --config Debug)",
       "Bash(ctest --test-dir C:/Users/thraa/github/CoolSynth/build -C Debug --output-on-failure)",
       "Bash(C:/Users/thraa/github/CoolSynth/build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(cmake --preset vs2022-debug -NoProfile)",
+      "Bash(cmake --preset vs2022-debug)",
+      "Bash(./build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)",
+      "Bash(echo \"EXIT: $?\")",
+      "PowerShell(& \"C:\\\\Users\\\\thraa\\\\github\\\\CoolSynth\\\\build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\" 2>&1 | Select-Object -First 80)",
+      "Bash(\"build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe\" --help)"
     ]
   }
 }

@@ -5,6 +5,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "midi/MidiMappingEngine.h"
+#include "plugin/ProcessorScopeFifo.h"
 #include "synth/SynthEngineV2.h"
 
 class SynthAudioProcessor final : public juce::AudioProcessor
@@ -62,15 +63,22 @@ public:
 
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
 
+    coolsynth::plugin::ProcessorScopeFifo& getScopeFifo() noexcept { return scopeFifo; }
+
+    uint64_t getDroppedControllerEventCount() const noexcept
+        { return droppedControllerEventCount.load(std::memory_order_relaxed); }
+    uint64_t getDroppedMappedControllerEventCount() const noexcept
+        { return droppedMappedControllerEventCount.load(std::memory_order_relaxed); }
+
+    void flushMappedControllerEventsSync() { dispatchPendingMappedControllerEvents(); }
+
 private:
-    class PluginMappedActionDispatcher final : private juce::Thread
+    class PluginMappedActionAsyncBridge : public juce::AsyncUpdater
     {
     public:
-        explicit PluginMappedActionDispatcher(SynthAudioProcessor& ownerIn);
-        ~PluginMappedActionDispatcher() override;
-
+        explicit PluginMappedActionAsyncBridge(SynthAudioProcessor& o) : owner(o) {}
+        void handleAsyncUpdate() override { owner.dispatchPendingMappedControllerEvents(); }
     private:
-        void run() override;
         SynthAudioProcessor& owner;
     };
 
@@ -103,7 +111,11 @@ private:
     juce::AbstractFifo pendingPluginControllerEventQueue { static_cast<int> (pendingPluginControllerEvents.size()) };
     std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginMappedControllerEvents {};
     juce::AbstractFifo pendingPluginMappedControllerEventQueue { static_cast<int> (pendingPluginMappedControllerEvents.size()) };
-    PluginMappedActionDispatcher mappedActionDispatcher;
+    std::atomic<uint64_t> droppedControllerEventCount { 0 };
+    std::atomic<uint64_t> droppedMappedControllerEventCount { 0 };
+    coolsynth::plugin::ProcessorScopeFifo scopeFifo;
+    std::vector<float> monoMixScratch;
+    PluginMappedActionAsyncBridge mappedActionBridge;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)
 };

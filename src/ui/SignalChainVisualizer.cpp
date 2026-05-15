@@ -26,30 +26,33 @@ namespace coolsynth::ui
         {
             juce::Path p;
             p.startNewSubPath(0.0f, h);
-            
+
             const float total = a + d + 0.5f + r; // 0.5 is for sustain hold visual
             const float scale = w / total;
-            
+
             float x = a * scale;
             p.lineTo(x, 0.0f);
-            
+
             x += d * scale;
             p.lineTo(x, h * (1.0f - s));
-            
+
             x += 0.5f * scale;
             p.lineTo(x, h * (1.0f - s));
-            
+
             x += r * scale;
             p.lineTo(x, h);
-            
+
             return p;
         }
     }
 
-    SignalChainVisualizer::SignalChainVisualizer(juce::AudioProcessorValueTreeState& apvts)
+    SignalChainVisualizer::SignalChainVisualizer(juce::AudioProcessorValueTreeState& apvts,
+                                                 coolsynth::plugin::ProcessorScopeFifo& fifo)
         : state(apvts)
+        , scopeFifo(fifo)
     {
         outputBuffer.resize(1024, 0.0f);
+        fftScratch.resize(fftSize * 2, 0.0f);
         startTimerHz(30);
     }
 
@@ -58,39 +61,14 @@ namespace coolsynth::ui
         stopTimer();
     }
 
-    void SignalChainVisualizer::pushSamples(const float* samples, int numSamples) noexcept
-    {
-        for (int i = 0; i < numSamples; ++i)
-        {
-            const float val = samples[i];
-            
-            // Scope FIFO
-            int idx = writeIndex.load();
-            fifo[idx] = val;
-            writeIndex.store((idx + 1) % fifoSize);
-
-            // FFT buffer (simple non-overlapping for now)
-            static int fftWriteIdx = 0;
-            if (!nextFFTBlockReady.load())
-            {
-                fftData[fftWriteIdx++] = val;
-                if (fftWriteIdx >= fftSize)
-                {
-                    fftWriteIdx = 0;
-                    nextFFTBlockReady.store(true);
-                }
-            }
-        }
-    }
-
     void SignalChainVisualizer::paint(juce::Graphics& g)
     {
         auto area = getLocalBounds().reduced(2);
-        
+
         // 5 Panes: MODS, SOURCE, FILTER, SPECTRA, REALITY
         const int gap = 8;
         const int paneW = (area.getWidth() - (gap * 4)) / 5;
-        
+
         auto modsArea = area.removeFromLeft(paneW);
         area.removeFromLeft(gap);
         auto sourceArea = area.removeFromLeft(paneW);
@@ -113,88 +91,97 @@ namespace coolsynth::ui
         updateIdealWaveforms();
     }
 
+    void SignalChainVisualizer::pullFromProcessor()
+    {
+        // Read as many samples as the output buffer can hold. New samples overwrite the
+        // start of outputBuffer; any remainder is filled with the previous content.
+        const int numRead = scopeFifo.read(outputBuffer.data(), static_cast<int>(outputBuffer.size()));
+
+        // If fewer samples arrived than the buffer, shift old content down so the newest
+        // samples always sit at the end (most-recent-last convention for waveform display).
+        if (numRead > 0 && numRead < static_cast<int>(outputBuffer.size()))
+        {
+            const int remaining = static_cast<int>(outputBuffer.size()) - numRead;
+            std::move(outputBuffer.begin() + numRead,
+                      outputBuffer.end(),
+                      outputBuffer.begin());
+            std::copy(outputBuffer.begin() + remaining,
+                      outputBuffer.end(),
+                      outputBuffer.begin() + remaining);
+        }
+    }
+
     void SignalChainVisualizer::timerCallback()
     {
         frameCount++;
         updateIdealWaveforms();
-        updateSpectralData();
 
-        // Update Reality Path
-        realityPath.clear();
-        
-        int currentWrite = writeIndex.load();
-        int readStart = (currentWrite - outputBuffer.size() * 3 + fifoSize) % fifoSize;
-        
-        int triggerIdx = -1;
-        float maxAbsVal = 0.01f;
-        for (int i = 0; i < (int)outputBuffer.size() * 2; ++i)
+        // Pull audio samples from the processor FIFO (UI thread only).
+        pullFromProcessor();
+
+        // Feed pulled samples into the FFT scratch buffer.
+        for (float sample : outputBuffer)
         {
-            int idx1 = (readStart + i) % fifoSize;
-            int idx2 = (idx1 + 1) % fifoSize;
-            float val = std::abs(fifo[idx1]);
-            if (val > maxAbsVal) maxAbsVal = val;
+            if (fftWriteIdx < fftSize)
+                fftScratch[static_cast<size_t>(fftWriteIdx++)] = sample;
 
-            if (triggerIdx == -1 && fifo[idx1] <= 0.0f && fifo[idx2] > 0.0f)
+            if (fftWriteIdx >= fftSize)
             {
-                triggerIdx = idx2;
+                // Run windowing + FFT in-place, then render spectraPath.
+                window.multiplyWithWindowingTable(fftScratch.data(), fftSize);
+                forwardFFT.performFrequencyOnlyForwardTransform(fftScratch.data());
+
+                spectraPath.clear();
+                const float w = (getWidth() - 40) / 5.0f;
+                const float h = static_cast<float>(getHeight());
+                const int numBins = fftSize / 2;
+                const float stepX = w / std::log10(static_cast<float>(numBins));
+
+                for (int i = 1; i < numBins; ++i)
+                {
+                    float x = std::log10(static_cast<float>(i)) * stepX;
+                    float level = juce::Decibels::gainToDecibels(fftScratch[static_cast<size_t>(i)]);
+                    float y = juce::jlimit(0.0f, h, h * (1.0f - (level + 60.0f) / 60.0f));
+
+                    if (i == 1) spectraPath.startNewSubPath(x, y);
+                    else        spectraPath.lineTo(x, y);
+                }
+
+                std::fill(fftScratch.begin(), fftScratch.end(), 0.0f);
+                fftWriteIdx = 0;
             }
         }
 
-        if (triggerIdx == -1) triggerIdx = readStart;
+        // Render the REALITY waveform from outputBuffer (linear, most-recent-last).
+        realityPath.clear();
 
-        float zoom = 1.0f / std::max(0.1f, maxAbsVal);
-        zoom = std::min(zoom, 10.0f);
+        const auto& buf = outputBuffer;
+        float maxAbsVal = 0.01f;
+        for (float v : buf)
+            maxAbsVal = juce::jmax(maxAbsVal, std::abs(v));
 
-        const float halfH = getHeight() * 0.5f;
-        const float w = (getWidth() - 40) / 5.0f; // Approximate
-        const float stepX = w / static_cast<float>(outputBuffer.size());
+        float zoom = juce::jmin(10.0f, 1.0f / maxAbsVal);
 
-        for (int i = 0; i < (int)outputBuffer.size(); ++i)
+        const float halfH = static_cast<float>(getHeight()) * 0.5f;
+        const float w = (getWidth() - 40) / 5.0f;
+        const float stepX = w / static_cast<float>(buf.size());
+
+        for (int i = 0; i < static_cast<int>(buf.size()); ++i)
         {
-            float val = fifo[(triggerIdx + i) % fifoSize];
-            float x = i * stepX;
-            float y = halfH - val * halfH * 0.8f * zoom;
-            
+            float x = static_cast<float>(i) * stepX;
+            float y = halfH - buf[static_cast<size_t>(i)] * halfH * 0.8f * zoom;
+
             if (i == 0) realityPath.startNewSubPath(x, y);
-            else realityPath.lineTo(x, y);
+            else        realityPath.lineTo(x, y);
         }
 
         repaint();
     }
 
-    void SignalChainVisualizer::updateSpectralData()
-    {
-        if (nextFFTBlockReady.load())
-        {
-            window.multiplyWithWindowingTable(fftData, fftSize);
-            forwardFFT.performFrequencyOnlyForwardTransform(fftData);
-
-            spectraPath.clear();
-            const float w = (getWidth() - 40) / 5.0f;
-            const float h = getHeight();
-            const int numBins = fftSize / 2;
-            const float stepX = w / std::log10(static_cast<float>(numBins));
-
-            for (int i = 1; i < numBins; ++i)
-            {
-                // Logarithmic frequency scale for better visual balance
-                float x = std::log10(static_cast<float>(i)) * stepX;
-                float level = juce::Decibels::gainToDecibels(fftData[i]);
-                // Scale dB to visual height (roughly -60dB to 0dB range)
-                float y = juce::jlimit(0.0f, h, h * (1.0f - (level + 60.0f) / 60.0f));
-
-                if (i == 1) spectraPath.startNewSubPath(x, y);
-                else spectraPath.lineTo(x, y);
-            }
-
-            nextFFTBlockReady.store(false);
-        }
-    }
-
     void SignalChainVisualizer::updateIdealWaveforms()
     {
         using namespace coolsynth::parameters;
-        
+
         // Osc A/B
         const auto waveA = static_cast<OscillatorWaveShape>(static_cast<int>(state.getRawParameterValue(ids::oscAWave)->load()));
         const auto pwA = state.getRawParameterValue(ids::oscAPulseWidth)->load();
@@ -211,7 +198,7 @@ namespace coolsynth::ui
 
         // Mods
         const auto lfoWave = static_cast<LfoWaveShape>(static_cast<int>(state.getRawParameterValue(ids::lfoWave)->load()));
-        
+
         const auto fA = state.getRawParameterValue(ids::filterAttackMs)->load() / 1000.0f;
         const auto fD = state.getRawParameterValue(ids::filterDecayMs)->load() / 1000.0f;
         const auto fS = state.getRawParameterValue(ids::filterSustain)->load();
@@ -229,12 +216,12 @@ namespace coolsynth::ui
         const int numPoints = 256;
         const float numCycles = 2.0f;
         const float w = std::max(1.0f, (static_cast<float>(getWidth()) - 4.0f - 32.0f) / 5.0f);
-        const float h = getHeight();
+        const float h = static_cast<float>(getHeight());
         const float halfH = h * 0.5f;
         const float stepX = w / static_cast<float>(numPoints);
 
-        float drift = std::sin(frameCount * 0.05f) * 0.01f;
-        float lfoAnim = std::sin(frameCount * 0.1f) * 0.02f;
+        float drift = std::sin(static_cast<float>(frameCount) * 0.05f) * 0.01f;
+        float lfoAnim = std::sin(static_cast<float>(frameCount) * 0.1f) * 0.02f;
 
         // Draw LFO Preview
         auto lfoOscShape = OscillatorWaveShape::sine;
@@ -247,7 +234,7 @@ namespace coolsynth::ui
             float normX = static_cast<float>(i) / static_cast<float>(numPoints);
             float lfoPhase = std::fmod(normX + lfoAnim, 1.0f);
             float lfoVal = renderIdealSample(lfoPhase, lfoOscShape, 0.5f);
-            float lx = i * stepX;
+            float lx = static_cast<float>(i) * stepX;
             float ly = halfH - lfoVal * halfH * 0.7f;
             if (i == 0) lfoPath.startNewSubPath(lx, ly);
             else lfoPath.lineTo(lx, ly);
@@ -265,7 +252,7 @@ namespace coolsynth::ui
         {
             float normX = static_cast<float>(i) / static_cast<float>(numPoints);
             float phase = std::fmod(normX * numCycles + drift, 1.0f);
-            
+
             float sA = renderIdealSample(phase, waveA, pwA);
             float phaseB = std::fmod(phase * (1.0f + detuneB * 0.05f), 1.0f);
             float sB = renderIdealSample(phaseB, waveB, pwB);
@@ -277,7 +264,7 @@ namespace coolsynth::ui
             float normalized = mixed * (totalLevel > 0.0f ? 1.0f / std::max(1.0f, totalLevel) : 0.0f);
             float sourceVal = std::tanh(normalized * overloadDrive);
 
-            float x = i * stepX;
+            float x = static_cast<float>(i) * stepX;
             float yS = halfH - sourceVal * halfH * 0.8f;
             if (i == 0) sourcePath.startNewSubPath(x, yS);
             else sourcePath.lineTo(x, yS);
@@ -300,7 +287,7 @@ namespace coolsynth::ui
         g.drawRoundedRectangle(area.toFloat(), 3.0f, 1.0f);
 
         auto inner = area.reduced(4, 2);
-        
+
         // Split into 3 micro-rows
         auto lfoArea = inner.removeFromTop(inner.getHeight() / 3);
         auto fenvArea = inner.removeFromTop(inner.getHeight() / 2);
@@ -311,13 +298,13 @@ namespace coolsynth::ui
             g.setColour(palette::textSecondary.withAlpha(0.6f));
             g.setFont(7.0f);
             g.drawText(lbl, r.removeFromLeft(20), juce::Justification::centredLeft);
-            
+
             g.setColour(c);
             auto pScaled = p;
             auto bounds = pScaled.getBounds();
             pScaled.applyTransform(juce::AffineTransform::scale(r.getWidth() / std::max(1.0f, bounds.getWidth()),
                                                                 r.getHeight() / std::max(1.0f, bounds.getHeight())));
-            pScaled.applyTransform(juce::AffineTransform::translation(static_cast<float>(r.getX()), 
+            pScaled.applyTransform(juce::AffineTransform::translation(static_cast<float>(r.getX()),
                                                                       static_cast<float>(r.getY())));
             g.strokePath(pScaled, juce::PathStrokeType(1.0f));
         };
@@ -333,10 +320,10 @@ namespace coolsynth::ui
         g.restoreState();
     }
 
-    void SignalChainVisualizer::drawWaveform(juce::Graphics& g, 
-                                              juce::Rectangle<int> area, 
-                                              const juce::Path& path, 
-                                              juce::Colour colour, 
+    void SignalChainVisualizer::drawWaveform(juce::Graphics& g,
+                                              juce::Rectangle<int> area,
+                                              const juce::Path& path,
+                                              juce::Colour colour,
                                               const juce::String& label)
     {
         g.saveState();
@@ -346,14 +333,14 @@ namespace coolsynth::ui
         g.drawRoundedRectangle(area.toFloat(), 3.0f, 1.0f);
 
         g.reduceClipRegion(area);
-        
+
         g.setColour(palette::textSecondary);
         g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
         g.drawText(label, area.withTrimmedBottom(2).removeFromBottom(10), juce::Justification::centred);
 
         g.setColour(colour);
         auto p = path;
-        p.applyTransform(juce::AffineTransform::translation(static_cast<float>(area.getX()), 
+        p.applyTransform(juce::AffineTransform::translation(static_cast<float>(area.getX()),
                                                             static_cast<float>(area.getY())));
         g.strokePath(p, juce::PathStrokeType(1.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 

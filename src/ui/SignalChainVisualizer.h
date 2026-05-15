@@ -1,10 +1,13 @@
 #pragma once
 
+#include <vector>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include "UiPalette.h"
 #include "parameters/ParameterIDs.h"
+#include "plugin/ProcessorScopeFifo.h"
 
 namespace coolsynth::ui
 {
@@ -16,10 +19,9 @@ namespace coolsynth::ui
                                         private juce::Timer
     {
     public:
-        SignalChainVisualizer(juce::AudioProcessorValueTreeState& apvts);
+        SignalChainVisualizer(juce::AudioProcessorValueTreeState& apvts,
+                              coolsynth::plugin::ProcessorScopeFifo& fifo);
         ~SignalChainVisualizer() override;
-
-        void pushSamples(const float* samples, int numSamples) noexcept;
 
         void paint(juce::Graphics& g) override;
         void resized() override;
@@ -27,18 +29,19 @@ namespace coolsynth::ui
     private:
         void timerCallback() override;
 
+        void pullFromProcessor();
         void updateIdealWaveforms();
-        void updateSpectralData();
 
-        void drawWaveform(juce::Graphics& g, 
-                          juce::Rectangle<int> area, 
-                          const juce::Path& path, 
-                          juce::Colour colour, 
+        void drawWaveform(juce::Graphics& g,
+                          juce::Rectangle<int> area,
+                          const juce::Path& path,
+                          juce::Colour colour,
                           const juce::String& label);
 
         void drawModulationPane(juce::Graphics& g, juce::Rectangle<int> area);
 
         juce::AudioProcessorValueTreeState& state;
+        coolsynth::plugin::ProcessorScopeFifo& scopeFifo;
 
         // Waveform data
         juce::Path sourcePath;
@@ -51,22 +54,16 @@ namespace coolsynth::ui
         juce::Path filterEnvPath;
         juce::Path ampEnvPath;
 
-        // FFT for Spectra pane
+        // FFT for Spectra pane — all UI-thread-only, no atomics or statics
         static constexpr int fftOrder = 10;
         static constexpr int fftSize = 1 << fftOrder;
         juce::dsp::FFT forwardFFT { fftOrder };
         juce::dsp::WindowingFunction<float> window { fftSize, juce::dsp::WindowingFunction<float>::hann };
 
-        float fftData[fftSize * 2] {};
-        float scopeData[fftSize] {};
-        std::atomic<bool> nextFFTBlockReady { false };
+        std::vector<float> fftScratch;
+        int fftWriteIdx = 0;
 
-        // FIFO for real-time output
-        static constexpr int fifoSize = 4096;
-        float fifo[fifoSize] {};
-        std::atomic<int> writeIndex { 0 };
-
-        // Local buffer for drawing output
+        // Buffer pulled from the processor FIFO each timer tick
         std::vector<float> outputBuffer;
 
         uint32_t frameCount { 0 };

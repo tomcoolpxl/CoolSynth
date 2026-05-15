@@ -128,7 +128,7 @@ namespace
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
     , processor(inProcessor)
-    , visualizer(processor.getValueTreeState())
+    , visualizer(processor.getValueTreeState(), processor.getScopeFifo())
     , pianoBar(processor.getKeyboardState())
 {
     const bool isStandalone = juce::JUCEApplicationBase::isStandaloneApp();

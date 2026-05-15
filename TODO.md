@@ -1,6 +1,7 @@
 # TODO
 
-`Late V2 scope update`
+## Phase 11 — Track A: RT-safety fixes (in progress, Track A complete)
 
-- [x] Add a sine oscillator waveform back to the V2 parameter, DSP, UI, and test surface without disturbing the existing dual-oscillator architecture.
-- [x] Implement the Signal Chain Visualizer (Visual Laboratory) in the title bar with Source, Filter, and Output panes.
+Track A WIs are all landed and test-clean as of 2026-05-15. Remaining Track B/C/D/E work per `REVIEW_V2_PLAN.md`.
+
+Next: WI-B1 (PolyBLEP saw/pulse/triangle bandlimiting).

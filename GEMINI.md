@@ -181,3 +181,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Manual validation passed in standalone and VST3 use: valid V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the active synth state.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
 - `TODO.md` now points to Phase 11.
+- Phase 11 Track A completed on 2026-05-15:
+  - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
+  - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).
+  - `PluginMappedActionDispatcher` (`juce::Thread` calling host gesture APIs off the message thread) replaced by `PluginMappedActionAsyncBridge` (`juce::AsyncUpdater`). `triggerAsyncUpdate()` is the only audio-thread call; dispatch happens on the message thread (WI-A3).
+  - Dropped-event counters added to both controller event enqueue paths; `V2ScopeFifoTests` added (WI-A4).
+  - `MidiMappingEngine::translate()` locking contract documented in the header (WI-A5).
+  - Local verification passed: `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, `ctest --test-dir build -C Debug --output-on-failure`.

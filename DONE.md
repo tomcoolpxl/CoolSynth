@@ -1,5 +1,15 @@
 # DONE
 
+## Phase 11 Track A — Critical RT-safety fixes
+
+Completed on 2026-05-15. All five WIs landed, builds clean, all tests pass.
+
+- [x] **WI-A1**: Introduced `ProcessorScopeFifo` (lock-free `AbstractFifo`-backed ring buffer, heap-allocated). `SynthAudioProcessor::processBlock` now writes the post-FX mono mix to `scopeFifo` instead of dynamic-casting to the editor on the audio thread. `SignalChainVisualizer` pulls samples from the FIFO on its 30 Hz UI timer. `getActiveEditor()` and `dynamic_cast<SynthAudioProcessorEditor*>` are gone from the audio path.
+- [x] **WI-A2**: Removed the `static int fftWriteIdx` (shared across plugin instances) and the `std::atomic<bool> nextFFTBlockReady` race from `SignalChainVisualizer`. FFT scratch is now a `std::vector<float>` filled on the UI thread only; two plugin instances have fully independent spectra.
+- [x] **WI-A3**: Replaced `PluginMappedActionDispatcher` (a `juce::Thread` calling host gesture APIs off the message thread) with `PluginMappedActionAsyncBridge` (`juce::AsyncUpdater`). `enqueuePluginMappedControllerEvent` now calls `triggerAsyncUpdate()` (RT-safe atomic exchange) and dispatch happens on the message thread. Added `flushMappedControllerEventsSync()` for tests.
+- [x] **WI-A4**: Added `droppedControllerEventCount` and `droppedMappedControllerEventCount` atomics to `SynthAudioProcessor`. Both enqueue paths increment their respective counter instead of silently discarding. Added `V2ScopeFifoTests` covering round-trip, graceful overflow, and clear.
+- [x] **WI-A5**: Added Doxygen locking contract to `MidiMappingEngine::translate()` and `NOLINTNEXTLINE` annotations on the `mutable` per-binding takeover fields.
+
 ## V2 Phase 10: Patch/state boundary and compatibility handling
 
 Completed on 2026-05-15. The V2 patch/state boundary is now explicit, test-covered, and manually signed off in standalone and VST3 workflows.

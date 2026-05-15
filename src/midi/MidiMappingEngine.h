@@ -95,6 +95,8 @@ namespace coolsynth::midi
         bool clearLearnedBinding(juce::StringRef parameterId);
         const LearnedCcBinding* findLearnedBinding(juce::StringRef parameterId) const noexcept;
 
+        /** Must only be called while the owner holds the mapping state lock;
+         *  this method mutates per-binding takeover state via mutable fields. */
         MappedAction translate(const ControllerMidiEvent& event) const noexcept;
 
     private:
@@ -115,6 +117,7 @@ namespace coolsynth::midi
         {
             ControllerBinding binding;
             ParameterTarget target;
+            // NOLINTNEXTLINE: per-binding mutable state requires external lock
             mutable TakeoverState state = TakeoverState::waitingForFirstTouch;
             mutable float initialHardwareValue = 0.0f;
             mutable float initialSoftwareValue = 0.0f;
@@ -124,6 +127,7 @@ namespace coolsynth::midi
         {
             LearnedCcBinding binding;
             ParameterTarget target;
+            // NOLINTNEXTLINE: per-binding mutable state requires external lock
             mutable TakeoverState state = TakeoverState::waitingForFirstTouch;
             mutable float initialHardwareValue = 0.0f;
             mutable float initialSoftwareValue = 0.0f;

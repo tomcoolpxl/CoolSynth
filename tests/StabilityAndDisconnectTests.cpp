@@ -3,6 +3,7 @@
 
 #include <juce_core/juce_core.h>
 
+#include "plugin/ProcessorScopeFifo.h"
 #include "standalone/StandaloneMidiInput.h"
 #include "standalone/SettingsStore.h"
 #include "synth/SynthEngine.h"
@@ -2178,6 +2179,72 @@ public:
     }
 };
 
+class V2ScopeFifoTests final : public juce::UnitTest
+{
+public:
+    V2ScopeFifoTests() : juce::UnitTest("V2ScopeFifo", "CoolSynth") {}
+
+    void runTest() override
+    {
+        beginTest("scope_fifo_basic_round_trip");
+        {
+            coolsynth::plugin::ProcessorScopeFifo fifo;
+
+            // Write 1024 samples, read them back, verify values.
+            constexpr int numSamples = 1024;
+            std::vector<float> writeData(numSamples);
+            for (int i = 0; i < numSamples; ++i)
+                writeData[static_cast<size_t>(i)] = static_cast<float>(i) * 0.001f;
+
+            fifo.write(writeData.data(), numSamples);
+
+            std::vector<float> readData(numSamples, 0.0f);
+            const int numRead = fifo.read(readData.data(), numSamples);
+
+            expectEquals(numRead, numSamples);
+            bool allMatch = true;
+            for (int i = 0; i < numSamples && allMatch; ++i)
+                allMatch = (readData[static_cast<size_t>(i)] == writeData[static_cast<size_t>(i)]);
+            expect(allMatch, "round-trip data must match");
+        }
+
+        beginTest("scope_fifo_overflow_does_not_crash_and_drops_gracefully");
+        {
+            coolsynth::plugin::ProcessorScopeFifo fifo;
+
+            // Fill to capacity.
+            const int capacity = coolsynth::plugin::ProcessorScopeFifo::capacity;
+            std::vector<float> fillData(static_cast<size_t>(capacity), 1.0f);
+            fifo.write(fillData.data(), capacity);
+
+            // Writing more to a full FIFO silently drops the excess — must not crash.
+            std::vector<float> extra(100, 2.0f);
+            fifo.write(extra.data(), 100);
+
+            // Only the originally written data should be readable.
+            std::vector<float> readData(static_cast<size_t>(capacity + 200), 0.0f);
+            const int numRead = fifo.read(readData.data(), capacity + 200);
+
+            // Must have read at most capacity samples and no more than what we wrote.
+            expect(numRead <= capacity, "cannot read more than capacity");
+            expect(numRead > 0, "some samples must be readable after write");
+        }
+
+        beginTest("scope_fifo_clear_resets_to_empty");
+        {
+            coolsynth::plugin::ProcessorScopeFifo fifo;
+
+            std::vector<float> data(512, 0.5f);
+            fifo.write(data.data(), 512);
+            fifo.clear();
+
+            std::vector<float> readData(512, 0.0f);
+            const int numRead = fifo.read(readData.data(), 512);
+            expectEquals(numRead, 0, "clear must drain all pending samples");
+        }
+    }
+};
+
 static StandaloneMidiInputTests standaloneMidiInputTests;
 static DspRegressionTests dspRegressionTests;
 static V2AllocatorTests v2AllocatorTests;
@@ -2186,3 +2253,4 @@ static V2VoiceSourcesTests v2VoiceSourcesTests;
 static V2FilterAndEnvelopeTests v2FilterAndEnvelopeTests;
 static V2PolyphonyHeadroomTests v2PolyphonyHeadroomTests;
 static V2ArpeggiatorTests v2ArpeggiatorTests;
+static V2ScopeFifoTests v2ScopeFifoTests;

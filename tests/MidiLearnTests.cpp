@@ -319,7 +319,7 @@ public:
             midi.addEvent(juce::MidiMessage::controllerEvent(1, 74, 127), 0);
 
             processor.processBlock(buffer, midi);
-            juce::Thread::sleep(20);
+            processor.flushMappedControllerEventsSync();
 
             auto* cutoff = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::filterCutoffHz);
             expect(cutoff != nullptr);

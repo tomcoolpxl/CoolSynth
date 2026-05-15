@@ -156,7 +156,7 @@ SynthAudioProcessor::SynthAudioProcessor()
     , parameters(*this, nullptr, "CoolSynthState", coolsynth::parameters::createParameterLayout())
     , midiMappingEngine(parameters)
     , parameterValues(bindParameterPointers(parameters))
-    , mappedActionDispatcher(*this)
+    , mappedActionBridge(*this)
 {
 }
 
@@ -165,6 +165,11 @@ SynthAudioProcessor::~SynthAudioProcessor() = default;
 void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     synthEngine.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
+    scopeFifo.clear();
+    monoMixScratch.resize(static_cast<size_t>(samplesPerBlock));
+    // Prime the AsyncUpdater's lazy first-call allocation before the audio thread touches it.
+    mappedActionBridge.triggerAsyncUpdate();
+    mappedActionBridge.cancelPendingUpdate();
 }
 
 void SynthAudioProcessor::releaseResources()
@@ -177,6 +182,7 @@ void SynthAudioProcessor::reset()
     panicRequested.store(false, std::memory_order_release);
     synthEngine.panic();
     keyboardState.reset();
+    scopeFifo.clear();
 }
 
 bool SynthAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -254,8 +260,19 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                        makeBlockRenderParameters(),
                        transportInfo);
 
-    if (auto* editor = dynamic_cast<SynthAudioProcessorEditor*>(getActiveEditor()))
-        editor->getVisualizer().pushSamples(buffer.getReadPointer(0), buffer.getNumSamples());
+    const int numSamples = buffer.getNumSamples();
+    if (buffer.getNumChannels() >= 2 && numSamples <= static_cast<int>(monoMixScratch.size()))
+    {
+        const float* L = buffer.getReadPointer(0);
+        const float* R = buffer.getReadPointer(1);
+        for (int i = 0; i < numSamples; ++i)
+            monoMixScratch[static_cast<size_t>(i)] = (L[i] + R[i]) * 0.5f;
+        scopeFifo.write(monoMixScratch.data(), numSamples);
+    }
+    else if (buffer.getNumChannels() == 1)
+    {
+        scopeFifo.write(buffer.getReadPointer(0), numSamples);
+    }
 }
 
 juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()
@@ -524,7 +541,10 @@ void SynthAudioProcessor::enqueuePluginControllerEvent(const coolsynth::midi::Co
     {
         pendingPluginControllerEvents[static_cast<size_t> (start2)] = event;
         pendingPluginControllerEventQueue.finishedWrite(1);
+        return;
     }
+
+    droppedControllerEventCount.fetch_add(1, std::memory_order_relaxed);
 }
 
 void SynthAudioProcessor::enqueuePluginMappedControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept
@@ -536,6 +556,7 @@ void SynthAudioProcessor::enqueuePluginMappedControllerEvent(const coolsynth::mi
     {
         pendingPluginMappedControllerEvents[static_cast<size_t> (start1)] = event;
         pendingPluginMappedControllerEventQueue.finishedWrite(1);
+        mappedActionBridge.triggerAsyncUpdate();
         return;
     }
 
@@ -543,7 +564,11 @@ void SynthAudioProcessor::enqueuePluginMappedControllerEvent(const coolsynth::mi
     {
         pendingPluginMappedControllerEvents[static_cast<size_t> (start2)] = event;
         pendingPluginMappedControllerEventQueue.finishedWrite(1);
+        mappedActionBridge.triggerAsyncUpdate();
+        return;
     }
+
+    droppedMappedControllerEventCount.fetch_add(1, std::memory_order_relaxed);
 }
 
 int SynthAudioProcessor::drainPendingMappedControllerEvents(coolsynth::midi::ControllerMidiEvent* destination,
@@ -905,25 +930,3 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
     return new SynthAudioProcessor();
 }
 
-SynthAudioProcessor::PluginMappedActionDispatcher::PluginMappedActionDispatcher(SynthAudioProcessor& ownerIn)
-    : juce::Thread("CoolSynthPluginMappedActionDispatcher")
-    , owner(ownerIn)
-{
-    startThread();
-}
-
-SynthAudioProcessor::PluginMappedActionDispatcher::~PluginMappedActionDispatcher()
-{
-    stopThread(500);
-}
-
-void SynthAudioProcessor::PluginMappedActionDispatcher::run()
-{
-    while (! threadShouldExit())
-    {
-        owner.dispatchPendingMappedControllerEvents();
-        wait(4);
-    }
-
-    owner.dispatchPendingMappedControllerEvents();
-}
