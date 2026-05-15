@@ -136,4 +136,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Added `V2Performance` test suite covering bend range, mono priority, mono low-priority fallback, unison stack count, glide rendering divergence, vintage variance bounds, and mod-wheel-driven LFO.
   - Editor wiring was verified intact — all LFO/Poly Mod/Performance knobs already bind to the right V2 parameter IDs and lay out in the existing one-page panel.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- `TODO.md` now points to Phase 7.
+- V2 `Phase 7` completed on 2026-05-15:
+  - `SynthEngineV2` now includes an internal arpeggiator that tracks held notes, latched notes, pattern order, octave cycling, gate timing, and pending cross-block note-offs without audio-thread allocation.
+  - `SynthAudioProcessor::processBlock()` now reads plugin playhead tempo, PPQ, and transport state when available and passes a compact transport snapshot into the engine; when host timing is incomplete, the arp falls back to its internal tempo source instead of stalling.
+  - Arp-generated note on/off events now route through the existing V2 allocator with sample offsets, so arp playback shares the same timing and voice-steal path as ordinary note play.
+  - Added `V2Arpeggiator` regressions covering pattern ordering (`Up`, `Down`, `Up/Down`, `As Played`), octave range, latch behavior, gate timing, internal-tempo fallback, host-PPQ alignment, transport-stop release, arp-disable release, and panic clearing.
+  - A Windows patch-save failure found during manual Phase 7 validation was fixed by closing the temporary output stream before replacing the destination file, and patch-state coverage now includes a real file write/read round trip.
+  - Manual standalone arp validation passed on 2026-05-15 using a simplified dry test patch: internal tempo, pattern switching, octave range, gate length, latch behavior, patch save, and patch load all worked as expected.
+  - Ableton Live Lite VST3 arp-host validation was intentionally deferred to the final release-validation phase by user request after host workflow issues during bring-up.
+- `TODO.md` now points to Phase 8.

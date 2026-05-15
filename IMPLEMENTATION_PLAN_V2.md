@@ -563,7 +563,7 @@ Explicitly out of scope:
 - `cmake --build --preset build-debug --config Debug`
 - `ctest --test-dir build -C Debug --output-on-failure`
 - standalone manual arp checks for tempo, latch, gate length, octave range, and bypass behavior
-- Ableton Live Lite VST3 manual checks for host tempo sync, transport start/stop behavior, and internal-rate fallback behavior
+- Ableton Live Lite VST3 manual checks for host tempo sync, transport start/stop behavior, and internal-rate fallback behavior, unless explicitly deferred to the final release-validation phase
 - REAPER VST3 manual checks during release-signoff once the arp path is otherwise stable
 
 ### Review check before moving work to `DONE.md`
@@ -579,7 +579,7 @@ Reviewer must confirm that the arpeggiator is the only primary outcome, that tim
 - [ ] Implement deterministic internal-rate fallback behavior for missing host timing.
 - [ ] Route arp-generated note events through the allocator with sample offsets.
 - [ ] Add tests for pattern ordering, latch behavior, gate timing, and tempo fallback.
-- [ ] Verify standalone and Ableton Live Lite VST3 arp behavior manually before final multi-host release validation.
+- [ ] Verify standalone arp behavior manually; defer Ableton Live Lite VST3 arp-host validation to the final release-validation phase if host bring-up becomes a workflow blocker.
 
 ### Exit criteria for moving items to `DONE.md`
 
@@ -892,6 +892,7 @@ Reviewer must confirm that the phase outcome is stabilization and release readin
 - [ ] Run the full local Debug and Release build and test matrix for V2.
 - [ ] Fix any release-blocking defects found during full-matrix validation.
 - [ ] Run the standalone and VST3 manual smoke workflows and capture the results.
+- [ ] Run the deferred Ableton Live Lite VST3 arpeggiator host-sync checks for tempo sync, transport start or stop behavior, and internal-rate fallback.
 - [ ] Run the GitHub `Windows Manual Validation` workflow and review diagnostics and packaged artifacts.
 - [ ] Reconcile `README.md`, `REQUIREMENTS_V2.md`, `DESIGN_V2.md`, `IMPLEMENTATION_PLAN_V2.md`, `TODO.md`, and `DONE.md` with shipped V2 behavior.
 - [ ] Confirm every unfinished item is explicitly deferred in `TODO.md` before closing the release review.

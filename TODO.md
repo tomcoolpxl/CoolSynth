@@ -1,10 +1,10 @@
 # TODO
 
-`Phase 7`
+`Phase 8`
 
-- [ ] Add held-note, latched-note, pattern, octave, and gate state for the V2 arpeggiator.
-- [ ] Read plugin transport and tempo in `processBlock()` and pass a transport snapshot into the engine.
-- [ ] Implement deterministic internal-rate fallback behavior for missing host timing.
-- [ ] Route arp-generated note events through the allocator with sample offsets.
-- [ ] Add tests for pattern ordering, latch behavior, gate timing, and tempo fallback.
-- [ ] Verify standalone and Ableton Live Lite VST3 arp behavior manually before final multi-host release validation.
+- [ ] Implement the global drive stage for the V2 output path.
+- [ ] Implement the global chorus or ensemble stage for the V2 output path.
+- [ ] Rework the existing delay into the fixed-order V2 FX rack.
+- [ ] Implement the global reverb stage and output gain handling for the V2 rack.
+- [ ] Add reset, bypass, mix, and tail-handling behavior for the full rack.
+- [ ] Add tests or render checks for bounded feedback, stable reset behavior, and no obvious dry-path regression.

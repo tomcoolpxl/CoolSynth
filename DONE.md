@@ -1,5 +1,18 @@
 # DONE
 
+## V2 Phase 7: Host-aware arpeggiator
+
+Completed on 2026-05-15. The V2 arpeggiator is now implemented and locally verified, and the remaining Ableton Live Lite VST3 host-sync smoke has been intentionally deferred to the final release-validation phase so Phase 8 can proceed.
+
+- [x] Added a dedicated `Arpeggiator` inside `SynthEngineV2` with bounded held-note, latched-note, and pending ringing-note state; pattern walking for `Up`, `Down`, `Up/Down`, and `As Played`; octave cycling; and gate timing that carries note-offs across block boundaries when needed.
+- [x] Updated `SynthAudioProcessor::processBlock()` to read host tempo, PPQ, and transport state from `AudioPlayHead::getPosition()` in plugin mode and pass a compact transport snapshot into the V2 engine.
+- [x] Implemented deterministic internal-tempo fallback when host timing is incomplete, and explicit host-transport stop handling so host-synced arp playback releases ringing notes instead of stalling ambiguously.
+- [x] Routed arp-generated note on/off events through the same sample-offset allocator path as ordinary keyboard play so arp timing, stealing, and release behavior share the existing V2 event model.
+- [x] Added `V2Arpeggiator` regressions in `tests/StabilityAndDisconnectTests.cpp` for pattern ordering, octave range, latch behavior, gate timing, internal-rate fallback, host-PPQ alignment, transport-stop release, arp-disable release, and panic clearing.
+- [x] Fixed a Windows patch-save failure found during Phase 7 manual validation by closing the temporary output stream before replacing the destination file, and added a real patch file write/read round-trip regression in `tests/PatchStateTests.cpp`.
+- [x] Manual standalone validation passed on 2026-05-15 using a simplified dry arp test patch: internal tempo, pattern changes, octave range, gate length, latch behavior, patch save, and patch load all worked as expected.
+- [x] Deferred Ableton Live Lite VST3 arp host-sync smoke to the final release-validation phase by user request after workflow issues during host bring-up.
+
 ## V2 Phase 6: Performance modulation and play modes
 
 Completed on 2026-05-15. The full V2 performance layer is now wired end-to-end: global LFO, Poly Mod cross-modulation, pitch bend and mod wheel, glide, mono/unison play modes with key priority, bounded vintage drift, and balance-style pan spread. The dry voice rendering loop was unified so all modulation sources mix per-sample without breaking the cutoff smoother.

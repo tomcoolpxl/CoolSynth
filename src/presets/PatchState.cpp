@@ -53,6 +53,7 @@ namespace coolsynth::presets
         {
             patchXml.writeTo(*stream, {});
             stream->flush();
+            stream.reset();
 
             if (tempFile.overwriteTargetFileWithTemporary())
                 return {};

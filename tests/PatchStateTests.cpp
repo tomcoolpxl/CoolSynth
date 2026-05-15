@@ -173,6 +173,51 @@ public:
 
             expect(!processor.applyParameterStateXml(*stateXml));
         }
+
+        beginTest("patch_file_write_and_read_round_trip_succeeds");
+        {
+            SynthAudioProcessor source;
+            auto& sourceState = source.getValueTreeState();
+            sourceState.getParameter(coolsynth::parameters::ids::arpEnabled)->setValueNotifyingHost(1.0f);
+            sourceState.getParameter(coolsynth::parameters::ids::delayMix)->setValueNotifyingHost(0.42f);
+
+            auto stateXml = source.createParameterStateXml();
+            expect(stateXml != nullptr);
+
+            auto patchXml = coolsynth::presets::createWrappedPatchXml(*stateXml,
+                                                                      source.getParameterStateTypeName());
+            expect(patchXml != nullptr);
+
+            auto tempDir = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                               .getChildFile("CoolSynthPatchStateTests");
+            tempDir.createDirectory();
+            auto patchFile = tempDir.getChildFile("round-trip-test" + juce::String(coolsynth::presets::defaultPatchExtension));
+            patchFile.deleteFile();
+
+            auto writeResult = coolsynth::presets::writePatchFile(patchFile, *patchXml);
+            expect(writeResult.succeeded());
+            expect(patchFile.existsAsFile());
+
+            auto readResult = coolsynth::presets::readPatchFile(patchFile,
+                                                                source.getParameterStateTypeName());
+            expect(readResult.succeeded());
+            expect(readResult.parameterStateXml != nullptr);
+
+            if (readResult.parameterStateXml != nullptr)
+            {
+                SynthAudioProcessor target;
+                expect(target.applyParameterStateXml(*readResult.parameterStateXml));
+                expectWithinAbsoluteError(target.getValueTreeState().getParameter(coolsynth::parameters::ids::arpEnabled)->getValue(),
+                                          1.0f,
+                                          0.0001f);
+                expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::delayMix)->load(),
+                                          0.42f,
+                                          0.0001f);
+            }
+
+            patchFile.deleteFile();
+            tempDir.deleteRecursively();
+        }
     }
 };
 
