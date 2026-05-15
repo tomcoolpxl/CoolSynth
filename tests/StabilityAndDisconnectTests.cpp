@@ -2245,6 +2245,468 @@ public:
     }
 };
 
+class V2AudioQualityTests final : public juce::UnitTest
+{
+public:
+    V2AudioQualityTests() : juce::UnitTest("V2AudioQuality", "CoolSynth") {}
+
+    void runTest() override
+    {
+        // B3: Extreme cutoff-mod values must not produce inf/nan or filter instability.
+        beginTest("cutoff_mod_clamp_finite");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 512, 2);
+
+            auto params = makeEngineParameters();
+            params.filter.envelopeAmount    = 1.0f;   // +84 semitones max
+            params.lfo.filterCutoffDepth    = 1.0f;   // +60 semitones max
+            params.polyMod.oscBToFilterCutoff = 1.0f;
+            params.polyMod.envToFilterCutoff  = 1.0f; // +60 semitones combined
+            params.performance.velocityToFilter = 1.0f; // +24 semitones
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 512);
+            for (int b = 0; b < 200; ++b)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                     : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              params);
+                expectBufferFiniteAndBounded(*this, buffer, 20.0f);
+            }
+        }
+
+        // B4: Q=25 with cutoff sweep must stay below a safe peak bound.
+        beginTest("filter_stability_q25");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto params = makeEngineParameters();
+            params.filter.resonanceNormalized = 1.0f; // Q=25
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            float maxPeak = 0.0f;
+
+            for (int b = 0; b < 100; ++b)
+            {
+                params.filter.cutoffHz = 200.0f + (20000.0f - 200.0f)
+                    * static_cast<float>(b) / 100.0f;
+                buffer.clear();
+                engine.render(buffer,
+                              b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                     : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              params);
+                expectBufferFiniteAndBounded(*this, buffer, 20.0f);
+                if (b > 2)
+                    maxPeak = juce::jmax(maxPeak, computePeakAbs(buffer, 0, buffer.getNumSamples()));
+            }
+
+            // With B4 input-gain compensation (1/sqrt(Q)) the resonance peak is bounded.
+            expect(maxPeak < 6.0f, "Q=25 with B4 compensation must stay below 6.0");
+        }
+
+        // B4: All Q values must produce bounded output (regression guard).
+        beginTest("filter_loudness_vs_Q");
+        {
+            const std::array<float, 4> resonanceVals { 0.0f, 0.56f, 0.84f, 1.0f }; // ~Q=0.7,5,15,25
+
+            for (int qi = 0; qi < 4; ++qi)
+            {
+                coolsynth::synth::SynthEngineV2 engine;
+                engine.prepare(48000.0, 256, 2);
+
+                auto params = makeEngineParameters();
+                params.filter.resonanceNormalized = resonanceVals[static_cast<size_t>(qi)];
+                params.filter.cutoffHz = 1000.0f;
+
+                std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                    { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
+                }};
+
+                juce::AudioBuffer<float> buffer(2, 256);
+                float maxPeak = 0.0f;
+
+                for (int b = 0; b < 60; ++b)
+                {
+                    buffer.clear();
+                    engine.render(buffer,
+                                  b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                         : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                                  params);
+                    if (b > 5)
+                        maxPeak = juce::jmax(maxPeak, computePeakAbs(buffer, 0, buffer.getNumSamples()));
+                }
+
+                expect(maxPeak < 6.0f, "all Q values must produce bounded output with B4 compensation");
+            }
+        }
+
+        // B6: Unison mode with vintageAmount=0 must produce valid audio (not silence).
+        beginTest("unison_vintage_zero_produces_valid_audio");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto params = makeEngineParameters();
+            params.performance.playMode     = coolsynth::parameters::PlayModeChoice::unison;
+            params.performance.vintageAmount = 0.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            float maxPeak = 0.0f;
+
+            for (int b = 0; b < 20; ++b)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                     : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              params);
+                expectBufferFiniteAndBounded(*this, buffer, 10.0f);
+                if (b > 2)
+                    maxPeak = juce::jmax(maxPeak, computePeakAbs(buffer, 0, buffer.getNumSamples()));
+            }
+
+            expect(maxPeak > 0.01f, "unison with vintage=0 must produce audible output");
+        }
+
+        // B1: PolyBLEP saw must suppress aliasing at A4 (440 Hz).
+        beginTest("aliasing_A4_saw");
+        {
+            runAliasingTest(*this, 69, -50.0f, "A4 saw alias must be ≤ -50 dB vs fundamental");
+        }
+
+        // B1: PolyBLEP saw must suppress aliasing at A7 (3520 Hz).
+        beginTest("aliasing_A7_saw");
+        {
+            runAliasingTest(*this, 105, -30.0f, "A7 saw alias must be ≤ -30 dB vs fundamental");
+        }
+
+        // B1: Triangle leaky integrator must not accumulate DC over a long sustained hold.
+        beginTest("triangle_no_dc");
+        {
+            coolsynth::synth::SynthVoice voice;
+            juce::dsp::ProcessSpec spec { 48000.0, 256, 1 };
+            voice.prepare(spec);
+
+            coolsynth::synth::OscillatorParametersV2 oscA;
+            oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::triangle;
+            oscA.level = 1.0f;
+            coolsynth::synth::OscillatorParametersV2 oscB;
+            oscB.level = 0.0f;
+            voice.setNextVoiceSourceParameters(oscA, oscB, {});
+            voice.setNextEnvelopeParameters({ 0.001f, 0.01f, 1.0f, 10.0f });
+            voice.setNextFilterParameters({ 20000.0f, 0.0f, 0.0f,
+                                            coolsynth::parameters::FilterKeyTrackingMode::off });
+            voice.startNote(69, 1.0f);
+
+            const int blockSize    = 256;
+            const int totalBlocks  = (5 * 60 * 48000) / blockSize;  // 5 minutes
+            const int measureStart = totalBlocks - (48000 / blockSize); // last 1 second
+
+            juce::AudioBuffer<float> buf(1, blockSize);
+            double dcAccum = 0.0;
+            int    dcCount = 0;
+
+            for (int b = 0; b < totalBlocks; ++b)
+            {
+                buf.clear();
+                voice.renderNextBlock(buf, 0, blockSize);
+
+                if (b >= measureStart)
+                {
+                    const float* data = buf.getReadPointer(0);
+                    for (int s = 0; s < blockSize; ++s)
+                    {
+                        dcAccum += static_cast<double>(data[s]);
+                        ++dcCount;
+                    }
+                }
+            }
+
+            const double dc = dcAccum / static_cast<double>(juce::jmax(1, dcCount));
+            expect(std::abs(dc) < 1e-3, "triangle must have DC < 1e-3 after 5-minute hold");
+        }
+
+        // B2: Hard-sync must not produce large alias spikes near Nyquist.
+        beginTest("hard_sync_alias_bounded");
+        {
+            runSyncAliasingTest(*this);
+        }
+
+        // B5: Mono and unison modes both produce audible, bounded output.
+        beginTest("polyphony_loudness_consistency");
+        {
+            auto params = makeEngineParameters();
+            params.filter.cutoffHz = 20000.0f;
+
+            const float monoRms   = measureSteadyStateRms(params, coolsynth::parameters::PlayModeChoice::poly);
+            const float unisonRms = measureSteadyStateRms(params, coolsynth::parameters::PlayModeChoice::unison);
+
+            expect(monoRms > 0.005f,  "mono single voice must be audible");
+            expect(unisonRms > 0.005f, "unison must be audible");
+
+            // With B5, mono gain = 1.0 and unison gain = 1/sqrt(8) ≈ 0.354.
+            // Unison voices sum somewhat incoherently due to random start phases.
+            // Expect mono louder, but within a reasonable range (< 20 dB apart).
+            const float ratio = monoRms / juce::jmax(1e-9f, unisonRms);
+            expect(ratio < 10.0f, "mono should not be more than ~20 dB louder than 8-voice unison");
+            expect(ratio > 0.05f, "mono should not be substantially quieter than unison");
+        }
+    }
+
+private:
+    static coolsynth::synth::BlockRenderParametersV2 makeEngineParameters() noexcept
+    {
+        coolsynth::synth::BlockRenderParametersV2 params;
+        params.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+        params.oscA.level = 1.0f;
+        params.oscB.level = 0.0f;
+        params.ampEnvelope = makeStressEnvelope();
+        params.filterEnvelope = makeStressEnvelope();
+        params.filter.cutoffHz = 8000.0f;
+        params.filter.resonanceNormalized = 0.1f;
+        params.filter.envelopeAmount = 0.0f;
+        params.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+        params.delay.enabled = false;
+        params.masterGainLinear = 1.0f;
+        return params;
+    }
+
+    static float measureSteadyStateRms(
+        coolsynth::synth::BlockRenderParametersV2 params,
+        coolsynth::parameters::PlayModeChoice mode) noexcept
+    {
+        coolsynth::synth::SynthEngineV2 engine;
+        engine.prepare(48000.0, 256, 2);
+        params.performance.playMode = mode;
+
+        std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+            { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
+        }};
+
+        juce::AudioBuffer<float> buf(2, 256);
+        double rmsAccum = 0.0;
+        int    rmsSamples = 0;
+
+        for (int b = 0; b < 80; ++b)
+        {
+            buf.clear();
+            engine.render(buf,
+                          b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                 : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                          params);
+            if (b > 10)
+            {
+                const float* data = buf.getReadPointer(0);
+                for (int s = 0; s < 256; ++s)
+                {
+                    rmsAccum += static_cast<double>(data[s]) * static_cast<double>(data[s]);
+                    ++rmsSamples;
+                }
+            }
+        }
+
+        return static_cast<float>(
+            std::sqrt(rmsAccum / static_cast<double>(juce::jmax(1, rmsSamples))));
+    }
+
+    // Render a sustained saw, apply Hann-windowed FFT, assert alias energy
+    // above Nyquist-50 Hz is below maxDbThreshold dB relative to the fundamental.
+    static void runAliasingTest(juce::UnitTest& test,
+                                int midiNote,
+                                float maxDbThreshold,
+                                const char* label)
+    {
+        const int sampleRate    = 48000;
+        const int blockSize     = 256;
+        const int fftOrder      = 13;               // 8192 point FFT
+        const int fftSize       = 1 << fftOrder;
+        const int settleBlocks  = 20;
+        const int captureBlocks = (fftSize / blockSize) + 2;
+        const int totalBlocks   = settleBlocks + captureBlocks;
+
+        coolsynth::synth::SynthEngineV2 engine;
+        engine.prepare(static_cast<double>(sampleRate), blockSize, 2);
+
+        auto params = makeEngineParameters();
+        params.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+        params.filter.cutoffHz = 20000.0f;         // near-transparent; let raw osc through
+        params.filter.resonanceNormalized = 0.0f;
+
+        std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+            { coolsynth::synth::EngineMidiEventType::noteOn, 0, static_cast<uint8_t>(midiNote), 1.0f }
+        }};
+
+        std::vector<float> captured;
+        captured.reserve(static_cast<size_t>(captureBlocks * blockSize));
+
+        juce::AudioBuffer<float> buf(2, blockSize);
+        for (int b = 0; b < totalBlocks; ++b)
+        {
+            buf.clear();
+            engine.render(buf,
+                          b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                 : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                          params);
+            if (b >= settleBlocks)
+            {
+                const float* data = buf.getReadPointer(0);
+                for (int s = 0; s < blockSize; ++s)
+                    captured.push_back(data[s]);
+            }
+        }
+
+        if (static_cast<int>(captured.size()) < fftSize)
+        {
+            test.expect(false, "not enough captured samples for FFT");
+            return;
+        }
+
+        std::vector<float> fftBuf(static_cast<size_t>(fftSize * 2), 0.0f);
+        for (int i = 0; i < fftSize; ++i)
+            fftBuf[static_cast<size_t>(i)] = captured[static_cast<size_t>(i)];
+
+        juce::dsp::WindowingFunction<float> window(
+            static_cast<size_t>(fftSize), juce::dsp::WindowingFunction<float>::hann);
+        window.multiplyWithWindowingTable(fftBuf.data(), static_cast<size_t>(fftSize));
+
+        juce::dsp::FFT fft(fftOrder);
+        fft.performFrequencyOnlyForwardTransform(fftBuf.data());
+
+        const float noteFreqHz = 440.0f
+            * std::pow(2.0f, static_cast<float>(midiNote - 69) / 12.0f);
+        const int fundamentalBin = static_cast<int>(
+            std::round(noteFreqHz * static_cast<float>(fftSize) / static_cast<float>(sampleRate)));
+
+        float fundamentalMag = 0.0f;
+        for (int bin = juce::jmax(1, fundamentalBin - 3);
+             bin <= juce::jmin(fftSize / 2 - 1, fundamentalBin + 3); ++bin)
+            fundamentalMag = juce::jmax(fundamentalMag, fftBuf[static_cast<size_t>(bin)]);
+
+        if (fundamentalMag <= 0.0f)
+        {
+            test.expect(false, "fundamental not found in spectrum");
+            return;
+        }
+
+        // Energy above Nyquist - 50 Hz (alias region).
+        const int aliasBinStart = static_cast<int>(std::ceil(
+            (static_cast<float>(sampleRate) / 2.0f - 50.0f)
+            * static_cast<float>(fftSize) / static_cast<float>(sampleRate)));
+
+        float maxAliasMag = 0.0f;
+        for (int bin = aliasBinStart; bin < fftSize / 2; ++bin)
+            maxAliasMag = juce::jmax(maxAliasMag, fftBuf[static_cast<size_t>(bin)]);
+
+        const float ratioDb = 20.0f * std::log10(maxAliasMag / fundamentalMag + 1e-30f);
+        test.expect(ratioDb <= maxDbThreshold, label);
+    }
+
+    // Render a hard-sync patch and assert alias content near Nyquist is bounded.
+    static void runSyncAliasingTest(juce::UnitTest& test)
+    {
+        const int sampleRate    = 48000;
+        const int blockSize     = 256;
+        const int fftOrder      = 13;
+        const int fftSize       = 1 << fftOrder;
+        const int settleBlocks  = 20;
+        const int captureBlocks = (fftSize / blockSize) + 2;
+        const int totalBlocks   = settleBlocks + captureBlocks;
+
+        coolsynth::synth::SynthEngineV2 engine;
+        engine.prepare(static_cast<double>(sampleRate), blockSize, 2);
+
+        auto params = makeEngineParameters();
+        params.oscA.waveShape    = coolsynth::parameters::OscillatorWaveShape::saw;
+        params.oscA.syncEnabled  = true;
+        params.oscA.octaveIndex  = 3;   // ~880 Hz carrier
+        params.oscB.waveShape    = coolsynth::parameters::OscillatorWaveShape::saw;
+        params.oscB.level        = 0.0f; // silent — drives sync only
+        params.oscB.octaveIndex  = 1;    // ~220 Hz sync master
+        params.filter.cutoffHz   = 20000.0f;
+        params.filter.resonanceNormalized = 0.0f;
+
+        std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+            { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
+        }};
+
+        std::vector<float> captured;
+        captured.reserve(static_cast<size_t>(captureBlocks * blockSize));
+
+        juce::AudioBuffer<float> buf(2, blockSize);
+        for (int b = 0; b < totalBlocks; ++b)
+        {
+            buf.clear();
+            engine.render(buf,
+                          b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                 : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                          params);
+            if (b >= settleBlocks)
+            {
+                const float* data = buf.getReadPointer(0);
+                for (int s = 0; s < blockSize; ++s)
+                    captured.push_back(data[s]);
+            }
+        }
+
+        if (static_cast<int>(captured.size()) < fftSize)
+        {
+            test.expect(false, "not enough captured samples for sync FFT");
+            return;
+        }
+
+        std::vector<float> fftBuf(static_cast<size_t>(fftSize * 2), 0.0f);
+        for (int i = 0; i < fftSize; ++i)
+            fftBuf[static_cast<size_t>(i)] = captured[static_cast<size_t>(i)];
+
+        juce::dsp::WindowingFunction<float> window(
+            static_cast<size_t>(fftSize), juce::dsp::WindowingFunction<float>::hann);
+        window.multiplyWithWindowingTable(fftBuf.data(), static_cast<size_t>(fftSize));
+
+        juce::dsp::FFT fft(fftOrder);
+        fft.performFrequencyOnlyForwardTransform(fftBuf.data());
+
+        // Use peak below 12 kHz as the reference "signal" level.
+        const int signalBinEnd = static_cast<int>(
+            12000.0f * static_cast<float>(fftSize) / static_cast<float>(sampleRate));
+        float signalMag = 0.0f;
+        for (int bin = 1; bin < signalBinEnd; ++bin)
+            signalMag = juce::jmax(signalMag, fftBuf[static_cast<size_t>(bin)]);
+
+        if (signalMag <= 0.0f)
+        {
+            test.expect(false, "no signal found in sync spectrum");
+            return;
+        }
+
+        const int aliasBinStart = static_cast<int>(std::ceil(
+            (static_cast<float>(sampleRate) / 2.0f - 50.0f)
+            * static_cast<float>(fftSize) / static_cast<float>(sampleRate)));
+
+        float maxAliasMag = 0.0f;
+        for (int bin = aliasBinStart; bin < fftSize / 2; ++bin)
+            maxAliasMag = juce::jmax(maxAliasMag, fftBuf[static_cast<size_t>(bin)]);
+
+        const float ratioDb = 20.0f * std::log10(maxAliasMag / signalMag + 1e-30f);
+        test.expect(ratioDb <= -35.0f,
+                    "hard-sync alias content must be ≤ -35 dB vs signal below 12 kHz");
+    }
+};
+
 static StandaloneMidiInputTests standaloneMidiInputTests;
 static DspRegressionTests dspRegressionTests;
 static V2AllocatorTests v2AllocatorTests;
@@ -2254,3 +2716,4 @@ static V2FilterAndEnvelopeTests v2FilterAndEnvelopeTests;
 static V2PolyphonyHeadroomTests v2PolyphonyHeadroomTests;
 static V2ArpeggiatorTests v2ArpeggiatorTests;
 static V2ScopeFifoTests v2ScopeFifoTests;
+static V2AudioQualityTests v2AudioQualityTests;

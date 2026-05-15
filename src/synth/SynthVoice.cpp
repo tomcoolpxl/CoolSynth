@@ -2,6 +2,65 @@
 
 #include <cmath>
 
+namespace
+{
+    // Standard 2-point PolyBLEP correction. t in [0,1), dt = phase increment per sample.
+    static float polyBlep(float t, float dt) noexcept
+    {
+        if (dt <= 0.0f) return 0.0f;
+        if (t < dt)
+        {
+            t /= dt;
+            return t + t - t * t - 1.0f;
+        }
+        if (t > 1.0f - dt)
+        {
+            t = (t - 1.0f) / dt;
+            return t * t + t + t + 1.0f;
+        }
+        return 0.0f;
+    }
+
+    // Bandlimited wave renderer using PolyBLEP for saw and pulse discontinuities
+    // and a leaky integrator for triangle. triState persists between samples.
+    static float renderBandlimitedWaveSample(
+        float phase, float dt,
+        coolsynth::parameters::OscillatorWaveShape shape,
+        float pulseWidth, float& triState) noexcept
+    {
+        using WS = coolsynth::parameters::OscillatorWaveShape;
+        switch (shape)
+        {
+            case WS::saw:
+            {
+                float y = 2.0f * phase - 1.0f;
+                y -= polyBlep(phase, dt);
+                return y;
+            }
+            case WS::pulse:
+            {
+                const float pw = juce::jlimit(0.05f, 0.95f, pulseWidth);
+                float y = phase < pw ? (1.0f - pw) : -pw;
+                y += polyBlep(phase, dt);
+                y -= polyBlep(std::fmod(phase - pw + 1.0f, 1.0f), dt);
+                return y;
+            }
+            case WS::triangle:
+            {
+                // Leaky integrator of bandlimited square; leak factor prevents DC drift.
+                float sq = phase < 0.5f ? 1.0f : -1.0f;
+                sq += polyBlep(phase, dt);
+                sq -= polyBlep(std::fmod(phase + 0.5f, 1.0f), dt);
+                triState = 4.0f * dt * sq + (1.0f - 4.0f * dt) * triState;
+                return triState * 0.8f;
+            }
+            case WS::sine:
+            default:
+                return std::sin(phase * juce::MathConstants<float>::twoPi);
+        }
+    }
+} // namespace
+
 namespace coolsynth::synth
 {
     SynthVoice::SynthVoice()
@@ -230,7 +289,7 @@ namespace coolsynth::synth
             const float envValue = ampEnvelope.getNextSample();
             const float filterEnvValue = filterEnvelope.getNextSample();
 
-            const float lfoBaseSample = renderWaveSample(lfoPhase, lfoOscShape, 0.5f);
+            const float lfoBaseSample = renderNaiveWaveSample(lfoPhase, lfoOscShape, 0.5f);
             const float lfoSample = lfoBaseSample * lfoModWheelDepth;
 
             lfoPhase += lfoPhaseIncrement;
@@ -246,11 +305,14 @@ namespace coolsynth::synth
             if (! nextOscillatorBParameters.lowFrequencyMode)
                 oscBState.frequencyHz *= commonPitchRatio;
 
+            oscBState.phaseIncrement = juce::jlimit(0.0f, 0.5f, oscBState.frequencyHz / sampleRateFloat);
             oscBState.pulseWidth = juce::jlimit(0.05f, 0.95f, nextOscillatorBParameters.pulseWidth);
             oscBState.waveShape = nextOscillatorBParameters.waveShape;
 
-            const auto oscBWrapped = oscBState.phase
-                                     + juce::jlimit(0.0f, 0.5f, oscBState.frequencyHz / sampleRateFloat) >= 1.0f;
+            const bool oscBWrapped = oscBState.phase + oscBState.phaseIncrement >= 1.0f;
+            const float bWrapFrac = (oscBWrapped && oscBState.phaseIncrement > 0.0f)
+                ? (oscBState.phase + oscBState.phaseIncrement - 1.0f) / oscBState.phaseIncrement
+                : 0.0f;
             const float oscBSample = renderOscillatorSample(oscBState, false);
 
             const float polyModOscB = oscBSample;
@@ -262,6 +324,7 @@ namespace coolsynth::synth
             const float oscAPitchRatio = std::pow(2.0f, oscATotalPitchSemis / 12.0f);
 
             oscAState.frequencyHz = baseOscAFreqRaw * oscAPitchRatio * commonPitchRatio;
+            oscAState.phaseIncrement = juce::jlimit(0.0f, 0.5f, oscAState.frequencyHz / sampleRateFloat);
 
             const float polyModOscAPw = (polyModOscB * nextPolyModParameters.oscBToPulseWidth
                                           + polyModEnv * nextPolyModParameters.envToPulseWidth) * 0.5f;
@@ -271,8 +334,19 @@ namespace coolsynth::synth
                                                 nextOscillatorAParameters.pulseWidth + polyModOscAPw + lfoOscAPw);
             oscAState.waveShape = nextOscillatorAParameters.waveShape;
 
-            const float oscASample = renderOscillatorSample(oscAState,
-                                                            nextOscillatorAParameters.syncEnabled && oscBWrapped);
+            const float phaseBeforeAReset = oscAState.phase;
+            float oscASample = renderOscillatorSample(oscAState,
+                                                      nextOscillatorAParameters.syncEnabled && oscBWrapped);
+
+            // B2: smooth the sync discontinuity — PolyBLEP correction for the hard-reset step.
+            if (nextOscillatorAParameters.syncEnabled && oscBWrapped && oscAState.phaseIncrement > 0.0f)
+            {
+                const float before = renderNaiveWaveSample(phaseBeforeAReset,
+                                                           oscAState.waveShape, oscAState.pulseWidth);
+                const float after  = renderNaiveWaveSample(0.0f,
+                                                           oscAState.waveShape, oscAState.pulseWidth);
+                oscASample += polyBlep(bWrapFrac, oscAState.phaseIncrement) * (after - before);
+            }
 
             const auto oscALevel = juce::jlimit(0.0f, 1.0f, nextOscillatorAParameters.level);
             const auto oscBLevel = juce::jlimit(0.0f, 1.0f, nextOscillatorBParameters.level);
@@ -292,15 +366,16 @@ namespace coolsynth::synth
             const float lfoCutoffSemis = lfoSample * nextLfoParameters.filterCutoffDepth * 60.0f;
             const float envCutoffSemis = filterEnvValue * nextFilterParameters.envelopeAmount * 84.0f;
             const float velFilterSemis = nextPerformanceParameters.velocityToFilter * velocityGain * 24.0f;
-            const float cutoffModRatio = std::pow(2.0f,
-                                                  (envCutoffSemis + lfoCutoffSemis + polyModCutoffSemis
-                                                   + velFilterSemis) / 12.0f);
+            const float cutoffModSumSemis = juce::jlimit(-120.0f, 120.0f,
+                envCutoffSemis + lfoCutoffSemis + polyModCutoffSemis + velFilterSemis);
+            const float cutoffModRatio = std::exp2(cutoffModSumSemis / 12.0f);
 
             const float baseCutoffSmoothed = cutoffHzSmoother.getNextValue();
             lowPassFilter.setCutoffFrequency(clampCutoffToPreparedRange(baseCutoffSmoothed * cutoffModRatio));
-            lowPassFilter.setResonance(resonanceQSmoother.getNextValue());
-
-            const float filteredValue = lowPassFilter.processSample(0, oscValue);
+            const float currentQ = resonanceQSmoother.getNextValue();
+            lowPassFilter.setResonance(currentQ);
+            const float filterInputGain = juce::jmin(1.0f, 1.0f / std::sqrt(currentQ));
+            const float filteredValue = lowPassFilter.processSample(0, oscValue * filterInputGain);
 
             const float ampVelocityMult = 1.0f - nextPerformanceParameters.velocityToAmp
                                           + (velocityGain * nextPerformanceParameters.velocityToAmp);
@@ -388,14 +463,11 @@ namespace coolsynth::synth
         if (forcePhaseReset)
             oscillator.phase = 0.0f;
 
-        const auto sample = renderWaveSample(oscillator.phase, oscillator.waveShape, oscillator.pulseWidth);
-        if (currentSampleRate <= 0.0)
-            return sample;
+        const float sample = renderBandlimitedWaveSample(
+            oscillator.phase, oscillator.phaseIncrement,
+            oscillator.waveShape, oscillator.pulseWidth, oscillator.triState);
 
-        const auto phaseIncrement = juce::jlimit(0.0f,
-                                                 0.5f,
-                                                 oscillator.frequencyHz / static_cast<float>(currentSampleRate));
-        oscillator.phase += phaseIncrement;
+        oscillator.phase += oscillator.phaseIncrement;
         oscillator.phase -= std::floor(oscillator.phase);
         return sample;
     }
@@ -438,9 +510,9 @@ namespace coolsynth::synth
         return randomState;
     }
 
-    float SynthVoice::renderWaveSample(float phase,
-                                       coolsynth::parameters::OscillatorWaveShape waveShape,
-                                       float pulseWidth) noexcept
+    float SynthVoice::renderNaiveWaveSample(float phase,
+                                            coolsynth::parameters::OscillatorWaveShape waveShape,
+                                            float pulseWidth) noexcept
     {
         switch (waveShape)
         {
@@ -520,6 +592,10 @@ namespace coolsynth::synth
                                      65535.0f,
                                      0.0f,
                                      1.0f);
+        oscAState.triState = 0.0f;
+        oscBState.triState = 0.0f;
+        oscAState.phaseIncrement = 0.0f;
+        oscBState.phaseIncrement = 0.0f;
     }
 
     juce::ADSR::Parameters SynthVoice::makeJuceEnvelopeParameters() const noexcept

@@ -54,7 +54,9 @@ namespace coolsynth::synth
         {
             float phase = 0.0f;
             float frequencyHz = 0.0f;
+            float phaseIncrement = 0.0f;
             float pulseWidth = 0.5f;
+            float triState = 0.0f;
             coolsynth::parameters::OscillatorWaveShape waveShape =
                 coolsynth::parameters::OscillatorWaveShape::saw;
         };
@@ -68,9 +70,9 @@ namespace coolsynth::synth
         float consumeNoteStartRamp() noexcept;
         float nextNoiseSample() noexcept;
         uint32_t advanceRandomState() noexcept;
-        static float renderWaveSample(float phase,
-                                      coolsynth::parameters::OscillatorWaveShape waveShape,
-                                      float pulseWidth) noexcept;
+        static float renderNaiveWaveSample(float phase,
+                                           coolsynth::parameters::OscillatorWaveShape waveShape,
+                                           float pulseWidth) noexcept;
         static coolsynth::parameters::OscillatorWaveShape lfoShapeToOscShape(
             coolsynth::parameters::LfoWaveShape shape) noexcept;
         static float mapNormalizedResonanceToQ(float normalized) noexcept;

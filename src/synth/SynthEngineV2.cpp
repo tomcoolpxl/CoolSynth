@@ -565,7 +565,7 @@ namespace coolsynth::synth
             slot.voice.setNextModulationParameters(parameters.lfo, parameters.polyMod, parameters.performance);
             slot.voice.setGlobalLfoState(globalLfoPhase, modWheelValue);
             assignVoicePanForIndex(slot, i, totalVoices, parameters.performance.panSpread);
-            const float unisonVintage = juce::jmax(parameters.performance.vintageAmount, 0.35f);
+            const float unisonVintage = parameters.performance.vintageAmount;
             assignVoiceVintageForIndex(slot, i, unisonVintage);
             slot.voice.startNote(noteNumber, velocity);
             slot.voice.setGlideFromNote(glideFromNote, parameters.performance.glideTimeSeconds);
@@ -654,9 +654,12 @@ namespace coolsynth::synth
     void SynthEngineV2::applyMasterGain(juce::AudioBuffer<float>& outputBuffer,
                                         float targetLinearGain) noexcept
     {
-        const float polyphonyHeadroom = 0.35f;
-
-        masterGainLinear.setTargetValue(targetLinearGain * polyphonyHeadroom);
+        int activeCount = 0;
+        for (const auto& slot : voices)
+            if (slot.voice.isActive())
+                ++activeCount;
+        const float headroom = 1.0f / std::sqrt(static_cast<float>(juce::jmax(1, activeCount)));
+        masterGainLinear.setTargetValue(targetLinearGain * headroom);
         masterGainLinear.applyGain(outputBuffer, outputBuffer.getNumSamples());
     }
 
