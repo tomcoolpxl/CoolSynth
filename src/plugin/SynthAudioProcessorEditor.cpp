@@ -1344,9 +1344,10 @@ void SynthAudioProcessorEditor::resized()
     auto titleArea = area.removeFromTop(48);
     auto logoArea = titleArea.removeFromLeft(248);
     
-    // Shifted right by an extra 40px and narrowed to ~384px (3 x 128px) to feel more 4:3-ish
-    titleArea.removeFromLeft(40);
-    visualizer.setBounds(titleArea.removeFromLeft(400).reduced(0, 4));
+    // Expanded to 640px to fit 5 panes (120px each + 10px gaps)
+    // Shifted 60px right to clear logo tail space
+    titleArea.removeFromLeft(60);
+    visualizer.setBounds(titleArea.removeFromLeft(640).reduced(0, 4));
 
     if (titleLogoDrawable != nullptr)
     {
