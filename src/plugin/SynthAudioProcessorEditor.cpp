@@ -203,8 +203,8 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     parameterRefs.revMix = apvts.getParameter(ids::reverbMix);
     parameterRefs.outGain = apvts.getParameter(ids::masterGainDb);
 
-    titleLogoDrawable = juce::Drawable::createFromImageData(BinaryData::coolsynthlogo_png,
-                                                            BinaryData::coolsynthlogo_pngSize);
+    titleLogoDrawable = juce::Drawable::createFromImageData(BinaryData::coolsynthlogo2_png,
+                                                            BinaryData::coolsynthlogo2_pngSize);
     if (titleLogoDrawable != nullptr)
         addAndMakeVisible(*titleLogoDrawable);
 
@@ -573,42 +573,79 @@ addAndMakeVisible(mixSection);
                                           "Use this to match loudness without changing\n"
                                           "the patch balance upstream."));
 
-    setParameterTooltip(oscAWaveChoice, "Wave", "Select the waveform for oscillator A.");
+    setParameterTooltip(oscAWaveChoice, "Wave",
+                        "Choose the basic tone shape for oscillator A.\n"
+                        "Different waveforms change how bright, hollow,\n"
+                        "or smooth the sound starts out.");
     oscAWaveChoice.setOptionTooltip(0, makeTooltipText("Pulse",
-                                                       "A hollow, buzzy waveform with an adjustable width.\n"
-                                                       "Great for basses, leads, and animated PWM sounds."));
-    oscAWaveChoice.setOptionTooltip(1, makeTooltipText("Tri",
-                                                       "A softer, rounder waveform with fewer bright overtones.\n"
-                                                       "Useful for gentle leads, flutes, and smoother modulation."));
+                                                       "Pulse is a hollow, buzzy waveform.\n"
+                                                       "Its width can be changed for thinner or fatter tone.\n"
+                                                       "Great for basses, leads, and animated movement."));
+    oscAWaveChoice.setOptionTooltip(1, makeTooltipText("Tri - Triangle",
+                                                       "Triangle sounds softer and rounder than saw or pulse.\n"
+                                                       "Useful for gentle leads and smoother tones."));
     oscAWaveChoice.setOptionTooltip(2, makeTooltipText("Saw",
-                                                       "A bright, harmonically rich waveform.\n"
-                                                       "This is the classic starting point for many synth brass,\n"
-                                                       "strings, basses, and leads."));
-    setParameterTooltip(oscAOctaveKnob, "Octave", "Shift oscillator A up or down by octaves.");
-    setParameterTooltip(oscAFineKnob, "Fine", "Fine tune oscillator A in cents.");
-    setParameterTooltip(oscAPwKnob, "Pulse Width", "Adjust oscillator A pulse width.");
-    setParameterTooltip(oscASyncToggle, "Sync", "Enable hard sync so oscillator A resets from oscillator B.");
-    setParameterTooltip(oscBWaveChoice, "Wave", "Select the waveform for oscillator B.");
+                                                       "Saw is bright and rich in harmonics.\n"
+                                                       "It is the classic starting point for synth brass,\n"
+                                                       "strings, basses, and many leads."));
+    setParameterTooltip(oscAOctaveKnob, "Octave",
+                        "Move oscillator A up or down in whole octaves.\n"
+                        "Use it to set the register before fine tuning.");
+    setParameterTooltip(oscAFineKnob, "Fine",
+                        "Fine tune oscillator A in small pitch steps.\n"
+                        "Tiny offsets between oscillators add beating and width.");
+    setParameterTooltip(oscAPwKnob, "Pulse Width",
+                        "Change the width of oscillator A's pulse wave.\n"
+                        "This matters most when the waveform is set to Pulse.");
+    setParameterTooltip(oscASyncToggle, "Sync",
+                        "Hard sync forces oscillator A to restart from oscillator B.\n"
+                        "This gives sharper, more tearing sweeps when pitch moves.");
+    setParameterTooltip(oscBWaveChoice, "Wave",
+                        "Choose the basic tone shape for oscillator B.\n"
+                        "This oscillator can act as a second voice or a modulator.");
     oscBWaveChoice.setOptionTooltip(0, makeTooltipText("Pulse",
-                                                       "A hollow, buzzy waveform with an adjustable width.\n"
-                                                       "Layer it with oscillator A for thicker classic synth tones."));
-    oscBWaveChoice.setOptionTooltip(1, makeTooltipText("Tri",
-                                                       "A softer waveform with less bite than saw or pulse.\n"
-                                                       "Good for supporting tone or smoother modulation duties."));
+                                                       "Pulse is a hollow, buzzy waveform.\n"
+                                                       "Layer it with oscillator A for thicker classic synth tone.\n"
+                                                       "Its width can also be modulated for animation."));
+    oscBWaveChoice.setOptionTooltip(1, makeTooltipText("Tri - Triangle",
+                                                       "Triangle has less bite than saw or pulse.\n"
+                                                       "Good for support tone or gentler modulation."));
     oscBWaveChoice.setOptionTooltip(2, makeTooltipText("Saw",
-                                                       "A bright, full waveform rich in harmonics.\n"
-                                                       "Use it when you want edge, body, or strong filter sweeps."));
-    setParameterTooltip(oscBOctaveKnob, "Octave", "Shift oscillator B up or down by octaves.");
-    setParameterTooltip(oscBFineKnob, "Fine", "Fine tune oscillator B in cents.");
-    setParameterTooltip(oscBPwKnob, "Pulse Width", "Adjust oscillator B pulse width.");
-    setParameterTooltip(oscBLoFreqToggle, "Lo Freq", "Put oscillator B into low-frequency mode for modulation duties.");
-    setParameterTooltip(mixOscAKnob, "Osc A", "Set the level of oscillator A in the mixer.");
-    setParameterTooltip(mixOscBKnob, "Osc B", "Set the level of oscillator B in the mixer.");
-    setParameterTooltip(mixNoiseKnob, "Noise", "Set the amount of noise mixed into the voice.");
-    setParameterTooltip(fltCutoffKnob, "Cutoff", "Set the filter cutoff frequency.");
-    setParameterTooltip(fltResKnob, "Resonance", "Boost frequencies around the filter cutoff.");
-    setParameterTooltip(fltEnvAmtKnob, "Env Amt", "Set how strongly the filter envelope moves cutoff.");
-    setParameterTooltip(fltKeyTrkChoice, "Key Trk", "Choose how much keyboard pitch tracks the filter cutoff.");
+                                                       "Saw is bright, full, and rich in harmonics.\n"
+                                                       "Use it when you want edge, body,\n"
+                                                       "or strong filter sweeps."));
+    setParameterTooltip(oscBOctaveKnob, "Octave",
+                        "Move oscillator B up or down in whole octaves.\n"
+                        "Use it to separate the two oscillators by register.");
+    setParameterTooltip(oscBFineKnob, "Fine",
+                        "Fine tune oscillator B in small pitch steps.\n"
+                        "A slight detune makes the pair sound wider and thicker.");
+    setParameterTooltip(oscBPwKnob, "Pulse Width",
+                        "Change the width of oscillator B's pulse wave.\n"
+                        "This only matters when oscillator B uses Pulse.");
+    setParameterTooltip(oscBLoFreqToggle, "Lo Freq - Low Frequency",
+                        "Oscillator B drops into a slow range for modulation\n"
+                        "instead of acting like a normal pitched oscillator.");
+    setParameterTooltip(mixOscAKnob, "Osc A",
+                        "Set how much oscillator A reaches the mixer.\n"
+                        "Turn it down if oscillator B or noise should dominate.");
+    setParameterTooltip(mixOscBKnob, "Osc B",
+                        "Set how much oscillator B reaches the mixer.\n"
+                        "Blend it against oscillator A to build the core tone.");
+    setParameterTooltip(mixNoiseKnob, "Noise",
+                        "Add hiss and texture to the sound.\n"
+                        "Small amounts can add bite without sounding obviously noisy.");
+    setParameterTooltip(fltCutoffKnob, "Cutoff",
+                        "Cutoff sets how much high end the low-pass filter removes.\n"
+                        "Lower values sound darker. Higher values sound brighter.");
+    setParameterTooltip(fltResKnob, "Resonance",
+                        "Resonance emphasizes frequencies near the cutoff point.\n"
+                        "It makes sweeps speak more clearly and can sound sharper.");
+    setParameterTooltip(fltEnvAmtKnob, "Env Amt - Envelope Amount",
+                        "It sets how far the filter envelope pushes the cutoff\n"
+                        "each time a note starts.");
+    setParameterTooltip(fltKeyTrkChoice, "Key Trk - Key Tracking",
+                        "It decides how much higher notes open the filter more.");
     fltKeyTrkChoice.setOptionTooltip(0, makeTooltipText("Off",
                                                         "The filter stays at the same base brightness across the keyboard.\n"
                                                         "Higher notes will not automatically open the filter."));
@@ -618,38 +655,69 @@ addAndMakeVisible(mixSection);
     fltKeyTrkChoice.setOptionTooltip(2, makeTooltipText("Full",
                                                         "Higher notes open the filter strongly as pitch rises.\n"
                                                         "This helps preserve brightness across the keyboard range."));
-    setParameterTooltip(fEnvAKnob, "F Atk", "Set filter envelope attack time.");
-    setParameterTooltip(fEnvDKnob, "F Dec", "Set filter envelope decay time.");
-    setParameterTooltip(fEnvSKnob, "F Sus", "Set filter envelope sustain level.");
-    setParameterTooltip(fEnvRKnob, "F Rel", "Set filter envelope release time.");
-    setParameterTooltip(aEnvAKnob, "A Atk", "Set amp envelope attack time.");
-    setParameterTooltip(aEnvDKnob, "A Dec", "Set amp envelope decay time.");
-    setParameterTooltip(aEnvSKnob, "A Sus", "Set amp envelope sustain level.");
-    setParameterTooltip(aEnvRKnob, "A Rel", "Set amp envelope release time.");
-    setParameterTooltip(lfoWaveChoice, "Wave", "Select the global LFO waveform.");
+    setParameterTooltip(fEnvAKnob, "F Atk - Filter Attack",
+                        "This sets how long the filter takes to open after a note starts.");
+    setParameterTooltip(fEnvDKnob, "F Dec - Filter Decay",
+                        "This sets how fast the filter falls after the attack peak.");
+    setParameterTooltip(fEnvSKnob, "F Sus - Filter Sustain",
+                        "This is the filter level held while a key stays down.");
+    setParameterTooltip(fEnvRKnob, "F Rel - Filter Release",
+                        "This sets how long the filter takes to fade after key release.");
+    setParameterTooltip(aEnvAKnob, "A Atk - Amp Attack",
+                        "This controls how fast the note reaches full volume.");
+    setParameterTooltip(aEnvDKnob, "A Dec - Amp Decay",
+                        "This controls how fast the note falls from the peak level.");
+    setParameterTooltip(aEnvSKnob, "A Sus - Amp Sustain",
+                        "This is the level held while the key stays down.");
+    setParameterTooltip(aEnvRKnob, "A Rel - Amp Release",
+                        "This controls how long the note rings out after release.");
+    setParameterTooltip(lfoWaveChoice, "Wave",
+                        "Choose the shape of the global low-frequency oscillator.\n"
+                        "That shape changes whether modulation feels smooth,\n"
+                        "stepped, or slanted.");
     lfoWaveChoice.setOptionTooltip(0, makeTooltipText("Saw",
                                                       "A repeating ramp shape.\n"
                                                       "It creates a steady sweep or rise before snapping back."));
     lfoWaveChoice.setOptionTooltip(1, makeTooltipText("Tri",
                                                       "A smooth up-and-down shape.\n"
                                                       "This is the most even and gentle modulation option."));
-    lfoWaveChoice.setOptionTooltip(2, makeTooltipText("Sqr",
-                                                      "A sharp on-off shape.\n"
+    lfoWaveChoice.setOptionTooltip(2, makeTooltipText("Sqr - Square",
+                                                      "This is a sharp on-off shape.\n"
                                                       "Use it for stepped vibrato, trill-like motion,\n"
                                                       "or abrupt filter changes."));
-    setParameterTooltip(lfoRateKnob, "Rate", "Set the global LFO speed.");
-    setParameterTooltip(lfoMwDepKnob, "MW->Dep", "Set how much mod wheel increases LFO depth.");
-    setParameterTooltip(lfoPitchKnob, "->Pitch", "Send the LFO to oscillator pitch.");
-    setParameterTooltip(lfoPwKnob, "->PW", "Send the LFO to pulse width.");
-    setParameterTooltip(lfoCutoffKnob, "->Cutoff", "Send the LFO to filter cutoff.");
-    setParameterTooltip(pmodBPitchKnob, "B->Pitch", "Send oscillator B into pitch modulation.");
-    setParameterTooltip(pmodBPwKnob, "B->PW", "Send oscillator B into pulse width modulation.");
-    setParameterTooltip(pmodBCutoffKnob, "B->Cutoff", "Send oscillator B into filter cutoff modulation.");
-    setParameterTooltip(pmodEPitchKnob, "E->Pitch", "Send the filter envelope into pitch modulation.");
-    setParameterTooltip(pmodEPwKnob, "E->PW", "Send the filter envelope into pulse width modulation.");
-    setParameterTooltip(pmodECutoffKnob, "E->Cutoff", "Send the filter envelope into filter cutoff modulation.");
-    setParameterTooltip(perfGlideKnob, "Glide", "Set note glide time.");
-    setParameterTooltip(perfModeChoice, "Mode", "Choose poly, mono, or unison voice mode.");
+    setParameterTooltip(lfoRateKnob, "Rate",
+                        "Rate sets how fast the low-frequency oscillator cycles.\n"
+                        "Faster values create quicker vibrato, wah,\n"
+                        "or pulse-width movement.");
+    setParameterTooltip(lfoMwDepKnob, "MW->Dep - Mod Wheel To Depth",
+                        "This lets the mod wheel add more LFO amount while you play.");
+    setParameterTooltip(lfoPitchKnob, "->Pitch",
+                        "Send the LFO to oscillator pitch.\n"
+                        "Small amounts create vibrato. Large amounts sound wilder.");
+    setParameterTooltip(lfoPwKnob, "->PW - To Pulse Width",
+                        "This sends the LFO to pulse width for animated hollow tone.");
+    setParameterTooltip(lfoCutoffKnob, "->Cutoff",
+                        "Send the LFO to filter cutoff.\n"
+                        "Use it for repeating wah, sweep, or tremble-like brightness changes.");
+    setParameterTooltip(pmodBPitchKnob, "B->Pitch - Oscillator B To Pitch",
+                        "This lets oscillator B modulate pitch for harsher, richer motion.");
+    setParameterTooltip(pmodBPwKnob, "B->PW - Oscillator B To Pulse Width",
+                        "This lets oscillator B bend pulse width for complex movement.");
+    setParameterTooltip(pmodBCutoffKnob, "B->Cutoff - Oscillator B To Cutoff",
+                        "This lets oscillator B modulate filter cutoff for aggressive animation.");
+    setParameterTooltip(pmodEPitchKnob, "E->Pitch - Envelope To Pitch",
+                        "This sends the envelope to pitch for punch or attack snap.");
+    setParameterTooltip(pmodEPwKnob, "E->PW - Envelope To Pulse Width",
+                        "This makes pulse width change over the life of each note.");
+    setParameterTooltip(pmodECutoffKnob, "E->Cutoff - Envelope To Cutoff",
+                        "This adds extra envelope movement to the filter cutoff itself.");
+    setParameterTooltip(perfGlideKnob, "Glide",
+                        "Glide sets how long pitch takes to slide\n"
+                        "from one note to the next.");
+    setParameterTooltip(perfModeChoice, "Mode",
+                        "Choose how voices are allocated while you play.\n"
+                        "Poly plays chords, mono plays one note,\n"
+                        "and unison stacks voices together.");
     perfModeChoice.setOptionTooltip(0, makeTooltipText("Poly",
                                                        "Each new note can sound with its own voice.\n"
                                                        "Best for chords and layered playing."));
@@ -659,7 +727,9 @@ addAndMakeVisible(mixSection);
     perfModeChoice.setOptionTooltip(2, makeTooltipText("Unison",
                                                        "Multiple voices stack on the same note.\n"
                                                        "This makes the sound thicker, wider, and heavier."));
-    setParameterTooltip(perfPrioChoice, "Priority", "Choose how mono mode resolves held-note priority.");
+    setParameterTooltip(perfPrioChoice, "Priority",
+                        "Priority matters in mono mode.\n"
+                        "It chooses which held note wins when several keys are down.");
     perfPrioChoice.setOptionTooltip(0, makeTooltipText("Last",
                                                        "The newest held note wins.\n"
                                                        "This feels natural for most lead and solo playing."));
@@ -669,46 +739,62 @@ addAndMakeVisible(mixSection);
     perfPrioChoice.setOptionTooltip(2, makeTooltipText("High",
                                                        "The highest held note wins.\n"
                                                        "Useful when you want upper notes to take over."));
-    setParameterTooltip(perfPbRangeKnob, "PB Range", "Set pitch bend range in semitones.");
-    setParameterTooltip(perfVintageKnob, "Vintage", "Add controlled analog-style drift and variance.");
-    setParameterTooltip(perfPanKnob, "Pan Spread", "Spread voices across the stereo field.");
-    setParameterTooltip(perfVelAmpKnob, "Vel->Amp", "Set how much note velocity affects level.");
-    setParameterTooltip(perfVelFltKnob, "Vel->Flt", "Set how much note velocity affects brightness.");
-    setParameterTooltip(arpOnToggle, "Arp On", "Enable or disable the arpeggiator.");
-    setParameterTooltip(arpTempoKnob, "Tempo", "Set the internal arpeggiator tempo.");
-    setParameterTooltip(arpRateChoice, "Rate", "Choose the arpeggiator timing division.");
+    setParameterTooltip(perfPbRangeKnob, "PB Range - Pitch Bend Range",
+                        "This sets how far the bend wheel can move the note.");
+    setParameterTooltip(perfVintageKnob, "Vintage",
+                        "Add controlled drift and slight mismatch between voices.\n"
+                        "Higher values feel less perfect and more analog-like.");
+    setParameterTooltip(perfPanKnob, "Pan Spread - Stereo Spread",
+                        "This spreads different voices left and right for width.");
+    setParameterTooltip(perfVelAmpKnob, "Vel->Amp - Velocity To Loudness",
+                        "Higher values make harder key strikes play louder.");
+    setParameterTooltip(perfVelFltKnob, "Vel->Flt - Velocity To Filter",
+                        "Higher values make harder key strikes sound brighter.");
+    setParameterTooltip(arpOnToggle, "Arp On",
+                        "Turn the arpeggiator on or off.\n"
+                        "When on, held notes are replayed as a repeating pattern.");
+    setParameterTooltip(arpTempoKnob, "Tempo",
+                        "Set the arpeggiator speed in beats per minute.\n"
+                        "This is used when host timing is not driving the arp.");
+    setParameterTooltip(arpRateChoice, "Rate",
+                        "Choose the note division for each arpeggiated step.\n"
+                        "Smaller fractions play faster.");
     arpRateChoice.setOptionTooltip(0, makeTooltipText("1/4",
                                                       "One arpeggiated step per quarter note.\n"
                                                       "Slow and spacious."));
     arpRateChoice.setOptionTooltip(1, makeTooltipText("1/8",
                                                       "One step per eighth note.\n"
                                                       "A common medium pulse."));
-    arpRateChoice.setOptionTooltip(2, makeTooltipText("1/8T",
-                                                      "One step per eighth-note triplet.\n"
-                                                      "Gives a swinging three-part feel."));
+    arpRateChoice.setOptionTooltip(2, makeTooltipText("1/8T - Eighth-Note Triplet",
+                                                      "This plays one step per eighth-note triplet\n"
+                                                      "for a swinging three-part feel."));
     arpRateChoice.setOptionTooltip(3, makeTooltipText("1/16",
                                                       "One step per sixteenth note.\n"
                                                       "Fast and common for synth sequences."));
-    arpRateChoice.setOptionTooltip(4, makeTooltipText("1/16T",
-                                                      "One step per sixteenth-note triplet.\n"
-                                                      "Adds a fast rolling triplet feel."));
+    arpRateChoice.setOptionTooltip(4, makeTooltipText("1/16T - Sixteenth-Note Triplet",
+                                                      "This plays one step per sixteenth-note triplet\n"
+                                                      "for a fast rolling feel."));
     arpRateChoice.setOptionTooltip(5, makeTooltipText("1/32",
                                                       "One step per thirty-second note.\n"
                                                       "Very fast and dense."));
-    setParameterTooltip(arpPatternChoice, "Pattern", "Choose the arpeggiator playback order.");
+    setParameterTooltip(arpPatternChoice, "Pattern",
+                        "Choose the order in which held notes are replayed.\n"
+                        "This changes the shape of the sequence without changing the notes.");
     arpPatternChoice.setOptionTooltip(0, makeTooltipText("Up",
                                                          "Plays held notes from low to high,\n"
                                                          "then repeats from the bottom."));
     arpPatternChoice.setOptionTooltip(1, makeTooltipText("Down",
                                                          "Plays held notes from high to low,\n"
                                                          "then repeats from the top."));
-    arpPatternChoice.setOptionTooltip(2, makeTooltipText("Up/Dn",
-                                                         "Climbs upward, then comes back down.\n"
-                                                         "A classic back-and-forth arp motion."));
-    arpPatternChoice.setOptionTooltip(3, makeTooltipText("Play",
-                                                         "Uses the order you actually played the notes.\n"
+    arpPatternChoice.setOptionTooltip(2, makeTooltipText("Up/Dn - Up/Down",
+                                                         "This climbs upward, then comes back down.\n"
+                                                         "It gives a classic back-and-forth arp motion."));
+    arpPatternChoice.setOptionTooltip(3, makeTooltipText("Play - As Played",
+                                                         "It reuses the order you actually played the notes.\n"
                                                          "Good when finger order matters."));
-    setParameterTooltip(arpOctaveChoice, "Octave", "Choose how many octaves the arpeggiator spans.");
+    setParameterTooltip(arpOctaveChoice, "Octave",
+                        "Choose how many octaves the arpeggiator will cover.\n"
+                        "Larger ranges make the pattern feel more sweeping.");
     arpOctaveChoice.setOptionTooltip(1, makeTooltipText("1",
                                                         "Keep the arpeggio within the notes you played.\n"
                                                         "No extra octave repeats are added."));
@@ -718,24 +804,60 @@ addAndMakeVisible(mixSection);
     arpOctaveChoice.setOptionTooltip(3, makeTooltipText("3",
                                                         "Repeat the arpeggio across three octaves.\n"
                                                         "This creates a broad, cascading motion."));
-    setParameterTooltip(arpGateKnob, "Gate", "Set how long each arpeggiated note stays open.");
-    setParameterTooltip(arpLatchToggle, "Latch", "Hold the arpeggiator note set after you release keys.");
-    setParameterTooltip(drvOnToggle, "Drive", "Enable or disable the drive stage.");
-    setParameterTooltip(drvAmtKnob, "Amount", "Set how hard the drive stage saturates.");
-    setParameterTooltip(drvMixKnob, "Mix", "Blend the drive stage with the dry signal.");
-    setParameterTooltip(choOnToggle, "Chorus", "Enable or disable the chorus stage.");
-    setParameterTooltip(choRateKnob, "Rate", "Set the chorus modulation rate.");
-    setParameterTooltip(choDepKnob, "Depth", "Set the chorus modulation depth.");
-    setParameterTooltip(choMixKnob, "Mix", "Blend the chorus stage with the dry signal.");
-    setParameterTooltip(dlyOnToggle, "Delay", "Enable or disable the delay stage.");
-    setParameterTooltip(dlyTimeKnob, "Time", "Set the delay time.");
-    setParameterTooltip(dlyFdbkKnob, "Fdbk", "Set the delay feedback amount.");
-    setParameterTooltip(dlyMixKnob, "Mix", "Blend the delay stage with the dry signal.");
-    setParameterTooltip(revOnToggle, "Reverb", "Enable or disable the reverb stage.");
-    setParameterTooltip(revSizeKnob, "Size", "Set the virtual room size.");
-    setParameterTooltip(revDampKnob, "Damp", "Control high-frequency damping in the reverb tail.");
-    setParameterTooltip(revMixKnob, "Mix", "Blend the reverb stage with the dry signal.");
-    setParameterTooltip(outGainKnob, "Master", "Set the final output level.");
+    setParameterTooltip(arpGateKnob, "Gate",
+                        "Gate sets how long each arp note stays open.\n"
+                        "Lower values sound choppier. Higher values sound more connected.");
+    setParameterTooltip(arpLatchToggle, "Latch",
+                        "Latch keeps the current held-note set playing\n"
+                        "after you release the keys.");
+    setParameterTooltip(drvOnToggle, "Drive",
+                        "Turn the drive stage on or off.\n"
+                        "Drive adds saturation before the time-based effects.");
+    setParameterTooltip(drvAmtKnob, "Amount",
+                        "Set how hard the drive stage pushes the signal.\n"
+                        "More amount means more grit and saturation.");
+    setParameterTooltip(drvMixKnob, "Mix",
+                        "Blend the driven sound with the clean sound.\n"
+                        "Lower values stay subtler. Higher values sound more processed.");
+    setParameterTooltip(choOnToggle, "Chorus",
+                        "Turn the chorus stage on or off.\n"
+                        "Chorus thickens the sound by adding moving detuned copies.");
+    setParameterTooltip(choRateKnob, "Rate",
+                        "Set how fast the chorus motion cycles.\n"
+                        "Slow values feel lush. Faster values feel more obvious.");
+    setParameterTooltip(choDepKnob, "Depth",
+                        "Depth sets how far the chorus modulation moves.\n"
+                        "More depth gives a wider, more dramatic swirl.");
+    setParameterTooltip(choMixKnob, "Mix",
+                        "Blend the chorus signal with the dry signal.\n"
+                        "Use this to keep width under control.");
+    setParameterTooltip(dlyOnToggle, "Delay",
+                        "Turn the delay stage on or off.\n"
+                        "Delay creates repeating echoes after the dry sound.");
+    setParameterTooltip(dlyTimeKnob, "Time",
+                        "Time sets the space between echoes.\n"
+                        "Short values feel tight. Long values feel spacious.");
+    setParameterTooltip(dlyFdbkKnob, "Fdbk - Feedback",
+                        "It feeds some of each echo back into the delay line\n"
+                        "to create more repeats.");
+    setParameterTooltip(dlyMixKnob, "Mix",
+                        "Blend the echoes with the dry signal.\n"
+                        "Lower values tuck delay behind the main sound.");
+    setParameterTooltip(revOnToggle, "Reverb",
+                        "Turn the reverb stage on or off.\n"
+                        "Reverb adds room, air, and a fading tail.");
+    setParameterTooltip(revSizeKnob, "Size",
+                        "Size changes the apparent room or space.\n"
+                        "Higher values sound larger and longer.");
+    setParameterTooltip(revDampKnob, "Damp",
+                        "Damp controls how quickly high frequencies fade in the tail.\n"
+                        "Higher damping makes the reverb darker and softer.");
+    setParameterTooltip(revMixKnob, "Mix",
+                        "Blend the reverb with the dry sound.\n"
+                        "Use small amounts to add space without washing out the patch.");
+    setParameterTooltip(outGainKnob, "Master",
+                        "Set the final output level of the whole synth.\n"
+                        "Use this to match loudness after shaping the patch.");
 
     initPatchButton.setTooltip(makeTooltipText("Init Patch",
                                                "Reset the panel to the default patch.\n"
@@ -891,7 +1013,6 @@ void SynthAudioProcessorEditor::setParameterTooltip(juce::SettableTooltipClient&
     auto body = std::move(description).trim();
     if (! body.endsWithChar('.'))
         body << ".";
-    body << "\nListen for how this changes the tone,\nmovement, or playing response.";
     surface.setTooltip(makeTooltipText(std::move(name), std::move(body)));
 }
 
@@ -1209,10 +1330,18 @@ void SynthAudioProcessorEditor::resized()
     auto titleArea = area.removeFromTop(48);
     auto logoArea = titleArea.removeFromLeft(248);
     if (titleLogoDrawable != nullptr)
-        titleLogoDrawable->setTransformToFit(logoArea.toFloat(),
+    {
+        auto enlargedLogoArea = logoArea.toFloat();
+        enlargedLogoArea.setSize(enlargedLogoArea.getWidth() * 1.25f,
+                                 enlargedLogoArea.getHeight() * 1.25f);
+        enlargedLogoArea.setX(static_cast<float>(logoArea.getX()));
+        enlargedLogoArea.setY(static_cast<float>(logoArea.getCentreY()) - (enlargedLogoArea.getHeight() * 0.5f));
+
+        titleLogoDrawable->setTransformToFit(enlargedLogoArea,
                                              juce::RectanglePlacement(juce::RectanglePlacement::xLeft
                                                                       | juce::RectanglePlacement::yMid
                                                                       | juce::RectanglePlacement::onlyReduceInSize));
+    }
     midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(250).withTrimmedTop(12));
 
     if (patchActionsVisible)
