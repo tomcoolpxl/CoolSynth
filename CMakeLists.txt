@@ -75,7 +75,8 @@ target_sources(CoolSynth
         src/ui/StandaloneMidiInputPanel.cpp
         src/ui/StandaloneSettingsDialog.cpp
         src/ui/StandaloneStatusBar.cpp
-        src/ui/SynthSection.cpp)
+        src/ui/SynthSection.cpp
+        src/ui/SignalChainVisualizer.cpp)
 
 target_include_directories(CoolSynth
     PRIVATE
@@ -140,6 +141,7 @@ if(BUILD_TESTING)
             src/ui/StandaloneSettingsDialog.cpp
             src/ui/StandaloneStatusBar.cpp
             src/ui/SynthSection.cpp
+            src/ui/SignalChainVisualizer.cpp
     )
 
     target_include_directories(CoolSynthMidiLearnTests

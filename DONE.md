@@ -93,6 +93,17 @@ Completed on 2026-05-14. The DSP voice core is fully implemented, and the manual
 - [x] Added render-level regressions for pulse-width edge settings, sync-enabled render divergence, dual-oscillator detune divergence, dense note-start transient containment, and full-mixer stability.
 - [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14 after the Phase 3 voice-core change.
 
+## Late V2 UI update: Signal Chain Visualizer
+
+Completed on 2026-05-15. Added a high-signal "Visual Laboratory" to the title bar that provides interactive feedback on waveform construction and subtractive filtering.
+
+- [x] Implemented `SignalChainVisualizer` with three panes: Source (ideal), Filter (preview), and Output (real-time).
+- [x] Integrated the visualizer into the title bar next to the logo, occupying 500x48 pixels.
+- [x] Wired the "Source" and "Filter" panes to update mathematically based on oscillator and filter parameters on the UI thread.
+- [x] Implemented a lock-free FIFO bridge to feed live audio samples from `SynthAudioProcessor::processBlock` to the "Output" oscilloscope.
+- [x] Verified that the visualizer is performant and correctly reflects all parameter changes (waveforms, PW, levels, cutoff, resonance).
+- [x] Updated `CMakeLists.txt` and verified the build and existing `CoolSynthMidiLearnTests` suite pass.
+
 ## Late V2 scope update: sine oscillator and LFO waveform
 
 Completed on 2026-05-15. V2 now exposes a true sine oscillator option again across both main oscillators and the global LFO without changing the dual-oscillator architecture or growing the control count.

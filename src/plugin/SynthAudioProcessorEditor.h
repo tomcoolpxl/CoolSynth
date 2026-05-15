@@ -8,6 +8,7 @@
 #include "ui/PianoBarComponent.h"
 #include "ui/SegmentedChoiceGroup.h"
 #include "ui/SynthSection.h"
+#include "ui/SignalChainVisualizer.h"
 #include "midi/MidiLearn.h"
 
 class SynthAudioProcessor;
@@ -28,6 +29,10 @@ public:
     void paint(juce::Graphics& g) override;
     void resized() override;
     int getControlParameterIndex(juce::Component& component) override;
+
+    /** Returns the visualizer for the processor to push samples into. */
+    coolsynth::ui::SignalChainVisualizer& getVisualizer() { return visualizer; }
+
     void refreshStandaloneControllerProfileSelection();
     juce::String getResolvedStandaloneControllerProfileDisplayName() const;
     void resetStandaloneMidiSettings();
@@ -414,6 +419,7 @@ private:
     juce::TextButton savePatchButton { "Save Patch" };
     juce::TextButton loadPatchButton { "Load Patch" };
     juce::TextButton tooltipToggleButton { "i" };
+    coolsynth::ui::SignalChainVisualizer visualizer;
     coolsynth::ui::PianoBarComponent pianoBar;
     std::unique_ptr<juce::FileChooser> activePatchChooser;
     bool patchActionsVisible = false;

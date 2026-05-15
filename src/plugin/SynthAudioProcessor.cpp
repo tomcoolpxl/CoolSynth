@@ -253,6 +253,9 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                                                                           static_cast<size_t> (engineEventCount)),
                        makeBlockRenderParameters(),
                        transportInfo);
+
+    if (auto* editor = dynamic_cast<SynthAudioProcessorEditor*>(getActiveEditor()))
+        editor->getVisualizer().pushSamples(buffer.getReadPointer(0), buffer.getNumSamples());
 }
 
 juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()

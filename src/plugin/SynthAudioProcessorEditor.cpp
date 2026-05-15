@@ -128,6 +128,7 @@ namespace
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
     , processor(inProcessor)
+    , visualizer(processor.getValueTreeState())
     , pianoBar(processor.getKeyboardState())
 {
     const bool isStandalone = juce::JUCEApplicationBase::isStandaloneApp();
@@ -207,6 +208,8 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
                                                             BinaryData::coolsynthlogo2_pngSize);
     if (titleLogoDrawable != nullptr)
         addAndMakeVisible(*titleLogoDrawable);
+
+    addAndMakeVisible(visualizer);
 
     midiLearnStatusLabel.setText("", juce::dontSendNotification);
     midiLearnStatusLabel.setFont(juce::FontOptions("Arial", 14.0f, juce::Font::bold));
@@ -1340,6 +1343,11 @@ void SynthAudioProcessorEditor::resized()
     auto area = bounds.reduced(24);
     auto titleArea = area.removeFromTop(48);
     auto logoArea = titleArea.removeFromLeft(248);
+    
+    // Shifted right by an extra 40px and narrowed to ~384px (3 x 128px) to feel more 4:3-ish
+    titleArea.removeFromLeft(40);
+    visualizer.setBounds(titleArea.removeFromLeft(400).reduced(0, 4));
+
     if (titleLogoDrawable != nullptr)
     {
         auto enlargedLogoArea = logoArea.toFloat();
