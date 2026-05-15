@@ -84,6 +84,29 @@ namespace coolsynth::ui
                 path.lineTo(right - area.getWidth() * 0.12f, bottom);
                 break;
 
+            case Icon::sine:
+            {
+                constexpr int segments = 24;
+                for (int index = 0; index <= segments; ++index)
+                {
+                    const auto x = juce::jmap(static_cast<float>(index),
+                                              0.0f,
+                                              static_cast<float>(segments),
+                                              left,
+                                              right);
+                    const auto phase = juce::MathConstants<float>::twoPi
+                                       * static_cast<float>(index)
+                                       / static_cast<float>(segments);
+                    const auto y = area.getCentreY() - std::sin(phase) * area.getHeight() * 0.28f;
+
+                    if (index == 0)
+                        path.startNewSubPath(x, y);
+                    else
+                        path.lineTo(x, y);
+                }
+                break;
+            }
+
             case Icon::square:
                 path.startNewSubPath(left, bottom);
                 path.lineTo(left + area.getWidth() * 0.18f, bottom);

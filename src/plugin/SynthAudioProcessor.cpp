@@ -690,7 +690,7 @@ namespace
 
     coolsynth::parameters::OscillatorWaveShape decodeOscillatorWave(float rawValue) noexcept
     {
-        const int choice = juce::jlimit(0, 2, static_cast<int>(std::round(rawValue)));
+        const int choice = juce::jlimit(0, 3, static_cast<int>(std::round(rawValue)));
         return static_cast<coolsynth::parameters::OscillatorWaveShape>(choice);
     }
 
@@ -702,7 +702,7 @@ namespace
 
     coolsynth::parameters::LfoWaveShape decodeLfoWave(float rawValue) noexcept
     {
-        const int choice = juce::jlimit(0, 2, static_cast<int>(std::round(rawValue)));
+        const int choice = juce::jlimit(0, 3, static_cast<int>(std::round(rawValue)));
         return static_cast<coolsynth::parameters::LfoWaveShape>(choice);
     }
 

@@ -105,7 +105,7 @@ namespace coolsynth::synth
         switch (waveform)
         {
             case coolsynth::parameters::WaveformChoice::sine:
-                nextOscillatorAParameters.waveShape = coolsynth::parameters::OscillatorWaveShape::triangle;
+                nextOscillatorAParameters.waveShape = coolsynth::parameters::OscillatorWaveShape::sine;
                 break;
 
             case coolsynth::parameters::WaveformChoice::square:
@@ -455,6 +455,9 @@ namespace coolsynth::synth
                     ? juce::jmap(phase, 0.0f, 0.5f, -1.0f, 1.0f)
                     : juce::jmap(phase, 0.5f, 1.0f, 1.0f, -1.0f);
 
+            case coolsynth::parameters::OscillatorWaveShape::sine:
+                return std::sin(phase * juce::MathConstants<float>::twoPi);
+
             case coolsynth::parameters::OscillatorWaveShape::saw:
             default:
                 return juce::jmap(phase, 0.0f, 1.0f, -1.0f, 1.0f);
@@ -471,8 +474,10 @@ namespace coolsynth::synth
             case coolsynth::parameters::LfoWaveShape::square:
                 return coolsynth::parameters::OscillatorWaveShape::pulse;
             case coolsynth::parameters::LfoWaveShape::triangle:
-            default:
                 return coolsynth::parameters::OscillatorWaveShape::triangle;
+            case coolsynth::parameters::LfoWaveShape::sine:
+            default:
+                return coolsynth::parameters::OscillatorWaveShape::sine;
         }
     }
 

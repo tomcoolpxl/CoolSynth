@@ -87,11 +87,23 @@ Completed on 2026-05-15. The dry Prophet-adjacent tone-shaping path is fully imp
 Completed on 2026-05-14. The DSP voice core is fully implemented, and the manual dry-tone audition has been deferred to Phase 8 when the UI becomes available.
 
 - [x] Replaced the temporary single-source V2 voice output with a per-voice dual-oscillator plus noise source path inside `SynthVoice`, while deliberately keeping the existing filter and amp-envelope path isolated for Phase 4.
-- [x] Implemented oscillator A and oscillator B source controls on the live V2 path: pulse, triangle, and saw wave shapes; octave and fine tune; pulse width; oscillator A hard-sync behavior; and oscillator B low-frequency mode support.
+- [x] Implemented oscillator A and oscillator B source controls on the live V2 path: pulse, triangle, saw, and later sine wave shapes; octave and fine tune; pulse width; oscillator A hard-sync behavior; and oscillator B low-frequency mode support.
 - [x] Added bounded pre-filter overload gain staging on the per-voice mixer path so stacked source levels can push the dry tone harder without destabilizing render.
 - [x] Added a short deterministic note-start de-click ramp plus per-voice phase randomization so dense simultaneous note-ons no longer produce the previously observed outsized startup transient under aggressive settings.
 - [x] Added render-level regressions for pulse-width edge settings, sync-enabled render divergence, dual-oscillator detune divergence, dense note-start transient containment, and full-mixer stability.
 - [x] Verified `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-14 after the Phase 3 voice-core change.
+
+## Late V2 scope update: sine oscillator and LFO waveform
+
+Completed on 2026-05-15. V2 now exposes a true sine oscillator option again across both main oscillators and the global LFO without changing the dual-oscillator architecture or growing the control count.
+
+- [x] Added `sine` to the V2 oscillator and LFO wave-shape enums, APVTS choice surface, processor-side waveform decoding, and all wave selectors in the one-page editor.
+- [x] Implemented real sine sample generation in `SynthVoice` for both oscillator and LFO modulation paths.
+- [x] Restored legacy V1-to-V2 sine mapping so the older compatibility seam no longer aliases sine to triangle.
+- [x] Added tooltips and editor icons for the new sine options in the oscillator and LFO sections.
+- [x] Added a sine-wave render regression to confirm the new shape stays audible, finite, and bounded on the live V2 engine path for both oscillators and LFO.
+- [x] Fixed a broken factory profile test in `MidiLearnTests.cpp` that was caused by the changed number of waveform options.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-15.
 
 ## V2 Phase 1: V2 parameter contract and processor seam
 

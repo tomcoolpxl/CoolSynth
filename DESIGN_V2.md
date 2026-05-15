@@ -255,6 +255,7 @@ Recommended implementation shape:
 ```text
 VoiceOscillator
   -> phase accumulator
+  -> sine generator
   -> saw generator
   -> pulse generator
   -> triangle generator
@@ -264,6 +265,8 @@ VoiceOscillator
 ```
 
 This does not need to be a circuit emulation. It does need to support the control vocabulary and musical behavior of the target architecture.
+
+The core oscillator vocabulary should stay Prophet-adjacent. A sine option is acceptable as a small pragmatic extension for softer fundamentals, cleaner low-end reinforcement, and gentler modulation, but it should not expand into an open-ended digital waveform browser.
 
 Important design choice:
 

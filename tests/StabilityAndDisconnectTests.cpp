@@ -765,6 +765,29 @@ public:
             }
         }
 
+        beginTest("sine_wave_shape_renders_audibly_and_stays_bounded");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::sine;
+            parameters.oscA.level = 0.9f;
+            parameters.oscB.level = 0.0f;
+            parameters.mixer.noiseLevel = 0.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 48, 1.0f }
+            }};
+            juce::AudioBuffer<float> buffer(2, 256);
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+
+            expectBufferFiniteAndBounded(*this, buffer, 10.0f);
+            expect(computePeakAbs(buffer, 16, buffer.getNumSamples()) > 1.0e-3f);
+            expectWithinAbsoluteError(computeMean(buffer), 0.0f, 0.05f);
+        }
+
         beginTest("oscillator_sync_changes_rendered_output_without_destabilizing_the_voice");
         {
             auto baseParameters = makeBasicParameters();
@@ -1149,6 +1172,27 @@ public:
             expectBufferFiniteAndBounded(*this, lowBuffer, 10.0f);
             expectBufferFiniteAndBounded(*this, highBuffer, 10.0f);
             expect(computeAbsoluteDifferenceSum(lowBuffer, highBuffer) > 0.5f);
+        }
+
+        beginTest("lfo_sine_wave_shape_renders_audibly_and_stays_bounded");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 1024, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.lfo.waveShape = coolsynth::parameters::LfoWaveShape::sine;
+            parameters.lfo.rateHz = 10.0f;
+            parameters.lfo.oscPitchDepth = 1.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 1024);
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+            expectBufferFiniteAndBounded(*this, buffer, 10.0f);
+            expect(computeAbsoluteDifferenceSum(buffer, juce::AudioBuffer<float>(2, 1024)) > 0.1f);
         }
     }
 

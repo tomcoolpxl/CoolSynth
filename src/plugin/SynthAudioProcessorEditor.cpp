@@ -588,6 +588,10 @@ addAndMakeVisible(mixSection);
                                                        "Saw is bright and rich in harmonics.\n"
                                                        "It is the classic starting point for synth brass,\n"
                                                        "strings, basses, and many leads."));
+    oscAWaveChoice.setOptionTooltip(3, makeTooltipText("Sin - Sine",
+                                                       "Sine is the smoothest and purest oscillator shape.\n"
+                                                       "Use it for softer fundamentals, rounded support tone,\n"
+                                                       "or cleaner low-end reinforcement."));
     setParameterTooltip(oscAOctaveKnob, "Octave",
                         "Move oscillator A up or down in whole octaves.\n"
                         "Use it to set the register before fine tuning.");
@@ -614,6 +618,10 @@ addAndMakeVisible(mixSection);
                                                        "Saw is bright, full, and rich in harmonics.\n"
                                                        "Use it when you want edge, body,\n"
                                                        "or strong filter sweeps."));
+    oscBWaveChoice.setOptionTooltip(3, makeTooltipText("Sin - Sine",
+                                                       "Sine is smooth and low in harmonics.\n"
+                                                       "Useful when oscillator B should add weight,\n"
+                                                       "behave gently, or modulate with a rounder shape."));
     setParameterTooltip(oscBOctaveKnob, "Octave",
                         "Move oscillator B up or down in whole octaves.\n"
                         "Use it to separate the two oscillators by register.");
@@ -685,6 +693,9 @@ addAndMakeVisible(mixSection);
                                                       "This is a sharp on-off shape.\n"
                                                       "Use it for stepped vibrato, trill-like motion,\n"
                                                       "or abrupt filter changes."));
+    lfoWaveChoice.setOptionTooltip(3, makeTooltipText("Sin - Sine",
+                                                      "A pure, smooth sine wave.\n"
+                                                      "Perfect for gentle, organic vibrato or tremolo."));
     setParameterTooltip(lfoRateKnob, "Rate",
                         "Rate sets how fast the low-frequency oscillator cycles.\n"
                         "Faster values create quicker vibrato, wah,\n"

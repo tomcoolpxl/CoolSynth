@@ -223,7 +223,7 @@ Deliver the V2 dual-oscillator plus noise mixer voice architecture as the defaul
 Included:
 
 - implement oscillator A and oscillator B voice behavior
-- add pulse, saw, and triangle-capable wave support where required by the design
+- add pulse, saw, triangle, and sine-capable wave support where required by the design
 - add per-oscillator tuning, pulse width, sync, and oscillator B low-frequency mode as required by the V2 surface
 - add per-voice noise source and explicit mixer levels
 - add bounded pre-filter overload behavior if needed for the target tone

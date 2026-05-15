@@ -130,10 +130,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Build identity is now visible in both the standalone status bar and a dedicated plugin footer strip so manual host checks can confirm the tested standalone and VST3 binaries match.
   - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
 - V2 `Phase 3` has a verified implementation slice on 2026-05-14, but it is not fully closed yet because manual standalone dry-tone audition remains open in `TODO.md`:
-  - `SynthVoice` now renders a true dual-oscillator plus noise source path with pulse, triangle, and saw wave shapes; per-oscillator octave and fine tuning; per-oscillator pulse width; oscillator A hard sync to oscillator B; oscillator B low-frequency mode support; and bounded pre-filter overload gain staging ahead of the existing temporary filter path.
+  - `SynthVoice` now renders a true dual-oscillator plus noise source path with pulse, triangle, saw, and later sine wave shapes; per-oscillator octave and fine tuning; per-oscillator pulse width; oscillator A hard sync to oscillator B; oscillator B low-frequency mode support; and bounded pre-filter overload gain staging ahead of the existing temporary filter path.
   - The previously observed dense note-start click is now directly tracked as dry voice-core work and mitigated in code through a short de-click ramp plus per-voice randomized start phase, without changing allocator timing or host event offsets.
   - Added automated regressions for pulse-width limits, sync-enabled render divergence, dual-oscillator detune divergence, dense note-start transient containment, and full-mixer stability.
   - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
+- Late V2 oscillator scope update landed on 2026-05-15:
+  - V2 now exposes a real sine oscillator option again on both oscillator wave selectors without changing the dual-oscillator architecture or adding new controls.
+  - The oscillator wave enum, APVTS choice lists, processor-side waveform decoding, editor segmented controls, and legacy V1 sine-mapping seam were all updated consistently.
+  - Added a live-engine regression that confirms the sine wave path renders audibly and remains finite and bounded.
 - V2 `Phase 6` completed on 2026-05-15:
   - Voice rendering now applies global LFO (sine/triangle/square), Poly Mod (Osc B and filter envelope to pitch, pulse width, filter cutoff), pitch bend, mod wheel, per-voice vintage drift, glide, and velocity-to-amp/filter modulation per sample. The cutoff smoother smooths the base cutoff per block while modulation acts directly per sample.
   - `SynthEngineV2` now tracks `globalLfoPhase` and advances it across in-block event spans, broadcasts modulation parameters and the current mod-wheel value to all voices each render span, maintains a bounded held-note list, and supports poly/mono/unison play modes with Last/Low/High key priority.

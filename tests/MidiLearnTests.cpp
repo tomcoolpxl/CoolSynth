@@ -261,7 +261,7 @@ public:
             expect(processor.setActiveControllerProfile("arturia.minilab3.arturia-mode.v1"));
 
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 114, 63 });
-            expectWithinAbsoluteError(waveform->getValue(), 0.5f, 0.001f);
+            expectWithinAbsoluteError(waveform->getValue(), 0.333333f, 0.001f);
 
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 74, 0 });
             expectWithinAbsoluteError(cutoff->getValue(), 0.0f, 0.001f);

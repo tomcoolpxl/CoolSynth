@@ -104,7 +104,7 @@ namespace coolsynth::synth
         switch (parameters.waveform)
         {
             case coolsynth::parameters::WaveformChoice::sine:
-                mapped.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::triangle;
+                mapped.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::sine;
                 break;
 
             case coolsynth::parameters::WaveformChoice::square:

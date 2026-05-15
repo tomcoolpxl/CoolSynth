@@ -105,6 +105,7 @@ namespace coolsynth::parameters
         pulse = 0,
         triangle = 1,
         saw = 2,
+        sine = 3,
     };
 
     enum class FilterKeyTrackingMode : int
@@ -119,6 +120,7 @@ namespace coolsynth::parameters
         saw = 0,
         triangle = 1,
         square = 2,
+        sine = 3,
     };
 
     enum class PlayModeChoice : int

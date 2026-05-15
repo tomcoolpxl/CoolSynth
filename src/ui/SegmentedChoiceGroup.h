@@ -18,6 +18,7 @@ namespace coolsynth::ui
             pulse,
             triangle,
             saw,
+            sine,
             square,
         };
 

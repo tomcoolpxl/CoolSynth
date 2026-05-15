@@ -175,8 +175,9 @@ private:
             { "Pulse", 0, coolsynth::ui::SegmentedChoiceGroup::Icon::pulse },
             { "Tri", 1, coolsynth::ui::SegmentedChoiceGroup::Icon::triangle },
             { "Saw", 2, coolsynth::ui::SegmentedChoiceGroup::Icon::saw },
+            { "Sin", 3, coolsynth::ui::SegmentedChoiceGroup::Icon::sine },
         },
-        3
+        4
     };
     coolsynth::ui::HardwareKnob oscAOctaveKnob { "Octave" };
     coolsynth::ui::HardwareKnob oscAFineKnob { "Fine" };
@@ -188,8 +189,9 @@ private:
             { "Pulse", 0, coolsynth::ui::SegmentedChoiceGroup::Icon::pulse },
             { "Tri", 1, coolsynth::ui::SegmentedChoiceGroup::Icon::triangle },
             { "Saw", 2, coolsynth::ui::SegmentedChoiceGroup::Icon::saw },
+            { "Sin", 3, coolsynth::ui::SegmentedChoiceGroup::Icon::sine },
         },
-        3
+        4
     };
     coolsynth::ui::HardwareKnob oscBOctaveKnob { "Octave" };
     coolsynth::ui::HardwareKnob oscBFineKnob { "Fine" };
@@ -225,8 +227,9 @@ private:
             { "Saw", 0, coolsynth::ui::SegmentedChoiceGroup::Icon::saw },
             { "Tri", 1, coolsynth::ui::SegmentedChoiceGroup::Icon::triangle },
             { "Sqr", 2, coolsynth::ui::SegmentedChoiceGroup::Icon::square },
+            { "Sin", 3, coolsynth::ui::SegmentedChoiceGroup::Icon::sine },
         },
-        3
+        4
     };
     coolsynth::ui::HardwareKnob lfoMwDepKnob { "MW->Dep" };
     coolsynth::ui::HardwareKnob lfoPitchKnob { "->Pitch" };

@@ -156,6 +156,7 @@ Required oscillator capabilities:
 
 - Independent Oscillator A and Oscillator B controls.
 - Per-oscillator tuning controls sufficient for interval and detune work.
+- Sine-capable waveform support.
 - Pulse-capable waveform support.
 - Saw-capable waveform support.
 - Triangle-capable waveform support.
@@ -168,6 +169,7 @@ Strongly preferred:
 
 - Prophet-like waveform behavior rather than arbitrary digital shape browsing.
 - A limited set of musically useful wave options instead of a large waveform list.
+- If a non-Prophet helper shape such as sine is kept, it should remain a small explicit extension rather than turning the oscillator into a broad digital shape browser.
 - A constrained wave model that can cover Prophet-adjacent results without requiring a large modern wavetable-style browser.
 - Oscillator wave selection that either:
   - supports simultaneous multi-wave combinations in a Prophet-adjacent way, or

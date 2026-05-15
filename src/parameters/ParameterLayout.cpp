@@ -139,7 +139,7 @@ namespace
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(oscAWave),
             "Wave Shape",
-            juce::StringArray { "Pulse", "Triangle", "Saw" },
+            juce::StringArray { "Pulse", "Triangle", "Saw", "Sine" },
             static_cast<int>(OscillatorWaveShape::saw)));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(oscAOctave),
@@ -172,7 +172,7 @@ namespace
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(oscBWave),
             "Wave Shape",
-            juce::StringArray { "Pulse", "Triangle", "Saw" },
+            juce::StringArray { "Pulse", "Triangle", "Saw", "Sine" },
             static_cast<int>(OscillatorWaveShape::saw)));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(oscBOctave),
@@ -300,7 +300,7 @@ namespace
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(lfoWave),
             "Wave Shape",
-            juce::StringArray { "Saw", "Triangle", "Square" },
+            juce::StringArray { "Saw", "Triangle", "Square", "Sine" },
             static_cast<int>(LfoWaveShape::triangle)));
         group->addChild(makePercentParameter(lfoToOscPitch, v2VersionHint, "To Pitch", 0.0f));
         group->addChild(makePercentParameter(lfoToPulseWidth, v2VersionHint, "To Pulse Width", 0.0f));
