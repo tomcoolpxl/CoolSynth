@@ -26,7 +26,10 @@
       "Bash(echo \"Exit code: $?\")",
       "Bash(echo \"Exit: $?\")",
       "Bash(git add *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(.\\\\build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe)",
+      "PowerShell(Select-String *)",
+      "PowerShell(Out-File *)"
     ]
   }
 }

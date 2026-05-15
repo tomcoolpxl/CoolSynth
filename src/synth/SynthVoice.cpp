@@ -242,8 +242,15 @@ namespace coolsynth::synth
         ampEnvelope.setParameters(makeJuceEnvelopeParameters());
         filterEnvelope.setParameters(makeJuceFilterEnvelopeParameters());
 
-        const auto baseBendRatio = std::pow(2.0f, currentPitchBendSemitones / 12.0f);
-        const auto vintageRatio = std::pow(2.0f, vintageDriftCents / 1200.0f);
+        // C2: exp2 is faster than pow(2, x) on all major platforms
+        const float voicePitchCarrierRatio = std::exp2(currentPitchBendSemitones / 12.0f)
+                                            * std::exp2(vintageDriftCents / 1200.0f);
+
+        // C1: initialize glide ratio as running multiplicative state (avoids per-sample pow)
+        float currentGlideRatio = std::exp2(glideOffsetLog2);
+        const float glideStepRatioPerSample = std::exp2(glideStepLog2PerSample);
+        const float glideStepRatioInverse = (glideStepRatioPerSample > 0.0f)
+                                           ? 1.0f / glideStepRatioPerSample : 1.0f;
 
         float keyboardTrackingAmount = 0.0f;
         if (nextFilterParameters.keyTracking == coolsynth::parameters::FilterKeyTrackingMode::half)
@@ -251,9 +258,8 @@ namespace coolsynth::synth
         else if (nextFilterParameters.keyTracking == coolsynth::parameters::FilterKeyTrackingMode::full)
             keyboardTrackingAmount = 1.0f;
 
-        const float keyTrackingRatio = std::pow(2.0f,
-                                                (static_cast<float>(currentMidiNoteNumber) - 60.0f)
-                                                    * keyboardTrackingAmount / 12.0f);
+        const float keyTrackingRatio = std::exp2((static_cast<float>(currentMidiNoteNumber) - 60.0f)
+                                                     * keyboardTrackingAmount / 12.0f);
 
         const float sampleRateFloat = static_cast<float>(juce::jmax(1.0, currentSampleRate));
         const float lfoPhaseIncrement = nextLfoParameters.rateHz / sampleRateFloat;
@@ -274,36 +280,53 @@ namespace coolsynth::synth
 
         float lfoPhase = blockStartGlobalLfoPhase;
 
+        // C3: sub-rate LFO — evaluate wave every lfoSubRateSamples, linearly interpolate between
+        float lfoValue = renderNaiveWaveSample(lfoPhase, lfoOscShape, 0.5f) * lfoModWheelDepth;
+        float lfoInterpStep = 0.0f;
+        int   lfoSubRateCounter = lfoSubRateSamples;
+
         for (int sample = 0; sample < numSamples; ++sample)
         {
+            // C1: multiplicative glide update — avoids per-sample pow(2, glideOffsetLog2)
             if (glideStepLog2PerSample > 0.0f)
             {
                 if (glideOffsetLog2 > 0.0f)
+                {
                     glideOffsetLog2 = juce::jmax(0.0f, glideOffsetLog2 - glideStepLog2PerSample);
-                else
+                    currentGlideRatio = (glideOffsetLog2 > 0.0f) ? currentGlideRatio * glideStepRatioInverse : 1.0f;
+                }
+                else if (glideOffsetLog2 < 0.0f)
+                {
                     glideOffsetLog2 = juce::jmin(0.0f, glideOffsetLog2 + glideStepLog2PerSample);
+                    currentGlideRatio = (glideOffsetLog2 < 0.0f) ? currentGlideRatio * glideStepRatioPerSample : 1.0f;
+                }
             }
-
-            const float glideRatio = std::pow(2.0f, glideOffsetLog2);
 
             const float envValue = ampEnvelope.getNextSample();
             const float filterEnvValue = filterEnvelope.getNextSample();
 
-            const float lfoBaseSample = renderNaiveWaveSample(lfoPhase, lfoOscShape, 0.5f);
-            const float lfoSample = lfoBaseSample * lfoModWheelDepth;
-
-            lfoPhase += lfoPhaseIncrement;
-            if (lfoPhase >= 1.0f)
-                lfoPhase -= 1.0f;
+            // C3: use interpolated LFO value; advance phase and recompute only every sub-rate period
+            const float lfoSample = lfoValue;
+            lfoValue += lfoInterpStep;
+            if (--lfoSubRateCounter == 0)
+            {
+                lfoPhase += lfoPhaseIncrement * static_cast<float>(lfoSubRateSamples);
+                if (lfoPhase >= 1.0f)
+                    lfoPhase -= 1.0f;
+                const float nextLfoValue = renderNaiveWaveSample(lfoPhase, lfoOscShape, 0.5f) * lfoModWheelDepth;
+                lfoInterpStep     = (nextLfoValue - lfoValue) / static_cast<float>(lfoSubRateSamples);
+                lfoSubRateCounter = lfoSubRateSamples;
+            }
 
             const float lfoPitchSemitones = lfoSample * nextLfoParameters.oscPitchDepth * 12.0f;
-            const float lfoPitchRatio = std::pow(2.0f, lfoPitchSemitones / 12.0f);
+            // C2: exp2 instead of pow; C1: one exp2 per oscillator (osc A folds in polyMod below)
+            const float oscBPitchRatio = std::exp2(lfoPitchSemitones / 12.0f);
 
-            const float commonPitchRatio = baseBendRatio * vintageRatio * glideRatio;
+            const float totalPitchCarrierRatio = voicePitchCarrierRatio * currentGlideRatio;
 
-            oscBState.frequencyHz = baseOscBFreqRaw * lfoPitchRatio;
+            oscBState.frequencyHz = baseOscBFreqRaw * oscBPitchRatio;
             if (! nextOscillatorBParameters.lowFrequencyMode)
-                oscBState.frequencyHz *= commonPitchRatio;
+                oscBState.frequencyHz *= totalPitchCarrierRatio;
 
             oscBState.phaseIncrement = juce::jlimit(0.0f, 0.5f, oscBState.frequencyHz / sampleRateFloat);
             oscBState.pulseWidth = juce::jlimit(0.05f, 0.95f, nextOscillatorBParameters.pulseWidth);
@@ -320,10 +343,10 @@ namespace coolsynth::synth
 
             const float polyModOscAPitchSemis = (polyModOscB * nextPolyModParameters.oscBToOscPitch
                                                   + polyModEnv * nextPolyModParameters.envToOscPitch) * 24.0f;
-            const float oscATotalPitchSemis = lfoPitchSemitones + polyModOscAPitchSemis;
-            const float oscAPitchRatio = std::pow(2.0f, oscATotalPitchSemis / 12.0f);
+            // C1: fold LFO + polyMod semitones together before the single exp2
+            const float oscAPitchRatio = std::exp2((lfoPitchSemitones + polyModOscAPitchSemis) / 12.0f);
 
-            oscAState.frequencyHz = baseOscAFreqRaw * oscAPitchRatio * commonPitchRatio;
+            oscAState.frequencyHz = baseOscAFreqRaw * oscAPitchRatio * totalPitchCarrierRatio;
             oscAState.phaseIncrement = juce::jlimit(0.0f, 0.5f, oscAState.frequencyHz / sampleRateFloat);
 
             const float polyModOscAPw = (polyModOscB * nextPolyModParameters.oscBToPulseWidth
@@ -422,14 +445,11 @@ namespace coolsynth::synth
         const auto fineTuneSemitones = parameters.fineCents / 100.0f;
 
         if (parameters.lowFrequencyMode)
-        {
-            const auto lowFrequencyRatio = std::pow(2.0f, octaveOffsetSemitones / 12.0f);
             return juce::jlimit(0.1f,
                                 20.0f,
-                                1.0f * lowFrequencyRatio * std::pow(2.0f, fineTuneSemitones / 12.0f));
-        }
+                                std::exp2((octaveOffsetSemitones + fineTuneSemitones) / 12.0f));
 
-        return baseFrequencyHz * std::pow(2.0f, (octaveOffsetSemitones + fineTuneSemitones) / 12.0f);
+        return baseFrequencyHz * std::exp2((octaveOffsetSemitones + fineTuneSemitones) / 12.0f);
     }
 
     int SynthVoice::computeNoteStartRampSamples() const noexcept

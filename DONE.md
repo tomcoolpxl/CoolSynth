@@ -1,5 +1,15 @@
 # DONE
 
+## Phase 11 Track C — Performance optimisations
+
+Completed on 2026-05-16. All six WIs landed, builds clean, all tests pass.
+
+- [x] **WI-C4**: Hoisted `std::tanh(preGain)` normalizer out of `applyDriveShape` inner sample loop in `GlobalFxRack`. Changed from recomputing per sample to computing once per block; `applyDriveShape` now takes the pre-computed `normalizer` as a parameter.
+- [x] **WI-C1+C2**: Refactored `SynthVoice::renderNextBlock` per-sample pitch-ratio computation. Pre-loop: replaced three `std::pow(2.0f, …)` (bend, vintage, key-tracking) with `std::exp2` and combined bend+vintage into a single `voicePitchCarrierRatio` constant, initialized glide as a multiplicative running state (`currentGlideRatio * glideStepRatioPerSample` per sample instead of `pow` per sample). Per-sample: replaced the two remaining `std::pow(2.0f, …)` (LFO pitch and osc A total pitch) with `std::exp2`, folding LFO and polyMod semitones together before the single exp2 for osc A. `computeOscillatorFrequencyHz` also switched to `std::exp2`. Zero `std::pow(2.0f, …)` hits remain in any `.cpp` under `src/`.
+- [x] **WI-C3**: Sub-rate LFO with linear interpolation. `lfoSubRateSamples = 32` constant added to `SynthParameters.h`. LFO wave is evaluated once per 32 samples and linearly interpolated between updates, saving a `sin`/wave call per sample in the inner voice loop.
+- [x] **WI-C5**: Added `juce::SmoothedValue` FX wet/dry smoothing to `GlobalFxRack`. Drive mix is smoothed per sample using a pre-computed `mixRampScratch`. Chorus and reverb use a dry-buffer approach: the JUCE DSP object is run at full wet, then the output is blended back with the original dry signal using a per-sample smoothed mix coefficient. When `enabled` turns false the smoother snaps immediately (no ramp), preserving the original clear-on-disable behavior. `dryBuffer` and `mixRampScratch` are pre-sized in `prepare()` — no runtime allocations.
+- [x] **WI-C6**: Cached `AudioParameterChoice*` pointers for 8 choice parameters (`oscAWave`, `oscBWave`, `filterKeyTracking`, `lfoWave`, `playMode`, `keyPriority`, `arpRateDivision`, `arpPattern`) in a new `ChoiceParameterPointers` struct on `SynthAudioProcessor`. `makeBlockRenderParameters` now calls `getIndex()` directly instead of `std::round(float)` + `jlimit`. Removed the 7 now-unused `decodeXxx` helper functions from `SynthAudioProcessor.cpp`.
+
 ## Phase 11 Track B — Audio quality and DSP correctness
 
 Completed on 2026-05-15. All six WIs landed in a single commit, builds clean, all tests pass.

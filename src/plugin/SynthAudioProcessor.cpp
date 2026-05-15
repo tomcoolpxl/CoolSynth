@@ -156,6 +156,7 @@ SynthAudioProcessor::SynthAudioProcessor()
     , parameters(*this, nullptr, "CoolSynthState", coolsynth::parameters::createParameterLayout())
     , midiMappingEngine(parameters)
     , parameterValues(bindParameterPointers(parameters))
+    , choiceParams(bindChoicePointers(parameters))
     , mappedActionBridge(*this)
 {
 }
@@ -716,61 +717,20 @@ namespace
         return rawValue >= 0.5f;
     }
 
-    coolsynth::parameters::OscillatorWaveShape decodeOscillatorWave(float rawValue) noexcept
-    {
-        const int choice = juce::jlimit(0, 3, static_cast<int>(std::round(rawValue)));
-        return static_cast<coolsynth::parameters::OscillatorWaveShape>(choice);
-    }
-
-    coolsynth::parameters::FilterKeyTrackingMode decodeFilterKeyTracking(float rawValue) noexcept
-    {
-        const int choice = juce::jlimit(0, 2, static_cast<int>(std::round(rawValue)));
-        return static_cast<coolsynth::parameters::FilterKeyTrackingMode>(choice);
-    }
-
-    coolsynth::parameters::LfoWaveShape decodeLfoWave(float rawValue) noexcept
-    {
-        const int choice = juce::jlimit(0, 3, static_cast<int>(std::round(rawValue)));
-        return static_cast<coolsynth::parameters::LfoWaveShape>(choice);
-    }
-
-    coolsynth::parameters::PlayModeChoice decodePlayMode(float rawValue) noexcept
-    {
-        const int choice = juce::jlimit(0, 2, static_cast<int>(std::round(rawValue)));
-        return static_cast<coolsynth::parameters::PlayModeChoice>(choice);
-    }
-
-    coolsynth::parameters::KeyPriorityChoice decodeKeyPriority(float rawValue) noexcept
-    {
-        const int choice = juce::jlimit(0, 2, static_cast<int>(std::round(rawValue)));
-        return static_cast<coolsynth::parameters::KeyPriorityChoice>(choice);
-    }
-
-    coolsynth::parameters::ArpRateChoice decodeArpRate(float rawValue) noexcept
-    {
-        const int choice = juce::jlimit(0, 5, static_cast<int>(std::round(rawValue)));
-        return static_cast<coolsynth::parameters::ArpRateChoice>(choice);
-    }
-
-    coolsynth::parameters::ArpPatternChoice decodeArpPattern(float rawValue) noexcept
-    {
-        const int choice = juce::jlimit(0, 3, static_cast<int>(std::round(rawValue)));
-        return static_cast<coolsynth::parameters::ArpPatternChoice>(choice);
-    }
 }
 
 coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderParameters() const noexcept
 {
     coolsynth::synth::BlockRenderParametersV2 params;
 
-    params.oscA.waveShape = decodeOscillatorWave(parameterValues.oscAWave->load());
+    params.oscA.waveShape = static_cast<coolsynth::parameters::OscillatorWaveShape>(choiceParams.oscAWave->getIndex());
     params.oscA.octaveIndex = juce::jlimit(0, 4, static_cast<int>(std::round(parameterValues.oscAOctave->load())));
     params.oscA.fineCents = juce::jlimit(-50.0f, 50.0f, parameterValues.oscAFineCents->load());
     params.oscA.level = juce::jlimit(0.0f, 1.0f, parameterValues.oscALevel->load());
     params.oscA.pulseWidth = juce::jlimit(0.05f, 0.95f, parameterValues.oscAPulseWidth->load());
     params.oscA.syncEnabled = decodeBool(parameterValues.oscASyncEnabled->load());
 
-    params.oscB.waveShape = decodeOscillatorWave(parameterValues.oscBWave->load());
+    params.oscB.waveShape = static_cast<coolsynth::parameters::OscillatorWaveShape>(choiceParams.oscBWave->getIndex());
     params.oscB.octaveIndex = juce::jlimit(0, 4, static_cast<int>(std::round(parameterValues.oscBOctave->load())));
     params.oscB.fineCents = juce::jlimit(-50.0f, 50.0f, parameterValues.oscBFineCents->load());
     params.oscB.level = juce::jlimit(0.0f, 1.0f, parameterValues.oscBLevel->load());
@@ -782,7 +742,7 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
     params.filter.cutoffHz = juce::jlimit(20.0f, 20000.0f, parameterValues.filterCutoffHz->load());
     params.filter.resonanceNormalized = juce::jlimit(0.0f, 1.0f, parameterValues.filterResonance->load());
     params.filter.envelopeAmount = juce::jlimit(0.0f, 1.0f, parameterValues.filterEnvAmount->load());
-    params.filter.keyTracking = decodeFilterKeyTracking(parameterValues.filterKeyTracking->load());
+    params.filter.keyTracking = static_cast<coolsynth::parameters::FilterKeyTrackingMode>(choiceParams.filterKeyTrack->getIndex());
 
     params.filterEnvelope.attackSeconds = juce::jmax(0.001f, parameterValues.filterAttackMs->load() * 0.001f);
     params.filterEnvelope.decaySeconds = juce::jmax(0.005f, parameterValues.filterDecayMs->load() * 0.001f);
@@ -795,7 +755,7 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
     params.ampEnvelope.releaseSeconds = juce::jmax(0.005f, parameterValues.ampReleaseMs->load() * 0.001f);
 
     params.lfo.rateHz = juce::jlimit(0.05f, 20.0f, parameterValues.lfoRateHz->load());
-    params.lfo.waveShape = decodeLfoWave(parameterValues.lfoWave->load());
+    params.lfo.waveShape = static_cast<coolsynth::parameters::LfoWaveShape>(choiceParams.lfoWave->getIndex());
     params.lfo.oscPitchDepth = juce::jlimit(0.0f, 1.0f, parameterValues.lfoToOscPitch->load());
     params.lfo.pulseWidthDepth = juce::jlimit(0.0f, 1.0f, parameterValues.lfoToPulseWidth->load());
     params.lfo.filterCutoffDepth = juce::jlimit(0.0f, 1.0f, parameterValues.lfoToFilterCutoff->load());
@@ -809,8 +769,8 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
     params.polyMod.envToFilterCutoff = juce::jlimit(0.0f, 1.0f, parameterValues.polyModEnvToFilterCutoff->load());
 
     params.performance.glideTimeSeconds = juce::jlimit(0.0f, 2.0f, parameterValues.glideTimeMs->load() * 0.001f);
-    params.performance.playMode = decodePlayMode(parameterValues.playMode->load());
-    params.performance.keyPriority = decodeKeyPriority(parameterValues.keyPriority->load());
+    params.performance.playMode = static_cast<coolsynth::parameters::PlayModeChoice>(choiceParams.playMode->getIndex());
+    params.performance.keyPriority = static_cast<coolsynth::parameters::KeyPriorityChoice>(choiceParams.keyPriority->getIndex());
     params.performance.pitchBendRangeSemitones = juce::jlimit(1.0f, 24.0f, parameterValues.pitchBendRangeSemitones->load());
     params.performance.vintageAmount = juce::jlimit(0.0f, 1.0f, parameterValues.vintageAmount->load());
     params.performance.panSpread = juce::jlimit(0.0f, 1.0f, parameterValues.panSpread->load());
@@ -819,8 +779,8 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
 
     params.arp.enabled = decodeBool(parameterValues.arpEnabled->load());
     params.arp.internalTempoBpm = juce::jlimit(40.0f, 240.0f, parameterValues.arpInternalTempoBpm->load());
-    params.arp.rate = decodeArpRate(parameterValues.arpRateDivision->load());
-    params.arp.pattern = decodeArpPattern(parameterValues.arpPattern->load());
+    params.arp.rate = static_cast<coolsynth::parameters::ArpRateChoice>(choiceParams.arpRate->getIndex());
+    params.arp.pattern = static_cast<coolsynth::parameters::ArpPatternChoice>(choiceParams.arpPattern->getIndex());
     params.arp.octaveRange = juce::jlimit(1, 3, static_cast<int>(std::round(parameterValues.arpOctaveRange->load())));
     params.arp.gateLength = juce::jlimit(0.0f, 1.0f, parameterValues.arpGate->load());
     params.arp.latch = decodeBool(parameterValues.arpLatch->load());
@@ -922,6 +882,27 @@ coolsynth::synth::ParameterValuePointersV2 SynthAudioProcessor::bindParameterPoi
     pointers.reverbMix = state.getRawParameterValue(ids::reverbMix);
     pointers.masterGainDb = state.getRawParameterValue(ids::masterGainDb);
     return pointers;
+}
+
+SynthAudioProcessor::ChoiceParameterPointers SynthAudioProcessor::bindChoicePointers(APVTS& state)
+{
+    namespace ids = coolsynth::parameters::ids;
+
+    auto getChoice = [&](const juce::String& id) -> juce::AudioParameterChoice*
+    {
+        return dynamic_cast<juce::AudioParameterChoice*>(state.getParameter(id));
+    };
+
+    ChoiceParameterPointers p;
+    p.oscAWave       = getChoice(ids::oscAWave);
+    p.oscBWave       = getChoice(ids::oscBWave);
+    p.filterKeyTrack = getChoice(ids::filterKeyTracking);
+    p.lfoWave        = getChoice(ids::lfoWave);
+    p.playMode       = getChoice(ids::playMode);
+    p.keyPriority    = getChoice(ids::keyPriority);
+    p.arpRate        = getChoice(ids::arpRateDivision);
+    p.arpPattern     = getChoice(ids::arpPattern);
+    return p;
 }
 
 // Static creation function required by JUCE

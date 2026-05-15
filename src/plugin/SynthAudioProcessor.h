@@ -99,11 +99,26 @@ private:
     coolsynth::synth::BlockRenderParametersV2 makeBlockRenderParameters() const noexcept;
     static coolsynth::synth::ParameterValuePointersV2 bindParameterPointers(APVTS& state);
 
+    // C6: typed choice-parameter pointers — getIndex() avoids per-block std::round + cast
+    struct ChoiceParameterPointers
+    {
+        juce::AudioParameterChoice* oscAWave       = nullptr;
+        juce::AudioParameterChoice* oscBWave       = nullptr;
+        juce::AudioParameterChoice* filterKeyTrack = nullptr;
+        juce::AudioParameterChoice* lfoWave        = nullptr;
+        juce::AudioParameterChoice* playMode       = nullptr;
+        juce::AudioParameterChoice* keyPriority    = nullptr;
+        juce::AudioParameterChoice* arpRate        = nullptr;
+        juce::AudioParameterChoice* arpPattern     = nullptr;
+    };
+    static ChoiceParameterPointers bindChoicePointers(APVTS& state);
+
     APVTS parameters;
     juce::MidiKeyboardState keyboardState;
     coolsynth::midi::MidiMappingEngine midiMappingEngine;
     std::vector<coolsynth::midi::LearnedCcBinding> learnedMidiBindings;
     coolsynth::synth::ParameterValuePointersV2 parameterValues;
+    ChoiceParameterPointers choiceParams;
     coolsynth::synth::SynthEngineV2 synthEngine;
     std::atomic<bool> panicRequested { false };
     mutable juce::CriticalSection midiMappingStateLock;

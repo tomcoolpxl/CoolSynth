@@ -39,5 +39,12 @@ namespace coolsynth::synth
         bool delayWasAudible = false;
         bool reverbWasAudible = false;
         bool prepared = false;
+
+        // C5: per-sample FX mix smoothers — eliminates zipper noise under automation
+        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> driveMixSmoothed;
+        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> chorusMixSmoothed;
+        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> reverbMixSmoothed;
+        juce::AudioBuffer<float> dryBuffer;   // pre-sized scratch for dry-signal preservation
+        std::vector<float> mixRampScratch;    // pre-sized per-sample mix ramp (avoids per-channel smoother advance)
     };
 }

@@ -180,7 +180,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Refreshed a factory-profile regression to assert the intended soft-takeover behavior of the oscillator-level faders under the current V2 init defaults.
   - Manual validation passed in standalone and VST3 use: valid V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the active synth state.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- `TODO.md` now points to Phase 11.
+- `TODO.md` now points to Phase 11 Track D/E remaining work.
 - Phase 11 Track A completed on 2026-05-15:
   - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
   - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).
@@ -196,4 +196,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Master gain now scales as `1/√(activeVoiceCount)` instead of a hardcoded 0.35; single notes are full-level (WI-B5).
   - Unison vintage floor removed: `jmax(vintage, 0.35f)` → `vintage`; vintage=0 yields zero drift (WI-B6).
   - `V2AudioQualityTests` class added (9 tests); all pass. Commit: `fdd3f85`.
-  - Manual smoke still pending: cutoff sweep at Q=25, unison vintage=0, FX mix sweeps, high-note alias check (standalone + Ableton Live Lite + REAPER).
+- Phase 11 Track C completed on 2026-05-16:
+  - Drive normalizer (`std::tanh(preGain)`) hoisted out of the per-sample loop in `GlobalFxRack::processDrive` — computed once per block (WI-C4).
+  - `SynthVoice::renderNextBlock` per-sample pitch computation refactored: bend+vintage combined into a single pre-loop `voicePitchCarrierRatio`; glide ratio maintained as a running multiplicative state (no per-sample `pow`); LFO and polyMod pitch semitones folded before a single `exp2` per oscillator (WI-C1). All `std::pow(2.0f, …)` replaced with `std::exp2` throughout `SynthVoice.cpp` (WI-C2).
+  - Sub-rate LFO: wave evaluated every 32 samples (`lfoSubRateSamples` in `SynthParameters.h`) with linear interpolation between updates (WI-C3).
+  - `GlobalFxRack` FX mix smoothing via `juce::SmoothedValue`. Drive: per-sample ramp via `mixRampScratch`. Chorus and reverb: dry-buffer approach (JUCE DSP run at full wet, manually blended with smoothed mix). Disabling snaps smoother immediately — no ramp — to preserve clear-on-disable tail behavior (WI-C5).
+  - `ChoiceParameterPointers` struct caches `AudioParameterChoice*` for 8 choice params; `makeBlockRenderParameters` uses `getIndex()` instead of `std::round(float)`. Seven `decodeXxx` helpers deleted (WI-C6).
+  - Build clean; all tests pass.
+  - Manual smoke still pending: cutoff sweep at Q=25, unison vintage=0, FX mix sweeps (rapid automation — no clicks), high-note alias check (standalone + Ableton Live Lite + REAPER).
