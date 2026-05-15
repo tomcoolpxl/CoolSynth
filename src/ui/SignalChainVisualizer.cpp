@@ -97,15 +97,15 @@ namespace coolsynth::ui
         area.removeFromLeft(gap);
         auto filterArea = area.removeFromLeft(paneW);
         area.removeFromLeft(gap);
-        auto spectraArea = area.removeFromLeft(paneW);
+        auto realityArea = area.removeFromLeft(paneW);
         area.removeFromLeft(gap);
-        auto realityArea = area;
+        auto spectraArea = area;
 
         drawModulationPane(g, modsArea);
         drawWaveform(g, sourceArea, sourcePath, palette::textPrimary, "SOURCE");
         drawWaveform(g, filterArea, filterPath, palette::ledGreen, "FILTER");
-        drawWaveform(g, spectraArea, spectraPath, palette::ledGreen, "SPECTRA");
         drawWaveform(g, realityArea, realityPath, palette::learnYellow, "REALITY");
+        drawWaveform(g, spectraArea, spectraPath, palette::ledGreen, "SPECTRA");
     }
 
     void SignalChainVisualizer::resized()
@@ -228,7 +228,7 @@ namespace coolsynth::ui
 
         const int numPoints = 256;
         const float numCycles = 2.0f;
-        const float w = 120.0f;
+        const float w = std::max(1.0f, (static_cast<float>(getWidth()) - 4.0f - 32.0f) / 5.0f);
         const float h = getHeight();
         const float halfH = h * 0.5f;
         const float stepX = w / static_cast<float>(numPoints);

@@ -10,7 +10,7 @@ namespace coolsynth::ui
 {
     /**
      * A 5-pane Visual Laboratory showing Signal Flow:
-     * [MODS] -> [SOURCE] -> [FILTER] -> [SPECTRA] -> [REALITY]
+     * [MODS] -> [SOURCE] -> [FILTER] -> [REALITY] -> [SPECTRA]
      */
     class SignalChainVisualizer final : public juce::Component,
                                         private juce::Timer
