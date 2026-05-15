@@ -11,7 +11,8 @@
       "WebFetch(domain:docs.juce.com)",
       "Bash(cmake --build C:/Users/thraa/github/CoolSynth/build --preset build-debug --config Debug)",
       "Bash(ctest --test-dir C:/Users/thraa/github/CoolSynth/build -C Debug --output-on-failure)",
-      "Bash(C:/Users/thraa/github/CoolSynth/build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)"
+      "Bash(C:/Users/thraa/github/CoolSynth/build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)",
+      "WebSearch"
     ]
   }
 }
