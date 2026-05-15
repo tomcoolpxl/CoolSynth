@@ -1,5 +1,18 @@
 # DONE
 
+## V2 Phase 10: Patch/state boundary and compatibility handling
+
+Completed on 2026-05-15. The V2 patch/state boundary is now explicit, test-covered, and manually signed off in standalone and VST3 workflows.
+
+- [x] Bumped the wrapped `.cspatch` format and wrapped processor-state format to explicit V2 version `2` boundaries while retaining the `.cspatch` extension.
+- [x] Tightened patch parsing so the wrapper's declared `stateType` must match the current APVTS state type before any parameter state is considered loadable.
+- [x] Removed the old bare-APVTS plugin-state restore fallback; processor state now restores only from the wrapped V2 root with the expected version and parameter-state child.
+- [x] Tightened parameter-state application so load succeeds only when a complete current V2 parameter set is present exactly once, preventing partial overlap from old or malformed payloads from mutating the synth silently.
+- [x] Added automated regressions for legacy patch-version rejection, wrong-state-type rejection, incomplete or partial-overlap parameter-state rejection, and wrapped-vs-unwrapped processor-state boundary behavior.
+- [x] Updated the factory-profile regression for oscillator-level faders so it now asserts the intended soft-takeover behavior under the newer V2 init defaults instead of relying on stale first-touch assumptions.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-15 after the Phase 10 boundary change.
+- [x] Manual validation passed in standalone and VST3 use: saved V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the current synth state.
+
 ## V2 Phase 9: MIDI learn and controller integration
 
 Completed on 2026-05-15. The V2 controller and patch-workflow slice is now implemented, validated by automated coverage, and manually signed off in standalone and VST3 use.

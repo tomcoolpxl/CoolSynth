@@ -17,7 +17,9 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    inline constexpr int processorStateFormatVersion = 1;
+    inline constexpr int processorStateFormatVersion = 2;
+    inline constexpr char processorStateProductProperty[] = "product";
+    inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
     inline constexpr char learnedMidiMappingTag[] = "MAPPING";
     inline constexpr char learnedMidiMappingParameterIdProperty[] = "parameterId";
@@ -127,6 +129,25 @@ namespace
     bool isReservedSynthController(const coolsynth::midi::ControllerMidiEvent& event) noexcept
     {
         return coolsynth::midi::isReservedSynthControllerEvent(event);
+    }
+
+    const juce::XmlElement* findSingleMatchingChild(const juce::XmlElement& parent,
+                                                    juce::StringRef tagName) noexcept
+    {
+        const juce::XmlElement* matchingChild = nullptr;
+
+        for (auto* child : parent.getChildIterator())
+        {
+            if (!child->hasTagName(tagName))
+                continue;
+
+            if (matchingChild != nullptr)
+                return nullptr;
+
+            matchingChild = child;
+        }
+
+        return matchingChild;
     }
 }
 
@@ -249,22 +270,22 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
     if (auto xml = getXmlFromBinary(data, sizeInBytes))
     {
-        if (xml->hasTagName(parameters.state.getType()))
-        {
-            if (applyParameterStateXml(*xml))
-                setLearnedMidiBindings({});
-
-            return;
-        }
-
         if (! xml->hasTagName(processorStateRootTag))
             return;
 
-        if (auto* parameterStateXml = xml->getChildByName(parameters.state.getType()))
-        {
-            if (applyParameterStateXml(*parameterStateXml))
-                setLearnedMidiBindings(parseLearnedMidiBindingsXml(*xml));
-        }
+        if (xml->getIntAttribute(processorStateVersionProperty, 0) != processorStateFormatVersion)
+            return;
+
+        const auto expectedStateType = getParameterStateTypeName();
+        if (xml->getStringAttribute(processorStateStateTypeProperty) != expectedStateType)
+            return;
+
+        auto* parameterStateXml = findSingleMatchingChild(*xml, expectedStateType);
+        if (parameterStateXml == nullptr)
+            return;
+
+        if (applyParameterStateXml(*parameterStateXml))
+            setLearnedMidiBindings(parseLearnedMidiBindingsXml(*xml));
     }
 }
 
@@ -278,6 +299,8 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
 {
     auto root = std::make_unique<juce::XmlElement>(processorStateRootTag);
     root->setAttribute(processorStateVersionProperty, processorStateFormatVersion);
+    root->setAttribute(processorStateProductProperty, "CoolSynth");
+    root->setAttribute(processorStateStateTypeProperty, parameters.state.getType().toString());
 
     auto parameterState = const_cast<SynthAudioProcessor*> (this)->parameters.copyState();
     root->addChildElement(parameterState.createXml().release());
@@ -327,6 +350,7 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
     sanitizedState = parameters.copyState();
     juce::StringArray seenParameterIds;
     int appliedParameterCount = 0;
+    std::array<bool, coolsynth::parameters::allParameterIds.size()> seenKnownParameters {};
 
     for (auto incomingChild : incomingState)
     {
@@ -346,6 +370,21 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
 
         seenParameterIds.add(parameterId);
 
+        size_t matchedParameterIndex = coolsynth::parameters::allParameterIds.size();
+        for (size_t index = 0; index < coolsynth::parameters::allParameterIds.size(); ++index)
+        {
+            if (parameterId == coolsynth::parameters::allParameterIds[index])
+            {
+                matchedParameterIndex = index;
+                break;
+            }
+        }
+
+        if (matchedParameterIndex == coolsynth::parameters::allParameterIds.size())
+            continue;
+
+        seenKnownParameters[matchedParameterIndex] = true;
+
         for (auto sanitizedChild : sanitizedState)
         {
             if (sanitizedChild.getProperty(apvtsParameterIdProperty).toString() != parameterId)
@@ -359,7 +398,16 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
         }
     }
 
-    return appliedParameterCount > 0;
+    if (appliedParameterCount != static_cast<int> (coolsynth::parameters::allParameterIds.size()))
+        return false;
+
+    for (const auto seen : seenKnownParameters)
+    {
+        if (!seen)
+            return false;
+    }
+
+    return true;
 }
 
 juce::String SynthAudioProcessor::getParameterStateTypeName() const

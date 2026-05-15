@@ -168,4 +168,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Added automated regressions for full-surface learn eligibility, discrete learned-binding XML and plugin-state round trip, factory-profile signature shadowing by learned bindings, updated factory-profile runtime mappings, and init-default reset expectations.
   - Manual validation passed in both standalone and VST3 use: the updated MiniLab 3 profile behaved as expected, learned CC overrides worked, plugin learned mappings restored correctly, VST3 patch buttons were visible, and patch save/load worked in the plugin workflow.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- `TODO.md` now points to Phase 10.
+- V2 `Phase 10` completed on 2026-05-15:
+  - Wrapped `.cspatch` files and wrapped processor state now use explicit V2 format version `2` boundaries while keeping the `.cspatch` extension.
+  - Plugin state no longer accepts bare APVTS XML fallback; restore now requires the wrapped V2 processor-state root, expected state type, and a single matching parameter-state child.
+  - Parameter-state application now requires a complete current V2 parameter set, which prevents partial overlap from older or malformed payloads from silently mutating only the still-matching controls.
+  - Added automated regressions for legacy patch-version rejection, wrong-state-type rejection, incomplete and partial-overlap parameter-state rejection, and processor-state rejection for unwrapped or legacy wrapped payloads.
+  - Refreshed a factory-profile regression to assert the intended soft-takeover behavior of the oscillator-level faders under the current V2 init defaults.
+  - Manual validation passed in standalone and VST3 use: valid V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the active synth state.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
+- `TODO.md` now points to Phase 11.

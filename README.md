@@ -4,17 +4,16 @@
 
 CoolSynth is a JUCE-based software synthesizer for Windows 11. It is built as both a standalone desktop instrument and a VST3 plugin, with the same synth engine and parameter set in both modes.
 
-The instrument is intentionally compact and direct: one oscillator per voice, a subtractive signal path, and a hardware-style control surface that stays close to playing and sound shaping instead of menu-heavy workflow. It is designed to be understandable, usable with a MIDI keyboard right away, and cleanly shared between standalone and plugin builds.
+The current codebase is in the V2 transition: a Prophet-inspired, Stranger Things / S U R V I V E-adjacent subtractive polysynth with a one-page instrument panel, shared standalone/VST3 behavior, and an intentionally explicit patch/state compatibility break from older builds.
 
 ## Features
 
-- Polyphonic MIDI note playback.
-- One oscillator per voice with sine, square, and saw waveforms.
-- Per-voice ADSR amplitude envelope.
-- Per-voice resonant low-pass filter.
-- Global delay with time, feedback, and mix controls.
-- Master output gain.
-- Panic / all-notes-off control.
+- Dual-oscillator plus noise subtractive voice architecture.
+- Dedicated filter and amp ADSR envelopes with a resonant low-pass filter.
+- Global LFO, constrained Poly Mod, pitch bend, glide, mono/unison play modes, vintage drift, and pan spread.
+- Host-aware arpeggiator with standalone tempo fallback.
+- Global drive, chorus, delay, reverb, and master output stages.
+- Shared standalone and VST3 patch workflow with MIDI learn and panic support.
 
 The same core sound engine drives both targets, so the standalone app and the VST3 plugin expose the same main synth controls.
 
@@ -50,11 +49,12 @@ Learned mappings are stored with standalone settings in standalone mode, and in 
 
 ## Patch Workflow
 
-CoolSynth includes a minimal patch format for synth parameter state in both standalone and VST3 mode.
+CoolSynth keeps the `.cspatch` extension, but the current V2 builds use an explicit V2-only patch/state boundary.
 
 - `Init Patch` resets synth parameters to their defaults.
-- `Save Patch` writes a `.cspatch` XML file containing synth parameter state.
-- `Load Patch` restores that parameter state without changing standalone audio settings, MIDI device selection, or learned MIDI mappings.
+- `Save Patch` writes a `.cspatch` XML file containing only the current V2 synth parameter state.
+- `Load Patch` restores that V2 parameter state without changing standalone audio settings, MIDI device selection, or learned MIDI mappings.
+- Incompatible older patch/state payloads are rejected explicitly rather than partially loaded.
 
 ## Build
 

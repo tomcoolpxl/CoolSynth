@@ -32,7 +32,9 @@ Destination: `%LOCALAPPDATA%/Programs/Common/VST3/CoolSynth.vst3`
 3. Play host MIDI notes (e.g. using computer keyboard or MIDI clip).
 4. Open the editor.
 5. Automate cutoff and master gain.
-6. Save and reopen the project.
+6. Save a `.cspatch`, change a few obvious parameters, then reload the saved patch.
+7. If you have a legacy or deliberately malformed `.cspatch`, attempt to load it and confirm the plugin shows a patch error instead of partially changing state.
+8. Save and reopen the project.
 
 ## REAPER Steps
 
@@ -41,13 +43,17 @@ Destination: `%LOCALAPPDATA%/Programs/Common/VST3/CoolSynth.vst3`
 3. Play MIDI notes from a keyboard or item.
 4. Open the editor.
 5. Move cutoff and master gain, then verify the sound and UI respond.
-6. Save and reopen the project.
+6. Save a `.cspatch`, change a few obvious parameters, then reload the saved patch.
+7. If you have a legacy or deliberately malformed `.cspatch`, attempt to load it and confirm the plugin shows a patch error instead of partially changing state.
+8. Save and reopen the project.
 
 ## Expected Results
 
 - Plugin loads as an instrument.
 - Notes produce sound.
 - Automation moves the editor knobs and alters the sound.
+- Saved V2 patches reload the same parameter state in-session.
+- Incompatible patch payloads are rejected explicitly and do not partially mutate the synth state.
 - Reopen restores all parameter states.
 - The UI contains no standalone-specific components (Settings, Status Bar, MIDI Monitors).
 - The same expected behavior holds in both Ableton Live Lite and REAPER.

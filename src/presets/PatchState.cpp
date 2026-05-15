@@ -23,6 +23,9 @@ namespace coolsynth::presets
         if (version != patchFormatVersion)
             return { PatchStateError::unsupportedFormatVersion, "Unsupported CoolSynth patch version.", nullptr };
 
+        if (patchXml.getStringAttribute("stateType") != expectedStateType)
+            return { PatchStateError::unexpectedStateType, "Patch file contains incompatible parameter state.", nullptr };
+
         const juce::XmlElement* matchingChild = nullptr;
 
         for (auto* child : patchXml.getChildIterator())

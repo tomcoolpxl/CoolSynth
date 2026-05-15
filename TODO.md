@@ -1,10 +1,11 @@
 # TODO
 
-`Phase 10`
+`Phase 11`
 
-- [ ] Define the V2 processor-state version and patch-format boundary for the new parameter contract. NOTE: BACKWARDS COMPATIBILITY IS NOT A REQUIREMENT!!! NOT SURE HOW NECESSARY NEXDT STEPS ARE
-- [ ] Update patch save and load logic to round-trip only V2 parameter state.
-- [ ] Reject incompatible V1 patch or processor-state payloads explicitly unless an import path is later approved.
-- [ ] Add tests for V2 patch round-trip, malformed payload rejection, and V1 compatibility-boundary behavior.
-- [ ] Update `README.md` and patch workflow documentation to describe the V2 compatibility break.
-- [ ] Verify saved V2 patches reload identically in standalone and plugin workflows.
+- [ ] Run the full local Debug and Release build and test matrix for V2.
+- [ ] Fix any release-blocking defects found during full-matrix validation.
+- [ ] Run the standalone and VST3 manual smoke workflows and capture the results.
+- [ ] Run the deferred Ableton Live Lite VST3 arpeggiator host-sync checks for tempo sync, transport start or stop behavior, and internal-rate fallback.
+- [ ] Run the GitHub `Windows Manual Validation` workflow and review diagnostics and packaged artifacts.
+- [ ] Reconcile `README.md`, `REQUIREMENTS_V2.md`, `DESIGN_V2.md`, `IMPLEMENTATION_PLAN_V2.md`, `TODO.md`, and `DONE.md` with shipped V2 behavior.
+- [ ] Confirm every unfinished item is explicitly deferred in `TODO.md` before closing the release review.

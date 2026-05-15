@@ -269,11 +269,17 @@ public:
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 74, 127 });
             expectWithinAbsoluteError(cutoff->getValue(), 1.0f, 0.001f);
 
+            const auto initialOscALevel = oscALevel != nullptr ? oscALevel->getValue() : 0.0f;
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 82, 64 });
-            expectWithinAbsoluteError(oscALevel->getValue(), 64.0f / 127.0f, 0.001f);
+            expectWithinAbsoluteError(oscALevel->getValue(), initialOscALevel, 0.001f);
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 82, 127 });
+            expectWithinAbsoluteError(oscALevel->getValue(), 1.0f, 0.001f);
 
+            const auto initialOscBLevel = oscBLevel != nullptr ? oscBLevel->getValue() : 0.0f;
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 83, 32 });
-            expectWithinAbsoluteError(oscBLevel->getValue(), 32.0f / 127.0f, 0.001f);
+            expectWithinAbsoluteError(oscBLevel->getValue(), initialOscBLevel, 0.001f);
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 83, 0 });
+            expectWithinAbsoluteError(oscBLevel->getValue(), 0.0f, 0.001f);
         }
 
         beginTest("learned_bindings_shadow_factory_profile_signatures");

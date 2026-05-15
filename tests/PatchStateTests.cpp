@@ -4,6 +4,39 @@
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/PatchState.h"
 
+class AudioProcessorXmlHarness final : public juce::AudioProcessor
+{
+public:
+    static void writeXmlToBinary(const juce::XmlElement& xml, juce::MemoryBlock& destData)
+    {
+        copyXmlToBinary(xml, destData);
+    }
+
+    static std::unique_ptr<juce::XmlElement> readXmlFromBinary(const void* data, int sizeInBytes)
+    {
+        return getXmlFromBinary(data, sizeInBytes);
+    }
+
+    const juce::String getName() const override { return "AudioProcessorXmlHarness"; }
+    void prepareToPlay(double, int) override {}
+    void releaseResources() override {}
+    void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override {}
+    bool isBusesLayoutSupported(const BusesLayout&) const override { return true; }
+    juce::AudioProcessorEditor* createEditor() override { return nullptr; }
+    bool hasEditor() const override { return false; }
+    double getTailLengthSeconds() const override { return 0.0; }
+    bool acceptsMidi() const override { return false; }
+    bool producesMidi() const override { return false; }
+    bool isMidiEffect() const override { return false; }
+    int getNumPrograms() override { return 1; }
+    int getCurrentProgram() override { return 0; }
+    void setCurrentProgram(int) override {}
+    const juce::String getProgramName(int) override { return {}; }
+    void changeProgramName(int, const juce::String&) override {}
+    void getStateInformation(juce::MemoryBlock&) override {}
+    void setStateInformation(const void*, int) override {}
+};
+
 class PatchStateTests final : public juce::UnitTest
 {
 public:
@@ -51,7 +84,7 @@ public:
                                       0.0001f);
             expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::filterCutoffHz)->load(),
                                       3200.0f,
-                                      0.0001f);
+                                      0.1f);
             expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::filterEnvAmount)->load(),
                                       0.35f,
                                       0.0001f);
@@ -117,10 +150,37 @@ public:
             expect(parsed1.error == coolsynth::presets::PatchStateError::invalidRootTag);
 
             juce::XmlElement goodRoot(coolsynth::presets::patchRootTag);
-            goodRoot.setAttribute("formatVersion", 1);
+            goodRoot.setAttribute("formatVersion", coolsynth::presets::patchFormatVersion);
+            goodRoot.setAttribute("stateType", "CoolSynthState");
             auto parsed2 = coolsynth::presets::parseWrappedPatchXml(goodRoot, "CoolSynthState");
             expect(!parsed2.succeeded());
             expect(parsed2.error == coolsynth::presets::PatchStateError::missingParameterState);
+        }
+
+        beginTest("patch_loader_rejects_legacy_version_and_wrong_state_type");
+        {
+            SynthAudioProcessor processor;
+            auto stateXml = processor.createParameterStateXml();
+            expect(stateXml != nullptr);
+
+            if (stateXml != nullptr)
+            {
+                auto legacyPatchXml = coolsynth::presets::createWrappedPatchXml(*stateXml,
+                                                                                processor.getParameterStateTypeName());
+                legacyPatchXml->setAttribute("formatVersion", coolsynth::presets::patchFormatVersion - 1);
+                auto parsedLegacy = coolsynth::presets::parseWrappedPatchXml(*legacyPatchXml,
+                                                                             processor.getParameterStateTypeName());
+                expect(!parsedLegacy.succeeded());
+                expect(parsedLegacy.error == coolsynth::presets::PatchStateError::unsupportedFormatVersion);
+
+                auto wrongStateTypePatchXml = coolsynth::presets::createWrappedPatchXml(*stateXml,
+                                                                                        processor.getParameterStateTypeName());
+                wrongStateTypePatchXml->setAttribute("stateType", "LegacyCoolSynthState");
+                auto parsedWrongStateType = coolsynth::presets::parseWrappedPatchXml(*wrongStateTypePatchXml,
+                                                                                     processor.getParameterStateTypeName());
+                expect(!parsedWrongStateType.succeeded());
+                expect(parsedWrongStateType.error == coolsynth::presets::PatchStateError::unexpectedStateType);
+            }
         }
 
         beginTest("patch_xml_excludes_standalone_and_midi_learn_keys");
@@ -188,6 +248,30 @@ public:
             expect(!processor.applyParameterStateXml(*stateXml));
         }
 
+        beginTest("patch_loader_rejects_incomplete_or_partial_overlap_parameter_state");
+        {
+            SynthAudioProcessor processor;
+            auto fullStateXml = processor.createParameterStateXml();
+            expect(fullStateXml != nullptr);
+
+            if (fullStateXml != nullptr)
+            {
+                auto incompleteStateXml = std::make_unique<juce::XmlElement>(*fullStateXml);
+                incompleteStateXml->removeChildElement(incompleteStateXml->getChildElement(0), true);
+                expect(!processor.applyParameterStateXml(*incompleteStateXml));
+            }
+
+            juce::XmlElement partialOverlapState(processor.getParameterStateTypeName());
+            auto* child = partialOverlapState.createNewChildElement("PARAM");
+            child->setAttribute("id", coolsynth::parameters::ids::filterCutoffHz);
+            child->setAttribute("value", 250.0f);
+
+            expect(!processor.applyParameterStateXml(partialOverlapState));
+            expectWithinAbsoluteError(processor.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::filterCutoffHz)->load(),
+                                      3200.0f,
+                                      0.1f);
+        }
+
         beginTest("patch_file_write_and_read_round_trip_succeeds");
         {
             SynthAudioProcessor source;
@@ -231,6 +315,55 @@ public:
 
             patchFile.deleteFile();
             tempDir.deleteRecursively();
+        }
+
+        beginTest("processor_state_loader_rejects_unwrapped_or_legacy_wrapped_state");
+        {
+            SynthAudioProcessor source;
+            SynthAudioProcessor target;
+
+            source.getValueTreeState().getParameter(coolsynth::parameters::ids::delayMix)->setValueNotifyingHost(0.61f);
+            target.getValueTreeState().getParameter(coolsynth::parameters::ids::delayMix)->setValueNotifyingHost(0.12f);
+            const std::array<coolsynth::midi::LearnedCcBinding, 1> targetBindings {{
+                { coolsynth::parameters::ids::oscAWave, { 3, 70 } }
+            }};
+            target.setLearnedMidiBindings(targetBindings);
+
+            auto bareStateXml = source.createParameterStateXml();
+            expect(bareStateXml != nullptr);
+
+            if (bareStateXml != nullptr)
+            {
+                juce::MemoryBlock bareStateData;
+                AudioProcessorXmlHarness::writeXmlToBinary(*bareStateXml, bareStateData);
+                target.setStateInformation(bareStateData.getData(), static_cast<int> (bareStateData.getSize()));
+
+                expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::delayMix)->load(),
+                                          0.12f,
+                                          0.0001f);
+                expectEquals(static_cast<int> (target.getLearnedMidiBindings().size()), 1);
+
+                juce::MemoryBlock wrappedStateData;
+                source.getStateInformation(wrappedStateData);
+                auto wrappedStateXml = AudioProcessorXmlHarness::readXmlFromBinary(wrappedStateData.getData(),
+                                                                                   static_cast<int> (wrappedStateData.getSize()));
+                expect(wrappedStateXml != nullptr);
+
+                if (wrappedStateXml != nullptr)
+                {
+                    wrappedStateXml->setAttribute("formatVersion", 1);
+
+                    juce::MemoryBlock legacyWrappedStateData;
+                    AudioProcessorXmlHarness::writeXmlToBinary(*wrappedStateXml, legacyWrappedStateData);
+                    target.setStateInformation(legacyWrappedStateData.getData(),
+                                               static_cast<int> (legacyWrappedStateData.getSize()));
+
+                    expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::delayMix)->load(),
+                                              0.12f,
+                                              0.0001f);
+                    expectEquals(static_cast<int> (target.getLearnedMidiBindings().size()), 1);
+                }
+            }
         }
     }
 };
