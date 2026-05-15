@@ -579,20 +579,26 @@ void SynthAudioProcessor::requestPanic() noexcept
 double SynthAudioProcessor::getTailLengthSeconds() const
 {
     if (parameterValues.delayEnabled == nullptr
+        || parameterValues.delayTimeMs == nullptr
         || parameterValues.delayMix == nullptr
-        || parameterValues.delayFeedback == nullptr)
+        || parameterValues.delayFeedback == nullptr
+        || parameterValues.reverbEnabled == nullptr
+        || parameterValues.reverbMix == nullptr)
     {
         return 0.0;
     }
 
-    const auto delayEnabled = parameterValues.delayEnabled->load() >= 0.5f;
-    const auto delayMix = juce::jlimit(0.0f, 1.0f, parameterValues.delayMix->load());
-    const auto delayFeedback = juce::jlimit(0.0f, 0.85f, parameterValues.delayFeedback->load());
+    coolsynth::synth::DelayParametersV2 delayParameters;
+    delayParameters.enabled = parameterValues.delayEnabled->load() >= 0.5f;
+    delayParameters.timeMs = juce::jlimit(1.0f, 1000.0f, parameterValues.delayTimeMs->load());
+    delayParameters.mix = juce::jlimit(0.0f, 1.0f, parameterValues.delayMix->load());
+    delayParameters.feedback = juce::jlimit(0.0f, 0.85f, parameterValues.delayFeedback->load());
 
-    if (! delayEnabled || delayMix <= 0.0f || delayFeedback <= 0.0f)
-        return 0.0;
+    coolsynth::synth::ReverbParametersV2 reverbParameters;
+    reverbParameters.enabled = parameterValues.reverbEnabled->load() >= 0.5f;
+    reverbParameters.mix = juce::jlimit(0.0f, 1.0f, parameterValues.reverbMix->load());
 
-    return 48.0;
+    return coolsynth::synth::GlobalFxRack::estimateTailLengthSeconds(delayParameters, reverbParameters);
 }
 
 std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::parseLearnedMidiBindingsXml(const juce::XmlElement& parent) const

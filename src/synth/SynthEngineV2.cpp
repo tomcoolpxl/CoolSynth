@@ -56,7 +56,7 @@ namespace coolsynth::synth
         outputChannels = outputChannelCount;
         masterGainLinear.reset(sampleRate, masterGainRampSeconds);
         prepareVoices(sampleRate, samplesPerBlock);
-        globalDelay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
+        globalFxRack.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         arpeggiator.prepare(sampleRate);
         panic();
         prepared = true;
@@ -65,7 +65,7 @@ namespace coolsynth::synth
     void SynthEngineV2::releaseResources() noexcept
     {
         panic();
-        globalDelay.reset();
+        globalFxRack.reset();
         prepared = false;
     }
 
@@ -181,7 +181,11 @@ namespace coolsynth::synth
             globalLfoPhase -= std::floor(globalLfoPhase);
         }
 
-        globalDelay.process(outputBuffer, mapDelayParameters(parameters.delay));
+        globalFxRack.process(outputBuffer,
+                             parameters.drive,
+                             parameters.chorus,
+                             parameters.delay,
+                             parameters.reverb);
         applyMasterGain(outputBuffer, parameters.masterGainLinear);
     }
 
@@ -193,7 +197,7 @@ namespace coolsynth::synth
             clearVoiceSlot(slot);
         }
 
-        globalDelay.clear();
+        globalFxRack.clear();
         clearHeldNotes();
         arpeggiator.panic();
         nextVoiceStartOrder = 0;
@@ -745,14 +749,5 @@ namespace coolsynth::synth
     {
         const float sr = static_cast<float>(juce::jmax(1.0, sampleRate));
         return juce::jmax(0.0f, rateHz) / sr;
-    }
-
-    DelayParameters SynthEngineV2::mapDelayParameters(const DelayParametersV2& parameters) noexcept
-    {
-        DelayParameters delay;
-        delay.timeMs = parameters.timeMs;
-        delay.feedback = parameters.enabled ? parameters.feedback : 0.0f;
-        delay.mix = parameters.enabled ? parameters.mix : 0.0f;
-        return delay;
     }
 }

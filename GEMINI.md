@@ -144,4 +144,12 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - A Windows patch-save failure found during manual Phase 7 validation was fixed by closing the temporary output stream before replacing the destination file, and patch-state coverage now includes a real file write/read round trip.
   - Manual standalone arp validation passed on 2026-05-15 using a simplified dry test patch: internal tempo, pattern switching, octave range, gate length, latch behavior, patch save, and patch load all worked as expected.
   - Ableton Live Lite VST3 arp-host validation was intentionally deferred to the final release-validation phase by user request after host workflow issues during bring-up.
-- `TODO.md` now points to Phase 8.
+- V2 `Phase 8` completed on 2026-05-15:
+  - The V2 render path now runs through a dedicated `GlobalFxRack` with the documented fixed order `drive -> chorus -> delay -> reverb -> master gain`.
+  - The new drive stage is a bounded soft-saturation pass with mix control; the chorus stage is voiced as a compact ensemble-style widener using the existing V2 rate, depth, and mix parameters; the existing delay now lives inside the rack; and a new global reverb stage completes the first-release FX set.
+  - Rack disable behavior is now explicit for the time-based stages: disabling delay or reverb clears buffered tails instead of keeping stale audio around for a later re-enable.
+  - Host tail reporting is now rack-aware rather than delay-only, so one-shot delay tails, feedback delay tails, and reverb tails all contribute to a conservative nonzero tail estimate when audible.
+  - Added automated regressions covering dry-path preservation with zero-mix FX, extreme full-rack boundedness, time-based effect disable clearing, processor reset silence with the full rack enabled, and rack-aware tail reporting.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
+  - Manual validation passed on 2026-05-15 in both standalone and VST3 host use: dry baseline, drive, chorus, delay, reverb, full-rack playback, effect disable clearing, panic silence, and stop/reset tail behavior all worked as expected.
+- `TODO.md` now points to Phase 9.

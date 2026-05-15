@@ -290,6 +290,162 @@ public:
                 expectBufferFiniteAndBounded(*this, buffer, 20.0f);
             }
         }
+
+        beginTest("v2_fx_rack_zero_mix_preserves_the_dry_path");
+        {
+            coolsynth::synth::SynthEngineV2 dryEngine;
+            coolsynth::synth::SynthEngineV2 bypassedFxEngine;
+            dryEngine.prepare(48000.0, 256, 2);
+            bypassedFxEngine.prepare(48000.0, 256, 2);
+
+            coolsynth::synth::BlockRenderParametersV2 dryParameters;
+            dryParameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            dryParameters.oscA.level = 1.0f;
+            dryParameters.oscB.level = 0.0f;
+            dryParameters.ampEnvelope = makeStressEnvelope();
+            dryParameters.filterEnvelope = makeStressEnvelope();
+            dryParameters.filter.cutoffHz = 8000.0f;
+            dryParameters.filter.resonanceNormalized = 0.1f;
+            dryParameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            dryParameters.masterGainLinear = 0.5f;
+
+            auto fxParameters = dryParameters;
+            fxParameters.drive.enabled = true;
+            fxParameters.drive.amount = 1.0f;
+            fxParameters.drive.mix = 0.0f;
+            fxParameters.chorus.enabled = true;
+            fxParameters.chorus.rateHz = 3.0f;
+            fxParameters.chorus.depth = 1.0f;
+            fxParameters.chorus.mix = 0.0f;
+            fxParameters.delay.enabled = true;
+            fxParameters.delay.timeMs = 500.0f;
+            fxParameters.delay.feedback = 0.85f;
+            fxParameters.delay.mix = 0.0f;
+            fxParameters.reverb.enabled = true;
+            fxParameters.reverb.size = 1.0f;
+            fxParameters.reverb.damping = 0.0f;
+            fxParameters.reverb.mix = 0.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> dryBuffer(2, 256);
+            juce::AudioBuffer<float> fxBuffer(2, 256);
+            dryBuffer.clear();
+            fxBuffer.clear();
+            dryEngine.render(dryBuffer, noteOn, dryParameters);
+            bypassedFxEngine.render(fxBuffer, noteOn, fxParameters);
+
+            expectWithinAbsoluteError(computeAbsoluteDifferenceSum(dryBuffer, fxBuffer), 0.0f, 1.0e-6f);
+        }
+
+        beginTest("v2_fx_rack_extreme_settings_remain_finite_and_bounded");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            coolsynth::synth::BlockRenderParametersV2 parameters;
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
+            parameters.ampEnvelope = makeStressEnvelope();
+            parameters.filterEnvelope = makeStressEnvelope();
+            parameters.filter.cutoffHz = 4000.0f;
+            parameters.filter.resonanceNormalized = 0.2f;
+            parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            parameters.drive.enabled = true;
+            parameters.drive.amount = 1.0f;
+            parameters.drive.mix = 1.0f;
+            parameters.chorus.enabled = true;
+            parameters.chorus.rateHz = 5.0f;
+            parameters.chorus.depth = 1.0f;
+            parameters.chorus.mix = 1.0f;
+            parameters.delay.enabled = true;
+            parameters.delay.timeMs = 1000.0f;
+            parameters.delay.feedback = 1.0f;
+            parameters.delay.mix = 1.0f;
+            parameters.reverb.enabled = true;
+            parameters.reverb.size = 1.0f;
+            parameters.reverb.damping = 0.0f;
+            parameters.reverb.mix = 1.0f;
+            parameters.masterGainLinear = 0.5f;
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            for (int block = 0; block < 32; ++block)
+            {
+                std::array<coolsynth::synth::EngineMidiEvent, 1> eventStorage {{
+                    block == 0
+                        ? coolsynth::synth::EngineMidiEvent { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+                        : coolsynth::synth::EngineMidiEvent { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+                }};
+
+                const auto events = block == 0
+                    ? std::span<const coolsynth::synth::EngineMidiEvent>(eventStorage.data(), 1)
+                    : (block == 8
+                        ? std::span<const coolsynth::synth::EngineMidiEvent>(eventStorage.data(), 1)
+                        : std::span<const coolsynth::synth::EngineMidiEvent>());
+
+                buffer.clear();
+                engine.render(buffer, events, parameters);
+                expectBufferFiniteAndBounded(*this, buffer, 100.0f);
+            }
+        }
+
+        beginTest("disabling_time_based_v2_fx_clears_existing_tails");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            coolsynth::synth::BlockRenderParametersV2 parameters;
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
+            parameters.ampEnvelope = makeStressEnvelope();
+            parameters.filterEnvelope = makeStressEnvelope();
+            parameters.filter.cutoffHz = 5000.0f;
+            parameters.filter.resonanceNormalized = 0.1f;
+            parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            parameters.delay.enabled = true;
+            parameters.delay.timeMs = 300.0f;
+            parameters.delay.feedback = 0.6f;
+            parameters.delay.mix = 1.0f;
+            parameters.reverb.enabled = true;
+            parameters.reverb.size = 1.0f;
+            parameters.reverb.damping = 0.0f;
+            parameters.reverb.mix = 1.0f;
+            parameters.masterGainLinear = 0.5f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOff {{
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+            buffer.clear();
+            engine.render(buffer, noteOff, parameters);
+
+            float tailPeak = 0.0f;
+            for (int block = 0; block < 4; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+                tailPeak = juce::jmax(tailPeak, computePeakAbs(buffer, 0, buffer.getNumSamples()));
+            }
+
+            expect(tailPeak > 1.0e-4f);
+
+            parameters.delay.enabled = false;
+            parameters.reverb.enabled = false;
+            buffer.clear();
+            engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+
+            expect(computePeakAbs(buffer, 0, buffer.getNumSamples()) < 1.0e-4f);
+        }
     }
 };
 

@@ -1,0 +1,15 @@
+Load order for FX validation:
+- test-fx-dry.cspatch
+- test-fx-drive.cspatch
+- test-fx-chorus.cspatch
+- test-fx-delay.cspatch
+- test-fx-reverb.cspatch
+- test-fx-full-rack.cspatch
+
+Manual checks:
+1. Dry patch first, confirm no FX.
+2. Drive patch: obvious saturation.
+3. Chorus patch: width/motion.
+4. Delay patch: repeats, then disable Delay in UI and tail should clear immediately.
+5. Reverb patch: long tail, then disable Reverb in UI and tail should clear immediately.
+6. Full-rack patch: all FX active, then Panic should silence immediately.

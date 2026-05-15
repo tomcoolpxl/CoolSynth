@@ -1,5 +1,21 @@
 # DONE
 
+## V2 Phase 8: Global FX rack
+
+Completed on 2026-05-15. The fixed-order V2 FX rack is now implemented and verified locally and manually in standalone and VST3 host use.
+
+- [x] Added a dedicated `GlobalFxRack` on the V2 path so the engine now processes the documented fixed order `drive -> chorus -> delay -> reverb -> master gain` instead of bolting new stages directly into `SynthEngineV2`.
+- [x] Implemented the global drive stage as a bounded soft-saturation pass with mix control and no render-path allocation.
+- [x] Implemented the global chorus stage with the existing V2 rate/depth/mix parameters and a fixed ensemble-style voicing suited to the first-release rack.
+- [x] Reworked the existing delay into the shared V2 rack and preserved real-time-safe smoothed delay-time and bounded feedback behavior.
+- [x] Implemented the global reverb stage and kept output gain handling at the end of the rack through the existing master-gain smoothing path.
+- [x] Added explicit bypass or disable behavior for the time-based stages so disabling delay or reverb clears latent tails instead of letting stale buffered audio reappear later.
+- [x] Moved host tail reporting from the old delay-only shortcut to a rack-level estimate that now covers one-shot delay tails, feedback delay tails, and reverb tails conservatively.
+- [x] Added regressions for zero-mix dry-path preservation, extreme full-rack stability, time-based effect disable clearing, processor reset silence with the full rack enabled, and rack-aware tail reporting.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-15 after the Phase 8 FX-rack change.
+- [x] Manual standalone FX-rack smoke passed on 2026-05-15: dry baseline, drive, chorus, delay, reverb, full-rack playback, delay disable clearing, reverb disable clearing, and panic silence all worked as expected.
+- [x] Manual VST3 host FX-rack smoke passed on 2026-05-15: dry vs effected playback, effect disable clearing, and stop/reset tail behavior worked as expected in host use.
+
 ## V2 Phase 7: Host-aware arpeggiator
 
 Completed on 2026-05-15. The V2 arpeggiator is now implemented and locally verified, and the remaining Ableton Live Lite VST3 host-sync smoke has been intentionally deferred to the final release-validation phase so Phase 8 can proceed.

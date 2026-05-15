@@ -383,27 +383,47 @@ public:
             expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
         }
 
-        beginTest("processor_reset_silences_allocator_path_and_clears_delay_tail");
+        beginTest("processor_reset_silences_allocator_path_and_clears_full_fx_rack");
         {
             SynthAudioProcessor processor;
             processor.prepareToPlay(48000.0, 128);
 
             auto& state = processor.getValueTreeState();
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::driveEnabled))
+                enabled->setValueNotifyingHost(1.0f);
+            if (auto* amount = state.getParameter(coolsynth::parameters::ids::driveAmount))
+                amount->setValueNotifyingHost(1.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::driveMix))
+                mix->setValueNotifyingHost(1.0f);
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::chorusEnabled))
+                enabled->setValueNotifyingHost(1.0f);
+            if (auto* depth = state.getParameter(coolsynth::parameters::ids::chorusDepth))
+                depth->setValueNotifyingHost(1.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::chorusMix))
+                mix->setValueNotifyingHost(1.0f);
             if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
                 enabled->setValueNotifyingHost(1.0f);
             if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
                 feedback->setValueNotifyingHost(1.0f);
             if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
                 mix->setValueNotifyingHost(1.0f);
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::reverbEnabled))
+                enabled->setValueNotifyingHost(1.0f);
+            if (auto* size = state.getParameter(coolsynth::parameters::ids::reverbSize))
+                size->setValueNotifyingHost(1.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::reverbMix))
+                mix->setValueNotifyingHost(1.0f);
 
             juce::AudioBuffer<float> buffer(2, 128);
             juce::MidiBuffer noteOn;
             noteOn.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8) 100), 0);
             processor.processBlock(buffer, noteOn);
+            juce::MidiBuffer emptyMidi;
+            buffer.clear();
+            processor.processBlock(buffer, emptyMidi);
 
             processor.reset();
 
-            juce::MidiBuffer emptyMidi;
             buffer.clear();
             processor.processBlock(buffer, emptyMidi);
 
@@ -417,7 +437,7 @@ public:
             expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
         }
 
-        beginTest("processor_reports_nonzero_tail_only_when_delay_can_ring");
+        beginTest("processor_reports_tail_for_audible_delay_or_reverb_paths");
         {
             SynthAudioProcessor processor;
             auto& state = processor.getValueTreeState();
@@ -433,6 +453,10 @@ public:
                 feedback->setValueNotifyingHost(1.0f);
             if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
                 mix->setValueNotifyingHost(1.0f);
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::reverbEnabled))
+                enabled->setValueNotifyingHost(0.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::reverbMix))
+                mix->setValueNotifyingHost(0.0f);
             expectTailNear(0.0);
 
             if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
@@ -445,11 +469,19 @@ public:
                 mix->setValueNotifyingHost(1.0f);
             if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
                 feedback->setValueNotifyingHost(0.0f);
-            expectTailNear(0.0);
+            expectTailNear(0.5);
 
             if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
                 feedback->setValueNotifyingHost(1.0f);
             expectTailNear(48.0);
+
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
+                enabled->setValueNotifyingHost(0.0f);
+            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::reverbEnabled))
+                enabled->setValueNotifyingHost(1.0f);
+            if (auto* mix = state.getParameter(coolsynth::parameters::ids::reverbMix))
+                mix->setValueNotifyingHost(1.0f);
+            expectTailNear(12.0);
         }
 
         beginTest("processor_process_block_routes_note_events_through_the_v2_allocator");

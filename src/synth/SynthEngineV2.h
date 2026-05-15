@@ -9,7 +9,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "Arpeggiator.h"
-#include "GlobalDelay.h"
+#include "GlobalFxRack.h"
 #include "SynthParameters.h"
 #include "SynthVoice.h"
 
@@ -126,11 +126,10 @@ namespace coolsynth::synth
                                         float vintageAmount) noexcept;
 
         static float computeLfoPhaseIncrementPerSample(float rateHz, double sampleRate) noexcept;
-        static DelayParameters mapDelayParameters(const DelayParametersV2& parameters) noexcept;
 
         std::vector<VoiceSlot> voices;
         Arpeggiator arpeggiator;
-        GlobalDelay globalDelay;
+        GlobalFxRack globalFxRack;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGainLinear;
         std::array<HeldNote, maxHeldNotes> heldNotes {};
         int heldNoteCount = 0;

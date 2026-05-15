@@ -62,6 +62,7 @@ target_sources(CoolSynth
         src/synth/SynthEngine.cpp
         src/synth/SynthEngineV2.cpp
         src/synth/GlobalDelay.cpp
+        src/synth/GlobalFxRack.cpp
         src/synth/SynthVoice.cpp
 
         src/ui/HardwareFader.cpp
@@ -124,6 +125,7 @@ if(BUILD_TESTING)
             src/synth/SynthEngine.cpp
             src/synth/SynthEngineV2.cpp
             src/synth/GlobalDelay.cpp
+            src/synth/GlobalFxRack.cpp
             src/synth/SynthVoice.cpp
             src/ui/HardwareFader.cpp
             src/ui/HardwareKnob.cpp

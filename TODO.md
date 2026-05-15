@@ -1,10 +1,11 @@
 # TODO
 
-`Phase 8`
+`Phase 9`
 
-- [ ] Implement the global drive stage for the V2 output path.
-- [ ] Implement the global chorus or ensemble stage for the V2 output path.
-- [ ] Rework the existing delay into the fixed-order V2 FX rack.
-- [ ] Implement the global reverb stage and output gain handling for the V2 rack.
-- [ ] Add reset, bypass, mix, and tail-handling behavior for the full rack.
-- [ ] Add tests or render checks for bounded feedback, stable reset behavior, and no obvious dry-path regression.
+- [ ] Update the bundled controller profile data and runtime mapping logic for the V2 parameter surface.
+- [ ] Preserve notes, pitch bend, mod wheel, and sustain as reserved performance inputs outside generic MIDI learn.
+- [ ] Extend standalone and plugin MIDI learn to the V2 controls.
+- [ ] Persist and restore V2 learned mappings in standalone settings and plugin state.
+- [ ] Add channel aftertouch only if it fits the stabilized MIDI/controller path without broader redesign.
+- [ ] Add tests for learned-CC round-trip, controller-profile override precedence, and disconnect handling.
+- [ ] Verify controller workflows manually in standalone and plugin mode.
