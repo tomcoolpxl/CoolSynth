@@ -152,7 +152,7 @@ namespace
             juce::NormalisableRange<float>(-50.0f, 50.0f),
             0.0f,
             juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int) { return formatCents(value); })));
-        group->addChild(makePercentParameter(oscALevel, v2VersionHint, "Level", 0.75f));
+        group->addChild(makePercentParameter(oscALevel, v2VersionHint, "Level", 0.80f));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             makeV2ParameterId(oscAPulseWidth),
             "Pulse Width",
@@ -183,9 +183,9 @@ namespace
             makeV2ParameterId(oscBFineCents),
             "Fine Tune",
             juce::NormalisableRange<float>(-50.0f, 50.0f),
-            0.0f,
+            4.0f,
             juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int) { return formatCents(value); })));
-        group->addChild(makePercentParameter(oscBLevel, v2VersionHint, "Level", 0.65f));
+        group->addChild(makePercentParameter(oscBLevel, v2VersionHint, "Level", 0.68f));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             makeV2ParameterId(oscBPulseWidth),
             "Pulse Width",
@@ -214,15 +214,15 @@ namespace
             makeLegacyParameterId(filterCutoffHz),
             "Cutoff",
             makeLogRange(20.0f, 20000.0f),
-            10000.0f,
+            3200.0f,
             hertzAttributes()));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             makeLegacyParameterId(filterResonance),
             "Resonance",
             juce::NormalisableRange<float>(0.0f, 1.0f),
-            0.1f,
+            0.08f,
             percentAttributes()));
-        group->addChild(makePercentParameter(filterEnvAmount, v2VersionHint, "Env Amount", 0.0f));
+        group->addChild(makePercentParameter(filterEnvAmount, v2VersionHint, "Env Amount", 0.35f));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(filterKeyTracking),
             "Key Track",
@@ -246,14 +246,14 @@ namespace
             makeV2ParameterId(filterDecayMs),
             "Decay",
             makeLogRange(5.0f, 5000.0f),
-            200.0f,
+            220.0f,
             millisecondsAttributes()));
-        group->addChild(makePercentParameter(filterSustain, v2VersionHint, "Sustain", 0.0f));
+        group->addChild(makePercentParameter(filterSustain, v2VersionHint, "Sustain", 0.12f));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             makeV2ParameterId(filterReleaseMs),
             "Release",
             makeLogRange(5.0f, 5000.0f),
-            300.0f,
+            220.0f,
             millisecondsAttributes()));
         return group;
     }
@@ -267,20 +267,20 @@ namespace
             makeLegacyParameterId(ampAttackMs),
             "Attack",
             makeLogRange(1.0f, 5000.0f),
-            10.0f,
+            5.0f,
             millisecondsAttributes()));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             makeLegacyParameterId(ampDecayMs),
             "Decay",
             makeLogRange(5.0f, 5000.0f),
-            200.0f,
+            260.0f,
             millisecondsAttributes()));
-        group->addChild(makePercentParameter(ampSustain, legacyVersionHint, "Sustain", 0.8f));
+        group->addChild(makePercentParameter(ampSustain, legacyVersionHint, "Sustain", 0.72f));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             makeLegacyParameterId(ampReleaseMs),
             "Release",
             makeLogRange(5.0f, 5000.0f),
-            300.0f,
+            240.0f,
             millisecondsAttributes()));
         return group;
     }

@@ -21,18 +21,18 @@
       "target": { "kind": "parameter", "parameterId": "filterResonance" }
     },
     {
-      "bindingId": "knob3-delay-time",
+      "bindingId": "knob3-filter-env-amount",
       "displayName": "Knob 3",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 76 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "delayTimeMs" }
+      "target": { "kind": "parameter", "parameterId": "filterEnvAmount" }
     },
     {
-      "bindingId": "knob4-delay-feedback",
+      "bindingId": "knob4-oscb-fine",
       "displayName": "Knob 4",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 77 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "delayFeedback" }
+      "target": { "kind": "parameter", "parameterId": "oscBFineCents" }
     },
     {
       "bindingId": "knob5-amp-attack",
@@ -63,18 +63,25 @@
       "target": { "kind": "parameter", "parameterId": "ampReleaseMs" }
     },
     {
-      "bindingId": "fader1-master-gain",
+      "bindingId": "fader1-osca-level",
       "displayName": "Fader 1",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 82 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "masterGainDb" }
+      "target": { "kind": "parameter", "parameterId": "oscALevel" }
     },
     {
-      "bindingId": "fader2-delay-mix",
+      "bindingId": "fader2-oscb-level",
       "displayName": "Fader 2",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 83 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "delayMix" }
+      "target": { "kind": "parameter", "parameterId": "oscBLevel" }
+    },
+    {
+      "bindingId": "fader3-master-gain",
+      "displayName": "Fader 3",
+      "signature": { "kind": "controlChange", "channel": "omni", "data1": 85 },
+      "valueMode": "absolute7",
+      "target": { "kind": "parameter", "parameterId": "masterGainDb" }
     },
     {
       "bindingId": "encoder-waveform",

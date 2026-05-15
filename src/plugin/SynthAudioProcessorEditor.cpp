@@ -353,18 +353,16 @@ addAndMakeVisible(mixSection);
     midiLearnManager = std::make_unique<coolsynth::midi::MidiLearnManager>();
     midiLearnManager->replaceBindings(processor.getLearnedMidiBindings());
 
+    patchActionsVisible = true;
+    initPatchButton.onClick = [this] { triggerInitPatch(); };
+    savePatchButton.onClick = [this] { triggerSavePatch(); };
+    loadPatchButton.onClick = [this] { triggerLoadPatch(); };
+    addAndMakeVisible(initPatchButton);
+    addAndMakeVisible(savePatchButton);
+    addAndMakeVisible(loadPatchButton);
+
     if (juce::JUCEApplicationBase::isStandaloneApp())
     {
-        patchActionsVisible = true;
-
-        initPatchButton.onClick = [this] { triggerInitPatch(); };
-        savePatchButton.onClick = [this] { triggerSavePatch(); };
-        loadPatchButton.onClick = [this] { triggerLoadPatch(); };
-
-        addAndMakeVisible(initPatchButton);
-        addAndMakeVisible(savePatchButton);
-        addAndMakeVisible(loadPatchButton);
-
         auto* deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager();
         auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore();
 
@@ -1147,7 +1145,12 @@ void SynthAudioProcessorEditor::triggerLoadPatch()
 void SynthAudioProcessorEditor::launchPatchSaveChooser()
 {
     activePatchChooser = std::make_unique<juce::FileChooser>(
-        "Save Patch", juce::File(), "*" + juce::String(coolsynth::presets::defaultPatchExtension));
+        "Save Patch",
+        juce::File(),
+        "*" + juce::String(coolsynth::presets::defaultPatchExtension),
+        true,
+        false,
+        this);
 
     auto chooserFlags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles;
     activePatchChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)
@@ -1160,7 +1163,12 @@ void SynthAudioProcessorEditor::launchPatchSaveChooser()
 void SynthAudioProcessorEditor::launchPatchLoadChooser()
 {
     activePatchChooser = std::make_unique<juce::FileChooser>(
-        "Load Patch", juce::File(), "*" + juce::String(coolsynth::presets::defaultPatchExtension));
+        "Load Patch",
+        juce::File(),
+        "*" + juce::String(coolsynth::presets::defaultPatchExtension),
+        true,
+        false,
+        this);
 
     auto chooserFlags = juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles;
     activePatchChooser->launchAsync(chooserFlags, [this](const juce::FileChooser& chooser)

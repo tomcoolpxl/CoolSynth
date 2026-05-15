@@ -1,11 +1,10 @@
 # TODO
 
-`Phase 9`
+`Phase 10`
 
-- [ ] Update the bundled controller profile data and runtime mapping logic for the V2 parameter surface.
-- [ ] Preserve notes, pitch bend, mod wheel, and sustain as reserved performance inputs outside generic MIDI learn.
-- [ ] Extend standalone and plugin MIDI learn to the V2 controls.
-- [ ] Persist and restore V2 learned mappings in standalone settings and plugin state.
-- [ ] Add channel aftertouch only if it fits the stabilized MIDI/controller path without broader redesign.
-- [ ] Add tests for learned-CC round-trip, controller-profile override precedence, and disconnect handling.
-- [ ] Verify controller workflows manually in standalone and plugin mode.
+- [ ] Define the V2 processor-state version and patch-format boundary for the new parameter contract. NOTE: BACKWARDS COMPATIBILITY IS NOT A REQUIREMENT!!! NOT SURE HOW NECESSARY NEXDT STEPS ARE
+- [ ] Update patch save and load logic to round-trip only V2 parameter state.
+- [ ] Reject incompatible V1 patch or processor-state payloads explicitly unless an import path is later approved.
+- [ ] Add tests for V2 patch round-trip, malformed payload rejection, and V1 compatibility-boundary behavior.
+- [ ] Update `README.md` and patch workflow documentation to describe the V2 compatibility break.
+- [ ] Verify saved V2 patches reload identically in standalone and plugin workflows.

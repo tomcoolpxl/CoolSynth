@@ -27,12 +27,14 @@ public:
 
     void runTest() override
     {
-        beginTest("learn_manager_accepts_only_the_ten_continuous_parameter_ids");
+        beginTest("learn_manager_accepts_v2_panel_parameters_across_continuous_and_discrete_controls");
         {
             MidiLearnManager manager;
             expect(manager.isLearnableParameter(coolsynth::parameters::ids::filterCutoffHz));
             expect(manager.isLearnableParameter(coolsynth::parameters::ids::masterGainDb));
-            expect(!manager.isLearnableParameter(coolsynth::parameters::ids::oscAWave));
+            expect(manager.isLearnableParameter(coolsynth::parameters::ids::oscAWave));
+            expect(manager.isLearnableParameter(coolsynth::parameters::ids::arpEnabled));
+            expect(manager.isLearnableParameter(coolsynth::parameters::ids::playMode));
             expect(!manager.isLearnableParameter("invalid_id"));
         }
 
@@ -106,14 +108,14 @@ public:
             
             std::vector<LearnedCcBinding> bindings = {
                 { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } },
-                { coolsynth::parameters::ids::delayMix, { 2, 83 } }
+                { coolsynth::parameters::ids::oscAWave, { 2, 83 } }
             };
             store.saveLearnedMidiMappings(bindings);
             
             auto loaded = store.loadLearnedMidiMappings();
             expectEquals((int)loaded.size(), 2);
             expect(loaded[0].parameterId == coolsynth::parameters::ids::filterCutoffHz);
-            expect(loaded[1].parameterId == coolsynth::parameters::ids::delayMix);
+            expect(loaded[1].parameterId == coolsynth::parameters::ids::oscAWave);
             expect(loaded[1].cc.channel == 2);
             expect(loaded[1].cc.controllerNumber == 83);
         }
@@ -249,9 +251,13 @@ public:
             auto& state = processor.getValueTreeState();
             auto* waveform = state.getParameter(coolsynth::parameters::ids::oscAWave);
             auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            auto* oscALevel = state.getParameter(coolsynth::parameters::ids::oscALevel);
+            auto* oscBLevel = state.getParameter(coolsynth::parameters::ids::oscBLevel);
 
             expect(waveform != nullptr);
             expect(cutoff != nullptr);
+            expect(oscALevel != nullptr);
+            expect(oscBLevel != nullptr);
             expect(processor.setActiveControllerProfile("arturia.minilab3.arturia-mode.v1"));
 
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 114, 63 });
@@ -262,6 +268,36 @@ public:
 
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 74, 127 });
             expectWithinAbsoluteError(cutoff->getValue(), 1.0f, 0.001f);
+
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 82, 64 });
+            expectWithinAbsoluteError(oscALevel->getValue(), 64.0f / 127.0f, 0.001f);
+
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 83, 32 });
+            expectWithinAbsoluteError(oscBLevel->getValue(), 32.0f / 127.0f, 0.001f);
+        }
+
+        beginTest("learned_bindings_shadow_factory_profile_signatures");
+        {
+            SynthAudioProcessor processor;
+            auto& state = processor.getValueTreeState();
+            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            auto* oscBLevel = state.getParameter(coolsynth::parameters::ids::oscBLevel);
+
+            expect(cutoff != nullptr);
+            expect(oscBLevel != nullptr);
+            expect(processor.setActiveControllerProfile("arturia.minilab3.arturia-mode.v1"));
+
+            const auto initialOscBLevel = oscBLevel != nullptr ? oscBLevel->getValue() : 0.0f;
+
+            const std::array<LearnedCcBinding, 1> bindings {{
+                { coolsynth::parameters::ids::filterCutoffHz, { 1, 83 } }
+            }};
+            processor.setLearnedMidiBindings(bindings);
+
+            processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 83, 127 });
+
+            expectWithinAbsoluteError(cutoff->getValue(), 1.0f, 0.001f);
+            expectWithinAbsoluteError(oscBLevel->getValue(), initialOscBLevel, 1.0e-6f);
         }
 
         beginTest("plugin_process_block_applies_learned_cc_mappings_via_async_handoff");
@@ -517,7 +553,7 @@ public:
 
             const std::array<LearnedCcBinding, 2> bindings {{
                 { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } },
-                { coolsynth::parameters::ids::delayMix, { 2, 83 } }
+                { coolsynth::parameters::ids::oscAWave, { 2, 83 } }
             }};
             source.setLearnedMidiBindings(bindings);
 
@@ -533,7 +569,7 @@ public:
                 expect(restored[0].parameterId == coolsynth::parameters::ids::filterCutoffHz);
                 expectEquals((int) restored[0].cc.channel, 1);
                 expectEquals((int) restored[0].cc.controllerNumber, 74);
-                expect(restored[1].parameterId == coolsynth::parameters::ids::delayMix);
+                expect(restored[1].parameterId == coolsynth::parameters::ids::oscAWave);
                 expectEquals((int) restored[1].cc.channel, 2);
                 expectEquals((int) restored[1].cc.controllerNumber, 83);
             }

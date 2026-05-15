@@ -79,7 +79,7 @@ namespace coolsynth::midi
         MidiLearnSession getSession() const;
 
     private:
-        static bool isContinuousLearnEligible(juce::StringRef parameterId) noexcept;
+        static bool isParameterLearnEligible(juce::StringRef parameterId) noexcept;
         void normalizeBindings();
 
         MidiLearnSession session;

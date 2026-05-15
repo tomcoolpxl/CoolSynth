@@ -37,7 +37,7 @@ The VST3 build uses the same synth engine and parameters inside a DAW. Audio rou
 
 ## MIDI Learn
 
-In standalone mode, CoolSynth ships with a bundled MiniLab 3 / Arturia Mode factory profile and allows continuous controls such as knobs and faders to override that profile with MIDI learn from a right-click context menu.
+In standalone mode, CoolSynth ships with a bundled MiniLab 3 / Arturia Mode factory profile and allows any exposed V2 panel control to override that profile with MIDI learn from a right-click context menu.
 
 In plugin mode, the same learnable controls can capture DAW-routed live MIDI CC input from the plugin editor. Plugin learned bindings are stored in plugin state, so they restore with the host session. Plugin mode does not auto-load a hardware-specific factory profile.
 
@@ -50,7 +50,7 @@ Learned mappings are stored with standalone settings in standalone mode, and in 
 
 ## Patch Workflow
 
-CoolSynth includes a minimal patch format for synth parameter state.
+CoolSynth includes a minimal patch format for synth parameter state in both standalone and VST3 mode.
 
 - `Init Patch` resets synth parameters to their defaults.
 - `Save Patch` writes a `.cspatch` XML file containing synth parameter state.

@@ -11,15 +11,15 @@ Capture surface: bundled factory controller profile `arturia.minilab3.arturia-mo
 | Keyboard | keyboard | note | 1 | 0..127 | velocity 1..127 | note input | requiredForPhase7 | Standard MIDI notes |
 | Knob 1 | knob | controlChange | omni | 74 | absolute 0..127 | filter cutoff | shipped | "Brightness" in Arturia mode |
 | Knob 2 | knob | controlChange | omni | 71 | absolute 0..127 | filter resonance | shipped | "Timbre" in Arturia mode |
-| Knob 3 | knob | controlChange | omni | 76 | absolute 0..127 | delay time | shipped | "Variation" in Arturia mode |
-| Knob 4 | knob | controlChange | omni | 77 | absolute 0..127 | delay feedback | shipped | "Movement" in Arturia mode |
+| Knob 3 | knob | controlChange | omni | 76 | absolute 0..127 | filter envelope amount | shipped | "Variation" in Arturia mode |
+| Knob 4 | knob | controlChange | omni | 77 | absolute 0..127 | oscillator B fine tune | shipped | "Movement" in Arturia mode |
 | Knob 5 | knob | controlChange | omni | 93 | absolute 0..127 | amp attack | shipped | "FX A" in Arturia mode |
 | Knob 6 | knob | controlChange | omni | 18 | absolute 0..127 | amp decay | shipped | "FX B" in Arturia mode |
 | Knob 7 | knob | controlChange | omni | 19 | absolute 0..127 | amp sustain | shipped | "Delay" in Arturia mode |
 | Knob 8 | knob | controlChange | omni | 16 | absolute 0..127 | amp release | shipped | "Reverb" in Arturia mode |
-| Fader 1 | fader | controlChange | omni | 82 | absolute 0..127 | master gain | shipped | "Bass EQ" in Arturia mode |
-| Fader 2 | fader | controlChange | omni | 83 | absolute 0..127 | delay mix | shipped | "Mid EQ" in Arturia mode |
-| Fader 3 | fader | controlChange | omni | 85 | absolute 0..127 | unassigned | deferred | "High EQ" in Arturia mode |
+| Fader 1 | fader | controlChange | omni | 82 | absolute 0..127 | oscillator A level | shipped | "Bass EQ" in Arturia mode |
+| Fader 2 | fader | controlChange | omni | 83 | absolute 0..127 | oscillator B level | shipped | "Mid EQ" in Arturia mode |
+| Fader 3 | fader | controlChange | omni | 85 | absolute 0..127 | master gain | shipped | "High EQ" in Arturia mode |
 | Encoder | encoder | controlChange | omni | 114 | relative binary offset | waveform | shipped | Main encoder, one step per detent |
 | Pad 8 | pad | note | 10 | 43 | velocity 1..127 | panic | shipped | Bank A, G1 (note 43) |
 
@@ -27,7 +27,7 @@ Capture surface: bundled factory controller profile `arturia.minilab3.arturia-mo
 
 - The shipped profile is data-driven and loaded from `resources/controller_profiles/minilab3_arturia_mode.json`.
 - Standalone mode auto-detects this profile for matching MiniLab 3 device names, and the MIDI tab also allows forcing or disabling the factory profile.
-- Standalone MIDI learn overrides these shipped bindings on a per-parameter basis.
+- Standalone and plugin MIDI learn override these shipped bindings on a per-parameter basis.
 
 ## Deferred Controls
 

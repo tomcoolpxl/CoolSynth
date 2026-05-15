@@ -224,16 +224,5 @@ namespace coolsynth::parameters
         ids::masterGainDb,
     });
 
-    inline constexpr auto continuousLearnableParameterIds = std::to_array<const char*>({
-        ids::filterCutoffHz,
-        ids::filterResonance,
-        ids::ampAttackMs,
-        ids::ampDecayMs,
-        ids::ampSustain,
-        ids::ampReleaseMs,
-        ids::delayTimeMs,
-        ids::delayFeedback,
-        ids::delayMix,
-        ids::masterGainDb,
-    });
+    inline constexpr auto learnableParameterIds = allParameterIds;
 }

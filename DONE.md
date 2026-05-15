@@ -1,5 +1,21 @@
 # DONE
 
+## V2 Phase 9: MIDI learn and controller integration
+
+Completed on 2026-05-15. The V2 controller and patch-workflow slice is now implemented, validated by automated coverage, and manually signed off in standalone and VST3 use.
+
+- [x] Expanded MIDI learn eligibility from the old narrow continuous subset to the full exposed V2 panel surface, including discrete toggles and selector-style parameters.
+- [x] Preserved notes, pitch bend, mod wheel, sustain, and host-safety controller semantics outside generic MIDI learn and runtime controller remapping.
+- [x] Kept standalone settings and plugin-state learned-binding persistence working for the broader V2 surface, including discrete parameters such as `oscAWave`.
+- [x] Retargeted the bundled MiniLab 3 Arturia-mode factory profile toward the V2 core surface: cutoff, resonance, filter-envelope amount, oscillator B fine tune, amp ADSR, oscillator A and B levels, master gain, oscillator A wave, and panic.
+- [x] Preserved controller-profile override precedence so learned bindings still shadow the factory profile by both target parameter and CC signature.
+- [x] Exposed `Init Patch`, `Save Patch`, and `Load Patch` in the shared plugin editor so the VST3 build now surfaces the same patch actions as standalone, and parented the async file choosers to the editor component.
+- [x] Retuned the built-in init defaults to a more musically useful dry V2 baseline while keeping the first-load patch clean and FX-free.
+- [x] Evaluated channel aftertouch for Phase 9 and intentionally deferred it because there is still no explicit aftertouch destination or parameter contract in V2; forcing one here would have added hidden scope rather than staying low risk.
+- [x] Added regressions for full-surface learn eligibility, discrete learned-binding persistence, factory-profile signature shadowing, updated factory-profile runtime mappings, and init-default reset expectations.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-15 after the Phase 9 slice.
+- [x] Manual validation passed on 2026-05-15 in both standalone and VST3 use: the updated MiniLab 3 profile behaved as expected, learned CC overrides worked, plugin learned mappings restored correctly, VST3 `Init Patch`/`Save Patch`/`Load Patch` buttons were visible, and patch save/load worked in the plugin workflow.
+
 ## V2 Phase 8: Global FX rack
 
 Completed on 2026-05-15. The fixed-order V2 FX rack is now implemented and verified locally and manually in standalone and VST3 host use.

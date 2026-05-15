@@ -41,11 +41,25 @@ public:
 
             apvts.getParameter("delayMix")->setValueNotifyingHost(1.0f);
             apvts.getParameter("masterGainDb")->setValueNotifyingHost(1.0f);
+            apvts.getParameter(coolsynth::parameters::ids::oscBFineCents)->setValueNotifyingHost(0.0f);
+            apvts.getParameter(coolsynth::parameters::ids::filterEnvAmount)->setValueNotifyingHost(0.0f);
 
             processor.resetAutomatableParametersToDefaults();
 
             expectWithinAbsoluteError(apvts.getParameter("delayMix")->getValue(),
                                       apvts.getParameter("delayMix")->getDefaultValue(),
+                                      0.0001f);
+            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::filterCutoffHz)->load(),
+                                      3200.0f,
+                                      0.0001f);
+            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::filterEnvAmount)->load(),
+                                      0.35f,
+                                      0.0001f);
+            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::oscBFineCents)->load(),
+                                      4.0f,
+                                      0.0001f);
+            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::ampSustain)->load(),
+                                      0.72f,
                                       0.0001f);
         }
 

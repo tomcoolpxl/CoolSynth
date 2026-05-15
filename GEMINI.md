@@ -4,6 +4,12 @@ This is the main repo or agent memory file. If you need to adapt your memory fil
 
 We are in "V2" phase right now.
 
+## Compatibility Stance
+
+- No backward compatibility is required anywhere in this repo unless the user explicitly asks for it.
+- Nothing has been released yet, so prefer the cleanest current V2 behavior over preserving older patch, state, parameter-ID, or controller-mapping contracts.
+- If a future task would keep backward compatibility only out of caution or inertia, do not do that by default.
+
 Authoritative project files:
 
 - `REQUIREMENTS.md`, `REQUIREMENTS_V2.md`
@@ -152,4 +158,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Added automated regressions covering dry-path preservation with zero-mix FX, extreme full-rack boundedness, time-based effect disable clearing, processor reset silence with the full rack enabled, and rack-aware tail reporting.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
   - Manual validation passed on 2026-05-15 in both standalone and VST3 host use: dry baseline, drive, chorus, delay, reverb, full-rack playback, effect disable clearing, panic silence, and stop/reset tail behavior all worked as expected.
-- `TODO.md` now points to Phase 9.
+- V2 `Phase 9` completed on 2026-05-15:
+  - MIDI learn now accepts the full exposed V2 parameter surface, including discrete controls such as waveform, play mode, and arp toggles, while still rejecting reserved performance controllers such as mod wheel, sustain, all-notes-off, and all-sound-off semantics.
+  - The bundled MiniLab 3 Arturia-mode factory profile was retargeted toward the V2 core surface: cutoff, resonance, filter envelope amount, oscillator B fine tune, amp ADSR, oscillator A and B levels, master gain, oscillator A wave, and panic.
+  - Factory-profile precedence remains deliberate: learned bindings still shadow the active factory profile by target and by CC signature so user overrides win predictably in standalone and plugin workflows.
+  - Patch actions are now visible in the VST3 editor as well as standalone, and the async patch file choosers are parented to the editor component so manual save or load validation can happen directly inside the plugin UI.
+  - The built-in init patch defaults were retuned toward a more useful dry dual-saw baseline with a moderated cutoff, positive filter-envelope contour, slight oscillator B detune, and balanced levels while keeping FX disabled.
+  - Channel aftertouch was evaluated for Phase 9 and intentionally deferred because V2 still has no explicit aftertouch destination or parameter contract; adding hidden aftertouch behavior here would broaden scope rather than stay low risk.
+  - Added automated regressions for full-surface learn eligibility, discrete learned-binding XML and plugin-state round trip, factory-profile signature shadowing by learned bindings, updated factory-profile runtime mappings, and init-default reset expectations.
+  - Manual validation passed in both standalone and VST3 use: the updated MiniLab 3 profile behaved as expected, learned CC overrides worked, plugin learned mappings restored correctly, VST3 patch buttons were visible, and patch save/load worked in the plugin workflow.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
+- `TODO.md` now points to Phase 10.

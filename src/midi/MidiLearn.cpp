@@ -7,9 +7,9 @@ namespace coolsynth::midi
 {
     MidiLearnManager::MidiLearnManager() = default;
 
-    bool MidiLearnManager::isContinuousLearnEligible(juce::StringRef parameterId) noexcept
+    bool MidiLearnManager::isParameterLearnEligible(juce::StringRef parameterId) noexcept
     {
-        for (const auto* knownId : parameters::continuousLearnableParameterIds)
+        for (const auto* knownId : parameters::learnableParameterIds)
             if (parameterId == juce::StringRef(knownId))
                 return true;
 
@@ -18,12 +18,12 @@ namespace coolsynth::midi
 
     bool MidiLearnManager::isLearnableParameter(juce::StringRef parameterId) const noexcept
     {
-        return isContinuousLearnEligible(parameterId);
+        return isParameterLearnEligible(parameterId);
     }
 
     bool MidiLearnManager::beginLearning(juce::String parameterId, juce::String parameterName)
     {
-        if (!isContinuousLearnEligible(parameterId))
+        if (!isParameterLearnEligible(parameterId))
             return false;
 
         session.armed = true;
@@ -141,7 +141,7 @@ namespace coolsynth::midi
             if (!it->isValid())
                 continue;
 
-            if (!isContinuousLearnEligible(it->parameterId))
+            if (!isParameterLearnEligible(it->parameterId))
                 continue;
 
             auto paramExists = std::any_of(normalized.begin(), normalized.end(),
