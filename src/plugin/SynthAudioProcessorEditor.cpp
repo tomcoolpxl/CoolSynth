@@ -1,6 +1,9 @@
 #include "SynthAudioProcessorEditor.h"
 
 #include <array>
+#include <cmath>
+
+#include <BinaryData.h>
 
 #include "BuildInfo.h"
 #include "SynthAudioProcessor.h"
@@ -9,8 +12,118 @@
 #include "presets/PatchState.h"
 #include "standalone/SettingsStore.h"
 #include "standalone/StandaloneAudioSupport.h"
+#include "ui/ActionButtonLookAndFeel.h"
 #include "ui/StandaloneSettingsDialog.h"
 #include "ui/StandaloneStatusBar.h"
+#include "ui/UiPalette.h"
+
+namespace
+{
+    juce::String wrapTooltipBody(juce::String text, int maxCharsPerLine = 38)
+    {
+        juce::StringArray paragraphs;
+        paragraphs.addLines(text);
+
+        juce::StringArray wrappedParagraphs;
+
+        for (auto paragraph : paragraphs)
+        {
+            paragraph = paragraph.trim();
+
+            if (paragraph.isEmpty())
+            {
+                wrappedParagraphs.add({});
+                continue;
+            }
+
+            juce::StringArray words;
+            words.addTokens(paragraph, " ", {});
+            words.removeEmptyStrings();
+
+            juce::String currentLine;
+            juce::StringArray lines;
+
+            for (const auto& word : words)
+            {
+                const auto candidate = currentLine.isEmpty() ? word : currentLine + " " + word;
+
+                if (! currentLine.isEmpty() && candidate.length() > maxCharsPerLine)
+                {
+                    lines.add(currentLine);
+                    currentLine = word;
+                }
+                else
+                {
+                    currentLine = candidate;
+                }
+            }
+
+            if (currentLine.isNotEmpty())
+                lines.add(currentLine);
+
+            wrappedParagraphs.add(lines.joinIntoString("\n"));
+        }
+
+        return wrappedParagraphs.joinIntoString("\n");
+    }
+
+    juce::String makeTooltipText(juce::String title, juce::String body)
+    {
+        return title.toUpperCase() + "\n" + wrapTooltipBody(body);
+    }
+
+    class EditorTooltipWindow final : public juce::TooltipWindow
+    {
+    public:
+        using juce::TooltipWindow::TooltipWindow;
+
+        std::function<bool()> isEnabledProvider;
+
+        juce::String getTipFor(juce::Component& component) override
+        {
+            if (isEnabledProvider != nullptr && ! isEnabledProvider())
+                return {};
+
+            for (auto* current = &component; current != nullptr; current = current->getParentComponent())
+            {
+                if (auto tip = juce::TooltipWindow::getTipFor(*current); tip.isNotEmpty())
+                    return tip;
+            }
+
+            return {};
+        }
+    };
+
+    class EditorTooltipLookAndFeel final : public juce::LookAndFeel_V4
+    {
+    public:
+        juce::Rectangle<int> getTooltipBounds(const juce::String& tipText,
+                                              juce::Point<int> screenPos,
+                                              juce::Rectangle<int> parentArea) override
+        {
+            auto bounds = juce::LookAndFeel_V2::getTooltipBounds(tipText, screenPos, parentArea);
+            bounds.setHeight(bounds.getHeight() + 10);
+            return bounds;
+        }
+
+        void drawTooltip(juce::Graphics& g, const juce::String& text, int width, int height) override
+        {
+            auto bounds = juce::Rectangle<float>(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height)).reduced(0.5f);
+            g.setColour(coolsynth::ui::palette::tooltipBackground);
+            g.fillRoundedRectangle(bounds, 6.0f);
+
+            g.setColour(coolsynth::ui::palette::tooltipBorder);
+            g.drawRoundedRectangle(bounds, 6.0f, 1.0f);
+
+            g.setColour(coolsynth::ui::palette::textPrimary);
+            g.setFont(juce::FontOptions(13.0f, juce::Font::plain));
+            g.drawFittedText(text,
+                             juce::Rectangle<int>(width, height).reduced(8, 6).withTrimmedBottom(10),
+                             juce::Justification::topLeft,
+                             8);
+        }
+    };
+}
 
 SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProcessor)
     : juce::AudioProcessorEditor(&inProcessor)
@@ -90,27 +203,27 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     parameterRefs.revMix = apvts.getParameter(ids::reverbMix);
     parameterRefs.outGain = apvts.getParameter(ids::masterGainDb);
 
-    titleLabel.setText("CoolSynth", juce::dontSendNotification);
-    titleLabel.setFont(juce::FontOptions(32.0f, juce::Font::bold));
-    titleLabel.setJustificationType(juce::Justification::centredLeft);
-    addAndMakeVisible(titleLabel);
+    titleLogoDrawable = juce::Drawable::createFromImageData(BinaryData::coolsynthlogo_png,
+                                                            BinaryData::coolsynthlogo_pngSize);
+    if (titleLogoDrawable != nullptr)
+        addAndMakeVisible(*titleLogoDrawable);
 
     midiLearnStatusLabel.setText("", juce::dontSendNotification);
-    midiLearnStatusLabel.setFont(juce::FontOptions(14.0f));
-    midiLearnStatusLabel.setColour(juce::Label::textColourId, juce::Colours::yellow);
+    midiLearnStatusLabel.setFont(juce::FontOptions("Arial", 14.0f, juce::Font::bold));
+    midiLearnStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::ledTextOff);
     midiLearnStatusLabel.setJustificationType(juce::Justification::centredLeft);
     addAndMakeVisible(midiLearnStatusLabel);
 
     pluginStatusLabel.setText("Plugin Build", juce::dontSendNotification);
     pluginStatusLabel.setFont(juce::FontOptions(12.0f));
-    pluginStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+    pluginStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
     pluginStatusLabel.setJustificationType(juce::Justification::centredLeft);
     pluginStatusLabel.setVisible(!isStandalone);
     addAndMakeVisible(pluginStatusLabel);
 
     buildInfoLabel.setText(coolsynth::build::getBuildIdentity(), juce::dontSendNotification);
     buildInfoLabel.setFont(juce::FontOptions(13.0f));
-    buildInfoLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    buildInfoLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textPrimary);
     buildInfoLabel.setJustificationType(juce::Justification::centredRight);
     buildInfoLabel.setVisible(!isStandalone);
     addAndMakeVisible(buildInfoLabel);
@@ -129,170 +242,151 @@ addAndMakeVisible(mixSection);
     addAndMakeVisible(revSection);
     addAndMakeVisible(outSection);
 
-    addAndMakeVisible(oscAWaveKnob);
-    oscAWaveAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscAWave, oscAWaveKnob.slider());
-    addAndMakeVisible(oscAOctaveKnob);
-    oscAOctaveAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscAOctave, oscAOctaveKnob.slider());
-    addAndMakeVisible(oscAFineKnob);
-    oscAFineAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscAFineCents, oscAFineKnob.slider());
-    addAndMakeVisible(oscAPwKnob);
-    oscAPwAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscAPulseWidth, oscAPwKnob.slider());
-    addAndMakeVisible(oscASyncKnob);
-    oscASyncAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscASyncEnabled, oscASyncKnob.slider());
-    addAndMakeVisible(oscBWaveKnob);
-    oscBWaveAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscBWave, oscBWaveKnob.slider());
-    addAndMakeVisible(oscBOctaveKnob);
-    oscBOctaveAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscBOctave, oscBOctaveKnob.slider());
-    addAndMakeVisible(oscBFineKnob);
-    oscBFineAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscBFineCents, oscBFineKnob.slider());
-    addAndMakeVisible(oscBPwKnob);
-    oscBPwAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscBPulseWidth, oscBPwKnob.slider());
-    addAndMakeVisible(oscBLoFreqKnob);
-    oscBLoFreqAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscBLowFrequencyMode, oscBLoFreqKnob.slider());
-    addAndMakeVisible(mixOscAKnob);
-    mixOscAAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscALevel, mixOscAKnob.slider());
-    addAndMakeVisible(mixOscBKnob);
-    mixOscBAttachment = std::make_unique<SliderAttachment>(apvts, ids::oscBLevel, mixOscBKnob.slider());
-    addAndMakeVisible(mixNoiseKnob);
-    mixNoiseAttachment = std::make_unique<SliderAttachment>(apvts, ids::noiseLevel, mixNoiseKnob.slider());
-    addAndMakeVisible(fltCutoffKnob);
-    fltCutoffAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterCutoffHz, fltCutoffKnob.slider());
-    addAndMakeVisible(fltResKnob);
-    fltResAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterResonance, fltResKnob.slider());
-    addAndMakeVisible(fltEnvAmtKnob);
-    fltEnvAmtAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterEnvAmount, fltEnvAmtKnob.slider());
-    addAndMakeVisible(fltKeyTrkKnob);
-    fltKeyTrkAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterKeyTracking, fltKeyTrkKnob.slider());
-    addAndMakeVisible(fEnvAKnob);
-    fEnvAAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterAttackMs, fEnvAKnob.slider());
-    addAndMakeVisible(fEnvDKnob);
-    fEnvDAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterDecayMs, fEnvDKnob.slider());
-    addAndMakeVisible(fEnvSKnob);
-    fEnvSAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterSustain, fEnvSKnob.slider());
-    addAndMakeVisible(fEnvRKnob);
-    fEnvRAttachment = std::make_unique<SliderAttachment>(apvts, ids::filterReleaseMs, fEnvRKnob.slider());
-    addAndMakeVisible(aEnvAKnob);
-    aEnvAAttachment = std::make_unique<SliderAttachment>(apvts, ids::ampAttackMs, aEnvAKnob.slider());
-    addAndMakeVisible(aEnvDKnob);
-    aEnvDAttachment = std::make_unique<SliderAttachment>(apvts, ids::ampDecayMs, aEnvDKnob.slider());
-    addAndMakeVisible(aEnvSKnob);
-    aEnvSAttachment = std::make_unique<SliderAttachment>(apvts, ids::ampSustain, aEnvSKnob.slider());
-    addAndMakeVisible(aEnvRKnob);
-    aEnvRAttachment = std::make_unique<SliderAttachment>(apvts, ids::ampReleaseMs, aEnvRKnob.slider());
-    addAndMakeVisible(lfoRateKnob);
-    lfoRateAttachment = std::make_unique<SliderAttachment>(apvts, ids::lfoRateHz, lfoRateKnob.slider());
-    addAndMakeVisible(lfoWaveKnob);
-    lfoWaveAttachment = std::make_unique<SliderAttachment>(apvts, ids::lfoWave, lfoWaveKnob.slider());
-    addAndMakeVisible(lfoMwDepKnob);
-    lfoMwDepAttachment = std::make_unique<SliderAttachment>(apvts, ids::modWheelToLfoDepth, lfoMwDepKnob.slider());
-    addAndMakeVisible(lfoPitchKnob);
-    lfoPitchAttachment = std::make_unique<SliderAttachment>(apvts, ids::lfoToOscPitch, lfoPitchKnob.slider());
-    addAndMakeVisible(lfoPwKnob);
-    lfoPwAttachment = std::make_unique<SliderAttachment>(apvts, ids::lfoToPulseWidth, lfoPwKnob.slider());
-    addAndMakeVisible(lfoCutoffKnob);
-    lfoCutoffAttachment = std::make_unique<SliderAttachment>(apvts, ids::lfoToFilterCutoff, lfoCutoffKnob.slider());
-    addAndMakeVisible(pmodBPitchKnob);
-    pmodBPitchAttachment = std::make_unique<SliderAttachment>(apvts, ids::polyModOscBToOscPitch, pmodBPitchKnob.slider());
-    addAndMakeVisible(pmodBPwKnob);
-    pmodBPwAttachment = std::make_unique<SliderAttachment>(apvts, ids::polyModOscBToPulseWidth, pmodBPwKnob.slider());
-    addAndMakeVisible(pmodBCutoffKnob);
-    pmodBCutoffAttachment = std::make_unique<SliderAttachment>(apvts, ids::polyModOscBToFilterCutoff, pmodBCutoffKnob.slider());
-    addAndMakeVisible(pmodEPitchKnob);
-    pmodEPitchAttachment = std::make_unique<SliderAttachment>(apvts, ids::polyModEnvToOscPitch, pmodEPitchKnob.slider());
-    addAndMakeVisible(pmodEPwKnob);
-    pmodEPwAttachment = std::make_unique<SliderAttachment>(apvts, ids::polyModEnvToPulseWidth, pmodEPwKnob.slider());
-    addAndMakeVisible(pmodECutoffKnob);
-    pmodECutoffAttachment = std::make_unique<SliderAttachment>(apvts, ids::polyModEnvToFilterCutoff, pmodECutoffKnob.slider());
-    addAndMakeVisible(perfGlideKnob);
-    perfGlideAttachment = std::make_unique<SliderAttachment>(apvts, ids::glideTimeMs, perfGlideKnob.slider());
-    addAndMakeVisible(perfModeKnob);
-    perfModeAttachment = std::make_unique<SliderAttachment>(apvts, ids::playMode, perfModeKnob.slider());
-    addAndMakeVisible(perfPrioKnob);
-    perfPrioAttachment = std::make_unique<SliderAttachment>(apvts, ids::keyPriority, perfPrioKnob.slider());
-    addAndMakeVisible(perfPbRangeKnob);
-    perfPbRangeAttachment = std::make_unique<SliderAttachment>(apvts, ids::pitchBendRangeSemitones, perfPbRangeKnob.slider());
-    addAndMakeVisible(perfVintageKnob);
-    perfVintageAttachment = std::make_unique<SliderAttachment>(apvts, ids::vintageAmount, perfVintageKnob.slider());
-    addAndMakeVisible(perfPanKnob);
-    perfPanAttachment = std::make_unique<SliderAttachment>(apvts, ids::panSpread, perfPanKnob.slider());
-    addAndMakeVisible(perfVelAmpKnob);
-    perfVelAmpAttachment = std::make_unique<SliderAttachment>(apvts, ids::velocityToAmp, perfVelAmpKnob.slider());
-    addAndMakeVisible(perfVelFltKnob);
-    perfVelFltAttachment = std::make_unique<SliderAttachment>(apvts, ids::velocityToFilter, perfVelFltKnob.slider());
-    addAndMakeVisible(arpOnKnob);
-    arpOnAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpEnabled, arpOnKnob.slider());
-    addAndMakeVisible(arpTempoKnob);
-    arpTempoAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpInternalTempoBpm, arpTempoKnob.slider());
-    addAndMakeVisible(arpRateKnob);
-    arpRateAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpRateDivision, arpRateKnob.slider());
-    addAndMakeVisible(arpPatternKnob);
-    arpPatternAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpPattern, arpPatternKnob.slider());
-    addAndMakeVisible(arpOctaveKnob);
-    arpOctaveAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpOctaveRange, arpOctaveKnob.slider());
-    addAndMakeVisible(arpGateKnob);
-    arpGateAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpGate, arpGateKnob.slider());
-    addAndMakeVisible(arpLatchKnob);
-    arpLatchAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpLatch, arpLatchKnob.slider());
-    addAndMakeVisible(drvOnKnob);
-    drvOnAttachment = std::make_unique<SliderAttachment>(apvts, ids::driveEnabled, drvOnKnob.slider());
-    addAndMakeVisible(drvAmtKnob);
-    drvAmtAttachment = std::make_unique<SliderAttachment>(apvts, ids::driveAmount, drvAmtKnob.slider());
-    addAndMakeVisible(drvMixKnob);
-    drvMixAttachment = std::make_unique<SliderAttachment>(apvts, ids::driveMix, drvMixKnob.slider());
-    addAndMakeVisible(choOnKnob);
-    choOnAttachment = std::make_unique<SliderAttachment>(apvts, ids::chorusEnabled, choOnKnob.slider());
-    addAndMakeVisible(choRateKnob);
-    choRateAttachment = std::make_unique<SliderAttachment>(apvts, ids::chorusRateHz, choRateKnob.slider());
-    addAndMakeVisible(choDepKnob);
-    choDepAttachment = std::make_unique<SliderAttachment>(apvts, ids::chorusDepth, choDepKnob.slider());
-    addAndMakeVisible(choMixKnob);
-    choMixAttachment = std::make_unique<SliderAttachment>(apvts, ids::chorusMix, choMixKnob.slider());
-    addAndMakeVisible(dlyOnKnob);
-    dlyOnAttachment = std::make_unique<SliderAttachment>(apvts, ids::delayEnabled, dlyOnKnob.slider());
-    addAndMakeVisible(dlyTimeKnob);
-    dlyTimeAttachment = std::make_unique<SliderAttachment>(apvts, ids::delayTimeMs, dlyTimeKnob.slider());
-    addAndMakeVisible(dlyFdbkKnob);
-    dlyFdbkAttachment = std::make_unique<SliderAttachment>(apvts, ids::delayFeedback, dlyFdbkKnob.slider());
-    addAndMakeVisible(dlyMixKnob);
-    dlyMixAttachment = std::make_unique<SliderAttachment>(apvts, ids::delayMix, dlyMixKnob.slider());
-    addAndMakeVisible(revOnKnob);
-    revOnAttachment = std::make_unique<SliderAttachment>(apvts, ids::reverbEnabled, revOnKnob.slider());
-    addAndMakeVisible(revSizeKnob);
-    revSizeAttachment = std::make_unique<SliderAttachment>(apvts, ids::reverbSize, revSizeKnob.slider());
-    addAndMakeVisible(revDampKnob);
-    revDampAttachment = std::make_unique<SliderAttachment>(apvts, ids::reverbDamping, revDampKnob.slider());
-    addAndMakeVisible(revMixKnob);
-    revMixAttachment = std::make_unique<SliderAttachment>(apvts, ids::reverbMix, revMixKnob.slider());
-    addAndMakeVisible(outGainFader);
-    outGainAttachment = std::make_unique<SliderAttachment>(apvts, ids::masterGainDb, outGainFader.slider());
+    auto addSliderControl = [this, &apvts](auto& control,
+                                           std::unique_ptr<SliderAttachment>& attachment,
+                                           const char* parameterId)
+    {
+        addAndMakeVisible(control);
+        attachment = std::make_unique<SliderAttachment>(apvts, parameterId, control.slider());
+    };
 
-    
+    auto addToggleControl = [this, &apvts](auto& control,
+                                           std::unique_ptr<ButtonAttachment>& attachment,
+                                           const char* parameterId)
+    {
+        addAndMakeVisible(control);
+        attachment = std::make_unique<ButtonAttachment>(apvts, parameterId, control.button());
+    };
+
+    auto attachChoiceControl = [](auto& control,
+                                  std::unique_ptr<ChoiceAttachment>& attachment,
+                                  juce::RangedAudioParameter* parameter)
+    {
+        control.onSelectionChanged = [&attachment](int value)
+        {
+            if (attachment != nullptr)
+                attachment->setValueAsCompleteGesture(static_cast<float>(value));
+        };
+
+        if (parameter == nullptr)
+            return;
+
+        attachment = std::make_unique<ChoiceAttachment>(*parameter,
+                                                        [&control](float value)
+                                                        {
+                                                            control.setSelectedValue(static_cast<int>(std::lround(value)));
+                                                        });
+        attachment->sendInitialUpdate();
+    };
+
+    addAndMakeVisible(oscAWaveChoice);
+    attachChoiceControl(oscAWaveChoice, oscAWaveAttachment, parameterRefs.oscAWave);
+    addSliderControl(oscAOctaveKnob, oscAOctaveAttachment, ids::oscAOctave);
+    addSliderControl(oscAFineKnob, oscAFineAttachment, ids::oscAFineCents);
+    addSliderControl(oscAPwKnob, oscAPwAttachment, ids::oscAPulseWidth);
+    addToggleControl(oscASyncToggle, oscASyncAttachment, ids::oscASyncEnabled);
+    addAndMakeVisible(oscBWaveChoice);
+    attachChoiceControl(oscBWaveChoice, oscBWaveAttachment, parameterRefs.oscBWave);
+    addSliderControl(oscBOctaveKnob, oscBOctaveAttachment, ids::oscBOctave);
+    addSliderControl(oscBFineKnob, oscBFineAttachment, ids::oscBFineCents);
+    addSliderControl(oscBPwKnob, oscBPwAttachment, ids::oscBPulseWidth);
+    addToggleControl(oscBLoFreqToggle, oscBLoFreqAttachment, ids::oscBLowFrequencyMode);
+    addSliderControl(mixOscAKnob, mixOscAAttachment, ids::oscALevel);
+    addSliderControl(mixOscBKnob, mixOscBAttachment, ids::oscBLevel);
+    addSliderControl(mixNoiseKnob, mixNoiseAttachment, ids::noiseLevel);
+    addSliderControl(fltCutoffKnob, fltCutoffAttachment, ids::filterCutoffHz);
+    addSliderControl(fltResKnob, fltResAttachment, ids::filterResonance);
+    addSliderControl(fltEnvAmtKnob, fltEnvAmtAttachment, ids::filterEnvAmount);
+    addAndMakeVisible(fltKeyTrkChoice);
+    attachChoiceControl(fltKeyTrkChoice, fltKeyTrkAttachment, parameterRefs.fltKeyTrk);
+    addSliderControl(fEnvAKnob, fEnvAAttachment, ids::filterAttackMs);
+    addSliderControl(fEnvDKnob, fEnvDAttachment, ids::filterDecayMs);
+    addSliderControl(fEnvSKnob, fEnvSAttachment, ids::filterSustain);
+    addSliderControl(fEnvRKnob, fEnvRAttachment, ids::filterReleaseMs);
+    addSliderControl(aEnvAKnob, aEnvAAttachment, ids::ampAttackMs);
+    addSliderControl(aEnvDKnob, aEnvDAttachment, ids::ampDecayMs);
+    addSliderControl(aEnvSKnob, aEnvSAttachment, ids::ampSustain);
+    addSliderControl(aEnvRKnob, aEnvRAttachment, ids::ampReleaseMs);
+    addSliderControl(lfoRateKnob, lfoRateAttachment, ids::lfoRateHz);
+    addAndMakeVisible(lfoWaveChoice);
+    attachChoiceControl(lfoWaveChoice, lfoWaveAttachment, parameterRefs.lfoWave);
+    addSliderControl(lfoMwDepKnob, lfoMwDepAttachment, ids::modWheelToLfoDepth);
+    addSliderControl(lfoPitchKnob, lfoPitchAttachment, ids::lfoToOscPitch);
+    addSliderControl(lfoPwKnob, lfoPwAttachment, ids::lfoToPulseWidth);
+    addSliderControl(lfoCutoffKnob, lfoCutoffAttachment, ids::lfoToFilterCutoff);
+    addSliderControl(pmodBPitchKnob, pmodBPitchAttachment, ids::polyModOscBToOscPitch);
+    addSliderControl(pmodBPwKnob, pmodBPwAttachment, ids::polyModOscBToPulseWidth);
+    addSliderControl(pmodBCutoffKnob, pmodBCutoffAttachment, ids::polyModOscBToFilterCutoff);
+    addSliderControl(pmodEPitchKnob, pmodEPitchAttachment, ids::polyModEnvToOscPitch);
+    addSliderControl(pmodEPwKnob, pmodEPwAttachment, ids::polyModEnvToPulseWidth);
+    addSliderControl(pmodECutoffKnob, pmodECutoffAttachment, ids::polyModEnvToFilterCutoff);
+    addSliderControl(perfGlideKnob, perfGlideAttachment, ids::glideTimeMs);
+    addAndMakeVisible(perfModeChoice);
+    attachChoiceControl(perfModeChoice, perfModeAttachment, parameterRefs.perfMode);
+    addAndMakeVisible(perfPrioChoice);
+    attachChoiceControl(perfPrioChoice, perfPrioAttachment, parameterRefs.perfPrio);
+    addSliderControl(perfPbRangeKnob, perfPbRangeAttachment, ids::pitchBendRangeSemitones);
+    addSliderControl(perfVintageKnob, perfVintageAttachment, ids::vintageAmount);
+    addSliderControl(perfPanKnob, perfPanAttachment, ids::panSpread);
+    addSliderControl(perfVelAmpKnob, perfVelAmpAttachment, ids::velocityToAmp);
+    addSliderControl(perfVelFltKnob, perfVelFltAttachment, ids::velocityToFilter);
+    addToggleControl(arpOnToggle, arpOnAttachment, ids::arpEnabled);
+    addSliderControl(arpTempoKnob, arpTempoAttachment, ids::arpInternalTempoBpm);
+    addAndMakeVisible(arpRateChoice);
+    attachChoiceControl(arpRateChoice, arpRateAttachment, parameterRefs.arpRate);
+    addAndMakeVisible(arpPatternChoice);
+    attachChoiceControl(arpPatternChoice, arpPatternAttachment, parameterRefs.arpPattern);
+    addAndMakeVisible(arpOctaveChoice);
+    attachChoiceControl(arpOctaveChoice, arpOctaveAttachment, parameterRefs.arpOctave);
+    addSliderControl(arpGateKnob, arpGateAttachment, ids::arpGate);
+    addToggleControl(arpLatchToggle, arpLatchAttachment, ids::arpLatch);
+    addToggleControl(drvOnToggle, drvOnAttachment, ids::driveEnabled);
+    addSliderControl(drvAmtKnob, drvAmtAttachment, ids::driveAmount);
+    addSliderControl(drvMixKnob, drvMixAttachment, ids::driveMix);
+    addToggleControl(choOnToggle, choOnAttachment, ids::chorusEnabled);
+    addSliderControl(choRateKnob, choRateAttachment, ids::chorusRateHz);
+    addSliderControl(choDepKnob, choDepAttachment, ids::chorusDepth);
+    addSliderControl(choMixKnob, choMixAttachment, ids::chorusMix);
+    addToggleControl(dlyOnToggle, dlyOnAttachment, ids::delayEnabled);
+    addSliderControl(dlyTimeKnob, dlyTimeAttachment, ids::delayTimeMs);
+    addSliderControl(dlyFdbkKnob, dlyFdbkAttachment, ids::delayFeedback);
+    addSliderControl(dlyMixKnob, dlyMixAttachment, ids::delayMix);
+    addToggleControl(revOnToggle, revOnAttachment, ids::reverbEnabled);
+    addSliderControl(revSizeKnob, revSizeAttachment, ids::reverbSize);
+    addSliderControl(revDampKnob, revDampAttachment, ids::reverbDamping);
+    addSliderControl(revMixKnob, revMixAttachment, ids::reverbMix);
+    addSliderControl(outGainKnob, outGainAttachment, ids::masterGainDb);
+
     auto applyKnobState = [](coolsynth::ui::HardwareKnob& knob, bool armed, juce::String badge)
     {
         knob.setLearnState(armed, badge);
     };
-    auto applyFaderState = [](coolsynth::ui::HardwareFader& fader, bool armed, juce::String badge)
+    auto applyToggleState = [](coolsynth::ui::LedToggleButton& toggle, bool armed, juce::String badge)
     {
-        fader.setLearnState(armed, badge);
+        toggle.setLearnState(armed, badge);
+    };
+    auto applyChoiceState = [](coolsynth::ui::SegmentedChoiceGroup& choice, bool armed, juce::String badge)
+    {
+        choice.setLearnState(armed, badge);
     };
 
-    registerLearnableControl(oscAWaveKnob, ids::oscAWave, "Wave", [&](bool a, juce::String b) { applyKnobState(oscAWaveKnob, a, b); });
+    registerLearnableControl(oscAWaveChoice, ids::oscAWave, "Wave", [&](bool a, juce::String b) { applyChoiceState(oscAWaveChoice, a, b); });
     registerLearnableControl(oscAOctaveKnob, ids::oscAOctave, "Octave", [&](bool a, juce::String b) { applyKnobState(oscAOctaveKnob, a, b); });
     registerLearnableControl(oscAFineKnob, ids::oscAFineCents, "Fine", [&](bool a, juce::String b) { applyKnobState(oscAFineKnob, a, b); });
     registerLearnableControl(oscAPwKnob, ids::oscAPulseWidth, "Pulse W", [&](bool a, juce::String b) { applyKnobState(oscAPwKnob, a, b); });
-    registerLearnableControl(oscASyncKnob, ids::oscASyncEnabled, "Sync", [&](bool a, juce::String b) { applyKnobState(oscASyncKnob, a, b); });
-    registerLearnableControl(oscBWaveKnob, ids::oscBWave, "Wave", [&](bool a, juce::String b) { applyKnobState(oscBWaveKnob, a, b); });
+    registerLearnableControl(oscASyncToggle, ids::oscASyncEnabled, "Sync", [&](bool a, juce::String b) { applyToggleState(oscASyncToggle, a, b); });
+    registerLearnableControl(oscBWaveChoice, ids::oscBWave, "Wave", [&](bool a, juce::String b) { applyChoiceState(oscBWaveChoice, a, b); });
     registerLearnableControl(oscBOctaveKnob, ids::oscBOctave, "Octave", [&](bool a, juce::String b) { applyKnobState(oscBOctaveKnob, a, b); });
     registerLearnableControl(oscBFineKnob, ids::oscBFineCents, "Fine", [&](bool a, juce::String b) { applyKnobState(oscBFineKnob, a, b); });
     registerLearnableControl(oscBPwKnob, ids::oscBPulseWidth, "Pulse W", [&](bool a, juce::String b) { applyKnobState(oscBPwKnob, a, b); });
-    registerLearnableControl(oscBLoFreqKnob, ids::oscBLowFrequencyMode, "Lo Freq", [&](bool a, juce::String b) { applyKnobState(oscBLoFreqKnob, a, b); });
+    registerLearnableControl(oscBLoFreqToggle, ids::oscBLowFrequencyMode, "Lo Freq", [&](bool a, juce::String b) { applyToggleState(oscBLoFreqToggle, a, b); });
     registerLearnableControl(mixOscAKnob, ids::oscALevel, "Osc A", [&](bool a, juce::String b) { applyKnobState(mixOscAKnob, a, b); });
     registerLearnableControl(mixOscBKnob, ids::oscBLevel, "Osc B", [&](bool a, juce::String b) { applyKnobState(mixOscBKnob, a, b); });
     registerLearnableControl(mixNoiseKnob, ids::noiseLevel, "Noise", [&](bool a, juce::String b) { applyKnobState(mixNoiseKnob, a, b); });
     registerLearnableControl(fltCutoffKnob, ids::filterCutoffHz, "Cutoff", [&](bool a, juce::String b) { applyKnobState(fltCutoffKnob, a, b); });
     registerLearnableControl(fltResKnob, ids::filterResonance, "Resonance", [&](bool a, juce::String b) { applyKnobState(fltResKnob, a, b); });
     registerLearnableControl(fltEnvAmtKnob, ids::filterEnvAmount, "Env Amt", [&](bool a, juce::String b) { applyKnobState(fltEnvAmtKnob, a, b); });
-    registerLearnableControl(fltKeyTrkKnob, ids::filterKeyTracking, "Key Trk", [&](bool a, juce::String b) { applyKnobState(fltKeyTrkKnob, a, b); });
+    registerLearnableControl(fltKeyTrkChoice, ids::filterKeyTracking, "Key Trk", [&](bool a, juce::String b) { applyChoiceState(fltKeyTrkChoice, a, b); });
     registerLearnableControl(fEnvAKnob, ids::filterAttackMs, "F Atk", [&](bool a, juce::String b) { applyKnobState(fEnvAKnob, a, b); });
     registerLearnableControl(fEnvDKnob, ids::filterDecayMs, "F Dec", [&](bool a, juce::String b) { applyKnobState(fEnvDKnob, a, b); });
     registerLearnableControl(fEnvSKnob, ids::filterSustain, "F Sus", [&](bool a, juce::String b) { applyKnobState(fEnvSKnob, a, b); });
@@ -302,7 +396,7 @@ addAndMakeVisible(mixSection);
     registerLearnableControl(aEnvSKnob, ids::ampSustain, "A Sus", [&](bool a, juce::String b) { applyKnobState(aEnvSKnob, a, b); });
     registerLearnableControl(aEnvRKnob, ids::ampReleaseMs, "A Rel", [&](bool a, juce::String b) { applyKnobState(aEnvRKnob, a, b); });
     registerLearnableControl(lfoRateKnob, ids::lfoRateHz, "Rate", [&](bool a, juce::String b) { applyKnobState(lfoRateKnob, a, b); });
-    registerLearnableControl(lfoWaveKnob, ids::lfoWave, "Wave", [&](bool a, juce::String b) { applyKnobState(lfoWaveKnob, a, b); });
+    registerLearnableControl(lfoWaveChoice, ids::lfoWave, "Wave", [&](bool a, juce::String b) { applyChoiceState(lfoWaveChoice, a, b); });
     registerLearnableControl(lfoMwDepKnob, ids::modWheelToLfoDepth, "MW->Dep", [&](bool a, juce::String b) { applyKnobState(lfoMwDepKnob, a, b); });
     registerLearnableControl(lfoPitchKnob, ids::lfoToOscPitch, "->Pitch", [&](bool a, juce::String b) { applyKnobState(lfoPitchKnob, a, b); });
     registerLearnableControl(lfoPwKnob, ids::lfoToPulseWidth, "->PW", [&](bool a, juce::String b) { applyKnobState(lfoPwKnob, a, b); });
@@ -314,39 +408,55 @@ addAndMakeVisible(mixSection);
     registerLearnableControl(pmodEPwKnob, ids::polyModEnvToPulseWidth, "E->PW", [&](bool a, juce::String b) { applyKnobState(pmodEPwKnob, a, b); });
     registerLearnableControl(pmodECutoffKnob, ids::polyModEnvToFilterCutoff, "E->Cutoff", [&](bool a, juce::String b) { applyKnobState(pmodECutoffKnob, a, b); });
     registerLearnableControl(perfGlideKnob, ids::glideTimeMs, "Glide", [&](bool a, juce::String b) { applyKnobState(perfGlideKnob, a, b); });
-    registerLearnableControl(perfModeKnob, ids::playMode, "Mode", [&](bool a, juce::String b) { applyKnobState(perfModeKnob, a, b); });
-    registerLearnableControl(perfPrioKnob, ids::keyPriority, "Priority", [&](bool a, juce::String b) { applyKnobState(perfPrioKnob, a, b); });
+    registerLearnableControl(perfModeChoice, ids::playMode, "Mode", [&](bool a, juce::String b) { applyChoiceState(perfModeChoice, a, b); });
+    registerLearnableControl(perfPrioChoice, ids::keyPriority, "Priority", [&](bool a, juce::String b) { applyChoiceState(perfPrioChoice, a, b); });
     registerLearnableControl(perfPbRangeKnob, ids::pitchBendRangeSemitones, "PB Range", [&](bool a, juce::String b) { applyKnobState(perfPbRangeKnob, a, b); });
     registerLearnableControl(perfVintageKnob, ids::vintageAmount, "Vintage", [&](bool a, juce::String b) { applyKnobState(perfVintageKnob, a, b); });
     registerLearnableControl(perfPanKnob, ids::panSpread, "Pan Spread", [&](bool a, juce::String b) { applyKnobState(perfPanKnob, a, b); });
     registerLearnableControl(perfVelAmpKnob, ids::velocityToAmp, "Vel->Amp", [&](bool a, juce::String b) { applyKnobState(perfVelAmpKnob, a, b); });
     registerLearnableControl(perfVelFltKnob, ids::velocityToFilter, "Vel->Flt", [&](bool a, juce::String b) { applyKnobState(perfVelFltKnob, a, b); });
-    registerLearnableControl(arpOnKnob, ids::arpEnabled, "On", [&](bool a, juce::String b) { applyKnobState(arpOnKnob, a, b); });
+    registerLearnableControl(arpOnToggle, ids::arpEnabled, "Arp On", [&](bool a, juce::String b) { applyToggleState(arpOnToggle, a, b); });
     registerLearnableControl(arpTempoKnob, ids::arpInternalTempoBpm, "Tempo", [&](bool a, juce::String b) { applyKnobState(arpTempoKnob, a, b); });
-    registerLearnableControl(arpRateKnob, ids::arpRateDivision, "Rate", [&](bool a, juce::String b) { applyKnobState(arpRateKnob, a, b); });
-    registerLearnableControl(arpPatternKnob, ids::arpPattern, "Pattern", [&](bool a, juce::String b) { applyKnobState(arpPatternKnob, a, b); });
-    registerLearnableControl(arpOctaveKnob, ids::arpOctaveRange, "Octave", [&](bool a, juce::String b) { applyKnobState(arpOctaveKnob, a, b); });
+    registerLearnableControl(arpRateChoice, ids::arpRateDivision, "Rate", [&](bool a, juce::String b) { applyChoiceState(arpRateChoice, a, b); });
+    registerLearnableControl(arpPatternChoice, ids::arpPattern, "Pattern", [&](bool a, juce::String b) { applyChoiceState(arpPatternChoice, a, b); });
+    registerLearnableControl(arpOctaveChoice, ids::arpOctaveRange, "Octave", [&](bool a, juce::String b) { applyChoiceState(arpOctaveChoice, a, b); });
     registerLearnableControl(arpGateKnob, ids::arpGate, "Gate", [&](bool a, juce::String b) { applyKnobState(arpGateKnob, a, b); });
-    registerLearnableControl(arpLatchKnob, ids::arpLatch, "Latch", [&](bool a, juce::String b) { applyKnobState(arpLatchKnob, a, b); });
-    registerLearnableControl(drvOnKnob, ids::driveEnabled, "On", [&](bool a, juce::String b) { applyKnobState(drvOnKnob, a, b); });
+    registerLearnableControl(arpLatchToggle, ids::arpLatch, "Latch", [&](bool a, juce::String b) { applyToggleState(arpLatchToggle, a, b); });
+    registerLearnableControl(drvOnToggle, ids::driveEnabled, "Drive", [&](bool a, juce::String b) { applyToggleState(drvOnToggle, a, b); });
     registerLearnableControl(drvAmtKnob, ids::driveAmount, "Amount", [&](bool a, juce::String b) { applyKnobState(drvAmtKnob, a, b); });
     registerLearnableControl(drvMixKnob, ids::driveMix, "Mix", [&](bool a, juce::String b) { applyKnobState(drvMixKnob, a, b); });
-    registerLearnableControl(choOnKnob, ids::chorusEnabled, "On", [&](bool a, juce::String b) { applyKnobState(choOnKnob, a, b); });
+    registerLearnableControl(choOnToggle, ids::chorusEnabled, "Chorus", [&](bool a, juce::String b) { applyToggleState(choOnToggle, a, b); });
     registerLearnableControl(choRateKnob, ids::chorusRateHz, "Rate", [&](bool a, juce::String b) { applyKnobState(choRateKnob, a, b); });
     registerLearnableControl(choDepKnob, ids::chorusDepth, "Depth", [&](bool a, juce::String b) { applyKnobState(choDepKnob, a, b); });
     registerLearnableControl(choMixKnob, ids::chorusMix, "Mix", [&](bool a, juce::String b) { applyKnobState(choMixKnob, a, b); });
-    registerLearnableControl(dlyOnKnob, ids::delayEnabled, "On", [&](bool a, juce::String b) { applyKnobState(dlyOnKnob, a, b); });
+    registerLearnableControl(dlyOnToggle, ids::delayEnabled, "Delay", [&](bool a, juce::String b) { applyToggleState(dlyOnToggle, a, b); });
     registerLearnableControl(dlyTimeKnob, ids::delayTimeMs, "Time", [&](bool a, juce::String b) { applyKnobState(dlyTimeKnob, a, b); });
     registerLearnableControl(dlyFdbkKnob, ids::delayFeedback, "Fdbk", [&](bool a, juce::String b) { applyKnobState(dlyFdbkKnob, a, b); });
     registerLearnableControl(dlyMixKnob, ids::delayMix, "Mix", [&](bool a, juce::String b) { applyKnobState(dlyMixKnob, a, b); });
-    registerLearnableControl(revOnKnob, ids::reverbEnabled, "On", [&](bool a, juce::String b) { applyKnobState(revOnKnob, a, b); });
+    registerLearnableControl(revOnToggle, ids::reverbEnabled, "Reverb", [&](bool a, juce::String b) { applyToggleState(revOnToggle, a, b); });
     registerLearnableControl(revSizeKnob, ids::reverbSize, "Size", [&](bool a, juce::String b) { applyKnobState(revSizeKnob, a, b); });
     registerLearnableControl(revDampKnob, ids::reverbDamping, "Damp", [&](bool a, juce::String b) { applyKnobState(revDampKnob, a, b); });
     registerLearnableControl(revMixKnob, ids::reverbMix, "Mix", [&](bool a, juce::String b) { applyKnobState(revMixKnob, a, b); });
-    registerLearnableControl(outGainFader, ids::masterGainDb, "Master", [&](bool a, juce::String b) { applyFaderState(outGainFader, a, b); });
+    registerLearnableControl(outGainKnob, ids::masterGainDb, "Master", [&](bool a, juce::String b) { applyKnobState(outGainKnob, a, b); });
 
+    coolsynth::ui::applyGreenActionButtonStyle(initPatchButton, "patchButton");
+    coolsynth::ui::applyGreenActionButtonStyle(savePatchButton, "patchButton");
+    coolsynth::ui::applyGreenActionButtonStyle(loadPatchButton, "patchButton");
+    coolsynth::ui::applyGreenActionButtonStyle(allNotesOffButton, "panicButton");
+    coolsynth::ui::applyGreenActionButtonStyle(tooltipToggleButton, "tooltipToggleButton");
+    allNotesOffButton.setButtonText({});
     allNotesOffButton.onClick = [this] { processor.requestPanic(); };
+    tooltipToggleButton.setClickingTogglesState(true);
+    tooltipToggleButton.setToggleState(true, juce::dontSendNotification);
+    tooltipToggleButton.onClick = [this]
+    {
+        tooltipsEnabled = tooltipToggleButton.getToggleState();
+
+        if (tooltipWindow != nullptr)
+            tooltipWindow->hideTip();
+    };
     addAndMakeVisible(allNotesOffButton);
+    addAndMakeVisible(tooltipToggleButton);
 
     addAndMakeVisible(pianoBar);
 
@@ -390,7 +500,12 @@ addAndMakeVisible(mixSection);
         standaloneMidiController->addChangeListener(this);
         refreshStandaloneControllerProfileSelection();
 
-        standaloneStatusBar = std::make_unique<StandaloneStatusBar>(*standaloneMidiController);
+        standaloneStatusBar = std::make_unique<StandaloneStatusBar>(*standaloneMidiController,
+            [this]
+            {
+                const auto profile = getResolvedStandaloneControllerProfileDisplayName();
+                return profile.isNotEmpty() ? "PROFILE: " + profile.toUpperCase() : juce::String {};
+            });
         addAndMakeVisible(*standaloneStatusBar);
 
         setSize(1400, 628);
@@ -399,6 +514,249 @@ addAndMakeVisible(mixSection);
     {
         setSize(1400, 600);
     }
+
+    tooltipLookAndFeel = std::make_unique<EditorTooltipLookAndFeel>();
+    tooltipWindow = std::make_unique<EditorTooltipWindow>(this, 500);
+    static_cast<EditorTooltipWindow*>(tooltipWindow.get())->isEnabledProvider = [this] { return tooltipsEnabled; };
+    tooltipWindow->setLookAndFeel(tooltipLookAndFeel.get());
+
+    oscSection.setTooltip(makeTooltipText("Oscillators",
+                                          "Choose the source tone for oscillator A and B.\n"
+                                          "This section sets waveform, pitch, pulse width,\n"
+                                          "sync, and low-frequency mode."));
+    mixSection.setTooltip(makeTooltipText("Mixer",
+                                          "Blend oscillator A, oscillator B, and noise\n"
+                                          "before the signal reaches the filter."));
+    fltSection.setTooltip(makeTooltipText("Filter",
+                                          "Shape brightness and emphasis in the main\n"
+                                          "low-pass filter.\n"
+                                          "Cutoff, resonance, envelope amount, and key\n"
+                                          "tracking all meet here."));
+    envSection.setTooltip(makeTooltipText("Envelopes",
+                                          "Set the time shape for both the filter and amp.\n"
+                                          "Attack, decay, sustain, and release define how\n"
+                                          "each note starts, holds, and fades."));
+    lfoSection.setTooltip(makeTooltipText("LFO",
+                                          "Set the global low-frequency modulator.\n"
+                                          "Choose its shape and route it to pitch,\n"
+                                          "pulse width, and filter cutoff."));
+    pmodSection.setTooltip(makeTooltipText("Poly Mod",
+                                           "Route oscillator B or the filter envelope into\n"
+                                           "extra modulation destinations.\n"
+                                           "Use this for more aggressive or animated tones."));
+    perfSection.setTooltip(makeTooltipText("Performance",
+                                           "Configure how the synth responds while played.\n"
+                                           "This includes glide, voice mode, note priority,\n"
+                                           "bend range, drift, spread, and velocity."));
+    arpSection.setTooltip(makeTooltipText("Arpeggiator",
+                                          "Turn held notes into repeating patterns.\n"
+                                          "Set tempo, timing division, pattern order,\n"
+                                          "octave span, gate length, and latch behavior."));
+    drvSection.setTooltip(makeTooltipText("Drive",
+                                          "Add saturation before the time-based effects.\n"
+                                          "Use amount and mix to control strength and blend."));
+    choSection.setTooltip(makeTooltipText("Chorus",
+                                          "Widen and thicken the sound with modulation.\n"
+                                          "Rate controls movement, depth controls range,\n"
+                                          "and mix controls blend."));
+    dlySection.setTooltip(makeTooltipText("Delay",
+                                          "Create repeating echoes after the dry signal.\n"
+                                          "Time sets spacing, feedback sets repeats,\n"
+                                          "and mix sets blend."));
+    revSection.setTooltip(makeTooltipText("Reverb",
+                                          "Add space and tail after the delay stage.\n"
+                                          "Size sets the room, damping darkens the tail,\n"
+                                          "and mix sets blend."));
+    outSection.setTooltip(makeTooltipText("Output",
+                                          "Set the final master level after the full\n"
+                                          "effects chain.\n"
+                                          "Use this to match loudness without changing\n"
+                                          "the patch balance upstream."));
+
+    setParameterTooltip(oscAWaveChoice, "Wave", "Select the waveform for oscillator A.");
+    oscAWaveChoice.setOptionTooltip(0, makeTooltipText("Pulse",
+                                                       "A hollow, buzzy waveform with an adjustable width.\n"
+                                                       "Great for basses, leads, and animated PWM sounds."));
+    oscAWaveChoice.setOptionTooltip(1, makeTooltipText("Tri",
+                                                       "A softer, rounder waveform with fewer bright overtones.\n"
+                                                       "Useful for gentle leads, flutes, and smoother modulation."));
+    oscAWaveChoice.setOptionTooltip(2, makeTooltipText("Saw",
+                                                       "A bright, harmonically rich waveform.\n"
+                                                       "This is the classic starting point for many synth brass,\n"
+                                                       "strings, basses, and leads."));
+    setParameterTooltip(oscAOctaveKnob, "Octave", "Shift oscillator A up or down by octaves.");
+    setParameterTooltip(oscAFineKnob, "Fine", "Fine tune oscillator A in cents.");
+    setParameterTooltip(oscAPwKnob, "Pulse Width", "Adjust oscillator A pulse width.");
+    setParameterTooltip(oscASyncToggle, "Sync", "Enable hard sync so oscillator A resets from oscillator B.");
+    setParameterTooltip(oscBWaveChoice, "Wave", "Select the waveform for oscillator B.");
+    oscBWaveChoice.setOptionTooltip(0, makeTooltipText("Pulse",
+                                                       "A hollow, buzzy waveform with an adjustable width.\n"
+                                                       "Layer it with oscillator A for thicker classic synth tones."));
+    oscBWaveChoice.setOptionTooltip(1, makeTooltipText("Tri",
+                                                       "A softer waveform with less bite than saw or pulse.\n"
+                                                       "Good for supporting tone or smoother modulation duties."));
+    oscBWaveChoice.setOptionTooltip(2, makeTooltipText("Saw",
+                                                       "A bright, full waveform rich in harmonics.\n"
+                                                       "Use it when you want edge, body, or strong filter sweeps."));
+    setParameterTooltip(oscBOctaveKnob, "Octave", "Shift oscillator B up or down by octaves.");
+    setParameterTooltip(oscBFineKnob, "Fine", "Fine tune oscillator B in cents.");
+    setParameterTooltip(oscBPwKnob, "Pulse Width", "Adjust oscillator B pulse width.");
+    setParameterTooltip(oscBLoFreqToggle, "Lo Freq", "Put oscillator B into low-frequency mode for modulation duties.");
+    setParameterTooltip(mixOscAKnob, "Osc A", "Set the level of oscillator A in the mixer.");
+    setParameterTooltip(mixOscBKnob, "Osc B", "Set the level of oscillator B in the mixer.");
+    setParameterTooltip(mixNoiseKnob, "Noise", "Set the amount of noise mixed into the voice.");
+    setParameterTooltip(fltCutoffKnob, "Cutoff", "Set the filter cutoff frequency.");
+    setParameterTooltip(fltResKnob, "Resonance", "Boost frequencies around the filter cutoff.");
+    setParameterTooltip(fltEnvAmtKnob, "Env Amt", "Set how strongly the filter envelope moves cutoff.");
+    setParameterTooltip(fltKeyTrkChoice, "Key Trk", "Choose how much keyboard pitch tracks the filter cutoff.");
+    fltKeyTrkChoice.setOptionTooltip(0, makeTooltipText("Off",
+                                                        "The filter stays at the same base brightness across the keyboard.\n"
+                                                        "Higher notes will not automatically open the filter."));
+    fltKeyTrkChoice.setOptionTooltip(1, makeTooltipText("Half",
+                                                        "Higher notes open the filter a little as you play upward.\n"
+                                                        "This keeps the keyboard more even without going too bright."));
+    fltKeyTrkChoice.setOptionTooltip(2, makeTooltipText("Full",
+                                                        "Higher notes open the filter strongly as pitch rises.\n"
+                                                        "This helps preserve brightness across the keyboard range."));
+    setParameterTooltip(fEnvAKnob, "F Atk", "Set filter envelope attack time.");
+    setParameterTooltip(fEnvDKnob, "F Dec", "Set filter envelope decay time.");
+    setParameterTooltip(fEnvSKnob, "F Sus", "Set filter envelope sustain level.");
+    setParameterTooltip(fEnvRKnob, "F Rel", "Set filter envelope release time.");
+    setParameterTooltip(aEnvAKnob, "A Atk", "Set amp envelope attack time.");
+    setParameterTooltip(aEnvDKnob, "A Dec", "Set amp envelope decay time.");
+    setParameterTooltip(aEnvSKnob, "A Sus", "Set amp envelope sustain level.");
+    setParameterTooltip(aEnvRKnob, "A Rel", "Set amp envelope release time.");
+    setParameterTooltip(lfoWaveChoice, "Wave", "Select the global LFO waveform.");
+    lfoWaveChoice.setOptionTooltip(0, makeTooltipText("Saw",
+                                                      "A repeating ramp shape.\n"
+                                                      "It creates a steady sweep or rise before snapping back."));
+    lfoWaveChoice.setOptionTooltip(1, makeTooltipText("Tri",
+                                                      "A smooth up-and-down shape.\n"
+                                                      "This is the most even and gentle modulation option."));
+    lfoWaveChoice.setOptionTooltip(2, makeTooltipText("Sqr",
+                                                      "A sharp on-off shape.\n"
+                                                      "Use it for stepped vibrato, trill-like motion,\n"
+                                                      "or abrupt filter changes."));
+    setParameterTooltip(lfoRateKnob, "Rate", "Set the global LFO speed.");
+    setParameterTooltip(lfoMwDepKnob, "MW->Dep", "Set how much mod wheel increases LFO depth.");
+    setParameterTooltip(lfoPitchKnob, "->Pitch", "Send the LFO to oscillator pitch.");
+    setParameterTooltip(lfoPwKnob, "->PW", "Send the LFO to pulse width.");
+    setParameterTooltip(lfoCutoffKnob, "->Cutoff", "Send the LFO to filter cutoff.");
+    setParameterTooltip(pmodBPitchKnob, "B->Pitch", "Send oscillator B into pitch modulation.");
+    setParameterTooltip(pmodBPwKnob, "B->PW", "Send oscillator B into pulse width modulation.");
+    setParameterTooltip(pmodBCutoffKnob, "B->Cutoff", "Send oscillator B into filter cutoff modulation.");
+    setParameterTooltip(pmodEPitchKnob, "E->Pitch", "Send the filter envelope into pitch modulation.");
+    setParameterTooltip(pmodEPwKnob, "E->PW", "Send the filter envelope into pulse width modulation.");
+    setParameterTooltip(pmodECutoffKnob, "E->Cutoff", "Send the filter envelope into filter cutoff modulation.");
+    setParameterTooltip(perfGlideKnob, "Glide", "Set note glide time.");
+    setParameterTooltip(perfModeChoice, "Mode", "Choose poly, mono, or unison voice mode.");
+    perfModeChoice.setOptionTooltip(0, makeTooltipText("Poly",
+                                                       "Each new note can sound with its own voice.\n"
+                                                       "Best for chords and layered playing."));
+    perfModeChoice.setOptionTooltip(1, makeTooltipText("Mono",
+                                                       "Only one note sounds at a time.\n"
+                                                       "Best for lead lines, basses, and glide playing."));
+    perfModeChoice.setOptionTooltip(2, makeTooltipText("Unison",
+                                                       "Multiple voices stack on the same note.\n"
+                                                       "This makes the sound thicker, wider, and heavier."));
+    setParameterTooltip(perfPrioChoice, "Priority", "Choose how mono mode resolves held-note priority.");
+    perfPrioChoice.setOptionTooltip(0, makeTooltipText("Last",
+                                                       "The newest held note wins.\n"
+                                                       "This feels natural for most lead and solo playing."));
+    perfPrioChoice.setOptionTooltip(1, makeTooltipText("Low",
+                                                       "The lowest held note wins.\n"
+                                                       "Useful for bass-oriented mono playing."));
+    perfPrioChoice.setOptionTooltip(2, makeTooltipText("High",
+                                                       "The highest held note wins.\n"
+                                                       "Useful when you want upper notes to take over."));
+    setParameterTooltip(perfPbRangeKnob, "PB Range", "Set pitch bend range in semitones.");
+    setParameterTooltip(perfVintageKnob, "Vintage", "Add controlled analog-style drift and variance.");
+    setParameterTooltip(perfPanKnob, "Pan Spread", "Spread voices across the stereo field.");
+    setParameterTooltip(perfVelAmpKnob, "Vel->Amp", "Set how much note velocity affects level.");
+    setParameterTooltip(perfVelFltKnob, "Vel->Flt", "Set how much note velocity affects brightness.");
+    setParameterTooltip(arpOnToggle, "Arp On", "Enable or disable the arpeggiator.");
+    setParameterTooltip(arpTempoKnob, "Tempo", "Set the internal arpeggiator tempo.");
+    setParameterTooltip(arpRateChoice, "Rate", "Choose the arpeggiator timing division.");
+    arpRateChoice.setOptionTooltip(0, makeTooltipText("1/4",
+                                                      "One arpeggiated step per quarter note.\n"
+                                                      "Slow and spacious."));
+    arpRateChoice.setOptionTooltip(1, makeTooltipText("1/8",
+                                                      "One step per eighth note.\n"
+                                                      "A common medium pulse."));
+    arpRateChoice.setOptionTooltip(2, makeTooltipText("1/8T",
+                                                      "One step per eighth-note triplet.\n"
+                                                      "Gives a swinging three-part feel."));
+    arpRateChoice.setOptionTooltip(3, makeTooltipText("1/16",
+                                                      "One step per sixteenth note.\n"
+                                                      "Fast and common for synth sequences."));
+    arpRateChoice.setOptionTooltip(4, makeTooltipText("1/16T",
+                                                      "One step per sixteenth-note triplet.\n"
+                                                      "Adds a fast rolling triplet feel."));
+    arpRateChoice.setOptionTooltip(5, makeTooltipText("1/32",
+                                                      "One step per thirty-second note.\n"
+                                                      "Very fast and dense."));
+    setParameterTooltip(arpPatternChoice, "Pattern", "Choose the arpeggiator playback order.");
+    arpPatternChoice.setOptionTooltip(0, makeTooltipText("Up",
+                                                         "Plays held notes from low to high,\n"
+                                                         "then repeats from the bottom."));
+    arpPatternChoice.setOptionTooltip(1, makeTooltipText("Down",
+                                                         "Plays held notes from high to low,\n"
+                                                         "then repeats from the top."));
+    arpPatternChoice.setOptionTooltip(2, makeTooltipText("Up/Dn",
+                                                         "Climbs upward, then comes back down.\n"
+                                                         "A classic back-and-forth arp motion."));
+    arpPatternChoice.setOptionTooltip(3, makeTooltipText("Play",
+                                                         "Uses the order you actually played the notes.\n"
+                                                         "Good when finger order matters."));
+    setParameterTooltip(arpOctaveChoice, "Octave", "Choose how many octaves the arpeggiator spans.");
+    arpOctaveChoice.setOptionTooltip(1, makeTooltipText("1",
+                                                        "Keep the arpeggio within the notes you played.\n"
+                                                        "No extra octave repeats are added."));
+    arpOctaveChoice.setOptionTooltip(2, makeTooltipText("2",
+                                                        "Repeat the arpeggio across two octaves.\n"
+                                                        "This makes the pattern feel larger and more animated."));
+    arpOctaveChoice.setOptionTooltip(3, makeTooltipText("3",
+                                                        "Repeat the arpeggio across three octaves.\n"
+                                                        "This creates a broad, cascading motion."));
+    setParameterTooltip(arpGateKnob, "Gate", "Set how long each arpeggiated note stays open.");
+    setParameterTooltip(arpLatchToggle, "Latch", "Hold the arpeggiator note set after you release keys.");
+    setParameterTooltip(drvOnToggle, "Drive", "Enable or disable the drive stage.");
+    setParameterTooltip(drvAmtKnob, "Amount", "Set how hard the drive stage saturates.");
+    setParameterTooltip(drvMixKnob, "Mix", "Blend the drive stage with the dry signal.");
+    setParameterTooltip(choOnToggle, "Chorus", "Enable or disable the chorus stage.");
+    setParameterTooltip(choRateKnob, "Rate", "Set the chorus modulation rate.");
+    setParameterTooltip(choDepKnob, "Depth", "Set the chorus modulation depth.");
+    setParameterTooltip(choMixKnob, "Mix", "Blend the chorus stage with the dry signal.");
+    setParameterTooltip(dlyOnToggle, "Delay", "Enable or disable the delay stage.");
+    setParameterTooltip(dlyTimeKnob, "Time", "Set the delay time.");
+    setParameterTooltip(dlyFdbkKnob, "Fdbk", "Set the delay feedback amount.");
+    setParameterTooltip(dlyMixKnob, "Mix", "Blend the delay stage with the dry signal.");
+    setParameterTooltip(revOnToggle, "Reverb", "Enable or disable the reverb stage.");
+    setParameterTooltip(revSizeKnob, "Size", "Set the virtual room size.");
+    setParameterTooltip(revDampKnob, "Damp", "Control high-frequency damping in the reverb tail.");
+    setParameterTooltip(revMixKnob, "Mix", "Blend the reverb stage with the dry signal.");
+    setParameterTooltip(outGainKnob, "Master", "Set the final output level.");
+
+    initPatchButton.setTooltip(makeTooltipText("Init Patch",
+                                               "Reset the panel to the default patch.\n"
+                                               "Useful when you want a clean baseline."));
+    savePatchButton.setTooltip(makeTooltipText("Save Patch",
+                                               "Write the current synth state to a\n"
+                                               ".cspatch file for later recall."));
+    loadPatchButton.setTooltip(makeTooltipText("Load Patch",
+                                               "Load a saved .cspatch file into the synth.\n"
+                                               "The current patch state will be replaced."));
+    allNotesOffButton.setTooltip(makeTooltipText("All Notes Off",
+                                                 "Immediate panic.\n"
+                                                 "Stops active notes and clears any\n"
+                                                 "stuck playing state."));
+    tooltipToggleButton.setTooltip(makeTooltipText("i",
+                                                   "Toggle hover help on or off.\n"
+                                                   "Turn it off if you want a cleaner panel."));
+    pianoBar.setTooltip(makeTooltipText("Keyboard / LED Strip",
+                                        "Click to expand or collapse the keyboard area.\n"
+                                        "The compact strip shows note activity.\n"
+                                        "The expanded view gives octave controls."));
 
     startTimerHz(24);
     refreshMidiLearnVisuals();
@@ -411,6 +769,9 @@ SynthAudioProcessorEditor::~SynthAudioProcessorEditor()
         standaloneMidiController->removeChangeListener(this);
 
     stopTimer();
+
+    if (tooltipWindow != nullptr)
+        tooltipWindow->setLookAndFeel(nullptr);
 }
 
 int SynthAudioProcessorEditor::getControlParameterIndex(juce::Component& component)
@@ -523,6 +884,17 @@ void SynthAudioProcessorEditor::registerLearnableControl(juce::Component& surfac
     learnableControls.push_back({ parameterId, displayName, &surface, std::move(applyVisualState) });
 }
 
+void SynthAudioProcessorEditor::setParameterTooltip(juce::SettableTooltipClient& surface,
+                                                    juce::String name,
+                                                    juce::String description)
+{
+    auto body = std::move(description).trim();
+    if (! body.endsWithChar('.'))
+        body << ".";
+    body << "\nListen for how this changes the tone,\nmovement, or playing response.";
+    surface.setTooltip(makeTooltipText(std::move(name), std::move(body)));
+}
+
 const SynthAudioProcessorEditor::ParameterSurfaceRegistration*
 SynthAudioProcessorEditor::findParameterSurfaceForComponent(const juce::Component* component) const noexcept
 {
@@ -603,9 +975,9 @@ void SynthAudioProcessorEditor::refreshMidiLearnVisuals()
         session = midiLearnManager->getSession();
 
     auto statusText = session.statusText;
-    if (statusText.isEmpty() && standaloneMidiController != nullptr)
-        statusText = "Profile: " + getResolvedStandaloneControllerProfileDisplayName();
+    auto statusColour = coolsynth::ui::palette::learnYellow;
 
+    midiLearnStatusLabel.setColour(juce::Label::textColourId, statusColour);
     midiLearnStatusLabel.setText(statusText, juce::dontSendNotification);
 
     const bool shouldShowBadges = midiLearnManager != nullptr
@@ -788,14 +1160,22 @@ void SynthAudioProcessorEditor::showParameterContextMenu(juce::String parameterI
 
 void SynthAudioProcessorEditor::paint(juce::Graphics& g)
 {
-    g.fillAll(juce::Colours::black);
+    juce::ColourGradient background(coolsynth::ui::palette::panelBlack,
+                                    0.0f,
+                                    0.0f,
+                                    coolsynth::ui::palette::panelRaised.darker(0.8f),
+                                    0.0f,
+                                    static_cast<float>(getHeight()),
+                                    false);
+    g.setGradientFill(background);
+    g.fillRect(getLocalBounds());
 
     if (!juce::JUCEApplicationBase::isStandaloneApp())
     {
         auto footerArea = getLocalBounds().removeFromBottom(30);
-        g.setColour(juce::Colours::black.withAlpha(0.35f));
+        g.setColour(coolsynth::ui::palette::panelRaised.withAlpha(0.92f));
         g.fillRect(footerArea);
-        g.setColour(juce::Colours::white.withAlpha(0.1f));
+        g.setColour(coolsynth::ui::palette::panelStroke);
         g.drawLine(static_cast<float>(footerArea.getX()),
                    static_cast<float>(footerArea.getY()),
                    static_cast<float>(footerArea.getRight()),
@@ -806,6 +1186,13 @@ void SynthAudioProcessorEditor::paint(juce::Graphics& g)
 
 void SynthAudioProcessorEditor::resized()
 {
+    auto takeWeightedWidth = [](juce::Rectangle<int>& row, float weight, float& remainingWeight)
+    {
+        const auto width = juce::roundToInt(static_cast<float>(row.getWidth()) * (weight / remainingWeight));
+        remainingWeight -= weight;
+        return row.removeFromLeft(width);
+    };
+
     auto bounds = getLocalBounds();
     if (standaloneStatusBar != nullptr)
     {
@@ -820,22 +1207,43 @@ void SynthAudioProcessorEditor::resized()
 
     auto area = bounds.reduced(24);
     auto titleArea = area.removeFromTop(48);
-    titleLabel.setBounds(titleArea.removeFromLeft(200));
-    midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(400).withTrimmedTop(12));
-    if (juce::JUCEApplicationBase::isStandaloneApp())
-    {
-        titleArea.removeFromRight(16);
-    }
-    allNotesOffButton.setBounds(titleArea.removeFromRight(120).withSizeKeepingCentre(100, 24));
-    
+    auto logoArea = titleArea.removeFromLeft(248);
+    if (titleLogoDrawable != nullptr)
+        titleLogoDrawable->setTransformToFit(logoArea.toFloat(),
+                                             juce::RectanglePlacement(juce::RectanglePlacement::xLeft
+                                                                      | juce::RectanglePlacement::yMid
+                                                                      | juce::RectanglePlacement::onlyReduceInSize));
+    midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(250).withTrimmedTop(12));
+
     if (patchActionsVisible)
     {
-        titleArea.removeFromRight(16);
-        loadPatchButton.setBounds(titleArea.removeFromRight(90).withSizeKeepingCentre(80, 24));
-        titleArea.removeFromRight(8);
-        savePatchButton.setBounds(titleArea.removeFromRight(90).withSizeKeepingCentre(80, 24));
-        titleArea.removeFromRight(8);
-        initPatchButton.setBounds(titleArea.removeFromRight(90).withSizeKeepingCentre(80, 24));
+        const auto buttonHeight = 24;
+        const auto panicSize = 24;
+        const auto tooltipButtonWidth = 24;
+        const auto patchButtonWidth = 112;
+        const auto gap = 4;
+        const auto outerRightMargin = juce::JUCEApplicationBase::isStandaloneApp() ? 0 : 0;
+        const auto totalWidth = panicSize + tooltipButtonWidth + (gap * 4) + (patchButtonWidth * 3);
+
+        auto clusterArea = titleArea.removeFromRight(totalWidth + outerRightMargin);
+        if (outerRightMargin > 0)
+            clusterArea.removeFromRight(outerRightMargin);
+
+        initPatchButton.setBounds(clusterArea.removeFromLeft(patchButtonWidth).withSizeKeepingCentre(patchButtonWidth, buttonHeight));
+        clusterArea.removeFromLeft(gap);
+        savePatchButton.setBounds(clusterArea.removeFromLeft(patchButtonWidth).withSizeKeepingCentre(patchButtonWidth, buttonHeight));
+        clusterArea.removeFromLeft(gap);
+        loadPatchButton.setBounds(clusterArea.removeFromLeft(patchButtonWidth).withSizeKeepingCentre(patchButtonWidth, buttonHeight));
+        clusterArea.removeFromLeft(gap);
+        allNotesOffButton.setBounds(clusterArea.removeFromLeft(panicSize).withSizeKeepingCentre(panicSize, panicSize));
+        clusterArea.removeFromLeft(gap);
+        tooltipToggleButton.setBounds(clusterArea.removeFromLeft(tooltipButtonWidth).withSizeKeepingCentre(tooltipButtonWidth, buttonHeight));
+    }
+    else
+    {
+        tooltipToggleButton.setBounds(titleArea.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        titleArea.removeFromRight(4);
+        allNotesOffButton.setBounds(titleArea.removeFromRight(24).withSizeKeepingCentre(24, 24));
     }
     area.removeFromTop(16);
 
@@ -848,17 +1256,19 @@ void SynthAudioProcessorEditor::resized()
     auto oscContent = oscArea.reduced(12).withTrimmedTop(24);
     auto oscRow1 = oscContent.removeFromTop(oscContent.getHeight() / 2);
     auto oscRow2 = oscContent;
-    oscAWaveKnob.setBounds(oscRow1.removeFromLeft(oscRow1.getWidth() / 5));
-    oscAOctaveKnob.setBounds(oscRow1.removeFromLeft(oscRow1.getWidth() / 4));
-    oscAFineKnob.setBounds(oscRow1.removeFromLeft(oscRow1.getWidth() / 3));
-    oscAPwKnob.setBounds(oscRow1.removeFromLeft(oscRow1.getWidth() / 2));
-    oscASyncKnob.setBounds(oscRow1);
-    
-    oscBWaveKnob.setBounds(oscRow2.removeFromLeft(oscRow2.getWidth() / 5));
-    oscBOctaveKnob.setBounds(oscRow2.removeFromLeft(oscRow2.getWidth() / 4));
-    oscBFineKnob.setBounds(oscRow2.removeFromLeft(oscRow2.getWidth() / 3));
-    oscBPwKnob.setBounds(oscRow2.removeFromLeft(oscRow2.getWidth() / 2));
-    oscBLoFreqKnob.setBounds(oscRow2);
+    float oscWeightsTop = 6.2f;
+    oscAWaveChoice.setBounds(takeWeightedWidth(oscRow1, 2.2f, oscWeightsTop));
+    oscAOctaveKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
+    oscAFineKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
+    oscAPwKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
+    oscASyncToggle.setBounds(oscRow1);
+
+    float oscWeightsBottom = 6.2f;
+    oscBWaveChoice.setBounds(takeWeightedWidth(oscRow2, 2.2f, oscWeightsBottom));
+    oscBOctaveKnob.setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
+    oscBFineKnob.setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
+    oscBPwKnob.setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
+    oscBLoFreqToggle.setBounds(oscRow2);
 
     synthRow.removeFromLeft(10); // gap
 
@@ -883,7 +1293,7 @@ void SynthAudioProcessorEditor::resized()
     fltCutoffKnob.setBounds(fltRow1.removeFromLeft(fltRow1.getWidth() / 2));
     fltResKnob.setBounds(fltRow1);
     fltEnvAmtKnob.setBounds(fltRow2.removeFromLeft(fltRow2.getWidth() / 2));
-    fltKeyTrkKnob.setBounds(fltRow2);
+    fltKeyTrkChoice.setBounds(fltRow2);
 
     synthRow.removeFromLeft(10); // gap
 
@@ -910,8 +1320,9 @@ void SynthAudioProcessorEditor::resized()
     auto lfoContent = lfoArea.reduced(12).withTrimmedTop(24);
     auto lfoRow1 = lfoContent.removeFromTop(lfoContent.getHeight() / 2);
     auto lfoRow2 = lfoContent;
-    lfoRateKnob.setBounds(lfoRow1.removeFromLeft(lfoRow1.getWidth() / 3));
-    lfoWaveKnob.setBounds(lfoRow1.removeFromLeft(lfoRow1.getWidth() / 2));
+    float lfoTopWeights = 4.0f;
+    lfoWaveChoice.setBounds(takeWeightedWidth(lfoRow1, 2.0f, lfoTopWeights));
+    lfoRateKnob.setBounds(takeWeightedWidth(lfoRow1, 1.0f, lfoTopWeights));
     lfoMwDepKnob.setBounds(lfoRow1);
     lfoPitchKnob.setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 3));
     lfoPwKnob.setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 2));
@@ -940,9 +1351,10 @@ void SynthAudioProcessorEditor::resized()
     auto perfContent = perfArea.reduced(12).withTrimmedTop(24);
     auto perfRow1 = perfContent.removeFromTop(perfContent.getHeight() / 2);
     auto perfRow2 = perfContent;
-    perfGlideKnob.setBounds(perfRow1.removeFromLeft(perfRow1.getWidth() / 4));
-    perfModeKnob.setBounds(perfRow1.removeFromLeft(perfRow1.getWidth() / 3));
-    perfPrioKnob.setBounds(perfRow1.removeFromLeft(perfRow1.getWidth() / 2));
+    float perfTopWeights = 6.0f;
+    perfGlideKnob.setBounds(takeWeightedWidth(perfRow1, 1.0f, perfTopWeights));
+    perfModeChoice.setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
+    perfPrioChoice.setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
     perfPbRangeKnob.setBounds(perfRow1);
     perfVintageKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 4));
     perfPanKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 3));
@@ -957,22 +1369,27 @@ void SynthAudioProcessorEditor::resized()
     // Arp (7 cols * 55 = 385)
     auto arpArea = lowerRow.removeFromLeft(385);
     arpSection.setBounds(arpArea);
+    auto arpHeader = arpArea.reduced(12, 0).removeFromTop(32);
+    arpOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+    arpOnToggle.setBounds(arpHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
     auto arpContent = arpArea.reduced(12).withTrimmedTop(24);
-    arpOnKnob.setBounds(arpContent.removeFromLeft(arpContent.getWidth() / 7));
-    arpTempoKnob.setBounds(arpContent.removeFromLeft(arpContent.getWidth() / 6));
-    arpRateKnob.setBounds(arpContent.removeFromLeft(arpContent.getWidth() / 5));
-    arpPatternKnob.setBounds(arpContent.removeFromLeft(arpContent.getWidth() / 4));
-    arpOctaveKnob.setBounds(arpContent.removeFromLeft(arpContent.getWidth() / 3));
-    arpGateKnob.setBounds(arpContent.removeFromLeft(arpContent.getWidth() / 2));
-    arpLatchKnob.setBounds(arpContent);
+    float arpWeights = 8.6f;
+    arpTempoKnob.setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
+    arpRateChoice.setBounds(takeWeightedWidth(arpContent, 2.2f, arpWeights));
+    arpPatternChoice.setBounds(takeWeightedWidth(arpContent, 2.0f, arpWeights));
+    arpOctaveChoice.setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
+    arpGateKnob.setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
+    arpLatchToggle.setBounds(arpContent.withWidth(48));
 
     lowerRow.removeFromLeft(10);
 
     // Drive (3 cols * 55 = 165)
     auto drvArea = lowerRow.removeFromLeft(165);
     drvSection.setBounds(drvArea);
+    auto drvHeader = drvArea.reduced(12, 0).removeFromTop(32);
+    drvOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+    drvOnToggle.setBounds(drvHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
     auto drvContent = drvArea.reduced(12).withTrimmedTop(24);
-    drvOnKnob.setBounds(drvContent.removeFromLeft(drvContent.getWidth() / 3));
     drvAmtKnob.setBounds(drvContent.removeFromLeft(drvContent.getWidth() / 2));
     drvMixKnob.setBounds(drvContent);
 
@@ -981,8 +1398,10 @@ void SynthAudioProcessorEditor::resized()
     // Chorus (4 cols * 55 = 220)
     auto choArea = lowerRow.removeFromLeft(220);
     choSection.setBounds(choArea);
+    auto choHeader = choArea.reduced(12, 0).removeFromTop(32);
+    choOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+    choOnToggle.setBounds(choHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
     auto choContent = choArea.reduced(12).withTrimmedTop(24);
-    choOnKnob.setBounds(choContent.removeFromLeft(choContent.getWidth() / 4));
     choRateKnob.setBounds(choContent.removeFromLeft(choContent.getWidth() / 3));
     choDepKnob.setBounds(choContent.removeFromLeft(choContent.getWidth() / 2));
     choMixKnob.setBounds(choContent);
@@ -992,8 +1411,10 @@ void SynthAudioProcessorEditor::resized()
     // Delay (4 cols * 55 = 220)
     auto dlyArea = lowerRow.removeFromLeft(220);
     dlySection.setBounds(dlyArea);
+    auto dlyHeader = dlyArea.reduced(12, 0).removeFromTop(32);
+    dlyOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+    dlyOnToggle.setBounds(dlyHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
     auto dlyContent = dlyArea.reduced(12).withTrimmedTop(24);
-    dlyOnKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 4));
     dlyTimeKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 3));
     dlyFdbkKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 2));
     dlyMixKnob.setBounds(dlyContent);
@@ -1003,19 +1424,21 @@ void SynthAudioProcessorEditor::resized()
     // Reverb (4 cols * 55 = 220)
     auto revArea = lowerRow.removeFromLeft(220);
     revSection.setBounds(revArea);
+    auto revHeader = revArea.reduced(12, 0).removeFromTop(32);
+    revOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+    revOnToggle.setBounds(revHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
     auto revContent = revArea.reduced(12).withTrimmedTop(24);
-    revOnKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 4));
     revSizeKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 3));
     revDampKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 2));
     revMixKnob.setBounds(revContent);
 
     lowerRow.removeFromLeft(10);
 
-    // Output (1 fader = 80)
-    auto outArea = lowerRow.removeFromLeft(80);
+    // Output (1 knob = 92)
+    auto outArea = lowerRow.removeFromLeft(92);
     outSection.setBounds(outArea);
     auto outContent = outArea.reduced(12).withTrimmedTop(24);
-    outGainFader.setBounds(outContent);
+    outGainKnob.setBounds(outContent);
 
     area.removeFromTop(16);
     pianoBar.setBounds(area.removeFromTop(pianoBar.getDesiredHeight()));
@@ -1048,23 +1471,23 @@ void SynthAudioProcessorEditor::timerCallback()
 
 void SynthAudioProcessorEditor::refreshValueDisplays()
 {
-    oscAWaveKnob.setValueText(getCurrentParameterText(parameterRefs.oscAWave));
+    oscAWaveChoice.setValueText(getCurrentParameterText(parameterRefs.oscAWave));
     oscAOctaveKnob.setValueText(getCurrentParameterText(parameterRefs.oscAOctave));
     oscAFineKnob.setValueText(getCurrentParameterText(parameterRefs.oscAFine));
     oscAPwKnob.setValueText(getCurrentParameterText(parameterRefs.oscAPw));
-    oscASyncKnob.setValueText(getCurrentParameterText(parameterRefs.oscASync));
-    oscBWaveKnob.setValueText(getCurrentParameterText(parameterRefs.oscBWave));
+    oscASyncToggle.setValueText(getCurrentParameterText(parameterRefs.oscASync));
+    oscBWaveChoice.setValueText(getCurrentParameterText(parameterRefs.oscBWave));
     oscBOctaveKnob.setValueText(getCurrentParameterText(parameterRefs.oscBOctave));
     oscBFineKnob.setValueText(getCurrentParameterText(parameterRefs.oscBFine));
     oscBPwKnob.setValueText(getCurrentParameterText(parameterRefs.oscBPw));
-    oscBLoFreqKnob.setValueText(getCurrentParameterText(parameterRefs.oscBLoFreq));
+    oscBLoFreqToggle.setValueText(getCurrentParameterText(parameterRefs.oscBLoFreq));
     mixOscAKnob.setValueText(getCurrentParameterText(parameterRefs.mixOscA));
     mixOscBKnob.setValueText(getCurrentParameterText(parameterRefs.mixOscB));
     mixNoiseKnob.setValueText(getCurrentParameterText(parameterRefs.mixNoise));
     fltCutoffKnob.setValueText(getCurrentParameterText(parameterRefs.fltCutoff));
     fltResKnob.setValueText(getCurrentParameterText(parameterRefs.fltRes));
     fltEnvAmtKnob.setValueText(getCurrentParameterText(parameterRefs.fltEnvAmt));
-    fltKeyTrkKnob.setValueText(getCurrentParameterText(parameterRefs.fltKeyTrk));
+    fltKeyTrkChoice.setValueText(getCurrentParameterText(parameterRefs.fltKeyTrk));
     fEnvAKnob.setValueText(getCurrentParameterText(parameterRefs.fEnvA));
     fEnvDKnob.setValueText(getCurrentParameterText(parameterRefs.fEnvD));
     fEnvSKnob.setValueText(getCurrentParameterText(parameterRefs.fEnvS));
@@ -1074,7 +1497,7 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     aEnvSKnob.setValueText(getCurrentParameterText(parameterRefs.aEnvS));
     aEnvRKnob.setValueText(getCurrentParameterText(parameterRefs.aEnvR));
     lfoRateKnob.setValueText(getCurrentParameterText(parameterRefs.lfoRate));
-    lfoWaveKnob.setValueText(getCurrentParameterText(parameterRefs.lfoWave));
+    lfoWaveChoice.setValueText(getCurrentParameterText(parameterRefs.lfoWave));
     lfoMwDepKnob.setValueText(getCurrentParameterText(parameterRefs.lfoMwDep));
     lfoPitchKnob.setValueText(getCurrentParameterText(parameterRefs.lfoPitch));
     lfoPwKnob.setValueText(getCurrentParameterText(parameterRefs.lfoPw));
@@ -1086,36 +1509,36 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     pmodEPwKnob.setValueText(getCurrentParameterText(parameterRefs.pmodEPw));
     pmodECutoffKnob.setValueText(getCurrentParameterText(parameterRefs.pmodECutoff));
     perfGlideKnob.setValueText(getCurrentParameterText(parameterRefs.perfGlide));
-    perfModeKnob.setValueText(getCurrentParameterText(parameterRefs.perfMode));
-    perfPrioKnob.setValueText(getCurrentParameterText(parameterRefs.perfPrio));
+    perfModeChoice.setValueText(getCurrentParameterText(parameterRefs.perfMode));
+    perfPrioChoice.setValueText(getCurrentParameterText(parameterRefs.perfPrio));
     perfPbRangeKnob.setValueText(getCurrentParameterText(parameterRefs.perfPbRange));
     perfVintageKnob.setValueText(getCurrentParameterText(parameterRefs.perfVintage));
     perfPanKnob.setValueText(getCurrentParameterText(parameterRefs.perfPan));
     perfVelAmpKnob.setValueText(getCurrentParameterText(parameterRefs.perfVelAmp));
     perfVelFltKnob.setValueText(getCurrentParameterText(parameterRefs.perfVelFlt));
-    arpOnKnob.setValueText(getCurrentParameterText(parameterRefs.arpOn));
+    arpOnToggle.setValueText(getCurrentParameterText(parameterRefs.arpOn));
     arpTempoKnob.setValueText(getCurrentParameterText(parameterRefs.arpTempo));
-    arpRateKnob.setValueText(getCurrentParameterText(parameterRefs.arpRate));
-    arpPatternKnob.setValueText(getCurrentParameterText(parameterRefs.arpPattern));
-    arpOctaveKnob.setValueText(getCurrentParameterText(parameterRefs.arpOctave));
+    arpRateChoice.setValueText(getCurrentParameterText(parameterRefs.arpRate));
+    arpPatternChoice.setValueText(getCurrentParameterText(parameterRefs.arpPattern));
+    arpOctaveChoice.setValueText(getCurrentParameterText(parameterRefs.arpOctave));
     arpGateKnob.setValueText(getCurrentParameterText(parameterRefs.arpGate));
-    arpLatchKnob.setValueText(getCurrentParameterText(parameterRefs.arpLatch));
-    drvOnKnob.setValueText(getCurrentParameterText(parameterRefs.drvOn));
+    arpLatchToggle.setValueText(getCurrentParameterText(parameterRefs.arpLatch));
+    drvOnToggle.setValueText(getCurrentParameterText(parameterRefs.drvOn));
     drvAmtKnob.setValueText(getCurrentParameterText(parameterRefs.drvAmt));
     drvMixKnob.setValueText(getCurrentParameterText(parameterRefs.drvMix));
-    choOnKnob.setValueText(getCurrentParameterText(parameterRefs.choOn));
+    choOnToggle.setValueText(getCurrentParameterText(parameterRefs.choOn));
     choRateKnob.setValueText(getCurrentParameterText(parameterRefs.choRate));
     choDepKnob.setValueText(getCurrentParameterText(parameterRefs.choDep));
     choMixKnob.setValueText(getCurrentParameterText(parameterRefs.choMix));
-    dlyOnKnob.setValueText(getCurrentParameterText(parameterRefs.dlyOn));
+    dlyOnToggle.setValueText(getCurrentParameterText(parameterRefs.dlyOn));
     dlyTimeKnob.setValueText(getCurrentParameterText(parameterRefs.dlyTime));
     dlyFdbkKnob.setValueText(getCurrentParameterText(parameterRefs.dlyFdbk));
     dlyMixKnob.setValueText(getCurrentParameterText(parameterRefs.dlyMix));
-    revOnKnob.setValueText(getCurrentParameterText(parameterRefs.revOn));
+    revOnToggle.setValueText(getCurrentParameterText(parameterRefs.revOn));
     revSizeKnob.setValueText(getCurrentParameterText(parameterRefs.revSize));
     revDampKnob.setValueText(getCurrentParameterText(parameterRefs.revDamp));
     revMixKnob.setValueText(getCurrentParameterText(parameterRefs.revMix));
-    outGainFader.setValueText(getCurrentParameterText(parameterRefs.outGain));
+    outGainKnob.setValueText(getCurrentParameterText(parameterRefs.outGain));
 }
 
 juce::String SynthAudioProcessorEditor::getCurrentParameterText(juce::RangedAudioParameter* parameter) const

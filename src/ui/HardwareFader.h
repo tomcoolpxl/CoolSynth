@@ -8,6 +8,7 @@ namespace coolsynth::ui
     {
     public:
         explicit HardwareFader(juce::String labelText);
+        ~HardwareFader() override;
 
         juce::Slider& slider() noexcept { return fader; }
         void setValueText(const juce::String& text);

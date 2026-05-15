@@ -4,7 +4,8 @@
 
 namespace coolsynth::ui
 {
-    class SynthSection final : public juce::Component
+    class SynthSection final : public juce::Component,
+                               public juce::SettableTooltipClient
     {
     public:
         explicit SynthSection(juce::String titleText);

@@ -4,10 +4,12 @@
 
 namespace coolsynth::ui
 {
-    class HardwareKnob final : public juce::Component
+    class HardwareKnob final : public juce::Component,
+                               public juce::SettableTooltipClient
     {
     public:
         explicit HardwareKnob(juce::String labelText);
+        ~HardwareKnob() override;
 
         juce::Slider& slider() noexcept { return knob; }
         void setValueText(const juce::String& text);

@@ -1,5 +1,8 @@
 #include "PianoBarComponent.h"
 
+#include "ActionButtonLookAndFeel.h"
+#include "UiPalette.h"
+
 namespace coolsynth::ui
 {
     PianoBarComponent::PianoBarComponent(juce::MidiKeyboardState& state)
@@ -10,14 +13,25 @@ namespace coolsynth::ui
         keyboard.setScrollButtonsVisible(false);
         keyboard.setKeyWidth(32.0f);
         
-        // Custom colours for the "purple overlay"
-        keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, juce::Colours::purple.withAlpha(0.5f));
-        keyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, juce::Colours::purple.withAlpha(0.2f));
+        keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId,
+                           juce::Colour::fromRGB(164, 34, 28).withAlpha(0.42f));
+        keyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId,
+                           juce::Colour::fromRGB(164, 34, 28).withAlpha(0.18f));
 
         addAndMakeVisible(keyboard);
         keyboard.setVisible(false);
         keyboard.setInterceptsMouseClicks(true, true);
 
+        ledModeButton.onClick = [this]
+        {
+            collapsed = true;
+            keyboard.setVisible(false);
+
+            if (auto* parent = getParentComponent())
+                parent->resized();
+
+            repaint();
+        };
         octaveDownButton.onClick = [this] { 
             currentOctaveOffset = juce::jmax(-3, currentOctaveOffset - 1);
             updateKeyboardRange();
@@ -28,9 +42,19 @@ namespace coolsynth::ui
         };
 
         octaveLabel.setJustificationType(juce::Justification::centred);
-        octaveLabel.setText("Octave", juce::dontSendNotification);
+        octaveLabel.setText("OCTAVE", juce::dontSendNotification);
         octaveLabel.setFont(juce::FontOptions(12.0f));
+        octaveLabel.setColour(juce::Label::textColourId, palette::ledTextOff);
 
+        applyGreenActionButtonStyle(ledModeButton, "ledModeButton");
+        ledModeButton.setButtonText({});
+        ledModeButton.setTooltip("RETURN TO LED STRIP\nCollapse the keyboard back to the compact LED view.");
+        applyGreenActionButtonStyle(octaveDownButton);
+        octaveDownButton.setTooltip("OCTAVE DOWN\nShift the visible keyboard range down by one octave.");
+        applyGreenActionButtonStyle(octaveUpButton);
+        octaveUpButton.setTooltip("OCTAVE UP\nShift the visible keyboard range up by one octave.");
+
+        addChildComponent(ledModeButton);
         addChildComponent(octaveDownButton);
         addChildComponent(octaveUpButton);
         addChildComponent(octaveLabel);
@@ -47,7 +71,7 @@ namespace coolsynth::ui
     {
         const int startNote = baseStartNote + (currentOctaveOffset * 12);
         keyboard.setAvailableRange(startNote, startNote + numKeys - 1);
-        octaveLabel.setText("Octave: " + juce::String(currentOctaveOffset), juce::dontSendNotification);
+        octaveLabel.setText("OCTAVE: " + juce::String(currentOctaveOffset), juce::dontSendNotification);
         repaint();
     }
 
@@ -56,8 +80,8 @@ namespace coolsynth::ui
         if (collapsed)
         {
             auto bounds = getLocalBounds().toFloat();
-            g.setColour(juce::Colours::black.brighter(0.1f));
-            g.fillRoundedRectangle(bounds, 4.0f);
+            g.setColour(palette::panelRaised);
+            g.fillRoundedRectangle(bounds, 5.0f);
             
             const int numWhiteKeys = 29; // C to C (4 octaves) has 29 white keys in 49 notes
             const float ledSize = 6.0f;
@@ -98,13 +122,18 @@ namespace coolsynth::ui
                 
                 if (isDown)
                 {
-                    g.setColour(juce::Colours::purple.withAlpha(0.4f));
+                    const auto velocity = noteVelocities[static_cast<size_t>(note)];
+                    const auto accent = juce::jlimit(0.0f, 1.0f, std::pow(velocity, 0.55f));
+                    const auto glowAlpha = 0.12f + (accent * 0.34f);
+                    auto ledColour = juce::Colour::fromFloatRGBA(accent, 0.0f, 0.0f, 1.0f);
+
+                    g.setColour(juce::Colour::fromRGB(120, 0, 0).withAlpha(glowAlpha));
                     g.fillEllipse(x - 2, y - 2, ledSize + 4, ledSize + 4);
-                    g.setColour(juce::Colours::purple.brighter(0.5f));
+                    g.setColour(ledColour);
                 }
                 else
                 {
-                    g.setColour(isBlackKey ? juce::Colours::black : juce::Colours::white.withAlpha(0.6f));
+                    g.setColour(isBlackKey ? juce::Colours::black : juce::Colours::white.withAlpha(0.42f));
                 }
                 
                 g.fillEllipse(x, y, ledSize, ledSize);
@@ -118,17 +147,22 @@ namespace coolsynth::ui
 
         if (!collapsed)
         {
-            auto controlsArea = bounds.removeFromLeft(100).reduced(5);
+            auto ledButtonArea = getLocalBounds().reduced(6);
+            ledModeButton.setBounds(ledButtonArea.removeFromTop(18).removeFromRight(18));
+
+            auto controlsArea = bounds.removeFromLeft(120).reduced(5);
             octaveLabel.setBounds(controlsArea.removeFromTop(20));
             auto buttonsRow = controlsArea.removeFromTop(30);
             octaveDownButton.setBounds(buttonsRow.removeFromLeft(buttonsRow.getWidth() / 2).reduced(2));
             octaveUpButton.setBounds(buttonsRow.reduced(2));
 
+            ledModeButton.setVisible(true);
             octaveDownButton.setVisible(true);
             octaveUpButton.setVisible(true);
             octaveLabel.setVisible(true);
 
             const float totalKeyboardWidth = keyboard.getTotalKeyboardWidth();
+            bounds.removeFromRight(28);
             if (totalKeyboardWidth < bounds.getWidth())
             {
                 auto keyboardBounds = bounds.withSizeKeepingCentre((int)totalKeyboardWidth, bounds.getHeight());
@@ -141,19 +175,26 @@ namespace coolsynth::ui
         }
         else
         {
+            ledModeButton.setVisible(false);
             octaveDownButton.setVisible(false);
             octaveUpButton.setVisible(false);
             octaveLabel.setVisible(false);
         }
     }
 
-    void PianoBarComponent::handleNoteOn(juce::MidiKeyboardState*, int, int, float)
+    void PianoBarComponent::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity)
     {
+        if (juce::isPositiveAndBelow(midiNoteNumber, static_cast<int>(noteVelocities.size())))
+            noteVelocities[static_cast<size_t>(midiNoteNumber)] = juce::jlimit(0.0f, 1.0f, velocity);
+
         juce::MessageManager::callAsync([this] { repaint(); });
     }
 
-    void PianoBarComponent::handleNoteOff(juce::MidiKeyboardState*, int, int, float)
+    void PianoBarComponent::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float)
     {
+        if (juce::isPositiveAndBelow(midiNoteNumber, static_cast<int>(noteVelocities.size())))
+            noteVelocities[static_cast<size_t>(midiNoteNumber)] = 0.0f;
+
         juce::MessageManager::callAsync([this] { repaint(); });
     }
 

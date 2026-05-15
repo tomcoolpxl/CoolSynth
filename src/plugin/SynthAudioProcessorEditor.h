@@ -3,10 +3,11 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "ui/HardwareFader.h"
 #include "ui/HardwareKnob.h"
-#include "ui/SynthSection.h"
+#include "ui/LedToggleButton.h"
 #include "ui/PianoBarComponent.h"
+#include "ui/SegmentedChoiceGroup.h"
+#include "ui/SynthSection.h"
 #include "midi/MidiLearn.h"
 
 class SynthAudioProcessor;
@@ -33,7 +34,8 @@ public:
 
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
-    using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+    using ChoiceAttachment = juce::ParameterAttachment;
 
     // Generated Code
     struct ParameterRefs {
@@ -132,6 +134,9 @@ private:
                                   juce::String parameterId,
                                   juce::String displayName,
                                   std::function<void(bool, juce::String)> applyVisualState);
+    void setParameterTooltip(juce::SettableTooltipClient& surface,
+                             juce::String name,
+                             juce::String description);
     const ParameterSurfaceRegistration* findParameterSurfaceForComponent(const juce::Component* component) const noexcept;
     const LearnableControlRegistration* findLearnableControl(juce::StringRef parameterId) const noexcept;
     void mouseUp(const juce::MouseEvent& event) override;
@@ -145,7 +150,7 @@ private:
     SynthAudioProcessor& processor;
     ParameterRefs parameterRefs;
 
-    juce::Label titleLabel;
+    std::unique_ptr<juce::Drawable> titleLogoDrawable;
     juce::Label midiLearnStatusLabel;
     juce::Label pluginStatusLabel;
     juce::Label buildInfoLabel;
@@ -164,23 +169,47 @@ private:
     coolsynth::ui::SynthSection revSection { "Reverb" };
     coolsynth::ui::SynthSection outSection { "Output" };
 
-    coolsynth::ui::HardwareKnob oscAWaveKnob { "Wave" };
+    coolsynth::ui::SegmentedChoiceGroup oscAWaveChoice {
+        "Wave",
+        {
+            { "Pulse", 0, coolsynth::ui::SegmentedChoiceGroup::Icon::pulse },
+            { "Tri", 1, coolsynth::ui::SegmentedChoiceGroup::Icon::triangle },
+            { "Saw", 2, coolsynth::ui::SegmentedChoiceGroup::Icon::saw },
+        },
+        3
+    };
     coolsynth::ui::HardwareKnob oscAOctaveKnob { "Octave" };
     coolsynth::ui::HardwareKnob oscAFineKnob { "Fine" };
     coolsynth::ui::HardwareKnob oscAPwKnob { "Pulse W" };
-    coolsynth::ui::HardwareKnob oscASyncKnob { "Sync" };
-    coolsynth::ui::HardwareKnob oscBWaveKnob { "Wave" };
+    coolsynth::ui::LedToggleButton oscASyncToggle { "Sync" };
+    coolsynth::ui::SegmentedChoiceGroup oscBWaveChoice {
+        "Wave",
+        {
+            { "Pulse", 0, coolsynth::ui::SegmentedChoiceGroup::Icon::pulse },
+            { "Tri", 1, coolsynth::ui::SegmentedChoiceGroup::Icon::triangle },
+            { "Saw", 2, coolsynth::ui::SegmentedChoiceGroup::Icon::saw },
+        },
+        3
+    };
     coolsynth::ui::HardwareKnob oscBOctaveKnob { "Octave" };
     coolsynth::ui::HardwareKnob oscBFineKnob { "Fine" };
     coolsynth::ui::HardwareKnob oscBPwKnob { "Pulse W" };
-    coolsynth::ui::HardwareKnob oscBLoFreqKnob { "Lo Freq" };
+    coolsynth::ui::LedToggleButton oscBLoFreqToggle { "Lo Freq" };
     coolsynth::ui::HardwareKnob mixOscAKnob { "Osc A" };
     coolsynth::ui::HardwareKnob mixOscBKnob { "Osc B" };
     coolsynth::ui::HardwareKnob mixNoiseKnob { "Noise" };
     coolsynth::ui::HardwareKnob fltCutoffKnob { "Cutoff" };
     coolsynth::ui::HardwareKnob fltResKnob { "Resonance" };
     coolsynth::ui::HardwareKnob fltEnvAmtKnob { "Env Amt" };
-    coolsynth::ui::HardwareKnob fltKeyTrkKnob { "Key Trk" };
+    coolsynth::ui::SegmentedChoiceGroup fltKeyTrkChoice {
+        "Key Trk",
+        {
+            { "Off", 0 },
+            { "Half", 1 },
+            { "Full", 2 },
+        },
+        1
+    };
     coolsynth::ui::HardwareKnob fEnvAKnob { "F Atk" };
     coolsynth::ui::HardwareKnob fEnvDKnob { "F Dec" };
     coolsynth::ui::HardwareKnob fEnvSKnob { "F Sus" };
@@ -190,7 +219,15 @@ private:
     coolsynth::ui::HardwareKnob aEnvSKnob { "A Sus" };
     coolsynth::ui::HardwareKnob aEnvRKnob { "A Rel" };
     coolsynth::ui::HardwareKnob lfoRateKnob { "Rate" };
-    coolsynth::ui::HardwareKnob lfoWaveKnob { "Wave" };
+    coolsynth::ui::SegmentedChoiceGroup lfoWaveChoice {
+        "Wave",
+        {
+            { "Saw", 0, coolsynth::ui::SegmentedChoiceGroup::Icon::saw },
+            { "Tri", 1, coolsynth::ui::SegmentedChoiceGroup::Icon::triangle },
+            { "Sqr", 2, coolsynth::ui::SegmentedChoiceGroup::Icon::square },
+        },
+        3
+    };
     coolsynth::ui::HardwareKnob lfoMwDepKnob { "MW->Dep" };
     coolsynth::ui::HardwareKnob lfoPitchKnob { "->Pitch" };
     coolsynth::ui::HardwareKnob lfoPwKnob { "->PW" };
@@ -202,54 +239,98 @@ private:
     coolsynth::ui::HardwareKnob pmodEPwKnob { "E->PW" };
     coolsynth::ui::HardwareKnob pmodECutoffKnob { "E->Cutoff" };
     coolsynth::ui::HardwareKnob perfGlideKnob { "Glide" };
-    coolsynth::ui::HardwareKnob perfModeKnob { "Mode" };
-    coolsynth::ui::HardwareKnob perfPrioKnob { "Priority" };
+    coolsynth::ui::SegmentedChoiceGroup perfModeChoice {
+        "Mode",
+        {
+            { "Poly", 0 },
+            { "Mono", 1 },
+            { "Unison", 2 },
+        },
+        1
+    };
+    coolsynth::ui::SegmentedChoiceGroup perfPrioChoice {
+        "Priority",
+        {
+            { "Last", 0 },
+            { "Low", 1 },
+            { "High", 2 },
+        },
+        1
+    };
     coolsynth::ui::HardwareKnob perfPbRangeKnob { "PB Range" };
     coolsynth::ui::HardwareKnob perfVintageKnob { "Vintage" };
     coolsynth::ui::HardwareKnob perfPanKnob { "Pan Spread" };
     coolsynth::ui::HardwareKnob perfVelAmpKnob { "Vel->Amp" };
     coolsynth::ui::HardwareKnob perfVelFltKnob { "Vel->Flt" };
-    coolsynth::ui::HardwareKnob arpOnKnob { "On" };
+    coolsynth::ui::LedToggleButton arpOnToggle { "Arp On" };
     coolsynth::ui::HardwareKnob arpTempoKnob { "Tempo" };
-    coolsynth::ui::HardwareKnob arpRateKnob { "Rate" };
-    coolsynth::ui::HardwareKnob arpPatternKnob { "Pattern" };
-    coolsynth::ui::HardwareKnob arpOctaveKnob { "Octave" };
+    coolsynth::ui::SegmentedChoiceGroup arpRateChoice {
+        "Rate",
+        {
+            { "1/4", 0 },
+            { "1/8", 1 },
+            { "1/8T", 2 },
+            { "1/16", 3 },
+            { "1/16T", 4 },
+            { "1/32", 5 },
+        },
+        3
+    };
+    coolsynth::ui::SegmentedChoiceGroup arpPatternChoice {
+        "Pattern",
+        {
+            { "Up", 0 },
+            { "Down", 1 },
+            { "Up/Dn", 2 },
+            { "Play", 3 },
+        },
+        2
+    };
+    coolsynth::ui::SegmentedChoiceGroup arpOctaveChoice {
+        "Octave",
+        {
+            { "1", 1 },
+            { "2", 2 },
+            { "3", 3 },
+        },
+        1
+    };
     coolsynth::ui::HardwareKnob arpGateKnob { "Gate" };
-    coolsynth::ui::HardwareKnob arpLatchKnob { "Latch" };
-    coolsynth::ui::HardwareKnob drvOnKnob { "On" };
+    coolsynth::ui::LedToggleButton arpLatchToggle { "Latch" };
+    coolsynth::ui::LedToggleButton drvOnToggle { "Drive" };
     coolsynth::ui::HardwareKnob drvAmtKnob { "Amount" };
     coolsynth::ui::HardwareKnob drvMixKnob { "Mix" };
-    coolsynth::ui::HardwareKnob choOnKnob { "On" };
+    coolsynth::ui::LedToggleButton choOnToggle { "Chorus" };
     coolsynth::ui::HardwareKnob choRateKnob { "Rate" };
     coolsynth::ui::HardwareKnob choDepKnob { "Depth" };
     coolsynth::ui::HardwareKnob choMixKnob { "Mix" };
-    coolsynth::ui::HardwareKnob dlyOnKnob { "On" };
+    coolsynth::ui::LedToggleButton dlyOnToggle { "Delay" };
     coolsynth::ui::HardwareKnob dlyTimeKnob { "Time" };
     coolsynth::ui::HardwareKnob dlyFdbkKnob { "Fdbk" };
     coolsynth::ui::HardwareKnob dlyMixKnob { "Mix" };
-    coolsynth::ui::HardwareKnob revOnKnob { "On" };
+    coolsynth::ui::LedToggleButton revOnToggle { "Reverb" };
     coolsynth::ui::HardwareKnob revSizeKnob { "Size" };
     coolsynth::ui::HardwareKnob revDampKnob { "Damp" };
     coolsynth::ui::HardwareKnob revMixKnob { "Mix" };
-    coolsynth::ui::HardwareFader outGainFader { "Master" };
+    coolsynth::ui::HardwareKnob outGainKnob { "Master" };
 
-    std::unique_ptr<SliderAttachment> oscAWaveAttachment;
+    std::unique_ptr<ChoiceAttachment> oscAWaveAttachment;
     std::unique_ptr<SliderAttachment> oscAOctaveAttachment;
     std::unique_ptr<SliderAttachment> oscAFineAttachment;
     std::unique_ptr<SliderAttachment> oscAPwAttachment;
-    std::unique_ptr<SliderAttachment> oscASyncAttachment;
-    std::unique_ptr<SliderAttachment> oscBWaveAttachment;
+    std::unique_ptr<ButtonAttachment> oscASyncAttachment;
+    std::unique_ptr<ChoiceAttachment> oscBWaveAttachment;
     std::unique_ptr<SliderAttachment> oscBOctaveAttachment;
     std::unique_ptr<SliderAttachment> oscBFineAttachment;
     std::unique_ptr<SliderAttachment> oscBPwAttachment;
-    std::unique_ptr<SliderAttachment> oscBLoFreqAttachment;
+    std::unique_ptr<ButtonAttachment> oscBLoFreqAttachment;
     std::unique_ptr<SliderAttachment> mixOscAAttachment;
     std::unique_ptr<SliderAttachment> mixOscBAttachment;
     std::unique_ptr<SliderAttachment> mixNoiseAttachment;
     std::unique_ptr<SliderAttachment> fltCutoffAttachment;
     std::unique_ptr<SliderAttachment> fltResAttachment;
     std::unique_ptr<SliderAttachment> fltEnvAmtAttachment;
-    std::unique_ptr<SliderAttachment> fltKeyTrkAttachment;
+    std::unique_ptr<ChoiceAttachment> fltKeyTrkAttachment;
     std::unique_ptr<SliderAttachment> fEnvAAttachment;
     std::unique_ptr<SliderAttachment> fEnvDAttachment;
     std::unique_ptr<SliderAttachment> fEnvSAttachment;
@@ -259,7 +340,7 @@ private:
     std::unique_ptr<SliderAttachment> aEnvSAttachment;
     std::unique_ptr<SliderAttachment> aEnvRAttachment;
     std::unique_ptr<SliderAttachment> lfoRateAttachment;
-    std::unique_ptr<SliderAttachment> lfoWaveAttachment;
+    std::unique_ptr<ChoiceAttachment> lfoWaveAttachment;
     std::unique_ptr<SliderAttachment> lfoMwDepAttachment;
     std::unique_ptr<SliderAttachment> lfoPitchAttachment;
     std::unique_ptr<SliderAttachment> lfoPwAttachment;
@@ -271,32 +352,32 @@ private:
     std::unique_ptr<SliderAttachment> pmodEPwAttachment;
     std::unique_ptr<SliderAttachment> pmodECutoffAttachment;
     std::unique_ptr<SliderAttachment> perfGlideAttachment;
-    std::unique_ptr<SliderAttachment> perfModeAttachment;
-    std::unique_ptr<SliderAttachment> perfPrioAttachment;
+    std::unique_ptr<ChoiceAttachment> perfModeAttachment;
+    std::unique_ptr<ChoiceAttachment> perfPrioAttachment;
     std::unique_ptr<SliderAttachment> perfPbRangeAttachment;
     std::unique_ptr<SliderAttachment> perfVintageAttachment;
     std::unique_ptr<SliderAttachment> perfPanAttachment;
     std::unique_ptr<SliderAttachment> perfVelAmpAttachment;
     std::unique_ptr<SliderAttachment> perfVelFltAttachment;
-    std::unique_ptr<SliderAttachment> arpOnAttachment;
+    std::unique_ptr<ButtonAttachment> arpOnAttachment;
     std::unique_ptr<SliderAttachment> arpTempoAttachment;
-    std::unique_ptr<SliderAttachment> arpRateAttachment;
-    std::unique_ptr<SliderAttachment> arpPatternAttachment;
-    std::unique_ptr<SliderAttachment> arpOctaveAttachment;
+    std::unique_ptr<ChoiceAttachment> arpRateAttachment;
+    std::unique_ptr<ChoiceAttachment> arpPatternAttachment;
+    std::unique_ptr<ChoiceAttachment> arpOctaveAttachment;
     std::unique_ptr<SliderAttachment> arpGateAttachment;
-    std::unique_ptr<SliderAttachment> arpLatchAttachment;
-    std::unique_ptr<SliderAttachment> drvOnAttachment;
+    std::unique_ptr<ButtonAttachment> arpLatchAttachment;
+    std::unique_ptr<ButtonAttachment> drvOnAttachment;
     std::unique_ptr<SliderAttachment> drvAmtAttachment;
     std::unique_ptr<SliderAttachment> drvMixAttachment;
-    std::unique_ptr<SliderAttachment> choOnAttachment;
+    std::unique_ptr<ButtonAttachment> choOnAttachment;
     std::unique_ptr<SliderAttachment> choRateAttachment;
     std::unique_ptr<SliderAttachment> choDepAttachment;
     std::unique_ptr<SliderAttachment> choMixAttachment;
-    std::unique_ptr<SliderAttachment> dlyOnAttachment;
+    std::unique_ptr<ButtonAttachment> dlyOnAttachment;
     std::unique_ptr<SliderAttachment> dlyTimeAttachment;
     std::unique_ptr<SliderAttachment> dlyFdbkAttachment;
     std::unique_ptr<SliderAttachment> dlyMixAttachment;
-    std::unique_ptr<SliderAttachment> revOnAttachment;
+    std::unique_ptr<ButtonAttachment> revOnAttachment;
     std::unique_ptr<SliderAttachment> revSizeAttachment;
     std::unique_ptr<SliderAttachment> revDampAttachment;
     std::unique_ptr<SliderAttachment> revMixAttachment;
@@ -310,6 +391,9 @@ private:
 
     std::unique_ptr<coolsynth::standalone::StandaloneMidiInputController> standaloneMidiController;
     std::unique_ptr<juce::Component> standaloneStatusBar;
+    std::unique_ptr<juce::TooltipWindow> tooltipWindow;
+    std::unique_ptr<juce::LookAndFeel_V4> tooltipLookAndFeel;
+    bool tooltipsEnabled = true;
 
     int badgeVisibilityCounter = 0;
     bool lastShowCcLabelsSetting = true;
@@ -326,6 +410,7 @@ private:
     juce::TextButton initPatchButton { "Init Patch" };
     juce::TextButton savePatchButton { "Save Patch" };
     juce::TextButton loadPatchButton { "Load Patch" };
+    juce::TextButton tooltipToggleButton { "i" };
     coolsynth::ui::PianoBarComponent pianoBar;
     std::unique_ptr<juce::FileChooser> activePatchChooser;
     bool patchActionsVisible = false;

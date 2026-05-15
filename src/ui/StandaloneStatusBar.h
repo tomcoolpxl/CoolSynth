@@ -11,7 +11,8 @@ class StandaloneStatusBar final : public juce::Component,
                                   private juce::Timer
 {
 public:
-    explicit StandaloneStatusBar(coolsynth::standalone::StandaloneMidiInputController& midiController);
+    StandaloneStatusBar(coolsynth::standalone::StandaloneMidiInputController& midiController,
+                        std::function<juce::String()> profileTextProvider);
     ~StandaloneStatusBar() override;
 
     void resized() override;
@@ -36,6 +37,7 @@ private:
     coolsynth::standalone::AudioDeviceSnapshot audioSnapshot;
     coolsynth::standalone::MidiInputSnapshot midiSnapshot;
     coolsynth::standalone::LastMidiEventSnapshot lastMidiSnapshot;
+    std::function<juce::String()> profileProvider;
 
     juce::Label audioStatusLabel;
     juce::Label midiStatusLabel;

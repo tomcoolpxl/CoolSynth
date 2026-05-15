@@ -6,7 +6,8 @@ add_subdirectory(external/JUCE)
 
 juce_add_binary_data(CoolSynthControllerProfiles
     SOURCES
-        resources/controller_profiles/minilab3_arturia_mode.json)
+        resources/controller_profiles/minilab3_arturia_mode.json
+        resources/ui/coolsynth-logo.png)
 
 option(COOLSYNTH_ENABLE_VST3_USER_INSTALL
     "Copy CoolSynth.vst3 to the per-user Windows VST3 folder after build"
@@ -67,8 +68,10 @@ target_sources(CoolSynth
 
         src/ui/HardwareFader.cpp
         src/ui/HardwareKnob.cpp
+        src/ui/LedToggleButton.cpp
         src/ui/MidiMonitorPanel.cpp
         src/ui/PianoBarComponent.cpp
+        src/ui/SegmentedChoiceGroup.cpp
         src/ui/StandaloneMidiInputPanel.cpp
         src/ui/StandaloneSettingsDialog.cpp
         src/ui/StandaloneStatusBar.cpp
@@ -129,8 +132,10 @@ if(BUILD_TESTING)
             src/synth/SynthVoice.cpp
             src/ui/HardwareFader.cpp
             src/ui/HardwareKnob.cpp
+            src/ui/LedToggleButton.cpp
             src/ui/MidiMonitorPanel.cpp
             src/ui/PianoBarComponent.cpp
+            src/ui/SegmentedChoiceGroup.cpp
             src/ui/StandaloneMidiInputPanel.cpp
             src/ui/StandaloneSettingsDialog.cpp
             src/ui/StandaloneStatusBar.cpp

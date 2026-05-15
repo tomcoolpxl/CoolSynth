@@ -1,27 +1,31 @@
 #include "StandaloneStatusBar.h"
 
-StandaloneStatusBar::StandaloneStatusBar(coolsynth::standalone::StandaloneMidiInputController& controller)
-    : midiController(controller)
+#include "ui/UiPalette.h"
+
+StandaloneStatusBar::StandaloneStatusBar(coolsynth::standalone::StandaloneMidiInputController& controller,
+                                         std::function<juce::String()> profileTextProvider)
+    : midiController(controller),
+      profileProvider(std::move(profileTextProvider))
 {
     addAndMakeVisible(audioStatusLabel);
     audioStatusLabel.setFont(juce::FontOptions(12.0f));
     audioStatusLabel.setJustificationType(juce::Justification::centredLeft);
-    audioStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+    audioStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
 
     addAndMakeVisible(midiStatusLabel);
     midiStatusLabel.setFont(juce::FontOptions(12.0f));
     midiStatusLabel.setJustificationType(juce::Justification::centred);
-    midiStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+    midiStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
 
     addAndMakeVisible(lastMidiStatusLabel);
     lastMidiStatusLabel.setFont(juce::FontOptions(12.0f));
     lastMidiStatusLabel.setJustificationType(juce::Justification::centred);
-    lastMidiStatusLabel.setColour(juce::Label::textColourId, juce::Colours::grey);
+    lastMidiStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
 
     addAndMakeVisible(buildStatusLabel);
     buildStatusLabel.setFont(juce::FontOptions(12.0f));
     buildStatusLabel.setJustificationType(juce::Justification::centredRight);
-    buildStatusLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+    buildStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
     buildStatusLabel.setText(coolsynth::build::getBuildIdentity(), juce::dontSendNotification);
 
     deviceManager = coolsynth::standalone::getStandaloneAudioDeviceManager();
@@ -120,7 +124,15 @@ void StandaloneStatusBar::refreshLastMidiSnapshot()
 void StandaloneStatusBar::refreshLabels()
 {
     audioStatusLabel.setText(formatAudioSummary(audioSnapshot), juce::dontSendNotification);
-    midiStatusLabel.setText(formatMidiSummary(midiSnapshot), juce::dontSendNotification);
+    auto midiSummary = formatMidiSummary(midiSnapshot);
+    if (profileProvider != nullptr)
+    {
+        const auto profileText = profileProvider();
+        if (profileText.isNotEmpty())
+            midiSummary << " | " << profileText;
+    }
+
+    midiStatusLabel.setText(midiSummary, juce::dontSendNotification);
 }
 
 juce::String StandaloneStatusBar::formatAudioSummary(const coolsynth::standalone::AudioDeviceSnapshot& snapshot) const

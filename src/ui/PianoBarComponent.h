@@ -4,9 +4,12 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_utils/juce_audio_utils.h>
 
+#include <array>
+
 namespace coolsynth::ui
 {
     class PianoBarComponent final : public juce::Component,
+                                    public juce::SettableTooltipClient,
                                     public juce::MidiKeyboardStateListener
     {
     public:
@@ -36,9 +39,11 @@ namespace coolsynth::ui
         
         juce::MidiKeyboardComponent keyboard { keyboardState, juce::MidiKeyboardComponent::horizontalKeyboard };
         
+        juce::TextButton ledModeButton { "LED" };
         juce::TextButton octaveDownButton { "-" };
         juce::TextButton octaveUpButton { "+" };
         juce::Label octaveLabel;
+        std::array<float, 128> noteVelocities {};
 
         JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PianoBarComponent)
     };
