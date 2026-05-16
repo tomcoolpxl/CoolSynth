@@ -87,19 +87,35 @@ namespace coolsynth::synth
         arpeggiator.setParameters(parameters.arp);
         arpeggiator.setTransportInfo(transport);
 
-        // Phase 1: when arp is enabled, absorb incoming note events into the arp
-        // held/latched trackers BEFORE generating its events for this block.
-        // Non-note control events still propagate to the engine normally.
+        // When arp is enabled, absorb note-ons into the arp's held set BEFORE
+        // generating step events, and defer note-offs (and panic-style controls)
+        // until AFTER generation. Without this, a fast key tap whose note-on
+        // and note-off land in the same audio block would be added and then
+        // immediately removed from the held set, so the arp would see an empty
+        // set and never fire the note. Splitting the passes also lets a step
+        // that lands earlier in the block than a key release still trigger.
+        if (arpEnabled)
+        {
+            for (const auto& event : midiEvents)
+            {
+                if (event.type == EngineMidiEventType::noteOn)
+                    arpeggiator.onNoteOn(static_cast<int>(event.noteNumber),
+                                         juce::jlimit(0.0f, 1.0f, event.value));
+            }
+        }
+
+        std::array<EngineMidiEvent, maxArpEventsPerBlock> arpEventBuffer {};
+        const int arpEventCount = arpeggiator.generateEventsForBlock(blockSamples,
+                                                                     currentSampleRate,
+                                                                     arpEventBuffer.data(),
+                                                                     static_cast<int>(arpEventBuffer.size()));
+
         if (arpEnabled)
         {
             for (const auto& event : midiEvents)
             {
                 switch (event.type)
                 {
-                    case EngineMidiEventType::noteOn:
-                        arpeggiator.onNoteOn(static_cast<int>(event.noteNumber),
-                                             juce::jlimit(0.0f, 1.0f, event.value));
-                        break;
                     case EngineMidiEventType::noteOff:
                         arpeggiator.onNoteOff(static_cast<int>(event.noteNumber));
                         break;
@@ -113,12 +129,6 @@ namespace coolsynth::synth
                 }
             }
         }
-
-        std::array<EngineMidiEvent, maxArpEventsPerBlock> arpEventBuffer {};
-        const int arpEventCount = arpeggiator.generateEventsForBlock(blockSamples,
-                                                                     currentSampleRate,
-                                                                     arpEventBuffer.data(),
-                                                                     static_cast<int>(arpEventBuffer.size()));
 
         int renderedSamples = 0;
         size_t midiIndex = 0;

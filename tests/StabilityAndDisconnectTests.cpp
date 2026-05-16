@@ -2141,6 +2141,44 @@ public:
             expectEquals(keyDownCount, 0);
         }
 
+        beginTest("fast_key_tap_within_single_block_still_triggers_arp_step");
+        {
+            // A short, fast key tap whose noteOn and noteOff both land in the
+            // same audio block must still fire an arp step. Regression: prior
+            // behavior absorbed all note events into the held set before
+            // generateEventsForBlock, so a tap was added-then-removed and the
+            // step generator saw an empty set.
+            constexpr int stepLength = 6000; // 48k / 120bpm / 8 = 1/16th
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, stepLength, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.arp.enabled = true;
+            parameters.arp.internalTempoBpm = 120.0f;
+            parameters.arp.rate = coolsynth::parameters::ArpRateChoice::sixteenth;
+            parameters.arp.pattern = coolsynth::parameters::ArpPatternChoice::up;
+            parameters.arp.octaveRange = 1;
+            parameters.arp.gateLength = 0.5f;
+            parameters.arp.latch = false;
+
+            // Press + release within the same block (~125 ms tap inside a 125 ms block).
+            std::array<coolsynth::synth::EngineMidiEvent, 2> tap {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f, false },
+                { coolsynth::synth::EngineMidiEventType::noteOff, stepLength - 1, 60, 0.0f, false }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, stepLength);
+            buffer.clear();
+            engine.render(buffer, tap, parameters);
+
+            // Step must have fired and routed the tapped note through the allocator.
+            expectEquals(engine.getLastPlayedNoteForTesting(), 60);
+
+            // After the block the deferred note-off must have cleared the held set,
+            // so the next empty block must not produce any further step on that note.
+            expectEquals(engine.getArpHeldNoteCountForTesting(), 0);
+        }
+
         beginTest("panic_clears_held_latched_and_ringing_arp_state");
         {
             constexpr int stepLength = 6000;
