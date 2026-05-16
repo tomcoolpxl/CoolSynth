@@ -34,7 +34,11 @@
       "Bash(git checkout *)",
       "PowerShell(cmake *)",
       "PowerShell(ctest *)",
-      "Bash(build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)"
+      "Bash(build/CoolSynthMidiLearnTests_artefacts/Debug/CoolSynthMidiLearnTests.exe)",
+      "PowerShell(pwsh -NoProfile -File scripts/generate_factory_presets.ps1)",
+      "PowerShell(pwsh -NoProfile -File scripts/splice_factory_presets.ps1)",
+      "Bash(pwsh -NoProfile -File scripts/splice_factory_presets.ps1)",
+      "Bash(grep -nE '^        \\\\};$|=== \\(BEGIN|END\\) AUTO' src/presets/FactoryPresets.cpp)"
     ]
   }
 }
