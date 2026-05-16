@@ -93,21 +93,31 @@ namespace coolsynth::ui
 
     void SignalChainVisualizer::pullFromProcessor()
     {
-        // Read as many samples as the output buffer can hold. New samples overwrite the
-        // start of outputBuffer; any remainder is filled with the previous content.
-        const int numRead = scopeFifo.read(outputBuffer.data(), static_cast<int>(outputBuffer.size()));
+        // Use a temporary stack buffer to avoid overwriting outputBuffer while shifting.
+        std::array<float, 2048> temp;
+        const int maxToRead = std::min(static_cast<int>(temp.size()), static_cast<int>(outputBuffer.size()));
+        const int numRead = scopeFifo.read(temp.data(), maxToRead);
 
-        // If fewer samples arrived than the buffer, shift old content down so the newest
-        // samples always sit at the end (most-recent-last convention for waveform display).
-        if (numRead > 0 && numRead < static_cast<int>(outputBuffer.size()))
+        if (numRead > 0)
         {
-            const int remaining = static_cast<int>(outputBuffer.size()) - numRead;
-            std::move(outputBuffer.begin() + numRead,
-                      outputBuffer.end(),
-                      outputBuffer.begin());
-            std::copy(outputBuffer.begin() + remaining,
-                      outputBuffer.end(),
-                      outputBuffer.begin() + remaining);
+            if (numRead >= static_cast<int>(outputBuffer.size()))
+            {
+                // Full replacement
+                std::copy(temp.begin() + (numRead - outputBuffer.size()),
+                          temp.begin() + numRead,
+                          outputBuffer.begin());
+            }
+            else
+            {
+                // Partial shift: move existing data left, append new data at the end.
+                const int remaining = static_cast<int>(outputBuffer.size()) - numRead;
+                std::move(outputBuffer.begin() + numRead,
+                          outputBuffer.end(),
+                          outputBuffer.begin());
+                std::copy(temp.begin(),
+                          temp.begin() + numRead,
+                          outputBuffer.begin() + remaining);
+            }
         }
     }
 

@@ -51,7 +51,7 @@ namespace coolsynth::synth
         reverb.prepare(spec);
         delay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
 
-        constexpr double kFxSmoothRampSeconds = 0.015;
+        constexpr double kFxSmoothRampSeconds = 0.004;
         driveMixSmoothed.reset(sampleRate, kFxSmoothRampSeconds);
         chorusMixSmoothed.reset(sampleRate, kFxSmoothRampSeconds);
         reverbMixSmoothed.reset(sampleRate, kFxSmoothRampSeconds);

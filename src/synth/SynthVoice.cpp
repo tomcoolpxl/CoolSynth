@@ -199,8 +199,10 @@ namespace coolsynth::synth
         velocityGain = juce::jlimit(0.0f, 1.0f, velocity);
         noteStartRampTotalSamples = computeNoteStartRampSamples();
         noteStartRampSamplesRemaining = noteStartRampTotalSamples;
+        samplesSinceStart = 0;
         active = true;
         releasing = false;
+        pendingStop = false;
     }
 
     void SynthVoice::stopNote(float, bool allowTailOff)
@@ -210,6 +212,13 @@ namespace coolsynth::synth
 
         if (allowTailOff)
         {
+            const int minAudibleSamples = static_cast<int>(std::round(currentSampleRate * 0.005));
+            if (samplesSinceStart < minAudibleSamples)
+            {
+                pendingStop = true;
+                return;
+            }
+
             ampEnvelope.noteOff();
             filterEnvelope.noteOff();
             releasing = true;
@@ -225,6 +234,18 @@ namespace coolsynth::synth
     {
         if (! active || numSamples <= 0)
             return;
+
+        if (pendingStop)
+        {
+            const int minAudibleSamples = static_cast<int>(std::round(currentSampleRate * 0.005));
+            if (samplesSinceStart >= minAudibleSamples)
+            {
+                ampEnvelope.noteOff();
+                filterEnvelope.noteOff();
+                releasing = true;
+                pendingStop = false;
+            }
+        }
 
         ampEnvelope.setParameters(makeJuceEnvelopeParameters());
         filterEnvelope.setParameters(makeJuceFilterEnvelopeParameters());
@@ -286,6 +307,18 @@ namespace coolsynth::synth
                 {
                     glideOffsetLog2 = juce::jmin(0.0f, glideOffsetLog2 + glideStepLog2PerSample);
                     currentGlideRatio = (glideOffsetLog2 < 0.0f) ? currentGlideRatio * glideStepRatioPerSample : 1.0f;
+                }
+            }
+
+            if (pendingStop)
+            {
+                const int minAudibleSamples = static_cast<int>(std::round(currentSampleRate * 0.005));
+                if (samplesSinceStart >= minAudibleSamples)
+                {
+                    ampEnvelope.noteOff();
+                    filterEnvelope.noteOff();
+                    releasing = true;
+                    pendingStop = false;
                 }
             }
 
@@ -392,6 +425,8 @@ namespace coolsynth::synth
             const float sampleValue = filteredValue * envValue * consumeNoteStartRamp()
                                       * ampVelocityMult * outputLevel;
 
+            samplesSinceStart++;
+
             if (outputBuffer.getNumChannels() == 1)
             {
                 outputBuffer.addSample(0, startSample + sample, sampleValue);
@@ -420,6 +455,8 @@ namespace coolsynth::synth
         currentMidiNoteNumber = -1;
         active = false;
         releasing = false;
+        pendingStop = false;
+        samplesSinceStart = 0;
         velocityGain = 0.0f;
         baseFrequencyHz = 0.0f;
         glideOffsetLog2 = 0.0f;

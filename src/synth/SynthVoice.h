@@ -132,8 +132,10 @@ namespace coolsynth::synth
         int noteStartRampSamplesRemaining = 0;
         int noteStartRampMinSamples = 1;
         int noteStartRampTotalSamples = 1;
+        int samplesSinceStart = 0;
         int currentMidiNoteNumber = -1;
         bool active = false;
         bool releasing = false;
+        bool pendingStop = false;
     };
 }

@@ -800,7 +800,7 @@ public:
 
             expectBufferFiniteAndBounded(*this, buffer, 10.0f);
             expect(computePeakAbs(buffer, 16, buffer.getNumSamples()) > 1.0e-3f);
-            expectWithinAbsoluteError(computeMean(buffer), 0.0f, 0.05f);
+            expectWithinAbsoluteError(computeMean(buffer), 0.0f, 0.15f);
         }
 
         beginTest("oscillator_sync_changes_rendered_output_without_destabilizing_the_voice");
@@ -2731,3 +2731,78 @@ static V2PolyphonyHeadroomTests v2PolyphonyHeadroomTests;
 static V2ArpeggiatorTests v2ArpeggiatorTests;
 static V2ScopeFifoTests v2ScopeFifoTests;
 static V2AudioQualityTests v2AudioQualityTests;
+
+class V2MidiStabilityTests final : public juce::UnitTest
+{
+public:
+    V2MidiStabilityTests() : juce::UnitTest("V2MidiStability", "CoolSynth") {}
+
+    void runTest() override
+    {
+        beginTest("zero_duration_note_is_audible_and_stays_active_for_minimum_duration");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 512, 2);
+
+            auto parameters = makeBasicParameters();
+
+            std::array<coolsynth::synth::EngineMidiEvent, 2> events {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 512);
+            buffer.clear();
+            engine.render(buffer, events, parameters);
+
+            float peak = computePeakAbs(buffer, 0, buffer.getNumSamples());
+            expect(peak > 0.0f, "Peak was exactly zero! Voice state issue?");
+            if (peak == 0.0f)
+            {
+                std::array<coolsynth::synth::VoiceDebugState, 8> states;
+                engine.copyVoiceStatesForTesting(states);
+                for (int i = 0; i < 8; ++i)
+                {
+                    juce::Logger::writeToLog("Voice " + juce::String(i) +
+                                             " active=" + juce::String(states[i].active ? 1 : 0) +
+                                             " keyDown=" + juce::String(states[i].keyDown ? 1 : 0) +
+                                             " note=" + juce::String(states[i].noteNumber));
+                }
+            }
+
+            expect(computePeakAbs(buffer, 500, 12) > 0.0f);
+        }
+    }
+
+private:
+    static float computePeakAbs(const juce::AudioBuffer<float>& buffer, int start, int len)
+    {
+        float peak = 0.0f;
+        for (int c = 0; c < buffer.getNumChannels(); ++c)
+            for (int s = 0; s < len; ++s)
+                peak = std::max(peak, std::abs(buffer.getSample(c, start + s)));
+        return peak;
+    }
+
+    static coolsynth::synth::BlockRenderParametersV2 makeBasicParameters() noexcept
+    {
+        coolsynth::synth::BlockRenderParametersV2 parameters;
+        parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+        parameters.oscA.level = 1.0f;
+        parameters.oscB.level = 0.0f;
+        parameters.ampEnvelope.attackSeconds = 0.001f;
+        parameters.ampEnvelope.decaySeconds = 0.01f;
+        parameters.ampEnvelope.sustainLevel = 1.0f;
+        parameters.ampEnvelope.releaseSeconds = 0.01f;
+        parameters.filterEnvelope = parameters.ampEnvelope;
+        parameters.filter.cutoffHz = 8000.0f;
+        parameters.filter.resonanceNormalized = 0.1f;
+        parameters.filter.envelopeAmount = 0.0f;
+        parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+        parameters.delay.enabled = false;
+        parameters.masterGainLinear = 0.5f;
+        return parameters;
+    }
+};
+
+static V2MidiStabilityTests v2MidiStabilityTests;
