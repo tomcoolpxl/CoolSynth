@@ -28,7 +28,6 @@ namespace coolsynth::synth
         void setGlobalLfoState(float phase, float modWheel) noexcept;
         void setPan(float panLeft, float panRight) noexcept;
         void setVintageDriftCents(float cents) noexcept;
-        void setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept;
         void setOutputLevel(float level) noexcept;
         void setPitchBendSemitones(float semitones) noexcept;
         void setGlideFromNote(int fromMidiNoteNumber, float glideTimeSeconds) noexcept;

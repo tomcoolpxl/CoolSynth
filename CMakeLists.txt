@@ -54,13 +54,13 @@ target_sources(CoolSynth
         src/midi/Minilab3Profile.cpp
         src/parameters/ParameterLayout.cpp
         src/plugin/SynthAudioProcessor.cpp
+        src/plugin/EditorTooltips.cpp
         src/plugin/SynthAudioProcessorEditor.cpp
         src/standalone/CoolSynthStandaloneApp.cpp
         src/standalone/SettingsStore.cpp
         src/standalone/StandaloneAudioSupport.cpp
         src/standalone/StandaloneMidiInput.cpp
         src/synth/Arpeggiator.cpp
-        src/synth/SynthEngine.cpp
         src/synth/SynthEngineV2.cpp
         src/synth/GlobalDelay.cpp
         src/synth/GlobalFxRack.cpp
@@ -116,6 +116,7 @@ if(BUILD_TESTING)
             src/presets/PatchState.cpp
             src/midi/ControllerProfile.cpp
             src/plugin/SynthAudioProcessor.cpp
+            src/plugin/EditorTooltips.cpp
             src/plugin/SynthAudioProcessorEditor.cpp
             src/midi/MidiLearn.cpp
             src/midi/MidiMappingEngine.cpp
@@ -126,7 +127,6 @@ if(BUILD_TESTING)
             src/standalone/StandaloneMidiInput.cpp
             src/parameters/ParameterLayout.cpp
             src/synth/Arpeggiator.cpp
-            src/synth/SynthEngine.cpp
             src/synth/SynthEngineV2.cpp
             src/synth/GlobalDelay.cpp
             src/synth/GlobalFxRack.cpp

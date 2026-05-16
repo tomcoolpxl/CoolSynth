@@ -4,8 +4,7 @@
 
 namespace coolsynth::parameters::ids
 {
-    inline constexpr int legacyVersionHint = 1;
-    inline constexpr int v2VersionHint = 2;
+    inline constexpr int parameterVersionHint = 2;
 
     inline constexpr char oscAWave[] = "oscAWave";
     inline constexpr char oscAOctave[] = "oscAOctave";
@@ -93,13 +92,6 @@ namespace coolsynth::parameters::ids
 
 namespace coolsynth::parameters
 {
-    enum class WaveformChoice : int
-    {
-        sine = 0,
-        square = 1,
-        saw = 2,
-    };
-
     enum class OscillatorWaveShape : int
     {
         pulse = 0,

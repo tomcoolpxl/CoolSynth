@@ -1,5 +1,7 @@
 #include "StandaloneMidiInput.h"
 
+#include "midi/MidiToControllerEvent.h"
+
 namespace coolsynth::standalone
 {
     StandaloneMidiInputController::StandaloneMidiInputController(juce::AudioDeviceManager& dm,
@@ -180,40 +182,16 @@ namespace coolsynth::standalone
 
     void StandaloneMidiInputController::enqueueControllerEvent(const juce::MidiMessage& message) noexcept
     {
-        using namespace coolsynth::midi;
-
-        ControllerMidiEvent event;
-        if (message.isNoteOn())
-        {
-            event.type = ControllerMidiEventType::noteOn;
-            event.data1 = static_cast<uint8_t>(message.getNoteNumber());
-            event.data2 = static_cast<uint8_t>(message.getVelocity());
-        }
-        else if (message.isNoteOff())
-        {
-            event.type = ControllerMidiEventType::noteOff;
-            event.data1 = static_cast<uint8_t>(message.getNoteNumber());
-            event.data2 = static_cast<uint8_t>(message.getVelocity());
-        }
-        else if (message.isController())
-        {
-            event.type = ControllerMidiEventType::controlChange;
-            event.data1 = static_cast<uint8_t>(message.getControllerNumber());
-            event.data2 = static_cast<uint8_t>(message.getControllerValue());
-        }
-        else
-        {
+        const auto event = coolsynth::midi::toControllerMidiEvent(message);
+        if (! event)
             return;
-        }
-
-        event.channel = static_cast<uint8_t>(message.getChannel());
 
         int start1, size1, start2, size2;
         pendingControllerEventQueue.prepareToWrite(1, start1, size1, start2, size2);
-        
+
         if (size1 > 0)
         {
-            pendingControllerEvents[static_cast<size_t>(start1)] = event;
+            pendingControllerEvents[static_cast<size_t>(start1)] = *event;
             pendingControllerEventQueue.finishedWrite(1);
             triggerAsyncUpdate();
         }

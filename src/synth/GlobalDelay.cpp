@@ -42,7 +42,7 @@ namespace coolsynth::synth
     }
 
     void GlobalDelay::process(juce::AudioBuffer<float>& buffer,
-                              const DelayParameters& parameters) noexcept
+                              const DelayParametersV2& parameters) noexcept
     {
         if (!prepared)
             return;
@@ -93,7 +93,7 @@ namespace coolsynth::synth
         return juce::jmin(samples, static_cast<float>(maximumDelaySamples - 1));
     }
 
-    void GlobalDelay::updateTargets(const DelayParameters& parameters) noexcept
+    void GlobalDelay::updateTargets(const DelayParametersV2& parameters) noexcept
     {
         delaySamplesSmoother.setTargetValue(delayMsToSamples(parameters.timeMs));
         feedbackSmoother.setTargetValue(clampFeedback(parameters.feedback));

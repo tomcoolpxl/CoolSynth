@@ -406,6 +406,15 @@ private:
     int badgeVisibilityCounter = 0;
     bool lastShowCcLabelsSetting = true;
 
+    void setupParameterRefs();
+    void setupVisualsAndLabels(bool isStandalone);
+    void setupControlAttachments();
+    void registerLearnableControls();
+    void setupActionButtons();
+    void setupStandaloneMode(bool isStandalone);
+    void setupTooltipWindow();
+    void applyTooltips();
+
     void triggerInitPatch();
     void triggerSavePatch();
     void triggerLoadPatch();

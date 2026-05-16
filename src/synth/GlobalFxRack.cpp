@@ -221,7 +221,7 @@ namespace coolsynth::synth
             return;
         }
 
-        delay.process(buffer, mapDelayParameters(parameters));
+        delay.process(buffer, parameters);
         delayWasAudible = true;
     }
 
@@ -283,12 +283,4 @@ namespace coolsynth::synth
         reverbWasAudible = true;
     }
 
-    DelayParameters GlobalFxRack::mapDelayParameters(const DelayParametersV2& parameters) noexcept
-    {
-        DelayParameters mapped;
-        mapped.timeMs = parameters.timeMs;
-        mapped.feedback = parameters.feedback;
-        mapped.mix = parameters.mix;
-        return mapped;
-    }
 }

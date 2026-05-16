@@ -7,6 +7,7 @@
 #include <span>
 
 #include "SynthAudioProcessorEditor.h"
+#include "midi/MidiToControllerEvent.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 
@@ -25,39 +26,6 @@ namespace
     inline constexpr char learnedMidiMappingParameterIdProperty[] = "parameterId";
     inline constexpr char learnedMidiMappingChannelProperty[] = "channel";
     inline constexpr char learnedMidiMappingControllerProperty[] = "controller";
-
-    std::optional<coolsynth::midi::ControllerMidiEvent> makeControllerMidiEvent(const juce::MidiMessage& message) noexcept
-    {
-        using namespace coolsynth::midi;
-
-        ControllerMidiEvent event;
-
-        if (message.isNoteOn())
-        {
-            event.type = ControllerMidiEventType::noteOn;
-            event.data1 = static_cast<uint8_t> (message.getNoteNumber());
-            event.data2 = static_cast<uint8_t> (message.getVelocity());
-        }
-        else if (message.isNoteOff())
-        {
-            event.type = ControllerMidiEventType::noteOff;
-            event.data1 = static_cast<uint8_t> (message.getNoteNumber());
-            event.data2 = static_cast<uint8_t> (message.getVelocity());
-        }
-        else if (message.isController())
-        {
-            event.type = ControllerMidiEventType::controlChange;
-            event.data1 = static_cast<uint8_t> (message.getControllerNumber());
-            event.data2 = static_cast<uint8_t> (message.getControllerValue());
-        }
-        else
-        {
-            return std::nullopt;
-        }
-
-        event.channel = static_cast<uint8_t> (message.getChannel());
-        return event;
-    }
 
     std::optional<coolsynth::synth::EngineMidiEvent> makeEngineMidiEvent(const juce::MidiMessage& message,
                                                                          int sampleOffset) noexcept
@@ -223,7 +191,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         if (juce::JUCEApplicationBase::isStandaloneApp())
             continue;
 
-        if (const auto event = makeControllerMidiEvent(metadata.getMessage()))
+        if (const auto event = coolsynth::midi::toControllerMidiEvent(metadata.getMessage()))
         {
             enqueuePluginControllerEvent(*event);
 
@@ -669,7 +637,7 @@ double SynthAudioProcessor::getTailLengthSeconds() const
     delayParameters.enabled = parameterValues.delayEnabled->load() >= 0.5f;
     delayParameters.timeMs = juce::jlimit(1.0f, 1000.0f, parameterValues.delayTimeMs->load());
     delayParameters.mix = juce::jlimit(0.0f, 1.0f, parameterValues.delayMix->load());
-    delayParameters.feedback = juce::jlimit(0.0f, 0.85f, parameterValues.delayFeedback->load());
+    delayParameters.feedback = juce::jlimit(0.0f, coolsynth::synth::GlobalDelay::maxFeedback, parameterValues.delayFeedback->load());
 
     coolsynth::synth::ReverbParametersV2 reverbParameters;
     reverbParameters.enabled = parameterValues.reverbEnabled->load() >= 0.5f;
@@ -724,85 +692,85 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
     coolsynth::synth::BlockRenderParametersV2 params;
 
     params.oscA.waveShape = static_cast<coolsynth::parameters::OscillatorWaveShape>(choiceParams.oscAWave->getIndex());
-    params.oscA.octaveIndex = juce::jlimit(0, 4, static_cast<int>(std::round(parameterValues.oscAOctave->load())));
-    params.oscA.fineCents = juce::jlimit(-50.0f, 50.0f, parameterValues.oscAFineCents->load());
-    params.oscA.level = juce::jlimit(0.0f, 1.0f, parameterValues.oscALevel->load());
-    params.oscA.pulseWidth = juce::jlimit(0.05f, 0.95f, parameterValues.oscAPulseWidth->load());
+    params.oscA.octaveIndex = static_cast<int>(std::round(parameterValues.oscAOctave->load()));
+    params.oscA.fineCents = parameterValues.oscAFineCents->load();
+    params.oscA.level = parameterValues.oscALevel->load();
+    params.oscA.pulseWidth = parameterValues.oscAPulseWidth->load();
     params.oscA.syncEnabled = decodeBool(parameterValues.oscASyncEnabled->load());
 
     params.oscB.waveShape = static_cast<coolsynth::parameters::OscillatorWaveShape>(choiceParams.oscBWave->getIndex());
-    params.oscB.octaveIndex = juce::jlimit(0, 4, static_cast<int>(std::round(parameterValues.oscBOctave->load())));
-    params.oscB.fineCents = juce::jlimit(-50.0f, 50.0f, parameterValues.oscBFineCents->load());
-    params.oscB.level = juce::jlimit(0.0f, 1.0f, parameterValues.oscBLevel->load());
-    params.oscB.pulseWidth = juce::jlimit(0.05f, 0.95f, parameterValues.oscBPulseWidth->load());
+    params.oscB.octaveIndex = static_cast<int>(std::round(parameterValues.oscBOctave->load()));
+    params.oscB.fineCents = parameterValues.oscBFineCents->load();
+    params.oscB.level = parameterValues.oscBLevel->load();
+    params.oscB.pulseWidth = parameterValues.oscBPulseWidth->load();
     params.oscB.lowFrequencyMode = decodeBool(parameterValues.oscBLowFrequencyMode->load());
 
-    params.mixer.noiseLevel = juce::jlimit(0.0f, 1.0f, parameterValues.noiseLevel->load());
+    params.mixer.noiseLevel = parameterValues.noiseLevel->load();
 
-    params.filter.cutoffHz = juce::jlimit(20.0f, 20000.0f, parameterValues.filterCutoffHz->load());
-    params.filter.resonanceNormalized = juce::jlimit(0.0f, 1.0f, parameterValues.filterResonance->load());
-    params.filter.envelopeAmount = juce::jlimit(0.0f, 1.0f, parameterValues.filterEnvAmount->load());
+    params.filter.cutoffHz = parameterValues.filterCutoffHz->load();
+    params.filter.resonanceNormalized = parameterValues.filterResonance->load();
+    params.filter.envelopeAmount = parameterValues.filterEnvAmount->load();
     params.filter.keyTracking = static_cast<coolsynth::parameters::FilterKeyTrackingMode>(choiceParams.filterKeyTrack->getIndex());
 
     params.filterEnvelope.attackSeconds = juce::jmax(0.001f, parameterValues.filterAttackMs->load() * 0.001f);
     params.filterEnvelope.decaySeconds = juce::jmax(0.005f, parameterValues.filterDecayMs->load() * 0.001f);
-    params.filterEnvelope.sustainLevel = juce::jlimit(0.0f, 1.0f, parameterValues.filterSustain->load());
+    params.filterEnvelope.sustainLevel = parameterValues.filterSustain->load();
     params.filterEnvelope.releaseSeconds = juce::jmax(0.005f, parameterValues.filterReleaseMs->load() * 0.001f);
 
     params.ampEnvelope.attackSeconds = juce::jmax(0.001f, parameterValues.ampAttackMs->load() * 0.001f);
     params.ampEnvelope.decaySeconds = juce::jmax(0.005f, parameterValues.ampDecayMs->load() * 0.001f);
-    params.ampEnvelope.sustainLevel = juce::jlimit(0.0f, 1.0f, parameterValues.ampSustain->load());
+    params.ampEnvelope.sustainLevel = parameterValues.ampSustain->load();
     params.ampEnvelope.releaseSeconds = juce::jmax(0.005f, parameterValues.ampReleaseMs->load() * 0.001f);
 
-    params.lfo.rateHz = juce::jlimit(0.05f, 20.0f, parameterValues.lfoRateHz->load());
+    params.lfo.rateHz = parameterValues.lfoRateHz->load();
     params.lfo.waveShape = static_cast<coolsynth::parameters::LfoWaveShape>(choiceParams.lfoWave->getIndex());
-    params.lfo.oscPitchDepth = juce::jlimit(0.0f, 1.0f, parameterValues.lfoToOscPitch->load());
-    params.lfo.pulseWidthDepth = juce::jlimit(0.0f, 1.0f, parameterValues.lfoToPulseWidth->load());
-    params.lfo.filterCutoffDepth = juce::jlimit(0.0f, 1.0f, parameterValues.lfoToFilterCutoff->load());
-    params.lfo.modWheelDepth = juce::jlimit(0.0f, 1.0f, parameterValues.modWheelToLfoDepth->load());
+    params.lfo.oscPitchDepth = parameterValues.lfoToOscPitch->load();
+    params.lfo.pulseWidthDepth = parameterValues.lfoToPulseWidth->load();
+    params.lfo.filterCutoffDepth = parameterValues.lfoToFilterCutoff->load();
+    params.lfo.modWheelDepth = parameterValues.modWheelToLfoDepth->load();
 
-    params.polyMod.oscBToOscPitch = juce::jlimit(0.0f, 1.0f, parameterValues.polyModOscBToOscPitch->load());
-    params.polyMod.envToOscPitch = juce::jlimit(0.0f, 1.0f, parameterValues.polyModEnvToOscPitch->load());
-    params.polyMod.oscBToPulseWidth = juce::jlimit(0.0f, 1.0f, parameterValues.polyModOscBToPulseWidth->load());
-    params.polyMod.envToPulseWidth = juce::jlimit(0.0f, 1.0f, parameterValues.polyModEnvToPulseWidth->load());
-    params.polyMod.oscBToFilterCutoff = juce::jlimit(0.0f, 1.0f, parameterValues.polyModOscBToFilterCutoff->load());
-    params.polyMod.envToFilterCutoff = juce::jlimit(0.0f, 1.0f, parameterValues.polyModEnvToFilterCutoff->load());
+    params.polyMod.oscBToOscPitch = parameterValues.polyModOscBToOscPitch->load();
+    params.polyMod.envToOscPitch = parameterValues.polyModEnvToOscPitch->load();
+    params.polyMod.oscBToPulseWidth = parameterValues.polyModOscBToPulseWidth->load();
+    params.polyMod.envToPulseWidth = parameterValues.polyModEnvToPulseWidth->load();
+    params.polyMod.oscBToFilterCutoff = parameterValues.polyModOscBToFilterCutoff->load();
+    params.polyMod.envToFilterCutoff = parameterValues.polyModEnvToFilterCutoff->load();
 
-    params.performance.glideTimeSeconds = juce::jlimit(0.0f, 2.0f, parameterValues.glideTimeMs->load() * 0.001f);
+    params.performance.glideTimeSeconds = parameterValues.glideTimeMs->load() * 0.001f;
     params.performance.playMode = static_cast<coolsynth::parameters::PlayModeChoice>(choiceParams.playMode->getIndex());
     params.performance.keyPriority = static_cast<coolsynth::parameters::KeyPriorityChoice>(choiceParams.keyPriority->getIndex());
-    params.performance.pitchBendRangeSemitones = juce::jlimit(1.0f, 24.0f, parameterValues.pitchBendRangeSemitones->load());
-    params.performance.vintageAmount = juce::jlimit(0.0f, 1.0f, parameterValues.vintageAmount->load());
-    params.performance.panSpread = juce::jlimit(0.0f, 1.0f, parameterValues.panSpread->load());
-    params.performance.velocityToAmp = juce::jlimit(0.0f, 1.0f, parameterValues.velocityToAmp->load());
-    params.performance.velocityToFilter = juce::jlimit(0.0f, 1.0f, parameterValues.velocityToFilter->load());
+    params.performance.pitchBendRangeSemitones = parameterValues.pitchBendRangeSemitones->load();
+    params.performance.vintageAmount = parameterValues.vintageAmount->load();
+    params.performance.panSpread = parameterValues.panSpread->load();
+    params.performance.velocityToAmp = parameterValues.velocityToAmp->load();
+    params.performance.velocityToFilter = parameterValues.velocityToFilter->load();
 
     params.arp.enabled = decodeBool(parameterValues.arpEnabled->load());
-    params.arp.internalTempoBpm = juce::jlimit(40.0f, 240.0f, parameterValues.arpInternalTempoBpm->load());
+    params.arp.internalTempoBpm = parameterValues.arpInternalTempoBpm->load();
     params.arp.rate = static_cast<coolsynth::parameters::ArpRateChoice>(choiceParams.arpRate->getIndex());
     params.arp.pattern = static_cast<coolsynth::parameters::ArpPatternChoice>(choiceParams.arpPattern->getIndex());
-    params.arp.octaveRange = juce::jlimit(1, 3, static_cast<int>(std::round(parameterValues.arpOctaveRange->load())));
-    params.arp.gateLength = juce::jlimit(0.0f, 1.0f, parameterValues.arpGate->load());
+    params.arp.octaveRange = static_cast<int>(std::round(parameterValues.arpOctaveRange->load()));
+    params.arp.gateLength = parameterValues.arpGate->load();
     params.arp.latch = decodeBool(parameterValues.arpLatch->load());
 
     params.drive.enabled = decodeBool(parameterValues.driveEnabled->load());
-    params.drive.amount = juce::jlimit(0.0f, 1.0f, parameterValues.driveAmount->load());
-    params.drive.mix = juce::jlimit(0.0f, 1.0f, parameterValues.driveMix->load());
+    params.drive.amount = parameterValues.driveAmount->load();
+    params.drive.mix = parameterValues.driveMix->load();
 
     params.chorus.enabled = decodeBool(parameterValues.chorusEnabled->load());
-    params.chorus.rateHz = juce::jlimit(0.05f, 10.0f, parameterValues.chorusRateHz->load());
-    params.chorus.depth = juce::jlimit(0.0f, 1.0f, parameterValues.chorusDepth->load());
-    params.chorus.mix = juce::jlimit(0.0f, 1.0f, parameterValues.chorusMix->load());
+    params.chorus.rateHz = parameterValues.chorusRateHz->load();
+    params.chorus.depth = parameterValues.chorusDepth->load();
+    params.chorus.mix = parameterValues.chorusMix->load();
 
     params.delay.enabled = decodeBool(parameterValues.delayEnabled->load());
     params.delay.timeMs = juce::jlimit(1.0f, 1000.0f, parameterValues.delayTimeMs->load());
-    params.delay.feedback = juce::jlimit(0.0f, 0.85f, parameterValues.delayFeedback->load());
-    params.delay.mix = juce::jlimit(0.0f, 1.0f, parameterValues.delayMix->load());
+    params.delay.feedback = juce::jlimit(0.0f, coolsynth::synth::GlobalDelay::maxFeedback, parameterValues.delayFeedback->load());
+    params.delay.mix = parameterValues.delayMix->load();
 
     params.reverb.enabled = decodeBool(parameterValues.reverbEnabled->load());
-    params.reverb.size = juce::jlimit(0.0f, 1.0f, parameterValues.reverbSize->load());
-    params.reverb.damping = juce::jlimit(0.0f, 1.0f, parameterValues.reverbDamping->load());
-    params.reverb.mix = juce::jlimit(0.0f, 1.0f, parameterValues.reverbMix->load());
+    params.reverb.size = parameterValues.reverbSize->load();
+    params.reverb.damping = parameterValues.reverbDamping->load();
+    params.reverb.mix = parameterValues.reverbMix->load();
 
     params.masterGainLinear = juce::Decibels::decibelsToGain(parameterValues.masterGainDb->load());
     return params;
@@ -810,77 +778,9 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
 
 coolsynth::synth::ParameterValuePointersV2 SynthAudioProcessor::bindParameterPointers(APVTS& state)
 {
-    namespace ids = coolsynth::parameters::ids;
-
     coolsynth::synth::ParameterValuePointersV2 pointers;
-    pointers.oscAWave = state.getRawParameterValue(ids::oscAWave);
-    pointers.oscAOctave = state.getRawParameterValue(ids::oscAOctave);
-    pointers.oscAFineCents = state.getRawParameterValue(ids::oscAFineCents);
-    pointers.oscALevel = state.getRawParameterValue(ids::oscALevel);
-    pointers.oscAPulseWidth = state.getRawParameterValue(ids::oscAPulseWidth);
-    pointers.oscASyncEnabled = state.getRawParameterValue(ids::oscASyncEnabled);
-    pointers.oscBWave = state.getRawParameterValue(ids::oscBWave);
-    pointers.oscBOctave = state.getRawParameterValue(ids::oscBOctave);
-    pointers.oscBFineCents = state.getRawParameterValue(ids::oscBFineCents);
-    pointers.oscBLevel = state.getRawParameterValue(ids::oscBLevel);
-    pointers.oscBPulseWidth = state.getRawParameterValue(ids::oscBPulseWidth);
-    pointers.oscBLowFrequencyMode = state.getRawParameterValue(ids::oscBLowFrequencyMode);
-    pointers.noiseLevel = state.getRawParameterValue(ids::noiseLevel);
-    pointers.filterCutoffHz = state.getRawParameterValue(ids::filterCutoffHz);
-    pointers.filterResonance = state.getRawParameterValue(ids::filterResonance);
-    pointers.filterEnvAmount = state.getRawParameterValue(ids::filterEnvAmount);
-    pointers.filterKeyTracking = state.getRawParameterValue(ids::filterKeyTracking);
-    pointers.filterAttackMs = state.getRawParameterValue(ids::filterAttackMs);
-    pointers.filterDecayMs = state.getRawParameterValue(ids::filterDecayMs);
-    pointers.filterSustain = state.getRawParameterValue(ids::filterSustain);
-    pointers.filterReleaseMs = state.getRawParameterValue(ids::filterReleaseMs);
-    pointers.ampAttackMs = state.getRawParameterValue(ids::ampAttackMs);
-    pointers.ampDecayMs = state.getRawParameterValue(ids::ampDecayMs);
-    pointers.ampSustain = state.getRawParameterValue(ids::ampSustain);
-    pointers.ampReleaseMs = state.getRawParameterValue(ids::ampReleaseMs);
-    pointers.lfoRateHz = state.getRawParameterValue(ids::lfoRateHz);
-    pointers.lfoWave = state.getRawParameterValue(ids::lfoWave);
-    pointers.lfoToOscPitch = state.getRawParameterValue(ids::lfoToOscPitch);
-    pointers.lfoToPulseWidth = state.getRawParameterValue(ids::lfoToPulseWidth);
-    pointers.lfoToFilterCutoff = state.getRawParameterValue(ids::lfoToFilterCutoff);
-    pointers.modWheelToLfoDepth = state.getRawParameterValue(ids::modWheelToLfoDepth);
-    pointers.polyModOscBToOscPitch = state.getRawParameterValue(ids::polyModOscBToOscPitch);
-    pointers.polyModEnvToOscPitch = state.getRawParameterValue(ids::polyModEnvToOscPitch);
-    pointers.polyModOscBToPulseWidth = state.getRawParameterValue(ids::polyModOscBToPulseWidth);
-    pointers.polyModEnvToPulseWidth = state.getRawParameterValue(ids::polyModEnvToPulseWidth);
-    pointers.polyModOscBToFilterCutoff = state.getRawParameterValue(ids::polyModOscBToFilterCutoff);
-    pointers.polyModEnvToFilterCutoff = state.getRawParameterValue(ids::polyModEnvToFilterCutoff);
-    pointers.glideTimeMs = state.getRawParameterValue(ids::glideTimeMs);
-    pointers.playMode = state.getRawParameterValue(ids::playMode);
-    pointers.keyPriority = state.getRawParameterValue(ids::keyPriority);
-    pointers.pitchBendRangeSemitones = state.getRawParameterValue(ids::pitchBendRangeSemitones);
-    pointers.vintageAmount = state.getRawParameterValue(ids::vintageAmount);
-    pointers.panSpread = state.getRawParameterValue(ids::panSpread);
-    pointers.velocityToAmp = state.getRawParameterValue(ids::velocityToAmp);
-    pointers.velocityToFilter = state.getRawParameterValue(ids::velocityToFilter);
-    pointers.arpEnabled = state.getRawParameterValue(ids::arpEnabled);
-    pointers.arpInternalTempoBpm = state.getRawParameterValue(ids::arpInternalTempoBpm);
-    pointers.arpRateDivision = state.getRawParameterValue(ids::arpRateDivision);
-    pointers.arpPattern = state.getRawParameterValue(ids::arpPattern);
-    pointers.arpOctaveRange = state.getRawParameterValue(ids::arpOctaveRange);
-    pointers.arpGate = state.getRawParameterValue(ids::arpGate);
-    pointers.arpLatch = state.getRawParameterValue(ids::arpLatch);
-    pointers.driveEnabled = state.getRawParameterValue(ids::driveEnabled);
-    pointers.driveAmount = state.getRawParameterValue(ids::driveAmount);
-    pointers.driveMix = state.getRawParameterValue(ids::driveMix);
-    pointers.chorusEnabled = state.getRawParameterValue(ids::chorusEnabled);
-    pointers.chorusRateHz = state.getRawParameterValue(ids::chorusRateHz);
-    pointers.chorusDepth = state.getRawParameterValue(ids::chorusDepth);
-    pointers.chorusMix = state.getRawParameterValue(ids::chorusMix);
-    pointers.delayEnabled = state.getRawParameterValue(ids::delayEnabled);
-    pointers.delayTimeMs = state.getRawParameterValue(ids::delayTimeMs);
-    pointers.delayFeedback = state.getRawParameterValue(ids::delayFeedback);
-    pointers.delayMix = state.getRawParameterValue(ids::delayMix);
-    pointers.reverbEnabled = state.getRawParameterValue(ids::reverbEnabled);
-    pointers.reverbSize = state.getRawParameterValue(ids::reverbSize);
-    pointers.reverbDamping = state.getRawParameterValue(ids::reverbDamping);
-    pointers.reverbMix = state.getRawParameterValue(ids::reverbMix);
-    pointers.masterGainDb = state.getRawParameterValue(ids::masterGainDb);
+    for (auto& [id, memberPtr] : coolsynth::synth::kParamPtrBindings)
+        pointers.*memberPtr = state.getRawParameterValue(id);
     return pointers;
 }
 

@@ -29,8 +29,6 @@ namespace coolsynth::synth
         void processDelay(juce::AudioBuffer<float>& buffer, const DelayParametersV2& parameters) noexcept;
         void processReverb(juce::AudioBuffer<float>& buffer, const ReverbParametersV2& parameters) noexcept;
 
-        static DelayParameters mapDelayParameters(const DelayParametersV2& parameters) noexcept;
-
         GlobalDelay delay;
         juce::dsp::Chorus<float> chorus;
         juce::dsp::Reverb reverb;

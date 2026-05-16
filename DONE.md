@@ -1,5 +1,18 @@
 # DONE
 
+## Phase 11 Track D — Code hygiene and dead code
+
+Completed on 2026-05-16. All eight WIs landed, builds clean, all tests pass.
+
+- [x] **WI-D1**: `SynthEngine.h/.cpp` deleted; `WaveformChoice` enum removed from `ParameterIDs.h`; `SynthVoice::setWaveform(WaveformChoice)` declaration and implementation removed; V1-only test include removed.
+- [x] **WI-D2**: All parameter version hints flipped to V2 (`makeLegacyParameterId` → `makeV2ParameterId` for filter/amp-ADSR/delay/master-gain groups); `makeLegacyParameterId` helper, `legacyVersionHint` constant, and `JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING` compile definition deleted.
+- [x] **WI-D3**: Eight magic numbers in `SynthVoice.cpp` hoisted to named anon-namespace `inline constexpr` constants. Duplicate `lfoSubRateSamples` in `SynthParameters.h` removed. Both `0.85f` literals in `SynthAudioProcessor.cpp` replaced with `GlobalDelay::maxFeedback`.
+- [x] **WI-D4**: `src/midi/MidiToControllerEvent.h` added with canonical `coolsynth::midi::toControllerMidiEvent()`. `makeControllerMidiEvent` in `SynthAudioProcessor.cpp` and inline translation block in `StandaloneMidiInput.cpp` both removed and replaced with calls to the shared translator.
+- [x] **WI-D5**: `SynthAudioProcessorEditor` constructor reduced from ~773 lines to ~18 lines via 8 private helper methods. Tooltip helpers and all tooltip assignments extracted to `EditorTooltips.cpp`. `EditorTooltips.cpp` added to both main and test `target_sources` in `CMakeLists.txt`.
+- [x] **WI-D6**: `kParamPtrBindings` table (65-entry `inline const std::array<std::pair<const char*, ParamMemberPtr>, …>`) added to `SynthParameters.h`; `bindParameterPointers` body reduced to 4 lines; `static_assert` enforces exhaustiveness at compile time.
+- [x] **WI-D7**: ~40 redundant APVTS-enforced `jlimit` calls removed from `makeBlockRenderParameters`. Retained: envelope-time `jmax` floors, delay time `jlimit(1, 1000)`, delay feedback cap.
+- [x] **WI-D8**: `SignalChainVisualizer::paneWidth()` added (`(getWidth() - 36) / 5.0f`). Three inconsistent pane-width expressions in `timerCallback()` and `updateIdealWaveforms()` replaced with `paneWidth()`.
+
 ## Phase 11 Track C — Performance optimisations
 
 Completed on 2026-05-16. All six WIs landed, builds clean, all tests pass.

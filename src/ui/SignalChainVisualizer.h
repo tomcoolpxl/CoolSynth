@@ -40,6 +40,8 @@ namespace coolsynth::ui
 
         void drawModulationPane(juce::Graphics& g, juce::Rectangle<int> area);
 
+        [[nodiscard]] float paneWidth() const noexcept;
+
         juce::AudioProcessorValueTreeState& state;
         coolsynth::plugin::ProcessorScopeFifo& scopeFifo;
 

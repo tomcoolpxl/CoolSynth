@@ -111,6 +111,11 @@ namespace coolsynth::ui
         }
     }
 
+    float SignalChainVisualizer::paneWidth() const noexcept
+    {
+        return (getWidth() - 36) / 5.0f;
+    }
+
     void SignalChainVisualizer::timerCallback()
     {
         frameCount++;
@@ -132,7 +137,7 @@ namespace coolsynth::ui
                 forwardFFT.performFrequencyOnlyForwardTransform(fftScratch.data());
 
                 spectraPath.clear();
-                const float w = (getWidth() - 40) / 5.0f;
+                const float w = paneWidth();
                 const float h = static_cast<float>(getHeight());
                 const int numBins = fftSize / 2;
                 const float stepX = w / std::log10(static_cast<float>(numBins));
@@ -163,7 +168,7 @@ namespace coolsynth::ui
         float zoom = juce::jmin(10.0f, 1.0f / maxAbsVal);
 
         const float halfH = static_cast<float>(getHeight()) * 0.5f;
-        const float w = (getWidth() - 40) / 5.0f;
+        const float w = paneWidth();
         const float stepX = w / static_cast<float>(buf.size());
 
         for (int i = 0; i < static_cast<int>(buf.size()); ++i)
@@ -215,7 +220,7 @@ namespace coolsynth::ui
 
         const int numPoints = 256;
         const float numCycles = 2.0f;
-        const float w = std::max(1.0f, (static_cast<float>(getWidth()) - 4.0f - 32.0f) / 5.0f);
+        const float w = std::max(1.0f, paneWidth());
         const float h = static_cast<float>(getHeight());
         const float halfH = h * 0.5f;
         const float stepX = w / static_cast<float>(numPoints);

@@ -4,6 +4,16 @@
 
 namespace
 {
+    constexpr float kPreFilterOverloadDriveSlope   = 1.75f;  // soft-clip slope when total osc level > 1.0
+    constexpr float kPinkNoiseKelletNormalisation  = 0.2f;   // Kellet filter normalisation to ~0 dBFS pink
+    constexpr float kPolyModCutoffRangeSemitones   = 60.0f;  // poly-mod and LFO → filter cutoff: ±5 octaves
+    constexpr float kFilterEnvCutoffRangeSemitones = 84.0f;  // filter envelope → cutoff: ±7 octaves
+    constexpr float kPolyModOscPitchRangeSemitones = 24.0f;  // poly-mod osc-B → pitch: ±2 octaves
+    constexpr float kLfoPitchRangeSemitones        = 12.0f;  // LFO → pitch: ±1 octave
+    constexpr float kVelocityFilterRangeSemitones  = 24.0f;  // velocity → filter: ±2 octaves
+    constexpr float kFilterQMin                    = 0.7071067811865476f; // 1/√2, Butterworth minimum Q
+    constexpr float kFilterQMax                    = 25.0f;  // maximum resonance Q
+
     // Standard 2-point PolyBLEP correction. t in [0,1), dt = phase increment per sample.
     static float polyBlep(float t, float dt) noexcept
     {
@@ -159,29 +169,6 @@ namespace coolsynth::synth
         nextFilterParameters = parameters;
     }
 
-    void SynthVoice::setWaveform(coolsynth::parameters::WaveformChoice waveform) noexcept
-    {
-        switch (waveform)
-        {
-            case coolsynth::parameters::WaveformChoice::sine:
-                nextOscillatorAParameters.waveShape = coolsynth::parameters::OscillatorWaveShape::sine;
-                break;
-
-            case coolsynth::parameters::WaveformChoice::square:
-                nextOscillatorAParameters.waveShape = coolsynth::parameters::OscillatorWaveShape::pulse;
-                break;
-
-            case coolsynth::parameters::WaveformChoice::saw:
-            default:
-                nextOscillatorAParameters.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
-                break;
-        }
-
-        nextOscillatorAParameters.level = 1.0f;
-        nextOscillatorBParameters.level = 0.0f;
-        nextMixerParameters.noiseLevel = 0.0f;
-    }
-
     void SynthVoice::setOutputLevel(float level) noexcept
     {
         outputLevel = juce::jlimit(0.0f, 1.0f, level);
@@ -318,7 +305,7 @@ namespace coolsynth::synth
                 lfoSubRateCounter = lfoSubRateSamples;
             }
 
-            const float lfoPitchSemitones = lfoSample * nextLfoParameters.oscPitchDepth * 12.0f;
+            const float lfoPitchSemitones = lfoSample * nextLfoParameters.oscPitchDepth * kLfoPitchRangeSemitones;
             // C2: exp2 instead of pow; C1: one exp2 per oscillator (osc A folds in polyMod below)
             const float oscBPitchRatio = std::exp2(lfoPitchSemitones / 12.0f);
 
@@ -342,7 +329,7 @@ namespace coolsynth::synth
             const float polyModEnv = filterEnvValue;
 
             const float polyModOscAPitchSemis = (polyModOscB * nextPolyModParameters.oscBToOscPitch
-                                                  + polyModEnv * nextPolyModParameters.envToOscPitch) * 24.0f;
+                                                  + polyModEnv * nextPolyModParameters.envToOscPitch) * kPolyModOscPitchRangeSemitones;
             // C1: fold LFO + polyMod semitones together before the single exp2
             const float oscAPitchRatio = std::exp2((lfoPitchSemitones + polyModOscAPitchSemis) / 12.0f);
 
@@ -380,15 +367,15 @@ namespace coolsynth::synth
                                + oscBSample * oscBLevel
                                + noiseSample * noiseLevel;
             const auto totalLevel = oscALevel + oscBLevel + noiseLevel;
-            const auto overloadDrive = 1.0f + juce::jmax(0.0f, totalLevel - 1.0f) * 1.75f;
+            const auto overloadDrive = 1.0f + juce::jmax(0.0f, totalLevel - 1.0f) * kPreFilterOverloadDriveSlope;
             const auto normalized = mixed * (totalLevel > 0.0f ? 1.0f / juce::jmax(1.0f, totalLevel) : 0.0f);
             const float oscValue = std::tanh(normalized * overloadDrive);
 
             const float polyModCutoffSemis = (polyModOscB * nextPolyModParameters.oscBToFilterCutoff
-                                               + polyModEnv * nextPolyModParameters.envToFilterCutoff) * 60.0f;
-            const float lfoCutoffSemis = lfoSample * nextLfoParameters.filterCutoffDepth * 60.0f;
-            const float envCutoffSemis = filterEnvValue * nextFilterParameters.envelopeAmount * 84.0f;
-            const float velFilterSemis = nextPerformanceParameters.velocityToFilter * velocityGain * 24.0f;
+                                               + polyModEnv * nextPolyModParameters.envToFilterCutoff) * kPolyModCutoffRangeSemitones;
+            const float lfoCutoffSemis = lfoSample * nextLfoParameters.filterCutoffDepth * kPolyModCutoffRangeSemitones;
+            const float envCutoffSemis = filterEnvValue * nextFilterParameters.envelopeAmount * kFilterEnvCutoffRangeSemitones;
+            const float velFilterSemis = nextPerformanceParameters.velocityToFilter * velocityGain * kVelocityFilterRangeSemitones;
             const float cutoffModSumSemis = juce::jlimit(-120.0f, 120.0f,
                 envCutoffSemis + lfoCutoffSemis + polyModCutoffSemis + velFilterSemis);
             const float cutoffModRatio = std::exp2(cutoffModSumSemis / 12.0f);
@@ -519,7 +506,7 @@ namespace coolsynth::synth
         pinkB2 = 0.57000f * pinkB2 + white * 1.0526913f;
 
         const auto pink = pinkB0 + pinkB1 + pinkB2 + white * 0.1848f;
-        return juce::jlimit(-1.0f, 1.0f, pink * 0.2f);
+        return juce::jlimit(-1.0f, 1.0f, pink * kPinkNoiseKelletNormalisation);
     }
 
     uint32_t SynthVoice::advanceRandomState() noexcept
@@ -575,10 +562,8 @@ namespace coolsynth::synth
 
     float SynthVoice::mapNormalizedResonanceToQ(float normalized) noexcept
     {
-        const float qMin = 1.0f / std::sqrt(2.0f);
-        const float qMax = 25.0f;
         const float r = juce::jlimit(0.0f, 1.0f, normalized);
-        return qMin + (qMax - qMin) * (r * r * r);
+        return kFilterQMin + (kFilterQMax - kFilterQMin) * (r * r * r);
     }
 
     float SynthVoice::clampCutoffToPreparedRange(float cutoffHz) const noexcept

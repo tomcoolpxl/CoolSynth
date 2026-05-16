@@ -29,7 +29,11 @@
       "Bash(git commit *)",
       "Bash(.\\\\build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe)",
       "PowerShell(Select-String *)",
-      "PowerShell(Out-File *)"
+      "PowerShell(Out-File *)",
+      "Bash(cmake --preset vs2022-debug -DBUILD_TESTING=ON)",
+      "Bash(git checkout *)",
+      "PowerShell(cmake *)",
+      "PowerShell(ctest *)"
     ]
   }
 }

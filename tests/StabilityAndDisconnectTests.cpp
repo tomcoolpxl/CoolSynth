@@ -6,7 +6,6 @@
 #include "plugin/ProcessorScopeFifo.h"
 #include "standalone/StandaloneMidiInput.h"
 #include "standalone/SettingsStore.h"
-#include "synth/SynthEngine.h"
 #include "synth/SynthEngineV2.h"
 #include "synth/SynthVoice.h"
 
@@ -192,7 +191,6 @@ public:
                 coolsynth::synth::SynthVoice voice;
                 juce::dsp::ProcessSpec spec { sampleRate, 256, 1 };
                 voice.prepare(spec);
-                voice.setWaveform(coolsynth::parameters::WaveformChoice::saw);
                 voice.setNextEnvelopeParameters(makeStressEnvelope());
                 voice.setNextFilterParameters({ 20000.0f, 1.0f });
 
@@ -213,7 +211,6 @@ public:
             coolsynth::synth::SynthVoice voice;
             juce::dsp::ProcessSpec spec { 48000.0, 256, 1 };
             voice.prepare(spec);
-            voice.setWaveform(coolsynth::parameters::WaveformChoice::saw);
             voice.setNextEnvelopeParameters(makeStressEnvelope());
             voice.setNextFilterParameters({ 20000.0f, 0.0f });
 
@@ -233,14 +230,20 @@ public:
 
         beginTest("global_delay_time_jumps_remain_finite_and_bounded");
         {
-            coolsynth::synth::SynthEngine engine;
+            coolsynth::synth::SynthEngineV2 engine;
             engine.prepare(48000.0, 256, 2);
 
-            coolsynth::synth::BlockRenderParameters parameters;
-            parameters.waveform = coolsynth::parameters::WaveformChoice::saw;
+            coolsynth::synth::BlockRenderParametersV2 parameters;
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
             parameters.ampEnvelope = makeStressEnvelope();
+            parameters.filterEnvelope = makeStressEnvelope();
             parameters.filter.cutoffHz = 4000.0f;
             parameters.filter.resonanceNormalized = 0.2f;
+            parameters.filter.envelopeAmount = 0.0f;
+            parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            parameters.delay.enabled = true;
             parameters.delay.feedback = 0.85f;
             parameters.delay.mix = 1.0f;
             parameters.masterGainLinear = 0.5f;
@@ -248,46 +251,57 @@ public:
             juce::AudioBuffer<float> buffer(2, 256);
             for (int block = 0; block < 32; ++block)
             {
-                juce::MidiBuffer midi;
+                std::array<coolsynth::synth::EngineMidiEvent, 1> eventStorage {};
+                int eventCount = 0;
                 if (block == 0)
-                    midi.addEvent(juce::MidiMessage::noteOn(1, 60, (juce::uint8) 100), 0);
-                if (block == 20)
-                    midi.addEvent(juce::MidiMessage::noteOff(1, 60), 0);
+                    eventStorage[eventCount++] = { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 100.0f / 127.0f };
+                else if (block == 20)
+                    eventStorage[eventCount++] = { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f };
 
                 parameters.delay.timeMs = (block % 2) != 0 ? 1000.0f : 1.0f;
 
                 buffer.clear();
-                engine.render(buffer, midi, parameters);
+                engine.render(buffer,
+                              std::span<const coolsynth::synth::EngineMidiEvent>(eventStorage.data(), static_cast<size_t>(eventCount)),
+                              parameters);
                 expectBufferFiniteAndBounded(*this, buffer, 100.0f);
             }
         }
 
         beginTest("master_gain_jumps_remain_finite_and_bounded");
         {
-            coolsynth::synth::SynthEngine engine;
+            coolsynth::synth::SynthEngineV2 engine;
             engine.prepare(48000.0, 256, 2);
 
-            coolsynth::synth::BlockRenderParameters parameters;
-            parameters.waveform = coolsynth::parameters::WaveformChoice::saw;
+            coolsynth::synth::BlockRenderParametersV2 parameters;
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
             parameters.ampEnvelope = makeStressEnvelope();
+            parameters.filterEnvelope = makeStressEnvelope();
             parameters.filter.cutoffHz = 6000.0f;
             parameters.filter.resonanceNormalized = 0.1f;
-            parameters.delay.mix = 0.0f;
+            parameters.filter.envelopeAmount = 0.0f;
+            parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            parameters.delay.enabled = false;
             parameters.masterGainLinear = 1.0f;
 
             juce::AudioBuffer<float> buffer(2, 256);
             for (int block = 0; block < 24; ++block)
             {
-                juce::MidiBuffer midi;
+                std::array<coolsynth::synth::EngineMidiEvent, 1> eventStorage {};
+                int eventCount = 0;
                 if (block == 0)
-                    midi.addEvent(juce::MidiMessage::noteOn(1, 67, (juce::uint8) 100), 0);
-                if (block == 16)
-                    midi.addEvent(juce::MidiMessage::noteOff(1, 67), 0);
+                    eventStorage[eventCount++] = { coolsynth::synth::EngineMidiEventType::noteOn, 0, 67, 100.0f / 127.0f };
+                else if (block == 16)
+                    eventStorage[eventCount++] = { coolsynth::synth::EngineMidiEventType::noteOff, 0, 67, 0.0f };
 
                 parameters.masterGainLinear = (block % 2) != 0 ? 1.0f : 0.001f;
 
                 buffer.clear();
-                engine.render(buffer, midi, parameters);
+                engine.render(buffer,
+                              std::span<const coolsynth::synth::EngineMidiEvent>(eventStorage.data(), static_cast<size_t>(eventCount)),
+                              parameters);
                 expectBufferFiniteAndBounded(*this, buffer, 20.0f);
             }
         }

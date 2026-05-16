@@ -13,11 +13,13 @@ namespace coolsynth::synth
     class GlobalDelay final
     {
     public:
+        static constexpr float maxFeedback = 0.85f;
+
         void prepare(double sampleRate, int samplesPerBlock, int outputChannelCount);
         void reset() noexcept;
         void clear() noexcept;
         void process(juce::AudioBuffer<float>& buffer,
-                     const DelayParameters& parameters) noexcept;
+                     const DelayParametersV2& parameters) noexcept;
 
     private:
         using DelayLine =
@@ -25,14 +27,13 @@ namespace coolsynth::synth
 
         static constexpr float minDelayTimeMs = 1.0f;
         static constexpr float maxDelayTimeMs = 1000.0f;
-        static constexpr float maxFeedback = 0.85f;
         static constexpr double parameterSmoothingSeconds = 0.02;
 
         float clampDelayMs(float timeMs) const noexcept;
         float clampFeedback(float feedback) const noexcept;
         float clampMix(float mix) const noexcept;
         float delayMsToSamples(float timeMs) const noexcept;
-        void updateTargets(const DelayParameters& parameters) noexcept;
+        void updateTargets(const DelayParametersV2& parameters) noexcept;
 
         DelayLine delayLine;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> delaySamplesSmoother;
