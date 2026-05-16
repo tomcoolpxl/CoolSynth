@@ -160,7 +160,7 @@ public:
             expect(controller.selectDeviceByIdentifier(selectedIdentifier));
             expect(controller.getSnapshot().status == coolsynth::standalone::MidiInputStatus::connected);
 
-            controller.injectMidiMessageForTesting(juce::MidiMessage::controllerEvent(1, 74, (juce::uint8) 100));
+            controller.injectMidiMessageForTesting(juce::MidiMessage::noteOn(1, 60, (juce::uint8) 100));
             expect(controller.getLastMidiEventSnapshot().hasEvent);
             expect(controller.getPendingControllerEventCountForTesting() > 0);
 
