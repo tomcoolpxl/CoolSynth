@@ -96,6 +96,17 @@ namespace coolsynth::synth
         processChorus(buffer, chorusParameters);
         processDelay(buffer, delayParameters);
         processReverb(buffer, reverbParametersIn);
+
+        // Ultimate host-safety net: catch any stray NaNs or Infinities
+        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        {
+            auto* data = buffer.getWritePointer(ch);
+            for (int i = 0; i < buffer.getNumSamples(); ++i)
+            {
+                if (! std::isfinite(data[i]))
+                    data[i] = 0.0f;
+            }
+        }
     }
 
     double GlobalFxRack::estimateTailLengthSeconds(const DelayParametersV2& delayParameters,
@@ -260,9 +271,15 @@ namespace coolsynth::synth
         const auto numChannels = buffer.getNumChannels();
         const auto numSamples  = buffer.getNumSamples();
 
-        // Save dry signal into pre-sized scratch buffer
+        // Save dry signal into pre-sized scratch buffer, and soft-clip the input to the reverb
         for (int ch = 0; ch < numChannels; ++ch)
+        {
             dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
+
+            auto* wet = buffer.getWritePointer(ch);
+            for (int i = 0; i < numSamples; ++i)
+                wet[i] = std::tanh(wet[i]);
+        }
 
         juce::dsp::AudioBlock<float> block(buffer);
         juce::dsp::ProcessContextReplacing<float> context(block);

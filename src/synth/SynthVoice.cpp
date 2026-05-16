@@ -291,7 +291,7 @@ namespace coolsynth::synth
         // C3: sub-rate LFO — evaluate wave every lfoSubRateSamples, linearly interpolate between
         float lfoValue = renderNaiveWaveSample(lfoPhase, lfoOscShape, 0.5f) * lfoModWheelDepth;
         float lfoInterpStep = 0.0f;
-        int   lfoSubRateCounter = lfoSubRateSamples;
+        int   lfoSubRateCounter = 1;
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -328,6 +328,8 @@ namespace coolsynth::synth
             // C3: use interpolated LFO value; advance phase and recompute only every sub-rate period
             const float lfoSample = lfoValue;
             lfoValue += lfoInterpStep;
+            
+            bool updateFilter = false;
             if (--lfoSubRateCounter == 0)
             {
                 lfoPhase += lfoPhaseIncrement * static_cast<float>(lfoSubRateSamples);
@@ -336,7 +338,13 @@ namespace coolsynth::synth
                 const float nextLfoValue = renderNaiveWaveSample(lfoPhase, lfoOscShape, 0.5f) * lfoModWheelDepth;
                 lfoInterpStep     = (nextLfoValue - lfoValue) / static_cast<float>(lfoSubRateSamples);
                 lfoSubRateCounter = lfoSubRateSamples;
+                updateFilter = true;
             }
+
+            // Always update filter per-sample if audio-rate PolyMod is active.
+            if (std::abs(nextPolyModParameters.oscBToFilterCutoff) > 0.001f)
+                updateFilter = true;
+
 
             const float lfoPitchSemitones = lfoSample * nextLfoParameters.oscPitchDepth * kLfoPitchRangeSemitones;
             // C2: exp2 instead of pow; C1: one exp2 per oscillator (osc A folds in polyMod below)
@@ -404,20 +412,25 @@ namespace coolsynth::synth
             const auto normalized = mixed * (totalLevel > 0.0f ? 1.0f / juce::jmax(1.0f, totalLevel) : 0.0f);
             const float oscValue = std::tanh(normalized * overloadDrive);
 
-            const float polyModCutoffSemis = (polyModOscB * nextPolyModParameters.oscBToFilterCutoff
-                                               + polyModEnv * nextPolyModParameters.envToFilterCutoff) * kPolyModCutoffRangeSemitones;
-            const float lfoCutoffSemis = lfoSample * nextLfoParameters.filterCutoffDepth * kPolyModCutoffRangeSemitones;
-            const float envCutoffSemis = filterEnvValue * nextFilterParameters.envelopeAmount * kFilterEnvCutoffRangeSemitones;
-            const float velFilterSemis = nextPerformanceParameters.velocityToFilter * velocityGain * kVelocityFilterRangeSemitones;
-            const float cutoffModSumSemis = juce::jlimit(-120.0f, 120.0f,
-                envCutoffSemis + lfoCutoffSemis + polyModCutoffSemis + velFilterSemis);
-            const float cutoffModRatio = std::exp2(cutoffModSumSemis / 12.0f);
-
             const float baseCutoffSmoothed = cutoffHzSmoother.getNextValue();
-            lowPassFilter.setCutoffFrequency(clampCutoffToPreparedRange(baseCutoffSmoothed * cutoffModRatio));
             const float currentQ = resonanceQSmoother.getNextValue();
-            lowPassFilter.setResonance(currentQ);
-            const float filterInputGain = juce::jmin(1.0f, 1.0f / std::sqrt(currentQ));
+
+            if (updateFilter)
+            {
+                const float polyModCutoffSemis = (polyModOscB * nextPolyModParameters.oscBToFilterCutoff
+                                                   + polyModEnv * nextPolyModParameters.envToFilterCutoff) * kPolyModCutoffRangeSemitones;
+                const float lfoCutoffSemis = lfoSample * nextLfoParameters.filterCutoffDepth * kPolyModCutoffRangeSemitones;
+                const float envCutoffSemis = filterEnvValue * nextFilterParameters.envelopeAmount * kFilterEnvCutoffRangeSemitones;
+                const float velFilterSemis = nextPerformanceParameters.velocityToFilter * velocityGain * kVelocityFilterRangeSemitones;
+                const float cutoffModSumSemis = juce::jlimit(-120.0f, 120.0f,
+                    envCutoffSemis + lfoCutoffSemis + polyModCutoffSemis + velFilterSemis);
+                const float cutoffModRatio = std::exp2(cutoffModSumSemis / 12.0f);
+
+                lowPassFilter.setCutoffFrequency(clampCutoffToPreparedRange(baseCutoffSmoothed * cutoffModRatio));
+                lowPassFilter.setResonance(currentQ);
+            }
+
+            const float filterInputGain = juce::jmin(1.0f, 1.0f / std::sqrt(lowPassFilter.getResonance()));
             const float filteredValue = lowPassFilter.processSample(0, oscValue * filterInputGain);
 
             const float ampVelocityMult = 1.0f - nextPerformanceParameters.velocityToAmp

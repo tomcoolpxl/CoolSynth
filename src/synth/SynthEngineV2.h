@@ -108,7 +108,6 @@ namespace coolsynth::synth
         void retriggerMonoFromHeldNotes(const BlockRenderParametersV2& parameters) noexcept;
 
         int findVoiceIndexToAllocate() const noexcept;
-        int findVoiceIndexForNoteOff(int midiNoteNumber) const noexcept;
         void clearVoiceSlot(VoiceSlot& slot) noexcept;
         void applyMasterGain(juce::AudioBuffer<float>& outputBuffer, float targetLinearGain) noexcept;
 

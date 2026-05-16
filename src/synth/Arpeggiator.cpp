@@ -229,21 +229,21 @@ namespace coolsynth::synth
                 insertSortedEvent(outEvents, outEventCount, noteOn, maxEvents);
 
                 const int absoluteGateOffSample = eventOffset + gateLengthSamples;
-                if (absoluteGateOffSample < blockSamples)
+                if (absoluteGateOffSample < blockSamples && outEventCount < maxEvents)
                 {
-                    if (outEventCount < maxEvents)
-                    {
-                        EngineMidiEvent noteOff {};
-                        noteOff.type = EngineMidiEventType::noteOff;
-                        noteOff.sampleOffset = absoluteGateOffSample;
-                        noteOff.noteNumber = static_cast<uint8_t>(note);
-                        noteOff.fromArp = true;
-                        insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
-                    }
+                    EngineMidiEvent noteOff {};
+                    noteOff.type = EngineMidiEventType::noteOff;
+                    noteOff.sampleOffset = absoluteGateOffSample;
+                    noteOff.noteNumber = static_cast<uint8_t>(note);
+                    noteOff.fromArp = true;
+                    insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
                 }
                 else
                 {
-                    scheduleRingingNote(note, absoluteGateOffSample - blockSamples);
+                    // If it falls outside this block, OR if we ran out of space in the
+                    // current event buffer, we must schedule it as a ringing note so
+                    // we don't leak polyphony.
+                    scheduleRingingNote(note, juce::jmax(0, absoluteGateOffSample - blockSamples));
                 }
             }
 
@@ -344,10 +344,15 @@ namespace coolsynth::synth
                                                 int sampleOffset,
                                                 int maxEvents) noexcept
     {
+        int writeIndex = 0;
         for (int i = 0; i < ringingNoteCount; ++i)
         {
             if (outEventCount >= maxEvents)
-                break;
+            {
+                // Cannot emit more events this block; save the rest for next time.
+                ringingNotes[static_cast<size_t>(writeIndex++)] = ringingNotes[static_cast<size_t>(i)];
+                continue;
+            }
 
             EngineMidiEvent noteOff {};
             noteOff.type = EngineMidiEventType::noteOff;
@@ -357,7 +362,7 @@ namespace coolsynth::synth
             noteOff.fromArp = true;
             insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
         }
-        ringingNoteCount = 0;
+        ringingNoteCount = writeIndex;
     }
 
     void Arpeggiator::scheduleRingingNote(int noteNumber, int samplesUntilGateOff) noexcept
@@ -385,22 +390,19 @@ namespace coolsynth::synth
         for (int i = 0; i < ringingNoteCount; ++i)
         {
             auto& entry = ringingNotes[static_cast<size_t>(i)];
-            if (entry.samplesUntilGateOff < blockSamples)
+            if (entry.samplesUntilGateOff < blockSamples && outEventCount < maxEvents)
             {
-                if (outEventCount < maxEvents)
-                {
-                    EngineMidiEvent noteOff {};
-                    noteOff.type = EngineMidiEventType::noteOff;
-                    noteOff.sampleOffset = juce::jmax(0, entry.samplesUntilGateOff);
-                    noteOff.noteNumber = static_cast<uint8_t>(entry.noteNumber);
-                    noteOff.fromArp = true;
-                    insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
-                    ++emittedCount;
-                }
+                EngineMidiEvent noteOff {};
+                noteOff.type = EngineMidiEventType::noteOff;
+                noteOff.sampleOffset = juce::jmax(0, entry.samplesUntilGateOff);
+                noteOff.noteNumber = static_cast<uint8_t>(entry.noteNumber);
+                noteOff.fromArp = true;
+                insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
+                ++emittedCount;
             }
             else
             {
-                entry.samplesUntilGateOff -= blockSamples;
+                entry.samplesUntilGateOff = juce::jmax(0, entry.samplesUntilGateOff - blockSamples);
                 ringingNotes[static_cast<size_t>(writeIndex++)] = entry;
             }
         }

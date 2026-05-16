@@ -18,7 +18,7 @@ namespace coolsynth::synth
 
     inline constexpr int maxArpHeldNotes = 16;
     inline constexpr int maxArpLatchedNotes = 16;
-    inline constexpr int maxArpRingingNotes = 4;
+    inline constexpr int maxArpRingingNotes = 32;
     inline constexpr int maxArpEventsPerBlock = 64;
 
     class Arpeggiator final

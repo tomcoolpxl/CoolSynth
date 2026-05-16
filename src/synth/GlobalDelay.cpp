@@ -62,7 +62,12 @@ namespace coolsynth::synth
             {
                 const float dry = buffer.getSample(channel, sample);
                 const float wet = delayLine.popSample(channel, delaySamples);
-                const float feedbackInput = dry + (wet * feedback);
+                
+                float feedbackInput = dry + (wet * feedback);
+                feedbackInput = std::tanh(feedbackInput); // Soft-clip feedback to prevent explosions
+                
+                if (std::abs(feedbackInput) < 1.0e-7f)    // Anti-denormal to prevent CPU spikes
+                    feedbackInput = 0.0f;
 
                 delayLine.pushSample(channel, feedbackInput);
                 

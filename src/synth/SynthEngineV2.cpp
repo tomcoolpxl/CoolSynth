@@ -391,20 +391,21 @@ namespace coolsynth::synth
             return;
         }
 
-        const int voiceIndex = findVoiceIndexForNoteOff(noteNumber);
-        if (voiceIndex < 0)
-            return;
-
-        auto& slot = voices[static_cast<size_t>(voiceIndex)];
-        slot.keyDown = false;
-
-        if (sustainPedalDown && ! event.fromArp)
+        bool foundAny = false;
+        for (auto& slot : voices)
         {
-            slot.sustained = true;
-            return;
-        }
+            if (slot.keyDown && slot.noteNumber == noteNumber)
+            {
+                slot.keyDown = false;
 
-        slot.voice.stopNote(0.0f, true);
+                if (sustainPedalDown && ! event.fromArp)
+                    slot.sustained = true;
+                else
+                    slot.voice.stopNote(0.0f, true);
+
+                foundAny = true;
+            }
+        }
     }
 
     void SynthEngineV2::handlePitchBend(const EngineMidiEvent& event,
@@ -620,27 +621,6 @@ namespace coolsynth::synth
             return oldestReleasedVoice;
 
         return juce::jmax(0, oldestHeldVoice);
-    }
-
-    int SynthEngineV2::findVoiceIndexForNoteOff(int midiNoteNumber) const noexcept
-    {
-        int matchedVoice = -1;
-        uint64_t oldestMatchOrder = std::numeric_limits<uint64_t>::max();
-
-        for (int i = 0; i < static_cast<int>(voices.size()); ++i)
-        {
-            const auto& slot = voices[static_cast<size_t>(i)];
-            if (! slot.keyDown || slot.noteNumber != midiNoteNumber)
-                continue;
-
-            if (slot.startOrder < oldestMatchOrder)
-            {
-                oldestMatchOrder = slot.startOrder;
-                matchedVoice = i;
-            }
-        }
-
-        return matchedVoice;
     }
 
     void SynthEngineV2::clearVoiceSlot(VoiceSlot& slot) noexcept
