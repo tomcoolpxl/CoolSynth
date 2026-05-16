@@ -413,7 +413,9 @@ private:
     void setupActionButtons();
     void setupStandaloneMode(bool isStandalone);
     void setupTooltipWindow();
+    void setupPresetSelector();
     void applyTooltips();
+    void applySelectedPreset();
 
     void triggerInitPatch();
     void triggerSavePatch();
@@ -428,6 +430,7 @@ private:
     juce::TextButton savePatchButton { "Save Patch" };
     juce::TextButton loadPatchButton { "Load Patch" };
     juce::TextButton tooltipToggleButton { "i" };
+    juce::ComboBox presetSelector;
     coolsynth::ui::SignalChainVisualizer visualizer;
     coolsynth::ui::PianoBarComponent pianoBar;
     std::unique_ptr<juce::FileChooser> activePatchChooser;

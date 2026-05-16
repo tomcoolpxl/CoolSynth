@@ -46,6 +46,7 @@ add_custom_target(UpdateBuildInfo ALL
 target_sources(CoolSynth
     PRIVATE
         src/BuildInfo.cpp
+        src/presets/FactoryPresets.cpp
         src/presets/PatchState.cpp
         src/midi/ControllerProfile.cpp
         src/midi/MidiLearn.cpp
@@ -113,6 +114,7 @@ if(BUILD_TESTING)
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp
             src/BuildInfo.cpp
+            src/presets/FactoryPresets.cpp
             src/presets/PatchState.cpp
             src/midi/ControllerProfile.cpp
             src/plugin/SynthAudioProcessor.cpp

@@ -9,6 +9,7 @@
 #include "SynthAudioProcessor.h"
 #include "midi/ControllerProfile.h"
 #include "parameters/ParameterIDs.h"
+#include "presets/FactoryPresets.h"
 #include "presets/PatchState.h"
 #include "standalone/SettingsStore.h"
 #include "standalone/StandaloneAudioSupport.h"
@@ -84,6 +85,7 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     setupControlAttachments();
     registerLearnableControls();
     setupActionButtons();
+    setupPresetSelector();
     setupStandaloneMode(isStandalone);
     setupTooltipWindow();
     applyTooltips();
@@ -507,6 +509,43 @@ void SynthAudioProcessorEditor::setupTooltipWindow()
     tooltipWindow = std::make_unique<EditorTooltipWindow>(this, 500);
     static_cast<EditorTooltipWindow*>(tooltipWindow.get())->isEnabledProvider = [this] { return tooltipsEnabled; };
     tooltipWindow->setLookAndFeel(tooltipLookAndFeel.get());
+}
+
+void SynthAudioProcessorEditor::setupPresetSelector()
+{
+    presetSelector.setTextWhenNothingSelected("Preset");
+    presetSelector.setColour(juce::ComboBox::backgroundColourId, coolsynth::ui::palette::panelRaised);
+    presetSelector.setColour(juce::ComboBox::textColourId, coolsynth::ui::palette::textPrimary);
+    presetSelector.setColour(juce::ComboBox::outlineColourId, coolsynth::ui::palette::panelStroke);
+    presetSelector.setColour(juce::ComboBox::arrowColourId, coolsynth::ui::palette::textPrimary);
+    presetSelector.setJustificationType(juce::Justification::centredLeft);
+    presetSelector.setTooltip("Factory presets — selecting one replaces the current patch.");
+
+    const auto presetCount = coolsynth::presets::getFactoryPresetCount();
+    for (int i = 0; i < presetCount; ++i)
+    {
+        const auto& preset = coolsynth::presets::getFactoryPreset(i);
+        const auto label = juce::String(preset.name) + "  \xe2\x80\x94  " + juce::String(preset.category);
+        presetSelector.addItem(label, i + 1);
+    }
+
+    presetSelector.onChange = [this] { applySelectedPreset(); };
+
+    addAndMakeVisible(presetSelector);
+}
+
+void SynthAudioProcessorEditor::applySelectedPreset()
+{
+    const auto selected = presetSelector.getSelectedId();
+    if (selected <= 0)
+        return;
+
+    const int index = selected - 1;
+    if (index < 0 || index >= coolsynth::presets::getFactoryPresetCount())
+        return;
+
+    coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(),
+                                           coolsynth::presets::getFactoryPreset(index));
 }
 
 SynthAudioProcessorEditor::~SynthAudioProcessorEditor()
@@ -962,7 +1001,11 @@ void SynthAudioProcessorEditor::resized()
                                                                       | juce::RectanglePlacement::yMid
                                                                       | juce::RectanglePlacement::onlyReduceInSize));
     }
-    midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(250).withTrimmedTop(12));
+
+    titleArea.removeFromLeft(12);
+    presetSelector.setBounds(titleArea.removeFromLeft(200).withSizeKeepingCentre(200, 26));
+    titleArea.removeFromLeft(8);
+    midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(160).withTrimmedTop(12));
 
     if (patchActionsVisible)
     {
