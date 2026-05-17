@@ -347,20 +347,11 @@ void SynthAudioProcessorEditor::applyTooltips()
                                                       "One step per thirty-second note.\n"
                                                       "Very fast and dense."));
     setParameterTooltip(arpPatternChoice, "Pattern",
-                        "Choose the order in which held notes are replayed.\n"
-                        "This changes the shape of the sequence without changing the notes.");
-    arpPatternChoice.setOptionTooltip(0, makeTooltipText("Up",
-                                                         "Plays held notes from low to high,\n"
-                                                         "then repeats from the bottom."));
-    arpPatternChoice.setOptionTooltip(1, makeTooltipText("Down",
-                                                         "Plays held notes from high to low,\n"
-                                                         "then repeats from the top."));
-    arpPatternChoice.setOptionTooltip(2, makeTooltipText("Up/Dn - Up/Down",
-                                                         "This climbs upward, then comes back down.\n"
-                                                         "It gives a classic back-and-forth arp motion."));
-    arpPatternChoice.setOptionTooltip(3, makeTooltipText("Play - As Played",
-                                                         "It reuses the order you actually played the notes.\n"
-                                                         "Good when finger order matters."));
+                        "Choose the note-order generator for the arpeggiator.\n"
+                        "Classic sweeps, order modes, random modes, and chord replay all live here.");
+    setParameterTooltip(arpPatternLabel, "Pattern",
+                        "Choose the note-order generator for the arpeggiator.\n"
+                        "Classic sweeps, order modes, random modes, and chord replay all live here.");
     setParameterTooltip(arpOctaveChoice, "Octave",
                         "Choose how many octaves the arpeggiator will cover.\n"
                         "Larger ranges make the pattern feel more sweeping.");

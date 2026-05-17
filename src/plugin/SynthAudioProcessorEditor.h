@@ -295,16 +295,8 @@ private:
         },
         3
     };
-    coolsynth::ui::SegmentedChoiceGroup arpPatternChoice {
-        "Pattern",
-        {
-            { "Up", 0 },
-            { "Down", 1 },
-            { "Up/Dn", 2 },
-            { "Play", 3 },
-        },
-        2
-    };
+    juce::Label arpPatternLabel;
+    juce::ComboBox arpPatternChoice;
     coolsynth::ui::SegmentedChoiceGroup arpOctaveChoice {
         "Octave",
         {

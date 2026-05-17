@@ -375,7 +375,19 @@ namespace
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(arpPattern),
             "Pattern",
-            juce::StringArray { "Up", "Down", "Up/Down", "As Played" },
+            juce::StringArray {
+                "Up",
+                "Down",
+                "Up/Down",
+                "As Played",
+                "Converge",
+                "Diverge",
+                "Inside",
+                "Outside",
+                "Random",
+                "Random Walk",
+                "Chord",
+            },
             static_cast<int>(ArpPatternChoice::up)));
         group->addChild(std::make_unique<juce::AudioParameterInt>(
             makeV2ParameterId(arpOctaveRange),

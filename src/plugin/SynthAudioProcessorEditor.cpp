@@ -343,6 +343,27 @@ void SynthAudioProcessorEditor::setupVisualsAndLabels(bool isStandalone)
     buildInfoLabel.setJustificationType(juce::Justification::centredRight);
     buildInfoLabel.setVisible(!isStandalone);
     addAndMakeVisible(buildInfoLabel);
+
+    arpPatternLabel.setText("Pattern", juce::dontSendNotification);
+    arpPatternLabel.setFont(juce::FontOptions(15.0f));
+    arpPatternLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textPrimary);
+    arpPatternLabel.setJustificationType(juce::Justification::centred);
+    addAndMakeVisible(arpPatternLabel);
+
+    coolsynth::ui::applyGreenComboBoxStyle(arpPatternChoice);
+    arpPatternChoice.setJustificationType(juce::Justification::centredLeft);
+    arpPatternChoice.setScrollWheelEnabled(false);
+    arpPatternChoice.addItem("Up", 1);
+    arpPatternChoice.addItem("Down", 2);
+    arpPatternChoice.addItem("Up/Down", 3);
+    arpPatternChoice.addItem("As Played", 4);
+    arpPatternChoice.addItem("Converge", 5);
+    arpPatternChoice.addItem("Diverge", 6);
+    arpPatternChoice.addItem("Inside", 7);
+    arpPatternChoice.addItem("Outside", 8);
+    arpPatternChoice.addItem("Random", 9);
+    arpPatternChoice.addItem("Random Walk", 10);
+    arpPatternChoice.addItem("Chord", 11);
 }
 
 void SynthAudioProcessorEditor::setupControlAttachments()
@@ -404,6 +425,30 @@ void SynthAudioProcessorEditor::setupControlAttachments()
         attachment->sendInitialUpdate();
     };
 
+    auto attachComboChoiceControl = [](juce::ComboBox& control,
+                                       std::unique_ptr<ChoiceAttachment>& attachment,
+                                       juce::RangedAudioParameter* parameter)
+    {
+        control.onChange = [&attachment, &control]
+        {
+            if (attachment != nullptr && control.getSelectedId() > 0)
+                attachment->setValueAsCompleteGesture(
+                    static_cast<float>(control.getSelectedId() - 1));
+        };
+
+        if (parameter == nullptr)
+            return;
+
+        attachment = std::make_unique<ChoiceAttachment>(*parameter,
+                                                        [&control](float value)
+                                                        {
+                                                            control.setSelectedId(
+                                                                static_cast<int>(std::lround(value)) + 1,
+                                                                juce::dontSendNotification);
+                                                        });
+        attachment->sendInitialUpdate();
+    };
+
     addAndMakeVisible(oscAWaveChoice);
     attachChoiceControl(oscAWaveChoice, oscAWaveAttachment, parameterRefs.oscAWave);
     addSliderControl(oscAOctaveKnob, oscAOctaveAttachment, ids::oscAOctave);
@@ -460,7 +505,7 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addAndMakeVisible(arpRateChoice);
     attachChoiceControl(arpRateChoice, arpRateAttachment, parameterRefs.arpRate);
     addAndMakeVisible(arpPatternChoice);
-    attachChoiceControl(arpPatternChoice, arpPatternAttachment, parameterRefs.arpPattern);
+    attachComboChoiceControl(arpPatternChoice, arpPatternAttachment, parameterRefs.arpPattern);
     addAndMakeVisible(arpOctaveChoice);
     attachChoiceControl(arpOctaveChoice, arpOctaveAttachment, parameterRefs.arpOctave);
     addSliderControl(arpGateKnob, arpGateAttachment, ids::arpGate);
@@ -506,6 +551,18 @@ void SynthAudioProcessorEditor::registerLearnableControls()
     auto applyChoiceState = [](coolsynth::ui::SegmentedChoiceGroup& choice, bool armed, juce::String badge)
     {
         choice.setLearnState(armed, badge);
+    };
+    auto applyArpPatternState = [this](bool armed, juce::String)
+    {
+        const auto colour = armed ? coolsynth::ui::palette::learnYellow
+                                  : coolsynth::ui::palette::ledGreen;
+        arpPatternChoice.setColour(juce::ComboBox::outlineColourId, colour);
+        arpPatternChoice.setColour(juce::ComboBox::focusedOutlineColourId, colour);
+        arpPatternLabel.setColour(juce::Label::textColourId,
+                                  armed ? coolsynth::ui::palette::learnYellow
+                                        : coolsynth::ui::palette::textPrimary);
+        arpPatternChoice.repaint();
+        arpPatternLabel.repaint();
     };
 
     registerLearnableControl(oscAWaveChoice, ids::oscAWave, "Wave", [&](bool a, juce::String b) { applyChoiceState(oscAWaveChoice, a, b); });
@@ -556,7 +613,7 @@ void SynthAudioProcessorEditor::registerLearnableControls()
     registerLearnableControl(arpOnToggle, ids::arpEnabled, "Arp On", [&](bool a, juce::String b) { applyToggleState(arpOnToggle, a, b); });
     registerLearnableControl(arpTempoKnob, ids::arpInternalTempoBpm, "Tempo", [&](bool a, juce::String b) { applyKnobState(arpTempoKnob, a, b); });
     registerLearnableControl(arpRateChoice, ids::arpRateDivision, "Rate", [&](bool a, juce::String b) { applyChoiceState(arpRateChoice, a, b); });
-    registerLearnableControl(arpPatternChoice, ids::arpPattern, "Pattern", [&](bool a, juce::String b) { applyChoiceState(arpPatternChoice, a, b); });
+    registerLearnableControl(arpPatternChoice, ids::arpPattern, "Pattern", applyArpPatternState);
     registerLearnableControl(arpOctaveChoice, ids::arpOctaveRange, "Octave", [&](bool a, juce::String b) { applyChoiceState(arpOctaveChoice, a, b); });
     registerLearnableControl(arpGateKnob, ids::arpGate, "Gate", [&](bool a, juce::String b) { applyKnobState(arpGateKnob, a, b); });
     registerLearnableControl(arpLatchToggle, ids::arpLatch, "Latch", [&](bool a, juce::String b) { applyToggleState(arpLatchToggle, a, b); });
@@ -1359,7 +1416,9 @@ void SynthAudioProcessorEditor::resized()
         float arpWeights = 8.6f;
         arpTempoKnob   .setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
         arpRateChoice  .setBounds(takeWeightedWidth(arpContent, 2.2f, arpWeights));
-        arpPatternChoice.setBounds(takeWeightedWidth(arpContent, 2.0f, arpWeights));
+        auto arpPatternArea = takeWeightedWidth(arpContent, 2.0f, arpWeights);
+        arpPatternLabel .setBounds(arpPatternArea.removeFromTop(20));
+        arpPatternChoice.setBounds(arpPatternArea.removeFromTop(26));
         arpOctaveChoice.setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
         arpGateKnob    .setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
         arpLatchToggle.setBounds(arpContent.withWidth(48));
@@ -1525,7 +1584,6 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     arpOnToggle.setValueText(getCurrentParameterText(parameterRefs.arpOn));
     arpTempoKnob.setValueText(getCurrentParameterText(parameterRefs.arpTempo));
     arpRateChoice.setValueText(getCurrentParameterText(parameterRefs.arpRate));
-    arpPatternChoice.setValueText(getCurrentParameterText(parameterRefs.arpPattern));
     arpOctaveChoice.setValueText(getCurrentParameterText(parameterRefs.arpOctave));
     arpGateKnob.setValueText(getCurrentParameterText(parameterRefs.arpGate));
     arpLatchToggle.setValueText(getCurrentParameterText(parameterRefs.arpLatch));

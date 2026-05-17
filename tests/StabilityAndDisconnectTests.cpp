@@ -1716,6 +1716,50 @@ public:
         return parameters;
     }
 
+    static coolsynth::synth::ArpParametersV2 makeBasicArpParameters() noexcept
+    {
+        coolsynth::synth::ArpParametersV2 parameters;
+        parameters.enabled = true;
+        parameters.internalTempoBpm = 120.0f;
+        parameters.rate = coolsynth::parameters::ArpRateChoice::sixteenth;
+        parameters.pattern = coolsynth::parameters::ArpPatternChoice::up;
+        parameters.octaveRange = 1;
+        parameters.gateLength = 0.5f;
+        parameters.latch = false;
+        return parameters;
+    }
+
+    static int collectNoteOns(const std::array<coolsynth::synth::EngineMidiEvent,
+                                               coolsynth::synth::maxArpEventsPerBlock>& events,
+                              int eventCount,
+                              std::array<int, coolsynth::synth::maxArpEventsPerBlock>& outNotes) noexcept
+    {
+        int noteOnCount = 0;
+
+        for (int index = 0; index < eventCount; ++index)
+        {
+            const auto& event = events[static_cast<size_t>(index)];
+            if (event.type != coolsynth::synth::EngineMidiEventType::noteOn)
+                continue;
+
+            outNotes[static_cast<size_t>(noteOnCount++)] = static_cast<int>(event.noteNumber);
+        }
+
+        return noteOnCount;
+    }
+
+    static int renderArpBlock(coolsynth::synth::Arpeggiator& arp,
+                              int blockSamples,
+                              std::array<coolsynth::synth::EngineMidiEvent,
+                                         coolsynth::synth::maxArpEventsPerBlock>& outEvents) noexcept
+    {
+        outEvents.fill({});
+        return arp.generateEventsForBlock(blockSamples,
+                                          48000.0,
+                                          outEvents.data(),
+                                          static_cast<int>(outEvents.size()));
+    }
+
     void runTest() override
     {
         beginTest("arp_disabled_passes_through_to_allocator_unchanged");
@@ -1883,6 +1927,364 @@ public:
                 engine.render(buffer, {}, parameters);
                 expectEquals(engine.getLastPlayedNoteForTesting(),
                              expectedNotes[static_cast<size_t>(step)]);
+            }
+        }
+
+        beginTest("new_patterns_with_empty_working_set_emit_nothing");
+        {
+            constexpr int stepLength = 6000;
+            const std::array patterns {
+                coolsynth::parameters::ArpPatternChoice::converge,
+                coolsynth::parameters::ArpPatternChoice::diverge,
+                coolsynth::parameters::ArpPatternChoice::inside,
+                coolsynth::parameters::ArpPatternChoice::outside,
+                coolsynth::parameters::ArpPatternChoice::random,
+                coolsynth::parameters::ArpPatternChoice::randomWalk,
+                coolsynth::parameters::ArpPatternChoice::chord,
+            };
+
+            for (const auto pattern : patterns)
+            {
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = pattern;
+                arp.setParameters(parameters);
+
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                const int eventCount = renderArpBlock(arp, stepLength, events);
+                expectEquals(eventCount, 0);
+            }
+        }
+
+        beginTest("new_patterns_single_note_collapse_to_repeating_single_note");
+        {
+            constexpr int stepLength = 6000;
+            const std::array patterns {
+                coolsynth::parameters::ArpPatternChoice::converge,
+                coolsynth::parameters::ArpPatternChoice::diverge,
+                coolsynth::parameters::ArpPatternChoice::inside,
+                coolsynth::parameters::ArpPatternChoice::outside,
+                coolsynth::parameters::ArpPatternChoice::random,
+                coolsynth::parameters::ArpPatternChoice::randomWalk,
+                coolsynth::parameters::ArpPatternChoice::chord,
+            };
+
+            for (const auto pattern : patterns)
+            {
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = pattern;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 0.8f);
+
+                for (int step = 0; step < 3; ++step)
+                {
+                    std::array<coolsynth::synth::EngineMidiEvent,
+                               coolsynth::synth::maxArpEventsPerBlock> events {};
+                    std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                    const int eventCount = renderArpBlock(arp, stepLength, events);
+                    const int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+
+                    expectEquals(noteOnCount, 1);
+                    if (noteOnCount == 1)
+                        expectEquals(noteOns[0], 60);
+                }
+            }
+        }
+
+        beginTest("pattern_converge_and_diverge_follow_documented_index_formulas");
+        {
+            constexpr int stepLength = 6000;
+
+            {
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = coolsynth::parameters::ArpPatternChoice::converge;
+                parameters.octaveRange = 2;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 1.0f);
+                arp.onNoteOn(64, 1.0f);
+                arp.onNoteOn(67, 1.0f);
+
+                const std::array<int, 6> expected { 60, 79, 64, 76, 67, 72 };
+
+                for (int step = 0; step < static_cast<int>(expected.size()); ++step)
+                {
+                    std::array<coolsynth::synth::EngineMidiEvent,
+                               coolsynth::synth::maxArpEventsPerBlock> events {};
+                    std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                    const int eventCount = renderArpBlock(arp, stepLength, events);
+                    const int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+                    expectEquals(noteOnCount, 1);
+                    if (noteOnCount == 1)
+                        expectEquals(noteOns[0], expected[static_cast<size_t>(step)]);
+                }
+            }
+
+            {
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = coolsynth::parameters::ArpPatternChoice::diverge;
+                parameters.octaveRange = 2;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 1.0f);
+                arp.onNoteOn(64, 1.0f);
+                arp.onNoteOn(67, 1.0f);
+
+                const std::array<int, 6> expected { 72, 67, 76, 64, 79, 60 };
+
+                for (int step = 0; step < static_cast<int>(expected.size()); ++step)
+                {
+                    std::array<coolsynth::synth::EngineMidiEvent,
+                               coolsynth::synth::maxArpEventsPerBlock> events {};
+                    std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                    const int eventCount = renderArpBlock(arp, stepLength, events);
+                    const int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+                    expectEquals(noteOnCount, 1);
+                    if (noteOnCount == 1)
+                        expectEquals(noteOns[0], expected[static_cast<size_t>(step)]);
+                }
+            }
+        }
+
+        beginTest("pattern_inside_and_outside_reorder_within_each_octave");
+        {
+            constexpr int stepLength = 6000;
+
+            {
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = coolsynth::parameters::ArpPatternChoice::inside;
+                parameters.octaveRange = 2;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 1.0f);
+                arp.onNoteOn(64, 1.0f);
+                arp.onNoteOn(67, 1.0f);
+
+                const std::array<int, 6> expected { 60, 67, 64, 72, 79, 76 };
+
+                for (int step = 0; step < static_cast<int>(expected.size()); ++step)
+                {
+                    std::array<coolsynth::synth::EngineMidiEvent,
+                               coolsynth::synth::maxArpEventsPerBlock> events {};
+                    std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                    const int eventCount = renderArpBlock(arp, stepLength, events);
+                    const int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+                    expectEquals(noteOnCount, 1);
+                    if (noteOnCount == 1)
+                        expectEquals(noteOns[0], expected[static_cast<size_t>(step)]);
+                }
+            }
+
+            {
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = coolsynth::parameters::ArpPatternChoice::outside;
+                parameters.octaveRange = 2;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 1.0f);
+                arp.onNoteOn(64, 1.0f);
+                arp.onNoteOn(67, 1.0f);
+
+                const std::array<int, 6> expected { 67, 60, 64, 79, 72, 76 };
+
+                for (int step = 0; step < static_cast<int>(expected.size()); ++step)
+                {
+                    std::array<coolsynth::synth::EngineMidiEvent,
+                               coolsynth::synth::maxArpEventsPerBlock> events {};
+                    std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                    const int eventCount = renderArpBlock(arp, stepLength, events);
+                    const int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+                    expectEquals(noteOnCount, 1);
+                    if (noteOnCount == 1)
+                        expectEquals(noteOns[0], expected[static_cast<size_t>(step)]);
+                }
+            }
+        }
+
+        beginTest("pattern_random_is_exactly_reproducible_under_seed");
+        {
+            constexpr int stepLength = 6000;
+            constexpr uint64_t seed = 0x1234abcdULL;
+            const std::array<int, 3> sortedNotes { 60, 64, 67 };
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+            arp.setSeedForTesting(seed);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.pattern = coolsynth::parameters::ArpPatternChoice::random;
+            parameters.octaveRange = 2;
+            arp.setParameters(parameters);
+            arp.onNoteOn(67, 1.0f);
+            arp.onNoteOn(60, 1.0f);
+            arp.onNoteOn(64, 1.0f);
+
+            juce::Random referenceRng(static_cast<int64_t>(seed));
+
+            for (int step = 0; step < 16; ++step)
+            {
+                const int octaveShift = referenceRng.nextInt(2);
+                const int noteIndex = referenceRng.nextInt(3);
+                const int expectedNote = sortedNotes[static_cast<size_t>(noteIndex)]
+                    + (12 * octaveShift);
+
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                const int eventCount = renderArpBlock(arp, stepLength, events);
+                const int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+                expectEquals(noteOnCount, 1);
+                if (noteOnCount == 1)
+                    expectEquals(noteOns[0], expectedNote);
+            }
+        }
+
+        beginTest("pattern_random_walk_is_exactly_reproducible_under_seed");
+        {
+            constexpr int stepLength = 6000;
+            constexpr uint64_t seed = 0x3456fedcULL;
+            const std::array<int, 3> sortedNotes { 60, 64, 67 };
+            constexpr int octaveRange = 2;
+            constexpr int totalSweepLength = static_cast<int>(sortedNotes.size()) * octaveRange;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+            arp.setSeedForTesting(seed);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.pattern = coolsynth::parameters::ArpPatternChoice::randomWalk;
+            parameters.octaveRange = octaveRange;
+            arp.setParameters(parameters);
+            arp.onNoteOn(67, 1.0f);
+            arp.onNoteOn(60, 1.0f);
+            arp.onNoteOn(64, 1.0f);
+
+            juce::Random referenceRng(static_cast<int64_t>(seed));
+            int walkIndex = 0;
+
+            for (int step = 0; step < 16; ++step)
+            {
+                const float roll = referenceRng.nextFloat();
+                int nextIndex = walkIndex;
+
+                if (roll < 0.50f)
+                    ++nextIndex;
+                else if (roll < 0.75f)
+                    --nextIndex;
+
+                if (nextIndex < 0)
+                    nextIndex = 1;
+                else if (nextIndex >= totalSweepLength)
+                    nextIndex = totalSweepLength - 2;
+
+                walkIndex = juce::jlimit(0, totalSweepLength - 1, nextIndex);
+
+                const int expectedNote = sortedNotes[static_cast<size_t>(walkIndex % 3)]
+                    + (12 * (walkIndex / 3));
+
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                const int eventCount = renderArpBlock(arp, stepLength, events);
+                const int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+                expectEquals(noteOnCount, 1);
+                if (noteOnCount == 1)
+                    expectEquals(noteOns[0], expectedNote);
+            }
+        }
+
+        beginTest("pattern_chord_emits_full_stabs_cycles_octaves_and_cleans_up_ringing_notes");
+        {
+            {
+                constexpr int blockSamples = 6000;
+
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = coolsynth::parameters::ArpPatternChoice::chord;
+                parameters.octaveRange = 2;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 0.9f);
+                arp.onNoteOn(64, 0.8f);
+                arp.onNoteOn(67, 0.7f);
+
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                int eventCount = renderArpBlock(arp, blockSamples, events);
+                int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+
+                expectEquals(noteOnCount, 3);
+                if (noteOnCount == 3)
+                {
+                    expectEquals(noteOns[0], 60);
+                    expectEquals(noteOns[1], 64);
+                    expectEquals(noteOns[2], 67);
+                }
+
+                eventCount = renderArpBlock(arp, blockSamples, events);
+                noteOnCount = collectNoteOns(events, eventCount, noteOns);
+
+                expectEquals(noteOnCount, 3);
+                if (noteOnCount == 3)
+                {
+                    expectEquals(noteOns[0], 72);
+                    expectEquals(noteOns[1], 76);
+                    expectEquals(noteOns[2], 79);
+                }
+            }
+
+            {
+                constexpr int blockSamples = 3000;
+
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.pattern = coolsynth::parameters::ArpPatternChoice::chord;
+                parameters.octaveRange = 2;
+                parameters.gateLength = 0.95f;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 0.9f);
+                arp.onNoteOn(64, 0.8f);
+                arp.onNoteOn(67, 0.7f);
+
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                int eventCount = renderArpBlock(arp, blockSamples, events);
+                int noteOnCount = collectNoteOns(events, eventCount, noteOns);
+
+                expectEquals(noteOnCount, 3);
+                expectEquals(arp.getRingingNoteCountForTesting(), 3);
+
+                parameters.enabled = false;
+                arp.setParameters(parameters);
+                eventCount = renderArpBlock(arp, blockSamples, events);
+
+                int noteOffCount = 0;
+                for (int index = 0; index < eventCount; ++index)
+                    if (events[static_cast<size_t>(index)].type
+                        == coolsynth::synth::EngineMidiEventType::noteOff)
+                        ++noteOffCount;
+
+                expectEquals(noteOffCount, 3);
+                expectEquals(arp.getRingingNoteCountForTesting(), 0);
             }
         }
 

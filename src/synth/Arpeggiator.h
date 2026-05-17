@@ -3,6 +3,8 @@
 #include <array>
 #include <cstdint>
 
+#include <juce_core/juce_core.h>
+
 #include "SynthParameters.h"
 
 namespace coolsynth::synth
@@ -28,6 +30,7 @@ namespace coolsynth::synth
 
         void prepare(double sampleRate) noexcept;
         void panic() noexcept;
+        void setSeedForTesting(uint64_t seed) noexcept;
 
         void setParameters(const ArpParametersV2& parameters) noexcept;
         void setTransportInfo(const EngineTransportInfo& transport) noexcept;
@@ -83,6 +86,8 @@ namespace coolsynth::synth
 
         int computeStepsPerBeat() const noexcept;
         float computeInternalStepLengthSamples(double sampleRate) const noexcept;
+        int buildOrderedWorkingSet(std::array<HeldEntry, maxArpHeldNotes>& ordered) const noexcept;
+        void resetPatternWalkState() noexcept;
 
         // Returns next pattern note number with octave shift applied, or -1 if working set empty.
         // Advances patternStepCounter on success.
@@ -114,5 +119,7 @@ namespace coolsynth::synth
 
         // Pattern walker state.
         int patternStepCounter = 0;
+        int randomWalkIndex = 0;
+        juce::Random rng;
     };
 }

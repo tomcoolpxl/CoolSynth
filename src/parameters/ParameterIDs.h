@@ -158,6 +158,13 @@ namespace coolsynth::parameters
         down = 1,
         upDown = 2,
         asPlayed = 3,
+        converge = 4,
+        diverge = 5,
+        inside = 6,
+        outside = 7,
+        random = 8,
+        randomWalk = 9,
+        chord = 10,
     };
 
     inline constexpr auto allParameterIds = std::to_array<const char*>({

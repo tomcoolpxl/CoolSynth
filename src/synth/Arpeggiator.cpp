@@ -13,6 +13,33 @@ namespace coolsynth::synth
         constexpr float maxGateFraction = 0.95f;
         constexpr float ppqEpsilon = 1.0e-9f;
 
+        bool usesPlayOrder(coolsynth::parameters::ArpPatternChoice pattern) noexcept
+        {
+            return pattern == coolsynth::parameters::ArpPatternChoice::asPlayed;
+        }
+
+        int convergeIndex(int stepIndex, int length) noexcept
+        {
+            if (length <= 1)
+                return 0;
+
+            const int pair = stepIndex / 2;
+            const bool flip = (stepIndex & 1) != 0;
+            return flip ? (length - 1 - pair) : pair;
+        }
+
+        int divergeIndex(int stepIndex, int length) noexcept
+        {
+            if (length <= 1)
+                return 0;
+
+            const int mid = length / 2;
+            const int pair = stepIndex / 2;
+            const bool flip = (stepIndex & 1) != 0;
+            const int index = flip ? (mid - 1 - pair) : (mid + pair);
+            return juce::jlimit(0, length - 1, index);
+        }
+
         bool useHostSync(const EngineTransportInfo& info) noexcept
         {
             return info.hostHasTempo && info.hostHasPpq && info.hostBpm > 0.0;
@@ -43,6 +70,7 @@ namespace coolsynth::synth
     void Arpeggiator::prepare(double sampleRate) noexcept
     {
         preparedSampleRate = juce::jmax(1.0, sampleRate);
+        rng.setSeed(static_cast<int64_t>(juce::Time::getHighResolutionTicks()));
         panic();
     }
 
@@ -56,14 +84,22 @@ namespace coolsynth::synth
         samplesUntilNextStep = 0.0f;
         internalClockArmed = false;
         patternStepCounter = 0;
+        randomWalkIndex = 0;
         previousHostIsPlaying = false;
         previousEnabled = false;
+    }
+
+    void Arpeggiator::setSeedForTesting(uint64_t seed) noexcept
+    {
+        rng.setSeed(static_cast<int64_t>(seed));
+        resetPatternWalkState();
     }
 
     void Arpeggiator::setParameters(const ArpParametersV2& parameters) noexcept
     {
         const bool wasLatch = currentParameters.latch;
         const bool nowLatch = parameters.latch;
+        const auto previousPattern = currentParameters.pattern;
 
         if (! wasLatch && nowLatch)
             copyHeldIntoLatched();
@@ -71,6 +107,9 @@ namespace coolsynth::synth
             clearLatched();
 
         currentParameters = parameters;
+
+        if (previousPattern != currentParameters.pattern)
+            resetPatternWalkState();
     }
 
     void Arpeggiator::setTransportInfo(const EngineTransportInfo& transport) noexcept
@@ -101,8 +140,7 @@ namespace coolsynth::synth
     void Arpeggiator::onAllNotesOff() noexcept
     {
         // Soft reset: release held set, but preserve latched memory.
-        heldNoteCount = 0;
-        nextHeldOrder = 0;
+        clearHeld();
     }
 
     int Arpeggiator::generateEventsForBlock(int blockSamples,
@@ -119,6 +157,7 @@ namespace coolsynth::synth
         int outEventCount = 0;
 
         const bool nowEnabled = currentParameters.enabled;
+        const bool enabledTransitionedOn = ! previousEnabled && nowEnabled;
         const bool enabledTransitionedOff = previousEnabled && ! nowEnabled;
 
         if (enabledTransitionedOff)
@@ -126,6 +165,10 @@ namespace coolsynth::synth
             emitNoteOffsForAllRinging(outEvents, outEventCount, 0, maxEvents);
             samplesUntilNextStep = 0.0f;
             internalClockArmed = false;
+        }
+        else if (enabledTransitionedOn)
+        {
+            resetPatternWalkState();
         }
 
         previousEnabled = nowEnabled;
@@ -211,39 +254,118 @@ namespace coolsynth::synth
 
         while (stepOffset < static_cast<float>(blockSamples) && outEventCount < maxEvents)
         {
-            float velocity = 0.0f;
-            const int note = pickNextPatternNote(velocity);
-
             const int eventOffset = juce::jlimit(0,
                                                  juce::jmax(0, blockSamples - 1),
                                                  static_cast<int>(stepOffset));
 
-            if (note >= 0)
+            if (currentParameters.pattern == coolsynth::parameters::ArpPatternChoice::chord)
             {
-                EngineMidiEvent noteOn {};
-                noteOn.type = EngineMidiEventType::noteOn;
-                noteOn.sampleOffset = eventOffset;
-                noteOn.noteNumber = static_cast<uint8_t>(note);
-                noteOn.value = juce::jlimit(0.0f, 1.0f, velocity);
-                noteOn.fromArp = true;
-                insertSortedEvent(outEvents, outEventCount, noteOn, maxEvents);
+                std::array<HeldEntry, maxArpHeldNotes> ordered {};
+                const int workingSetSize = buildOrderedWorkingSet(ordered);
 
-                const int absoluteGateOffSample = eventOffset + gateLengthSamples;
-                if (absoluteGateOffSample < blockSamples && outEventCount < maxEvents)
+                if (workingSetSize > 0)
                 {
-                    EngineMidiEvent noteOff {};
-                    noteOff.type = EngineMidiEventType::noteOff;
-                    noteOff.sampleOffset = absoluteGateOffSample;
-                    noteOff.noteNumber = static_cast<uint8_t>(note);
-                    noteOff.fromArp = true;
-                    insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
+                    const int octaveRange = juce::jlimit(1, 3, currentParameters.octaveRange);
+                    const int octaveShift = patternStepCounter % octaveRange;
+                    ++patternStepCounter;
+
+                    std::array<int, maxArpHeldNotes> chordNotes {};
+                    std::array<float, maxArpHeldNotes> chordVelocities {};
+                    int validNoteCount = 0;
+
+                    for (int index = 0; index < workingSetSize; ++index)
+                    {
+                        const auto& entry = ordered[static_cast<size_t>(index)];
+                        const int shiftedNote = entry.noteNumber + (12 * octaveShift);
+                        if (shiftedNote < 0 || shiftedNote > 127)
+                            continue;
+
+                        chordNotes[static_cast<size_t>(validNoteCount)] = shiftedNote;
+                        chordVelocities[static_cast<size_t>(validNoteCount)] = entry.velocity;
+                        ++validNoteCount;
+                    }
+
+                    if (validNoteCount > 0)
+                    {
+                        const int absoluteGateOffSample = eventOffset + gateLengthSamples;
+                        const bool gateFitsInBlock = absoluteGateOffSample < blockSamples;
+                        const int requiredEventCount = validNoteCount * (gateFitsInBlock ? 2 : 1);
+                        const bool hasEventCapacity = (outEventCount + requiredEventCount) <= maxEvents;
+                        const bool hasRingingCapacity = gateFitsInBlock
+                            || (ringingNoteCount + validNoteCount) <= maxArpRingingNotes;
+
+                        // Chords are emitted atomically so we never leave half a stab in the buffer.
+                        if (hasEventCapacity && hasRingingCapacity)
+                        {
+                            for (int index = 0; index < validNoteCount; ++index)
+                            {
+                                EngineMidiEvent noteOn {};
+                                noteOn.type = EngineMidiEventType::noteOn;
+                                noteOn.sampleOffset = eventOffset;
+                                noteOn.noteNumber = static_cast<uint8_t>(
+                                    chordNotes[static_cast<size_t>(index)]);
+                                noteOn.value = juce::jlimit(0.0f,
+                                                            1.0f,
+                                                            chordVelocities[static_cast<size_t>(index)]);
+                                noteOn.fromArp = true;
+                                insertSortedEvent(outEvents, outEventCount, noteOn, maxEvents);
+                            }
+
+                            for (int index = 0; index < validNoteCount; ++index)
+                            {
+                                const int noteNumber = chordNotes[static_cast<size_t>(index)];
+                                if (gateFitsInBlock)
+                                {
+                                    EngineMidiEvent noteOff {};
+                                    noteOff.type = EngineMidiEventType::noteOff;
+                                    noteOff.sampleOffset = absoluteGateOffSample;
+                                    noteOff.noteNumber = static_cast<uint8_t>(noteNumber);
+                                    noteOff.fromArp = true;
+                                    insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
+                                }
+                                else
+                                {
+                                    scheduleRingingNote(noteNumber,
+                                                        juce::jmax(0,
+                                                                   absoluteGateOffSample - blockSamples));
+                                }
+                            }
+                        }
+                    }
                 }
-                else
+            }
+            else
+            {
+                float velocity = 0.0f;
+                const int note = pickNextPatternNote(velocity);
+
+                if (note >= 0)
                 {
-                    // If it falls outside this block, OR if we ran out of space in the
-                    // current event buffer, we must schedule it as a ringing note so
-                    // we don't leak polyphony.
-                    scheduleRingingNote(note, juce::jmax(0, absoluteGateOffSample - blockSamples));
+                    EngineMidiEvent noteOn {};
+                    noteOn.type = EngineMidiEventType::noteOn;
+                    noteOn.sampleOffset = eventOffset;
+                    noteOn.noteNumber = static_cast<uint8_t>(note);
+                    noteOn.value = juce::jlimit(0.0f, 1.0f, velocity);
+                    noteOn.fromArp = true;
+                    insertSortedEvent(outEvents, outEventCount, noteOn, maxEvents);
+
+                    const int absoluteGateOffSample = eventOffset + gateLengthSamples;
+                    if (absoluteGateOffSample < blockSamples && outEventCount < maxEvents)
+                    {
+                        EngineMidiEvent noteOff {};
+                        noteOff.type = EngineMidiEventType::noteOff;
+                        noteOff.sampleOffset = absoluteGateOffSample;
+                        noteOff.noteNumber = static_cast<uint8_t>(note);
+                        noteOff.fromArp = true;
+                        insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
+                    }
+                    else
+                    {
+                        // If it falls outside this block, OR if we ran out of space in the
+                        // current event buffer, we must schedule it as a ringing note so
+                        // we don't leak polyphony.
+                        scheduleRingingNote(note, juce::jmax(0, absoluteGateOffSample - blockSamples));
+                    }
                 }
             }
 
@@ -266,6 +388,7 @@ namespace coolsynth::synth
             {
                 heldNotes[static_cast<size_t>(i)].velocity = velocity;
                 heldNotes[static_cast<size_t>(i)].order = ++nextHeldOrder;
+                resetPatternWalkState();
                 return;
             }
         }
@@ -281,6 +404,7 @@ namespace coolsynth::synth
         heldNotes[static_cast<size_t>(heldNoteCount)] =
             HeldEntry { noteNumber, velocity, ++nextHeldOrder };
         ++heldNoteCount;
+        resetPatternWalkState();
     }
 
     void Arpeggiator::removeNoteFromHeld(int noteNumber) noexcept
@@ -292,6 +416,8 @@ namespace coolsynth::synth
                 continue;
             heldNotes[static_cast<size_t>(writeIndex++)] = heldNotes[static_cast<size_t>(i)];
         }
+        if (writeIndex != heldNoteCount)
+            resetPatternWalkState();
         heldNoteCount = writeIndex;
     }
 
@@ -303,6 +429,7 @@ namespace coolsynth::synth
             {
                 latchedNotes[static_cast<size_t>(i)].velocity = velocity;
                 latchedNotes[static_cast<size_t>(i)].order = ++nextLatchedOrder;
+                resetPatternWalkState();
                 return;
             }
         }
@@ -317,16 +444,21 @@ namespace coolsynth::synth
         latchedNotes[static_cast<size_t>(latchedNoteCount)] =
             HeldEntry { noteNumber, velocity, ++nextLatchedOrder };
         ++latchedNoteCount;
+        resetPatternWalkState();
     }
 
     void Arpeggiator::clearHeld() noexcept
     {
+        if (heldNoteCount > 0)
+            resetPatternWalkState();
         heldNoteCount = 0;
         nextHeldOrder = 0;
     }
 
     void Arpeggiator::clearLatched() noexcept
     {
+        if (latchedNoteCount > 0)
+            resetPatternWalkState();
         latchedNoteCount = 0;
         nextLatchedOrder = 0;
     }
@@ -431,9 +563,8 @@ namespace coolsynth::synth
         return static_cast<float>(sampleRate * 60.0 / bpm / static_cast<double>(stepsPerBeat));
     }
 
-    int Arpeggiator::pickNextPatternNote(float& outVelocity) noexcept
+    int Arpeggiator::buildOrderedWorkingSet(std::array<HeldEntry, maxArpHeldNotes>& ordered) const noexcept
     {
-        // Choose working set: latched (if latch on and non-empty) else physically held.
         const HeldEntry* workingSet = nullptr;
         int workingSetSize = 0;
 
@@ -449,28 +580,12 @@ namespace coolsynth::synth
         }
 
         if (workingSet == nullptr || workingSetSize <= 0)
-            return -1;
+            return 0;
 
-        // Build a sorted copy for Up/Down/Up-Down. As-Played uses insertion order.
-        std::array<HeldEntry, maxArpHeldNotes> ordered {};
         for (int i = 0; i < workingSetSize; ++i)
             ordered[static_cast<size_t>(i)] = workingSet[static_cast<size_t>(i)];
 
-        const auto pattern = currentParameters.pattern;
-        const int octaveRange = juce::jlimit(1, 3, currentParameters.octaveRange);
-
-        if (pattern == coolsynth::parameters::ArpPatternChoice::up
-            || pattern == coolsynth::parameters::ArpPatternChoice::down
-            || pattern == coolsynth::parameters::ArpPatternChoice::upDown)
-        {
-            std::sort(ordered.data(),
-                      ordered.data() + workingSetSize,
-                      [](const HeldEntry& a, const HeldEntry& b) noexcept
-                      {
-                          return a.noteNumber < b.noteNumber;
-                      });
-        }
-        else
+        if (usesPlayOrder(currentParameters.pattern))
         {
             std::sort(ordered.data(),
                       ordered.data() + workingSetSize,
@@ -479,6 +594,33 @@ namespace coolsynth::synth
                           return a.order < b.order;
                       });
         }
+        else
+        {
+            std::sort(ordered.data(),
+                      ordered.data() + workingSetSize,
+                      [](const HeldEntry& a, const HeldEntry& b) noexcept
+                      {
+                          return a.noteNumber < b.noteNumber;
+                      });
+        }
+
+        return workingSetSize;
+    }
+
+    void Arpeggiator::resetPatternWalkState() noexcept
+    {
+        randomWalkIndex = 0;
+    }
+
+    int Arpeggiator::pickNextPatternNote(float& outVelocity) noexcept
+    {
+        std::array<HeldEntry, maxArpHeldNotes> ordered {};
+        const int workingSetSize = buildOrderedWorkingSet(ordered);
+        if (workingSetSize <= 0)
+            return -1;
+
+        const auto pattern = currentParameters.pattern;
+        const int octaveRange = juce::jlimit(1, 3, currentParameters.octaveRange);
 
         const int notesPerOctaveSweep = workingSetSize;
         const int totalSweepLength = notesPerOctaveSweep * octaveRange;
@@ -528,6 +670,75 @@ namespace coolsynth::synth
                 linearIndex = stepIndex % notesPerOctaveSweep;
                 break;
             }
+            case coolsynth::parameters::ArpPatternChoice::converge:
+            {
+                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int sweepIndex = convergeIndex(stepIndex, totalSweepLength);
+                octaveShift = sweepIndex / notesPerOctaveSweep;
+                linearIndex = sweepIndex % notesPerOctaveSweep;
+                break;
+            }
+            case coolsynth::parameters::ArpPatternChoice::diverge:
+            {
+                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int sweepIndex = divergeIndex(stepIndex, totalSweepLength);
+                octaveShift = sweepIndex / notesPerOctaveSweep;
+                linearIndex = sweepIndex % notesPerOctaveSweep;
+                break;
+            }
+            case coolsynth::parameters::ArpPatternChoice::inside:
+            {
+                const int stepIndex = patternStepCounter % totalSweepLength;
+                octaveShift = stepIndex / notesPerOctaveSweep;
+                linearIndex = convergeIndex(stepIndex % notesPerOctaveSweep,
+                                            notesPerOctaveSweep);
+                break;
+            }
+            case coolsynth::parameters::ArpPatternChoice::outside:
+            {
+                const int stepIndex = patternStepCounter % totalSweepLength;
+                octaveShift = stepIndex / notesPerOctaveSweep;
+                linearIndex = (notesPerOctaveSweep - 1)
+                    - convergeIndex(stepIndex % notesPerOctaveSweep,
+                                    notesPerOctaveSweep);
+                break;
+            }
+            case coolsynth::parameters::ArpPatternChoice::random:
+            {
+                octaveShift = octaveRange > 1 ? rng.nextInt(octaveRange) : 0;
+                linearIndex = rng.nextInt(notesPerOctaveSweep);
+                break;
+            }
+            case coolsynth::parameters::ArpPatternChoice::randomWalk:
+            {
+                if (totalSweepLength <= 1)
+                {
+                    randomWalkIndex = 0;
+                }
+                else
+                {
+                    const float roll = rng.nextFloat();
+                    int nextIndex = randomWalkIndex;
+
+                    if (roll < 0.50f)
+                        ++nextIndex;
+                    else if (roll < 0.75f)
+                        --nextIndex;
+
+                    if (nextIndex < 0)
+                        nextIndex = 1;
+                    else if (nextIndex >= totalSweepLength)
+                        nextIndex = totalSweepLength - 2;
+
+                    randomWalkIndex = juce::jlimit(0, totalSweepLength - 1, nextIndex);
+                }
+
+                octaveShift = randomWalkIndex / notesPerOctaveSweep;
+                linearIndex = randomWalkIndex % notesPerOctaveSweep;
+                break;
+            }
+            case coolsynth::parameters::ArpPatternChoice::chord:
+                return -1;
         }
 
         ++patternStepCounter;
