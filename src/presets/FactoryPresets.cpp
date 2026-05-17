@@ -42,7 +42,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.25f }, { ids::delayMix, 0.0f },
             { ids::reverbEnabled, 0.0f }, { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -12.0f },
+            { ids::masterGainDb, -10.5f },
         };
 
         constexpr PresetParameterValue kMonoSawLead[] = {
@@ -76,7 +76,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.3f }, { ids::delayMix, 0.18f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.35f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.15f },
-            { ids::masterGainDb, -10.0f },
+            { ids::masterGainDb, -16.0f },
         };
 
         constexpr PresetParameterValue kHardSyncLead[] = {
@@ -110,7 +110,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.3f }, { ids::delayMix, 0.15f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.35f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.18f },
-            { ids::masterGainDb, -10.0f },
+            { ids::masterGainDb, -14.5f },
         };
 
         constexpr PresetParameterValue kSuperStack[] = {
@@ -144,7 +144,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.25f }, { ids::delayMix, 0.0f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.45f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.25f },
-            { ids::masterGainDb, -13.0f },
+            { ids::masterGainDb, -6.5f },
         };
 
         constexpr PresetParameterValue kFatMonoBass[] = {
@@ -178,7 +178,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.25f }, { ids::delayMix, 0.0f },
             { ids::reverbEnabled, 0.0f }, { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.0f },
-            { ids::masterGainDb, -9.0f },
+            { ids::masterGainDb, -18.0f },
         };
 
         constexpr PresetParameterValue kPureSub[] = {
@@ -212,7 +212,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.25f }, { ids::delayMix, 0.0f },
             { ids::reverbEnabled, 0.0f }, { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.0f },
-            { ids::masterGainDb, -8.0f },
+            { ids::masterGainDb, -13.0f },
         };
 
         constexpr PresetParameterValue kAcidBass[] = {
@@ -246,7 +246,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.25f }, { ids::delayMix, 0.10f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.30f },
             { ids::reverbDamping, 0.6f }, { ids::reverbMix, 0.10f },
-            { ids::masterGainDb, -10.0f },
+            { ids::masterGainDb, 0.0f },
         };
 
         constexpr PresetParameterValue kGlassyPluck[] = {
@@ -280,7 +280,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.35f }, { ids::delayMix, 0.22f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.55f },
             { ids::reverbDamping, 0.4f }, { ids::reverbMix, 0.30f },
-            { ids::masterGainDb, -11.0f },
+            { ids::masterGainDb, 1.0f },
         };
 
         constexpr PresetParameterValue kFunkyClav[] = {
@@ -314,7 +314,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.20f }, { ids::delayMix, 0.15f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.30f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.12f },
-            { ids::masterGainDb, -10.0f },
+            { ids::masterGainDb, 0.5f },
         };
 
         constexpr PresetParameterValue kBrassStack[] = {
@@ -382,7 +382,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.30f }, { ids::delayMix, 0.15f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.60f },
             { ids::reverbDamping, 0.40f }, { ids::reverbMix, 0.35f },
-            { ids::masterGainDb, -13.0f },
+            { ids::masterGainDb, -8.0f },
         };
 
         constexpr PresetParameterValue kEtherealDream[] = {
@@ -416,7 +416,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.45f }, { ids::delayMix, 0.25f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.80f },
             { ids::reverbDamping, 0.35f }, { ids::reverbMix, 0.55f },
-            { ids::masterGainDb, -13.0f },
+            { ids::masterGainDb, -10.0f },
         };
 
         constexpr PresetParameterValue kWobbleBass[] = {
@@ -450,7 +450,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.25f }, { ids::delayMix, 0.12f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.35f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.10f },
-            { ids::masterGainDb, -9.0f },
+            { ids::masterGainDb, -14.0f },
         };
 
         constexpr PresetParameterValue kSciFiTexture[] = {
@@ -484,7 +484,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.55f }, { ids::delayMix, 0.30f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.70f },
             { ids::reverbDamping, 0.45f }, { ids::reverbMix, 0.45f },
-            { ids::masterGainDb, -14.0f },
+            { ids::masterGainDb, -7.0f },
         };
 
         constexpr PresetParameterValue kArpBliss[] = {
@@ -518,7 +518,7 @@ namespace coolsynth::presets
             { ids::delayFeedback, 0.45f }, { ids::delayMix, 0.25f },
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.55f },
             { ids::reverbDamping, 0.45f }, { ids::reverbMix, 0.30f },
-            { ids::masterGainDb, -12.0f },
+            { ids::masterGainDb, -3.5f },
         };
 
         // === BEGIN AUTO YAML PRESETS ===
@@ -590,7 +590,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -10.0f },
+            { ids::masterGainDb, -15.5f },
         };
 
         constexpr PresetParameterValue kRubberPWMBass[] = {
@@ -661,7 +661,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -11.0f },
+            { ids::masterGainDb, -14.5f },
         };
 
         constexpr PresetParameterValue kAcidProphet[] = {
@@ -732,7 +732,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -12.0f },
+            { ids::masterGainDb, -12.5f },
         };
 
         constexpr PresetParameterValue kSubMetalStack[] = {
@@ -803,7 +803,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -16.0f },
+            { ids::masterGainDb, -9.5f },
         };
 
         constexpr PresetParameterValue kSyncSaber[] = {
@@ -874,7 +874,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.42f },
             { ids::reverbDamping, 0.55f },
             { ids::reverbMix, 0.16f },
-            { ids::masterGainDb, -13.0f },
+            { ids::masterGainDb, -15.0f },
         };
 
         constexpr PresetParameterValue kUnisonAnthem[] = {
@@ -945,7 +945,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.48f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.18f },
-            { ids::masterGainDb, -17.0f },
+            { ids::masterGainDb, -6.5f },
         };
 
         constexpr PresetParameterValue kHollowSquareSolo[] = {
@@ -1016,7 +1016,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.35f },
             { ids::reverbDamping, 0.58f },
             { ids::reverbMix, 0.12f },
-            { ids::masterGainDb, -12.0f },
+            { ids::masterGainDb, -13.0f },
         };
 
         constexpr PresetParameterValue kWhistleTriLead[] = {
@@ -1087,7 +1087,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.52f },
             { ids::reverbDamping, 0.42f },
             { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -10.0f },
+            { ids::masterGainDb, -6.5f },
         };
 
         constexpr PresetParameterValue kWarmFilmPad[] = {
@@ -1158,7 +1158,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.78f },
             { ids::reverbDamping, 0.56f },
             { ids::reverbMix, 0.35f },
-            { ids::masterGainDb, -14.0f },
+            { ids::masterGainDb, -9.0f },
         };
 
         constexpr PresetParameterValue kGlassProphetPad[] = {
@@ -1229,7 +1229,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.86f },
             { ids::reverbDamping, 0.38f },
             { ids::reverbMix, 0.38f },
-            { ids::masterGainDb, -15.0f },
+            { ids::masterGainDb, -7.0f },
         };
 
         constexpr PresetParameterValue kDuskStrings[] = {
@@ -1300,7 +1300,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.72f },
             { ids::reverbDamping, 0.68f },
             { ids::reverbMix, 0.32f },
-            { ids::masterGainDb, -14.0f },
+            { ids::masterGainDb, -7.5f },
         };
 
         constexpr PresetParameterValue kChoirDrift[] = {
@@ -1371,7 +1371,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.92f },
             { ids::reverbDamping, 0.45f },
             { ids::reverbMix, 0.42f },
-            { ids::masterGainDb, -16.0f },
+            { ids::masterGainDb, -8.5f },
         };
 
         constexpr PresetParameterValue kVelvetPluck[] = {
@@ -1442,7 +1442,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.44f },
             { ids::reverbDamping, 0.52f },
             { ids::reverbMix, 0.16f },
-            { ids::masterGainDb, -10.0f },
+            { ids::masterGainDb, -1.0f },
         };
 
         constexpr PresetParameterValue kKotoPulse[] = {
@@ -1513,7 +1513,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.36f },
             { ids::reverbDamping, 0.48f },
             { ids::reverbMix, 0.13f },
-            { ids::masterGainDb, -11.0f },
+            { ids::masterGainDb, 5.0f },
         };
 
         constexpr PresetParameterValue kAnalogCompKeys[] = {
@@ -1584,7 +1584,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.34f },
             { ids::reverbDamping, 0.6f },
             { ids::reverbMix, 0.11f },
-            { ids::masterGainDb, -11.0f },
+            { ids::masterGainDb, -7.5f },
         };
 
         constexpr PresetParameterValue kDustyPolyKeys[] = {
@@ -1655,7 +1655,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.52f },
             { ids::reverbDamping, 0.62f },
             { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -13.0f },
+            { ids::masterGainDb, -2.5f },
         };
 
         constexpr PresetParameterValue kNeonRunner[] = {
@@ -1726,7 +1726,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.38f },
             { ids::reverbDamping, 0.45f },
             { ids::reverbMix, 0.13f },
-            { ids::masterGainDb, -12.0f },
+            { ids::masterGainDb, -3.0f },
         };
 
         constexpr PresetParameterValue kClockworkPulse[] = {
@@ -1797,7 +1797,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
-            { ids::masterGainDb, -11.0f },
+            { ids::masterGainDb, -13.5f },
         };
 
         constexpr PresetParameterValue kOctaveSprinter[] = {
@@ -1868,7 +1868,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.46f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.15f },
-            { ids::masterGainDb, -13.0f },
+            { ids::masterGainDb, -3.5f },
         };
 
         constexpr PresetParameterValue kRisingSyncSwarm[] = {
@@ -1939,7 +1939,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.88f },
             { ids::reverbDamping, 0.35f },
             { ids::reverbMix, 0.42f },
-            { ids::masterGainDb, -18.0f },
+            { ids::masterGainDb, -10.5f },
         };
 
         constexpr PresetParameterValue kReplicantBrass[] = {
@@ -2010,7 +2010,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.9f },
             { ids::reverbDamping, 0.46f },
             { ids::reverbMix, 0.44f },
-            { ids::masterGainDb, -16.0f },
+            { ids::masterGainDb, -12.0f },
         };
 
         constexpr PresetParameterValue kOffworldFlute[] = {
@@ -2081,7 +2081,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.74f },
             { ids::reverbDamping, 0.42f },
             { ids::reverbMix, 0.34f },
-            { ids::masterGainDb, -12.0f },
+            { ids::masterGainDb, -7.0f },
         };
 
         constexpr PresetParameterValue kUpsideDownDrone[] = {
@@ -2152,7 +2152,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.96f },
             { ids::reverbDamping, 0.62f },
             { ids::reverbMix, 0.48f },
-            { ids::masterGainDb, -20.0f },
+            { ids::masterGainDb, -11.5f },
         };
 
         constexpr PresetParameterValue kHawkinsPulse[] = {
@@ -2223,7 +2223,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.46f },
             { ids::reverbDamping, 0.58f },
             { ids::reverbMix, 0.12f },
-            { ids::masterGainDb, -13.0f },
+            { ids::masterGainDb, -11.5f },
         };
 
         constexpr PresetParameterValue kNeonPoliceSweep[] = {
@@ -2294,7 +2294,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.66f },
             { ids::reverbDamping, 0.45f },
             { ids::reverbMix, 0.24f },
-            { ids::masterGainDb, -18.0f },
+            { ids::masterGainDb, -5.5f },
         };
 
         constexpr PresetParameterValue kTyrellRainPad[] = {
@@ -2365,7 +2365,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.98f },
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.5f },
-            { ids::masterGainDb, -18.0f },
+            { ids::masterGainDb, -12.0f },
         };
 
         constexpr PresetParameterValue kXenonPanFlute[] = {
@@ -2436,7 +2436,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.82f },
             { ids::reverbDamping, 0.36f },
             { ids::reverbMix, 0.38f },
-            { ids::masterGainDb, -14.0f },
+            { ids::masterGainDb, -5.0f },
         };
 
         constexpr PresetParameterValue kStarcourtSequence[] = {
@@ -2507,7 +2507,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.54f },
             { ids::reverbDamping, 0.48f },
             { ids::reverbMix, 0.16f },
-            { ids::masterGainDb, -14.0f },
+            { ids::masterGainDb, -1.5f },
         };
 
         constexpr PresetParameterValue kLosAngeles2019[] = {
@@ -2578,7 +2578,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.95f },
             { ids::reverbDamping, 0.44f },
             { ids::reverbMix, 0.46f },
-            { ids::masterGainDb, -18.0f },
+            { ids::masterGainDb, -12.5f },
         };
 
         constexpr PresetParameterValue kSovietSatellite[] = {
@@ -2649,7 +2649,7 @@ namespace coolsynth::presets
             { ids::reverbSize, 0.86f },
             { ids::reverbDamping, 0.55f },
             { ids::reverbMix, 0.36f },
-            { ids::masterGainDb, -19.0f },
+            { ids::masterGainDb, -4.0f },
         };
         // === END AUTO YAML PRESETS ===
 

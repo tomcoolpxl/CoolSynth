@@ -176,3 +176,66 @@ if(BUILD_TESTING)
 
     add_test(NAME CoolSynthMidiLearnTests COMMAND CoolSynthMidiLearnTests)
 endif()
+
+juce_add_console_app(CoolSynthPresetNormalizer)
+
+target_sources(CoolSynthPresetNormalizer
+    PRIVATE
+        tools/NormalizePresets.cpp
+        src/BuildInfo.cpp
+        src/presets/FactoryPresets.cpp
+        src/presets/PatchState.cpp
+        src/midi/ControllerProfile.cpp
+        src/midi/MidiLearn.cpp
+        src/midi/MidiMappingEngine.cpp
+        src/midi/MidiMonitor.cpp
+        src/midi/Minilab3Profile.cpp
+        src/parameters/ParameterLayout.cpp
+        src/plugin/SynthAudioProcessor.cpp
+        src/plugin/EditorTooltips.cpp
+        src/plugin/SynthAudioProcessorEditor.cpp
+        src/standalone/SettingsStore.cpp
+        src/standalone/StandaloneAudioSupport.cpp
+        src/standalone/StandaloneMidiInput.cpp
+        src/synth/Arpeggiator.cpp
+        src/synth/SynthEngineV2.cpp
+        src/synth/GlobalDelay.cpp
+        src/synth/GlobalFxRack.cpp
+        src/synth/SynthVoice.cpp
+        src/ui/HardwareFader.cpp
+        src/ui/HardwareKnob.cpp
+        src/ui/LedToggleButton.cpp
+        src/ui/MidiMonitorPanel.cpp
+        src/ui/PianoBarComponent.cpp
+        src/ui/SegmentedChoiceGroup.cpp
+        src/ui/StandaloneMidiInputPanel.cpp
+        src/ui/StandaloneSettingsDialog.cpp
+        src/ui/StandaloneStatusBar.cpp
+        src/ui/SynthSection.cpp
+        src/ui/SignalChainVisualizer.cpp)
+
+target_include_directories(CoolSynthPresetNormalizer
+    PRIVATE
+        src
+        ${CMAKE_CURRENT_BINARY_DIR})
+
+target_compile_features(CoolSynthPresetNormalizer PUBLIC cxx_std_20)
+
+target_compile_definitions(CoolSynthPresetNormalizer
+    PRIVATE
+        COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}")
+
+add_dependencies(CoolSynthPresetNormalizer UpdateBuildInfo)
+
+target_link_libraries(CoolSynthPresetNormalizer
+    PRIVATE
+        juce::juce_core
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_gui_basics
+        juce::juce_dsp
+        CoolSynthControllerProfiles
+        juce::juce_recommended_config_flags
+        juce::juce_recommended_warning_flags)
