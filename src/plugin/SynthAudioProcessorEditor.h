@@ -12,6 +12,7 @@
 #include "midi/MidiLearn.h"
 
 class SynthAudioProcessor;
+class ArpAdvancedOverlay;
 
 namespace coolsynth::standalone
 {
@@ -36,6 +37,11 @@ public:
     void refreshStandaloneControllerProfileSelection();
     juce::String getResolvedStandaloneControllerProfileDisplayName() const;
     void resetStandaloneMidiSettings();
+    bool isArpAdvancedOverlayVisibleForTesting() const noexcept;
+    bool areArpEuclideanControlsVisibleForTesting() const noexcept;
+    juce::String getArpAdvancedSummaryTextForTesting() const;
+    void setArpAdvancedOverlayVisibleForTesting(bool shouldBeVisible);
+    void refreshArpUiForTesting();
 
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -101,6 +107,10 @@ private:
         juce::RangedAudioParameter* arpRatchetChance = nullptr;
         juce::RangedAudioParameter* arpAccentEvery = nullptr;
         juce::RangedAudioParameter* arpAccentAmount = nullptr;
+        juce::RangedAudioParameter* arpRhythm = nullptr;
+        juce::RangedAudioParameter* arpEuclideanPulses = nullptr;
+        juce::RangedAudioParameter* arpEuclideanSteps = nullptr;
+        juce::RangedAudioParameter* arpEuclideanRotation = nullptr;
         juce::RangedAudioParameter* arpLatch = nullptr;
         juce::RangedAudioParameter* drvOn = nullptr;
         juce::RangedAudioParameter* drvAmt = nullptr;
@@ -288,7 +298,6 @@ private:
     coolsynth::ui::HardwareKnob perfVelAmpKnob { "Vel->Amp" };
     coolsynth::ui::HardwareKnob perfVelFltKnob { "Vel->Flt" };
     coolsynth::ui::LedToggleButton arpOnToggle { "Arp On" };
-    coolsynth::ui::HardwareKnob arpTempoKnob { "Tempo" };
     coolsynth::ui::SegmentedChoiceGroup arpRateChoice {
         "Rate",
         {
@@ -314,14 +323,9 @@ private:
     };
     coolsynth::ui::HardwareKnob arpGateKnob { "Gate" };
     coolsynth::ui::HardwareKnob arpSwingKnob { "Swing" };
-    coolsynth::ui::HardwareKnob arpChanceKnob { "Chance" };
-    juce::Label arpRatchetLabel;
-    juce::ComboBox arpRatchetChoice;
-    coolsynth::ui::HardwareKnob arpRatchetChanceKnob { "Rat Ch" };
-    juce::Label arpAccentLabel;
-    juce::ComboBox arpAccentChoice;
-    coolsynth::ui::HardwareKnob arpAccentAmountKnob { "Accent" };
     coolsynth::ui::LedToggleButton arpLatchToggle { "Latch" };
+    juce::TextButton arpAdvancedButton { "Advanced..." };
+    juce::Label arpAdvancedSummaryLabel;
     coolsynth::ui::LedToggleButton drvOnToggle { "Distortion" };
     coolsynth::ui::HardwareKnob drvAmtKnob { "Amount" };
     coolsynth::ui::HardwareKnob drvMixKnob { "Mix" };
@@ -393,17 +397,11 @@ private:
     std::unique_ptr<SliderAttachment> perfVelAmpAttachment;
     std::unique_ptr<SliderAttachment> perfVelFltAttachment;
     std::unique_ptr<ButtonAttachment> arpOnAttachment;
-    std::unique_ptr<SliderAttachment> arpTempoAttachment;
     std::unique_ptr<ChoiceAttachment> arpRateAttachment;
     std::unique_ptr<ChoiceAttachment> arpPatternAttachment;
     std::unique_ptr<ChoiceAttachment> arpOctaveAttachment;
     std::unique_ptr<SliderAttachment> arpGateAttachment;
     std::unique_ptr<SliderAttachment> arpSwingAttachment;
-    std::unique_ptr<SliderAttachment> arpChanceAttachment;
-    std::unique_ptr<ChoiceAttachment> arpRatchetAttachment;
-    std::unique_ptr<SliderAttachment> arpRatchetChanceAttachment;
-    std::unique_ptr<ChoiceAttachment> arpAccentAttachment;
-    std::unique_ptr<SliderAttachment> arpAccentAmountAttachment;
     std::unique_ptr<ButtonAttachment> arpLatchAttachment;
     std::unique_ptr<ButtonAttachment> drvOnAttachment;
     std::unique_ptr<SliderAttachment> drvAmtAttachment;
@@ -455,6 +453,9 @@ private:
     void setupPresetSelector();
     void applyTooltips();
     void applySelectedPreset();
+    void setArpAdvancedOverlayVisible(bool shouldBeVisible);
+    void refreshArpAdvancedSummary();
+    juce::String buildArpAdvancedSummaryText() const;
 
     void triggerInitPatch();
     void triggerSavePatch();
@@ -472,6 +473,7 @@ private:
     juce::ComboBox presetSelector;
     coolsynth::ui::SignalChainVisualizer visualizer;
     coolsynth::ui::PianoBarComponent pianoBar;
+    std::unique_ptr<ArpAdvancedOverlay> arpAdvancedOverlay;
     std::unique_ptr<juce::FileChooser> activePatchChooser;
     bool patchActionsVisible = false;
 

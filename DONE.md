@@ -1,5 +1,16 @@
 # DONE
 
+## ARP Expansion Phase E — Advanced overlay UI
+
+Completed on 2026-05-17. The Phase E overlay slice is implemented, build-test clean, and keeps the expanded arp surface inside the existing one-page editor.
+
+- [x] Added `ArpAdvancedOverlay` as a full-editor dimmed overlay with a centered advanced arp panel, `Escape` dismissal, close button, and shared APVTS-backed controls for rhythm, Euclidean shape, chance, ratchet, accent, and standalone-only internal tempo.
+- [x] Removed the temporary Phase C/D advanced arp controls from the main band and replaced them with an `Advanced...` entry point plus a compact status strip that summarizes non-default overlay state.
+- [x] Added a dedicated Euclidean-cycle helper so the overlay visualizer and arp engine share the same bounded cycle builder and rotation behavior.
+- [x] Added editor-level regressions covering overlay show/hide behavior, Euclidean control visibility under `Straight` versus `Euclidean`, and non-default advanced-summary text.
+- [x] Corrected the Phase D `E(7,12)` acceptance example from an impossible eight-pulse string to the engine's current valid rotated Euclidean necklace, and verified the necklace orientation against Toussaint's published `E(7,12)` reference.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-17 after the Phase E change.
+
 ## ARP Expansion Phase D — Euclidean rhythm
 
 Completed on 2026-05-17. The Phase D rhythm slice is implemented, build-test clean, and intentionally breaks older saved patch/state compatibility.

@@ -54,6 +54,7 @@ target_sources(CoolSynth
         src/midi/MidiMonitor.cpp
         src/midi/Minilab3Profile.cpp
         src/parameters/ParameterLayout.cpp
+        src/plugin/ArpAdvancedOverlay.cpp
         src/plugin/SynthAudioProcessor.cpp
         src/plugin/EditorTooltips.cpp
         src/plugin/SynthAudioProcessorEditor.cpp
@@ -119,6 +120,7 @@ if(BUILD_TESTING)
             src/presets/FactoryPresets.cpp
             src/presets/PatchState.cpp
             src/midi/ControllerProfile.cpp
+            src/plugin/ArpAdvancedOverlay.cpp
             src/plugin/SynthAudioProcessor.cpp
             src/plugin/EditorTooltips.cpp
             src/plugin/SynthAudioProcessorEditor.cpp
@@ -195,6 +197,7 @@ target_sources(CoolSynthPresetNormalizer
         src/midi/MidiMonitor.cpp
         src/midi/Minilab3Profile.cpp
         src/parameters/ParameterLayout.cpp
+        src/plugin/ArpAdvancedOverlay.cpp
         src/plugin/SynthAudioProcessor.cpp
         src/plugin/EditorTooltips.cpp
         src/plugin/SynthAudioProcessorEditor.cpp

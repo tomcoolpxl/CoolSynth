@@ -4,6 +4,7 @@
 #include "midi/ControllerProfile.h"
 #include "midi/MidiMappingEngine.h"
 #include "plugin/SynthAudioProcessor.h"
+#include "plugin/SynthAudioProcessorEditor.h"
 #include "standalone/SettingsStore.h"
 #include "parameters/ParameterIDs.h"
 
@@ -579,6 +580,57 @@ public:
                 expectEquals((int) restored[1].cc.channel, 2);
                 expectEquals((int) restored[1].cc.controllerNumber, 83);
             }
+        }
+
+        beginTest("editor_arp_overlay_toggles_and_euclidean_controls_follow_rhythm_choice");
+        {
+            SynthAudioProcessor processor;
+            SynthAudioProcessorEditor editor(processor);
+            auto& state = processor.getValueTreeState();
+
+            expect(!editor.isArpAdvancedOverlayVisibleForTesting());
+
+            editor.setArpAdvancedOverlayVisibleForTesting(true);
+            expect(editor.isArpAdvancedOverlayVisibleForTesting());
+
+            auto* rhythm = state.getParameter(coolsynth::parameters::ids::arpRhythm);
+            expect(rhythm != nullptr);
+
+            if (rhythm != nullptr)
+            {
+                rhythm->setValueNotifyingHost(rhythm->convertTo0to1(1.0f));
+                editor.refreshArpUiForTesting();
+                expect(editor.areArpEuclideanControlsVisibleForTesting());
+
+                rhythm->setValueNotifyingHost(rhythm->convertTo0to1(0.0f));
+                editor.refreshArpUiForTesting();
+                expect(!editor.areArpEuclideanControlsVisibleForTesting());
+            }
+
+            editor.setArpAdvancedOverlayVisibleForTesting(false);
+            expect(!editor.isArpAdvancedOverlayVisibleForTesting());
+        }
+
+        beginTest("editor_arp_overlay_summary_reports_non_default_advanced_state");
+        {
+            SynthAudioProcessor processor;
+            SynthAudioProcessorEditor editor(processor);
+            auto& state = processor.getValueTreeState();
+
+            auto setPlainValue = [](juce::RangedAudioParameter* parameter, float value)
+            {
+                if (parameter != nullptr)
+                    parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
+            };
+
+            setPlainValue(state.getParameter(coolsynth::parameters::ids::arpRhythm), 1.0f);
+            setPlainValue(state.getParameter(coolsynth::parameters::ids::arpEuclideanPulses), 5.0f);
+            setPlainValue(state.getParameter(coolsynth::parameters::ids::arpChance), 0.5f);
+
+            editor.refreshArpUiForTesting();
+            const auto summary = editor.getArpAdvancedSummaryTextForTesting();
+            expect(summary.contains("Euc 5/8"));
+            expect(summary.contains("Chance"));
         }
     }
 };

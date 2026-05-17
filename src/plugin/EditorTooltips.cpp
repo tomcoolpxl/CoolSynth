@@ -1,5 +1,7 @@
 #include "SynthAudioProcessorEditor.h"
 
+#include "ArpAdvancedOverlay.h"
+
 namespace
 {
     juce::String wrapTooltipBody(juce::String text, int maxCharsPerLine = 38)
@@ -322,9 +324,6 @@ void SynthAudioProcessorEditor::applyTooltips()
     setParameterTooltip(arpOnToggle, "Arp On",
                         "Turn the arpeggiator on or off.\n"
                         "When on, held notes are replayed as a repeating pattern.");
-    setParameterTooltip(arpTempoKnob, "Tempo",
-                        "Set the arpeggiator speed in beats per minute.\n"
-                        "This is used when host timing is not driving the arp.");
     setParameterTooltip(arpRateChoice, "Rate",
                         "Choose the note division for each arpeggiated step.\n"
                         "Smaller fractions play faster.");
@@ -370,30 +369,53 @@ void SynthAudioProcessorEditor::applyTooltips()
     setParameterTooltip(arpSwingKnob, "Swing",
                         "Delay every other arp step later in the subdivision.\n"
                         "The groove stays rate-relative under host sync instead of drifting off the bar.");
-    setParameterTooltip(arpChanceKnob, "Chance",
-                        "Set the probability that each arp step will fire.\n"
-                        "At lower values some steps are skipped, but the melodic walk keeps advancing.");
-    setParameterTooltip(arpRatchetChoice, "Ratchet",
-                        "Choose how many times one arp step is retriggered inside its gate window.\n"
-                        "Chord mode repeats the whole chord stab, not the notes one by one.");
-    setParameterTooltip(arpRatchetLabel, "Ratchet",
-                        "Choose how many times one arp step is retriggered inside its gate window.\n"
-                        "Chord mode repeats the whole chord stab, not the notes one by one.");
-    setParameterTooltip(arpRatchetChanceKnob, "Ratchet Chance",
-                        "Set the probability that a step expands into ratchets instead of a single hit.\n"
-                        "Chance is evaluated once before the ratchet burst is emitted.");
-    setParameterTooltip(arpAccentChoice, "Accent Every",
-                        "Accent every second, third, or fourth emitted arp step.\n"
-                        "Skipped chance steps do not advance the accent grid.");
-    setParameterTooltip(arpAccentLabel, "Accent Every",
-                        "Accent every second, third, or fourth emitted arp step.\n"
-                        "Skipped chance steps do not advance the accent grid.");
-    setParameterTooltip(arpAccentAmountKnob, "Accent",
-                        "Set how much accented steps boost note velocity.\n"
-                        "The boost is uniform across all notes in a chord step.");
     setParameterTooltip(arpLatchToggle, "Latch",
                         "Latch keeps the current held-note set playing\n"
                         "after you release the keys.");
+    setParameterTooltip(arpAdvancedButton, "Advanced",
+                        "Open the advanced arp overlay for rhythm, chance,\n"
+                        "ratchet, accent, and standalone internal-tempo controls.");
+    arpAdvancedSummaryLabel.setTooltip(makeTooltipText("Advanced Summary",
+                                                       "Shows non-default advanced arp state at a glance.\n"
+                                                       "When every advanced setting is at its default,\n"
+                                                       "this strip stays empty."));
+    if (arpAdvancedOverlay != nullptr)
+    {
+        if (juce::JUCEApplicationBase::isStandaloneApp())
+            setParameterTooltip(arpAdvancedOverlay->getTempoKnob(), "Tempo",
+                                "Set the arpeggiator speed in beats per minute.\n"
+                                "This is used when host timing is not driving the arp.");
+        setParameterTooltip(arpAdvancedOverlay->getRhythmChoice(), "Rhythm",
+                            "Choose whether the arp fires every rate slot or only\n"
+                            "the active pulses of a Euclidean rhythm cycle.");
+        setParameterTooltip(arpAdvancedOverlay->getEuclideanPulsesKnob(), "Pulses",
+                            "Set how many hits appear inside the Euclidean cycle.\n"
+                            "Higher values make the pattern denser.");
+        setParameterTooltip(arpAdvancedOverlay->getEuclideanStepsKnob(), "Steps",
+                            "Set the total slot count of the Euclidean cycle.\n"
+                            "Rate still decides how long each slot lasts.");
+        setParameterTooltip(arpAdvancedOverlay->getEuclideanRotationKnob(), "Rotation",
+                            "Rotate the Euclidean cycle without changing its density.\n"
+                            "This shifts where the first pulse lands.");
+        setParameterTooltip(arpAdvancedOverlay->getChanceKnob(), "Chance",
+                            "Set the probability that each arp step will fire.\n"
+                            "At lower values some steps are skipped, but the melodic walk keeps advancing.");
+        setParameterTooltip(arpAdvancedOverlay->getRatchetChoice(), "Ratchet",
+                            "Choose how many times one arp step is retriggered inside its gate window.\n"
+                            "Chord mode repeats the whole chord stab, not the notes one by one.");
+        setParameterTooltip(arpAdvancedOverlay->getRatchetChanceKnob(), "Ratchet Chance",
+                            "Set the probability that a step expands into ratchets instead of a single hit.\n"
+                            "Chance is evaluated once before the ratchet burst is emitted.");
+        setParameterTooltip(arpAdvancedOverlay->getAccentChoice(), "Accent Every",
+                            "Accent every second, third, or fourth emitted arp step.\n"
+                            "Skipped chance steps do not advance the accent grid.");
+        setParameterTooltip(arpAdvancedOverlay->getAccentAmountKnob(), "Accent",
+                            "Set how much accented steps boost note velocity.\n"
+                            "The boost is uniform across all notes in a chord step.");
+        arpAdvancedOverlay->getCloseButton().setTooltip(makeTooltipText("Close",
+                                                                        "Close the advanced arp overlay.\n"
+                                                                        "Press Escape for the same result."));
+    }
     setParameterTooltip(drvOnToggle, "Distortion",
                         "Turn the distortion stage on or off.\n"
                         "Distortion adds saturation before the time-based effects.");

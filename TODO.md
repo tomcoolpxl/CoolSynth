@@ -1,10 +1,11 @@
 # TODO
 
-## ARP Expansion Phase E — Advanced overlay UI
+## ARP Expansion Phase F — Patch format + factory presets
 
-Phase D is now implemented and locally verified. The next implementation chunk is Phase E from `ARP_EXPANSION_PLAN.md`.
+Phase E is now implemented and locally verified. The next implementation chunk is Phase F from `ARP_EXPANSION_PLAN.md`.
 
-- Add `ArpAdvancedOverlay` and the `Advanced...` entry point in the shared editor without changing the one-page panel structure.
-- Move the new Euclidean controls plus the existing chance, ratchet, and accent controls into the overlay, keeping APVTS wiring shared and state-preserving.
-- Add the Euclidean visualizer and a compact status summary strip for non-default overlay state.
-- Add editor-level regressions or verification notes for overlay show/hide behavior, attachment lifetime, and Straight/EUclidean control visibility rules.
+- Bump the wrapped `.cspatch` and wrapped processor-state format versions for the full expanded arp parameter surface.
+- OVERRIDING COMMENT: DO NOT CARE ABOUT BACKWARDS COMPATIBIULITY OF PATCHES!!!!!!!!
+- Re-emit the factory preset source data with explicit defaults for the new arp rhythm and modifier fields.
+- Add the first curated arp-focused factory preset slice that exercises the new pattern, rhythm, and modifier combinations without broadening scope beyond the approved Phase F plan.
+- Add preset round-trip coverage or equivalent verification notes for the new arp-focused preset payloads.

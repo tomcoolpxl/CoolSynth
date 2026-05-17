@@ -5,6 +5,8 @@
 
 #include <juce_core/juce_core.h>
 
+#include "EuclideanRhythm.h"
+
 namespace coolsynth::synth
 {
     namespace
@@ -73,97 +75,6 @@ namespace coolsynth::synth
             }
             outEvents[insertIndex] = event;
             ++outEventCount;
-        }
-
-        int buildBjorklundSequence(int level,
-                                   const std::array<int, 16>& counts,
-                                   const std::array<int, 16>& remainders,
-                                   std::array<bool, 16>& pattern,
-                                   int writeIndex) noexcept
-        {
-            if (level == -1)
-            {
-                pattern[static_cast<size_t>(writeIndex++)] = false;
-                return writeIndex;
-            }
-
-            if (level == -2)
-            {
-                pattern[static_cast<size_t>(writeIndex++)] = true;
-                return writeIndex;
-            }
-
-            for (int i = 0; i < counts[static_cast<size_t>(level)]; ++i)
-                writeIndex = buildBjorklundSequence(level - 1, counts, remainders, pattern, writeIndex);
-
-            if (remainders[static_cast<size_t>(level)] != 0)
-                writeIndex = buildBjorklundSequence(level - 2, counts, remainders, pattern, writeIndex);
-
-            return writeIndex;
-        }
-
-        std::array<bool, 16> makeEuclideanCycle(int pulses, int steps, int rotation) noexcept
-        {
-            std::array<bool, 16> cycle {};
-
-            const int clampedSteps = juce::jlimit(1, 16, steps);
-            const int clampedPulses = juce::jlimit(0, clampedSteps, pulses);
-
-            if (clampedPulses == 0)
-                return cycle;
-
-            if (clampedPulses >= clampedSteps)
-            {
-                for (int index = 0; index < clampedSteps; ++index)
-                    cycle[static_cast<size_t>(index)] = true;
-                return cycle;
-            }
-
-            std::array<int, 16> counts {};
-            std::array<int, 16> remainders {};
-
-            remainders[0] = clampedPulses;
-            int divisor = clampedSteps - clampedPulses;
-            int level = 0;
-
-            while (remainders[static_cast<size_t>(level)] > 1)
-            {
-                counts[static_cast<size_t>(level)] =
-                    divisor / remainders[static_cast<size_t>(level)];
-                remainders[static_cast<size_t>(level + 1)] =
-                    divisor % remainders[static_cast<size_t>(level)];
-                divisor = remainders[static_cast<size_t>(level)];
-                ++level;
-            }
-
-            counts[static_cast<size_t>(level)] = divisor;
-
-            std::array<bool, 16> rawPattern {};
-            const int generatedLength =
-                buildBjorklundSequence(level, counts, remainders, rawPattern, 0);
-
-            const int rotationOffset = positiveModulo(rotation, clampedSteps);
-            const int firstPulseIndex =
-                generatedLength > 0
-                    ? [&rawPattern, generatedLength]()
-                    {
-                        for (int index = 0; index < generatedLength; ++index)
-                        {
-                            if (rawPattern[static_cast<size_t>(index)])
-                                return index;
-                        }
-                        return 0;
-                    }()
-                    : 0;
-
-            for (int index = 0; index < clampedSteps; ++index)
-            {
-                const int sourceIndex =
-                    (index + firstPulseIndex + rotationOffset) % clampedSteps;
-                cycle[static_cast<size_t>(index)] = rawPattern[static_cast<size_t>(sourceIndex)];
-            }
-
-            return cycle;
         }
     }
 

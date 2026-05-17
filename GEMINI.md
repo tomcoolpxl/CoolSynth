@@ -181,7 +181,13 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Refreshed a factory-profile regression to assert the intended soft-takeover behavior of the oscillator-level faders under the current V2 init defaults.
   - Manual validation passed in standalone and VST3 use: valid V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the active synth state.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- `TODO.md` now points to ARP Expansion Phase E — Advanced overlay UI.
+- ARP Expansion `Phase E` completed on 2026-05-17:
+  - Added `ArpAdvancedOverlay` plus the `Advanced...` entry point and a compact advanced-status strip in the shared editor, keeping the one-page panel intact while moving Euclidean, chance, ratchet, accent, and standalone tempo controls into the overlay.
+  - The overlay is a full-editor dimmed layer with a centered panel, `Escape` dismissal, close button, shared APVTS attachments, and a Euclidean visualizer that follows the same cycle helper used by the arp engine.
+  - Added editor regressions covering overlay visibility toggling, Straight-versus-Euclidean control visibility, and non-default advanced-summary text.
+  - Corrected the Phase D `E(7,12)` acceptance example from an impossible eight-pulse string to the engine's current valid rotated Euclidean necklace; online verification against Godfried Toussaint's published `E(7,12)` confirmed the engine output is a rotation of the same Euclidean rhythm necklace.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
+- `TODO.md` now points to ARP Expansion Phase F — Patch format + factory presets.
 - Phase 11 Track A completed on 2026-05-15:
   - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
   - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).

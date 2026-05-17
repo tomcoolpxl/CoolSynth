@@ -5,6 +5,7 @@
 
 #include <BinaryData.h>
 
+#include "ArpAdvancedOverlay.h"
 #include "BuildInfo.h"
 #include "SynthAudioProcessor.h"
 #include "midi/ControllerProfile.h"
@@ -294,6 +295,10 @@ void SynthAudioProcessorEditor::setupParameterRefs()
     parameterRefs.arpRatchetChance = apvts.getParameter(ids::arpRatchetChance);
     parameterRefs.arpAccentEvery = apvts.getParameter(ids::arpAccentEvery);
     parameterRefs.arpAccentAmount = apvts.getParameter(ids::arpAccentAmount);
+    parameterRefs.arpRhythm = apvts.getParameter(ids::arpRhythm);
+    parameterRefs.arpEuclideanPulses = apvts.getParameter(ids::arpEuclideanPulses);
+    parameterRefs.arpEuclideanSteps = apvts.getParameter(ids::arpEuclideanSteps);
+    parameterRefs.arpEuclideanRotation = apvts.getParameter(ids::arpEuclideanRotation);
     parameterRefs.arpLatch = apvts.getParameter(ids::arpLatch);
     parameterRefs.drvOn = apvts.getParameter(ids::driveEnabled);
     parameterRefs.drvAmt = apvts.getParameter(ids::driveAmount);
@@ -371,33 +376,16 @@ void SynthAudioProcessorEditor::setupVisualsAndLabels(bool isStandalone)
     arpPatternChoice.addItem("Random Walk", 10);
     arpPatternChoice.addItem("Chord", 11);
 
-    arpRatchetLabel.setText("Ratchet", juce::dontSendNotification);
-    arpRatchetLabel.setFont(juce::FontOptions(14.0f));
-    arpRatchetLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textPrimary);
-    arpRatchetLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(arpRatchetLabel);
+    arpAdvancedSummaryLabel.setFont(juce::FontOptions(11.0f, juce::Font::bold));
+    arpAdvancedSummaryLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
+    arpAdvancedSummaryLabel.setJustificationType(juce::Justification::centredLeft);
+    arpAdvancedSummaryLabel.setInterceptsMouseClicks(false, false);
+    addAndMakeVisible(arpAdvancedSummaryLabel);
 
-    coolsynth::ui::applyGreenComboBoxStyle(arpRatchetChoice);
-    arpRatchetChoice.setJustificationType(juce::Justification::centredLeft);
-    arpRatchetChoice.setScrollWheelEnabled(false);
-    arpRatchetChoice.addItem("Off", 1);
-    arpRatchetChoice.addItem("x2", 2);
-    arpRatchetChoice.addItem("x3", 3);
-    arpRatchetChoice.addItem("x4", 4);
-
-    arpAccentLabel.setText("Accent", juce::dontSendNotification);
-    arpAccentLabel.setFont(juce::FontOptions(14.0f));
-    arpAccentLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textPrimary);
-    arpAccentLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(arpAccentLabel);
-
-    coolsynth::ui::applyGreenComboBoxStyle(arpAccentChoice);
-    arpAccentChoice.setJustificationType(juce::Justification::centredLeft);
-    arpAccentChoice.setScrollWheelEnabled(false);
-    arpAccentChoice.addItem("Off", 1);
-    arpAccentChoice.addItem("/2", 2);
-    arpAccentChoice.addItem("/3", 3);
-    arpAccentChoice.addItem("/4", 4);
+    arpAdvancedOverlay = std::make_unique<ArpAdvancedOverlay>(processor.getValueTreeState(),
+                                                              isStandalone);
+    arpAdvancedOverlay->setCloseCallback([this] { setArpAdvancedOverlayVisible(false); });
+    addChildComponent(*arpAdvancedOverlay);
 }
 
 void SynthAudioProcessorEditor::setupControlAttachments()
@@ -535,7 +523,6 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addSliderControl(perfVelAmpKnob, perfVelAmpAttachment, ids::velocityToAmp);
     addSliderControl(perfVelFltKnob, perfVelFltAttachment, ids::velocityToFilter);
     addToggleControl(arpOnToggle, arpOnAttachment, ids::arpEnabled);
-    addSliderControl(arpTempoKnob, arpTempoAttachment, ids::arpInternalTempoBpm);
     addAndMakeVisible(arpRateChoice);
     attachChoiceControl(arpRateChoice, arpRateAttachment, parameterRefs.arpRate);
     addAndMakeVisible(arpPatternChoice);
@@ -544,13 +531,6 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     attachChoiceControl(arpOctaveChoice, arpOctaveAttachment, parameterRefs.arpOctave);
     addSliderControl(arpGateKnob, arpGateAttachment, ids::arpGate);
     addSliderControl(arpSwingKnob, arpSwingAttachment, ids::arpSwing);
-    addSliderControl(arpChanceKnob, arpChanceAttachment, ids::arpChance);
-    addAndMakeVisible(arpRatchetChoice);
-    attachComboChoiceControl(arpRatchetChoice, arpRatchetAttachment, parameterRefs.arpRatchetCount);
-    addSliderControl(arpRatchetChanceKnob, arpRatchetChanceAttachment, ids::arpRatchetChance);
-    addAndMakeVisible(arpAccentChoice);
-    attachComboChoiceControl(arpAccentChoice, arpAccentAttachment, parameterRefs.arpAccentEvery);
-    addSliderControl(arpAccentAmountKnob, arpAccentAmountAttachment, ids::arpAccentAmount);
     addToggleControl(arpLatchToggle, arpLatchAttachment, ids::arpLatch);
     addToggleControl(drvOnToggle, drvOnAttachment, ids::driveEnabled);
     addSliderControl(drvAmtKnob, drvAmtAttachment, ids::driveAmount);
@@ -606,19 +586,6 @@ void SynthAudioProcessorEditor::registerLearnableControls()
         arpPatternChoice.repaint();
         arpPatternLabel.repaint();
     };
-    auto applyArpComboState = [](juce::ComboBox& combo, juce::Label& label, bool armed)
-    {
-        const auto colour = armed ? coolsynth::ui::palette::learnYellow
-                                  : coolsynth::ui::palette::ledGreen;
-        combo.setColour(juce::ComboBox::outlineColourId, colour);
-        combo.setColour(juce::ComboBox::focusedOutlineColourId, colour);
-        label.setColour(juce::Label::textColourId,
-                        armed ? coolsynth::ui::palette::learnYellow
-                              : coolsynth::ui::palette::textPrimary);
-        combo.repaint();
-        label.repaint();
-    };
-
     registerLearnableControl(oscAWaveChoice, ids::oscAWave, "Wave", [&](bool a, juce::String b) { applyChoiceState(oscAWaveChoice, a, b); });
     registerLearnableControl(oscAOctaveKnob, ids::oscAOctave, "Octave", [&](bool a, juce::String b) { applyKnobState(oscAOctaveKnob, a, b); });
     registerLearnableControl(oscAFineKnob, ids::oscAFineCents, "Fine", [&](bool a, juce::String b) { applyKnobState(oscAFineKnob, a, b); });
@@ -665,18 +632,26 @@ void SynthAudioProcessorEditor::registerLearnableControls()
     registerLearnableControl(perfVelAmpKnob, ids::velocityToAmp, "Vel->Amp", [&](bool a, juce::String b) { applyKnobState(perfVelAmpKnob, a, b); });
     registerLearnableControl(perfVelFltKnob, ids::velocityToFilter, "Vel->Flt", [&](bool a, juce::String b) { applyKnobState(perfVelFltKnob, a, b); });
     registerLearnableControl(arpOnToggle, ids::arpEnabled, "Arp On", [&](bool a, juce::String b) { applyToggleState(arpOnToggle, a, b); });
-    registerLearnableControl(arpTempoKnob, ids::arpInternalTempoBpm, "Tempo", [&](bool a, juce::String b) { applyKnobState(arpTempoKnob, a, b); });
     registerLearnableControl(arpRateChoice, ids::arpRateDivision, "Rate", [&](bool a, juce::String b) { applyChoiceState(arpRateChoice, a, b); });
     registerLearnableControl(arpPatternChoice, ids::arpPattern, "Pattern", applyArpPatternState);
     registerLearnableControl(arpOctaveChoice, ids::arpOctaveRange, "Octave", [&](bool a, juce::String b) { applyChoiceState(arpOctaveChoice, a, b); });
     registerLearnableControl(arpGateKnob, ids::arpGate, "Gate", [&](bool a, juce::String b) { applyKnobState(arpGateKnob, a, b); });
     registerLearnableControl(arpSwingKnob, ids::arpSwing, "Swing", [&](bool a, juce::String b) { applyKnobState(arpSwingKnob, a, b); });
-    registerLearnableControl(arpChanceKnob, ids::arpChance, "Chance", [&](bool a, juce::String b) { applyKnobState(arpChanceKnob, a, b); });
-    registerLearnableControl(arpRatchetChoice, ids::arpRatchetCount, "Ratchet", [&](bool a, juce::String) { applyArpComboState(arpRatchetChoice, arpRatchetLabel, a); });
-    registerLearnableControl(arpRatchetChanceKnob, ids::arpRatchetChance, "Rat Ch", [&](bool a, juce::String b) { applyKnobState(arpRatchetChanceKnob, a, b); });
-    registerLearnableControl(arpAccentChoice, ids::arpAccentEvery, "Accent Every", [&](bool a, juce::String) { applyArpComboState(arpAccentChoice, arpAccentLabel, a); });
-    registerLearnableControl(arpAccentAmountKnob, ids::arpAccentAmount, "Accent", [&](bool a, juce::String b) { applyKnobState(arpAccentAmountKnob, a, b); });
     registerLearnableControl(arpLatchToggle, ids::arpLatch, "Latch", [&](bool a, juce::String b) { applyToggleState(arpLatchToggle, a, b); });
+    if (arpAdvancedOverlay != nullptr)
+    {
+        if (juce::JUCEApplicationBase::isStandaloneApp())
+            registerLearnableControl(arpAdvancedOverlay->getTempoKnob(), ids::arpInternalTempoBpm, "Tempo", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getTempoKnob(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getRhythmChoice(), ids::arpRhythm, "Rhythm", [&](bool a, juce::String b) { applyChoiceState(arpAdvancedOverlay->getRhythmChoice(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getChanceKnob(), ids::arpChance, "Chance", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getChanceKnob(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getRatchetChoice(), ids::arpRatchetCount, "Ratchet", [&](bool a, juce::String b) { applyChoiceState(arpAdvancedOverlay->getRatchetChoice(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getRatchetChanceKnob(), ids::arpRatchetChance, "Rat Ch", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getRatchetChanceKnob(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getAccentChoice(), ids::arpAccentEvery, "Accent Every", [&](bool a, juce::String b) { applyChoiceState(arpAdvancedOverlay->getAccentChoice(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getAccentAmountKnob(), ids::arpAccentAmount, "Accent", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getAccentAmountKnob(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getEuclideanPulsesKnob(), ids::arpEuclideanPulses, "Pulses", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getEuclideanPulsesKnob(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getEuclideanStepsKnob(), ids::arpEuclideanSteps, "Steps", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getEuclideanStepsKnob(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getEuclideanRotationKnob(), ids::arpEuclideanRotation, "Rotation", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getEuclideanRotationKnob(), a, b); });
+    }
     registerLearnableControl(drvOnToggle, ids::driveEnabled, "Distortion", [&](bool a, juce::String b) { applyToggleState(drvOnToggle, a, b); });
     registerLearnableControl(drvAmtKnob, ids::driveAmount, "Amount", [&](bool a, juce::String b) { applyKnobState(drvAmtKnob, a, b); });
     registerLearnableControl(drvMixKnob, ids::driveMix, "Mix", [&](bool a, juce::String b) { applyKnobState(drvMixKnob, a, b); });
@@ -710,8 +685,13 @@ void SynthAudioProcessorEditor::setupActionButtons()
     coolsynth::ui::applyGreenActionButtonStyle(loadPatchButton, "patchButton");
     coolsynth::ui::applyGreenActionButtonStyle(allNotesOffButton, "panicButton");
     coolsynth::ui::applyGreenActionButtonStyle(tooltipToggleButton, "tooltipToggleButton");
+    coolsynth::ui::applyGreenActionButtonStyle(arpAdvancedButton, "patchButton");
     allNotesOffButton.setButtonText({});
     allNotesOffButton.onClick = [this] { processor.requestPanic(); };
+    arpAdvancedButton.onClick = [this]
+    {
+        setArpAdvancedOverlayVisible(arpAdvancedOverlay == nullptr || !arpAdvancedOverlay->isVisible());
+    };
     tooltipToggleButton.setClickingTogglesState(true);
     tooltipToggleButton.setToggleState(true, juce::dontSendNotification);
     tooltipToggleButton.onClick = [this]
@@ -723,6 +703,7 @@ void SynthAudioProcessorEditor::setupActionButtons()
     };
     addAndMakeVisible(allNotesOffButton);
     addAndMakeVisible(tooltipToggleButton);
+    addAndMakeVisible(arpAdvancedButton);
 
     addAndMakeVisible(pianoBar);
 
@@ -825,6 +806,95 @@ void SynthAudioProcessorEditor::applySelectedPreset()
 
     coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(),
                                            coolsynth::presets::getFactoryPreset(index));
+}
+
+void SynthAudioProcessorEditor::setArpAdvancedOverlayVisible(bool shouldBeVisible)
+{
+    if (arpAdvancedOverlay == nullptr)
+        return;
+
+    arpAdvancedOverlay->setVisible(shouldBeVisible);
+    arpAdvancedButton.setToggleState(shouldBeVisible, juce::dontSendNotification);
+
+    if (tooltipWindow != nullptr)
+        tooltipWindow->hideTip();
+
+    if (shouldBeVisible)
+    {
+        arpAdvancedOverlay->toFront(true);
+        arpAdvancedOverlay->grabKeyboardFocus();
+    }
+}
+
+void SynthAudioProcessorEditor::refreshArpAdvancedSummary()
+{
+    arpAdvancedSummaryLabel.setText(buildArpAdvancedSummaryText(),
+                                    juce::dontSendNotification);
+}
+
+juce::String SynthAudioProcessorEditor::buildArpAdvancedSummaryText() const
+{
+    auto getPlainValue = [](juce::RangedAudioParameter* parameter) -> float
+    {
+        return parameter != nullptr ? parameter->convertFrom0to1(parameter->getValue()) : 0.0f;
+    };
+
+    auto getChoiceIndex = [&getPlainValue](juce::RangedAudioParameter* parameter) -> int
+    {
+        return static_cast<int>(std::lround(getPlainValue(parameter)));
+    };
+
+    juce::StringArray parts;
+
+    if (getChoiceIndex(parameterRefs.arpRhythm) == static_cast<int>(coolsynth::parameters::ArpRhythmChoice::euclidean))
+    {
+        auto rhythmSummary = "Euc "
+            + juce::String(static_cast<int>(std::lround(getPlainValue(parameterRefs.arpEuclideanPulses))))
+            + "/"
+            + juce::String(static_cast<int>(std::lround(getPlainValue(parameterRefs.arpEuclideanSteps))));
+
+        const int rotation = static_cast<int>(std::lround(getPlainValue(parameterRefs.arpEuclideanRotation)));
+        if (rotation > 0)
+            rhythmSummary << " r" << rotation;
+
+        parts.add(rhythmSummary);
+    }
+
+    if (getPlainValue(parameterRefs.arpSwing) > 0.001f)
+        parts.add("Swing " + getCurrentParameterText(parameterRefs.arpSwing));
+
+    if (getPlainValue(parameterRefs.arpChance) < 0.999f)
+        parts.add("Chance " + getCurrentParameterText(parameterRefs.arpChance));
+
+    const int ratchetCount = getChoiceIndex(parameterRefs.arpRatchetCount);
+    const float ratchetChance = getPlainValue(parameterRefs.arpRatchetChance);
+    if (ratchetCount != static_cast<int>(coolsynth::parameters::ArpRatchetChoice::off)
+        || ratchetChance > 0.001f)
+    {
+        auto ratchetSummary = "Rat " + getCurrentParameterText(parameterRefs.arpRatchetCount);
+        if (ratchetChance > 0.001f)
+            ratchetSummary << " @" << getCurrentParameterText(parameterRefs.arpRatchetChance);
+        parts.add(ratchetSummary);
+    }
+
+    const int accentEvery = getChoiceIndex(parameterRefs.arpAccentEvery);
+    const float accentAmount = getPlainValue(parameterRefs.arpAccentAmount);
+    if (accentEvery != static_cast<int>(coolsynth::parameters::ArpAccentEveryChoice::off)
+        || accentAmount > 0.001f)
+    {
+        auto accentSummary = "Acc " + getCurrentParameterText(parameterRefs.arpAccentEvery);
+        if (accentAmount > 0.001f)
+            accentSummary << " +" << getCurrentParameterText(parameterRefs.arpAccentAmount);
+        parts.add(accentSummary);
+    }
+
+    if (juce::JUCEApplicationBase::isStandaloneApp()
+        && std::abs(getPlainValue(parameterRefs.arpTempo) - 120.0f) > 0.5f)
+    {
+        parts.add("Int " + getCurrentParameterText(parameterRefs.arpTempo));
+    }
+
+    return parts.joinIntoString("  •  ");
 }
 
 SynthAudioProcessorEditor::~SynthAudioProcessorEditor()
@@ -1473,31 +1543,26 @@ void SynthAudioProcessorEditor::resized()
     {
         auto arpArea = deck2Cols.take(Layout::Deck2::arp);
         auto arpContent = layoutSectionWithToggle(arpArea, arpSection, arpOnToggle);
-        auto arpTopRow = arpContent.removeFromTop(arpContent.getHeight() / 2);
+        auto arpTopRow = arpContent.removeFromTop(46);
+        arpContent.removeFromTop(6);
+        auto arpMidRow = arpContent.removeFromTop(36);
         arpContent.removeFromTop(4);
-        auto arpBottomRow = arpContent;
+        auto arpStatusRow = arpContent;
 
-        float arpTopWeights = 6.8f;
-        arpTempoKnob   .setBounds(takeWeightedWidth(arpTopRow, 1.0f, arpTopWeights));
-        arpRateChoice  .setBounds(takeWeightedWidth(arpTopRow, 1.6f, arpTopWeights));
-        auto arpPatternArea = takeWeightedWidth(arpTopRow, 2.4f, arpTopWeights);
+        float arpTopWeights = 5.2f;
+        arpRateChoice  .setBounds(takeWeightedWidth(arpTopRow, 1.55f, arpTopWeights));
+        auto arpPatternArea = takeWeightedWidth(arpTopRow, 2.85f, arpTopWeights);
         arpPatternLabel .setBounds(arpPatternArea.removeFromTop(18));
         arpPatternChoice.setBounds(arpPatternArea);
         arpOctaveChoice.setBounds(takeWeightedWidth(arpTopRow, 0.8f, arpTopWeights));
         arpGateKnob    .setBounds(arpTopRow);
 
-        float arpBottomWeights = 6.75f;
-        arpSwingKnob.setBounds(takeWeightedWidth(arpBottomRow, 0.95f, arpBottomWeights));
-        arpChanceKnob.setBounds(takeWeightedWidth(arpBottomRow, 0.95f, arpBottomWeights));
-        auto arpRatchetArea = takeWeightedWidth(arpBottomRow, 1.2f, arpBottomWeights);
-        arpRatchetLabel.setBounds(arpRatchetArea.removeFromTop(18));
-        arpRatchetChoice.setBounds(arpRatchetArea);
-        arpRatchetChanceKnob.setBounds(takeWeightedWidth(arpBottomRow, 0.95f, arpBottomWeights));
-        auto arpAccentArea = takeWeightedWidth(arpBottomRow, 1.2f, arpBottomWeights);
-        arpAccentLabel.setBounds(arpAccentArea.removeFromTop(18));
-        arpAccentChoice.setBounds(arpAccentArea);
-        arpAccentAmountKnob.setBounds(takeWeightedWidth(arpBottomRow, 0.95f, arpBottomWeights));
-        arpLatchToggle.setBounds(arpBottomRow.withWidth(44));
+        float arpMidWeights = 4.2f;
+        arpSwingKnob.setBounds(takeWeightedWidth(arpMidRow, 1.0f, arpMidWeights));
+        auto arpAdvancedArea = takeWeightedWidth(arpMidRow, 2.4f, arpMidWeights);
+        arpAdvancedButton.setBounds(arpAdvancedArea.withSizeKeepingCentre(arpAdvancedArea.getWidth(), 24));
+        arpLatchToggle.setBounds(arpMidRow.withWidth(52));
+        arpAdvancedSummaryLabel.setBounds(arpStatusRow.reduced(4, 0).withTrimmedTop(2));
     }
 
     // Distortion (formerly Drive)
@@ -1582,6 +1647,13 @@ void SynthAudioProcessorEditor::resized()
         cmpAmtKnob.setBounds(compContent.removeFromLeft(compContent.getWidth() / 2));
         cmpMixKnob.setBounds(compContent);
     }
+
+    if (arpAdvancedOverlay != nullptr)
+    {
+        arpAdvancedOverlay->setBounds(getLocalBounds());
+        if (arpAdvancedOverlay->isVisible())
+            arpAdvancedOverlay->toFront(false);
+    }
 }
 
 void SynthAudioProcessorEditor::timerCallback()
@@ -1658,15 +1730,14 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     perfVelAmpKnob.setValueText(getCurrentParameterText(parameterRefs.perfVelAmp));
     perfVelFltKnob.setValueText(getCurrentParameterText(parameterRefs.perfVelFlt));
     arpOnToggle.setValueText(getCurrentParameterText(parameterRefs.arpOn));
-    arpTempoKnob.setValueText(getCurrentParameterText(parameterRefs.arpTempo));
     arpRateChoice.setValueText(getCurrentParameterText(parameterRefs.arpRate));
     arpOctaveChoice.setValueText(getCurrentParameterText(parameterRefs.arpOctave));
     arpGateKnob.setValueText(getCurrentParameterText(parameterRefs.arpGate));
     arpSwingKnob.setValueText(getCurrentParameterText(parameterRefs.arpSwing));
-    arpChanceKnob.setValueText(getCurrentParameterText(parameterRefs.arpChance));
-    arpRatchetChanceKnob.setValueText(getCurrentParameterText(parameterRefs.arpRatchetChance));
-    arpAccentAmountKnob.setValueText(getCurrentParameterText(parameterRefs.arpAccentAmount));
     arpLatchToggle.setValueText(getCurrentParameterText(parameterRefs.arpLatch));
+    if (arpAdvancedOverlay != nullptr)
+        arpAdvancedOverlay->refreshFromParameters();
+    refreshArpAdvancedSummary();
     drvOnToggle.setValueText(getCurrentParameterText(parameterRefs.drvOn));
     drvAmtKnob.setValueText(getCurrentParameterText(parameterRefs.drvAmt));
     drvMixKnob.setValueText(getCurrentParameterText(parameterRefs.drvMix));
@@ -1790,4 +1861,30 @@ void SynthAudioProcessorEditor::showPatchError(juce::String message)
                                                 "Patch Error",
                                                 message,
                                                 this);
+}
+
+bool SynthAudioProcessorEditor::isArpAdvancedOverlayVisibleForTesting() const noexcept
+{
+    return arpAdvancedOverlay != nullptr && arpAdvancedOverlay->isVisible();
+}
+
+bool SynthAudioProcessorEditor::areArpEuclideanControlsVisibleForTesting() const noexcept
+{
+    return arpAdvancedOverlay != nullptr
+        && arpAdvancedOverlay->areEuclideanControlsVisibleForTesting();
+}
+
+juce::String SynthAudioProcessorEditor::getArpAdvancedSummaryTextForTesting() const
+{
+    return arpAdvancedSummaryLabel.getText();
+}
+
+void SynthAudioProcessorEditor::setArpAdvancedOverlayVisibleForTesting(bool shouldBeVisible)
+{
+    setArpAdvancedOverlayVisible(shouldBeVisible);
+}
+
+void SynthAudioProcessorEditor::refreshArpUiForTesting()
+{
+    refreshValueDisplays();
 }

@@ -360,7 +360,8 @@ accent boost matches expected curve; combination tests against chord mode.
 Acceptance:
 
 - Unit tests for Bjorklund on known inputs (e.g. `(3, 8) → 10010010`,
-  `(5, 8) → 10110110`, `(7, 12) → 110110101101` after standard rotation).
+  `(5, 8) → 10110110`, `(7, 12) → 101011010110` for the engine's current
+  canonical rotation of that Euclidean necklace).
 - Integration test: `pulses = 3, steps = 8, rotation = 0`, pattern = Up,
   N = 4 held notes → first 8 steps fire on slots 0, 3, 6 only, and the
   Up pattern walks one held note per pulse (not per slot).

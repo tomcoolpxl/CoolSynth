@@ -2446,7 +2446,7 @@ public:
             const std::array<EuclideanCase, 4> cases {{
                 { 3, 8, 0, { true, false, false, true, false, false, true, false }, 8 },
                 { 5, 8, 0, { true, false, true, true, false, true, true, false }, 8 },
-                { 7, 12, 0, { true, true, false, true, true, false, true, false, true, true, false, true }, 12 },
+                { 7, 12, 0, { true, false, true, false, true, true, false, true, false, true, true, false }, 12 },
                 { 3, 8, 1, { false, false, true, false, false, true, false, true }, 8 },
             }};
 
