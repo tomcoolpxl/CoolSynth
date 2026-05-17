@@ -181,7 +181,7 @@ private:
     coolsynth::ui::SynthSection dlySection { "Delay" };
     coolsynth::ui::SynthSection revSection { "Reverb" };
     coolsynth::ui::SynthSection outSection { "Output" };
-    coolsynth::ui::SynthSection macrosSection { "Macros" };
+    coolsynth::ui::SynthSection macrosSection { "Vibe" };
     coolsynth::ui::SynthSection phaserSection { "Phaser" };
     coolsynth::ui::SynthSection compressorSection { "Compressor" };
 

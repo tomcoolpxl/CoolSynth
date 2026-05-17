@@ -460,7 +460,7 @@ namespace
     {
         using namespace coolsynth::parameters::ids;
 
-        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("macros", "Macros", " / ");
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("macros", "Vibe", " / ");
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID { timbre, parameterVersionHintV3 },
             "Timbre",

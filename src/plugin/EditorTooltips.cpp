@@ -120,7 +120,7 @@ void SynthAudioProcessorEditor::applyTooltips()
                                           "effects chain.\n"
                                           "Use this to match loudness without changing\n"
                                           "the patch balance upstream."));
-    macrosSection.setTooltip(makeTooltipText("Macros",
+    macrosSection.setTooltip(makeTooltipText("Vibe",
                                              "Quick one-knob shapes that modulate multiple\n"
                                              "parameters at once without moving the source knobs."));
     phaserSection.setTooltip(makeTooltipText("Phaser",

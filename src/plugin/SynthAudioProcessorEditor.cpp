@@ -522,11 +522,11 @@ void SynthAudioProcessorEditor::setupStandaloneMode(bool isStandalone)
             });
         addAndMakeVisible(*standaloneStatusBar);
 
-        setSize(1400, 628);
+        setSize(1550, 628);
     }
     else
     {
-        setSize(1400, 600);
+        setSize(1550, 600);
     }
 }
 
@@ -1264,13 +1264,50 @@ void SynthAudioProcessorEditor::resized()
     pianoBar.setBounds(bottomRow.removeFromLeft(pianoWidth));
     bottomRow.removeFromLeft(10); // gap between piano bar and new FX cluster
 
-    // New bottom-row FX cluster: Macros | Phaser | Compressor
+    // New bottom-row FX cluster: Macros | Phaser | Compressor. The cluster always lays out
+    // (no degraded fallback path); if the parent ever shrinks below the natural total width
+    // the sections compress proportionally rather than vanish.
     constexpr int macrosWidth = 130;
     constexpr int phaserWidth = 175;
     constexpr int compressorWidth = 175;
     constexpr int gap = 8;
+    constexpr int totalWidth = macrosWidth + phaserWidth + compressorWidth + gap * 2;
 
-    if (bottomRow.getWidth() > macrosWidth + phaserWidth + compressorWidth + gap * 2)
+    if (bottomRow.getWidth() < totalWidth)
+    {
+        // Scale every column by the same factor so the cluster always fills the available row.
+        const float scale = static_cast<float>(bottomRow.getWidth()) / static_cast<float>(totalWidth);
+        const int macrosW = juce::roundToInt(macrosWidth * scale);
+        const int phaserW = juce::roundToInt(phaserWidth * scale);
+        const int compressorW = bottomRow.getWidth() - macrosW - phaserW - gap * 2;
+
+        auto macrosArea = bottomRow.removeFromLeft(macrosW);
+        macrosSection.setBounds(macrosArea);
+        auto macrosContent = macrosArea.reduced(12).withTrimmedTop(24);
+        timbreKnob.setBounds(macrosContent.removeFromLeft(macrosContent.getWidth() / 2));
+        exciteKnob.setBounds(macrosContent);
+        bottomRow.removeFromLeft(gap);
+
+        auto phaserArea = bottomRow.removeFromLeft(phaserW);
+        phaserSection.setBounds(phaserArea);
+        auto phaserHeader = phaserArea.reduced(12, 0).removeFromTop(32);
+        phsOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+        phsOnToggle.setBounds(phaserHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        auto phaserContent = phaserArea.reduced(12).withTrimmedTop(24);
+        phsRateKnob.setBounds(phaserContent.removeFromLeft(phaserContent.getWidth() / 2));
+        phsDepthKnob.setBounds(phaserContent);
+        bottomRow.removeFromLeft(gap);
+
+        auto compressorArea = bottomRow.removeFromLeft(juce::jmax(0, compressorW));
+        compressorSection.setBounds(compressorArea);
+        auto compressorHeader = compressorArea.reduced(12, 0).removeFromTop(32);
+        cmpOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+        cmpOnToggle.setBounds(compressorHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        auto compressorContent = compressorArea.reduced(12).withTrimmedTop(24);
+        cmpAmtKnob.setBounds(compressorContent.removeFromLeft(compressorContent.getWidth() / 2));
+        cmpMixKnob.setBounds(compressorContent);
+    }
+    else
     {
         auto macrosArea = bottomRow.removeFromLeft(macrosWidth);
         macrosSection.setBounds(macrosArea);
@@ -1297,12 +1334,6 @@ void SynthAudioProcessorEditor::resized()
         auto compressorContent = compressorArea.reduced(12).withTrimmedTop(24);
         cmpAmtKnob.setBounds(compressorContent.removeFromLeft(compressorContent.getWidth() / 2));
         cmpMixKnob.setBounds(compressorContent);
-    }
-    else
-    {
-        macrosSection.setBounds(bottomRow);
-        phaserSection.setBounds({});
-        compressorSection.setBounds({});
     }
 }
 
