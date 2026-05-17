@@ -403,7 +403,7 @@ void SynthAudioProcessorEditor::registerLearnableControls()
     registerLearnableControl(arpOctaveChoice, ids::arpOctaveRange, "Octave", [&](bool a, juce::String b) { applyChoiceState(arpOctaveChoice, a, b); });
     registerLearnableControl(arpGateKnob, ids::arpGate, "Gate", [&](bool a, juce::String b) { applyKnobState(arpGateKnob, a, b); });
     registerLearnableControl(arpLatchToggle, ids::arpLatch, "Latch", [&](bool a, juce::String b) { applyToggleState(arpLatchToggle, a, b); });
-    registerLearnableControl(drvOnToggle, ids::driveEnabled, "Drive", [&](bool a, juce::String b) { applyToggleState(drvOnToggle, a, b); });
+    registerLearnableControl(drvOnToggle, ids::driveEnabled, "Distortion", [&](bool a, juce::String b) { applyToggleState(drvOnToggle, a, b); });
     registerLearnableControl(drvAmtKnob, ids::driveAmount, "Amount", [&](bool a, juce::String b) { applyKnobState(drvAmtKnob, a, b); });
     registerLearnableControl(drvMixKnob, ids::driveMix, "Mix", [&](bool a, juce::String b) { applyKnobState(drvMixKnob, a, b); });
     registerLearnableControl(choOnToggle, ids::chorusEnabled, "Chorus", [&](bool a, juce::String b) { applyToggleState(choOnToggle, a, b); });
@@ -1174,7 +1174,7 @@ void SynthAudioProcessorEditor::resized()
 
     lowerRow.removeFromLeft(10);
 
-    // Drive (3 cols * 55 = 165)
+    // Distortion (3 cols * 55 = 165)
     auto drvArea = lowerRow.removeFromLeft(165);
     drvSection.setBounds(drvArea);
     auto drvHeader = drvArea.reduced(12, 0).removeFromTop(32);

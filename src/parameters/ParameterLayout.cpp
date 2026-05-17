@@ -393,7 +393,7 @@ namespace
     {
         using namespace coolsynth::parameters::ids;
 
-        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("drive", "Drive", " / ");
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("drive", "Distortion", " / ");
         group->addChild(makeBoolParameter(driveEnabled, parameterVersionHint, "Enabled", false));
         group->addChild(makePercentParameter(driveAmount, parameterVersionHint, "Amount", 0.0f));
         group->addChild(makePercentParameter(driveMix, parameterVersionHint, "Mix", 1.0f));

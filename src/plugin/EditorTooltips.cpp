@@ -100,7 +100,7 @@ void SynthAudioProcessorEditor::applyTooltips()
                                           "Turn held notes into repeating patterns.\n"
                                           "Set tempo, timing division, pattern order,\n"
                                           "octave span, gate length, and latch behavior."));
-    drvSection.setTooltip(makeTooltipText("Drive",
+    drvSection.setTooltip(makeTooltipText("Distortion",
                                           "Add saturation before the time-based effects.\n"
                                           "Use amount and mix to control strength and blend."));
     choSection.setTooltip(makeTooltipText("Chorus",
@@ -369,14 +369,14 @@ void SynthAudioProcessorEditor::applyTooltips()
     setParameterTooltip(arpLatchToggle, "Latch",
                         "Latch keeps the current held-note set playing\n"
                         "after you release the keys.");
-    setParameterTooltip(drvOnToggle, "Drive",
-                        "Turn the drive stage on or off.\n"
-                        "Drive adds saturation before the time-based effects.");
+    setParameterTooltip(drvOnToggle, "Distortion",
+                        "Turn the distortion stage on or off.\n"
+                        "Distortion adds saturation before the time-based effects.");
     setParameterTooltip(drvAmtKnob, "Amount",
-                        "Set how hard the drive stage pushes the signal.\n"
+                        "Set how hard the distortion stage pushes the signal.\n"
                         "More amount means more grit and saturation.");
     setParameterTooltip(drvMixKnob, "Mix",
-                        "Blend the driven sound with the clean sound.\n"
+                        "Blend the distorted sound with the clean sound.\n"
                         "Lower values stay subtler. Higher values sound more processed.");
     setParameterTooltip(choOnToggle, "Chorus",
                         "Turn the chorus stage on or off.\n"

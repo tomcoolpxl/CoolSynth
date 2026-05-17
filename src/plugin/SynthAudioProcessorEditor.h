@@ -168,7 +168,7 @@ private:
     coolsynth::ui::SynthSection pmodSection { "Poly Mod" };
     coolsynth::ui::SynthSection perfSection { "Performance" };
     coolsynth::ui::SynthSection arpSection { "Arpeggiator" };
-    coolsynth::ui::SynthSection drvSection { "Drive" };
+    coolsynth::ui::SynthSection drvSection { "Distortion" };
     coolsynth::ui::SynthSection choSection { "Chorus" };
     coolsynth::ui::SynthSection dlySection { "Delay" };
     coolsynth::ui::SynthSection revSection { "Reverb" };
@@ -305,7 +305,7 @@ private:
     };
     coolsynth::ui::HardwareKnob arpGateKnob { "Gate" };
     coolsynth::ui::LedToggleButton arpLatchToggle { "Latch" };
-    coolsynth::ui::LedToggleButton drvOnToggle { "Drive" };
+    coolsynth::ui::LedToggleButton drvOnToggle { "Distortion" };
     coolsynth::ui::HardwareKnob drvAmtKnob { "Amount" };
     coolsynth::ui::HardwareKnob drvMixKnob { "Mix" };
     coolsynth::ui::LedToggleButton choOnToggle { "Chorus" };
