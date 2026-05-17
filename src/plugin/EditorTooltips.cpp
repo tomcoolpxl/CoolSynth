@@ -367,6 +367,12 @@ void SynthAudioProcessorEditor::applyTooltips()
     setParameterTooltip(arpGateKnob, "Gate",
                         "Gate sets how long each arp note stays open.\n"
                         "Lower values sound choppier. Higher values sound more connected.");
+    setParameterTooltip(arpSwingKnob, "Swing",
+                        "Delay every other arp step later in the subdivision.\n"
+                        "The groove stays rate-relative under host sync instead of drifting off the bar.");
+    setParameterTooltip(arpChanceKnob, "Chance",
+                        "Set the probability that each arp step will fire.\n"
+                        "At lower values some steps are skipped, but the melodic walk keeps advancing.");
     setParameterTooltip(arpLatchToggle, "Latch",
                         "Latch keeps the current held-note set playing\n"
                         "after you release the keys.");

@@ -91,6 +91,8 @@ namespace coolsynth::synth
             coolsynth::parameters::ArpPatternChoice::up;
         int octaveRange = 1;
         float gateLength = 0.5f;
+        float swingAmount = 0.0f;
+        float chance = 1.0f;
         bool latch = false;
     };
 
@@ -234,6 +236,8 @@ namespace coolsynth::synth
         std::atomic<float>* arpPattern = nullptr;
         std::atomic<float>* arpOctaveRange = nullptr;
         std::atomic<float>* arpGate = nullptr;
+        std::atomic<float>* arpSwing = nullptr;
+        std::atomic<float>* arpChance = nullptr;
         std::atomic<float>* arpLatch = nullptr;
         std::atomic<float>* driveEnabled = nullptr;
         std::atomic<float>* driveAmount = nullptr;
@@ -317,6 +321,8 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::arpPattern,               &ParameterValuePointersV2::arpPattern               },
         { coolsynth::parameters::ids::arpOctaveRange,           &ParameterValuePointersV2::arpOctaveRange           },
         { coolsynth::parameters::ids::arpGate,                  &ParameterValuePointersV2::arpGate                  },
+        { coolsynth::parameters::ids::arpSwing,                 &ParameterValuePointersV2::arpSwing                 },
+        { coolsynth::parameters::ids::arpChance,                &ParameterValuePointersV2::arpChance                },
         { coolsynth::parameters::ids::arpLatch,                 &ParameterValuePointersV2::arpLatch                 },
         { coolsynth::parameters::ids::driveEnabled,             &ParameterValuePointersV2::driveEnabled             },
         { coolsynth::parameters::ids::driveAmount,              &ParameterValuePointersV2::driveAmount              },

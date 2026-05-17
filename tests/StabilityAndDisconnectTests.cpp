@@ -1725,6 +1725,8 @@ public:
         parameters.pattern = coolsynth::parameters::ArpPatternChoice::up;
         parameters.octaveRange = 1;
         parameters.gateLength = 0.5f;
+        parameters.swingAmount = 0.0f;
+        parameters.chance = 1.0f;
         parameters.latch = false;
         return parameters;
     }
@@ -1758,6 +1760,20 @@ public:
                                           48000.0,
                                           outEvents.data(),
                                           static_cast<int>(outEvents.size()));
+    }
+
+    static int findFirstNoteOnOffset(const std::array<coolsynth::synth::EngineMidiEvent,
+                                                      coolsynth::synth::maxArpEventsPerBlock>& events,
+                                     int eventCount) noexcept
+    {
+        for (int index = 0; index < eventCount; ++index)
+        {
+            if (events[static_cast<size_t>(index)].type
+                == coolsynth::synth::EngineMidiEventType::noteOn)
+                return events[static_cast<size_t>(index)].sampleOffset;
+        }
+
+        return -1;
     }
 
     void runTest() override
@@ -2286,6 +2302,99 @@ public:
                 expectEquals(noteOffCount, 3);
                 expectEquals(arp.getRingingNoteCountForTesting(), 0);
             }
+        }
+
+        beginTest("swing_offsets_every_other_step_under_internal_clock");
+        {
+            constexpr int stepLength = 6000;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.swingAmount = 0.5f;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 1.0f);
+
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> events {};
+
+            int eventCount = renderArpBlock(arp, stepLength, events);
+            expectEquals(findFirstNoteOnOffset(events, eventCount), 0);
+
+            eventCount = renderArpBlock(arp, stepLength, events);
+            expectEquals(findFirstNoteOnOffset(events, eventCount), 1500);
+
+            eventCount = renderArpBlock(arp, stepLength, events);
+            expectEquals(findFirstNoteOnOffset(events, eventCount), 0);
+        }
+
+        beginTest("swing_stays_rate_relative_under_host_sync");
+        {
+            constexpr int blockSamples = 24000;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.rate = coolsynth::parameters::ArpRateChoice::quarter;
+            parameters.swingAmount = 0.5f;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 1.0f);
+
+            coolsynth::synth::EngineTransportInfo transport;
+            transport.hostHasTempo = true;
+            transport.hostHasPpq = true;
+            transport.hostIsPlaying = true;
+            transport.hostBpm = 120.0;
+
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> events {};
+
+            transport.hostPpqAtBlockStart = 0.0;
+            arp.setTransportInfo(transport);
+            int eventCount = renderArpBlock(arp, blockSamples, events);
+            expectEquals(findFirstNoteOnOffset(events, eventCount), 0);
+
+            transport.hostPpqAtBlockStart = 1.0;
+            arp.setTransportInfo(transport);
+            eventCount = renderArpBlock(arp, blockSamples, events);
+            expectEquals(findFirstNoteOnOffset(events, eventCount), 6000);
+        }
+
+        beginTest("chance_uses_seeded_rng_and_skips_exact_known_count_over_long_run");
+        {
+            constexpr int stepLength = 6000;
+            constexpr int stepCount = 1000;
+            constexpr uint64_t seed = 0x5a17cafeULL;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+            arp.setSeedForTesting(seed);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.chance = 0.5f;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 1.0f);
+
+            juce::Random referenceRng(static_cast<int64_t>(seed));
+            int expectedNoteOnCount = 0;
+            for (int step = 0; step < stepCount; ++step)
+                if (referenceRng.nextFloat() < 0.5f)
+                    ++expectedNoteOnCount;
+
+            int actualNoteOnCount = 0;
+            for (int step = 0; step < stepCount; ++step)
+            {
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                std::array<int, coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                const int eventCount = renderArpBlock(arp, stepLength, events);
+                actualNoteOnCount += collectNoteOns(events, eventCount, noteOns);
+            }
+
+            expectEquals(actualNoteOnCount, expectedNoteOnCount);
+            expectEquals(stepCount - actualNoteOnCount, stepCount - expectedNoteOnCount);
         }
 
         beginTest("octave_range_two_alternates_base_and_plus_twelve");

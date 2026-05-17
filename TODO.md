@@ -1,11 +1,10 @@
 # TODO
 
-## ARP Expansion Phase A — Manual closure
+## ARP Expansion Phase C — Ratchet + Accent
 
-Phase A from `ARP_EXPANSION_PLAN.md` is implemented locally and build-test clean, but it is not closed yet.
+Phase B is now implemented and locally verified. The next implementation chunk is Phase C from `ARP_EXPANSION_PLAN.md`.
 
-- Manually smoke the new arp patterns on a held chord in standalone.
-- Manually smoke the same Phase A patterns in Ableton Live Lite VST3 use.
-- If both passes are clean, move Phase A to `DONE.md` and advance `TODO.md` to Phase B.
-
-Note: the earlier Phase 11 Track E manual smoke also remains open; this file reflects the active arp review-cycle closure item.
+- Add `arpRatchetCount`, `arpRatchetChance`, `arpAccentEvery`, and `arpAccentAmount` to the parameter layout and block decode path.
+- Implement ratchet sub-step emission and accent velocity scaling in `Arpeggiator::generateEventsForBlock()`, including chord-mode combinations.
+- Add deterministic regressions for ratchet offsets/counts and accent scaling behavior.
+- Keep the UI temporary and minimal until the planned advanced overlay lands in Phase E.

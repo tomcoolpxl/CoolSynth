@@ -6,6 +6,7 @@ namespace coolsynth::parameters::ids
 {
     inline constexpr int parameterVersionHint = 2;
     inline constexpr int parameterVersionHintV3 = 3;
+    inline constexpr int parameterVersionHintV4 = 4;
 
     inline constexpr char oscAWave[] = "oscAWave";
     inline constexpr char oscAOctave[] = "oscAOctave";
@@ -67,6 +68,8 @@ namespace coolsynth::parameters::ids
     inline constexpr char arpPattern[] = "arpPattern";
     inline constexpr char arpOctaveRange[] = "arpOctaveRange";
     inline constexpr char arpGate[] = "arpGate";
+    inline constexpr char arpSwing[] = "arpSwing";
+    inline constexpr char arpChance[] = "arpChance";
     inline constexpr char arpLatch[] = "arpLatch";
 
     inline constexpr char driveEnabled[] = "driveEnabled";
@@ -219,6 +222,8 @@ namespace coolsynth::parameters
         ids::arpPattern,
         ids::arpOctaveRange,
         ids::arpGate,
+        ids::arpSwing,
+        ids::arpChance,
         ids::arpLatch,
         ids::driveEnabled,
         ids::driveAmount,

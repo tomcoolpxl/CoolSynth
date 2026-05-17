@@ -11,6 +11,7 @@ namespace coolsynth::synth
     {
         constexpr float minGateFraction = 0.05f;
         constexpr float maxGateFraction = 0.95f;
+        constexpr float maxSwingFraction = 0.75f;
         constexpr float ppqEpsilon = 1.0e-9f;
 
         bool usesPlayOrder(coolsynth::parameters::ArpPatternChoice pattern) noexcept
@@ -217,6 +218,10 @@ namespace coolsynth::synth
         const float gateFraction = juce::jlimit(minGateFraction,
                                                 maxGateFraction,
                                                 currentParameters.gateLength);
+        const float swingAmount = juce::jlimit(0.0f,
+                                               maxSwingFraction,
+                                               currentParameters.swingAmount);
+        const float chance = juce::jlimit(0.0f, 1.0f, currentParameters.chance);
         const int gateLengthSamples = juce::jmax(1, static_cast<int>(stepLengthSamples * gateFraction));
 
         // Compute when the first step fires inside this block.
@@ -254,9 +259,13 @@ namespace coolsynth::synth
 
         while (stepOffset < static_cast<float>(blockSamples) && outEventCount < maxEvents)
         {
+            const bool swingThisStep = (patternStepCounter & 1) != 0;
+            const float swingDelaySamples = swingThisStep
+                ? (swingAmount * (stepLengthSamples * 0.5f))
+                : 0.0f;
             const int eventOffset = juce::jlimit(0,
                                                  juce::jmax(0, blockSamples - 1),
-                                                 static_cast<int>(stepOffset));
+                                                 static_cast<int>(stepOffset + swingDelaySamples));
 
             if (currentParameters.pattern == coolsynth::parameters::ArpPatternChoice::chord)
             {
@@ -287,6 +296,13 @@ namespace coolsynth::synth
 
                     if (validNoteCount > 0)
                     {
+                        const bool stepPassedChance = chance >= 1.0f || rng.nextFloat() < chance;
+                        if (! stepPassedChance)
+                        {
+                            stepOffset += stepLengthSamples;
+                            continue;
+                        }
+
                         const int absoluteGateOffSample = eventOffset + gateLengthSamples;
                         const bool gateFitsInBlock = absoluteGateOffSample < blockSamples;
                         const int requiredEventCount = validNoteCount * (gateFitsInBlock ? 2 : 1);
@@ -341,6 +357,13 @@ namespace coolsynth::synth
 
                 if (note >= 0)
                 {
+                    const bool stepPassedChance = chance >= 1.0f || rng.nextFloat() < chance;
+                    if (! stepPassedChance)
+                    {
+                        stepOffset += stepLengthSamples;
+                        continue;
+                    }
+
                     EngineMidiEvent noteOn {};
                     noteOn.type = EngineMidiEventType::noteOn;
                     noteOn.sampleOffset = eventOffset;

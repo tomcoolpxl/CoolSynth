@@ -1,5 +1,16 @@
 # DONE
 
+## ARP Expansion Phase B — Swing + Chance
+
+Completed on 2026-05-17. The Phase B arp modifier slice is implemented, build-test clean, and intentionally breaks older saved patch/state compatibility.
+
+- [x] Added `arpSwing` and `arpChance` end-to-end across `ParameterIDs`, the APVTS layout, raw parameter binding, processor block decoding, and the main arp band in the shared editor.
+- [x] Updated the arp engine so swing delays every other step by a rate-relative fraction of half a step, while chance skips steps after the melodic pattern advances, preserving the pattern walk instead of stalling it.
+- [x] Kept chord-mode chance semantics phase-correct: one probability roll gates the whole chord step, matching the approved Phase B decision.
+- [x] Added deterministic `V2Arpeggiator` coverage for internal-clock swing offsets, host-synced rate-relative swing offsets, and seeded 50% chance behavior over a 1000-step run.
+- [x] Bumped wrapped `.cspatch` and wrapped processor-state format versions from `3` to `4` so older saved patches/state are rejected cleanly under the new arp parameter contract.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `build\CoolSynthMidiLearnTests_artefacts\Debug\CoolSynthMidiLearnTests.exe` pass on 2026-05-17 after the Phase B change.
+
 ## Phase 11 Track D — Code hygiene and dead code
 
 Completed on 2026-05-16. All eight WIs landed, builds clean, all tests pass.

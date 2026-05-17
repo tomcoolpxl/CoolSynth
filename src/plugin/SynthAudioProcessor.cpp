@@ -18,7 +18,7 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    inline constexpr int processorStateFormatVersion = 3;
+    inline constexpr int processorStateFormatVersion = 4;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
@@ -751,6 +751,8 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
     params.arp.pattern = static_cast<coolsynth::parameters::ArpPatternChoice>(choiceParams.arpPattern->getIndex());
     params.arp.octaveRange = static_cast<int>(std::round(parameterValues.arpOctaveRange->load()));
     params.arp.gateLength = parameterValues.arpGate->load();
+    params.arp.swingAmount = parameterValues.arpSwing->load();
+    params.arp.chance = parameterValues.arpChance->load();
     params.arp.latch = decodeBool(parameterValues.arpLatch->load());
 
     params.drive.enabled = decodeBool(parameterValues.driveEnabled->load());
@@ -866,4 +868,3 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new SynthAudioProcessor();
 }
-

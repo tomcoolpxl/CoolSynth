@@ -95,6 +95,8 @@ private:
         juce::RangedAudioParameter* arpPattern = nullptr;
         juce::RangedAudioParameter* arpOctave = nullptr;
         juce::RangedAudioParameter* arpGate = nullptr;
+        juce::RangedAudioParameter* arpSwing = nullptr;
+        juce::RangedAudioParameter* arpChance = nullptr;
         juce::RangedAudioParameter* arpLatch = nullptr;
         juce::RangedAudioParameter* drvOn = nullptr;
         juce::RangedAudioParameter* drvAmt = nullptr;
@@ -307,6 +309,8 @@ private:
         1
     };
     coolsynth::ui::HardwareKnob arpGateKnob { "Gate" };
+    coolsynth::ui::HardwareKnob arpSwingKnob { "Swing" };
+    coolsynth::ui::HardwareKnob arpChanceKnob { "Chance" };
     coolsynth::ui::LedToggleButton arpLatchToggle { "Latch" };
     coolsynth::ui::LedToggleButton drvOnToggle { "Distortion" };
     coolsynth::ui::HardwareKnob drvAmtKnob { "Amount" };
@@ -384,6 +388,8 @@ private:
     std::unique_ptr<ChoiceAttachment> arpPatternAttachment;
     std::unique_ptr<ChoiceAttachment> arpOctaveAttachment;
     std::unique_ptr<SliderAttachment> arpGateAttachment;
+    std::unique_ptr<SliderAttachment> arpSwingAttachment;
+    std::unique_ptr<SliderAttachment> arpChanceAttachment;
     std::unique_ptr<ButtonAttachment> arpLatchAttachment;
     std::unique_ptr<ButtonAttachment> drvOnAttachment;
     std::unique_ptr<SliderAttachment> drvAmtAttachment;

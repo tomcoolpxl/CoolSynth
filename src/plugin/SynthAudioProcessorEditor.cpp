@@ -288,6 +288,8 @@ void SynthAudioProcessorEditor::setupParameterRefs()
     parameterRefs.arpPattern = apvts.getParameter(ids::arpPattern);
     parameterRefs.arpOctave = apvts.getParameter(ids::arpOctaveRange);
     parameterRefs.arpGate = apvts.getParameter(ids::arpGate);
+    parameterRefs.arpSwing = apvts.getParameter(ids::arpSwing);
+    parameterRefs.arpChance = apvts.getParameter(ids::arpChance);
     parameterRefs.arpLatch = apvts.getParameter(ids::arpLatch);
     parameterRefs.drvOn = apvts.getParameter(ids::driveEnabled);
     parameterRefs.drvAmt = apvts.getParameter(ids::driveAmount);
@@ -509,6 +511,8 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addAndMakeVisible(arpOctaveChoice);
     attachChoiceControl(arpOctaveChoice, arpOctaveAttachment, parameterRefs.arpOctave);
     addSliderControl(arpGateKnob, arpGateAttachment, ids::arpGate);
+    addSliderControl(arpSwingKnob, arpSwingAttachment, ids::arpSwing);
+    addSliderControl(arpChanceKnob, arpChanceAttachment, ids::arpChance);
     addToggleControl(arpLatchToggle, arpLatchAttachment, ids::arpLatch);
     addToggleControl(drvOnToggle, drvOnAttachment, ids::driveEnabled);
     addSliderControl(drvAmtKnob, drvAmtAttachment, ids::driveAmount);
@@ -616,6 +620,8 @@ void SynthAudioProcessorEditor::registerLearnableControls()
     registerLearnableControl(arpPatternChoice, ids::arpPattern, "Pattern", applyArpPatternState);
     registerLearnableControl(arpOctaveChoice, ids::arpOctaveRange, "Octave", [&](bool a, juce::String b) { applyChoiceState(arpOctaveChoice, a, b); });
     registerLearnableControl(arpGateKnob, ids::arpGate, "Gate", [&](bool a, juce::String b) { applyKnobState(arpGateKnob, a, b); });
+    registerLearnableControl(arpSwingKnob, ids::arpSwing, "Swing", [&](bool a, juce::String b) { applyKnobState(arpSwingKnob, a, b); });
+    registerLearnableControl(arpChanceKnob, ids::arpChance, "Chance", [&](bool a, juce::String b) { applyKnobState(arpChanceKnob, a, b); });
     registerLearnableControl(arpLatchToggle, ids::arpLatch, "Latch", [&](bool a, juce::String b) { applyToggleState(arpLatchToggle, a, b); });
     registerLearnableControl(drvOnToggle, ids::driveEnabled, "Distortion", [&](bool a, juce::String b) { applyToggleState(drvOnToggle, a, b); });
     registerLearnableControl(drvAmtKnob, ids::driveAmount, "Amount", [&](bool a, juce::String b) { applyKnobState(drvAmtKnob, a, b); });
@@ -1413,15 +1419,17 @@ void SynthAudioProcessorEditor::resized()
     {
         auto arpArea = deck2Cols.take(Layout::Deck2::arp);
         auto arpContent = layoutSectionWithToggle(arpArea, arpSection, arpOnToggle);
-        float arpWeights = 8.6f;
-        arpTempoKnob   .setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
-        arpRateChoice  .setBounds(takeWeightedWidth(arpContent, 2.2f, arpWeights));
-        auto arpPatternArea = takeWeightedWidth(arpContent, 2.0f, arpWeights);
+        float arpWeights = 9.35f;
+        arpTempoKnob   .setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
+        arpRateChoice  .setBounds(takeWeightedWidth(arpContent, 2.0f, arpWeights));
+        auto arpPatternArea = takeWeightedWidth(arpContent, 1.9f, arpWeights);
         arpPatternLabel .setBounds(arpPatternArea.removeFromTop(20));
         arpPatternChoice.setBounds(arpPatternArea.removeFromTop(26));
-        arpOctaveChoice.setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
-        arpGateKnob    .setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
-        arpLatchToggle.setBounds(arpContent.withWidth(48));
+        arpOctaveChoice.setBounds(takeWeightedWidth(arpContent, 0.9f, arpWeights));
+        arpGateKnob    .setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
+        arpSwingKnob   .setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
+        arpChanceKnob  .setBounds(takeWeightedWidth(arpContent, 1.1f, arpWeights));
+        arpLatchToggle.setBounds(arpContent.withWidth(44));
     }
 
     // Distortion (formerly Drive)
@@ -1586,6 +1594,8 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     arpRateChoice.setValueText(getCurrentParameterText(parameterRefs.arpRate));
     arpOctaveChoice.setValueText(getCurrentParameterText(parameterRefs.arpOctave));
     arpGateKnob.setValueText(getCurrentParameterText(parameterRefs.arpGate));
+    arpSwingKnob.setValueText(getCurrentParameterText(parameterRefs.arpSwing));
+    arpChanceKnob.setValueText(getCurrentParameterText(parameterRefs.arpChance));
     arpLatchToggle.setValueText(getCurrentParameterText(parameterRefs.arpLatch));
     drvOnToggle.setValueText(getCurrentParameterText(parameterRefs.drvOn));
     drvAmtKnob.setValueText(getCurrentParameterText(parameterRefs.drvAmt));

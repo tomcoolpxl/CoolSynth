@@ -397,6 +397,13 @@ namespace
             1,
             juce::AudioParameterIntAttributes().withStringFromValueFunction([](int value, int) { return formatOctaveRange(value - 1); })));
         group->addChild(makePercentParameter(arpGate, parameterVersionHint, "Gate", 0.5f));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { arpSwing, parameterVersionHintV4 },
+            "Swing",
+            juce::NormalisableRange<float>(0.0f, 0.75f),
+            0.0f,
+            percentAttributes()));
+        group->addChild(makePercentParameter(arpChance, parameterVersionHintV4, "Chance", 1.0f));
         group->addChild(makeBoolParameter(arpLatch, parameterVersionHint, "Latch", false));
         return group;
     }
