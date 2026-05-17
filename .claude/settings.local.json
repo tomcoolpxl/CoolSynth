@@ -46,7 +46,9 @@
       "Bash(cmake --build C:/Users/thraa/github/CoolSynth/build --config Debug --target CoolSynthPresetNormalizer)",
       "Bash(./CoolSynthPresetNormalizer_artefacts/Debug/CoolSynthPresetNormalizer.exe)",
       "PowerShell(& C:/Users/thraa/github/CoolSynth/scripts/apply_normalized_master_gains.ps1)",
-      "Bash(cmake --build C:/Users/thraa/github/CoolSynth/build --config Debug --target CoolSynthMidiLearnTests CoolSynthPresetNormalizer)"
+      "Bash(cmake --build C:/Users/thraa/github/CoolSynth/build --config Debug --target CoolSynthMidiLearnTests CoolSynthPresetNormalizer)",
+      "PowerShell(Test-Path *)",
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; $exit = $LASTEXITCODE; \"EXIT: $exit\"; $output | Select-String -Pattern \"FAILED|PASSED|^All tests|tests fail|error|ERROR\" | Select-Object -Last 20)"
     ]
   }
 }

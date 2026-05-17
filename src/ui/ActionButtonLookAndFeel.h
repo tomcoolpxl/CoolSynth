@@ -52,27 +52,10 @@ namespace coolsynth::ui
                 return;
             }
 
-            if (button.getComponentID() == "ledModeButton")
-            {
-                auto iconBounds = bounds.toFloat().reduced(5.0f, 4.0f);
-                juce::Path arrow;
-                const auto centreX = iconBounds.getCentreX();
-                const auto topY = iconBounds.getY();
-                const auto midY = iconBounds.getCentreY() + 1.0f;
-                const auto bottomY = iconBounds.getBottom();
-
-                arrow.startNewSubPath(centreX, topY);
-                arrow.lineTo(iconBounds.getRight(), midY);
-                arrow.startNewSubPath(centreX, topY);
-                arrow.lineTo(iconBounds.getX(), midY);
-                arrow.startNewSubPath(centreX, topY + 1.0f);
-                arrow.lineTo(centreX, bottomY);
-
-                g.strokePath(arrow, juce::PathStrokeType(1.75f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-                return;
-            }
-
-            g.setFont(juce::FontOptions(13.0f, isPatchButton ? juce::Font::bold : juce::Font::plain));
+            const bool isKeysToggle = button.getComponentID() == "keysToggleButton";
+            const float fontSize = isKeysToggle ? 9.0f : 13.0f;
+            const auto fontStyle = (isPatchButton || isKeysToggle) ? juce::Font::bold : juce::Font::plain;
+            g.setFont(juce::FontOptions(fontSize, fontStyle));
             const auto label = button.getComponentID() == "tooltipToggleButton"
                 ? button.getButtonText()
                 : button.getButtonText().toUpperCase();

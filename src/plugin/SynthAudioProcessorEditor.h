@@ -173,6 +173,7 @@ private:
     coolsynth::ui::SynthSection dlySection { "Delay" };
     coolsynth::ui::SynthSection revSection { "Reverb" };
     coolsynth::ui::SynthSection outSection { "Output" };
+    coolsynth::ui::SynthSection fxPlaceholderSection { "New FX (coming soon)" };
 
     coolsynth::ui::SegmentedChoiceGroup oscAWaveChoice {
         "Wave",

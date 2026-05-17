@@ -217,6 +217,7 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addAndMakeVisible(dlySection);
     addAndMakeVisible(revSection);
     addAndMakeVisible(outSection);
+    addAndMakeVisible(fxPlaceholderSection);
 
     auto addSliderControl = [this, &apvts](auto& control,
                                            std::unique_ptr<SliderAttachment>& attachment,
@@ -1232,7 +1233,11 @@ void SynthAudioProcessorEditor::resized()
     outGainKnob.setBounds(outContent);
 
     area.removeFromTop(16);
-    pianoBar.setBounds(area.removeFromTop(pianoBar.getDesiredHeight()));
+    auto bottomRow = area.removeFromTop(pianoBar.getDesiredHeight());
+    const int pianoWidth = juce::jmin(pianoBar.getDesiredWidth(), bottomRow.getWidth());
+    pianoBar.setBounds(bottomRow.removeFromLeft(pianoWidth));
+    bottomRow.removeFromLeft(10); // gap between piano bar and new FX cluster
+    fxPlaceholderSection.setBounds(bottomRow);
 }
 
 void SynthAudioProcessorEditor::timerCallback()
