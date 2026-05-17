@@ -6,6 +6,11 @@ namespace coolsynth::ui
 {
     namespace
     {
+        constexpr int kPaneGap = 4;
+        constexpr int kNumPanes = 7;
+        constexpr int kLabelHeight = 12;
+        constexpr int kVisualizerMargin = 2;
+
         float renderIdealSample(float phase, coolsynth::parameters::OscillatorWaveShape shape, float pw)
         {
             switch (shape)
@@ -63,27 +68,32 @@ namespace coolsynth::ui
 
     void SignalChainVisualizer::paint(juce::Graphics& g)
     {
-        auto area = getLocalBounds().reduced(2);
+        auto area = getLocalBounds().reduced(kVisualizerMargin);
 
-        // 5 Panes: MODS, SOURCE, FILTER, SPECTRA, REALITY
-        const int gap = 8;
-        const int paneW = (area.getWidth() - (gap * 4)) / 5;
+        const int paneW = (area.getWidth() - (kPaneGap * (kNumPanes - 1))) / kNumPanes;
 
-        auto modsArea = area.removeFromLeft(paneW);
-        area.removeFromLeft(gap);
-        auto sourceArea = area.removeFromLeft(paneW);
-        area.removeFromLeft(gap);
-        auto filterArea = area.removeFromLeft(paneW);
-        area.removeFromLeft(gap);
-        auto realityArea = area.removeFromLeft(paneW);
-        area.removeFromLeft(gap);
-        auto spectraArea = area;
+        auto take = [&](int width) -> juce::Rectangle<int>
+        {
+            auto pane = area.removeFromLeft(width);
+            area.removeFromLeft(kPaneGap);
+            return pane;
+        };
 
-        drawModulationPane(g, modsArea);
-        drawWaveform(g, sourceArea, sourcePath, palette::textPrimary, "SOURCE");
-        drawWaveform(g, filterArea, filterPath, palette::ledGreen, "FILTER");
-        drawWaveform(g, realityArea, realityPath, palette::learnYellow, "REALITY");
-        drawWaveform(g, spectraArea, spectraPath, palette::ledGreen, "SPECTRA");
+        auto lfoArea     = take(paneW);
+        auto fltEnvArea  = take(paneW);
+        auto ampEnvArea  = take(paneW);
+        auto sourceArea  = take(paneW);
+        auto filterArea  = take(paneW);
+        auto realityArea = take(paneW);
+        auto spectraArea = area; // last pane uses remainder
+
+        drawWaveform(g, lfoArea,     lfoPath,       palette::learnYellow,  "LFO");
+        drawWaveform(g, fltEnvArea,  filterEnvPath, palette::ledGreen,     "FLT ENV");
+        drawWaveform(g, ampEnvArea,  ampEnvPath,    palette::textPrimary,  "AMP ENV");
+        drawWaveform(g, sourceArea,  sourcePath,    palette::textPrimary,  "SOURCE");
+        drawWaveform(g, filterArea,  filterPath,    palette::ledGreen,     "FILTER");
+        drawWaveform(g, realityArea, realityPath,   palette::learnYellow,  "REALITY");
+        drawWaveform(g, spectraArea, spectraPath,   palette::ledGreen,     "SPECTRA");
     }
 
     void SignalChainVisualizer::resized()
@@ -123,7 +133,15 @@ namespace coolsynth::ui
 
     float SignalChainVisualizer::paneWidth() const noexcept
     {
-        return (getWidth() - 36) / 5.0f;
+        const float usable = static_cast<float>(getWidth() - (kVisualizerMargin * 2)
+                                                - (kPaneGap * (kNumPanes - 1)));
+        return usable / static_cast<float>(kNumPanes);
+    }
+
+    float SignalChainVisualizer::paneWaveHeight() const noexcept
+    {
+        const int waveH = getHeight() - (kVisualizerMargin * 2) - kLabelHeight;
+        return static_cast<float>(juce::jmax(1, waveH));
     }
 
     void SignalChainVisualizer::timerCallback()
@@ -148,7 +166,7 @@ namespace coolsynth::ui
 
                 spectraPath.clear();
                 const float w = paneWidth();
-                const float h = static_cast<float>(getHeight());
+                const float h = paneWaveHeight();
                 const int numBins = fftSize / 2;
                 const float stepX = w / std::log10(static_cast<float>(numBins));
 
@@ -177,7 +195,7 @@ namespace coolsynth::ui
 
         float zoom = juce::jmin(10.0f, 1.0f / maxAbsVal);
 
-        const float halfH = static_cast<float>(getHeight()) * 0.5f;
+        const float halfH = paneWaveHeight() * 0.5f;
         const float w = paneWidth();
         const float stepX = w / static_cast<float>(buf.size());
 
@@ -231,14 +249,14 @@ namespace coolsynth::ui
         const int numPoints = 256;
         const float numCycles = 2.0f;
         const float w = std::max(1.0f, paneWidth());
-        const float h = static_cast<float>(getHeight());
+        const float h = paneWaveHeight();
         const float halfH = h * 0.5f;
         const float stepX = w / static_cast<float>(numPoints);
 
         float drift = std::sin(static_cast<float>(frameCount) * 0.05f) * 0.01f;
         float lfoAnim = std::sin(static_cast<float>(frameCount) * 0.1f) * 0.02f;
 
-        // Draw LFO Preview
+        // LFO preview
         auto lfoOscShape = OscillatorWaveShape::sine;
         if (lfoWave == LfoWaveShape::saw) lfoOscShape = OscillatorWaveShape::saw;
         else if (lfoWave == LfoWaveShape::square) lfoOscShape = OscillatorWaveShape::pulse;
@@ -250,16 +268,16 @@ namespace coolsynth::ui
             float lfoPhase = std::fmod(normX + lfoAnim, 1.0f);
             float lfoVal = renderIdealSample(lfoPhase, lfoOscShape, 0.5f);
             float lx = static_cast<float>(i) * stepX;
-            float ly = halfH - lfoVal * halfH * 0.7f;
+            float ly = halfH - lfoVal * halfH * 0.8f;
             if (i == 0) lfoPath.startNewSubPath(lx, ly);
             else lfoPath.lineTo(lx, ly);
         }
 
-        // Draw Env Previews
-        filterEnvPath = createAdsrPath(fA, fD, fS, fR, w, h * 0.7f);
-        ampEnvPath = createAdsrPath(aA, aD, aS, aR, w, h * 0.7f);
+        // Envelope previews — span the full wave area, leaving a hairline at the top.
+        filterEnvPath = createAdsrPath(fA, fD, fS, fR, w, h * 0.92f);
+        ampEnvPath    = createAdsrPath(aA, aD, aS, aR, w, h * 0.92f);
 
-        // Draw Source/Filter Waves
+        // Source / Filter waves
         float lastFiltered = 0.0f;
         float alpha = std::clamp(cutoff / 4000.0f, 0.01f, 1.0f);
 
@@ -293,72 +311,33 @@ namespace coolsynth::ui
         }
     }
 
-    void SignalChainVisualizer::drawModulationPane(juce::Graphics& g, juce::Rectangle<int> area)
-    {
-        g.saveState();
-        g.setColour(palette::panelBlack);
-        g.fillRoundedRectangle(area.toFloat(), 3.0f);
-        g.setColour(palette::panelStroke.withAlpha(0.6f));
-        g.drawRoundedRectangle(area.toFloat(), 3.0f, 1.0f);
-
-        auto inner = area.reduced(4, 2);
-
-        // Split into 3 micro-rows
-        auto lfoArea = inner.removeFromTop(inner.getHeight() / 3);
-        auto fenvArea = inner.removeFromTop(inner.getHeight() / 2);
-        auto aenvArea = inner;
-
-        auto drawMicro = [&](juce::Rectangle<int> r, const juce::Path& p, juce::Colour c, const juce::String& lbl)
-        {
-            g.setColour(palette::textSecondary.withAlpha(0.6f));
-            g.setFont(7.0f);
-            g.drawText(lbl, r.removeFromLeft(20), juce::Justification::centredLeft);
-
-            g.setColour(c);
-            auto pScaled = p;
-            auto bounds = pScaled.getBounds();
-            pScaled.applyTransform(juce::AffineTransform::scale(r.getWidth() / std::max(1.0f, bounds.getWidth()),
-                                                                r.getHeight() / std::max(1.0f, bounds.getHeight())));
-            pScaled.applyTransform(juce::AffineTransform::translation(static_cast<float>(r.getX()),
-                                                                      static_cast<float>(r.getY())));
-            g.strokePath(pScaled, juce::PathStrokeType(1.0f));
-        };
-
-        drawMicro(lfoArea, lfoPath, palette::learnYellow, "LFO");
-        drawMicro(fenvArea, filterEnvPath, palette::ledGreen, "FLT");
-        drawMicro(aenvArea, ampEnvPath, palette::textPrimary, "AMP");
-
-        g.setColour(palette::textSecondary);
-        g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
-        g.drawText("MODS", area.withTrimmedBottom(2).removeFromBottom(10), juce::Justification::centred);
-
-        g.restoreState();
-    }
-
     void SignalChainVisualizer::drawWaveform(juce::Graphics& g,
                                               juce::Rectangle<int> area,
                                               const juce::Path& path,
                                               juce::Colour colour,
                                               const juce::String& label)
     {
-        g.saveState();
-        g.setColour(palette::panelBlack);
-        g.fillRoundedRectangle(area.toFloat(), 3.0f);
-        g.setColour(palette::panelStroke.withAlpha(0.6f));
-        g.drawRoundedRectangle(area.toFloat(), 3.0f, 1.0f);
+        auto labelArea = area.removeFromBottom(kLabelHeight);
+        auto waveBox = area;
 
-        g.reduceClipRegion(area);
+        g.setColour(palette::panelBlack);
+        g.fillRoundedRectangle(waveBox.toFloat(), 3.0f);
+        g.setColour(palette::panelStroke.withAlpha(0.6f));
+        g.drawRoundedRectangle(waveBox.toFloat(), 3.0f, 1.0f);
+
+        {
+            juce::Graphics::ScopedSaveState saveState(g);
+            g.reduceClipRegion(waveBox);
+
+            g.setColour(colour);
+            auto p = path;
+            p.applyTransform(juce::AffineTransform::translation(static_cast<float>(waveBox.getX()),
+                                                                static_cast<float>(waveBox.getY())));
+            g.strokePath(p, juce::PathStrokeType(1.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        }
 
         g.setColour(palette::textSecondary);
         g.setFont(juce::FontOptions(9.0f, juce::Font::bold));
-        g.drawText(label, area.withTrimmedBottom(2).removeFromBottom(10), juce::Justification::centred);
-
-        g.setColour(colour);
-        auto p = path;
-        p.applyTransform(juce::AffineTransform::translation(static_cast<float>(area.getX()),
-                                                            static_cast<float>(area.getY())));
-        g.strokePath(p, juce::PathStrokeType(1.5f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-
-        g.restoreState();
+        g.drawText(label, labelArea, juce::Justification::centred);
     }
 }

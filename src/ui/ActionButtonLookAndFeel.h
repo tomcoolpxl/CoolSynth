@@ -99,4 +99,72 @@ namespace coolsynth::ui
         button.setColour(juce::TextButton::buttonOnColourId, palette::ledGreen);
         button.setLookAndFeel(&getGreenActionButtonLookAndFeel());
     }
+
+    class GreenComboBoxLookAndFeel final : public juce::LookAndFeel_V4
+    {
+    public:
+        void drawComboBox(juce::Graphics& g,
+                          int width,
+                          int height,
+                          bool isButtonDown,
+                          int /*buttonX*/,
+                          int /*buttonY*/,
+                          int /*buttonW*/,
+                          int /*buttonH*/,
+                          juce::ComboBox& box) override
+        {
+            auto bounds = juce::Rectangle<float>(0.0f, 0.0f,
+                                                 static_cast<float>(width),
+                                                 static_cast<float>(height));
+            auto fill = palette::panelRaised;
+            if (box.isMouseOver(true) && box.isEnabled())
+                fill = palette::panelRaisedAlt;
+            if (isButtonDown)
+                fill = palette::ledGreen;
+
+            g.setColour(fill);
+            g.fillRect(bounds);
+
+            g.setColour(palette::ledGreen);
+            g.drawRect(bounds, 1.0f);
+
+            auto arrowZone = juce::Rectangle<float>(static_cast<float>(width - 18),
+                                                    0.0f,
+                                                    16.0f,
+                                                    static_cast<float>(height)).reduced(2.0f, 8.0f);
+            juce::Path arrow;
+            arrow.addTriangle(arrowZone.getX(), arrowZone.getY(),
+                              arrowZone.getRight(), arrowZone.getY(),
+                              arrowZone.getCentreX(), arrowZone.getBottom());
+            g.setColour(isButtonDown ? palette::ledTextOn : palette::ledTextOff);
+            g.fillPath(arrow);
+        }
+
+        juce::Font getComboBoxFont(juce::ComboBox&) override
+        {
+            return juce::Font(juce::FontOptions(12.0f, juce::Font::bold));
+        }
+
+        void positionComboBoxText(juce::ComboBox& box, juce::Label& label) override
+        {
+            label.setBounds(8, 0, box.getWidth() - 24, box.getHeight());
+            label.setFont(getComboBoxFont(box));
+        }
+    };
+
+    inline GreenComboBoxLookAndFeel& getGreenComboBoxLookAndFeel()
+    {
+        static GreenComboBoxLookAndFeel lookAndFeel;
+        return lookAndFeel;
+    }
+
+    inline void applyGreenComboBoxStyle(juce::ComboBox& box)
+    {
+        box.setColour(juce::ComboBox::backgroundColourId, palette::panelRaised);
+        box.setColour(juce::ComboBox::textColourId, palette::ledTextOff);
+        box.setColour(juce::ComboBox::outlineColourId, palette::ledGreen);
+        box.setColour(juce::ComboBox::arrowColourId, palette::ledTextOff);
+        box.setColour(juce::ComboBox::focusedOutlineColourId, palette::ledGreen);
+        box.setLookAndFeel(&getGreenComboBoxLookAndFeel());
+    }
 }

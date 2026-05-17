@@ -12,8 +12,8 @@
 namespace coolsynth::ui
 {
     /**
-     * A 5-pane Visual Laboratory showing Signal Flow:
-     * [MODS] -> [SOURCE] -> [FILTER] -> [REALITY] -> [SPECTRA]
+     * A 7-pane Visual Laboratory showing Signal Flow with labels beneath each pane:
+     * [LFO] [FLT ENV] [AMP ENV] [SOURCE] [FILTER] [REALITY] [SPECTRA]
      */
     class SignalChainVisualizer final : public juce::Component,
                                         private juce::Timer
@@ -38,9 +38,8 @@ namespace coolsynth::ui
                           juce::Colour colour,
                           const juce::String& label);
 
-        void drawModulationPane(juce::Graphics& g, juce::Rectangle<int> area);
-
         [[nodiscard]] float paneWidth() const noexcept;
+        [[nodiscard]] float paneWaveHeight() const noexcept;
 
         juce::AudioProcessorValueTreeState& state;
         coolsynth::plugin::ProcessorScopeFifo& scopeFifo;

@@ -513,11 +513,8 @@ void SynthAudioProcessorEditor::setupTooltipWindow()
 
 void SynthAudioProcessorEditor::setupPresetSelector()
 {
-    presetSelector.setTextWhenNothingSelected("Preset");
-    presetSelector.setColour(juce::ComboBox::backgroundColourId, coolsynth::ui::palette::panelRaised);
-    presetSelector.setColour(juce::ComboBox::textColourId, coolsynth::ui::palette::textPrimary);
-    presetSelector.setColour(juce::ComboBox::outlineColourId, coolsynth::ui::palette::panelStroke);
-    presetSelector.setColour(juce::ComboBox::arrowColourId, coolsynth::ui::palette::textPrimary);
+    coolsynth::ui::applyGreenComboBoxStyle(presetSelector);
+    presetSelector.setTextWhenNothingSelected("PRESET");
     presetSelector.setJustificationType(juce::Justification::centredLeft);
     presetSelector.setTooltip("Factory presets — selecting one replaces the current patch.");
 
@@ -554,6 +551,8 @@ SynthAudioProcessorEditor::~SynthAudioProcessorEditor()
         standaloneMidiController->removeChangeListener(this);
 
     stopTimer();
+
+    presetSelector.setLookAndFeel(nullptr);
 
     if (tooltipWindow != nullptr)
         tooltipWindow->setLookAndFeel(nullptr);
@@ -983,10 +982,9 @@ void SynthAudioProcessorEditor::resized()
     auto titleArea = area.removeFromTop(48);
     auto logoArea = titleArea.removeFromLeft(248);
 
-    // 5 panes at 4:3 (48x36 each) + 4 gaps of 8px + 4px borders = 276px total
-    // Shifted 60px right to clear logo tail space
-    titleArea.removeFromLeft(60);
-    visualizer.setBounds(titleArea.removeFromLeft(276).reduced(0, 4));
+    // 7 panes with labels below; pane width ≈ 49px each.
+    titleArea.removeFromLeft(20);
+    visualizer.setBounds(titleArea.removeFromLeft(372));
 
     if (titleLogoDrawable != nullptr)
     {
@@ -1002,11 +1000,6 @@ void SynthAudioProcessorEditor::resized()
                                                                       | juce::RectanglePlacement::onlyReduceInSize));
     }
 
-    titleArea.removeFromLeft(12);
-    presetSelector.setBounds(titleArea.removeFromLeft(200).withSizeKeepingCentre(200, 26));
-    titleArea.removeFromLeft(8);
-    midiLearnStatusLabel.setBounds(titleArea.removeFromLeft(160).withTrimmedTop(12));
-
     if (patchActionsVisible)
     {
         const auto buttonHeight = 24;
@@ -1014,12 +1007,9 @@ void SynthAudioProcessorEditor::resized()
         const auto tooltipButtonWidth = 24;
         const auto patchButtonWidth = 112;
         const auto gap = 4;
-        const auto outerRightMargin = juce::JUCEApplicationBase::isStandaloneApp() ? 0 : 0;
         const auto totalWidth = panicSize + tooltipButtonWidth + (gap * 4) + (patchButtonWidth * 3);
 
-        auto clusterArea = titleArea.removeFromRight(totalWidth + outerRightMargin);
-        if (outerRightMargin > 0)
-            clusterArea.removeFromRight(outerRightMargin);
+        auto clusterArea = titleArea.removeFromRight(totalWidth);
 
         initPatchButton.setBounds(clusterArea.removeFromLeft(patchButtonWidth).withSizeKeepingCentre(patchButtonWidth, buttonHeight));
         clusterArea.removeFromLeft(gap);
@@ -1037,6 +1027,15 @@ void SynthAudioProcessorEditor::resized()
         titleArea.removeFromRight(4);
         allNotesOffButton.setBounds(titleArea.removeFromRight(24).withSizeKeepingCentre(24, 24));
     }
+
+    // Preset selector sits immediately left of the patch cluster, themed to match.
+    titleArea.removeFromRight(8);
+    presetSelector.setBounds(titleArea.removeFromRight(180).withSizeKeepingCentre(180, 26));
+    titleArea.removeFromRight(8);
+
+    // MIDI learn status fills the remaining centre slack between visualizer and preset.
+    midiLearnStatusLabel.setBounds(titleArea.withTrimmedTop(12));
+
     area.removeFromTop(16);
 
     // Deck 1: Synth Core (Height: 240)
