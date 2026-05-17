@@ -26,19 +26,32 @@ namespace
     // and no row is silently clipped off-screen.
     namespace Layout
     {
+        // Outer chrome.
         inline constexpr int outerMargin             = 24;
-        inline constexpr int titleHeight             = 48;
-        inline constexpr int spacerTitleToDeck1      = 16;
-        inline constexpr int deck1Height             = 240;
-        inline constexpr int spacerBetweenDecks      = 10;   // also: piano-bar -> FX cluster
-        inline constexpr int deck2Height             = 140;
-        inline constexpr int spacerDeck2ToBottom     = 16;
-        inline constexpr int bottomRowHeight         = coolsynth::ui::PianoBarComponent::desiredHeight;
         inline constexpr int standaloneStatusBarH    = 28;
         inline constexpr int pluginFooterHeight      = 30;
         inline constexpr int defaultWindowWidth      = 1550;
 
-        // Horizontal sub-widths inside the title row.
+        // Vertical row structure of the inner content area.
+        inline constexpr int titleHeight             = 48;
+        inline constexpr int spacerTitleToDeck1      = 16;
+        inline constexpr int deck1Height             = 240;
+        inline constexpr int spacerDeck1ToDeck2      = 10;
+        inline constexpr int deck2Height             = 140;
+        inline constexpr int spacerDeck2ToBottom     = 16;
+        inline constexpr int bottomRowHeight         = coolsynth::ui::PianoBarComponent::desiredHeight;
+
+        // Generic horizontal gap between adjacent sections (within a deck,
+        // and between the piano bar and the bottom FX cluster).
+        inline constexpr int interSectionGap         = 10;
+
+        // Section frame metrics (padding inside a SynthSection panel).
+        inline constexpr int sectionContentInset     = 12;
+        inline constexpr int sectionTitleBarHeight   = 24;
+        inline constexpr int sectionHeaderStripH     = 32;
+        inline constexpr int sectionToggleSize       = 24;
+
+        // Title-row sub-widths.
         inline constexpr int logoAreaWidth           = 248;
         inline constexpr int visualizerLeftGap       = 40;
         inline constexpr int visualizerWidth         = 372;
@@ -49,16 +62,45 @@ namespace
         inline constexpr int titleClusterPatchW      = 112;
         inline constexpr int titleClusterGap         = 4;
 
-        // Bottom-row FX cluster.
+        // Bottom-row FX cluster column widths and gap.
         inline constexpr int bottomRowGap            = 8;
         inline constexpr int bottomRowMacrosWidth    = 130;
         inline constexpr int bottomRowPhaserWidth    = 175;
         inline constexpr int bottomRowCompressorW    = 175;
 
+        // Deck section weights — relative widths used by the WeightedRowDistributor.
+        // These currently match the previous pixel widths, which makes the migration
+        // a no-op at the default window size; they will scale continuously once the
+        // window becomes user-resizable.
+        namespace Deck1
+        {
+            inline constexpr float osc   = 275.0f;
+            inline constexpr float mix   = 110.0f;
+            inline constexpr float flt   = 120.0f;
+            inline constexpr float env   = 220.0f;
+            inline constexpr float lfo   = 165.0f;
+            inline constexpr float pmod  = 180.0f;
+            inline constexpr float perf  = 220.0f;
+            inline constexpr int   count = 7;
+            inline constexpr float total = osc + mix + flt + env + lfo + pmod + perf;
+        }
+
+        namespace Deck2
+        {
+            inline constexpr float arp   = 385.0f;
+            inline constexpr float drv   = 165.0f;
+            inline constexpr float cho   = 220.0f;
+            inline constexpr float dly   = 220.0f;
+            inline constexpr float rev   = 220.0f;
+            inline constexpr float out   =  92.0f;
+            inline constexpr int   count = 6;
+            inline constexpr float total = arp + drv + cho + dly + rev + out;
+        }
+
         inline constexpr int sumContentHeight() noexcept
         {
             return titleHeight + spacerTitleToDeck1
-                 + deck1Height + spacerBetweenDecks
+                 + deck1Height + spacerDeck1ToDeck2
                  + deck2Height + spacerDeck2ToBottom
                  + bottomRowHeight;
         }
@@ -73,6 +115,48 @@ namespace
             return sumContentHeight() + outerMargin * 2 + pluginFooterHeight;
         }
     }
+
+    // Distributes a row's width among N weighted sections separated by fixed gaps.
+    // The last section absorbs rounding residuals, so the produced rectangles always
+    // sum to exactly the row width — no leftover slack on the right edge.
+    //
+    // This is the primitive that lets the layout scale continuously: change the row
+    // width and every section grows or shrinks in proportion.
+    struct WeightedRowDistributor
+    {
+        WeightedRowDistributor(juce::Rectangle<int>& rowRef,
+                               float totalWeight,
+                               int sectionCount,
+                               int gapPx) noexcept
+            : row(rowRef)
+            , remainingWidth(juce::jmax(0, rowRef.getWidth() - juce::jmax(0, sectionCount - 1) * gapPx))
+            , remainingWeight(totalWeight)
+            , gap(gapPx)
+            , sectionsLeft(sectionCount)
+        {
+        }
+
+        juce::Rectangle<int> take(float weight) noexcept
+        {
+            const int width = (sectionsLeft <= 1 || remainingWeight <= 0.0f)
+                ? remainingWidth
+                : juce::roundToInt(static_cast<float>(remainingWidth) * (weight / remainingWeight));
+
+            remainingWidth -= width;
+            remainingWeight -= weight;
+            auto rect = row.removeFromLeft(width);
+            if (--sectionsLeft > 0)
+                row.removeFromLeft(gap);
+            return rect;
+        }
+
+    private:
+        juce::Rectangle<int>& row;
+        int   remainingWidth;
+        float remainingWeight;
+        int   gap;
+        int   sectionsLeft;
+    };
 
     class EditorTooltipWindow final : public juce::TooltipWindow
     {
@@ -1122,268 +1206,246 @@ void SynthAudioProcessorEditor::resized()
 
     area.removeFromTop(Layout::spacerTitleToDeck1);
 
-    // Deck 1: Synth Core (fixed height; section widths still hard-coded below)
+    // Helper that yields the inside-the-frame content rectangle for a section.
+    auto sectionContentArea = [](juce::Rectangle<int> area) -> juce::Rectangle<int>
+    {
+        return area.reduced(Layout::sectionContentInset)
+                   .withTrimmedTop(Layout::sectionTitleBarHeight);
+    };
+
+    // Helper that places a SynthSection's enable-toggle into its header strip and
+    // returns the content rectangle below the title bar.
+    auto layoutSectionWithToggle = [&](juce::Rectangle<int> area,
+                                       coolsynth::ui::SynthSection& section,
+                                       coolsynth::ui::LedToggleButton& toggle)
+    {
+        section.setBounds(area);
+        auto header = area.reduced(Layout::sectionContentInset, 0).removeFromTop(Layout::sectionHeaderStripH);
+        toggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+        toggle.setBounds(header.removeFromRight(Layout::sectionToggleSize)
+                                .withSizeKeepingCentre(Layout::sectionToggleSize,
+                                                        Layout::sectionToggleSize));
+        return sectionContentArea(area);
+    };
+
+    // ---- Deck 1: Synth Core. Section widths come from Layout::Deck1 weights so
+    //      the row always fills the available width.
     auto synthRow = area.removeFromTop(Layout::deck1Height);
+    WeightedRowDistributor deck1Cols { synthRow, Layout::Deck1::total, Layout::Deck1::count, Layout::interSectionGap };
 
-    // Oscillators (5 cols * 55 = 275)
-    auto oscArea = synthRow.removeFromLeft(275);
-    oscSection.setBounds(oscArea);
-    auto oscContent = oscArea.reduced(12).withTrimmedTop(24);
-    auto oscRow1 = oscContent.removeFromTop(oscContent.getHeight() / 2);
-    auto oscRow2 = oscContent;
-    float oscWeightsTop = 6.2f;
-    oscAWaveChoice.setBounds(takeWeightedWidth(oscRow1, 2.2f, oscWeightsTop));
-    oscAOctaveKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
-    oscAFineKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
-    oscAPwKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
-    oscASyncToggle.setBounds(oscRow1);
+    // Oscillators
+    {
+        auto oscArea = deck1Cols.take(Layout::Deck1::osc);
+        oscSection.setBounds(oscArea);
+        auto oscContent = sectionContentArea(oscArea);
+        auto oscRow1 = oscContent.removeFromTop(oscContent.getHeight() / 2);
+        auto oscRow2 = oscContent;
+        float oscWeightsTop = 6.2f;
+        oscAWaveChoice.setBounds(takeWeightedWidth(oscRow1, 2.2f, oscWeightsTop));
+        oscAOctaveKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
+        oscAFineKnob  .setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
+        oscAPwKnob    .setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
+        oscASyncToggle.setBounds(oscRow1);
 
-    float oscWeightsBottom = 6.2f;
-    oscBWaveChoice.setBounds(takeWeightedWidth(oscRow2, 2.2f, oscWeightsBottom));
-    oscBOctaveKnob.setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
-    oscBFineKnob.setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
-    oscBPwKnob.setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
-    oscBLoFreqToggle.setBounds(oscRow2);
+        float oscWeightsBottom = 6.2f;
+        oscBWaveChoice .setBounds(takeWeightedWidth(oscRow2, 2.2f, oscWeightsBottom));
+        oscBOctaveKnob .setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
+        oscBFineKnob   .setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
+        oscBPwKnob     .setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
+        oscBLoFreqToggle.setBounds(oscRow2);
+    }
 
-    synthRow.removeFromLeft(10); // gap
+    // Mixer
+    {
+        auto mixArea = deck1Cols.take(Layout::Deck1::mix);
+        mixSection.setBounds(mixArea);
+        auto mixContent = sectionContentArea(mixArea);
+        auto mixRow1 = mixContent.removeFromTop(mixContent.getHeight() / 2);
+        auto mixRow2 = mixContent;
+        mixOscAKnob .setBounds(mixRow1.removeFromLeft(mixRow1.getWidth() / 2));
+        mixOscBKnob .setBounds(mixRow1);
+        mixNoiseKnob.setBounds(mixRow2.removeFromLeft(mixRow2.getWidth() / 2));
+    }
 
-    // Mixer (2 cols * 55 = 110)
-    auto mixArea = synthRow.removeFromLeft(110);
-    mixSection.setBounds(mixArea);
-    auto mixContent = mixArea.reduced(12).withTrimmedTop(24);
-    auto mixRow1 = mixContent.removeFromTop(mixContent.getHeight() / 2);
-    auto mixRow2 = mixContent;
-    mixOscAKnob.setBounds(mixRow1.removeFromLeft(mixRow1.getWidth() / 2));
-    mixOscBKnob.setBounds(mixRow1);
-    mixNoiseKnob.setBounds(mixRow2.removeFromLeft(mixRow2.getWidth() / 2));
+    // Filter
+    {
+        auto fltArea = deck1Cols.take(Layout::Deck1::flt);
+        fltSection.setBounds(fltArea);
+        auto fltContent = sectionContentArea(fltArea);
+        auto fltRow1 = fltContent.removeFromTop(fltContent.getHeight() / 2);
+        auto fltRow2 = fltContent;
+        fltCutoffKnob  .setBounds(fltRow1.removeFromLeft(fltRow1.getWidth() / 2));
+        fltResKnob     .setBounds(fltRow1);
+        fltEnvAmtKnob  .setBounds(fltRow2.removeFromLeft(fltRow2.getWidth() / 2));
+        fltKeyTrkChoice.setBounds(fltRow2);
+    }
 
-    synthRow.removeFromLeft(10); // gap
+    // Envelopes
+    {
+        auto envArea = deck1Cols.take(Layout::Deck1::env);
+        envSection.setBounds(envArea);
+        auto envContent = sectionContentArea(envArea);
+        auto envRow1 = envContent.removeFromTop(envContent.getHeight() / 2);
+        auto envRow2 = envContent;
+        fEnvAKnob.setBounds(envRow1.removeFromLeft(envRow1.getWidth() / 4));
+        fEnvDKnob.setBounds(envRow1.removeFromLeft(envRow1.getWidth() / 3));
+        fEnvSKnob.setBounds(envRow1.removeFromLeft(envRow1.getWidth() / 2));
+        fEnvRKnob.setBounds(envRow1);
+        aEnvAKnob.setBounds(envRow2.removeFromLeft(envRow2.getWidth() / 4));
+        aEnvDKnob.setBounds(envRow2.removeFromLeft(envRow2.getWidth() / 3));
+        aEnvSKnob.setBounds(envRow2.removeFromLeft(envRow2.getWidth() / 2));
+        aEnvRKnob.setBounds(envRow2);
+    }
 
-    // Filter (2 cols * 60 = 120)
-    auto fltArea = synthRow.removeFromLeft(120);
-    fltSection.setBounds(fltArea);
-    auto fltContent = fltArea.reduced(12).withTrimmedTop(24);
-    auto fltRow1 = fltContent.removeFromTop(fltContent.getHeight() / 2);
-    auto fltRow2 = fltContent;
-    fltCutoffKnob.setBounds(fltRow1.removeFromLeft(fltRow1.getWidth() / 2));
-    fltResKnob.setBounds(fltRow1);
-    fltEnvAmtKnob.setBounds(fltRow2.removeFromLeft(fltRow2.getWidth() / 2));
-    fltKeyTrkChoice.setBounds(fltRow2);
+    // LFO
+    {
+        auto lfoArea = deck1Cols.take(Layout::Deck1::lfo);
+        lfoSection.setBounds(lfoArea);
+        auto lfoContent = sectionContentArea(lfoArea);
+        auto lfoRow1 = lfoContent.removeFromTop(lfoContent.getHeight() / 2);
+        auto lfoRow2 = lfoContent;
+        float lfoTopWeights = 4.0f;
+        lfoWaveChoice.setBounds(takeWeightedWidth(lfoRow1, 2.0f, lfoTopWeights));
+        lfoRateKnob  .setBounds(takeWeightedWidth(lfoRow1, 1.0f, lfoTopWeights));
+        lfoMwDepKnob .setBounds(lfoRow1);
+        lfoPitchKnob .setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 3));
+        lfoPwKnob    .setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 2));
+        lfoCutoffKnob.setBounds(lfoRow2);
+    }
 
-    synthRow.removeFromLeft(10); // gap
+    // Poly Mod
+    {
+        auto pmodArea = deck1Cols.take(Layout::Deck1::pmod);
+        pmodSection.setBounds(pmodArea);
+        auto pmodContent = sectionContentArea(pmodArea);
+        auto pmodRow1 = pmodContent.removeFromTop(pmodContent.getHeight() / 2);
+        auto pmodRow2 = pmodContent;
+        pmodBPitchKnob .setBounds(pmodRow1.removeFromLeft(pmodRow1.getWidth() / 3));
+        pmodBPwKnob    .setBounds(pmodRow1.removeFromLeft(pmodRow1.getWidth() / 2));
+        pmodBCutoffKnob.setBounds(pmodRow1);
+        pmodEPitchKnob .setBounds(pmodRow2.removeFromLeft(pmodRow2.getWidth() / 3));
+        pmodEPwKnob    .setBounds(pmodRow2.removeFromLeft(pmodRow2.getWidth() / 2));
+        pmodECutoffKnob.setBounds(pmodRow2);
+    }
 
-    // Envelopes (4 cols * 55 = 220)
-    auto envArea = synthRow.removeFromLeft(220);
-    envSection.setBounds(envArea);
-    auto envContent = envArea.reduced(12).withTrimmedTop(24);
-    auto envRow1 = envContent.removeFromTop(envContent.getHeight() / 2);
-    auto envRow2 = envContent;
-    fEnvAKnob.setBounds(envRow1.removeFromLeft(envRow1.getWidth() / 4));
-    fEnvDKnob.setBounds(envRow1.removeFromLeft(envRow1.getWidth() / 3));
-    fEnvSKnob.setBounds(envRow1.removeFromLeft(envRow1.getWidth() / 2));
-    fEnvRKnob.setBounds(envRow1);
-    aEnvAKnob.setBounds(envRow2.removeFromLeft(envRow2.getWidth() / 4));
-    aEnvDKnob.setBounds(envRow2.removeFromLeft(envRow2.getWidth() / 3));
-    aEnvSKnob.setBounds(envRow2.removeFromLeft(envRow2.getWidth() / 2));
-    aEnvRKnob.setBounds(envRow2);
+    // Performance
+    {
+        auto perfArea = deck1Cols.take(Layout::Deck1::perf);
+        perfSection.setBounds(perfArea);
+        auto perfContent = sectionContentArea(perfArea);
+        auto perfRow1 = perfContent.removeFromTop(perfContent.getHeight() / 2);
+        auto perfRow2 = perfContent;
+        float perfTopWeights = 6.0f;
+        perfGlideKnob  .setBounds(takeWeightedWidth(perfRow1, 1.0f, perfTopWeights));
+        perfModeChoice .setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
+        perfPrioChoice .setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
+        perfPbRangeKnob.setBounds(perfRow1);
+        perfVintageKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 4));
+        perfPanKnob    .setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 3));
+        perfVelAmpKnob .setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 2));
+        perfVelFltKnob .setBounds(perfRow2);
+    }
 
-    synthRow.removeFromLeft(10); // gap
+    area.removeFromTop(Layout::spacerDeck1ToDeck2);
 
-    // LFO (3 cols * 55 = 165)
-    auto lfoArea = synthRow.removeFromLeft(165);
-    lfoSection.setBounds(lfoArea);
-    auto lfoContent = lfoArea.reduced(12).withTrimmedTop(24);
-    auto lfoRow1 = lfoContent.removeFromTop(lfoContent.getHeight() / 2);
-    auto lfoRow2 = lfoContent;
-    float lfoTopWeights = 4.0f;
-    lfoWaveChoice.setBounds(takeWeightedWidth(lfoRow1, 2.0f, lfoTopWeights));
-    lfoRateKnob.setBounds(takeWeightedWidth(lfoRow1, 1.0f, lfoTopWeights));
-    lfoMwDepKnob.setBounds(lfoRow1);
-    lfoPitchKnob.setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 3));
-    lfoPwKnob.setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 2));
-    lfoCutoffKnob.setBounds(lfoRow2);
-
-    synthRow.removeFromLeft(10); // gap
-
-    // Poly Mod (3 cols * 60 = 180)
-    auto pmodArea = synthRow.removeFromLeft(180);
-    pmodSection.setBounds(pmodArea);
-    auto pmodContent = pmodArea.reduced(12).withTrimmedTop(24);
-    auto pmodRow1 = pmodContent.removeFromTop(pmodContent.getHeight() / 2);
-    auto pmodRow2 = pmodContent;
-    pmodBPitchKnob.setBounds(pmodRow1.removeFromLeft(pmodRow1.getWidth() / 3));
-    pmodBPwKnob.setBounds(pmodRow1.removeFromLeft(pmodRow1.getWidth() / 2));
-    pmodBCutoffKnob.setBounds(pmodRow1);
-    pmodEPitchKnob.setBounds(pmodRow2.removeFromLeft(pmodRow2.getWidth() / 3));
-    pmodEPwKnob.setBounds(pmodRow2.removeFromLeft(pmodRow2.getWidth() / 2));
-    pmodECutoffKnob.setBounds(pmodRow2);
-
-    synthRow.removeFromLeft(10); // gap
-
-    // Performance (4 cols * 55 = 220)
-    auto perfArea = synthRow.removeFromLeft(220);
-    perfSection.setBounds(perfArea);
-    auto perfContent = perfArea.reduced(12).withTrimmedTop(24);
-    auto perfRow1 = perfContent.removeFromTop(perfContent.getHeight() / 2);
-    auto perfRow2 = perfContent;
-    float perfTopWeights = 6.0f;
-    perfGlideKnob.setBounds(takeWeightedWidth(perfRow1, 1.0f, perfTopWeights));
-    perfModeChoice.setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
-    perfPrioChoice.setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
-    perfPbRangeKnob.setBounds(perfRow1);
-    perfVintageKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 4));
-    perfPanKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 3));
-    perfVelAmpKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 2));
-    perfVelFltKnob.setBounds(perfRow2);
-
-    area.removeFromTop(Layout::spacerBetweenDecks);
-
-    // Deck 2: Lower Deck
+    // ---- Deck 2: Effects rack and output. Same weighted distribution as Deck 1.
     auto lowerRow = area.removeFromTop(Layout::deck2Height);
+    WeightedRowDistributor deck2Cols { lowerRow, Layout::Deck2::total, Layout::Deck2::count, Layout::interSectionGap };
 
-    // Arp (7 cols * 55 = 385)
-    auto arpArea = lowerRow.removeFromLeft(385);
-    arpSection.setBounds(arpArea);
-    auto arpHeader = arpArea.reduced(12, 0).removeFromTop(32);
-    arpOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-    arpOnToggle.setBounds(arpHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
-    auto arpContent = arpArea.reduced(12).withTrimmedTop(24);
-    float arpWeights = 8.6f;
-    arpTempoKnob.setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
-    arpRateChoice.setBounds(takeWeightedWidth(arpContent, 2.2f, arpWeights));
-    arpPatternChoice.setBounds(takeWeightedWidth(arpContent, 2.0f, arpWeights));
-    arpOctaveChoice.setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
-    arpGateKnob.setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
-    arpLatchToggle.setBounds(arpContent.withWidth(48));
+    // Arpeggiator
+    {
+        auto arpArea = deck2Cols.take(Layout::Deck2::arp);
+        auto arpContent = layoutSectionWithToggle(arpArea, arpSection, arpOnToggle);
+        float arpWeights = 8.6f;
+        arpTempoKnob   .setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
+        arpRateChoice  .setBounds(takeWeightedWidth(arpContent, 2.2f, arpWeights));
+        arpPatternChoice.setBounds(takeWeightedWidth(arpContent, 2.0f, arpWeights));
+        arpOctaveChoice.setBounds(takeWeightedWidth(arpContent, 1.0f, arpWeights));
+        arpGateKnob    .setBounds(takeWeightedWidth(arpContent, 1.2f, arpWeights));
+        arpLatchToggle.setBounds(arpContent.withWidth(48));
+    }
 
-    lowerRow.removeFromLeft(10);
+    // Distortion (formerly Drive)
+    {
+        auto drvArea = deck2Cols.take(Layout::Deck2::drv);
+        auto drvContent = layoutSectionWithToggle(drvArea, drvSection, drvOnToggle);
+        drvAmtKnob.setBounds(drvContent.removeFromLeft(drvContent.getWidth() / 2));
+        drvMixKnob.setBounds(drvContent);
+    }
 
-    // Distortion (3 cols * 55 = 165)
-    auto drvArea = lowerRow.removeFromLeft(165);
-    drvSection.setBounds(drvArea);
-    auto drvHeader = drvArea.reduced(12, 0).removeFromTop(32);
-    drvOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-    drvOnToggle.setBounds(drvHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
-    auto drvContent = drvArea.reduced(12).withTrimmedTop(24);
-    drvAmtKnob.setBounds(drvContent.removeFromLeft(drvContent.getWidth() / 2));
-    drvMixKnob.setBounds(drvContent);
+    // Chorus
+    {
+        auto choArea = deck2Cols.take(Layout::Deck2::cho);
+        auto choContent = layoutSectionWithToggle(choArea, choSection, choOnToggle);
+        choRateKnob.setBounds(choContent.removeFromLeft(choContent.getWidth() / 3));
+        choDepKnob .setBounds(choContent.removeFromLeft(choContent.getWidth() / 2));
+        choMixKnob .setBounds(choContent);
+    }
 
-    lowerRow.removeFromLeft(10);
+    // Delay
+    {
+        auto dlyArea = deck2Cols.take(Layout::Deck2::dly);
+        auto dlyContent = layoutSectionWithToggle(dlyArea, dlySection, dlyOnToggle);
+        dlyTimeKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 3));
+        dlyFdbkKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 2));
+        dlyMixKnob .setBounds(dlyContent);
+    }
 
-    // Chorus (4 cols * 55 = 220)
-    auto choArea = lowerRow.removeFromLeft(220);
-    choSection.setBounds(choArea);
-    auto choHeader = choArea.reduced(12, 0).removeFromTop(32);
-    choOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-    choOnToggle.setBounds(choHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
-    auto choContent = choArea.reduced(12).withTrimmedTop(24);
-    choRateKnob.setBounds(choContent.removeFromLeft(choContent.getWidth() / 3));
-    choDepKnob.setBounds(choContent.removeFromLeft(choContent.getWidth() / 2));
-    choMixKnob.setBounds(choContent);
+    // Reverb
+    {
+        auto revArea = deck2Cols.take(Layout::Deck2::rev);
+        auto revContent = layoutSectionWithToggle(revArea, revSection, revOnToggle);
+        revSizeKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 3));
+        revDampKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 2));
+        revMixKnob .setBounds(revContent);
+    }
 
-    lowerRow.removeFromLeft(10);
-
-    // Delay (4 cols * 55 = 220)
-    auto dlyArea = lowerRow.removeFromLeft(220);
-    dlySection.setBounds(dlyArea);
-    auto dlyHeader = dlyArea.reduced(12, 0).removeFromTop(32);
-    dlyOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-    dlyOnToggle.setBounds(dlyHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
-    auto dlyContent = dlyArea.reduced(12).withTrimmedTop(24);
-    dlyTimeKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 3));
-    dlyFdbkKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 2));
-    dlyMixKnob.setBounds(dlyContent);
-
-    lowerRow.removeFromLeft(10);
-
-    // Reverb (4 cols * 55 = 220)
-    auto revArea = lowerRow.removeFromLeft(220);
-    revSection.setBounds(revArea);
-    auto revHeader = revArea.reduced(12, 0).removeFromTop(32);
-    revOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-    revOnToggle.setBounds(revHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
-    auto revContent = revArea.reduced(12).withTrimmedTop(24);
-    revSizeKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 3));
-    revDampKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 2));
-    revMixKnob.setBounds(revContent);
-
-    lowerRow.removeFromLeft(10);
-
-    // Output (1 knob = 92)
-    auto outArea = lowerRow.removeFromLeft(92);
-    outSection.setBounds(outArea);
-    auto outContent = outArea.reduced(12).withTrimmedTop(24);
-    outGainKnob.setBounds(outContent);
+    // Output
+    {
+        auto outArea = deck2Cols.take(Layout::Deck2::out);
+        outSection.setBounds(outArea);
+        auto outContent = sectionContentArea(outArea);
+        outGainKnob.setBounds(outContent);
+    }
 
     area.removeFromTop(Layout::spacerDeck2ToBottom);
     auto bottomRow = area.removeFromTop(pianoBar.getDesiredHeight());
     const int pianoWidth = juce::jmin(pianoBar.getDesiredWidth(), bottomRow.getWidth());
     pianoBar.setBounds(bottomRow.removeFromLeft(pianoWidth));
-    bottomRow.removeFromLeft(Layout::spacerBetweenDecks); // gap between piano bar and FX cluster
+    bottomRow.removeFromLeft(Layout::interSectionGap);
 
-    // Bottom-row FX cluster: Vibe | Phaser | Compressor.
-    // We resolve the three column widths first (scaling them proportionally if the
-    // parent row is too narrow), then run a single placement pass so every control
-    // is laid out unconditionally. No path can leave a knob without bounds.
-    constexpr int naturalTotal =
-        Layout::bottomRowMacrosWidth + Layout::bottomRowPhaserWidth + Layout::bottomRowCompressorW
-        + Layout::bottomRowGap * 2;
-
-    int macrosW;
-    int phaserW;
-    int compressorW;
-
-    if (bottomRow.getWidth() < naturalTotal)
-    {
-        const float scale = static_cast<float>(bottomRow.getWidth()) / static_cast<float>(naturalTotal);
-        macrosW = juce::roundToInt(Layout::bottomRowMacrosWidth * scale);
-        phaserW = juce::roundToInt(Layout::bottomRowPhaserWidth * scale);
-        compressorW = juce::jmax(0, bottomRow.getWidth() - macrosW - phaserW - Layout::bottomRowGap * 2);
-    }
-    else
-    {
-        macrosW = Layout::bottomRowMacrosWidth;
-        phaserW = Layout::bottomRowPhaserWidth;
-        compressorW = Layout::bottomRowCompressorW;
-    }
+    // ---- Bottom-row FX cluster: Vibe | Phaser | Compressor.
+    // Weighted distribution that always lays out, even if the parent row is narrower
+    // than the natural total (each column then scales proportionally).
+    const float fxTotalWeight = static_cast<float>(Layout::bottomRowMacrosWidth
+                                                  + Layout::bottomRowPhaserWidth
+                                                  + Layout::bottomRowCompressorW);
+    constexpr int fxColumnCount = 3;
+    WeightedRowDistributor fxCols { bottomRow, fxTotalWeight, fxColumnCount, Layout::bottomRowGap };
 
     // -- Vibe (macros)
     {
-        auto macrosArea = bottomRow.removeFromLeft(macrosW);
-        macrosSection.setBounds(macrosArea);
-        auto macrosContent = macrosArea.reduced(12).withTrimmedTop(24);
-        timbreKnob.setBounds(macrosContent.removeFromLeft(macrosContent.getWidth() / 2));
-        exciteKnob.setBounds(macrosContent);
+        auto vibeArea = fxCols.take(static_cast<float>(Layout::bottomRowMacrosWidth));
+        macrosSection.setBounds(vibeArea);
+        auto vibeContent = sectionContentArea(vibeArea);
+        timbreKnob.setBounds(vibeContent.removeFromLeft(vibeContent.getWidth() / 2));
+        exciteKnob.setBounds(vibeContent);
     }
-    bottomRow.removeFromLeft(Layout::bottomRowGap);
 
     // -- Phaser
     {
-        auto phaserArea = bottomRow.removeFromLeft(phaserW);
-        phaserSection.setBounds(phaserArea);
-        auto phaserHeader = phaserArea.reduced(12, 0).removeFromTop(32);
-        phsOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-        phsOnToggle.setBounds(phaserHeader.removeFromRight(Layout::titleClusterButtonH)
-                                  .withSizeKeepingCentre(Layout::titleClusterButtonH,
-                                                          Layout::titleClusterButtonH));
-        auto phaserContent = phaserArea.reduced(12).withTrimmedTop(24);
-        phsRateKnob.setBounds(phaserContent.removeFromLeft(phaserContent.getWidth() / 2));
+        auto phaserArea = fxCols.take(static_cast<float>(Layout::bottomRowPhaserWidth));
+        auto phaserContent = layoutSectionWithToggle(phaserArea, phaserSection, phsOnToggle);
+        phsRateKnob .setBounds(phaserContent.removeFromLeft(phaserContent.getWidth() / 2));
         phsDepthKnob.setBounds(phaserContent);
     }
-    bottomRow.removeFromLeft(Layout::bottomRowGap);
 
     // -- Compressor
     {
-        auto compressorArea = bottomRow.removeFromLeft(compressorW);
-        compressorSection.setBounds(compressorArea);
-        auto compressorHeader = compressorArea.reduced(12, 0).removeFromTop(32);
-        cmpOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-        cmpOnToggle.setBounds(compressorHeader.removeFromRight(Layout::titleClusterButtonH)
-                                  .withSizeKeepingCentre(Layout::titleClusterButtonH,
-                                                          Layout::titleClusterButtonH));
-        auto compressorContent = compressorArea.reduced(12).withTrimmedTop(24);
-        cmpAmtKnob.setBounds(compressorContent.removeFromLeft(compressorContent.getWidth() / 2));
-        cmpMixKnob.setBounds(compressorContent);
+        auto compArea = fxCols.take(static_cast<float>(Layout::bottomRowCompressorW));
+        auto compContent = layoutSectionWithToggle(compArea, compressorSection, cmpOnToggle);
+        cmpAmtKnob.setBounds(compContent.removeFromLeft(compContent.getWidth() / 2));
+        cmpMixKnob.setBounds(compContent);
     }
 }
 
