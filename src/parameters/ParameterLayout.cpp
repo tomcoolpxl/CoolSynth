@@ -404,6 +404,18 @@ namespace
             0.0f,
             percentAttributes()));
         group->addChild(makePercentParameter(arpChance, parameterVersionHintV4, "Chance", 1.0f));
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID { arpRatchetCount, parameterVersionHintV5 },
+            "Ratchet",
+            juce::StringArray { "Off", "x2", "x3", "x4" },
+            static_cast<int>(ArpRatchetChoice::off)));
+        group->addChild(makePercentParameter(arpRatchetChance, parameterVersionHintV5, "Ratchet Chance", 0.0f));
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID { arpAccentEvery, parameterVersionHintV5 },
+            "Accent Every",
+            juce::StringArray { "Off", "/2", "/3", "/4" },
+            static_cast<int>(ArpAccentEveryChoice::off)));
+        group->addChild(makePercentParameter(arpAccentAmount, parameterVersionHintV5, "Accent Amount", 0.0f));
         group->addChild(makeBoolParameter(arpLatch, parameterVersionHint, "Latch", false));
         return group;
     }

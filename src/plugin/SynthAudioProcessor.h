@@ -110,6 +110,8 @@ private:
         juce::AudioParameterChoice* keyPriority    = nullptr;
         juce::AudioParameterChoice* arpRate        = nullptr;
         juce::AudioParameterChoice* arpPattern     = nullptr;
+        juce::AudioParameterChoice* arpRatchet     = nullptr;
+        juce::AudioParameterChoice* arpAccentEvery = nullptr;
     };
     static ChoiceParameterPointers bindChoicePointers(APVTS& state);
 

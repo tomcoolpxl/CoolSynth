@@ -1,10 +1,10 @@
 # TODO
 
-## ARP Expansion Phase C — Ratchet + Accent
+## ARP Expansion Phase D — Euclidean rhythm
 
-Phase B is now implemented and locally verified. The next implementation chunk is Phase C from `ARP_EXPANSION_PLAN.md`.
+Phase C is now implemented and locally verified. The next implementation chunk is Phase D from `ARP_EXPANSION_PLAN.md`.
 
-- Add `arpRatchetCount`, `arpRatchetChance`, `arpAccentEvery`, and `arpAccentAmount` to the parameter layout and block decode path.
-- Implement ratchet sub-step emission and accent velocity scaling in `Arpeggiator::generateEventsForBlock()`, including chord-mode combinations.
-- Add deterministic regressions for ratchet offsets/counts and accent scaling behavior.
+- Add `arpRhythm`, `arpEuclideanPulses`, `arpEuclideanSteps`, and `arpEuclideanRotation` to the parameter layout and block decode path.
+- Implement cached Bjorklund Euclidean cycle generation and integrate it into the arp step loop so rests advance rhythm position without advancing the melodic walk.
+- Add deterministic regressions for known Euclidean patterns, pulse-vs-slot melodic advancement, and host-sync bar-reset behavior.
 - Keep the UI temporary and minimal until the planned advanced overlay lands in Phase E.

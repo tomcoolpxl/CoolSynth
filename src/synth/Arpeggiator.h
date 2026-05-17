@@ -88,6 +88,19 @@ namespace coolsynth::synth
         float computeInternalStepLengthSamples(double sampleRate) const noexcept;
         int buildOrderedWorkingSet(std::array<HeldEntry, maxArpHeldNotes>& ordered) const noexcept;
         void resetPatternWalkState() noexcept;
+        int resolveRatchetCount() const noexcept;
+        int resolveAccentEvery() const noexcept;
+        bool emitStepNotes(const std::array<int, maxArpHeldNotes>& notes,
+                           const std::array<float, maxArpHeldNotes>& velocities,
+                           int noteCount,
+                           int eventOffset,
+                           int gateLengthSamples,
+                           int ratchetCount,
+                           float velocityScale,
+                           EngineMidiEvent* outEvents,
+                           int& outEventCount,
+                           int blockSamples,
+                           int maxEvents) noexcept;
 
         // Returns next pattern note number with octave shift applied, or -1 if working set empty.
         // Advances patternStepCounter on success.
@@ -119,6 +132,7 @@ namespace coolsynth::synth
 
         // Pattern walker state.
         int patternStepCounter = 0;
+        int emittedStepCounter = 0;
         int randomWalkIndex = 0;
         juce::Random rng;
     };

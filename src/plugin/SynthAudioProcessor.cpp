@@ -18,7 +18,7 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    inline constexpr int processorStateFormatVersion = 4;
+    inline constexpr int processorStateFormatVersion = 5;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
@@ -753,6 +753,10 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
     params.arp.gateLength = parameterValues.arpGate->load();
     params.arp.swingAmount = parameterValues.arpSwing->load();
     params.arp.chance = parameterValues.arpChance->load();
+    params.arp.ratchetCount = static_cast<coolsynth::parameters::ArpRatchetChoice>(choiceParams.arpRatchet->getIndex());
+    params.arp.ratchetChance = parameterValues.arpRatchetChance->load();
+    params.arp.accentEvery = static_cast<coolsynth::parameters::ArpAccentEveryChoice>(choiceParams.arpAccentEvery->getIndex());
+    params.arp.accentAmount = parameterValues.arpAccentAmount->load();
     params.arp.latch = decodeBool(parameterValues.arpLatch->load());
 
     params.drive.enabled = decodeBool(parameterValues.driveEnabled->load());
@@ -860,6 +864,8 @@ SynthAudioProcessor::ChoiceParameterPointers SynthAudioProcessor::bindChoicePoin
     p.keyPriority    = getChoice(ids::keyPriority);
     p.arpRate        = getChoice(ids::arpRateDivision);
     p.arpPattern     = getChoice(ids::arpPattern);
+    p.arpRatchet     = getChoice(ids::arpRatchetCount);
+    p.arpAccentEvery = getChoice(ids::arpAccentEvery);
     return p;
 }
 

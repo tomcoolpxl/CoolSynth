@@ -1727,6 +1727,10 @@ public:
         parameters.gateLength = 0.5f;
         parameters.swingAmount = 0.0f;
         parameters.chance = 1.0f;
+        parameters.ratchetCount = coolsynth::parameters::ArpRatchetChoice::off;
+        parameters.ratchetChance = 0.0f;
+        parameters.accentEvery = coolsynth::parameters::ArpAccentEveryChoice::off;
+        parameters.accentAmount = 0.0f;
         parameters.latch = false;
         return parameters;
     }
@@ -1774,6 +1778,26 @@ public:
         }
 
         return -1;
+    }
+
+    static int collectEventsOfType(const std::array<coolsynth::synth::EngineMidiEvent,
+                                                    coolsynth::synth::maxArpEventsPerBlock>& events,
+                                   int eventCount,
+                                   coolsynth::synth::EngineMidiEventType type,
+                                   std::array<coolsynth::synth::EngineMidiEvent,
+                                              coolsynth::synth::maxArpEventsPerBlock>& outEvents) noexcept
+    {
+        int outCount = 0;
+
+        for (int index = 0; index < eventCount; ++index)
+        {
+            if (events[static_cast<size_t>(index)].type != type)
+                continue;
+
+            outEvents[static_cast<size_t>(outCount++)] = events[static_cast<size_t>(index)];
+        }
+
+        return outCount;
     }
 
     void runTest() override
@@ -2395,6 +2419,177 @@ public:
 
             expectEquals(actualNoteOnCount, expectedNoteOnCount);
             expectEquals(stepCount - actualNoteOnCount, stepCount - expectedNoteOnCount);
+        }
+
+        beginTest("ratchet_emits_exact_sub_step_offsets_and_note_counts");
+        {
+            constexpr int blockSamples = 6000;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.ratchetCount = coolsynth::parameters::ArpRatchetChoice::x3;
+            parameters.ratchetChance = 1.0f;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 0.5f);
+
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> events {};
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> noteOffs {};
+            const int eventCount = renderArpBlock(arp, blockSamples, events);
+            const int noteOnCount = collectEventsOfType(events,
+                                                        eventCount,
+                                                        coolsynth::synth::EngineMidiEventType::noteOn,
+                                                        noteOns);
+            const int noteOffCount = collectEventsOfType(events,
+                                                         eventCount,
+                                                         coolsynth::synth::EngineMidiEventType::noteOff,
+                                                         noteOffs);
+
+            expectEquals(noteOnCount, 3);
+            expectEquals(noteOffCount, 3);
+
+            if (noteOnCount == 3)
+            {
+                expectEquals(noteOns[0].sampleOffset, 0);
+                expectEquals(noteOns[1].sampleOffset, 1000);
+                expectEquals(noteOns[2].sampleOffset, 2000);
+            }
+
+            if (noteOffCount == 3)
+            {
+                expectEquals(noteOffs[0].sampleOffset, 1000);
+                expectEquals(noteOffs[1].sampleOffset, 2000);
+                expectEquals(noteOffs[2].sampleOffset, 3000);
+            }
+        }
+
+        beginTest("accent_boosts_velocity_on_emitted_step_grid_not_raw_steps");
+        {
+            constexpr int blockSamples = 6000;
+            constexpr uint64_t seed = 0x0ddc0ffeULL;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+            arp.setSeedForTesting(seed);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.chance = 0.5f;
+            parameters.accentEvery = coolsynth::parameters::ArpAccentEveryChoice::every2;
+            parameters.accentAmount = 0.5f;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 0.4f);
+
+            juce::Random referenceRng(static_cast<int64_t>(seed));
+            int emittedStepIndex = 0;
+
+            for (int step = 0; step < 12; ++step)
+            {
+                const bool emits = referenceRng.nextFloat() < 0.5f;
+
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+                const int eventCount = renderArpBlock(arp, blockSamples, events);
+                const int noteOnCount = collectEventsOfType(events,
+                                                            eventCount,
+                                                            coolsynth::synth::EngineMidiEventType::noteOn,
+                                                            noteOns);
+
+                expectEquals(noteOnCount, emits ? 1 : 0);
+                if (! emits)
+                    continue;
+
+                const float expectedVelocity = (emittedStepIndex % 2) == 0 ? 0.6f : 0.4f;
+                expectWithinAbsoluteError(noteOns[0].value, expectedVelocity, 0.0001f);
+                ++emittedStepIndex;
+            }
+        }
+
+        beginTest("chord_ratchet_and_accent_apply_uniformly_across_the_whole_step");
+        {
+            constexpr int blockSamples = 6000;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.pattern = coolsynth::parameters::ArpPatternChoice::chord;
+            parameters.ratchetCount = coolsynth::parameters::ArpRatchetChoice::x2;
+            parameters.ratchetChance = 1.0f;
+            parameters.accentEvery = coolsynth::parameters::ArpAccentEveryChoice::every2;
+            parameters.accentAmount = 0.25f;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 0.6f);
+            arp.onNoteOn(64, 0.5f);
+            arp.onNoteOn(67, 0.4f);
+
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> events {};
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> noteOns {};
+            int eventCount = renderArpBlock(arp, blockSamples, events);
+            int noteOnCount = collectEventsOfType(events,
+                                                  eventCount,
+                                                  coolsynth::synth::EngineMidiEventType::noteOn,
+                                                  noteOns);
+
+            expectEquals(noteOnCount, 6);
+            if (noteOnCount == 6)
+            {
+                expectEquals(noteOns[0].sampleOffset, 0);
+                expectEquals(noteOns[1].sampleOffset, 0);
+                expectEquals(noteOns[2].sampleOffset, 0);
+                expectEquals(noteOns[3].sampleOffset, 1500);
+                expectEquals(noteOns[4].sampleOffset, 1500);
+                expectEquals(noteOns[5].sampleOffset, 1500);
+                expectWithinAbsoluteError(noteOns[0].value, 0.75f, 0.0001f);
+                expectWithinAbsoluteError(noteOns[1].value, 0.625f, 0.0001f);
+                expectWithinAbsoluteError(noteOns[2].value, 0.5f, 0.0001f);
+            }
+
+            eventCount = renderArpBlock(arp, blockSamples, events);
+            noteOnCount = collectEventsOfType(events,
+                                              eventCount,
+                                              coolsynth::synth::EngineMidiEventType::noteOn,
+                                              noteOns);
+
+            expectEquals(noteOnCount, 6);
+            if (noteOnCount == 6)
+            {
+                expectWithinAbsoluteError(noteOns[0].value, 0.6f, 0.0001f);
+                expectWithinAbsoluteError(noteOns[1].value, 0.5f, 0.0001f);
+                expectWithinAbsoluteError(noteOns[2].value, 0.4f, 0.0001f);
+            }
+        }
+
+        beginTest("ratcheted_chord_step_is_dropped_atomically_when_it_would_overflow_event_capacity");
+        {
+            constexpr int blockSamples = 6000;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.pattern = coolsynth::parameters::ArpPatternChoice::chord;
+            parameters.ratchetCount = coolsynth::parameters::ArpRatchetChoice::x4;
+            parameters.ratchetChance = 1.0f;
+            arp.setParameters(parameters);
+
+            for (int note = 0; note < coolsynth::synth::maxArpHeldNotes; ++note)
+                arp.onNoteOn(48 + note, 0.7f);
+
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> events {};
+            const int eventCount = renderArpBlock(arp, blockSamples, events);
+
+            expectEquals(eventCount, 0);
+            expectEquals(arp.getRingingNoteCountForTesting(), 0);
         }
 
         beginTest("octave_range_two_alternates_base_and_plus_twelve");

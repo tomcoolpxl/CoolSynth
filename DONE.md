@@ -1,5 +1,16 @@
 # DONE
 
+## ARP Expansion Phase C — Ratchet + Accent
+
+Completed on 2026-05-17. The Phase C arp modifier slice is implemented, build-test clean, and intentionally breaks older saved patch/state compatibility.
+
+- [x] Added `arpRatchetCount`, `arpRatchetChance`, `arpAccentEvery`, and `arpAccentAmount` end-to-end across `ParameterIDs`, the APVTS layout, raw parameter binding, processor block decoding, and the shared editor's temporary arp surface.
+- [x] Updated the arp engine so ratchet expands a step into deterministic sub-step retriggers, chord mode ratchets the whole chord stab, and accent scales note velocity on emitted-step boundaries rather than raw pattern advances.
+- [x] Kept the overflow behavior explicit for expanded chord steps: ratcheted chord stabs are emitted atomically or dropped entirely so the event buffer never receives a partial burst.
+- [x] Added deterministic `V2Arpeggiator` coverage for ratchet offsets/counts, emitted-step accent grid behavior under chance skipping, chord-mode ratchet-plus-accent application, and ratcheted chord overflow dropping.
+- [x] Bumped wrapped `.cspatch` and wrapped processor-state format versions from `4` to `5` so older saved patches/state are rejected cleanly under the expanded arp parameter contract.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-17 after the Phase C change.
+
 ## ARP Expansion Phase B — Swing + Chance
 
 Completed on 2026-05-17. The Phase B arp modifier slice is implemented, build-test clean, and intentionally breaks older saved patch/state compatibility.

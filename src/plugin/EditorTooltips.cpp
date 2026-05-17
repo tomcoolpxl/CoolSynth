@@ -373,6 +373,24 @@ void SynthAudioProcessorEditor::applyTooltips()
     setParameterTooltip(arpChanceKnob, "Chance",
                         "Set the probability that each arp step will fire.\n"
                         "At lower values some steps are skipped, but the melodic walk keeps advancing.");
+    setParameterTooltip(arpRatchetChoice, "Ratchet",
+                        "Choose how many times one arp step is retriggered inside its gate window.\n"
+                        "Chord mode repeats the whole chord stab, not the notes one by one.");
+    setParameterTooltip(arpRatchetLabel, "Ratchet",
+                        "Choose how many times one arp step is retriggered inside its gate window.\n"
+                        "Chord mode repeats the whole chord stab, not the notes one by one.");
+    setParameterTooltip(arpRatchetChanceKnob, "Ratchet Chance",
+                        "Set the probability that a step expands into ratchets instead of a single hit.\n"
+                        "Chance is evaluated once before the ratchet burst is emitted.");
+    setParameterTooltip(arpAccentChoice, "Accent Every",
+                        "Accent every second, third, or fourth emitted arp step.\n"
+                        "Skipped chance steps do not advance the accent grid.");
+    setParameterTooltip(arpAccentLabel, "Accent Every",
+                        "Accent every second, third, or fourth emitted arp step.\n"
+                        "Skipped chance steps do not advance the accent grid.");
+    setParameterTooltip(arpAccentAmountKnob, "Accent",
+                        "Set how much accented steps boost note velocity.\n"
+                        "The boost is uniform across all notes in a chord step.");
     setParameterTooltip(arpLatchToggle, "Latch",
                         "Latch keeps the current held-note set playing\n"
                         "after you release the keys.");

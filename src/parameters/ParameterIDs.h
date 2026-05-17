@@ -7,6 +7,7 @@ namespace coolsynth::parameters::ids
     inline constexpr int parameterVersionHint = 2;
     inline constexpr int parameterVersionHintV3 = 3;
     inline constexpr int parameterVersionHintV4 = 4;
+    inline constexpr int parameterVersionHintV5 = 5;
 
     inline constexpr char oscAWave[] = "oscAWave";
     inline constexpr char oscAOctave[] = "oscAOctave";
@@ -70,6 +71,10 @@ namespace coolsynth::parameters::ids
     inline constexpr char arpGate[] = "arpGate";
     inline constexpr char arpSwing[] = "arpSwing";
     inline constexpr char arpChance[] = "arpChance";
+    inline constexpr char arpRatchetCount[] = "arpRatchetCount";
+    inline constexpr char arpRatchetChance[] = "arpRatchetChance";
+    inline constexpr char arpAccentEvery[] = "arpAccentEvery";
+    inline constexpr char arpAccentAmount[] = "arpAccentAmount";
     inline constexpr char arpLatch[] = "arpLatch";
 
     inline constexpr char driveEnabled[] = "driveEnabled";
@@ -170,6 +175,22 @@ namespace coolsynth::parameters
         chord = 10,
     };
 
+    enum class ArpRatchetChoice : int
+    {
+        off = 0,
+        x2 = 1,
+        x3 = 2,
+        x4 = 3,
+    };
+
+    enum class ArpAccentEveryChoice : int
+    {
+        off = 0,
+        every2 = 1,
+        every3 = 2,
+        every4 = 3,
+    };
+
     inline constexpr auto allParameterIds = std::to_array<const char*>({
         ids::oscAWave,
         ids::oscAOctave,
@@ -224,6 +245,10 @@ namespace coolsynth::parameters
         ids::arpGate,
         ids::arpSwing,
         ids::arpChance,
+        ids::arpRatchetCount,
+        ids::arpRatchetChance,
+        ids::arpAccentEvery,
+        ids::arpAccentAmount,
         ids::arpLatch,
         ids::driveEnabled,
         ids::driveAmount,

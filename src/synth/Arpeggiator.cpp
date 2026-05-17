@@ -85,6 +85,7 @@ namespace coolsynth::synth
         samplesUntilNextStep = 0.0f;
         internalClockArmed = false;
         patternStepCounter = 0;
+        emittedStepCounter = 0;
         randomWalkIndex = 0;
         previousHostIsPlaying = false;
         previousEnabled = false;
@@ -222,6 +223,8 @@ namespace coolsynth::synth
                                                maxSwingFraction,
                                                currentParameters.swingAmount);
         const float chance = juce::jlimit(0.0f, 1.0f, currentParameters.chance);
+        const float ratchetChance = juce::jlimit(0.0f, 1.0f, currentParameters.ratchetChance);
+        const float accentAmount = juce::jlimit(0.0f, 1.0f, currentParameters.accentAmount);
         const int gateLengthSamples = juce::jmax(1, static_cast<int>(stepLengthSamples * gateFraction));
 
         // Compute when the first step fires inside this block.
@@ -303,49 +306,30 @@ namespace coolsynth::synth
                             continue;
                         }
 
-                        const int absoluteGateOffSample = eventOffset + gateLengthSamples;
-                        const bool gateFitsInBlock = absoluteGateOffSample < blockSamples;
-                        const int requiredEventCount = validNoteCount * (gateFitsInBlock ? 2 : 1);
-                        const bool hasEventCapacity = (outEventCount + requiredEventCount) <= maxEvents;
-                        const bool hasRingingCapacity = gateFitsInBlock
-                            || (ringingNoteCount + validNoteCount) <= maxArpRingingNotes;
+                        const int ratchetCount = resolveRatchetCount();
+                        const bool ratchetActive = ratchetCount > 1
+                            && (ratchetChance >= 1.0f || rng.nextFloat() < ratchetChance);
+                        const int stepRatchetCount = ratchetActive ? ratchetCount : 1;
+                        const int accentEvery = resolveAccentEvery();
+                        const bool accentThisStep = accentEvery > 0
+                            && (emittedStepCounter % accentEvery) == 0;
+                        const float velocityScale = accentThisStep
+                            ? (1.0f + accentAmount)
+                            : 1.0f;
 
-                        // Chords are emitted atomically so we never leave half a stab in the buffer.
-                        if (hasEventCapacity && hasRingingCapacity)
+                        if (emitStepNotes(chordNotes,
+                                          chordVelocities,
+                                          validNoteCount,
+                                          eventOffset,
+                                          gateLengthSamples,
+                                          stepRatchetCount,
+                                          velocityScale,
+                                          outEvents,
+                                          outEventCount,
+                                          blockSamples,
+                                          maxEvents))
                         {
-                            for (int index = 0; index < validNoteCount; ++index)
-                            {
-                                EngineMidiEvent noteOn {};
-                                noteOn.type = EngineMidiEventType::noteOn;
-                                noteOn.sampleOffset = eventOffset;
-                                noteOn.noteNumber = static_cast<uint8_t>(
-                                    chordNotes[static_cast<size_t>(index)]);
-                                noteOn.value = juce::jlimit(0.0f,
-                                                            1.0f,
-                                                            chordVelocities[static_cast<size_t>(index)]);
-                                noteOn.fromArp = true;
-                                insertSortedEvent(outEvents, outEventCount, noteOn, maxEvents);
-                            }
-
-                            for (int index = 0; index < validNoteCount; ++index)
-                            {
-                                const int noteNumber = chordNotes[static_cast<size_t>(index)];
-                                if (gateFitsInBlock)
-                                {
-                                    EngineMidiEvent noteOff {};
-                                    noteOff.type = EngineMidiEventType::noteOff;
-                                    noteOff.sampleOffset = absoluteGateOffSample;
-                                    noteOff.noteNumber = static_cast<uint8_t>(noteNumber);
-                                    noteOff.fromArp = true;
-                                    insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
-                                }
-                                else
-                                {
-                                    scheduleRingingNote(noteNumber,
-                                                        juce::jmax(0,
-                                                                   absoluteGateOffSample - blockSamples));
-                                }
-                            }
+                            ++emittedStepCounter;
                         }
                     }
                 }
@@ -364,30 +348,35 @@ namespace coolsynth::synth
                         continue;
                     }
 
-                    EngineMidiEvent noteOn {};
-                    noteOn.type = EngineMidiEventType::noteOn;
-                    noteOn.sampleOffset = eventOffset;
-                    noteOn.noteNumber = static_cast<uint8_t>(note);
-                    noteOn.value = juce::jlimit(0.0f, 1.0f, velocity);
-                    noteOn.fromArp = true;
-                    insertSortedEvent(outEvents, outEventCount, noteOn, maxEvents);
+                    std::array<int, maxArpHeldNotes> stepNotes {};
+                    std::array<float, maxArpHeldNotes> stepVelocities {};
+                    stepNotes[0] = note;
+                    stepVelocities[0] = velocity;
 
-                    const int absoluteGateOffSample = eventOffset + gateLengthSamples;
-                    if (absoluteGateOffSample < blockSamples && outEventCount < maxEvents)
+                    const int ratchetCount = resolveRatchetCount();
+                    const bool ratchetActive = ratchetCount > 1
+                        && (ratchetChance >= 1.0f || rng.nextFloat() < ratchetChance);
+                    const int stepRatchetCount = ratchetActive ? ratchetCount : 1;
+                    const int accentEvery = resolveAccentEvery();
+                    const bool accentThisStep = accentEvery > 0
+                        && (emittedStepCounter % accentEvery) == 0;
+                    const float velocityScale = accentThisStep
+                        ? (1.0f + accentAmount)
+                        : 1.0f;
+
+                    if (emitStepNotes(stepNotes,
+                                      stepVelocities,
+                                      1,
+                                      eventOffset,
+                                      gateLengthSamples,
+                                      stepRatchetCount,
+                                      velocityScale,
+                                      outEvents,
+                                      outEventCount,
+                                      blockSamples,
+                                      maxEvents))
                     {
-                        EngineMidiEvent noteOff {};
-                        noteOff.type = EngineMidiEventType::noteOff;
-                        noteOff.sampleOffset = absoluteGateOffSample;
-                        noteOff.noteNumber = static_cast<uint8_t>(note);
-                        noteOff.fromArp = true;
-                        insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
-                    }
-                    else
-                    {
-                        // If it falls outside this block, OR if we ran out of space in the
-                        // current event buffer, we must schedule it as a ringing note so
-                        // we don't leak polyphony.
-                        scheduleRingingNote(note, juce::jmax(0, absoluteGateOffSample - blockSamples));
+                        ++emittedStepCounter;
                     }
                 }
             }
@@ -632,7 +621,116 @@ namespace coolsynth::synth
 
     void Arpeggiator::resetPatternWalkState() noexcept
     {
+        emittedStepCounter = 0;
         randomWalkIndex = 0;
+    }
+
+    int Arpeggiator::resolveRatchetCount() const noexcept
+    {
+        switch (currentParameters.ratchetCount)
+        {
+            case coolsynth::parameters::ArpRatchetChoice::x2: return 2;
+            case coolsynth::parameters::ArpRatchetChoice::x3: return 3;
+            case coolsynth::parameters::ArpRatchetChoice::x4: return 4;
+            case coolsynth::parameters::ArpRatchetChoice::off:
+            default: return 1;
+        }
+    }
+
+    int Arpeggiator::resolveAccentEvery() const noexcept
+    {
+        switch (currentParameters.accentEvery)
+        {
+            case coolsynth::parameters::ArpAccentEveryChoice::every2: return 2;
+            case coolsynth::parameters::ArpAccentEveryChoice::every3: return 3;
+            case coolsynth::parameters::ArpAccentEveryChoice::every4: return 4;
+            case coolsynth::parameters::ArpAccentEveryChoice::off:
+            default: return 0;
+        }
+    }
+
+    bool Arpeggiator::emitStepNotes(const std::array<int, maxArpHeldNotes>& notes,
+                                    const std::array<float, maxArpHeldNotes>& velocities,
+                                    int noteCount,
+                                    int eventOffset,
+                                    int gateLengthSamples,
+                                    int ratchetCount,
+                                    float velocityScale,
+                                    EngineMidiEvent* outEvents,
+                                    int& outEventCount,
+                                    int blockSamples,
+                                    int maxEvents) noexcept
+    {
+        if (noteCount <= 0 || ratchetCount <= 0)
+            return false;
+
+        const int clampedRatchetCount = juce::jmax(1, ratchetCount);
+        const int subHitLengthSamples = juce::jmax(1, gateLengthSamples / clampedRatchetCount);
+
+        int requiredEventCount = 0;
+        int requiredRingingCount = 0;
+
+        for (int hitIndex = 0; hitIndex < clampedRatchetCount; ++hitIndex)
+        {
+            const int subHitOffset = eventOffset
+                + static_cast<int>((static_cast<int64_t>(hitIndex) * gateLengthSamples)
+                                   / clampedRatchetCount);
+            const int absoluteGateOffSample = subHitOffset + subHitLengthSamples;
+            const bool gateFitsInBlock = absoluteGateOffSample < blockSamples;
+
+            requiredEventCount += noteCount * (gateFitsInBlock ? 2 : 1);
+            if (! gateFitsInBlock)
+                requiredRingingCount += noteCount;
+        }
+
+        if ((outEventCount + requiredEventCount) > maxEvents
+            || (ringingNoteCount + requiredRingingCount) > maxArpRingingNotes)
+        {
+            return false;
+        }
+
+        for (int hitIndex = 0; hitIndex < clampedRatchetCount; ++hitIndex)
+        {
+            const int subHitOffset = eventOffset
+                + static_cast<int>((static_cast<int64_t>(hitIndex) * gateLengthSamples)
+                                   / clampedRatchetCount);
+            const int absoluteGateOffSample = subHitOffset + subHitLengthSamples;
+
+            for (int noteIndex = 0; noteIndex < noteCount; ++noteIndex)
+            {
+                EngineMidiEvent noteOn {};
+                noteOn.type = EngineMidiEventType::noteOn;
+                noteOn.sampleOffset = subHitOffset;
+                noteOn.noteNumber = static_cast<uint8_t>(notes[static_cast<size_t>(noteIndex)]);
+                noteOn.value = juce::jlimit(0.0f,
+                                            1.0f,
+                                            velocities[static_cast<size_t>(noteIndex)] * velocityScale);
+                noteOn.fromArp = true;
+                insertSortedEvent(outEvents, outEventCount, noteOn, maxEvents);
+            }
+
+            for (int noteIndex = 0; noteIndex < noteCount; ++noteIndex)
+            {
+                const int noteNumber = notes[static_cast<size_t>(noteIndex)];
+                if (absoluteGateOffSample < blockSamples)
+                {
+                    EngineMidiEvent noteOff {};
+                    noteOff.type = EngineMidiEventType::noteOff;
+                    noteOff.sampleOffset = absoluteGateOffSample;
+                    noteOff.noteNumber = static_cast<uint8_t>(noteNumber);
+                    noteOff.fromArp = true;
+                    insertSortedEvent(outEvents, outEventCount, noteOff, maxEvents);
+                }
+                else
+                {
+                    scheduleRingingNote(noteNumber,
+                                        juce::jmax(0,
+                                                   absoluteGateOffSample - blockSamples));
+                }
+            }
+        }
+
+        return true;
     }
 
     int Arpeggiator::pickNextPatternNote(float& outVelocity) noexcept

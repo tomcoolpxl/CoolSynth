@@ -180,7 +180,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Refreshed a factory-profile regression to assert the intended soft-takeover behavior of the oscillator-level faders under the current V2 init defaults.
   - Manual validation passed in standalone and VST3 use: valid V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the active synth state.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- `TODO.md` now points to Phase 11 Track D/E remaining work.
+- `TODO.md` now points to ARP Expansion Phase D — Euclidean rhythm.
 - Phase 11 Track A completed on 2026-05-15:
   - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
   - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).
@@ -227,3 +227,10 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Wrapped `.cspatch` files and wrapped processor state now use format version `4`, intentionally rejecting older saved patches or state under the expanded arp parameter contract.
   - Added direct arp-event regressions for internal-clock swing offsets, host-synced swing offsets, and exact seeded 50% chance skip counts across 1000 steps.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `build\\CoolSynthMidiLearnTests_artefacts\\Debug\\CoolSynthMidiLearnTests.exe` on 2026-05-17.
+- ARP Expansion `Phase C` completed on 2026-05-17:
+  - Added `arpRatchetCount`, `arpRatchetChance`, `arpAccentEvery`, and `arpAccentAmount` end-to-end across the APVTS contract, raw parameter binding, processor block snapshot decode, and a temporary shared-editor arp surface pending the Phase E overlay.
+  - `Arpeggiator::generateEventsForBlock()` now expands steps into deterministic ratchet bursts, applies ratchet chance once per emitted step, and scales accent velocity on the emitted-step grid so chance skips do not desync accents.
+  - Chord mode now ratchets the whole chord stab, accent scales all notes in the chord uniformly, and expanded chord bursts are emitted atomically or dropped entirely if they would overflow the bounded arp event buffer.
+  - Wrapped `.cspatch` files and wrapped processor state now use format version `5`, intentionally rejecting older saved patches or state under the expanded arp parameter contract.
+  - Added direct arp-event regressions for ratchet offsets/counts, emitted-step accent behavior under chance skipping, chord ratchet-plus-accent application, and ratcheted chord overflow dropping.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.

@@ -93,6 +93,12 @@ namespace coolsynth::synth
         float gateLength = 0.5f;
         float swingAmount = 0.0f;
         float chance = 1.0f;
+        coolsynth::parameters::ArpRatchetChoice ratchetCount =
+            coolsynth::parameters::ArpRatchetChoice::off;
+        float ratchetChance = 0.0f;
+        coolsynth::parameters::ArpAccentEveryChoice accentEvery =
+            coolsynth::parameters::ArpAccentEveryChoice::off;
+        float accentAmount = 0.0f;
         bool latch = false;
     };
 
@@ -238,6 +244,10 @@ namespace coolsynth::synth
         std::atomic<float>* arpGate = nullptr;
         std::atomic<float>* arpSwing = nullptr;
         std::atomic<float>* arpChance = nullptr;
+        std::atomic<float>* arpRatchetCount = nullptr;
+        std::atomic<float>* arpRatchetChance = nullptr;
+        std::atomic<float>* arpAccentEvery = nullptr;
+        std::atomic<float>* arpAccentAmount = nullptr;
         std::atomic<float>* arpLatch = nullptr;
         std::atomic<float>* driveEnabled = nullptr;
         std::atomic<float>* driveAmount = nullptr;
@@ -323,6 +333,10 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::arpGate,                  &ParameterValuePointersV2::arpGate                  },
         { coolsynth::parameters::ids::arpSwing,                 &ParameterValuePointersV2::arpSwing                 },
         { coolsynth::parameters::ids::arpChance,                &ParameterValuePointersV2::arpChance                },
+        { coolsynth::parameters::ids::arpRatchetCount,          &ParameterValuePointersV2::arpRatchetCount          },
+        { coolsynth::parameters::ids::arpRatchetChance,         &ParameterValuePointersV2::arpRatchetChance         },
+        { coolsynth::parameters::ids::arpAccentEvery,           &ParameterValuePointersV2::arpAccentEvery           },
+        { coolsynth::parameters::ids::arpAccentAmount,          &ParameterValuePointersV2::arpAccentAmount          },
         { coolsynth::parameters::ids::arpLatch,                 &ParameterValuePointersV2::arpLatch                 },
         { coolsynth::parameters::ids::driveEnabled,             &ParameterValuePointersV2::driveEnabled             },
         { coolsynth::parameters::ids::driveAmount,              &ParameterValuePointersV2::driveAmount              },
