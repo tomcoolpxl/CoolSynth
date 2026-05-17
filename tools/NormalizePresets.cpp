@@ -27,11 +27,22 @@
 
 namespace
 {
-    constexpr double kSampleRate     = 48000.0;
-    constexpr int    kBlockSize      = 256;
-    constexpr double kRenderSeconds  = 4.0;
-    constexpr double kTargetLufs     = -18.0;
-    constexpr double kPeakCeilingDb  = -3.0;
+    constexpr double kSampleRate         = 48000.0;
+    constexpr int    kBlockSize          = 256;
+    constexpr double kRenderSeconds      = 4.0;
+    constexpr double kBaseTargetLufs     = -18.0;
+    constexpr double kPeakCeilingDb      = -3.0;
+
+    // K-weighted LUFS undercounts perceived loudness for high-crest material
+    // (sustained sine/triangle-ish patches, breathy flutes, sparse plucks) compared
+    // to dense low-crest material (saws, square leads). Adding a crest-factor-aware
+    // boost lets sparse patches sit a few dB hotter than the base LUFS target so
+    // they feel comparable to dense leads. Dense material (crest <= 3 dB) is
+    // unchanged; high-crest material gets up to +4 dB extra, still capped by the
+    // peak ceiling.
+    constexpr double kCrestBoostKneeDb   = 3.0;  // crest factor below which no boost applies
+    constexpr double kCrestBoostSlope    = 0.4;  // dB of boost per dB of crest factor above the knee
+    constexpr double kCrestBoostMaxDb    = 4.0;  // maximum boost
 
     // ITU-R BS.1770-4 K-weighting biquads, tuned for 48 kHz sample rate.
     // Stage 1: high-shelf (~+4 dB above 1.68 kHz). Stage 2: high-pass (~38 Hz).
@@ -264,10 +275,11 @@ int main()
 
     const int presetCount = coolsynth::presets::getFactoryPresetCount();
     std::cout << "Normalizing " << presetCount << " factory presets to "
-              << kTargetLufs << " LUFS (peak ceiling " << kPeakCeilingDb << " dBFS).\n\n";
+              << kBaseTargetLufs << " LUFS base (peak ceiling " << kPeakCeilingDb << " dBFS, "
+              << "crest-factor boost up to +" << kCrestBoostMaxDb << " dB).\n\n";
 
     std::ostringstream csv;
-    csv << "preset,old_master_db,new_master_db,delta_db,lufs,peak_db,limited_by\n";
+    csv << "preset,old_master_db,new_master_db,delta_db,lufs,peak_db,crest_db,target_lufs,limited_by\n";
 
     int adjusted = 0;
     for (int i = 0; i < presetCount; ++i)
@@ -277,7 +289,12 @@ int main()
 
         const auto loudness = renderAndMeasure(preset);
 
-        double lufsDelta = kTargetLufs - loudness.integratedLufs;
+        const double crestFactor = loudness.peakDb - loudness.integratedLufs;
+        const double crestBoost  = std::clamp((crestFactor - kCrestBoostKneeDb) * kCrestBoostSlope,
+                                              0.0, kCrestBoostMaxDb);
+        const double targetLufs  = kBaseTargetLufs + crestBoost;
+
+        double lufsDelta = targetLufs - loudness.integratedLufs;
         double peakDelta = kPeakCeilingDb - loudness.peakDb;
         std::string limitedBy = "lufs";
         double correction = lufsDelta;
@@ -298,6 +315,8 @@ int main()
                   << oldMasterDb << " -> " << std::setw(6) << newMasterDb << " dB"
                   << "  (LUFS " << std::setw(7) << std::setprecision(2) << loudness.integratedLufs
                   << ", peak " << std::setw(6) << loudness.peakDb << " dB"
+                  << ", crest " << std::setw(5) << crestFactor << " dB"
+                  << ", tgt " << std::setw(6) << targetLufs << " LUFS"
                   << ", limit=" << limitedBy << ")\n";
 
         csv << "\"" << preset.name << "\","
@@ -306,6 +325,8 @@ int main()
             << appliedDelta << ","
             << loudness.integratedLufs << ","
             << loudness.peakDb << ","
+            << crestFactor << ","
+            << targetLufs << ","
             << limitedBy << "\n";
 
         if (std::abs(appliedDelta) > 0.25)
