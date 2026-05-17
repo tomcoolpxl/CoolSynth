@@ -240,10 +240,5 @@ namespace coolsynth::parameters
         ids::compressorMix,
     });
 
-    // Number of parameters that existed in v2 state files. The first N entries of
-    // allParameterIds are required to be present when loading a saved state; entries
-    // beyond this index were added in v3 and may be absent (defaults are applied).
-    inline constexpr size_t v2EraParameterCount = 68;
-
     inline constexpr auto learnableParameterIds = allParameterIds;
 }

@@ -8,8 +8,9 @@ namespace coolsynth::presets
     {
         namespace ids = coolsynth::parameters::ids;
 
-        // Each preset specifies all 67 parameters explicitly, so loading a preset
-        // fully overrides the previous patch with no leftover knob state.
+        // Each preset specifies every parameter explicitly (68 v2-era params plus
+        // the 8 v3 macro/phaser/compressor entries), so loading a preset fully
+        // overrides the previous patch with no leftover knob state.
 
         constexpr PresetParameterValue kInitDefault[] = {
             { ids::oscAWave, 2.0f }, { ids::oscAOctave, 2.0f }, { ids::oscAFineCents, 0.0f },
@@ -43,6 +44,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 0.0f }, { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.2f },
             { ids::masterGainDb, -8.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kMonoSawLead[] = {
@@ -77,6 +81,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.35f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.15f },
             { ids::masterGainDb, -16.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kHardSyncLead[] = {
@@ -111,6 +118,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.35f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.18f },
             { ids::masterGainDb, -14.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.35f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kSuperStack[] = {
@@ -145,6 +155,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.45f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.25f },
             { ids::masterGainDb, -4.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.40f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kFatMonoBass[] = {
@@ -179,6 +192,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 0.0f }, { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.0f },
             { ids::masterGainDb, -18.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.40f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kPureSub[] = {
@@ -213,6 +229,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 0.0f }, { ids::reverbSize, 0.4f },
             { ids::reverbDamping, 0.5f }, { ids::reverbMix, 0.0f },
             { ids::masterGainDb, -13.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kAcidBass[] = {
@@ -247,6 +266,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.30f },
             { ids::reverbDamping, 0.6f }, { ids::reverbMix, 0.10f },
             { ids::masterGainDb, 0.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.35f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kGlassyPluck[] = {
@@ -281,6 +303,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.55f },
             { ids::reverbDamping, 0.4f }, { ids::reverbMix, 0.30f },
             { ids::masterGainDb, 2.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.25f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kFunkyClav[] = {
@@ -315,6 +340,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.30f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.12f },
             { ids::masterGainDb, 4.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 1.20f }, { ids::phaserDepth, 0.55f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.40f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kBrassStack[] = {
@@ -349,6 +377,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.40f },
             { ids::reverbDamping, 0.50f }, { ids::reverbMix, 0.20f },
             { ids::masterGainDb, -9.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.35f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kWarmAnalogPad[] = {
@@ -383,6 +414,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.60f },
             { ids::reverbDamping, 0.40f }, { ids::reverbMix, 0.35f },
             { ids::masterGainDb, -5.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kEtherealDream[] = {
@@ -417,6 +451,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.80f },
             { ids::reverbDamping, 0.35f }, { ids::reverbMix, 0.55f },
             { ids::masterGainDb, -7.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.18f }, { ids::phaserDepth, 0.45f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kWobbleBass[] = {
@@ -451,6 +488,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.35f },
             { ids::reverbDamping, 0.55f }, { ids::reverbMix, 0.10f },
             { ids::masterGainDb, -14.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.40f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kSciFiTexture[] = {
@@ -485,6 +525,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.70f },
             { ids::reverbDamping, 0.45f }, { ids::reverbMix, 0.45f },
             { ids::masterGainDb, -4.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.60f }, { ids::phaserDepth, 0.70f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kArpBliss[] = {
@@ -519,6 +562,9 @@ namespace coolsynth::presets
             { ids::reverbEnabled, 1.0f }, { ids::reverbSize, 0.55f },
             { ids::reverbDamping, 0.45f }, { ids::reverbMix, 0.30f },
             { ids::masterGainDb, -0.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         // === BEGIN AUTO YAML PRESETS ===
@@ -591,6 +637,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
             { ids::masterGainDb, -15.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.45f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kRubberPWMBass[] = {
@@ -662,6 +711,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
             { ids::masterGainDb, -14.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.40f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kAcidProphet[] = {
@@ -733,6 +785,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
             { ids::masterGainDb, -12.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.40f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kSubMetalStack[] = {
@@ -804,6 +859,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
             { ids::masterGainDb, -9.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.35f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kSyncSaber[] = {
@@ -875,6 +933,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.55f },
             { ids::reverbMix, 0.16f },
             { ids::masterGainDb, -14.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.35f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kUnisonAnthem[] = {
@@ -946,6 +1007,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.18f },
             { ids::masterGainDb, -5.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.40f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kHollowSquareSolo[] = {
@@ -1017,6 +1081,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.58f },
             { ids::reverbMix, 0.12f },
             { ids::masterGainDb, -12.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kWhistleTriLead[] = {
@@ -1088,6 +1155,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.42f },
             { ids::reverbMix, 0.2f },
             { ids::masterGainDb, -6.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kWarmFilmPad[] = {
@@ -1159,6 +1229,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.56f },
             { ids::reverbMix, 0.35f },
             { ids::masterGainDb, -6.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.20f }, { ids::phaserDepth, 0.40f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kGlassProphetPad[] = {
@@ -1230,6 +1303,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.38f },
             { ids::reverbMix, 0.38f },
             { ids::masterGainDb, -4.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.25f }, { ids::phaserDepth, 0.50f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kDuskStrings[] = {
@@ -1301,6 +1377,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.68f },
             { ids::reverbMix, 0.32f },
             { ids::masterGainDb, -4.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kChoirDrift[] = {
@@ -1372,6 +1451,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.45f },
             { ids::reverbMix, 0.42f },
             { ids::masterGainDb, -6.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kVelvetPluck[] = {
@@ -1443,6 +1525,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.52f },
             { ids::reverbMix, 0.16f },
             { ids::masterGainDb, -1.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kKotoPulse[] = {
@@ -1514,6 +1599,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.48f },
             { ids::reverbMix, 0.13f },
             { ids::masterGainDb, 6.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kAnalogCompKeys[] = {
@@ -1585,6 +1673,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.6f },
             { ids::reverbMix, 0.11f },
             { ids::masterGainDb, -6.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.55f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kDustyPolyKeys[] = {
@@ -1656,6 +1747,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.62f },
             { ids::reverbMix, 0.2f },
             { ids::masterGainDb, 0.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.35f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kNeonRunner[] = {
@@ -1727,6 +1821,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.45f },
             { ids::reverbMix, 0.13f },
             { ids::masterGainDb, 0.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.35f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kClockworkPulse[] = {
@@ -1798,6 +1895,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.2f },
             { ids::masterGainDb, -13.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kOctaveSprinter[] = {
@@ -1869,6 +1969,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.15f },
             { ids::masterGainDb, -1.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kRisingSyncSwarm[] = {
@@ -1940,6 +2043,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.35f },
             { ids::reverbMix, 0.42f },
             { ids::masterGainDb, -8.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.70f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kReplicantBrass[] = {
@@ -2011,6 +2117,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.46f },
             { ids::reverbMix, 0.44f },
             { ids::masterGainDb, -9.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.18f }, { ids::phaserDepth, 0.35f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kOffworldFlute[] = {
@@ -2082,6 +2191,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.42f },
             { ids::reverbMix, 0.34f },
             { ids::masterGainDb, -6.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kUpsideDownDrone[] = {
@@ -2153,6 +2265,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.62f },
             { ids::reverbMix, 0.48f },
             { ids::masterGainDb, -9.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.18f }, { ids::phaserDepth, 0.65f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kHawkinsPulse[] = {
@@ -2224,6 +2339,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.58f },
             { ids::reverbMix, 0.12f },
             { ids::masterGainDb, -10.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.35f }, { ids::phaserDepth, 0.55f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kNeonPoliceSweep[] = {
@@ -2295,6 +2413,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.45f },
             { ids::reverbMix, 0.24f },
             { ids::masterGainDb, -2.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kTyrellRainPad[] = {
@@ -2366,6 +2487,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.5f },
             { ids::reverbMix, 0.5f },
             { ids::masterGainDb, -9.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.22f }, { ids::phaserDepth, 0.55f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kXenonPanFlute[] = {
@@ -2437,6 +2561,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.36f },
             { ids::reverbMix, 0.38f },
             { ids::masterGainDb, -2.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 0.0f }, { ids::phaserRateHz, 0.50f }, { ids::phaserDepth, 0.60f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kStarcourtSequence[] = {
@@ -2508,6 +2635,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.48f },
             { ids::reverbMix, 0.16f },
             { ids::masterGainDb, 1.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.45f }, { ids::phaserDepth, 0.50f },
+            { ids::compressorEnabled, 1.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kLosAngeles2019[] = {
@@ -2579,6 +2709,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.44f },
             { ids::reverbMix, 0.46f },
             { ids::masterGainDb, -9.5f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.18f }, { ids::phaserDepth, 0.55f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
 
         constexpr PresetParameterValue kSovietSatellite[] = {
@@ -2650,6 +2783,9 @@ namespace coolsynth::presets
             { ids::reverbDamping, 0.55f },
             { ids::reverbMix, 0.36f },
             { ids::masterGainDb, -1.0f },
+            { ids::timbre, 0.0f }, { ids::excite, 0.0f },
+            { ids::phaserEnabled, 1.0f }, { ids::phaserRateHz, 0.40f }, { ids::phaserDepth, 0.55f },
+            { ids::compressorEnabled, 0.0f }, { ids::compressorAmount, 0.30f }, { ids::compressorMix, 1.00f },
         };
         // === END AUTO YAML PRESETS ===
 

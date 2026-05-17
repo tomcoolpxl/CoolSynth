@@ -53,7 +53,11 @@
       "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests\" | Select-Object -Last 30)",
       "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests|compressor\" | Select-Object -Last 30)",
       "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"compressor|FAILED|FAIL!|monotonically\" | Select-Object -Last 20)",
-      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"compressor|FAILED|FAIL!|monotonically\" | Select-Object -Last 10)"
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"compressor|FAILED|FAIL!|monotonically\" | Select-Object -Last 10)",
+      "Bash(python *)",
+      "Bash(awk '/kFunkyClav\\\\[\\\\] = \\\\{/{p=1} p; /\\\\};/&&p{p=0;print \"---\"}' src/presets/FactoryPresets.cpp)",
+      "Bash(awk *)",
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests\" | Select-Object -Last 10)"
     ]
   }
 }

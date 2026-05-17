@@ -19,7 +19,6 @@ namespace
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
     inline constexpr int processorStateFormatVersion = 3;
-    inline constexpr int oldestSupportedStateFormatVersion = 2;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
@@ -263,8 +262,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         if (! xml->hasTagName(processorStateRootTag))
             return;
 
-        const int stateVersion = xml->getIntAttribute(processorStateVersionProperty, 0);
-        if (stateVersion < oldestSupportedStateFormatVersion || stateVersion > processorStateFormatVersion)
+        if (xml->getIntAttribute(processorStateVersionProperty, 0) != processorStateFormatVersion)
             return;
 
         const auto expectedStateType = getParameterStateTypeName();
@@ -389,17 +387,14 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
         }
     }
 
-    // Every parameter that existed in v2 state files must be present. Parameters added in v3+
-    // (indices >= v2EraParameterCount) may be absent — the sanitized tree was seeded from the
-    // current defaults, so missing newer parameters simply keep their default values.
-    for (size_t index = 0; index < coolsynth::parameters::v2EraParameterCount; ++index)
+    if (appliedParameterCount != static_cast<int> (coolsynth::parameters::allParameterIds.size()))
+        return false;
+
+    for (const auto seen : seenKnownParameters)
     {
-        if (! seenKnownParameters[index])
+        if (! seen)
             return false;
     }
-
-    if (appliedParameterCount < static_cast<int> (coolsynth::parameters::v2EraParameterCount))
-        return false;
 
     return true;
 }
