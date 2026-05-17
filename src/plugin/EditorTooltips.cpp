@@ -126,6 +126,10 @@ void SynthAudioProcessorEditor::applyTooltips()
     phaserSection.setTooltip(makeTooltipText("Phaser",
                                              "Four-stage all-pass phaser between Distortion and Chorus.\n"
                                              "Stereo channels run with a 90 deg LFO offset for width."));
+    compressorSection.setTooltip(makeTooltipText("Compressor",
+                                                 "Feed-forward peak compressor at the end of the FX chain.\n"
+                                                 "Amount sets threshold and ratio together; Mix blends for\n"
+                                                 "parallel compression. Attack and release are fixed."));
 
     setParameterTooltip(oscAWaveChoice, "Wave",
                         "Choose the basic tone shape for oscillator A.\n"
@@ -441,6 +445,17 @@ void SynthAudioProcessorEditor::applyTooltips()
                         "Combined sweep range and wet mix.\n"
                         "Zero bypasses the phaser; higher values sweep further\n"
                         "and let more of the wet signal through.");
+    setParameterTooltip(cmpOnToggle, "Compressor",
+                        "Turn the compressor on or off.\n"
+                        "Compression evens out dynamics at the end of the chain.");
+    setParameterTooltip(cmpAmtKnob, "Amount",
+                        "One-knob compression strength.\n"
+                        "Higher values lower the threshold and raise the ratio,\n"
+                        "squeezing peaks harder. Auto makeup keeps loudness steady.");
+    setParameterTooltip(cmpMixKnob, "Mix",
+                        "Blend the compressed signal with the dry signal.\n"
+                        "Use partial mix for parallel compression\n"
+                        "(thickening without flattening transients).");
 
     initPatchButton.setTooltip(makeTooltipText("Init Patch",
                                                "Reset the panel to the default patch.\n"

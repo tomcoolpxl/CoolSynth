@@ -117,6 +117,9 @@ private:
         juce::RangedAudioParameter* phsOn = nullptr;
         juce::RangedAudioParameter* phsRate = nullptr;
         juce::RangedAudioParameter* phsDepth = nullptr;
+        juce::RangedAudioParameter* cmpOn = nullptr;
+        juce::RangedAudioParameter* cmpAmt = nullptr;
+        juce::RangedAudioParameter* cmpMix = nullptr;
     };
 
     struct LearnableControlRegistration
@@ -180,7 +183,7 @@ private:
     coolsynth::ui::SynthSection outSection { "Output" };
     coolsynth::ui::SynthSection macrosSection { "Macros" };
     coolsynth::ui::SynthSection phaserSection { "Phaser" };
-    coolsynth::ui::SynthSection fxPlaceholderSection { "New FX (coming soon)" };
+    coolsynth::ui::SynthSection compressorSection { "Compressor" };
 
     coolsynth::ui::SegmentedChoiceGroup oscAWaveChoice {
         "Wave",
@@ -334,6 +337,9 @@ private:
     coolsynth::ui::LedToggleButton phsOnToggle { "Phaser" };
     coolsynth::ui::HardwareKnob phsRateKnob { "Rate" };
     coolsynth::ui::HardwareKnob phsDepthKnob { "Depth" };
+    coolsynth::ui::LedToggleButton cmpOnToggle { "Comp" };
+    coolsynth::ui::HardwareKnob cmpAmtKnob { "Amount" };
+    coolsynth::ui::HardwareKnob cmpMixKnob { "Mix" };
 
     std::unique_ptr<ChoiceAttachment> oscAWaveAttachment;
     std::unique_ptr<SliderAttachment> oscAOctaveAttachment;
@@ -408,6 +414,9 @@ private:
     std::unique_ptr<ButtonAttachment> phsOnAttachment;
     std::unique_ptr<SliderAttachment> phsRateAttachment;
     std::unique_ptr<SliderAttachment> phsDepthAttachment;
+    std::unique_ptr<ButtonAttachment> cmpOnAttachment;
+    std::unique_ptr<SliderAttachment> cmpAmtAttachment;
+    std::unique_ptr<SliderAttachment> cmpMixAttachment;
 
     juce::TextButton allNotesOffButton { "All Notes Off" };
 

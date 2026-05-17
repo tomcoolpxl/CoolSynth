@@ -51,6 +51,7 @@ namespace coolsynth::synth
         reverb.prepare(spec);
         delay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         phaser.prepare(sampleRate, samplesPerBlock, outputChannelCount);
+        compressor.prepare(sampleRate, samplesPerBlock, outputChannelCount);
 
         constexpr double kFxSmoothRampSeconds = 0.004;
         driveMixSmoothed.reset(sampleRate, kFxSmoothRampSeconds);
@@ -70,6 +71,7 @@ namespace coolsynth::synth
         delay.reset();
         reverb.reset();
         phaser.reset();
+        compressor.reset();
         chorusWasAudible = false;
         delayWasAudible = false;
         reverbWasAudible = false;
@@ -81,6 +83,7 @@ namespace coolsynth::synth
         delay.clear();
         reverb.reset();
         phaser.reset();
+        compressor.reset();
         chorusWasAudible = false;
         delayWasAudible = false;
         reverbWasAudible = false;
@@ -91,7 +94,8 @@ namespace coolsynth::synth
                                const PhaserParametersV2& phaserParameters,
                                const ChorusParametersV2& chorusParameters,
                                const DelayParametersV2& delayParameters,
-                               const ReverbParametersV2& reverbParametersIn) noexcept
+                               const ReverbParametersV2& reverbParametersIn,
+                               const CompressorParametersV2& compressorParameters) noexcept
     {
         if (! prepared)
             return;
@@ -101,6 +105,7 @@ namespace coolsynth::synth
         processChorus(buffer, chorusParameters);
         processDelay(buffer, delayParameters);
         processReverb(buffer, reverbParametersIn);
+        compressor.process(buffer, compressorParameters);
 
         // Ultimate host-safety net: catch any stray NaNs or Infinities
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch)

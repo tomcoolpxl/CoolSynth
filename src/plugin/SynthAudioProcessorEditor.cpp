@@ -172,6 +172,9 @@ void SynthAudioProcessorEditor::setupParameterRefs()
     parameterRefs.phsOn = apvts.getParameter(ids::phaserEnabled);
     parameterRefs.phsRate = apvts.getParameter(ids::phaserRateHz);
     parameterRefs.phsDepth = apvts.getParameter(ids::phaserDepth);
+    parameterRefs.cmpOn = apvts.getParameter(ids::compressorEnabled);
+    parameterRefs.cmpAmt = apvts.getParameter(ids::compressorAmount);
+    parameterRefs.cmpMix = apvts.getParameter(ids::compressorMix);
 }
 
 void SynthAudioProcessorEditor::setupVisualsAndLabels(bool isStandalone)
@@ -224,7 +227,7 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addAndMakeVisible(outSection);
     addAndMakeVisible(macrosSection);
     addAndMakeVisible(phaserSection);
-    addAndMakeVisible(fxPlaceholderSection);
+    addAndMakeVisible(compressorSection);
 
     auto addSliderControl = [this, &apvts](auto& control,
                                            std::unique_ptr<SliderAttachment>& attachment,
@@ -345,6 +348,9 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addToggleControl(phsOnToggle, phsOnAttachment, ids::phaserEnabled);
     addSliderControl(phsRateKnob, phsRateAttachment, ids::phaserRateHz);
     addSliderControl(phsDepthKnob, phsDepthAttachment, ids::phaserDepth);
+    addToggleControl(cmpOnToggle, cmpOnAttachment, ids::compressorEnabled);
+    addSliderControl(cmpAmtKnob, cmpAmtAttachment, ids::compressorAmount);
+    addSliderControl(cmpMixKnob, cmpMixAttachment, ids::compressorMix);
 }
 
 void SynthAudioProcessorEditor::registerLearnableControls()
@@ -437,6 +443,9 @@ void SynthAudioProcessorEditor::registerLearnableControls()
     registerLearnableControl(phsOnToggle, ids::phaserEnabled, "Phaser", [&](bool a, juce::String b) { applyToggleState(phsOnToggle, a, b); });
     registerLearnableControl(phsRateKnob, ids::phaserRateHz, "Rate", [&](bool a, juce::String b) { applyKnobState(phsRateKnob, a, b); });
     registerLearnableControl(phsDepthKnob, ids::phaserDepth, "Depth", [&](bool a, juce::String b) { applyKnobState(phsDepthKnob, a, b); });
+    registerLearnableControl(cmpOnToggle, ids::compressorEnabled, "Compressor", [&](bool a, juce::String b) { applyToggleState(cmpOnToggle, a, b); });
+    registerLearnableControl(cmpAmtKnob, ids::compressorAmount, "Amount", [&](bool a, juce::String b) { applyKnobState(cmpAmtKnob, a, b); });
+    registerLearnableControl(cmpMixKnob, ids::compressorMix, "Mix", [&](bool a, juce::String b) { applyKnobState(cmpMixKnob, a, b); });
 }
 
 void SynthAudioProcessorEditor::setupActionButtons()
@@ -1255,12 +1264,13 @@ void SynthAudioProcessorEditor::resized()
     pianoBar.setBounds(bottomRow.removeFromLeft(pianoWidth));
     bottomRow.removeFromLeft(10); // gap between piano bar and new FX cluster
 
-    // New bottom-row FX cluster: Macros | Phaser | placeholder (Compressor in Phase E)
+    // New bottom-row FX cluster: Macros | Phaser | Compressor
     constexpr int macrosWidth = 130;
     constexpr int phaserWidth = 175;
+    constexpr int compressorWidth = 175;
     constexpr int gap = 8;
 
-    if (bottomRow.getWidth() > macrosWidth + phaserWidth + gap * 2)
+    if (bottomRow.getWidth() > macrosWidth + phaserWidth + compressorWidth + gap * 2)
     {
         auto macrosArea = bottomRow.removeFromLeft(macrosWidth);
         macrosSection.setBounds(macrosArea);
@@ -1279,13 +1289,20 @@ void SynthAudioProcessorEditor::resized()
         phsDepthKnob.setBounds(phaserContent);
         bottomRow.removeFromLeft(gap);
 
-        fxPlaceholderSection.setBounds(bottomRow);
+        auto compressorArea = bottomRow.removeFromLeft(compressorWidth);
+        compressorSection.setBounds(compressorArea);
+        auto compressorHeader = compressorArea.reduced(12, 0).removeFromTop(32);
+        cmpOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+        cmpOnToggle.setBounds(compressorHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        auto compressorContent = compressorArea.reduced(12).withTrimmedTop(24);
+        cmpAmtKnob.setBounds(compressorContent.removeFromLeft(compressorContent.getWidth() / 2));
+        cmpMixKnob.setBounds(compressorContent);
     }
     else
     {
         macrosSection.setBounds(bottomRow);
         phaserSection.setBounds({});
-        fxPlaceholderSection.setBounds({});
+        compressorSection.setBounds({});
     }
 }
 

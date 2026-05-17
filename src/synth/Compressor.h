@@ -25,7 +25,7 @@ namespace coolsynth::synth
                      const CompressorParametersV2& parameters) noexcept;
 
     private:
-        float envelopeDb = -120.0f;
+        float gainReductionDb = 0.0f;
         float attackCoef = 0.0f;
         float releaseCoef = 0.0f;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> mixSmoothed;

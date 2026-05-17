@@ -3,6 +3,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_dsp/juce_dsp.h>
 
+#include "Compressor.h"
 #include "GlobalDelay.h"
 #include "Phaser.h"
 #include "SynthParameters.h"
@@ -20,7 +21,8 @@ namespace coolsynth::synth
                      const PhaserParametersV2& phaser,
                      const ChorusParametersV2& chorus,
                      const DelayParametersV2& delay,
-                     const ReverbParametersV2& reverb) noexcept;
+                     const ReverbParametersV2& reverb,
+                     const CompressorParametersV2& compressor) noexcept;
 
         [[nodiscard]] static double estimateTailLengthSeconds(const DelayParametersV2& delay,
                                                               const ReverbParametersV2& reverb) noexcept;
@@ -33,6 +35,7 @@ namespace coolsynth::synth
 
         GlobalDelay delay;
         Phaser phaser;
+        Compressor compressor;
         juce::dsp::Chorus<float> chorus;
         juce::dsp::Reverb reverb;
         juce::Reverb::Parameters reverbParameters;

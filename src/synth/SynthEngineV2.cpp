@@ -196,7 +196,8 @@ namespace coolsynth::synth
                              parameters.phaser,
                              parameters.chorus,
                              parameters.delay,
-                             parameters.reverb);
+                             parameters.reverb,
+                             parameters.compressor);
         applyMasterGain(outputBuffer, parameters.masterGainLinear);
     }
 

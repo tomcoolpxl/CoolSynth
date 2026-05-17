@@ -343,6 +343,9 @@ public:
             fxParameters.reverb.size = 1.0f;
             fxParameters.reverb.damping = 0.0f;
             fxParameters.reverb.mix = 0.0f;
+            fxParameters.compressor.enabled = true;
+            fxParameters.compressor.amount = 1.0f;
+            fxParameters.compressor.mix = 0.0f;
 
             std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
                 { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
@@ -390,6 +393,9 @@ public:
             parameters.reverb.size = 1.0f;
             parameters.reverb.damping = 0.0f;
             parameters.reverb.mix = 1.0f;
+            parameters.compressor.enabled = true;
+            parameters.compressor.amount = 1.0f;
+            parameters.compressor.mix = 1.0f;
             parameters.masterGainLinear = 0.5f;
 
             juce::AudioBuffer<float> buffer(2, 256);
@@ -466,6 +472,59 @@ public:
             engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
 
             expect(computePeakAbs(buffer, 0, buffer.getNumSamples()) < 1.0e-4f);
+        }
+
+        beginTest("v2_compressor_amount_reduces_steady_state_peaks_monotonically");
+        {
+            // Renders the same hot signal with three increasing compressor amounts and verifies
+            // that the steady-state peak after the attack settles is monotonically non-increasing.
+            const std::array<float, 3> amounts { 0.0f, 0.5f, 1.0f };
+            std::array<float, 3> peaks {};
+
+            for (size_t i = 0; i < amounts.size(); ++i)
+            {
+                coolsynth::synth::SynthEngineV2 engine;
+                engine.prepare(48000.0, 256, 2);
+
+                coolsynth::synth::BlockRenderParametersV2 parameters;
+                parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+                parameters.oscA.level = 1.0f;
+                parameters.oscB.level = 0.0f;
+                parameters.ampEnvelope = makeStressEnvelope();
+                parameters.filterEnvelope = makeStressEnvelope();
+                parameters.filter.cutoffHz = 10000.0f;
+                parameters.filter.resonanceNormalized = 0.1f;
+                parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+                parameters.compressor.enabled = true;
+                parameters.compressor.amount = amounts[i];
+                parameters.compressor.mix = 1.0f;
+                parameters.masterGainLinear = 1.0f;
+
+                std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                    { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+                }};
+
+                juce::AudioBuffer<float> buffer(2, 256);
+                // Warm up: let the envelope follower settle past the 5 ms attack.
+                for (int block = 0; block < 4; ++block)
+                {
+                    buffer.clear();
+                    engine.render(buffer, block == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn) : std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+                }
+                buffer.clear();
+                engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+                peaks[i] = computePeakAbs(buffer, 0, buffer.getNumSamples());
+            }
+
+            logMessage("compressor peaks: amount0=" + juce::String(peaks[0], 4)
+                       + " amount0.5=" + juce::String(peaks[1], 4)
+                       + " amount1=" + juce::String(peaks[2], 4));
+
+            // Each step's peak must be <= the previous (small tolerance for makeup overshoot).
+            expect(peaks[1] <= peaks[0] + 0.05f);
+            expect(peaks[2] <= peaks[1] + 0.05f);
+            // The fully compressed peak should clearly be lower than the bypass peak.
+            expect(peaks[2] < peaks[0]);
         }
     }
 };

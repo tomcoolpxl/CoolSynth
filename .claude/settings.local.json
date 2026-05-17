@@ -50,7 +50,10 @@
       "PowerShell(Test-Path *)",
       "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; $exit = $LASTEXITCODE; \"EXIT: $exit\"; $output | Select-String -Pattern \"FAILED|PASSED|^All tests|tests fail|error|ERROR\" | Select-Object -Last 20)",
       "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; $exit = $LASTEXITCODE; \"EXIT: $exit\"; $output | Select-String -Pattern \"FAILED|^All tests|tests fail|error|ERROR|FAIL!\" | Select-Object -Last 30)",
-      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests\" | Select-Object -Last 30)"
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests\" | Select-Object -Last 30)",
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests|compressor\" | Select-Object -Last 30)",
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"compressor|FAILED|FAIL!|monotonically\" | Select-Object -Last 20)",
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"compressor|FAILED|FAIL!|monotonically\" | Select-Object -Last 10)"
     ]
   }
 }
