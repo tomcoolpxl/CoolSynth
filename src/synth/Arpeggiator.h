@@ -88,6 +88,8 @@ namespace coolsynth::synth
         float computeInternalStepLengthSamples(double sampleRate) const noexcept;
         int buildOrderedWorkingSet(std::array<HeldEntry, maxArpHeldNotes>& ordered) const noexcept;
         void resetPatternWalkState() noexcept;
+        void updateEuclideanCycle() noexcept;
+        bool shouldEmitEuclideanStep(int hostStepIndex) noexcept;
         int resolveRatchetCount() const noexcept;
         int resolveAccentEvery() const noexcept;
         bool emitStepNotes(const std::array<int, maxArpHeldNotes>& notes,
@@ -134,6 +136,9 @@ namespace coolsynth::synth
         int patternStepCounter = 0;
         int emittedStepCounter = 0;
         int randomWalkIndex = 0;
+        std::array<bool, 16> euclideanCycle {};
+        int euclideanStepCount = 1;
+        int euclideanPosition = 0;
         juce::Random rng;
     };
 }

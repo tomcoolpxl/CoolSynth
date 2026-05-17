@@ -1731,6 +1731,10 @@ public:
         parameters.ratchetChance = 0.0f;
         parameters.accentEvery = coolsynth::parameters::ArpAccentEveryChoice::off;
         parameters.accentAmount = 0.0f;
+        parameters.rhythm = coolsynth::parameters::ArpRhythmChoice::straight;
+        parameters.euclideanPulses = 4;
+        parameters.euclideanSteps = 8;
+        parameters.euclideanRotation = 0;
         parameters.latch = false;
         return parameters;
     }
@@ -1778,6 +1782,13 @@ public:
         }
 
         return -1;
+    }
+
+    static bool blockContainsNoteOn(const std::array<coolsynth::synth::EngineMidiEvent,
+                                                     coolsynth::synth::maxArpEventsPerBlock>& events,
+                                    int eventCount) noexcept
+    {
+        return findFirstNoteOnOffset(events, eventCount) >= 0;
     }
 
     static int collectEventsOfType(const std::array<coolsynth::synth::EngineMidiEvent,
@@ -2419,6 +2430,126 @@ public:
 
             expectEquals(actualNoteOnCount, expectedNoteOnCount);
             expectEquals(stepCount - actualNoteOnCount, stepCount - expectedNoteOnCount);
+        }
+
+        beginTest("euclidean_known_patterns_match_standard_sequences");
+        {
+            struct EuclideanCase
+            {
+                int pulses;
+                int steps;
+                int rotation;
+                std::array<bool, 16> expected;
+                int expectedLength;
+            };
+
+            const std::array<EuclideanCase, 4> cases {{
+                { 3, 8, 0, { true, false, false, true, false, false, true, false }, 8 },
+                { 5, 8, 0, { true, false, true, true, false, true, true, false }, 8 },
+                { 7, 12, 0, { true, true, false, true, true, false, true, false, true, true, false, true }, 12 },
+                { 3, 8, 1, { false, false, true, false, false, true, false, true }, 8 },
+            }};
+
+            constexpr int stepLength = 6000;
+
+            for (const auto& testCase : cases)
+            {
+                coolsynth::synth::Arpeggiator arp;
+                arp.prepare(48000.0);
+
+                auto parameters = makeBasicArpParameters();
+                parameters.rhythm = coolsynth::parameters::ArpRhythmChoice::euclidean;
+                parameters.euclideanPulses = testCase.pulses;
+                parameters.euclideanSteps = testCase.steps;
+                parameters.euclideanRotation = testCase.rotation;
+                arp.setParameters(parameters);
+                arp.onNoteOn(60, 1.0f);
+
+                for (int step = 0; step < testCase.expectedLength; ++step)
+                {
+                    std::array<coolsynth::synth::EngineMidiEvent,
+                               coolsynth::synth::maxArpEventsPerBlock> events {};
+                    const int eventCount = renderArpBlock(arp, stepLength, events);
+                    expect(blockContainsNoteOn(events, eventCount)
+                           == testCase.expected[static_cast<size_t>(step)]);
+                }
+            }
+        }
+
+        beginTest("euclidean_rests_advance_rhythm_slots_without_advancing_the_melodic_walk");
+        {
+            constexpr int stepLength = 6000;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.pattern = coolsynth::parameters::ArpPatternChoice::up;
+            parameters.rhythm = coolsynth::parameters::ArpRhythmChoice::euclidean;
+            parameters.euclideanPulses = 3;
+            parameters.euclideanSteps = 8;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 1.0f);
+            arp.onNoteOn(64, 1.0f);
+            arp.onNoteOn(67, 1.0f);
+            arp.onNoteOn(72, 1.0f);
+
+            const std::array<bool, 8> expectedPulseSlots { true, false, false, true, false, false, true, false };
+            const std::array<int, 3> expectedNotes { 60, 64, 67 };
+            int emittedIndex = 0;
+
+            for (int slot = 0; slot < static_cast<int>(expectedPulseSlots.size()); ++slot)
+            {
+                std::array<coolsynth::synth::EngineMidiEvent,
+                           coolsynth::synth::maxArpEventsPerBlock> events {};
+                std::array<int, coolsynth::synth::maxArpEventsPerBlock> notes {};
+                const int eventCount = renderArpBlock(arp, stepLength, events);
+                const int noteOnCount = collectNoteOns(events, eventCount, notes);
+
+                expectEquals(noteOnCount, expectedPulseSlots[static_cast<size_t>(slot)] ? 1 : 0);
+                if (noteOnCount == 1)
+                    expectEquals(notes[0], expectedNotes[static_cast<size_t>(emittedIndex++)]);
+            }
+        }
+
+        beginTest("host_synced_euclidean_cycle_resets_at_bar_start");
+        {
+            constexpr int stepLength = 6000;
+
+            coolsynth::synth::Arpeggiator arp;
+            arp.prepare(48000.0);
+
+            auto parameters = makeBasicArpParameters();
+            parameters.rate = coolsynth::parameters::ArpRateChoice::sixteenth;
+            parameters.rhythm = coolsynth::parameters::ArpRhythmChoice::euclidean;
+            parameters.euclideanPulses = 1;
+            parameters.euclideanSteps = 7;
+            arp.setParameters(parameters);
+            arp.onNoteOn(60, 1.0f);
+
+            coolsynth::synth::EngineTransportInfo transport;
+            transport.hostHasTempo = true;
+            transport.hostHasPpq = true;
+            transport.hostIsPlaying = true;
+            transport.hostBpm = 120.0;
+
+            std::array<coolsynth::synth::EngineMidiEvent,
+                       coolsynth::synth::maxArpEventsPerBlock> events {};
+
+            transport.hostPpqAtBlockStart = 0.0;
+            arp.setTransportInfo(transport);
+            int eventCount = renderArpBlock(arp, stepLength, events);
+            expect(blockContainsNoteOn(events, eventCount));
+
+            transport.hostPpqAtBlockStart = 3.5;
+            arp.setTransportInfo(transport);
+            eventCount = renderArpBlock(arp, stepLength, events);
+            expect(blockContainsNoteOn(events, eventCount));
+
+            transport.hostPpqAtBlockStart = 4.0;
+            arp.setTransportInfo(transport);
+            eventCount = renderArpBlock(arp, stepLength, events);
+            expect(blockContainsNoteOn(events, eventCount));
         }
 
         beginTest("ratchet_emits_exact_sub_step_offsets_and_note_counts");

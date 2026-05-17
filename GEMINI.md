@@ -9,6 +9,7 @@ We are in "V2" phase right now.
 - No backward compatibility is required anywhere in this repo unless the user explicitly asks for it.
 - Nothing has been released yet, so prefer the cleanest current V2 behavior over preserving older patch, state, parameter-ID, or controller-mapping contracts.
 - If a future task would keep backward compatibility only out of caution or inertia, do not do that by default.
+- Patch and processor-state formats must never be kept backward compatible by default. When the parameter contract changes, bump the format and reject older saved patches or state unless the user explicitly asks for compatibility.
 
 Authoritative project files:
 
@@ -180,7 +181,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Refreshed a factory-profile regression to assert the intended soft-takeover behavior of the oscillator-level faders under the current V2 init defaults.
   - Manual validation passed in standalone and VST3 use: valid V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the active synth state.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- `TODO.md` now points to ARP Expansion Phase D — Euclidean rhythm.
+- `TODO.md` now points to ARP Expansion Phase E — Advanced overlay UI.
 - Phase 11 Track A completed on 2026-05-15:
   - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
   - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).
@@ -233,4 +234,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Chord mode now ratchets the whole chord stab, accent scales all notes in the chord uniformly, and expanded chord bursts are emitted atomically or dropped entirely if they would overflow the bounded arp event buffer.
   - Wrapped `.cspatch` files and wrapped processor state now use format version `5`, intentionally rejecting older saved patches or state under the expanded arp parameter contract.
   - Added direct arp-event regressions for ratchet offsets/counts, emitted-step accent behavior under chance skipping, chord ratchet-plus-accent application, and ratcheted chord overflow dropping.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
+- ARP Expansion `Phase D` completed on 2026-05-17:
+  - Added `arpRhythm`, `arpEuclideanPulses`, `arpEuclideanSteps`, and `arpEuclideanRotation` end-to-end across the APVTS contract, raw parameter binding, and processor block snapshot decode.
+  - `Arpeggiator` now caches a rotated Euclidean pulse cycle and applies it in the step loop so rhythm rests advance slot position without advancing the melodic pattern walk.
+  - Host-synced Euclidean playback currently follows the explicit Phase D acceptance rule and resets the cycle at each bar boundary; the longer multi-bar-cycle implication in `ARP_EXPANSION_PLAN.md` remains a documented design contradiction to resolve later.
+  - Wrapped `.cspatch` files and wrapped processor state now use format version `6`, intentionally rejecting older saved patches or state under the expanded arp parameter contract.
+  - Added direct arp-event regressions for standard Euclidean patterns, pulse-vs-slot melodic advancement, and host-synced bar-reset behavior.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.

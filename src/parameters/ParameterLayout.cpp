@@ -416,6 +416,29 @@ namespace
             juce::StringArray { "Off", "/2", "/3", "/4" },
             static_cast<int>(ArpAccentEveryChoice::off)));
         group->addChild(makePercentParameter(arpAccentAmount, parameterVersionHintV5, "Accent Amount", 0.0f));
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(
+            juce::ParameterID { arpRhythm, parameterVersionHintV6 },
+            "Rhythm",
+            juce::StringArray { "Straight", "Euclidean" },
+            static_cast<int>(ArpRhythmChoice::straight)));
+        group->addChild(std::make_unique<juce::AudioParameterInt>(
+            juce::ParameterID { arpEuclideanPulses, parameterVersionHintV6 },
+            "Euclidean Pulses",
+            1,
+            16,
+            4));
+        group->addChild(std::make_unique<juce::AudioParameterInt>(
+            juce::ParameterID { arpEuclideanSteps, parameterVersionHintV6 },
+            "Euclidean Steps",
+            1,
+            16,
+            8));
+        group->addChild(std::make_unique<juce::AudioParameterInt>(
+            juce::ParameterID { arpEuclideanRotation, parameterVersionHintV6 },
+            "Euclidean Rotation",
+            0,
+            15,
+            0));
         group->addChild(makeBoolParameter(arpLatch, parameterVersionHint, "Latch", false));
         return group;
     }

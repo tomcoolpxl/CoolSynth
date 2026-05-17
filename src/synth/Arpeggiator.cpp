@@ -13,6 +13,7 @@ namespace coolsynth::synth
         constexpr float maxGateFraction = 0.95f;
         constexpr float maxSwingFraction = 0.75f;
         constexpr float ppqEpsilon = 1.0e-9f;
+        constexpr int stepsPerBar = 4;
 
         bool usesPlayOrder(coolsynth::parameters::ArpPatternChoice pattern) noexcept
         {
@@ -46,6 +47,15 @@ namespace coolsynth::synth
             return info.hostHasTempo && info.hostHasPpq && info.hostBpm > 0.0;
         }
 
+        int positiveModulo(int value, int modulus) noexcept
+        {
+            if (modulus <= 0)
+                return 0;
+
+            const int remainder = value % modulus;
+            return remainder < 0 ? (remainder + modulus) : remainder;
+        }
+
         void insertSortedEvent(EngineMidiEvent* outEvents,
                                int& outEventCount,
                                const EngineMidiEvent& event,
@@ -63,6 +73,97 @@ namespace coolsynth::synth
             }
             outEvents[insertIndex] = event;
             ++outEventCount;
+        }
+
+        int buildBjorklundSequence(int level,
+                                   const std::array<int, 16>& counts,
+                                   const std::array<int, 16>& remainders,
+                                   std::array<bool, 16>& pattern,
+                                   int writeIndex) noexcept
+        {
+            if (level == -1)
+            {
+                pattern[static_cast<size_t>(writeIndex++)] = false;
+                return writeIndex;
+            }
+
+            if (level == -2)
+            {
+                pattern[static_cast<size_t>(writeIndex++)] = true;
+                return writeIndex;
+            }
+
+            for (int i = 0; i < counts[static_cast<size_t>(level)]; ++i)
+                writeIndex = buildBjorklundSequence(level - 1, counts, remainders, pattern, writeIndex);
+
+            if (remainders[static_cast<size_t>(level)] != 0)
+                writeIndex = buildBjorklundSequence(level - 2, counts, remainders, pattern, writeIndex);
+
+            return writeIndex;
+        }
+
+        std::array<bool, 16> makeEuclideanCycle(int pulses, int steps, int rotation) noexcept
+        {
+            std::array<bool, 16> cycle {};
+
+            const int clampedSteps = juce::jlimit(1, 16, steps);
+            const int clampedPulses = juce::jlimit(0, clampedSteps, pulses);
+
+            if (clampedPulses == 0)
+                return cycle;
+
+            if (clampedPulses >= clampedSteps)
+            {
+                for (int index = 0; index < clampedSteps; ++index)
+                    cycle[static_cast<size_t>(index)] = true;
+                return cycle;
+            }
+
+            std::array<int, 16> counts {};
+            std::array<int, 16> remainders {};
+
+            remainders[0] = clampedPulses;
+            int divisor = clampedSteps - clampedPulses;
+            int level = 0;
+
+            while (remainders[static_cast<size_t>(level)] > 1)
+            {
+                counts[static_cast<size_t>(level)] =
+                    divisor / remainders[static_cast<size_t>(level)];
+                remainders[static_cast<size_t>(level + 1)] =
+                    divisor % remainders[static_cast<size_t>(level)];
+                divisor = remainders[static_cast<size_t>(level)];
+                ++level;
+            }
+
+            counts[static_cast<size_t>(level)] = divisor;
+
+            std::array<bool, 16> rawPattern {};
+            const int generatedLength =
+                buildBjorklundSequence(level, counts, remainders, rawPattern, 0);
+
+            const int rotationOffset = positiveModulo(rotation, clampedSteps);
+            const int firstPulseIndex =
+                generatedLength > 0
+                    ? [&rawPattern, generatedLength]()
+                    {
+                        for (int index = 0; index < generatedLength; ++index)
+                        {
+                            if (rawPattern[static_cast<size_t>(index)])
+                                return index;
+                        }
+                        return 0;
+                    }()
+                    : 0;
+
+            for (int index = 0; index < clampedSteps; ++index)
+            {
+                const int sourceIndex =
+                    (index + firstPulseIndex + rotationOffset) % clampedSteps;
+                cycle[static_cast<size_t>(index)] = rawPattern[static_cast<size_t>(sourceIndex)];
+            }
+
+            return cycle;
         }
     }
 
@@ -87,6 +188,8 @@ namespace coolsynth::synth
         patternStepCounter = 0;
         emittedStepCounter = 0;
         randomWalkIndex = 0;
+        euclideanPosition = 0;
+        updateEuclideanCycle();
         previousHostIsPlaying = false;
         previousEnabled = false;
     }
@@ -102,6 +205,10 @@ namespace coolsynth::synth
         const bool wasLatch = currentParameters.latch;
         const bool nowLatch = parameters.latch;
         const auto previousPattern = currentParameters.pattern;
+        const auto previousRhythm = currentParameters.rhythm;
+        const auto previousEuclideanPulses = currentParameters.euclideanPulses;
+        const auto previousEuclideanSteps = currentParameters.euclideanSteps;
+        const auto previousEuclideanRotation = currentParameters.euclideanRotation;
 
         if (! wasLatch && nowLatch)
             copyHeldIntoLatched();
@@ -112,6 +219,14 @@ namespace coolsynth::synth
 
         if (previousPattern != currentParameters.pattern)
             resetPatternWalkState();
+
+        if (previousRhythm != currentParameters.rhythm
+            || previousEuclideanPulses != currentParameters.euclideanPulses
+            || previousEuclideanSteps != currentParameters.euclideanSteps
+            || previousEuclideanRotation != currentParameters.euclideanRotation)
+        {
+            updateEuclideanCycle();
+        }
     }
 
     void Arpeggiator::setTransportInfo(const EngineTransportInfo& transport) noexcept
@@ -171,6 +286,7 @@ namespace coolsynth::synth
         else if (enabledTransitionedOn)
         {
             resetPatternWalkState();
+            euclideanPosition = 0;
         }
 
         previousEnabled = nowEnabled;
@@ -229,6 +345,7 @@ namespace coolsynth::synth
 
         // Compute when the first step fires inside this block.
         float firstStepOffset = 0.0f;
+        int hostStepIndex = 0;
 
         if (hostSync)
         {
@@ -243,6 +360,7 @@ namespace coolsynth::synth
             const double samplesPerPpq = preparedSampleRate * 60.0 / bpm;
             const double offset = (nextStepPpq - ppqAtStart) * samplesPerPpq;
             firstStepOffset = static_cast<float>(juce::jmax(0.0, offset));
+            hostStepIndex = juce::jmax(0, static_cast<int>(nextStepIndex));
             // Refresh internal clock so that if host sync drops out next block,
             // the internal clock continues smoothly.
             samplesUntilNextStep = firstStepOffset;
@@ -262,6 +380,16 @@ namespace coolsynth::synth
 
         while (stepOffset < static_cast<float>(blockSamples) && outEventCount < maxEvents)
         {
+            const bool emitsThisRhythmStep = shouldEmitEuclideanStep(hostStepIndex);
+            if (hostSync)
+                ++hostStepIndex;
+
+            if (! emitsThisRhythmStep)
+            {
+                stepOffset += stepLengthSamples;
+                continue;
+            }
+
             const bool swingThisStep = (patternStepCounter & 1) != 0;
             const float swingDelaySamples = swingThisStep
                 ? (swingAmount * (stepLengthSamples * 0.5f))
@@ -623,6 +751,39 @@ namespace coolsynth::synth
     {
         emittedStepCounter = 0;
         randomWalkIndex = 0;
+    }
+
+    void Arpeggiator::updateEuclideanCycle() noexcept
+    {
+        euclideanStepCount = juce::jlimit(1, 16, currentParameters.euclideanSteps);
+        euclideanCycle = makeEuclideanCycle(currentParameters.euclideanPulses,
+                                            euclideanStepCount,
+                                            currentParameters.euclideanRotation);
+        euclideanPosition = positiveModulo(euclideanPosition, euclideanStepCount);
+    }
+
+    bool Arpeggiator::shouldEmitEuclideanStep(int hostStepIndex) noexcept
+    {
+        if (currentParameters.rhythm != coolsynth::parameters::ArpRhythmChoice::euclidean)
+            return true;
+
+        if (euclideanStepCount <= 0)
+            return false;
+
+        int cycleIndex = 0;
+        if (useHostSync(currentTransport))
+        {
+            const int slotsPerBar = juce::jmax(1, computeStepsPerBeat() * stepsPerBar);
+            const int slotInBar = positiveModulo(hostStepIndex, slotsPerBar);
+            cycleIndex = slotInBar % euclideanStepCount;
+        }
+        else
+        {
+            cycleIndex = euclideanPosition;
+            euclideanPosition = (euclideanPosition + 1) % euclideanStepCount;
+        }
+
+        return euclideanCycle[static_cast<size_t>(cycleIndex)];
     }
 
     int Arpeggiator::resolveRatchetCount() const noexcept

@@ -1,10 +1,10 @@
 # TODO
 
-## ARP Expansion Phase D — Euclidean rhythm
+## ARP Expansion Phase E — Advanced overlay UI
 
-Phase C is now implemented and locally verified. The next implementation chunk is Phase D from `ARP_EXPANSION_PLAN.md`.
+Phase D is now implemented and locally verified. The next implementation chunk is Phase E from `ARP_EXPANSION_PLAN.md`.
 
-- Add `arpRhythm`, `arpEuclideanPulses`, `arpEuclideanSteps`, and `arpEuclideanRotation` to the parameter layout and block decode path.
-- Implement cached Bjorklund Euclidean cycle generation and integrate it into the arp step loop so rests advance rhythm position without advancing the melodic walk.
-- Add deterministic regressions for known Euclidean patterns, pulse-vs-slot melodic advancement, and host-sync bar-reset behavior.
-- Keep the UI temporary and minimal until the planned advanced overlay lands in Phase E.
+- Add `ArpAdvancedOverlay` and the `Advanced...` entry point in the shared editor without changing the one-page panel structure.
+- Move the new Euclidean controls plus the existing chance, ratchet, and accent controls into the overlay, keeping APVTS wiring shared and state-preserving.
+- Add the Euclidean visualizer and a compact status summary strip for non-default overlay state.
+- Add editor-level regressions or verification notes for overlay show/hide behavior, attachment lifetime, and Straight/EUclidean control visibility rules.

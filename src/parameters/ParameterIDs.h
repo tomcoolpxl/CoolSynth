@@ -8,6 +8,7 @@ namespace coolsynth::parameters::ids
     inline constexpr int parameterVersionHintV3 = 3;
     inline constexpr int parameterVersionHintV4 = 4;
     inline constexpr int parameterVersionHintV5 = 5;
+    inline constexpr int parameterVersionHintV6 = 6;
 
     inline constexpr char oscAWave[] = "oscAWave";
     inline constexpr char oscAOctave[] = "oscAOctave";
@@ -75,6 +76,10 @@ namespace coolsynth::parameters::ids
     inline constexpr char arpRatchetChance[] = "arpRatchetChance";
     inline constexpr char arpAccentEvery[] = "arpAccentEvery";
     inline constexpr char arpAccentAmount[] = "arpAccentAmount";
+    inline constexpr char arpRhythm[] = "arpRhythm";
+    inline constexpr char arpEuclideanPulses[] = "arpEuclideanPulses";
+    inline constexpr char arpEuclideanSteps[] = "arpEuclideanSteps";
+    inline constexpr char arpEuclideanRotation[] = "arpEuclideanRotation";
     inline constexpr char arpLatch[] = "arpLatch";
 
     inline constexpr char driveEnabled[] = "driveEnabled";
@@ -183,6 +188,12 @@ namespace coolsynth::parameters
         x4 = 3,
     };
 
+    enum class ArpRhythmChoice : int
+    {
+        straight = 0,
+        euclidean = 1,
+    };
+
     enum class ArpAccentEveryChoice : int
     {
         off = 0,
@@ -249,6 +260,10 @@ namespace coolsynth::parameters
         ids::arpRatchetChance,
         ids::arpAccentEvery,
         ids::arpAccentAmount,
+        ids::arpRhythm,
+        ids::arpEuclideanPulses,
+        ids::arpEuclideanSteps,
+        ids::arpEuclideanRotation,
         ids::arpLatch,
         ids::driveEnabled,
         ids::driveAmount,

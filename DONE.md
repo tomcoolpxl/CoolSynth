@@ -1,5 +1,17 @@
 # DONE
 
+## ARP Expansion Phase D — Euclidean rhythm
+
+Completed on 2026-05-17. The Phase D rhythm slice is implemented, build-test clean, and intentionally breaks older saved patch/state compatibility.
+
+- [x] Added `arpRhythm`, `arpEuclideanPulses`, `arpEuclideanSteps`, and `arpEuclideanRotation` across `ParameterIDs`, the APVTS layout, raw parameter binding, and processor block decoding.
+- [x] Added cached Euclidean-cycle state to `Arpeggiator` and integrated it into the step loop so Euclidean rests advance only the rhythm slot while the melodic walk advances only on firing pulses.
+- [x] Implemented a bounded Bjorklund-style cycle builder with rotation support and host-synced bar-reset behavior on the current Phase D contract.
+- [x] Added deterministic `V2Arpeggiator` coverage for known Euclidean patterns, pulse-vs-slot melodic advancement, and host-synced cycle reset at the bar boundary.
+- [x] Kept the editor temporary for this slice: the new Euclidean parameters are in the parameter contract and processor path now, while the planned overlay UI remains deferred to Phase E.
+- [x] Bumped wrapped `.cspatch` and wrapped processor-state format versions from `5` to `6` so older saved patches/state are rejected cleanly under the expanded arp parameter contract.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-17 after the Phase D change.
+
 ## ARP Expansion Phase C — Ratchet + Accent
 
 Completed on 2026-05-17. The Phase C arp modifier slice is implemented, build-test clean, and intentionally breaks older saved patch/state compatibility.
