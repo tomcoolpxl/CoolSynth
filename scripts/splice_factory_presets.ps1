@@ -45,11 +45,12 @@ if ($lsi -ge 0 -and $lei -gt $lsi) {
 }
 
 # Insert arrays block right after the kArpBliss[] closing brace.
-$arraysAnchor = "        };`n`n        template <int N>"
-if (-not $cpp.Contains($arraysAnchor)) { throw "Could not locate arrays anchor" }
+$arraysAnchorPattern = '(?ms)(        constexpr PresetParameterValue kArpBliss\[\] = \{.*?^        \};\n)\n*(        template <int N>)'
+$arraysMatch = [regex]::Match($cpp, $arraysAnchorPattern)
+if (-not $arraysMatch.Success) { throw "Could not locate arrays anchor" }
 
-$replacement = "        };`n`n" + $startTag + "`n" + $arraysBlock + "`n" + $endTag + "`n`n        template <int N>"
-$cpp = $cpp.Replace($arraysAnchor, $replacement)
+$replacement = $arraysMatch.Groups[1].Value + "`n" + $startTag + "`n" + $arraysBlock + "`n" + $endTag + "`n`n" + $arraysMatch.Groups[2].Value
+$cpp = [regex]::Replace($cpp, $arraysAnchorPattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $replacement }, 1)
 
 # Append the new makeFactoryPreset(...) lines inside kPresets[].
 $listAnchor = '            makeFactoryPreset("Arp Bliss",       "Arp",   kArpBliss),'

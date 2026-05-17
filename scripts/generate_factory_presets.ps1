@@ -9,7 +9,7 @@ $outPath  = Join-Path $PSScriptRoot '..\build_aux\factory_presets_snippet.txt'
 $auxDir   = Split-Path $outPath -Parent
 if (-not (Test-Path $auxDir)) { New-Item -ItemType Directory -Path $auxDir | Out-Null }
 
-# Parameter id order (must match the existing 15 presets and the YAML key set).
+# Parameter id order (must match the manual preset arrays and the YAML key set).
 $paramOrder = @(
     'oscAWave','oscAOctave','oscAFineCents','oscALevel','oscAPulseWidth','oscASyncEnabled',
     'oscBWave','oscBOctave','oscBFineCents','oscBLevel','oscBPulseWidth','oscBLowFrequencyMode',
@@ -22,12 +22,18 @@ $paramOrder = @(
     'polyModOscBToFilterCutoff','polyModEnvToFilterCutoff',
     'glideTimeMs','playMode','keyPriority','pitchBendRangeSemitones',
     'vintageAmount','panSpread','velocityToAmp','velocityToFilter',
-    'arpEnabled','arpInternalTempoBpm','arpRateDivision','arpPattern','arpOctaveRange','arpGate','arpLatch',
+    'arpEnabled','arpInternalTempoBpm','arpRateDivision','arpPattern','arpOctaveRange','arpGate',
+    'arpSwing','arpChance','arpRatchetCount','arpRatchetChance',
+    'arpAccentEvery','arpAccentAmount','arpRhythm',
+    'arpEuclideanPulses','arpEuclideanSteps','arpEuclideanRotation','arpLatch',
     'driveEnabled','driveAmount','driveMix',
     'chorusEnabled','chorusRateHz','chorusDepth','chorusMix',
     'delayEnabled','delayTimeMs','delayFeedback','delayMix',
     'reverbEnabled','reverbSize','reverbDamping','reverbMix',
-    'masterGainDb'
+    'masterGainDb',
+    'timbre','excite',
+    'phaserEnabled','phaserRateHz','phaserDepth',
+    'compressorEnabled','compressorAmount','compressorMix'
 )
 
 # Param-id -> identifier slug used in C++ symbol generation.

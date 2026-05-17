@@ -53,6 +53,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.18
@@ -70,6 +80,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.2
   masterGainDb: -10
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.45
+  compressorMix: 1
 
 name: Rubber PWM Bass
 category: Bass
@@ -126,6 +144,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.22
@@ -143,6 +171,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.2
   masterGainDb: -11
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.40
+  compressorMix: 1
 
 name: Acid Prophet
 category: Bass
@@ -199,6 +235,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.32
@@ -216,6 +262,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.2
   masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.40
+  compressorMix: 1
 
 name: Sub Metal Stack
 category: Bass
@@ -272,6 +326,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.38
@@ -289,6 +353,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.2
   masterGainDb: -16
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.35
+  compressorMix: 1
 
 name: Sync Saber
 category: Lead
@@ -345,6 +417,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.28
@@ -362,6 +444,14 @@ params:
   reverbDamping: 0.55
   reverbMix: 0.16
   masterGainDb: -13
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.35
+  compressorMix: 1
 
 name: Unison Anthem
 category: Lead
@@ -418,6 +508,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.24
@@ -435,6 +535,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.18
   masterGainDb: -17
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.40
+  compressorMix: 1
 
 name: Hollow Square Solo
 category: Lead
@@ -491,6 +599,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.18
@@ -508,6 +626,14 @@ params:
   reverbDamping: 0.58
   reverbMix: 0.12
   masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Whistle Tri Lead
 category: Lead
@@ -564,6 +690,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -581,6 +717,14 @@ params:
   reverbDamping: 0.42
   reverbMix: 0.2
   masterGainDb: -10
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Warm Film Pad
 category: Pad
@@ -637,6 +781,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -654,6 +808,14 @@ params:
   reverbDamping: 0.56
   reverbMix: 0.35
   masterGainDb: -14
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.20
+  phaserDepth: 0.40
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Glass Prophet Pad
 category: Pad
@@ -710,6 +872,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -727,6 +899,14 @@ params:
   reverbDamping: 0.38
   reverbMix: 0.38
   masterGainDb: -15
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.25
+  phaserDepth: 0.50
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Dusk Strings
 category: Pad
@@ -783,6 +963,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -800,6 +990,14 @@ params:
   reverbDamping: 0.68
   reverbMix: 0.32
   masterGainDb: -14
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Choir Drift
 category: Pad
@@ -856,6 +1054,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -873,6 +1081,14 @@ params:
   reverbDamping: 0.45
   reverbMix: 0.42
   masterGainDb: -16
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Velvet Pluck
 category: Pluck
@@ -929,6 +1145,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -946,6 +1172,14 @@ params:
   reverbDamping: 0.52
   reverbMix: 0.16
   masterGainDb: -10
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Koto Pulse
 category: Pluck
@@ -1002,6 +1236,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -1019,6 +1263,14 @@ params:
   reverbDamping: 0.48
   reverbMix: 0.13
   masterGainDb: -11
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Analog Comp Keys
 category: Keys
@@ -1075,6 +1327,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.12
@@ -1092,6 +1354,14 @@ params:
   reverbDamping: 0.6
   reverbMix: 0.11
   masterGainDb: -11
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.55
+  compressorMix: 1
 
 name: Dusty Poly Keys
 category: Keys
@@ -1148,6 +1418,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -1165,6 +1445,14 @@ params:
   reverbDamping: 0.62
   reverbMix: 0.2
   masterGainDb: -13
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.35
+  compressorMix: 1
 
 name: Neon Runner
 category: Arp
@@ -1221,6 +1509,16 @@ params:
   arpPattern: 2
   arpOctaveRange: 2
   arpGate: 0.34
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: true
   driveEnabled: false
   driveAmount: 0
@@ -1238,6 +1536,14 @@ params:
   reverbDamping: 0.45
   reverbMix: 0.13
   masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.35
+  compressorMix: 1
 
 name: Clockwork Pulse
 category: Arp
@@ -1294,6 +1600,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.28
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.16
@@ -1311,6 +1627,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.2
   masterGainDb: -11
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Octave Sprinter
 category: Arp
@@ -1367,6 +1691,16 @@ params:
   arpPattern: 2
   arpOctaveRange: 3
   arpGate: 0.31
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: true
   driveEnabled: false
   driveAmount: 0
@@ -1384,6 +1718,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.15
   masterGainDb: -13
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Rising Sync Swarm
 category: FX
@@ -1440,6 +1782,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.26
@@ -1457,6 +1809,14 @@ params:
   reverbDamping: 0.35
   reverbMix: 0.42
   masterGainDb: -18
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.70
+  phaserDepth: 0.60
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Replicant Brass
 category: Pad
@@ -1513,6 +1873,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.08
@@ -1530,6 +1900,14 @@ params:
   reverbDamping: 0.46
   reverbMix: 0.44
   masterGainDb: -16
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.18
+  phaserDepth: 0.35
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Offworld Flute
 category: Lead
@@ -1586,6 +1964,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -1603,6 +1991,14 @@ params:
   reverbDamping: 0.42
   reverbMix: 0.34
   masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Upside Down Drone
 category: FX
@@ -1659,6 +2055,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.2
@@ -1676,6 +2082,14 @@ params:
   reverbDamping: 0.62
   reverbMix: 0.48
   masterGainDb: -20
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.18
+  phaserDepth: 0.65
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Hawkins Pulse
 category: Arp
@@ -1732,6 +2146,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 2
   arpGate: 0.3
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: true
   driveEnabled: true
   driveAmount: 0.16
@@ -1749,6 +2173,14 @@ params:
   reverbDamping: 0.58
   reverbMix: 0.12
   masterGainDb: -13
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.35
+  phaserDepth: 0.55
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Neon Police Sweep
 category: Lead
@@ -1805,6 +2237,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.28
@@ -1822,6 +2264,14 @@ params:
   reverbDamping: 0.45
   reverbMix: 0.24
   masterGainDb: -18
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Tyrell Rain Pad
 category: Pad
@@ -1878,6 +2328,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -1895,6 +2355,14 @@ params:
   reverbDamping: 0.5
   reverbMix: 0.5
   masterGainDb: -18
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.22
+  phaserDepth: 0.55
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Xenon Pan Flute
 category: Lead
@@ -1951,6 +2419,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: false
   driveAmount: 0
@@ -1968,6 +2446,14 @@ params:
   reverbDamping: 0.36
   reverbMix: 0.38
   masterGainDb: -14
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Starcourt Sequence
 category: Arp
@@ -2024,6 +2510,16 @@ params:
   arpPattern: 2
   arpOctaveRange: 3
   arpGate: 0.36
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: true
   driveEnabled: false
   driveAmount: 0
@@ -2041,6 +2537,14 @@ params:
   reverbDamping: 0.48
   reverbMix: 0.16
   masterGainDb: -14
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.45
+  phaserDepth: 0.50
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Los Angeles 2019
 category: Pad
@@ -2097,6 +2601,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.12
@@ -2114,6 +2628,14 @@ params:
   reverbDamping: 0.44
   reverbMix: 0.46
   masterGainDb: -18
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.18
+  phaserDepth: 0.55
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
 
 name: Soviet Satellite
 category: FX
@@ -2170,6 +2692,16 @@ params:
   arpPattern: 0
   arpOctaveRange: 1
   arpGate: 0.5
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
   arpLatch: false
   driveEnabled: true
   driveAmount: 0.18
@@ -2187,3 +2719,1103 @@ params:
   reverbDamping: 0.55
   reverbMix: 0.36
   masterGainDb: -19
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.40
+  phaserDepth: 0.55
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
+
+name: Random Walk Pluck
+category: Arp
+description: Short bright pluck that wanders unpredictably; hold compact triads and let the line drift.
+params:
+  oscAWave: 2
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.76
+  oscAPulseWidth: 0.5
+  oscASyncEnabled: false
+  oscBWave: 1
+  oscBOctave: 2
+  oscBFineCents: 7
+  oscBLevel: 0.46
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 1150
+  filterResonance: 0.18
+  filterEnvAmount: 0.74
+  filterKeyTracking: 1
+  filterAttackMs: 1
+  filterDecayMs: 190
+  filterSustain: 0
+  filterReleaseMs: 170
+  ampAttackMs: 1
+  ampDecayMs: 150
+  ampSustain: 0.05
+  ampReleaseMs: 120
+  lfoRateHz: 0.45
+  lfoWave: 3
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0.05
+  lfoToFilterCutoff: 0.04
+  modWheelToLfoDepth: 0.7
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.09
+  panSpread: 0.24
+  velocityToAmp: 0.95
+  velocityToFilter: 0.62
+  arpEnabled: true
+  arpInternalTempoBpm: 118
+  arpRateDivision: 3
+  arpPattern: 9
+  arpOctaveRange: 2
+  arpGate: 0.24
+  arpSwing: 0.08
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: false
+  driveAmount: 0
+  driveMix: 1
+  chorusEnabled: true
+  chorusRateHz: 0.42
+  chorusDepth: 0.18
+  chorusMix: 0.12
+  delayEnabled: true
+  delayTimeMs: 220
+  delayFeedback: 0.16
+  delayMix: 0.08
+  reverbEnabled: true
+  reverbSize: 0.46
+  reverbDamping: 0.48
+  reverbMix: 0.12
+  masterGainDb: -11
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.28
+  compressorMix: 1
+
+name: Random Walk Pad
+category: Arp
+description: A softer wandering arp with long tails and gentle probability drift for slow soundtrack beds.
+params:
+  oscAWave: 1
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.66
+  oscAPulseWidth: 0.5
+  oscASyncEnabled: false
+  oscBWave: 2
+  oscBOctave: 2
+  oscBFineCents: 9
+  oscBLevel: 0.54
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0.02
+  filterCutoffHz: 1850
+  filterResonance: 0.12
+  filterEnvAmount: 0.28
+  filterKeyTracking: 1
+  filterAttackMs: 240
+  filterDecayMs: 1500
+  filterSustain: 0.42
+  filterReleaseMs: 2200
+  ampAttackMs: 180
+  ampDecayMs: 1300
+  ampSustain: 0.78
+  ampReleaseMs: 2600
+  lfoRateHz: 0.16
+  lfoWave: 3
+  lfoToOscPitch: 0.01
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0.09
+  modWheelToLfoDepth: 0.65
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.18
+  panSpread: 0.82
+  velocityToAmp: 0.42
+  velocityToFilter: 0.18
+  arpEnabled: true
+  arpInternalTempoBpm: 94
+  arpRateDivision: 1
+  arpPattern: 9
+  arpOctaveRange: 2
+  arpGate: 0.54
+  arpSwing: 0.12
+  arpChance: 0.92
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 2
+  arpAccentAmount: 0.10
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: false
+  driveAmount: 0
+  driveMix: 1
+  chorusEnabled: true
+  chorusRateHz: 0.18
+  chorusDepth: 0.56
+  chorusMix: 0.40
+  delayEnabled: true
+  delayTimeMs: 480
+  delayFeedback: 0.24
+  delayMix: 0.14
+  reverbEnabled: true
+  reverbSize: 0.88
+  reverbDamping: 0.42
+  reverbMix: 0.32
+  masterGainDb: -15
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.14
+  phaserDepth: 0.36
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
+
+name: Random Sparks
+category: Arp
+description: Fast random fragments for nervous sequencer flicker and short syncopated fills.
+params:
+  oscAWave: 0
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.74
+  oscAPulseWidth: 0.34
+  oscASyncEnabled: false
+  oscBWave: 2
+  oscBOctave: 3
+  oscBFineCents: 5
+  oscBLevel: 0.38
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 2200
+  filterResonance: 0.22
+  filterEnvAmount: 0.58
+  filterKeyTracking: 1
+  filterAttackMs: 1
+  filterDecayMs: 110
+  filterSustain: 0
+  filterReleaseMs: 90
+  ampAttackMs: 1
+  ampDecayMs: 95
+  ampSustain: 0.02
+  ampReleaseMs: 70
+  lfoRateHz: 1.4
+  lfoWave: 2
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0.08
+  modWheelToLfoDepth: 0.5
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.06
+  panSpread: 0
+  velocityToAmp: 0.92
+  velocityToFilter: 0.52
+  arpEnabled: true
+  arpInternalTempoBpm: 126
+  arpRateDivision: 5
+  arpPattern: 8
+  arpOctaveRange: 2
+  arpGate: 0.16
+  arpSwing: 0
+  arpChance: 0.68
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 1
+  arpAccentAmount: 0.18
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: false
+  driveEnabled: true
+  driveAmount: 0.16
+  driveMix: 0.70
+  chorusEnabled: false
+  chorusRateHz: 0.6
+  chorusDepth: 0.4
+  chorusMix: 0.3
+  delayEnabled: true
+  delayTimeMs: 150
+  delayFeedback: 0.12
+  delayMix: 0.07
+  reverbEnabled: false
+  reverbSize: 0.4
+  reverbDamping: 0.5
+  reverbMix: 0.2
+  masterGainDb: -13
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.26
+  compressorMix: 1
+
+name: Trance Gate
+category: Arp
+description: Full-chord sixteenth gate with quarter-note accents for classic wide supersaw pumping figures.
+params:
+  oscAWave: 2
+  oscAOctave: 2
+  oscAFineCents: -4
+  oscALevel: 0.78
+  oscAPulseWidth: 0.5
+  oscASyncEnabled: false
+  oscBWave: 2
+  oscBOctave: 2
+  oscBFineCents: 8
+  oscBLevel: 0.70
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 1650
+  filterResonance: 0.10
+  filterEnvAmount: 0.20
+  filterKeyTracking: 1
+  filterAttackMs: 8
+  filterDecayMs: 420
+  filterSustain: 0.44
+  filterReleaseMs: 380
+  ampAttackMs: 6
+  ampDecayMs: 280
+  ampSustain: 0.82
+  ampReleaseMs: 340
+  lfoRateHz: 0.22
+  lfoWave: 3
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0.05
+  lfoToFilterCutoff: 0.03
+  modWheelToLfoDepth: 0.55
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 2
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.22
+  panSpread: 0.62
+  velocityToAmp: 0.62
+  velocityToFilter: 0.16
+  arpEnabled: true
+  arpInternalTempoBpm: 132
+  arpRateDivision: 3
+  arpPattern: 10
+  arpOctaveRange: 1
+  arpGate: 0.18
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 3
+  arpAccentAmount: 0.34
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: false
+  driveAmount: 0
+  driveMix: 1
+  chorusEnabled: true
+  chorusRateHz: 0.34
+  chorusDepth: 0.30
+  chorusMix: 0.20
+  delayEnabled: true
+  delayTimeMs: 300
+  delayFeedback: 0.20
+  delayMix: 0.10
+  reverbEnabled: true
+  reverbSize: 0.52
+  reverbDamping: 0.48
+  reverbMix: 0.18
+  masterGainDb: -17
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.38
+  compressorMix: 1
+
+name: Stuttered Chord
+category: Arp
+description: Chord stabs with deterministic ratchets for machine-gun synth hits and gated soundtrack pulses.
+params:
+  oscAWave: 0
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.72
+  oscAPulseWidth: 0.40
+  oscASyncEnabled: false
+  oscBWave: 2
+  oscBOctave: 2
+  oscBFineCents: 6
+  oscBLevel: 0.54
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 1400
+  filterResonance: 0.20
+  filterEnvAmount: 0.48
+  filterKeyTracking: 1
+  filterAttackMs: 2
+  filterDecayMs: 180
+  filterSustain: 0.10
+  filterReleaseMs: 160
+  ampAttackMs: 2
+  ampDecayMs: 150
+  ampSustain: 0.08
+  ampReleaseMs: 120
+  lfoRateHz: 5
+  lfoWave: 1
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0
+  modWheelToLfoDepth: 1
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0
+  panSpread: 0
+  velocityToAmp: 0.88
+  velocityToFilter: 0.58
+  arpEnabled: true
+  arpInternalTempoBpm: 124
+  arpRateDivision: 3
+  arpPattern: 10
+  arpOctaveRange: 1
+  arpGate: 0.22
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 2
+  arpRatchetChance: 1
+  arpAccentEvery: 1
+  arpAccentAmount: 0.22
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: true
+  driveAmount: 0.14
+  driveMix: 0.66
+  chorusEnabled: false
+  chorusRateHz: 0.6
+  chorusDepth: 0.4
+  chorusMix: 0.3
+  delayEnabled: true
+  delayTimeMs: 188
+  delayFeedback: 0.16
+  delayMix: 0.08
+  reverbEnabled: true
+  reverbSize: 0.36
+  reverbDamping: 0.56
+  reverbMix: 0.10
+  masterGainDb: -13
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.30
+  compressorMix: 1
+
+name: Tresillo Bass
+category: Arp
+description: Driven mono bass locked to the canonical tresillo spacing using a Euclidean 3 over 8 rhythm.
+params:
+  oscAWave: 2
+  oscAOctave: 1
+  oscAFineCents: 0
+  oscALevel: 0.84
+  oscAPulseWidth: 0.5
+  oscASyncEnabled: false
+  oscBWave: 0
+  oscBOctave: 1
+  oscBFineCents: 3
+  oscBLevel: 0.44
+  oscBPulseWidth: 0.36
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 520
+  filterResonance: 0.26
+  filterEnvAmount: 0.66
+  filterKeyTracking: 1
+  filterAttackMs: 1
+  filterDecayMs: 150
+  filterSustain: 0.02
+  filterReleaseMs: 90
+  ampAttackMs: 1
+  ampDecayMs: 160
+  ampSustain: 0.22
+  ampReleaseMs: 80
+  lfoRateHz: 5
+  lfoWave: 1
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0
+  modWheelToLfoDepth: 1
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 28
+  playMode: 1
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.05
+  panSpread: 0
+  velocityToAmp: 0.92
+  velocityToFilter: 0.64
+  arpEnabled: true
+  arpInternalTempoBpm: 120
+  arpRateDivision: 4
+  arpPattern: 0
+  arpOctaveRange: 1
+  arpGate: 0.34
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 1
+  arpEuclideanPulses: 3
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: true
+  driveAmount: 0.24
+  driveMix: 0.84
+  chorusEnabled: false
+  chorusRateHz: 0.6
+  chorusDepth: 0.4
+  chorusMix: 0.3
+  delayEnabled: false
+  delayTimeMs: 250
+  delayFeedback: 0.25
+  delayMix: 0
+  reverbEnabled: false
+  reverbSize: 0.4
+  reverbDamping: 0.5
+  reverbMix: 0.2
+  masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.34
+  compressorMix: 1
+
+name: Cinquillo Lead
+category: Arp
+description: A sync-edged lead stepping through the five-onset cinquillo contour with short dotted echoes.
+params:
+  oscAWave: 2
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.76
+  oscAPulseWidth: 0.5
+  oscASyncEnabled: true
+  oscBWave: 2
+  oscBOctave: 1
+  oscBFineCents: -7
+  oscBLevel: 0.34
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 2050
+  filterResonance: 0.24
+  filterEnvAmount: 0.46
+  filterKeyTracking: 1
+  filterAttackMs: 2
+  filterDecayMs: 260
+  filterSustain: 0.12
+  filterReleaseMs: 180
+  ampAttackMs: 2
+  ampDecayMs: 190
+  ampSustain: 0.18
+  ampReleaseMs: 130
+  lfoRateHz: 0.40
+  lfoWave: 3
+  lfoToOscPitch: 0.015
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0
+  modWheelToLfoDepth: 0.7
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 36
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 7
+  vintageAmount: 0.12
+  panSpread: 0
+  velocityToAmp: 1
+  velocityToFilter: 0.46
+  arpEnabled: true
+  arpInternalTempoBpm: 122
+  arpRateDivision: 3
+  arpPattern: 2
+  arpOctaveRange: 2
+  arpGate: 0.26
+  arpSwing: 0.04
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 1
+  arpEuclideanPulses: 5
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: false
+  driveAmount: 0
+  driveMix: 1
+  chorusEnabled: true
+  chorusRateHz: 0.32
+  chorusDepth: 0.18
+  chorusMix: 0.12
+  delayEnabled: true
+  delayTimeMs: 248
+  delayFeedback: 0.18
+  delayMix: 0.10
+  reverbEnabled: true
+  reverbSize: 0.40
+  reverbDamping: 0.50
+  reverbMix: 0.12
+  masterGainDb: -13
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.28
+  compressorMix: 1
+
+name: Polymeter Stab
+category: Arp
+description: Chord stabs cycling through a 5 over 7 Euclidean loop for offset-bar tension and restartless drift.
+params:
+  oscAWave: 0
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.70
+  oscAPulseWidth: 0.38
+  oscASyncEnabled: false
+  oscBWave: 0
+  oscBOctave: 2
+  oscBFineCents: 9
+  oscBLevel: 0.56
+  oscBPulseWidth: 0.62
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 1500
+  filterResonance: 0.14
+  filterEnvAmount: 0.52
+  filterKeyTracking: 1
+  filterAttackMs: 1
+  filterDecayMs: 170
+  filterSustain: 0.08
+  filterReleaseMs: 130
+  ampAttackMs: 1
+  ampDecayMs: 140
+  ampSustain: 0.08
+  ampReleaseMs: 110
+  lfoRateHz: 5
+  lfoWave: 1
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0
+  modWheelToLfoDepth: 1
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.10
+  panSpread: 0.24
+  velocityToAmp: 0.90
+  velocityToFilter: 0.42
+  arpEnabled: true
+  arpInternalTempoBpm: 110
+  arpRateDivision: 1
+  arpPattern: 10
+  arpOctaveRange: 1
+  arpGate: 0.18
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 2
+  arpAccentAmount: 0.24
+  arpRhythm: 1
+  arpEuclideanPulses: 5
+  arpEuclideanSteps: 7
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: true
+  driveAmount: 0.10
+  driveMix: 0.54
+  chorusEnabled: true
+  chorusRateHz: 0.24
+  chorusDepth: 0.16
+  chorusMix: 0.10
+  delayEnabled: false
+  delayTimeMs: 250
+  delayFeedback: 0.25
+  delayMix: 0
+  reverbEnabled: true
+  reverbSize: 0.30
+  reverbDamping: 0.58
+  reverbMix: 0.10
+  masterGainDb: -14
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.26
+  compressorMix: 1
+
+name: Converge Bell
+category: Arp
+description: Glass-and-triangle bell tones collapsing from the edges inward for clear converging melodic motion.
+params:
+  oscAWave: 3
+  oscAOctave: 3
+  oscAFineCents: 0
+  oscALevel: 0.62
+  oscAPulseWidth: 0.5
+  oscASyncEnabled: false
+  oscBWave: 1
+  oscBOctave: 2
+  oscBFineCents: 12
+  oscBLevel: 0.34
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0.01
+  filterCutoffHz: 4200
+  filterResonance: 0.20
+  filterEnvAmount: 0.32
+  filterKeyTracking: 2
+  filterAttackMs: 2
+  filterDecayMs: 620
+  filterSustain: 0.08
+  filterReleaseMs: 720
+  ampAttackMs: 1
+  ampDecayMs: 540
+  ampSustain: 0.06
+  ampReleaseMs: 860
+  lfoRateHz: 0.18
+  lfoWave: 3
+  lfoToOscPitch: 0.006
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0.04
+  modWheelToLfoDepth: 1
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0
+  panSpread: 0.62
+  velocityToAmp: 0.88
+  velocityToFilter: 0.36
+  arpEnabled: true
+  arpInternalTempoBpm: 108
+  arpRateDivision: 3
+  arpPattern: 4
+  arpOctaveRange: 2
+  arpGate: 0.20
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: false
+  driveAmount: 0
+  driveMix: 1
+  chorusEnabled: true
+  chorusRateHz: 0.28
+  chorusDepth: 0.22
+  chorusMix: 0.14
+  delayEnabled: true
+  delayTimeMs: 360
+  delayFeedback: 0.24
+  delayMix: 0.16
+  reverbEnabled: true
+  reverbSize: 0.62
+  reverbDamping: 0.34
+  reverbMix: 0.20
+  masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1
+
+name: Inside Orbit
+category: Arp
+description: Inside-order movement with a rounded pulse core and mild swing for circular melodic patterns.
+params:
+  oscAWave: 0
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.74
+  oscAPulseWidth: 0.44
+  oscASyncEnabled: false
+  oscBWave: 1
+  oscBOctave: 2
+  oscBFineCents: 5
+  oscBLevel: 0.42
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 1700
+  filterResonance: 0.16
+  filterEnvAmount: 0.50
+  filterKeyTracking: 1
+  filterAttackMs: 2
+  filterDecayMs: 210
+  filterSustain: 0.10
+  filterReleaseMs: 170
+  ampAttackMs: 2
+  ampDecayMs: 170
+  ampSustain: 0.12
+  ampReleaseMs: 135
+  lfoRateHz: 0.55
+  lfoWave: 3
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0.08
+  lfoToFilterCutoff: 0.05
+  modWheelToLfoDepth: 1
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.10
+  panSpread: 0.34
+  velocityToAmp: 0.88
+  velocityToFilter: 0.48
+  arpEnabled: true
+  arpInternalTempoBpm: 116
+  arpRateDivision: 3
+  arpPattern: 6
+  arpOctaveRange: 2
+  arpGate: 0.24
+  arpSwing: 0.06
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: false
+  driveAmount: 0
+  driveMix: 1
+  chorusEnabled: true
+  chorusRateHz: 0.36
+  chorusDepth: 0.20
+  chorusMix: 0.12
+  delayEnabled: true
+  delayTimeMs: 280
+  delayFeedback: 0.18
+  delayMix: 0.10
+  reverbEnabled: false
+  reverbSize: 0.4
+  reverbDamping: 0.5
+  reverbMix: 0.2
+  masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.24
+  compressorMix: 1
+
+name: Outside Plucker
+category: Arp
+description: Hard-edged outside-order plucks that jump to the extremes first and stay rhythmically sharp.
+params:
+  oscAWave: 0
+  oscAOctave: 2
+  oscAFineCents: 0
+  oscALevel: 0.78
+  oscAPulseWidth: 0.30
+  oscASyncEnabled: false
+  oscBWave: 2
+  oscBOctave: 2
+  oscBFineCents: 4
+  oscBLevel: 0.40
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0
+  filterCutoffHz: 1260
+  filterResonance: 0.20
+  filterEnvAmount: 0.70
+  filterKeyTracking: 1
+  filterAttackMs: 1
+  filterDecayMs: 160
+  filterSustain: 0
+  filterReleaseMs: 120
+  ampAttackMs: 1
+  ampDecayMs: 135
+  ampSustain: 0.02
+  ampReleaseMs: 90
+  lfoRateHz: 5
+  lfoWave: 1
+  lfoToOscPitch: 0
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0
+  modWheelToLfoDepth: 1
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0
+  panSpread: 0
+  velocityToAmp: 0.94
+  velocityToFilter: 0.66
+  arpEnabled: true
+  arpInternalTempoBpm: 121
+  arpRateDivision: 3
+  arpPattern: 7
+  arpOctaveRange: 2
+  arpGate: 0.18
+  arpSwing: 0.10
+  arpChance: 0.90
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: true
+  driveAmount: 0.12
+  driveMix: 0.62
+  chorusEnabled: false
+  chorusRateHz: 0.6
+  chorusDepth: 0.4
+  chorusMix: 0.3
+  delayEnabled: true
+  delayTimeMs: 210
+  delayFeedback: 0.14
+  delayMix: 0.08
+  reverbEnabled: true
+  reverbSize: 0.32
+  reverbDamping: 0.54
+  reverbMix: 0.08
+  masterGainDb: -12
+  timbre: 0
+  excite: 0
+  phaserEnabled: false
+  phaserRateHz: 0.5
+  phaserDepth: 0.6
+  compressorEnabled: true
+  compressorAmount: 0.26
+  compressorMix: 1
+
+name: Diverge Sweep
+category: Arp
+description: Center-outward sweep motion with wide stereo spread, slow modulation, and a long cinematic tail.
+params:
+  oscAWave: 2
+  oscAOctave: 2
+  oscAFineCents: -3
+  oscALevel: 0.70
+  oscAPulseWidth: 0.5
+  oscASyncEnabled: false
+  oscBWave: 2
+  oscBOctave: 3
+  oscBFineCents: 9
+  oscBLevel: 0.48
+  oscBPulseWidth: 0.5
+  oscBLowFrequencyMode: false
+  noiseLevel: 0.03
+  filterCutoffHz: 2100
+  filterResonance: 0.16
+  filterEnvAmount: 0.38
+  filterKeyTracking: 1
+  filterAttackMs: 90
+  filterDecayMs: 900
+  filterSustain: 0.30
+  filterReleaseMs: 1100
+  ampAttackMs: 70
+  ampDecayMs: 820
+  ampSustain: 0.62
+  ampReleaseMs: 1400
+  lfoRateHz: 0.20
+  lfoWave: 3
+  lfoToOscPitch: 0.010
+  lfoToPulseWidth: 0
+  lfoToFilterCutoff: 0.08
+  modWheelToLfoDepth: 0.7
+  polyModOscBToOscPitch: 0
+  polyModEnvToOscPitch: 0
+  polyModOscBToPulseWidth: 0
+  polyModEnvToPulseWidth: 0
+  polyModOscBToFilterCutoff: 0
+  polyModEnvToFilterCutoff: 0
+  glideTimeMs: 0
+  playMode: 0
+  keyPriority: 0
+  pitchBendRangeSemitones: 2
+  vintageAmount: 0.20
+  panSpread: 0.86
+  velocityToAmp: 0.66
+  velocityToFilter: 0.28
+  arpEnabled: true
+  arpInternalTempoBpm: 104
+  arpRateDivision: 2
+  arpPattern: 5
+  arpOctaveRange: 3
+  arpGate: 0.42
+  arpSwing: 0
+  arpChance: 1
+  arpRatchetCount: 0
+  arpRatchetChance: 0
+  arpAccentEvery: 0
+  arpAccentAmount: 0
+  arpRhythm: 0
+  arpEuclideanPulses: 4
+  arpEuclideanSteps: 8
+  arpEuclideanRotation: 0
+  arpLatch: true
+  driveEnabled: false
+  driveAmount: 0
+  driveMix: 1
+  chorusEnabled: true
+  chorusRateHz: 0.18
+  chorusDepth: 0.44
+  chorusMix: 0.24
+  delayEnabled: true
+  delayTimeMs: 420
+  delayFeedback: 0.28
+  delayMix: 0.14
+  reverbEnabled: true
+  reverbSize: 0.72
+  reverbDamping: 0.40
+  reverbMix: 0.26
+  masterGainDb: -15
+  timbre: 0
+  excite: 0
+  phaserEnabled: true
+  phaserRateHz: 0.18
+  phaserDepth: 0.40
+  compressorEnabled: false
+  compressorAmount: 0.30
+  compressorMix: 1

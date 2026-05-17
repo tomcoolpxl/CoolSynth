@@ -7,7 +7,7 @@
 namespace coolsynth::presets
 {
     inline constexpr char patchRootTag[] = "COOLSYNTH_PATCH";
-    inline constexpr int patchFormatVersion = 6;
+    inline constexpr int patchFormatVersion = 7;
     inline constexpr char defaultPatchExtension[] = ".cspatch";
 
     enum class PatchStateError : uint8_t

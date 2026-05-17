@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-"""Insert v3-era effect entries (timbre/excite/phaser/compressor) into every
-constexpr preset array in src/presets/FactoryPresets.cpp.
+"""Legacy helper for inserting v3-era effect entries into FactoryPresets.cpp.
 
-For each preset, locate its `{ ids::masterGainDb, ... },` line and append the
-new entries immediately after, preserving the existing indentation. Effect
-values are chosen per preset name based on the preset's character.
+The main preset pipeline now emits the full preset surface from YAML, including
+arp-expansion fields plus timbre/excite/phaser/compressor. This script remains
+only as a historical one-off for older generated files.
 
 Run from the project root:
     python scripts/inject_v3_into_factory_presets.py

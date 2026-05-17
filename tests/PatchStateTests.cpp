@@ -2,6 +2,7 @@
 
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
+#include "presets/FactoryPresets.h"
 #include "presets/PatchState.h"
 
 class AudioProcessorXmlHarness final : public juce::AudioProcessor
@@ -315,6 +316,105 @@ public:
 
             patchFile.deleteFile();
             tempDir.deleteRecursively();
+        }
+
+        beginTest("factory_presets_cover_full_parameter_contract_and_curated_arp_bank");
+        {
+            int arpPresetCount = 0;
+            bool hasRandomWalkPluck = false;
+            bool hasTranceGate = false;
+            bool hasTresilloBass = false;
+            bool hasCinquilloLead = false;
+            bool hasPolymeterStab = false;
+            bool hasConvergeBell = false;
+            bool hasRandomSparks = false;
+            bool hasInsideOrbit = false;
+            bool hasOutsidePlucker = false;
+            bool hasDivergeSweep = false;
+
+            for (int index = 0; index < coolsynth::presets::getFactoryPresetCount(); ++index)
+            {
+                const auto& preset = coolsynth::presets::getFactoryPreset(index);
+                expectEquals(preset.valueCount,
+                             static_cast<int>(coolsynth::parameters::allParameterIds.size()));
+
+                if (juce::String(preset.category) == "Arp")
+                    ++arpPresetCount;
+
+                const auto presetName = juce::String(preset.name);
+                hasRandomWalkPluck = hasRandomWalkPluck || presetName == "Random Walk Pluck";
+                hasTranceGate = hasTranceGate || presetName == "Trance Gate";
+                hasTresilloBass = hasTresilloBass || presetName == "Tresillo Bass";
+                hasCinquilloLead = hasCinquilloLead || presetName == "Cinquillo Lead";
+                hasPolymeterStab = hasPolymeterStab || presetName == "Polymeter Stab";
+                hasConvergeBell = hasConvergeBell || presetName == "Converge Bell";
+                hasRandomSparks = hasRandomSparks || presetName == "Random Sparks";
+                hasInsideOrbit = hasInsideOrbit || presetName == "Inside Orbit";
+                hasOutsidePlucker = hasOutsidePlucker || presetName == "Outside Plucker";
+                hasDivergeSweep = hasDivergeSweep || presetName == "Diverge Sweep";
+            }
+
+            expect(arpPresetCount >= 15);
+            expect(hasRandomWalkPluck);
+            expect(hasTranceGate);
+            expect(hasTresilloBass);
+            expect(hasCinquilloLead);
+            expect(hasPolymeterStab);
+            expect(hasConvergeBell);
+            expect(hasRandomSparks);
+            expect(hasInsideOrbit);
+            expect(hasOutsidePlucker);
+            expect(hasDivergeSweep);
+        }
+
+        beginTest("factory_presets_round_trip_through_wrapped_patch_state");
+        {
+            const auto compareStates = [this](const SynthAudioProcessor& source,
+                                              const SynthAudioProcessor& target)
+            {
+                for (const auto* parameterId : coolsynth::parameters::allParameterIds)
+                {
+                    const auto* sourceValue = source.getValueTreeState().getRawParameterValue(parameterId);
+                    const auto* targetValue = target.getValueTreeState().getRawParameterValue(parameterId);
+                    expect(sourceValue != nullptr);
+                    expect(targetValue != nullptr);
+
+                    if (sourceValue != nullptr && targetValue != nullptr)
+                    {
+                        expectWithinAbsoluteError(sourceValue->load(),
+                                                  targetValue->load(),
+                                                  0.01f);
+                    }
+                }
+            };
+
+            for (int presetIndex = 0; presetIndex < coolsynth::presets::getFactoryPresetCount(); ++presetIndex)
+            {
+                SynthAudioProcessor source;
+                SynthAudioProcessor target;
+
+                coolsynth::presets::applyFactoryPreset(source.getValueTreeState(),
+                                                       coolsynth::presets::getFactoryPreset(presetIndex));
+
+                auto stateXml = source.createParameterStateXml();
+                expect(stateXml != nullptr);
+
+                if (stateXml == nullptr)
+                    continue;
+
+                auto patchXml = coolsynth::presets::createWrappedPatchXml(*stateXml,
+                                                                          source.getParameterStateTypeName());
+                auto parsed = coolsynth::presets::parseWrappedPatchXml(*patchXml,
+                                                                       target.getParameterStateTypeName());
+                expect(parsed.succeeded());
+                expect(parsed.parameterStateXml != nullptr);
+
+                if (parsed.parameterStateXml == nullptr)
+                    continue;
+
+                expect(target.applyParameterStateXml(*parsed.parameterStateXml));
+                compareStates(source, target);
+            }
         }
 
         beginTest("processor_state_loader_rejects_unwrapped_or_legacy_wrapped_state");

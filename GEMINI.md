@@ -187,7 +187,14 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Added editor regressions covering overlay visibility toggling, Straight-versus-Euclidean control visibility, and non-default advanced-summary text.
   - Corrected the Phase D `E(7,12)` acceptance example from an impossible eight-pulse string to the engine's current valid rotated Euclidean necklace; online verification against Godfried Toussaint's published `E(7,12)` confirmed the engine output is a rotation of the same Euclidean rhythm necklace.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
-- `TODO.md` now points to ARP Expansion Phase F — Patch format + factory presets.
+- ARP Expansion `Phase F` has a verified implementation slice on 2026-05-17, but it is not fully closed yet because the planned manual preset audition remains open in `TODO.md`:
+  - Bumped the wrapped `.cspatch` and wrapped processor-state format versions from `6` to `7`, intentionally rejecting older saved patches or state under the full expanded arp parameter contract.
+  - The factory-preset source pipeline now treats the YAML file as the full preset contract again: YAML and generated `FactoryPresets.cpp` both carry the new arp expansion fields plus the already-shipped `timbre` / `excite` / phaser / compressor entries.
+  - Re-emitted the YAML-backed preset data with explicit defaults for the expanded arp surface and preserved the explicit full-parameter contract across the whole factory bank.
+  - Added a larger curated `Arp` bank covering random, random-walk, order-mode, Euclidean, chance, ratchet, and accent combinations, including `Random Walk Pluck`, `Random Walk Pad`, `Random Sparks`, `Trance Gate`, `Stuttered Chord`, `Tresillo Bass`, `Cinquillo Lead`, `Polymeter Stab`, `Converge Bell`, `Inside Orbit`, `Outside Plucker`, and `Diverge Sweep`.
+  - Added preset regressions that assert full parameter coverage across the factory bank and round-trip every factory preset through the strict wrapped patch-load path.
+  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
+- `TODO.md` now points to the remaining ARP Expansion Phase F manual preset audition and sign-off pass.
 - Phase 11 Track A completed on 2026-05-15:
   - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
   - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).

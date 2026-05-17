@@ -18,7 +18,7 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    inline constexpr int processorStateFormatVersion = 6;
+    inline constexpr int processorStateFormatVersion = 7;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";

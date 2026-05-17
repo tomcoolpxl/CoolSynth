@@ -1,5 +1,16 @@
 # DONE
 
+## ARP Expansion Phase F — Format boundary and curated preset-bank slice
+
+Completed on 2026-05-17. The code and data portion of Phase F is implemented and locally verified; only the manual preset audition remains open in `TODO.md`.
+
+- [x] Bumped the wrapped `.cspatch` and wrapped processor-state format versions from `6` to `7`, intentionally rejecting older saved patches or state under the full expanded arp parameter contract.
+- [x] Extended the factory-preset source pipeline so the YAML source and generated `FactoryPresets.cpp` now both carry the full exposed preset surface, including the new arp expansion fields plus the already-shipped `timbre` / `excite` / phaser / compressor entries.
+- [x] Re-emitted the YAML-backed preset data with explicit defaults for the expanded arp surface and preserved the explicit full-parameter contract for every factory preset.
+- [x] Added a larger curated `Arp` bank covering the new random, random-walk, order-mode, Euclidean, chance, ratchet, and accent combinations, including `Random Walk Pluck`, `Random Walk Pad`, `Random Sparks`, `Trance Gate`, `Stuttered Chord`, `Tresillo Bass`, `Cinquillo Lead`, `Polymeter Stab`, `Converge Bell`, `Inside Orbit`, `Outside Plucker`, and `Diverge Sweep`.
+- [x] Added preset regressions that assert full parameter coverage across the factory bank and round-trip every factory preset through the current strict wrapped patch-load path.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-05-17 after the Phase F implementation slice.
+
 ## ARP Expansion Phase E — Advanced overlay UI
 
 Completed on 2026-05-17. The Phase E overlay slice is implemented, build-test clean, and keeps the expanded arp surface inside the existing one-page editor.

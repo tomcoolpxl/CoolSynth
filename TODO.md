@@ -1,11 +1,9 @@
 # TODO
 
-## ARP Expansion Phase F — Patch format + factory presets
+## ARP Expansion Phase F — Factory preset audition and sign-off
 
-Phase E is now implemented and locally verified. The next implementation chunk is Phase F from `ARP_EXPANSION_PLAN.md`.
+The format boundary, preset source-pipeline refresh, and curated arp-bank implementation slice are now in place and locally build-test verified. The remaining Phase F work is the manual ear-check and any final preset trims that fall directly out of it.
 
-- Bump the wrapped `.cspatch` and wrapped processor-state format versions for the full expanded arp parameter surface.
-- OVERRIDING COMMENT: DO NOT CARE ABOUT BACKWARDS COMPATIBIULITY OF PATCHES!!!!!!!!
-- Re-emit the factory preset source data with explicit defaults for the new arp rhythm and modifier fields.
-- Add the first curated arp-focused factory preset slice that exercises the new pattern, rhythm, and modifier combinations without broadening scope beyond the approved Phase F plan.
-- Add preset round-trip coverage or equivalent verification notes for the new arp-focused preset payloads.
+- Manually audition the new curated arp presets in standalone and confirm the names, pattern modes, Euclidean rhythms, chance, ratchet, and accent behaviors all match the intended musical character.
+- If the ear check exposes obvious voicing or loudness mismatches, retune only the affected preset values and rerun the current local build-test verification.
+- After the manual preset pass, update `DONE.md` and `GEMINI.md` to close full ARP Expansion Phase F if no further code changes are needed.
