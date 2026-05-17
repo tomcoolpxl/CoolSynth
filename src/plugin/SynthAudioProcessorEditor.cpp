@@ -167,6 +167,11 @@ void SynthAudioProcessorEditor::setupParameterRefs()
     parameterRefs.revDamp = apvts.getParameter(ids::reverbDamping);
     parameterRefs.revMix = apvts.getParameter(ids::reverbMix);
     parameterRefs.outGain = apvts.getParameter(ids::masterGainDb);
+    parameterRefs.timbre = apvts.getParameter(ids::timbre);
+    parameterRefs.excite = apvts.getParameter(ids::excite);
+    parameterRefs.phsOn = apvts.getParameter(ids::phaserEnabled);
+    parameterRefs.phsRate = apvts.getParameter(ids::phaserRateHz);
+    parameterRefs.phsDepth = apvts.getParameter(ids::phaserDepth);
 }
 
 void SynthAudioProcessorEditor::setupVisualsAndLabels(bool isStandalone)
@@ -217,6 +222,8 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addAndMakeVisible(dlySection);
     addAndMakeVisible(revSection);
     addAndMakeVisible(outSection);
+    addAndMakeVisible(macrosSection);
+    addAndMakeVisible(phaserSection);
     addAndMakeVisible(fxPlaceholderSection);
 
     auto addSliderControl = [this, &apvts](auto& control,
@@ -333,6 +340,11 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addSliderControl(revDampKnob, revDampAttachment, ids::reverbDamping);
     addSliderControl(revMixKnob, revMixAttachment, ids::reverbMix);
     addSliderControl(outGainKnob, outGainAttachment, ids::masterGainDb);
+    addSliderControl(timbreKnob, timbreAttachment, ids::timbre);
+    addSliderControl(exciteKnob, exciteAttachment, ids::excite);
+    addToggleControl(phsOnToggle, phsOnAttachment, ids::phaserEnabled);
+    addSliderControl(phsRateKnob, phsRateAttachment, ids::phaserRateHz);
+    addSliderControl(phsDepthKnob, phsDepthAttachment, ids::phaserDepth);
 }
 
 void SynthAudioProcessorEditor::registerLearnableControls()
@@ -420,6 +432,11 @@ void SynthAudioProcessorEditor::registerLearnableControls()
     registerLearnableControl(revDampKnob, ids::reverbDamping, "Damp", [&](bool a, juce::String b) { applyKnobState(revDampKnob, a, b); });
     registerLearnableControl(revMixKnob, ids::reverbMix, "Mix", [&](bool a, juce::String b) { applyKnobState(revMixKnob, a, b); });
     registerLearnableControl(outGainKnob, ids::masterGainDb, "Master", [&](bool a, juce::String b) { applyKnobState(outGainKnob, a, b); });
+    registerLearnableControl(timbreKnob, ids::timbre, "Timbre", [&](bool a, juce::String b) { applyKnobState(timbreKnob, a, b); });
+    registerLearnableControl(exciteKnob, ids::excite, "Excite", [&](bool a, juce::String b) { applyKnobState(exciteKnob, a, b); });
+    registerLearnableControl(phsOnToggle, ids::phaserEnabled, "Phaser", [&](bool a, juce::String b) { applyToggleState(phsOnToggle, a, b); });
+    registerLearnableControl(phsRateKnob, ids::phaserRateHz, "Rate", [&](bool a, juce::String b) { applyKnobState(phsRateKnob, a, b); });
+    registerLearnableControl(phsDepthKnob, ids::phaserDepth, "Depth", [&](bool a, juce::String b) { applyKnobState(phsDepthKnob, a, b); });
 }
 
 void SynthAudioProcessorEditor::setupActionButtons()
@@ -1237,7 +1254,39 @@ void SynthAudioProcessorEditor::resized()
     const int pianoWidth = juce::jmin(pianoBar.getDesiredWidth(), bottomRow.getWidth());
     pianoBar.setBounds(bottomRow.removeFromLeft(pianoWidth));
     bottomRow.removeFromLeft(10); // gap between piano bar and new FX cluster
-    fxPlaceholderSection.setBounds(bottomRow);
+
+    // New bottom-row FX cluster: Macros | Phaser | placeholder (Compressor in Phase E)
+    constexpr int macrosWidth = 130;
+    constexpr int phaserWidth = 175;
+    constexpr int gap = 8;
+
+    if (bottomRow.getWidth() > macrosWidth + phaserWidth + gap * 2)
+    {
+        auto macrosArea = bottomRow.removeFromLeft(macrosWidth);
+        macrosSection.setBounds(macrosArea);
+        auto macrosContent = macrosArea.reduced(12).withTrimmedTop(24);
+        timbreKnob.setBounds(macrosContent.removeFromLeft(macrosContent.getWidth() / 2));
+        exciteKnob.setBounds(macrosContent);
+        bottomRow.removeFromLeft(gap);
+
+        auto phaserArea = bottomRow.removeFromLeft(phaserWidth);
+        phaserSection.setBounds(phaserArea);
+        auto phaserHeader = phaserArea.reduced(12, 0).removeFromTop(32);
+        phsOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
+        phsOnToggle.setBounds(phaserHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        auto phaserContent = phaserArea.reduced(12).withTrimmedTop(24);
+        phsRateKnob.setBounds(phaserContent.removeFromLeft(phaserContent.getWidth() / 2));
+        phsDepthKnob.setBounds(phaserContent);
+        bottomRow.removeFromLeft(gap);
+
+        fxPlaceholderSection.setBounds(bottomRow);
+    }
+    else
+    {
+        macrosSection.setBounds(bottomRow);
+        phaserSection.setBounds({});
+        fxPlaceholderSection.setBounds({});
+    }
 }
 
 void SynthAudioProcessorEditor::timerCallback()

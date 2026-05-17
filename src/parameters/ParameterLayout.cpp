@@ -456,6 +456,75 @@ namespace
         return group;
     }
 
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeMacrosGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("macros", "Macros", " / ");
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { timbre, parameterVersionHintV3 },
+            "Timbre",
+            juce::NormalisableRange<float>(-1.0f, 1.0f),
+            0.0f,
+            juce::AudioParameterFloatAttributes().withStringFromValueFunction(
+                [](float value, int) { return juce::String(static_cast<int>(std::round(value * 100.0f))) + " %"; })));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { excite, parameterVersionHintV3 },
+            "Excite",
+            juce::NormalisableRange<float>(0.0f, 1.0f),
+            0.0f,
+            percentAttributes()));
+        return group;
+    }
+
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makePhaserGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("phaser", "Phaser", " / ");
+        group->addChild(std::make_unique<juce::AudioParameterBool>(
+            juce::ParameterID { phaserEnabled, parameterVersionHintV3 },
+            "Enabled",
+            false));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { phaserRateHz, parameterVersionHintV3 },
+            "Rate",
+            makeLogRange(0.05f, 8.0f),
+            0.5f,
+            hertzAttributes()));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { phaserDepth, parameterVersionHintV3 },
+            "Depth",
+            juce::NormalisableRange<float>(0.0f, 1.0f),
+            0.6f,
+            percentAttributes()));
+        return group;
+    }
+
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeCompressorGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("compressor", "Compressor", " / ");
+        group->addChild(std::make_unique<juce::AudioParameterBool>(
+            juce::ParameterID { compressorEnabled, parameterVersionHintV3 },
+            "Enabled",
+            false));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { compressorAmount, parameterVersionHintV3 },
+            "Amount",
+            juce::NormalisableRange<float>(0.0f, 1.0f),
+            0.3f,
+            percentAttributes()));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { compressorMix, parameterVersionHintV3 },
+            "Mix",
+            juce::NormalisableRange<float>(0.0f, 1.0f),
+            1.0f,
+            percentAttributes()));
+        return group;
+    }
+
     std::unique_ptr<juce::AudioProcessorParameterGroup> makeOutputGroup()
     {
         using namespace coolsynth::parameters::ids;
@@ -485,9 +554,12 @@ juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::creat
                makePerformanceGroup(),
                makeArpGroup(),
                makeDriveGroup(),
+               makePhaserGroup(),
                makeChorusGroup(),
                makeDelayGroup(),
                makeReverbGroup(),
-               makeOutputGroup());
+               makeCompressorGroup(),
+               makeOutputGroup(),
+               makeMacrosGroup());
     return layout;
 }

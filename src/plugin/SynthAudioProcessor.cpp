@@ -18,7 +18,8 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    inline constexpr int processorStateFormatVersion = 2;
+    inline constexpr int processorStateFormatVersion = 3;
+    inline constexpr int oldestSupportedStateFormatVersion = 2;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
@@ -262,7 +263,8 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         if (! xml->hasTagName(processorStateRootTag))
             return;
 
-        if (xml->getIntAttribute(processorStateVersionProperty, 0) != processorStateFormatVersion)
+        const int stateVersion = xml->getIntAttribute(processorStateVersionProperty, 0);
+        if (stateVersion < oldestSupportedStateFormatVersion || stateVersion > processorStateFormatVersion)
             return;
 
         const auto expectedStateType = getParameterStateTypeName();
@@ -387,14 +389,17 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
         }
     }
 
-    if (appliedParameterCount != static_cast<int> (coolsynth::parameters::allParameterIds.size()))
-        return false;
-
-    for (const auto seen : seenKnownParameters)
+    // Every parameter that existed in v2 state files must be present. Parameters added in v3+
+    // (indices >= v2EraParameterCount) may be absent — the sanitized tree was seeded from the
+    // current defaults, so missing newer parameters simply keep their default values.
+    for (size_t index = 0; index < coolsynth::parameters::v2EraParameterCount; ++index)
     {
-        if (!seen)
+        if (! seenKnownParameters[index])
             return false;
     }
+
+    if (appliedParameterCount < static_cast<int> (coolsynth::parameters::v2EraParameterCount))
+        return false;
 
     return true;
 }
@@ -773,6 +778,62 @@ coolsynth::synth::BlockRenderParametersV2 SynthAudioProcessor::makeBlockRenderPa
     params.reverb.mix = parameterValues.reverbMix->load();
 
     params.masterGainLinear = juce::Decibels::decibelsToGain(parameterValues.masterGainDb->load());
+
+    // --- Phaser ---
+    if (parameterValues.phaserEnabled != nullptr)
+    {
+        params.phaser.enabled = decodeBool(parameterValues.phaserEnabled->load());
+        params.phaser.rateHz = juce::jlimit(0.05f, 8.0f, parameterValues.phaserRateHz->load());
+        params.phaser.depth = juce::jlimit(0.0f, 1.0f, parameterValues.phaserDepth->load());
+    }
+
+    // --- Compressor ---
+    if (parameterValues.compressorEnabled != nullptr)
+    {
+        params.compressor.enabled = decodeBool(parameterValues.compressorEnabled->load());
+        params.compressor.amount = juce::jlimit(0.0f, 1.0f, parameterValues.compressorAmount->load());
+        params.compressor.mix = juce::jlimit(0.0f, 1.0f, parameterValues.compressorMix->load());
+    }
+
+    // --- Macros: fold timbre and excite into the already-resolved snapshot.
+    // These macros never write back to the underlying knobs; they only adjust the per-block
+    // snapshot, so the source parameter values displayed in the UI stay where the user put them.
+    const float timbre = parameterValues.timbre != nullptr
+        ? juce::jlimit(-1.0f, 1.0f, parameterValues.timbre->load())
+        : 0.0f;
+    const float excite = parameterValues.excite != nullptr
+        ? juce::jlimit(0.0f, 1.0f, parameterValues.excite->load())
+        : 0.0f;
+
+    if (timbre != 0.0f)
+    {
+        // Cutoff: multiplicative shift up to ±2.83x (i.e. ±1.5 octaves)
+        const float cutoffMultiplier = std::pow(2.0f, timbre * 1.5f);
+        params.filter.cutoffHz = juce::jlimit(20.0f, 20000.0f,
+                                              params.filter.cutoffHz * cutoffMultiplier);
+
+        // Pulse width: push toward narrow at -1, wide at +1 (stays inside legal 0.05..0.95)
+        params.oscA.pulseWidth = juce::jlimit(0.05f, 0.95f, params.oscA.pulseWidth + timbre * 0.30f);
+        params.oscB.pulseWidth = juce::jlimit(0.05f, 0.95f, params.oscB.pulseWidth + timbre * 0.30f);
+
+        // Drive amount: only positive timbre adds drive; negative leaves drive untouched
+        if (timbre > 0.0f)
+            params.drive.amount = juce::jlimit(0.0f, 1.0f, params.drive.amount + timbre * 0.25f);
+    }
+
+    if (excite > 0.0f)
+    {
+        // Shorten amp attack toward 1 ms at full excite
+        params.ampEnvelope.attackSeconds = juce::jmax(0.001f,
+            params.ampEnvelope.attackSeconds * (1.0f - excite * 0.95f));
+
+        // Push filter envelope and velocity->filter routing harder
+        params.filter.envelopeAmount = juce::jlimit(0.0f, 1.0f,
+            params.filter.envelopeAmount + excite * 0.40f);
+        params.performance.velocityToFilter = juce::jlimit(0.0f, 1.0f,
+            params.performance.velocityToFilter + excite * 0.30f);
+    }
+
     return params;
 }
 

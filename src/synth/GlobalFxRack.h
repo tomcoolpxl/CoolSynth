@@ -4,6 +4,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "GlobalDelay.h"
+#include "Phaser.h"
 #include "SynthParameters.h"
 
 namespace coolsynth::synth
@@ -16,6 +17,7 @@ namespace coolsynth::synth
         void clear() noexcept;
         void process(juce::AudioBuffer<float>& buffer,
                      const DriveParametersV2& drive,
+                     const PhaserParametersV2& phaser,
                      const ChorusParametersV2& chorus,
                      const DelayParametersV2& delay,
                      const ReverbParametersV2& reverb) noexcept;
@@ -30,6 +32,7 @@ namespace coolsynth::synth
         void processReverb(juce::AudioBuffer<float>& buffer, const ReverbParametersV2& parameters) noexcept;
 
         GlobalDelay delay;
+        Phaser phaser;
         juce::dsp::Chorus<float> chorus;
         juce::dsp::Reverb reverb;
         juce::Reverb::Parameters reverbParameters;

@@ -50,6 +50,7 @@ namespace coolsynth::synth
         chorus.prepare(spec);
         reverb.prepare(spec);
         delay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
+        phaser.prepare(sampleRate, samplesPerBlock, outputChannelCount);
 
         constexpr double kFxSmoothRampSeconds = 0.004;
         driveMixSmoothed.reset(sampleRate, kFxSmoothRampSeconds);
@@ -68,6 +69,7 @@ namespace coolsynth::synth
         chorus.reset();
         delay.reset();
         reverb.reset();
+        phaser.reset();
         chorusWasAudible = false;
         delayWasAudible = false;
         reverbWasAudible = false;
@@ -78,6 +80,7 @@ namespace coolsynth::synth
         chorus.reset();
         delay.clear();
         reverb.reset();
+        phaser.reset();
         chorusWasAudible = false;
         delayWasAudible = false;
         reverbWasAudible = false;
@@ -85,6 +88,7 @@ namespace coolsynth::synth
 
     void GlobalFxRack::process(juce::AudioBuffer<float>& buffer,
                                const DriveParametersV2& driveParameters,
+                               const PhaserParametersV2& phaserParameters,
                                const ChorusParametersV2& chorusParameters,
                                const DelayParametersV2& delayParameters,
                                const ReverbParametersV2& reverbParametersIn) noexcept
@@ -93,6 +97,7 @@ namespace coolsynth::synth
             return;
 
         processDrive(buffer, driveParameters);
+        phaser.process(buffer, phaserParameters);
         processChorus(buffer, chorusParameters);
         processDelay(buffer, delayParameters);
         processReverb(buffer, reverbParametersIn);

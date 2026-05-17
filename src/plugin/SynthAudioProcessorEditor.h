@@ -112,6 +112,11 @@ private:
         juce::RangedAudioParameter* revDamp = nullptr;
         juce::RangedAudioParameter* revMix = nullptr;
         juce::RangedAudioParameter* outGain = nullptr;
+        juce::RangedAudioParameter* timbre = nullptr;
+        juce::RangedAudioParameter* excite = nullptr;
+        juce::RangedAudioParameter* phsOn = nullptr;
+        juce::RangedAudioParameter* phsRate = nullptr;
+        juce::RangedAudioParameter* phsDepth = nullptr;
     };
 
     struct LearnableControlRegistration
@@ -173,6 +178,8 @@ private:
     coolsynth::ui::SynthSection dlySection { "Delay" };
     coolsynth::ui::SynthSection revSection { "Reverb" };
     coolsynth::ui::SynthSection outSection { "Output" };
+    coolsynth::ui::SynthSection macrosSection { "Macros" };
+    coolsynth::ui::SynthSection phaserSection { "Phaser" };
     coolsynth::ui::SynthSection fxPlaceholderSection { "New FX (coming soon)" };
 
     coolsynth::ui::SegmentedChoiceGroup oscAWaveChoice {
@@ -322,6 +329,11 @@ private:
     coolsynth::ui::HardwareKnob revDampKnob { "Damp" };
     coolsynth::ui::HardwareKnob revMixKnob { "Mix" };
     coolsynth::ui::HardwareKnob outGainKnob { "Master" };
+    coolsynth::ui::HardwareKnob timbreKnob { "Timbre" };
+    coolsynth::ui::HardwareKnob exciteKnob { "Excite" };
+    coolsynth::ui::LedToggleButton phsOnToggle { "Phaser" };
+    coolsynth::ui::HardwareKnob phsRateKnob { "Rate" };
+    coolsynth::ui::HardwareKnob phsDepthKnob { "Depth" };
 
     std::unique_ptr<ChoiceAttachment> oscAWaveAttachment;
     std::unique_ptr<SliderAttachment> oscAOctaveAttachment;
@@ -391,6 +403,11 @@ private:
     std::unique_ptr<SliderAttachment> revDampAttachment;
     std::unique_ptr<SliderAttachment> revMixAttachment;
     std::unique_ptr<SliderAttachment> outGainAttachment;
+    std::unique_ptr<SliderAttachment> timbreAttachment;
+    std::unique_ptr<SliderAttachment> exciteAttachment;
+    std::unique_ptr<ButtonAttachment> phsOnAttachment;
+    std::unique_ptr<SliderAttachment> phsRateAttachment;
+    std::unique_ptr<SliderAttachment> phsDepthAttachment;
 
     juce::TextButton allNotesOffButton { "All Notes Off" };
 

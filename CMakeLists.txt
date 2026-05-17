@@ -65,6 +65,7 @@ target_sources(CoolSynth
         src/synth/SynthEngineV2.cpp
         src/synth/GlobalDelay.cpp
         src/synth/GlobalFxRack.cpp
+        src/synth/Phaser.cpp
         src/synth/SynthVoice.cpp
 
         src/ui/HardwareFader.cpp
@@ -132,6 +133,7 @@ if(BUILD_TESTING)
             src/synth/SynthEngineV2.cpp
             src/synth/GlobalDelay.cpp
             src/synth/GlobalFxRack.cpp
+            src/synth/Phaser.cpp
             src/synth/SynthVoice.cpp
             src/ui/HardwareFader.cpp
             src/ui/HardwareKnob.cpp
@@ -201,6 +203,7 @@ target_sources(CoolSynthPresetNormalizer
         src/synth/SynthEngineV2.cpp
         src/synth/GlobalDelay.cpp
         src/synth/GlobalFxRack.cpp
+        src/synth/Phaser.cpp
         src/synth/SynthVoice.cpp
         src/ui/HardwareFader.cpp
         src/ui/HardwareKnob.cpp

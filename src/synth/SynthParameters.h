@@ -125,6 +125,20 @@ namespace coolsynth::synth
         float mix = 0.2f;
     };
 
+    struct PhaserParametersV2
+    {
+        bool enabled = false;
+        float rateHz = 0.5f;
+        float depth = 0.6f;
+    };
+
+    struct CompressorParametersV2
+    {
+        bool enabled = false;
+        float amount = 0.3f;
+        float mix = 1.0f;
+    };
+
     struct BlockRenderParametersV2
     {
         OscillatorParametersV2 oscA;
@@ -138,9 +152,11 @@ namespace coolsynth::synth
         PerformanceParametersV2 performance;
         ArpParametersV2 arp;
         DriveParametersV2 drive;
+        PhaserParametersV2 phaser;
         ChorusParametersV2 chorus;
         DelayParametersV2 delay;
         ReverbParametersV2 reverb;
+        CompressorParametersV2 compressor;
         float masterGainLinear = 1.0f;
     };
 
@@ -235,6 +251,15 @@ namespace coolsynth::synth
         std::atomic<float>* reverbDamping = nullptr;
         std::atomic<float>* reverbMix = nullptr;
         std::atomic<float>* masterGainDb = nullptr;
+        // --- v3 additions ---
+        std::atomic<float>* timbre = nullptr;
+        std::atomic<float>* excite = nullptr;
+        std::atomic<float>* phaserEnabled = nullptr;
+        std::atomic<float>* phaserRateHz = nullptr;
+        std::atomic<float>* phaserDepth = nullptr;
+        std::atomic<float>* compressorEnabled = nullptr;
+        std::atomic<float>* compressorAmount = nullptr;
+        std::atomic<float>* compressorMix = nullptr;
     };
 
     using ParamMemberPtr = std::atomic<float>* ParameterValuePointersV2::*;
@@ -309,6 +334,15 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::reverbDamping,            &ParameterValuePointersV2::reverbDamping            },
         { coolsynth::parameters::ids::reverbMix,                &ParameterValuePointersV2::reverbMix                },
         { coolsynth::parameters::ids::masterGainDb,             &ParameterValuePointersV2::masterGainDb             },
+        // --- v3 additions ---
+        { coolsynth::parameters::ids::timbre,                   &ParameterValuePointersV2::timbre                   },
+        { coolsynth::parameters::ids::excite,                   &ParameterValuePointersV2::excite                   },
+        { coolsynth::parameters::ids::phaserEnabled,            &ParameterValuePointersV2::phaserEnabled            },
+        { coolsynth::parameters::ids::phaserRateHz,             &ParameterValuePointersV2::phaserRateHz             },
+        { coolsynth::parameters::ids::phaserDepth,              &ParameterValuePointersV2::phaserDepth              },
+        { coolsynth::parameters::ids::compressorEnabled,        &ParameterValuePointersV2::compressorEnabled        },
+        { coolsynth::parameters::ids::compressorAmount,         &ParameterValuePointersV2::compressorAmount         },
+        { coolsynth::parameters::ids::compressorMix,            &ParameterValuePointersV2::compressorMix            },
     }};
 
     static_assert(kParamPtrBindings.size() == coolsynth::parameters::allParameterIds.size(),

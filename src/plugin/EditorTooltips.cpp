@@ -120,6 +120,12 @@ void SynthAudioProcessorEditor::applyTooltips()
                                           "effects chain.\n"
                                           "Use this to match loudness without changing\n"
                                           "the patch balance upstream."));
+    macrosSection.setTooltip(makeTooltipText("Macros",
+                                             "Quick one-knob shapes that modulate multiple\n"
+                                             "parameters at once without moving the source knobs."));
+    phaserSection.setTooltip(makeTooltipText("Phaser",
+                                             "Four-stage all-pass phaser between Distortion and Chorus.\n"
+                                             "Stereo channels run with a 90 deg LFO offset for width."));
 
     setParameterTooltip(oscAWaveChoice, "Wave",
                         "Choose the basic tone shape for oscillator A.\n"
@@ -417,6 +423,24 @@ void SynthAudioProcessorEditor::applyTooltips()
     setParameterTooltip(outGainKnob, "Master",
                         "Set the final output level of the whole synth.\n"
                         "Use this to match loudness after shaping the patch.");
+    setParameterTooltip(timbreKnob, "Timbre",
+                        "Macro: shifts overall tone color.\n"
+                        "Left darkens the filter and narrows pulse width;\n"
+                        "right brightens, widens, and adds drive.");
+    setParameterTooltip(exciteKnob, "Excite",
+                        "Macro: snaps the attack and pushes the filter envelope.\n"
+                        "Higher values feel more percussive and immediate.\n"
+                        "Source knobs are not moved.");
+    setParameterTooltip(phsOnToggle, "Phaser",
+                        "Turn the phaser on or off.\n"
+                        "Phaser adds notch sweeps for movement and width.");
+    setParameterTooltip(phsRateKnob, "Rate",
+                        "Set how fast the phaser sweeps.\n"
+                        "Slow values feel cinematic; fast values feel like vibrato.");
+    setParameterTooltip(phsDepthKnob, "Depth",
+                        "Combined sweep range and wet mix.\n"
+                        "Zero bypasses the phaser; higher values sweep further\n"
+                        "and let more of the wet signal through.");
 
     initPatchButton.setTooltip(makeTooltipText("Init Patch",
                                                "Reset the panel to the default patch.\n"

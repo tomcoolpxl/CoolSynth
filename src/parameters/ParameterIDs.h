@@ -5,6 +5,7 @@
 namespace coolsynth::parameters::ids
 {
     inline constexpr int parameterVersionHint = 2;
+    inline constexpr int parameterVersionHintV3 = 3;
 
     inline constexpr char oscAWave[] = "oscAWave";
     inline constexpr char oscAOctave[] = "oscAOctave";
@@ -88,6 +89,18 @@ namespace coolsynth::parameters::ids
     inline constexpr char reverbMix[] = "reverbMix";
 
     inline constexpr char masterGainDb[] = "masterGainDb";
+
+    // --- v3 additions (Phase C–E: macros, phaser, compressor) ---
+    inline constexpr char timbre[]            = "timbre";
+    inline constexpr char excite[]            = "excite";
+
+    inline constexpr char phaserEnabled[]     = "phaserEnabled";
+    inline constexpr char phaserRateHz[]      = "phaserRateHz";
+    inline constexpr char phaserDepth[]       = "phaserDepth";
+
+    inline constexpr char compressorEnabled[] = "compressorEnabled";
+    inline constexpr char compressorAmount[]  = "compressorAmount";
+    inline constexpr char compressorMix[]     = "compressorMix";
 }
 
 namespace coolsynth::parameters
@@ -216,7 +229,21 @@ namespace coolsynth::parameters
         ids::reverbDamping,
         ids::reverbMix,
         ids::masterGainDb,
+        // --- v3 additions below; v2EraParameterCount marks the boundary for state migration ---
+        ids::timbre,
+        ids::excite,
+        ids::phaserEnabled,
+        ids::phaserRateHz,
+        ids::phaserDepth,
+        ids::compressorEnabled,
+        ids::compressorAmount,
+        ids::compressorMix,
     });
+
+    // Number of parameters that existed in v2 state files. The first N entries of
+    // allParameterIds are required to be present when loading a saved state; entries
+    // beyond this index were added in v3 and may be absent (defaults are applied).
+    inline constexpr size_t v2EraParameterCount = 68;
 
     inline constexpr auto learnableParameterIds = allParameterIds;
 }

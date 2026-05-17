@@ -193,6 +193,7 @@ namespace coolsynth::synth
 
         globalFxRack.process(outputBuffer,
                              parameters.drive,
+                             parameters.phaser,
                              parameters.chorus,
                              parameters.delay,
                              parameters.reverb);

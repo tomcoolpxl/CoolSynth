@@ -328,6 +328,9 @@ public:
             fxParameters.drive.enabled = true;
             fxParameters.drive.amount = 1.0f;
             fxParameters.drive.mix = 0.0f;
+            fxParameters.phaser.enabled = true;
+            fxParameters.phaser.rateHz = 3.0f;
+            fxParameters.phaser.depth = 0.0f;
             fxParameters.chorus.enabled = true;
             fxParameters.chorus.rateHz = 3.0f;
             fxParameters.chorus.depth = 1.0f;
@@ -372,6 +375,9 @@ public:
             parameters.drive.enabled = true;
             parameters.drive.amount = 1.0f;
             parameters.drive.mix = 1.0f;
+            parameters.phaser.enabled = true;
+            parameters.phaser.rateHz = 8.0f;
+            parameters.phaser.depth = 1.0f;
             parameters.chorus.enabled = true;
             parameters.chorus.rateHz = 5.0f;
             parameters.chorus.depth = 1.0f;
