@@ -6,10 +6,12 @@ namespace coolsynth::ui
 {
     namespace
     {
-        constexpr int kPaneGap = 4;
+        constexpr int kPaneGap = 7;
         constexpr int kNumPanes = 7;
         constexpr int kLabelHeight = 12;
-        constexpr int kVisualizerMargin = 2;
+        constexpr int kVisualizerInsetX = 8;
+        constexpr int kVisualizerInsetY = 4;
+        constexpr float kVisualizerCornerRadius = 12.0f;
 
         float renderIdealSample(float phase, coolsynth::parameters::OscillatorWaveShape shape, float pw)
         {
@@ -68,7 +70,21 @@ namespace coolsynth::ui
 
     void SignalChainVisualizer::paint(juce::Graphics& g)
     {
-        auto area = getLocalBounds().reduced(kVisualizerMargin);
+        auto fullBounds = getLocalBounds().toFloat();
+        juce::ColourGradient gradient(palette::panelRaisedAlt,
+                                      fullBounds.getX(),
+                                      fullBounds.getY(),
+                                      palette::panelRaised,
+                                      fullBounds.getX(),
+                                      fullBounds.getBottom(),
+                                      false);
+        g.setGradientFill(gradient);
+        g.fillRoundedRectangle(fullBounds, kVisualizerCornerRadius);
+
+        g.setColour(palette::panelStroke);
+        g.drawRoundedRectangle(fullBounds, kVisualizerCornerRadius, 1.0f);
+
+        auto area = getLocalBounds().reduced(kVisualizerInsetX, kVisualizerInsetY);
 
         const int paneW = (area.getWidth() - (kPaneGap * (kNumPanes - 1))) / kNumPanes;
 
@@ -133,14 +149,14 @@ namespace coolsynth::ui
 
     float SignalChainVisualizer::paneWidth() const noexcept
     {
-        const float usable = static_cast<float>(getWidth() - (kVisualizerMargin * 2)
+        const float usable = static_cast<float>(getWidth() - (kVisualizerInsetX * 2)
                                                 - (kPaneGap * (kNumPanes - 1)));
         return usable / static_cast<float>(kNumPanes);
     }
 
     float SignalChainVisualizer::paneWaveHeight() const noexcept
     {
-        const int waveH = getHeight() - (kVisualizerMargin * 2) - kLabelHeight;
+        const int waveH = getHeight() - (kVisualizerInsetY * 2) - kLabelHeight;
         return static_cast<float>(juce::jmax(1, waveH));
     }
 

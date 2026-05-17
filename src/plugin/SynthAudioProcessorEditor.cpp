@@ -982,8 +982,8 @@ void SynthAudioProcessorEditor::resized()
     auto titleArea = area.removeFromTop(48);
     auto logoArea = titleArea.removeFromLeft(248);
 
-    // 7 panes with labels below; pane width ≈ 49px each.
-    titleArea.removeFromLeft(20);
+    // 7 panes with labels below, hosted inside a framed panel.
+    titleArea.removeFromLeft(40);
     visualizer.setBounds(titleArea.removeFromLeft(372));
 
     if (titleLogoDrawable != nullptr)
