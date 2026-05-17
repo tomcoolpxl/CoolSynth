@@ -20,6 +20,60 @@
 
 namespace
 {
+    // ----- Editor layout metrics ------------------------------------------------
+    // Vertical structure of the main editor area. The window size is derived from
+    // these values so that adjusting a single row height keeps everything in sync
+    // and no row is silently clipped off-screen.
+    namespace Layout
+    {
+        inline constexpr int outerMargin             = 24;
+        inline constexpr int titleHeight             = 48;
+        inline constexpr int spacerTitleToDeck1      = 16;
+        inline constexpr int deck1Height             = 240;
+        inline constexpr int spacerBetweenDecks      = 10;   // also: piano-bar -> FX cluster
+        inline constexpr int deck2Height             = 140;
+        inline constexpr int spacerDeck2ToBottom     = 16;
+        inline constexpr int bottomRowHeight         = coolsynth::ui::PianoBarComponent::desiredHeight;
+        inline constexpr int standaloneStatusBarH    = 28;
+        inline constexpr int pluginFooterHeight      = 30;
+        inline constexpr int defaultWindowWidth      = 1550;
+
+        // Horizontal sub-widths inside the title row.
+        inline constexpr int logoAreaWidth           = 248;
+        inline constexpr int visualizerLeftGap       = 40;
+        inline constexpr int visualizerWidth         = 372;
+        inline constexpr int presetSelectorWidth     = 180;
+        inline constexpr int presetSelectorHeight    = 26;
+        inline constexpr int titleControlGap         = 8;
+        inline constexpr int titleClusterButtonH     = 24;
+        inline constexpr int titleClusterPatchW      = 112;
+        inline constexpr int titleClusterGap         = 4;
+
+        // Bottom-row FX cluster.
+        inline constexpr int bottomRowGap            = 8;
+        inline constexpr int bottomRowMacrosWidth    = 130;
+        inline constexpr int bottomRowPhaserWidth    = 175;
+        inline constexpr int bottomRowCompressorW    = 175;
+
+        inline constexpr int sumContentHeight() noexcept
+        {
+            return titleHeight + spacerTitleToDeck1
+                 + deck1Height + spacerBetweenDecks
+                 + deck2Height + spacerDeck2ToBottom
+                 + bottomRowHeight;
+        }
+
+        inline constexpr int standaloneWindowHeight() noexcept
+        {
+            return sumContentHeight() + outerMargin * 2 + standaloneStatusBarH;
+        }
+
+        inline constexpr int pluginWindowHeight() noexcept
+        {
+            return sumContentHeight() + outerMargin * 2 + pluginFooterHeight;
+        }
+    }
+
     class EditorTooltipWindow final : public juce::TooltipWindow
     {
     public:
@@ -522,11 +576,11 @@ void SynthAudioProcessorEditor::setupStandaloneMode(bool isStandalone)
             });
         addAndMakeVisible(*standaloneStatusBar);
 
-        setSize(1550, 628);
+        setSize(Layout::defaultWindowWidth, Layout::standaloneWindowHeight());
     }
     else
     {
-        setSize(1550, 600);
+        setSize(Layout::defaultWindowWidth, Layout::pluginWindowHeight());
     }
 }
 
@@ -996,22 +1050,22 @@ void SynthAudioProcessorEditor::resized()
     auto bounds = getLocalBounds();
     if (standaloneStatusBar != nullptr)
     {
-        standaloneStatusBar->setBounds(bounds.removeFromBottom(28));
+        standaloneStatusBar->setBounds(bounds.removeFromBottom(Layout::standaloneStatusBarH));
     }
     else
     {
-        auto footerArea = bounds.removeFromBottom(30).reduced(12, 0);
+        auto footerArea = bounds.removeFromBottom(Layout::pluginFooterHeight).reduced(12, 0);
         pluginStatusLabel.setBounds(footerArea.removeFromLeft(120));
         buildInfoLabel.setBounds(footerArea);
     }
 
-    auto area = bounds.reduced(24);
-    auto titleArea = area.removeFromTop(48);
-    auto logoArea = titleArea.removeFromLeft(248);
+    auto area = bounds.reduced(Layout::outerMargin);
+    auto titleArea = area.removeFromTop(Layout::titleHeight);
+    auto logoArea = titleArea.removeFromLeft(Layout::logoAreaWidth);
 
     // 7 panes with labels below, hosted inside a framed panel.
-    titleArea.removeFromLeft(40);
-    visualizer.setBounds(titleArea.removeFromLeft(372));
+    titleArea.removeFromLeft(Layout::visualizerLeftGap);
+    visualizer.setBounds(titleArea.removeFromLeft(Layout::visualizerWidth));
 
     if (titleLogoDrawable != nullptr)
     {
@@ -1029,11 +1083,11 @@ void SynthAudioProcessorEditor::resized()
 
     if (patchActionsVisible)
     {
-        const auto buttonHeight = 24;
-        const auto panicSize = 24;
-        const auto tooltipButtonWidth = 24;
-        const auto patchButtonWidth = 112;
-        const auto gap = 4;
+        const auto buttonHeight = Layout::titleClusterButtonH;
+        const auto panicSize = Layout::titleClusterButtonH;
+        const auto tooltipButtonWidth = Layout::titleClusterButtonH;
+        const auto patchButtonWidth = Layout::titleClusterPatchW;
+        const auto gap = Layout::titleClusterGap;
         const auto totalWidth = panicSize + tooltipButtonWidth + (gap * 4) + (patchButtonWidth * 3);
 
         auto clusterArea = titleArea.removeFromRight(totalWidth);
@@ -1050,23 +1104,26 @@ void SynthAudioProcessorEditor::resized()
     }
     else
     {
-        tooltipToggleButton.setBounds(titleArea.removeFromRight(24).withSizeKeepingCentre(24, 24));
-        titleArea.removeFromRight(4);
-        allNotesOffButton.setBounds(titleArea.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        const auto sz = Layout::titleClusterButtonH;
+        tooltipToggleButton.setBounds(titleArea.removeFromRight(sz).withSizeKeepingCentre(sz, sz));
+        titleArea.removeFromRight(Layout::titleClusterGap);
+        allNotesOffButton.setBounds(titleArea.removeFromRight(sz).withSizeKeepingCentre(sz, sz));
     }
 
     // Preset selector sits immediately left of the patch cluster, themed to match.
-    titleArea.removeFromRight(8);
-    presetSelector.setBounds(titleArea.removeFromRight(180).withSizeKeepingCentre(180, 26));
-    titleArea.removeFromRight(8);
+    titleArea.removeFromRight(Layout::titleControlGap);
+    presetSelector.setBounds(titleArea.removeFromRight(Layout::presetSelectorWidth)
+                                 .withSizeKeepingCentre(Layout::presetSelectorWidth,
+                                                         Layout::presetSelectorHeight));
+    titleArea.removeFromRight(Layout::titleControlGap);
 
     // MIDI learn status fills the remaining centre slack between visualizer and preset.
     midiLearnStatusLabel.setBounds(titleArea.withTrimmedTop(12));
 
-    area.removeFromTop(16);
+    area.removeFromTop(Layout::spacerTitleToDeck1);
 
-    // Deck 1: Synth Core (Height: 240)
-    auto synthRow = area.removeFromTop(240);
+    // Deck 1: Synth Core (fixed height; section widths still hard-coded below)
+    auto synthRow = area.removeFromTop(Layout::deck1Height);
 
     // Oscillators (5 cols * 55 = 275)
     auto oscArea = synthRow.removeFromLeft(275);
@@ -1179,10 +1236,10 @@ void SynthAudioProcessorEditor::resized()
     perfVelAmpKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 2));
     perfVelFltKnob.setBounds(perfRow2);
 
-    area.removeFromTop(10); // Vertical gap between decks
+    area.removeFromTop(Layout::spacerBetweenDecks);
 
-    // Deck 2: Lower Deck (Height: 140)
-    auto lowerRow = area.removeFromTop(140);
+    // Deck 2: Lower Deck
+    auto lowerRow = area.removeFromTop(Layout::deck2Height);
 
     // Arp (7 cols * 55 = 385)
     auto arpArea = lowerRow.removeFromLeft(385);
@@ -1258,79 +1315,72 @@ void SynthAudioProcessorEditor::resized()
     auto outContent = outArea.reduced(12).withTrimmedTop(24);
     outGainKnob.setBounds(outContent);
 
-    area.removeFromTop(16);
+    area.removeFromTop(Layout::spacerDeck2ToBottom);
     auto bottomRow = area.removeFromTop(pianoBar.getDesiredHeight());
     const int pianoWidth = juce::jmin(pianoBar.getDesiredWidth(), bottomRow.getWidth());
     pianoBar.setBounds(bottomRow.removeFromLeft(pianoWidth));
-    bottomRow.removeFromLeft(10); // gap between piano bar and new FX cluster
+    bottomRow.removeFromLeft(Layout::spacerBetweenDecks); // gap between piano bar and FX cluster
 
-    // New bottom-row FX cluster: Macros | Phaser | Compressor. The cluster always lays out
-    // (no degraded fallback path); if the parent ever shrinks below the natural total width
-    // the sections compress proportionally rather than vanish.
-    constexpr int macrosWidth = 130;
-    constexpr int phaserWidth = 175;
-    constexpr int compressorWidth = 175;
-    constexpr int gap = 8;
-    constexpr int totalWidth = macrosWidth + phaserWidth + compressorWidth + gap * 2;
+    // Bottom-row FX cluster: Vibe | Phaser | Compressor.
+    // We resolve the three column widths first (scaling them proportionally if the
+    // parent row is too narrow), then run a single placement pass so every control
+    // is laid out unconditionally. No path can leave a knob without bounds.
+    constexpr int naturalTotal =
+        Layout::bottomRowMacrosWidth + Layout::bottomRowPhaserWidth + Layout::bottomRowCompressorW
+        + Layout::bottomRowGap * 2;
 
-    if (bottomRow.getWidth() < totalWidth)
+    int macrosW;
+    int phaserW;
+    int compressorW;
+
+    if (bottomRow.getWidth() < naturalTotal)
     {
-        // Scale every column by the same factor so the cluster always fills the available row.
-        const float scale = static_cast<float>(bottomRow.getWidth()) / static_cast<float>(totalWidth);
-        const int macrosW = juce::roundToInt(macrosWidth * scale);
-        const int phaserW = juce::roundToInt(phaserWidth * scale);
-        const int compressorW = bottomRow.getWidth() - macrosW - phaserW - gap * 2;
+        const float scale = static_cast<float>(bottomRow.getWidth()) / static_cast<float>(naturalTotal);
+        macrosW = juce::roundToInt(Layout::bottomRowMacrosWidth * scale);
+        phaserW = juce::roundToInt(Layout::bottomRowPhaserWidth * scale);
+        compressorW = juce::jmax(0, bottomRow.getWidth() - macrosW - phaserW - Layout::bottomRowGap * 2);
+    }
+    else
+    {
+        macrosW = Layout::bottomRowMacrosWidth;
+        phaserW = Layout::bottomRowPhaserWidth;
+        compressorW = Layout::bottomRowCompressorW;
+    }
 
+    // -- Vibe (macros)
+    {
         auto macrosArea = bottomRow.removeFromLeft(macrosW);
         macrosSection.setBounds(macrosArea);
         auto macrosContent = macrosArea.reduced(12).withTrimmedTop(24);
         timbreKnob.setBounds(macrosContent.removeFromLeft(macrosContent.getWidth() / 2));
         exciteKnob.setBounds(macrosContent);
-        bottomRow.removeFromLeft(gap);
+    }
+    bottomRow.removeFromLeft(Layout::bottomRowGap);
 
+    // -- Phaser
+    {
         auto phaserArea = bottomRow.removeFromLeft(phaserW);
         phaserSection.setBounds(phaserArea);
         auto phaserHeader = phaserArea.reduced(12, 0).removeFromTop(32);
         phsOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-        phsOnToggle.setBounds(phaserHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        phsOnToggle.setBounds(phaserHeader.removeFromRight(Layout::titleClusterButtonH)
+                                  .withSizeKeepingCentre(Layout::titleClusterButtonH,
+                                                          Layout::titleClusterButtonH));
         auto phaserContent = phaserArea.reduced(12).withTrimmedTop(24);
         phsRateKnob.setBounds(phaserContent.removeFromLeft(phaserContent.getWidth() / 2));
         phsDepthKnob.setBounds(phaserContent);
-        bottomRow.removeFromLeft(gap);
-
-        auto compressorArea = bottomRow.removeFromLeft(juce::jmax(0, compressorW));
-        compressorSection.setBounds(compressorArea);
-        auto compressorHeader = compressorArea.reduced(12, 0).removeFromTop(32);
-        cmpOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-        cmpOnToggle.setBounds(compressorHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
-        auto compressorContent = compressorArea.reduced(12).withTrimmedTop(24);
-        cmpAmtKnob.setBounds(compressorContent.removeFromLeft(compressorContent.getWidth() / 2));
-        cmpMixKnob.setBounds(compressorContent);
     }
-    else
+    bottomRow.removeFromLeft(Layout::bottomRowGap);
+
+    // -- Compressor
     {
-        auto macrosArea = bottomRow.removeFromLeft(macrosWidth);
-        macrosSection.setBounds(macrosArea);
-        auto macrosContent = macrosArea.reduced(12).withTrimmedTop(24);
-        timbreKnob.setBounds(macrosContent.removeFromLeft(macrosContent.getWidth() / 2));
-        exciteKnob.setBounds(macrosContent);
-        bottomRow.removeFromLeft(gap);
-
-        auto phaserArea = bottomRow.removeFromLeft(phaserWidth);
-        phaserSection.setBounds(phaserArea);
-        auto phaserHeader = phaserArea.reduced(12, 0).removeFromTop(32);
-        phsOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-        phsOnToggle.setBounds(phaserHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
-        auto phaserContent = phaserArea.reduced(12).withTrimmedTop(24);
-        phsRateKnob.setBounds(phaserContent.removeFromLeft(phaserContent.getWidth() / 2));
-        phsDepthKnob.setBounds(phaserContent);
-        bottomRow.removeFromLeft(gap);
-
-        auto compressorArea = bottomRow.removeFromLeft(compressorWidth);
+        auto compressorArea = bottomRow.removeFromLeft(compressorW);
         compressorSection.setBounds(compressorArea);
         auto compressorHeader = compressorArea.reduced(12, 0).removeFromTop(32);
         cmpOnToggle.setLayoutMode(coolsynth::ui::LedToggleButton::LayoutMode::compactHeader);
-        cmpOnToggle.setBounds(compressorHeader.removeFromRight(24).withSizeKeepingCentre(24, 24));
+        cmpOnToggle.setBounds(compressorHeader.removeFromRight(Layout::titleClusterButtonH)
+                                  .withSizeKeepingCentre(Layout::titleClusterButtonH,
+                                                          Layout::titleClusterButtonH));
         auto compressorContent = compressorArea.reduced(12).withTrimmedTop(24);
         cmpAmtKnob.setBounds(compressorContent.removeFromLeft(compressorContent.getWidth() / 2));
         cmpMixKnob.setBounds(compressorContent);
