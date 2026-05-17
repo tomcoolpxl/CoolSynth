@@ -57,7 +57,9 @@
       "Bash(python *)",
       "Bash(awk '/kFunkyClav\\\\[\\\\] = \\\\{/{p=1} p; /\\\\};/&&p{p=0;print \"---\"}' src/presets/FactoryPresets.cpp)",
       "Bash(awk *)",
-      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests\" | Select-Object -Last 10)"
+      "PowerShell($exe = \"build\\\\CoolSynthMidiLearnTests_artefacts\\\\Debug\\\\CoolSynthMidiLearnTests.exe\"; $output = & $exe 2>&1; \"EXIT: $LASTEXITCODE\"; $output | Select-String -Pattern \"FAILED|FAIL!|tests fail|^All tests\" | Select-Object -Last 10)",
+      "WebFetch(domain:unison.audio)",
+      "WebFetch(domain:www.bleass.com)"
     ]
   }
 }
