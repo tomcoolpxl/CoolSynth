@@ -129,6 +129,7 @@ namespace coolsynth::ui
                                                int columnCount)
         : columns(columnCount > 0 ? columnCount : static_cast<int>(options.size()))
     {
+        setName(labelText);
         titleLabel.setText(labelText, juce::dontSendNotification);
         titleLabel.setJustificationType(juce::Justification::centred);
         titleLabel.setColour(juce::Label::textColourId, palette::textPrimary);

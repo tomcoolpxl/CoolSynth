@@ -58,6 +58,8 @@ private:
     void refreshEuclideanVisualizer();
     void refreshEuclideanVisibility();
     void requestClose();
+    int getPanelHeight() const noexcept;
+    juce::Rectangle<int> getPanelBounds() const noexcept;
     juce::String getCurrentParameterText(const char* parameterId) const;
 
     juce::AudioProcessorValueTreeState& apvts;

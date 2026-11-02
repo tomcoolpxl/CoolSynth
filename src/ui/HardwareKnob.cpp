@@ -101,6 +101,7 @@ namespace coolsynth::ui
         titleLabel.setFont(juce::FontOptions(15.0f));
         addAndMakeVisible(titleLabel);
 
+        knob.setName(labelText);
         addAndMakeVisible(knob);
 
         valueLabel.setText("-", juce::dontSendNotification);

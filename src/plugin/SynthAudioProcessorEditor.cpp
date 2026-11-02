@@ -41,7 +41,7 @@ namespace
         inline constexpr int spacerTitleToDeck1      = 16;
         inline constexpr int deck1Height             = 240;
         inline constexpr int spacerDeck1ToDeck2      = 10;
-        inline constexpr int deck2Height             = 140;
+        inline constexpr int deck2Height             = 240;
         inline constexpr int spacerDeck2ToBottom     = 16;
         inline constexpr int bottomRowHeight         = coolsynth::ui::PianoBarComponent::desiredHeight;
 
@@ -54,6 +54,24 @@ namespace
         inline constexpr int sectionTitleBarHeight   = 24;
         inline constexpr int sectionHeaderStripH     = 32;
         inline constexpr int sectionToggleSize       = 24;
+
+        // Arpeggiator rows. The top row hosts the 2 x 3 Rate group, which needs
+        // 20 (title) + 8 (padding) + 2 x 24 (cells) + 18 (value) px; the middle row
+        // hosts the 1 x 3 Octave group, the Advanced button and the Latch toggle;
+        // the status strip shows the advanced summary.
+        inline constexpr int arpTopRowHeight         = 94;
+        inline constexpr int arpMidRowHeight         = 76;
+        inline constexpr int arpStatusRowHeight      = 16;
+        inline constexpr int arpRowGap               = 4;
+
+        // Height of the knob row inside the deck-2 FX sections and the Output
+        // section. Centred in the taller deck so those knobs stay the same size as
+        // the deck-1 knobs instead of growing with the section.
+        inline constexpr int fxKnobRowHeight         = 96;
+
+        static_assert(deck2Height - 2 * sectionContentInset - sectionTitleBarHeight
+                          >= arpTopRowHeight + arpRowGap + arpMidRowHeight + arpStatusRowHeight,
+                      "Deck 2 is too short for the arpeggiator rows");
 
         // Title-row sub-widths.
         inline constexpr int logoAreaWidth           = 248;
@@ -1356,6 +1374,12 @@ void SynthAudioProcessorEditor::resized()
         return sectionContentArea(area);
     };
 
+    // Centres a fixed-height knob row inside a deck-2 section's content area.
+    auto fxKnobRow = [](juce::Rectangle<int> content)
+    {
+        return content.withSizeKeepingCentre(content.getWidth(), Layout::fxKnobRowHeight);
+    };
+
     // ---- Deck 1: Synth Core. Section widths come from Layout::Deck1 weights so
     //      the row always fills the available width.
     auto synthRow = area.removeFromTop(Layout::deck1Height);
@@ -1484,32 +1508,34 @@ void SynthAudioProcessorEditor::resized()
     {
         auto arpArea = deck2Cols.take(Layout::Deck2::arp);
         auto arpContent = layoutSectionWithToggle(arpArea, arpSection, arpOnToggle);
-        auto arpTopRow = arpContent.removeFromTop(46);
-        arpContent.removeFromTop(6);
-        auto arpMidRow = arpContent.removeFromTop(36);
-        arpContent.removeFromTop(4);
-        auto arpStatusRow = arpContent;
+        auto arpTopRow = arpContent.removeFromTop(Layout::arpTopRowHeight);
+        arpContent.removeFromTop(Layout::arpRowGap);
+        auto arpMidRow = arpContent.removeFromTop(Layout::arpMidRowHeight);
+        auto arpStatusRow = arpContent.removeFromBottom(Layout::arpStatusRowHeight);
 
-        WeightedRowDistributor arpTop { arpTopRow, 5.2f, 4, 0 };
-        arpRateChoice  .setBounds(arpTop.take(1.55f));
-        auto arpPatternArea = arpTop.take(2.85f);
-        arpPatternLabel .setBounds(arpPatternArea.removeFromTop(18));
-        arpPatternChoice.setBounds(arpPatternArea);
-        arpOctaveChoice.setBounds(arpTop.take(0.8f));
-        arpGateKnob    .setBounds(arpTop.take(0.0f));
+        // Top row: Rate (2 x 3 cells) | Pattern | Gate | Swing
+        WeightedRowDistributor arpTop { arpTopRow, 4.8f, 4, 0 };
+        arpRateChoice.setBounds(arpTop.take(1.6f));
+        auto arpPatternArea = arpTop.take(1.6f);
+        arpPatternLabel .setBounds(arpPatternArea.removeFromTop(20));
+        arpPatternChoice.setBounds(arpPatternArea.removeFromTop(26).reduced(6, 0));
+        arpGateKnob .setBounds(arpTop.take(0.8f));
+        arpSwingKnob.setBounds(arpTop.take(0.8f));
 
-        WeightedRowDistributor arpMid { arpMidRow, 4.2f, 3, 0 };
-        arpSwingKnob.setBounds(arpMid.take(1.0f));
-        auto arpAdvancedArea = arpMid.take(2.4f);
+        // Middle row: Octave (1 x 3 cells) | Advanced... | Latch
+        WeightedRowDistributor arpMid { arpMidRow, 4.8f, 3, 0 };
+        arpOctaveChoice.setBounds(arpMid.take(1.6f));
+        auto arpAdvancedArea = arpMid.take(2.4f).reduced(6, 0);
         arpAdvancedButton.setBounds(arpAdvancedArea.withSizeKeepingCentre(arpAdvancedArea.getWidth(), 24));
         arpLatchToggle.setBounds(arpMid.take(0.8f).withWidth(52));
-        arpAdvancedSummaryLabel.setBounds(arpStatusRow.reduced(4, 0).withTrimmedTop(2));
+
+        arpAdvancedSummaryLabel.setBounds(arpStatusRow.reduced(4, 0));
     }
 
     // Distortion (formerly Drive)
     {
         auto drvArea = deck2Cols.take(Layout::Deck2::drv);
-        auto drvContent = layoutSectionWithToggle(drvArea, drvSection, drvOnToggle);
+        auto drvContent = fxKnobRow(layoutSectionWithToggle(drvArea, drvSection, drvOnToggle));
         drvAmtKnob.setBounds(drvContent.removeFromLeft(drvContent.getWidth() / 2));
         drvMixKnob.setBounds(drvContent);
     }
@@ -1517,7 +1543,7 @@ void SynthAudioProcessorEditor::resized()
     // Chorus
     {
         auto choArea = deck2Cols.take(Layout::Deck2::cho);
-        auto choContent = layoutSectionWithToggle(choArea, choSection, choOnToggle);
+        auto choContent = fxKnobRow(layoutSectionWithToggle(choArea, choSection, choOnToggle));
         choRateKnob.setBounds(choContent.removeFromLeft(choContent.getWidth() / 3));
         choDepKnob .setBounds(choContent.removeFromLeft(choContent.getWidth() / 2));
         choMixKnob .setBounds(choContent);
@@ -1526,7 +1552,7 @@ void SynthAudioProcessorEditor::resized()
     // Delay
     {
         auto dlyArea = deck2Cols.take(Layout::Deck2::dly);
-        auto dlyContent = layoutSectionWithToggle(dlyArea, dlySection, dlyOnToggle);
+        auto dlyContent = fxKnobRow(layoutSectionWithToggle(dlyArea, dlySection, dlyOnToggle));
         dlyTimeKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 3));
         dlyFdbkKnob.setBounds(dlyContent.removeFromLeft(dlyContent.getWidth() / 2));
         dlyMixKnob .setBounds(dlyContent);
@@ -1535,7 +1561,7 @@ void SynthAudioProcessorEditor::resized()
     // Reverb
     {
         auto revArea = deck2Cols.take(Layout::Deck2::rev);
-        auto revContent = layoutSectionWithToggle(revArea, revSection, revOnToggle);
+        auto revContent = fxKnobRow(layoutSectionWithToggle(revArea, revSection, revOnToggle));
         revSizeKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 3));
         revDampKnob.setBounds(revContent.removeFromLeft(revContent.getWidth() / 2));
         revMixKnob .setBounds(revContent);
@@ -1546,7 +1572,7 @@ void SynthAudioProcessorEditor::resized()
         auto outArea = deck2Cols.take(Layout::Deck2::out);
         outSection.setBounds(outArea);
         auto outContent = sectionContentArea(outArea);
-        outGainKnob.setBounds(outContent);
+        outGainKnob.setBounds(fxKnobRow(outContent));
     }
 
     area.removeFromTop(Layout::spacerDeck2ToBottom);
@@ -1699,6 +1725,14 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     revDampKnob.setValueText(getCurrentParameterText(parameterRefs.revDamp));
     revMixKnob.setValueText(getCurrentParameterText(parameterRefs.revMix));
     outGainKnob.setValueText(getCurrentParameterText(parameterRefs.outGain));
+    timbreKnob.setValueText(getCurrentParameterText(parameterRefs.timbre));
+    exciteKnob.setValueText(getCurrentParameterText(parameterRefs.excite));
+    phsOnToggle.setValueText(getCurrentParameterText(parameterRefs.phsOn));
+    phsRateKnob.setValueText(getCurrentParameterText(parameterRefs.phsRate));
+    phsDepthKnob.setValueText(getCurrentParameterText(parameterRefs.phsDepth));
+    cmpOnToggle.setValueText(getCurrentParameterText(parameterRefs.cmpOn));
+    cmpAmtKnob.setValueText(getCurrentParameterText(parameterRefs.cmpAmt));
+    cmpMixKnob.setValueText(getCurrentParameterText(parameterRefs.cmpMix));
 }
 
 bool SynthAudioProcessorEditor::haveParameterValuesChanged()

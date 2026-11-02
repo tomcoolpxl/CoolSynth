@@ -15,8 +15,6 @@ namespace
     {
         inline constexpr int outerMargin = 64;
         inline constexpr int panelMaxWidth = 860;
-        inline constexpr int panelStandaloneHeight = 430;
-        inline constexpr int panelPluginHeight = 360;
         inline constexpr int panelInset = 18;
         inline constexpr int panelHeaderHeight = 36;
         inline constexpr int sectionGap = 10;
@@ -24,6 +22,22 @@ namespace
         inline constexpr int sectionTitleHeight = 24;
         inline constexpr int closeButtonWidth = 96;
         inline constexpr int closeButtonHeight = 24;
+
+        // Section heights are derived from what the controls need: a HardwareKnob
+        // is 20 (title) + 56 (knob) + 20 (value) px, and a one-row
+        // SegmentedChoiceGroup fits comfortably in the same height.
+        inline constexpr int knobRowHeight = 96;
+        inline constexpr int knobWidth = 104;
+        inline constexpr int knobGap = 10;
+        inline constexpr int rhythmChoiceWidth = 260;
+        inline constexpr int euclideanGap = 8;
+        inline constexpr int euclideanVisualizerHeight = 44;
+        inline constexpr int sectionChromeHeight = sectionContentInset * 2 + sectionTitleHeight;
+        inline constexpr int rhythmSectionStraightHeight = sectionChromeHeight + knobRowHeight;
+        inline constexpr int rhythmSectionEuclideanHeight = rhythmSectionStraightHeight
+                                                          + euclideanGap + euclideanVisualizerHeight;
+        inline constexpr int modifiersSectionHeight = sectionChromeHeight + knobRowHeight;
+        inline constexpr int tempoSectionHeight = sectionChromeHeight + knobRowHeight;
     }
 
     juce::Rectangle<int> sectionContentBounds(const coolsynth::ui::SynthSection& section) noexcept
@@ -128,11 +142,7 @@ void ArpAdvancedOverlay::paint(juce::Graphics& g)
     g.setColour(coolsynth::ui::palette::panelBlack.withAlpha(0.72f));
     g.fillRect(getLocalBounds());
 
-    auto panelBounds = getLocalBounds().reduced(Layout::outerMargin).toFloat();
-    panelBounds.setWidth(static_cast<float>(juce::jmin(Layout::panelMaxWidth, getWidth() - (Layout::outerMargin * 2))));
-    panelBounds.setHeight(static_cast<float>(isStandalone ? Layout::panelStandaloneHeight
-                                                          : Layout::panelPluginHeight));
-    panelBounds.setCentre(getLocalBounds().toFloat().getCentre());
+    auto panelBounds = getPanelBounds().toFloat();
 
     juce::ColourGradient gradient(coolsynth::ui::palette::panelRaisedAlt,
                                   panelBounds.getX(),
@@ -154,15 +164,34 @@ void ArpAdvancedOverlay::paint(juce::Graphics& g)
     g.drawText("ARP - ADVANCED", titleBounds.removeFromLeft(280), juce::Justification::centredLeft);
 }
 
-void ArpAdvancedOverlay::resized()
+int ArpAdvancedOverlay::getPanelHeight() const noexcept
+{
+    int height = Layout::panelInset * 2
+               + Layout::panelHeaderHeight
+               + Layout::sectionGap
+               + (euclideanControlsVisible ? Layout::rhythmSectionEuclideanHeight
+                                           : Layout::rhythmSectionStraightHeight)
+               + Layout::sectionGap
+               + Layout::modifiersSectionHeight;
+
+    if (isStandalone)
+        height += Layout::sectionGap + Layout::tempoSectionHeight;
+
+    return height;
+}
+
+juce::Rectangle<int> ArpAdvancedOverlay::getPanelBounds() const noexcept
 {
     auto panelBounds = getLocalBounds().reduced(Layout::outerMargin);
     panelBounds.setWidth(juce::jmin(Layout::panelMaxWidth, getWidth() - (Layout::outerMargin * 2)));
-    panelBounds.setHeight(isStandalone ? Layout::panelStandaloneHeight
-                                       : Layout::panelPluginHeight);
+    panelBounds.setHeight(getPanelHeight());
     panelBounds.setCentre(getLocalBounds().getCentre());
+    return panelBounds;
+}
 
-    auto content = panelBounds.reduced(Layout::panelInset);
+void ArpAdvancedOverlay::resized()
+{
+    auto content = getPanelBounds().reduced(Layout::panelInset);
     auto header = content.removeFromTop(Layout::panelHeaderHeight);
     closeButton.setBounds(header.removeFromRight(Layout::closeButtonWidth)
                                .withSizeKeepingCentre(Layout::closeButtonWidth,
@@ -170,34 +199,36 @@ void ArpAdvancedOverlay::resized()
 
     content.removeFromTop(Layout::sectionGap);
 
-    const int rhythmHeight = euclideanControlsVisible ? 148 : 76;
-    rhythmSection.setBounds(content.removeFromTop(rhythmHeight));
+    rhythmSection.setBounds(content.removeFromTop(euclideanControlsVisible ? Layout::rhythmSectionEuclideanHeight
+                                                                           : Layout::rhythmSectionStraightHeight));
     content.removeFromTop(Layout::sectionGap);
 
-    modifiersSection.setBounds(content.removeFromTop(104));
+    modifiersSection.setBounds(content.removeFromTop(Layout::modifiersSectionHeight));
 
     if (isStandalone)
     {
         content.removeFromTop(Layout::sectionGap);
-        tempoSection.setBounds(content.removeFromTop(78));
+        tempoSection.setBounds(content.removeFromTop(Layout::tempoSectionHeight));
         auto tempoContent = sectionContentBounds(tempoSection);
-        tempoKnob.setBounds(tempoContent.removeFromLeft(104));
+        tempoKnob.setBounds(tempoContent.removeFromLeft(Layout::knobWidth));
     }
 
+    // Rhythm row: the Straight/Euclidean selector on the left, the three Euclidean
+    // knobs beside it when that mode is active, and the cycle preview underneath.
     auto rhythmContent = sectionContentBounds(rhythmSection);
-    rhythmChoice.setBounds(rhythmContent.removeFromTop(40).removeFromLeft(260));
+    auto rhythmRow = rhythmContent.removeFromTop(Layout::knobRowHeight);
+    rhythmChoice.setBounds(rhythmRow.removeFromLeft(Layout::rhythmChoiceWidth));
 
     if (euclideanControlsVisible)
     {
-        rhythmContent.removeFromTop(8);
-        auto euclideanControlsRow = rhythmContent.removeFromTop(60);
-        euclideanPulsesKnob.setBounds(euclideanControlsRow.removeFromLeft(104));
-        euclideanControlsRow.removeFromLeft(10);
-        euclideanStepsKnob.setBounds(euclideanControlsRow.removeFromLeft(104));
-        euclideanControlsRow.removeFromLeft(10);
-        euclideanRotationKnob.setBounds(euclideanControlsRow.removeFromLeft(104));
-        rhythmContent.removeFromTop(8);
-        euclideanVisualizer.setBounds(rhythmContent);
+        rhythmRow.removeFromLeft(Layout::knobGap);
+        euclideanPulsesKnob.setBounds(rhythmRow.removeFromLeft(Layout::knobWidth));
+        rhythmRow.removeFromLeft(Layout::knobGap);
+        euclideanStepsKnob.setBounds(rhythmRow.removeFromLeft(Layout::knobWidth));
+        rhythmRow.removeFromLeft(Layout::knobGap);
+        euclideanRotationKnob.setBounds(rhythmRow.removeFromLeft(Layout::knobWidth));
+        rhythmContent.removeFromTop(Layout::euclideanGap);
+        euclideanVisualizer.setBounds(rhythmContent.removeFromTop(Layout::euclideanVisualizerHeight));
     }
 
     auto modifiersContent = sectionContentBounds(modifiersSection);

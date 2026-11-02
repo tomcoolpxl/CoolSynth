@@ -43,6 +43,7 @@ namespace coolsynth::ui
         titleLabel.setFont(juce::FontOptions(15.0f));
         addAndMakeVisible(titleLabel);
 
+        stateButton.setName(labelText);
         addAndMakeVisible(stateButton);
 
         valueLabel.setText("-", juce::dontSendNotification);

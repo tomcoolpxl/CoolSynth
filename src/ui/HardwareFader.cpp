@@ -108,6 +108,7 @@ namespace coolsynth::ui
         titleLabel.setFont(juce::FontOptions(15.0f));
         addAndMakeVisible(titleLabel);
 
+        fader.setName(labelText);
         addAndMakeVisible(fader);
 
         valueLabel.setText("-", juce::dontSendNotification);

@@ -323,7 +323,7 @@ private:
             { "2", 2 },
             { "3", 3 },
         },
-        1
+        3
     };
     coolsynth::ui::HardwareKnob arpGateKnob { "Gate" };
     coolsynth::ui::HardwareKnob arpSwingKnob { "Swing" };

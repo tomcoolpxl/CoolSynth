@@ -642,6 +642,63 @@ public:
             expect(summary.contains("Euc 5/8"));
             expect(summary.contains("Chance"));
         }
+
+        beginTest("editor_gives_every_visible_control_a_usable_size");
+        {
+            // A row that is shorter than a widget's label bands leaves its knob,
+            // toggle or segment buttons with a zero or near-zero rectangle while
+            // isVisible() still reports true. Walk every visible slider, button and
+            // combo box in the main panel and in the Advanced overlay (Euclidean
+            // mode, so the Euclidean knobs are included) and require a real size.
+            constexpr int minimumControlSize = 16;
+
+            struct ControlSizeChecker
+            {
+                juce::UnitTest& test;
+                juce::String context;
+
+                void walk(const juce::Component& component) const
+                {
+                    for (auto* child : component.getChildren())
+                    {
+                        if (child == nullptr || ! child->isVisible())
+                            continue;
+
+                        const bool isControl = dynamic_cast<juce::Slider*>(child) != nullptr
+                                            || dynamic_cast<juce::Button*>(child) != nullptr
+                                            || dynamic_cast<juce::ComboBox*>(child) != nullptr;
+
+                        if (isControl)
+                        {
+                            auto name = child->getName();
+                            if (auto* parent = child->getParentComponent();
+                                parent != nullptr && parent->getName().isNotEmpty())
+                                name = parent->getName() + " / " + name;
+
+                            test.expect(child->getWidth() >= minimumControlSize
+                                            && child->getHeight() >= minimumControlSize,
+                                        context + ": " + name + " is "
+                                            + juce::String(child->getWidth()) + "x"
+                                            + juce::String(child->getHeight()) + " px");
+                        }
+
+                        walk(*child);
+                    }
+                }
+            };
+
+            SynthAudioProcessor processor;
+            SynthAudioProcessorEditor editor(processor);
+
+            ControlSizeChecker { *this, "main panel" }.walk(editor);
+
+            editor.setArpAdvancedOverlayVisibleForTesting(true);
+            if (auto* rhythm = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::arpRhythm))
+                rhythm->setValueNotifyingHost(rhythm->convertTo0to1(1.0f));
+            editor.refreshArpUiForTesting();
+
+            ControlSizeChecker { *this, "advanced overlay" }.walk(editor);
+        }
     }
 };
 
