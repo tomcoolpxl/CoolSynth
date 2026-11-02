@@ -28,6 +28,13 @@ namespace coolsynth::synth
                                                               const ReverbParametersV2& reverb) noexcept;
 
     private:
+        void processChunk(juce::AudioBuffer<float>& buffer,
+                          const DriveParametersV2& drive,
+                          const PhaserParametersV2& phaser,
+                          const ChorusParametersV2& chorus,
+                          const DelayParametersV2& delay,
+                          const ReverbParametersV2& reverb,
+                          const CompressorParametersV2& compressor) noexcept;
         void processDrive(juce::AudioBuffer<float>& buffer, const DriveParametersV2& parameters) noexcept;
         void processChorus(juce::AudioBuffer<float>& buffer, const ChorusParametersV2& parameters) noexcept;
         void processDelay(juce::AudioBuffer<float>& buffer, const DelayParametersV2& parameters) noexcept;

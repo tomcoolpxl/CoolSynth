@@ -105,8 +105,6 @@ namespace coolsynth::midi
         bool isFactoryBindingShadowedByLearnedTarget(const ControllerBinding& binding) const noexcept;
         bool isFactoryBindingShadowedByLearnedSignature(const ControllerMessageSignature& signature) const noexcept;
 
-        static float mapAbsoluteControllerValue(uint8_t midiValue) noexcept;
-        static float mapThreeStepValue(uint8_t midiValue) noexcept;
         static bool shouldUseSoftTakeover(const juce::RangedAudioParameter& parameter,
                                           ControllerValueMode valueMode) noexcept;
 

@@ -419,6 +419,50 @@ public:
             }
         }
 
+        beginTest("v2_fx_rack_processes_blocks_larger_than_the_prepared_size");
+        {
+            // prepareToPlay's block size is only a hint; a host may deliver a larger block.
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            coolsynth::synth::BlockRenderParametersV2 parameters;
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
+            parameters.ampEnvelope = makeStressEnvelope();
+            parameters.filterEnvelope = makeStressEnvelope();
+            parameters.filter.cutoffHz = 4000.0f;
+            parameters.filter.resonanceNormalized = 0.2f;
+            parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            parameters.drive.enabled = true;
+            parameters.drive.amount = 0.5f;
+            parameters.drive.mix = 1.0f;
+            parameters.phaser.enabled = true;
+            parameters.phaser.depth = 1.0f;
+            parameters.chorus.enabled = true;
+            parameters.chorus.depth = 1.0f;
+            parameters.chorus.mix = 1.0f;
+            parameters.delay.enabled = true;
+            parameters.delay.mix = 0.5f;
+            parameters.reverb.enabled = true;
+            parameters.reverb.mix = 1.0f;
+            parameters.compressor.enabled = true;
+            parameters.compressor.mix = 1.0f;
+            parameters.masterGainLinear = 0.5f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+
+            constexpr int oversizedBlock = 2048;
+            juce::AudioBuffer<float> buffer(2, oversizedBlock);
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+
+            expectBufferFiniteAndBounded(*this, buffer, 100.0f);
+            expect(buffer.getMagnitude(0, 0, oversizedBlock) > 0.0f, "oversized block must still render audio");
+        }
+
         beginTest("disabling_time_based_v2_fx_clears_existing_tails");
         {
             coolsynth::synth::SynthEngineV2 engine;
@@ -3040,6 +3084,123 @@ public:
             for (const auto& s : states)
                 if (s.active && s.keyDown) ++keyDownCount;
             expectEquals(engine.getArpRingingNoteCountForTesting(), 0);
+            expectEquals(keyDownCount, 0);
+        }
+
+        beginTest("enabling_arp_while_a_key_is_held_releases_the_voice_and_seeds_the_arp");
+        {
+            // Regression: a voice started with the arp off stayed keyDown forever once the
+            // arp was switched on, because its note-off was then routed to the arp only.
+            constexpr int stepLength = 6000; // 48k / 120bpm / 8 = 1/16th
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, stepLength, 2);
+
+            const auto countKeyDownVoices = [&engine]
+            {
+                std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
+                engine.copyVoiceStatesForTesting(states);
+                int keyDown = 0;
+                for (const auto& s : states)
+                    if (s.active && s.keyDown) ++keyDown;
+                return keyDown;
+            };
+
+            auto parameters = makeBasicParameters();
+            parameters.arp.enabled = false;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f, false }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, stepLength);
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+            expectEquals(engine.getActiveVoiceCountForTesting(), 1);
+            expectEquals(countKeyDownVoices(), 1);
+
+            // Switch the arp on while the key is still held.
+            parameters.arp.enabled = true;
+            parameters.arp.internalTempoBpm = 120.0f;
+            parameters.arp.rate = coolsynth::parameters::ArpRateChoice::sixteenth;
+            parameters.arp.pattern = coolsynth::parameters::ArpPatternChoice::up;
+            parameters.arp.octaveRange = 1;
+            parameters.arp.gateLength = 0.5f;
+            parameters.arp.latch = false;
+            buffer.clear();
+            engine.render(buffer, {}, parameters);
+
+            // The held key now drives the arp and no allocator voice is left keyDown.
+            expectEquals(engine.getArpHeldNoteCountForTesting(), 1);
+            expectEquals(countKeyDownVoices(), 0);
+
+            // Releasing the key must empty the arp's held set and leave nothing keyDown.
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOff {{
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f, false }
+            }};
+            buffer.clear();
+            engine.render(buffer, noteOff, parameters);
+            buffer.clear();
+            engine.render(buffer, {}, parameters);
+
+            expectEquals(engine.getArpHeldNoteCountForTesting(), 0);
+            expectEquals(countKeyDownVoices(), 0);
+        }
+
+        beginTest("disabling_arp_with_keys_held_forgets_them_so_re_enable_plays_no_ghost_notes");
+        {
+            constexpr int stepLength = 6000;
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, stepLength, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.arp.enabled = true;
+            parameters.arp.internalTempoBpm = 120.0f;
+            parameters.arp.rate = coolsynth::parameters::ArpRateChoice::sixteenth;
+            parameters.arp.pattern = coolsynth::parameters::ArpPatternChoice::up;
+            parameters.arp.octaveRange = 1;
+            parameters.arp.gateLength = 0.5f;
+            parameters.arp.latch = false;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 3> chord {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f, false },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f, false },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 67, 1.0f, false }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, stepLength);
+            buffer.clear();
+            engine.render(buffer, chord, parameters);
+            expectEquals(engine.getArpHeldNoteCountForTesting(), 3);
+
+            // Switch the arp off while the chord is still held: it must forget the keys.
+            parameters.arp.enabled = false;
+            buffer.clear();
+            engine.render(buffer, {}, parameters);
+            expectEquals(engine.getArpHeldNoteCountForTesting(), 0);
+
+            // Release the keys with the arp off, then switch it back on with nothing held.
+            std::array<coolsynth::synth::EngineMidiEvent, 3> release {{
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f, false },
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 64, 0.0f, false },
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 67, 0.0f, false }
+            }};
+            buffer.clear();
+            engine.render(buffer, release, parameters);
+
+            parameters.arp.enabled = true;
+            for (int block = 0; block < 4; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer, {}, parameters);
+            }
+
+            int keyDownCount = 0;
+            std::array<coolsynth::synth::VoiceDebugState, coolsynth::synth::defaultVoiceCount> states {};
+            engine.copyVoiceStatesForTesting(states);
+            for (const auto& s : states)
+                if (s.active && s.keyDown) ++keyDownCount;
+
+            expectEquals(engine.getArpHeldNoteCountForTesting(), 0);
             expectEquals(keyDownCount, 0);
         }
 

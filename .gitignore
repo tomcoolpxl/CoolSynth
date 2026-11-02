@@ -67,3 +67,8 @@ vcpkg_installed/
 # test output & cache
 Testing/
 .cache/
+
+# Local tool state and generated intermediates
+test_output.txt
+build_aux/
+.claude/settings.local.json

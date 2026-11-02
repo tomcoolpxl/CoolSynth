@@ -1,5 +1,8 @@
 #pragma once
 
+#include <atomic>
+#include <vector>
+
 #include <juce_gui_basics/juce_gui_basics.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -155,6 +158,7 @@ private:
     void timerCallback() override;
     void changeListenerCallback(juce::ChangeBroadcaster* source) override;
     void refreshValueDisplays();
+    bool haveParameterValuesChanged();
     juce::String getCurrentParameterText(juce::RangedAudioParameter* parameter) const;
     juce::RangedAudioParameter* findParameterForId(juce::StringRef parameterId) const noexcept;
     void registerParameterSurface(juce::Component& surface, juce::String parameterId);
@@ -442,6 +446,11 @@ private:
 
     int badgeVisibilityCounter = 0;
     bool lastShowCcLabelsSetting = true;
+
+    // Raw APVTS values snapshotted each timer tick so the value labels are only
+    // re-formatted when a parameter actually moved.
+    std::vector<std::atomic<float>*> rawParameterValues;
+    std::vector<float> lastRawParameterValues;
 
     void setupParameterRefs();
     void setupVisualsAndLabels(bool isStandalone);

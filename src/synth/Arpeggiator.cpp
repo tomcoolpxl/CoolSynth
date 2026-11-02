@@ -49,15 +49,6 @@ namespace coolsynth::synth
             return info.hostHasTempo && info.hostHasPpq && info.hostBpm > 0.0;
         }
 
-        int positiveModulo(int value, int modulus) noexcept
-        {
-            if (modulus <= 0)
-                return 0;
-
-            const int remainder = value % modulus;
-            return remainder < 0 ? (remainder + modulus) : remainder;
-        }
-
         void insertSortedEvent(EngineMidiEvent* outEvents,
                                int& outEventCount,
                                const EngineMidiEvent& event,
@@ -99,6 +90,7 @@ namespace coolsynth::synth
         patternStepCounter = 0;
         emittedStepCounter = 0;
         randomWalkIndex = 0;
+        melodicStepIndex = 0;
         euclideanPosition = 0;
         updateEuclideanCycle();
         previousHostIsPlaying = false;
@@ -129,7 +121,10 @@ namespace coolsynth::synth
         currentParameters = parameters;
 
         if (previousPattern != currentParameters.pattern)
+        {
             resetPatternWalkState();
+            melodicStepIndex = 0;
+        }
 
         if (previousRhythm != currentParameters.rhythm
             || previousEuclideanPulses != currentParameters.euclideanPulses
@@ -191,12 +186,16 @@ namespace coolsynth::synth
         if (enabledTransitionedOff)
         {
             emitNoteOffsForAllRinging(outEvents, outEventCount, 0, maxEvents);
+            // Physical note-offs stop reaching the arp while it is disabled, so forget
+            // the held keys now; otherwise they would replay as ghost notes on re-enable.
+            clearHeld();
             samplesUntilNextStep = 0.0f;
             internalClockArmed = false;
         }
         else if (enabledTransitionedOn)
         {
             resetPatternWalkState();
+            melodicStepIndex = 0;
             euclideanPosition = 0;
         }
 
@@ -317,7 +316,8 @@ namespace coolsynth::synth
                 if (workingSetSize > 0)
                 {
                     const int octaveRange = juce::jlimit(1, 3, currentParameters.octaveRange);
-                    const int octaveShift = patternStepCounter % octaveRange;
+                    const int octaveShift = melodicStepIndex % octaveRange;
+                    ++melodicStepIndex;
                     ++patternStepCounter;
 
                     std::array<int, maxArpHeldNotes> chordNotes {};
@@ -451,6 +451,10 @@ namespace coolsynth::synth
                 heldNotes[static_cast<size_t>(i)] = heldNotes[static_cast<size_t>(i + 1)];
             --heldNoteCount;
         }
+
+        // A chord played from an empty held set restarts the melodic walk.
+        if (heldNoteCount == 0)
+            melodicStepIndex = 0;
 
         heldNotes[static_cast<size_t>(heldNoteCount)] =
             HeldEntry { noteNumber, velocity, ++nextHeldOrder };
@@ -607,13 +611,6 @@ namespace coolsynth::synth
         return 4;
     }
 
-    float Arpeggiator::computeInternalStepLengthSamples(double sampleRate) const noexcept
-    {
-        const auto bpm = juce::jlimit(20.0, 400.0, static_cast<double>(currentParameters.internalTempoBpm));
-        const auto stepsPerBeat = juce::jmax(1, computeStepsPerBeat());
-        return static_cast<float>(sampleRate * 60.0 / bpm / static_cast<double>(stepsPerBeat));
-    }
-
     int Arpeggiator::buildOrderedWorkingSet(std::array<HeldEntry, maxArpHeldNotes>& ordered) const noexcept
     {
         const HeldEntry* workingSet = nullptr;
@@ -670,7 +667,7 @@ namespace coolsynth::synth
         euclideanCycle = makeEuclideanCycle(currentParameters.euclideanPulses,
                                             euclideanStepCount,
                                             currentParameters.euclideanRotation);
-        euclideanPosition = positiveModulo(euclideanPosition, euclideanStepCount);
+        euclideanPosition = detail::positiveModulo(euclideanPosition, euclideanStepCount);
     }
 
     bool Arpeggiator::shouldEmitEuclideanStep(int hostStepIndex) noexcept
@@ -685,7 +682,7 @@ namespace coolsynth::synth
         if (useHostSync(currentTransport))
         {
             const int slotsPerBar = juce::jmax(1, computeStepsPerBeat() * stepsPerBar);
-            const int slotInBar = positiveModulo(hostStepIndex, slotsPerBar);
+            const int slotInBar = detail::positiveModulo(hostStepIndex, slotsPerBar);
             cycleIndex = slotInBar % euclideanStepCount;
         }
         else
@@ -827,14 +824,14 @@ namespace coolsynth::synth
         {
             case coolsynth::parameters::ArpPatternChoice::up:
             {
-                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int stepIndex = melodicStepIndex % totalSweepLength;
                 octaveShift = stepIndex / notesPerOctaveSweep;
                 linearIndex = stepIndex % notesPerOctaveSweep;
                 break;
             }
             case coolsynth::parameters::ArpPatternChoice::down:
             {
-                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int stepIndex = melodicStepIndex % totalSweepLength;
                 octaveShift = (octaveRange - 1) - (stepIndex / notesPerOctaveSweep);
                 const int inOctaveIndex = stepIndex % notesPerOctaveSweep;
                 linearIndex = (notesPerOctaveSweep - 1) - inOctaveIndex;
@@ -847,7 +844,7 @@ namespace coolsynth::synth
                 const int reflectedLength = totalSweepLength > 1
                     ? (2 * totalSweepLength - 2)
                     : 1;
-                const int reflectIndex = patternStepCounter % reflectedLength;
+                const int reflectIndex = melodicStepIndex % reflectedLength;
                 int sweepIndex = reflectIndex;
                 if (reflectIndex >= totalSweepLength)
                     sweepIndex = (2 * totalSweepLength - 2) - reflectIndex;
@@ -858,14 +855,14 @@ namespace coolsynth::synth
             }
             case coolsynth::parameters::ArpPatternChoice::asPlayed:
             {
-                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int stepIndex = melodicStepIndex % totalSweepLength;
                 octaveShift = stepIndex / notesPerOctaveSweep;
                 linearIndex = stepIndex % notesPerOctaveSweep;
                 break;
             }
             case coolsynth::parameters::ArpPatternChoice::converge:
             {
-                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int stepIndex = melodicStepIndex % totalSweepLength;
                 const int sweepIndex = convergeIndex(stepIndex, totalSweepLength);
                 octaveShift = sweepIndex / notesPerOctaveSweep;
                 linearIndex = sweepIndex % notesPerOctaveSweep;
@@ -873,7 +870,7 @@ namespace coolsynth::synth
             }
             case coolsynth::parameters::ArpPatternChoice::diverge:
             {
-                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int stepIndex = melodicStepIndex % totalSweepLength;
                 const int sweepIndex = divergeIndex(stepIndex, totalSweepLength);
                 octaveShift = sweepIndex / notesPerOctaveSweep;
                 linearIndex = sweepIndex % notesPerOctaveSweep;
@@ -881,7 +878,7 @@ namespace coolsynth::synth
             }
             case coolsynth::parameters::ArpPatternChoice::inside:
             {
-                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int stepIndex = melodicStepIndex % totalSweepLength;
                 octaveShift = stepIndex / notesPerOctaveSweep;
                 linearIndex = convergeIndex(stepIndex % notesPerOctaveSweep,
                                             notesPerOctaveSweep);
@@ -889,7 +886,7 @@ namespace coolsynth::synth
             }
             case coolsynth::parameters::ArpPatternChoice::outside:
             {
-                const int stepIndex = patternStepCounter % totalSweepLength;
+                const int stepIndex = melodicStepIndex % totalSweepLength;
                 octaveShift = stepIndex / notesPerOctaveSweep;
                 linearIndex = (notesPerOctaveSweep - 1)
                     - convergeIndex(stepIndex % notesPerOctaveSweep,
@@ -934,6 +931,7 @@ namespace coolsynth::synth
                 return -1;
         }
 
+        ++melodicStepIndex;
         ++patternStepCounter;
 
         const auto& entry = ordered[static_cast<size_t>(juce::jlimit(0, notesPerOctaveSweep - 1, linearIndex))];

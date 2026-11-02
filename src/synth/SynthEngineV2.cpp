@@ -87,6 +87,29 @@ namespace coolsynth::synth
         arpeggiator.setParameters(parameters.arp);
         arpeggiator.setTransportInfo(transport);
 
+        if (arpEnabled && ! previousArpEnabled)
+        {
+            // Keys that were already down when the arp was switched on now belong to
+            // the arp: seed its held set from the allocator's held list and release
+            // the voices those keys started. From here on their note-offs are routed
+            // to the arp only, so a voice left keyDown would never be released.
+            for (int i = 0; i < heldNoteCount; ++i)
+                arpeggiator.onNoteOn(heldNotes[static_cast<size_t>(i)].noteNumber,
+                                     heldNotes[static_cast<size_t>(i)].velocity);
+            clearHeldNotes();
+
+            for (auto& slot : voices)
+            {
+                if (! slot.voice.isActive() || ! slot.keyDown)
+                    continue;
+
+                slot.keyDown = false;
+                slot.sustained = false;
+                slot.voice.stopNote(0.0f, true);
+            }
+        }
+        previousArpEnabled = arpEnabled;
+
         // When arp is enabled, absorb note-ons into the arp's held set BEFORE
         // generating step events, and defer note-offs (and panic-style controls)
         // until AFTER generation. Without this, a fast key tap whose note-on
@@ -218,6 +241,7 @@ namespace coolsynth::synth
         globalLfoPhase = 0.0f;
         lastPlayedNote = -1;
         sustainPedalDown = false;
+        previousArpEnabled = false;
     }
 
     int SynthEngineV2::getActiveVoiceCountForTesting() const noexcept
@@ -403,7 +427,6 @@ namespace coolsynth::synth
             return;
         }
 
-        bool foundAny = false;
         for (auto& slot : voices)
         {
             if (slot.keyDown && slot.noteNumber == noteNumber)
@@ -414,8 +437,6 @@ namespace coolsynth::synth
                     slot.sustained = true;
                 else
                     slot.voice.stopNote(0.0f, true);
-
-                foundAny = true;
             }
         }
     }

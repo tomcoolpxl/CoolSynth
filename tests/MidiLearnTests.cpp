@@ -1,4 +1,5 @@
 #include <array>
+#include <cmath>
 #include <juce_core/juce_core.h>
 #include "midi/MidiLearn.h"
 #include "midi/ControllerProfile.h"
@@ -6,6 +7,7 @@
 #include "plugin/SynthAudioProcessor.h"
 #include "plugin/SynthAudioProcessorEditor.h"
 #include "standalone/SettingsStore.h"
+#include "synth/GlobalDelay.h"
 #include "parameters/ParameterIDs.h"
 
 #include <iostream>
@@ -516,7 +518,15 @@ public:
 
             if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
                 feedback->setValueNotifyingHost(1.0f);
-            expectTailNear(48.0);
+            {
+                // Default delay time at the 0.85 feedback ceiling: repeats until -60 dB plus the
+                // one-shot pad. Read the raw time back because the log range does not store
+                // exactly 250 ms.
+                const double delaySeconds = static_cast<double>(
+                    state.getRawParameterValue(coolsynth::parameters::ids::delayTimeMs)->load()) / 1000.0;
+                const double feedback = static_cast<double>(coolsynth::synth::GlobalDelay::maxFeedback);
+                expectTailNear(delaySeconds * (std::log(0.001) / std::log(feedback)) + 0.25);
+            }
 
             if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
                 enabled->setValueNotifyingHost(0.0f);

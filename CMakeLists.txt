@@ -43,44 +43,46 @@ add_custom_target(UpdateBuildInfo ALL
     BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/GeneratedBuildInfo.h
 )
 
-target_sources(CoolSynth
-    PRIVATE
-        src/BuildInfo.cpp
-        src/presets/FactoryPresets.cpp
-        src/presets/PatchState.cpp
-        src/midi/ControllerProfile.cpp
-        src/midi/MidiLearn.cpp
-        src/midi/MidiMappingEngine.cpp
-        src/midi/MidiMonitor.cpp
-        src/midi/Minilab3Profile.cpp
-        src/parameters/ParameterLayout.cpp
-        src/plugin/ArpAdvancedOverlay.cpp
-        src/plugin/SynthAudioProcessor.cpp
-        src/plugin/EditorTooltips.cpp
-        src/plugin/SynthAudioProcessorEditor.cpp
-        src/standalone/CoolSynthStandaloneApp.cpp
-        src/standalone/SettingsStore.cpp
-        src/standalone/StandaloneAudioSupport.cpp
-        src/standalone/StandaloneMidiInput.cpp
-        src/synth/Arpeggiator.cpp
-        src/synth/SynthEngineV2.cpp
-        src/synth/GlobalDelay.cpp
-        src/synth/GlobalFxRack.cpp
-        src/synth/Phaser.cpp
-        src/synth/Compressor.cpp
-        src/synth/SynthVoice.cpp
+# Engine, MIDI, preset, UI and standalone sources shared by the plugin, the test
+# runner and the preset normalizer. Kept in one list so the three targets cannot
+# drift apart.
+set(COOLSYNTH_SHARED_SOURCES
+    src/BuildInfo.cpp
+    src/presets/FactoryPresets.cpp
+    src/presets/PatchState.cpp
+    src/midi/ControllerProfile.cpp
+    src/midi/MidiLearn.cpp
+    src/midi/MidiMappingEngine.cpp
+    src/midi/MidiMonitor.cpp
+    src/parameters/ParameterLayout.cpp
+    src/plugin/ArpAdvancedOverlay.cpp
+    src/plugin/SynthAudioProcessor.cpp
+    src/plugin/EditorTooltips.cpp
+    src/plugin/SynthAudioProcessorEditor.cpp
+    src/standalone/CoolSynthStandaloneApp.cpp
+    src/standalone/SettingsStore.cpp
+    src/standalone/StandaloneAudioSupport.cpp
+    src/standalone/StandaloneMidiInput.cpp
+    src/synth/Arpeggiator.cpp
+    src/synth/SynthEngineV2.cpp
+    src/synth/GlobalDelay.cpp
+    src/synth/GlobalFxRack.cpp
+    src/synth/Phaser.cpp
+    src/synth/Compressor.cpp
+    src/synth/SynthVoice.cpp
+    src/ui/HardwareFader.cpp
+    src/ui/HardwareKnob.cpp
+    src/ui/LedToggleButton.cpp
+    src/ui/MidiMonitorPanel.cpp
+    src/ui/PianoBarComponent.cpp
+    src/ui/SegmentedChoiceGroup.cpp
+    src/ui/StandaloneMidiInputPanel.cpp
+    src/ui/StandaloneSettingsDialog.cpp
+    src/ui/StandaloneStatusBar.cpp
+    src/ui/SynthSection.cpp
+    src/ui/SignalChainVisualizer.cpp)
 
-        src/ui/HardwareFader.cpp
-        src/ui/HardwareKnob.cpp
-        src/ui/LedToggleButton.cpp
-        src/ui/MidiMonitorPanel.cpp
-        src/ui/PianoBarComponent.cpp
-        src/ui/SegmentedChoiceGroup.cpp
-        src/ui/StandaloneMidiInputPanel.cpp
-        src/ui/StandaloneSettingsDialog.cpp
-        src/ui/StandaloneStatusBar.cpp
-        src/ui/SynthSection.cpp
-        src/ui/SignalChainVisualizer.cpp)
+target_sources(CoolSynth PRIVATE ${COOLSYNTH_SHARED_SOURCES})
 
 target_include_directories(CoolSynth
     PRIVATE
@@ -93,7 +95,10 @@ target_compile_definitions(CoolSynth
     PUBLIC
         JUCE_WEB_BROWSER=0
         JUCE_USE_CURL=0
-        JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
+        # No VST2 build has ever shipped, so the VST3 does not need to masquerade as
+        # one. This is JUCE's recommended setting for a VST3-only plugin and makes the
+        # VST2/VST3 parameter-ID conflict check pass without suppressing it.
+        JUCE_VST3_CAN_REPLACE_VST2=0
     PRIVATE
         JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP=1)
 
@@ -110,47 +115,13 @@ target_link_libraries(CoolSynth
 include(CTest)
 if(BUILD_TESTING)
     juce_add_console_app(CoolSynthMidiLearnTests)
-    
+
     target_sources(CoolSynthMidiLearnTests
         PRIVATE
             tests/MidiLearnTests.cpp
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp
-            src/BuildInfo.cpp
-            src/presets/FactoryPresets.cpp
-            src/presets/PatchState.cpp
-            src/midi/ControllerProfile.cpp
-            src/plugin/ArpAdvancedOverlay.cpp
-            src/plugin/SynthAudioProcessor.cpp
-            src/plugin/EditorTooltips.cpp
-            src/plugin/SynthAudioProcessorEditor.cpp
-            src/midi/MidiLearn.cpp
-            src/midi/MidiMappingEngine.cpp
-            src/midi/MidiMonitor.cpp
-            src/midi/Minilab3Profile.cpp
-            src/standalone/SettingsStore.cpp
-            src/standalone/StandaloneAudioSupport.cpp
-            src/standalone/StandaloneMidiInput.cpp
-            src/parameters/ParameterLayout.cpp
-            src/synth/Arpeggiator.cpp
-            src/synth/SynthEngineV2.cpp
-            src/synth/GlobalDelay.cpp
-            src/synth/GlobalFxRack.cpp
-            src/synth/Phaser.cpp
-            src/synth/Compressor.cpp
-            src/synth/SynthVoice.cpp
-            src/ui/HardwareFader.cpp
-            src/ui/HardwareKnob.cpp
-            src/ui/LedToggleButton.cpp
-            src/ui/MidiMonitorPanel.cpp
-            src/ui/PianoBarComponent.cpp
-            src/ui/SegmentedChoiceGroup.cpp
-            src/ui/StandaloneMidiInputPanel.cpp
-            src/ui/StandaloneSettingsDialog.cpp
-            src/ui/StandaloneStatusBar.cpp
-            src/ui/SynthSection.cpp
-            src/ui/SignalChainVisualizer.cpp
-    )
+            ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests
         PRIVATE
@@ -183,45 +154,15 @@ if(BUILD_TESTING)
     add_test(NAME CoolSynthMidiLearnTests COMMAND CoolSynthMidiLearnTests)
 endif()
 
+# Offline preset-loudness tool. Not part of ALL: build it on demand with
+#   cmake --build <build-dir> --config <Config> --target CoolSynthPresetNormalizer
 juce_add_console_app(CoolSynthPresetNormalizer)
+set_target_properties(CoolSynthPresetNormalizer PROPERTIES EXCLUDE_FROM_ALL TRUE)
 
 target_sources(CoolSynthPresetNormalizer
     PRIVATE
         tools/NormalizePresets.cpp
-        src/BuildInfo.cpp
-        src/presets/FactoryPresets.cpp
-        src/presets/PatchState.cpp
-        src/midi/ControllerProfile.cpp
-        src/midi/MidiLearn.cpp
-        src/midi/MidiMappingEngine.cpp
-        src/midi/MidiMonitor.cpp
-        src/midi/Minilab3Profile.cpp
-        src/parameters/ParameterLayout.cpp
-        src/plugin/ArpAdvancedOverlay.cpp
-        src/plugin/SynthAudioProcessor.cpp
-        src/plugin/EditorTooltips.cpp
-        src/plugin/SynthAudioProcessorEditor.cpp
-        src/standalone/SettingsStore.cpp
-        src/standalone/StandaloneAudioSupport.cpp
-        src/standalone/StandaloneMidiInput.cpp
-        src/synth/Arpeggiator.cpp
-        src/synth/SynthEngineV2.cpp
-        src/synth/GlobalDelay.cpp
-        src/synth/GlobalFxRack.cpp
-        src/synth/Phaser.cpp
-        src/synth/Compressor.cpp
-        src/synth/SynthVoice.cpp
-        src/ui/HardwareFader.cpp
-        src/ui/HardwareKnob.cpp
-        src/ui/LedToggleButton.cpp
-        src/ui/MidiMonitorPanel.cpp
-        src/ui/PianoBarComponent.cpp
-        src/ui/SegmentedChoiceGroup.cpp
-        src/ui/StandaloneMidiInputPanel.cpp
-        src/ui/StandaloneSettingsDialog.cpp
-        src/ui/StandaloneStatusBar.cpp
-        src/ui/SynthSection.cpp
-        src/ui/SignalChainVisualizer.cpp)
+        ${COOLSYNTH_SHARED_SOURCES})
 
 target_include_directories(CoolSynthPresetNormalizer
     PRIVATE

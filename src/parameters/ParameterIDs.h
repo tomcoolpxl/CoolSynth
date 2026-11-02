@@ -281,7 +281,7 @@ namespace coolsynth::parameters
         ids::reverbDamping,
         ids::reverbMix,
         ids::masterGainDb,
-        // --- v3 additions below; v2EraParameterCount marks the boundary for state migration ---
+        // --- v3 additions (macros, phaser, compressor) ---
         ids::timbre,
         ids::excite,
         ids::phaserEnabled,

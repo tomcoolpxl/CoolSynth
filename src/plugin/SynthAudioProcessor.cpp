@@ -7,6 +7,7 @@
 #include <span>
 
 #include "SynthAudioProcessorEditor.h"
+#include "midi/LearnedBindingsXml.h"
 #include "midi/MidiToControllerEvent.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
@@ -22,10 +23,6 @@ namespace
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
-    inline constexpr char learnedMidiMappingTag[] = "MAPPING";
-    inline constexpr char learnedMidiMappingParameterIdProperty[] = "parameterId";
-    inline constexpr char learnedMidiMappingChannelProperty[] = "channel";
-    inline constexpr char learnedMidiMappingControllerProperty[] = "controller";
 
     std::optional<coolsynth::synth::EngineMidiEvent> makeEngineMidiEvent(const juce::MidiMessage& message,
                                                                          int sampleOffset) noexcept
@@ -294,22 +291,9 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
     auto parameterState = const_cast<SynthAudioProcessor*> (this)->parameters.copyState();
     root->addChildElement(parameterState.createXml().release());
 
-    auto learnedMappings = std::make_unique<juce::XmlElement>(learnedMidiMappingsTag);
-    learnedMappings->setAttribute("version", 1);
-
     const juce::ScopedLock lock(midiMappingStateLock);
-    for (const auto& binding : learnedMidiBindings)
-    {
-        if (! binding.isValid())
-            continue;
-
-        auto* child = learnedMappings->createNewChildElement(learnedMidiMappingTag);
-        child->setAttribute(learnedMidiMappingParameterIdProperty, binding.parameterId);
-        child->setAttribute(learnedMidiMappingChannelProperty, static_cast<int> (binding.cc.channel));
-        child->setAttribute(learnedMidiMappingControllerProperty, static_cast<int> (binding.cc.controllerNumber));
-    }
-
-    root->addChildElement(learnedMappings.release());
+    root->addChildElement(coolsynth::midi::createLearnedBindingsXml(learnedMidiMappingsTag,
+                                                                    learnedMidiBindings).release());
     return root;
 }
 
@@ -651,26 +635,7 @@ std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::parseLearned
     std::vector<coolsynth::midi::LearnedCcBinding> bindings;
 
     if (const auto* mappings = parent.getChildByName(learnedMidiMappingsTag))
-    {
-        for (const auto* child : mappings->getChildIterator())
-        {
-            if (! child->hasTagName(learnedMidiMappingTag))
-                continue;
-
-            const auto parameterId = child->getStringAttribute(learnedMidiMappingParameterIdProperty);
-            const auto channel = child->getIntAttribute(learnedMidiMappingChannelProperty, 0);
-            const auto controller = child->getIntAttribute(learnedMidiMappingControllerProperty, -1);
-
-            coolsynth::midi::LearnedCcBinding binding
-            {
-                parameterId,
-                { static_cast<uint8_t> (channel), static_cast<uint8_t> (controller) }
-            };
-
-            if (binding.isValid() && controller >= 0 && controller <= 127)
-                bindings.push_back(std::move(binding));
-        }
-    }
+        bindings = coolsynth::midi::parseLearnedBindingsXml(*mappings);
 
     coolsynth::midi::MidiLearnManager normalizer;
     normalizer.replaceBindings(std::move(bindings));

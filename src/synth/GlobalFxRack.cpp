@@ -100,6 +100,42 @@ namespace coolsynth::synth
         if (! prepared)
             return;
 
+        // prepareToPlay's block size is only a hint: a host may deliver a larger block.
+        // The per-sample scratch buffers (and juce::dsp::Chorus) are sized to that hint,
+        // so split oversized blocks into chunks that fit instead of indexing past them.
+        const int chunkCapacity = static_cast<int>(mixRampScratch.size());
+        const int totalSamples = buffer.getNumSamples();
+
+        if (chunkCapacity <= 0)
+            return;
+
+        if (totalSamples <= chunkCapacity)
+        {
+            processChunk(buffer, driveParameters, phaserParameters, chorusParameters,
+                         delayParameters, reverbParametersIn, compressorParameters);
+            return;
+        }
+
+        for (int start = 0; start < totalSamples; start += chunkCapacity)
+        {
+            const int chunkSamples = juce::jmin(chunkCapacity, totalSamples - start);
+            juce::AudioBuffer<float> chunk(buffer.getArrayOfWritePointers(),
+                                           buffer.getNumChannels(),
+                                           start,
+                                           chunkSamples);
+            processChunk(chunk, driveParameters, phaserParameters, chorusParameters,
+                         delayParameters, reverbParametersIn, compressorParameters);
+        }
+    }
+
+    void GlobalFxRack::processChunk(juce::AudioBuffer<float>& buffer,
+                                    const DriveParametersV2& driveParameters,
+                                    const PhaserParametersV2& phaserParameters,
+                                    const ChorusParametersV2& chorusParameters,
+                                    const DelayParametersV2& delayParameters,
+                                    const ReverbParametersV2& reverbParametersIn,
+                                    const CompressorParametersV2& compressorParameters) noexcept
+    {
         processDrive(buffer, driveParameters);
         phaser.process(buffer, phaserParameters);
         processChorus(buffer, chorusParameters);
@@ -126,11 +162,21 @@ namespace coolsynth::synth
 
         if (hasAudibleDelayTail(delayParameters))
         {
-            const auto oneShotTail = juce::jlimit(0.0, 2.0,
-                                                  static_cast<double>(juce::jlimit(1.0f, 1000.0f, delayParameters.timeMs)) / 1000.0
-                                                      + 0.25);
-            tailSeconds = delayParameters.feedback > 0.0f ? conservativeDelayFeedbackTailSeconds
-                                                          : oneShotTail;
+            const double delaySeconds = static_cast<double>(juce::jlimit(1.0f, 1000.0f, delayParameters.timeMs)) / 1000.0;
+            const double feedback = static_cast<double>(juce::jlimit(0.0f, GlobalDelay::maxFeedback, delayParameters.feedback));
+
+            if (feedback <= 0.0)
+            {
+                tailSeconds = juce::jlimit(0.0, 2.0, delaySeconds + 0.25);
+            }
+            else
+            {
+                // Repeats until the feedback path has decayed by 60 dB, plus the one-shot pad.
+                // The constant is only the ceiling reached at the maximum feedback setting.
+                const double repeatsToSilence = std::log(0.001) / std::log(feedback);
+                tailSeconds = juce::jmin(conservativeDelayFeedbackTailSeconds,
+                                         delaySeconds * repeatsToSilence + 0.25);
+            }
         }
 
         if (hasAudibleReverbTail(reverbParametersIn))

@@ -85,7 +85,6 @@ namespace coolsynth::synth
                                int maxEvents) noexcept;
 
         int computeStepsPerBeat() const noexcept;
-        float computeInternalStepLengthSamples(double sampleRate) const noexcept;
         int buildOrderedWorkingSet(std::array<HeldEntry, maxArpHeldNotes>& ordered) const noexcept;
         void resetPatternWalkState() noexcept;
         void updateEuclideanCycle() noexcept;
@@ -136,6 +135,7 @@ namespace coolsynth::synth
         int patternStepCounter = 0;
         int emittedStepCounter = 0;
         int randomWalkIndex = 0;
+        int melodicStepIndex = 0; // position within the melodic walk; restarts on a new chord
         std::array<bool, 16> euclideanCycle {};
         int euclideanStepCount = 1;
         int euclideanPosition = 0;

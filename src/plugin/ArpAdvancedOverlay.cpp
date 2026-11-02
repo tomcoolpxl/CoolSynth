@@ -5,7 +5,9 @@
 #include "parameters/ParameterIDs.h"
 #include "synth/EuclideanRhythm.h"
 #include "ui/ActionButtonLookAndFeel.h"
+#include "ui/ChoiceParameterAttachment.h"
 #include "ui/UiPalette.h"
+#include "ui/WeightedRowDistributor.h"
 
 namespace
 {
@@ -106,27 +108,6 @@ ArpAdvancedOverlay::ArpAdvancedOverlay(juce::AudioProcessorValueTreeState& value
     closeButton.onClick = [this] { requestClose(); };
     addAndMakeVisible(closeButton);
 
-    auto attachChoiceControl = [](auto& control,
-                                  std::unique_ptr<ChoiceAttachment>& attachment,
-                                  juce::RangedAudioParameter* parameter)
-    {
-        control.onSelectionChanged = [&attachment](int value)
-        {
-            if (attachment != nullptr)
-                attachment->setValueAsCompleteGesture(static_cast<float>(value));
-        };
-
-        if (parameter == nullptr)
-            return;
-
-        attachment = std::make_unique<ChoiceAttachment>(*parameter,
-                                                        [&control](float value)
-                                                        {
-                                                            control.setSelectedValue(static_cast<int>(std::lround(value)));
-                                                        });
-        attachment->sendInitialUpdate();
-    };
-
     tempoAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpInternalTempoBpm, tempoKnob.slider());
     chanceAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpChance, chanceKnob.slider());
     ratchetChanceAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpRatchetChance, ratchetChanceKnob.slider());
@@ -135,9 +116,9 @@ ArpAdvancedOverlay::ArpAdvancedOverlay(juce::AudioProcessorValueTreeState& value
     euclideanStepsAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpEuclideanSteps, euclideanStepsKnob.slider());
     euclideanRotationAttachment = std::make_unique<SliderAttachment>(apvts, ids::arpEuclideanRotation, euclideanRotationKnob.slider());
 
-    attachChoiceControl(rhythmChoice, rhythmAttachment, apvts.getParameter(ids::arpRhythm));
-    attachChoiceControl(ratchetChoice, ratchetAttachment, apvts.getParameter(ids::arpRatchetCount));
-    attachChoiceControl(accentChoice, accentAttachment, apvts.getParameter(ids::arpAccentEvery));
+    coolsynth::ui::attachChoiceControl(rhythmChoice, rhythmAttachment, apvts.getParameter(ids::arpRhythm));
+    coolsynth::ui::attachChoiceControl(ratchetChoice, ratchetAttachment, apvts.getParameter(ids::arpRatchetCount));
+    coolsynth::ui::attachChoiceControl(accentChoice, accentAttachment, apvts.getParameter(ids::arpAccentEvery));
 
     refreshFromParameters();
 }
@@ -220,24 +201,12 @@ void ArpAdvancedOverlay::resized()
     }
 
     auto modifiersContent = sectionContentBounds(modifiersSection);
-    const float totalWeight = 5.7f;
-    auto takeWeightedWidth = [](juce::Rectangle<int>& row, float weight, float& remainingWeight)
-    {
-        const auto width = juce::roundToInt(static_cast<float>(row.getWidth()) * (weight / remainingWeight));
-        remainingWeight -= weight;
-        return row.removeFromLeft(width);
-    };
-
-    float remainingWeight = totalWeight;
-    chanceKnob.setBounds(takeWeightedWidth(modifiersContent, 1.0f, remainingWeight));
-    modifiersContent.removeFromLeft(8);
-    ratchetChoice.setBounds(takeWeightedWidth(modifiersContent, 1.35f, remainingWeight));
-    modifiersContent.removeFromLeft(8);
-    ratchetChanceKnob.setBounds(takeWeightedWidth(modifiersContent, 1.0f, remainingWeight));
-    modifiersContent.removeFromLeft(8);
-    accentChoice.setBounds(takeWeightedWidth(modifiersContent, 1.35f, remainingWeight));
-    modifiersContent.removeFromLeft(8);
-    accentAmountKnob.setBounds(modifiersContent);
+    coolsynth::ui::WeightedRowDistributor modifiers { modifiersContent, 5.7f, 5, 8 };
+    chanceKnob.setBounds(modifiers.take(1.0f));
+    ratchetChoice.setBounds(modifiers.take(1.35f));
+    ratchetChanceKnob.setBounds(modifiers.take(1.0f));
+    accentChoice.setBounds(modifiers.take(1.35f));
+    accentAmountKnob.setBounds(modifiers.take(1.0f));
 }
 
 bool ArpAdvancedOverlay::keyPressed(const juce::KeyPress& key)

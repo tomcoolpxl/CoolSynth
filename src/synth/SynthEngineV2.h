@@ -142,6 +142,7 @@ namespace coolsynth::synth
         float modWheelValue = 0.0f;
         float globalLfoPhase = 0.0f;
         bool sustainPedalDown = false;
+        bool previousArpEnabled = false;
         bool prepared = false;
     };
 }

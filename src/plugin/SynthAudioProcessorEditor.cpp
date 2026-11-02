@@ -2,6 +2,7 @@
 
 #include <array>
 #include <cmath>
+#include <limits>
 
 #include <BinaryData.h>
 
@@ -15,9 +16,11 @@
 #include "standalone/SettingsStore.h"
 #include "standalone/StandaloneAudioSupport.h"
 #include "ui/ActionButtonLookAndFeel.h"
+#include "ui/ChoiceParameterAttachment.h"
 #include "ui/StandaloneSettingsDialog.h"
 #include "ui/StandaloneStatusBar.h"
 #include "ui/UiPalette.h"
+#include "ui/WeightedRowDistributor.h"
 
 namespace
 {
@@ -117,47 +120,8 @@ namespace
         }
     }
 
-    // Distributes a row's width among N weighted sections separated by fixed gaps.
-    // The last section absorbs rounding residuals, so the produced rectangles always
-    // sum to exactly the row width — no leftover slack on the right edge.
-    //
-    // This is the primitive that lets the layout scale continuously: change the row
-    // width and every section grows or shrinks in proportion.
-    struct WeightedRowDistributor
-    {
-        WeightedRowDistributor(juce::Rectangle<int>& rowRef,
-                               float totalWeight,
-                               int sectionCount,
-                               int gapPx) noexcept
-            : row(rowRef)
-            , remainingWidth(juce::jmax(0, rowRef.getWidth() - juce::jmax(0, sectionCount - 1) * gapPx))
-            , remainingWeight(totalWeight)
-            , gap(gapPx)
-            , sectionsLeft(sectionCount)
-        {
-        }
-
-        juce::Rectangle<int> take(float weight) noexcept
-        {
-            const int width = (sectionsLeft <= 1 || remainingWeight <= 0.0f)
-                ? remainingWidth
-                : juce::roundToInt(static_cast<float>(remainingWidth) * (weight / remainingWeight));
-
-            remainingWidth -= width;
-            remainingWeight -= weight;
-            auto rect = row.removeFromLeft(width);
-            if (--sectionsLeft > 0)
-                row.removeFromLeft(gap);
-            return rect;
-        }
-
-    private:
-        juce::Rectangle<int>& row;
-        int   remainingWidth;
-        float remainingWeight;
-        int   gap;
-        int   sectionsLeft;
-    };
+    using coolsynth::ui::WeightedRowDistributor;
+    using coolsynth::ui::attachChoiceControl;
 
     class EditorTooltipWindow final : public juce::TooltipWindow
     {
@@ -324,6 +288,11 @@ void SynthAudioProcessorEditor::setupParameterRefs()
     parameterRefs.cmpOn = apvts.getParameter(ids::compressorEnabled);
     parameterRefs.cmpAmt = apvts.getParameter(ids::compressorAmount);
     parameterRefs.cmpMix = apvts.getParameter(ids::compressorMix);
+
+    rawParameterValues.clear();
+    for (const auto* id : coolsynth::parameters::allParameterIds)
+        rawParameterValues.push_back(apvts.getRawParameterValue(id));
+    lastRawParameterValues.assign(rawParameterValues.size(), std::numeric_limits<float>::quiet_NaN());
 }
 
 void SynthAudioProcessorEditor::setupVisualsAndLabels(bool isStandalone)
@@ -424,27 +393,6 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     {
         addAndMakeVisible(control);
         attachment = std::make_unique<ButtonAttachment>(apvts, parameterId, control.button());
-    };
-
-    auto attachChoiceControl = [](auto& control,
-                                  std::unique_ptr<ChoiceAttachment>& attachment,
-                                  juce::RangedAudioParameter* parameter)
-    {
-        control.onSelectionChanged = [&attachment](int value)
-        {
-            if (attachment != nullptr)
-                attachment->setValueAsCompleteGesture(static_cast<float>(value));
-        };
-
-        if (parameter == nullptr)
-            return;
-
-        attachment = std::make_unique<ChoiceAttachment>(*parameter,
-                                                        [&control](float value)
-                                                        {
-                                                            control.setSelectedValue(static_cast<int>(std::lround(value)));
-                                                        });
-        attachment->sendInitialUpdate();
     };
 
     auto attachComboChoiceControl = [](juce::ComboBox& control,
@@ -1311,13 +1259,6 @@ void SynthAudioProcessorEditor::paint(juce::Graphics& g)
 
 void SynthAudioProcessorEditor::resized()
 {
-    auto takeWeightedWidth = [](juce::Rectangle<int>& row, float weight, float& remainingWeight)
-    {
-        const auto width = juce::roundToInt(static_cast<float>(row.getWidth()) * (weight / remainingWeight));
-        remainingWeight -= weight;
-        return row.removeFromLeft(width);
-    };
-
     auto bounds = getLocalBounds();
     if (standaloneStatusBar != nullptr)
     {
@@ -1427,19 +1368,19 @@ void SynthAudioProcessorEditor::resized()
         auto oscContent = sectionContentArea(oscArea);
         auto oscRow1 = oscContent.removeFromTop(oscContent.getHeight() / 2);
         auto oscRow2 = oscContent;
-        float oscWeightsTop = 6.2f;
-        oscAWaveChoice.setBounds(takeWeightedWidth(oscRow1, 2.2f, oscWeightsTop));
-        oscAOctaveKnob.setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
-        oscAFineKnob  .setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
-        oscAPwKnob    .setBounds(takeWeightedWidth(oscRow1, 1.0f, oscWeightsTop));
-        oscASyncToggle.setBounds(oscRow1);
+        WeightedRowDistributor oscTop { oscRow1, 6.2f, 5, 0 };
+        oscAWaveChoice.setBounds(oscTop.take(2.2f));
+        oscAOctaveKnob.setBounds(oscTop.take(1.0f));
+        oscAFineKnob  .setBounds(oscTop.take(1.0f));
+        oscAPwKnob    .setBounds(oscTop.take(1.0f));
+        oscASyncToggle.setBounds(oscTop.take(1.0f));
 
-        float oscWeightsBottom = 6.2f;
-        oscBWaveChoice .setBounds(takeWeightedWidth(oscRow2, 2.2f, oscWeightsBottom));
-        oscBOctaveKnob .setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
-        oscBFineKnob   .setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
-        oscBPwKnob     .setBounds(takeWeightedWidth(oscRow2, 1.0f, oscWeightsBottom));
-        oscBLoFreqToggle.setBounds(oscRow2);
+        WeightedRowDistributor oscBottom { oscRow2, 6.2f, 5, 0 };
+        oscBWaveChoice .setBounds(oscBottom.take(2.2f));
+        oscBOctaveKnob .setBounds(oscBottom.take(1.0f));
+        oscBFineKnob   .setBounds(oscBottom.take(1.0f));
+        oscBPwKnob     .setBounds(oscBottom.take(1.0f));
+        oscBLoFreqToggle.setBounds(oscBottom.take(1.0f));
     }
 
     // Mixer
@@ -1491,10 +1432,10 @@ void SynthAudioProcessorEditor::resized()
         auto lfoContent = sectionContentArea(lfoArea);
         auto lfoRow1 = lfoContent.removeFromTop(lfoContent.getHeight() / 2);
         auto lfoRow2 = lfoContent;
-        float lfoTopWeights = 4.0f;
-        lfoWaveChoice.setBounds(takeWeightedWidth(lfoRow1, 2.0f, lfoTopWeights));
-        lfoRateKnob  .setBounds(takeWeightedWidth(lfoRow1, 1.0f, lfoTopWeights));
-        lfoMwDepKnob .setBounds(lfoRow1);
+        WeightedRowDistributor lfoTop { lfoRow1, 4.0f, 3, 0 };
+        lfoWaveChoice.setBounds(lfoTop.take(2.0f));
+        lfoRateKnob  .setBounds(lfoTop.take(1.0f));
+        lfoMwDepKnob .setBounds(lfoTop.take(1.0f));
         lfoPitchKnob .setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 3));
         lfoPwKnob    .setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 2));
         lfoCutoffKnob.setBounds(lfoRow2);
@@ -1522,11 +1463,11 @@ void SynthAudioProcessorEditor::resized()
         auto perfContent = sectionContentArea(perfArea);
         auto perfRow1 = perfContent.removeFromTop(perfContent.getHeight() / 2);
         auto perfRow2 = perfContent;
-        float perfTopWeights = 6.0f;
-        perfGlideKnob  .setBounds(takeWeightedWidth(perfRow1, 1.0f, perfTopWeights));
-        perfModeChoice .setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
-        perfPrioChoice .setBounds(takeWeightedWidth(perfRow1, 2.0f, perfTopWeights));
-        perfPbRangeKnob.setBounds(perfRow1);
+        WeightedRowDistributor perfTop { perfRow1, 6.0f, 4, 0 };
+        perfGlideKnob  .setBounds(perfTop.take(1.0f));
+        perfModeChoice .setBounds(perfTop.take(2.0f));
+        perfPrioChoice .setBounds(perfTop.take(2.0f));
+        perfPbRangeKnob.setBounds(perfTop.take(1.0f));
         perfVintageKnob.setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 4));
         perfPanKnob    .setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 3));
         perfVelAmpKnob .setBounds(perfRow2.removeFromLeft(perfRow2.getWidth() / 2));
@@ -1549,19 +1490,19 @@ void SynthAudioProcessorEditor::resized()
         arpContent.removeFromTop(4);
         auto arpStatusRow = arpContent;
 
-        float arpTopWeights = 5.2f;
-        arpRateChoice  .setBounds(takeWeightedWidth(arpTopRow, 1.55f, arpTopWeights));
-        auto arpPatternArea = takeWeightedWidth(arpTopRow, 2.85f, arpTopWeights);
+        WeightedRowDistributor arpTop { arpTopRow, 5.2f, 4, 0 };
+        arpRateChoice  .setBounds(arpTop.take(1.55f));
+        auto arpPatternArea = arpTop.take(2.85f);
         arpPatternLabel .setBounds(arpPatternArea.removeFromTop(18));
         arpPatternChoice.setBounds(arpPatternArea);
-        arpOctaveChoice.setBounds(takeWeightedWidth(arpTopRow, 0.8f, arpTopWeights));
-        arpGateKnob    .setBounds(arpTopRow);
+        arpOctaveChoice.setBounds(arpTop.take(0.8f));
+        arpGateKnob    .setBounds(arpTop.take(0.0f));
 
-        float arpMidWeights = 4.2f;
-        arpSwingKnob.setBounds(takeWeightedWidth(arpMidRow, 1.0f, arpMidWeights));
-        auto arpAdvancedArea = takeWeightedWidth(arpMidRow, 2.4f, arpMidWeights);
+        WeightedRowDistributor arpMid { arpMidRow, 4.2f, 3, 0 };
+        arpSwingKnob.setBounds(arpMid.take(1.0f));
+        auto arpAdvancedArea = arpMid.take(2.4f);
         arpAdvancedButton.setBounds(arpAdvancedArea.withSizeKeepingCentre(arpAdvancedArea.getWidth(), 24));
-        arpLatchToggle.setBounds(arpMidRow.withWidth(52));
+        arpLatchToggle.setBounds(arpMid.take(0.8f).withWidth(52));
         arpAdvancedSummaryLabel.setBounds(arpStatusRow.reduced(4, 0).withTrimmedTop(2));
     }
 
@@ -1659,7 +1600,11 @@ void SynthAudioProcessorEditor::resized()
 void SynthAudioProcessorEditor::timerCallback()
 {
     pollPluginMidiLearnEvents();
-    refreshValueDisplays();
+
+    // Re-formatting ~85 value labels (plus the arp summary and Euclidean preview) is
+    // only worth doing when a parameter actually moved; comparing raw values is cheap.
+    if (haveParameterValuesChanged())
+        refreshValueDisplays();
 
     if (badgeVisibilityCounter > 0)
     {
@@ -1754,6 +1699,23 @@ void SynthAudioProcessorEditor::refreshValueDisplays()
     revDampKnob.setValueText(getCurrentParameterText(parameterRefs.revDamp));
     revMixKnob.setValueText(getCurrentParameterText(parameterRefs.revMix));
     outGainKnob.setValueText(getCurrentParameterText(parameterRefs.outGain));
+}
+
+bool SynthAudioProcessorEditor::haveParameterValuesChanged()
+{
+    bool changed = false;
+
+    for (size_t i = 0; i < rawParameterValues.size(); ++i)
+    {
+        const float value = rawParameterValues[i] != nullptr ? rawParameterValues[i]->load() : 0.0f;
+        if (value == lastRawParameterValues[i])
+            continue;
+
+        lastRawParameterValues[i] = value;
+        changed = true;
+    }
+
+    return changed;
 }
 
 juce::String SynthAudioProcessorEditor::getCurrentParameterText(juce::RangedAudioParameter* parameter) const

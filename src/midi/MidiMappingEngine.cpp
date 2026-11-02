@@ -7,6 +7,18 @@ namespace coolsynth::midi
 {
     namespace
     {
+        float mapAbsolute7(uint8_t midiValue) noexcept
+        {
+            return static_cast<float>(midiValue) / 127.0f;
+        }
+
+        float mapThreeStep(uint8_t midiValue) noexcept
+        {
+            if (midiValue <= 42) return 0.0f;
+            if (midiValue <= 85) return 0.5f;
+            return 1.0f;
+        }
+
         bool signatureMatches(const ControllerMessageSignature& signature,
                               const ControllerMidiEvent& event) noexcept
         {
@@ -85,12 +97,10 @@ namespace coolsynth::midi
             switch (binding.valueMode)
             {
                 case ControllerValueMode::absolute7:
-                    return static_cast<float>(event.data2) / 127.0f;
+                    return mapAbsolute7(event.data2);
 
                 case ControllerValueMode::threeStepAbsolute:
-                    if (event.data2 <= 42) return 0.0f;
-                    if (event.data2 <= 85) return 0.5f;
-                    return 1.0f;
+                    return mapThreeStep(event.data2);
 
                 case ControllerValueMode::relativeBinaryOffset:
                 {
@@ -249,18 +259,6 @@ namespace coolsynth::midi
         return false;
     }
 
-    float MidiMappingEngine::mapAbsoluteControllerValue(uint8_t midiValue) noexcept
-    {
-        return static_cast<float>(midiValue) / 127.0f;
-    }
-
-    float MidiMappingEngine::mapThreeStepValue(uint8_t midiValue) noexcept
-    {
-        if (midiValue <= 42) return 0.0f;
-        if (midiValue <= 85) return 0.5f;
-        return 1.0f;
-    }
-
     bool MidiMappingEngine::shouldUseSoftTakeover(const juce::RangedAudioParameter& parameter,
                                                   ControllerValueMode valueMode) noexcept
     {
@@ -285,7 +283,7 @@ namespace coolsynth::midi
                     continue;
                 }
 
-                auto maybeValue = mapAbsoluteControllerValue(event.data2);
+                const float maybeValue = mapAbsolute7(event.data2);
                 float finalValue = maybeValue;
 
                 if (shouldUseSoftTakeover(*binding.target.parameter, ControllerValueMode::absolute7))
