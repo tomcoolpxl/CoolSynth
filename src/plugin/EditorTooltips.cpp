@@ -511,7 +511,7 @@ void SynthAudioProcessorEditor::applyTooltips()
                                                    "Toggle hover help on or off.\n"
                                                    "Turn it off if you want a cleaner panel."));
     pianoBar.setTooltip(makeTooltipText("Keyboard / LED Strip",
-                                        "Click to expand or collapse the keyboard area.\n"
-                                        "The compact strip shows note activity.\n"
-                                        "The expanded view gives octave controls."));
+                                        "The strip shows note activity as LEDs.\n"
+                                        "KEYS swaps it for a playable keyboard;\n"
+                                        "OCT + and - shift the visible range."));
 }

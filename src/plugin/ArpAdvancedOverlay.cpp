@@ -98,6 +98,9 @@ ArpAdvancedOverlay::ArpAdvancedOverlay(juce::AudioProcessorValueTreeState& value
     setInterceptsMouseClicks(true, true);
     setWantsKeyboardFocus(true);
     setMouseClickGrabsKeyboardFocus(true);
+    // Tab stays inside the overlay while it is open; Escape and Close leave it.
+    setFocusContainerType(FocusContainerType::keyboardFocusContainer);
+    setTitle("Arpeggiator advanced settings");
 
     addAndMakeVisible(rhythmSection);
     addAndMakeVisible(modifiersSection);

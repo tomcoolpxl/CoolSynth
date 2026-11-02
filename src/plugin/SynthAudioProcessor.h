@@ -1,14 +1,18 @@
 #pragma once
 
 #include <array>
+#include <atomic>
+#include <functional>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "midi/MidiMappingEngine.h"
+#include "plugin/ParameterUndoHistory.h"
 #include "plugin/ProcessorScopeFifo.h"
 #include "synth/SynthEngineV2.h"
 
-class SynthAudioProcessor final : public juce::AudioProcessor
+class SynthAudioProcessor final : public juce::AudioProcessor,
+                                  private juce::AudioProcessorParameter::Listener
 {
 public:
     using APVTS = juce::AudioProcessorValueTreeState;
@@ -58,6 +62,23 @@ public:
     void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
     void requestPanic() noexcept;
 
+    // ---- Undo and patch identity (message thread) ----------------------------
+    // Every UI gesture becomes one undo step automatically. Bulk edits (preset,
+    // init, load) are wrapped in performUndoableEdit() so they become one step too.
+    void performUndoableEdit(const juce::String& label, const std::function<void()>& edit);
+    bool canUndo() const noexcept { return undoHistory.canUndo(); }
+    bool canRedo() const noexcept { return undoHistory.canRedo(); }
+    juce::String getUndoLabel() const { return undoHistory.getUndoLabel(); }
+    juce::String getRedoLabel() const { return undoHistory.getRedoLabel(); }
+    bool undo();
+    bool redo();
+
+    // The name shown for the current patch and whether it has been edited since it
+    // was last applied or saved. Any parameter change marks the patch dirty.
+    void setPatchIdentity(juce::String name, bool dirty);
+    juce::String getPatchName() const;
+    bool isPatchDirty() const noexcept { return patchDirty.load(std::memory_order_relaxed); }
+
     APVTS& getValueTreeState() noexcept { return parameters; }
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
@@ -99,6 +120,12 @@ private:
     coolsynth::synth::BlockRenderParametersV2 makeBlockRenderParameters() const noexcept;
     static coolsynth::synth::ParameterValuePointersV2 bindParameterPointers(APVTS& state);
 
+    void parameterValueChanged(int parameterIndex, float newValue) override;
+    void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
+    coolsynth::plugin::ParameterUndoHistory::Snapshot captureSnapshot(juce::String label) const;
+    std::vector<float> captureNormalisedValues() const;
+    void restoreSnapshot(const coolsynth::plugin::ParameterUndoHistory::Snapshot& snapshot);
+
     // C6: typed choice-parameter pointers — getIndex() avoids per-block std::round + cast
     struct ChoiceParameterPointers
     {
@@ -134,6 +161,14 @@ private:
     coolsynth::plugin::ProcessorScopeFifo scopeFifo;
     std::vector<float> monoMixScratch;
     PluginMappedActionAsyncBridge mappedActionBridge;
+
+    coolsynth::plugin::ParameterUndoHistory undoHistory;
+    int activeGestureCount = 0;
+    bool suppressGestureSnapshots = false;
+    std::atomic<bool> applyingPatch { false };
+    std::atomic<bool> patchDirty { false };
+    juce::String patchName { "Init" };
+    mutable juce::CriticalSection patchIdentityLock;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)
 };

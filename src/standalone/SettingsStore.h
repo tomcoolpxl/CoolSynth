@@ -92,6 +92,17 @@ namespace coolsynth::standalone
             return propertySet.getBoolValue("showCcLabels", true);
         }
 
+        // Editor zoom in percent; 0 means "not set yet" (fit to the display).
+        int getUiScalePercent() const
+        {
+            return propertySet.getIntValue("uiScalePercent", 0);
+        }
+
+        void setUiScalePercent(int percent)
+        {
+            propertySet.setValue("uiScalePercent", percent);
+        }
+
         void setShowCcLabels(bool show)
         {
             propertySet.setValue("showCcLabels", show);

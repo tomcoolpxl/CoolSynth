@@ -7,6 +7,8 @@ namespace coolsynth::ui
     SynthSection::SynthSection(juce::String titleText)
         : title(std::move(titleText))
     {
+        setTitle(title);
+        setFocusContainerType(FocusContainerType::focusContainer);
     }
 
     juce::Rectangle<int> SynthSection::getContentBounds() const noexcept

@@ -1,5 +1,16 @@
 # DONE
 
+## UI/UX review follow-up — resizable window, accessibility, labels, undo
+
+Completed on 2026-11-02 from the open items in `UI_UX_REVIEW.md`.
+
+- [x] Made the editor user-resizable (50% to 200%, fixed aspect ratio) by hosting all controls in a scaled content panel; added a right-click zoom menu, Ctrl+plus / Ctrl+minus / Ctrl+0, a persisted standalone scale, and fit-to-display on first launch.
+- [x] Made knobs and faders keyboard-focusable with a focus ring in every custom paint path, gave sliders, toggles, segment cells, sections and icon-only buttons accessible titles and help text, and contained Tab traversal inside the Advanced overlay.
+- [x] Reworked the label system: 13 px widget titles, shortened long labels, icon-only cells below 32 x 44 px, LFO wave as 2 x 2, and `A` / `B` tags on the oscillator rows.
+- [x] Added processor-owned snapshot undo/redo driven by parameter gestures and bulk edits, Undo / Redo buttons and shortcuts, a patch name with dirty marker in the title row, a category-grouped preset selector with prev / next that clears on edit, and processor-state format `8` carrying the patch identity.
+- [x] Added regressions for uniform scaling and clamping, focusable and named controls, gesture and bulk undo/redo, patch identity state round trip, and preset selector clearing and undo.
+- [x] Verified `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-11-02, plus offscreen renders of the panel at 100% and 60% and of the Advanced overlay.
+
 ## ARP Expansion Phase F — Format boundary and curated preset-bank slice
 
 Completed on 2026-05-17. The code and data portion of Phase F is implemented and locally verified; only the manual preset audition remains open in `TODO.md`.

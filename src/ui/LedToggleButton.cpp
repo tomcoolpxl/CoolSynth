@@ -33,6 +33,9 @@ namespace coolsynth::ui
         g.setColour(textColour);
         g.setFont(juce::FontOptions(11.5f, juce::Font::plain));
         g.drawFittedText(isActive ? "ON" : "OFF", getLocalBounds(), juce::Justification::centred, 1);
+
+        if (hasKeyboardFocus(true))
+            palette::drawFocusRing(g, bounds, 2.0f);
     }
 
     LedToggleButton::LedToggleButton(juce::String labelText)
@@ -40,10 +43,11 @@ namespace coolsynth::ui
         titleLabel.setText(labelText, juce::dontSendNotification);
         titleLabel.setJustificationType(juce::Justification::centred);
         titleLabel.setColour(juce::Label::textColourId, palette::textPrimary);
-        titleLabel.setFont(juce::FontOptions(15.0f));
+        titleLabel.setFont(juce::FontOptions(13.0f));
         addAndMakeVisible(titleLabel);
 
         stateButton.setName(labelText);
+        stateButton.setTitle(labelText);
         addAndMakeVisible(stateButton);
 
         valueLabel.setText("-", juce::dontSendNotification);
@@ -56,6 +60,12 @@ namespace coolsynth::ui
     void LedToggleButton::setValueText(const juce::String& text)
     {
         valueLabel.setText(text, juce::dontSendNotification);
+    }
+
+    void LedToggleButton::setTooltip(const juce::String& newTooltip)
+    {
+        juce::SettableTooltipClient::setTooltip(newTooltip);
+        stateButton.setHelpText(newTooltip);
     }
 
     void LedToggleButton::setLearnState(bool armed, const juce::String& badgeText)

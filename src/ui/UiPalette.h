@@ -18,4 +18,14 @@ namespace coolsynth::ui::palette
     inline const auto badgeGreen = juce::Colour::fromRGB(124, 210, 116);
     inline const auto tooltipBackground = juce::Colour::fromRGB(38, 45, 48);
     inline const auto tooltipBorder = juce::Colour::fromRGB(255, 171, 82);
+    // Keyboard-focus ring: near-white so it is distinct from the green LED state
+    // and the yellow MIDI-learn arming colour, and above 3:1 against every panel fill.
+    inline const auto focusRing = juce::Colour::fromRGB(244, 244, 239);
+
+    // Draws the shared keyboard-focus ring just inside a control's bounds.
+    inline void drawFocusRing(juce::Graphics& g, juce::Rectangle<float> bounds, float cornerSize = 3.0f)
+    {
+        g.setColour(focusRing);
+        g.drawRoundedRectangle(bounds.reduced(1.0f), cornerSize, 2.0f);
+    }
 }

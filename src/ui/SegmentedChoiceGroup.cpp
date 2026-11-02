@@ -7,10 +7,18 @@
 
 namespace coolsynth::ui
 {
+    namespace
+    {
+        // Below these cell sizes an icon cell cannot fit a legible caption as well.
+        constexpr int iconCaptionMinWidth = 32;
+        constexpr int iconCaptionMinHeight = 44;
+    }
+
     SegmentedChoiceGroup::SegmentButton::SegmentButton(Option optionToUse)
         : juce::Button(optionToUse.label),
           option(std::move(optionToUse))
     {
+        setTitle(option.label);
     }
 
     void SegmentedChoiceGroup::SegmentButton::paintButton(juce::Graphics& g, bool isHighlighted, bool isDown)
@@ -38,16 +46,27 @@ namespace coolsynth::ui
             g.setColour(ink);
             g.setFont(juce::FontOptions(11.0f, juce::Font::plain));
             g.drawFittedText(option.label.toUpperCase(), getLocalBounds().reduced(3, 2), juce::Justification::centred, 2);
-            return;
+        }
+        else if (getWidth() < iconCaptionMinWidth || getHeight() < iconCaptionMinHeight)
+        {
+            // Too small for a readable caption under the icon: draw the icon alone in a
+            // centred square. The word stays in the tooltip and in the group's value label.
+            const auto side = juce::jmax(8.0f, juce::jmin(bounds.getWidth(), bounds.getHeight()) - 6.0f);
+            drawWaveformIcon(g, bounds.withSizeKeepingCentre(side, side), option.icon, ink);
+        }
+        else
+        {
+            auto iconArea = bounds.reduced(5.0f, 4.0f);
+            auto textArea = iconArea.removeFromBottom(14.0f);
+            drawWaveformIcon(g, iconArea, option.icon, ink);
+
+            g.setColour(ink);
+            g.setFont(juce::FontOptions(8.8f, juce::Font::plain));
+            g.drawFittedText(option.label.toUpperCase(), textArea.toNearestInt(), juce::Justification::centred, 1);
         }
 
-        auto iconArea = bounds.reduced(5.0f, 4.0f);
-        auto textArea = iconArea.removeFromBottom(14.0f);
-        drawWaveformIcon(g, iconArea, option.icon, ink);
-
-        g.setColour(ink);
-        g.setFont(juce::FontOptions(8.8f, juce::Font::plain));
-        g.drawFittedText(option.label.toUpperCase(), textArea.toNearestInt(), juce::Justification::centred, 1);
+        if (hasKeyboardFocus(true))
+            palette::drawFocusRing(g, bounds, 2.0f);
     }
 
     void SegmentedChoiceGroup::SegmentButton::drawWaveformIcon(juce::Graphics& g,
@@ -130,10 +149,12 @@ namespace coolsynth::ui
         : columns(columnCount > 0 ? columnCount : static_cast<int>(options.size()))
     {
         setName(labelText);
+        setTitle(labelText);
+        setFocusContainerType(FocusContainerType::focusContainer);
         titleLabel.setText(labelText, juce::dontSendNotification);
         titleLabel.setJustificationType(juce::Justification::centred);
         titleLabel.setColour(juce::Label::textColourId, palette::textPrimary);
-        titleLabel.setFont(juce::FontOptions(15.0f));
+        titleLabel.setFont(juce::FontOptions(13.0f));
         addAndMakeVisible(titleLabel);
 
         valueLabel.setText("-", juce::dontSendNotification);
@@ -178,8 +199,19 @@ namespace coolsynth::ui
     void SegmentedChoiceGroup::setOptionTooltip(int value, const juce::String& tooltipText)
     {
         for (const auto& button : buttons)
+        {
             if (button->getOptionValue() == value)
+            {
                 button->setTooltip(tooltipText);
+                button->setHelpText(tooltipText);
+            }
+        }
+    }
+
+    void SegmentedChoiceGroup::setTooltip(const juce::String& newTooltip)
+    {
+        juce::SettableTooltipClient::setTooltip(newTooltip);
+        setHelpText(newTooltip);
     }
 
     void SegmentedChoiceGroup::resized()

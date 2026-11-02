@@ -19,6 +19,9 @@ namespace coolsynth::ui
             const bool isLatched = button.getToggleState();
             auto fill = isLatched ? palette::ledGreen : palette::panelRaised;
 
+            if (! button.isEnabled())
+                g.setOpacity(0.35f);
+
             if (! isLatched && isMouseOverButton)
                 fill = palette::panelRaisedAlt;
 
@@ -30,6 +33,9 @@ namespace coolsynth::ui
 
             g.setColour(isButtonDown ? palette::ledGreen : palette::ledGreen);
             g.drawRect(bounds, 1.0f);
+
+            if (button.hasKeyboardFocus(true))
+                palette::drawFocusRing(g, bounds, 2.0f);
         }
 
         void drawButtonText(juce::Graphics& g,
@@ -42,6 +48,9 @@ namespace coolsynth::ui
             const auto ink = isActive ? palette::ledTextOn : palette::ledTextOff;
             const bool isPatchButton = button.getComponentID() == "patchButton";
 
+            if (! button.isEnabled())
+                g.setOpacity(0.35f);
+
             g.setColour(ink);
 
             if (button.getComponentID() == "panicButton")
@@ -49,6 +58,38 @@ namespace coolsynth::ui
                 const auto size = static_cast<float>(juce::jmin(bounds.getWidth(), bounds.getHeight()) - 10);
                 auto icon = juce::Rectangle<float>(size, size).withCentre(bounds.toFloat().getCentre());
                 g.fillRect(icon);
+                return;
+            }
+
+            const bool isUndo = button.getComponentID() == "undoButton";
+            if (isUndo || button.getComponentID() == "redoButton")
+            {
+                // A curved arrow: arc plus arrow head, mirrored for redo.
+                const auto size = static_cast<float>(juce::jmin(bounds.getWidth(), bounds.getHeight()) - 8);
+                auto icon = juce::Rectangle<float>(size, size).withCentre(bounds.toFloat().getCentre());
+                const auto radius = icon.getWidth() * 0.34f;
+                const auto centre = icon.getCentre().translated(0.0f, icon.getHeight() * 0.08f);
+
+                juce::Path arc;
+                arc.addCentredArc(centre.x, centre.y, radius, radius, 0.0f,
+                                  juce::MathConstants<float>::pi * 0.15f,
+                                  juce::MathConstants<float>::pi * 1.55f, true);
+
+                juce::Path head;
+                const auto tip = centre.getPointOnCircumference(radius, juce::MathConstants<float>::pi * 1.55f);
+                head.addTriangle(tip.x - radius * 0.55f, tip.y - radius * 0.1f,
+                                 tip.x + radius * 0.35f, tip.y - radius * 0.75f,
+                                 tip.x + radius * 0.35f, tip.y + radius * 0.55f);
+
+                if (! isUndo)
+                {
+                    const auto mirror = juce::AffineTransform::scale(-1.0f, 1.0f, centre.x, centre.y);
+                    arc.applyTransform(mirror);
+                    head.applyTransform(mirror);
+                }
+
+                g.strokePath(arc, juce::PathStrokeType(2.0f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+                g.fillPath(head);
                 return;
             }
 
@@ -110,6 +151,9 @@ namespace coolsynth::ui
 
             g.setColour(palette::ledGreen);
             g.drawRect(bounds, 1.0f);
+
+            if (box.hasKeyboardFocus(true))
+                palette::drawFocusRing(g, bounds, 2.0f);
 
             auto arrowZone = juce::Rectangle<float>(static_cast<float>(width - 18),
                                                     0.0f,

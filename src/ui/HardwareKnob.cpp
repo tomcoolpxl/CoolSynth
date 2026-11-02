@@ -19,12 +19,13 @@ namespace coolsynth::ui
                                   float sliderPosProportional,
                                   float rotaryStartAngle,
                                   float rotaryEndAngle,
-                                  juce::Slider&) override
+                                  juce::Slider& slider) override
             {
-                auto bounds = juce::Rectangle<float>(static_cast<float>(x),
-                                                     static_cast<float>(y),
-                                                     static_cast<float>(width),
-                                                     static_cast<float>(height)).reduced(8.0f);
+                const auto outerBounds = juce::Rectangle<float>(static_cast<float>(x),
+                                                                static_cast<float>(y),
+                                                                static_cast<float>(width),
+                                                                static_cast<float>(height));
+                auto bounds = outerBounds.reduced(8.0f);
                 const auto radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) * 0.5f;
                 const auto centre = bounds.getCentre();
                 const auto arcRadius = radius * 0.72f;
@@ -87,6 +88,9 @@ namespace coolsynth::ui
                               radius * 0.24f,
                               radius * 0.24f,
                               1.0f);
+
+                if (slider.hasKeyboardFocus(true))
+                    palette::drawFocusRing(g, outerBounds, 6.0f);
             }
         };
 
@@ -98,10 +102,12 @@ namespace coolsynth::ui
         titleLabel.setText(labelText, juce::dontSendNotification);
         titleLabel.setJustificationType(juce::Justification::centred);
         titleLabel.setColour(juce::Label::textColourId, palette::textPrimary);
-        titleLabel.setFont(juce::FontOptions(15.0f));
+        titleLabel.setFont(juce::FontOptions(13.0f));
         addAndMakeVisible(titleLabel);
 
         knob.setName(labelText);
+        knob.setTitle(labelText);
+        knob.setWantsKeyboardFocus(true);
         addAndMakeVisible(knob);
 
         valueLabel.setText("-", juce::dontSendNotification);
@@ -126,6 +132,12 @@ namespace coolsynth::ui
     void HardwareKnob::setValueText(const juce::String& text)
     {
         valueLabel.setText(text, juce::dontSendNotification);
+    }
+
+    void HardwareKnob::setTooltip(const juce::String& newTooltip)
+    {
+        juce::SettableTooltipClient::setTooltip(newTooltip);
+        knob.setHelpText(newTooltip);
     }
 
     void HardwareKnob::setLearnState(bool armed, const juce::String& badgeText)

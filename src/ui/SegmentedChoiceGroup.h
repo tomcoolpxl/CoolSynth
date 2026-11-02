@@ -41,6 +41,7 @@ namespace coolsynth::ui
 
         void resized() override;
         void paint(juce::Graphics& g) override;
+        void setTooltip(const juce::String& newTooltip) override;
 
         std::function<void(int)> onSelectionChanged;
 

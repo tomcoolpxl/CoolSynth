@@ -195,6 +195,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
   - Added preset regressions that assert full parameter coverage across the factory bank and round-trip every factory preset through the strict wrapped patch-load path.
   - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
 - `TODO.md` now points to the remaining ARP Expansion Phase F manual preset audition and sign-off pass.
+- UI/UX review follow-up completed on 2026-11-02 (see `UI_UX_REVIEW.md` status):
+  - The editor is user-resizable with a fixed aspect ratio: `SynthAudioProcessorEditor` scales a `ContentPanel` that holds every control at the fixed design size, so layout code stays in design pixels. Zoom via right-click menu, Ctrl+plus / Ctrl+minus / Ctrl+0; the standalone persists `uiScalePercent` in the settings store.
+  - Knobs and faders are keyboard-focusable with focus rings; controls carry accessible titles and help text; the Advanced overlay is a keyboard focus container.
+  - `SynthAudioProcessor` owns a snapshot-based `ParameterUndoHistory`: one step per UI gesture, one step per bulk edit through `performUndoableEdit()`, MIDI CC changes excluded. It also tracks the patch name and dirty flag; wrapped processor state is now format version `8` and carries both. The `.cspatch` format stays at `7`.
+  - The preset selector is grouped by category with prev / next steppers and clears whenever the patch is edited.
 - Phase 11 Track A completed on 2026-05-15:
   - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
   - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).

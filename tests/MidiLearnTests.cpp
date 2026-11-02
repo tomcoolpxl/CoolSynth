@@ -1,4 +1,5 @@
 #include <array>
+#include <memory>
 #include <cmath>
 #include <juce_core/juce_core.h>
 #include "midi/MidiLearn.h"
@@ -6,6 +7,7 @@
 #include "midi/MidiMappingEngine.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "plugin/SynthAudioProcessorEditor.h"
+#include "presets/FactoryPresets.h"
 #include "standalone/SettingsStore.h"
 #include "synth/GlobalDelay.h"
 #include "parameters/ParameterIDs.h"
@@ -699,10 +701,232 @@ public:
 
             ControlSizeChecker { *this, "advanced overlay" }.walk(editor);
         }
+
     }
 };
 
 static MidiLearnTests midiLearnTests;
+
+// Editor UX regressions (resizing, keyboard focus, undo, patch identity). Kept in
+// their own runTest() frame: MSVC Debug reserves a stack slot for every
+// block-scoped local of a function, and processors and editors are large.
+class EditorUxTests final : public juce::UnitTest
+{
+public:
+    EditorUxTests() : juce::UnitTest("EditorUx", "UI") {}
+
+    void runTest() override
+    {
+        beginTest("editor_scales_content_uniformly_when_resized");
+        {
+            // The window is user-resizable with a fixed aspect ratio: the content
+            // panel keeps its design size and is scaled to fit the editor bounds, so
+            // every control keeps its design-space geometry at any zoom.
+            auto processorHolder = std::make_unique<SynthAudioProcessor>();
+            auto& processor = *processorHolder;
+            auto editorHolder = std::make_unique<SynthAudioProcessorEditor>(processor);
+            auto& editor = *editorHolder;
+
+            const int designWidth = editor.getWidth();
+            const int designHeight = editor.getHeight();
+            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 1.0f, 0.001f);
+
+            editor.setContentScaleForTesting(0.5f);
+            expectEquals(editor.getWidth(), juce::roundToInt(designWidth * 0.5f));
+            expectEquals(editor.getHeight(), juce::roundToInt(designHeight * 0.5f));
+            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 0.5f, 0.01f);
+
+            editor.setContentScaleForTesting(1.5f);
+            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 1.5f, 0.01f);
+
+            // Out-of-range requests are clamped to the resize limits.
+            editor.setContentScaleForTesting(9.0f);
+            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 2.0f, 0.01f);
+            editor.setContentScaleForTesting(0.1f);
+            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 0.5f, 0.01f);
+
+            // A host-driven resize that breaks the aspect ratio still scales uniformly.
+            editor.setSize(designWidth, designHeight * 2);
+            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 1.0f, 0.01f);
+
+            expect(editor.isResizable());
+        }
+
+        beginTest("editor_controls_are_keyboard_focusable_and_named");
+        {
+            // Every slider and button must be reachable with Tab and expose an
+            // accessible name (title or button text) for screen readers.
+            struct FocusChecker
+            {
+                juce::UnitTest& test;
+
+                void walk(const juce::Component& component) const
+                {
+                    for (auto* child : component.getChildren())
+                    {
+                        if (child == nullptr || ! child->isVisible())
+                            continue;
+
+                        if (auto* slider = dynamic_cast<juce::Slider*>(child))
+                        {
+                            test.expect(slider->getWantsKeyboardFocus(),
+                                        "slider without keyboard focus: " + slider->getName());
+                            test.expect(slider->getTitle().isNotEmpty(),
+                                        "slider without accessible title: " + slider->getName());
+                        }
+                        else if (auto* button = dynamic_cast<juce::Button*>(child))
+                        {
+                            // A disabled button (Undo with nothing to undo) is not focusable.
+                            test.expect(button->getWantsKeyboardFocus() || ! button->isEnabled(),
+                                        "button without keyboard focus: " + button->getName());
+                            test.expect(button->getTitle().isNotEmpty() || button->getButtonText().isNotEmpty(),
+                                        "button without accessible name: " + button->getName());
+                        }
+                        else if (auto* box = dynamic_cast<juce::ComboBox*>(child))
+                        {
+                            test.expect(box->getTitle().isNotEmpty(),
+                                        "combo box without accessible title: " + box->getName());
+                        }
+
+                        walk(*child);
+                    }
+                }
+            };
+
+            auto processorHolder = std::make_unique<SynthAudioProcessor>();
+            auto& processor = *processorHolder;
+            auto editorHolder = std::make_unique<SynthAudioProcessorEditor>(processor);
+            auto& editor = *editorHolder;
+            FocusChecker { *this }.walk(editor);
+
+            editor.setArpAdvancedOverlayVisibleForTesting(true);
+            FocusChecker { *this }.walk(editor);
+        }
+
+        beginTest("processor_undo_and_redo_follow_gestures_and_bulk_edits");
+        {
+            auto processorHolder = std::make_unique<SynthAudioProcessor>();
+            auto& processor = *processorHolder;
+            auto& state = processor.getValueTreeState();
+            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            auto* resonance = state.getParameter(coolsynth::parameters::ids::filterResonance);
+            expect(cutoff != nullptr && resonance != nullptr);
+            if (cutoff == nullptr || resonance == nullptr)
+                return;
+
+            expect(! processor.canUndo());
+            expect(! processor.isPatchDirty());
+            expectEquals(processor.getPatchName(), juce::String("Init"));
+
+            // A gesture that changes nothing leaves no undo step.
+            cutoff->beginChangeGesture();
+            cutoff->endChangeGesture();
+            expect(! processor.canUndo());
+
+            // One UI gesture is one undo step and marks the patch dirty.
+            const float cutoffBefore = cutoff->getValue();
+            cutoff->beginChangeGesture();
+            cutoff->setValueNotifyingHost(0.25f);
+            cutoff->setValueNotifyingHost(0.3f);
+            cutoff->endChangeGesture();
+            expect(processor.canUndo());
+            expect(processor.isPatchDirty());
+            expectEquals(processor.getUndoLabel(), cutoff->getName(32));
+
+            expect(processor.undo());
+            expectWithinAbsoluteError(cutoff->getValue(), cutoffBefore, 0.0001f);
+            expect(! processor.isPatchDirty());
+            expect(processor.canRedo());
+
+            expect(processor.redo());
+            expectWithinAbsoluteError(cutoff->getValue(), 0.3f, 0.0001f);
+            expect(processor.isPatchDirty());
+
+            // A bulk edit (init, preset, load) is one step regardless of how many
+            // parameters it touches, and the identity set afterwards is restored
+            // together with the values.
+            resonance->beginChangeGesture();
+            resonance->setValueNotifyingHost(0.9f);
+            resonance->endChangeGesture();
+
+            processor.performUndoableEdit("Init patch", [&] { processor.resetAutomatableParametersToDefaults(); });
+            processor.setPatchIdentity("Init", false);
+            expectWithinAbsoluteError(cutoff->getValue(), cutoff->getDefaultValue(), 0.0001f);
+            expectWithinAbsoluteError(resonance->getValue(), resonance->getDefaultValue(), 0.0001f);
+            expectEquals(processor.getUndoLabel(), juce::String("Init patch"));
+            expect(! processor.isPatchDirty());
+
+            expect(processor.undo());
+            expectWithinAbsoluteError(cutoff->getValue(), 0.3f, 0.0001f);
+            expectWithinAbsoluteError(resonance->getValue(), 0.9f, 0.0001f);
+            expect(processor.isPatchDirty());
+
+            // A new edit after undo discards the redo branch.
+            cutoff->beginChangeGesture();
+            cutoff->setValueNotifyingHost(0.6f);
+            cutoff->endChangeGesture();
+            expect(! processor.canRedo());
+        }
+
+        beginTest("processor_state_round_trips_patch_identity");
+        {
+            auto sourceHolder = std::make_unique<SynthAudioProcessor>();
+            auto& source = *sourceHolder;
+            source.setPatchIdentity("Glass Pad", true);
+
+            juce::MemoryBlock stateData;
+            source.getStateInformation(stateData);
+
+            auto targetHolder = std::make_unique<SynthAudioProcessor>();
+            auto& target = *targetHolder;
+            target.setStateInformation(stateData.getData(), static_cast<int>(stateData.getSize()));
+            expectEquals(target.getPatchName(), juce::String("Glass Pad"));
+            expect(target.isPatchDirty());
+            expect(! target.canUndo());
+        }
+
+        beginTest("editor_preset_selector_clears_on_edit_and_follows_undo");
+        {
+            auto processorHolder = std::make_unique<SynthAudioProcessor>();
+            auto& processor = *processorHolder;
+            auto editorHolder = std::make_unique<SynthAudioProcessorEditor>(processor);
+            auto& editor = *editorHolder;
+            auto& state = processor.getValueTreeState();
+
+            expectEquals(editor.getPatchNameTextForTesting(), juce::String("Init"));
+            expectEquals(editor.getSelectedPresetIdForTesting(), 0);
+
+            const auto& preset = coolsynth::presets::getFactoryPreset(0);
+            editor.selectPresetForTesting(1);
+            expectEquals(editor.getPatchNameTextForTesting(), juce::String(preset.name));
+            expectEquals(editor.getSelectedPresetIdForTesting(), 1);
+            expect(processor.canUndo());
+
+            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            expect(cutoff != nullptr);
+            if (cutoff != nullptr)
+            {
+                cutoff->beginChangeGesture();
+                cutoff->setValueNotifyingHost(cutoff->getValue() > 0.5f ? 0.1f : 0.9f);
+                cutoff->endChangeGesture();
+            }
+
+            editor.refreshPatchIdentityForTesting();
+            expectEquals(editor.getPatchNameTextForTesting(), juce::String(preset.name) + " *");
+            expectEquals(editor.getSelectedPresetIdForTesting(), 0);
+
+            editor.performUndoForTesting();
+            expectEquals(editor.getPatchNameTextForTesting(), juce::String(preset.name));
+            expectEquals(editor.getSelectedPresetIdForTesting(), 1);
+
+            editor.performUndoForTesting();
+            expectEquals(editor.getPatchNameTextForTesting(), juce::String("Init"));
+            expectEquals(editor.getSelectedPresetIdForTesting(), 0);
+        }
+    }
+};
+
+static EditorUxTests editorUxTests;
 
 int main()
 {

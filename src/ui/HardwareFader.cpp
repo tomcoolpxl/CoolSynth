@@ -35,10 +35,11 @@ namespace coolsynth::ui
                     return;
                 }
 
-                auto bounds = juce::Rectangle<float>(static_cast<float>(x),
-                                                     static_cast<float>(y),
-                                                     static_cast<float>(width),
-                                                     static_cast<float>(height)).reduced(10.0f, 8.0f);
+                const auto outerBounds = juce::Rectangle<float>(static_cast<float>(x),
+                                                                static_cast<float>(y),
+                                                                static_cast<float>(width),
+                                                                static_cast<float>(height));
+                auto bounds = outerBounds.reduced(10.0f, 8.0f);
                 const auto centreX = bounds.getCentreX();
                 const auto trackWidth = juce::jmax(6.0f, bounds.getWidth() * 0.12f);
                 const auto trackTop = bounds.getY() + bounds.getHeight() * 0.06f;
@@ -94,6 +95,9 @@ namespace coolsynth::ui
                               trackWidth * 0.76f,
                               trackWidth * 0.76f,
                               1.0f);
+
+                if (slider.hasKeyboardFocus(true))
+                    palette::drawFocusRing(g, outerBounds, 6.0f);
             }
         };
 
@@ -105,10 +109,12 @@ namespace coolsynth::ui
         titleLabel.setText(labelText, juce::dontSendNotification);
         titleLabel.setJustificationType(juce::Justification::centred);
         titleLabel.setColour(juce::Label::textColourId, palette::textPrimary);
-        titleLabel.setFont(juce::FontOptions(15.0f));
+        titleLabel.setFont(juce::FontOptions(13.0f));
         addAndMakeVisible(titleLabel);
 
         fader.setName(labelText);
+        fader.setTitle(labelText);
+        fader.setWantsKeyboardFocus(true);
         addAndMakeVisible(fader);
 
         valueLabel.setText("-", juce::dontSendNotification);
@@ -131,6 +137,12 @@ namespace coolsynth::ui
     void HardwareFader::setValueText(const juce::String& text)
     {
         valueLabel.setText(text, juce::dontSendNotification);
+    }
+
+    void HardwareFader::setTooltip(const juce::String& newTooltip)
+    {
+        juce::SettableTooltipClient::setTooltip(newTooltip);
+        fader.setHelpText(newTooltip);
     }
 
     void HardwareFader::setLearnState(bool armed, const juce::String& badgeText)

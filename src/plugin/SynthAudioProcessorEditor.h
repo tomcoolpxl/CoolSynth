@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <functional>
 #include <vector>
 
 #include <juce_gui_basics/juce_gui_basics.h>
@@ -45,6 +46,17 @@ public:
     juce::String getArpAdvancedSummaryTextForTesting() const;
     void setArpAdvancedOverlayVisibleForTesting(bool shouldBeVisible);
     void refreshArpUiForTesting();
+
+    bool keyPressed(const juce::KeyPress& key) override;
+
+    float getContentScaleForTesting() const noexcept { return contentScale; }
+    void setContentScaleForTesting(float scale) { setContentScale(scale); }
+    juce::String getPatchNameTextForTesting() const { return patchNameLabel.getText(); }
+    int getSelectedPresetIdForTesting() const { return presetSelector.getSelectedId(); }
+    void selectPresetForTesting(int presetId) { presetSelector.setSelectedId(presetId, juce::sendNotificationSync); }
+    void refreshPatchIdentityForTesting() { refreshPatchIdentityDisplay(); }
+    void performUndoForTesting() { performUndo(); }
+    void performRedoForTesting() { performRedo(); }
 
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
@@ -183,7 +195,39 @@ private:
     SynthAudioProcessor& processor;
     ParameterRefs parameterRefs;
 
+    // Hosts every control at the fixed design size. The editor itself is
+    // user-resizable and scales this panel uniformly to fit its bounds.
+    class ContentPanel final : public juce::Component
+    {
+    public:
+        std::function<void()> onLayout;
+        bool drawsPluginFooter = false;
+
+        void paint(juce::Graphics& g) override;
+        void resized() override
+        {
+            if (onLayout != nullptr)
+                onLayout();
+        }
+    };
+
+    ContentPanel contentPanel;
+    float contentScale = 1.0f;
+    bool isStandaloneEditor = false;
+    bool initialFocusRequested = false;
+
     std::unique_ptr<juce::Drawable> titleLogoDrawable;
+    juce::Label oscATagLabel;
+    juce::Label oscBTagLabel;
+    juce::Label patchNameLabel;
+    juce::TextButton undoButton { "Undo" };
+    juce::TextButton redoButton { "Redo" };
+    juce::TextButton presetPrevButton { "<" };
+    juce::TextButton presetNextButton { ">" };
+    juce::String lastPatchNameShown;
+    bool lastPatchDirtyShown = false;
+    bool lastCanUndoShown = false;
+    bool lastCanRedoShown = false;
     juce::Label midiLearnStatusLabel;
     juce::Label pluginStatusLabel;
     juce::Label buildInfoLabel;
@@ -217,7 +261,7 @@ private:
     };
     coolsynth::ui::HardwareKnob oscAOctaveKnob { "Octave" };
     coolsynth::ui::HardwareKnob oscAFineKnob { "Fine" };
-    coolsynth::ui::HardwareKnob oscAPwKnob { "Pulse W" };
+    coolsynth::ui::HardwareKnob oscAPwKnob { "PW" };
     coolsynth::ui::LedToggleButton oscASyncToggle { "Sync" };
     coolsynth::ui::SegmentedChoiceGroup oscBWaveChoice {
         "Wave",
@@ -231,13 +275,13 @@ private:
     };
     coolsynth::ui::HardwareKnob oscBOctaveKnob { "Octave" };
     coolsynth::ui::HardwareKnob oscBFineKnob { "Fine" };
-    coolsynth::ui::HardwareKnob oscBPwKnob { "Pulse W" };
+    coolsynth::ui::HardwareKnob oscBPwKnob { "PW" };
     coolsynth::ui::LedToggleButton oscBLoFreqToggle { "Lo Freq" };
     coolsynth::ui::HardwareKnob mixOscAKnob { "Osc A" };
     coolsynth::ui::HardwareKnob mixOscBKnob { "Osc B" };
     coolsynth::ui::HardwareKnob mixNoiseKnob { "Noise" };
     coolsynth::ui::HardwareKnob fltCutoffKnob { "Cutoff" };
-    coolsynth::ui::HardwareKnob fltResKnob { "Resonance" };
+    coolsynth::ui::HardwareKnob fltResKnob { "Reso" };
     coolsynth::ui::HardwareKnob fltEnvAmtKnob { "Env Amt" };
     coolsynth::ui::SegmentedChoiceGroup fltKeyTrkChoice {
         "Key Trk",
@@ -265,9 +309,9 @@ private:
             { "Sqr", 2, coolsynth::ui::SegmentedChoiceGroup::Icon::square },
             { "Sin", 3, coolsynth::ui::SegmentedChoiceGroup::Icon::sine },
         },
-        4
+        2
     };
-    coolsynth::ui::HardwareKnob lfoMwDepKnob { "MW->Dep" };
+    coolsynth::ui::HardwareKnob lfoMwDepKnob { "MW Dep" };
     coolsynth::ui::HardwareKnob lfoPitchKnob { "->Pitch" };
     coolsynth::ui::HardwareKnob lfoPwKnob { "->PW" };
     coolsynth::ui::HardwareKnob lfoCutoffKnob { "->Cutoff" };
@@ -296,9 +340,9 @@ private:
         },
         1
     };
-    coolsynth::ui::HardwareKnob perfPbRangeKnob { "PB Range" };
+    coolsynth::ui::HardwareKnob perfPbRangeKnob { "Bend" };
     coolsynth::ui::HardwareKnob perfVintageKnob { "Vintage" };
-    coolsynth::ui::HardwareKnob perfPanKnob { "Pan Spread" };
+    coolsynth::ui::HardwareKnob perfPanKnob { "Spread" };
     coolsynth::ui::HardwareKnob perfVelAmpKnob { "Vel->Amp" };
     coolsynth::ui::HardwareKnob perfVelFltKnob { "Vel->Flt" };
     coolsynth::ui::LedToggleButton arpOnToggle { "Arp On" };
@@ -460,6 +504,14 @@ private:
     void setupStandaloneMode(bool isStandalone);
     void setupTooltipWindow();
     void setupPresetSelector();
+    void setupPatchIdentityControls();
+    void layoutContent();
+    void setContentScale(float newScale);
+    void showViewMenu(juce::Point<int> screenPosition);
+    void refreshPatchIdentityDisplay();
+    void stepPreset(int delta);
+    void performUndo();
+    void performRedo();
     void applyTooltips();
     void applySelectedPreset();
     void setArpAdvancedOverlayVisible(bool shouldBeVisible);

@@ -95,7 +95,7 @@ private:
         },
         4
     };
-    coolsynth::ui::HardwareKnob ratchetChanceKnob { "Rat Ch" };
+    coolsynth::ui::HardwareKnob ratchetChanceKnob { "Ratchet %" };
     coolsynth::ui::SegmentedChoiceGroup accentChoice {
         "Accent Every",
         {

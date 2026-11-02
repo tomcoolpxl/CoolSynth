@@ -19,9 +19,21 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    inline constexpr int processorStateFormatVersion = 7;
+    inline constexpr int processorStateFormatVersion = 8;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
+    inline constexpr char processorStatePatchNameProperty[] = "patchName";
+    inline constexpr char processorStatePatchDirtyProperty[] = "patchDirty";
+
+    // Sets an atomic flag for the current scope and restores the previous value after.
+    struct AtomicFlagScope
+    {
+        AtomicFlagScope(std::atomic<bool>& flagToSet, bool value) noexcept
+            : flag(flagToSet), previous(flagToSet.exchange(value)) {}
+        ~AtomicFlagScope() noexcept { flag.store(previous); }
+        std::atomic<bool>& flag;
+        bool previous;
+    };
     inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
 
     std::optional<coolsynth::synth::EngineMidiEvent> makeEngineMidiEvent(const juce::MidiMessage& message,
@@ -124,9 +136,15 @@ SynthAudioProcessor::SynthAudioProcessor()
     , choiceParams(bindChoicePointers(parameters))
     , mappedActionBridge(*this)
 {
+    for (auto* parameter : getParameters())
+        parameter->addListener(this);
 }
 
-SynthAudioProcessor::~SynthAudioProcessor() = default;
+SynthAudioProcessor::~SynthAudioProcessor()
+{
+    for (auto* parameter : getParameters())
+        parameter->removeListener(this);
+}
 
 void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
@@ -270,8 +288,18 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         if (parameterStateXml == nullptr)
             return;
 
-        if (applyParameterStateXml(*parameterStateXml))
+        const AtomicFlagScope applying(applyingPatch, true);
+        suppressGestureSnapshots = true;
+        const bool applied = applyParameterStateXml(*parameterStateXml);
+        suppressGestureSnapshots = false;
+
+        if (applied)
+        {
             setLearnedMidiBindings(parseLearnedMidiBindingsXml(*xml));
+            setPatchIdentity(xml->getStringAttribute(processorStatePatchNameProperty, "Init"),
+                             xml->getBoolAttribute(processorStatePatchDirtyProperty, false));
+            undoHistory.clear();
+        }
     }
 }
 
@@ -287,6 +315,8 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
     root->setAttribute(processorStateVersionProperty, processorStateFormatVersion);
     root->setAttribute(processorStateProductProperty, "CoolSynth");
     root->setAttribute(processorStateStateTypeProperty, parameters.state.getType().toString());
+    root->setAttribute(processorStatePatchNameProperty, getPatchName());
+    root->setAttribute(processorStatePatchDirtyProperty, isPatchDirty());
 
     auto parameterState = const_cast<SynthAudioProcessor*> (this)->parameters.copyState();
     root->addChildElement(parameterState.createXml().release());
@@ -401,6 +431,127 @@ void SynthAudioProcessor::resetAutomatableParametersToDefaults()
     for (auto* parameterBase : getParameters())
         if (auto* parameter = dynamic_cast<juce::RangedAudioParameter*>(parameterBase))
             applyNormalizedParameterValue(*parameter, parameter->getDefaultValue());
+}
+
+// ---- Undo and patch identity ---------------------------------------------------
+
+void SynthAudioProcessor::parameterValueChanged(int, float)
+{
+    if (! applyingPatch.load(std::memory_order_relaxed))
+        patchDirty.store(true, std::memory_order_relaxed);
+}
+
+void SynthAudioProcessor::parameterGestureChanged(int parameterIndex, bool gestureIsStarting)
+{
+    // Gestures come from this plugin's own UI, so they arrive on the message thread;
+    // anything else (and the bulk edits below) must not open snapshots.
+    if (suppressGestureSnapshots || ! juce::MessageManager::existsAndIsCurrentThread())
+        return;
+
+    if (gestureIsStarting)
+    {
+        if (activeGestureCount++ == 0)
+        {
+            juce::String label;
+            if (auto* parameter = getParameters()[parameterIndex])
+                label = parameter->getName(32);
+            undoHistory.beginEdit(captureSnapshot(label));
+        }
+        return;
+    }
+
+    if (activeGestureCount > 0 && --activeGestureCount == 0)
+        undoHistory.commitEdit(captureNormalisedValues());
+}
+
+std::vector<float> SynthAudioProcessor::captureNormalisedValues() const
+{
+    std::vector<float> values;
+    const auto& allParameters = getParameters();
+    values.reserve(static_cast<size_t>(allParameters.size()));
+    for (auto* parameter : allParameters)
+        values.push_back(parameter->getValue());
+    return values;
+}
+
+coolsynth::plugin::ParameterUndoHistory::Snapshot SynthAudioProcessor::captureSnapshot(juce::String label) const
+{
+    return { std::move(label), captureNormalisedValues(), getPatchName(), isPatchDirty() };
+}
+
+void SynthAudioProcessor::restoreSnapshot(const coolsynth::plugin::ParameterUndoHistory::Snapshot& snapshot)
+{
+    const AtomicFlagScope applying(applyingPatch, true);
+    const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
+
+    const auto& allParameters = getParameters();
+    for (int i = 0; i < allParameters.size() && i < static_cast<int>(snapshot.normalisedValues.size()); ++i)
+    {
+        auto* parameter = allParameters[i];
+        const float value = snapshot.normalisedValues[static_cast<size_t>(i)];
+        if (! juce::approximatelyEqual(parameter->getValue(), value))
+        {
+            parameter->beginChangeGesture();
+            parameter->setValueNotifyingHost(value);
+            parameter->endChangeGesture();
+        }
+    }
+
+    setPatchIdentity(snapshot.patchName, snapshot.patchDirty);
+}
+
+void SynthAudioProcessor::performUndoableEdit(const juce::String& label, const std::function<void()>& edit)
+{
+    jassert(juce::MessageManager::existsAndIsCurrentThread());
+
+    // A gesture that is still open would otherwise swallow this edit into its step.
+    if (undoHistory.isEditPending())
+        undoHistory.commitEdit(captureNormalisedValues());
+    activeGestureCount = 0;
+
+    undoHistory.beginEdit(captureSnapshot(label));
+    {
+        const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
+        edit();
+    }
+    undoHistory.commitEdit(captureNormalisedValues());
+}
+
+bool SynthAudioProcessor::undo()
+{
+    if (! undoHistory.canUndo())
+        return false;
+
+    if (undoHistory.isEditPending())
+        undoHistory.commitEdit(captureNormalisedValues());
+    activeGestureCount = 0;
+
+    restoreSnapshot(undoHistory.popUndo(captureSnapshot({})));
+    return true;
+}
+
+bool SynthAudioProcessor::redo()
+{
+    if (! undoHistory.canRedo())
+        return false;
+
+    restoreSnapshot(undoHistory.popRedo(captureSnapshot({})));
+    return true;
+}
+
+void SynthAudioProcessor::setPatchIdentity(juce::String name, bool dirty)
+{
+    {
+        const juce::ScopedLock lock(patchIdentityLock);
+        patchName = std::move(name);
+    }
+    patchDirty.store(dirty, std::memory_order_relaxed);
+}
+
+juce::String SynthAudioProcessor::getPatchName() const
+{
+    const juce::ScopedLock lock(patchIdentityLock);
+    return patchName;
 }
 
 bool SynthAudioProcessor::setActiveControllerProfile(juce::StringRef profileId)
@@ -583,6 +734,7 @@ void SynthAudioProcessor::applyParameterChange(const coolsynth::midi::MappedPara
     if (change.parameter == nullptr)
         return;
 
+    const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
     change.parameter->beginChangeGesture();
     change.parameter->setValueNotifyingHost(change.normalizedValue);
     change.parameter->endChangeGesture();

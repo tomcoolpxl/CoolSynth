@@ -73,9 +73,15 @@ namespace
                           >= arpTopRowHeight + arpRowGap + arpMidRowHeight + arpStatusRowHeight,
                       "Deck 2 is too short for the arpeggiator rows");
 
+        // User-resizable window: the fixed design size above is scaled uniformly
+        // between these limits, in steps for the keyboard and menu zoom.
+        inline constexpr float minContentScale       = 0.5f;
+        inline constexpr float maxContentScale       = 2.0f;
+        inline constexpr float contentScaleStep      = 0.25f;
+
         // Title-row sub-widths.
         inline constexpr int logoAreaWidth           = 248;
-        inline constexpr int visualizerLeftGap       = 40;
+        inline constexpr int visualizerLeftGap       = 16;
         inline constexpr int visualizerWidth         = 372;
         inline constexpr int presetSelectorWidth     = 180;
         inline constexpr int presetSelectorHeight    = 26;
@@ -201,18 +207,31 @@ SynthAudioProcessorEditor::SynthAudioProcessorEditor(SynthAudioProcessor& inProc
     , pianoBar(processor.getKeyboardState())
 {
     const bool isStandalone = juce::JUCEApplicationBase::isStandaloneApp();
+    isStandaloneEditor = isStandalone;
+
+    // Keyboard shortcuts (undo, redo, zoom) are handled here; key presses bubble up
+    // from whichever control has focus.
+    setWantsKeyboardFocus(true);
+
+    contentPanel.drawsPluginFooter = ! isStandalone;
+    contentPanel.onLayout = [this] { layoutContent(); };
+    contentPanel.addMouseListener(this, true);
+    juce::Component::addAndMakeVisible(contentPanel);
+
     setupParameterRefs();
     setupVisualsAndLabels(isStandalone);
     setupControlAttachments();
     registerLearnableControls();
     setupActionButtons();
     setupPresetSelector();
+    setupPatchIdentityControls();
     setupStandaloneMode(isStandalone);
     setupTooltipWindow();
     applyTooltips();
     startTimerHz(24);
     refreshMidiLearnVisuals();
     refreshValueDisplays();
+    refreshPatchIdentityDisplay();
 }
 
 void SynthAudioProcessorEditor::setupParameterRefs()
@@ -318,35 +337,53 @@ void SynthAudioProcessorEditor::setupVisualsAndLabels(bool isStandalone)
     titleLogoDrawable = juce::Drawable::createFromImageData(BinaryData::coolsynthlogo2_png,
                                                             BinaryData::coolsynthlogo2_pngSize);
     if (titleLogoDrawable != nullptr)
-        addAndMakeVisible(*titleLogoDrawable);
+        contentPanel.addAndMakeVisible(*titleLogoDrawable);
 
-    addAndMakeVisible(visualizer);
+    contentPanel.addAndMakeVisible(visualizer);
 
     midiLearnStatusLabel.setText("", juce::dontSendNotification);
     midiLearnStatusLabel.setFont(juce::FontOptions("Arial", 14.0f, juce::Font::bold));
     midiLearnStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::ledTextOff);
     midiLearnStatusLabel.setJustificationType(juce::Justification::centredLeft);
-    addAndMakeVisible(midiLearnStatusLabel);
+    contentPanel.addAndMakeVisible(midiLearnStatusLabel);
+
+    patchNameLabel.setFont(juce::FontOptions(14.0f, juce::Font::bold));
+    patchNameLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textPrimary);
+    patchNameLabel.setJustificationType(juce::Justification::centredLeft);
+    contentPanel.addAndMakeVisible(patchNameLabel);
+
+    // "A" / "B" tags sit in the oscillator section's left inset beside each row.
+    for (auto* tag : { &oscATagLabel, &oscBTagLabel })
+    {
+        tag->setFont(juce::FontOptions(11.0f, juce::Font::bold));
+        tag->setColour(juce::Label::textColourId, coolsynth::ui::palette::ledTextOff);
+        tag->setJustificationType(juce::Justification::centred);
+        tag->setBorderSize(juce::BorderSize<int>(0));
+        tag->setInterceptsMouseClicks(false, false);
+        contentPanel.addAndMakeVisible(*tag);
+    }
+    oscATagLabel.setText("A", juce::dontSendNotification);
+    oscBTagLabel.setText("B", juce::dontSendNotification);
 
     pluginStatusLabel.setText("Plugin Build", juce::dontSendNotification);
     pluginStatusLabel.setFont(juce::FontOptions(12.0f));
     pluginStatusLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
     pluginStatusLabel.setJustificationType(juce::Justification::centredLeft);
     pluginStatusLabel.setVisible(!isStandalone);
-    addAndMakeVisible(pluginStatusLabel);
+    contentPanel.addAndMakeVisible(pluginStatusLabel);
 
     buildInfoLabel.setText(coolsynth::build::getBuildIdentity(), juce::dontSendNotification);
     buildInfoLabel.setFont(juce::FontOptions(13.0f));
     buildInfoLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textPrimary);
     buildInfoLabel.setJustificationType(juce::Justification::centredRight);
     buildInfoLabel.setVisible(!isStandalone);
-    addAndMakeVisible(buildInfoLabel);
+    contentPanel.addAndMakeVisible(buildInfoLabel);
 
     arpPatternLabel.setText("Pattern", juce::dontSendNotification);
     arpPatternLabel.setFont(juce::FontOptions(15.0f));
     arpPatternLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textPrimary);
     arpPatternLabel.setJustificationType(juce::Justification::centred);
-    addAndMakeVisible(arpPatternLabel);
+    contentPanel.addAndMakeVisible(arpPatternLabel);
 
     coolsynth::ui::applyGreenComboBoxStyle(arpPatternChoice);
     arpPatternChoice.setJustificationType(juce::Justification::centredLeft);
@@ -367,12 +404,12 @@ void SynthAudioProcessorEditor::setupVisualsAndLabels(bool isStandalone)
     arpAdvancedSummaryLabel.setColour(juce::Label::textColourId, coolsynth::ui::palette::textSecondary);
     arpAdvancedSummaryLabel.setJustificationType(juce::Justification::centredLeft);
     arpAdvancedSummaryLabel.setInterceptsMouseClicks(false, false);
-    addAndMakeVisible(arpAdvancedSummaryLabel);
+    contentPanel.addAndMakeVisible(arpAdvancedSummaryLabel);
 
     arpAdvancedOverlay = std::make_unique<ArpAdvancedOverlay>(processor.getValueTreeState(),
                                                               isStandalone);
     arpAdvancedOverlay->setCloseCallback([this] { setArpAdvancedOverlayVisible(false); });
-    addChildComponent(*arpAdvancedOverlay);
+    contentPanel.addChildComponent(*arpAdvancedOverlay);
 }
 
 void SynthAudioProcessorEditor::setupControlAttachments()
@@ -380,28 +417,30 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     namespace ids = coolsynth::parameters::ids;
     auto& apvts = processor.getValueTreeState();
 
-    addAndMakeVisible(oscSection);
-    addAndMakeVisible(mixSection);
-    addAndMakeVisible(fltSection);
-    addAndMakeVisible(envSection);
-    addAndMakeVisible(lfoSection);
-    addAndMakeVisible(pmodSection);
-    addAndMakeVisible(perfSection);
-    addAndMakeVisible(arpSection);
-    addAndMakeVisible(drvSection);
-    addAndMakeVisible(choSection);
-    addAndMakeVisible(dlySection);
-    addAndMakeVisible(revSection);
-    addAndMakeVisible(outSection);
-    addAndMakeVisible(macrosSection);
-    addAndMakeVisible(phaserSection);
-    addAndMakeVisible(compressorSection);
+    contentPanel.addAndMakeVisible(oscSection);
+    contentPanel.addAndMakeVisible(mixSection);
+    contentPanel.addAndMakeVisible(fltSection);
+    contentPanel.addAndMakeVisible(envSection);
+    contentPanel.addAndMakeVisible(lfoSection);
+    contentPanel.addAndMakeVisible(pmodSection);
+    contentPanel.addAndMakeVisible(perfSection);
+    contentPanel.addAndMakeVisible(arpSection);
+    contentPanel.addAndMakeVisible(drvSection);
+    contentPanel.addAndMakeVisible(choSection);
+    contentPanel.addAndMakeVisible(dlySection);
+    contentPanel.addAndMakeVisible(revSection);
+    contentPanel.addAndMakeVisible(outSection);
+    contentPanel.addAndMakeVisible(macrosSection);
+    contentPanel.addAndMakeVisible(phaserSection);
+    contentPanel.addAndMakeVisible(compressorSection);
+    oscATagLabel.toFront(false);
+    oscBTagLabel.toFront(false);
 
     auto addSliderControl = [this, &apvts](auto& control,
                                            std::unique_ptr<SliderAttachment>& attachment,
                                            const char* parameterId)
     {
-        addAndMakeVisible(control);
+        contentPanel.addAndMakeVisible(control);
         attachment = std::make_unique<SliderAttachment>(apvts, parameterId, control.slider());
     };
 
@@ -409,7 +448,7 @@ void SynthAudioProcessorEditor::setupControlAttachments()
                                            std::unique_ptr<ButtonAttachment>& attachment,
                                            const char* parameterId)
     {
-        addAndMakeVisible(control);
+        contentPanel.addAndMakeVisible(control);
         attachment = std::make_unique<ButtonAttachment>(apvts, parameterId, control.button());
     };
 
@@ -437,13 +476,13 @@ void SynthAudioProcessorEditor::setupControlAttachments()
         attachment->sendInitialUpdate();
     };
 
-    addAndMakeVisible(oscAWaveChoice);
+    contentPanel.addAndMakeVisible(oscAWaveChoice);
     attachChoiceControl(oscAWaveChoice, oscAWaveAttachment, parameterRefs.oscAWave);
     addSliderControl(oscAOctaveKnob, oscAOctaveAttachment, ids::oscAOctave);
     addSliderControl(oscAFineKnob, oscAFineAttachment, ids::oscAFineCents);
     addSliderControl(oscAPwKnob, oscAPwAttachment, ids::oscAPulseWidth);
     addToggleControl(oscASyncToggle, oscASyncAttachment, ids::oscASyncEnabled);
-    addAndMakeVisible(oscBWaveChoice);
+    contentPanel.addAndMakeVisible(oscBWaveChoice);
     attachChoiceControl(oscBWaveChoice, oscBWaveAttachment, parameterRefs.oscBWave);
     addSliderControl(oscBOctaveKnob, oscBOctaveAttachment, ids::oscBOctave);
     addSliderControl(oscBFineKnob, oscBFineAttachment, ids::oscBFineCents);
@@ -455,7 +494,7 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addSliderControl(fltCutoffKnob, fltCutoffAttachment, ids::filterCutoffHz);
     addSliderControl(fltResKnob, fltResAttachment, ids::filterResonance);
     addSliderControl(fltEnvAmtKnob, fltEnvAmtAttachment, ids::filterEnvAmount);
-    addAndMakeVisible(fltKeyTrkChoice);
+    contentPanel.addAndMakeVisible(fltKeyTrkChoice);
     attachChoiceControl(fltKeyTrkChoice, fltKeyTrkAttachment, parameterRefs.fltKeyTrk);
     addSliderControl(fEnvAKnob, fEnvAAttachment, ids::filterAttackMs);
     addSliderControl(fEnvDKnob, fEnvDAttachment, ids::filterDecayMs);
@@ -466,7 +505,7 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addSliderControl(aEnvSKnob, aEnvSAttachment, ids::ampSustain);
     addSliderControl(aEnvRKnob, aEnvRAttachment, ids::ampReleaseMs);
     addSliderControl(lfoRateKnob, lfoRateAttachment, ids::lfoRateHz);
-    addAndMakeVisible(lfoWaveChoice);
+    contentPanel.addAndMakeVisible(lfoWaveChoice);
     attachChoiceControl(lfoWaveChoice, lfoWaveAttachment, parameterRefs.lfoWave);
     addSliderControl(lfoMwDepKnob, lfoMwDepAttachment, ids::modWheelToLfoDepth);
     addSliderControl(lfoPitchKnob, lfoPitchAttachment, ids::lfoToOscPitch);
@@ -479,9 +518,9 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addSliderControl(pmodEPwKnob, pmodEPwAttachment, ids::polyModEnvToPulseWidth);
     addSliderControl(pmodECutoffKnob, pmodECutoffAttachment, ids::polyModEnvToFilterCutoff);
     addSliderControl(perfGlideKnob, perfGlideAttachment, ids::glideTimeMs);
-    addAndMakeVisible(perfModeChoice);
+    contentPanel.addAndMakeVisible(perfModeChoice);
     attachChoiceControl(perfModeChoice, perfModeAttachment, parameterRefs.perfMode);
-    addAndMakeVisible(perfPrioChoice);
+    contentPanel.addAndMakeVisible(perfPrioChoice);
     attachChoiceControl(perfPrioChoice, perfPrioAttachment, parameterRefs.perfPrio);
     addSliderControl(perfPbRangeKnob, perfPbRangeAttachment, ids::pitchBendRangeSemitones);
     addSliderControl(perfVintageKnob, perfVintageAttachment, ids::vintageAmount);
@@ -489,11 +528,11 @@ void SynthAudioProcessorEditor::setupControlAttachments()
     addSliderControl(perfVelAmpKnob, perfVelAmpAttachment, ids::velocityToAmp);
     addSliderControl(perfVelFltKnob, perfVelFltAttachment, ids::velocityToFilter);
     addToggleControl(arpOnToggle, arpOnAttachment, ids::arpEnabled);
-    addAndMakeVisible(arpRateChoice);
+    contentPanel.addAndMakeVisible(arpRateChoice);
     attachChoiceControl(arpRateChoice, arpRateAttachment, parameterRefs.arpRate);
-    addAndMakeVisible(arpPatternChoice);
+    contentPanel.addAndMakeVisible(arpPatternChoice);
     attachComboChoiceControl(arpPatternChoice, arpPatternAttachment, parameterRefs.arpPattern);
-    addAndMakeVisible(arpOctaveChoice);
+    contentPanel.addAndMakeVisible(arpOctaveChoice);
     attachChoiceControl(arpOctaveChoice, arpOctaveAttachment, parameterRefs.arpOctave);
     addSliderControl(arpGateKnob, arpGateAttachment, ids::arpGate);
     addSliderControl(arpSwingKnob, arpSwingAttachment, ids::arpSwing);
@@ -611,7 +650,7 @@ void SynthAudioProcessorEditor::registerLearnableControls()
         registerLearnableControl(arpAdvancedOverlay->getRhythmChoice(), ids::arpRhythm, "Rhythm", [&](bool a, juce::String b) { applyChoiceState(arpAdvancedOverlay->getRhythmChoice(), a, b); });
         registerLearnableControl(arpAdvancedOverlay->getChanceKnob(), ids::arpChance, "Chance", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getChanceKnob(), a, b); });
         registerLearnableControl(arpAdvancedOverlay->getRatchetChoice(), ids::arpRatchetCount, "Ratchet", [&](bool a, juce::String b) { applyChoiceState(arpAdvancedOverlay->getRatchetChoice(), a, b); });
-        registerLearnableControl(arpAdvancedOverlay->getRatchetChanceKnob(), ids::arpRatchetChance, "Rat Ch", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getRatchetChanceKnob(), a, b); });
+        registerLearnableControl(arpAdvancedOverlay->getRatchetChanceKnob(), ids::arpRatchetChance, "Ratchet %", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getRatchetChanceKnob(), a, b); });
         registerLearnableControl(arpAdvancedOverlay->getAccentChoice(), ids::arpAccentEvery, "Accent Every", [&](bool a, juce::String b) { applyChoiceState(arpAdvancedOverlay->getAccentChoice(), a, b); });
         registerLearnableControl(arpAdvancedOverlay->getAccentAmountKnob(), ids::arpAccentAmount, "Accent", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getAccentAmountKnob(), a, b); });
         registerLearnableControl(arpAdvancedOverlay->getEuclideanPulsesKnob(), ids::arpEuclideanPulses, "Pulses", [&](bool a, juce::String b) { applyKnobState(arpAdvancedOverlay->getEuclideanPulsesKnob(), a, b); });
@@ -667,11 +706,11 @@ void SynthAudioProcessorEditor::setupActionButtons()
         if (tooltipWindow != nullptr)
             tooltipWindow->hideTip();
     };
-    addAndMakeVisible(allNotesOffButton);
-    addAndMakeVisible(tooltipToggleButton);
-    addAndMakeVisible(arpAdvancedButton);
+    contentPanel.addAndMakeVisible(allNotesOffButton);
+    contentPanel.addAndMakeVisible(tooltipToggleButton);
+    contentPanel.addAndMakeVisible(arpAdvancedButton);
 
-    addAndMakeVisible(pianoBar);
+    contentPanel.addAndMakeVisible(pianoBar);
 
     midiLearnManager = std::make_unique<coolsynth::midi::MidiLearnManager>();
     midiLearnManager->replaceBindings(processor.getLearnedMidiBindings());
@@ -680,9 +719,9 @@ void SynthAudioProcessorEditor::setupActionButtons()
     initPatchButton.onClick = [this] { triggerInitPatch(); };
     savePatchButton.onClick = [this] { triggerSavePatch(); };
     loadPatchButton.onClick = [this] { triggerLoadPatch(); };
-    addAndMakeVisible(initPatchButton);
-    addAndMakeVisible(savePatchButton);
-    addAndMakeVisible(loadPatchButton);
+    contentPanel.addAndMakeVisible(initPatchButton);
+    contentPanel.addAndMakeVisible(savePatchButton);
+    contentPanel.addAndMakeVisible(loadPatchButton);
 }
 
 void SynthAudioProcessorEditor::setupStandaloneMode(bool isStandalone)
@@ -722,14 +761,70 @@ void SynthAudioProcessorEditor::setupStandaloneMode(bool isStandalone)
                 const auto profile = getResolvedStandaloneControllerProfileDisplayName();
                 return profile.isNotEmpty() ? "PROFILE: " + profile.toUpperCase() : juce::String {};
             });
-        addAndMakeVisible(*standaloneStatusBar);
+        contentPanel.addAndMakeVisible(*standaloneStatusBar);
+    }
 
-        setSize(Layout::defaultWindowWidth, Layout::standaloneWindowHeight());
-    }
-    else
+    // The content panel keeps the design size; the editor scales it to its bounds.
+    const int designWidth = Layout::defaultWindowWidth;
+    const int designHeight = isStandalone ? Layout::standaloneWindowHeight() : Layout::pluginWindowHeight();
+    contentPanel.setBounds(0, 0, designWidth, designHeight);
+
+    setResizable(true, true);
+    setResizeLimits(juce::roundToInt(static_cast<float>(designWidth) * Layout::minContentScale),
+                    juce::roundToInt(static_cast<float>(designHeight) * Layout::minContentScale),
+                    juce::roundToInt(static_cast<float>(designWidth) * Layout::maxContentScale),
+                    juce::roundToInt(static_cast<float>(designHeight) * Layout::maxContentScale));
+    getConstrainer()->setFixedAspectRatio(static_cast<double>(designWidth) / static_cast<double>(designHeight));
+
+    float initialScale = 1.0f;
+
+    if (isStandalone)
     {
-        setSize(Layout::defaultWindowWidth, Layout::pluginWindowHeight());
+        if (auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore())
+            if (const auto percent = settingsStore->getUiScalePercent(); percent > 0)
+                initialScale = static_cast<float>(percent) / 100.0f;
+
+        // Never open larger than the primary display can show.
+        if (auto* display = juce::Desktop::getInstance().getDisplays().getPrimaryDisplay())
+        {
+            const auto usable = display->userArea;
+            const float fitScale = juce::jmin(static_cast<float>(usable.getWidth() - 40) / static_cast<float>(designWidth),
+                                              static_cast<float>(usable.getHeight() - 80) / static_cast<float>(designHeight));
+            initialScale = juce::jmin(initialScale, fitScale);
+        }
     }
+
+    setContentScale(initialScale);
+}
+
+void SynthAudioProcessorEditor::setupPatchIdentityControls()
+{
+    coolsynth::ui::applyGreenActionButtonStyle(undoButton, "undoButton");
+    coolsynth::ui::applyGreenActionButtonStyle(redoButton, "redoButton");
+    coolsynth::ui::applyGreenActionButtonStyle(presetPrevButton, "patchButton");
+    coolsynth::ui::applyGreenActionButtonStyle(presetNextButton, "patchButton");
+
+    undoButton.onClick = [this] { performUndo(); };
+    redoButton.onClick = [this] { performRedo(); };
+    presetPrevButton.onClick = [this] { stepPreset(-1); };
+    presetNextButton.onClick = [this] { stepPreset(1); };
+
+    presetPrevButton.setTitle("Previous preset");
+    presetNextButton.setTitle("Next preset");
+    presetPrevButton.setTooltip("PREVIOUS PRESET\nStep back through the factory bank.");
+    presetNextButton.setTooltip("NEXT PRESET\nStep forward through the factory bank.");
+
+    // Accessible names for the controls whose visible text is an icon or a glyph.
+    allNotesOffButton.setTitle("Panic: all notes off");
+    tooltipToggleButton.setTitle("Show tooltips");
+    presetSelector.setTitle("Factory preset");
+    arpPatternChoice.setTitle("Arp pattern");
+    patchNameLabel.setTitle("Current patch");
+
+    contentPanel.addAndMakeVisible(undoButton);
+    contentPanel.addAndMakeVisible(redoButton);
+    contentPanel.addAndMakeVisible(presetPrevButton);
+    contentPanel.addAndMakeVisible(presetNextButton);
 }
 
 void SynthAudioProcessorEditor::setupTooltipWindow()
@@ -747,17 +842,29 @@ void SynthAudioProcessorEditor::setupPresetSelector()
     presetSelector.setJustificationType(juce::Justification::centredLeft);
     presetSelector.setTooltip("Factory presets — selecting one replaces the current patch.");
 
+    // One submenu per category; item ids stay 1-based bank indices so the
+    // selector, prev/next stepping and the patch identity all agree.
     const auto presetCount = coolsynth::presets::getFactoryPresetCount();
+    juce::StringArray categories;
     for (int i = 0; i < presetCount; ++i)
+        categories.addIfNotAlreadyThere(coolsynth::presets::getFactoryPreset(i).category);
+    categories.sort(true);
+
+    for (const auto& category : categories)
     {
-        const auto& preset = coolsynth::presets::getFactoryPreset(i);
-        const auto label = juce::String(preset.name) + "  \xe2\x80\x94  " + juce::String(preset.category);
-        presetSelector.addItem(label, i + 1);
+        juce::PopupMenu categoryMenu;
+        for (int i = 0; i < presetCount; ++i)
+        {
+            const auto& preset = coolsynth::presets::getFactoryPreset(i);
+            if (category == preset.category)
+                categoryMenu.addItem(i + 1, preset.name);
+        }
+        presetSelector.getRootMenu()->addSubMenu(category, categoryMenu);
     }
 
     presetSelector.onChange = [this] { applySelectedPreset(); };
 
-    addAndMakeVisible(presetSelector);
+    contentPanel.addAndMakeVisible(presetSelector);
 }
 
 void SynthAudioProcessorEditor::applySelectedPreset()
@@ -770,8 +877,89 @@ void SynthAudioProcessorEditor::applySelectedPreset()
     if (index < 0 || index >= coolsynth::presets::getFactoryPresetCount())
         return;
 
-    coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(),
-                                           coolsynth::presets::getFactoryPreset(index));
+    const auto& preset = coolsynth::presets::getFactoryPreset(index);
+    processor.performUndoableEdit(juce::String("Preset ") + preset.name, [this, &preset]
+    {
+        coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset);
+    });
+    processor.setPatchIdentity(preset.name, false);
+    refreshValueDisplays();
+    refreshPatchIdentityDisplay();
+}
+
+void SynthAudioProcessorEditor::stepPreset(int delta)
+{
+    const int count = coolsynth::presets::getFactoryPresetCount();
+    if (count <= 0)
+        return;
+
+    int index = presetSelector.getSelectedId() - 1;
+    if (index < 0)
+        index = delta > 0 ? 0 : count - 1;
+    else
+        index = (index + delta + count) % count;
+
+    presetSelector.setSelectedId(index + 1, juce::sendNotificationSync);
+}
+
+void SynthAudioProcessorEditor::performUndo()
+{
+    if (! processor.undo())
+        return;
+
+    refreshValueDisplays();
+    refreshPatchIdentityDisplay();
+}
+
+void SynthAudioProcessorEditor::performRedo()
+{
+    if (! processor.redo())
+        return;
+
+    refreshValueDisplays();
+    refreshPatchIdentityDisplay();
+}
+
+void SynthAudioProcessorEditor::refreshPatchIdentityDisplay()
+{
+    const auto name = processor.getPatchName();
+    const bool dirty = processor.isPatchDirty();
+    const bool canUndo = processor.canUndo();
+    const bool canRedo = processor.canRedo();
+
+    if (name == lastPatchNameShown && dirty == lastPatchDirtyShown
+        && canUndo == lastCanUndoShown && canRedo == lastCanRedoShown)
+        return;
+
+    lastPatchNameShown = name;
+    lastPatchDirtyShown = dirty;
+    lastCanUndoShown = canUndo;
+    lastCanRedoShown = canRedo;
+
+    patchNameLabel.setText(dirty ? name + " *" : name, juce::dontSendNotification);
+
+    undoButton.setEnabled(canUndo);
+    redoButton.setEnabled(canRedo);
+    undoButton.setTooltip("UNDO (Ctrl+Z)\n" + (canUndo ? processor.getUndoLabel() : juce::String("Nothing to undo.")));
+    redoButton.setTooltip("REDO (Ctrl+Y)\n" + (canRedo ? processor.getRedoLabel() : juce::String("Nothing to redo.")));
+
+    // The selector names the active factory preset only while the patch is
+    // unedited; any edit clears it so a stale name can never be shown.
+    int presetId = 0;
+    if (! dirty)
+    {
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+        {
+            if (name == coolsynth::presets::getFactoryPreset(i).name)
+            {
+                presetId = i + 1;
+                break;
+            }
+        }
+    }
+
+    if (presetSelector.getSelectedId() != presetId)
+        presetSelector.setSelectedId(presetId, juce::dontSendNotification);
 }
 
 void SynthAudioProcessorEditor::setArpAdvancedOverlayVisible(bool shouldBeVisible)
@@ -974,7 +1162,6 @@ void SynthAudioProcessorEditor::registerParameterSurface(juce::Component& surfac
     }
 
     parameterSurfaces.push_back({ std::move(parameterId), &surface });
-    surface.addMouseListener(this, true);
 }
 
 void SynthAudioProcessorEditor::registerLearnableControl(juce::Component& surface,
@@ -1156,7 +1343,11 @@ void SynthAudioProcessorEditor::mouseUp(const juce::MouseEvent& event)
 
     const auto* registration = findParameterSurfaceForComponent(event.eventComponent);
     if (registration == nullptr)
+    {
+        if (dynamic_cast<juce::MidiKeyboardComponent*>(event.eventComponent) == nullptr)
+            showViewMenu(event.getScreenPosition());
         return;
+    }
 
     juce::String displayName = registration->parameterId;
     if (const auto* learnable = findLearnableControl(registration->parameterId))
@@ -1251,6 +1442,11 @@ void SynthAudioProcessorEditor::showParameterContextMenu(juce::String parameterI
 
 void SynthAudioProcessorEditor::paint(juce::Graphics& g)
 {
+    g.fillAll(coolsynth::ui::palette::panelBlack);
+}
+
+void SynthAudioProcessorEditor::ContentPanel::paint(juce::Graphics& g)
+{
     juce::ColourGradient background(coolsynth::ui::palette::panelBlack,
                                     0.0f,
                                     0.0f,
@@ -1261,7 +1457,7 @@ void SynthAudioProcessorEditor::paint(juce::Graphics& g)
     g.setGradientFill(background);
     g.fillRect(getLocalBounds());
 
-    if (!juce::JUCEApplicationBase::isStandaloneApp())
+    if (drawsPluginFooter)
     {
         auto footerArea = getLocalBounds().removeFromBottom(30);
         g.setColour(coolsynth::ui::palette::panelRaised.withAlpha(0.92f));
@@ -1277,7 +1473,98 @@ void SynthAudioProcessorEditor::paint(juce::Graphics& g)
 
 void SynthAudioProcessorEditor::resized()
 {
-    auto bounds = getLocalBounds();
+    const auto designWidth = static_cast<float>(contentPanel.getWidth());
+    const auto designHeight = static_cast<float>(contentPanel.getHeight());
+    if (designWidth <= 0.0f || designHeight <= 0.0f || getWidth() <= 0 || getHeight() <= 0)
+        return;
+
+    contentScale = juce::jmin(static_cast<float>(getWidth()) / designWidth,
+                              static_cast<float>(getHeight()) / designHeight);
+    const float offsetX = (static_cast<float>(getWidth()) - designWidth * contentScale) * 0.5f;
+    const float offsetY = (static_cast<float>(getHeight()) - designHeight * contentScale) * 0.5f;
+    contentPanel.setTransform(juce::AffineTransform::scale(contentScale).translated(offsetX, offsetY));
+
+    if (isStandaloneEditor)
+        if (auto* settingsStore = coolsynth::standalone::getStandaloneSettingsStore())
+            settingsStore->setUiScalePercent(juce::roundToInt(contentScale * 100.0f));
+}
+
+void SynthAudioProcessorEditor::setContentScale(float newScale)
+{
+    const auto scale = juce::jlimit(Layout::minContentScale, Layout::maxContentScale, newScale);
+    setSize(juce::roundToInt(static_cast<float>(contentPanel.getWidth()) * scale),
+            juce::roundToInt(static_cast<float>(contentPanel.getHeight()) * scale));
+}
+
+void SynthAudioProcessorEditor::showViewMenu(juce::Point<int> screenPosition)
+{
+    juce::PopupMenu menu;
+    static constexpr int zoomItemBase = 2000;
+    static constexpr std::array<int, 6> zoomPercents { 50, 75, 100, 125, 150, 200 };
+    const int currentPercent = juce::roundToInt(contentScale * 100.0f);
+
+    for (size_t i = 0; i < zoomPercents.size(); ++i)
+        menu.addItem(zoomItemBase + static_cast<int>(i),
+                     "Zoom " + juce::String(zoomPercents[i]) + "%",
+                     true,
+                     zoomPercents[i] == currentPercent);
+
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea({ screenPosition.x, screenPosition.y, 1, 1 }),
+                       [this](int result)
+                       {
+                           const int index = result - zoomItemBase;
+                           if (juce::isPositiveAndBelow(index, static_cast<int>(zoomPercents.size())))
+                               setContentScale(static_cast<float>(zoomPercents[static_cast<size_t>(index)]) / 100.0f);
+                       });
+}
+
+bool SynthAudioProcessorEditor::keyPressed(const juce::KeyPress& key)
+{
+    const auto mods = key.getModifiers();
+    if (! mods.isCommandDown())
+        return false;
+
+    const auto code = key.getKeyCode();
+
+    if (code == 'Z')
+    {
+        if (mods.isShiftDown())
+            performRedo();
+        else
+            performUndo();
+        return true;
+    }
+
+    if (code == 'Y')
+    {
+        performRedo();
+        return true;
+    }
+
+    if (code == '=' || code == '+' || code == juce::KeyPress::numberPadAdd)
+    {
+        setContentScale(contentScale + Layout::contentScaleStep);
+        return true;
+    }
+
+    if (code == '-' || code == juce::KeyPress::numberPadSubtract)
+    {
+        setContentScale(contentScale - Layout::contentScaleStep);
+        return true;
+    }
+
+    if (code == '0' || code == juce::KeyPress::numberPad0)
+    {
+        setContentScale(1.0f);
+        return true;
+    }
+
+    return false;
+}
+
+void SynthAudioProcessorEditor::layoutContent()
+{
+    auto bounds = contentPanel.getLocalBounds();
     if (standaloneStatusBar != nullptr)
     {
         standaloneStatusBar->setBounds(bounds.removeFromBottom(Layout::standaloneStatusBarH));
@@ -1318,10 +1605,15 @@ void SynthAudioProcessorEditor::resized()
         const auto tooltipButtonWidth = Layout::titleClusterButtonH;
         const auto patchButtonWidth = Layout::titleClusterPatchW;
         const auto gap = Layout::titleClusterGap;
-        const auto totalWidth = panicSize + tooltipButtonWidth + (gap * 4) + (patchButtonWidth * 3);
+        const auto totalWidth = (buttonHeight * 2) + (gap * 2)
+                              + panicSize + tooltipButtonWidth + (gap * 4) + (patchButtonWidth * 3);
 
         auto clusterArea = titleArea.removeFromRight(totalWidth);
 
+        undoButton.setBounds(clusterArea.removeFromLeft(buttonHeight).withSizeKeepingCentre(buttonHeight, buttonHeight));
+        clusterArea.removeFromLeft(gap);
+        redoButton.setBounds(clusterArea.removeFromLeft(buttonHeight).withSizeKeepingCentre(buttonHeight, buttonHeight));
+        clusterArea.removeFromLeft(gap);
         initPatchButton.setBounds(clusterArea.removeFromLeft(patchButtonWidth).withSizeKeepingCentre(patchButtonWidth, buttonHeight));
         clusterArea.removeFromLeft(gap);
         savePatchButton.setBounds(clusterArea.removeFromLeft(patchButtonWidth).withSizeKeepingCentre(patchButtonWidth, buttonHeight));
@@ -1338,17 +1630,31 @@ void SynthAudioProcessorEditor::resized()
         tooltipToggleButton.setBounds(titleArea.removeFromRight(sz).withSizeKeepingCentre(sz, sz));
         titleArea.removeFromRight(Layout::titleClusterGap);
         allNotesOffButton.setBounds(titleArea.removeFromRight(sz).withSizeKeepingCentre(sz, sz));
+        titleArea.removeFromRight(Layout::titleClusterGap);
+        redoButton.setBounds(titleArea.removeFromRight(sz).withSizeKeepingCentre(sz, sz));
+        titleArea.removeFromRight(Layout::titleClusterGap);
+        undoButton.setBounds(titleArea.removeFromRight(sz).withSizeKeepingCentre(sz, sz));
     }
 
-    // Preset selector sits immediately left of the patch cluster, themed to match.
+    // Preset selector with prev/next steppers sits left of the patch cluster.
     titleArea.removeFromRight(Layout::titleControlGap);
+    presetNextButton.setBounds(titleArea.removeFromRight(Layout::titleClusterButtonH)
+                                   .withSizeKeepingCentre(Layout::titleClusterButtonH,
+                                                           Layout::presetSelectorHeight));
+    titleArea.removeFromRight(Layout::titleClusterGap);
     presetSelector.setBounds(titleArea.removeFromRight(Layout::presetSelectorWidth)
                                  .withSizeKeepingCentre(Layout::presetSelectorWidth,
                                                          Layout::presetSelectorHeight));
+    titleArea.removeFromRight(Layout::titleClusterGap);
+    presetPrevButton.setBounds(titleArea.removeFromRight(Layout::titleClusterButtonH)
+                                   .withSizeKeepingCentre(Layout::titleClusterButtonH,
+                                                           Layout::presetSelectorHeight));
     titleArea.removeFromRight(Layout::titleControlGap);
 
-    // MIDI learn status fills the remaining centre slack between visualizer and preset.
-    midiLearnStatusLabel.setBounds(titleArea.withTrimmedTop(12));
+    // Patch name on top, MIDI learn status underneath, in the remaining slack.
+    auto statusArea = titleArea;
+    patchNameLabel.setBounds(statusArea.removeFromTop(Layout::titleHeight / 2));
+    midiLearnStatusLabel.setBounds(statusArea);
 
     area.removeFromTop(Layout::spacerTitleToDeck1);
 
@@ -1392,6 +1698,9 @@ void SynthAudioProcessorEditor::resized()
         auto oscContent = sectionContentArea(oscArea);
         auto oscRow1 = oscContent.removeFromTop(oscContent.getHeight() / 2);
         auto oscRow2 = oscContent;
+        const int tagWidth = Layout::sectionContentInset;
+        oscATagLabel.setBounds(oscArea.getX(), oscRow1.getCentreY() - 8, tagWidth, 16);
+        oscBTagLabel.setBounds(oscArea.getX(), oscRow2.getCentreY() - 8, tagWidth, 16);
         WeightedRowDistributor oscTop { oscRow1, 6.2f, 5, 0 };
         oscAWaveChoice.setBounds(oscTop.take(2.2f));
         oscAOctaveKnob.setBounds(oscTop.take(1.0f));
@@ -1457,9 +1766,9 @@ void SynthAudioProcessorEditor::resized()
         auto lfoRow1 = lfoContent.removeFromTop(lfoContent.getHeight() / 2);
         auto lfoRow2 = lfoContent;
         WeightedRowDistributor lfoTop { lfoRow1, 4.0f, 3, 0 };
-        lfoWaveChoice.setBounds(lfoTop.take(2.0f));
-        lfoRateKnob  .setBounds(lfoTop.take(1.0f));
-        lfoMwDepKnob .setBounds(lfoTop.take(1.0f));
+        lfoWaveChoice.setBounds(lfoTop.take(1.5f));
+        lfoRateKnob  .setBounds(lfoTop.take(1.25f));
+        lfoMwDepKnob .setBounds(lfoTop.take(1.25f));
         lfoPitchKnob .setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 3));
         lfoPwKnob    .setBounds(lfoRow2.removeFromLeft(lfoRow2.getWidth() / 2));
         lfoCutoffKnob.setBounds(lfoRow2);
@@ -1617,7 +1926,7 @@ void SynthAudioProcessorEditor::resized()
 
     if (arpAdvancedOverlay != nullptr)
     {
-        arpAdvancedOverlay->setBounds(getLocalBounds());
+        arpAdvancedOverlay->setBounds(contentPanel.getLocalBounds());
         if (arpAdvancedOverlay->isVisible())
             arpAdvancedOverlay->toFront(false);
     }
@@ -1626,6 +1935,15 @@ void SynthAudioProcessorEditor::resized()
 void SynthAudioProcessorEditor::timerCallback()
 {
     pollPluginMidiLearnEvents();
+    refreshPatchIdentityDisplay();
+
+    // Standalone: take keyboard focus once the window is up so the shortcuts work
+    // before the first click. Hosts decide focus themselves.
+    if (isStandaloneEditor && ! initialFocusRequested && isShowing())
+    {
+        initialFocusRequested = true;
+        grabKeyboardFocus();
+    }
 
     // Re-formatting ~85 value labels (plus the arp summary and Euclidean preview) is
     // only worth doing when a parameter actually moved; comparing raw values is cheap.
@@ -1762,8 +2080,10 @@ juce::String SynthAudioProcessorEditor::getCurrentParameterText(juce::RangedAudi
 
 void SynthAudioProcessorEditor::triggerInitPatch()
 {
-    processor.resetAutomatableParametersToDefaults();
+    processor.performUndoableEdit("Init patch", [this] { processor.resetAutomatableParametersToDefaults(); });
+    processor.setPatchIdentity("Init", false);
     refreshValueDisplays();
+    refreshPatchIdentityDisplay();
 }
 
 void SynthAudioProcessorEditor::triggerSavePatch()
@@ -1829,7 +2149,13 @@ void SynthAudioProcessorEditor::handlePatchSaveSelection(const juce::File& selec
                                                               processor.getParameterStateTypeName());
     auto result = coolsynth::presets::writePatchFile(destination, *patchXml);
     if (!result.succeeded())
+    {
         showPatchError(result.message);
+        return;
+    }
+
+    processor.setPatchIdentity(destination.getFileNameWithoutExtension(), false);
+    refreshPatchIdentityDisplay();
 }
 
 void SynthAudioProcessorEditor::handlePatchLoadSelection(const juce::File& selectedFile)
@@ -1842,13 +2168,21 @@ void SynthAudioProcessorEditor::handlePatchLoadSelection(const juce::File& selec
         return;
     }
 
-    if (!processor.applyParameterStateXml(*result.parameterStateXml))
+    bool applied = false;
+    processor.performUndoableEdit("Load " + selectedFile.getFileNameWithoutExtension(), [&]
+    {
+        applied = processor.applyParameterStateXml(*result.parameterStateXml);
+    });
+
+    if (!applied)
     {
         showPatchError("Patch file contained incompatible parameter state.");
         return;
     }
 
+    processor.setPatchIdentity(selectedFile.getFileNameWithoutExtension(), false);
     refreshValueDisplays();
+    refreshPatchIdentityDisplay();
 }
 
 void SynthAudioProcessorEditor::showPatchError(juce::String message)

@@ -45,10 +45,13 @@ namespace coolsynth::ui
 
         applyGreenActionButtonStyle(keysToggleButton, "keysToggleButton");
         keysToggleButton.setTooltip("KEYS / LED\nToggle between the LED meter view and the on-screen keyboard.");
+        keysToggleButton.setTitle("Show on-screen keyboard");
         applyGreenActionButtonStyle(octaveDownButton);
         octaveDownButton.setTooltip("OCTAVE DOWN\nShift the visible keyboard / LED range down by one octave.");
+        octaveDownButton.setTitle("Octave down");
         applyGreenActionButtonStyle(octaveUpButton);
         octaveUpButton.setTooltip("OCTAVE UP\nShift the visible keyboard / LED range up by one octave.");
+        octaveUpButton.setTitle("Octave up");
 
         addAndMakeVisible(keysToggleButton);
         addAndMakeVisible(octaveDownButton);
