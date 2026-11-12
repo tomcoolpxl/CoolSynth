@@ -469,3 +469,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/v3/Module.h`: `ParameterDescriptor`, `ModuleDescriptor`, `NoteContext`, `SlotParams`, the `SlotMemory` float arena, the `Module` concept, and `Slot<std::variant<...>>` with descriptor lookup by type index, arena sizing from the largest type, pending-type requests from any thread, a 5 ms crossfade on type change with the old module running on a copy of the input, note hand-over to the new module, per-module parameter clamping, and testing accessors.
 - [x] Added `tests/V3ModuleTests.cpp` (nine tests with dummy generator and processor types): descriptor table and arena sizing, arena spans, generator and processor crossfades with the step bound, same-type no-op, request during a fade waits, note hand-over and reset, prepare applies a pending type at once, descriptor clamping. Registered in the test target.
 - [x] Verified Debug build without warnings, `ctest` green, measured crossfade step 0.004167 against the 0.004177 bound.
+
+## V3 phase 0.2: sub-block modulation context (2026-11-13)
+
+- [x] Added `src/synth/v3/Modulation.h`: `ModSource` and `ModSources`, `SlotOffsets`, `SlotBase` with linear per-sub-block smoothing in normalised space (pan and pitch scaled by their spans, targets clamped, snap on prepare and reset), `descriptorToUnits` and `unitsToNormalised` with linear and logarithmic skew, and `buildSlotParams` (base plus offsets, clamped, mapped to units, non-modulatable parameters ignore offsets).
+- [x] Added `tests/V3ModulationTests.cpp` (six tests): mapping round trips, smoothing continuity and landing, pan and pitch step scaling, prepare snapping and wide sub-blocks, parameter building, source vector. Registered in the test target.
+- [x] Verified Debug build without warnings and `ctest` green.

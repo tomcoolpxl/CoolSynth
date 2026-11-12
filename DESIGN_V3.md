@@ -132,6 +132,16 @@ then run G1..G3, mixer, P1..P3, VCA, pan. Audio-rate modulation exists only wher
 a module (FM inside the FM generator, combine modes between generators). This is the V2
 `renderNextBlock` structure with the per-sample parameter evaluation moved up to sub-block rate.
 
+Shipped (phase 0.2, 2026-11-13): `Modulation.h` holds `ModSources` (the source vector indexed
+by `ModSource`), `SlotOffsets` (per-slot accumulators: generic offsets in normalised units, pan
+in -1..1, pitch in semitones), `SlotBase` (host-set values smoothed linearly toward their
+targets by at most one step per sub-block, 10 ms by default, in normalised space so linear and
+logarithmic parameters ramp alike; pan and pitch scale their step by their span of 2 and 96
+semitones) and `buildSlotParams`, which sums base and offsets, clamps, maps generic values to
+descriptor units with the descriptor's skew, and ignores offsets on parameters marked not
+modulatable. Smoothing is per sub-block, not per sample; modules interpolate internally where
+their coefficients need it.
+
 ### 4.3 Local modulators
 
 - ENV1, ENV2, ENV3: the V2 `AnalogEnvelope` extended with a per-stage curve (0 exponential to 1

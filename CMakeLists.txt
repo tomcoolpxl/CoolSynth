@@ -122,6 +122,7 @@ if(BUILD_TESTING)
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp
             tests/V3ModuleTests.cpp
+            tests/V3ModulationTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests
