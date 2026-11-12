@@ -58,6 +58,9 @@ namespace coolsynth::synth::v3
         bool fromArp = false;
     };
 
+    /** How a generator combines with the previous generator slot. */
+    enum class Combine : int { off = 0, sync, ring, fm, am };
+
     /** Parameter values for one sub-block, in descriptor units with modulation applied. */
     struct SlotParams
     {
@@ -65,6 +68,8 @@ namespace coolsynth::synth::v3
         float level = 1.0f;          // generators only
         float pan = 0.0f;            // generators only, -1..1
         float pitchSemitones = 0.0f; // generators only: octave, semitone, fine and modulation
+        float frequencyHz = 440.0f;  // set by the voice from the note, glide, bend and pitchSemitones
+        Combine combine = Combine::off;
     };
 
     /** Arena of floats, sized once off the audio thread; modules take spans from it in prepare(). */
@@ -112,7 +117,7 @@ namespace coolsynth::synth::v3
                               const SlotParams& params)
     {
         { T::descriptor() } -> std::convertible_to<const ModuleDescriptor&>;
-        { T::memoryFloats(sampleRate) } -> std::convertible_to<std::size_t>;
+        { T::memoryFloats(sampleRate, numSamples) } -> std::convertible_to<std::size_t>;
         module.prepare(sampleRate, numSamples, memory);
         module.reset();
         module.noteOn(note);
@@ -138,9 +143,9 @@ namespace coolsynth::synth::v3
 
             static constexpr int count = static_cast<int>(sizeof...(Ts));
 
-            static std::size_t maxMemoryFloats(double sampleRate)
+            static std::size_t maxMemoryFloats(double sampleRate, int maxSubBlock)
             {
-                return std::max({ std::size_t { 0 }, Ts::memoryFloats(sampleRate)... });
+                return std::max({ std::size_t { 0 }, Ts::memoryFloats(sampleRate, maxSubBlock)... });
             }
 
             static const ModuleDescriptor& descriptor(int index)
@@ -190,7 +195,7 @@ namespace coolsynth::synth::v3
             sampleRate = newSampleRate;
             maxSubBlock = std::max(1, newMaxSubBlock);
 
-            const auto floats = Types::maxMemoryFloats(sampleRate);
+            const auto floats = Types::maxMemoryFloats(sampleRate, maxSubBlock);
             for (auto& instance : instances)
                 instance.memory.allocate(floats);
 

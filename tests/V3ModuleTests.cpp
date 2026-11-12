@@ -22,7 +22,7 @@ namespace
                                               {{ { "value", "Value", -1.0f, 1.0f, 0.5f } }}, 1 };
             return d;
         }
-        static std::size_t memoryFloats(double) { return 16; }
+        static std::size_t memoryFloats(double, int) { return 16; }
 
         void prepare(double, int, SlotMemory& memory) noexcept { table = memory.take(16); }
         void reset() noexcept { ++resets; }
@@ -48,9 +48,9 @@ namespace
                                               {{ { "value", "Value", -1.0f, 1.0f, 0.5f } }}, 1 };
             return d;
         }
-        static std::size_t memoryFloats(double sampleRate) { return static_cast<std::size_t>(sampleRate / 20.0); }
+        static std::size_t memoryFloats(double sampleRate, int) { return static_cast<std::size_t>(sampleRate / 20.0); }
 
-        void prepare(double sampleRate, int, SlotMemory& memory) noexcept { line = memory.take(memoryFloats(sampleRate)); }
+        void prepare(double sampleRate, int maxSubBlock, SlotMemory& memory) noexcept { line = memory.take(memoryFloats(sampleRate, maxSubBlock)); }
         void reset() noexcept {}
         void noteOn(const NoteContext& note) noexcept { lastNote = note.noteNumber; ++noteOns; }
         void process(float* left, float* right, int n, const SlotParams& p) noexcept
@@ -73,7 +73,7 @@ namespace
                                               {{ { "gain", "Gain", 0.0f, 1.0f, 1.0f } }}, 1 };
             return d;
         }
-        static std::size_t memoryFloats(double) { return 0; }
+        static std::size_t memoryFloats(double, int) { return 0; }
 
         void prepare(double, int, SlotMemory&) noexcept {}
         void reset() noexcept {}
@@ -96,7 +96,7 @@ namespace
             static const ModuleDescriptor d { "Pass", 0, {}, 0 };
             return d;
         }
-        static std::size_t memoryFloats(double) { return 64; }
+        static std::size_t memoryFloats(double, int) { return 64; }
 
         void prepare(double, int, SlotMemory& memory) noexcept { scratch = memory.take(64); }
         void reset() noexcept {}

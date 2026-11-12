@@ -37,7 +37,7 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] juce::String genericParameterId(const SlotPath& path, int oneBased); // "pA.g1.p1"
     [[nodiscard]] juce::String fixedParameterId(const SlotPath& path, const char* suffix);
 
-    enum class CombineMode : int { off = 0, sync, ring, fm, am };
+    using CombineMode = coolsynth::synth::v3::Combine;
     inline const juce::StringArray combineModeNames { "Off", "Sync", "Ring", "FM", "AM" };
     inline constexpr int octaveMin = -2, octaveMax = 2;
     inline constexpr int semitoneMin = -12, semitoneMax = 12;

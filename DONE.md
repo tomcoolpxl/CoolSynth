@@ -481,3 +481,10 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/parameters/v3/SlotParameters.h/.cpp`: slot paths and stable IDs (`pA.g1.type`, `pA.g1.p1`.., `f6.p8`), `GenericSlotParameter` whose name, text and parsing follow the selected type's descriptor, unit formatting and parsing (Hz with kHz, ms with s, dB, semitones, cents, percent, choice), `makeSlotGroup` (type, eight generics, generator fixed parameters), `bindSlotPointers`, `readSlotTargets` and `applySlotTargets`. Added `SlotTypeTable` and `Slot::typeTable()` to `Module.h`.
 - [x] Added `tests/V3ParameterTests.cpp` (four tests, minimal processor harness): ID builder, a 258-parameter layout with unique IDs and the designed counts, name and text switching with the type including round trips, pointer table to targets to `SlotBase`. Registered source and tests in CMake.
 - [x] Verified Debug build without warnings and `ctest` green. Phase 0 complete.
+
+## V3 phase 1.1: VA generator (2026-11-13)
+
+- [x] Added `src/synth/v3/VaGenerator.h`: the V2 PolyBLEP oscillator as a slot module with pulse, triangle, saw and sine, pulse width, unison 1 to 7 with detune, spread and 1/sqrt(N) compensation, a sine sub, own level and constant-power pan, and the combine modes sync (wrap track in, PolyBLEP-corrected reset), ring, AM and FM.
+- [x] Extended the slot contract: `Combine` and `SlotParams::frequencyHz` / `combine` in `Module.h`, `memoryFloats(sampleRate, maxSubBlock)`; `CombineMode` in the parameter layer is now an alias of `Combine`.
+- [x] Added `tests/V3GeneratorTests.cpp` (nine tests): descriptor, tuning within one cent for every wave at three pitches, alias floor after decimation at A4 and A7 against the V2 thresholds, unison level compensation, pan and spread, sync periodicity against a free-running slave, ring and AM scaling, sub level, FM boundedness.
+- [x] Verified Debug build without warnings and `ctest` green; measured tuning error at most 0.03 cents, alias -101 dB (A4) and -86 dB (A7), unison stack -0.4 dB, sub 0.0 dB.

@@ -13,7 +13,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 5. Phase 0.2 done 2026-11-13: `src/synth/v3/Modulation.h` and `tests/V3ModulationTests.cpp`.
 6. Phase 0.3 done 2026-11-13: `src/parameters/v3/SlotParameters.h/.cpp` and
    `tests/V3ParameterTests.cpp`. Phase 0 complete.
-7. Phase 1.1: VA generator with unison, sub mix and combine-ready sync; tuning and alias tests.
+7. Phase 1.1 done 2026-11-13: `src/synth/v3/VaGenerator.h` and `tests/V3GeneratorTests.cpp`.
+8. Phase 1.2: `LadderProcessor` from `VoiceLadderFilter` with the drive exposed; `AnalogEnvelope`
+   extended with curve, velocity sensitivity, loop and one-shot; V2 filter tests ported.
+9. Phase 1.3: `Voice` with G1..G3, mixer and combine wiring, P1..P3, VCA, pan, sub-block
+   rendering and local sources; combine and headroom tests.
 
 ## Carried over from the V2 backlog
 

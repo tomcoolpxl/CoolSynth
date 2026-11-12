@@ -125,6 +125,7 @@ if(BUILD_TESTING)
             tests/V3ModuleTests.cpp
             tests/V3ModulationTests.cpp
             tests/V3ParameterTests.cpp
+            tests/V3GeneratorTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests
