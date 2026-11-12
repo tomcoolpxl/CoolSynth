@@ -435,3 +435,18 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Reapplied the default live standalone MIDI state immediately after reset, without requiring an app restart.
 - [x] Verified the settings-reset behavior with a dedicated `CoolSynthMidiLearnTests` unit test plus local Debug build and `ctest`.
 
+
+## Engine pass 3: glitch fixes (2026-11-12)
+
+- [x] Replaced the per-active-voice headroom (1/sqrt(N)) with a fixed voice headroom of 0.5, which removed the level pumping heard when chords changed under a held note.
+- [x] Added a 1.5 ms steal fade with a pending note start: a stolen voice fades its old note out before the new note starts, which removed the clicks on voice steal.
+- [x] Applied the plate reverb decay once per tank half, as in the Dattorro paper, instead of twice.
+- [x] Raised the Master Gain range to +6 dB.
+- [x] Adjusted the stolen-voice test window and verified the full suite green; committed as 6b5973f.
+
+## V3 sound bank design and engine requirements (2026-11-12)
+
+- [x] Wrote `SOUND_BANK_V3.md`: the "Places" bank of 11 rooms and 68 presets (Bedroom, Arcade, Outrun, Observatory, Greenhouse, Basement, Studio 1982, Main Stage, Engine Room, Clock Tower, Workshop), each preset with recipe, needed modules and a Now / Now~ / placeholder status; 39 buildable on V2, 29 placeholders.
+- [x] Wrote `REQUIREMENTS_V3.md`: module catalogue (generators, processors, local and global modulators, note layer, parts, effects), traceability from the bank with priorities, a slot-chain engine shape compared with a free graph and with extending V2, an eight-phase order, and the open decision.
+- [x] Checked the module catalogue against Plaits, MiniFreak, OP-1 field, SH-4d, NTS-1 mk2, Dirtywave M8, Serum 2 and Vital; sources listed in both documents.
+- [x] Refreshed `TODO.md` for V3 and marked which V2 backlog items V3 absorbs.

@@ -1003,3 +1003,7 @@ The right shape is:
 - one coherent monotimbral instrument with a strong dry core.
 
 That is the smallest design that can honestly satisfy the V2 requirements without turning CoolSynth into either a V1 patch-up or a generic modern synth workstation.
+
+## 19. V3 Direction
+
+The next engine step is specified in `REQUIREMENTS_V3.md` (module catalogue, slot-chain shape) and driven by `SOUND_BANK_V3.md`.

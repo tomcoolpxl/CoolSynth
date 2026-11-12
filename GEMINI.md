@@ -2,7 +2,7 @@
 
 This is the main repo or agent memory file. If you need to adapt your memory file, adapt this file.
 
-We are in "V2" phase right now.
+The V2 engine is shipped. V3 (the "Places" sound bank and a modular engine) is in design: see `SOUND_BANK_V3.md` and `REQUIREMENTS_V3.md`.
 
 ## Compatibility Stance
 
@@ -13,7 +13,7 @@ We are in "V2" phase right now.
 
 Authoritative project files:
 
-- `REQUIREMENTS.md`, `REQUIREMENTS_V2.md`
+- `REQUIREMENTS.md`, `REQUIREMENTS_V2.md`, `REQUIREMENTS_V3.md`, `SOUND_BANK_V3.md`
 - `DESIGN.md`, `DESIGN_V2.md`
 - `IMPLEMENTATION_PLAN.md`, `IMPLEMENTATION_PLAN_V2.md`
 - `TODO.md`
