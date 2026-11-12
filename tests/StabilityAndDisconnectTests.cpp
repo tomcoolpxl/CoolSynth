@@ -571,6 +571,73 @@ public:
             expect(lateRms < earlyRms, "plate tail must decay");
         }
 
+        // At full wet the plate must sit in the same ballpark as the dry signal it replaces,
+        // so a preset's reverb mix means the same thing it did with the previous reverb.
+        beginTest("reverb_wet_level_is_comparable_to_dry");
+        {
+            coolsynth::synth::EnvelopeParameters held;
+            held.attackSeconds = 0.01f;
+            held.decaySeconds = 0.1f;
+            held.sustainLevel = 1.0f;
+            held.releaseSeconds = 0.2f;
+
+            const auto measure = [&](float reverbMix, float size)
+            {
+                coolsynth::synth::SynthEngineV2 engine;
+                engine.prepare(48000.0, 256, 2);
+
+                coolsynth::synth::BlockRenderParametersV2 parameters;
+                parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+                parameters.oscA.level = 1.0f;
+                parameters.oscB.level = 0.0f;
+                parameters.ampEnvelope = held;
+                parameters.filterEnvelope = held;
+                parameters.filter.cutoffHz = 3000.0f;
+                parameters.filter.resonanceNormalized = 0.1f;
+                parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+                parameters.reverb.enabled = reverbMix > 0.0f;
+                parameters.reverb.size = size;
+                parameters.reverb.damping = 0.5f;
+                parameters.reverb.mix = reverbMix;
+                parameters.masterGainLinear = 1.0f;
+
+                std::array<coolsynth::synth::EngineMidiEvent, 3> chord {{
+                    { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f },
+                    { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f },
+                    { coolsynth::synth::EngineMidiEventType::noteOn, 0, 67, 1.0f }
+                }};
+
+                juce::AudioBuffer<float> buffer(2, 256);
+                double sumSquares = 0.0;
+                int counted = 0;
+                for (int b = 0; b < 400; ++b)   // about 2.1 s
+                {
+                    buffer.clear();
+                    engine.render(buffer,
+                                  b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(chord)
+                                         : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                                  parameters);
+                    if (b >= 280)
+                    {
+                        const float rms = computeRms(buffer, 0, buffer.getNumSamples());
+                        sumSquares += static_cast<double>(rms) * static_cast<double>(rms);
+                        ++counted;
+                    }
+                }
+                return static_cast<float>(std::sqrt(sumSquares / static_cast<double>(counted)));
+            };
+
+            const float dryRms = measure(0.0f, 0.5f);
+            const float wetMidRms = measure(1.0f, 0.5f);
+            const float wetLargeRms = measure(1.0f, 0.98f);
+
+            logMessage("reverb rms: dry=" + juce::String(dryRms, 4) + " wet(size 0.5)=" + juce::String(wetMidRms, 4)
+                       + " wet(size 0.98)=" + juce::String(wetLargeRms, 4));
+            expect(wetMidRms > dryRms * 0.4f, "a medium plate at full wet must not be much quieter than dry");
+            expect(wetMidRms < dryRms * 2.5f, "a medium plate at full wet must not be much louder than dry");
+            expect(wetLargeRms > wetMidRms, "a larger plate must build up more level than a medium one");
+        }
+
         beginTest("chorus_decorrelates_left_and_right");
         {
             coolsynth::synth::BlockRenderParametersV2 parameters;
@@ -1817,7 +1884,9 @@ public:
             buffer.clear();
             engine.render(buffer, thirdNote, parameters);
 
-            const float earlyStolenPeak = computePeakAbs(buffer, 0, 16);
+            // The stolen voice fades out over about 1.5 ms (72 samples) and only then restarts
+            // from the attack, so look just past the fade: nothing there may still be at sustain level.
+            const float earlyStolenPeak = computePeakAbs(buffer, 128, 64);
             expect(earlyStolenPeak < sustainPeak * 0.5f);
         }
     }
@@ -3833,6 +3902,122 @@ public:
             expect(maxAbs > 0.5f, "full vintage must actually drift");
             expect(maxAbs <= 7.0f, "drift must stay inside +/-7 cents");
             expect(maxStep < 0.5f, "drift must move smoothly, never in audible steps");
+        }
+
+        // Five held voices must be louder than one: the master stage must not scale the mix
+        // down by the voice count, which used to pump the level on every note start and release.
+        beginTest("more_voices_sound_louder_not_normalized_down");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto params = makeEngineParameters();
+            params.filter.cutoffHz = 20000.0f;
+            params.filter.resonanceNormalized = 0.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> firstNote {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 48, 1.0f }
+            }};
+            std::array<coolsynth::synth::EngineMidiEvent, 4> moreNotes {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 52, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 55, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 59, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            float oneVoiceRms = 0.0f;
+            for (int b = 0; b < 12; ++b)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(firstNote)
+                                     : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              params);
+                if (b == 11)
+                    oneVoiceRms = computeRms(buffer, 0, buffer.getNumSamples());
+            }
+
+            float fiveVoiceRms = 0.0f;
+            for (int b = 0; b < 12; ++b)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(moreNotes)
+                                     : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              params);
+                if (b == 11)
+                    fiveVoiceRms = computeRms(buffer, 0, buffer.getNumSamples());
+            }
+
+            logMessage("rms one voice=" + juce::String(oneVoiceRms, 4) + " five voices=" + juce::String(fiveVoiceRms, 4));
+            expect(oneVoiceRms > 0.01f, "a single voice must be audible");
+            expect(fiveVoiceRms > oneVoiceRms * 1.5f, "five voices must be clearly louder than one");
+        }
+
+        // A stolen voice must fade out, not stop dead: the largest sample-to-sample step around
+        // the steal must stay close to what the steady sine already produces.
+        beginTest("stolen_voice_fades_instead_of_clicking");
+        {
+            coolsynth::synth::EnvelopeParameters held;
+            held.attackSeconds = 0.005f;
+            held.decaySeconds = 0.05f;
+            held.sustainLevel = 1.0f;
+            held.releaseSeconds = 0.2f;
+
+            coolsynth::synth::SynthEngineV2 engine(1);
+            engine.prepare(48000.0, 256, 2);
+
+            auto params = makeEngineParameters();
+            params.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::sine;
+            params.ampEnvelope = held;
+            params.filter.cutoffHz = 20000.0f;
+            params.filter.resonanceNormalized = 0.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> firstNote {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+            std::array<coolsynth::synth::EngineMidiEvent, 1> stealingNote {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 100, 67, 1.0f }
+            }};
+
+            const auto maxStep = [](const juce::AudioBuffer<float>& b)
+            {
+                float step = 0.0f;
+                const auto* d = b.getReadPointer(0);
+                for (int i = 1; i < b.getNumSamples(); ++i)
+                    step = juce::jmax(step, std::abs(d[i] - d[i - 1]));
+                return step;
+            };
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            float steadyPeak = 0.0f;
+            float steadyStep = 0.0f;
+            for (int b = 0; b < 30; ++b)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(firstNote)
+                                     : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              params);
+                if (b >= 20)
+                {
+                    steadyPeak = juce::jmax(steadyPeak, computePeakAbs(buffer, 0, buffer.getNumSamples()));
+                    steadyStep = juce::jmax(steadyStep, maxStep(buffer));
+                }
+            }
+
+            buffer.clear();
+            engine.render(buffer, stealingNote, params);
+            float stealStep = maxStep(buffer);
+            buffer.clear();
+            engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), params);
+            stealStep = juce::jmax(stealStep, maxStep(buffer));
+
+            logMessage("steal: steady peak=" + juce::String(steadyPeak, 4) + " steady step=" + juce::String(steadyStep, 4)
+                       + " steal step=" + juce::String(stealStep, 4));
+            expect(steadyPeak > 0.05f, "the held sine must be audible");
+            expect(stealStep < steadyPeak * 0.25f, "stealing must not produce a step anywhere near the signal amplitude");
         }
 
         beginTest("polyphony_loudness_consistency");

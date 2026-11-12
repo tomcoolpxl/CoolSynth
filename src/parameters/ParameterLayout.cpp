@@ -587,7 +587,7 @@ namespace
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
             makeV2ParameterId(masterGainDb),
             "Master Gain",
-            juce::NormalisableRange<float>(-60.0f, 0.0f),
+            juce::NormalisableRange<float>(-60.0f, 6.0f),
             -12.0f,
             dbAttributes()));
         return group;

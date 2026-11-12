@@ -73,6 +73,11 @@ namespace coolsynth::synth
             bool keyDown = false;
             bool sustained = false;
             uint64_t startOrder = 0;
+            // A stolen voice fades its old note out first; the new note waits here until the fade completes.
+            bool pendingNoteStart = false;
+            int pendingNoteNumber = -1;
+            float pendingVelocity = 0.0f;
+            int pendingGlideFromNote = -1;
         };
 
         struct HeldNote
@@ -102,6 +107,12 @@ namespace coolsynth::synth
 
         void allocatePolyNote(int noteNumber,
                               float velocity,
+                              const BlockRenderParametersV2& parameters) noexcept;
+        void startVoiceOnSlot(VoiceSlot& slot,
+                              int voiceIndex,
+                              int noteNumber,
+                              float velocity,
+                              int glideFromNote,
                               const BlockRenderParametersV2& parameters) noexcept;
         void allocateMonoNote(int noteNumber,
                               float velocity,

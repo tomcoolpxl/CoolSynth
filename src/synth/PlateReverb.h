@@ -63,7 +63,7 @@ namespace coolsynth::synth
             modulationPhase = 0.0f;
         }
 
-        /** 0..1: short room to long plate. */
+        /** 0..1: short room to long plate. Decay is applied once per tank half, as in the paper. */
         void setSize(float size) noexcept
         {
             decay = 0.25f + 0.70f * std::clamp(size, 0.0f, 1.0f);
@@ -105,7 +105,7 @@ namespace coolsynth::synth
                 l = leftDampingState * decay;
                 l = leftAllpass2.allpass(l, kDecayDiffusion2);
                 leftDelay2.write(l);
-                const float leftTankOut = leftDelay2.readEnd() * decay;
+                const float leftTankOut = leftDelay2.readEnd();
 
                 // Right half, fed by the output of the left half.
                 float r = x + leftTankOut;
@@ -116,7 +116,7 @@ namespace coolsynth::synth
                 r = rightDampingState * decay;
                 r = rightAllpass2.allpass(r, kDecayDiffusion2);
                 rightDelay2.write(r);
-                rightTankOut = rightDelay2.readEnd() * decay;
+                rightTankOut = rightDelay2.readEnd();
 
                 // Output taps from the table in the paper, scaled to the sample rate.
                 const float outL = kTapGain * (rightDelay1.tap(266.0f * lengthScale)

@@ -191,6 +191,8 @@ Reasons:
 
 `SynthVoiceV2` does not need to inherit from `juce::SynthesiserVoice` if the allocator becomes fully custom.
 
+Shipped design (2026-11-12): stealing in poly mode no longer cuts the old note dead. The stolen voice fades its current note out over about 1.5 ms and the new note waits on the slot until that fade completes, so pads with long releases never click when the ninth note arrives. The master stage applies a fixed voice headroom of 0.5 (-6 dB); it used to divide the mix by the square root of the active voice count, which pumped the level on every note start and release and stepped it up each time a tail ended. Factory preset master gains were re-normalised through `tools/NormalizePresets.cpp` after the change.
+
 ## 6. DSP Signal Flow
 
 ## 6.1 Voice Signal Path

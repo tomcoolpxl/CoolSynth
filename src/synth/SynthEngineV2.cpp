@@ -8,6 +8,7 @@ namespace coolsynth::synth
     namespace
     {
         constexpr float maxVintageDriftCents = 25.0f;
+        constexpr float kVoiceHeadroom = 0.5f;   // -6 dB per voice; the soft clipper covers dense chords
 
         float computeVoicePan(int voiceIndex, int totalVoices, float panSpread) noexcept
         {
@@ -367,8 +368,13 @@ namespace coolsynth::synth
         const int oversampledStart = startSample * oversampleFactor;
         const int oversampledCount = numSamples * oversampleFactor;
 
-        for (auto& slot : voices)
+        for (int i = 0; i < static_cast<int>(voices.size()); ++i)
         {
+            auto& slot = voices[static_cast<size_t>(i)];
+
+            if (slot.pendingNoteStart && ! slot.voice.isActive())
+                startVoiceOnSlot(slot, i, slot.pendingNoteNumber, slot.pendingVelocity, slot.pendingGlideFromNote, parameters);
+
             if (! slot.voice.isActive())
             {
                 clearVoiceSlot(slot);
@@ -569,13 +575,34 @@ namespace coolsynth::synth
         const int voiceIndex = findVoiceIndexToAllocate();
         auto& slot = voices[static_cast<size_t>(voiceIndex)];
 
-        if (slot.voice.isActive())
-            slot.voice.forceStop();
-
         slot.noteNumber = noteNumber;
         slot.keyDown = true;
         slot.sustained = false;
         slot.startOrder = ++nextVoiceStartOrder;
+
+        if (slot.voice.isActive())
+        {
+            // Stealing: fade the old note out over a couple of milliseconds instead of cutting
+            // it dead, and start the new note once the fade has finished (see renderVoiceSpan).
+            slot.voice.beginStealFade();
+            slot.pendingNoteStart = true;
+            slot.pendingNoteNumber = noteNumber;
+            slot.pendingVelocity = velocity;
+            slot.pendingGlideFromNote = lastPlayedNote;
+            return;
+        }
+
+        startVoiceOnSlot(slot, voiceIndex, noteNumber, velocity, lastPlayedNote, parameters);
+    }
+
+    void SynthEngineV2::startVoiceOnSlot(VoiceSlot& slot,
+                                         int voiceIndex,
+                                         int noteNumber,
+                                         float velocity,
+                                         int glideFromNote,
+                                         const BlockRenderParametersV2& parameters) noexcept
+    {
+        slot.pendingNoteStart = false;
         slot.voice.setNextVoiceSourceParameters(parameters.oscA, parameters.oscB, parameters.mixer);
         slot.voice.setOutputLevel(1.0f);
         slot.voice.setNextEnvelopeParameters(parameters.ampEnvelope);
@@ -585,9 +612,13 @@ namespace coolsynth::synth
         slot.voice.setGlobalLfoState(globalLfoPhase, modWheelValue);
         assignVoicePanForIndex(slot, voiceIndex, static_cast<int>(voices.size()), parameters.performance.panSpread);
         assignVoiceVintageForIndex(slot, voiceIndex, parameters.performance.vintageAmount);
-        slot.voice.startNote(slot.noteNumber, velocity);
-        slot.voice.setGlideFromNote(lastPlayedNote, parameters.performance.glideTimeSeconds);
+        slot.voice.startNote(noteNumber, velocity);
+        slot.voice.setGlideFromNote(glideFromNote, parameters.performance.glideTimeSeconds);
         slot.voice.setPitchBendSemitones(pitchBendSemitones);
+
+        // The key may already have been released while the old note was fading out.
+        if (! slot.keyDown && ! slot.sustained)
+            slot.voice.stopNote(0.0f, true);
     }
 
     void SynthEngineV2::allocateMonoNote(int noteNumber,
@@ -716,17 +747,15 @@ namespace coolsynth::synth
         slot.keyDown = false;
         slot.sustained = false;
         slot.startOrder = 0;
+        slot.pendingNoteStart = false;
     }
 
     void SynthEngineV2::applyMasterGain(juce::AudioBuffer<float>& outputBuffer,
                                         float targetLinearGain) noexcept
     {
-        int activeCount = 0;
-        for (const auto& slot : voices)
-            if (slot.voice.isActive())
-                ++activeCount;
-        const float headroom = 1.0f / std::sqrt(static_cast<float>(juce::jmax(1, activeCount)));
-        masterGainLinear.setTargetValue(targetLinearGain * headroom);
+        // Fixed voice headroom: more voices are louder, as on any polysynth. Scaling by the
+        // number of active voices used to pump the level with every note start and release.
+        masterGainLinear.setTargetValue(targetLinearGain * kVoiceHeadroom);
         masterGainLinear.applyGain(outputBuffer, outputBuffer.getNumSamples());
 
         for (int ch = 0; ch < outputBuffer.getNumChannels(); ++ch)

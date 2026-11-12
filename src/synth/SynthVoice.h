@@ -41,6 +41,9 @@ namespace coolsynth::synth
                        juce::SynthesiserSound* sound = nullptr,
                        int currentPitchWheelPosition = 0);
         void stopNote(float velocity, bool allowTailOff);
+        /** Fades the current note out over about 1.5 ms and then stops; used instead of a hard cut when the voice is stolen. */
+        void beginStealFade() noexcept;
+        [[nodiscard]] bool isStealFading() const noexcept { return stealFadeSamplesRemaining > 0; }
         void renderNextBlock(juce::AudioBuffer<float>& outputBuffer,
                              int startSample,
                              int numSamples);
@@ -140,6 +143,8 @@ namespace coolsynth::synth
         float pinkB1 = 0.0f;
         float pinkB2 = 0.0f;
         int noteStartRampSamplesRemaining = 0;
+        int stealFadeSamplesRemaining = 0;
+        int stealFadeTotalSamples = 1;
         int noteStartRampMinSamples = 1;
         int noteStartRampTotalSamples = 1;
         int samplesSinceStart = 0;

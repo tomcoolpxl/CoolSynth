@@ -472,8 +472,16 @@ namespace coolsynth::synth
 
             const float ampVelocityMult = 1.0f - nextPerformanceParameters.velocityToAmp
                                           + (velocityGain * nextPerformanceParameters.velocityToAmp);
-            const float sampleValue = filteredValue * envValue * consumeNoteStartRamp()
-                                      * ampVelocityMult * outputLevel;
+            float sampleValue = filteredValue * envValue * consumeNoteStartRamp()
+                                * ampVelocityMult * outputLevel;
+
+            bool stealFadeFinished = false;
+            if (stealFadeSamplesRemaining > 0)
+            {
+                sampleValue *= static_cast<float>(stealFadeSamplesRemaining) / static_cast<float>(stealFadeTotalSamples);
+                if (--stealFadeSamplesRemaining == 0)
+                    stealFadeFinished = true;
+            }
 
             samplesSinceStart++;
 
@@ -487,7 +495,7 @@ namespace coolsynth::synth
                 outputBuffer.addSample(1, startSample + sample, sampleValue * panRightVolume);
             }
 
-            if (! ampEnvelope.isActive())
+            if (stealFadeFinished || ! ampEnvelope.isActive())
             {
                 forceStop();
                 break;
@@ -495,6 +503,15 @@ namespace coolsynth::synth
         }
 
         lowPassFilter.snapToZero();
+    }
+
+    void SynthVoice::beginStealFade() noexcept
+    {
+        if (! active || stealFadeSamplesRemaining > 0)
+            return;
+
+        stealFadeTotalSamples = juce::jmax(16, static_cast<int>(std::round(currentSampleRate * 0.0015)));
+        stealFadeSamplesRemaining = stealFadeTotalSamples;
     }
 
     void SynthVoice::forceStop() noexcept
@@ -506,6 +523,7 @@ namespace coolsynth::synth
         active = false;
         releasing = false;
         pendingStop = false;
+        stealFadeSamplesRemaining = 0;
         samplesSinceStart = 0;
         velocityGain = 0.0f;
         baseFrequencyHz = 0.0f;
