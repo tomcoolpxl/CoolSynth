@@ -6,8 +6,7 @@ The factory bank is being replaced by the "Places" bank in `SOUND_BANK_V3.md`, a
 written against the engine we want. `REQUIREMENTS_V3.md` lists what that engine must have and
 proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed at the bottom.
 
-1. Decide the engine shape (`REQUIREMENTS_V3.md` section 7: slot chain, free graph, or extend
-   V2) and record it there.
+1. Engine shape decided 2026-11-12: slot chain (`REQUIREMENTS_V3.md` section 7). Done.
 2. Write `DESIGN_V3.md` from the decision: module interface, slot parameter descriptor model and
    stable parameter IDs, modulation context and matrix evaluation, parts, effect chain, preset
    and state format v3, CPU budget per module type, what V2 code is kept where.

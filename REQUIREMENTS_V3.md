@@ -259,11 +259,11 @@ Bedroom placeholders stay placeholders for a long time. Not proposed.
 
 Each phase ends with the normaliser run, the test suite green, and the rooms it names auditioned.
 
-## 7. Open decision
+## 7. Decision
 
-Which engine shape to build. Options as in section 4: slot chain (proposed), free-form graph, or
-extend V2 in place. Record the choice here, then write `DESIGN_V3.md` and
-`IMPLEMENTATION_PLAN_V3.md` from it.
+Decided 2026-11-12: V3 is built as the slot chain of section 4.1. The free-form graph and
+extending V2 in place were considered and rejected for the reasons in sections 4.2 and 4.3.
+`DESIGN_V3.md` and `IMPLEMENTATION_PLAN_V3.md` follow from this.
 
 ## 8. Sources consulted for the module catalogue
 
