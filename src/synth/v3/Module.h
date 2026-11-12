@@ -119,6 +119,13 @@ namespace coolsynth::synth::v3
         module.process(samples, samples, numSamples, params);
     };
 
+    /** The module types a slot kind accepts, as the parameter layer sees them. */
+    struct SlotTypeTable
+    {
+        int count = 0;
+        const ModuleDescriptor& (*descriptor)(int typeIndex) = nullptr;
+    };
+
     namespace detail
     {
         template <typename Variant>
@@ -175,6 +182,7 @@ namespace coolsynth::synth::v3
         static constexpr double crossfadeSeconds = 0.005;
 
         static const ModuleDescriptor& descriptorFor(int typeIndex) { return Types::descriptor(typeIndex); }
+        static SlotTypeTable typeTable() noexcept { return { typeCount, &Types::descriptor }; }
 
         /** Message thread. Sizes both arenas and the scratch, applies a pending type at once, prepares the active module. */
         void prepare(double newSampleRate, int newMaxSubBlock)

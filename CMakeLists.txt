@@ -55,6 +55,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/midi/MidiMappingEngine.cpp
     src/midi/MidiMonitor.cpp
     src/parameters/ParameterLayout.cpp
+    src/parameters/v3/SlotParameters.cpp
     src/plugin/ArpAdvancedOverlay.cpp
     src/plugin/SynthAudioProcessor.cpp
     src/plugin/EditorTooltips.cpp
@@ -123,6 +124,7 @@ if(BUILD_TESTING)
             tests/StabilityAndDisconnectTests.cpp
             tests/V3ModuleTests.cpp
             tests/V3ModulationTests.cpp
+            tests/V3ParameterTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests

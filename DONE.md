@@ -475,3 +475,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/v3/Modulation.h`: `ModSource` and `ModSources`, `SlotOffsets`, `SlotBase` with linear per-sub-block smoothing in normalised space (pan and pitch scaled by their spans, targets clamped, snap on prepare and reset), `descriptorToUnits` and `unitsToNormalised` with linear and logarithmic skew, and `buildSlotParams` (base plus offsets, clamped, mapped to units, non-modulatable parameters ignore offsets).
 - [x] Added `tests/V3ModulationTests.cpp` (six tests): mapping round trips, smoothing continuity and landing, pan and pitch step scaling, prepare snapping and wide sub-blocks, parameter building, source vector. Registered in the test target.
 - [x] Verified Debug build without warnings and `ctest` green.
+
+## V3 phase 0.3: descriptor-driven slot parameters (2026-11-13)
+
+- [x] Added `src/parameters/v3/SlotParameters.h/.cpp`: slot paths and stable IDs (`pA.g1.type`, `pA.g1.p1`.., `f6.p8`), `GenericSlotParameter` whose name, text and parsing follow the selected type's descriptor, unit formatting and parsing (Hz with kHz, ms with s, dB, semitones, cents, percent, choice), `makeSlotGroup` (type, eight generics, generator fixed parameters), `bindSlotPointers`, `readSlotTargets` and `applySlotTargets`. Added `SlotTypeTable` and `Slot::typeTable()` to `Module.h`.
+- [x] Added `tests/V3ParameterTests.cpp` (four tests, minimal processor harness): ID builder, a 258-parameter layout with unique IDs and the designed counts, name and text switching with the type including round trips, pointer table to targets to `SlotBase`. Registered source and tests in CMake.
+- [x] Verified Debug build without warnings and `ctest` green. Phase 0 complete.

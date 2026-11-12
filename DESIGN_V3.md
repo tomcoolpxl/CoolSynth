@@ -234,6 +234,16 @@ host automation name follows the current type (hosts that cache names show the g
 that is accepted). Roughly 700 parameters in total; the processor keeps the V2 pattern of a
 flat table of atomic pointers read once per block into a plain struct.
 
+Shipped (phase 0.3, 2026-11-13): `parameters/v3/SlotParameters` builds one group per slot
+from a `SlotTypeTable` (which `Slot<Variant>::typeTable()` supplies): a type choice named after
+the descriptors, eight `GenericSlotParameter`s (normalised floats whose `getName`, `getText` and
+`getValueForText` read the descriptor of the currently selected type; unused ones show "P n" and
+"-"), and for generators the fixed level, pan, octave (-2..2), semitone (-12..12), fine
+(-50..50 cents), key tracking and combine (Off, Sync, Ring, FM, AM). The default of a generic
+parameter is type 0's default; a type change does not reset values. `bindSlotPointers` resolves
+the raw pointers by ID, `readSlotTargets` folds octave, semitone and fine into one pitch offset,
+and `applySlotTargets` pushes a slot's targets into its `SlotBase`. Parameter version hint 8.
+
 ### 9.2 State and patch format
 
 `patchFormatVersion` goes to 8; V2 state (7 and lower) is rejected, as the compatibility stance

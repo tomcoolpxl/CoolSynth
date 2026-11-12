@@ -11,8 +11,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 3. `IMPLEMENTATION_PLAN_V3.md` written 2026-11-12. Done.
 4. Phase 0.1 done 2026-11-12: `src/synth/v3/Module.h` and `tests/V3ModuleTests.cpp`.
 5. Phase 0.2 done 2026-11-13: `src/synth/v3/Modulation.h` and `tests/V3ModulationTests.cpp`.
-6. Phase 0.3: descriptor-driven generic parameters and the slot path builder in the parameter
-   layout; ID uniqueness and text round-trip tests.
+6. Phase 0.3 done 2026-11-13: `src/parameters/v3/SlotParameters.h/.cpp` and
+   `tests/V3ParameterTests.cpp`. Phase 0 complete.
 7. Phase 1.1: VA generator with unison, sub mix and combine-ready sync; tuning and alias tests.
 
 ## Carried over from the V2 backlog
