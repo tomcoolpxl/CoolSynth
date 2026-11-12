@@ -7,17 +7,14 @@ written against the engine we want. `REQUIREMENTS_V3.md` lists what that engine 
 proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed at the bottom.
 
 1. Engine shape decided 2026-11-12: slot chain (`REQUIREMENTS_V3.md` section 7). Done.
-2. Write `DESIGN_V3.md` from the decision: module interface, slot parameter descriptor model and
-   stable parameter IDs, modulation context and matrix evaluation, parts, effect chain, preset
-   and state format v3, CPU budget per module type, what V2 code is kept where.
-3. Write `IMPLEMENTATION_PLAN_V3.md` with the eight phases of `REQUIREMENTS_V3.md` section 6,
-   each small enough for one review cycle, each ending with the rooms it ships.
-4. Phase 1 core: slot chain with the VA generator, ladder processor, three envelopes, parity
-   tests from V2 (alias, steal fade, latency, levels) green.
-5. Author Workshop, Studio 1982 and Engine Room from `SOUND_BANK_V3.md` in the v3 preset format,
-   delete the old bank, update the preset tests, run the normaliser.
-6. Phase 2 modulation (LFO sync, per-voice LFOs, S&H, step modulator, global envelope, matrix,
-   delay sync), then Clock Tower.
+2. `DESIGN_V3.md` written 2026-11-12. Done.
+3. `IMPLEMENTATION_PLAN_V3.md` written 2026-11-12. Done.
+4. Phase 0.1: module interface, descriptors, `Slot` variant with pending-type crossfade, arena
+   sizing; dummy-type tests (`IMPLEMENTATION_PLAN_V3.md`).
+5. Phase 0.2: sub-block modulation context with smoothing and clamping; tests.
+6. Phase 0.3: descriptor-driven generic parameters and the slot path builder in the parameter
+   layout; ID uniqueness and text round-trip tests.
+7. Phase 1.1: VA generator with unison, sub mix and combine-ready sync; tuning and alias tests.
 
 ## Carried over from the V2 backlog
 

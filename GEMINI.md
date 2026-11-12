@@ -14,8 +14,8 @@ The V2 engine is shipped. V3 (the "Places" sound bank and a modular engine) is i
 Authoritative project files:
 
 - `REQUIREMENTS.md`, `REQUIREMENTS_V2.md`, `REQUIREMENTS_V3.md`, `SOUND_BANK_V3.md`
-- `DESIGN.md`, `DESIGN_V2.md`
-- `IMPLEMENTATION_PLAN.md`, `IMPLEMENTATION_PLAN_V2.md`
+- `DESIGN.md`, `DESIGN_V2.md`, `DESIGN_V3.md`
+- `IMPLEMENTATION_PLAN.md`, `IMPLEMENTATION_PLAN_V2.md`, `IMPLEMENTATION_PLAN_V3.md`
 - `TODO.md`
 - `DONE.md`
 

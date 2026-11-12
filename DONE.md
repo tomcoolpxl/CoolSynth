@@ -457,3 +457,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Sized the dense note-on click test to its eight literal events so it no longer depends on the voice count.
 - [x] Updated the V2 requirement, plan and design statements from 8 to 16 voices.
 - [x] Verified Debug build without warnings and `ctest` green.
+
+## V3 design and implementation plan (2026-11-12)
+
+- [x] Wrote `DESIGN_V3.md`: module interface and descriptors, slot variants with arena memory and crossfaded type changes, cost classes and voice cap, the voice with three generator and three processor slots and combine modes, sub-block rendering, local and global modulators, the 24-slot matrix, note layer with chord memory, two parts, effect slots, parameter IDs by slot path, state version 8, realtime rules, test plan, migration table from V2.
+- [x] Wrote `IMPLEMENTATION_PLAN_V3.md`: phases 0 to 8 in review-sized chunks, each with files, tests and the rooms of `SOUND_BANK_V3.md` it ships.
+- [x] Refreshed `TODO.md` with the first four chunks and `GEMINI.md` with the new authoritative files.
