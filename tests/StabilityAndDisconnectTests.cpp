@@ -518,6 +518,117 @@ public:
             expect(computePeakAbs(buffer, 0, buffer.getNumSamples()) < 1.0e-4f);
         }
 
+        beginTest("reverb_tail_rings_and_decays_after_note_off");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            coolsynth::synth::BlockRenderParametersV2 parameters;
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
+            parameters.ampEnvelope = makeStressEnvelope();
+            parameters.filterEnvelope = makeStressEnvelope();
+            parameters.filter.cutoffHz = 5000.0f;
+            parameters.filter.resonanceNormalized = 0.1f;
+            parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            parameters.delay.enabled = false;
+            parameters.reverb.enabled = true;
+            parameters.reverb.size = 0.7f;
+            parameters.reverb.damping = 0.3f;
+            parameters.reverb.mix = 1.0f;
+            parameters.masterGainLinear = 0.5f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOff {{
+                { coolsynth::synth::EngineMidiEventType::noteOff, 0, 60, 0.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters);
+            buffer.clear();
+            engine.render(buffer, noteOff, parameters);
+
+            float earlyRms = 0.0f;
+            float lateRms = 0.0f;
+            for (int block = 0; block < 60; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+                expectBufferFiniteAndBounded(*this, buffer, 10.0f);
+                const float rms = computeRms(buffer, 0, buffer.getNumSamples());
+                if (block >= 4 && block < 8)
+                    earlyRms = juce::jmax(earlyRms, rms);
+                if (block >= 56)
+                    lateRms = juce::jmax(lateRms, rms);
+            }
+
+            expect(earlyRms > 1.0e-3f, "plate must ring after the note is released");
+            expect(lateRms > 1.0e-5f, "plate must still be audible 0.3 s into the tail");
+            expect(lateRms < earlyRms, "plate tail must decay");
+        }
+
+        beginTest("chorus_decorrelates_left_and_right");
+        {
+            coolsynth::synth::BlockRenderParametersV2 parameters;
+            parameters.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::saw;
+            parameters.oscA.level = 1.0f;
+            parameters.oscB.level = 0.0f;
+            parameters.ampEnvelope = makeStressEnvelope();
+            parameters.filterEnvelope = makeStressEnvelope();
+            parameters.filter.cutoffHz = 5000.0f;
+            parameters.filter.resonanceNormalized = 0.1f;
+            parameters.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            parameters.performance.panSpread = 0.0f;
+            parameters.chorus.rateHz = 1.0f;
+            parameters.chorus.depth = 1.0f;
+            parameters.chorus.mix = 1.0f;
+            parameters.masterGainLinear = 0.5f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f }
+            }};
+
+            const auto renderSideToMidRatio = [&](bool chorusEnabled)
+            {
+                auto withChorus = parameters;
+                withChorus.chorus.enabled = chorusEnabled;
+
+                coolsynth::synth::SynthEngineV2 engine;
+                engine.prepare(48000.0, 256, 2);
+
+                juce::AudioBuffer<float> buffer(2, 256);
+                float side = 0.0f;
+                float mid = 0.0f;
+                for (int block = 0; block < 24; ++block)
+                {
+                    buffer.clear();
+                    engine.render(buffer,
+                                  block == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(noteOn)
+                                             : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                                  withChorus);
+                    if (block < 8)
+                        continue;
+                    for (int i = 0; i < buffer.getNumSamples(); ++i)
+                    {
+                        const float l = buffer.getSample(0, i);
+                        const float r = buffer.getSample(1, i);
+                        side += (l - r) * (l - r);
+                        mid += (l + r) * (l + r);
+                    }
+                }
+                return mid > 0.0f ? std::sqrt(side / mid) : 0.0f;
+            };
+
+            const float dryRatio = renderSideToMidRatio(false);
+            const float chorusRatio = renderSideToMidRatio(true);
+            expect(dryRatio < 1.0e-3f, "without chorus and pan spread both channels must be identical");
+            expect(chorusRatio > 0.05f, "chorus must put different signals on left and right");
+        }
+
         beginTest("v2_compressor_amount_reduces_steady_state_peaks_monotonically");
         {
             // Renders the same hot signal with three increasing compressor amounts and verifies
@@ -1519,6 +1630,59 @@ public:
             const float closedRms = computeRms(closedBuffer, 256, closedBuffer.getNumSamples());
             const float openRms = computeRms(openBuffer, 256, openBuffer.getNumSamples());
             expect(openRms > closedRms * 2.0f);
+        }
+
+        // Ladder slope guard: a sine one octave above cutoff versus two octaves above cutoff.
+        // Four cascaded one-poles attenuate about 21 dB more at the second setting (ratio ~11);
+        // a 2-pole response would only manage about 12 dB (ratio ~4).
+        beginTest("filter_slope_is_four_pole");
+        {
+            coolsynth::synth::EnvelopeParameters heldEnvelope;
+            heldEnvelope.attackSeconds = 0.005f;
+            heldEnvelope.decaySeconds = 0.05f;
+            heldEnvelope.sustainLevel = 1.0f;
+            heldEnvelope.releaseSeconds = 0.05f;
+
+            auto base = makeBasicParameters();
+            base.oscA.waveShape = coolsynth::parameters::OscillatorWaveShape::sine;
+            base.oscA.level = 1.0f;
+            base.oscB.level = 0.0f;
+            base.mixer.noiseLevel = 0.0f;
+            base.ampEnvelope = heldEnvelope;
+            base.filter.resonanceNormalized = 0.0f;
+            base.filter.envelopeAmount = 0.0f;
+            base.filter.keyTracking = coolsynth::parameters::FilterKeyTrackingMode::off;
+            base.masterGainLinear = 1.0f;
+
+            auto oneOctaveAbove = base;
+            oneOctaveAbove.filter.cutoffHz = 220.0f;
+
+            auto twoOctavesAbove = base;
+            twoOctavesAbove.filter.cutoffHz = 110.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
+            }};
+
+            coolsynth::synth::SynthEngineV2 nearEngine;
+            coolsynth::synth::SynthEngineV2 farEngine;
+            nearEngine.prepare(48000.0, 4096, 2);
+            farEngine.prepare(48000.0, 4096, 2);
+
+            juce::AudioBuffer<float> nearBuffer(2, 4096);
+            juce::AudioBuffer<float> farBuffer(2, 4096);
+            nearBuffer.clear();
+            farBuffer.clear();
+            nearEngine.render(nearBuffer, noteOn, oneOctaveAbove);
+            farEngine.render(farBuffer, noteOn, twoOctavesAbove);
+
+            expectBufferFiniteAndBounded(*this, nearBuffer, 10.0f);
+            expectBufferFiniteAndBounded(*this, farBuffer, 10.0f);
+
+            const float nearRms = computeRms(nearBuffer, 2048, nearBuffer.getNumSamples());
+            const float farRms = computeRms(farBuffer, 2048, farBuffer.getNumSamples());
+            expect(farRms > 0.0f, "two octaves above cutoff must still pass signal");
+            expect(nearRms > farRms * 8.0f, "one extra octave above cutoff must cost about 24 dB, not 12 dB");
         }
 
         beginTest("filter_keyboard_tracking_full_lets_more_signal_through_high_notes");
@@ -3396,14 +3560,14 @@ public:
             }
         }
 
-        // B4: Q=25 with cutoff sweep must stay below a safe peak bound.
+        // Full resonance (ladder feedback k = 4, self-oscillating) with a cutoff sweep must stay below a safe peak bound.
         beginTest("filter_stability_q25");
         {
             coolsynth::synth::SynthEngineV2 engine;
             engine.prepare(48000.0, 256, 2);
 
             auto params = makeEngineParameters();
-            params.filter.resonanceNormalized = 1.0f; // Q=25
+            params.filter.resonanceNormalized = 1.0f; // self-oscillation
 
             std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
                 { coolsynth::synth::EngineMidiEventType::noteOn, 0, 69, 1.0f }
@@ -3426,14 +3590,14 @@ public:
                     maxPeak = juce::jmax(maxPeak, computePeakAbs(buffer, 0, buffer.getNumSamples()));
             }
 
-            // With B4 input-gain compensation (1/sqrt(Q)) the resonance peak is bounded.
-            expect(maxPeak < 6.0f, "Q=25 with B4 compensation must stay below 6.0");
+            // The tanh saturator on the ladder input bounds the resonance peak.
+            expect(maxPeak < 6.0f, "full resonance must stay below 6.0");
         }
 
-        // B4: All Q values must produce bounded output (regression guard).
+        // All resonance settings must produce bounded output (regression guard).
         beginTest("filter_loudness_vs_Q");
         {
-            const std::array<float, 4> resonanceVals { 0.0f, 0.56f, 0.84f, 1.0f }; // ~Q=0.7,5,15,25
+            const std::array<float, 4> resonanceVals { 0.0f, 0.56f, 0.84f, 1.0f };
 
             for (int qi = 0; qi < 4; ++qi)
             {

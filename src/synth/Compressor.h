@@ -8,7 +8,7 @@
 namespace coolsynth::synth
 {
     // Feed-forward peak compressor with a stereo-linked envelope, fixed soft knee,
-    // and auto-makeup gain. A single `amount` knob walks threshold from 0 dB down
+    // and auto-makeup gain that follows the applied gain reduction. A single `amount` knob walks threshold from 0 dB down
     // toward -24 dB while ratio rises from 1:1 toward 6:1.
     class Compressor final
     {
@@ -28,6 +28,8 @@ namespace coolsynth::synth
         float gainReductionDb = 0.0f;
         float attackCoef = 0.0f;
         float releaseCoef = 0.0f;
+        float makeupTrackerDb = 0.0f;
+        float makeupTrackerCoef = 0.0f;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> mixSmoothed;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> amountSmoothed;
         double sampleRate = 44100.0;

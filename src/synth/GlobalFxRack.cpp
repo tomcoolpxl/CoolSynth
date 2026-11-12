@@ -6,8 +6,6 @@ namespace coolsynth::synth
 {
     namespace
     {
-        constexpr float chorusCentreDelayMs = 7.5f;
-        constexpr float chorusFeedback = 0.1f;
         constexpr float maxDrivePreGain = 16.0f;
         constexpr double conservativeReverbTailSeconds = 12.0;
         constexpr double conservativeDelayFeedbackTailSeconds = 48.0;
@@ -42,13 +40,8 @@ namespace coolsynth::synth
 
     void GlobalFxRack::prepare(double sampleRate, int samplesPerBlock, int outputChannelCount)
     {
-        juce::dsp::ProcessSpec spec;
-        spec.sampleRate = sampleRate;
-        spec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
-        spec.numChannels = static_cast<juce::uint32>(juce::jmax(1, outputChannelCount));
-
-        chorus.prepare(spec);
-        reverb.prepare(spec);
+        chorus.prepare(sampleRate);
+        reverb.prepare(sampleRate);
         delay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         phaser.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         compressor.prepare(sampleRate, samplesPerBlock, outputChannelCount);
@@ -101,7 +94,7 @@ namespace coolsynth::synth
             return;
 
         // prepareToPlay's block size is only a hint: a host may deliver a larger block.
-        // The per-sample scratch buffers (and juce::dsp::Chorus) are sized to that hint,
+        // The per-sample scratch buffers are sized to that hint,
         // so split oversized blocks into chunks that fit instead of indexing past them.
         const int chunkCapacity = static_cast<int>(mixRampScratch.size());
         const int totalSamples = buffer.getNumSamples();
@@ -242,11 +235,8 @@ namespace coolsynth::synth
             return;
         }
 
-        chorus.setRate(juce::jlimit(0.05f, 99.0f, parameters.rateHz));
+        chorus.setRateHz(parameters.rateHz);
         chorus.setDepth(clampUnit(parameters.depth));
-        chorus.setCentreDelay(chorusCentreDelayMs);
-        chorus.setFeedback(chorusFeedback);
-        chorus.setMix(1.0f);  // C5: full-wet from JUCE; we blend with smoothed mix below
 
         const auto numChannels = buffer.getNumChannels();
         const auto numSamples  = buffer.getNumSamples();
@@ -255,9 +245,11 @@ namespace coolsynth::synth
         for (int ch = 0; ch < numChannels; ++ch)
             dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
 
-        juce::dsp::AudioBlock<float> block(buffer);
-        juce::dsp::ProcessContextReplacing<float> context(block);
-        chorus.process(context);
+        {
+            auto* left = buffer.getWritePointer(0);
+            auto* right = numChannels > 1 ? buffer.getWritePointer(1) : left;
+            chorus.process(left, right, numSamples);  // full wet; blended with the smoothed mix below
+        }
 
         // Build per-sample mix ramp once, apply to all channels
         for (int i = 0; i < numSamples; ++i)
@@ -314,15 +306,8 @@ namespace coolsynth::synth
             return;
         }
 
-        reverbParameters.roomSize = clampUnit(parameters.size);
-        reverbParameters.damping = clampUnit(parameters.damping);
-        reverbParameters.wetLevel = 1.0f;  // C5: full-wet from JUCE; we blend with smoothed mix below
-        reverbParameters.dryLevel = 0.0f;
-        reverbParameters.width = 1.0f;
-        reverbParameters.freezeMode = 0.0f;
-
-        reverb.setEnabled(true);
-        reverb.setParameters(reverbParameters);
+        reverb.setSize(clampUnit(parameters.size));
+        reverb.setDamping(clampUnit(parameters.damping));
 
         const auto numChannels = buffer.getNumChannels();
         const auto numSamples  = buffer.getNumSamples();
@@ -337,9 +322,11 @@ namespace coolsynth::synth
                 wet[i] = std::tanh(wet[i]);
         }
 
-        juce::dsp::AudioBlock<float> block(buffer);
-        juce::dsp::ProcessContextReplacing<float> context(block);
-        reverb.process(context);
+        {
+            auto* left = buffer.getWritePointer(0);
+            auto* right = numChannels > 1 ? buffer.getWritePointer(1) : left;
+            reverb.process(left, right, numSamples);  // full wet; blended with the smoothed mix below
+        }
 
         // Build per-sample mix ramp once, apply to all channels
         for (int i = 0; i < numSamples; ++i)

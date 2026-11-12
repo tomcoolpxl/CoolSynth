@@ -7,6 +7,7 @@ namespace coolsynth::synth
     namespace
     {
         constexpr double kCompressorSmoothRampSeconds = 0.020;
+        constexpr float kMakeupTrackSeconds = 0.100f;
         constexpr float kMinusInfDb = -120.0f;
 
         float linearToDb(float x) noexcept
@@ -45,6 +46,7 @@ namespace coolsynth::synth
         sampleRate = newSampleRate;
         attackCoef = std::exp(-1.0f / static_cast<float>(newSampleRate * attackSeconds));
         releaseCoef = std::exp(-1.0f / static_cast<float>(newSampleRate * releaseSeconds));
+        makeupTrackerCoef = std::exp(-1.0f / static_cast<float>(newSampleRate * kMakeupTrackSeconds));
         mixSmoothed.reset(newSampleRate, kCompressorSmoothRampSeconds);
         amountSmoothed.reset(newSampleRate, kCompressorSmoothRampSeconds);
         reset();
@@ -54,6 +56,7 @@ namespace coolsynth::synth
     void Compressor::reset() noexcept
     {
         gainReductionDb = 0.0f;
+        makeupTrackerDb = 0.0f;
         mixSmoothed.setCurrentAndTargetValue(0.0f);
         amountSmoothed.setCurrentAndTargetValue(0.0f);
     }
@@ -72,6 +75,7 @@ namespace coolsynth::synth
             mixSmoothed.setCurrentAndTargetValue(0.0f);
             amountSmoothed.setCurrentAndTargetValue(amount);
             gainReductionDb = 0.0f;
+            makeupTrackerDb = 0.0f;
             return;
         }
 
@@ -106,10 +110,11 @@ namespace coolsynth::synth
             const float coef = (targetGrDb > gainReductionDb) ? attackCoef : releaseCoef;
             gainReductionDb = coef * gainReductionDb + (1.0f - coef) * targetGrDb;
 
-            // Conservative makeup: capped at +6 dB even at amount=1.0 to avoid amplifying
-            // the dry signal louder than the bypass case for source material whose envelope
-            // doesn't sit near the threshold.
-            const float makeupDb = amt * 6.0f;
+            // Makeup follows the reduction it compensates: a slow average of the applied
+            // gain reduction, capped at +6 dB at amount=1.0. Peaks therefore never leave
+            // louder than the bypass case, whatever the crest factor of the source.
+            makeupTrackerDb = makeupTrackerCoef * makeupTrackerDb + (1.0f - makeupTrackerCoef) * gainReductionDb;
+            const float makeupDb = juce::jmin(amt * 6.0f, makeupTrackerDb);
             const float gainLinear = dbToLinear(-gainReductionDb + makeupDb);
 
             for (int ch = 0; ch < numChannels; ++ch)

@@ -11,8 +11,6 @@ namespace
     constexpr float kPolyModOscPitchRangeSemitones = 24.0f;  // poly-mod osc-B → pitch: ±2 octaves
     constexpr float kLfoPitchRangeSemitones        = 12.0f;  // LFO → pitch: ±1 octave
     constexpr float kVelocityFilterRangeSemitones  = 24.0f;  // velocity → filter: ±2 octaves
-    constexpr float kFilterQMin                    = 0.7071067811865476f; // 1/√2, Butterworth minimum Q
-    constexpr float kFilterQMax                    = 25.0f;  // maximum resonance Q
 
     // Standard 2-point PolyBLEP correction. t in [0,1), dt = phase increment per sample.
     static float polyBlep(float t, float dt) noexcept
@@ -73,19 +71,16 @@ namespace
 
 namespace coolsynth::synth
 {
-    SynthVoice::SynthVoice()
-    {
-        lowPassFilter.setType(juce::dsp::StateVariableTPTFilterType::lowpass);
-    }
+    SynthVoice::SynthVoice() = default;
 
     void SynthVoice::prepare(const juce::dsp::ProcessSpec& spec)
     {
         currentSampleRate = spec.sampleRate;
-        lowPassFilter.prepare(spec);
+        lowPassFilter.prepare(spec.sampleRate);
         ampEnvelope.setSampleRate(spec.sampleRate);
         filterEnvelope.setSampleRate(spec.sampleRate);
         cutoffHzSmoother.reset(spec.sampleRate, 0.02);
-        resonanceQSmoother.reset(spec.sampleRate, 0.02);
+        resonanceSmoother.reset(spec.sampleRate, 0.02);
         noteStartRampMinSamples = juce::jlimit(8, 64, static_cast<int>(std::round(spec.sampleRate * 0.00035)));
         forceStop();
     }
@@ -190,10 +185,10 @@ namespace coolsynth::synth
         glideStepLog2PerSample = 0.0f;
         resetVoiceState();
 
-        ampEnvelope.setParameters(makeJuceEnvelopeParameters());
+        ampEnvelope.setParameters(makeAmpEnvelopeParameters());
         ampEnvelope.noteOn();
 
-        filterEnvelope.setParameters(makeJuceFilterEnvelopeParameters());
+        filterEnvelope.setParameters(makeFilterEnvelopeParameters());
         filterEnvelope.noteOn();
 
         velocityGain = juce::jlimit(0.0f, 1.0f, velocity);
@@ -247,8 +242,8 @@ namespace coolsynth::synth
             }
         }
 
-        ampEnvelope.setParameters(makeJuceEnvelopeParameters());
-        filterEnvelope.setParameters(makeJuceFilterEnvelopeParameters());
+        ampEnvelope.setParameters(makeAmpEnvelopeParameters());
+        filterEnvelope.setParameters(makeFilterEnvelopeParameters());
 
         // C2: exp2 is faster than pow(2, x) on all major platforms
         const float voicePitchCarrierRatio = std::exp2(currentPitchBendSemitones / 12.0f)
@@ -274,8 +269,7 @@ namespace coolsynth::synth
         const float lfoModWheelDepth = (1.0f - nextLfoParameters.modWheelDepth)
                                        + (nextLfoParameters.modWheelDepth * currentModWheelValue);
 
-        const auto nextQ = mapNormalizedResonanceToQ(nextFilterParameters.resonanceNormalized);
-        resonanceQSmoother.setTargetValue(nextQ);
+        resonanceSmoother.setTargetValue(juce::jlimit(0.0f, 1.0f, nextFilterParameters.resonanceNormalized));
 
         const auto baseCutoffHz = clampCutoffToPreparedRange(nextFilterParameters.cutoffHz
                                                               * keyTrackingRatio);
@@ -413,7 +407,7 @@ namespace coolsynth::synth
             const float oscValue = std::tanh(normalized * overloadDrive);
 
             const float baseCutoffSmoothed = cutoffHzSmoother.getNextValue();
-            const float currentQ = resonanceQSmoother.getNextValue();
+            const float currentResonance = resonanceSmoother.getNextValue();
 
             if (updateFilter)
             {
@@ -426,12 +420,11 @@ namespace coolsynth::synth
                     envCutoffSemis + lfoCutoffSemis + polyModCutoffSemis + velFilterSemis);
                 const float cutoffModRatio = std::exp2(cutoffModSumSemis / 12.0f);
 
-                lowPassFilter.setCutoffFrequency(clampCutoffToPreparedRange(baseCutoffSmoothed * cutoffModRatio));
-                lowPassFilter.setResonance(currentQ);
+                lowPassFilter.setCutoffHz(clampCutoffToPreparedRange(baseCutoffSmoothed * cutoffModRatio));
+                lowPassFilter.setResonance(currentResonance);
             }
 
-            const float filterInputGain = juce::jmin(1.0f, 1.0f / std::sqrt(lowPassFilter.getResonance()));
-            const float filteredValue = lowPassFilter.processSample(0, oscValue * filterInputGain);
+            const float filteredValue = lowPassFilter.processSample(oscValue);
 
             const float ampVelocityMult = 1.0f - nextPerformanceParameters.velocityToAmp
                                           + (velocityGain * nextPerformanceParameters.velocityToAmp);
@@ -610,12 +603,6 @@ namespace coolsynth::synth
         }
     }
 
-    float SynthVoice::mapNormalizedResonanceToQ(float normalized) noexcept
-    {
-        const float r = juce::jlimit(0.0f, 1.0f, normalized);
-        return kFilterQMin + (kFilterQMax - kFilterQMin) * (r * r * r);
-    }
-
     float SynthVoice::clampCutoffToPreparedRange(float cutoffHz) const noexcept
     {
         const float minCutoffHz = 20.0f;
@@ -627,10 +614,11 @@ namespace coolsynth::synth
     {
         const auto clampedCutoffHz = clampCutoffToPreparedRange(nextFilterParameters.cutoffHz);
         cutoffHzSmoother.setCurrentAndTargetValue(clampedCutoffHz);
+        lowPassFilter.setCutoffHz(clampedCutoffHz);
 
-        const auto q = mapNormalizedResonanceToQ(nextFilterParameters.resonanceNormalized);
-        resonanceQSmoother.setCurrentAndTargetValue(q);
-        lowPassFilter.setResonance(q);
+        const auto resonance = juce::jlimit(0.0f, 1.0f, nextFilterParameters.resonanceNormalized);
+        resonanceSmoother.setCurrentAndTargetValue(resonance);
+        lowPassFilter.setResonance(resonance);
     }
 
     void SynthVoice::resetVoiceState() noexcept
@@ -653,9 +641,9 @@ namespace coolsynth::synth
         oscBState.phaseIncrement = 0.0f;
     }
 
-    juce::ADSR::Parameters SynthVoice::makeJuceEnvelopeParameters() const noexcept
+    AnalogEnvelope::Parameters SynthVoice::makeAmpEnvelopeParameters() const noexcept
     {
-        juce::ADSR::Parameters p;
+        AnalogEnvelope::Parameters p;
         p.attack = nextEnvelopeParameters.attackSeconds;
         p.decay = nextEnvelopeParameters.decaySeconds;
         p.sustain = nextEnvelopeParameters.sustainLevel;
@@ -663,9 +651,9 @@ namespace coolsynth::synth
         return p;
     }
 
-    juce::ADSR::Parameters SynthVoice::makeJuceFilterEnvelopeParameters() const noexcept
+    AnalogEnvelope::Parameters SynthVoice::makeFilterEnvelopeParameters() const noexcept
     {
-        juce::ADSR::Parameters p;
+        AnalogEnvelope::Parameters p;
         p.attack = nextFilterEnvelopeParameters.attackSeconds;
         p.decay = nextFilterEnvelopeParameters.decaySeconds;
         p.sustain = nextFilterEnvelopeParameters.sustainLevel;

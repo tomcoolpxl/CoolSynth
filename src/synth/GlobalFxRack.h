@@ -6,6 +6,8 @@
 #include "Compressor.h"
 #include "GlobalDelay.h"
 #include "Phaser.h"
+#include "PlateReverb.h"
+#include "StereoChorus.h"
 #include "SynthParameters.h"
 
 namespace coolsynth::synth
@@ -43,9 +45,8 @@ namespace coolsynth::synth
         GlobalDelay delay;
         Phaser phaser;
         Compressor compressor;
-        juce::dsp::Chorus<float> chorus;
-        juce::dsp::Reverb reverb;
-        juce::Reverb::Parameters reverbParameters;
+        StereoChorus chorus;
+        PlateReverb reverb;
         bool chorusWasAudible = false;
         bool delayWasAudible = false;
         bool reverbWasAudible = false;

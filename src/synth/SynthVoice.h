@@ -6,6 +6,8 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "SynthParameters.h"
+#include "AnalogEnvelope.h"
+#include "VoiceLadderFilter.h"
 
 namespace coolsynth::synth
 {
@@ -60,8 +62,8 @@ namespace coolsynth::synth
                 coolsynth::parameters::OscillatorWaveShape::saw;
         };
 
-        juce::ADSR::Parameters makeJuceEnvelopeParameters() const noexcept;
-        juce::ADSR::Parameters makeJuceFilterEnvelopeParameters() const noexcept;
+        AnalogEnvelope::Parameters makeAmpEnvelopeParameters() const noexcept;
+        AnalogEnvelope::Parameters makeFilterEnvelopeParameters() const noexcept;
         float computeOscillatorFrequencyHz(const OscillatorParametersV2& parameters) const noexcept;
         int computeNoteStartRampSamples() const noexcept;
         float renderOscillatorSample(OscillatorState& oscillator,
@@ -74,16 +76,15 @@ namespace coolsynth::synth
                                            float pulseWidth) noexcept;
         static coolsynth::parameters::OscillatorWaveShape lfoShapeToOscShape(
             coolsynth::parameters::LfoWaveShape shape) noexcept;
-        static float mapNormalizedResonanceToQ(float normalized) noexcept;
         float clampCutoffToPreparedRange(float cutoffHz) const noexcept;
         void primeFilterForCurrentTargets() noexcept;
         void resetVoiceState() noexcept;
 
-        juce::dsp::StateVariableTPTFilter<float> lowPassFilter;
+        VoiceLadderFilter lowPassFilter;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoffHzSmoother;
-        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> resonanceQSmoother;
-        juce::ADSR ampEnvelope;
-        juce::ADSR filterEnvelope;
+        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> resonanceSmoother;
+        AnalogEnvelope ampEnvelope;
+        AnalogEnvelope filterEnvelope;
         OscillatorParametersV2 nextOscillatorAParameters {
             coolsynth::parameters::OscillatorWaveShape::saw,
             2,

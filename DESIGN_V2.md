@@ -318,6 +318,8 @@ Recommended first-release choice:
 - optional character switching later,
 - optional subtle local drive around the filter path if stable.
 
+Shipped design (2026-11-12): `VoiceLadderFilter`, a zero-delay-feedback transistor ladder of four TPT one-pole stages with global feedback (Zavalishin, "The Art of VA Filter Design"), a tanh saturator on the ladder input, and bass makeup that returns half of the low-end lost to feedback. Resonance is 0..1 mapped to feedback k = 4r, so the top of the knob self-oscillates. Cutoff and resonance may change on every sample, which keeps the audio-rate Poly Mod path intact. The earlier single `juce::dsp::StateVariableTPTFilter` stage is gone.
+
 ## 7.4 Envelopes
 
 V2 needs:
@@ -333,6 +335,8 @@ Required behavior:
 - voice stealing does not leave envelopes in corrupted states,
 - mono/unison retrigger rules are controlled by the allocator rather than ad hoc voice reuse,
 - envelope timing can participate in vintage behavior if that mode is enabled.
+
+Shipped design (2026-11-12): `AnalogEnvelope`, an ADSR with exponential segments in the style of an RC-driven analog envelope generator (convex attack, concave decay and release). The public surface mirrors `juce::ADSR`, which it replaces; a retrigger continues from the current level so stolen and repeated notes never click.
 
 ## 7.5 Per-Voice Modulation
 
@@ -521,6 +525,8 @@ Recommended design:
 - low parameter count,
 - not a deep modulation lab.
 
+Shipped design (2026-11-12): `StereoChorus`, Juno-style. One delay line fed with the mono sum, read by two Hermite-interpolated taps modulated in anti-phase by a triangle LFO around a 5 ms centre, so left and right wobble against each other. Replaces `juce::dsp::Chorus`.
+
 ## 10.3 Drive / Saturation
 
 This is the required first FX slot for weight and aggression.
@@ -541,6 +547,8 @@ Recommended first-release direction:
 - cinematic but not endless by default,
 - no convolution requirement,
 - no latency-heavy design requirement.
+
+Shipped design (2026-11-12): `PlateReverb`, the Dattorro plate (JAES 1997): input bandwidth filter, four all-pass diffusers, a figure-of-eight tank of two cross-coupled halves with modulated all-passes and damping, and stereo output taps spread through both halves. `size` drives tank decay from 0.25 to 0.95, `damping` the tank low-pass. Replaces `juce::dsp::Reverb`.
 
 ## 11. Parameter and State Design
 

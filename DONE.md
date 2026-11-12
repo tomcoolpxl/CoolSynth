@@ -1,5 +1,16 @@
 # DONE
 
+## Engine quality pass — custom DSP in place of stock JUCE components
+
+Completed on 2026-11-12. Sound quality took precedence over the earlier document wording; `DESIGN_V2.md` sections 7.3, 7.4, 10.2 and 10.4 now record the shipped designs.
+
+- [x] Replaced the single 2-pole `juce::dsp::StateVariableTPTFilter` with `VoiceLadderFilter`, a zero-delay-feedback 4-pole transistor ladder (24 dB/octave) with a tanh saturator on the ladder input and partial bass makeup. Resonance 0..1 maps to feedback k = 4r and self-oscillates at the top; per-sample cutoff modulation (envelope, LFO, Poly Mod) is preserved.
+- [x] Replaced `juce::ADSR` with `AnalogEnvelope`, exponential RC-style segments behind the same public surface; a retrigger continues from the current level.
+- [x] Replaced `juce::dsp::Reverb` with `PlateReverb` (Dattorro plate, delay lengths scaled from the 29.761 kHz reference) and `juce::dsp::Chorus` with `StereoChorus` (Juno-style anti-phase taps, Hermite interpolation). `GlobalFxRack` owns no JUCE effect objects any more.
+- [x] Compressor makeup now follows a 100 ms average of the applied gain reduction, capped at +6 dB, so compressed peaks never leave louder than bypass. The former fixed `amount * 6 dB` makeup failed the existing monotonicity regression as soon as the ladder changed the crest factor of the source.
+- [x] Added regressions `filter_slope_is_four_pole`, `reverb_tail_rings_and_decays_after_note_off` and `chorus_decorrelates_left_and_right`; reworded the resonance-bound test comments.
+- [x] Verified `cmake --build --preset build-debug --config Debug` (no warnings) and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-11-12.
+
 ## UI/UX review follow-up — resizable window, accessibility, labels, undo
 
 Completed on 2026-11-02 from the open items in `UI_UX_REVIEW.md`.
