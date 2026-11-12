@@ -189,7 +189,7 @@ Room rule: drive or fold on every preset.
 | 3 | Metal Hit | Ring-modulated metallic stab | VA saw RING VA at ratio 2.76; amp D250; PLATE short | RING | PH (Now~ poly-mod B to pitch) |
 | 4 | Furnace Drone | Low detuned drone with comb movement | VA saw x2 32' -9 c; COMB from slow LFO; NOISE low | COMB | Now~ (LP4 with LFO) |
 | 5 | Concrete Pad | Dark crushed pad with no bass | VA saw x2; SVF HP 200 Hz then LP4 1 kHz; CRUSH 12 bit 22 kHz; LOFI | SVF, CRUSH | PH (Now~ dark LP4 pad) |
-| 6 | Siren | Self-oscillating filter sweep with echoes | LP4 res 1.0 self-oscillating, oscillators off; cutoff from LFO-G 0.1 Hz saw; DELAY feedback 0.8 | none | Now |
+| 6 | Siren | Self-oscillating filter sweep with echoes | LP4 res 1.0 self-oscillating, oscillators off, NOISE at 0.02 to start it; cutoff from LFO-G 0.1 Hz saw; DELAY feedback 0.8 | none | Now |
 
 ### Studio 1982 (retrosynth classics)
 

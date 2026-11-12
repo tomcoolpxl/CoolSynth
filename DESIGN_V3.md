@@ -137,6 +137,17 @@ ladder and SVF process left and right with shared coefficients. Then the VCA app
 velocity sensitivity times the voice gain modulation destination, and the pan stage applies pan
 spread plus modulation.
 
+Shipped (phase 1.2, 2026-11-13): `LadderProcessor` with cutoff, resonance, drive (0..24 dB
+into the saturator) and key tracking (0..1, neutral at C4, applied to the `frequencyHz` the
+voice supplies). Stereo with shared coefficients; cutoff and feedback ramp per sample across the
+sub-block. The resonance law changed from V2: feedback is 4.3 sqrt(r) instead of 4 sqrt(r), so
+the ladder self-oscillates from about 0.87 upwards and the saturator sets the level (measured:
+1000.0 Hz at cutoff 1 kHz, peak 0.41 from a single impulse). A silent input never starts the
+oscillation; presets that want it (Basement Siren) add a trace of noise. Measured: -28 dB one
+octave above cutoff and -49 dB two octaves above (four-pole), -0.07 dB well below cutoff,
++24 dB drive raises the third harmonic of a half-scale sine from -34 dB to -10 dB with the peak
+held at 1.0.
+
 ### 4.2 Sub-block rendering
 
 A voice renders a block in sub-blocks of 32 samples at the 2x rate (16 host samples). Per
@@ -167,6 +178,13 @@ their coefficients need it.
 - Sources without parameters: velocity, release velocity, key position (bipolar around C3),
   note random (new per note), aftertouch (channel or poly), MPE pressure and slide, per-voice
   drift (the V2 Vintage random walk, now a source with no fixed destination).
+
+Shipped (phase 1.2, 2026-11-13): `Envelope` keeps the V2 one-pole segments and adds a curve
+per stage (overshoot ratio 10^(-4 + 6 curve): 0 is the V2 exponential, 1 is near linear; the
+attack default 0.58 reproduces V2), velocity sensitivity on the peak, loop (attack and decay
+cycle while the gate is held) and one-shot (the decay runs to its end and goes straight to
+release). Every curve lands on full level at exactly the programmed attack time; a 10 ms + 10 ms
+loop repeats every 960 samples at 48 kHz.
 
 ### 4.4 Note context
 
