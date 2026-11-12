@@ -1174,7 +1174,7 @@ public:
             parameters.oscB.fineCents = 12.0f;
             parameters.mixer.noiseLevel = 0.35f;
 
-            std::array<coolsynth::synth::EngineMidiEvent, coolsynth::synth::defaultVoiceCount> noteOns {{
+            std::array<coolsynth::synth::EngineMidiEvent, 8> noteOns {{
                 { coolsynth::synth::EngineMidiEventType::noteOn, 0, 48, 1.0f },
                 { coolsynth::synth::EngineMidiEventType::noteOn, 0, 52, 1.0f },
                 { coolsynth::synth::EngineMidiEventType::noteOn, 0, 55, 1.0f },

@@ -186,7 +186,7 @@ Reasons:
 - mono mode needs explicit key priority,
 - glide policy depends on note history and allocation policy,
 - arp note generation needs direct note-dispatch ownership,
-- shipped 8-voice default behavior still needs deterministic voice-count control inside the allocator,
+- shipped 16-voice default behavior still needs deterministic voice-count control inside the allocator,
 - V2 should not be forced into emulating these behaviors via synthetic MIDI tricks.
 
 `SynthVoiceV2` does not need to inherit from `juce::SynthesiserVoice` if the allocator becomes fully custom.

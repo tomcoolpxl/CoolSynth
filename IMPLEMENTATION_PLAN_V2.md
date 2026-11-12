@@ -26,7 +26,7 @@ Hard constraints that shape the plan:
 - Windows 11 remains the only required delivery platform for the first V2 release.
 - The existing manual validation and tag-driven release workflows remain the release path; the plan does not add always-on CI triggers.
 - The first V2 release includes the mandatory global FX set only: drive, chorus or ensemble, delay, and reverb.
-- V2 ships with 8 voices by default, and a selectable 5-voice vintage-limited mode is not part of the first V2 release.
+- V2 ships with 16 voices by default, and a selectable 5-voice vintage-limited mode is not part of the first V2 release.
 - A single review cycle should be able to absorb one phase worth of work after it is refreshed into atomic `TODO.md` entries.
 - Manual VST3 release sign-off uses both Ableton Live Lite and REAPER on Windows.
 - V2 keeps the `.cspatch` extension while intentionally breaking V1 patch and state compatibility through a new explicit version boundary.

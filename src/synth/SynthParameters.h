@@ -6,7 +6,7 @@
 
 namespace coolsynth::synth
 {
-    inline constexpr int defaultVoiceCount = 8;
+    inline constexpr int defaultVoiceCount = 16;
     inline constexpr double masterGainRampSeconds = 0.004;
     inline constexpr int maxEngineEventsPerBlock = 1024;
     // LFO updates every N samples with linear interpolation (~0.7 ms at 44.1 kHz — inaudible)

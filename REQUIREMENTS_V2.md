@@ -15,7 +15,7 @@ The intent is to produce a synth that is still understandable and maintainable, 
 The following product decisions are now fixed for V2:
 
 - Polyphony shall modernize beyond strict Prophet-5 limits.
-- V2 shall ship with 8 voices by default.
+- V2 shall ship with 16 voices by default.
 - A selectable 5-voice vintage-limited mode is not required for the first V2 release.
 - The control set shall be a tasteful modern superset of the Prophet-5 model, not a strict historical replica.
 - V2 may break V1 preset, patch, and state compatibility.
@@ -27,7 +27,7 @@ The following product decisions are now fixed for V2:
 
 As of 2026-05-14, the current implementation already provides:
 
-- Polyphonic voice allocation with 8 preallocated voices and release-first voice stealing.
+- Polyphonic voice allocation with 16 preallocated voices and release-first voice stealing.
 - One oscillator per voice with a global waveform choice: sine, square, saw.
 - One per-voice ADSR amplitude envelope.
 - One per-voice low-pass filter with cutoff and resonance.
@@ -326,7 +326,7 @@ V2 shall remain polyphonic.
 
 Default requirement:
 
-- V2 shall ship with 8 voices by default rather than a strict 5-voice limit.
+- V2 shall ship with 16 voices by default rather than a strict 5-voice limit.
 
 Minimum requirement:
 
@@ -506,7 +506,7 @@ V2 should be considered successful only if all of the following are true:
 
 The following late V2 product decisions are now fixed:
 
-1. V2 ships with 8 voices by default.
+1. V2 ships with 16 voices by default.
 2. A selectable 5-voice vintage-limited mode is not required for the first V2 release.
 3. V2 keeps the `.cspatch` extension while intentionally breaking V1 patch and state compatibility.
 4. The first V2 release targets a one-page instrument panel first, with paging or tabs only as a fallback.

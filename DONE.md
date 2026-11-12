@@ -450,3 +450,10 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Wrote `REQUIREMENTS_V3.md`: module catalogue (generators, processors, local and global modulators, note layer, parts, effects), traceability from the bank with priorities, a slot-chain engine shape compared with a free graph and with extending V2, an eight-phase order, and the open decision.
 - [x] Checked the module catalogue against Plaits, MiniFreak, OP-1 field, SH-4d, NTS-1 mk2, Dirtywave M8, Serum 2 and Vital; sources listed in both documents.
 - [x] Refreshed `TODO.md` for V3 and marked which V2 backlog items V3 absorbs.
+
+## Polyphony raised to 16 voices (2026-11-12)
+
+- [x] Set `defaultVoiceCount` to 16 in `src/synth/SynthParameters.h`; the processor builds the engine with that default.
+- [x] Sized the dense note-on click test to its eight literal events so it no longer depends on the voice count.
+- [x] Updated the V2 requirement, plan and design statements from 8 to 16 voices.
+- [x] Verified Debug build without warnings and `ctest` green.
