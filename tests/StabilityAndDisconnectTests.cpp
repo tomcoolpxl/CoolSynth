@@ -3665,13 +3665,13 @@ public:
         // B1: PolyBLEP saw must suppress aliasing at A4 (440 Hz).
         beginTest("aliasing_A4_saw");
         {
-            runAliasingTest(*this, 69, -50.0f, "A4 saw alias must be ≤ -50 dB vs fundamental");
+            runAliasingTest(*this, 69, -80.0f, "A4 saw alias must be at or below -80 dB vs fundamental");
         }
 
         // B1: PolyBLEP saw must suppress aliasing at A7 (3520 Hz).
         beginTest("aliasing_A7_saw");
         {
-            runAliasingTest(*this, 105, -30.0f, "A7 saw alias must be ≤ -30 dB vs fundamental");
+            runAliasingTest(*this, 105, -70.0f, "A7 saw alias must be at or below -70 dB vs fundamental");
         }
 
         // B1: Triangle leaky integrator must not accumulate DC over a long sustained hold.
@@ -3727,6 +3727,114 @@ public:
         }
 
         // B5: Mono and unison modes both produce audible, bounded output.
+        // The 2x decimator must pass the audio band untouched and bury everything above the host Nyquist.
+        beginTest("halfband_decimator_passes_band_and_rejects_images");
+        {
+            const double hostRate = 48000.0;
+            const double overRate = hostRate * 2.0;
+            const int outputSamples = 8192;
+
+            const auto measure = [&](double toneHz)
+            {
+                coolsynth::synth::HalfBandDecimator2x decimator;
+                double sumSquares = 0.0;
+                int counted = 0;
+                for (int i = 0; i < outputSamples; ++i)
+                {
+                    const auto t0 = static_cast<double>(2 * i) / overRate;
+                    const auto t1 = static_cast<double>(2 * i + 1) / overRate;
+                    const float out = decimator.process(static_cast<float>(std::sin(2.0 * juce::MathConstants<double>::pi * toneHz * t0)),
+                                                        static_cast<float>(std::sin(2.0 * juce::MathConstants<double>::pi * toneHz * t1)));
+                    if (i >= 512)
+                    {
+                        sumSquares += static_cast<double>(out) * static_cast<double>(out);
+                        ++counted;
+                    }
+                }
+                return static_cast<float>(std::sqrt(sumSquares / static_cast<double>(counted)));
+            };
+
+            const float passbandRms = measure(10000.0);
+            const float stopbandRms = measure(30000.0);
+            const float unityRms = static_cast<float>(1.0 / std::sqrt(2.0));
+
+            logMessage("decimator rms: 10 kHz=" + juce::String(passbandRms, 4) + " 30 kHz=" + juce::String(stopbandRms, 6));
+            expect(std::abs(passbandRms - unityRms) < 0.02f, "10 kHz must pass at unity");
+            expect(stopbandRms < unityRms * 0.0002f, "30 kHz image must be rejected by more than 70 dB");
+        }
+
+        // The master soft clipper must keep any output inside +/-1 whatever the gain staging.
+        beginTest("master_soft_clip_bounds_output_below_unity");
+        {
+            coolsynth::synth::SynthEngineV2 engine;
+            engine.prepare(48000.0, 256, 2);
+
+            auto params = makeEngineParameters();
+            params.oscA.level = 1.0f;
+            params.oscB.level = 1.0f;
+            params.mixer.noiseLevel = 1.0f;
+            params.filter.cutoffHz = 20000.0f;
+            params.filter.resonanceNormalized = 1.0f;
+            params.drive.enabled = true;
+            params.drive.amount = 1.0f;
+            params.drive.mix = 1.0f;
+            params.masterGainLinear = 8.0f;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 3> chord {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 48, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 55, 1.0f },
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f }
+            }};
+
+            juce::AudioBuffer<float> buffer(2, 256);
+            float peak = 0.0f;
+            for (int b = 0; b < 40; ++b)
+            {
+                buffer.clear();
+                engine.render(buffer,
+                              b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(chord)
+                                     : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                              params);
+                expectBufferFiniteAndBounded(*this, buffer, 2.0f);
+                peak = juce::jmax(peak, computePeakAbs(buffer, 0, buffer.getNumSamples()));
+            }
+
+            logMessage("master clip peak: " + juce::String(peak, 4));
+            expect(peak > 0.5f, "a hot chord must still come through");
+            expect(peak <= 1.0f, "the soft clipper must never exceed unity");
+        }
+
+        // Vintage drift must wander but stay inside its advertised range and never jump.
+        beginTest("vintage_drift_stays_bounded_and_moves_smoothly");
+        {
+            coolsynth::synth::SynthVoice voice;
+            juce::dsp::ProcessSpec spec { 48000.0, 256, 1 };
+            voice.prepare(spec);
+            voice.setRandomSeed(0x2545f491u);
+            voice.setNextEnvelopeParameters(makeStressEnvelope());
+            voice.setVintageAmount(1.0f);
+            voice.startNote(60, 1.0f);
+
+            juce::AudioBuffer<float> buffer(1, 256);
+            float previous = voice.getVintageDriftCurrentCentsForTesting();
+            float maxAbs = 0.0f;
+            float maxStep = 0.0f;
+            for (int block = 0; block < 600; ++block)   // 3.2 s
+            {
+                buffer.clear();
+                voice.renderNextBlock(buffer, 0, buffer.getNumSamples());
+                const float now = voice.getVintageDriftCurrentCentsForTesting();
+                maxAbs = juce::jmax(maxAbs, std::abs(now));
+                maxStep = juce::jmax(maxStep, std::abs(now - previous));
+                previous = now;
+            }
+
+            logMessage("vintage drift: max " + juce::String(maxAbs, 3) + " cents, max step per block " + juce::String(maxStep, 4));
+            expect(maxAbs > 0.5f, "full vintage must actually drift");
+            expect(maxAbs <= 7.0f, "drift must stay inside +/-7 cents");
+            expect(maxStep < 0.5f, "drift must move smoothly, never in audible steps");
+        }
+
         beginTest("polyphony_loudness_consistency");
         {
             auto params = makeEngineParameters();
@@ -3893,6 +4001,7 @@ private:
             maxAliasMag = juce::jmax(maxAliasMag, fftBuf[static_cast<size_t>(bin)]);
 
         const float ratioDb = 20.0f * std::log10(maxAliasMag / fundamentalMag + 1e-30f);
+        test.logMessage(juce::String(label) + ": measured " + juce::String(ratioDb, 1) + " dB");
         test.expect(ratioDb <= maxDbThreshold, label);
     }
 

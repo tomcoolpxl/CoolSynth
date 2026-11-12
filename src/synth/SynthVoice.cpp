@@ -11,6 +11,10 @@ namespace
     constexpr float kPolyModOscPitchRangeSemitones = 24.0f;  // poly-mod osc-B → pitch: ±2 octaves
     constexpr float kLfoPitchRangeSemitones        = 12.0f;  // LFO → pitch: ±1 octave
     constexpr float kVelocityFilterRangeSemitones  = 24.0f;  // velocity → filter: ±2 octaves
+    constexpr float kVintageDriftMaxCents          = 7.0f;   // slow random-walk pitch drift at full vintage
+    constexpr float kVintageFilterOffsetMax        = 0.06f;  // per-voice cutoff offset at full vintage: ±6 %
+    constexpr float kVintageEnvelopeTimeMax        = 0.12f;  // per-voice envelope time spread at full vintage: ±12 %
+    constexpr float kVintageDriftSmoothingSeconds  = 0.35f;  // how lazily the drift follows its next target
 
     // Standard 2-point PolyBLEP correction. t in [0,1), dt = phase increment per sample.
     static float polyBlep(float t, float dt) noexcept
@@ -29,12 +33,14 @@ namespace
         return 0.0f;
     }
 
-    // Bandlimited wave renderer using PolyBLEP for saw and pulse discontinuities
-    // and a leaky integrator for triangle. triState persists between samples.
+    // Bandlimited wave renderer using PolyBLEP for saw and pulse discontinuities.
+    // The triangle is rendered naively: its harmonics fall at 1/n^2 and the voice runs
+    // oversampled, so its residual aliasing sits far below the saw's without the level
+    // loss and rounding a leaky-integrator triangle shows at high pitch.
     static float renderBandlimitedWaveSample(
         float phase, float dt,
         coolsynth::parameters::OscillatorWaveShape shape,
-        float pulseWidth, float& triState) noexcept
+        float pulseWidth) noexcept
     {
         using WS = coolsynth::parameters::OscillatorWaveShape;
         switch (shape)
@@ -54,14 +60,7 @@ namespace
                 return y;
             }
             case WS::triangle:
-            {
-                // Leaky integrator of bandlimited square; leak factor prevents DC drift.
-                float sq = phase < 0.5f ? 1.0f : -1.0f;
-                sq += polyBlep(phase, dt);
-                sq -= polyBlep(std::fmod(phase + 0.5f, 1.0f), dt);
-                triState = 4.0f * dt * sq + (1.0f - 4.0f * dt) * triState;
-                return triState * 0.8f;
-            }
+                return phase < 0.5f ? (4.0f * phase - 1.0f) : (3.0f - 4.0f * phase);
             case WS::sine:
             default:
                 return std::sin(phase * juce::MathConstants<float>::twoPi);
@@ -89,6 +88,47 @@ namespace coolsynth::synth
     {
         baseRandomSeed = seed == 0 ? 0x12345678u : seed;
         randomState = baseRandomSeed;
+
+        // Fixed per-voice character, drawn once from the seed so renders stay reproducible.
+        const auto unit = [this]() noexcept
+        {
+            return static_cast<float>(advanceRandomState() & 0xffffffu) / static_cast<float>(0xffffffu) * 2.0f - 1.0f;
+        };
+        vintageFilterOffsetFraction = unit();
+        vintageEnvelopeTimeFraction = unit();
+        randomState = baseRandomSeed;
+    }
+
+    void SynthVoice::setVintageAmount(float amount) noexcept
+    {
+        vintageAmount = juce::jlimit(0.0f, 1.0f, amount);
+        if (vintageAmount <= 0.0f)
+        {
+            vintageDriftCurrentCents = 0.0f;
+            vintageDriftTargetCents = 0.0f;
+            vintageDriftSamplesToNextTarget = 0;
+        }
+    }
+
+    void SynthVoice::updateVintageDrift(int numSamples) noexcept
+    {
+        if (vintageAmount <= 0.0f || currentSampleRate <= 0.0)
+            return;
+
+        // A new random target every 0.4 to 1.2 s; the drift eases toward it, so the pitch
+        // wanders the way a warm analog oscillator does instead of stepping.
+        vintageDriftSamplesToNextTarget -= numSamples;
+        if (vintageDriftSamplesToNextTarget <= 0)
+        {
+            const float unitA = static_cast<float>(advanceRandomState() & 0xffffffu) / static_cast<float>(0xffffffu);
+            const float unitB = static_cast<float>(advanceRandomState() & 0xffffffu) / static_cast<float>(0xffffffu);
+            vintageDriftTargetCents = (unitA * 2.0f - 1.0f) * kVintageDriftMaxCents * vintageAmount;
+            vintageDriftSamplesToNextTarget = static_cast<int>(currentSampleRate * (0.4 + 0.8 * unitB));
+        }
+
+        const float alpha = 1.0f - std::exp(-static_cast<float>(numSamples)
+                                            / static_cast<float>(currentSampleRate * kVintageDriftSmoothingSeconds));
+        vintageDriftCurrentCents += (vintageDriftTargetCents - vintageDriftCurrentCents) * alpha;
     }
 
     void SynthVoice::setNextVoiceSourceParameters(const OscillatorParametersV2& oscA,
@@ -245,9 +285,11 @@ namespace coolsynth::synth
         ampEnvelope.setParameters(makeAmpEnvelopeParameters());
         filterEnvelope.setParameters(makeFilterEnvelopeParameters());
 
+        updateVintageDrift(numSamples);
+
         // C2: exp2 is faster than pow(2, x) on all major platforms
         const float voicePitchCarrierRatio = std::exp2(currentPitchBendSemitones / 12.0f)
-                                            * std::exp2(vintageDriftCents / 1200.0f);
+                                            * std::exp2((vintageDriftCents + vintageDriftCurrentCents) / 1200.0f);
 
         // C1: initialize glide ratio as running multiplicative state (avoids per-sample pow)
         float currentGlideRatio = std::exp2(glideOffsetLog2);
@@ -271,8 +313,10 @@ namespace coolsynth::synth
 
         resonanceSmoother.setTargetValue(juce::jlimit(0.0f, 1.0f, nextFilterParameters.resonanceNormalized));
 
+        const float vintageCutoffRatio = 1.0f + kVintageFilterOffsetMax * vintageFilterOffsetFraction * vintageAmount;
         const auto baseCutoffHz = clampCutoffToPreparedRange(nextFilterParameters.cutoffHz
-                                                              * keyTrackingRatio);
+                                                              * keyTrackingRatio
+                                                              * vintageCutoffRatio);
         cutoffHzSmoother.setTargetValue(baseCutoffHz);
 
         const auto lfoOscShape = lfoShapeToOscShape(nextLfoParameters.waveShape);
@@ -515,7 +559,7 @@ namespace coolsynth::synth
 
         const float sample = renderBandlimitedWaveSample(
             oscillator.phase, oscillator.phaseIncrement,
-            oscillator.waveShape, oscillator.pulseWidth, oscillator.triState);
+            oscillator.waveShape, oscillator.pulseWidth);
 
         oscillator.phase += oscillator.phaseIncrement;
         oscillator.phase -= std::floor(oscillator.phase);
@@ -635,29 +679,29 @@ namespace coolsynth::synth
                                      65535.0f,
                                      0.0f,
                                      1.0f);
-        oscAState.triState = 0.0f;
-        oscBState.triState = 0.0f;
         oscAState.phaseIncrement = 0.0f;
         oscBState.phaseIncrement = 0.0f;
     }
 
     AnalogEnvelope::Parameters SynthVoice::makeAmpEnvelopeParameters() const noexcept
     {
+        const float timeScale = 1.0f + kVintageEnvelopeTimeMax * vintageEnvelopeTimeFraction * vintageAmount;
         AnalogEnvelope::Parameters p;
-        p.attack = nextEnvelopeParameters.attackSeconds;
-        p.decay = nextEnvelopeParameters.decaySeconds;
+        p.attack = nextEnvelopeParameters.attackSeconds * timeScale;
+        p.decay = nextEnvelopeParameters.decaySeconds * timeScale;
         p.sustain = nextEnvelopeParameters.sustainLevel;
-        p.release = nextEnvelopeParameters.releaseSeconds;
+        p.release = nextEnvelopeParameters.releaseSeconds * timeScale;
         return p;
     }
 
     AnalogEnvelope::Parameters SynthVoice::makeFilterEnvelopeParameters() const noexcept
     {
+        const float timeScale = 1.0f + kVintageEnvelopeTimeMax * vintageEnvelopeTimeFraction * vintageAmount;
         AnalogEnvelope::Parameters p;
-        p.attack = nextFilterEnvelopeParameters.attackSeconds;
-        p.decay = nextFilterEnvelopeParameters.decaySeconds;
+        p.attack = nextFilterEnvelopeParameters.attackSeconds * timeScale;
+        p.decay = nextFilterEnvelopeParameters.decaySeconds * timeScale;
         p.sustain = nextFilterEnvelopeParameters.sustainLevel;
-        p.release = nextFilterEnvelopeParameters.releaseSeconds;
+        p.release = nextFilterEnvelopeParameters.releaseSeconds * timeScale;
         return p;
     }
 }

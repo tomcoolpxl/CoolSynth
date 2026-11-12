@@ -31,6 +31,18 @@ namespace coolsynth::synth
             return 1.0f - juce::jmax(0.0f, -pan);
         }
 
+        // Transparent below 0.8 (about -2 dBFS), then bends smoothly toward a ceiling of 1.0,
+        // so self-oscillating resonance, drive and delay feedback can never hand the host a hard clip.
+        float softClipSample(float x) noexcept
+        {
+            constexpr float threshold = 0.8f;
+            const float magnitude = std::abs(x);
+            if (magnitude <= threshold)
+                return x;
+            const float over = (magnitude - threshold) / (1.0f - threshold);
+            return std::copysign(threshold + (1.0f - threshold) * std::tanh(over), x);
+        }
+
         float deterministicVoiceCents(int voiceIndex) noexcept
         {
             constexpr uint32_t mixer = 0x9e3779b9u;
@@ -55,7 +67,29 @@ namespace coolsynth::synth
         currentSampleRate = sampleRate;
         outputChannels = outputChannelCount;
         masterGainLinear.reset(sampleRate, masterGainRampSeconds);
-        prepareVoices(sampleRate, samplesPerBlock);
+        prepareVoices(sampleRate * oversampleFactor, samplesPerBlock * oversampleFactor);
+
+        const int channels = juce::jmax(1, outputChannelCount);
+        oversampledBuffer.setSize(channels, juce::jmax(1, samplesPerBlock) * oversampleFactor, false, true, true);
+        decimators.assign(static_cast<size_t>(channels), HalfBandDecimator2x {});
+
+        // The polyphase decimator has a short, fixed group delay: measure it once with an impulse.
+        {
+            HalfBandDecimator2x probe;
+            int peakIndex = 0;
+            float peakValue = 0.0f;
+            for (int i = 0; i < 64; ++i)
+            {
+                const float out = probe.process(i == 0 ? 1.0f : 0.0f, 0.0f);
+                if (std::abs(out) > peakValue)
+                {
+                    peakValue = std::abs(out);
+                    peakIndex = i;
+                }
+            }
+            decimationLatencySamples = peakIndex;
+        }
+
         globalFxRack.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         arpeggiator.prepare(sampleRate);
         panic();
@@ -78,6 +112,11 @@ namespace coolsynth::synth
             return;
 
         currentPlayMode = parameters.performance.playMode;
+
+        const int oversampledSamples = outputBuffer.getNumSamples() * oversampleFactor;
+        if (oversampledBuffer.getNumSamples() < oversampledSamples)
+            oversampledBuffer.setSize(oversampledBuffer.getNumChannels(), oversampledSamples, false, false, true);
+        oversampledBuffer.clear(0, oversampledSamples);
 
         const float lfoPhaseIncrement = computeLfoPhaseIncrementPerSample(parameters.lfo.rateHz, currentSampleRate);
 
@@ -174,7 +213,7 @@ namespace coolsynth::synth
             if (nextOffset > renderedSamples)
             {
                 const int spanSamples = nextOffset - renderedSamples;
-                renderVoiceSpan(outputBuffer, renderedSamples, spanSamples, parameters, globalLfoPhase);
+                renderVoiceSpan(renderedSamples, spanSamples, parameters, globalLfoPhase);
                 globalLfoPhase += lfoPhaseIncrement * static_cast<float>(spanSamples);
                 globalLfoPhase -= std::floor(globalLfoPhase);
                 renderedSamples = nextOffset;
@@ -209,10 +248,19 @@ namespace coolsynth::synth
         if (renderedSamples < blockSamples)
         {
             const int spanSamples = blockSamples - renderedSamples;
-            renderVoiceSpan(outputBuffer, renderedSamples, spanSamples, parameters, globalLfoPhase);
+            renderVoiceSpan(renderedSamples, spanSamples, parameters, globalLfoPhase);
             globalLfoPhase += lfoPhaseIncrement * static_cast<float>(spanSamples);
             globalLfoPhase -= std::floor(globalLfoPhase);
         }
+
+        // Bring the oversampled voice sum down to the host rate.
+        const int decimatedChannels = juce::jmin(outputBuffer.getNumChannels(), oversampledBuffer.getNumChannels());
+        for (int ch = 0; ch < decimatedChannels; ++ch)
+            decimators[static_cast<size_t>(ch)].processBlock(oversampledBuffer.getReadPointer(ch),
+                                                             outputBuffer.getWritePointer(ch),
+                                                             blockSamples);
+        for (int ch = decimatedChannels; ch < outputBuffer.getNumChannels(); ++ch)
+            outputBuffer.copyFrom(ch, 0, outputBuffer, 0, 0, blockSamples);
 
         globalFxRack.process(outputBuffer,
                              parameters.drive,
@@ -233,6 +281,9 @@ namespace coolsynth::synth
         }
 
         globalFxRack.clear();
+        for (auto& decimator : decimators)
+            decimator.reset();
+        oversampledBuffer.clear();
         clearHeldNotes();
         arpeggiator.panic();
         nextVoiceStartOrder = 0;
@@ -303,8 +354,7 @@ namespace coolsynth::synth
         }
     }
 
-    void SynthEngineV2::renderVoiceSpan(juce::AudioBuffer<float>& outputBuffer,
-                                        int startSample,
+    void SynthEngineV2::renderVoiceSpan(int startSample,
                                         int numSamples,
                                         const BlockRenderParametersV2& parameters,
                                         float lfoPhase) noexcept
@@ -314,6 +364,9 @@ namespace coolsynth::synth
 
         applyVoiceParametersForSpan(parameters, lfoPhase);
 
+        const int oversampledStart = startSample * oversampleFactor;
+        const int oversampledCount = numSamples * oversampleFactor;
+
         for (auto& slot : voices)
         {
             if (! slot.voice.isActive())
@@ -322,7 +375,7 @@ namespace coolsynth::synth
                 continue;
             }
 
-            slot.voice.renderNextBlock(outputBuffer, startSample, numSamples);
+            slot.voice.renderNextBlock(oversampledBuffer, oversampledStart, oversampledCount);
 
             if (! slot.voice.isActive())
                 clearVoiceSlot(slot);
@@ -567,6 +620,7 @@ namespace coolsynth::synth
         slot.voice.setGlobalLfoState(globalLfoPhase, modWheelValue);
         slot.voice.setPan(1.0f, 1.0f);
         slot.voice.setVintageDriftCents(0.0f);
+        slot.voice.setVintageAmount(0.0f);
         slot.voice.startNote(noteNumber, velocity);
         slot.voice.setGlideFromNote(glideFromNote, parameters.performance.glideTimeSeconds);
         slot.voice.setPitchBendSemitones(pitchBendSemitones);
@@ -674,6 +728,13 @@ namespace coolsynth::synth
         const float headroom = 1.0f / std::sqrt(static_cast<float>(juce::jmax(1, activeCount)));
         masterGainLinear.setTargetValue(targetLinearGain * headroom);
         masterGainLinear.applyGain(outputBuffer, outputBuffer.getNumSamples());
+
+        for (int ch = 0; ch < outputBuffer.getNumChannels(); ++ch)
+        {
+            auto* data = outputBuffer.getWritePointer(ch);
+            for (int i = 0; i < outputBuffer.getNumSamples(); ++i)
+                data[i] = softClipSample(data[i]);
+        }
     }
 
     void SynthEngineV2::addHeldNote(int noteNumber, float velocity) noexcept
@@ -759,6 +820,7 @@ namespace coolsynth::synth
         const float amount = juce::jlimit(0.0f, 1.0f, vintageAmount);
         const float cents = deterministicVoiceCents(voiceIndex) * amount * maxVintageDriftCents;
         slot.voice.setVintageDriftCents(cents);
+        slot.voice.setVintageAmount(amount);
     }
 
     float SynthEngineV2::computeLfoPhaseIncrementPerSample(float rateHz, double sampleRate) noexcept

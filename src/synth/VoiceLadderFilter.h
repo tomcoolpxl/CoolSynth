@@ -45,10 +45,14 @@ namespace coolsynth::synth
             loopGain4 = g2 * g2;
         }
 
-        /** Resonance 0..1. Feedback amount k = 4 * resonance; k = 4 self-oscillates. */
+        /**
+         * Resonance 0..1 maps to feedback k = 4 * sqrt(r), so k = 4 (self-oscillation) sits at
+         * the top of the knob while the audible peak grows evenly across the travel: a ladder
+         * only starts to sing above k = 2.5, which a linear law would push into the last quarter.
+         */
         void setResonance(float resonanceNormalized) noexcept
         {
-            feedbackAmount = 4.0f * std::clamp(resonanceNormalized, 0.0f, 1.0f);
+            feedbackAmount = 4.0f * std::sqrt(std::clamp(resonanceNormalized, 0.0f, 1.0f));
             // The ladder loses low end as feedback rises (DC gain 1/(1+k)); win part of it back.
             resonanceMakeupGain = 1.0f + kBassCompensation * feedbackAmount;
         }

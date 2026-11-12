@@ -10,12 +10,12 @@
 
 namespace coolsynth::synth
 {
-    // 4-stage all-pass phaser with a sine LFO. Stereo channels run with a 90 deg
+    // 6-stage all-pass phaser (three notches) with a sine LFO. Stereo channels run with a 90 deg
     // LFO phase offset to give the classic widening swirl. Feedback is fixed.
     class Phaser final
     {
     public:
-        static constexpr int numStages = 4;
+        static constexpr int numStages = 6;
         static constexpr float feedbackAmount = 0.35f;
         static constexpr float notchMinHz = 80.0f;
         static constexpr float notchMaxHz = 5000.0f;

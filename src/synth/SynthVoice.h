@@ -30,6 +30,8 @@ namespace coolsynth::synth
         void setGlobalLfoState(float phase, float modWheel) noexcept;
         void setPan(float panLeft, float panRight) noexcept;
         void setVintageDriftCents(float cents) noexcept;
+        /** 0..1: scales slow pitch drift, per-voice filter offset and envelope-time spread. */
+        void setVintageAmount(float amount) noexcept;
         void setOutputLevel(float level) noexcept;
         void setPitchBendSemitones(float semitones) noexcept;
         void setGlideFromNote(int fromMidiNoteNumber, float glideTimeSeconds) noexcept;
@@ -48,6 +50,7 @@ namespace coolsynth::synth
         [[nodiscard]] bool isReleasing() const noexcept { return releasing; }
         [[nodiscard]] int getCurrentMidiNoteNumber() const noexcept { return currentMidiNoteNumber; }
         [[nodiscard]] float getVintageDriftCentsForTesting() const noexcept { return vintageDriftCents; }
+        [[nodiscard]] float getVintageDriftCurrentCentsForTesting() const noexcept { return vintageDriftCurrentCents; }
         [[nodiscard]] float getCurrentGlideLog2ForTesting() const noexcept { return glideOffsetLog2; }
 
     private:
@@ -57,7 +60,6 @@ namespace coolsynth::synth
             float frequencyHz = 0.0f;
             float phaseIncrement = 0.0f;
             float pulseWidth = 0.5f;
-            float triState = 0.0f;
             coolsynth::parameters::OscillatorWaveShape waveShape =
                 coolsynth::parameters::OscillatorWaveShape::saw;
         };
@@ -79,6 +81,7 @@ namespace coolsynth::synth
         float clampCutoffToPreparedRange(float cutoffHz) const noexcept;
         void primeFilterForCurrentTargets() noexcept;
         void resetVoiceState() noexcept;
+        void updateVintageDrift(int numSamples) noexcept;
 
         VoiceLadderFilter lowPassFilter;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Multiplicative> cutoffHzSmoother;
@@ -123,6 +126,12 @@ namespace coolsynth::synth
         float panLeftVolume = 1.0f;
         float panRightVolume = 1.0f;
         float vintageDriftCents = 0.0f;
+        float vintageAmount = 0.0f;
+        float vintageDriftCurrentCents = 0.0f;
+        float vintageDriftTargetCents = 0.0f;
+        int vintageDriftSamplesToNextTarget = 0;
+        float vintageFilterOffsetFraction = 0.0f;   // -1..1, fixed per voice from its seed
+        float vintageEnvelopeTimeFraction = 0.0f;   // -1..1, fixed per voice from its seed
         float glideOffsetLog2 = 0.0f;
         float glideStepLog2PerSample = 0.0f;
         uint32_t baseRandomSeed = 0x12345678u;

@@ -40,6 +40,12 @@ namespace coolsynth::synth
 
     void GlobalFxRack::prepare(double sampleRate, int samplesPerBlock, int outputChannelCount)
     {
+        currentSampleRate = juce::jmax(1000.0, sampleRate);
+        const auto channelCount = static_cast<size_t>(juce::jmax(1, outputChannelCount));
+        driveUpsamplers.assign(channelCount, HalfBandUpsampler2x {});
+        driveDecimators.assign(channelCount, HalfBandDecimator2x {});
+        driveToneStates.assign(channelCount, 0.0f);
+
         chorus.prepare(sampleRate);
         reverb.prepare(sampleRate);
         delay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
@@ -193,8 +199,14 @@ namespace coolsynth::synth
 
         const float preGain = computeDrivePreGain(parameters.amount);
         const float normalizer = std::tanh(preGain);
-        const auto numChannels = buffer.getNumChannels();
+        const auto numChannels = juce::jmin(buffer.getNumChannels(), static_cast<int>(driveUpsamplers.size()));
         const auto numSamples = buffer.getNumSamples();
+
+        // Tone: the shaped signal runs through a one-pole low-pass that closes from 20 kHz
+        // at zero drive to 8 kHz at full drive, so heavy settings stay thick rather than fizzy.
+        const float toneCutoffHz = 20000.0f - 12000.0f * clampUnit(parameters.amount);
+        const float toneCoefficient = 1.0f - std::exp(-2.0f * juce::MathConstants<float>::pi * toneCutoffHz
+                                                      / static_cast<float>(currentSampleRate * 2.0));
 
         // Build the per-sample mix ramp once; apply the same ramp to all channels
         for (int i = 0; i < numSamples; ++i)
@@ -203,12 +215,26 @@ namespace coolsynth::synth
         for (int channel = 0; channel < numChannels; ++channel)
         {
             auto* samples = buffer.getWritePointer(channel);
+            auto& upsampler = driveUpsamplers[static_cast<size_t>(channel)];
+            auto& decimator = driveDecimators[static_cast<size_t>(channel)];
+            float& tone = driveToneStates[static_cast<size_t>(channel)];
 
             for (int sample = 0; sample < numSamples; ++sample)
             {
-                const float dry = samples[sample];
-                const float wet = applyDriveShape(dry, preGain, normalizer);
-                samples[sample] = dry + ((wet - dry) * mixRampScratch[static_cast<size_t>(sample)]);
+                const float mix = mixRampScratch[static_cast<size_t>(sample)];
+
+                // Shape at 2x and mix at 2x, so dry and wet share the decimator and no
+                // comb filter appears at partial mix settings.
+                float first = 0.0f;
+                float second = 0.0f;
+                upsampler.process(samples[sample], first, second);
+
+                tone += (applyDriveShape(first, preGain, normalizer) - tone) * toneCoefficient;
+                const float mixedFirst = first + (tone - first) * mix;
+                tone += (applyDriveShape(second, preGain, normalizer) - tone) * toneCoefficient;
+                const float mixedSecond = second + (tone - second) * mix;
+
+                samples[sample] = decimator.process(mixedFirst, mixedSecond);
             }
         }
     }

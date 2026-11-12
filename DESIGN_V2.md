@@ -211,6 +211,8 @@ Noise
 
 Each voice should remain internally mono until the pan-spread stage. This keeps the core synth path simple and analog-like.
 
+Shipped design (2026-11-12): every voice renders at twice the host rate (`SynthEngineV2::oversampleFactor`), so the PolyBLEP residuals, the mixer tanh and the ladder saturator put their harmonics where a decimator can remove them. The voice sum is brought down by `HalfBandDecimator2x`, a polyphase IIR elliptic half-band (about -96 dB stop band, 6 % transition), and the engine reports the decimator's few samples of latency to the host. Measured saw aliasing after the change: about -114 dB at A4 and -96 dB at A7 against the fundamental.
+
 ## 6.2 Global Post-Voice Path
 
 The recommended first-release global path is:
@@ -232,6 +234,8 @@ This order is recommended because:
 - a fixed first-release order avoids unnecessary routing complexity.
 
 Optional later FX such as phaser/flanger/tremolo should be inserted only if they can fit without turning the rack into a routing system.
+
+Shipped design (2026-11-12): decimated voice sum -> drive -> six-stage phaser -> chorus -> delay -> plate reverb -> compressor -> master gain -> soft clipper. The clipper is transparent below 0.8 and bends smoothly to a ceiling of 1.0, so self-oscillating resonance, drive and delay feedback can never hand the host a hard clip.
 
 ## 7. Voice DSP Design
 
@@ -318,7 +322,7 @@ Recommended first-release choice:
 - optional character switching later,
 - optional subtle local drive around the filter path if stable.
 
-Shipped design (2026-11-12): `VoiceLadderFilter`, a zero-delay-feedback transistor ladder of four TPT one-pole stages with global feedback (Zavalishin, "The Art of VA Filter Design"), a tanh saturator on the ladder input, and bass makeup that returns half of the low-end lost to feedback. Resonance is 0..1 mapped to feedback k = 4r, so the top of the knob self-oscillates. Cutoff and resonance may change on every sample, which keeps the audio-rate Poly Mod path intact. The earlier single `juce::dsp::StateVariableTPTFilter` stage is gone.
+Shipped design (2026-11-12): `VoiceLadderFilter`, a zero-delay-feedback transistor ladder of four TPT one-pole stages with global feedback (Zavalishin, "The Art of VA Filter Design"), a tanh saturator on the ladder input, and bass makeup that returns half of the low-end lost to feedback. Resonance is 0..1 mapped to feedback k = 4 * sqrt(r), so the top of the knob self-oscillates while the audible peak grows evenly across the travel. Factory presets were retuned to this law on 2026-11-12 by keeping each preset's cutoff-to-passband ratio equal to what the old state-variable Q gave it. Cutoff and resonance may change on every sample, which keeps the audio-rate Poly Mod path intact. The earlier single `juce::dsp::StateVariableTPTFilter` stage is gone.
 
 ## 7.4 Envelopes
 
@@ -486,6 +490,8 @@ Recommended domains affected by vintage amount:
 
 Pan spread should be independent from vintage amount and applied at voice output placement time.
 
+Shipped design (2026-11-12): one `vintageAmount` knob scales four things per voice: a fixed pitch offset from the voice index (up to 25 cents), a slow random-walk pitch drift that eases toward a new target every 0.4 to 1.2 s (up to 7 cents), a fixed cutoff offset (up to 6 %) and a fixed envelope-time scale (up to 12 %), the last two drawn once from the voice's seed so renders stay reproducible. The drift state is not reset at note-on, so it behaves like a free-running oscillator rather than a per-note effect.
+
 ## 10. FX Rack Design
 
 The first V2 release should use a fixed-order global rack.
@@ -516,6 +522,8 @@ Recommended behavior:
 - bounded feedback,
 - musically darker voicing than V1.
 
+Shipped design (2026-11-12): own delay line with Hermite-interpolated fractional reads; the delay time follows the knob through an 80 ms slew so time changes glide the repeats like a tape head moving; the feedback path runs through a 5.5 kHz one-pole low-pass, a 110 Hz one-pole high-pass and a tanh soft clip, so each repeat returns darker and thinner than the last. Replaces `juce::dsp::DelayLine`.
+
 ## 10.2 Chorus / Ensemble
 
 Recommended design:
@@ -538,6 +546,8 @@ Recommended design:
 - bounded output,
 - mixable or bypassable,
 - not a high-gain distortion pedal simulation.
+
+Shipped design (2026-11-12): the tanh shaper runs at 2x through `HalfBandUpsampler2x` and `HalfBandDecimator2x`, with dry and wet mixed at 2x so partial mix settings never comb-filter against a delayed wet path, and a one-pole low-pass on the shaped signal closes from 20 kHz at zero drive to 8 kHz at full drive.
 
 ## 10.4 Reverb
 

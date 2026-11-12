@@ -10,6 +10,7 @@
 
 #include "Arpeggiator.h"
 #include "GlobalFxRack.h"
+#include "HalfBand2x.h"
 #include "SynthParameters.h"
 #include "SynthVoice.h"
 
@@ -30,9 +31,14 @@ namespace coolsynth::synth
     class SynthEngineV2 final
     {
     public:
+        /** Voices render at this multiple of the host rate; the sum is decimated before the FX rack. */
+        static constexpr int oversampleFactor = 2;
+
         explicit SynthEngineV2(int voiceCount = defaultVoiceCount);
 
         void prepare(double sampleRate, int samplesPerBlock, int outputChannelCount);
+        /** Latency of the decimation stage in host samples, known after prepare(). */
+        [[nodiscard]] int getLatencySamples() const noexcept { return decimationLatencySamples; }
         void releaseResources() noexcept;
         void render(juce::AudioBuffer<float>& outputBuffer,
                     std::span<const EngineMidiEvent> midiEvents,
@@ -79,8 +85,7 @@ namespace coolsynth::synth
         void prepareVoices(double sampleRate, int samplesPerBlock);
         void applyVoiceParametersForSpan(const BlockRenderParametersV2& parameters,
                                          float lfoPhase) noexcept;
-        void renderVoiceSpan(juce::AudioBuffer<float>& outputBuffer,
-                             int startSample,
+        void renderVoiceSpan(int startSample,
                              int numSamples,
                              const BlockRenderParametersV2& parameters,
                              float lfoPhase) noexcept;
@@ -129,6 +134,9 @@ namespace coolsynth::synth
         std::vector<VoiceSlot> voices;
         Arpeggiator arpeggiator;
         GlobalFxRack globalFxRack;
+        juce::AudioBuffer<float> oversampledBuffer;   // voice sum at oversampleFactor x host rate
+        std::vector<HalfBandDecimator2x> decimators;  // one per output channel
+        int decimationLatencySamples = 0;
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGainLinear;
         std::array<HeldNote, maxHeldNotes> heldNotes {};
         int heldNoteCount = 0;

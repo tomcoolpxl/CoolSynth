@@ -5,6 +5,7 @@
 
 #include "Compressor.h"
 #include "GlobalDelay.h"
+#include "HalfBand2x.h"
 #include "Phaser.h"
 #include "PlateReverb.h"
 #include "StereoChorus.h"
@@ -47,6 +48,10 @@ namespace coolsynth::synth
         Compressor compressor;
         StereoChorus chorus;
         PlateReverb reverb;
+        std::vector<HalfBandUpsampler2x> driveUpsamplers;  // drive shapes at 2x so its harmonics do not alias
+        std::vector<HalfBandDecimator2x> driveDecimators;
+        std::vector<float> driveToneStates;                 // one-pole low-pass on the shaped signal
+        double currentSampleRate = 48000.0;
         bool chorusWasAudible = false;
         bool delayWasAudible = false;
         bool reverbWasAudible = false;

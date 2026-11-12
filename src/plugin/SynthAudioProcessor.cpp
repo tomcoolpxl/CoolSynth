@@ -149,6 +149,7 @@ SynthAudioProcessor::~SynthAudioProcessor()
 void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
     synthEngine.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
+    setLatencySamples(synthEngine.getLatencySamples());
     scopeFifo.clear();
     monoMixScratch.resize(static_cast<size_t>(samplesPerBlock));
     // Prime the AsyncUpdater's lazy first-call allocation before the audio thread touches it.

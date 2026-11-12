@@ -1,78 +1,93 @@
 #include "GlobalDelay.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace coolsynth::synth
 {
-    void GlobalDelay::prepare(double sampleRate, int samplesPerBlock, int outputChannelCount)
+    void GlobalDelay::prepare(double sampleRate, int /*samplesPerBlock*/, int outputChannelCount)
     {
-        currentSampleRate = sampleRate;
-        preparedOutputChannels = outputChannelCount;
-        
-        // Maximum 1 second delay + safety padding
-        maximumDelaySamples = static_cast<int>(std::ceil(sampleRate * 1.0)) + 4;
-        
-        juce::dsp::ProcessSpec spec;
-        spec.sampleRate = sampleRate;
-        spec.maximumBlockSize = static_cast<juce::uint32>(samplesPerBlock);
-        spec.numChannels = static_cast<juce::uint32>(outputChannelCount);
-        
-        delayLine.prepare(spec);
-        delayLine.setMaximumDelayInSamples(maximumDelaySamples);
-        
-        delaySamplesSmoother.reset(sampleRate, parameterSmoothingSeconds);
-        feedbackSmoother.reset(sampleRate, parameterSmoothingSeconds);
-        mixSmoother.reset(sampleRate, parameterSmoothingSeconds);
-        
+        currentSampleRate = std::max(1000.0, sampleRate);
+
+        // Longest delay plus room for the interpolation neighbours.
+        bufferLength = static_cast<int>(std::ceil(currentSampleRate * (maxDelayTimeMs / 1000.0))) + 8;
+
+        channels.assign(static_cast<size_t>(std::max(1, outputChannelCount)), Channel {});
+        for (auto& channel : channels)
+            channel.buffer.assign(static_cast<size_t>(bufferLength), 0.0f);
+
+        timeSlewCoefficient = std::exp(-1.0f / static_cast<float>(currentSampleRate * timeSlewSeconds));
+        lowPassCoefficient = 1.0f - std::exp(-2.0f * juce::MathConstants<float>::pi * feedbackLowPassHz
+                                             / static_cast<float>(currentSampleRate));
+        highPassCoefficient = std::exp(-2.0f * juce::MathConstants<float>::pi * feedbackHighPassHz
+                                       / static_cast<float>(currentSampleRate));
+
+        feedbackSmoother.reset(currentSampleRate, parameterSmoothingSeconds);
+        mixSmoother.reset(currentSampleRate, parameterSmoothingSeconds);
+
         reset();
-        
         prepared = true;
     }
 
     void GlobalDelay::reset() noexcept
     {
         clear();
-        
-        delaySamplesSmoother.setCurrentAndTargetValue(delayMsToSamples(250.0f));
+        currentDelaySamples = delayMsToSamples(250.0f);
+        targetDelaySamples = currentDelaySamples;
         feedbackSmoother.setCurrentAndTargetValue(0.25f);
         mixSmoother.setCurrentAndTargetValue(0.0f);
     }
 
     void GlobalDelay::clear() noexcept
     {
-        delayLine.reset();
+        for (auto& channel : channels)
+        {
+            std::fill(channel.buffer.begin(), channel.buffer.end(), 0.0f);
+            channel.writeIndex = 0;
+            channel.lowPassState = 0.0f;
+            channel.highPassState = 0.0f;
+            channel.highPassPreviousInput = 0.0f;
+        }
     }
 
     void GlobalDelay::process(juce::AudioBuffer<float>& buffer,
                               const DelayParametersV2& parameters) noexcept
     {
-        if (!prepared)
+        if (! prepared || bufferLength < 8)
             return;
 
         updateTargets(parameters);
 
-        const auto numChannels = juce::jmin(buffer.getNumChannels(), preparedOutputChannels);
-        const auto numSamples = buffer.getNumSamples();
+        const int numChannels = juce::jmin(buffer.getNumChannels(), static_cast<int>(channels.size()));
+        const int numSamples = buffer.getNumSamples();
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
-            const auto delaySamples = delaySamplesSmoother.getNextValue();
-            const auto feedback = feedbackSmoother.getNextValue();
-            const auto mix = mixSmoother.getNextValue();
+            // Slew the delay time so knob moves glide the repeats like a tape head moving.
+            currentDelaySamples += (targetDelaySamples - currentDelaySamples) * (1.0f - timeSlewCoefficient);
+            const float feedback = feedbackSmoother.getNextValue();
+            const float mix = mixSmoother.getNextValue();
 
-            for (int channel = 0; channel < numChannels; ++channel)
+            for (int ch = 0; ch < numChannels; ++ch)
             {
-                const float dry = buffer.getSample(channel, sample);
-                const float wet = delayLine.popSample(channel, delaySamples);
-                
-                float feedbackInput = dry + (wet * feedback);
-                feedbackInput = std::tanh(feedbackInput); // Soft-clip feedback to prevent explosions
-                
-                if (std::abs(feedbackInput) < 1.0e-7f)    // Anti-denormal to prevent CPU spikes
+                auto& channel = channels[static_cast<size_t>(ch)];
+                const float dry = buffer.getSample(ch, sample);
+                const float wet = readHermite(channel, currentDelaySamples);
+
+                // Feedback path: darken, thin out, then soft-clip so runaway settings stay musical.
+                channel.lowPassState += (wet - channel.lowPassState) * lowPassCoefficient;
+                const float darkened = channel.lowPassState;
+                channel.highPassState = highPassCoefficient * (channel.highPassState + darkened - channel.highPassPreviousInput);
+                channel.highPassPreviousInput = darkened;
+                float feedbackInput = dry + std::tanh(channel.highPassState * feedback);
+
+                if (std::abs(feedbackInput) < 1.0e-7f)
                     feedbackInput = 0.0f;
 
-                delayLine.pushSample(channel, feedbackInput);
-                
-                // Crossfade: dry + ((wet - dry) * mix)
-                buffer.setSample(channel, sample, dry + ((wet - dry) * mix));
+                channel.buffer[static_cast<size_t>(channel.writeIndex)] = feedbackInput;
+                channel.writeIndex = (channel.writeIndex + 1) % bufferLength;
+
+                buffer.setSample(ch, sample, dry + (wet - dry) * mix);
             }
         }
     }
@@ -82,26 +97,41 @@ namespace coolsynth::synth
         return juce::jlimit(minDelayTimeMs, maxDelayTimeMs, timeMs);
     }
 
-    float GlobalDelay::clampFeedback(float feedback) const noexcept
-    {
-        return juce::jlimit(0.0f, maxFeedback, feedback);
-    }
-
-    float GlobalDelay::clampMix(float mix) const noexcept
-    {
-        return juce::jlimit(0.0f, 1.0f, mix);
-    }
-
     float GlobalDelay::delayMsToSamples(float timeMs) const noexcept
     {
         const float samples = clampDelayMs(timeMs) * static_cast<float>(currentSampleRate) / 1000.0f;
-        return juce::jmin(samples, static_cast<float>(maximumDelaySamples - 1));
+        return juce::jlimit(2.0f, static_cast<float>(bufferLength - 4), samples);
+    }
+
+    float GlobalDelay::readHermite(const Channel& channel, float delaySamples) const noexcept
+    {
+        const float clamped = juce::jlimit(2.0f, static_cast<float>(bufferLength - 4), delaySamples);
+        const int whole = static_cast<int>(clamped);
+        const float t = clamped - static_cast<float>(whole);
+
+        const auto sampleAt = [&](int offsetBack) noexcept
+        {
+            int index = channel.writeIndex - offsetBack;
+            while (index < 0)
+                index += bufferLength;
+            return channel.buffer[static_cast<size_t>(index % bufferLength)];
+        };
+
+        const float xm1 = sampleAt(whole - 1);
+        const float x0 = sampleAt(whole);
+        const float x1 = sampleAt(whole + 1);
+        const float x2 = sampleAt(whole + 2);
+
+        const float c1 = 0.5f * (x1 - xm1);
+        const float c2 = xm1 - 2.5f * x0 + 2.0f * x1 - 0.5f * x2;
+        const float c3 = 0.5f * (x2 - xm1) + 1.5f * (x0 - x1);
+        return ((c3 * t + c2) * t + c1) * t + x0;
     }
 
     void GlobalDelay::updateTargets(const DelayParametersV2& parameters) noexcept
     {
-        delaySamplesSmoother.setTargetValue(delayMsToSamples(parameters.timeMs));
-        feedbackSmoother.setTargetValue(clampFeedback(parameters.feedback));
-        mixSmoother.setTargetValue(clampMix(parameters.mix));
+        targetDelaySamples = delayMsToSamples(parameters.timeMs);
+        feedbackSmoother.setTargetValue(juce::jlimit(0.0f, maxFeedback, parameters.feedback));
+        mixSmoother.setTargetValue(juce::jlimit(0.0f, 1.0f, parameters.mix));
     }
 }

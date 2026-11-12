@@ -1,5 +1,18 @@
 # DONE
 
+## Engine quality pass 2 — oversampling, delay, vintage, drive, phaser, clipper, presets
+
+Completed on 2026-11-12, directly after pass 1. `DESIGN_V2.md` sections 6.1, 6.2, 7.3, 9.4, 10.1 and 10.3 record the shipped designs.
+
+- [x] Voices render at 2x the host rate; the voice sum is decimated by `HalfBandDecimator2x`, a polyphase IIR elliptic half-band (about -96 dB stop band, 6 % transition, coefficients from an elliptic design computed once at first use). The engine measures the decimator's group delay with an impulse and the processor reports it to the host. Saw aliasing measured about -105 dB at A4 and -106 dB at A7; the alias regressions now demand -80 and -70 dB instead of -50 and -30.
+- [x] Ladder resonance law changed from k = 4r to k = 4 sqrt(r) so the audible peak grows evenly across the knob; the triangle is rendered naively at full level now that the voice is oversampled.
+- [x] `GlobalDelay` rewritten: own line with Hermite reads, an 80 ms time slew that glides the repeats, and a feedback path with 5.5 kHz low-pass, 110 Hz high-pass and tanh. Replaces `juce::dsp::DelayLine`.
+- [x] Vintage extended from a fixed per-voice pitch offset to slow random-walk pitch drift (up to 7 cents, eased over 350 ms toward a new target every 0.4 to 1.2 s), a fixed per-voice cutoff offset (up to 6 %) and envelope-time scale (up to 12 %), all under the existing `vintageAmount` knob and seeded deterministically.
+- [x] Drive shapes at 2x through `HalfBandUpsampler2x` and `HalfBandDecimator2x`, mixes at 2x so partial mix never comb-filters, and closes a one-pole low-pass from 20 kHz to 8 kHz with amount. Phaser now has six stages (three notches). A soft clipper after master gain is transparent below 0.8 and never exceeds 1.0.
+- [x] Factory presets retuned to the ladder law in both the YAML source and `FactoryPresets.cpp` by keeping each preset's cutoff-to-passband ratio equal to what its old state-variable Q produced.
+- [x] Added regressions `halfband_decimator_passes_band_and_rejects_images`, `master_soft_clip_bounds_output_below_unity` and `vintage_drift_stays_bounded_and_moves_smoothly`; the alias helper now logs its measurement.
+- [x] Verified `cmake --build --preset build-debug --config Debug` (no warnings) and `ctest --test-dir build -C Debug --output-on-failure` pass on 2026-11-12.
+
 ## Engine quality pass — custom DSP in place of stock JUCE components
 
 Completed on 2026-11-12. Sound quality took precedence over the earlier document wording; `DESIGN_V2.md` sections 7.3, 7.4, 10.2 and 10.4 now record the shipped designs.

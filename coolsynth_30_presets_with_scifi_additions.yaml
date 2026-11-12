@@ -16,7 +16,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 520
-  filterResonance: 0.12
+  filterResonance: 0.08
   filterEnvAmount: 0.58
   filterKeyTracking: 1
   filterAttackMs: 3
@@ -107,7 +107,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 740
-  filterResonance: 0.18
+  filterResonance: 0.10
   filterEnvAmount: 0.52
   filterKeyTracking: 1
   filterAttackMs: 2
@@ -198,7 +198,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 410
-  filterResonance: 0.58
+  filterResonance: 0.65
   filterEnvAmount: 0.74
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -289,7 +289,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.03
   filterCutoffHz: 980
-  filterResonance: 0.1
+  filterResonance: 0.08
   filterEnvAmount: 0.4
   filterKeyTracking: 1
   filterAttackMs: 4
@@ -380,7 +380,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 2300
-  filterResonance: 0.2
+  filterResonance: 0.12
   filterEnvAmount: 0.34
   filterKeyTracking: 1
   filterAttackMs: 2
@@ -471,7 +471,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 4200
-  filterResonance: 0.11
+  filterResonance: 0.08
   filterEnvAmount: 0.2
   filterKeyTracking: 1
   filterAttackMs: 5
@@ -562,7 +562,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1800
-  filterResonance: 0.26
+  filterResonance: 0.17
   filterEnvAmount: 0.38
   filterKeyTracking: 1
   filterAttackMs: 8
@@ -653,7 +653,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 3600
-  filterResonance: 0.32
+  filterResonance: 0.25
   filterEnvAmount: 0.18
   filterKeyTracking: 2
   filterAttackMs: 12
@@ -744,7 +744,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.02
   filterCutoffHz: 1550
-  filterResonance: 0.09
+  filterResonance: 0.08
   filterEnvAmount: 0.22
   filterKeyTracking: 1
   filterAttackMs: 1100
@@ -835,7 +835,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.01
   filterCutoffHz: 4200
-  filterResonance: 0.18
+  filterResonance: 0.10
   filterEnvAmount: 0.16
   filterKeyTracking: 2
   filterAttackMs: 1500
@@ -926,7 +926,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1180
-  filterResonance: 0.08
+  filterResonance: 0.07
   filterEnvAmount: 0.18
   filterKeyTracking: 1
   filterAttackMs: 900
@@ -1017,7 +1017,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.06
   filterCutoffHz: 2400
-  filterResonance: 0.34
+  filterResonance: 0.28
   filterEnvAmount: 0.24
   filterKeyTracking: 1
   filterAttackMs: 1800
@@ -1108,7 +1108,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1050
-  filterResonance: 0.16
+  filterResonance: 0.09
   filterEnvAmount: 0.72
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -1199,7 +1199,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 870
-  filterResonance: 0.42
+  filterResonance: 0.41
   filterEnvAmount: 0.82
   filterKeyTracking: 2
   filterAttackMs: 1
@@ -1290,7 +1290,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1900
-  filterResonance: 0.15
+  filterResonance: 0.09
   filterEnvAmount: 0.46
   filterKeyTracking: 1
   filterAttackMs: 3
@@ -1381,7 +1381,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.015
   filterCutoffHz: 1320
-  filterResonance: 0.12
+  filterResonance: 0.08
   filterEnvAmount: 0.3
   filterKeyTracking: 1
   filterAttackMs: 12
@@ -1472,7 +1472,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 2600
-  filterResonance: 0.18
+  filterResonance: 0.10
   filterEnvAmount: 0.48
   filterKeyTracking: 2
   filterAttackMs: 2
@@ -1563,7 +1563,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 760
-  filterResonance: 0.24
+  filterResonance: 0.15
   filterEnvAmount: 0.62
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -1654,7 +1654,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 3100
-  filterResonance: 0.14
+  filterResonance: 0.09
   filterEnvAmount: 0.42
   filterKeyTracking: 1
   filterAttackMs: 2
@@ -1745,7 +1745,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.12
   filterCutoffHz: 980
-  filterResonance: 0.54
+  filterResonance: 0.60
   filterEnvAmount: 0.78
   filterKeyTracking: 1
   filterAttackMs: 1800
@@ -1836,7 +1836,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.025
   filterCutoffHz: 1350
-  filterResonance: 0.16
+  filterResonance: 0.09
   filterEnvAmount: 0.52
   filterKeyTracking: 1
   filterAttackMs: 720
@@ -1927,7 +1927,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.07
   filterCutoffHz: 2750
-  filterResonance: 0.22
+  filterResonance: 0.13
   filterEnvAmount: 0.18
   filterKeyTracking: 2
   filterAttackMs: 90
@@ -2018,7 +2018,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.08
   filterCutoffHz: 620
-  filterResonance: 0.34
+  filterResonance: 0.28
   filterEnvAmount: 0.28
   filterKeyTracking: 0
   filterAttackMs: 2500
@@ -2109,7 +2109,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 880
-  filterResonance: 0.22
+  filterResonance: 0.13
   filterEnvAmount: 0.5
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -2200,7 +2200,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.015
   filterCutoffHz: 2100
-  filterResonance: 0.3
+  filterResonance: 0.22
   filterEnvAmount: 0.42
   filterKeyTracking: 1
   filterAttackMs: 25
@@ -2291,7 +2291,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.045
   filterCutoffHz: 1120
-  filterResonance: 0.13
+  filterResonance: 0.08
   filterEnvAmount: 0.26
   filterKeyTracking: 1
   filterAttackMs: 1800
@@ -2382,7 +2382,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.09
   filterCutoffHz: 3400
-  filterResonance: 0.18
+  filterResonance: 0.10
   filterEnvAmount: 0.22
   filterKeyTracking: 2
   filterAttackMs: 140
@@ -2473,7 +2473,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 2400
-  filterResonance: 0.17
+  filterResonance: 0.10
   filterEnvAmount: 0.44
   filterKeyTracking: 1
   filterAttackMs: 2
@@ -2564,7 +2564,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.035
   filterCutoffHz: 980
-  filterResonance: 0.2
+  filterResonance: 0.12
   filterEnvAmount: 0.56
   filterKeyTracking: 1
   filterAttackMs: 1300
@@ -2655,7 +2655,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.18
   filterCutoffHz: 1650
-  filterResonance: 0.62
+  filterResonance: 0.69
   filterEnvAmount: 0.2
   filterKeyTracking: 0
   filterAttackMs: 600
@@ -2746,7 +2746,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1150
-  filterResonance: 0.18
+  filterResonance: 0.10
   filterEnvAmount: 0.74
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -2837,7 +2837,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.02
   filterCutoffHz: 1850
-  filterResonance: 0.12
+  filterResonance: 0.08
   filterEnvAmount: 0.28
   filterKeyTracking: 1
   filterAttackMs: 240
@@ -2928,7 +2928,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 2200
-  filterResonance: 0.22
+  filterResonance: 0.13
   filterEnvAmount: 0.58
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -3019,7 +3019,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1650
-  filterResonance: 0.10
+  filterResonance: 0.08
   filterEnvAmount: 0.20
   filterKeyTracking: 1
   filterAttackMs: 8
@@ -3110,7 +3110,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1400
-  filterResonance: 0.20
+  filterResonance: 0.12
   filterEnvAmount: 0.48
   filterKeyTracking: 1
   filterAttackMs: 2
@@ -3201,7 +3201,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 520
-  filterResonance: 0.26
+  filterResonance: 0.17
   filterEnvAmount: 0.66
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -3292,7 +3292,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 2050
-  filterResonance: 0.24
+  filterResonance: 0.15
   filterEnvAmount: 0.46
   filterKeyTracking: 1
   filterAttackMs: 2
@@ -3383,7 +3383,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1500
-  filterResonance: 0.14
+  filterResonance: 0.09
   filterEnvAmount: 0.52
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -3474,7 +3474,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.01
   filterCutoffHz: 4200
-  filterResonance: 0.20
+  filterResonance: 0.12
   filterEnvAmount: 0.32
   filterKeyTracking: 2
   filterAttackMs: 2
@@ -3565,7 +3565,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1700
-  filterResonance: 0.16
+  filterResonance: 0.09
   filterEnvAmount: 0.50
   filterKeyTracking: 1
   filterAttackMs: 2
@@ -3656,7 +3656,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0
   filterCutoffHz: 1260
-  filterResonance: 0.20
+  filterResonance: 0.12
   filterEnvAmount: 0.70
   filterKeyTracking: 1
   filterAttackMs: 1
@@ -3747,7 +3747,7 @@ params:
   oscBLowFrequencyMode: false
   noiseLevel: 0.03
   filterCutoffHz: 2100
-  filterResonance: 0.16
+  filterResonance: 0.09
   filterEnvAmount: 0.38
   filterKeyTracking: 1
   filterAttackMs: 90
