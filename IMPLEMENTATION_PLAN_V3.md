@@ -49,8 +49,8 @@ parity figures logged.
 1.5 State and presets v3. `patchFormatVersion = 8`, rejection of 7, the YAML to table generator
 rewritten for slots using the descriptor export tool, the old bank and its YAML deleted, the
 normaliser pointed at the new table. Ships: Workshop (Init Saw, Init Pulse, Init Sine, Init
-Noise, Init Arp), Studio 1982 (all six), Engine Room (Pure Sub, 808 Boom, Donk, Reese moved
-here temporarily is not done; Reese stays in Main Stage and ships in 2.3).
+Noise, Init Arp), Studio 1982 (all six), Engine Room (Pure Sub, 808 Boom, Donk), Main Stage
+(Reese).
 
 1.6 Audition UI. Type menus and eight generic knobs per slot relabelled from the descriptor, the
 envelope panel, the existing effect panels mapped to F1..F6 with the V2 order as default types.
@@ -69,23 +69,25 @@ amount scaling by via.
 
 2.3 Global envelope, step modulator, macros, chaos. GENV with bar-length stages and first-note
 or every-note trigger; STEP with 16 values, slides, division and length; four macros; chaos
-source. Tests: GENV retrigger rules, STEP timing. Ships: Main Stage Reese and Pluck Drop,
-Engine Room Wobble.
+source. Tests: GENV retrigger rules, STEP timing. Ships: Engine Room Wobble, Main Stage
+Riser.
 
 2.4 Delay sync and ping-pong. Note-value times from transport, ping-pong mode, tape mode name
 for the existing dark feedback path. Tests: tap spacing at 1/8 and dotted 1/8. Ships: Clock
 Tower (Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad), Outrun (Neon Brass,
-Night Drive, Laser Lead, Sunset Strings, Gated Pad through LFO to VCA).
+Night Drive, Laser Lead, Sunset Strings, Gated Pad through LFO to VCA), Main Stage Pluck Drop.
 
 ## Phase 3: generators
 
 3.1 Noise generator. White, pink, band-passed with pitch tracking, LFSR periodic with clock
 divider. Tests: spectra, LFSR period. Ships: Bedroom Tape Flute, Observatory Solar Wind
-(band-pass inside the generator until SVF lands), Arcade Static Hit.
+(band-pass inside the generator until SVF lands), Arcade (Coin Pulse, Boss Bass, Power-Up,
+Static Hit).
 
 3.2 FM generator, two operators. Carrier and modulator with ratio, fine, index, feedback, index
 envelope through ENV3 or the matrix. Tests: ratio tuning, index to bandwidth, feedback stability.
-Ships: Greenhouse Glass Bell, Engine Room FM Knock, Workshop Init FM.
+Ships: Greenhouse (Glass Bell, Rain Chime, Crystal Pluck), Engine Room FM Knock, Workshop Init
+FM.
 
 3.3 FM generator, four operators. Six algorithms, per-operator level and ratio across P1..P8
 with paging in the descriptor. Ships: Outrun Grid Keys.
@@ -98,11 +100,11 @@ Arcade SCC Lead (crusher pending), Workshop Init Wavetable.
 ## Phase 4: processors
 
 4.1 SVF. LP2, HP, BP, notch with drive. Tests: response shapes, stability at resonance 1.
-Ships: Main Stage Supersaw (without the sub part), Observatory Nebula Pad.
+Ships: Main Stage Supersaw (without the sub part), Observatory (Nebula Pad, Deep Field).
 
 4.2 Crusher and folder. Bit depth continuous, sample-rate reduction, dry/wet; wavefolder with
-symmetry and pre-gain. Tests: bit steps, fold harmonics. Ships: Arcade SCC Lead, Basement Rust
-Bass and Concrete Pad, Main Stage Hyper Lead.
+symmetry and pre-gain. Tests: bit steps, fold harmonics. Ships: Arcade SCC Lead, Basement (Acid,
+Rust Bass, Concrete Pad, Siren), Main Stage Hyper Lead.
 
 4.3 Per-voice drive and ring combine polish. Drive processor type; ring and FM combine audited
 for level and aliasing. Ships: Basement Metal Hit, Main Stage Neuro Growl (formant pending).
@@ -118,7 +120,8 @@ Drone and Satellite Ping.
 5.2 Lo-fi type. Wow, flutter, hiss, crackle, bandwidth, bit depth, sample rate. Ships: Bedroom
 Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi added).
 
-5.3 Pump, EQ, flanger. Ships: Main Stage Future Chord (chord memory pending), Main Stage Riser.
+5.3 Pump, EQ, flanger. Ships: Main Stage Future Chord as a played chord (the one-key version
+lands with chord memory in 7.1).
 
 ## Phase 6: physical generators
 
