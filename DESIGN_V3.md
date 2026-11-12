@@ -118,6 +118,20 @@ the previous generator's phase or output at sample rate, so generators expose th
 sub-block output and, for VA and Wavetable, a phase-wrap flag per sample. The mixer sums at
 fixed voice headroom (the V2 constant 0.5) so levels do not pump with polyphony.
 
+Shipped (phase 1.1, 2026-11-13): `VaGenerator` with parameters wave, pulse width, unison
+(1..7), detune (cents), spread, sub and FM depth. The generator applies its own level and
+constant-power pan; unison copies are detuned symmetrically, spread across the field around the
+slot pan, start evenly spaced in phase, and are scaled by 1/sqrt(N). The sub is a sine one
+octave down at the slot pan. Combine: the previous generator's output arrives in the buffer the
+generator overwrites (ring multiplies, AM scales by 0.5 + 0.5 x input, FM adds up to half a
+cycle of phase); hard sync reads the previous generator's wrap track (fraction of the sample at
+which copy 0 wrapped, or -1) through `setSyncInput`, resets every copy and applies the V2
+PolyBLEP step correction. `SlotParams` gained `frequencyHz` (set by the voice) and `combine`;
+`memoryFloats` takes the sub-block size. Measured at 48 kHz: tuning within 0.03 cents on all
+waves at 55, 440 and 1760 Hz; saw alias after 2x rendering and decimation -101 dB at A4 and
+-86 dB at A7 (the V2 figure of -106 dB at A7 was taken behind the ladder low-pass); a 7-copy
+stack at 30 cents sits 0.4 dB below a single saw.
+
 Three processor slots run in series on the stereo pair. Processors are stereo in and out; the
 ladder and SVF process left and right with shared coefficients. Then the VCA applies ENV1 times
 velocity sensitivity times the voice gain modulation destination, and the pan stage applies pan
