@@ -16,6 +16,8 @@ Ordered by what you would hear first. Each line is one review cycle. Audition th
 10. Master safety: a soft clipper after master gain, so self-oscillating resonance plus drive plus delay feedback can never hand the host a hard clip. Keep it transparent below 0 dBFS.
 11. Measurement-style regressions: THD of a sine through the ladder at low resonance below a stated bound; attack reaching full level within the programmed time; reverb RT60 within a range for a given size; alias tests retargeted once oversampling lands.
 12. Phaser: optional 6-stage mode and a triangle LFO; the 4-stage first-order design gives only two notches, which is thin for a pad phaser.
+13. Unison voice count (2 / 4 / 8) next to the detune of item 5. With count 2, detune and 100 % pan spread this gives the "same patch left and right, slightly detuned" stack without any architecture change; today unison always takes all eight voices.
+14. Multi-part layering (two patches at once): the engine class is already self-contained, so a second `SynthEngineV2` summed before the FX rack is cheap. The cost is everything around it: a second copy of the patch parameters under a part prefix, part level / pan / detune / transpose / key and velocity ranges, a state and preset format bump (no compatibility needed), and a part selector in the UI. Write the design into `DESIGN_V2.md` before touching code; decide shared versus per-part FX and the voice budget per part first.
 
 ## ARP Expansion Phase F — Factory preset audition and sign-off
 
