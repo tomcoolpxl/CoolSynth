@@ -152,3 +152,15 @@ Granular Sky. All 68 presets exist; the bank is complete.
 After every chunk: `TODO.md` item moved to `DONE.md` with what was verified, `DESIGN_V3.md`
 "shipped" notes where the implementation deviated, the normaliser run when presets changed, and
 the Release standalone rebuilt for audition.
+
+## Done criteria for the whole project
+
+V3 is not finished until all of these hold:
+
+- Every room of `SOUND_BANK_V3.md` ships with its signature audible, all 68 presets exist, and
+  the old bank is gone.
+- A supersaw exists as a sound you can reach without building it: the Main Stage Supersaw preset
+  plus a VA generator unison that makes a JP-8000-style stack (seven saws, non-linear detune
+  curve, centre-versus-sides mix, high-passed low end) from a few knobs.
+- Two parts can play at once as a layer or a split from one patch.
+- The processor runs the V3 engine only, the state format is 8, and the suite is green.

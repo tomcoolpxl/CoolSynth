@@ -38,3 +38,9 @@ Absorbed into V3 (do not do them on V2):
 - Delay ping-pong and tempo sync: V3 phase 2.
 - ARP Expansion Phase F (manual audition of the curated arp presets): dropped with the old bank;
   the arpeggiator itself carries into V3 unchanged.
+
+## Standing notes
+
+- Supersaw must exist by the end of the project: see the done criteria at the end of
+  `IMPLEMENTATION_PLAN_V3.md`. The VA generator unison from phase 1.1 is the base; the JP-8000
+  detune curve and centre-versus-sides mix are still to add (phase 3 or 4).
