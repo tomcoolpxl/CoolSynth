@@ -488,3 +488,10 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Extended the slot contract: `Combine` and `SlotParams::frequencyHz` / `combine` in `Module.h`, `memoryFloats(sampleRate, maxSubBlock)`; `CombineMode` in the parameter layer is now an alias of `Combine`.
 - [x] Added `tests/V3GeneratorTests.cpp` (nine tests): descriptor, tuning within one cent for every wave at three pitches, alias floor after decimation at A4 and A7 against the V2 thresholds, unison level compensation, pan and spread, sync periodicity against a free-running slave, ring and AM scaling, sub level, FM boundedness.
 - [x] Verified Debug build without warnings and `ctest` green; measured tuning error at most 0.03 cents, alias -101 dB (A4) and -86 dB (A7), unison stack -0.4 dB, sub 0.0 dB.
+
+## V3 phase 1.2: ladder processor and envelope (2026-11-13)
+
+- [x] Added `src/synth/v3/LadderProcessor.h`: the V2 zero-delay-feedback ladder as a stereo slot module with cutoff, resonance, drive and key tracking, per-sample ramps of cutoff and feedback across the sub-block, and a resonance law that self-oscillates at the top (feedback up to 4.3).
+- [x] Added `src/synth/v3/Envelope.h`: the V2 exponential ADSR with per-stage curve, velocity sensitivity, loop and one-shot.
+- [x] Added `tests/V3ProcessorTests.cpp` (twelve tests): four-pole slope, passband gain, self-oscillation frequency and level, key tracking, drive harmonics and bound, extreme settings, attack landing time for three curves, curve shape, loop period, one-shot behaviour, velocity scaling, retrigger continuity. Registered in CMake.
+- [x] Verified Debug build without warnings and `ctest` green; noted in the bank that Siren needs a trace of noise to start the oscillation.
