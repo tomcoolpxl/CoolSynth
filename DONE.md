@@ -463,3 +463,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Wrote `DESIGN_V3.md`: module interface and descriptors, slot variants with arena memory and crossfaded type changes, cost classes and voice cap, the voice with three generator and three processor slots and combine modes, sub-block rendering, local and global modulators, the 24-slot matrix, note layer with chord memory, two parts, effect slots, parameter IDs by slot path, state version 8, realtime rules, test plan, migration table from V2.
 - [x] Wrote `IMPLEMENTATION_PLAN_V3.md`: phases 0 to 8 in review-sized chunks, each with files, tests and the rooms of `SOUND_BANK_V3.md` it ships.
 - [x] Refreshed `TODO.md` with the first four chunks and `GEMINI.md` with the new authoritative files.
+
+## V3 phase 0.1: module interface and slots (2026-11-12)
+
+- [x] Added `src/synth/v3/Module.h`: `ParameterDescriptor`, `ModuleDescriptor`, `NoteContext`, `SlotParams`, the `SlotMemory` float arena, the `Module` concept, and `Slot<std::variant<...>>` with descriptor lookup by type index, arena sizing from the largest type, pending-type requests from any thread, a 5 ms crossfade on type change with the old module running on a copy of the input, note hand-over to the new module, per-module parameter clamping, and testing accessors.
+- [x] Added `tests/V3ModuleTests.cpp` (nine tests with dummy generator and processor types): descriptor table and arena sizing, arena spans, generator and processor crossfades with the step bound, same-type no-op, request during a fade waits, note hand-over and reset, prepare applies a pending type at once, descriptor clamping. Registered in the test target.
+- [x] Verified Debug build without warnings, `ctest` green, measured crossfade step 0.004167 against the 0.004177 bound.

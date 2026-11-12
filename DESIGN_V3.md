@@ -89,6 +89,14 @@ newly constructed one, which prevents clicks when the user browses types with a 
 Wavetable and sample banks are immutable objects owned by the processor and handed to modules as
 a shared pointer swapped atomically; a module holds its copy for the duration of a block.
 
+Shipped (phase 0.1, 2026-11-12): `Slot::prepare` is the only place that allocates; a module's
+own `prepare` runs on the audio thread after a type change and may only take spans from its
+arena. Each slot owns two instances with their own arenas, so the fading module keeps its
+buffers while the new one is prepared. A type request that arrives during a fade is held until
+the fade ends. The slot clamps every module's parameters to that module's own descriptor
+ranges, so a fading module never sees values meant for the incoming type. Measured: a type
+change between two constant generators steps by exactly one fade increment (1/240 at 48 kHz).
+
 ### 3.5 Cost classes and the voice cap
 
 Each type declares a cost class (0 Off, 1 VA, 2 Noise, 3 Wavetable, 4 FM, 6 Karplus and

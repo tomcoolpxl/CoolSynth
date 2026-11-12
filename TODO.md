@@ -9,8 +9,7 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 1. Engine shape decided 2026-11-12: slot chain (`REQUIREMENTS_V3.md` section 7). Done.
 2. `DESIGN_V3.md` written 2026-11-12. Done.
 3. `IMPLEMENTATION_PLAN_V3.md` written 2026-11-12. Done.
-4. Phase 0.1: module interface, descriptors, `Slot` variant with pending-type crossfade, arena
-   sizing; dummy-type tests (`IMPLEMENTATION_PLAN_V3.md`).
+4. Phase 0.1 done 2026-11-12: `src/synth/v3/Module.h` and `tests/V3ModuleTests.cpp`.
 5. Phase 0.2: sub-block modulation context with smoothing and clamping; tests.
 6. Phase 0.3: descriptor-driven generic parameters and the slot path builder in the parameter
    layout; ID uniqueness and text round-trip tests.
