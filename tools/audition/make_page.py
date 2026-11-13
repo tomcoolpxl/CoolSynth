@@ -75,7 +75,8 @@ if open_checks:
     cards = []
     for c in open_checks:
         base = "modelcheck/" + c["id"] + "/"
-        labels = [("real", "The real instrument"), ("before", "My preset before"), ("after", "My preset now")]
+        labels = [("real", "The real instrument"), ("before", "My preset before, dry"), ("after", "My preset now, dry"),
+                  ("room", "My preset now, in its room")]
         audio = "".join(player(label, base + c["files"][key]) for key, label in labels if key in c["files"])
         cards.append(f'<article class="card"><h3>{esc(c["title"])}</h3><p class="facts">{esc(c["changed"])}</p>'
                      f'<div class="players">{audio}</div>'

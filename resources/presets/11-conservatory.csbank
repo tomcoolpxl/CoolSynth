@@ -44,7 +44,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.4 damping=0.5 mix=0.12
-master = 1.5
+master = 0.5
 
 [Italian Harpsichord]
 room = Conservatory
@@ -55,7 +55,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.4 damping=0.5 mix=0.12
-master = 2.5
+master = 1.5
 
 [FM Keys]
 room = Conservatory
@@ -330,7 +330,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.7 damping=0.5 mix=0.25
-master = -7.5
+master = -8
 
 [Marimba]
 room = Conservatory
@@ -352,7 +352,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.5 damping=0.5 mix=0.18
-master = 4
+master = 3.5
 
 [Xylophone]
 room = Conservatory

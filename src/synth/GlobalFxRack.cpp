@@ -363,15 +363,12 @@ namespace coolsynth::synth
         const auto numChannels = buffer.getNumChannels();
         const auto numSamples  = buffer.getNumSamples();
 
-        // Save dry signal into pre-sized scratch buffer, and soft-clip the input to the reverb
+        // Save the dry signal into the pre-sized scratch buffer. The reverb gets the signal as it is: a soft
+        // clip here once guarded the tank, and put sum and difference tones at -40 dB under any chord of
+        // pure tones that came in hot (decision D105). The plate is linear and cannot run away; its shimmer
+        // path, which feeds back, has a limit of its own.
         for (int ch = 0; ch < numChannels; ++ch)
-        {
             dryBuffer.copyFrom(ch, 0, buffer, ch, 0, numSamples);
-
-            auto* wet = buffer.getWritePointer(ch);
-            for (int i = 0; i < numSamples; ++i)
-                wet[i] = std::tanh(wet[i]);
-        }
 
         {
             auto* left = buffer.getWritePointer(0);

@@ -1,8 +1,10 @@
 """Model check clips: the real instrument, my preset before a change, and after, playing the same notes.
 
 For each entry it lays the recorded notes out at the same spacing the presets were rendered with,
-levels all three clips alike (same RMS, peak kept under full scale) and writes 16-bit files plus
-modelcheck/index.json for the page.
+levels all clips alike (same RMS, peak kept under full scale) and writes 16-bit files plus
+modelcheck/index.json for the page. before.wav and after.wav are the preset without effects;
+room.wav, if it is there, is the preset as it is played, with its own reverb: a recording has
+its room in it, and a dry preset beside it sounds as if it lacked something.
 
 usage: python -I make_modelcheck.py <audition-dir>
 """
@@ -48,7 +50,9 @@ CHECKS = [
         "changed": "\"Before\" is the version you found not close. The pluck was a burst of bright noise: its harmonics up to the "
                    "tenth were 10 to 30 dB stronger than the recorded harp's. It is now the smooth pulse of a finger's pad, softer "
                    "the higher the string: the first harmonics are within a decibel or two of the recording's, the bass rings "
-                   "longer, and a breath of finger noise starts each note.",
+                   "longer, and a breath of finger noise starts each note. You missed the echo: the recording is in stereo, in a "
+                   "room, and the first two preset clips are dry and mono. The last clip is the preset as it is played, with its "
+                   "own reverb.",
     },
 ]
 
@@ -103,7 +107,7 @@ for check in CHECKS:
     entry = {k: check[k] for k in ("id", "title", "preset", "changed")}
     entry["source"] = check["folder"]
     entry["files"] = {"real": "real_level.wav"}
-    for name in ("before", "after"):
+    for name in ("before", "after", "room"):
         path = os.path.join(out_dir, name + ".wav")
         if os.path.exists(path):
             rate, y = audiolib.read_wav(path)

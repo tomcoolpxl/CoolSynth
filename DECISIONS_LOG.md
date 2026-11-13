@@ -1609,3 +1609,42 @@ Carries out D88 and D103. How a Museum sound is made and where it waits:
 - BASS 1 (algorithm 16: one carrier under three modulator branches) fits a voice here as an
   FM2 generator modulating an FM4 generator's carrier; it waits for a reference recording.
   The Prophet-5, Minimoog and Roland sounds of D103 are not started.
+
+## D105. The user's verdicts on the listening page, and what they turned up (2026-11-13)
+
+All 43 sounds judged. 39 of the 40 Conservatory instruments: good. Four remarks:
+
+- **Recorders: "a bit oversteer at the end when multiple notes are playing".** The output is
+  not clipped there (the four styles' demonstrations peak at -4.5 to -9.8 dB, nothing above the
+  soft clipper's knee). But a chord is not the sum of its notes: rendered with the preset's
+  reverb, the chord differs from the sum of its four notes rendered alone by -40.5 dB; without
+  effects by -124 dB. The cause is in the old effects rack: the reverb's input went through
+  `tanh` ("soft-clip the input to the reverb"), and a recorded instrument runs hot inside the
+  engine before its master gain brings it down, so the reverb heard every chord saturated.
+  **The clip is removed (taken):** the plate is linear and cannot run away, and its shimmer
+  path has a limit of its own. With it gone the same chord differs from the sum of its notes
+  by -121.7 dB with the reverb on. Every preset with reverb gets its reverb clean; twelve
+  masters moved by half a decibel or a whole one in the loudness pass (the reverb is slightly
+  louder where its input used to be squeezed). Keeping the clip with a higher threshold was the
+  other option: it protects nothing a linear reverb needs protecting from.
+  Whether this was all the user heard is for his ear: the recorders' own tones, four at once,
+  also make combination tones in the ear at high level.
+- **DX7 E.PIANO 1: "an extra buzzing sound on top".** In the reference the detuned operators
+  lie 0.2 to 0.35 Hz apart per harmonic; in the rebuild 1.3 Hz, so its upper harmonics beat 7
+  to 11 times a second. The two open DX7 emulations disagree on what a detune step is: Dexed's
+  formula gives 1.2 cents a step at middle C, Hexter (which made the reference) 1/32 Hz a step
+  at any pitch, a fifth of that. **The candidate now takes the reference's figure (taken):**
+  the detuned pair 1.5 cents either side at middle C, moved with the key by two matrix slots
+  so it stays near a fifth of a hertz; the fit of the first sixteen harmonics is as before
+  (the feedback of 0.6 is confirmed, 0.39 is clearly worse). Which emulation is right about
+  the hardware is not settled here; the Museum's test is the side-by-side.
+- **Harp String, second try: "closer, but not there: not enough echo".** The recording is in
+  stereo and in a room (its channels are 0.6 to 0.96 alike; one note -0.38); the model check
+  plays the preset without effects, in mono (1.00). With the preset's own reverb its channels
+  are 0.65 to 0.83 alike. **The check gets a fourth clip, the preset as it is played, in its
+  room (taken).** The preset itself is not changed.
+- **Granular effect: "too sharp sometimes".** Measured on the page's clips: the cloud replays
+  note attacks, and in the clip an octave up the replays are as strong as the played attacks
+  and brighter (bursts above 3 kHz at 1.96, 2.10 and 3.78 s, where no note starts). What the
+  effect should do about it changes how it behaves or what it controls, so it is put to the
+  user as a pick list.
