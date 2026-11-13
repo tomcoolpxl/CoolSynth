@@ -287,7 +287,51 @@ int SynthAudioProcessor::getNumPrograms()
 const juce::String SynthAudioProcessor::getProgramName(int index)
 {
     const auto& preset = coolsynth::presets::getFactoryPreset(index);
-    return preset.category + ": " + preset.name;
+    return preset.category + ": " + (preset.section.isNotEmpty() ? preset.section + ": " : juce::String()) + preset.name;
+}
+
+bool SynthAudioProcessor::loadSampledInstrumentsNow()
+{
+    bool allThere = true;
+    forEachSampledStyle([&](const coolsynth::synth::v3::LoadedStyle* style) { allThere = allThere && style != nullptr; });
+    return allThere;
+}
+
+bool SynthAudioProcessor::sampledInstrumentRange(int& lowestNote, int& highestNote)
+{
+    int lowest = 128, highest = -1;
+    forEachSampledStyle([&](const coolsynth::synth::v3::LoadedStyle* style)
+    {
+        if (style != nullptr && ! style->zones.empty())
+        {
+            lowest = std::min(lowest, style->zones.front().root);
+            highest = std::max(highest, style->zones.back().root);
+        }
+    });
+    if (highest < 0)
+        return false;
+    lowestNote = lowest;
+    highestNote = highest;
+    return true;
+}
+
+template <typename Visit>
+void SynthAudioProcessor::forEachSampledStyle(Visit&& visit)
+{
+    namespace sv3 = coolsynth::synth::v3;
+    const auto& settings = makeEngineSettings();
+    const auto& d = sv3::SampleGenerator::descriptor();
+    for (const auto& part : settings.parts)
+        for (const auto& generator : part.voice.generators)
+        {
+            if (generator.type != sv3::generatorType::sample)
+                continue;
+            const int which = static_cast<int>(std::lround(sv3::descriptorToUnits(d.params[sv3::SampleGenerator::sample], generator.p[sv3::SampleGenerator::sample])));
+            if (which < sv3::SampleGenerator::firstInstrument)
+                continue;
+            const int style = static_cast<int>(std::lround(sv3::descriptorToUnits(d.params[sv3::SampleGenerator::style], generator.p[sv3::SampleGenerator::style])));
+            visit(sv3::SampleLibrary::instance().loadNow(which - sv3::SampleGenerator::firstInstrument, style));
+        }
 }
 
 void SynthAudioProcessor::setCurrentProgram(int index)

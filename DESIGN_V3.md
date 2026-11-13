@@ -107,6 +107,23 @@ Scan (0 freezes), Size, Density, Spray, Pitch Spray and Spread, levelled by the 
 overlap. Grains from another generator and user samples are still to come (decisions D77 to
 D79).
 
+Sampled instruments (2026-11-13, decisions D96 to D99): recordings of real instruments, played
+by the same Sample generator. `InstrumentCatalogue` (`src/synth/v3/InstrumentCatalogue.h`) reads
+`resources/instruments/catalogue.txt`, built into the plugin: seven families, 40 instruments,
+74 styles; the Sample parameter lists the five generated samples and then the instruments, and
+an eighth parameter picks the Style. The audio is not in the plugin: `SampleLibrary`
+(`SampleLibrary.h`) reads a style's folder of FLAC files and its manifest (note, dynamic layer,
+take, length, loop and one gain per style) into memory on a background thread. The audio thread
+asks with `request()`, which never waits: it gets the style if it is in memory, and the asking
+alone starts the load; the part asks ahead for what its patch names. A note takes the nearest
+recording, the layer of its velocity and the next take in turn, and reads it through a
+16-point windowed sinc (256 interpolated phases, three cutoffs) at the speed that gives its
+pitch; sustaining styles loop with the manifest's crossfade. The library is built from the
+CC0 recordings by `tools/audition/build_library.py` and checked bit for bit against them by
+`verify_library.py`. Bank files name the instrument and style by name
+(`g1 = Sample sample=cellos style=tremolo`) and a preset may carry `family = Strings`, which
+the preset menu uses as a submenu under its room.
+
 Shipped (phase 4.2, 2026-11-13): `CrusherProcessor` and `FolderProcessor` in
 `src/synth/v3/ShaperProcessors.h`, processor types 3 and 4. Crusher: sample-and-hold at Rate,
 rounding to 2^bits levels (bits continuous), Mix. Folder: a sine folder with first-order

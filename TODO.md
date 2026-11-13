@@ -88,8 +88,14 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each
       admitted by the user in a side-by-side against a reference recording (D88).
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
-    (start the `audition` preview server to hear it); marimba, kalimba and harp measured and
-    their presets corrected (D90, D91), waiting for the user's verdict on the page.
+    (start the `audition` preview server to hear it); marimba and kalimba corrected and
+    accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in
+    `audition/library`) that the Sample generator plays, with the room "Conservatory" of 40
+    presets (D96 to D98).
+    Open on the sampled instruments (D99): the horn, the tubular bells, the timpani and the
+    didgeridoo are placed wrongly by the first build; tuning and levels across the keyboard;
+    the loudness pass over the Conservatory presets; install options and packs; the wine
+    glasses as a source for the Grain generator.
 35. Left open by phases 2 to 8, in the order they would pay off:
     - effects as slot types, and with them the three insert slots per part (D72);
     - grains from another generator, which needs a buffer pool handed out by the part (D79);

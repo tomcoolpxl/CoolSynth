@@ -43,6 +43,7 @@ namespace coolsynth::presets
         juce::String category;   // the room
         juce::String sourceFile; // bank file name, for the loudness tool
         std::vector<PresetEntry> entries;
+        juce::String section;    // a family inside the room ("family = Strings"), or empty
     };
 
     struct BankParseResult

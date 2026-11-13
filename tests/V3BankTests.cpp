@@ -177,6 +177,8 @@ env1 = loop=maybe attack=abc
                 auto processor = std::make_unique<SynthAudioProcessor>();
                 processor->prepareToPlay(48000.0, 256);
                 coolsynth::presets::applyFactoryPreset(processor->getValueTreeState(), preset);
+                // A sampled instrument loads in the background: wait for it, as someone who picked the preset would.
+                expect(processor->loadSampledInstrumentsNow(), preset.name + " asks for an instrument that is not there");
 
                 // An arp that skips steps at random could stay silent for a second; give it four.
                 bool randomArp = false;
@@ -244,10 +246,15 @@ public:
         std::vector<int> candidates;
         for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
         {
-            bool arp = false;
+            // An arp plays notes of its own, and with chord memory one key takes several voices, so the newest
+            // keys can push an older key's notes out: both have their own tests.
+            bool arp = false, chord = false;
             for (const auto& e : coolsynth::presets::getFactoryPreset(i).entries)
+            {
                 arp = arp || (e.parameterId == "arpEnabled" && e.text == "on");
-            if (! arp)
+                chord = chord || (e.parameterId == "pA.chord.type" && e.text != "off");
+            }
+            if (! arp && ! chord)
                 candidates.push_back(i);
         }
 

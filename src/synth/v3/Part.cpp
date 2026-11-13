@@ -159,6 +159,21 @@ namespace coolsynth::synth::v3
             return;
         }
 
+        // A sampled instrument is asked for as soon as the patch names it, not at its first note:
+        // reading it into memory takes a moment, and the asking is all it takes to start that.
+        for (const auto& generator : settings.voice.generators)
+        {
+            if (generator.type != generatorType::sample)
+                continue;
+            const auto& d = SampleGenerator::descriptor();
+            const int which = static_cast<int>(std::lround(descriptorToUnits(d.params[SampleGenerator::sample], generator.p[SampleGenerator::sample])));
+            if (which >= SampleGenerator::firstInstrument)
+            {
+                const int style = static_cast<int>(std::lround(descriptorToUnits(d.params[SampleGenerator::style], generator.p[SampleGenerator::style])));
+                (void) SampleLibrary::instance().request(which - SampleGenerator::firstInstrument, style);
+            }
+        }
+
         if (settings.playMode != currentMode)
         {
             // A different play mode owns the voices differently: let everything ring out and start clean.

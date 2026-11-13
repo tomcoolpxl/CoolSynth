@@ -1,0 +1,90 @@
+# The sampled instruments (decisions D96 to D98): family | instrument | style | sustains | source
+#
+# One line per style. An instrument is the lines that share its name; its number is the order in
+# which it first appears and its styles are numbered in order, both saved in patches: never
+# reorder or remove lines, add new instruments at the end.
+#
+# "sustains" says whether a held note should go on for as long as the key is down (yes: the
+# library builder gives every sample a loop) or ring out as recorded (no).
+# "source" is the folder under audition/libraries the style is built from. Both libraries are CC0.
+
+Keys | Steinway Grand | Grand | no | VCSL/Chordophones/Zithers/Grand Piano, Steinway B/Sus
+Keys | Yamaha Upright | Upright | no | VCSL/Chordophones/Zithers/Upright Piano, Yamaha/Sustains
+Keys | Old Upright | Upright | no | VSCO-2-CE/Keys/Upright Nr1
+Keys | Flemish Harpsichord | 8' | no | VCSL/Chordophones/Zithers/Harpsichord, Flemish/Sustains/Low
+Keys | Italian Harpsichord | 8' | no | VCSL/Chordophones/Zithers/Harpsichord, Italian/Sustains/stop1
+Keys | FM Keys | Piano | no | VCSL/Electrophones/TX81Z/Piano 1
+Keys | FM Keys | E-Piano | no | VCSL/Electrophones/TX81Z/FM Piano
+Keys | FM Keys | Clav | no | VCSL/Electrophones/TX81Z/Clavisynth
+
+Strings | Violins | Sustain | yes | VSCO-2-CE/Strings/Violin Section/susVib
+Strings | Violas | Sustain | yes | VSCO-2-CE/Strings/Viola Section/susvib
+Strings | Violas | Pizzicato | no | VSCO-2-CE/Strings/Viola Section/pizz
+Strings | Violas | Spiccato | no | VSCO-2-CE/Strings/Viola Section/spic
+Strings | Cellos | Sustain | yes | VSCO-2-CE/Strings/Cello Section/susvib
+Strings | Cellos | Tremolo | yes | VSCO-2-CE/Strings/Cello Section/trem
+Strings | Cellos | Pizzicato | no | VSCO-2-CE/Strings/Cello Section/pizzT
+Strings | Double Bass | Vibrato | yes | VSCO-2-CE/Strings/Solo Contrabass/SusVib
+Strings | Double Bass | Straight | yes | VSCO-2-CE/Strings/Solo Contrabass/SusNV
+Strings | Double Bass | Pizzicato | no | VSCO-2-CE/Strings/Solo Contrabass/Pizz
+Strings | Solo Violin | Sustain | yes | VSCO-2-CE/Strings/Solo Violin/Arco Vib
+Strings | Solo Violin | Tremolo | yes | VSCO-2-CE/Strings/Solo Violin/Trem
+Strings | Solo Violin | Pizzicato | no | VSCO-2-CE/Strings/Solo Violin/Pizz
+Strings | Solo Violin | Spiccato | no | VSCO-2-CE/Strings/Solo Violin/spic
+
+Plucked | Folk Harp | Plucked | no | VCSL/Chordophones/Composite Chordophones/Folk Harp
+Plucked | Dan Tranh | Normal | no | VCSL/Chordophones/Zithers/Dan Tranh/Normal
+Plucked | Dan Tranh | Tremolo | yes | VCSL/Chordophones/Zithers/Dan Tranh/Tremolo
+Plucked | Kalimba | Plucked | no | VCSL/Idiophones/Plucked Idiophones/Kalimba, Tanzania
+
+Brass | Horn | Sustain | yes | VSCO-2-CE/Brass/F Horn/sus
+Brass | Trumpet | Straight | yes | VSCO-2-CE/Brass/Trumpet/sus
+Brass | Trumpet | Vibrato | yes | VSCO-2-CE/Brass/Trumpet/susvib
+Brass | Tuba | Sustain | yes | VSCO-2-CE/Brass/Tuba/sus
+Brass | Trombone | Straight | yes | VSCO-2-CE/Brass/Tenor Trombone/sus
+Brass | Trombone | Vibrato | yes | VSCO-2-CE/Brass/Tenor Trombone/vib
+Brass | Old Trombone | Straight | yes | VSCO-2-CE/Brass/OldTrombone/Sustain
+Brass | Old Trombone | Vibrato | yes | VSCO-2-CE/Brass/OldTrombone/Vibrato
+
+Winds | Flute | Sustain | yes | VSCO-2-CE/Woodwinds/Flute/susvib
+Winds | Clarinet | Sustain | yes | VSCO-2-CE/Woodwinds/Clarinet/susLong
+Winds | Bassoon | Sustain | yes | VSCO-2-CE/Woodwinds/Bassoon/vib
+Winds | Saxello | Vibrato | yes | VCSL/Aerophones/Reed Aerophones/Saxello/Vibrato
+Winds | Tenor Sax | Straight | yes | VCSL/Aerophones/Reed Aerophones/Tenor Saxophone/Non-Vibrato
+Winds | Tenor Sax | Vibrato | yes | VCSL/Aerophones/Reed Aerophones/Tenor Saxophone/Vibrato
+Winds | Recorders | Soprano | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Soprano Recorder/Sustain
+Winds | Recorders | Alto | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Alto Recorder/SusVib
+Winds | Recorders | Tenor | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Tenor Recorder/Sustain
+Winds | Recorders | Bass | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Bass Recorder/SusVib
+Winds | Ocarina | Small | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Small/Sustain
+Winds | Ocarina | Large | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Typical/Sustains/Sus
+Winds | Ocarina | Large Vibrato | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Typical/Sustains/SusVib
+Winds | Harmonica | Sustain | yes | VCSL/Aerophones/Free Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal
+Winds | Didgeridoo | Drone | yes | VCSL/Aerophones/Lip Aerophones/Didgeridoo
+
+Organs | Pipe Organ | Loud | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Loud
+Organs | Pipe Organ | Quiet | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Quiet
+Organs | Pipe Organ | Pedal | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Loud Pedal
+Organs | Renaissance Organ | 8' | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/8'
+Organs | Renaissance Organ | 4' | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/4'
+Organs | Renaissance Organ | Full | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/Full
+
+Mallets and Bells | Marimba | Mallets | no | VCSL/Idiophones/Struck Idiophones/Marimba
+Mallets and Bells | Vibraphone | Soft | no | VCSL/Idiophones/Struck Idiophones/Vibraphone/Soft Mallets
+Mallets and Bells | Vibraphone | Hard | no | VCSL/Idiophones/Struck Idiophones/Vibraphone/Hard Mallets
+Mallets and Bells | Vibraphone | Bowed | yes | VCSL/Idiophones/Struck Idiophones/Vibraphone/Bowed
+Mallets and Bells | Xylophone | Medium | no | VCSL/Idiophones/Struck Idiophones/Xylophone/Medium Mallets
+Mallets and Bells | Xylophone | Soft | no | VCSL/Idiophones/Struck Idiophones/Xylophone/Soft Mallets
+Mallets and Bells | Balafon | Hard | no | VCSL/Idiophones/Struck Idiophones/Balafon/Hard Mallet
+Mallets and Bells | Balafon | Soft | no | VCSL/Idiophones/Struck Idiophones/Balafon/Soft Mallet
+Mallets and Bells | Glockenspiel | A | no | VCSL/Idiophones/Struck Idiophones/Glockenspiel
+Mallets and Bells | Glockenspiel | B | no | VSCO-2-CE/Percussion/Glock
+Mallets and Bells | Tubular Bells | A | no | VCSL/Idiophones/Struck Idiophones/Tubular Bells 1
+Mallets and Bells | Tubular Bells | B | no | VCSL/Idiophones/Struck Idiophones/Tubular Bells 2
+Mallets and Bells | Tubular Glock | Mallets | no | VCSL/Idiophones/Struck Idiophones/Tubular Glockenspiel
+Mallets and Bells | Hand Chimes | Mallets | no | VCSL/Idiophones/Struck Idiophones/Hand Chimes
+Mallets and Bells | Wine Glasses | Slow | yes | VCSL/Idiophones/Friction Idiophones/Wine Glasses/Sustains/Slow
+Mallets and Bells | Wine Glasses | Fast | yes | VCSL/Idiophones/Friction Idiophones/Wine Glasses/Sustains/Fast
+Mallets and Bells | Timpani | A | no | VCSL/Membranophones/Struck Membranophones/Timpani 1/Hit
+Mallets and Bells | Timpani | B | no | VCSL/Membranophones/Struck Membranophones/Timpani 2/Hit
+Mallets and Bells | Timpani | C | no | VSCO-2-CE/Percussion/Timpani

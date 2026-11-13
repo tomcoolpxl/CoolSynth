@@ -139,12 +139,16 @@ int main(int argc, char* argv[])
     }
     else
     {
+        // "Name" takes the first preset of that name; "Room: Name" tells two rooms' presets of one name apart.
         for (int i = 0; i < coolsynth::presets::getFactoryPresetCount() && ! found; ++i)
-            if (coolsynth::presets::getFactoryPreset(i).name.equalsIgnoreCase(presetName))
+        {
+            const auto& candidate = coolsynth::presets::getFactoryPreset(i);
+            if (candidate.name.equalsIgnoreCase(presetName) || (candidate.category + ": " + candidate.name).equalsIgnoreCase(presetName))
             {
-                preset = coolsynth::presets::getFactoryPreset(i);
+                preset = candidate;
                 found = true;
             }
+        }
     }
     if (! found)
     {
@@ -157,6 +161,8 @@ int main(int argc, char* argv[])
     processor.prepareToPlay(kSampleRate, kBlockSize);
     for (const auto& problem : coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset))
         std::cerr << problem << "\n";
+    if (! processor.loadSampledInstrumentsNow())
+        std::cerr << "a sampled instrument of this preset is not installed: it will be silent\n";
 
     if (args.contains("--no-fx"))
     {

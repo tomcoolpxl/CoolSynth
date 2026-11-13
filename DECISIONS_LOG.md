@@ -1290,3 +1290,106 @@ harp, dan tranh, bowed strings in ten sustained and short articulations, brass, 
 stops, recorders, ocarinas, saxophones and other winds, the mallet instruments and bells, a
 kalimba, the wine glasses, three TX81Z sounds and three timpani. How they are stored, loaded
 and installed is the next decision; D83 already allows files beside the plugin.
+
+## D96. How the recordings are kept, loaded and stored (2026-11-13)
+
+Three pick lists, after the picks of D95 and under the rules of D83 (quality first; files
+beside the plugin). The user's choices:
+
+- What is kept of each instrument: **everything (chosen, recommended)**: every recorded pitch,
+  every dynamic layer, every take, at full length, in stereo. 2,368 recordings, 4.1 GB as
+  recorded. Offered instead: a compact set (fewer pitches, one or two layers, looped short),
+  smaller and audibly less than the recordings.
+- How a patch gets its audio: **loaded into memory (chosen, recommended)** by a background
+  thread when a patch names an instrument; playing never waits for the disk. Costs memory while
+  the instrument is in use (a grand piano is about 600 MB as 32-bit floats; the whole library
+  6.5 GB, never all at once). Offered instead: streaming from disk while playing (little
+  memory, but a disk thread per voice and a risk of dropouts on a slow disk).
+- The file format: **FLAC, lossless (chosen, recommended)**: bit for bit the recordings at
+  about a third of the size (1.4 GB for the whole library), in packs by family so an installer
+  can offer them one by one. Offered instead: WAV as recorded (4.1 GB) or a lossy format
+  (smaller again, no longer the recordings).
+
+## D97. The Conservatory: family, instrument, style (2026-11-13)
+
+74 picks are too many for one menu, and many are the same instrument played another way.
+
+- **A room of plain presets, "Conservatory", one per instrument (chosen by the user,
+  recommended).** Offered instead: no presets (the recordings only as a source in the Sample
+  generator), or designed presets that dress the recordings up.
+- **Family, instrument, style (chosen by the user, recommended).** Seven families (Keys,
+  Strings, Plucked, Brass, Winds, Organs, Mallets and Bells), 40 instruments, and the playing
+  style (sustain, tremolo, pizzicato; a mallet; an organ stop) as a switch inside the
+  instrument, at most four positions. The preset menu shows the room, then the family, then
+  the instrument. Offered instead: one preset per pick (74 in a flat list), or one preset per
+  family with the instrument as a switch (hides what the room holds).
+- `resources/instruments/catalogue.txt` is the list: family, instrument, style, whether the
+  style sustains, and the folder it is built from. An instrument's number and a style's number
+  are saved in patches, so lines are only ever added.
+
+## D98. How the sampled instruments are built (2026-11-13)
+
+Carries out D96 and D97. Choices inside the build:
+
+- **The Sample generator plays them: its Sample parameter lists the five generated samples and
+  then every instrument, and an eighth parameter is the Style (taken, recommended).** One
+  generator, so a recorded instrument can be mixed, filtered and modulated like any other
+  source, three to a voice. A separate "Instrument" generator type would have doubled the code
+  for the same job.
+- **A note takes the recording nearest its pitch (the lower of two equally near), the dynamic
+  layer its velocity falls in, and the next take in turn; it is read at the speed that gives
+  the note's pitch (taken).** No crossfade between neighbouring recordings or layers: two
+  recordings of one note are not in phase, and mixing them thins the tone.
+- **Reading is a 16-point windowed sinc with 256 phases, interpolated, at three cutoffs for
+  notes played above their recording (taken, recommended).** The four-point Hermite read the
+  generated samples use is cheaper and audibly duller and less clean on a piano two octaves
+  up; quality comes first (the user's rule).
+- **Sustaining styles get a loop from the builder (taken): over the steady part of each
+  recording, crossfaded for up to half a second, its end moved to where the wave best matches
+  the start.** Checked on 9 s notes of cello and organ: no step in level, no click. Struck and
+  plucked styles ring out as recorded. Hand-set loops would be better still and are 900 files
+  of work; no loops would end a held string note after a few seconds.
+- **One gain per style, applied as it is read, brings the style's loudest recording to 0.9 of
+  full scale (taken).** The balance between an instrument's notes and dynamics stays as
+  recorded. Normalising every file would flatten that balance; no gain at all leaves the pipe
+  organ 27 dB below the piano. Whether notes should be evened out across the keyboard is open:
+  see D99.
+- **The library is looked for in the folder named in `COOLSYNTH_LIBRARY`, else the one written
+  in `CoolSynth/library.path` in the user's application data, else `CoolSynth/Library` in the
+  common application data (taken).** An installer writes the second; the first is for testing.
+- **Memory: at most 3 GB of instruments; one nothing has asked for in a minute and a half goes
+  first (taken).** A note asked for before its instrument is in memory is silent, never half an
+  instrument; the next note sounds.
+- **A name need only be unique within its room (taken for now; the user is asked).** The
+  Greenhouse has a modelled Marimba and Kalimba, the Conservatory the recorded ones. Program
+  names carry the room ("Conservatory: Mallets and Bells: Marimba"), and the render tool takes
+  "Room: Name". The options: this; rename the models ("Marimba Bar", "Kalimba Tine", as "Harp
+  String" already is); or rename the recordings.
+- **The loudness tool plays a sampled instrument in the middle of the notes it was recorded
+  at (taken).** At the tool's usual C4 chord a flute is below its lowest note and a double bass
+  at its top.
+- **Tests never read the real library (taken).** A stand-in is written to a temporary folder:
+  every style of the catalogue as five quarter-second sine recordings with two layers, two
+  takes and a loop. One small FLAC file in `tests/data` checks the FLAC path.
+
+## D99. Faults found in the library as first built (2026-11-13)
+
+The first build places each recording by the note in its file name, moved by whole octaves to
+where a pitch detector hears it. Checked afterwards against the mapping files the library's
+author publishes (github.com/sgossner/VSCO-2-CE, branch SFZ) and by measuring partials:
+
+- The horn sits an octave too high (the author: `MOHorn_sus_A0` is A1; the detector caught
+  the second harmonic of most notes). Tubular Bells A sits two octaves too high and B probably
+  one (a bell's strike note is not its lowest partial). The Renaissance organ's 4' stop is
+  placed by its sound, an octave above its key, and so no longer sounds an octave up.
+- The timpani files are numbered drums, not named notes, and the detector spread each drum's
+  hits over several wrong notes. The drums are also between notes as recorded (the first
+  set: F#2, B2 -21 cents, C#3 +48, E3 +44, G3 -42).
+- The didgeridoo folder is three drones, five phrases and four calls, not notes.
+- A flute's low C is 20 dB below its top C as recorded, and neighbouring recordings differ by
+  up to 3 dB. The author's own mapping evens levels out by hand, per recording.
+
+To be corrected in the builder next: the octave given per style where a detector cannot be
+trusted; drums and unnamed sets grouped and placed by their measured main partial; a tuning
+correction per recording for sets that are not in tune; and, the user's choice, whether levels
+are evened out across the keyboard.

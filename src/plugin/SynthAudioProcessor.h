@@ -65,6 +65,13 @@ public:
     void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
     void requestPanic() noexcept;
 
+    /** Offline use (tools, tests): waits until the sampled instruments the current patch names are in memory.
+        False if one of them is not installed. */
+    bool loadSampledInstrumentsNow();
+    /** Offline use: the lowest and highest notes the patch's sampled instruments were recorded at, read in if
+        need be. False if the patch plays no sampled instrument or it is not installed. */
+    bool sampledInstrumentRange(int& lowestNote, int& highestNote);
+
     // ---- Undo and patch identity (message thread) ----------------------------
     // Every UI gesture becomes one undo step automatically. Bulk edits (preset,
     // init, load) are wrapped in performUndoableEdit() so they become one step too.
@@ -133,6 +140,9 @@ private:
 
     /** Reads every parameter into the engine settings once per block; lock-free. */
     const coolsynth::synth::v3::EngineSettings& makeEngineSettings() noexcept;
+    /** Reads in every sampled-instrument style the patch names and hands each to `visit` (null if not installed). */
+    template <typename Visit>
+    void forEachSampledStyle(Visit&& visit);
     static coolsynth::synth::GlobalParameterPointers bindParameterPointers(APVTS& state);
 
     void parameterValueChanged(int parameterIndex, float newValue) override;

@@ -340,8 +340,10 @@ public:
             {
                 const auto& preset = coolsynth::presets::getFactoryPreset(index);
                 expect(preset.category.isNotEmpty(), preset.name + " has no room");
-                expect(! names.contains(preset.name), "two presets are called " + preset.name);
-                names.add(preset.name);
+                // A name is unique within its room: a room may hold a model of an instrument another room has recorded.
+                const auto fullName = preset.category + ": " + preset.name;
+                expect(! names.contains(fullName), "two presets are called " + fullName);
+                names.add(fullName);
                 const auto problems = coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset);
                 expect(problems.isEmpty(), problems.joinIntoString("\n"));
             }

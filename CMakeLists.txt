@@ -39,6 +39,11 @@ juce_add_binary_data(CoolSynthFactoryBank
     NAMESPACE FactoryBankData
     SOURCES ${COOLSYNTH_BANK_FILES})
 
+juce_add_binary_data(CoolSynthInstrumentData
+    HEADER_NAME InstrumentData.h
+    NAMESPACE InstrumentData
+    SOURCES resources/instruments/catalogue.txt)
+
 juce_add_binary_data(CoolSynthControllerProfiles
     SOURCES
         resources/controller_profiles/minilab3_arturia_mode.json
@@ -97,6 +102,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/Part.cpp
     src/synth/v3/Wavetables.cpp
     src/synth/v3/Samples.cpp
+    src/synth/v3/InstrumentCatalogue.cpp
+    src/synth/v3/SampleLibrary.cpp
     src/synth/v3/EngineV3.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/SynthAudioProcessor.cpp
@@ -147,6 +154,7 @@ target_link_libraries(CoolSynth
         juce::juce_dsp
         CoolSynthControllerProfiles
         CoolSynthFactoryBank
+        CoolSynthInstrumentData
         coolsynth_config_flags
         juce::juce_recommended_warning_flags)
 
@@ -183,6 +191,7 @@ if(BUILD_TESTING)
             tests/V3PartsTests.cpp
             tests/V3SampleTests.cpp
             tests/V3InsertTests.cpp
+            tests/V3InstrumentTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp
@@ -198,7 +207,8 @@ if(BUILD_TESTING)
 
     target_compile_definitions(CoolSynthMidiLearnTests
         PRIVATE
-            COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}")
+            COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}"
+            COOLSYNTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 
     add_dependencies(CoolSynthMidiLearnTests UpdateBuildInfo)
 
@@ -213,6 +223,8 @@ if(BUILD_TESTING)
             juce::juce_dsp
             CoolSynthControllerProfiles
             CoolSynthFactoryBank
+            CoolSynthInstrumentData
+        CoolSynthInstrumentData
             coolsynth_config_flags
             juce::juce_recommended_warning_flags
     )
@@ -254,6 +266,7 @@ target_link_libraries(CoolSynthRender
         juce::juce_dsp
         CoolSynthControllerProfiles
         CoolSynthFactoryBank
+        CoolSynthInstrumentData
         coolsynth_config_flags
         juce::juce_recommended_warning_flags)
 
@@ -291,5 +304,6 @@ target_link_libraries(CoolSynthPresetNormalizer
         juce::juce_dsp
         CoolSynthControllerProfiles
         CoolSynthFactoryBank
+        CoolSynthInstrumentData
         coolsynth_config_flags
         juce::juce_recommended_warning_flags)

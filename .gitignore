@@ -75,3 +75,6 @@ build_aux/
 
 # Downloaded sample candidates and reference recordings: local only, thrown away later
 /audition/
+
+# Python caches
+__pycache__/

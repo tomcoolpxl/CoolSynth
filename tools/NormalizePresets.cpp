@@ -264,7 +264,9 @@ namespace
         return std::max(ampPreroll, std::min(40.0, ms / 1000.0));
     }
 
-    juce::MidiBuffer buildStimulus(const coolsynth::presets::FactoryPreset& preset, bool firstBlock)
+    /** `root` is the chord's lowest note: 60 (C4), or for a sampled instrument six below the middle of the notes
+        it was recorded at, so a flute is not judged below its lowest note nor a double bass at its top. */
+    juce::MidiBuffer buildStimulus(const coolsynth::presets::FactoryPreset& preset, bool firstBlock, int root)
     {
         juce::MidiBuffer midi;
         if (! firstBlock)
@@ -273,19 +275,19 @@ namespace
         const bool isPoly = lookupPolyMode(preset);
         const bool isArp = lookupArpEnabled(preset);
 
-        // Mono/unison: single sustained note (60 = C4).
-        // Poly without arp: 4-note chord (C, Eb, G, C+1oct) — covers thirds and fifths.
+        // Mono/unison: single sustained note.
+        // Poly without arp: 4-note chord (root, minor third, fifth, octave) — covers thirds and fifths.
         // Poly with arp: single held note; arp generates the steps internally.
         // Poly with chord memory: single held note; the key plays the chord.
         const juce::uint8 velocity = 100;
         if (isPoly && ! isArp && ! lookupChordMemory(preset))
         {
-            for (int note : { 60, 63, 67, 72 })
-                midi.addEvent(juce::MidiMessage::noteOn(1, note, velocity), 0);
+            for (int interval : { 0, 3, 7, 12 })
+                midi.addEvent(juce::MidiMessage::noteOn(1, root + interval, velocity), 0);
         }
         else
         {
-            midi.addEvent(juce::MidiMessage::noteOn(1, 60, velocity), 0);
+            midi.addEvent(juce::MidiMessage::noteOn(1, root, velocity), 0);
         }
         return midi;
     }
@@ -297,6 +299,10 @@ namespace
         processor.prepareToPlay(kSampleRate, kBlockSize);
 
         coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset);
+        processor.loadSampledInstrumentsNow(); // a sampled instrument is read in before the first note
+        int stimulusRoot = 60, lowestRecorded = 0, highestRecorded = 0;
+        if (processor.sampledInstrumentRange(lowestRecorded, highestRecorded))
+            stimulusRoot = (lowestRecorded + highestRecorded) / 2 - 6;
 
         // A preset that routes the global envelope is measured once that envelope has risen
         // (a riser is judged at its top, not at its quiet start).
@@ -316,7 +322,7 @@ namespace
             block.setSize(2, n, false, false, true);
             block.clear();
 
-            auto midi = buildStimulus(preset, firstBlock);
+            auto midi = buildStimulus(preset, firstBlock, stimulusRoot);
             firstBlock = false;
 
             juce::AudioBuffer<float> shortBlock(block.getArrayOfWritePointers(), 2, n);

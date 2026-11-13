@@ -9,6 +9,7 @@
 
 #include "parameters/ParameterIDs.h"
 #include "parameters/v3/PartParameters.h"
+#include "synth/v3/InstrumentCatalogue.h"
 #include "synth/v3/Voice.h"
 
 namespace coolsynth::presets
@@ -304,7 +305,7 @@ namespace coolsynth::presets
             auto noBareWords = [](const juce::String&) { return false; };
 
             // Room, master, the part mode, the arp and the effects belong to the patch, not to a part.
-            if (onPart && (key == "room" || key == "master" || key == "parts" || globalSections().count(key) != 0))
+            if (onPart && (key == "room" || key == "family" || key == "master" || key == "parts" || globalSections().count(key) != 0))
             {
                 error("'" + key + "' belongs to the patch, not to a part");
                 continue;
@@ -313,6 +314,12 @@ namespace coolsynth::presets
             if (key == "room")
             {
                 preset.category = value;
+                continue;
+            }
+
+            if (key == "family")
+            {
+                preset.section = value;
                 continue;
             }
 
@@ -358,6 +365,25 @@ namespace coolsynth::presets
                 }
 
                 const auto& descriptor = table.descriptor(typeIndex);
+                if (generator != 0 && typeIndex == sv3::generatorType::sample)
+                {
+                    // A sampled instrument's styles have names of their own ("style=tremolo"): they become the style's number.
+                    const auto& catalogue = sv3::InstrumentCatalogue::instance();
+                    int instrument = -1;
+                    for (const auto& token : tokens)
+                        if (token.startsWith("sample="))
+                            instrument = catalogue.find(token.fromFirstOccurrenceOf("=", false, false).toStdString());
+                    for (auto& token : tokens)
+                    {
+                        if (! token.startsWith("style="))
+                            continue;
+                        const auto written = token.fromFirstOccurrenceOf("=", false, false);
+                        if (const int named = catalogue.findStyle(instrument, written.toStdString()); named >= 0)
+                            token = "style=" + juce::String(named + 1);
+                        else if (! written.containsOnly("1234") || written.length() != 1)
+                            error("'" + written + "' is not a style of that instrument");
+                    }
+                }
                 if (generator != 0)
                     context.generatorTypes[static_cast<std::size_t>(generator - 1)] = typeIndex;
                 else if (processor != 0)

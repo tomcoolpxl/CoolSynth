@@ -10,6 +10,7 @@
 #include "standalone/SettingsStore.h"
 #include "synth/GlobalDelay.h"
 #include "parameters/ParameterIDs.h"
+#include "TestSampleLibrary.h"
 
 #include <iostream>
 
@@ -701,9 +702,12 @@ int main()
     juce::Logger::setCurrentLogger(&logger);
 
     juce::ScopedJuceInitialiser_GUI initialiser;
+    // No test reads the real sampled-instrument library: a small stand-in is written and used instead.
+    coolsynth::testing::installTestSampleLibrary();
     juce::UnitTestRunner runner;
     runner.runAllTests();
-    
+    coolsynth::testing::removeTestSampleLibrary();
+
     int failures = 0;
     for (int i = 0; i < runner.getNumResults(); ++i)
     {

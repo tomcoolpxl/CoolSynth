@@ -11,17 +11,37 @@ namespace
 AuditionEditor::AuditionEditor(SynthAudioProcessor& processor)
     : juce::AudioProcessorEditor(processor), synth(processor), sliders(processor)
 {
-    juce::String room;
+    // Rooms are headings; a room's families (the Conservatory's Keys, Strings, ...) are submenus.
+    auto* menu = presetMenu.getRootMenu();
+    juce::String room, family;
+    juce::PopupMenu familyMenu;
+    auto closeFamily = [&]
+    {
+        if (family.isNotEmpty() && familyMenu.getNumItems() > 0)
+            menu->addSubMenu(family, familyMenu);
+        familyMenu = {};
+    };
     for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
     {
         const auto& preset = coolsynth::presets::getFactoryPreset(i);
         if (preset.category != room)
         {
+            closeFamily();
+            family = {};
             room = preset.category;
-            presetMenu.addSectionHeading(room);
+            menu->addSectionHeader(room);
         }
-        presetMenu.addItem(preset.name, i + 1);
+        if (preset.section != family)
+        {
+            closeFamily();
+            family = preset.section;
+        }
+        if (family.isEmpty())
+            menu->addItem(i + 1, preset.name);
+        else
+            familyMenu.addItem(i + 1, preset.name);
     }
+    closeFamily();
     presetMenu.setTextWhenNothingSelected("Factory presets");
     presetMenu.setSelectedId(synth.getCurrentProgram() + 1, juce::dontSendNotification);
     presetMenu.onChange = [this]
