@@ -81,3 +81,28 @@ mod = src=lfo1 dst=g1.pitch amount=0.008 via=wheel
 voice = env2ToP1=0.41 velToP1=0 drift=1
 play = mode=poly voices=5
 master = 0
+
+[Prophet-5 Brass]
+room = Museum
+# The Prophet-5's brass: factory program 1-1, the first sound the instrument plays. One
+# sawtooth oscillator at full level (oscillator B is set up but switched off), no resonance,
+# five voices. The sound is its filter envelope: the filter starts closed under the note,
+# opens over five octaves in a twelfth of a second, and settles half way down within a few
+# tenths: a bright blare that mellows as the note is held. The wheel adds a vibrato of about
+# five a second.
+# Built from the documents alone, at the user's choice: no recording of single held notes of
+# this program was found to put beside it. From Sequential's own factory data and the service
+# manual's calibration: the oscillator, both envelopes' shapes (filter: attack 79 ms, sustain
+# 45 %, release 49 ms; amplifier: attack 53 ms, decay 22 ms, sustain 63 %, release 88 ms), the
+# filter envelope's reach (5.6 octaves; another reading of the circuit gives twice that). Two
+# values are carried over from the same model's Sync II, which could be fitted to a recording:
+# the cutoff sits 0.7 octave above the nominal one, and decays run at 0.7 of the nominal time.
+g1 = VA shape=saw level=0.8
+p1 = Ladder cutoff=150 res=0 key=1 drive=0 bass=0
+env1 = attack=53 decay=176 sustain=0.63 release=704 decayCurve=-1 releaseCurve=-1 velocity=0
+env2 = attack=79 decay=1800 sustain=0.45 release=392 decayCurve=-1 releaseCurve=-1
+lfo1 = shape=triangle rate=5 retrigger=off
+mod = src=lfo1 dst=pitch amount=0.008 via=wheel
+voice = env2ToP1=0.56 velToP1=0 drift=1
+play = mode=poly voices=5
+master = 0

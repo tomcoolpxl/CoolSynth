@@ -14,6 +14,9 @@ plays from the plugin's own Museum room) and a reference, in one of three forms:
              sound the transcriber cannot follow (a synced oscillator) or a recording that is
              mostly chords. With cents given, every note is rendered on its own at that pitch.
 
+An entry with "alone" has no reference (the user chose to hear it on its own): only the rebuild
+is rendered, on the notes the entry gives.
+
 The preset plays the same notes through CoolSynthRender, without effects, at the reference
 instrument's tuning; both clips are levelled alike. Writes <audition>/museum/<id>/reference.flac,
 rebuild.flac and <audition>/museum/index.json for the page.
@@ -157,9 +160,12 @@ with tempfile.TemporaryDirectory() as scratch:
             continue
         out_dir = os.path.join(out_root, entry["id"])
         os.makedirs(out_dir, exist_ok=True)
-        builder = from_phrase if "phrase" in entry else from_excerpts if "excerpts" in entry else from_samples
-        rate, reference, notes, seconds = builder(entry, scratch)
-        write_flac(os.path.join(out_dir, "reference.flac"), rate, level(reference), scratch)
+        if "alone" in entry:
+            notes, seconds = entry["alone"]["notes"], entry["alone"]["seconds"]
+        else:
+            builder = from_phrase if "phrase" in entry else from_excerpts if "excerpts" in entry else from_samples
+            rate, reference, notes, seconds = builder(entry, scratch)
+            write_flac(os.path.join(out_dir, "reference.flac"), rate, level(reference), scratch)
 
         wav = os.path.join(scratch, "rebuild.wav")
         source = ["--preset", "Museum: " + entry["preset"]] if entry.get("admitted") else ["--preset", entry["preset"], "--bank", candidates]
@@ -191,7 +197,8 @@ with tempfile.TemporaryDirectory() as scratch:
         own_rate, y = audiolib.read_wav(wav)
         write_flac(os.path.join(out_dir, "rebuild.flac"), own_rate, level(y), scratch)
         index = [e for e in index if e["id"] != entry["id"]]
-        index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")} | {"admitted": bool(entry.get("admitted"))})
+        index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")}
+                     | {"admitted": bool(entry.get("admitted")), "no_reference": "alone" in entry})
         print(entry["id"], "->", entry["preset"])
 
 order = {entry["id"]: i for i, entry in enumerate(ENTRIES)}

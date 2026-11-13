@@ -1914,3 +1914,30 @@ Judged on the page while the Museum candidates of D110 were being built.
   the user's choice (it is how that instrument sounds in its top register; the alternatives
   change the recording's notes or their balance). Not taken: changing the instrument now on
   this measurement alone.
+
+## D112. Prophet-5 Brass from the documents alone; then wait (2026-11-14)
+
+Two pick lists after D111.
+
+**Prophet-5 Brass**, which has factory data but no usable reference (D110). Offered:
+
+- Work out the recorded chord phrase by analysis and fit to that (recommended): a real
+  side-by-side, at an hour or two and the risk of a wrong chord note.
+- Leave it out until a recording of held notes turns up.
+- **Build it from the documents only (chosen by the user):** heard on its own; it sets aside
+  the Museum's rule of a side-by-side for this one sound, and the filter's reach has to be set
+  by judgement.
+
+Built as a candidate: one sawtooth, no resonance, both envelopes from Sequential's factory
+data with the service manual's calibration, the filter envelope's reach at the documents' 5.6
+octaves. Where judgement was needed it is borrowed, not invented: the same model's Sync II,
+fitted to a recording of a real unit (D110), needed its cutoff 0.7 octave above nominal and
+its decay at 0.7 of the nominal time; Brass takes both. The page plays it alone (five single
+notes, three chords) with the usual verdict; `make_museum.py` takes an entry without a
+reference ("alone").
+
+**What next.** Offered: wait for the verdicts (recommended), LatelyBass (a CC0 reference made
+with a DX7 emulation exists; the TX81Z's operator waves may need engine work), or a search for
+hoover and Juno-106 sources. **The user: wait for the verdicts.** On the page: the recorder
+test note by note, Minimoog Fat Bass, Minimoog Trilogy lead, Prophet-5 Sync II, Prophet-5
+Brass.

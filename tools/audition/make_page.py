@@ -98,7 +98,10 @@ if museum:
         cards.append(
             f'<article class="card"><h3>{esc(m["title"])}</h3>'
             f'<p class="facts">{esc(m["reference"])} {esc(m["source"])}</p>'
-            f'<div class="players">{player("The reference", base + "reference.flac")}{player("My rebuild", base + "rebuild.flac")}</div>'
+            f'<div class="players">'
+            + (player("My build, from the documents (no reference)", base + "rebuild.flac") if m.get("no_reference")
+               else player("The reference", base + "reference.flac") + player("My rebuild", base + "rebuild.flac"))
+            + '</div>'
             + verdict("Museum", m["title"], ["admit it", "not yet: too bright", "not yet: too dull", "not yet: the attack is wrong",
                                              "not yet: the decay is wrong", "not yet: something else"]) + "</article>")
     nav.append(("museum", "Museum"))
