@@ -4,6 +4,7 @@ This is the main repo or agent memory file. If you need to adapt your memory fil
 
 The V3 engine replaced V2 in the product on 2026-11-13 (plan phase 1.4); the plan is `IMPLEMENTATION_PLAN_V3.md`.
 The UI is designed last, after engine, presets and arpeggiator; until then any UI is throwaway (the generic editor).
+V3 plan phases 1 to 8 are complete as of 2026-11-13: two parts, ten generator types, eight processor types, 68 factory presets. Phase 9 (the real UI) is next and is designed with the user. What is still open is `TODO.md` item 34; decisions taken while the user was away are in `DECISIONS_LOG.md`.
 
 ## Compatibility Stance
 
