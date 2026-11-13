@@ -36,7 +36,11 @@ JUDGED_CHECKS = {"marimba", "kalimba", "harp", "harp2", "harp3"}
 # The granular effect was judged good on 13 November 2026 (decision D107): its clips move to the archive.
 GRAIN_JUDGED = True
 
-# A line on a card: "group|title" -> (its first words, the rest).
+# A sound changed since the user judged it shows as not judged until it is judged again (the note the user
+# wrote stays). The stamp names the round of changes; a new round takes a new stamp.
+REJUDGE_STAMP = "2026-11-14-joins"
+
+# A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
 REMARKS = {
     "Museum|Minimoog: Emerson's Fat Bass": ("Changed since your verdict, listen again.",
                                             "You heard notes start muffled. A third of the notes were being joined to the note before "
@@ -80,7 +84,8 @@ def verdict(group, title, options):
     key = f"{group}|{title}"
     choices = "".join(f"<option>{esc(o)}</option>" for o in options)
     renewed = f'<p class="renewed"><b>{esc(REMARKS[key][0])}</b> {esc(REMARKS[key][1])}</p>' if key in REMARKS else ""
-    return (renewed + f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}" aria-label="Verdict on {esc(title)}">'
+    again = f' data-rejudge="{REJUDGE_STAMP}"' if key in REMARKS and REMARKS[key][0].startswith("Changed") else ""
+    return (renewed + f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}"{again} aria-label="Verdict on {esc(title)}">'
             f'<option value="">not judged yet</option>{choices}</select>'
             f'<input type="text" data-note="{esc(key)}" placeholder="a note, if something is off (optional)" aria-label="Note on {esc(title)}"></div>')
 
@@ -302,13 +307,19 @@ function refresh() {
     const own = [...d.querySelectorAll("select[data-key]")];
     d.querySelector("[data-family-count]").textContent = own.filter(s => s.value).length + " of " + own.length + " judged";
   });
-  for (const s of selects) saved[s.dataset.key] = { v: s.value, n: notes[s.dataset.key].value };
+  for (const s of selects) {
+    const before = saved[s.dataset.key] || {};
+    // a sound that changed keeps "judged again" only once a verdict is set on the changed version
+    const round = s.dataset.rejudge ? (s.value ? s.dataset.rejudge : (before.r === s.dataset.rejudge ? undefined : before.r)) : before.r;
+    saved[s.dataset.key] = { v: s.value, n: notes[s.dataset.key].value, r: round };
+  }
   try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch (e) {}
 }
 for (const s of selects) {
   const was = saved[s.dataset.key];
   if (was) {
-    if ([...s.options].some(o => o.value === was.v || o.text === was.v)) s.value = was.v;
+    const changedSince = s.dataset.rejudge && was.r !== s.dataset.rejudge;  // judged before the sound changed
+    if (!changedSince && [...s.options].some(o => o.value === was.v || o.text === was.v)) s.value = was.v;
     notes[s.dataset.key].value = was.n || "";
   }
   s.addEventListener("change", refresh);
