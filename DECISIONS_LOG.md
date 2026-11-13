@@ -1497,3 +1497,40 @@ corrected in D91 were not what was wrong.
   first 30 ms (by 3 to 17 dB), and its upper harmonics beat.
 - It is on the audition page as "Harp String, second try": the recording, the version the
   user rejected, and this one. The user's ear decides.
+
+## D102. How the granular effect is built (2026-11-13)
+
+Carries out D82: live granulation as an effect on a whole part. Choices inside the build:
+
+- **A twelfth insert type, "Grain", with code of its own (`src/synth/v3/GrainInsert.h`) beside
+  the slot's rack (taken, recommended).** The other eleven types are the master rack's stages;
+  the rack has no such stage and the master section was not asked to get one. Adding it as a
+  rack stage would have put it in the master too and touched the rack every preset uses.
+- **Each Grain slot keeps its own four seconds of stereo (taken).** D82 says one recording per
+  part; a part with Grain in two slots gets two, each of what reaches that slot, so a cloud of
+  a cloud works. 1.5 MB a slot, taken when the engine is prepared; nothing is allocated while
+  playing.
+- **Eight parameters (taken): Size 10 to 500 ms, Density 1 to 80 grains a second, Position (how
+  far back, to 3 s), Spray (up to a second further back at random), Pitch -24 to +24
+  semitones, Spread (stereo), Freeze, Mix.** Freeze stops the recording, and the cloud keeps
+  playing what was caught for as long as it is on.
+- **A grain never crosses the point where the recording is written (taken).** A grain pitched
+  up reads faster than the recording grows and would catch up with it; one pitched down falls
+  back toward the oldest sound. Each starts where it has room for its whole length, which may
+  be further back than Position asks.
+- **Grains are read with the sampled instruments' windowed sinc (taken, recommended), narrower
+  when pitched up.** The kernels moved to `SincKernels.h` for both. A four-point read costs a
+  tenth as much and folds a part's treble back into the cloud when it is pitched an octave or
+  two up; quality comes first (the user's rule). Up to 32 grains.
+- **Level (taken):** grains of different sound add in power, so the level follows the root of
+  the overlap, as in the Grain generator. With no Spray and no Pitch every grain plays the
+  same moment of the past and they add in amplitude: there the level follows the overlap
+  itself, else a dense, unscattered cloud would be 12 dB too loud. When a cloud is made
+  thinner the level comes down at once and goes up only over a grain's length, because the
+  thick grains are still playing.
+- Not built: tempo-synced grains, a reverse switch, feedback into the recording. None was
+  asked for; all three fit the eight parameters only by replacing one.
+- Four clips on the audition page (`tools/audition/make_graindemo.py`): Glass Bell as it is,
+  with a cloud, with the cloud an octave up, and smeared. Freeze cannot be shown in a
+  rendered clip; it is tested (a note frozen while it sounds is still there three seconds
+  after it stopped).

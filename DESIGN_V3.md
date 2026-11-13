@@ -456,6 +456,14 @@ newer stages travel in `ExtraFxParameters`. The engine gives the pump its beat p
 song position while it plays, otherwise its own count restarted at the first note after silence
 (decisions D54 to D56).
 
+Granular insert (2026-11-13, decisions D82 and D102): a twelfth insert type, Grain, that the
+master rack does not have. `GrainInsert` keeps the last four seconds of what reaches its slot
+and plays them as a cloud of up to 32 raised-cosine grains (Size, Density, Position, Spray,
+Pitch, Spread, Freeze, Mix). Freeze stops the recording. A grain starts where it has room not
+to cross the point being written, is read through the windowed sinc of `SincKernels.h`, and
+the cloud's level follows the root of its overlap (the overlap itself when every grain plays
+the same moment).
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs

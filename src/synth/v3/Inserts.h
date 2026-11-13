@@ -7,6 +7,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 
 #include "synth/GlobalFxRack.h"
+#include "GrainInsert.h"
 #include "Modulation.h"
 #include "Module.h"
 
@@ -15,7 +16,8 @@
     voices and its place in the mix. A slot holds one effect at a time, any of the ten the master
     rack has. It runs that effect's own code (a rack of its own with only that stage switched
     on), so an insert sounds exactly as the same effect does in the master section, with the
-    same smoothing when a value moves or the effect is switched.
+    same smoothing when a value moves or the effect is switched. An eleventh type, Grain, exists
+    only as an insert: the granular effect on a part (GrainInsert.h, decision D82).
 
     A slot has a type and eight generic values, named and ranged by the type's descriptor, like a
     generator or processor slot. Values arrive normalised 0..1. A synced delay and the pump take
@@ -38,7 +40,8 @@ namespace coolsynth::synth::v3
         inline constexpr int compressor = 8;
         inline constexpr int eq = 9;
         inline constexpr int pump = 10;
-        inline constexpr int count = 11; // new types only at the end: the index is saved in patches
+        inline constexpr int grain = 11;
+        inline constexpr int count = 12; // new types only at the end: the index is saved in patches
     }
 
     /** Name and parameters of an insert type. The ranges are the master rack's. */
@@ -97,6 +100,15 @@ namespace coolsynth::synth::v3
               {{ { "depth",    "Depth",    0.0f,  1.0f,  0.6f, Skew::linear, Unit::percent, true },
                  { "division", "Division", 0.0f,  13.0f, 8.0f, Skew::linear, Unit::choice,  false, divisions },
                  { "release",  "Release",  0.05f, 1.0f,  0.5f, Skew::linear, Unit::percent, true } }}, 3 },
+            { "Grain", 2,
+              {{ { "size",     "Size",     10.0f,  500.0f,  120.0f, Skew::logarithmic, Unit::milliseconds, true },
+                 { "density",  "Density",  1.0f,   80.0f,   20.0f,  Skew::logarithmic, Unit::hertz,        true },
+                 { "position", "Position", 0.0f,   3000.0f, 250.0f, Skew::linear,      Unit::milliseconds, true },
+                 { "spray",    "Spray",    0.0f,   1.0f,    0.2f,   Skew::linear,      Unit::percent,      true },
+                 { "pitch",    "Pitch",    -24.0f, 24.0f,   0.0f,   Skew::linear,      Unit::semitones,    true },
+                 { "spread",   "Spread",   0.0f,   1.0f,    0.5f,   Skew::linear,      Unit::percent,      true },
+                 { "freeze",   "Freeze",   0.0f,   1.0f,    0.0f,   Skew::linear,      Unit::choice,       false, "Off|On" },
+                 { "mix",      "Mix",      0.0f,   1.0f,    0.5f,   Skew::linear,      Unit::percent,      true } }}, 8 },
         }};
         return table[static_cast<std::size_t>(std::clamp(typeIndex, 0, insertType::count - 1))];
     }
@@ -124,11 +136,18 @@ namespace coolsynth::synth::v3
         void prepare(double sampleRate, int maxBlockSize)
         {
             rack.prepare(sampleRate, std::max(1, maxBlockSize), 2);
+            grain.prepare(sampleRate);
             lastType = insertType::off;
         }
 
         /** Silence: every tail gone. */
-        void clear() noexcept { rack.clear(); }
+        void clear() noexcept
+        {
+            rack.clear();
+            grain.clear();
+        }
+
+        [[nodiscard]] const GrainInsert& grainForTesting() const noexcept { return grain; }
 
         [[nodiscard]] int currentType() const noexcept { return lastType; }
 
@@ -144,6 +163,27 @@ namespace coolsynth::synth::v3
                 return descriptorToUnits(d.params[static_cast<std::size_t>(index)], settings.p[static_cast<std::size_t>(index)]);
             };
             auto choice = [&](int index) { return static_cast<int>(std::lround(units(index))); };
+
+            // The granular effect is its own code; the rack has no such stage.
+            if (type == insertType::grain)
+            {
+                if (lastType != insertType::grain)
+                    clear(); // whatever was here before is cut, and the recording starts empty
+                GrainInsert::Settings g;
+                g.sizeMs = units(0);
+                g.density = units(1);
+                g.positionMs = units(2);
+                g.spray = units(3);
+                g.pitchSemitones = units(4);
+                g.spread = units(5);
+                g.freeze = choice(6) == 1;
+                g.mix = units(7);
+                grain.process(stereo, g);
+                lastType = type;
+                return;
+            }
+            if (lastType == insertType::grain)
+                grain.clear();
 
             coolsynth::synth::DriveParametersV2 drive;
             coolsynth::synth::PhaserParametersV2 phaser;
@@ -246,6 +286,7 @@ namespace coolsynth::synth::v3
 
     private:
         coolsynth::synth::GlobalFxRack rack;
+        GrainInsert grain;
         int lastType = insertType::off;
     };
 }

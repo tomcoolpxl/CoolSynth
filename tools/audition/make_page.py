@@ -144,6 +144,24 @@ if os.path.exists(demo_path):
                   'instrument, from soft to loud, then a chord. One player per playing style. This is the synth, not the raw '
                   'recording; the raw recordings are further down.</p>' + "".join(blocks) + "</section>")
 
+grain_path = os.path.join(audition, "graindemo", "index.json")
+grain_html = ""
+if os.path.exists(grain_path):
+    with open(grain_path, encoding="utf-8") as handle:
+        grain = json.load(handle)
+    audio = "".join(
+        f'<label class="player"><span>{html.escape(c["title"])}</span>'
+        f'<audio controls preload="none" src="{html.escape("graindemo/" + c["file"])}"></audio></label>'
+        for c in grain["clips"])
+    grain_html = ('<section><h2>Granular effect <span class="count">the new insert on a part</span></h2>'
+                  f'<p class="lead">The same phrase on {html.escape(grain["preset"])}, four times. The effect remembers the last four '
+                  'seconds of what a part plays and plays them back as a cloud of grains. Its Freeze switch, which holds the cloud for '
+                  'as long as it is on, cannot be shown in a recording like this: try it in the plugin (insert type Grain).</p>'
+                  f'<article class="item check"><div class="players">{audio}</div>'
+                  '<label class="verdict">Your verdict <select data-demo="Granular effect">'
+                  '<option value="">not judged yet</option><option>good</option><option>too loud or too quiet</option>'
+                  '<option>sounds wrong</option><option>something else is wrong</option></select></label></article></section>')
+
 page = """<!doctype html>
 <html lang="en">
 <head>
@@ -206,6 +224,7 @@ textarea { width: 100%; min-height: 90px; margin: 10px 0 40px; font: 13px/1.4 ui
 <main>
 __DEMOS__
 __CHECKS__
+__GRAIN__
 __SECTIONS__
 <h2>Your picks as text</h2>
 <textarea id="out" readonly></textarea>
@@ -229,7 +248,7 @@ function refresh() {
   document.getElementById("picked").textContent =
     (picked.length ? picked.length + " picked" : "Nothing picked yet") + (judged.length + heard.length ? ", " + (judged.length + heard.length) + " judged" : "");
   let text = "";
-  if (heard.length) text += "Conservatory:\\n" + heard.map(v => "- " + v.dataset.demo + ": " + v.value).join("\\n") + "\\n";
+  if (heard.length) text += "Heard on the page:\\n" + heard.map(v => "- " + v.dataset.demo + ": " + v.value).join("\\n") + "\\n";
   if (judged.length) text += "Model check:\\n" + judged.map(v => "- " + v.dataset.title + ": " + v.value).join("\\n") + "\\n";
   if (picked.length) text += "My sample picks:\\n" + picked.map(b => "- " + b.dataset.title + "  [" + b.dataset.id + "]").join("\\n");
   document.getElementById("out").value = text;
@@ -262,7 +281,7 @@ refresh();
 </body>
 </html>
 """
-page = page.replace("__COUNT__", str(rows_total)).replace("__SECTIONS__", "\n".join(sections)).replace("__CHECKS__", checks_html).replace("__DEMOS__", demos_html)
+page = page.replace("__COUNT__", str(rows_total)).replace("__SECTIONS__", "\n".join(sections)).replace("__CHECKS__", checks_html).replace("__DEMOS__", demos_html).replace("__GRAIN__", grain_html)
 with open(os.path.join(audition, "index.html"), "w", encoding="utf-8", newline="\n") as handle:
     handle.write(page)
 print(rows_total, "instruments on the page in", len(sections), "families")

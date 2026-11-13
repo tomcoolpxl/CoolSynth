@@ -81,7 +81,7 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;
     - three insert slots per part (the rack stays as the master): done, D93;
-    - a granular effect as an insert type;
+    - a granular effect as an insert type: done, D102;
     - Harp String: the user found neither version close to the recording (D94); redone as a
       finger's pluck (D101), on the audition page for a verdict;
     - after the user's picks: key zones in the sample generator, sample files beside the plugin

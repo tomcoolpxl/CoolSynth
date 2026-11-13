@@ -136,6 +136,21 @@ namespace
         return best;
     }
 
+    /** The power of one frequency in a stretch of signal (Goertzel). */
+    double powerAt(const std::vector<float>& x, std::size_t from, std::size_t to, double hz)
+    {
+        const double w = 2.0 * juce::MathConstants<double>::pi * hz / kRate;
+        const double coefficient = 2.0 * std::cos(w);
+        double s1 = 0.0, s2 = 0.0;
+        for (std::size_t i = from; i < std::min(to, x.size()); ++i)
+        {
+            const double s0 = static_cast<double>(x[i]) + coefficient * s1 - s2;
+            s2 = s1;
+            s1 = s0;
+        }
+        return s1 * s1 + s2 * s2 - coefficient * s1 * s2;
+    }
+
     juce::String entryText(const coolsynth::presets::BankPreset& preset, const juce::String& id)
     {
         for (const auto& entry : preset.entries)
@@ -169,6 +184,8 @@ public:
             }
             expectEquals(juce::String(insertDescriptor(insertType::delay).name), juce::String("Delay"));
             expectEquals(juce::String(insertDescriptor(insertType::pump).name), juce::String("Pump"));
+            expectEquals(juce::String(insertDescriptor(insertType::grain).name), juce::String("Grain"));
+            expectEquals(static_cast<int>(insertType::grain), 11); // saved in patches: it stays the twelfth
         }
 
         beginTest("an_insert_sounds_exactly_like_the_same_effect_in_the_master_section");
@@ -266,6 +283,126 @@ public:
             expectWithinAbsoluteError(echoAt(60.0f), 24000, 300);  // and 500 ms at 60
         }
 
+        beginTest("the_grain_insert_plays_the_parts_past_as_a_cloud");
+        {
+            const std::vector<Timed> held { { 0, Type::noteOn, 69 } };
+            const std::vector<Timed> halfSecond { { 0, Type::noteOn, 69 }, { 24000, Type::noteOff, 69 } };
+
+            // At Mix 0 the part passes untouched.
+            auto settings = onePart();
+            auto plainEngine = makeEngine();
+            const auto plain = render(*plainEngine, settings, 24000, held);
+            settings.inserts[0][0] = insertOf(insertType::grain, { { 7, 0.0f } });
+            auto dryEngine = makeEngine();
+            expectLessThan(largestDifference(plain, render(*dryEngine, settings, 24000, held)), 1.0e-6);
+
+            // The cloud alone, taken a quarter second back with no Spray, grains of 120 ms: it goes on for as far
+            // back as it reaches after the note has stopped, and then it has run out of past.
+            settings.inserts[0][0] = insertOf(insertType::grain, { { 2, 250.0f }, { 3, 0.0f }, { 7, 1.0f } });
+            auto engine = makeEngine();
+            const auto cloud = render(*engine, settings, 96000, halfSecond);
+            expectGreaterThan(rms(cloud, 14400, 24000), 0.02, "the cloud sounds while the note is held");
+            expectGreaterThan(rms(cloud, 26400, 33600), 0.02, "and for a quarter second after it");
+            expectLessThan(rms(cloud, 45600, 96000), 1.0e-4, "then there is no more past to play");
+            expect(engine->insertForTesting(0, 0).grainForTesting().activeGrainsForTesting() <= GrainInsert::maxGrains);
+
+            // With nothing scattered the cloud is the part a quarter second late, about as loud as it was;
+            // so is a thick, scattered cloud.
+            const double direct = rms(plain, 14400, 24000);
+            expectWithinAbsoluteError(rms(cloud, 14400, 24000) / direct, 1.0, 0.35);
+            settings.inserts[0][0] = insertOf(insertType::grain, { { 0, 400.0f }, { 1, 80.0f }, { 3, 0.5f }, { 7, 1.0f } });
+            auto thickEngine = makeEngine();
+            const auto thick = render(*thickEngine, settings, 96000, { { 0, Type::noteOn, 69 } });
+            expectWithinAbsoluteError(rms(thick, 72000, 96000) / direct, 1.0, 0.5);
+            float peak = 0.0f;
+            for (const float v : thick)
+                peak = std::max(peak, std::abs(v));
+            expectLessThan(peak, 1.0f);
+        }
+
+        beginTest("grain_pitch_reads_the_past_faster");
+        {
+            // The part plays a saw at 440 Hz. Unshifted the cloud's strongest tone is 440 Hz; an octave up it is
+            // 880 Hz and nothing is left at 440.
+            auto ratioFor = [&](float semitones)
+            {
+                auto settings = onePart();
+                settings.inserts[0][0] = insertOf(insertType::grain, { { 3, 0.3f }, { 4, semitones }, { 7, 1.0f } });
+                auto engine = makeEngine();
+                const auto out = render(*engine, settings, 96000, { { 0, Type::noteOn, 69 } });
+                // A cloud smears every tone a few hertz to either side: the power in a band round it counts.
+                auto band = [&](double centre)
+                {
+                    double sum = 0.0;
+                    for (double hz = centre - 15.0; hz <= centre + 15.0; hz += 1.0)
+                        sum += powerAt(out, 48000, 96000, hz);
+                    return sum;
+                };
+                return band(880.0) / band(440.0);
+            };
+            expectLessThan(ratioFor(0.0f), 0.6);
+            expectGreaterThan(ratioFor(12.0f), 10.0);
+        }
+
+        beginTest("freeze_keeps_the_cloud_playing_what_it_caught");
+        {
+            // A note of half a second. Frozen while it sounds, the cloud is still there three seconds later;
+            // left recording, it has long gone.
+            auto lastSecond = [&](bool freeze)
+            {
+                auto settings = onePart();
+                settings.inserts[0][0] = insertOf(insertType::grain, { { 3, 0.3f }, { 7, 1.0f } });
+                auto engine = makeEngine();
+                render(*engine, settings, 19200, { { 0, Type::noteOn, 69 } });
+                if (freeze)
+                    settings.inserts[0][0] = insertOf(insertType::grain, { { 3, 0.3f }, { 6, 1.0f }, { 7, 1.0f } });
+                const auto out = render(*engine, settings, 172800, { { 4800, Type::noteOff, 69 } });
+                return rms(out, 124800, 172800);
+            };
+            expectGreaterThan(lastSecond(true), 0.02);
+            expectLessThan(lastSecond(false), 1.0e-4);
+        }
+
+        beginTest("the_grain_insert_stays_in_bounds_whatever_is_asked_of_it");
+        {
+            // Noise in, every setting thrown about block by block, Freeze flipping: the output stays finite and
+            // bounded and never more than 32 grains play.
+            GrainInsert grain;
+            grain.prepare(kRate);
+            juce::Random random(20261113);
+            juce::AudioBuffer<float> block(2, kBlock);
+            bool finite = true;
+            float peak = 0.0f;
+            int most = 0;
+            for (int b = 0; b < 1500; ++b) // eight seconds: the recording wraps round twice
+            {
+                for (int ch = 0; ch < 2; ++ch)
+                    for (int s = 0; s < kBlock; ++s)
+                        block.setSample(ch, s, random.nextFloat() * 2.0f - 1.0f);
+                GrainInsert::Settings g;
+                g.sizeMs = 10.0f + 490.0f * random.nextFloat();
+                g.density = 1.0f + 79.0f * random.nextFloat();
+                g.positionMs = 3000.0f * random.nextFloat();
+                g.spray = random.nextFloat();
+                g.pitchSemitones = -24.0f + 48.0f * random.nextFloat();
+                g.spread = random.nextFloat();
+                g.freeze = random.nextFloat() < 0.3f;
+                g.mix = 1.0f;
+                grain.process(block, g);
+                for (int ch = 0; ch < 2; ++ch)
+                    for (int s = 0; s < kBlock; ++s)
+                    {
+                        const float v = block.getSample(ch, s);
+                        finite = finite && std::isfinite(v);
+                        peak = std::max(peak, std::abs(v));
+                    }
+                most = std::max(most, grain.activeGrainsForTesting());
+            }
+            expect(finite);
+            expectLessThan(peak, 4.0f);
+            expect(most <= GrainInsert::maxGrains && most > 4);
+        }
+
         beginTest("a_bank_preset_writes_inserts_as_slot_lines");
         {
             const auto parsed = coolsynth::presets::parseBankFile(R"(
@@ -277,6 +414,7 @@ i1 = Delay time=375 feedback=0.3 mix=0.25 sync=on division=1/8. mode=pingpong
 i3 = EQ low=-3 high=4
 b.g1 = VA shape=sine level=0.8
 b.i2 = Chorus rate=0.5 depth=0.4 mix=0.3
+b.i3 = Grain size=200 density=30 pitch=12 freeze=on mix=0.6
 )", "test.csbank");
             expect(parsed.errors.isEmpty(), parsed.errors.joinIntoString("\n"));
             if (parsed.presets.size() == 1)
@@ -291,6 +429,10 @@ b.i2 = Chorus rate=0.5 depth=0.4 mix=0.3
                 expect(entryText(preset, "pA.i3.p3") == "4");
                 expect(entryText(preset, "pB.i2.type") == "Chorus");
                 expect(entryText(preset, "pB.i2.p2") == "0.4");
+                expect(entryText(preset, "pB.i3.type") == "Grain");
+                expect(entryText(preset, "pB.i3.p1") == "200");
+                expect(entryText(preset, "pB.i3.p5") == "12");
+                expect(entryText(preset, "pB.i3.p7") == "on");
                 expect(entryText(preset, "pA.i2.type") == "<none>");
             }
             const auto wrong = coolsynth::presets::parseBankFile("[X]\ni1 = Wah depth=1\ni2 = Delay speed=3\ni4 = Delay\n", "bad.csbank");
