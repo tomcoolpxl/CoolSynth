@@ -6,6 +6,7 @@
 #include <variant>
 
 #include "Envelope.h"
+#include "FmGenerator.h"
 #include "LadderProcessor.h"
 #include "Lfo.h"
 #include "ModMatrix.h"
@@ -45,7 +46,7 @@
 */
 namespace coolsynth::synth::v3
 {
-    using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator>; // new types only at the end
+    using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator>; // new types only at the end
     using ProcessorTypes = std::variant<OffProcessor, LadderProcessor>;
     using GeneratorSlot = Slot<GeneratorTypes>;
     using ProcessorSlot = Slot<ProcessorTypes>;
@@ -55,6 +56,7 @@ namespace coolsynth::synth::v3
         inline constexpr int off = 0;
         inline constexpr int va = 1;
         inline constexpr int noise = 2;
+        inline constexpr int fm2 = 3;
     }
     namespace processorType
     {
@@ -63,6 +65,7 @@ namespace coolsynth::synth::v3
     }
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::va, GeneratorTypes>, VaGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::noise, GeneratorTypes>, NoiseGenerator>);
+    static_assert(std::is_same_v<std::variant_alternative_t<generatorType::fm2, GeneratorTypes>, FmGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::ladder, ProcessorTypes>, LadderProcessor>);
 
     inline constexpr int generatorSlotCount = 3;

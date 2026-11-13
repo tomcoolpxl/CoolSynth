@@ -14,9 +14,8 @@ if(MSVC)
         string(REPLACE "/RTC1" "" ${flagVariable} "${${flagVariable}}")
         string(REPLACE "/Ob0" "" ${flagVariable} "${${flagVariable}}")
         string(REPLACE "/Od" "" ${flagVariable} "${${flagVariable}}")
-        # Debug info comes from coolsynth_config_flags on the targets that have code. Left in the
-        # global flags it also went to the embedded bank library, whose shared .pdb went stale
-        # when bank files changed and made the linker reject the library (LNK1236).
+        # Debug info comes from coolsynth_config_flags on the targets that have code; the data-only
+        # libraries (the embedded bank, the controller profiles) need none.
         string(REPLACE "/Zi" "" ${flagVariable} "${${flagVariable}}")
     endforeach()
     target_compile_options(coolsynth_config_flags INTERFACE
@@ -160,6 +159,7 @@ if(BUILD_TESTING)
             tests/V3GlobalModulatorTests.cpp
             tests/V3DelayTests.cpp
             tests/V3NoiseTests.cpp
+            tests/V3FmTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp

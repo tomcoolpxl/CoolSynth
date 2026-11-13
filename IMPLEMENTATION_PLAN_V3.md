@@ -123,7 +123,7 @@ Shipped 2026-11-13 with all of them and Riser's noise layer (decisions D25 to D2
 3.2 FM generator, two operators. Carrier and modulator with ratio, fine, index, feedback, index
 envelope through ENV3 or the matrix. Tests: ratio tuning, index to bandwidth, feedback stability.
 Ships: Greenhouse (Glass Bell, Rain Chime, Crystal Pluck), Engine Room FM Knock, Workshop Init
-FM.
+FM. Shipped 2026-11-13 with all five (decisions D30 to D32).
 
 3.3 FM generator, four operators. Six algorithms, per-operator level and ratio across P1..P8
 with paging in the descriptor. Ships: Outrun Grid Keys.

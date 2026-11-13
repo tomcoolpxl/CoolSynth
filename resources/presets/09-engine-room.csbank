@@ -41,6 +41,20 @@ play = mode=legato glideLegato=on
 drive = on amount=0.25 mix=0.6
 master = -12
 
+[FM Knock]
+room = Engine Room
+# A 1:1 FM bass an octave down whose index snaps from bright to round in 30 ms: the knock of
+# the attack, then a warm tone under a gentle low-pass. Every note knocks again.
+g1 = FM2 ratio=1 index=0.3 feedback=0.2 oct=-1 level=1
+p1 = Ladder cutoff=1400 res=0.15 key=0.4 bass=0.6
+env1 = attack=1 decay=380 sustain=0.7 release=90 velocity=0.4
+env3 = attack=0.5 decay=30 sustain=0 release=30
+mod = src=env3 dst=g1.index amount=0.6
+mod = src=velocity dst=g1.index amount=0.15
+voice = env2ToP1=0
+play = mode=mono
+master = 1
+
 [Donk]
 room = Engine Room
 g1 = VA shape=pulse pw=0.5 oct=-1 level=0.8

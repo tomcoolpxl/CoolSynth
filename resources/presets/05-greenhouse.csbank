@@ -1,0 +1,45 @@
+# Greenhouse: glass, bells, mallets and strings. Percussive attacks, inharmonic or sine-rich
+# decays, organic. Room rule: sustain level 0 everywhere.
+
+[Glass Bell]
+room = Greenhouse
+# A ratio-3.5 FM bell whose index falls over two seconds, so the clang melts into a pure tone,
+# with a quieter, slightly detuned high partial for shimmer. Harder playing rings brighter.
+g1 = FM2 ratio=3.5 index=0.4 level=0.8
+g2 = FM2 ratio=5 carrier=2 index=0.3 fine=7 level=0.22
+p1 = Off
+env1 = attack=1 decay=3500 sustain=0 release=2500 decayCurve=-0.7 velocity=0.5
+env3 = attack=1 decay=2000 sustain=0 release=1500
+mod = src=env3 dst=g1.index amount=0.45
+mod = src=velocity dst=g1.index amount=0.15
+mod = src=env3 dst=g2.index amount=0.3
+voice = env2ToP1=0
+reverb = on size=0.75 damping=0.4 mix=0.3
+master = -2.5
+
+[Rain Chime]
+room = Greenhouse
+# High sine and triangle plucks, two octaves up, falling at random over three octaves at 1/16
+# with every other step skipped on average, into a ping-pong echo and a long room.
+g1 = VA shape=sine oct=2 rand=0 level=0.75
+g2 = VA shape=triangle oct=2 fine=5 level=0.35
+p1 = Off
+env1 = attack=1 decay=300 sustain=0 release=250 velocity=0.5
+voice = env2ToP1=0
+arp = on rate=1/16 pattern=random octaves=3 gate=0.6 chance=0.5
+delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.25
+reverb = on size=0.7 damping=0.35 mix=0.3
+master = 6
+
+[Crystal Pluck]
+room = Greenhouse
+# A saw and a pulse an octave up through a resonant ladder that snaps shut in 180 ms and follows
+# the key fully, so every note is equally bright.
+g1 = VA shape=saw level=0.7
+g2 = VA shape=pulse pw=0.3 oct=1 level=0.4
+p1 = Ladder cutoff=600 res=0.3 key=1
+env1 = attack=1 decay=700 sustain=0 release=400 velocity=0.5
+env2 = attack=0.5 decay=180 sustain=0 release=150
+voice = env2ToP1=0.5 velToP1=0.12
+reverb = on size=0.6 damping=0.45 mix=0.22
+master = 4

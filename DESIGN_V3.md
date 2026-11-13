@@ -53,6 +53,15 @@ clocked at 93 times the note, Clock in semitones, steps band-limited with the VA
 moved to `dsp::blepResidual`). Tone, Width, pan, ring and AM; output two samples late like the
 VA; every kind about 3 dB under a saw (decisions D25, D26).
 
+Shipped (phase 3.2, 2026-11-13): `FmGenerator` ("FM2") in `src/synth/v3/FmGenerator.h`, generator
+type 3. A sine modulator at Ratio (0.25 to 16) with Fine in cents phase-modulates a sine carrier
+at Carrier times the note; Index 0 to 10 radians, Feedback through the average of the last two
+modulator outputs, Mix from carrier to modulator. The index is limited where the first
+sideband that would fold into the audible band falls under 1e-4 (`indexLimit()`); index,
+feedback and ratios ramp across each sub-block; phases in double precision restart at a fresh
+note. Hands on its signal and the carrier's wrap track; combine FM, ring and AM (decisions D30,
+D31).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

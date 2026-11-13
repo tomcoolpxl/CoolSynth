@@ -355,14 +355,58 @@ musicdsp pink-noise page notes that fixed pinking coefficients degrade at higher
 Random Walk's measured loudness moves by about 1 dB between runs because its arp pattern is
 random, so the tool may nudge its master by 0.5 dB on a rerun; nothing to fix.
 
-## D29. The bank library without debug info (2026-11-13, phase 3.1)
+## D29. Link errors on the embedded bank library (2026-11-13, phases 3.1 and 3.2)
 
-The embedded bank library failed to link twice after bank files were added (LNK1236, once
-LNK1106). Each time CMake was reconfiguring in the middle of a build, which adding a bank file
-triggers. A second build always linked.
+The embedded bank library failed to link four times (LNK1236, once LNK1106). Every time, CMake
+had reconfigured itself in the middle of the build, which a new bank file or a CMakeLists change
+triggers. That build can write the library truncated, and later builds update the broken archive
+in place, so they keep failing. Deleting `build/Debug/CoolSynthFactoryBank.lib` and building
+again always fixed it. (Corrected on the second occurrence: at first I blamed a stale .pdb.)
 
-- **Build the two data-only libraries without debug info (their shared .pdb could go stale) and
-  note in TODO that a link error on the bank library after adding a bank file goes away with a
-  second build (taken, recommended).** Code targets keep their debug info from
-  `coolsynth_config_flags`.
-- Run a separate configure before every build. Reliable, but slower for every change.
+- **Configure explicitly after adding a bank file (`cmake --preset vs2022-debug`), and delete the
+  library if the error appears; both written in TODO's standing notes (taken, recommended).**
+- Delete the library before every build with a pre-build step. Never fails, but every build
+  would relink the plugin, the standalone and the tests, even with nothing changed.
+- Embed the bank in the plugin's own sources instead of a JUCE binary-data library. Removes the
+  library, but replaces JUCE's generator with one of our own.
+
+The data-only libraries now also build without debug info, which they never needed.
+
+## D30. The two-operator FM generator (2026-11-13, phase 3.2)
+
+- **A type of its own, "FM2", with the four-operator generator a separate type in 3.3 (taken,
+  recommended).** Two operators fit the eight slot parameters with room to spare (ratio, fine,
+  index, feedback, carrier ratio, mix); four operators need paging. One FM4 type for both was the
+  alternative, but a two-operator patch would carry two unused operators and the paging.
+- **Ratio is continuous (0.25 to 16, logarithmic), not stepped to DX ratios (taken).** Integer and
+  half ratios are typed exactly in bank files, and a sweep of the ratio through the matrix
+  makes the inharmonic glides that stepped ratios cannot.
+- **Feedback through the average of the modulator's last two outputs (taken).** Reported online
+  (Native Instruments forum, on emulating Yamaha chips; the thread itself calls it unproven) as
+  what keeps high feedback from buzzing at half the sample rate. Measured: full feedback leaves
+  -72 dB above 40 kHz.
+- **Phases restart at a fresh note and run in double precision (taken).** Every attack is the
+  same, as on a DX; free-running phases would make each note's attack differ.
+
+## D31. Keeping FM from aliasing (2026-11-13, phase 3.2)
+
+Checked online: CCRMA's FM notes suggest limiting the index to about (fs/2 - carrier) /
+modulator; forum advice is to oversample.
+
+- **Limit the index where the first sideband that would fold into the audible band, after the
+  voice's decimation, has a Bessel amplitude under 1e-4 (taken, recommended).** Measured: the
+  largest alias below 20 kHz -75 dB against the strongest sideband at a 2 kHz carrier with index
+  10 asked for (held at 3.0). Low and middle notes are never limited.
+- The Carson-rule cap from CCRMA. Tried first: -57.6 dB, since the Bessel tail just past
+  Carson's bandwidth still folds back.
+- Oversample the FM generator again internally. Clean at any index, but twice the cost and a
+  second decimator per voice.
+- No limit. DX-style grit at high notes, but uncontrolled.
+
+## D32. Phase 3.2 presets (2026-11-13, phase 3.2)
+
+- **Glass Bell has a second, quieter FM pair (ratio 5 on a carrier at 2, 7 cents sharp) for a
+  shimmering high partial (taken).** The recipe's single pair sounded plain against the plate.
+- **FM Knock plays mono, so every note knocks; its level and sustain were raised so it reaches
+  the loudness target under the +6 dB master cap (taken).**
+- **New bank file `05-greenhouse.csbank` with Glass Bell, Rain Chime and Crystal Pluck (taken).**
