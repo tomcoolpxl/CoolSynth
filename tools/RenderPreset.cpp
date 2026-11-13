@@ -1,13 +1,14 @@
 // Renders a preset playing given notes to a WAV file, through the real plugin signal path.
 //
 //   CoolSynthRender --preset "Marimba" --notes "60:0:1.5,64:0.5:1.5:80" --seconds 6 --out marimba.wav
-//                   [--bank some.csbank] [--style N] [--no-fx] [--list]
+//                   [--bank some.csbank] [--style N] [--no-fx] [--tune CENTS] [--list]
 //
 // --preset  a preset's name, or "Room: Name" where two rooms have a preset of that name
 // --notes   comma-separated note:start:length[:velocity], times in seconds, velocity 1..127 (100)
 // --bank    take the preset from this bank file instead of the built-in bank
 // --style   the Nth style, from 0, of the sampled instrument in the first generator slot
 // --no-fx   switch every effect off, to hear the voices alone
+// --tune    play this many cents sharp (a reference recording's instrument is rarely at 440 Hz); a held pitch bend
 // --list    print the built-in preset names and exit
 //
 // Used to put a preset next to a reference recording, and a change next to what it replaces.
@@ -184,6 +185,19 @@ int main(int argc, char* argv[])
                     parameter->setValueNotifyingHost(0.0f);
     }
 
+    // --tune CENTS: a pitch bend held for the whole clip, within the preset's bend range.
+    int bend = 8192;
+    if (const auto tuneText = value("--tune"); tuneText.isNotEmpty())
+    {
+        float range = 2.0f;
+        if (const auto* rangeValue = processor.getValueTreeState().getRawParameterValue("pA.play.bendRange"))
+            range = rangeValue->load();
+        if (range > 0.0f)
+            bend = juce::jlimit(0, 16383, 8192 + static_cast<int>(std::lround(tuneText.getFloatValue() / 100.0f / range * 8191.0f)));
+        else
+            std::cerr << "--tune needs a bend range above zero in the preset\n";
+    }
+
     const int total = static_cast<int>(std::llround(seconds * kSampleRate));
     juce::AudioBuffer<float> rendered(2, total);
     rendered.clear();
@@ -193,6 +207,8 @@ int main(int argc, char* argv[])
     {
         const int n = std::min(kBlockSize, total - start);
         juce::MidiBuffer midi;
+        if (start == 0 && bend != 8192)
+            midi.addEvent(juce::MidiMessage::pitchWheel(1, bend), 0);
         while (next < events.size() && events[next].sample < start + n)
         {
             const auto& e = events[next++];

@@ -34,3 +34,80 @@ mod = src=env3 dst=g1.index amount=-0.1252 curve=logarithmic
 mod = src=key dst=g2.amount amount=0.8
 voice = env2ToP1=0
 master = 0
+
+[Minimoog Fat Bass]
+room = Museum
+# "Emerson's Fat Bass from Brain Salad Surgery", from Tom Rhea's Sound Charts for the Minimoog
+# (Moog Music, 1974, page 15). The chart: three sawtooth oscillators at full level, one at 32'
+# and two at 16', tuned to unison; filter cutoff -2, emphasis 5, amount of contour 3.5, both
+# keyboard-control switches on; filter contour attack 0, decay 300 msec, sustain 0; loudness
+# contour attack 0, decay 600 msec, sustain 5; decay switch on, no glide. Play it an octave or
+# two under middle C: the key is the 8' pitch, as on the instrument.
+# From the chart and the service manual: the oscillators, and the cutoff (-2 on the dial is
+# about 250 Hz at the lowest key and follows the keyboard: 752 Hz at middle C). What the
+# documents do not pin down is fitted to a recording of a real Model D set to this chart: how
+# far the contour opens the filter (3.1 octaves; the manuals say between 1.4 and 2.2), what
+# emphasis 5 does with three oscillators driving the filter (little: 0.13), the contours' time
+# scale (the legend is close to the time a contour takes to finish), sustain 5 (0.8 of full).
+# Not here: the chart also lets oscillator 3 shake the filter at audio rate, a little, by the
+# modulation wheel; this engine has no such path, and the real one has more above 1.5 kHz.
+g1 = VA shape=saw oct=-2 level=0.8
+g2 = VA shape=saw oct=-1 fine=3 level=0.8
+g3 = VA shape=saw oct=-1 fine=-2 level=0.8
+p1 = Ladder cutoff=752 res=0.13 key=1 drive=10.5 bass=0
+env1 = attack=1 decay=1275 sustain=0.8 release=1275 decayCurve=-1 releaseCurve=-1 velocity=0
+env2 = attack=1 decay=432 sustain=0 release=432 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.31 velToP1=0 drift=1
+play = mode=legato priority=low
+master = 0
+
+[Minimoog Trilogy Lead]
+room = Museum
+# "Emerson, Lake and Palmer's Trilogy", from the same Sound Charts page. The chart: oscillator 2
+# at 2' and level 8 carries the tune; oscillators 1 and 3 at 16', three octaves under it, at
+# level 2; all three on the square wave; filter cutoff -1, emphasis 6, amount of contour 3, both
+# keyboard-control switches on; filter contour attack 0, decay 800 msec, sustain 0; loudness
+# contour attack 0, decay 400 msec, sustain 10; glide at 5, decay switch on. One voice, the
+# lowest key sounds, and a legato note does not start the contours again.
+# From the chart: ranges, levels, switches. Fitted to a recording of a real Model D set to this
+# chart: the pulse width (that instrument's "square" is nearer a third than a half: its second
+# harmonic is strong and its third nearly gone), the cutoff (3 kHz at middle C; the dial reading
+# alone would give 1.4 kHz), emphasis 6 (0.65), the contour's reach (1.4 octaves) and time, and
+# the glide (short: the recording's notes change within a few hundredths of a second).
+g1 = VA shape=pulse pw=0.31 oct=-1 level=0.175
+g2 = VA shape=pulse pw=0.34 oct=2 level=0.8
+g3 = VA shape=pulse pw=0.31 oct=-1 fine=3 level=0.175
+p1 = Ladder cutoff=3023 res=0.65 key=1 drive=3 bass=0
+env1 = attack=1 decay=1140 sustain=1 release=1140 decayCurve=-1 releaseCurve=-1 velocity=0
+env2 = attack=1 decay=8099 sustain=0 release=8099 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.14 velToP1=0 drift=1 glide=25
+play = mode=legato priority=low
+master = 0
+
+[Prophet-5 Sync II]
+room = Museum
+# The Prophet-5's sync lead: factory program 3-2, "Sync II", the sound of The Cars' "Let's Go".
+# Oscillator B, silent, is the master; oscillator A, a pulse near square, is locked to it and
+# pulled up by the filter envelope through Poly-Mod: two octaves above at the envelope's peak,
+# falling over a second to a third of an octave. That falling is the sweep. No resonance; the
+# same envelope opens the filter; the amplifier is a plain gate; five voices. The wheel adds a
+# vibrato to the master, as the program's Wheel-Mod does.
+# From the instrument's own data (the 2020 Prophet-5's factory bank holds the original forty
+# programs as numbers; the 1978 patch sheet agrees but for one knob) and the service manual's
+# calibration: oscillator pitches, the pulse width (52 %; fitted 53.5), the Poly-Mod depth
+# (1.97 octaves; fitted 2.04), envelope sustain (0.16 to 0.23; fitted 0.15) and attack (53 ms;
+# fitted 40). Fitted to a recording of a real Rev 3 playing this program, where units differ
+# and the documents disagree: the filter envelope's reach (4.1 octaves: the patch sheet gives
+# 3.2, the stored data 4.9), the cutoff (0.7 octave above the nominal), and the decay time
+# (1.2 s time constant: 1.7 nominal, and real units run faster).
+g1 = VA shape=saw level=0
+g2 = VA shape=pulse pw=0.535 combine=sync level=0.5
+p1 = Ladder cutoff=756 res=0 key=1 drive=0 bass=0
+env1 = attack=1 decay=100 sustain=1 release=4 velocity=0
+env2 = attack=40 decay=9900 sustain=0.15 release=80 decayCurve=-1 releaseCurve=-1
+lfo1 = shape=triangle rate=6 retrigger=off
+mod = src=env2 dst=g2.pitch amount=0.51
+mod = src=lfo1 dst=g1.pitch amount=0.008 via=wheel
+voice = env2ToP1=0.41 velToP1=0 drift=1
+play = mode=poly voices=5
+master = 0

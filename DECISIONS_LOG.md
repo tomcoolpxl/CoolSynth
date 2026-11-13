@@ -1817,3 +1817,72 @@ The feedback amount makes no difference below the top octave (0.6 and 1.0 score 
 at full, as feedback 7 is.
 
 It waits in `resources/museum-candidates/museum.csbank` for the user's side-by-side.
+
+## D110. Museum candidates from a Minimoog and a Prophet-5, and what a played reference asks for (2026-11-14)
+
+The user asked for all the Museum sounds (D108). Two research passes found the published
+settings and recordings of real instruments; everything copyrighted stays in the git-ignored
+audition folder (the charts and manuals as PDFs, the recordings as short stretches), with its
+sources in `audition/museum/minimoog/SOURCES.txt` and `audition/museum/prophet5/SOURCES.txt`.
+
+**Minimoog: "Emerson's Fat Bass" and the "Trilogy" lead.** Both from Tom Rhea's Sound Charts
+for the Minimoog (Moog Music, 1974, page 15), which prints the numbers in the knobs
+(https://www.drtomrhea.com). Calibration from the service manual (archive.org,
+synthmanual-moog-minimoog-service-notes): cutoff -1.1 on the dial is 440 Hz at the lowest key,
+about 0.9 octave per division, both keyboard switches together track one octave per octave;
+the decay switch makes the release as long as the decay. Reference: a real Model D set to
+these two charts and played (SynthMania, "Minimoog Sound Charts by Tom Rhea", YouTube; one
+minute fetched).
+The reference is a played phrase, not single notes. Taken: **the rebuild plays the same
+phrase**. `tools/audition/transcribe_mono.py` follows the fundamental in 5 ms steps (the
+candidate note whose first ten harmonics carry the most spectrum, marked down when its odd
+harmonics are empty) and tells struck notes from legato ones by the rise of the treble;
+`lib/phrase.py` turns that into notes that make a single-trigger, low-note-priority preset
+move as the player's hands did; `phrase_fit.py` compares reference and rebuild in ten octave
+bands in 10 ms steps and searches the values the documents leave open. Not taken: a
+side-by-side on different notes (it would compare the playing), and single notes cut from the
+phrase (there are hardly any).
+- Fat Bass: the chart's three sawtooths (32', 16', 16') at full level. The search left the
+  cutoff exactly where the chart and the service manual put it (752 Hz at middle C). Fitted:
+  the contour's reach (3.1 octaves for "3.5"; the manuals say 1.4 to 2.2), emphasis 5 (0.13:
+  little, with three oscillators driving the filter), the contours' times (the legend is
+  close to the time a contour takes to finish), sustain 5 (0.8). Bands from 22 Hz to 1.4 kHz
+  are within 3 dB in the middle. Above 1.5 kHz the real one has 8 to 17 dB more, 38 dB and
+  further under its level: the chart also lets oscillator 3 shake the filter at audio rate by
+  the wheel, and this engine has no such path. Saturation after the filter was tried and did
+  not help.
+- Trilogy lead: the chart's 2' oscillator at 8 with two 16' ones at 2. On the recorded
+  instrument the "square" has a strong second harmonic and almost no third: a pulse of about
+  a third. Fitted: pulse widths (0.34 and 0.31), cutoff (3 kHz at middle C; the dial alone
+  gives 1.4), emphasis 6 (0.65), the contour (1.4 octaves, slow), glide (25 ms: the notes
+  change within a few hundredths of a second). Bands from 176 Hz to 11 kHz are within 3 dB in
+  the middle. That instrument is 30 cents sharp; `CoolSynthRender --tune` plays the rebuild at
+  the recording's pitch (a held pitch bend).
+
+**Prophet-5: Sync II.** Factory program 3-2, the sound of The Cars' "Let's Go" by SynthMania's
+and others' account (no statement of the band's was found). The settings are Sequential's own
+numbers: the 2020 Prophet-5's factory bank holds the forty original programs
+(https://sequential.com/support/download/prophet-5-10-sounds/, decoded with the MIDI
+implementation document), and the 1978 patch sheets agree but for one knob. Calibration from
+the Rev 3 service manual and its circuit values. Reference: SynthMania's recording of a real
+Rev 3 playing program 32 (MP3, copyrighted).
+The transcriber cannot follow a synced oscillator: the swept slave misleads it at every note.
+Taken: **single notes cut out of the recording** (`make_museum.py`, "excerpts"), only those
+whose pitch holds still at five moments; the player bends most high notes with the wheel, so
+the set is three low notes and one C#5. From the data: oscillator pitches, pulse width (52 %;
+fitted 53.5), Poly-Mod depth (1.97 octaves; fitted 2.04), envelope sustain and attack.
+Fitted, where units differ and the documents disagree: the filter envelope's reach (4.1
+octaves; the sheet says 3.2, the stored data 4.9), the cutoff (0.7 octave above nominal), the
+decay (1.2 s time constant; 1.7 nominal). All bands from 176 Hz up are within 1 dB in the
+middle.
+
+**Prophet-5: Brass. Not built.** Program 1-1's data is in hand, but no usable reference: the
+recording found plays short stabs and chords, two other walkthroughs of real instruments play
+chords, and from the documents alone the sound comes out 8 dB off and far duller than the
+recording (the filter envelope's reach is where two readings of the circuit differ by a
+factor of two). A fit on badly cut stabs wandered to values no unit has. It is put to the user.
+
+**The page went dead.** The app stopped the listening page's server while the research agents
+ran (one had opened a browser tab), and the user was sent to a dead page. Restarted; agents
+are told to keep out of the browser, and the page is checked with a request before anyone is
+sent to it.

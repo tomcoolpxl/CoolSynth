@@ -2,13 +2,23 @@
 
 Each entry names a candidate preset in resources/museum-candidates/museum.csbank (the Museum's
 waiting room: a sound enters the plugin's bank only when the user admits it; an admitted entry
-plays from the plugin's own Museum room) and reference recordings of single notes (one file per
-note and velocity). The reference notes are laid end to end at a fixed spacing; the preset
-plays the same notes at the same velocities through CoolSynthRender, without effects; both
-clips are levelled alike. Writes <audition>/museum/<id>/reference.flac, rebuild.flac and
-<audition>/museum/index.json for the page.
+plays from the plugin's own Museum room) and a reference, in one of three forms:
 
-usage: python -I make_museum.py <CoolSynthRender.exe> <audition-dir>
+  samples    recordings of single notes, one file per note (and velocity): laid end to end at a
+             fixed spacing
+  phrase     a stretch of a recording of a monophonic synth and its transcription
+             (transcribe_mono.py): the rebuild plays the transcribed notes, legato where the
+             player did
+  excerpts   single notes cut out of a recording (start, length, key, and optionally how many
+             cents sharp the recording has that note): laid end to end with a short gap, for a
+             sound the transcriber cannot follow (a synced oscillator) or a recording that is
+             mostly chords. With cents given, every note is rendered on its own at that pitch.
+
+The preset plays the same notes through CoolSynthRender, without effects, at the reference
+instrument's tuning; both clips are levelled alike. Writes <audition>/museum/<id>/reference.flac,
+rebuild.flac and <audition>/museum/index.json for the page.
+
+usage: python -I make_museum.py <CoolSynthRender.exe> <audition-dir> [only-id-substring]
 """
 import json
 import os
@@ -20,10 +30,15 @@ import numpy as np
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
 import audiolib  # noqa: E402
+import phrase  # noqa: E402
 
 render, audition = sys.argv[1:3]
+only = sys.argv[3] if len(sys.argv) > 3 else ""
 out_root = os.path.join(audition, "museum")
 candidates = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "resources", "museum-candidates", "museum.csbank"))
+
+MINIMOOG_CLIP = "museum/minimoog/audio/synthmania/synthmania_soundcharts_1105_1203.flac"
+PROPHET_FOLDER = "museum/prophet5/recordings/synthmania/"
 
 ENTRIES = [
     {
@@ -49,6 +64,11 @@ ENTRIES = [
     },
 ]
 
+# The entries of the sounds whose references are played phrases or cut notes are kept beside this file.
+EXTRA = os.path.join(os.path.dirname(os.path.abspath(__file__)), "museum_entries.json")
+if os.path.exists(EXTRA):
+    ENTRIES += json.load(open(EXTRA, encoding="utf-8"))
+
 
 def level(x, target_rms=0.09):
     rms = float(np.sqrt(np.mean(x * x))) or 1.0
@@ -71,40 +91,109 @@ def write_flac(path, rate, x, scratch):
     subprocess.run(["ffmpeg", "-nostdin", "-loglevel", "error", "-y", "-i", wav, "-c:a", "flac", path], check=True)
 
 
+def stereo(x):
+    return x[:, :2] if x.shape[1] >= 2 else np.repeat(x, 2, axis=1)
+
+
+def from_samples(entry, scratch):
+    """Single-note files laid end to end: (rate, reference, notes text, seconds)."""
+    spacing = entry["spacing"]
+    pieces, rate_used = [], None
+    for name, _, velocity in entry["notes"]:
+        path = os.path.join(audition, *entry["samples"].split("/"), entry["pattern"].format(name=name, velocity=velocity))
+        rate, x = read_any(path, scratch)
+        rate_used = rate_used or rate
+        x = stereo(x)
+        above = np.nonzero(np.abs(x).max(axis=1) > float(np.abs(x).max()) * 0.01)[0]
+        x = x[max(0, int(above[0]) - 50):] if len(above) else x
+        slot = np.zeros((int(spacing * rate), 2), dtype=np.float32)
+        take = x[:int((spacing - 0.1) * rate)].copy()
+        fade = int(0.08 * rate)
+        take[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
+        slot[:len(take)] = take
+        pieces.append(slot)
+    notes = ",".join(f"{midi}:{i * spacing:.2f}:{spacing - 0.25:.2f}:{velocity}" for i, (_, midi, velocity) in enumerate(entry["notes"]))
+    return rate_used, np.concatenate(pieces), notes, len(entry["notes"]) * spacing
+
+
+def from_phrase(entry, scratch):
+    """A stretch of a recording and its transcription."""
+    spec = entry["phrase"]
+    rate, x = read_any(os.path.join(audition, *spec["file"].split("/")), scratch)
+    reference = stereo(x)[int(spec["begin"] * rate):int(spec["end"] * rate)]
+    transcribed = json.load(open(os.path.join(audition, *spec["notes"].split("/")), encoding="utf-8"))["notes"]
+    return rate, reference, phrase.notes_spec(transcribed, spec["key_offset"]), spec["end"] - spec["begin"] + 0.3
+
+
+def from_excerpts(entry, scratch):
+    """Single notes cut out of a recording: [start, length, key (, cents)] each, laid end to end."""
+    spec = entry["excerpts"]
+    rate, x = read_any(os.path.join(audition, *spec["file"].split("/")), scratch)
+    x = stereo(x)
+    gap, tail = spec.get("gap", 0.35), spec.get("tail", 0.25)
+    pieces, notes, at = [], [], 0.0
+    entry["_alone"] = []
+    for start, length, key, *cents in spec["notes"]:
+        take = x[int(start * rate):int((start + length + tail) * rate)].copy()
+        fade_in, fade_out = int(0.004 * rate), int(0.03 * rate)
+        take[:fade_in] *= np.linspace(0.0, 1.0, fade_in, dtype=np.float32)[:, None]
+        take[-fade_out:] *= np.linspace(1.0, 0.0, fade_out, dtype=np.float32)[:, None]
+        pieces += [take, np.zeros((int(gap * rate), 2), dtype=np.float32)]
+        notes.append(f"{key}:{at + spec.get('lead', 0.0):.3f}:{length:.3f}:{spec.get('velocity', 100)}")
+        if cents:
+            entry["_alone"].append((at, f"{key}:{spec.get('lead', 0.0):.3f}:{length:.3f}:{spec.get('velocity', 100)}", cents[0],
+                                    len(take) / rate + gap))
+        at += len(take) / rate + int(gap * rate) / rate
+    return rate, np.concatenate(pieces), ",".join(notes), at + 0.3
+
+
 index = []
+if only and os.path.exists(os.path.join(out_root, "index.json")):
+    index = [e for e in json.load(open(os.path.join(out_root, "index.json"), encoding="utf-8"))]
 with tempfile.TemporaryDirectory() as scratch:
     for entry in ENTRIES:
+        if only and only not in entry["id"]:
+            continue
         out_dir = os.path.join(out_root, entry["id"])
         os.makedirs(out_dir, exist_ok=True)
-        spacing = entry["spacing"]
-        pieces, rate_used = [], None
-        for name, _, velocity in entry["notes"]:
-            path = os.path.join(audition, *entry["samples"].split("/"), entry["pattern"].format(name=name, velocity=velocity))
-            rate, x = read_any(path, scratch)
-            rate_used = rate_used or rate
-            x = x[:, :2] if x.shape[1] >= 2 else np.repeat(x, 2, axis=1)
-            above = np.nonzero(np.abs(x).max(axis=1) > float(np.abs(x).max()) * 0.01)[0]
-            x = x[max(0, int(above[0]) - 50):] if len(above) else x
-            slot = np.zeros((int(spacing * rate), 2), dtype=np.float32)
-            take = x[:int((spacing - 0.1) * rate)].copy()
-            fade = int(0.08 * rate)
-            take[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
-            slot[:len(take)] = take
-            pieces.append(slot)
-        write_flac(os.path.join(out_dir, "reference.flac"), rate_used, level(np.concatenate(pieces)), scratch)
+        builder = from_phrase if "phrase" in entry else from_excerpts if "excerpts" in entry else from_samples
+        rate, reference, notes, seconds = builder(entry, scratch)
+        write_flac(os.path.join(out_dir, "reference.flac"), rate, level(reference), scratch)
 
-        notes = ",".join(f"{midi}:{i * spacing:.2f}:{spacing - 0.25:.2f}:{velocity}" for i, (_, midi, velocity) in enumerate(entry["notes"]))
         wav = os.path.join(scratch, "rebuild.wav")
         source = ["--preset", "Museum: " + entry["preset"]] if entry.get("admitted") else ["--preset", entry["preset"], "--bank", candidates]
-        result = subprocess.run([render] + source + ["--no-fx", "--notes", notes, "--seconds", f"{len(entry['notes']) * spacing:.1f}",
-                                 "--out", wav], capture_output=True, text=True)
+        tune = entry.get("phrase", entry.get("excerpts", {})).get("tune_cents", 0)
+        if entry.get("_alone"):
+            # Every note on its own, at the pitch the recording has it, put where the reference has that note.
+            own_rate, y = 48000, None
+            for at, note, cents, room in entry["_alone"]:
+                result = subprocess.run([render] + source + ["--no-fx", "--tune", str(cents), "--notes", note, "--seconds", f"{room:.2f}", "--out", wav],
+                                        capture_output=True, text=True)
+                if result.returncode != 0:
+                    raise SystemExit(entry["id"] + ": render failed: " + (result.stderr or result.stdout).strip()[-300:])
+                own_rate, one = audiolib.read_wav(wav)
+                if y is None:
+                    y = np.zeros((int((seconds + 1.0) * own_rate), 2), dtype=np.float32)
+                first = int(at * own_rate)
+                y[first:first + len(one)] += one[:len(y) - first]
+            y = y[:int(seconds * own_rate)]
+            write_flac(os.path.join(out_dir, "rebuild.flac"), own_rate, level(y), scratch)
+            index = [e for e in index if e["id"] != entry["id"]]
+            index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")} | {"admitted": bool(entry.get("admitted"))})
+            print(entry["id"], "->", entry["preset"], "(each note at the recording's pitch)")
+            continue
+        result = subprocess.run([render] + source + ["--no-fx", "--tune", str(tune), "--notes", notes, "--seconds", f"{seconds:.1f}", "--out", wav],
+                                capture_output=True, text=True)
         if result.returncode != 0 or not os.path.exists(wav):
             print(entry["id"], "render failed:", (result.stderr or result.stdout).strip()[-300:])
             continue
-        rate, y = audiolib.read_wav(wav)
-        write_flac(os.path.join(out_dir, "rebuild.flac"), rate, level(y), scratch)
+        own_rate, y = audiolib.read_wav(wav)
+        write_flac(os.path.join(out_dir, "rebuild.flac"), own_rate, level(y), scratch)
+        index = [e for e in index if e["id"] != entry["id"]]
         index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")} | {"admitted": bool(entry.get("admitted"))})
         print(entry["id"], "->", entry["preset"])
 
+order = {entry["id"]: i for i, entry in enumerate(ENTRIES)}
+index.sort(key=lambda e: order.get(e["id"], 999))
 with open(os.path.join(out_root, "index.json"), "w", encoding="utf-8", newline="\n") as handle:
     json.dump(index, handle, indent=1)
