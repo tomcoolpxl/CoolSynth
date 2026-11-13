@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "synth/HalfBand2x.h"
+#include "synth/v3/Fm4Generator.h"
 #include "synth/v3/FmGenerator.h"
 
 namespace
@@ -272,3 +273,134 @@ public:
 };
 
 static V3FmTests v3FmTests;
+
+namespace
+{
+    struct Fm4
+    {
+        SlotMemory memory;
+        Fm4Generator generator;
+    };
+
+    std::unique_ptr<Fm4> makeFm4()
+    {
+        auto f = std::make_unique<Fm4>();
+        f->memory.allocate(Fm4Generator::memoryFloats(kVoiceRate, kSubBlock));
+        f->generator.prepare(kVoiceRate, kSubBlock, f->memory);
+        f->generator.noteOn(NoteContext {});
+        return f;
+    }
+
+    SlotParams fm4Params(int algorithm, float hz)
+    {
+        SlotParams p;
+        p.p[Fm4Generator::algorithm] = static_cast<float>(algorithm);
+        p.p[Fm4Generator::ratio2] = 1.0f;
+        p.p[Fm4Generator::ratio3] = 1.0f;
+        p.p[Fm4Generator::ratio4] = 1.0f;
+        p.p[Fm4Generator::level2] = 0.0f;
+        p.p[Fm4Generator::level3] = 0.0f;
+        p.p[Fm4Generator::level4] = 0.0f;
+        p.p[Fm4Generator::feedback] = 0.0f;
+        p.frequencyHz = hz;
+        return p;
+    }
+
+    std::vector<float> renderFm4(Fm4Generator& g, const SlotParams& p, int samples)
+    {
+        std::vector<float> out(static_cast<std::size_t>(samples));
+        std::array<float, kSubBlock> l {}, r {};
+        for (int s = 0; s < samples; s += kSubBlock)
+        {
+            const int n = std::min(kSubBlock, samples - s);
+            g.setLink({});
+            g.process(l.data(), r.data(), n, p);
+            for (int i = 0; i < n; ++i)
+                out[static_cast<std::size_t>(s + i)] = g.link().signal[i];
+        }
+        return out;
+    }
+}
+
+class V3Fm4Tests final : public juce::UnitTest
+{
+public:
+    V3Fm4Tests() : juce::UnitTest("V3 FM4 generator", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("algorithms_route_as_documented");
+        {
+            const auto pairs = Fm4Generator::routing(3);
+            expect(pairs.carrier[0] && pairs.carrier[2] && ! pairs.carrier[1] && ! pairs.carrier[3]);
+            expect(pairs.modulatedBy[0][1] && pairs.modulatedBy[2][3] && ! pairs.modulatedBy[0][3]);
+            const auto stack = Fm4Generator::routing(0);
+            expect(stack.modulatedBy[2][3] && stack.modulatedBy[1][2] && stack.modulatedBy[0][1]);
+            const auto organ = Fm4Generator::routing(5);
+            for (bool c : organ.carrier)
+                expect(c);
+        }
+
+        beginTest("two_pairs_with_one_pair_silent_equals_the_two_operator_generator");
+        {
+            auto four = makeFm4();
+            auto p4 = fm4Params(3, 330.0f);
+            p4.p[Fm4Generator::ratio2] = 2.0f;
+            p4.p[Fm4Generator::level2] = 0.25f; // index 2
+            const auto a = renderFm4(four->generator, p4, 9600);
+            auto two = makeFm();
+            const auto b = render(two->generator, fmParams(330.0f, 2.0f, 2.0f), 9600).mono;
+            float worst = 0.0f;
+            for (std::size_t i = 0; i < a.size(); ++i)
+                worst = std::max(worst, std::abs(a[i] - b[i]));
+            expectLessThan(worst, 1.0e-5f);
+        }
+
+        beginTest("the_organ_sums_four_equal_partials");
+        {
+            auto fm = makeFm4();
+            const double f = 64.0 * kVoiceRate / kFftSize; // every partial on a bin
+            auto p = fm4Params(5, static_cast<float>(f));
+            p.p[Fm4Generator::ratio2] = 2.0f;
+            p.p[Fm4Generator::ratio3] = 3.0f;
+            p.p[Fm4Generator::ratio4] = 4.0f;
+            p.p[Fm4Generator::level2] = p.p[Fm4Generator::level3] = p.p[Fm4Generator::level4] = 1.0f;
+            const auto m = spectrum(renderFm4(fm->generator, p, kFftSize + 4096), 4096);
+            const double first = peakNear(m, f);
+            for (int k = 2; k <= 4; ++k)
+                expectWithinAbsoluteError(20.0 * std::log10(peakNear(m, f * k) / first), 0.0, 0.1, "partial " + juce::String(k));
+        }
+
+        beginTest("modulation_is_limited_for_the_operator_it_drives_and_output_stays_bounded");
+        {
+            auto fm = makeFm4();
+            auto p = fm4Params(0, 3000.0f);
+            p.p[Fm4Generator::ratio2] = 5.0f;
+            p.p[Fm4Generator::level2] = 1.0f;
+            renderFm4(fm->generator, p, 2048);
+            expectWithinAbsoluteError(fm->generator.indexForTesting(2), FmGenerator::indexLimit(3000.0, 15000.0, kVoiceRate), 1.0e-6);
+
+            for (int algorithm = 0; algorithm < Fm4Generator::algorithmCount; ++algorithm)
+            {
+                auto g = makeFm4();
+                auto q = fm4Params(algorithm, 220.0f);
+                q.p[Fm4Generator::ratio2] = 3.0f;
+                q.p[Fm4Generator::ratio3] = 7.0f;
+                q.p[Fm4Generator::ratio4] = 0.5f;
+                q.p[Fm4Generator::level2] = q.p[Fm4Generator::level3] = q.p[Fm4Generator::level4] = 1.0f;
+                q.p[Fm4Generator::feedback] = 1.0f;
+                float largest = 0.0f;
+                bool finite = true;
+                for (float v : renderFm4(g->generator, q, 48000))
+                {
+                    finite = finite && std::isfinite(v);
+                    largest = std::max(largest, std::abs(v));
+                }
+                expect(finite);
+                expectLessOrEqual(largest, 1.0f + 1.0e-5f, "algorithm " + juce::String(algorithm + 1));
+            }
+        }
+    }
+};
+
+static V3Fm4Tests v3Fm4Tests;

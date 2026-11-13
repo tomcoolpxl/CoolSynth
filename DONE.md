@@ -599,3 +599,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Presets: Workshop Init FM; Greenhouse Glass Bell, Rain Chime, Crystal Pluck (`05-greenhouse.csbank`); Engine Room FM Knock. 41 presets.
 - [x] Added `tests/V3FmTests.cpp` (8 tests): a pure sine at index 0 (harmonics below -90 dB); sidebands at ratio 3.5 matching J1(1)/J0(1) within 0.3 dB; ratio and fine; no alias above -70 dB below 20 kHz at index 10 on a 2 kHz carrier (measured -75.4 dB); full feedback bounded with -72 dB above 40 kHz; one wrap per carrier cycle; an index jumping every sub-block without steps; combine FM. Verified Debug build without warnings and `ctest` green; Glass Bell 8.7 %, FM Knock 2 % of real time for eight-note chords.
 - [x] Found and documented: the bank library's link errors come from CMake reconfiguring mid-build after a new bank file; configure first, or delete the library (TODO standing notes, decision D29).
+
+## V3 phase 3.3: four-operator FM and Grid Keys (2026-11-13)
+
+- [x] Added `src/synth/v3/Fm4Generator.h` ("FM4", generator type 4): four sine operators with six algorithms (stack, two into one, stack plus one, two pairs, one into three, organ), ratios and levels for operators 2 to 4, averaged feedback on operator 4, carriers normalised by their total level, FM2's alias limit on every modulation, per-sample ramps, double-precision phases, signal and wrap track for the next generator, combine FM, ring and AM.
+- [x] Preset: Outrun Grid Keys, the DX electric piano on two pairs (1:1 body with velocity bark, 1:14 tine). 42 presets; Outrun complete.
+- [x] Added `V3Fm4Tests` (4 tests): the routing tables; Two Pairs with one pair silent equal to FM2 within 1e-5; the organ's four partials equal within 0.1 dB; the alias limit per driven operator and every algorithm bounded at full levels and feedback. Verified Debug build without warnings and `ctest` green; Grid Keys 10.6 % of real time for eight-note chords.

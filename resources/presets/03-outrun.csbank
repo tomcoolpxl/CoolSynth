@@ -76,3 +76,21 @@ voice = env2ToP1=0 drift=4
 phaser = on rate=0.3 depth=0.5
 reverb = on size=0.8 damping=0.45 mix=0.3
 master = -4
+
+[Grid Keys]
+room = Outrun
+# The DX electric piano on two FM pairs: a 1:1 body whose bark follows velocity and fades over
+# a second, and a 1:14 tine that rings for a quarter of a second, chorused into a dotted echo.
+g1 = FM4 algo=twoPairs ratio2=1 ratio3=1 ratio4=14 level2=0.08 level3=0.6 level4=0.05 level=0.85
+p1 = Off
+env1 = attack=1 decay=2200 sustain=0.3 release=600 decayCurve=-0.6 velocity=0.5
+env2 = attack=1 decay=250 sustain=0 release=200
+env3 = attack=1 decay=900 sustain=0.1 release=400
+mod = src=env3 dst=g1.level2 amount=0.3
+mod = src=velocity dst=g1.level2 amount=0.15
+mod = src=env2 dst=g1.level4 amount=0.35
+voice = env2ToP1=0 drift=2
+chorus = on rate=0.5 depth=0.45 mix=0.4
+delay = on sync=on division=1/8. feedback=0.25 mix=0.12
+reverb = on size=0.6 damping=0.45 mix=0.2
+master = 2

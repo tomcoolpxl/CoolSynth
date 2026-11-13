@@ -42,7 +42,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    Noise, Tape Flute, Solar Wind, Coin Pulse, Boss Bass, Power-Up, Static Hit, Riser's noise.
 18. Phase 3.2 done 2026-11-13: `src/synth/v3/FmGenerator.h` (FM2), `tests/V3FmTests.cpp`; Glass
    Bell, Rain Chime, Crystal Pluck, FM Knock, Init FM. 41 presets.
-19. Phase 3.3: four-operator FM with six algorithms; Outrun Grid Keys.
+19. Phase 3.3 done 2026-11-13: `src/synth/v3/Fm4Generator.h` (FM4, six algorithms), tests in
+   `tests/V3FmTests.cpp`; Outrun Grid Keys. 42 presets.
+20. Phase 3.4: wavetable generator with a factory table set; Init Wavetable, Nebula Pad, SCC Lead.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

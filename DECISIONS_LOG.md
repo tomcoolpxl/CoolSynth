@@ -410,3 +410,25 @@ modulator; forum advice is to oversample.
 - **FM Knock plays mono, so every note knocks; its level and sustain were raised so it reaches
   the loudness target under the +6 dB master cap (taken).**
 - **New bank file `05-greenhouse.csbank` with Glass Bell, Rain Chime and Crystal Pluck (taken).**
+
+## D33. The four-operator FM generator (2026-11-13, phase 3.3)
+
+The plan asks for six algorithms with "per-operator level and ratio across P1..P8 with paging".
+
+- **Eight parameters, no paging: algorithm, the ratios of operators 2 to 4, their levels and
+  feedback on operator 4; operator 1 is the carrier at the note (taken, recommended).** Paging
+  needs UI support the throwaway editor does not have; the slot's own octave, semitone and fine
+  move operator 1. Per-operator fine detune is the price; a ratio like 14.02 still detunes one.
+- Paging over two pages of eight. More control, but the generic editor would show sixteen
+  generic parameters for one slot and the bank syntax would need pages.
+- **Six algorithms: stack, two into one, stack plus one, two pairs, one into three, organ
+  (taken).** They cover the classic four-operator families (the DX7's 32 six-operator algorithms
+  reduce to these shapes on four operators).
+- **A Level is the index (1 is 8 radians) where the operator modulates and its output level where
+  it sounds; carriers are summed and normalised by their total level (taken).** One knob per
+  operator whatever the algorithm; the output never exceeds 1 (tested on all six at full).
+- **Every modulation is limited with the two-operator generator's alias rule for the operator it
+  drives (taken).**
+
+Grid Keys (Outrun) ships on the Two Pairs algorithm: a 1:1 body with velocity bark and a 1:14
+tine that rings for 250 ms.

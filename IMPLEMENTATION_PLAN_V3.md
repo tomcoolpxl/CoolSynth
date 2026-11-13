@@ -127,6 +127,7 @@ FM. Shipped 2026-11-13 with all five (decisions D30 to D32).
 
 3.3 FM generator, four operators. Six algorithms, per-operator level and ratio across P1..P8
 with paging in the descriptor. Ships: Outrun Grid Keys.
+Shipped 2026-11-13 with Grid Keys; eight parameters without paging (decision D33).
 
 3.4 Wavetable generator. Factory table set embedded (classic, digital, vocal, chip 4-bit), mip-
 mapped band-limited playback, position with crossfade morph, phase randomisation. Tests: alias

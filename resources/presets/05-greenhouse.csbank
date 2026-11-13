@@ -29,7 +29,7 @@ voice = env2ToP1=0
 arp = on rate=1/16 pattern=random octaves=3 gate=0.6 chance=0.5
 delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.25
 reverb = on size=0.7 damping=0.35 mix=0.3
-master = 6
+master = 5.5
 
 [Crystal Pluck]
 room = Greenhouse

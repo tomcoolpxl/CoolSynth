@@ -62,6 +62,13 @@ feedback and ratios ramp across each sub-block; phases in double precision resta
 note. Hands on its signal and the carrier's wrap track; combine FM, ring and AM (decisions D30,
 D31).
 
+Shipped (phase 3.3, 2026-11-13): `Fm4Generator` ("FM4") in `src/synth/v3/Fm4Generator.h`,
+generator type 4: four sine operators, operator 1 at the note, ratios and levels for 2 to 4,
+feedback on 4, six algorithms (stack, two into one, stack plus one, two pairs, one into three,
+organ). A Level is an index where the operator modulates and an output level where it sounds;
+carriers are normalised by their total level; every modulation uses FM2's alias limit
+(decision D33).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

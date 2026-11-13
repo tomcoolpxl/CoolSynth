@@ -344,7 +344,7 @@ bank files today (`resources/presets`, loudness-normalised):
 | Workshop | Init Saw, Init Pulse, Init Sine, Init Arp, Init Noise, Init FM | Init Wavetable (3.4) |
 | Studio 1982 | Juno Pad, Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
-| Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Sunset Strings | Grid Keys (3.3) |
+| Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
 | Bedroom | Tape Flute | Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi, 5.2), Dusty Mallet (modal, 6.2), Vinyl Choir (formant, 4.4) |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Static Hit | SCC Lead (wavetable 3.4, crusher 4.2), Chip Chord (chord memory, 7.1) |
 | Greenhouse | Glass Bell, Rain Chime, Crystal Pluck | Marimba (modal, 6.2), Kalimba, Harp String (Karplus-Strong, 6.1) |
