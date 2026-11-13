@@ -72,3 +72,6 @@ Testing/
 test_output.txt
 build_aux/
 .claude/settings.local.json
+
+# Downloaded sample candidates and reference recordings: local only, thrown away later
+/audition/
