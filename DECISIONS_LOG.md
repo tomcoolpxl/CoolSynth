@@ -1006,3 +1006,66 @@ load 125 ms.
   Measured: preset 0.7 ms, state load 9.5 ms, and the test suite runs faster than before parts.
 - Leave it. Audible as a pause when browsing presets, and it grows with the square of the
   parameter count.
+
+## D77. The factory samples are made by the program (2026-11-13, phase 8)
+
+- **Five samples generated at first use: Glass (a bowed wine glass), Choir, Strings, Air and
+  Harp; each four seconds of mono at 48 kHz, tuned to C4, levelled alike, closed into a
+  seamless loop, and kept at three band limits (20, 10 and 5 kHz) (taken, recommended).**
+  Nothing to record or license, nothing added to the installer; building them takes a few tens
+  of milliseconds once per process and 11.5 MB of memory shared by every instance. The loop is
+  made by folding the half second after the end into the start, so a loop over the whole sample
+  and a grain crossing the end never click. The band levels let a sample play up to four
+  octaves above C4 without audible aliasing.
+- Recordings stored in the binary. The usual meaning of "factory samples", but there are no
+  recordings to use: they would have to be made or bought, and cleared.
+- No factory set; wait for user import. Then the grain generator has nothing to play and the
+  bank cannot be completed.
+- Glass follows what a rubbed glass does (checked online: a singing glass is driven by stick and
+  slip like a bowed string, Jundt et al., "Vibrational modes of partly filled wine glasses",
+  UNSW; its free modes are 1 : 2.32 : 4.25, Csound modal table): a nearly pure sustained tone
+  with weak harmonics, a slow beating as the pattern follows the finger, a faint ring of the
+  free modes and a breath of friction noise.
+
+## D78. The sample generator (2026-11-13, phase 8)
+
+- **Sample, Start, Loop, Loop Start, Loop End, Loop Fade, Reverse (taken).** C4 is the sample's
+  own speed; the slot's key tracking switch gives "pitch tracking off". A loop fades what lies
+  before Loop Start in under the last part of the loop (up to half of it), equal power; measured
+  on a 0.2 s loop of Glass, the largest step is 0.56 without the fade and 0.0106 with it, which
+  is the sample's own largest step. A one-shot fades out over its last 10 ms. The read blends
+  two band levels by how far the note transposes the sample.
+- A fade that needs room before the loop start in the file. Not needed: the samples are loops,
+  so there is always something before any point.
+- User samples. The requirement puts import later; it needs a file dialog, a place in the state
+  and a loader off the audio thread.
+
+## D79. The grain generator (2026-11-13, phase 8)
+
+Checked online: grain clouds are levelled by a gain that compensates the overlap of the grains
+and their window (Riedel et al., "Perceptual evaluation of listener envelopment using spatial
+granular synthesis", arXiv 2301.10210), commonly the square root of the number of active grains;
+"spray" is the usual name for a random offset of each grain's read position.
+
+- **Up to twelve grains per voice from a factory sample; Position, Scan, Size, Density, Spray,
+  Pitch Spray, Spread (taken, recommended).** The level follows one over the root of the
+  overlap (measured: 0.093, 0.121 and 0.149 RMS for overlaps of 1, 5 and 12). The window is
+  (4x(1-x)) squared, within a few percent of a Hann window at three multiplications a sample.
+  Spray scatters the read position up to a second either way and loosens the timing by up to
+  half an interval; at 0 the grains fall on a grid, which is a sound of its own.
+- **Freeze is Scan at 0 (taken).** The eight parameters are used up; Scan runs from -2 to 2
+  times the sample's speed and its middle is the frozen cloud.
+- **No grains from another generator yet. Review: the requirement names it.** Each voice would
+  need about a second of memory per generator slot to record into, and slots are sized for
+  their largest type: several megabytes per voice across 32 voices. It needs a buffer pool the
+  part hands out, which is a piece of work of its own.
+- More grains per voice. Twelve already cost 14 % of real time for eight notes in this build;
+  thicker clouds come from longer grains.
+
+## D80. Granular Sky (2026-11-13, phase 8)
+
+- **A frozen cloud on Glass (40 grains a second of 250 ms, Pitch Spray at 5 cents, wide), a
+  thinner cloud an octave up that drifts through the sample, and the sample itself quietly
+  underneath, through a low-pass into the long plate (taken).** The recipe asks for "density
+  high": 40 a second of this length already keeps ten grains sounding, near the limit of twelve.
+  The bank is complete at 68 presets.

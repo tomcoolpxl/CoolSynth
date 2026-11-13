@@ -349,6 +349,6 @@ loudness-normalised):
 | Bedroom | Cassette Keys, Blanket Pad, Dusty Mallet, Bedroom Bass, Tape Flute, Vinyl Choir | none |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Chip Chord, Static Hit, SCC Lead | none |
 | Greenhouse | Glass Bell, Marimba, Kalimba, Rain Chime, Crystal Pluck, Harp String | none |
-| Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field (two layers) | Granular Sky (8.2) |
+| Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field (two layers), Granular Sky | none |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad, Chord Trigger | none |
 | Main Stage | Reese, Supersaw (with its sub part), Future Chord, Neuro Growl, Riser, Pluck Drop, Hyper Lead | none |

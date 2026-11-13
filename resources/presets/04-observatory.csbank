@@ -82,3 +82,18 @@ arp = on rate=1/8 pattern=random octaves=2 gate=0.5 chance=0.35
 delay = on sync=on division=1/4. mode=pingpong feedback=0.7 mix=0.35
 reverb = on size=0.8 damping=0.4 mix=0.35 predelay=60
 master = 6
+
+[Granular Sky]
+room = Observatory
+# A cloud of grains from a bowed glass, frozen on one spot of the sample: forty grains a second,
+# a quarter of a second each, scattered around the spot and across the stereo field, never more
+# than five cents apart. A thinner cloud an octave up drifts slowly through the sample, and the
+# glass itself hums quietly underneath. It swells in over two seconds into the long plate.
+g1 = Grain sample=glass pos=0.3 scan=0 size=250 density=40 spray=0.35 pitch=0.065 spread=0.9 level=0.8
+g2 = Grain sample=glass pos=0.6 scan=0.1 size=180 density=10 spray=0.5 pitch=0.065 spread=1 oct=1 level=0.4
+g3 = Sample sample=glass loop=on level=0.2
+p1 = SVF mode=lp cutoff=6000 res=0.05 key=0.3
+env1 = attack=2000 decay=2000 sustain=1 release=4000
+voice = env2ToP1=0
+reverb = on size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
+master = 2

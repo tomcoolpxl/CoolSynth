@@ -73,8 +73,16 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    limits, part mix with an effects share), `pB.*`, `pA.mix.*`, `part.mode`, `b.` lines in bank
    files, `tests/V3PartsTests.cpp`; Supersaw with its sub part, Juno Pad and Deep Field in two
    layers. Open from this phase: per-part insert slots, which need effects as slot types.
-32. Phase 8: sample generator with an embedded factory set, grain generator; Observatory Granular
-   Sky completes the bank at 68.
+32. Phase 8 done 2026-11-13: `src/synth/v3/Samples.h` and `.cpp` (five generated factory
+   samples), `SampleGenerator.h`, `GrainGenerator.h`, `tests/V3SampleTests.cpp`; Observatory
+   Granular Sky. The bank is complete at 68 presets.
+33. Phase 9: the real UI. Not started: it is designed with the user once the engine has settled.
+34. Left open by phases 2 to 8, in the order they would pay off:
+    - effects as slot types, and with them the three insert slots per part (D72);
+    - grains from another generator, which needs a buffer pool handed out by the part (D79);
+    - user sample import (D78);
+    - the VA generator's CPU cost (an eight-note saw chord is about 15 % of real time in the
+      optimised Debug build).
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

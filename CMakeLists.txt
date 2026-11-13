@@ -96,6 +96,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/Voice.cpp
     src/synth/v3/Part.cpp
     src/synth/v3/Wavetables.cpp
+    src/synth/v3/Samples.cpp
     src/synth/v3/EngineV3.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/SynthAudioProcessor.cpp
@@ -180,6 +181,7 @@ if(BUILD_TESTING)
             tests/V3ModalTests.cpp
             tests/V3ChordTests.cpp
             tests/V3PartsTests.cpp
+            tests/V3SampleTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp

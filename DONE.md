@@ -692,3 +692,11 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Presets: Supersaw with its sub part; Juno Pad and Deep Field in two layers. 67 presets.
 - [x] Faster with 900 parameters: a preset sets only what changes (45 ms to 0.7 ms), the state check looks IDs up (125 ms to 9.5 ms).
 - [x] Added `tests/V3PartsTests.cpp` (13 tests): modes, split ranges, velocity ranges, transpose and release, fine detune, a part switched off, voice limits, level and pan, the effects share, the arp switch, `b.` lines in a bank file, a layered preset through the processor with a state round trip, start-up and load times. Verified Debug build without warnings and `ctest` green; single-part presets cost what they did, Juno Pad 33 % and Deep Field 27 % of real time with eight keys held.
+
+## V3 phase 8: samples and grains (2026-11-13)
+
+- [x] Added `src/synth/v3/Samples.h` and `.cpp`: five factory samples the program makes at first use (Glass, Choir, Strings, Air, Harp), each four seconds of mono at 48 kHz, tuned to C4, levelled alike, a seamless loop, at three band limits.
+- [x] Added `src/synth/v3/SampleGenerator.h` ("Sample", generator type 8): Start, Loop with Loop Start, Loop End and Loop Fade, Reverse; a one-shot fades out at its end; a retriggered voice starts the sample again.
+- [x] Added `src/synth/v3/GrainGenerator.h` ("Grain", generator type 9): up to twelve grains per voice with Position, Scan (0 freezes), Size, Density, Spray, Pitch Spray and Spread, in stereo.
+- [x] Preset: Observatory Granular Sky. The bank is complete at 68 presets.
+- [x] Added `tests/V3SampleTests.cpp` (12 tests): every sample bounded, levelled and seamless; Glass, Choir and Strings tuned to C4; the band levels; sample playback frame-exact at C4 and twice as fast an octave up; Start and Reverse; a one-shot ending in exact silence; a short loop clicking without the fade (0.56) and not with it (0.0106); cloud level across densities; never more than twelve grains; Spread; grains following the note and Pitch Spray scattering them; Scan and freeze; a grain patch in a part. Verified Debug build without warnings and `ctest` green; Granular Sky at 14 % of real time for eight-note chords.

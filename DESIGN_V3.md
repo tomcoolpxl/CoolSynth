@@ -96,6 +96,15 @@ fundamental's 60 dB time, Hardness the pulse's length, Strike Pos a sin(k pi pos
 Damping and Release Damp shorten the ring. Coefficients are recomputed only for the values that
 changed (decisions D61 to D63).
 
+Shipped (phase 8, 2026-11-13): `SampleBank` in `src/synth/v3/Samples.h`, five factory samples the
+program makes at first use (Glass, Choir, Strings, Air, Harp: four seconds, mono, 48 kHz, tuned
+to C4, seamless loops, three band levels). `SampleGenerator` ("Sample", generator type 8): Start,
+Loop with Loop Start, Loop End and an equal-power Loop Fade, Reverse, a Hermite read between two
+band levels. `GrainGenerator` ("Grain", type 9): up to twelve grains per voice with Position,
+Scan (0 freezes), Size, Density, Spray, Pitch Spray and Spread, levelled by the root of the
+overlap. Grains from another generator and user samples are still to come (decisions D77 to
+D79).
+
 Shipped (phase 4.2, 2026-11-13): `CrusherProcessor` and `FolderProcessor` in
 `src/synth/v3/ShaperProcessors.h`, processor types 3 and 4. Crusher: sample-and-hold at Rate,
 rounding to 2^bits levels (bits continuous), Mix. Folder: a sine folder with first-order

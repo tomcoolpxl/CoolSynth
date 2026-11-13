@@ -191,7 +191,8 @@ for them until effects are slot types (decisions D70 to D76).
 ## Phase 8: sample and grain
 
 8.1 Sample generator with an embedded factory set. 8.2 Grain generator. Ships: Observatory
-Granular Sky. All 68 presets exist; the bank is complete.
+Granular Sky. All 68 presets exist; the bank is complete. Shipped 2026-11-13 (decisions D77 to
+D80); grains read the factory samples, not yet another generator.
 
 ## Phase 9: the real UI
 
