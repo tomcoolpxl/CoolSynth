@@ -1,0 +1,31 @@
+# The Museum's candidates: classic synth sounds rebuilt from their published settings
+# (decisions D88, D103, D104). A sound moves from here into resources/presets/12-museum.csbank,
+# and so into the plugin, when the user admits it in a side-by-side on the audition page.
+# This folder is not built into the plugin.
+
+[DX7 E.PIANO 1]
+room = Museum
+# The DX7's electric piano (ROM 1A, voice 11): algorithm 5, three pairs of a sine carrier and a
+# sine modulator. Two pairs at 1:1 are the body, eight cents apart, one with feedback: their
+# brightness is the bark that follows how hard the key is hit. The third pair's modulator runs
+# at fourteen times the note and is the tine: a bell that drops 18 dB in a seventh of a second
+# and then fades. Ratios, detunes, indices (5.5, 2.3 and 0.38 radians at velocity 99), decay
+# rates (4 dB a second at middle C, faster going up) and velocity laws are the voice's own
+# numbers converted; the feedback amount is fitted to a recording of the voice.
+g1 = FM4 algo=twoPairs ratio2=1 ratio3=0.99516 ratio4=1.00486 level2=0 level3=1 level4=0 fb=0.6 level=0.8
+g2 = FM2 ratio=14 index=0 carrier=1 level=0.4
+p1 = Off
+env1 = attack=1 decay=17200 sustain=0 release=530 decayCurve=-1 releaseCurve=-1 velocity=0.6 keyTime=0.38
+env2 = attack=1 decay=530 sustain=0 release=100 decayCurve=-1 keyTime=0.38
+env3 = attack=1 decay=2860 sustain=0 release=100 decayCurve=-1 keyTime=0.38
+mod = src=env1 dst=g1.level2 amount=1 via=velocity curve=logarithmic
+mod = src=env1 dst=g1.level2 amount=0.2564 via=velocity curve=logarithmic
+mod = src=env1 dst=g1.level2 amount=-0.104 curve=logarithmic
+mod = src=env1 dst=g1.level4 amount=0.8142 via=velocity curve=logarithmic
+mod = src=env1 dst=g1.level4 amount=-0.0674 curve=logarithmic
+mod = src=env2 dst=g2.index amount=0.2036 via=velocity curve=logarithmic
+mod = src=env2 dst=g2.index amount=-0.0344 curve=logarithmic
+mod = src=env3 dst=g2.index amount=0.1122 via=velocity curve=logarithmic
+mod = src=env3 dst=g2.index amount=-0.0189 curve=logarithmic
+voice = env2ToP1=0
+master = 0

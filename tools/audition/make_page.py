@@ -162,6 +162,31 @@ if os.path.exists(grain_path):
                   '<option value="">not judged yet</option><option>good</option><option>too loud or too quiet</option>'
                   '<option>sounds wrong</option><option>something else is wrong</option></select></label></article></section>')
 
+museum_path = os.path.join(audition, "museum", "index.json")
+museum_html = ""
+if os.path.exists(museum_path):
+    with open(museum_path, encoding="utf-8") as handle:
+        museum = json.load(handle)
+    blocks = []
+    for m in museum:
+        base = "museum/" + m["id"] + "/"
+        audio = "".join(
+            f'<label class="player"><span>{label}</span><audio controls preload="none" src="{html.escape(base + name)}"></audio></label>'
+            for label, name in (("The reference", "reference.flac"), ("My rebuild", "rebuild.flac")))
+        blocks.append(
+            f'<article class="item check"><div class="pick"><span class="name">{html.escape(m["title"])}</span>'
+            f'<span class="lib">{html.escape(m["preset"])}</span></div>'
+            f'<p class="facts">{html.escape(m["reference"])} {html.escape(m["source"])}</p><div class="players">{audio}</div>'
+            f'<label class="verdict">Your verdict <select data-demo="Museum, {html.escape(m["title"])}">'
+            '<option value="">not judged yet</option><option>admit it</option><option>not yet: too bright</option>'
+            '<option>not yet: too dull</option><option>not yet: the attack is wrong</option>'
+            '<option>not yet: the decay is wrong</option><option>not yet: something else</option></select></label></article>')
+    if blocks:
+        museum_html = ('<section><h2>Museum <span class="count">classic synth sounds rebuilt from their published settings</span></h2>'
+                       '<p class="lead">The same notes twice, at the same velocities, without effects and equally loud: a reference, and '
+                       'my rebuild in the synth. A sound enters the Museum room only when you admit it here.</p>'
+                       + "".join(blocks) + "</section>")
+
 page = """<!doctype html>
 <html lang="en">
 <head>
@@ -222,6 +247,7 @@ textarea { width: 100%; min-height: 90px; margin: 10px 0 40px; font: 13px/1.4 ui
   <span id="picked">Nothing picked yet</span>
 </div></div>
 <main>
+__MUSEUM__
 __DEMOS__
 __CHECKS__
 __GRAIN__
@@ -281,7 +307,7 @@ refresh();
 </body>
 </html>
 """
-page = page.replace("__COUNT__", str(rows_total)).replace("__SECTIONS__", "\n".join(sections)).replace("__CHECKS__", checks_html).replace("__DEMOS__", demos_html).replace("__GRAIN__", grain_html)
+page = page.replace("__COUNT__", str(rows_total)).replace("__SECTIONS__", "\n".join(sections)).replace("__CHECKS__", checks_html).replace("__DEMOS__", demos_html).replace("__GRAIN__", grain_html).replace("__MUSEUM__", museum_html)
 with open(os.path.join(audition, "index.html"), "w", encoding="utf-8", newline="\n") as handle:
     handle.write(page)
 print(rows_total, "instruments on the page in", len(sections), "families")

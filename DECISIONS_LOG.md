@@ -1566,3 +1566,46 @@ Four pick lists at the end of the day's run:
   Model D patch sheets. Not found yet: published values for the hoover, LatelyBass and the
   Juno-106 patches; they need their patch dumps decoded, and a sound without a source cannot
   enter the Museum (D88).
+
+## D104. The Museum's first candidate: DX7 E.PIANO 1 (2026-11-13)
+
+Carries out D88 and D103. How a Museum sound is made and where it waits:
+
+- **Candidates wait in `resources/museum-candidates/museum.csbank`, which is not built into the
+  plugin (taken).** D88 admits a sound only after the user's side-by-side; a candidate in the
+  factory bank would already be shipped. On admission its lines move to
+  `resources/presets/12-museum.csbank`. The side-by-side is rendered from the candidates file
+  (`tools/audition/make_museum.py`) and shown at the top of the audition page.
+- **The DX7's numbers are converted, not matched by ear (taken).** After the open DX7 emulation
+  msfa (Dexed's engine, Apache licence, read for its formulas) and Chowning and Bristow's index
+  table: a level step is 0.75 dB; an envelope falls (4 + q mod 4) * 2^(q div 4) * 0.063 dB a
+  second with q = rate * 41 div 64 plus the key's rate scaling (a rate of 0 then takes 374 s
+  for the full range; 342 s is reported measured on the instrument); a modulator at output
+  level OL reaches pi * 2^(33/16 - (99 - OL)/8) radians; detune is about 1.2 cents a step at
+  middle C; velocity moves a level by sensitivity * (table - 239) / 8 half steps.
+  `tools/audition/dx7_show.py` prints a voice this way.
+- **E.PIANO 1 in this synth's terms (taken):** algorithm 5 is three carrier-modulator pairs.
+  Two pairs at 1:1 are an FM4 generator on "Two Pairs" (indices 5.5 and 2.3 radians at
+  velocity 99, the second pair detuned -8.4 and +8.4 cents, with feedback), the tine pair is
+  an FM2 generator with its modulator at 14 times the note (0.38 radians). The DX7 has six
+  envelopes and a voice here three: the amplifier's serves the three carriers and, through a
+  square-root curve, the two body indices (they fall 4 dB a second at middle C, as the
+  carriers do); the tine's two-stage fall (18 dB in a seventh of a second, then 24 dB a
+  second) is the sum of the two others. Each index follows velocity by the DX7's law, as two
+  matrix slots: one scaled by velocity, one fixed. Left out: the first pair's faster carrier
+  (8 against 4 dB a second), the 3 dB drop of the body indices in the first quarter second,
+  and the sixth operator's level scaling above D3.
+- **One number is fitted (taken): the feedback, 0.6 of this generator's range.** Computed from
+  the emulation's arithmetic it would be 0.39. A search over the body index, the tine index,
+  the steepness of the velocity law and the feedback, scored on the first sixteen harmonics of
+  C3 and C4 at velocities 60, 80 and 100 over the first 0.8 s, found the converted indices
+  best as they are (scaling them up by a quarter doubles the gap) and the fit flat between
+  feedback 0.6 and 1.0: a middle gap of 3.9 dB at the chosen values, 3.0 dB at the best of 42
+  combinations. The converted numbers are kept; the Museum's claim is that it is built from
+  the published settings.
+- **The reference is FreePats' FM Piano 1 (CC0): the E. Piano 1 voice recorded from Hexter,
+  another open DX7 emulation, at twelve notes and three velocities.** Not the hardware; no
+  recording of the hardware with a licence that allows keeping it was found. The page says so.
+- BASS 1 (algorithm 16: one carrier under three modulator branches) fits a voice here as an
+  FM2 generator modulating an FM4 generator's carrier; it waits for a reference recording.
+  The Prophet-5, Minimoog and Roland sounds of D103 are not started.
