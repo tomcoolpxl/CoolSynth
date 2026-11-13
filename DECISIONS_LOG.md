@@ -1163,3 +1163,30 @@ On the user's instruction: drive C: had 9 GB free, E: has 483 GB. Everything exc
 folder was copied and verified (same commit, clean status, 5,558 files); the build was made
 again from scratch at the new place. The project memory was copied to the folder a session in
 the new location reads.
+
+## D88. A Museum room of named classic synth sounds (2026-11-13)
+
+The user's idea: a category apart from the Places with recreations of famous presets of real
+synths, admitted only when exact or nearly exact. Offered:
+
+- **A small room, "The Museum": 8 to 12 famous sounds, each built from the original's published
+  patch settings where they exist, checked against a reference recording, and admitted only
+  after the user accepts it in a side-by-side on the audition page (chosen by the user;
+  recommended).** The bank grows past 68. Brand names in preset names are fine for private use
+  and would need renaming if the synth is published. The presets are built after the insert
+  slots, because a classic often needs its own chorus or delay.
+- A large classics bank across many synths. Many entries could only be approximate
+  (six-operator FM, sample-based and wavetable-specific synths).
+- No new category; correct the four homages in Studio 1982 (Juno Pad, Prophet Brass, OB
+  Strings, Moog Bass) against published settings and recordings.
+- Not now.
+
+## D89. The audition page (2026-11-13)
+
+- **Previews are made from the raw recordings and nothing else: every recorded pitch of a middle
+  dynamic for 1.3 s each, one long note, and one pitch at every dynamic; each file is only
+  levelled (taken).** The user judges the recordings, not my processing. 148 instrument
+  folders in 12 families; releases, legacy sets and unpitched percussion are left off the page.
+- The page lives in `/audition` with the libraries (15 GB, ignored by git) and is served by a
+  small local server (`.claude/launch.json`, name `audition`, port 8765), because the app shows
+  local files as snapshots without sound. Picks are ticked on the page and pasted into the chat.
