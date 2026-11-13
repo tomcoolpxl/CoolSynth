@@ -101,6 +101,14 @@ namespace coolsynth::synth::v3
             return requested;
         }
 
+        /** True once after the first note after silence: where a free-running pump starts its bar. */
+        [[nodiscard]] bool consumePhraseStart() noexcept
+        {
+            const bool started = phraseStartPending;
+            phraseStartPending = false;
+            return started;
+        }
+
         /** Host samples between a note event and its sound: decimator plus generator delay. */
         [[nodiscard]] int latencySamples() const noexcept { return decimatorLatency + generatorLatency; }
 
@@ -193,6 +201,7 @@ namespace coolsynth::synth::v3
         PlayMode currentMode = PlayMode::poly;
         bool sustainDown = false;
         bool soundOffPending = false;
+        bool phraseStartPending = false;
         bool previousArpEnabled = false;
         bool prepared = false;
         float bendNormalised = 0.0f;

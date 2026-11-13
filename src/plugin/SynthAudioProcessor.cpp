@@ -877,6 +877,20 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     settings.lofi.rateHz = v.lofiRate->load();
     settings.lofi.mix = v.lofiMix->load();
 
+    settings.flanger.enabled = decodeBool(v.flangerEnabled->load());
+    settings.flanger.rateHz = v.flangerRate->load();
+    settings.flanger.depth = v.flangerDepth->load();
+    settings.flanger.feedback = v.flangerFeedback->load();
+    settings.flanger.mix = v.flangerMix->load();
+    settings.eq.enabled = decodeBool(v.eqEnabled->load());
+    settings.eq.lowDb = v.eqLow->load();
+    settings.eq.tiltDb = v.eqTilt->load();
+    settings.eq.highDb = v.eqHigh->load();
+    settings.pump.enabled = decodeBool(v.pumpEnabled->load());
+    settings.pump.depth = v.pumpDepth->load();
+    settings.pump.division = index(v.pumpDivision);
+    settings.pump.release = v.pumpRelease->load();
+
     settings.reverb.enabled = decodeBool(v.reverbEnabled->load());
     settings.reverb.size = v.reverbSize->load();
     settings.reverb.damping = v.reverbDamping->load();

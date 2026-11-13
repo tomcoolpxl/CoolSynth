@@ -299,6 +299,52 @@ namespace
         return group;
     }
 
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeFlangerGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("flanger", "Flanger", " / ");
+        group->addChild(makeBoolParameter(flangerEnabled, parameterVersionHint, "Enabled", false));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(flangerRate), "Rate", makeLogRange(0.05f, 5.0f), 0.3f, hertzAttributes()));
+        group->addChild(makePercentParameter(flangerDepth, parameterVersionHint, "Depth", 0.7f));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(flangerFeedback), "Feedback", juce::NormalisableRange<float>(-0.95f, 0.95f), 0.5f, percentAttributes()));
+        group->addChild(makePercentParameter(flangerMix, parameterVersionHint, "Mix", 0.5f));
+        return group;
+    }
+
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeEqGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("eq", "EQ", " / ");
+        group->addChild(makeBoolParameter(eqEnabled, parameterVersionHint, "Enabled", false));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(eqLow), "Low", juce::NormalisableRange<float>(-12.0f, 12.0f), 0.0f, dbAttributes()));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(eqTilt), "Tilt", juce::NormalisableRange<float>(-6.0f, 6.0f), 0.0f, dbAttributes()));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(eqHigh), "High", juce::NormalisableRange<float>(-12.0f, 12.0f), 0.0f, dbAttributes()));
+        return group;
+    }
+
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makePumpGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("pump", "Pump", " / ");
+        group->addChild(makeBoolParameter(pumpEnabled, parameterVersionHint, "Enabled", false));
+        group->addChild(makePercentParameter(pumpDepth, parameterVersionHint, "Depth", 0.6f));
+        juce::StringArray divisions;
+        for (const auto& d : coolsynth::synth::delayDivisions)
+            divisions.add(d.name);
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(makeV2ParameterId(pumpDivision), "Division", divisions, 8));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(pumpRelease), "Release", juce::NormalisableRange<float>(0.05f, 1.0f), 0.5f, percentAttributes()));
+        return group;
+    }
+
     std::unique_ptr<juce::AudioProcessorParameterGroup> makeReverbGroup()
     {
         using namespace coolsynth::parameters::ids;
@@ -387,11 +433,14 @@ juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::creat
                makeArpGroup(),
                makeDriveGroup(),
                makePhaserGroup(),
+               makeFlangerGroup(),
                makeChorusGroup(),
                makeLoFiGroup(),
                makeDelayGroup(),
                makeReverbGroup(),
                makeCompressorGroup(),
+               makeEqGroup(),
+               makePumpGroup(),
                makeOutputGroup());
     return layout;
 }

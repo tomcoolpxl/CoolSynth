@@ -351,4 +351,4 @@ loudness-normalised):
 | Greenhouse | Glass Bell, Rain Chime, Crystal Pluck | Marimba (modal, 6.2), Kalimba, Harp String (Karplus-Strong, 6.1) |
 | Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field | Granular Sky (8.2) |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad | Chord Trigger (7.1) |
-| Main Stage | Reese, Supersaw (no sub layer), Neuro Growl, Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |
+| Main Stage | Reese, Supersaw (no sub layer), Future Chord (played as a chord), Neuro Growl, Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |

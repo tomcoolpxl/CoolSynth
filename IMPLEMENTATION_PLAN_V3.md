@@ -165,7 +165,7 @@ Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi added). Shipped 2026-11-13 with 
 lo-fi on Vinyl Choir and Concrete Pad (decisions D52, D53).
 
 5.3 Pump, EQ, flanger. Ships: Main Stage Future Chord as a played chord (the one-key version
-lands with chord memory in 7.1).
+lands with chord memory in 7.1). Shipped 2026-11-13 (decisions D54 to D57). Phase 5 complete.
 
 ## Phase 6: physical generators
 

@@ -653,3 +653,11 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/LoFi.h`, a global stage after the drive: wow (0.45 Hz with drift) and flutter (6.5 Hz) on a short delay line, a bandwidth low-pass, bits and rate, hiss and crackle that follow the signal, Mix with a matched dry delay. Nine parameters (`lofiEnabled` .. `lofiMix`), the bank section `lofi`.
 - [x] Presets: Bedroom Cassette Keys, Blanket Pad, Bedroom Bass; lo-fi on Vinyl Choir and Concrete Pad. 60 presets.
 - [x] Added `tests/V3LoFiTests.cpp` (5 tests): neutral settings are a clean 6 ms delay, wow and flutter spread a sine's cycles by 47 cents, bandwidth closes the top by more than 20 dB, hiss and crackle silent in silence and present under a tone, the bank section. Verified Debug build without warnings and `ctest` green.
+
+## V3 phase 5.3: pump, EQ, flanger (2026-11-13)
+
+- [x] Added `src/synth/ModernFx.h`: `Pump` (a beat-following ducker with a 2 ms attack and a squared recovery), `MasterEq` (low shelf, tilt, high shelf as RBJ biquads) and `Flanger` (0.3 to 5 ms, triangle LFO, stereo offset, feedback through a soft limit). The rack's chain is now drive, lo-fi, phaser, flanger, chorus, delay, reverb, compressor, EQ, pump.
+- [x] The engine drives the pump's phase from the host's song position, or from its own count restarted at the first note after silence (`Part::consumePhraseStart`).
+- [x] 13 new parameters (`flanger*`, `eq*`, `pump*`) and the bank sections `flanger`, `eq`, `pump`.
+- [x] Preset: Main Stage Future Chord (played as a chord). 61 presets; phase 5 complete.
+- [x] Added `tests/V3ModernFxTests.cpp` (4 tests): the pump's gain curve and a click-free duck to 0.4 at depth 0.6; EQ shelves and tilt within 0.7 dB of their settings and matching a measured sine; flanger notch depth and bounds; the rack running the stages and the bank sections. Verified Debug build without warnings and `ctest` green; Future Chord 11 to 12 % of real time for eight-note chords.

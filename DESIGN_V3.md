@@ -379,6 +379,12 @@ Shipped (phase 5.2, 2026-11-13): `LoFi` in `src/synth/LoFi.h`, a global stage af
 wow and flutter on a short delay line, a bandwidth low-pass, bit and rate crushing, hiss and
 crackle that follow the signal, Mix with a matched dry delay (decision D52).
 
+Shipped (phase 5.3, 2026-11-13): `Pump`, `MasterEq` and `Flanger` in `src/synth/ModernFx.h`. The
+rack's chain is drive, lo-fi, phaser, flanger, chorus, delay, reverb, compressor, EQ, pump; the
+newer stages travel in `ExtraFxParameters`. The engine gives the pump its beat phase: the host's
+song position while it plays, otherwise its own count restarted at the first note after silence
+(decisions D54 to D56).
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs

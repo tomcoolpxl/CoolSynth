@@ -1,6 +1,7 @@
 #include "EngineV3.h"
 
 #include <algorithm>
+#include <cmath>
 
 namespace coolsynth::synth::v3
 {
@@ -9,6 +10,8 @@ namespace coolsynth::synth::v3
     void EngineV3::prepare(double sampleRate, int maxBlockSize, int)
     {
         const int block = std::max(1, maxBlockSize);
+        hostRate = std::max(1000.0, sampleRate);
+        pumpPhase = 0.0;
         part->prepare(sampleRate, block, 0x5EEDu);
         fxRack.prepare(sampleRate, block, 2);
         work.setSize(2, block, false, true, true);
@@ -54,7 +57,25 @@ namespace coolsynth::synth::v3
             const double bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.part.arp.internalTempoBpm), 20.0, 400.0);
             delay.timeMs = coolsynth::synth::delayDivisionMs(delay.division, bpm);
         }
-        fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, delay, settings.reverb, settings.compressor, settings.lofi);
+        // The pump follows the beat: the host's song position while it plays, otherwise its own
+        // count at the tempo, restarted with the first note after silence.
+        coolsynth::synth::ExtraFxParameters extra { settings.lofi, settings.flanger, settings.eq, settings.pump };
+        const bool phraseStart = part->consumePhraseStart();
+        {
+            const bool hostTempo = transport.hostHasTempo && transport.hostBpm > 0.0;
+            const double bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.part.arp.internalTempoBpm), 20.0, 400.0);
+            const auto& division = coolsynth::synth::delayDivisions[static_cast<std::size_t>(
+                std::clamp(settings.pump.division, 0, static_cast<int>(coolsynth::synth::delayDivisions.size()) - 1))];
+            extra.pump.phasePerSample = bpm / 60.0 / division.beats / hostRate;
+            if (hostTempo && transport.hostHasPpq && transport.hostIsPlaying)
+                pumpPhase = transport.hostPpqAtBlockStart / division.beats;
+            else if (phraseStart)
+                pumpPhase = 0.0;
+            pumpPhase -= std::floor(pumpPhase);
+            extra.pump.phaseAtStart = pumpPhase;
+            pumpPhase += extra.pump.phasePerSample * n;
+        }
+        fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, delay, settings.reverb, settings.compressor, extra);
 
         // The first block after prepare starts at the setting; ramping from unity would make the
         // first notes after loading louder than the patch.

@@ -180,6 +180,19 @@ namespace coolsynth::synth
         std::atomic<float>* lofiBits = nullptr;
         std::atomic<float>* lofiRate = nullptr;
         std::atomic<float>* lofiMix = nullptr;
+        std::atomic<float>* flangerEnabled = nullptr;
+        std::atomic<float>* flangerRate = nullptr;
+        std::atomic<float>* flangerDepth = nullptr;
+        std::atomic<float>* flangerFeedback = nullptr;
+        std::atomic<float>* flangerMix = nullptr;
+        std::atomic<float>* eqEnabled = nullptr;
+        std::atomic<float>* eqLow = nullptr;
+        std::atomic<float>* eqTilt = nullptr;
+        std::atomic<float>* eqHigh = nullptr;
+        std::atomic<float>* pumpEnabled = nullptr;
+        std::atomic<float>* pumpDepth = nullptr;
+        std::atomic<float>* pumpDivision = nullptr;
+        std::atomic<float>* pumpRelease = nullptr;
         std::atomic<float>* reverbEnabled = nullptr;
         std::atomic<float>* reverbSize = nullptr;
         std::atomic<float>* reverbDamping = nullptr;
@@ -241,6 +254,19 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::lofiBits,             &GlobalParameterPointers::lofiBits             },
         { coolsynth::parameters::ids::lofiRate,             &GlobalParameterPointers::lofiRate             },
         { coolsynth::parameters::ids::lofiMix,              &GlobalParameterPointers::lofiMix              },
+        { coolsynth::parameters::ids::flangerEnabled, &GlobalParameterPointers::flangerEnabled },
+        { coolsynth::parameters::ids::flangerRate, &GlobalParameterPointers::flangerRate },
+        { coolsynth::parameters::ids::flangerDepth, &GlobalParameterPointers::flangerDepth },
+        { coolsynth::parameters::ids::flangerFeedback, &GlobalParameterPointers::flangerFeedback },
+        { coolsynth::parameters::ids::flangerMix, &GlobalParameterPointers::flangerMix },
+        { coolsynth::parameters::ids::eqEnabled, &GlobalParameterPointers::eqEnabled },
+        { coolsynth::parameters::ids::eqLow, &GlobalParameterPointers::eqLow },
+        { coolsynth::parameters::ids::eqTilt, &GlobalParameterPointers::eqTilt },
+        { coolsynth::parameters::ids::eqHigh, &GlobalParameterPointers::eqHigh },
+        { coolsynth::parameters::ids::pumpEnabled, &GlobalParameterPointers::pumpEnabled },
+        { coolsynth::parameters::ids::pumpDepth, &GlobalParameterPointers::pumpDepth },
+        { coolsynth::parameters::ids::pumpDivision, &GlobalParameterPointers::pumpDivision },
+        { coolsynth::parameters::ids::pumpRelease, &GlobalParameterPointers::pumpRelease },
         { coolsynth::parameters::ids::reverbEnabled,        &GlobalParameterPointers::reverbEnabled        },
         { coolsynth::parameters::ids::reverbSize,           &GlobalParameterPointers::reverbSize           },
         { coolsynth::parameters::ids::reverbDamping,        &GlobalParameterPointers::reverbDamping        },

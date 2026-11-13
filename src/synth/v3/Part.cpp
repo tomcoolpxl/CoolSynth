@@ -378,6 +378,7 @@ namespace coolsynth::synth::v3
                         globalLfos[k].restart(settings.globalLfos[k]);
                     if (settings.step.retrigger)
                         stepModulator.restart();
+                    phraseStartPending = true;
                 }
                 if (settings.playMode == PlayMode::poly)
                     polyNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp, settings);

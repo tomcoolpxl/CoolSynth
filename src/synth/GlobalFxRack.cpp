@@ -49,6 +49,9 @@ namespace coolsynth::synth
         chorus.prepare(sampleRate);
         reverb.prepare(sampleRate);
         lofi.prepare(sampleRate, outputChannelCount);
+        flanger.prepare(sampleRate, outputChannelCount);
+        eq.prepare(sampleRate, outputChannelCount);
+        pump.prepare(sampleRate);
         delay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         phaser.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         compressor.prepare(sampleRate, samplesPerBlock, outputChannelCount);
@@ -68,6 +71,8 @@ namespace coolsynth::synth
     void GlobalFxRack::reset() noexcept
     {
         lofi.reset();
+        flanger.reset();
+        eq.reset();
         chorus.reset();
         delay.reset();
         reverb.reset();
@@ -81,6 +86,8 @@ namespace coolsynth::synth
     void GlobalFxRack::clear() noexcept
     {
         lofi.reset();
+        flanger.reset();
+        eq.reset();
         chorus.reset();
         delay.clear();
         reverb.reset();
@@ -98,7 +105,7 @@ namespace coolsynth::synth
                                const DelayParametersV2& delayParameters,
                                const ReverbParametersV2& reverbParametersIn,
                                const CompressorParametersV2& compressorParameters,
-                               const LoFiParameters& lofiParameters) noexcept
+                               const ExtraFxParameters& extra) noexcept
     {
         if (! prepared)
             return;
@@ -115,7 +122,7 @@ namespace coolsynth::synth
         if (totalSamples <= chunkCapacity)
         {
             processChunk(buffer, driveParameters, phaserParameters, chorusParameters,
-                         delayParameters, reverbParametersIn, compressorParameters, lofiParameters);
+                         delayParameters, reverbParametersIn, compressorParameters, extra);
             return;
         }
 
@@ -126,8 +133,11 @@ namespace coolsynth::synth
                                            buffer.getNumChannels(),
                                            start,
                                            chunkSamples);
+            // The pump's phase moves on with every chunk.
+            ExtraFxParameters chunkExtra = extra;
+            chunkExtra.pump.phaseAtStart = extra.pump.phaseAtStart + extra.pump.phasePerSample * start;
             processChunk(chunk, driveParameters, phaserParameters, chorusParameters,
-                         delayParameters, reverbParametersIn, compressorParameters, lofiParameters);
+                         delayParameters, reverbParametersIn, compressorParameters, chunkExtra);
         }
     }
 
@@ -138,15 +148,18 @@ namespace coolsynth::synth
                                     const DelayParametersV2& delayParameters,
                                     const ReverbParametersV2& reverbParametersIn,
                                     const CompressorParametersV2& compressorParameters,
-                                    const LoFiParameters& lofiParameters) noexcept
+                                    const ExtraFxParameters& extra) noexcept
     {
         processDrive(buffer, driveParameters);
-        lofi.process(buffer, lofiParameters); // tape after the drive, before the modulation and space effects
+        lofi.process(buffer, extra.lofi); // tape after the drive, before the modulation and space effects
         phaser.process(buffer, phaserParameters);
+        flanger.process(buffer, extra.flanger);
         processChorus(buffer, chorusParameters);
         processDelay(buffer, delayParameters);
         processReverb(buffer, reverbParametersIn);
         compressor.process(buffer, compressorParameters);
+        eq.process(buffer, extra.eq);
+        pump.process(buffer, extra.pump); // last: it ducks everything, tails included
 
         // Ultimate host-safety net: catch any stray NaNs or Infinities
         for (int ch = 0; ch < buffer.getNumChannels(); ++ch)

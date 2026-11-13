@@ -686,3 +686,45 @@ own loop was the suggested fix.
   stays without lo-fi, as its recipe has none.
 
 Phase 5.2 brings the bank to 60 presets.
+
+## D54. The pump (2026-11-13, phase 5.3)
+
+- **A ducker at the end of the rack that follows the beat: the host's song position while it
+  plays, otherwise its own count at the tempo, restarted at the first note after silence
+  (taken, recommended).** In a DAW the duck sits on the grid; in the standalone a chord pumps
+  from its first beat. The gain drops by Depth within 2 ms and recovers along a squared curve
+  over Release, a share of the division (1/4 by default, the delay's note values).
+- A square LFO to the VCA through the matrix. Already possible, but it works per voice and
+  leaves the reverb tail unducked; the pump ducks everything after it.
+- A real sidechain input. A synth has no kick to listen to.
+
+Last in the chain, after the compressor and the EQ, so nothing behind it evens the duck out.
+
+## D55. The EQ (2026-11-13, phase 5.3)
+
+- **A low shelf at 150 Hz and a high shelf at 6 kHz (each +-12 dB) and a tilt of +-6 dB pivoting
+  at 1 kHz, as RBJ biquads after the compressor (taken, recommended).** Three knobs that shape a
+  preset's balance; the tilt is a complementary pair of shelves at 1 kHz. Tested against its own
+  computed response.
+- A three-band parametric. Nine parameters for a finishing EQ.
+- Tilt only. Cannot lift the air or trim the lows separately.
+
+## D56. The flanger (2026-11-13, phase 5.3)
+
+- **A 0.3 to 5 ms delay swept by a triangle LFO, the right channel a quarter cycle ahead,
+  feedback from -0.95 to 0.95 through a soft limit, Mix 1 as equal parts dry and delayed; between
+  phaser and chorus (taken).** Tested: 25 dB between a notch and a peak with the delay held,
+  bounded at full feedback on noise.
+- No preset uses it yet: no recipe in the bank asks for a flanger. It is there for the
+  remaining rooms and for the user.
+
+## D57. Future Chord, played (2026-11-13, phase 5.3)
+
+- **A soft Classic wavetable (between triangle and saw) in four unison voices, a state-variable
+  low-pass, pump on the quarter note at depth 0.6, chorus, a bright EQ (taken).** The one-key
+  minor seventh needs chord memory (7.1); until then it is played as a chord.
+
+One CPU reading of 154 % for a single block of Future Chord did not repeat in three further
+runs (17 to 26 % worst block, 11 to 12 % average); the machine was busy.
+
+Phase 5 is complete: 61 presets.

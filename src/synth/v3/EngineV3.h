@@ -24,6 +24,9 @@ namespace coolsynth::synth::v3
         coolsynth::synth::DelayParametersV2 delay {};
         coolsynth::synth::ReverbParametersV2 reverb {};
         coolsynth::synth::LoFiParameters lofi {};
+        coolsynth::synth::FlangerParameters flanger {};
+        coolsynth::synth::EqParameters eq {};
+        coolsynth::synth::PumpParameters pump {};
         coolsynth::synth::CompressorParametersV2 compressor {};
         float masterGainLinear = 1.0f;
     };
@@ -63,5 +66,7 @@ namespace coolsynth::synth::v3
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;
         bool prepared = false;
         bool masterPrimed = false;
+        double hostRate = 48000.0;
+        double pumpPhase = 0.0; // of the pump's division, while no host position drives it
     };
 }

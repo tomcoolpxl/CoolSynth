@@ -60,6 +60,20 @@ namespace coolsynth::parameters::ids
     inline constexpr char lofiRate[] = "lofiRate";
     inline constexpr char lofiMix[] = "lofiMix";
 
+    inline constexpr char flangerEnabled[] = "flangerEnabled";
+    inline constexpr char flangerRate[] = "flangerRate";
+    inline constexpr char flangerDepth[] = "flangerDepth";
+    inline constexpr char flangerFeedback[] = "flangerFeedback";
+    inline constexpr char flangerMix[] = "flangerMix";
+    inline constexpr char eqEnabled[] = "eqEnabled";
+    inline constexpr char eqLow[] = "eqLow";
+    inline constexpr char eqTilt[] = "eqTilt";
+    inline constexpr char eqHigh[] = "eqHigh";
+    inline constexpr char pumpEnabled[] = "pumpEnabled";
+    inline constexpr char pumpDepth[] = "pumpDepth";
+    inline constexpr char pumpDivision[] = "pumpDivision";
+    inline constexpr char pumpRelease[] = "pumpRelease";
+
     inline constexpr char reverbEnabled[] = "reverbEnabled";
     inline constexpr char reverbSize[] = "reverbSize";
     inline constexpr char reverbDamping[] = "reverbDamping";
@@ -170,6 +184,19 @@ namespace coolsynth::parameters
         ids::lofiBits,
         ids::lofiRate,
         ids::lofiMix,
+        ids::flangerEnabled,
+        ids::flangerRate,
+        ids::flangerDepth,
+        ids::flangerFeedback,
+        ids::flangerMix,
+        ids::eqEnabled,
+        ids::eqLow,
+        ids::eqTilt,
+        ids::eqHigh,
+        ids::pumpEnabled,
+        ids::pumpDepth,
+        ids::pumpDivision,
+        ids::pumpRelease,
         ids::reverbEnabled,
         ids::reverbSize,
         ids::reverbDamping,

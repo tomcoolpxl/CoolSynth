@@ -60,7 +60,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    `tests/V3ReverbTests.cpp`; Shimmer Drone, Satellite Ping, Nebula Pad's pre-delay. 57 presets.
 26. Phase 5.2 done 2026-11-13: `src/synth/LoFi.h`, nine `lofi*` parameters, `tests/V3LoFiTests.cpp`;
    Cassette Keys, Blanket Pad, Bedroom Bass, lo-fi on Vinyl Choir and Concrete Pad. 60 presets.
-27. Phase 5.3: pump, EQ, flanger; Main Stage Future Chord as a played chord.
+27. Phase 5.3 done 2026-11-13: `src/synth/ModernFx.h` (pump, EQ, flanger), 13 parameters,
+   `tests/V3ModernFxTests.cpp`; Main Stage Future Chord. Phase 5 complete: 61 presets.
+28. Phase 6.1: Karplus-Strong generator; Greenhouse Kalimba and Harp String.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.
