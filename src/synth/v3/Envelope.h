@@ -82,12 +82,15 @@ namespace coolsynth::synth::v3
             remaining = 0;
         }
 
-        /** keyOctaves: the note's distance from C4 in octaves, for key time tracking. */
-        void noteOn(float velocity = 1.0f, float keyOctaves = 0.0f) noexcept
+        /**
+            keyOctaves: the note's distance from C4 in octaves, for key time tracking. timeFactor
+            stretches every time of this note (the matrix's envelope-time destinations).
+        */
+        void noteOn(float velocity = 1.0f, float keyOctaves = 0.0f, float timeFactor = 1.0f) noexcept
         {
             const float sensitivity = parameters.velocitySensitivity;
             peak = 1.0f - sensitivity + sensitivity * std::clamp(velocity, 0.0f, 1.0f);
-            timeScale = std::exp2(-parameters.keyTimeTracking * keyOctaves);
+            timeScale = std::exp2(-parameters.keyTimeTracking * keyOctaves) * std::clamp(timeFactor, 1.0f / 256.0f, 256.0f);
             gate = true;
 
             if (value <= kSilent && parameters.delay > 0.0f)

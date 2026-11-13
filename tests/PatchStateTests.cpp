@@ -63,13 +63,14 @@ public:
                 registeredIds.add(parameter->paramID);
             }
 
-            // part A: 3 generators x 17, 3 processors x 9, 3 envelopes x 13, 4 LFOs x 9, 24 matrix slots x 5, 5 voice, 8 play
-            constexpr int partParameterCount = 3 * 17 + 3 * 9 + 3 * 13 + 4 * 9 + 24 * 5 + 5 + 8;
+            // part A: 3 generators x 17, 3 processors x 9, 3 envelopes x 13, 4 LFOs x 9, 24 matrix slots x 5,
+            // global envelope 12, step 16 + 16 + 4, 4 macros, chaos 1, 5 voice, 8 play
+            constexpr int partParameterCount = 3 * 17 + 3 * 9 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 5 + 8;
             expectEquals(registeredIds.size(), static_cast<int>(coolsynth::parameters::allParameterIds.size()) + partParameterCount);
 
             for (const auto* expectedId : coolsynth::parameters::allParameterIds)
                 expect(registeredIds.contains(expectedId));
-            for (const auto* partId : { "pA.g1.type", "pA.g3.amount", "pA.p1.p8", "pA.env3.oneShot", "pA.lfo2.oneShot", "pA.mod24.curve", "pA.mod1.src", "pA.glfo1.division", "pA.voice.wheelToLfo1", "pA.voice.drift", "pA.play.glideLegato" })
+            for (const auto* partId : { "pA.g1.type", "pA.g3.amount", "pA.p1.p8", "pA.env3.oneShot", "pA.lfo2.oneShot", "pA.mod24.curve", "pA.mod1.src", "pA.genv.trigger", "pA.step.slide16", "pA.macro4", "pA.chaos.rate", "pA.glfo1.division", "pA.voice.wheelToLfo1", "pA.voice.drift", "pA.play.glideLegato" })
                 expect(registeredIds.contains(partId), juce::String("missing ") + partId);
         }
 

@@ -160,6 +160,55 @@ namespace coolsynth::parameters::v3
             return group;
         }
 
+        std::unique_ptr<juce::AudioProcessorParameterGroup> makeGlobalModulatorGroups(Part part)
+        {
+            auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".global", "Global Modulators", "|");
+
+            auto genv = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".genv", "Global Envelope", "|");
+            auto g = [&](const char* field) { return globalEnvelopeParameterId(part, field); };
+            genv->addChild(floatParameter(g("delay"), "GEnv Delay", squaredRange(0.0f, 60000.0f), 0.0f, msAttributes()));
+            genv->addChild(floatParameter(g("attack"), "GEnv Attack", logRange(0.5f, 60000.0f), 1000.0f, msAttributes()));
+            genv->addChild(floatParameter(g("hold"), "GEnv Hold", squaredRange(0.0f, 60000.0f), 0.0f, msAttributes()));
+            genv->addChild(floatParameter(g("decay"), "GEnv Decay", logRange(1.0f, 60000.0f), 1000.0f, msAttributes()));
+            genv->addChild(floatParameter(g("sustain"), "GEnv Sustain", { 0.0f, 1.0f }, 1.0f, percentAttributes()));
+            genv->addChild(floatParameter(g("release"), "GEnv Release", logRange(1.0f, 60000.0f), 1000.0f, msAttributes()));
+            genv->addChild(floatParameter(g("attackCurve"), "GEnv Attack Curve", { -1.0f, 1.0f }, 0.0f));
+            genv->addChild(floatParameter(g("decayCurve"), "GEnv Decay Curve", { -1.0f, 1.0f }, -0.6f));
+            genv->addChild(floatParameter(g("releaseCurve"), "GEnv Release Curve", { -1.0f, 1.0f }, -0.6f));
+            genv->addChild(std::make_unique<juce::AudioParameterBool>(makeId(g("loop")), "GEnv Loop", false));
+            genv->addChild(std::make_unique<juce::AudioParameterBool>(makeId(g("sync")), "GEnv Sync", false));
+            genv->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(g("trigger")), "GEnv Trigger",
+                                                                        juce::StringArray { "First Note", "Every Note" }, 0));
+            group->addChild(std::move(genv));
+
+            auto step = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".step", "Step Modulator", "|");
+            for (int i = 1; i <= sv3::stepCount; ++i)
+                step->addChild(floatParameter(stepParameterId(part, "s" + juce::String(i)), "Step " + juce::String(i), { -1.0f, 1.0f }, 0.0f));
+            for (int i = 1; i <= sv3::stepCount; ++i)
+                step->addChild(std::make_unique<juce::AudioParameterBool>(makeId(stepParameterId(part, "slide" + juce::String(i))),
+                                                                          "Step " + juce::String(i) + " Slide", false));
+            juce::StringArray divisions;
+            for (const auto& d : sv3::lfoDivisions)
+                divisions.add(d.name);
+            step->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(stepParameterId(part, "division")), "Step Division",
+                                                                        divisions, sv3::stepDefaultDivision));
+            step->addChild(std::make_unique<juce::AudioParameterInt>(makeId(stepParameterId(part, "length")), "Step Length", 1,
+                                                                     sv3::stepCount, sv3::stepCount));
+            step->addChild(floatParameter(stepParameterId(part, "glide"), "Step Glide", { 0.0f, 1.0f }, 0.5f, percentAttributes()));
+            step->addChild(std::make_unique<juce::AudioParameterBool>(makeId(stepParameterId(part, "retrigger")), "Step Retrigger", true));
+            group->addChild(std::move(step));
+
+            auto macros = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".macros", "Macros", "|");
+            for (int i = 1; i <= sv3::macroCount; ++i)
+                macros->addChild(floatParameter(macroParameterId(part, i), "Macro " + juce::String(i), { 0.0f, 1.0f }, 0.0f, percentAttributes()));
+            group->addChild(std::move(macros));
+
+            auto chaosGroup = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".chaos", "Chaos", "|");
+            chaosGroup->addChild(floatParameter(chaosParameterId(part), "Chaos Rate", logRange(0.01f, 10.0f), 0.5f, hzAttributes()));
+            group->addChild(std::move(chaosGroup));
+            return group;
+        }
+
         LfoPointers bindLfoPointers(juce::AudioProcessorValueTreeState& state, Part part, const juce::String& lfo)
         {
             auto get = [&](const char* field) { return state.getRawParameterValue(lfoParameterId(part, lfo, field)); };
@@ -233,11 +282,31 @@ namespace coolsynth::parameters::v3
             for (int p = 1; p <= d::processorSlots; ++p)
                 for (int k = 1; k <= sv3::maxSlotParameters; ++k)
                     n.add("P" + juce::String(p) + " Param " + juce::String(k));
+            for (int e = 1; e <= d::envelopeTimes; ++e)
+                n.add("Env " + juce::String(e) + " Time");
             jassert(n.size() == d::count);
             return n;
         }();
         return names;
     }
+
+    const juce::StringArray& globalEnvelopeFields()
+    {
+        static const juce::StringArray fields { "delay", "attack", "hold", "decay", "sustain", "release", "attackCurve",
+                                                "decayCurve", "releaseCurve", "loop", "sync", "trigger" };
+        return fields;
+    }
+
+    const juce::StringArray& stepFields()
+    {
+        static const juce::StringArray fields { "division", "length", "glide", "retrigger" };
+        return fields;
+    }
+
+    juce::String globalEnvelopeParameterId(Part part, const char* field) { return partPrefix(part) + ".genv." + field; }
+    juce::String stepParameterId(Part part, const juce::String& field) { return partPrefix(part) + ".step." + field; }
+    juce::String macroParameterId(Part part, int oneBasedMacro) { return partPrefix(part) + ".macro" + juce::String(oneBasedMacro); }
+    juce::String chaosParameterId(Part part) { return partPrefix(part) + ".chaos.rate"; }
 
     const juce::StringArray& modCurveNames()
     {
@@ -274,6 +343,7 @@ namespace coolsynth::parameters::v3
         for (int i = 1; i <= partGlobalLfos; ++i)
             group->addChild(makeLfoGroup(part, "glfo" + juce::String(i), "Global LFO " + juce::String(i), true));
         group->addChild(makeMatrixGroup(part));
+        group->addChild(makeGlobalModulatorGroups(part));
 
         auto voice = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".voice", "Voice", "|");
         voice->addChild(floatParameter(voiceParameterId(part, "env2ToP1"), "Env 2 to P1", { -1.0f, 1.0f }, 0.2f, percentAttributes()));
@@ -333,6 +403,35 @@ namespace coolsynth::parameters::v3
         for (int i = 0; i < partGlobalLfos; ++i)
             p.globalLfos[static_cast<std::size_t>(i)] = bindLfoPointers(state, part, "glfo" + juce::String(i + 1));
         p.wheelToLfo1 = state.getRawParameterValue(voiceParameterId(part, "wheelToLfo1"));
+        {
+            auto& g = p.global;
+            auto get = [&](const char* field) { return state.getRawParameterValue(globalEnvelopeParameterId(part, field)); };
+            g.envelope.delay = get("delay");
+            g.envelope.attack = get("attack");
+            g.envelope.hold = get("hold");
+            g.envelope.decay = get("decay");
+            g.envelope.sustain = get("sustain");
+            g.envelope.release = get("release");
+            g.envelope.attackCurve = get("attackCurve");
+            g.envelope.decayCurve = get("decayCurve");
+            g.envelope.releaseCurve = get("releaseCurve");
+            g.envelope.loop = get("loop");
+            g.envelopeSync = get("sync");
+            g.envelopeTrigger = get("trigger");
+            for (int i = 0; i < sv3::stepCount; ++i)
+            {
+                g.stepValues[static_cast<std::size_t>(i)] = state.getRawParameterValue(stepParameterId(part, "s" + juce::String(i + 1)));
+                g.stepSlides[static_cast<std::size_t>(i)] = state.getRawParameterValue(stepParameterId(part, "slide" + juce::String(i + 1)));
+            }
+            g.stepDivision = state.getRawParameterValue(stepParameterId(part, "division"));
+            g.stepLength = state.getRawParameterValue(stepParameterId(part, "length"));
+            g.stepGlide = state.getRawParameterValue(stepParameterId(part, "glide"));
+            g.stepRetrigger = state.getRawParameterValue(stepParameterId(part, "retrigger"));
+            for (int i = 0; i < sv3::macroCount; ++i)
+                g.macros[static_cast<std::size_t>(i)] = state.getRawParameterValue(macroParameterId(part, i + 1));
+            g.chaosRate = state.getRawParameterValue(chaosParameterId(part));
+        }
+
         for (int i = 0; i < sv3::matrixSlotCount; ++i)
         {
             auto& m = p.matrix[static_cast<std::size_t>(i)];
@@ -420,6 +519,37 @@ namespace coolsynth::parameters::v3
         for (std::size_t i = 0; i < settings.globalLfos.size(); ++i)
             settings.globalLfos[i] = readLfo(pointers.globalLfos[i], true);
         settings.voice.wheelToLfo1 = load(pointers.wheelToLfo1, 0.0f);
+
+        {
+            const auto& g = pointers.global;
+            auto& out = settings.globalEnvelope;
+            out.delay = 0.001f * load(g.envelope.delay, 0.0f);
+            out.attack = 0.001f * load(g.envelope.attack, 1000.0f);
+            out.hold = 0.001f * load(g.envelope.hold, 0.0f);
+            out.decay = 0.001f * load(g.envelope.decay, 1000.0f);
+            out.sustain = load(g.envelope.sustain, 1.0f);
+            out.release = 0.001f * load(g.envelope.release, 1000.0f);
+            out.attackCurve = load(g.envelope.attackCurve, 0.0f);
+            out.decayCurve = load(g.envelope.decayCurve, -0.6f);
+            out.releaseCurve = load(g.envelope.releaseCurve, -0.6f);
+            out.loop = load(g.envelope.loop, 0.0f) >= 0.5f;
+            out.velocitySensitivity = 0.0f;
+            out.keyTimeTracking = 0.0f;
+            settings.globalEnvelopeSync = load(g.envelopeSync, 0.0f) >= 0.5f;
+            settings.globalEnvelopeTrigger = static_cast<sv3::GenvTrigger>(juce::jlimit(0, 1, loadInt(g.envelopeTrigger, 0)));
+            for (std::size_t i = 0; i < settings.step.values.size(); ++i)
+            {
+                settings.step.values[i] = load(g.stepValues[i], 0.0f);
+                settings.step.slides[i] = load(g.stepSlides[i], 0.0f) >= 0.5f;
+            }
+            settings.step.division = juce::jlimit(0, static_cast<int>(sv3::lfoDivisions.size()) - 1, loadInt(g.stepDivision, sv3::stepDefaultDivision));
+            settings.step.length = juce::jlimit(1, sv3::stepCount, loadInt(g.stepLength, sv3::stepCount));
+            settings.step.glide = load(g.stepGlide, 0.5f);
+            settings.step.retrigger = load(g.stepRetrigger, 1.0f) >= 0.5f;
+            for (std::size_t i = 0; i < settings.macros.size(); ++i)
+                settings.macros[i] = load(g.macros[i], 0.0f);
+            settings.chaosRateHz = load(g.chaosRate, 0.5f);
+        }
 
         settings.voice.matrix = {};
         for (const auto& m : pointers.matrix)

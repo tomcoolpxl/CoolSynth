@@ -160,3 +160,80 @@ the LFOs or the matrix (the one-voice level test is also unchanged).
 
 Also taken: the TODO now says to build the tool's target before running it. Adding it to the
 default build was the alternative; it would make every build slower for a tool run rarely.
+
+## D13. Riser ships before the noise generator (2026-11-13, phase 2.3)
+
+The recipe layers noise over a saw; noise is phase 3.1.
+
+- **Ship Riser now with the saw stack and add the noise layer in 3.1 (taken, recommended).** The
+  signature, an eight-bar rise in pitch, filter, width and an accelerating pulse, is all there.
+- Wait for 3.1. Nothing to audition in the meantime.
+
+## D14. What opens and closes the global envelope (2026-11-13, phase 2.3)
+
+- **The keys as played, before the arpeggiator (taken, recommended).** It opens with the first
+  key of a phrase (none other held) or, with trigger Every Note, with every key, retriggering
+  from its current level. It closes when the last key and the pedal are up and no latched arp
+  notes remain. A riser under an arp keeps rising while the chord is held.
+- The voices: open while any voice sounds. A release tail would hold it open, and every arp
+  step would count as a new note.
+- The arp's notes. The envelope would restart on every step.
+
+## D15. Synced global-envelope times (2026-11-13, phase 2.3)
+
+- **One set of millisecond times, read as at 120 BPM and scaled by 120 / tempo when sync is on;
+  bank files may write `8bars` or `2beats` (taken, recommended).** One parameter per stage; at
+  120 BPM a bar is 2000 ms. The generic editor shows the 120 BPM milliseconds until the real UI.
+- Separate bar and beat parameters for each stage. Twice the parameters, two ways to set the
+  same thing.
+- Times always in beats when synced, with their own range. The same parameter would mean
+  different units depending on another switch, worse for automation.
+
+## D16. Step modulator details (2026-11-13, phase 2.3)
+
+- **Values -1..1; slide per step with one shared glide (the share of a step a slide takes);
+  retrigger on by default (taken, recommended).** With retrigger on it restarts at the first
+  note after silence, like the global LFOs, so a pattern starts on the first step in the
+  standalone. Off, it follows the host's song position while the transport plays.
+- Retrigger off by default. Patterns would sit on the song's grid in a DAW without a setting,
+  but in the standalone each phrase would start on an arbitrary step.
+- A glide time per step. Sixteen more parameters for a rarely needed difference.
+
+## D17. The chaos source (2026-11-13, phase 2.3)
+
+- **A random walk: a new random target every 0.5 to 1.5 periods of its rate, through two
+  smoothing stages; one parameter, the rate (taken, recommended).** Wanders without corners
+  (largest step 0.0013 per sub-block at 1 Hz), bounded to -1..1.
+- A chaotic attractor (Lorenz, logistic map). More "chaotic" in name, but it orbits a fixed
+  shape and needs scaling per parameter set.
+- A second "smoothness" parameter. S&H on a global LFO already gives the stepped version.
+
+## D18. Macros are smoothed (2026-11-13, phase 2.3)
+
+- **Each macro moves toward its setting with a 10 ms time constant, per sub-block; the first
+  block starts at the setting (taken, recommended).** A macro on a cutoff or level does not
+  zipper when automated or turned.
+- No smoothing. Host automation would step the destination once per block.
+
+## D19. Envelope-time destinations read once per note (2026-11-13, phase 2.3)
+
+- **Evaluated when a note starts or retriggers, from that note's velocity, key and random value
+  and the part's current sources; an amount of 1 is 16 times longer (taken, recommended).** The
+  uses are velocity and key to envelope time, which are per-note values anyway. No cost while
+  the note plays.
+- Continuous modulation, rescaling the running segment every sub-block. An LFO could wobble a
+  decay, but it needs a segment rescale with an exponential per change.
+
+## D20. The loudness tool measures risers at their top (2026-11-13, phase 2.3)
+
+The tool measures 4 s of each preset; Riser takes 16 s to rise.
+
+- **When a matrix slot uses the global envelope, the tool first renders through the envelope's
+  delay, attack, hold and decay (up to 40 s) and measures the 4 s after (taken, recommended).**
+  Riser is judged at its loudest, so its top does not come out 10 dB above the bank.
+- Measure the first 4 s. Riser's top would be far too loud.
+- Leave risers out of the tool and set their master by hand. One more exception to remember.
+
+Found while testing, before commit: the global envelope read a block's settings after that
+block's events, so the first note after a change started it with stale times (the same ordering
+trap as the earlier preset leak). The settings are now applied before the events.

@@ -92,12 +92,16 @@ namespace coolsynth::synth::v3
         pendingReleased = false;
     }
 
-    void Voice::startPendingNote() noexcept
+    void Voice::startPendingNote(const VoiceGlobals& globals) noexcept
     {
         restartModules();
         pending = false;
         envelopeHold = generatorLatencySamples;
-        beginNote(pendingNote);
+        ModSources base = globals.sources;
+        if (globals.frames != nullptr && globals.frameCount > 0)
+            for (std::size_t k = 0; k < trackedGlobalSources.size(); ++k)
+                base.set(trackedGlobalSources[k], globals.frames[0].values[k]);
+        beginNote(pendingNote, base);
         snapToSettings();
         if (pendingReleased)
         {
@@ -117,9 +121,40 @@ namespace coolsynth::synth::v3
         released = false;
         lfoRestartPending = true;
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
-        const float keyOctaves = (static_cast<float>(start.note) - 60.0f) / 12.0f;
-        for (auto& e : envelopes)
-            e.noteOn(start.velocity, keyOctaves);
+        startEnvelopes(envelopeTimeFactors(sources, start, noteRandom)); // this voice's sources are current
+    }
+
+    std::array<float, envelopeCount> Voice::envelopeTimeFactors(const ModSources& base, const NoteStart& start, float random) const noexcept
+    {
+        std::array<float, envelopeCount> factors { 1.0f, 1.0f, 1.0f };
+        if (noteSlotCount == 0)
+            return factors;
+
+        ModSources s = base;
+        s.set(ModSource::velocity, start.velocity);
+        s.set(ModSource::releaseVelocity, 0.0f);
+        s.set(ModSource::key, std::clamp((static_cast<float>(start.note) - 60.0f) / 64.0f, -1.0f, 1.0f));
+        s.set(ModSource::noteRandom, random);
+
+        std::array<float, envelopeCount> octaves {};
+        for (int i = 0; i < noteSlotCount; ++i)
+        {
+            const auto& slot = noteSlots[static_cast<std::size_t>(i)];
+            float value = applyCurve(slot.curve, s.get(slot.source)) * slot.amount;
+            if (slot.via != ModSource::none)
+                value *= s.get(slot.via);
+            octaves[static_cast<std::size_t>(slot.destination - modDestination::envelopeTimeBase)] += value * matrixRateOctaves;
+        }
+        for (std::size_t i = 0; i < factors.size(); ++i)
+            factors[i] = std::exp2(std::clamp(octaves[i], -8.0f, 8.0f));
+        return factors;
+    }
+
+    void Voice::startEnvelopes(const std::array<float, envelopeCount>& timeFactors) noexcept
+    {
+        const float keyOctaves = (static_cast<float>(note.note) - 60.0f) / 12.0f;
+        for (std::size_t i = 0; i < envelopes.size(); ++i)
+            envelopes[i].noteOn(note.velocity, keyOctaves, timeFactors[i]);
     }
 
     void Voice::legato(const NoteStart& start) noexcept
@@ -156,7 +191,7 @@ namespace coolsynth::synth::v3
             e.noteOff();
     }
 
-    void Voice::beginNote(const NoteStart& start) noexcept
+    void Voice::beginNote(const NoteStart& start, const ModSources& base) noexcept
     {
         note = start;
         released = false;
@@ -181,9 +216,7 @@ namespace coolsynth::synth::v3
         for (auto& p : processors)
             p.slot.noteOn(context);
 
-        const float keyOctaves = (static_cast<float>(start.note) - 60.0f) / 12.0f;
-        for (auto& e : envelopes)
-            e.noteOn(start.velocity, keyOctaves);
+        startEnvelopes(envelopeTimeFactors(base, start, noteRandom));
     }
 
     void Voice::retarget(int noteNumber, float detuneCents, bool glide) noexcept
@@ -221,6 +254,11 @@ namespace coolsynth::synth::v3
             for (int k = 0; k < maxSlotParameters; ++k)
                 p.base.setTarget(k, s.p[static_cast<std::size_t>(k)]);
         }
+
+        noteSlotCount = 0;
+        for (int i = 0; i < settings.matrix.count; ++i)
+            if (modDestination::isEnvelopeTime(settings.matrix.slots[static_cast<std::size_t>(i)].destination))
+                noteSlots[static_cast<std::size_t>(noteSlotCount++)] = settings.matrix.slots[static_cast<std::size_t>(i)];
 
         for (std::size_t i = 0; i < envelopes.size(); ++i)
         {
@@ -261,7 +299,7 @@ namespace coolsynth::synth::v3
 
         applySettings(settings);
         if (pending && stealRemaining == 0)
-            startPendingNote();
+            startPendingNote(globals);
 
         int done = 0;
         while (done < numSamples && isActive())
@@ -277,7 +315,7 @@ namespace coolsynth::synth::v3
             {
                 stealRemaining -= n;
                 if (stealRemaining == 0)
-                    startPendingNote(); // the old note is silent now: start the waiting one from a clean slate
+                    startPendingNote(globals); // the old note is silent now: start the waiting one from a clean slate
             }
         }
     }

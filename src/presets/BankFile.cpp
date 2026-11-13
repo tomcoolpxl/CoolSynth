@@ -2,7 +2,10 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
+#include <cstring>
 #include <map>
+#include <utility>
 
 #include "parameters/ParameterIDs.h"
 #include "parameters/v3/PartParameters.h"
@@ -80,6 +83,35 @@ namespace coolsynth::presets
             return n >= 1 && n <= count ? n : 0;
         }
 
+        /** n from "s12" or "slide3" with the given prefix, 1..count; 0 when the key is not of that form. */
+        int indexedKey(const juce::String& key, const char* prefix, int count)
+        {
+            if (! key.startsWith(prefix))
+                return 0;
+            const auto rest = key.substring(static_cast<int>(std::strlen(prefix)));
+            if (rest.isEmpty() || ! rest.containsOnly("0123456789"))
+                return 0;
+            const int n = rest.getIntValue();
+            return n >= 1 && n <= count ? n : 0;
+        }
+
+        /** A global envelope time: milliseconds, or bars and beats as at 120 BPM ("8bars", "2beats"). */
+        juce::String envelopeTimeText(const juce::String& value)
+        {
+            const auto v = value.toLowerCase();
+            for (const auto& [suffix, ms] : { std::pair<const char*, double> { "bars", 2000.0 }, { "bar", 2000.0 },
+                                              { "beats", 500.0 }, { "beat", 500.0 } })
+                if (v.endsWith(suffix))
+                {
+                    const auto number = v.dropLastCharacters(static_cast<int>(std::strlen(suffix))).trim();
+                    if (number.isEmpty() || ! number.containsOnly("0123456789."))
+                        return {};
+                    const double total = number.getDoubleValue() * ms;
+                    return std::floor(total) == total ? juce::String(static_cast<juce::int64>(total)) : juce::String(total, 3);
+                }
+            return value;
+        }
+
         /** What a preset has set so far that later lines depend on. */
         struct PresetContext
         {
@@ -120,6 +152,9 @@ namespace coolsynth::presets
             if (t == "pan") return names[d::pan];
             if (t == "lfo1.rate") return names[d::lfo1Rate];
             if (t == "lfo2.rate") return names[d::lfo2Rate];
+            for (int e = 1; e <= d::envelopeTimes; ++e)
+                if (t == "env" + juce::String(e) + ".time")
+                    return names[d::envelopeTimeBase + e - 1];
 
             const int dot = t.indexOfChar('.');
             if (dot <= 0)
@@ -333,6 +368,81 @@ namespace coolsynth::presets
                         error("'" + v + "' is not a " + (k == "dst" ? "destination of this preset" : "modulation source"));
                     else
                         add(pv3::matrixParameterId(pv3::Part::a, slot, k.toRawUTF8()), resolved);
+                }
+                continue;
+            }
+
+            if (key == "genv" || key == "step" || key == "macros" || key == "chaos")
+            {
+                for (const auto& token : tokens)
+                {
+                    const int split = token.indexOfChar('=');
+                    const auto k = split > 0 ? token.substring(0, split) : token;
+                    const auto v = split > 0 ? token.substring(split + 1) : juce::String();
+                    if (split <= 0 || v.isEmpty())
+                    {
+                        error("'" + token + "' needs a key=value form");
+                        continue;
+                    }
+
+                    if (key == "genv")
+                    {
+                        if (! pv3::globalEnvelopeFields().contains(k))
+                        {
+                            error("'genv' has no setting '" + k + "'");
+                            continue;
+                        }
+                        const bool time = k == "delay" || k == "attack" || k == "hold" || k == "decay" || k == "release";
+                        const auto timeText = time ? envelopeTimeText(v) : v;
+                        if (timeText.isEmpty())
+                            error("'" + v + "' is not a time");
+                        else
+                            add(pv3::globalEnvelopeParameterId(pv3::Part::a, k.toRawUTF8()), timeText);
+                    }
+                    else if (key == "step")
+                    {
+                        if (k == "values" || k == "slides")
+                        {
+                            const auto items = juce::StringArray::fromTokens(v, ",", "");
+                            if (items.size() < 1 || items.size() > sv3::stepCount)
+                            {
+                                error("'" + k + "' takes 1 to 16 comma-separated values");
+                                continue;
+                            }
+                            for (int i = 0; i < items.size(); ++i)
+                            {
+                                auto item = items[i].trim();
+                                if (k == "slides")
+                                    item = item == "1" ? juce::String("on") : (item == "0" ? juce::String("off") : item);
+                                add(pv3::stepParameterId(pv3::Part::a, (k == "values" ? "s" : "slide") + juce::String(i + 1)), item);
+                            }
+                        }
+                        else if (pv3::stepFields().contains(k) || indexedKey(k, "s", sv3::stepCount) != 0
+                                 || indexedKey(k, "slide", sv3::stepCount) != 0)
+                        {
+                            add(pv3::stepParameterId(pv3::Part::a, k), v);
+                        }
+                        else
+                        {
+                            error("'step' has no setting '" + k + "'");
+                        }
+                    }
+                    else if (key == "macros")
+                    {
+                        const int macro = k.startsWith("macro") && k.length() == 6 ? k.getLastCharacters(1).getIntValue() : 0;
+                        if (macro < 1 || macro > sv3::macroCount)
+                            error("'macros' has no setting '" + k + "'");
+                        else
+                            add(pv3::macroParameterId(pv3::Part::a, macro), v);
+                    }
+                    else if (k == "rate")
+                    {
+                        add(pv3::chaosParameterId(pv3::Part::a), v);
+                    }
+                    else
+                    {
+                        error("'chaos' has no setting '" + k + "'");
+                    }
                 }
                 continue;
             }

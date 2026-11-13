@@ -72,7 +72,9 @@ namespace coolsynth::synth::v3
         Global sources that move inside a block. The part computes one frame of them for every
         voice sub-block of a render call, so a global LFO is as smooth as a local one.
     */
-    inline constexpr std::array<ModSource, 2> trackedGlobalSources { ModSource::glfo1, ModSource::glfo2 };
+    inline constexpr std::array<ModSource, 9> trackedGlobalSources { ModSource::glfo1, ModSource::glfo2, ModSource::genv,
+                                                                     ModSource::step, ModSource::chaos, ModSource::macro1,
+                                                                     ModSource::macro2, ModSource::macro3, ModSource::macro4 };
 
     struct GlobalFrame
     {
@@ -200,8 +202,11 @@ namespace coolsynth::synth::v3
         void applySettings(const VoiceSettings& settings) noexcept;
         void snapToSettings() noexcept;
         void restartModules() noexcept;
-        void beginNote(const NoteStart& start) noexcept;
-        void startPendingNote() noexcept;
+        void beginNote(const NoteStart& start, const ModSources& base) noexcept;
+        void startPendingNote(const VoiceGlobals& globals) noexcept;
+        /** Each envelope's time factor for a note, from the matrix's envelope-time slots. */
+        [[nodiscard]] std::array<float, envelopeCount> envelopeTimeFactors(const ModSources& base, const NoteStart& start, float random) const noexcept;
+        void startEnvelopes(const std::array<float, envelopeCount>& timeFactors) noexcept;
         void retarget(int noteNumber, float detuneCents, bool glide) noexcept;
         void renderSubBlock(float* left, float* right, int offset, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept;
         void advancePitch(int n, const VoiceSettings& settings) noexcept;
@@ -214,6 +219,8 @@ namespace coolsynth::synth::v3
         std::array<Lfo, localLfoCount> lfos;
         bool lfoRestartPending = false;
         MatrixOffsets matrixOffsets {};
+        std::array<MatrixSlot, matrixSlotCount> noteSlots {}; // the matrix slots read at note start
+        int noteSlotCount = 0;
         std::array<float, localLfoCount> lfoRateScale { 1.0f, 1.0f }; // from the previous sub-block's matrix
         float vcaGain = 1.0f;
         bool vcaSnap = true;

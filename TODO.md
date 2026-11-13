@@ -34,8 +34,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    and the test executable.
 14. Phase 2.2 done 2026-11-13: `src/synth/v3/ModMatrix.h`, 24 slots per part, bank `mod` lines,
    `tests/V3MatrixTests.cpp`; Juno Pad, 808 Boom and the Sync Lead sweep shipped.
-15. Phase 2.3: global envelope, step modulator, macros, chaos, envelope-time destinations;
-   Wobble and Riser.
+15. Phase 2.3 done 2026-11-13: global envelope, `GlobalModulators.h` (step, chaos), macros,
+   envelope-time destinations, `tests/V3GlobalModulatorTests.cpp`; Wobble and Riser shipped.
+16. Phase 2.4: delay sync and ping-pong; Clock Tower, Outrun, Pluck Drop.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

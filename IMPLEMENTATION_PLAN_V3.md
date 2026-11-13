@@ -102,6 +102,7 @@ Shipped 2026-11-13 with all three; envelope-time and slot-amount destinations mo
 or every-note trigger; STEP with 16 values, slides, division and length; four macros; chaos
 source. Tests: GENV retrigger rules, STEP timing. Ships: Engine Room Wobble, Main Stage
 Riser.
+Shipped 2026-11-13 with both; Riser waits for its noise layer until 3.1 (decision D13).
 
 2.4 Delay sync and ping-pong. Note-value times from transport, ping-pong mode, tape mode name
 for the existing dark feedback path. Tests: tap spacing at 1/8 and dotted 1/8. Ships: Clock

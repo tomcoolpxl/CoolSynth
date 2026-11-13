@@ -7,6 +7,7 @@
 
 #include "synth/Arpeggiator.h"
 #include "synth/HalfBand2x.h"
+#include "GlobalModulators.h"
 #include "Voice.h"
 
 /*
@@ -27,8 +28,12 @@
     voices on one note, spread in pitch and across the stereo field. Glide can be limited to
     overlapping keys.
 
-    The global LFOs run whether or not anything sounds, one value per voice sub-block, and
-    restart at the first note after silence. Tempo is the host's when it reports one, otherwise
+    The global LFOs, the step modulator, the chaos source and the smoothed macros run whether or
+    not anything sounds, one value per voice sub-block; the LFOs and the step modulator restart
+    at the first note after silence. The global envelope's gate follows the keys as played,
+    before the arpeggiator: it opens with the first key of a phrase (or every key) and closes when
+    the last key and the pedal are up and no latched arp notes remain. Synced, its times are
+    written as at 120 BPM and scale with the tempo. Tempo is the host's when it reports one, otherwise
     the arpeggiator's internal tempo, so the arp and synced LFOs always agree.
 */
 namespace coolsynth::synth::v3
@@ -41,6 +46,9 @@ namespace coolsynth::synth::v3
 
     enum class PlayMode : int { poly = 0, mono, legato, unison };
     enum class KeyPriority : int { last = 0, low, high };
+    /** When the global envelope starts: at the first key of a phrase (none other held), or at every key. */
+    enum class GenvTrigger : int { firstNote = 0, everyNote };
+    inline constexpr int macroCount = 4;
 
     struct PartSettings
     {
@@ -54,6 +62,12 @@ namespace coolsynth::synth::v3
         float bendRangeSemitones = 2.0f;
         bool glideLegatoOnly = false;
         std::array<LfoSettings, globalLfoCount> globalLfos {}; // GLFO1, GLFO2: one phase for every voice
+        Envelope::Parameters globalEnvelope {};  // GENV; times in seconds, as at 120 BPM when synced
+        bool globalEnvelopeSync = false;
+        GenvTrigger globalEnvelopeTrigger = GenvTrigger::firstNote;
+        StepSettings step {};
+        std::array<float, macroCount> macros {};
+        float chaosRateHz = 0.5f;
         ArpParametersV2 arp {};
     };
 
@@ -102,6 +116,9 @@ namespace coolsynth::synth::v3
         [[nodiscard]] int arpRingingNoteCountForTesting() const noexcept { return arpeggiator.getRingingNoteCountForTesting(); }
         [[nodiscard]] const Lfo& globalLfoForTesting(int index) const noexcept { return globalLfos[static_cast<std::size_t>(index)]; }
         [[nodiscard]] double tempoForTesting() const noexcept { return chunkClock.bpm; }
+        [[nodiscard]] const Envelope& globalEnvelopeForTesting() const noexcept { return globalEnvelope; }
+        [[nodiscard]] const StepModulator& stepForTesting() const noexcept { return stepModulator; }
+        [[nodiscard]] const GlobalFrame& lastFrameForTesting() const noexcept { return frames[static_cast<std::size_t>(std::max(0, globals.frameCount - 1))]; }
 
     private:
         struct VoiceState
@@ -127,6 +144,8 @@ namespace coolsynth::synth::v3
         void handleEvent(const EngineMidiEvent& event, const PartSettings& settings) noexcept;
         void updateGlobals(const PartSettings& settings) noexcept;
         [[nodiscard]] bool anyVoiceActive() const noexcept;
+        void trackKeys(const EngineMidiEvent& event, const PartSettings& settings) noexcept;
+        void closeGlobalEnvelopeIfUnheld(const PartSettings& settings) noexcept;
 
         void polyNoteOn(int note, float velocity, bool fromArp, const PartSettings& settings) noexcept;
         void polyNoteOff(int note, float releaseVelocity) noexcept;
@@ -158,6 +177,14 @@ namespace coolsynth::synth::v3
         std::vector<GlobalFrame> frames;
         LfoClock chunkClock {};
         double ppqPerHostSample = 0.0;
+        Envelope globalEnvelope;
+        Envelope::Parameters appliedGlobalEnvelope {};
+        StepModulator stepModulator;
+        ChaosSource chaos;
+        std::array<float, macroCount> macroValues {};
+        bool macrosPrimed = false;
+        std::array<bool, 128> keyIsDown {};
+        int keysDown = 0;
 
         std::uint64_t counter = 0;
         int lastNote = -1;

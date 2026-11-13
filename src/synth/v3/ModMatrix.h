@@ -13,7 +13,9 @@
     and, when a via source is set, by that source too, and adds the result into a destination's
     offset. Offsets are in the destination's normalised range (an amount of 1 sweeps a generic
     parameter over its whole range), except pitch, where 1 is 48 semitones, and the LFO rates,
-    where 1 is four octaves faster. The VCA destination scales the voice: its gain is 1 plus the
+    where 1 is four octaves faster, and the envelope times, where 1 is four octaves (16 times)
+    longer. Envelope times are read once per note, when the note starts or retriggers, from the
+    note's own sources and the part's current ones. The VCA destination scales the voice: its gain is 1 plus the
     offset, held between 0 and 1, so negative amounts duck and a unipolar LFO gates.
 
     Destination numbers are part of saved patches: add new ones only at the end.
@@ -55,7 +57,14 @@ namespace coolsynth::synth::v3
         inline constexpr int generatorSlots = 3;
         inline constexpr int processorBase = generatorBase + generatorSlots * generatorFields;
         inline constexpr int processorSlots = 3;
-        inline constexpr int count = processorBase + processorSlots * maxSlotParameters;
+        inline constexpr int envelopeTimeBase = processorBase + processorSlots * maxSlotParameters;
+        inline constexpr int envelopeTimes = 3;
+        inline constexpr int count = envelopeTimeBase + envelopeTimes;
+
+        [[nodiscard]] constexpr bool isEnvelopeTime(int destination) noexcept
+        {
+            return destination >= envelopeTimeBase && destination < envelopeTimeBase + envelopeTimes;
+        }
 
         namespace generatorField
         {
@@ -110,6 +119,7 @@ namespace coolsynth::synth::v3
         float vca = 0.0f;
         float pan = 0.0f;
         std::array<float, 2> lfoRateOctaves {};
+        std::array<float, modDestination::envelopeTimes> envelopeTimeOctaves {};
 
         void clear() noexcept
         {
@@ -119,12 +129,18 @@ namespace coolsynth::synth::v3
                 p.clear();
             pitchSemitones = vca = pan = 0.0f;
             lfoRateOctaves = {};
+            envelopeTimeOctaves = {};
         }
     };
 
     inline void addToDestination(int destination, float value, MatrixOffsets& out) noexcept
     {
         namespace d = modDestination;
+        if (d::isEnvelopeTime(destination))
+        {
+            out.envelopeTimeOctaves[static_cast<std::size_t>(destination - d::envelopeTimeBase)] += value * matrixRateOctaves;
+            return;
+        }
         if (destination >= d::processorBase)
         {
             const int index = destination - d::processorBase;

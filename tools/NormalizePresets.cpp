@@ -24,6 +24,7 @@
 #include <juce_dsp/juce_dsp.h>
 
 #include "parameters/ParameterIDs.h"
+#include "synth/v3/Modulation.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
 
@@ -231,6 +232,25 @@ namespace
         return lines.joinIntoString("\n");
     }
 
+    /** Seconds the global envelope takes to reach its sustain when a matrix slot uses it; else 0. */
+    double globalEnvelopeRiseSeconds(juce::AudioProcessorValueTreeState& state)
+    {
+        auto value = [&](const juce::String& id) { auto* p = state.getRawParameterValue(id); return p != nullptr ? p->load() : 0.0f; };
+        constexpr float genvSource = static_cast<float>(coolsynth::synth::v3::ModSource::genv);
+        bool used = false;
+        for (int slot = 1; slot <= 24; ++slot)
+        {
+            const juce::String prefix = "pA.mod" + juce::String(slot) + ".";
+            used = used || std::abs(value(prefix + "src") - genvSource) < 0.5f || std::abs(value(prefix + "via") - genvSource) < 0.5f;
+        }
+        if (! used)
+            return 0.0;
+        double ms = value("pA.genv.delay") + value("pA.genv.attack") + value("pA.genv.hold") + value("pA.genv.decay");
+        if (value("pA.genv.sync") >= 0.5f)
+            ms *= 120.0 / std::max(20.0f, value("arpInternalTempoBpm"));
+        return std::min(40.0, ms / 1000.0);
+    }
+
     juce::MidiBuffer buildStimulus(const coolsynth::presets::FactoryPreset& preset, bool firstBlock)
     {
         juce::MidiBuffer midi;
@@ -264,8 +284,12 @@ namespace
 
         coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset);
 
-        const int totalSamples = static_cast<int>(kRenderSeconds * kSampleRate);
-        juce::AudioBuffer<float> collected(2, totalSamples);
+        // A preset that routes the global envelope is measured once that envelope has risen
+        // (a riser is judged at its top, not at its quiet start).
+        const int prerollSamples = static_cast<int>(globalEnvelopeRiseSeconds(processor.getValueTreeState()) * kSampleRate);
+        const int measuredSamples = static_cast<int>(kRenderSeconds * kSampleRate);
+        const int totalSamples = prerollSamples + measuredSamples;
+        juce::AudioBuffer<float> collected(2, measuredSamples);
         collected.clear();
 
         juce::AudioBuffer<float> block(2, kBlockSize);
@@ -284,8 +308,13 @@ namespace
             juce::AudioBuffer<float> shortBlock(block.getArrayOfWritePointers(), 2, n);
             processor.processBlock(shortBlock, midi);
 
-            for (int ch = 0; ch < 2; ++ch)
-                collected.copyFrom(ch, rendered, shortBlock, ch, 0, n);
+            for (int i = 0; i < n; ++i)
+            {
+                const int at = rendered + i - prerollSamples;
+                if (at >= 0)
+                    for (int ch = 0; ch < 2; ++ch)
+                        collected.setSample(ch, at, shortBlock.getSample(ch, i));
+            }
             rendered += n;
         }
 

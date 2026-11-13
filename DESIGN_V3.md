@@ -259,6 +259,15 @@ sub-block. Bank files name destinations by key for the slot's type in that prese
 (`mod = src=lfo1 dst=g1.pw amount=0.3 via=wheel curve=unipolar`). Envelope-time and
 slot-amount destinations wait (decision D9).
 
+Shipped (phase 2.3, 2026-11-13): the global envelope is an `Envelope` in the part, its gate the
+played keys before the arpeggiator (first key of a phrase or every key; closed when keys, pedal
+and latched arp notes are gone), synced times written as at 120 BPM. `StepModulator` and
+`ChaosSource` in `src/synth/v3/GlobalModulators.h`: 16 values with per-step slide and a shared
+glide, division, length, retrigger or song-position lock; a smoothed random walk at a rate. Four
+macros, smoothed over 10 ms. All of them, with the global LFOs, reach the voices as one frame
+per sub-block. The matrix gained ENV1..3 time destinations, read once per note (decisions D14
+to D19).
+
 Hardwired routes that stay as plain parameters so simple patches need no matrix entries:
 ENV1 to VCA, ENV2 to P1 cutoff amount, velocity to VCA and to P1 cutoff, wheel to LFO1 depth,
 bend to pitch with range, key tracking per generator and per processor.

@@ -21,6 +21,10 @@
                             retrigger, delay and fade (ms), oneShot
         pA.glfo1, pA.glfo2  global LFOs, the same fields; synced and free-running by default
         pA.mod1 .. mod24    matrix slots: src, dst, amount (-1..1), via, curve
+        pA.genv.*           global envelope: delay .. release (ms), curves, loop, sync, trigger
+        pA.step.*           s1 .. s16 (-1..1), slide1 .. slide16, division, length, glide, retrigger
+        pA.macro1 .. 4      macros, 0..1
+        pA.chaos.rate       the chaos source's rate (Hz)
         pA.voice.*          env2ToP1, velToP1, glide (ms), drift (cents), wheelToLfo1
         pA.play.*           mode, priority, voices, unison, unisonDetune, unisonSpread,
                             bendRange, glideLegato
@@ -47,6 +51,14 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] const juce::StringArray& modSourceNames();
     [[nodiscard]] const juce::StringArray& modDestinationNames();
     [[nodiscard]] const juce::StringArray& modCurveNames();
+
+    /** The global envelope's fields, the step modulator's fixed fields, in parameter order. */
+    [[nodiscard]] const juce::StringArray& globalEnvelopeFields();
+    [[nodiscard]] const juce::StringArray& stepFields();
+    [[nodiscard]] juce::String globalEnvelopeParameterId(Part part, const char* field);
+    [[nodiscard]] juce::String stepParameterId(Part part, const juce::String& field);
+    [[nodiscard]] juce::String macroParameterId(Part part, int oneBasedMacro);
+    [[nodiscard]] juce::String chaosParameterId(Part part);
 
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part);
 
@@ -92,6 +104,21 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* curve = nullptr;
     };
 
+    struct GlobalModulatorPointers
+    {
+        EnvelopePointers envelope {}; // velocity and keyTime unused
+        std::atomic<float>* envelopeSync = nullptr;
+        std::atomic<float>* envelopeTrigger = nullptr;
+        std::array<std::atomic<float>*, coolsynth::synth::v3::stepCount> stepValues {};
+        std::array<std::atomic<float>*, coolsynth::synth::v3::stepCount> stepSlides {};
+        std::atomic<float>* stepDivision = nullptr;
+        std::atomic<float>* stepLength = nullptr;
+        std::atomic<float>* stepGlide = nullptr;
+        std::atomic<float>* stepRetrigger = nullptr;
+        std::array<std::atomic<float>*, coolsynth::synth::v3::macroCount> macros {};
+        std::atomic<float>* chaosRate = nullptr;
+    };
+
     struct PartParameterPointers
     {
         std::array<SlotParameterPointers, partGeneratorSlots> generators {};
@@ -100,6 +127,7 @@ namespace coolsynth::parameters::v3
         std::array<LfoPointers, partLocalLfos> lfos {};
         std::array<LfoPointers, partGlobalLfos> globalLfos {};
         std::array<MatrixSlotPointers, coolsynth::synth::v3::matrixSlotCount> matrix {};
+        GlobalModulatorPointers global {};
         std::atomic<float>* wheelToLfo1 = nullptr;
         std::atomic<float>* env2ToP1 = nullptr;
         std::atomic<float>* velToP1 = nullptr;

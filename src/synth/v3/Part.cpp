@@ -20,6 +20,10 @@ namespace coolsynth::synth::v3
         frames.assign(static_cast<std::size_t>((maxBlock * oversampleFactor) / Voice::maxSubBlock + 2), {});
         for (std::size_t i = 0; i < globalLfos.size(); ++i)
             globalLfos[i].prepare(voiceRate, seed ^ (0x51ED2700u + static_cast<std::uint32_t>(i)));
+        globalEnvelope.setSampleRate(voiceRate);
+        appliedGlobalEnvelope.attack = -1.0f; // forces the first apply
+        stepModulator.prepare(voiceRate);
+        chaos.prepare(voiceRate, seed ^ 0xC4A05000u);
         arpeggiator.prepare(hostRate);
 
         // The polyphase decimator has a short, fixed group delay: measure it once with an impulse.
@@ -61,6 +65,12 @@ namespace coolsynth::synth::v3
         globals = {};
         for (auto& l : globalLfos)
             l.reset();
+        globalEnvelope.reset();
+        stepModulator.reset();
+        chaos.reset();
+        macrosPrimed = false;
+        keyIsDown.fill(false);
+        keysDown = 0;
     }
 
     bool Part::anyVoiceActive() const noexcept
@@ -69,6 +79,54 @@ namespace coolsynth::synth::v3
             if (v.isActive())
                 return true;
         return false;
+    }
+
+    void Part::trackKeys(const EngineMidiEvent& event, const PartSettings& settings) noexcept
+    {
+        const auto note = static_cast<std::size_t>(std::clamp(static_cast<int>(event.noteNumber), 0, 127));
+        switch (event.type)
+        {
+            case EngineMidiEventType::noteOn:
+            {
+                const bool firstOfPhrase = keysDown == 0;
+                if (! keyIsDown[note])
+                {
+                    keyIsDown[note] = true;
+                    ++keysDown;
+                }
+                if (firstOfPhrase || settings.globalEnvelopeTrigger == GenvTrigger::everyNote)
+                    globalEnvelope.noteOn(1.0f, 0.0f);
+                break;
+            }
+            case EngineMidiEventType::noteOff:
+                if (keyIsDown[note])
+                {
+                    keyIsDown[note] = false;
+                    --keysDown;
+                }
+                closeGlobalEnvelopeIfUnheld(settings);
+                break;
+            case EngineMidiEventType::allNotesOff:
+            case EngineMidiEventType::resetControllers:
+                keyIsDown.fill(false);
+                keysDown = 0;
+                globalEnvelope.noteOff();
+                break;
+            case EngineMidiEventType::allSoundOff:
+                keyIsDown.fill(false);
+                keysDown = 0;
+                globalEnvelope.reset();
+                break;
+            default:
+                break;
+        }
+    }
+
+    void Part::closeGlobalEnvelopeIfUnheld(const PartSettings& settings) noexcept
+    {
+        const bool arpHolds = settings.arp.enabled && arpeggiator.getLatchedNoteCountForTesting() > 0;
+        if (keysDown == 0 && ! sustainDown && ! arpHolds)
+            globalEnvelope.noteOff();
     }
 
     int Part::activeVoiceCountForTesting() const noexcept
@@ -125,6 +183,25 @@ namespace coolsynth::synth::v3
         chunkClock.playing = hostTempo && transport.hostHasPpq && transport.hostIsPlaying;
         ppqPerHostSample = chunkClock.bpm / 60.0 / hostRate;
         chunkClock.ppq = transport.hostPpqAtBlockStart + static_cast<double>(offsetBase) * ppqPerHostSample;
+
+        // The global envelope reads this block's settings before any of its events can start it.
+        auto genvParameters = settings.globalEnvelope;
+        genvParameters.velocitySensitivity = 0.0f;
+        genvParameters.keyTimeTracking = 0.0f;
+        if (settings.globalEnvelopeSync)
+        {
+            const float scale = static_cast<float>(120.0 / std::max(1.0, chunkClock.bpm));
+            genvParameters.delay *= scale;
+            genvParameters.attack *= scale;
+            genvParameters.hold *= scale;
+            genvParameters.decay *= scale;
+            genvParameters.release *= scale;
+        }
+        if (! (genvParameters == appliedGlobalEnvelope))
+        {
+            globalEnvelope.setParameters(genvParameters);
+            appliedGlobalEnvelope = genvParameters;
+        }
 
         const bool arpEnabled = settings.arp.enabled;
         arpeggiator.setParameters(settings.arp);
@@ -203,6 +280,7 @@ namespace coolsynth::synth::v3
             if (midiOffset == next && midiIndex < events.size())
             {
                 const auto& event = events[midiIndex++];
+                trackKeys(event, settings);
                 const bool isNote = event.type == EngineMidiEventType::noteOn || event.type == EngineMidiEventType::noteOff;
                 if (! (arpEnabled && isNote)) // the arp already has it
                     handleEvent(event, settings);
@@ -229,6 +307,13 @@ namespace coolsynth::synth::v3
         const int length = count * oversampleFactor;
 
         // The global sources for this span, one frame per voice sub-block.
+        if (! macrosPrimed)
+        {
+            macroValues = settings.macros;
+            macrosPrimed = true;
+        }
+        const float macroCoefficient = 1.0f - std::exp(-static_cast<float>(Voice::maxSubBlock) / (0.01f * static_cast<float>(hostRate * oversampleFactor)));
+
         LfoClock clock = chunkClock;
         clock.ppq += static_cast<double>(start) * ppqPerHostSample;
         const double ppqPerVoiceSample = ppqPerHostSample / oversampleFactor;
@@ -239,8 +324,19 @@ namespace coolsynth::synth::v3
             LfoClock frameClock = clock;
             frameClock.ppq += static_cast<double>(f * Voice::maxSubBlock) * ppqPerVoiceSample;
             auto& frame = frames[static_cast<std::size_t>(f)];
-            for (std::size_t k = 0; k < globalLfos.size(); ++k)
-                frame.values[k] = globalLfos[k].advance(samples, settings.globalLfos[k], frameClock);
+            // Order as in trackedGlobalSources: GLFO1, GLFO2, GENV, STEP, CHAOS, MACRO1..4.
+            frame.values[0] = globalLfos[0].advance(samples, settings.globalLfos[0], frameClock);
+            frame.values[1] = globalLfos[1].advance(samples, settings.globalLfos[1], frameClock);
+            frame.values[2] = globalEnvelope.getValue();
+            globalEnvelope.advance(samples);
+            frame.values[3] = stepModulator.advance(samples, settings.step, frameClock);
+            frame.values[4] = chaos.advance(samples, settings.chaosRateHz);
+            for (int k = 0; k < macroCount; ++k)
+            {
+                auto& value = macroValues[static_cast<std::size_t>(k)];
+                value += (std::clamp(settings.macros[static_cast<std::size_t>(k)], 0.0f, 1.0f) - value) * macroCoefficient;
+                frame.values[static_cast<std::size_t>(5 + k)] = value;
+            }
         }
         globals.clock = clock;
         globals.ppqPerSample = ppqPerVoiceSample;
@@ -275,8 +371,13 @@ namespace coolsynth::synth::v3
         {
             case EngineMidiEventType::noteOn:
                 if (! anyVoiceActive())
+                {
+                    // The first note after silence restarts the global LFOs and the step modulator.
                     for (std::size_t k = 0; k < globalLfos.size(); ++k)
-                        globalLfos[k].restart(settings.globalLfos[k]); // the first note after silence
+                        globalLfos[k].restart(settings.globalLfos[k]);
+                    if (settings.step.retrigger)
+                        stepModulator.restart();
+                }
                 if (settings.playMode == PlayMode::poly)
                     polyNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp, settings);
                 else
@@ -307,7 +408,10 @@ namespace coolsynth::synth::v3
                 {
                     sustainDown = down;
                     if (! down)
+                    {
                         releaseSustained();
+                        closeGlobalEnvelopeIfUnheld(settings);
+                    }
                 }
                 break;
             }
