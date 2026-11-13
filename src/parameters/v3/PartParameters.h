@@ -7,6 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "SlotParameters.h"
+#include "synth/v3/Inserts.h"
 #include "synth/v3/Part.h"
 
 /*
@@ -32,6 +33,7 @@
                             semitones above the key, 0 unused), learn
         pA.mix.*            level (dB), pan, transpose, fine (cents), keyLow, keyHigh, velLow,
                             velHigh, fx (the share through the effects), arp
+        pA.i1 .. pA.i3      insert slots: type, p1 .. p8 (named and ranged by the type)
 
     Part B has the same parameters under "pB.". One parameter belongs to the patch as a whole:
         part.mode           A, Layer, Split, B
@@ -40,6 +42,7 @@ namespace coolsynth::parameters::v3
 {
     inline constexpr int partGeneratorSlots = 3;
     inline constexpr int partProcessorSlots = 3;
+    inline constexpr int partInsertSlots = coolsynth::synth::v3::insertSlotCount;
     inline constexpr int partEnvelopes = 3;
     inline constexpr int partLocalLfos = 2;
     inline constexpr int partGlobalLfos = 2;
@@ -153,6 +156,7 @@ namespace coolsynth::parameters::v3
     {
         std::array<SlotParameterPointers, partGeneratorSlots> generators {};
         std::array<SlotParameterPointers, partProcessorSlots> processors {};
+        std::array<SlotParameterPointers, partInsertSlots> inserts {};
         std::array<EnvelopePointers, partEnvelopes> envelopes {};
         std::array<LfoPointers, partLocalLfos> lfos {};
         std::array<LfoPointers, partGlobalLfos> globalLfos {};
@@ -183,4 +187,6 @@ namespace coolsynth::parameters::v3
     /** Fills everything except settings.arp, which lives outside the part. */
     void readPartSettings(const PartParameterPointers& pointers, coolsynth::synth::v3::PartSettings& settings) noexcept;
     void readPartMix(const PartParameterPointers& pointers, coolsynth::synth::v3::PartMix& mix) noexcept;
+    void readPartInserts(const PartParameterPointers& pointers,
+                         std::array<coolsynth::synth::v3::InsertSettings, partInsertSlots>& inserts) noexcept;
 }

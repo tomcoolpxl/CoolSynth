@@ -877,6 +877,7 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     {
         coolsynth::parameters::v3::readPartSettings(partParameterValues[part], settings.parts[part]);
         coolsynth::parameters::v3::readPartMix(partParameterValues[part], settings.mix[part]);
+        coolsynth::parameters::v3::readPartInserts(partParameterValues[part], settings.inserts[part]);
     }
     settings.partMode = static_cast<coolsynth::synth::v3::PartMode>(
         juce::jlimit(0, 3, static_cast<int>(std::lround(partModeValue != nullptr ? partModeValue->load() : 0.0f))));

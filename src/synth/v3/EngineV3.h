@@ -9,6 +9,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 
 #include "synth/GlobalFxRack.h"
+#include "Inserts.h"
 #include "Part.h"
 
 /*
@@ -27,9 +28,16 @@
     for (its polyphony, one voice for mono and legato, its unison count), is sure of eight, and
     gets more when the other asks for fewer.
 
+    Inserts. Each part runs through three insert slots of its own before the mix (Inserts.h):
+    any of the rack's ten effects, one per slot, so two parts can be treated differently.
+
     Mix. Each part has a level, a balance and an effects share: that share of the part passes
     through the rack, the rest joins after it, before the master gain. A sub layer set to 0
     stays out of the chorus and the plate.
+
+    Tempo. Synced delays and pumps, in the rack and in the inserts, follow the host's tempo and
+    song position while it plays; otherwise the arp's tempo and a beat count that starts again
+    with the first note after silence.
 */
 namespace coolsynth::synth::v3
 {
@@ -39,6 +47,7 @@ namespace coolsynth::synth::v3
     {
         std::array<PartSettings, partCount> parts {};
         std::array<PartMix, partCount> mix {};
+        std::array<std::array<InsertSettings, insertSlotCount>, partCount> inserts {};
         PartMode partMode = PartMode::aOnly;
         coolsynth::synth::DriveParametersV2 drive {};
         coolsynth::synth::PhaserParametersV2 phaser {};
@@ -78,6 +87,10 @@ namespace coolsynth::synth::v3
             return parts[static_cast<std::size_t>(std::clamp(partIndex, 0, partCount - 1))]->consumeLearnedChord();
         }
         [[nodiscard]] Part& partForTesting(int index = 0) noexcept { return *parts[static_cast<std::size_t>(index)]; }
+        [[nodiscard]] const InsertSlot& insertForTesting(int part, int slot) const noexcept
+        {
+            return inserts[static_cast<std::size_t>(part)][static_cast<std::size_t>(slot)];
+        }
 
         /** The voices a part's patch asks for: its polyphony, one for mono and legato, its unison count. */
         [[nodiscard]] static int voicesWanted(const PartSettings& settings) noexcept
@@ -134,12 +147,13 @@ namespace coolsynth::synth::v3
 
         coolsynth::synth::GlobalFxRack fxRack;
         juce::AudioBuffer<float> work;       // the stereo bus the rack runs on
-        juce::AudioBuffer<float> partBuffer; // one part's output
+        std::array<juce::AudioBuffer<float>, partCount> partBuffers; // each part's voices, then through its inserts
+        std::array<std::array<InsertSlot, insertSlotCount>, partCount> inserts;
         juce::AudioBuffer<float> dryBus;     // what goes past the rack
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;
         bool prepared = false;
         bool masterPrimed = false;
         double hostRate = 48000.0;
-        double pumpPhase = 0.0; // of the pump's division, while no host position drives it
+        double freeBeats = 0.0; // the beat count while no host position drives it
     };
 }

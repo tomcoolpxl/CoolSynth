@@ -182,6 +182,7 @@ if(BUILD_TESTING)
             tests/V3ChordTests.cpp
             tests/V3PartsTests.cpp
             tests/V3SampleTests.cpp
+            tests/V3InsertTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp

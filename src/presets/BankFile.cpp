@@ -333,11 +333,14 @@ namespace coolsynth::presets
 
             const int generator = slotNumber(key, "g", pv3::partGeneratorSlots);
             const int processor = generator == 0 ? slotNumber(key, "p", pv3::partProcessorSlots) : 0;
-            if (generator != 0 || processor != 0)
+            const int insert = generator == 0 && processor == 0 ? slotNumber(key, "i", pv3::partInsertSlots) : 0;
+            if (generator != 0 || processor != 0 || insert != 0)
             {
-                const pv3::SlotPath path { part, generator != 0 ? pv3::SlotKind::generator : pv3::SlotKind::processor,
-                                           generator != 0 ? generator : processor };
-                const auto table = generator != 0 ? sv3::GeneratorSlot::typeTable() : sv3::ProcessorSlot::typeTable();
+                const pv3::SlotPath path { part,
+                                           generator != 0 ? pv3::SlotKind::generator : (processor != 0 ? pv3::SlotKind::processor : pv3::SlotKind::insert),
+                                           generator != 0 ? generator : (processor != 0 ? processor : insert) };
+                const auto table = generator != 0 ? sv3::GeneratorSlot::typeTable()
+                                                  : (processor != 0 ? sv3::ProcessorSlot::typeTable() : sv3::insertTypeTable());
                 if (tokens.isEmpty())
                 {
                     error("'" + key + "' names a slot type first");
@@ -357,7 +360,7 @@ namespace coolsynth::presets
                 const auto& descriptor = table.descriptor(typeIndex);
                 if (generator != 0)
                     context.generatorTypes[static_cast<std::size_t>(generator - 1)] = typeIndex;
-                else
+                else if (processor != 0)
                     context.processorTypes[static_cast<std::size_t>(processor - 1)] = typeIndex;
                 add(pv3::typeParameterId(path), descriptor.name);
                 readPairs(1, [&](const juce::String& k) -> juce::String

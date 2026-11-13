@@ -700,3 +700,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/v3/GrainGenerator.h` ("Grain", generator type 9): up to twelve grains per voice with Position, Scan (0 freezes), Size, Density, Spray, Pitch Spray and Spread, in stereo.
 - [x] Preset: Observatory Granular Sky. The bank is complete at 68 presets.
 - [x] Added `tests/V3SampleTests.cpp` (12 tests): every sample bounded, levelled and seamless; Glass, Choir and Strings tuned to C4; the band levels; sample playback frame-exact at C4 and twice as fast an octave up; Start and Reverse; a one-shot ending in exact silence; a short loop clicking without the fade (0.56) and not with it (0.0106); cloud level across densities; never more than twelve grains; Spread; grains following the note and Pitch Spray scattering them; Scan and freeze; a grain patch in a part. Verified Debug build without warnings and `ctest` green; Granular Sky at 14 % of real time for eight-note chords.
+
+## After the review: recordings, corrections, inserts (2026-11-13)
+
+- [x] The repository moved to `E:\github\CoolSynth`. Both CC0 libraries (VSCO 2 CE, VCSL) are in `/audition`, with a page of 148 instrument previews and a model check; `tools/audition` holds the scripts and `CoolSynthRender` renders any preset to a WAV file.
+- [x] Modal generator corrected from recordings: Wood 1 : 4 : 10.1 : 19.1, a Tine material, partials lasting about 1/q. Marimba and Kalimba corrected and accepted by the user; Harp String corrected and not accepted yet.
+- [x] Three insert slots per part (`src/synth/v3/Inserts.h`), any of the ten rack effects per slot, as `pA.i1.*` parameters and `i1 =` lines in bank files. Added `tests/V3InsertTests.cpp` (7 tests): descriptors, every type equal to its master twin, inserts per part, an emptied slot, synced delay, bank lines, a preset through the processor. Debug build without warnings, `ctest` green.

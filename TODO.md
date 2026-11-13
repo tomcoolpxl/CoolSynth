@@ -80,8 +80,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;
-    - three insert slots per part (the rack stays as the master);
+    - three insert slots per part (the rack stays as the master): done, D93;
     - a granular effect as an insert type;
+    - Harp String: the user found neither version close to the recording (D94);
     - after the user's picks: key zones in the sample generator, sample files beside the plugin
       at the best quality, install options;
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each

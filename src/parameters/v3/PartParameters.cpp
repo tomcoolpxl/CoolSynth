@@ -434,6 +434,10 @@ namespace coolsynth::parameters::v3
         mix->addChild(std::make_unique<juce::AudioParameterBool>(makeId(mixParameterId(part, "arp")), "Part Arp", true));
         group->addChild(std::move(mix));
 
+        for (int i = 1; i <= partInsertSlots; ++i)
+            group->addChild(makeSlotGroup({ part, SlotKind::insert, i }, sv3::insertTypeTable(), "Insert " + juce::String(i),
+                                          sv3::insertType::off));
+
         return group;
     }
 
@@ -444,6 +448,8 @@ namespace coolsynth::parameters::v3
             p.generators[static_cast<std::size_t>(i)] = bindSlotPointers(state, { part, SlotKind::generator, i + 1 });
         for (int i = 0; i < partProcessorSlots; ++i)
             p.processors[static_cast<std::size_t>(i)] = bindSlotPointers(state, { part, SlotKind::processor, i + 1 });
+        for (int i = 0; i < partInsertSlots; ++i)
+            p.inserts[static_cast<std::size_t>(i)] = bindSlotPointers(state, { part, SlotKind::insert, i + 1 });
 
         for (int i = 0; i < partEnvelopes; ++i)
         {
@@ -680,5 +686,16 @@ namespace coolsynth::parameters::v3
         mix.velocityHigh = juce::jlimit(1, 127, whole(m.velHigh, 127));
         mix.fx = juce::jlimit(0.0f, 1.0f, value(m.fx, 1.0f));
         mix.arp = value(m.arp, 1.0f) >= 0.5f;
+    }
+
+    void readPartInserts(const PartParameterPointers& pointers,
+                         std::array<coolsynth::synth::v3::InsertSettings, partInsertSlots>& inserts) noexcept
+    {
+        for (std::size_t i = 0; i < inserts.size(); ++i)
+        {
+            const auto targets = readSlotTargets(pointers.inserts[i]);
+            inserts[i].type = juce::jlimit(0, sv3::insertType::count - 1, targets.typeIndex);
+            inserts[i].p = targets.p;
+        }
     }
 }

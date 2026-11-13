@@ -407,6 +407,11 @@ hiss, crackle, bandwidth, bit depth, sample rate), pump (tempo-synced ducker). E
 the transport (tempo, position, playing) for synced times, with the internal tempo as fallback
 exactly as the arpeggiator does today.
 
+Shipped (2026-11-13, decisions D81 and D93): three insert slots per part, `InsertSlot` in
+`src/synth/v3/Inserts.h`. A slot takes any of the rack's ten effects and runs that effect's own
+code; its parameters are `pA.i1.type` and `pA.i1.p1` to `p8`. The master section stays the fixed
+rack. Both parts' voices are rendered first, then each part passes its inserts and enters the mix.
+
 Shipped (phase 2.4, 2026-11-13), on the V2 rack until the effect slots arrive: the delay has
 Sync with 14 note values (1/32 to one bar, dotted and triplet) and Mode Tape or Ping-Pong. The
 engine sets the synced time from the host tempo, else the arp's internal tempo; the line holds

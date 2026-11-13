@@ -17,7 +17,7 @@ namespace coolsynth::synth::v3
     {
         const int block = std::max(1, maxBlockSize);
         hostRate = std::max(1000.0, sampleRate);
-        pumpPhase = 0.0;
+        freeBeats = 0.0;
         parts[0]->prepare(sampleRate, block, 0x5EEDu);
         parts[1]->prepare(sampleRate, block, 0xB5EEDu);
         // A key struck again under a new transpose is a note-off and a note-on; a mode change adds one event.
@@ -28,9 +28,13 @@ namespace coolsynth::synth::v3
             sent.fill(-1);
         wasActive = { true, false };
         mixPrimed = false;
+        for (auto& slots : inserts)
+            for (auto& slot : slots)
+                slot.prepare(sampleRate, block);
         fxRack.prepare(sampleRate, block, 2);
         work.setSize(2, block, false, true, true);
-        partBuffer.setSize(2, block, false, true, true);
+        for (auto& buffer : partBuffers)
+            buffer.setSize(2, block, false, true, true);
         dryBus.setSize(2, block, false, true, true);
         masterGain.reset(sampleRate, masterGainRampSeconds);
         masterGain.setCurrentAndTargetValue(1.0f);
@@ -44,9 +48,13 @@ namespace coolsynth::synth::v3
             part->reset();
         for (auto& sent : sentNote)
             sent.fill(-1);
+        for (auto& slots : inserts)
+            for (auto& slot : slots)
+                slot.clear();
         fxRack.clear();
         work.clear();
-        partBuffer.clear();
+        for (auto& buffer : partBuffers)
+            buffer.clear();
         dryBus.clear();
     }
 
@@ -173,7 +181,8 @@ namespace coolsynth::synth::v3
         if (work.getNumSamples() < n)
         {
             work.setSize(2, n, false, false, true);
-            partBuffer.setSize(2, n, false, false, true);
+            for (auto& partBuffer : partBuffers)
+                partBuffer.setSize(2, n, false, false, true);
             dryBus.setSize(2, n, false, false, true);
         }
 
@@ -184,23 +193,13 @@ namespace coolsynth::synth::v3
         if (active[0] && active[1])
             voices = voiceLimits(voices);
 
-        juce::AudioBuffer<float> stereo(work.getArrayOfWritePointers(), 2, n);
-        stereo.clear();
-        float* l = stereo.getWritePointer(0);
-        float* r = stereo.getWritePointer(1);
-        float* dryLeft = dryBus.getWritePointer(0);
-        float* dryRight = dryBus.getWritePointer(1);
-        bool dryUsed = false;
+        // The voices first: both parts, each into its own buffer.
+        std::array<bool, partCount> rendered {};
         bool soundOff = false;
         bool phraseStart = false;
-
         for (std::size_t p = 0; p < parts.size(); ++p)
         {
             auto& part = *parts[p];
-            const auto target = gainsFor(settings.mix[p]);
-            const auto from = mixPrimed ? lastGains[p] : target;
-            lastGains[p] = target;
-
             // A part the mode leaves out costs nothing once it has rung out.
             if (! active[p] && partEventCount[p] == 0 && ! part.isSounding())
                 continue;
@@ -212,13 +211,63 @@ namespace coolsynth::synth::v3
             patch.arp.enabled = patch.arp.enabled && settings.mix[p].arp;
             patch.tuneSemitones = settings.mix[p].fineCents * 0.01f;
 
-            float* pl = partBuffer.getWritePointer(0);
-            float* pr = partBuffer.getWritePointer(1);
-            part.render(pl, pr, n, std::span<const EngineMidiEvent>(partEvents[p].data(), static_cast<std::size_t>(partEventCount[p])),
-                        patch, transport);
+            part.render(partBuffers[p].getWritePointer(0), partBuffers[p].getWritePointer(1), n,
+                        std::span<const EngineMidiEvent>(partEvents[p].data(), static_cast<std::size_t>(partEventCount[p])), patch, transport);
             soundOff = part.consumeSoundOff() || soundOff;
             phraseStart = part.consumePhraseStart() || phraseStart;
+            rendered[p] = true;
+        }
 
+        if (soundOff)
+        {
+            for (auto& slots : inserts)
+                for (auto& slot : slots)
+                    slot.clear();
+            fxRack.clear();
+        }
+
+        // Tempo and beat: the host's while it plays, otherwise the arp's tempo and a count that
+        // starts again with the first note after silence. Synced delays and pumps follow them.
+        const bool hostTempo = transport.hostHasTempo && transport.hostBpm > 0.0;
+        const double bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.parts[0].arp.internalTempoBpm), 20.0, 400.0);
+        InsertContext beat;
+        beat.bpm = bpm;
+        beat.beatsPerSample = bpm / 60.0 / hostRate;
+        if (hostTempo && transport.hostHasPpq && transport.hostIsPlaying)
+        {
+            beat.beatsAtStart = transport.hostPpqAtBlockStart;
+            freeBeats = transport.hostPpqAtBlockStart + beat.beatsPerSample * n;
+        }
+        else
+        {
+            if (phraseStart)
+                freeBeats = 0.0;
+            beat.beatsAtStart = freeBeats;
+            freeBeats += beat.beatsPerSample * n;
+        }
+
+        // Then each part through its inserts and into the mix.
+        juce::AudioBuffer<float> stereo(work.getArrayOfWritePointers(), 2, n);
+        stereo.clear();
+        float* l = stereo.getWritePointer(0);
+        float* r = stereo.getWritePointer(1);
+        float* dryLeft = dryBus.getWritePointer(0);
+        float* dryRight = dryBus.getWritePointer(1);
+        bool dryUsed = false;
+        for (std::size_t p = 0; p < parts.size(); ++p)
+        {
+            const auto target = gainsFor(settings.mix[p]);
+            const auto from = mixPrimed ? lastGains[p] : target;
+            lastGains[p] = target;
+            if (! rendered[p])
+                continue;
+
+            juce::AudioBuffer<float> partAudio(partBuffers[p].getArrayOfWritePointers(), 2, n);
+            for (std::size_t slot = 0; slot < inserts[p].size(); ++slot)
+                inserts[p][slot].process(partAudio, settings.inserts[p][slot], beat);
+
+            const float* pl = partAudio.getReadPointer(0);
+            const float* pr = partAudio.getReadPointer(1);
             const bool dry = from.anyDry() || target.anyDry();
             if (dry && ! dryUsed)
             {
@@ -253,30 +302,17 @@ namespace coolsynth::synth::v3
         }
         mixPrimed = true;
 
-        if (soundOff)
-            fxRack.clear();
-
-        // A synced delay takes its time from the tempo the parts play at: the host's, else the arp's.
-        const bool hostTempo = transport.hostHasTempo && transport.hostBpm > 0.0;
-        const double bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.parts[0].arp.internalTempoBpm), 20.0, 400.0);
         auto delay = settings.delay;
         if (delay.sync)
             delay.timeMs = coolsynth::synth::delayDivisionMs(delay.division, bpm);
 
-        // The pump follows the beat: the host's song position while it plays, otherwise its own
-        // count at the tempo, restarted with the first note after silence.
         coolsynth::synth::ExtraFxParameters extra { settings.lofi, settings.flanger, settings.eq, settings.pump };
         {
             const auto& division = coolsynth::synth::delayDivisions[static_cast<std::size_t>(
                 std::clamp(settings.pump.division, 0, static_cast<int>(coolsynth::synth::delayDivisions.size()) - 1))];
-            extra.pump.phasePerSample = bpm / 60.0 / division.beats / hostRate;
-            if (hostTempo && transport.hostHasPpq && transport.hostIsPlaying)
-                pumpPhase = transport.hostPpqAtBlockStart / division.beats;
-            else if (phraseStart)
-                pumpPhase = 0.0;
-            pumpPhase -= std::floor(pumpPhase);
-            extra.pump.phaseAtStart = pumpPhase;
-            pumpPhase += extra.pump.phasePerSample * n;
+            const double phase = beat.beatsAtStart / division.beats;
+            extra.pump.phaseAtStart = phase - std::floor(phase);
+            extra.pump.phasePerSample = beat.beatsPerSample / division.beats;
         }
         fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, delay, settings.reverb, settings.compressor, extra);
 

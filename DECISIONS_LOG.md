@@ -1252,3 +1252,41 @@ was put back after the tool's usual random wobble.
   what puts every claim about a sound in front of the user's ears, and the Museum room (D88)
   needs the same side-by-side. The scripts read the libraries in `/audition` and write only
   there.
+
+## D93. How the insert slots are built (2026-11-13)
+
+Carries out D81. Choices inside the build:
+
+- **Each insert slot owns a rack of its own and switches on only the stage its type names
+  (taken, recommended).** An insert is the same code as the same effect in the master section,
+  with the same smoothing: a test renders each type once as an insert and once in the master
+  rack and finds them equal to 0.00001. Cost: six more racks in memory (a 4 s delay line and a
+  plate each), 7 ms of preparation instead of 2; an empty slot costs nothing while playing.
+- Rewrap each effect as a slot module with its own arena. The form voice modules have, but ten
+  effects to rewrite and a second copy of their smoothing logic to keep in step.
+- **All ten rack effects can be inserts: Drive, LoFi, Phaser, Flanger, Chorus, Delay, Reverb,
+  Compressor, EQ, Pump (taken).** A pump on one part and not the other is the main reason for
+  the last one.
+- **Insert parameters are slot parameters: `pA.i1.type`, `pA.i1.p1` to `p8`, named and ranged by
+  the type; bank files write `i1 = Delay time=375 mix=0.25` and `b.i2 = Chorus ...` (taken).**
+- **Both parts are rendered before either goes through its inserts (taken).** The beat that
+  synced delays and pumps follow starts again with the first note after silence, and that is
+  known only once the voices have run. The master pump now takes its phase from the same beat
+  count; changing its division while it runs free makes it jump to that division's phase.
+- An insert's tail is cut when its slot is emptied or its type changes, and when the part mode
+  leaves the part out and its voices have rung out.
+
+## D94. The user's verdicts on the model check (2026-11-13)
+
+- **Marimba: the new one is closer. Kalimba: the new one is closer.** D90 and D91 stand.
+- **Harp String: neither is close.** The correction of D91 is not enough; the preset stays as
+  corrected until a better one is found and goes back to the audition page.
+
+## D95. The user's sample picks (2026-11-13)
+
+74 instrument folders ticked on the audition page, 2,368 files, 4.1 GB as recorded
+(`tools/audition/picks.txt`): the Steinway B grand and two uprights, two harpsichords, folk
+harp, dan tranh, bowed strings in ten sustained and short articulations, brass, six organ
+stops, recorders, ocarinas, saxophones and other winds, the mallet instruments and bells, a
+kalimba, the wine glasses, three TX81Z sounds and three timpani. How they are stored, loaded
+and installed is the next decision; D83 already allows files beside the plugin.
