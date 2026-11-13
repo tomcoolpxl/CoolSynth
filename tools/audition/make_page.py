@@ -11,6 +11,9 @@ recordings.html  the archive: the raw recordings the instruments were picked fro
                  picks, and the model checks already judged.
 
 A section whose index file is missing is left out. Verdicts and picks are kept in the browser.
+Every player's address carries its file's time of writing, so a clip rendered again is never
+played from the browser's memory of the old one. RENEWED names the sounds changed since the
+user last judged them, with a line on what changed; their cards say so.
 
 usage: python make_page.py <audition-dir>
 """
@@ -26,6 +29,18 @@ esc = html.escape
 # Model checks the user has judged (decision D94): they move to the archive page.
 JUDGED_CHECKS = {"marimba", "kalimba", "harp"}
 
+# Changed since the verdicts of 13 November (decisions D105, D106): "group|title" and what changed.
+RENEWED = {
+    "Museum|DX7 E.PIANO 1": "You heard a buzz on top. The two detuned operators were five times too far apart, so the upper harmonics "
+                            "beat about ten times a second. They are now a fifth of a hertz apart, as in the reference.",
+    "Model check|Harp String, second try": "You missed the echo. The preset clips were dry and mono against a stereo recording in a room; "
+                                            "the last player is new: the preset as it is played, with its own reverb.",
+    "Granular effect|Granular effect": "You found it too sharp sometimes. The cloud replayed note attacks at full strength; it now turns a "
+                                       "grain down as it passes an attack. The last player is the octave-up clip as it was, to compare.",
+    "Conservatory|Recorders": "You heard overdrive on the chord. The reverb's input was soft-clipped, which put distortion 40 dB under any "
+                              "hot chord; that clip is gone (for every preset with reverb).",
+}
+
 
 def load(*parts):
     path = os.path.join(audition, *parts)
@@ -36,15 +51,18 @@ def load(*parts):
 
 
 def player(label, source):
+    path = os.path.join(audition, *source.split("/"))
+    stamp = f"?v={int(os.path.getmtime(path))}" if os.path.exists(path) else ""
     return (f'<label class="player"><span>{esc(label)}</span>'
-            f'<audio controls preload="none" src="{esc(source)}"></audio></label>')
+            f'<audio controls preload="none" src="{esc(source + stamp)}"></audio></label>')
 
 
 def verdict(group, title, options):
     """A verdict menu and a note, saved under group and title."""
     key = f"{group}|{title}"
     choices = "".join(f"<option>{esc(o)}</option>" for o in options)
-    return (f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}" aria-label="Verdict on {esc(title)}">'
+    renewed = f'<p class="renewed"><b>Changed since your verdict, listen again.</b> {esc(RENEWED[key])}</p>' if key in RENEWED else ""
+    return (renewed + f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}" aria-label="Verdict on {esc(title)}">'
             f'<option value="">not judged yet</option>{choices}</select>'
             f'<input type="text" data-note="{esc(key)}" placeholder="a note, if something is off (optional)" aria-label="Note on {esc(title)}"></div>')
 
@@ -147,6 +165,7 @@ button.quiet { background: transparent; color: var(--soft); border: 1px solid va
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
 .card.judged { background: var(--done); border-color: var(--accent); }
 .facts { margin: 0 0 10px; color: var(--soft); font-size: .88rem; max-width: 80ch; }
+.renewed { margin: 10px 0 0; padding: 8px 10px; border-left: 4px solid var(--accent); background: var(--bg); font-size: .9rem; max-width: 84ch; }
 .players { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 14px; }
 .player span { display: block; font-size: .8rem; color: var(--soft); margin-bottom: 2px; }
 audio { width: 100%; height: 34px; display: block; }
@@ -191,6 +210,7 @@ listening = """<!doctype html>
   <h1>Listening page</h1>
   <p class="lead">What is waiting for your ear, newest first. Set a verdict under each sound, add a note where something is off,
   then press <b>Copy my verdicts</b> and paste the text into the chat. Verdicts are kept in this browser, so you can stop and come back.</p>
+  __RENEWED__
 </header>
 <div id="bar"><div class="bar-in">
   <nav>__NAV__</nav>
@@ -265,7 +285,12 @@ refresh();
 </body>
 </html>
 """
-listening = (listening.replace("__STYLE__", STYLE).replace("__ONE__", ONE_AT_A_TIME)
+renewed_line = ""
+if RENEWED:
+    names = ", ".join(key.split("|", 1)[1] for key in RENEWED)
+    renewed_line = (f'<p class="lead"><b>{len(RENEWED)} sounds changed after your verdicts</b> and are marked on their cards: {esc(names)}. '
+                    'The other 39 are as you judged them.</p>')
+listening = (listening.replace("__STYLE__", STYLE).replace("__ONE__", ONE_AT_A_TIME).replace("__RENEWED__", renewed_line)
              .replace("__NAV__", "".join(f'<a href="#{anchor}">{esc(label)}</a>' for anchor, label in nav))
              .replace("__SECTIONS__", "\n".join(sections)))
 with open(os.path.join(audition, "index.html"), "w", encoding="utf-8", newline="\n") as handle:
