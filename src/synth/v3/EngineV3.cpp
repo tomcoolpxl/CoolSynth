@@ -14,6 +14,7 @@ namespace coolsynth::synth::v3
         work.setSize(2, block, false, true, true);
         masterGain.reset(sampleRate, masterGainRampSeconds);
         masterGain.setCurrentAndTargetValue(1.0f);
+        masterPrimed = false;
         prepared = true;
     }
 
@@ -47,6 +48,13 @@ namespace coolsynth::synth::v3
 
         fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, settings.delay, settings.reverb, settings.compressor);
 
+        // The first block after prepare starts at the setting; ramping from unity would make the
+        // first notes after loading louder than the patch.
+        if (! masterPrimed)
+        {
+            masterGain.setCurrentAndTargetValue(std::max(0.0f, settings.masterGainLinear));
+            masterPrimed = true;
+        }
         masterGain.setTargetValue(std::max(0.0f, settings.masterGainLinear));
         float* l = stereo.getWritePointer(0);
         float* r = stereo.getWritePointer(1);

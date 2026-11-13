@@ -523,3 +523,13 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Fixed the patch and state loader to validate against every registered parameter instead of the static list, which would have dropped every part parameter; All Sound Off now also clears decimator memory and effect tails; processor state format 9, patch format 8.
 - [x] Ported tests: `tests/EngineTestAdapter.h` runs the 35 arpeggiator and 10 effect-rack regressions on V3; the half-band check has its own suite; V2-only suites and the six editor tests removed; MIDI-learn and patch tests use V3 IDs.
 - [x] Verified Debug build without warnings, `ctest` green (173 tests), Release standalone and VST3 built, loudness tool builds and runs on the new engine.
+
+## V3 phase 1.5: the bank-file pipeline and the first 14 presets (2026-11-13)
+
+- [x] Added `src/presets/BankFile.h/.cpp`: plain-text bank files, one per room, one line per slot or section, mapped to parameter IDs by descriptor key, with unknown keys, types and settings reported by file and line.
+- [x] Rewrote `src/presets/FactoryPresets`: the bank files in `resources/presets` are embedded (`CoolSynthFactoryBank`) and parsed once; applying a preset resets every parameter, loads a named slot type's defaults, and lets each parameter read its value from text, reporting what it cannot read or what lies out of range.
+- [x] Descriptor parameters carry option names (VA shapes, ladder modes) for bank files and the generic editor; a percent value is a fraction unless written with `%` (bare numbers were divided by 100 before, which made `res=0.2` silently 0.002).
+- [x] The loudness tool reads bank entries, refuses a bank with errors, and with `--apply` writes each preset's master line back into its file; two passes converge.
+- [x] The master gain starts at its setting after prepare instead of ramping from unity, which made the first notes after loading louder; the master default is now -6 dB.
+- [x] Authored 14 presets: Workshop (Init Saw, Init Pulse, Init Sine, Init Arp), Studio 1982 (Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead), Engine Room (Pure Sub, Donk, Fat Analog), Main Stage (Reese, Supersaw), normalised to -15 to -18.6 LUFS.
+- [x] Added `tests/V3BankTests.cpp` (mapping, error reports, type defaults on apply, unreadable values, every preset sounds and stays within full scale), a clean-bank patch test and a master-priming engine test. Verified Debug build without warnings, `ctest` green, Release standalone and VST3 built.

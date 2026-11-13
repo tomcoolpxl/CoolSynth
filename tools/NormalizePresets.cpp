@@ -3,8 +3,8 @@
 // Renders each factory preset through the real plugin signal path, measures
 // integrated K-weighted loudness (ITU-R BS.1770 with gating) plus sample peak,
 // and prints the masterGainDb correction needed to land at -18 LUFS without
-// exceeding -3 dBFS peak. Output is a CSV that an external script can apply
-// back into FactoryPresets.cpp.
+// exceeding -3 dBFS peak. Writes a CSV; with --apply it also writes each
+// corrected master line back into the bank files in resources/presets.
 
 #include <algorithm>
 #include <array>
@@ -13,6 +13,8 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <map>
+#include <tuple>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -178,31 +180,55 @@ namespace
         return { lufs, peakDb };
     }
 
+    const coolsynth::presets::PresetEntry* findEntry(const coolsynth::presets::FactoryPreset& preset, juce::StringRef id)
+    {
+        for (const auto& entry : preset.entries)
+            if (entry.parameterId == id)
+                return &entry;
+        return nullptr;
+    }
+
     float lookupMasterGainDb(const coolsynth::presets::FactoryPreset& preset)
     {
-        namespace ids = coolsynth::parameters::ids;
-        for (int i = 0; i < preset.valueCount; ++i)
-            if (juce::StringRef(preset.values[i].parameterId) == juce::StringRef(ids::masterGainDb))
-                return preset.values[i].value;
-        return -12.0f;
+        const auto* entry = findEntry(preset, coolsynth::parameters::ids::masterGainDb);
+        return entry != nullptr ? entry->text.getFloatValue() : -6.0f; // the parameter's default
     }
 
     /** True unless the preset sets part A to mono, legato or unison. */
     bool lookupPolyMode(const coolsynth::presets::FactoryPreset& preset)
     {
-        for (int i = 0; i < preset.valueCount; ++i)
-            if (juce::StringRef(preset.values[i].parameterId) == juce::StringRef("pA.play.mode"))
-                return static_cast<int>(preset.values[i].value) == 0;
-        return true;
+        const auto* entry = findEntry(preset, "pA.play.mode");
+        return entry == nullptr || entry->text.trim().equalsIgnoreCase("poly");
     }
 
     bool lookupArpEnabled(const coolsynth::presets::FactoryPreset& preset)
     {
-        namespace ids = coolsynth::parameters::ids;
-        for (int i = 0; i < preset.valueCount; ++i)
-            if (juce::StringRef(preset.values[i].parameterId) == juce::StringRef(ids::arpEnabled))
-                return preset.values[i].value >= 0.5f;
-        return false;
+        const auto* entry = findEntry(preset, coolsynth::parameters::ids::arpEnabled);
+        return entry != nullptr && entry->text.trim().equalsIgnoreCase("on");
+    }
+
+    /** Sets, or adds after the header, the master line of one preset in a bank file's text. */
+    juce::String setMasterLine(const juce::String& text, const juce::String& presetName, double masterDb)
+    {
+        auto lines = juce::StringArray::fromLines(text);
+        const auto value = "master = " + juce::String(masterDb, 1).trimCharactersAtEnd("0").trimCharactersAtEnd(".");
+        const int header = lines.indexOf("[" + presetName + "]");
+        if (header < 0)
+            return text;
+        int insertAt = header + 1;
+        for (int i = header + 1; i < lines.size() && ! lines[i].trim().startsWithChar('['); ++i)
+        {
+            const auto key = lines[i].upToFirstOccurrenceOf("=", false, false).trim();
+            if (key == "master")
+            {
+                lines.set(i, value);
+                return lines.joinIntoString("\n");
+            }
+            if (lines[i].trim().isNotEmpty())
+                insertAt = i + 1;
+        }
+        lines.insert(insertAt, value);
+        return lines.joinIntoString("\n");
     }
 
     juce::MidiBuffer buildStimulus(const coolsynth::presets::FactoryPreset& preset, bool firstBlock)
@@ -269,9 +295,28 @@ namespace
     }
 }
 
-int main()
+int main(int argc, char* argv[])
 {
     juce::ScopedJuceInitialiser_GUI juceInit;
+
+    // --apply [bank directory]: write the corrected master gains into the bank files.
+    bool apply = false;
+    auto bankDirectory = juce::File::getCurrentWorkingDirectory().getChildFile("../resources/presets");
+    for (int a = 1; a < argc; ++a)
+    {
+        const juce::String arg(argv[a]);
+        if (arg == "--apply")
+            apply = true;
+        else
+            bankDirectory = juce::File::getCurrentWorkingDirectory().getChildFile(arg);
+    }
+    std::vector<std::tuple<juce::String, juce::String, double>> corrections; // file, preset, master dB
+
+    if (! coolsynth::presets::getFactoryBankErrors().isEmpty())
+    {
+        std::cout << "The bank has errors:\n" << coolsynth::presets::getFactoryBankErrors().joinIntoString("\n") << "\n";
+        return 1;
+    }
 
     const int presetCount = coolsynth::presets::getFactoryPresetCount();
     std::cout << "Normalizing " << presetCount << " factory presets to "
@@ -331,6 +376,7 @@ int main()
 
         if (std::abs(appliedDelta) > 0.25)
             ++adjusted;
+        corrections.emplace_back(preset.sourceFile, preset.name, newMasterDb);
     }
 
     const auto csvPath = juce::File::getCurrentWorkingDirectory().getChildFile("preset_loudness.csv");
@@ -338,5 +384,27 @@ int main()
 
     std::cout << "\nWrote " << csvPath.getFullPathName() << "\n";
     std::cout << adjusted << " of " << presetCount << " presets need a non-trivial adjustment.\n";
+
+    if (apply)
+    {
+        std::map<juce::String, juce::String> files;
+        for (const auto& [file, name, db] : corrections)
+        {
+            auto source = bankDirectory.getChildFile(file);
+            if (! source.existsAsFile())
+            {
+                std::cout << "Missing bank file " << source.getFullPathName() << "\n";
+                return 1;
+            }
+            if (files.find(file) == files.end())
+                files[file] = source.loadFileAsString();
+            files[file] = setMasterLine(files[file], name, db);
+        }
+        for (const auto& [file, text] : files)
+        {
+            bankDirectory.getChildFile(file).replaceWithText(text.endsWith("\n") ? text : text + "\n");
+            std::cout << "Updated " << bankDirectory.getChildFile(file).getFullPathName() << "\n";
+        }
+    }
     return 0;
 }

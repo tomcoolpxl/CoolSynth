@@ -324,18 +324,23 @@ public:
             tempDir.deleteRecursively();
         }
 
-        beginTest("factory_bank_starts_with_init_and_names_only_existing_parameters");
+        beginTest("factory_bank_reads_cleanly_and_every_preset_applies_without_problems");
         {
-            expect(coolsynth::presets::getFactoryPresetCount() >= 1);
-            expect(juce::String(coolsynth::presets::getFactoryPreset(0).name) == "Init");
+            const auto& errors = coolsynth::presets::getFactoryBankErrors();
+            expect(errors.isEmpty(), errors.joinIntoString("\n"));
+            expect(coolsynth::presets::getFactoryPresetCount() >= 14);
+            expect(coolsynth::presets::getFactoryPreset(0).category == "Workshop");
 
             SynthAudioProcessor processor;
+            juce::StringArray names;
             for (int index = 0; index < coolsynth::presets::getFactoryPresetCount(); ++index)
             {
                 const auto& preset = coolsynth::presets::getFactoryPreset(index);
-                for (int i = 0; i < preset.valueCount; ++i)
-                    expect(processor.getValueTreeState().getParameter(preset.values[i].parameterId) != nullptr,
-                           juce::String(preset.name) + " names an unknown parameter");
+                expect(preset.category.isNotEmpty(), preset.name + " has no room");
+                expect(! names.contains(preset.name), "two presets are called " + preset.name);
+                names.add(preset.name);
+                const auto problems = coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset);
+                expect(problems.isEmpty(), problems.joinIntoString("\n"));
             }
         }
 

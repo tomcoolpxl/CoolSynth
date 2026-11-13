@@ -4,6 +4,12 @@ project(CoolSynth VERSION 0.1.0 LANGUAGES CXX)
 
 add_subdirectory(external/JUCE)
 
+file(GLOB COOLSYNTH_BANK_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resources/presets/*.csbank)
+juce_add_binary_data(CoolSynthFactoryBank
+    HEADER_NAME FactoryBankData.h
+    NAMESPACE FactoryBankData
+    SOURCES ${COOLSYNTH_BANK_FILES})
+
 juce_add_binary_data(CoolSynthControllerProfiles
     SOURCES
         resources/controller_profiles/minilab3_arturia_mode.json
@@ -48,6 +54,7 @@ add_custom_target(UpdateBuildInfo ALL
 # drift apart.
 set(COOLSYNTH_SHARED_SOURCES
     src/BuildInfo.cpp
+    src/presets/BankFile.cpp
     src/presets/FactoryPresets.cpp
     src/presets/PatchState.cpp
     src/midi/ControllerProfile.cpp
@@ -107,6 +114,7 @@ target_link_libraries(CoolSynth
         juce::juce_audio_utils
         juce::juce_dsp
         CoolSynthControllerProfiles
+        CoolSynthFactoryBank
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)
 
@@ -126,6 +134,7 @@ if(BUILD_TESTING)
             tests/V3ProcessorTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
+            tests/V3BankTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests
@@ -152,6 +161,7 @@ if(BUILD_TESTING)
             juce::juce_gui_basics
             juce::juce_dsp
             CoolSynthControllerProfiles
+            CoolSynthFactoryBank
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags
     )
@@ -192,5 +202,6 @@ target_link_libraries(CoolSynthPresetNormalizer
         juce::juce_gui_basics
         juce::juce_dsp
         CoolSynthControllerProfiles
+        CoolSynthFactoryBank
         juce::juce_recommended_config_flags
         juce::juce_recommended_warning_flags)

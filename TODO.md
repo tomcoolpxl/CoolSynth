@@ -20,9 +20,12 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    `tests/V3VoiceTests.cpp`; the VA generator, ladder and envelope rebuilt from first principles.
 10. Phase 1.4 done 2026-11-13: `Part`, `EngineV3`, `PartParameters`, the processor on V3, the
    generic editor, the V2 engine, editor and bank deleted, tests ported (`EngineTestAdapter.h`).
-11. Phase 1.5: v3 preset pipeline: YAML by slot and descriptor key, a generator writing the
-   table, the loudness tool on the new table; author Workshop, Studio 1982, Engine Room and Reese.
-12. Phase 2.1: LFO class (local and global, sync, shapes), then the matrix (2.2).
+11. Phase 1.5 done 2026-11-13: bank files in `resources/presets`, `presets/BankFile`, the
+   loudness tool with `--apply`; 14 presets in Workshop, Studio 1982, Engine Room, Main Stage.
+12. Audition the 14 presets; retune by ear what the ear flags, then rerun the loudness tool with
+   `--apply` (from the build directory).
+13. Phase 2.1: LFO class (local and global, sync, shapes) and Juno Pad.
+14. Phase 2.2: the matrix, 808 Boom and the Sync Lead sweep.
 
 ## Carried over from the V2 backlog
 

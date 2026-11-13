@@ -60,7 +60,7 @@ namespace coolsynth::synth::v3
                    { "res",    "Resonance", 0.0f,  1.0f,     0.1f,    Skew::linear,      Unit::percent,  true },
                    { "drive",  "Drive",     0.0f,  24.0f,    0.0f,    Skew::linear,      Unit::decibels, true },
                    { "key",    "Key Track", 0.0f,  1.0f,     0.5f,    Skew::linear,      Unit::percent,  false },
-                   { "mode",   "Mode",      0.0f,  3.0f,     0.0f,    Skew::linear,      Unit::choice,   false },
+                   { "mode",   "Mode",      0.0f,  3.0f,     0.0f,    Skew::linear,      Unit::choice,   false, "LP24|LP12|BP|HP12" },
                    { "bass",   "Bass",      0.0f,  1.0f,     0.5f,    Skew::linear,      Unit::percent,  true } }},
                 paramCount };
             return d;

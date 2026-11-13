@@ -394,6 +394,31 @@ public:
             expect(buffer.getMagnitude(0, 0, kBlock) < 1.0e-6f);
         }
 
+        beginTest("master_gain_starts_at_its_setting_after_prepare");
+        {
+            // A note at the very first block must not come out louder while the gain ramps from unity.
+            auto engine = std::make_unique<EngineV3>();
+            engine->prepare(kRate, kBlock, 2);
+            EngineSettings settings;
+            settings.part = basicPart();
+            settings.masterGainLinear = 0.25f;
+            juce::AudioBuffer<float> buffer(2, kBlock);
+            const std::vector<EngineMidiEvent> events { on(69) };
+            float firstPeak = 0.0f, laterPeak = 0.0f;
+            for (int b = 0; b < 40; ++b)
+            {
+                buffer.clear();
+                engine->render(buffer, b == 0 ? std::span<const EngineMidiEvent>(events) : std::span<const EngineMidiEvent>(), settings);
+                const float peak = buffer.getMagnitude(0, 0, kBlock);
+                if (b < 2)
+                    firstPeak = std::max(firstPeak, peak);
+                else
+                    laterPeak = std::max(laterPeak, peak);
+            }
+            logMessage("peak in the first two blocks " + juce::String(firstPeak, 4) + ", later " + juce::String(laterPeak, 4));
+            expect(firstPeak <= laterPeak * 1.02f);
+        }
+
         beginTest("mono_output_buffer_gets_the_sum");
         {
             auto engine = std::make_unique<EngineV3>();

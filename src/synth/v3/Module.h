@@ -38,6 +38,7 @@ namespace coolsynth::synth::v3
         Skew skew = Skew::linear;
         Unit unit = Unit::generic;
         bool modulatable = true;
+        const char* options = nullptr; // '|'-separated names of the integer positions, or null
     };
 
     struct ModuleDescriptor

@@ -61,5 +61,6 @@ namespace coolsynth::synth::v3
         juce::AudioBuffer<float> work; // the stereo part output the rack runs on
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;
         bool prepared = false;
+        bool masterPrimed = false;
     };
 }

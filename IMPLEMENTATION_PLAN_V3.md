@@ -61,6 +61,17 @@ normaliser pointed at the new table. Ships: Workshop (Init Saw, Init Pulse, Init
 Noise, Init Arp), Studio 1982 (all six), Engine Room (Pure Sub, 808 Boom, Donk), Main Stage
 (Reese).
 
+Shipped 2026-11-13: no YAML and no generator. The bank is plain text in
+`resources/presets/*.csbank`, one file per room, one line per slot (`p1 = Ladder cutoff=800
+res=0.2`), embedded in the binary and parsed at startup (`presets/BankFile`); each value is read
+by its parameter's own text parsing, so it means what the generic editor shows, and naming a slot
+type loads that type's defaults. The loudness tool writes each preset's master line back with
+`--apply`. Shipped: Workshop (Init Saw, Init Pulse, Init Sine, Init Arp), Studio 1982 (Prophet
+Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead without its sweep), Engine Room (Pure Sub,
+Donk, Fat Analog), Main Stage (Reese, Supersaw without its sub layer). Moved on: Juno Pad to 2.1
+(pulse width from an LFO), 808 Boom and the Sync Lead sweep to 2.2 (pitch envelope through the
+matrix), Init Noise to 3.1 (noise generator).
+
 1.6 Audition UI, throwaway. The UI is designed last (phase 9), so until then auditioning uses
 JUCE's generic editor, which phase 1.4 already ships: every parameter as a slider, named and
 formatted by its slot's current type. Replace it only if auditioning becomes impractical, and
@@ -73,9 +84,13 @@ random, 16-step), Hz and tempo division from transport or internal tempo, phase,
 fade-in, one-shot. Used for LFO1..2 (local) and GLFO1..2 (global). Tests: period at each
 division against the transport, retrigger phase, fade-in curve.
 
+2.1 also ships Studio 1982 Juno Pad.
+
 2.2 Matrix. 24 slots, sources, destinations enumerated from descriptors, via, curve, per-sub-
 block evaluation into offsets. Tests: arithmetic, every destination reachable without NaN,
 amount scaling by via.
+
+2.2 also ships Engine Room 808 Boom and the pitch sweep of Studio 1982 Sync Lead.
 
 2.3 Global envelope, step modulator, macros, chaos. GENV with bar-length stages and first-note
 or every-note trigger; STEP with 16 values, slides, division and length; four macros; chaos
@@ -93,6 +108,8 @@ Night Drive, Laser Lead, Sunset Strings, Gated Pad through LFO to VCA), Main Sta
 divider. Tests: spectra, LFSR period. Ships: Bedroom Tape Flute, Observatory Solar Wind
 (band-pass inside the generator until SVF lands), Arcade (Coin Pulse, Boss Bass, Power-Up,
 Static Hit).
+
+3.1 also ships Workshop Init Noise.
 
 3.2 FM generator, two operators. Carrier and modulator with ratio, fine, index, feedback, index
 envelope through ENV3 or the matrix. Tests: ratio tuning, index to bandwidth, feedback stability.

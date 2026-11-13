@@ -1,0 +1,26 @@
+# Main Stage: modern, wide, processed. Most of this room waits for later modules; these two
+# are what the phase 1 engine already does well.
+
+[Reese]
+room = Main Stage
+g1 = VA shape=saw oct=-1 fine=7 pan=-0.25 level=0.8
+g2 = VA shape=saw oct=-1 fine=-7 pan=0.25 level=0.8
+p1 = Ladder cutoff=850 res=0.2 key=0.3 bass=0.6
+env1 = attack=4 decay=200 sustain=1 release=140 velocity=0.3
+voice = env2ToP1=0.06 glide=20
+play = mode=legato glideLegato=on
+drive = on amount=0.18 mix=0.75
+master = -12
+
+[Supersaw]
+room = Main Stage
+# Seven saws on the JP-8000 detune curve with the low end high-passed away.
+# The sub layer underneath arrives with parts in phase 7.2.
+g1 = VA shape=saw unison=7 detune=50 spread=1 mix=0.75 rand=1 level=0.85
+p1 = Ladder mode=hp12 cutoff=140 res=0 key=0
+p2 = Ladder cutoff=12000 res=0.05 key=0.3
+env1 = attack=8 decay=500 sustain=0.9 release=420 velocity=0.5
+voice = env2ToP1=0
+reverb = on size=0.75 damping=0.45 mix=0.24
+delay = on time=375 feedback=0.25 mix=0.12
+master = -3

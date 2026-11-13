@@ -75,7 +75,7 @@ struct ModuleDescriptor    { ModuleType type; const char* name; CostClass cost; 
 
 The descriptor tells the parameter layer how to display P1..P8 for that type, the voice how
 much `SlotMemory` to reserve, and the allocator how expensive a voice is. Descriptors are the
-single source for UI labels, preset YAML keys and test expectations.
+single source for UI labels, bank file keys and test expectations.
 
 ### 3.4 Slot memory and type changes
 
@@ -334,6 +334,17 @@ The generator script maps descriptor names (`cutoff`) to generic IDs (`pA.p1.p1`
 descriptor table exported by a small tool, so preset YAML never mentions P1..P8. Factory presets
 are still compiled in as a table; the normaliser and the master-gain script carry over.
 
+Shipped (phase 1.5, 2026-11-13), replacing the YAML and generator above: bank files in
+`resources/presets/*.csbank` are embedded and parsed at startup. `g1..g3` and `p1..p3` name the
+slot type and then its parameters by descriptor key; `env1..env3`, `voice`, `play` take part
+parameters by name; `arp`, `drive`, `chorus`, `delay`, `reverb`, `phaser`, `compressor` take on or
+off first; `master` sets the output. The parser only maps keys to parameter IDs and reports
+unknown keys with file and line; applying a preset resets every parameter, loads a named slot
+type's defaults, and has each parameter read its value from text, reporting anything it cannot
+read or that lies out of range. Descriptor parameters may carry option names (`Sine|Triangle|
+Saw|Pulse`, `LP24|LP12|BP|HP12`), which both the bank files and the generic editor use; a percent
+value is a fraction unless written with a `%` sign.
+
 ## 10. Realtime rules
 
 - No allocation, locks or blocking calls on the audio thread. Arenas are sized at `prepare`.
@@ -385,7 +396,7 @@ groups must stay clean. Nothing UI-specific is built before phase 9.
 | `GlobalFxRack` fixed order | effect slots; each block becomes an effect type |
 | `BlockRenderParametersV2` | `PartParameters` with slot arrays; built the same way per block |
 | `patchFormatVersion = 7` | 8, older rejected |
-| `FactoryPresets.cpp` bank | regenerated from the V3 YAML, old bank deleted |
+| `FactoryPresets.cpp` bank | bank files in `resources/presets`, parsed at startup; old bank deleted |
 
 Deleted after phase 1: the fixed voice path, poly-mod and Vintage parameters, the V2 preset
 YAML and generator snippet path, and the tests that only exercised them.

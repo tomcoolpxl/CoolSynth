@@ -47,7 +47,7 @@ namespace coolsynth::synth::v3
         {
             static const ModuleDescriptor d {
                 "VA", 1,
-                {{ { "shape",  "Shape",       0.0f,  3.0f,   2.0f,  Skew::linear,  Unit::generic, true },
+                {{ { "shape",  "Shape",       0.0f,  3.0f,   2.0f,  Skew::linear,  Unit::generic, true, "Sine|Triangle|Saw|Pulse" },
                    { "pw",     "Pulse Width", 0.05f, 0.95f,  0.5f,  Skew::linear,  Unit::percent, true },
                    { "unison", "Unison",      1.0f,  7.0f,   1.0f,  Skew::linear,  Unit::choice,  false },
                    { "detune", "Detune",      0.0f,  200.0f, 20.0f, Skew::squared, Unit::cents,   true },

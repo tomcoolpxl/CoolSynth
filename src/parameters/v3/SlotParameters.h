@@ -43,10 +43,13 @@ namespace coolsynth::parameters::v3
     inline constexpr int semitoneMin = -12, semitoneMax = 12;
     inline constexpr float fineCentsMin = -50.0f, fineCentsMax = 50.0f;
 
-    /** Text for a descriptor value in its unit, e.g. "632.5 Hz", "25 %", "-3.0 dB". */
+    /** Lower case without spaces, '-', '_' or '/': how option names and choices are compared. */
+    [[nodiscard]] juce::String normaliseOptionName(const juce::String& name);
+
+    /** Text for a descriptor value in its unit, e.g. "632.5 Hz", "25 %", "-3.0 dB", "Saw", "Saw > Pulse 40 %". */
     [[nodiscard]] juce::String formatDescriptorValue(const coolsynth::synth::v3::ParameterDescriptor& descriptor,
                                                      float units);
-    /** Parses the number in text, honouring "kHz" and "s" multipliers; returns false when there is none. */
+    /** Parses an option name or the number in text, honouring "kHz" and "s" multipliers; false when there is neither. */
     [[nodiscard]] bool parseDescriptorValue(const coolsynth::synth::v3::ParameterDescriptor& descriptor,
                                             const juce::String& text,
                                             float& units);
@@ -71,6 +74,12 @@ namespace coolsynth::parameters::v3
 
         [[nodiscard]] const coolsynth::synth::v3::ModuleDescriptor& currentDescriptor() const noexcept;
         [[nodiscard]] bool isUsedByCurrentType() const noexcept;
+
+        /** Text in the current type's units to a normalised value; false if it is not a value or lies outside the range. */
+        [[nodiscard]] bool tryNormalisedForText(const juce::String& text, float& normalised) const;
+
+        /** The current type's default for this parameter, normalised; 0 when the type does not use it. */
+        [[nodiscard]] float currentTypeDefault() const noexcept;
 
     private:
         const int index;

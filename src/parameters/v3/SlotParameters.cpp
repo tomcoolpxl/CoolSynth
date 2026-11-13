@@ -61,8 +61,26 @@ namespace coolsynth::parameters::v3
         return slotPrefix(path) + "." + suffix;
     }
 
+    juce::String normaliseOptionName(const juce::String& name)
+    {
+        return name.toLowerCase().removeCharacters(" -_/");
+    }
+
     juce::String formatDescriptorValue(const ParameterDescriptor& descriptor, float units)
     {
+        if (descriptor.options != nullptr)
+        {
+            const auto names = juce::StringArray::fromTokens(descriptor.options, "|", "");
+            const float position = juce::jlimit(0.0f, static_cast<float>(names.size() - 1), units);
+            const int lower = static_cast<int>(std::floor(position));
+            const float fraction = position - static_cast<float>(lower);
+            if (fraction < 0.005f)
+                return names[lower];
+            if (fraction > 0.995f)
+                return names[lower + 1];
+            return names[lower] + " > " + names[lower + 1] + " " + juce::String(juce::roundToInt(fraction * 100.0f)) + " %";
+        }
+
         switch (descriptor.unit)
         {
             case Unit::hertz:
@@ -92,6 +110,19 @@ namespace coolsynth::parameters::v3
     bool parseDescriptorValue(const ParameterDescriptor& descriptor, const juce::String& text, float& units)
     {
         const juce::String trimmed = text.trim();
+        if (descriptor.options != nullptr)
+        {
+            const auto names = juce::StringArray::fromTokens(descriptor.options, "|", "");
+            const auto wanted = normaliseOptionName(trimmed);
+            for (int i = 0; i < names.size(); ++i)
+            {
+                if (normaliseOptionName(names[i]) == wanted)
+                {
+                    units = static_cast<float>(i);
+                    return true;
+                }
+            }
+        }
         int end = 0;
         while (end < trimmed.length())
         {
@@ -111,8 +142,8 @@ namespace coolsynth::parameters::v3
             value *= 1000.0f;
         else if (descriptor.unit == Unit::milliseconds && suffix.startsWith("s"))
             value *= 1000.0f;
-        else if (descriptor.unit == Unit::percent)
-            value /= 100.0f;
+        else if (descriptor.unit == Unit::percent && suffix.startsWith("%"))
+            value /= 100.0f; // "25 %" is a quarter; a bare "0.25" already is the fraction
 
         units = value;
         return true;
@@ -149,6 +180,29 @@ namespace coolsynth::parameters::v3
     bool GenericSlotParameter::isUsedByCurrentType() const noexcept
     {
         return index < currentDescriptor().usedParams;
+    }
+
+    bool GenericSlotParameter::tryNormalisedForText(const juce::String& text, float& normalised) const
+    {
+        if (! isUsedByCurrentType())
+            return false;
+        const auto& d = currentDescriptor().params[static_cast<std::size_t>(index)];
+        float units = 0.0f;
+        if (! parseDescriptorValue(d, text, units))
+            return false;
+        const float tolerance = 1.0e-4f * std::abs(d.max - d.min);
+        if (units < d.min - tolerance || units > d.max + tolerance)
+            return false;
+        normalised = coolsynth::synth::v3::unitsToNormalised(d, units);
+        return true;
+    }
+
+    float GenericSlotParameter::currentTypeDefault() const noexcept
+    {
+        if (! isUsedByCurrentType())
+            return 0.0f;
+        const auto& d = currentDescriptor().params[static_cast<std::size_t>(index)];
+        return coolsynth::synth::v3::unitsToNormalised(d, d.def);
     }
 
     juce::String GenericSlotParameter::getName(int maximumStringLength) const
