@@ -51,7 +51,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 22. Phase 4.2 done 2026-11-13: `src/synth/v3/ShaperProcessors.h` (crusher, folder), the Quantized
    matrix curve, `tests/V3ShaperTests.cpp`; SCC Lead's crusher, Basement Acid, Rust Bass, Concrete
    Pad, Siren, Main Stage Hyper Lead. 51 presets.
-23. Phase 4.3: per-voice drive processor, ring and FM combine audit; Basement Metal Hit.
+23. Phase 4.3 done 2026-11-13: the Drive processor, the combine audit (no change needed),
+   `V3DriveTests`; Basement Metal Hit. 52 presets.
+24. Phase 4.4: formant and comb processors; Bedroom Vinyl Choir, Basement Furnace Drone, Main
+   Stage Neuro Growl.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

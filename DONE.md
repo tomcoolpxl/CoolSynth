@@ -627,3 +627,11 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Presets: SCC Lead's 4-bit crusher; Basement Acid, Rust Bass, Concrete Pad, Siren (`06-basement.csbank`); Main Stage Hyper Lead. 51 presets.
 - [x] Added `tests/V3ShaperTests.cpp` (5 tests): 4-bit output on a grid of 0.125, 16 bits transparent within 2e-5, at most 1000 new values a second at 1 kHz, mix 0 dry; fold harmonics growing with drive and bounded; ADAA aliases -94 dB against -72 dB for a naive folder; no DC with symmetry, mix 0 as the half-sample-delayed dry; quantized routes on whole semitones and sixteenths.
 - [x] Fixed the recurring LNK1236 link failure after new bank files: incremental linking is off in Debug (stale `.ilk` databases were the cause; decision D29 corrected). Verified Debug build without warnings and `ctest` green; Concrete Pad 26.6 %, the other new presets under 5 % of real time.
+
+## V3 phase 4.3: per-voice drive and the combine audit (2026-11-13)
+
+- [x] Added `DriveProcessor` (processor type 5) to `src/synth/v3/ShaperProcessors.h`: Soft, Hard and Tube curves with first-order antiderivative anti-aliasing, 0 to 36 dB over the ladder's headroom, peak-normalised by the larger peak, Tone, Mix.
+- [x] Audited ring and FM combine: ring of a sine by a saw at rms 0.40 with its worst alias -79.9 dB, combine FM at unit level with -93.6 dB; kept as regression tests, no change needed.
+- [x] Preset: Basement Metal Hit. 52 presets.
+- [x] Added `V3DriveTests` (4 tests): 0 dB nearly clean, every curve bounded at 36 dB; soft odd and tube even harmonics; hard curve ADAA -55 dB against -41 dB naive; the combine audit. Verified Debug build without warnings and `ctest` green; Metal Hit 18 % of real time for eight-note chords.
+- [x] Rule recorded in GEMINI.md: no heredocs in shell commands; scripts and commit messages go through files.

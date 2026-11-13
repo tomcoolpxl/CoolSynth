@@ -148,6 +148,7 @@ Shipped 2026-11-13 with all six (decisions D40 to D43).
 
 4.3 Per-voice drive and ring combine polish. Drive processor type; ring and FM combine audited
 for level and aliasing. Ships: Basement Metal Hit, Main Stage Neuro Growl (formant pending).
+Shipped 2026-11-13 with Metal Hit; Neuro Growl moves to 4.4 (decision D46).
 
 4.4 Formant and comb. Five-vowel morph with size and resonance; tuned comb with feedback and
 polarity. Ships: Bedroom Vinyl Choir, Basement Furnace Drone, Main Stage Neuro Growl.

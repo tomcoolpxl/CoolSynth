@@ -342,7 +342,7 @@ loudness-normalised):
 | Room | Shipped | Waiting for |
 | --- | --- | --- |
 | Workshop | Init Saw, Init Pulse, Init Sine, Init Arp, Init Noise, Init FM, Init Wavetable | none |
-| Basement | Acid, Rust Bass, Concrete Pad (no lo-fi yet), Siren | Metal Hit (4.3), Furnace Drone (comb, 4.4), the lo-fi on Concrete Pad (5.2) |
+| Basement | Acid, Rust Bass, Metal Hit, Concrete Pad (no lo-fi yet), Siren | Furnace Drone (comb, 4.4), the lo-fi on Concrete Pad (5.2) |
 | Studio 1982 | Juno Pad, Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |

@@ -87,6 +87,11 @@ rounding to 2^bits levels (bits continuous), Mix. Folder: a sine folder with fir
 antiderivative anti-aliasing, Drive, Symmetry with a DC blocker, Mix. The matrix gained a sixth
 curve, Quantized (decisions D40 to D42).
 
+Shipped (phase 4.3, 2026-11-13): `DriveProcessor` in `src/synth/v3/ShaperProcessors.h`,
+processor type 5: Soft, Hard and Tube curves with first-order antiderivative anti-aliasing, the
+ladder's headroom, peak normalisation by the larger peak, Tone, Mix. The ring and FM combine
+modes were audited and left as they are (decisions D44, D45).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

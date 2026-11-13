@@ -10,6 +10,7 @@
 #include "synth/HalfBand2x.h"
 #include "synth/v3/ModMatrix.h"
 #include "synth/v3/ShaperProcessors.h"
+#include "synth/v3/VaGenerator.h"
 
 namespace
 {
@@ -226,3 +227,220 @@ public:
 };
 
 static V3ShaperTests v3ShaperTests;
+
+namespace
+{
+    double harmonicDb(const std::vector<float>& x, double f, int k, double rate)
+    {
+        // Single-bin DFT at k f over a whole number of cycles of f.
+        const int cycles = static_cast<int>(std::floor(static_cast<double>(x.size() - 4800) * f / rate));
+        const int n = static_cast<int>(std::lround(cycles * rate / f));
+        double re1 = 0.0, im1 = 0.0, re = 0.0, im = 0.0;
+        for (int i = 0; i < n; ++i)
+        {
+            const double v = x[static_cast<std::size_t>(4800 + i)];
+            const double t = 2.0 * juce::MathConstants<double>::pi * f * i / rate;
+            re1 += v * std::cos(t);
+            im1 += v * std::sin(t);
+            re += v * std::cos(k * t);
+            im += v * std::sin(k * t);
+        }
+        return 10.0 * std::log10((re * re + im * im) / (re1 * re1 + im1 * im1));
+    }
+}
+
+class V3DriveTests final : public juce::UnitTest
+{
+public:
+    V3DriveTests() : juce::UnitTest("V3 per-voice drive and ring audit", "V3") {}
+
+    void runTest() override
+    {
+        SlotMemory memory;
+        auto drive = [&](DriveProcessor::Curve curve, float db, std::vector<float> x)
+        {
+            auto d = std::make_unique<DriveProcessor>();
+            d->prepare(kRate, kSubBlock, memory);
+            SlotParams p;
+            p.p[DriveProcessor::drive] = db;
+            p.p[DriveProcessor::curve] = static_cast<float>(curve);
+            p.p[DriveProcessor::tone] = 1.0f;
+            p.p[DriveProcessor::mix] = 1.0f;
+            return run(*d, p, std::move(x));
+        };
+
+        beginTest("zero_db_is_nearly_clean_and_every_curve_stays_bounded");
+        {
+            const auto x = sine(440.0, 0.5f, 9600);
+            const auto y = drive(DriveProcessor::Curve::soft, 0.0f, x);
+            float error = 0.0f;
+            for (std::size_t i = 1; i < x.size(); ++i)
+                error = std::max(error, std::abs(y[i] - 0.5f * (x[i] + x[i - 1])));
+            expectLessThan(error, 0.02f, "0 dB soft drive");
+            for (auto curve : { DriveProcessor::Curve::soft, DriveProcessor::Curve::hard, DriveProcessor::Curve::tube })
+            {
+                float peak = 0.0f;
+                for (float v : drive(curve, 36.0f, sine(220.0, 1.0f, 48000)))
+                    peak = std::max(peak, std::abs(v));
+                expectLessOrEqual(peak, 1.1f, "curve " + juce::String(static_cast<int>(curve)));
+            }
+        }
+
+        beginTest("soft_is_odd_and_tube_adds_even_harmonics");
+        {
+            const auto soft = drive(DriveProcessor::Curve::soft, 24.0f, sine(500.0, 0.8f, 96000));
+            const auto tube = drive(DriveProcessor::Curve::tube, 24.0f, sine(500.0, 0.8f, 96000));
+            expectGreaterThan(harmonicDb(soft, 500.0, 3, kRate), -20.0, "soft makes a third harmonic");
+            expectLessThan(harmonicDb(soft, 500.0, 2, kRate), -80.0, "soft makes no second harmonic");
+            expectGreaterThan(harmonicDb(tube, 500.0, 2, kRate), -30.0, "tube makes a second harmonic");
+        }
+
+        beginTest("the_hard_curve_aliases_less_than_a_naive_clipper");
+        {
+            // 4.1 kHz: not a divisor of the sample rate, so aliases do not land on harmonics.
+            const double f = 4100.0;
+            const auto x = sine(f, 0.9f, 2 * kFftSize + 8192);
+            const double adaa = worstAliasDb(drive(DriveProcessor::Curve::hard, 30.0f, x), f);
+            const double gain = DriveProcessor::kHeadroom * std::pow(10.0, 30.0 / 20.0);
+            std::vector<float> naive(x.size());
+            for (std::size_t i = 0; i < x.size(); ++i)
+                naive[i] = static_cast<float>(juce::jlimit(-1.0, 1.0, gain * x[i]));
+            const double plain = worstAliasDb(naive, f);
+            logMessage("hard drive, worst alias below 20 kHz: naive " + juce::String(plain, 1) + " dB, ADAA " + juce::String(adaa, 1) + " dB");
+            expectLessThan(adaa, plain - 6.0);
+        }
+
+        beginTest("ring_combine_audit_level_and_aliasing");
+        {
+            // A sine carrier ringed by a saw: every legit component sits at f1 +- n f2.
+            SlotMemory sawMemory, sineMemory;
+            sawMemory.allocate(VaGenerator::memoryFloats(kRate, kSubBlock));
+            sineMemory.allocate(VaGenerator::memoryFloats(kRate, kSubBlock));
+            auto saw = std::make_unique<VaGenerator>();
+            auto carrier = std::make_unique<VaGenerator>();
+            saw->prepare(kRate, kSubBlock, sawMemory);
+            carrier->prepare(kRate, kSubBlock, sineMemory);
+            saw->noteOn(NoteContext {});
+            carrier->noteOn(NoteContext {});
+            SlotParams sp;
+            sp.p[VaGenerator::shape] = 2.0f;
+            sp.p[VaGenerator::pulseWidth] = 0.5f;
+            sp.p[VaGenerator::unison] = 1.0f;
+            sp.p[VaGenerator::mix] = 0.67f;
+            sp.p[VaGenerator::randomPhase] = 0.0f;
+            const double f2 = 1370.0, f1 = 3000.0;
+            sp.frequencyHz = static_cast<float>(f2);
+            SlotParams cp = sp;
+            cp.p[VaGenerator::shape] = 0.0f;
+            cp.frequencyHz = static_cast<float>(f1);
+            cp.combine = Combine::ring;
+            cp.combineAmount = 1.0f;
+            const int total = 2 * kFftSize + 8192;
+            std::vector<float> ringed(static_cast<std::size_t>(total));
+            std::array<float, kSubBlock> l {}, r {};
+            for (int s = 0; s < total; s += kSubBlock)
+            {
+                saw->process(l.data(), r.data(), kSubBlock, sp);
+                carrier->setLink(saw->link());
+                carrier->process(l.data(), r.data(), kSubBlock, cp);
+                for (int i = 0; i < kSubBlock; ++i)
+                    ringed[static_cast<std::size_t>(s + i)] = carrier->link().signal[i];
+            }
+            double level = 0.0;
+            for (std::size_t i = 4096; i < ringed.size(); ++i)
+                level += static_cast<double>(ringed[i]) * ringed[i];
+            level = std::sqrt(level / static_cast<double>(ringed.size() - 4096));
+            logMessage("ring of a sine by a saw: rms " + juce::String(level, 3));
+            expect(level > 0.2 && level < 0.6, "the product of two unit waves sits near their rms product (0.41)");
+
+            coolsynth::synth::HalfBandDecimator2x decimator;
+            std::vector<float> host(ringed.size() / 2);
+            decimator.processBlock(ringed.data(), host.data(), static_cast<int>(host.size()));
+            juce::dsp::FFT fft(kFftOrder);
+            std::vector<float> frame(2 * kFftSize, 0.0f);
+            for (int i = 0; i < kFftSize; ++i)
+            {
+                const double t = 2.0 * juce::MathConstants<double>::pi * i / kFftSize;
+                const double w = 0.35875 - 0.48829 * std::cos(t) + 0.14128 * std::cos(2 * t) - 0.01168 * std::cos(3 * t);
+                frame[static_cast<std::size_t>(i)] = static_cast<float>(host[2048 + static_cast<std::size_t>(i)] * w);
+            }
+            fft.performFrequencyOnlyForwardTransform(frame.data());
+            const double binHz = (kRate / 2.0) / kFftSize;
+            double strongest = 0.0, worst = 0.0;
+            for (int b = static_cast<int>(50.0 / binHz); b < static_cast<int>(20000.0 / binHz); ++b)
+            {
+                const double hz = b * binHz;
+                bool legit = false;
+                for (int n = 0; n < 40 && ! legit; ++n)
+                    legit = std::abs(std::abs(f1 + n * f2) - hz) < 8.0 * binHz || std::abs(std::abs(f1 - n * f2) - hz) < 8.0 * binHz;
+                const double m = frame[static_cast<std::size_t>(b)];
+                if (legit)
+                    strongest = std::max(strongest, m);
+                else
+                    worst = std::max(worst, m);
+            }
+            const double db = 20.0 * std::log10(std::max(1.0e-12, worst) / strongest);
+            logMessage("ring of a sine by a saw: worst alias below 20 kHz " + juce::String(db, 1) + " dB");
+            expectLessThan(db, -70.0);
+
+            // FM combine: the same carrier phase-modulated by a sine at half amount.
+            SlotMemory modMemory, fmMemory;
+            modMemory.allocate(VaGenerator::memoryFloats(kRate, kSubBlock));
+            fmMemory.allocate(VaGenerator::memoryFloats(kRate, kSubBlock));
+            auto modulator = std::make_unique<VaGenerator>();
+            auto fmCarrier = std::make_unique<VaGenerator>();
+            modulator->prepare(kRate, kSubBlock, modMemory);
+            fmCarrier->prepare(kRate, kSubBlock, fmMemory);
+            modulator->noteOn(NoteContext {});
+            fmCarrier->noteOn(NoteContext {});
+            SlotParams mp = sp;
+            mp.p[VaGenerator::shape] = 0.0f;
+            SlotParams fp = cp;
+            fp.combine = Combine::fm;
+            fp.combineAmount = 0.5f;
+            std::vector<float> fmOut(static_cast<std::size_t>(total));
+            for (int s = 0; s < total; s += kSubBlock)
+            {
+                modulator->process(l.data(), r.data(), kSubBlock, mp);
+                fmCarrier->setLink(modulator->link());
+                fmCarrier->process(l.data(), r.data(), kSubBlock, fp);
+                for (int i = 0; i < kSubBlock; ++i)
+                    fmOut[static_cast<std::size_t>(s + i)] = fmCarrier->link().signal[i];
+            }
+            float fmPeak = 0.0f;
+            for (float v : fmOut)
+                fmPeak = std::max(fmPeak, std::abs(v));
+            expectLessOrEqual(fmPeak, 1.01f, "combine FM keeps a sine carrier at unit level");
+            std::vector<float> fmHost(fmOut.size() / 2);
+            coolsynth::synth::HalfBandDecimator2x fmDecimator;
+            fmDecimator.processBlock(fmOut.data(), fmHost.data(), static_cast<int>(fmHost.size()));
+            std::fill(frame.begin(), frame.end(), 0.0f);
+            for (int i = 0; i < kFftSize; ++i)
+            {
+                const double t = 2.0 * juce::MathConstants<double>::pi * i / kFftSize;
+                const double w = 0.35875 - 0.48829 * std::cos(t) + 0.14128 * std::cos(2 * t) - 0.01168 * std::cos(3 * t);
+                frame[static_cast<std::size_t>(i)] = static_cast<float>(fmHost[2048 + static_cast<std::size_t>(i)] * w);
+            }
+            fft.performFrequencyOnlyForwardTransform(frame.data());
+            strongest = 0.0;
+            worst = 0.0;
+            for (int b = static_cast<int>(50.0 / binHz); b < static_cast<int>(20000.0 / binHz); ++b)
+            {
+                const double hz = b * binHz;
+                bool legit = false;
+                for (int n = 0; n < 60 && ! legit; ++n)
+                    legit = std::abs(std::abs(f1 + n * f2) - hz) < 8.0 * binHz || std::abs(std::abs(f1 - n * f2) - hz) < 8.0 * binHz;
+                const double m = frame[static_cast<std::size_t>(b)];
+                if (legit)
+                    strongest = std::max(strongest, m);
+                else
+                    worst = std::max(worst, m);
+            }
+            const double fmDb = 20.0 * std::log10(std::max(1.0e-12, worst) / strongest);
+            logMessage("combine FM of a sine by a sine: worst alias below 20 kHz " + juce::String(fmDb, 1) + " dB");
+            expectLessThan(fmDb, -70.0);
+        }
+    }
+};
+
+static V3DriveTests v3DriveTests;

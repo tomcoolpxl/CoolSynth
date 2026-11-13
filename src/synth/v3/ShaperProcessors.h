@@ -196,6 +196,154 @@ namespace coolsynth::synth::v3
         Channel left, right;
     };
 
+    /**
+        Per-voice drive: Drive (0 to 36 dB) into one of three curves, each with first-order
+        antiderivative anti-aliasing: Soft (tanh, odd harmonics), Hard (a clipper, buzzier) and
+        Tube (tanh with a bias, so it adds even harmonics, its offset removed). As on the ladder's
+        drive, 0 dB is nearly clean and the curve is peak-normalised: a full-scale input leaves at
+        full scale, so turning Drive up thickens the sound more than it raises it. Tone is a one-pole low-pass
+        after the curve, from fully open down to 1 kHz. Mix blends with the half-sample-delayed
+        clean signal. Per voice, so chords do not intermodulate the way a drive on the mix does.
+    */
+    class DriveProcessor final
+    {
+    public:
+        enum Param : int { drive = 0, curve, tone, mix, paramCount };
+        enum class Curve : int { soft = 0, hard, tube };
+        static constexpr double tubeBias = 0.35;
+        static constexpr double kHeadroom = 0.25;
+
+        static const ModuleDescriptor& descriptor()
+        {
+            static const ModuleDescriptor d {
+                "Drive", 1,
+                {{ { "drive", "Drive", 0.0f, 36.0f, 12.0f, Skew::linear, Unit::decibels, true },
+                   { "curve", "Curve", 0.0f, 2.0f,  0.0f,  Skew::linear, Unit::choice,   false, "Soft|Hard|Tube" },
+                   { "tone",  "Tone",  0.0f, 1.0f,  1.0f,  Skew::linear, Unit::percent,  true },
+                   { "mix",   "Mix",   0.0f, 1.0f,  1.0f,  Skew::linear, Unit::percent,  true } }},
+                paramCount };
+            return d;
+        }
+
+        static std::size_t memoryFloats(double, int) { return 0; }
+
+        void prepare(double newSampleRate, int, SlotMemory&) noexcept
+        {
+            sampleRate = std::max(1000.0, newSampleRate);
+            dcCoefficient = static_cast<float>(1.0 - 2.0 * juce::MathConstants<double>::pi * 10.0 / sampleRate);
+            reset();
+        }
+
+        void reset() noexcept
+        {
+            left = {};
+            right = {};
+            primed = false;
+        }
+
+        void noteOn(const NoteContext&) noexcept {}
+
+        /** The curve and its antiderivative, at a pre-gained input. */
+        static double shape(Curve c, double u) noexcept
+        {
+            switch (c)
+            {
+                case Curve::soft: return std::tanh(u);
+                case Curve::hard: return juce::jlimit(-1.0, 1.0, u);
+                case Curve::tube: return std::tanh(u + tubeBias) - std::tanh(tubeBias);
+            }
+            return u;
+        }
+
+        static double shapeIntegral(Curve c, double u) noexcept
+        {
+            switch (c)
+            {
+                case Curve::soft: return logCosh(u);
+                case Curve::hard: return std::abs(u) <= 1.0 ? 0.5 * u * u : std::abs(u) - 0.5;
+                case Curve::tube: return logCosh(u + tubeBias) - u * std::tanh(tubeBias);
+            }
+            return 0.5 * u * u;
+        }
+
+        void process(float* leftSamples, float* rightSamples, int numSamples, const SlotParams& params) noexcept
+        {
+            const auto c = static_cast<Curve>(juce::jlimit(0, 2, static_cast<int>(std::lround(params.p[curve]))));
+            // As on the ladder: at 0 dB a full-scale input bends by a few percent at most.
+            const double targetGain = kHeadroom * std::pow(10.0, juce::jlimit(0.0, 36.0, static_cast<double>(params.p[drive])) / 20.0);
+            const float wet = juce::jlimit(0.0f, 1.0f, params.p[mix]);
+            const float toneAmount = juce::jlimit(0.0f, 1.0f, params.p[tone]);
+            const bool toneOn = toneAmount < 0.999f;
+            const double toneHz = std::min(0.45 * sampleRate, 1000.0 * std::pow(20.0, static_cast<double>(toneAmount)));
+            const float toneG = static_cast<float>(std::tan(juce::MathConstants<double>::pi * toneHz / sampleRate));
+            const float toneCoefficient = toneG / (1.0f + toneG);
+
+            if (! primed)
+            {
+                gain = targetGain;
+                primed = true;
+            }
+            const double gainStep = (targetGain - gain) / static_cast<double>(std::max(1, numSamples));
+
+            for (int i = 0; i < numSamples; ++i)
+            {
+                gain += gainStep;
+                // The larger of the two peaks: the tube's bias saturates its negative side harder.
+                const double normalise = 1.0 / std::max(1.0e-6, std::max(std::abs(shape(c, gain)), std::abs(shape(c, -gain))));
+                leftSamples[i] = driveChannel(left, leftSamples[i], c, normalise, wet, toneOn, toneCoefficient);
+                rightSamples[i] = driveChannel(right, rightSamples[i], c, normalise, wet, toneOn, toneCoefficient);
+            }
+        }
+
+    private:
+        struct Channel
+        {
+            double previousU = 0.0;
+            float previousDry = 0.0f;
+            float dcIn = 0.0f, dcOut = 0.0f, tone = 0.0f;
+        };
+
+        static double logCosh(double u) noexcept
+        {
+            const double a = std::abs(u);
+            return a + std::log1p(std::exp(-2.0 * a)) - 0.69314718055994530942;
+        }
+
+        float driveChannel(Channel& ch, float x, Curve c, double normalise, float wet, bool toneOn, float toneCoefficient) noexcept
+        {
+            const double u = gain * static_cast<double>(x);
+            const double du = u - ch.previousU;
+            const double y = std::abs(du) > 1.0e-5 ? (shapeIntegral(c, u) - shapeIntegral(c, ch.previousU)) / du
+                                                   : shape(c, 0.5 * (u + ch.previousU));
+            ch.previousU = u;
+            const float dry = 0.5f * (x + ch.previousDry);
+            ch.previousDry = x;
+
+            float out = static_cast<float>(y * normalise);
+            if (c == Curve::tube)
+            {
+                const float blocked = out - ch.dcIn + dcCoefficient * ch.dcOut;
+                ch.dcIn = out;
+                ch.dcOut = blocked;
+                out = blocked;
+            }
+            if (toneOn)
+            {
+                const float v = (out - ch.tone) * toneCoefficient;
+                out = v + ch.tone;
+                ch.tone = out + v;
+            }
+            return dry + (out - dry) * wet;
+        }
+
+        double sampleRate = 96000.0;
+        float dcCoefficient = 0.9993f;
+        double gain = 1.0;
+        bool primed = false;
+        Channel left, right;
+    };
+
     static_assert(Module<CrusherProcessor>);
     static_assert(Module<FolderProcessor>);
+    static_assert(Module<DriveProcessor>);
 }

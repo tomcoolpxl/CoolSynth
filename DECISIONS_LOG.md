@@ -562,3 +562,36 @@ Hyper Lead's recipe asks for a sample-and-hold to pitch "quantised to semitones"
   22 kHz (taken).** The lo-fi of the recipe waits for 5.2.
 - **New bank file `06-basement.csbank` (taken).** Metal Hit waits for 4.3, Furnace Drone for the
   comb (4.4).
+
+## D44. The per-voice drive (2026-11-13, phase 4.3)
+
+- **A Drive processor with three curves, Soft (tanh), Hard (clipper) and Tube (biased tanh, even
+  harmonics), each with first-order antiderivative anti-aliasing; Drive 0 to 36 dB over the
+  ladder's headroom (0 dB nearly clean); peak-normalised by the larger of its two peaks; Tone
+  and Mix (taken, recommended).** Per voice, so chords do not intermodulate as they do through
+  the global drive. Measured on a 4.1 kHz sine at 30 dB: hard curve's worst alias -55 dB, against
+  -41 dB for a naive clipper.
+- Keep only the global drive effect. Chords smear (the requirement this module answers).
+- Oversample the shapers again. Cleaner, at twice the cost, where ADAA already gains 14 dB.
+- More curves (fuzz, foldback). The folder covers folding; more can come with presets that ask.
+
+Found by the tests: normalising the Tube curve by its positive peak let its harder negative
+side reach 2.1; it is now normalised by the larger peak.
+
+## D45. The combine audit (2026-11-13, phase 4.3)
+
+The plan asks to audit ring and FM combine for level and aliasing.
+
+- **No change (taken).** Measured with VA generators at 96 kHz after the decimator: a 3 kHz sine
+  ringed by a 1.37 kHz saw sits at rms 0.40 (the product of two unit waves) with its worst alias
+  below 20 kHz at -79.9 dB; the same sine under combine FM at half amount stays at unit level
+  with its worst alias at -93.6 dB. Both are now regression tests.
+- Band-limit the ring product with extra oversampling. Not needed at these levels.
+
+## D46. Phase 4.3 presets (2026-11-13, phase 4.3)
+
+- **Metal Hit: a saw ringed by a saw at 2.76 times (oct +1, semi +6, fine -42 cents), hard
+  driven per voice, decaying in 250 ms (taken).**
+- **Neuro Growl moves to 4.4 (taken, recommended).** The plan lists it in 4.3 "formant pending";
+  its talking quality is the formant filter, so it ships once, with the formant, instead of
+  twice.

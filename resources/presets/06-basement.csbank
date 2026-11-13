@@ -31,6 +31,19 @@ play = mode=mono
 drive = on amount=0.15 mix=0.5
 master = -10.5
 
+[Metal Hit]
+room = Basement
+# A saw ring-modulated by a second saw at the inharmonic ratio 2.76 (17.58 semitones up), hard
+# driven per voice and cut short: a clang that never settles into a pitch.
+g1 = VA shape=saw level=0.25
+g2 = VA shape=saw combine=ring amount=1 oct=1 semi=6 fine=-42 level=0.8
+p1 = Drive curve=hard drive=14 tone=0.8 mix=1
+p2 = Ladder cutoff=4500 res=0.2 key=0.5
+env1 = attack=0.5 decay=250 sustain=0 release=200 velocity=0.5
+voice = env2ToP1=0
+reverb = on size=0.3 damping=0.4 mix=0.2
+master = 5.5
+
 [Concrete Pad]
 room = Basement
 # Two detuned saws with the bass taken away (state-variable high-pass at 200 Hz) and the top too

@@ -37,6 +37,7 @@ Project rules:
 - The Debug configuration is compiled optimised (`coolsynth_config_flags`), so the Debug plugin and standalone play in real time; keep JUCE's recommended config flags off CoolSynth targets.
 - Commit on `main` and push to `origin` after each verified chunk; no branches, no pull requests.
 - In this workspace, keep terminal commands profile-free (`login: false` or PowerShell `-NoProfile`) to avoid irrelevant profile-side access-denied noise in the transcript.
+- Never use heredocs (`<<'EOF'`, `<<EOF`, PowerShell here-strings) in shell commands. Write every script, test snippet and commit message to a file with the file-writing tool first, then pass the file by path (`python script.py`, `git commit -F message.txt`). Heredocs break on apostrophes in this shell and have already corrupted commands.
 
 ## 1. Think Before Coding
 
