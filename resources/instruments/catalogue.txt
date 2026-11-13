@@ -57,7 +57,7 @@ Winds | Bassoon | Sustain | yes | VSCO-2-CE/Woodwinds/Bassoon/vib
 Winds | Saxello | Vibrato | yes | VCSL/Aerophones/Reed Aerophones/Saxello/Vibrato
 Winds | Tenor Sax | Straight | yes | VCSL/Aerophones/Reed Aerophones/Tenor Saxophone/Non-Vibrato
 Winds | Tenor Sax | Vibrato | yes | VCSL/Aerophones/Reed Aerophones/Tenor Saxophone/Vibrato | trim=1.6
-Winds | Recorders | Soprano | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Soprano Recorder/Sustain
+Winds | Recorders | Soprano | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Soprano Recorder/Sustain | skip=E5,Fs5
 Winds | Recorders | Alto | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Alto Recorder/SusVib | trim=5
 Winds | Recorders | Tenor | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Tenor Recorder/Sustain | trim=4.3
 Winds | Recorders | Bass | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Bass Recorder/SusVib | trim=5.7

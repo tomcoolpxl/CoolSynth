@@ -121,12 +121,27 @@ def from_samples(entry, scratch):
 
 
 def from_phrase(entry, scratch):
-    """A stretch of a recording and its transcription."""
+    """One or more stretches of a recording and their transcriptions, laid end to end with 0.4 s between."""
     spec = entry["phrase"]
     rate, x = read_any(os.path.join(audition, *spec["file"].split("/")), scratch)
-    reference = stereo(x)[int(spec["begin"] * rate):int(spec["end"] * rate)]
-    transcribed = json.load(open(os.path.join(audition, *spec["notes"].split("/")), encoding="utf-8"))["notes"]
-    return rate, reference, phrase.notes_spec(transcribed, spec["key_offset"]), spec["end"] - spec["begin"] + 0.3
+    x = stereo(x)
+    stretches = spec.get("stretches") or [{"begin": spec["begin"], "end": spec["end"], "notes": spec["notes"]}]
+    pieces, specs, at = [], [], 0.0
+    for stretch in stretches:
+        take = x[int(stretch["begin"] * rate):int(stretch["end"] * rate)].copy()
+        fade = int(0.02 * rate)
+        take[:fade] *= np.linspace(0.0, 1.0, fade, dtype=np.float32)[:, None]
+        take[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
+        transcribed = json.load(open(os.path.join(audition, *stretch["notes"].split("/")), encoding="utf-8"))["notes"]
+        moved = [dict(note, start=note["start"] + at) for note in transcribed]
+        if moved:
+            moved[0]["struck"] = True
+            # the stretch is cut here: the last key goes up with the cut
+            moved[-1]["length"] = min(moved[-1]["length"], stretch["end"] - stretch["begin"] - (moved[-1]["start"] - at))
+        specs.append(phrase.notes_spec(moved, spec["key_offset"]))
+        pieces += [take, np.zeros((int(0.4 * rate), 2), dtype=np.float32)]
+        at += len(take) / rate + int(0.4 * rate) / rate
+    return rate, np.concatenate(pieces), ",".join(specs), at + 0.3
 
 
 def from_excerpts(entry, scratch):
@@ -137,7 +152,19 @@ def from_excerpts(entry, scratch):
     gap, tail = spec.get("gap", 0.35), spec.get("tail", 0.25)
     pieces, notes, at = [], [], 0.0
     entry["_alone"] = []
-    for start, length, key, *cents in spec["notes"]:
+    entry["_cuts"] = []
+    # Chords: [start, length, [keys]]. The cut ends the comparison, not the chord: the keys stay down a little longer
+    # ("held_on"), and the rebuild is cut and faded exactly where the reference is.
+    for start, length, keys in spec.get("chords", []):
+        take = x[int(start * rate):int((start + length + spec.get("lead", 0.0)) * rate)].copy()
+        fade_in, fade_out = int(0.003 * rate), int(0.025 * rate)
+        take[:fade_in] *= np.linspace(0.0, 1.0, fade_in, dtype=np.float32)[:, None]
+        take[-fade_out:] *= np.linspace(1.0, 0.0, fade_out, dtype=np.float32)[:, None]
+        pieces += [take, np.zeros((int(gap * rate), 2), dtype=np.float32)]
+        notes += [f"{key}:{at + spec.get('lead', 0.0):.3f}:{length + spec.get('held_on', 0.3):.3f}:{spec.get('velocity', 100)}" for key in keys]
+        entry["_cuts"].append((at, len(take) / rate, gap))
+        at += len(take) / rate + int(gap * rate) / rate
+    for start, length, key, *cents in spec.get("notes", []):
         take = x[int(start * rate):int((start + length + tail) * rate)].copy()
         fade_in, fade_out = int(0.004 * rate), int(0.03 * rate)
         take[:fade_in] *= np.linspace(0.0, 1.0, fade_in, dtype=np.float32)[:, None]
@@ -195,6 +222,10 @@ with tempfile.TemporaryDirectory() as scratch:
             print(entry["id"], "render failed:", (result.stderr or result.stdout).strip()[-300:])
             continue
         own_rate, y = audiolib.read_wav(wav)
+        for at, kept, gap in entry.get("_cuts", []):  # cut and fade the rebuild where the reference's chord was cut
+            end_at, fade = int((at + kept) * own_rate), int(0.025 * own_rate)
+            y[end_at - fade:end_at] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
+            y[end_at:int((at + kept + gap) * own_rate)] = 0.0
         write_flac(os.path.join(out_dir, "rebuild.flac"), own_rate, level(y), scratch)
         index = [e for e in index if e["id"] != entry["id"]]
         index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")}

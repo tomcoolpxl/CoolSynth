@@ -12,14 +12,26 @@ It works on plain oscillators. A hard-synced oscillator's strongest harmonics mo
 mislead it at every note's start: for such a sound cut single notes out of the recording instead
 (make_museum.py, "excerpts").
 
-A note is struck (the envelopes start again) where the band above `bright` Hz rises by more
-than 6 dB against the 60 ms before, or after silence; otherwise it is legato, which on a
+A note is struck (the envelopes start again) after silence, or where it starts brighter than
+the note before it ended: the share of energy above `bright` times the note's own fundamental,
+at its most in the new note's first 40 ms, against the middle value of the old note's last
+40 ms, by more than 6 dB. The filter follows the keyboard, so a joined note keeps the
+brightness it had; a struck one starts the filter's sweep again. (First version: a fixed band
+in Hz and the 60 ms before; it missed a third of the struck notes of a bass riff, and the
+rebuild started those notes muffled.) Brightness and loudness at a join are read from 20 ms
+windows, whatever window follows the pitch. Otherwise the note is legato, which on a
 single-trigger synth leaves the envelopes running.
+
+Where the filter's sweep lasts longer than the notes, a struck note is hardly brighter than
+the one before it and this test calls it joined; the tell is then only that the tune stays
+bright for seconds. For that case the last argument sets the rule: "flash" (the test above),
+"dip" (also struck where the loudness sags by 0.6 dB or more at the join: a key let go before
+the next went down), or "all" (every note struck).
 
 Writes JSON: {"tuning_cents", "notes": [{"start", "length", "midi", "struck"}]}; midi is the
 tracked fundamental's note number (add the oscillator's octave to get the key).
 
-usage: python -I transcribe_mono.py <file> <start-s> <end-s> <lowest-midi> <highest-midi> <window-ms> <bright-hz> <shortest-ms> <out.json>
+usage: python -I transcribe_mono.py <file> <start-s> <end-s> <lowest-midi> <highest-midi> <window-ms> <bright-multiple> <shortest-ms> <out.json> [flash|dip|all]
 """
 import json
 import os
@@ -34,8 +46,9 @@ import audiolib  # noqa: E402
 
 path, begin, end = sys.argv[1], float(sys.argv[2]), float(sys.argv[3])
 lowest, highest = int(sys.argv[4]), int(sys.argv[5])
-window_ms, bright_hz, shortest = float(sys.argv[6]), float(sys.argv[7]), float(sys.argv[8]) * 0.001
+window_ms, bright_multiple, shortest = float(sys.argv[6]), float(sys.argv[7]), float(sys.argv[8]) * 0.001
 out_path = sys.argv[9]
+rule = sys.argv[10] if len(sys.argv) > 10 else "flash"
 HOP = 0.005
 
 with tempfile.TemporaryDirectory() as scratch:
@@ -93,10 +106,23 @@ for i in range(len(track)):
     values, counts = np.unique(track[max(0, i - half):i + half + 1], return_counts=True)
     smooth[i] = values[np.argmax(counts)]
 
-# How bright each step is, to find the notes that were struck.
-top = int(bright_hz / bin_hz)
-bright = 10 * np.log10((spectra[:, top:] ** 2).sum(axis=1) + 1e-12)
-back = int(0.06 / HOP)
+# How bright a stretch of steps is for a given note: the share of energy above a multiple of its fundamental.
+# Read from short windows (20 ms), centred on the same moments as the pitch track's steps.
+short = int(0.020 * rate)
+short_size = 1 << int(np.ceil(np.log2(short * 4)))
+short_hann = np.hanning(short)
+centres = [at + window // 2 for at in frames]
+pieces = [mono[max(0, c - short // 2):max(0, c - short // 2) + short] for c in centres]
+power = np.array([np.abs(np.fft.rfft(np.pad(p, (0, short - len(p))) * short_hann, short_size)) ** 2 for p in pieces])
+short_level = np.array([10 * np.log10(np.mean(p ** 2) + 1e-14) if len(p) else -140.0 for p in pieces])
+all_hz = np.arange(power.shape[1]) * rate / short_size
+back = int(0.04 / HOP)
+
+
+def brightness(first, last, note):
+    top = all_hz >= bright_multiple * audiolib.midi_to_hz(note + best_tuning)
+    stretch = power[max(0, first):max(first + 1, last)]
+    return 10 * np.log10(stretch[:, top].sum(axis=1) / (stretch.sum(axis=1) + 1e-20) + 1e-12)
 
 segments = []  # [first step, last step + 1, note]
 i = 0
@@ -139,8 +165,12 @@ for a, b, note in segments:
 notes = []
 for s, (a, b, note) in enumerate(merged):
     after_silence = s == 0 or merged[s - 1][1] < a
-    rise = float(bright[a:min(b, a + back)].max() - np.median(bright[max(0, a - back):a])) if a > back else 99.0
-    struck = bool(after_silence or rise > 6.0)
+    if after_silence or a <= back + 2:
+        rise = 99.0
+    else:
+        rise = float(brightness(a + 1, min(b, a + 1 + back), note).max() - np.median(brightness(a - 2 - back, a - 2, merged[s - 1][2])))
+    sag = 0.0 if after_silence or a < 16 else float(np.median(short_level[a - 14:a - 2]) - short_level[a - 4:a + 6].min())
+    struck = bool(after_silence or rise > 6.0 or rule == "all" or (rule == "dip" and sag >= 0.6))
     notes.append({"start": round(float(times[a]), 3), "length": round(float((b - a) * HOP), 3), "midi": note, "struck": struck})
     print(f"   {begin + times[a]:7.3f} s  {(b - a) * HOP:6.3f} s  {audiolib.note_name(note):4s} ({note})  {'struck' if struck else 'legato'}")
 with open(out_path, "w", encoding="utf-8", newline="\n") as handle:

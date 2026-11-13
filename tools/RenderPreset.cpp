@@ -1,7 +1,7 @@
 // Renders a preset playing given notes to a WAV file, through the real plugin signal path.
 //
 //   CoolSynthRender --preset "Marimba" --notes "60:0:1.5,64:0.5:1.5:80" --seconds 6 --out marimba.wav
-//                   [--bank some.csbank] [--style N] [--no-fx] [--tune CENTS] [--list]
+//                   [--bank some.csbank] [--style N] [--no-fx] [--tune CENTS] [--cc time:number:value,...] [--list]
 //
 // --preset  a preset's name, or "Room: Name" where two rooms have a preset of that name
 // --notes   comma-separated note:start:length[:velocity], times in seconds, velocity 1..127 (100)
@@ -9,6 +9,8 @@
 // --style   the Nth style, from 0, of the sampled instrument in the first generator slot
 // --no-fx   switch every effect off, to hear the voices alone
 // --tune    play this many cents sharp (a reference recording's instrument is rarely at 440 Hz); a held pitch bend
+// --cc      controller moves, time in seconds, value 0..127: 0.7:1:127 pushes the modulation wheel up at 0.7 s, as a
+//           player brings in a vibrato
 // --list    print the built-in preset names and exit
 //
 // Used to put a preset next to a reference recording, and a change next to what it replaces.
@@ -198,6 +200,24 @@ int main(int argc, char* argv[])
             std::cerr << "--tune needs a bend range above zero in the preset\n";
     }
 
+    // --cc time:number:value,...: controller moves, in time order with the notes.
+    struct ControllerMove
+    {
+        std::int64_t sample = 0;
+        int number = 1;
+        int value = 0;
+    };
+    std::vector<ControllerMove> moves;
+    for (const auto& item : juce::StringArray::fromTokens(value("--cc"), ",", ""))
+    {
+        const auto fields = juce::StringArray::fromTokens(item, ":", "");
+        if (fields.size() == 3)
+            moves.push_back({ static_cast<std::int64_t>(std::llround(fields[0].getDoubleValue() * kSampleRate)), fields[1].getIntValue(),
+                              juce::jlimit(0, 127, fields[2].getIntValue()) });
+    }
+    std::sort(moves.begin(), moves.end(), [](const ControllerMove& a, const ControllerMove& b) { return a.sample < b.sample; });
+    std::size_t nextMove = 0;
+
     const int total = static_cast<int>(std::llround(seconds * kSampleRate));
     juce::AudioBuffer<float> rendered(2, total);
     rendered.clear();
@@ -209,6 +229,12 @@ int main(int argc, char* argv[])
         juce::MidiBuffer midi;
         if (start == 0 && bend != 8192)
             midi.addEvent(juce::MidiMessage::pitchWheel(1, bend), 0);
+        while (nextMove < moves.size() && moves[nextMove].sample < start + n)
+        {
+            const auto& move = moves[nextMove++];
+            midi.addEvent(juce::MidiMessage::controllerEvent(1, move.number, move.value),
+                          static_cast<int>(std::max<std::int64_t>(0, move.sample - start)));
+        }
         while (next < events.size() && events[next].sample < start + n)
         {
             const auto& e = events[next++];

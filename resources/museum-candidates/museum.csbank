@@ -12,22 +12,25 @@ room = Museum
 # and two at 16', tuned to unison; filter cutoff -2, emphasis 5, amount of contour 3.5, both
 # keyboard-control switches on; filter contour attack 0, decay 300 msec, sustain 0; loudness
 # contour attack 0, decay 600 msec, sustain 5; decay switch on, no glide. Play it an octave or
-# two under middle C: the key is the 8' pitch, as on the instrument.
+# two under middle C: the key is the 8' pitch, as on the instrument. One voice; a note joined
+# to the one before it does not start the filter's sweep again, a note struck anew does, and
+# that sweep at every struck note is the sound.
 # From the chart and the service manual: the oscillators, and the cutoff (-2 on the dial is
-# about 250 Hz at the lowest key and follows the keyboard: 752 Hz at middle C). What the
-# documents do not pin down is fitted to a recording of a real Model D set to this chart: how
-# far the contour opens the filter (3.1 octaves; the manuals say between 1.4 and 2.2), what
-# emphasis 5 does with three oscillators driving the filter (little: 0.13), the contours' time
-# scale (the legend is close to the time a contour takes to finish), sustain 5 (0.8 of full).
+# about 250 Hz at the lowest key and follows the keyboard: 752 Hz at middle C; the fit to the
+# recording left it exactly there). What the documents do not pin down is fitted to a recording
+# of a real Model D set to this chart, played with every note struck: how far the contour opens
+# the filter (3.0 octaves; the manuals say between 1.4 and 2.2), emphasis 5 (0.1: little, with
+# three oscillators driving the filter), the contours' times (the legend is close to the time
+# a contour takes to finish), sustain 5 (0.7 of full).
 # Not here: the chart also lets oscillator 3 shake the filter at audio rate, a little, by the
 # modulation wheel; this engine has no such path, and the real one has more above 1.5 kHz.
 g1 = VA shape=saw oct=-2 level=0.8
 g2 = VA shape=saw oct=-1 fine=3 level=0.8
 g3 = VA shape=saw oct=-1 fine=-2 level=0.8
-p1 = Ladder cutoff=752 res=0.13 key=1 drive=10.5 bass=0
-env1 = attack=1 decay=1275 sustain=0.8 release=1275 decayCurve=-1 releaseCurve=-1 velocity=0
-env2 = attack=1 decay=432 sustain=0 release=432 decayCurve=-1 releaseCurve=-1
-voice = env2ToP1=0.31 velToP1=0 drift=1
+p1 = Ladder cutoff=752 res=0.095 key=1 drive=0 bass=0
+env1 = attack=1 decay=780 sustain=0.7 release=780 decayCurve=-1 releaseCurve=-1 velocity=0
+env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.3 velToP1=0 drift=1
 play = mode=legato priority=low
 master = 0
 
@@ -38,19 +41,21 @@ room = Museum
 # level 2; all three on the square wave; filter cutoff -1, emphasis 6, amount of contour 3, both
 # keyboard-control switches on; filter contour attack 0, decay 800 msec, sustain 0; loudness
 # contour attack 0, decay 400 msec, sustain 10; glide at 5, decay switch on. One voice, the
-# lowest key sounds, and a legato note does not start the contours again.
+# lowest key sounds; a struck note starts the filter's sweep again, a joined one does not.
 # From the chart: ranges, levels, switches. Fitted to a recording of a real Model D set to this
-# chart: the pulse width (that instrument's "square" is nearer a third than a half: its second
-# harmonic is strong and its third nearly gone), the cutoff (3 kHz at middle C; the dial reading
-# alone would give 1.4 kHz), emphasis 6 (0.65), the contour's reach (1.4 octaves) and time, and
-# the glide (short: the recording's notes change within a few hundredths of a second).
-g1 = VA shape=pulse pw=0.31 oct=-1 level=0.175
-g2 = VA shape=pulse pw=0.34 oct=2 level=0.8
-g3 = VA shape=pulse pw=0.31 oct=-1 fine=3 level=0.175
-p1 = Ladder cutoff=3023 res=0.65 key=1 drive=3 bass=0
+# chart, in which the player strikes every note: the pulse width (that instrument's "square"
+# is nearer a third than a half: its second harmonic is strong and its third nearly gone), the
+# cutoff (2.7 kHz at middle C; the dial reading alone would give 1.4 kHz), emphasis 6 (0.6),
+# the contour's reach (1.7 octaves) and time. No glide: the chart has it on at 5, but in the
+# recording each new pitch is there within a hundredth of a second, and a glide of even 25 ms
+# made the notes' starts sound smoothed to the user.
+g1 = VA shape=pulse pw=0.3 oct=-1 level=0.15
+g2 = VA shape=pulse pw=0.28 oct=2 level=0.8
+g3 = VA shape=pulse pw=0.3 oct=-1 fine=3 level=0.15
+p1 = Ladder cutoff=2748 res=0.625 key=1 drive=4.5 bass=0
 env1 = attack=1 decay=1140 sustain=1 release=1140 decayCurve=-1 releaseCurve=-1 velocity=0
-env2 = attack=1 decay=8099 sustain=0 release=8099 decayCurve=-1 releaseCurve=-1
-voice = env2ToP1=0.14 velToP1=0 drift=1 glide=25
+env2 = attack=1 decay=3042 sustain=0 release=3042 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.17 velToP1=0 drift=1
 play = mode=legato priority=low
 master = 0
 
@@ -86,21 +91,20 @@ master = 0
 room = Museum
 # The Prophet-5's brass: factory program 1-1, the first sound the instrument plays. One
 # sawtooth oscillator at full level (oscillator B is set up but switched off), no resonance,
-# five voices. The sound is its filter envelope: the filter starts closed under the note,
-# opens over five octaves in a twelfth of a second, and settles half way down within a few
-# tenths: a bright blare that mellows as the note is held. The wheel adds a vibrato of about
-# five a second.
-# Built from the documents alone, at the user's choice: no recording of single held notes of
-# this program was found to put beside it. From Sequential's own factory data and the service
-# manual's calibration: the oscillator, both envelopes' shapes (filter: attack 79 ms, sustain
-# 45 %, release 49 ms; amplifier: attack 53 ms, decay 22 ms, sustain 63 %, release 88 ms), the
-# filter envelope's reach (5.6 octaves; another reading of the circuit gives twice that). Two
-# values are carried over from the same model's Sync II, which could be fitted to a recording:
-# the cutoff sits 0.7 octave above the nominal one, and decays run at 0.7 of the nominal time.
+# five voices. The sound is its filter: closed under the note when a key goes down, it opens
+# over five and a half octaves in a twentieth of a second and settles a good part of the way
+# back within a few tenths: a bright blare that mellows as the chord is held. The wheel adds a
+# vibrato of about five a second, as the player of the reference recording does on long chords.
+# From Sequential's own factory data and the service manual's calibration: the oscillator, the
+# filter's reach (5.6 octaves: the fit to the recording left it exactly there), the envelopes'
+# shapes. Fitted to five chords of a real Rev 3 playing this program, where units differ: the
+# cutoff (0.2 octave above nominal), the filter's opening and settling times (0.6 of nominal)
+# and sustain, the amplifier's decay and sustain. A first version, built from the documents
+# alone with two values borrowed from Sync II, sounded "like a midi pc sound card" to the user.
 g1 = VA shape=saw level=0.8
-p1 = Ladder cutoff=150 res=0 key=1 drive=0 bass=0
-env1 = attack=53 decay=176 sustain=0.63 release=704 decayCurve=-1 releaseCurve=-1 velocity=0
-env2 = attack=79 decay=1800 sustain=0.45 release=392 decayCurve=-1 releaseCurve=-1
+p1 = Ladder cutoff=105 res=0 key=1 drive=0 bass=0
+env1 = attack=17 decay=3000 sustain=0.63 release=704 decayCurve=-1 releaseCurve=-1 velocity=0
+env2 = attack=49 decay=1440 sustain=0.4 release=392 decayCurve=-1 releaseCurve=-1
 lfo1 = shape=triangle rate=5 retrigger=off
 mod = src=lfo1 dst=pitch amount=0.008 via=wheel
 voice = env2ToP1=0.56 velToP1=0 drift=1

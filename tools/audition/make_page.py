@@ -38,8 +38,25 @@ GRAIN_JUDGED = True
 
 # A line on a card: "group|title" -> (its first words, the rest).
 REMARKS = {
-    "Conservatory|Recorders": ("Still open.", "Your first test put the overdrive in the recordings themselves (not the ear, the reverb "
-                                              "or the tuning). A second, short test at the top of this page finds which recording."),
+    "Museum|Minimoog: Emerson's Fat Bass": ("Changed since your verdict, listen again.",
+                                            "You heard notes start muffled. A third of the notes were being joined to the note before "
+                                            "instead of struck anew, so the filter did not open again on them. Every note is struck now, "
+                                            "as in the recording. A middle stretch where the player bends notes with the pitch wheel is "
+                                            "left out; two stretches of the riff remain."),
+    "Museum|Minimoog: Trilogy lead": ("Changed since your verdict, listen again.",
+                                      "You heard the notes' starts smoothed. My version slid into each new pitch and joined most notes to "
+                                      "the one before; the recording changes pitch at once and strikes every note anew. Both are as in "
+                                      "the recording now."),
+    "Museum|Prophet-5: Sync II": ("Changed since your verdict, listen again.",
+                                  "You heard an extra small note between the notes. That was my cutting of the recording: each cut ran "
+                                  "on into the next note of the player's phrase. Each cut now ends before the pitch leaves its note."),
+    "Museum|Prophet-5: Brass": ("Changed since your verdict, listen again.",
+                                "Built from documents alone it sounded like a PC sound card. It is now fitted to a real Prophet-5 playing "
+                                "this program and has a reference beside it: five chords cut from that recording."),
+    "Conservatory|Recorders": ("Changed since your verdict, listen to Soprano again.",
+                               "Your two tests traced the overdrive to one recording, the soprano's E6, whose strong overtones clash "
+                               "with the other notes of a chord. At your choice E6 and F sharp 6 now play from the clean recordings "
+                               "beside them. The Soprano clip is new."),
 }
 
 
@@ -102,8 +119,10 @@ if museum:
             + (player("My build, from the documents (no reference)", base + "rebuild.flac") if m.get("no_reference")
                else player("The reference", base + "reference.flac") + player("My rebuild", base + "rebuild.flac"))
             + '</div>'
-            + verdict("Museum", m["title"], ["admit it", "not yet: too bright", "not yet: too dull", "not yet: the attack is wrong",
-                                             "not yet: the decay is wrong", "not yet: something else"]) + "</article>")
+            # plain words: the user judges by ear and does not use synth terms (attack, decay)
+            + verdict("Museum", m["title"], ["admit it", "not yet: too bright", "not yet: too dull or muffled",
+                                             "not yet: how notes start is wrong", "not yet: how notes fade or end is wrong",
+                                             "not yet: how one note passes into the next is wrong", "not yet: something else"]) + "</article>")
     nav.append(("museum", "Museum"))
     sections.append('<section id="museum"><h2>Museum</h2>'
                     '<p class="lead">A classic synth sound rebuilt from its published settings. The same notes twice, at the same '

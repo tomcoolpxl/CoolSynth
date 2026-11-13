@@ -87,10 +87,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       its reverb (D105, D107); refitted harmonic by harmonic, with a second string for the
       pluck's bright ring and the new Room effect set from the recording's reflections
       (D108): the user found the third try close enough (D111). Done;
-    - Recorders: the user hears overdrive on chords. A first listening test put it in the
-      recordings (not the ear, the reverb or the tuning); the soprano's E6 is an overblown,
-      edgy note and the loudest of the chord. A second test, note by note, is on the audition
-      page (D111); what to do about it is the user's choice once it is confirmed;
+    - Recorders: the user heard overdrive on chords. Two listening tests traced it to the
+      soprano's E6 recording, whose overtones clash with the other notes; at the user's
+      choice E6 and F sharp 6 now play from clean neighbours (D113). The new Soprano clip waits
+      for the user's ear;
     - after the user's picks: key zones in the sample generator, sample files beside the plugin
       at the best quality, install options;
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each

@@ -9,7 +9,9 @@ wrong should not steer the sound). The search moves one value at a time, four tr
 
 The job is a JSON file: {"reference", "begin", "end", "notes", "key_offset", "preset", "template",
 "start": {name: value}, "steps": {name: [offsets]}, "scaled": [names moved by factors], "limits": {name: [low, high]},
-"tune_cents": how sharp the recorded instrument is, so the rebuild plays at its pitch}.
+"tune_cents": how sharp the recorded instrument is, so the rebuild plays at its pitch,
+"cc": controller moves for the render ("time:number:value,..."), "key_up_early": seconds, for chords}.
+The notes file is a phrase (transcribe_mono.py) or chords (transcribe_chords.py).
 
 usage: python -I phrase_fit.py <CoolSynthRender.exe> <job.json> <rounds> [name=value ...]
 """
@@ -44,8 +46,12 @@ rate, x = read_any(os.path.join(folder, job["reference"]))
 reference = x.mean(axis=1)[int(job["begin"] * rate):int(job["end"] * rate)]
 ref_times, ref_bands, ref_total = phrase.band_levels(reference, rate)
 loud = ref_total > ref_total.max() - 30.0
-notes = json.load(open(os.path.join(folder, job["notes"]), encoding="utf-8"))["notes"]
-spec = phrase.notes_spec(notes, job["key_offset"])
+transcription = json.load(open(os.path.join(folder, job["notes"]), encoding="utf-8"))
+if "events" in transcription:  # chords: all keys of an event together
+    spec = phrase.chords_spec(transcription["events"], key_up_early=job.get("key_up_early", 0.0))
+else:
+    spec = phrase.notes_spec(transcription["notes"], job["key_offset"])
+extra = ["--cc", job["cc"]] if job.get("cc") else []
 seconds = job["end"] - job["begin"] + 0.5
 
 
@@ -56,7 +62,7 @@ def evaluate(trial):
         handle.write(job["template"].format(**{k: f"{v:.5g}" for k, v in values.items()}))
     wav = os.path.join(work, f"fit{tag}.wav")
     result = subprocess.run([render_exe, "--preset", job["preset"], "--bank", bank, "--no-fx", "--notes", spec, "--seconds", f"{seconds:.2f}", "--out", wav,
-                             "--tune", str(job.get("tune_cents", 0))], capture_output=True, text=True, cwd=work)
+                             "--tune", str(job.get("tune_cents", 0))] + extra, capture_output=True, text=True, cwd=work)
     if result.returncode != 0:
         raise SystemExit("render failed: " + (result.stderr or result.stdout)[-500:])
     own_rate, y = audiolib.read_wav(wav)

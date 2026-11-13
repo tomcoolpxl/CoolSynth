@@ -1,6 +1,7 @@
 """A transcribed phrase (transcribe_mono.py) as notes for CoolSynthRender, and a way to compare two
 recordings of the same phrase.
 
+chords_spec  the --notes text for transcribed chords: all keys of a chord together.
 notes_spec   the --notes text that makes a single-trigger, low-note-priority mono preset play the
              phrase as it was played: a struck note after a gap of 12 ms (the envelopes start
              again), a legato one overlapping its neighbour (they run on). With low-note priority
@@ -33,6 +34,16 @@ def notes_spec(notes, key_offset, velocity=100):
         else:
             ends[i] = turn + OVERLAP
     return ",".join(f"{k}:{max(0.0, s):.3f}:{max(0.02, e - s):.3f}:{velocity}" for k, s, e in zip(keys, starts, ends))
+
+
+def chords_spec(events, velocity=100, key_up_early=0.0):
+    """The --notes text for chords (transcribe_chords.py): every key of an event goes down at its start and up at
+    its end, less `key_up_early` seconds where the event's length was measured to the end of the sound's release."""
+    notes = []
+    for event in events:
+        for key in event["keys"]:
+            notes.append(f"{key}:{event['start']:.3f}:{max(0.05, event['length'] - key_up_early):.3f}:{velocity}")
+    return ",".join(notes)
 
 
 def band_levels(mono, rate):

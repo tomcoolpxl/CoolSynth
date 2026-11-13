@@ -5,14 +5,23 @@
   "preset": "Minimoog Fat Bass",
   "phrase": {
    "file": "museum/minimoog/audio/synthmania/synthmania_soundcharts_1105_1203.flac",
-   "begin": 38.5,
-   "end": 58.2,
-   "notes": "museum/minimoog/fatbass_notes.json",
    "key_offset": 24,
    "tune_cents": 0,
-   "transcribed_with": "transcribe_mono.py <clip> 38.5 58.2 17 55 110 1200 80 (the 32' oscillator is tracked; the key is two octaves above it)"
+   "stretches": [
+    {
+     "begin": 38.5,
+     "end": 45.32,
+     "notes": "museum/minimoog/fatbass_a_notes.json"
+    },
+    {
+     "begin": 51.5,
+     "end": 58.2,
+     "notes": "museum/minimoog/fatbass_b_notes.json"
+    }
+   ],
+   "transcribed_with": "transcribe_mono.py <clip> <begin> <end> 17 55 110 16 80 (the 32' oscillator is tracked; the key is two octaves above it; every note comes out struck)"
   },
-  "reference": "A real Minimoog Model D set to this chart and played by SynthMania (\"Minimoog Sound Charts by Tom Rhea\", YouTube, copyrighted: kept in the audition folder for this comparison only). My rebuild plays the same notes, transcribed from the recording.",
+  "reference": "A real Minimoog Model D set to this chart and played by SynthMania (\"Minimoog Sound Charts by Tom Rhea\", YouTube, copyrighted: kept in the audition folder for this comparison only). Two stretches of the riff, thirty notes; the stretch between them is left out because the player bends notes with the pitch wheel there. My rebuild plays the same notes, transcribed from the recording, every one struck anew as in the recording.",
   "source": "Tom Rhea's Sound Charts for the Minimoog (Moog Music, 1974), page 15: oscillators, levels and switches as charted; the cutoff from the dial by the service manual's calibration. The filter's contour amount, emphasis, the contours' times and sustain are fitted to the recording. The chart's slight shaking of the filter by oscillator 3 is not in it."
  },
  {
@@ -23,13 +32,13 @@
    "file": "museum/minimoog/audio/synthmania/synthmania_soundcharts_1105_1203.flac",
    "begin": 14.9,
    "end": 31.9,
-   "notes": "museum/minimoog/trilogy_notes.json",
+   "notes": "museum/minimoog/trilogy_notes_all.json",
    "key_offset": -24,
    "tune_cents": 30,
-   "transcribed_with": "transcribe_mono.py <clip> 14.9 31.9 65 103 30 6000 50 (the 2' oscillator is tracked; the key is two octaves under it)"
+   "transcribed_with": "transcribe_mono.py <clip> 14.9 31.9 65 103 30 2.5 50 <out> all (the 2' oscillator is tracked; the key is two octaves under it; every note struck: of three readings this one fits the recording best)"
   },
   "reference": "A real Minimoog Model D set to this chart and played by SynthMania (\"Minimoog Sound Charts by Tom Rhea\", YouTube, copyrighted: kept in the audition folder for this comparison only). My rebuild plays the same notes, transcribed from the recording. That instrument is 30 cents sharp; the rebuild is tuned to it for this clip.",
-  "source": "Tom Rhea's Sound Charts for the Minimoog (Moog Music, 1974), page 15: ranges, levels and switches as charted. Fitted to the recording: the pulse width (that instrument's square wave is nearer a third than a half), cutoff, emphasis, the contour's reach and time, and the glide time."
+  "source": "Tom Rhea's Sound Charts for the Minimoog (Moog Music, 1974), page 15: ranges, levels and switches as charted. Fitted to the recording: the pulse width (that instrument's square wave is nearer a third than a half), cutoff, emphasis, the contour's reach and time. No glide, though the chart has it on: the recording's notes change at once."
  },
  {
   "id": "prophet5-syncii",
@@ -39,30 +48,30 @@
    "file": "museum/prophet5/recordings/synthmania/synthmania_P5rev3_32_Sync_II.mp3",
    "tune_cents": 19,
    "gap": 0.35,
-   "tail": 0.25,
-   "lead": 0.02,
+   "tail": 0.03,
+   "lead": 0.01,
    "notes": [
     [
-     6.47,
-     0.976,
+     6.48,
+     0.96,
      52,
      20
     ],
     [
-     37.71,
-     0.872,
+     37.72,
+     0.84,
      50,
      20
     ],
     [
-     12.514,
-     1.344,
+     12.524,
+     1.32,
      45,
      20
     ],
     [
-     47.76,
-     1.256,
+     47.77,
+     1.0,
      73,
      25
     ]
@@ -75,11 +84,63 @@
   "id": "prophet5-brass",
   "title": "Prophet-5: Brass",
   "preset": "Prophet-5 Brass",
-  "alone": {
-   "notes": "48:0:0.9:100,55:1.1:0.9:100,60:2.2:0.9:100,67:3.3:0.9:100,72:4.4:1.2:100,48:6.0:1.6:100,60:6.0:1.6:100,64:6.0:1.6:100,67:6.0:1.6:100,53:7.9:1.6:100,60:7.9:1.6:100,65:7.9:1.6:100,69:7.9:1.6:100,55:9.8:2.4:100,59:9.8:2.4:100,62:9.8:2.4:100,67:9.8:2.4:100,74:9.8:2.4:100",
-   "seconds": 13.0
+  "excerpts": {
+   "file": "museum/prophet5/recordings/synthmania/synthmania_P5rev3_11_Brass.mp3",
+   "tune_cents": 5,
+   "gap": 0.4,
+   "lead": 0.01,
+   "held_on": 0.4,
+   "chords": [
+    [
+     12.158,
+     0.632,
+     [
+      57,
+      60,
+      64,
+      67
+     ]
+    ],
+    [
+     15.905,
+     0.52,
+     [
+      53,
+      57,
+      60
+     ]
+    ],
+    [
+     17.768,
+     0.522,
+     [
+      52,
+      55,
+      59,
+      62
+     ]
+    ],
+    [
+     26.256,
+     0.314,
+     [
+      60,
+      64,
+      67
+     ]
+    ],
+    [
+     27.021,
+     0.524,
+     [
+      64,
+      67,
+      71
+     ]
+    ]
+   ]
   },
-  "reference": "No reference beside it, at your choice: every recording of a real Prophet-5 playing this program that I found is short stabs and chords. Five single notes, then three chords.",
-  "source": "Sequential's own factory data for program 1-1 with the service manual's calibration. The filter envelope's reach is the documents' 5.6 octaves; cutoff and decay time follow what the same model's Sync II needed to match its recording."
+  "reference": "A real Prophet-5 Rev 3 playing factory program 11, recorded by SynthMania (copyrighted: kept in the audition folder for this comparison only). Five chords cut out of the demonstration, each from its start to just before the player brings in the wheel's vibrato: A minor seventh, F, G, C, E minor. My rebuild plays the same chords and is cut at the same moments.",
+  "source": "Sequential's own factory data for program 1-1 with the service manual's calibration: oscillator, the filter's reach, the envelopes' shapes. The cutoff, the envelopes' times and their sustain levels are fitted to those five chords."
  }
 ]

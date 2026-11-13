@@ -48,6 +48,11 @@ The catalogue's sixth column, "key=value" words:
                     it (a xylophone is mapped as it is written, an octave under its sound):
                     its tuning is measured there
     files=Sus,Hit   only files whose name contains one of these
+    skip=E5,Fs5     leave out the recordings of these notes, as the files name them (s for a
+                    sharp: a # would start a comment). Their keys are played from the nearest
+                    remaining recording. For a note that does not sit with its neighbours: the
+                    soprano recorder's E and F sharp in its third octave are overblown, edgy
+                    notes, and a chord through them sounded overdriven to the user (D111, D113)
     root=37         without a mapping: every file plays this note
     keys=36,48      without a mapping: each file its own key, in name order
     octave=12       without a mapping: the note in the file name plus this, no detector
@@ -309,6 +314,8 @@ for style in read_catalogue(catalogue_path):
     folder = os.path.join(libraries, *style["source"].split("/"))
     wanted = [w.lower() for w in options["files"].split(",")] if "files" in options else None
     wavs = sorted(f for f in os.listdir(folder) if f.lower().endswith(".wav") and (wanted is None or any(w in f.lower() for w in wanted)))
+    left_out = [re.sub(r"^([a-g])s(\d)$", r"\1#\2", w.strip().lower()) for w in options["skip"].split(",")] if "skip" in options else []
+    wavs = [f for f in wavs if not any(f"_{w}_" in f.lower() for w in left_out)]
     out_dir = os.path.join(out_root, slug(style["family"]), slug(style["instrument"]), slug(style["style"]))
     tune = options.get("tune", "harmonic")
     shift = int(options.get("shift", 0))

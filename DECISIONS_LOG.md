@@ -1941,3 +1941,58 @@ with a DX7 emulation exists; the TX81Z's operator waves may need engine work), o
 hoover and Juno-106 sources. **The user: wait for the verdicts.** On the page: the recorder
 test note by note, Minimoog Fat Bass, Minimoog Trilogy lead, Prophet-5 Sync II, Prophet-5
 Brass.
+
+## D113. The user's fourth round: the joins between notes (2026-11-14)
+
+All five waiting items were judged; the run before had ended on "I wait" with no pick list,
+which the user rightly objected to. Verdicts, the user's choices (pick lists) and what was done:
+
+- **Recorder test, note by note: "none of these has it".** No single note, and not the chord
+  without the E6 or with the E6 from the neighbouring recording. So the overdrive is the E6
+  recording's strong overtones against the other notes of a chord. Offered: replace E6 and
+  F sharp 6 from their clean neighbours (recommended), only E6, all four overblown top notes
+  (the top two stretched three and five semitones), or leave it. **The user: E6 and F sharp 6.**
+  `build_library.py` takes `skip=E5,Fs5` (the author's file names; s for a sharp); their keys
+  fall to the nearest recording (E6 from D6, F6 and F sharp 6 from G6). The soprano's demo clip
+  is new; the test's clips are kept as heard.
+- **Minimoog Fat Bass: "completely wrong. notes start sometimes muffled ... you analyze
+  better", and then: "I think it is the transition from one note to the other".** Measured at
+  every join, reference against rebuild (`tools/audition/transitions.py`: the loudness dip, the
+  jump in brightness, the time the pitch takes): in the recording nearly every note starts 11
+  to 24 dB brighter than the last one ended (the filter's sweep starts again); the rebuild had
+  that at two thirds of them and 0 to 4 dB at the rest, because the transcriber had called
+  those notes joined. Its test read a fixed band over a 110 ms window; it now reads the share
+  of energy above a multiple of each note's own pitch from 20 ms windows. All thirty notes of
+  the two clean stretches come out struck, and the rebuild's joins have the jump. The middle
+  stretch (45.3 to 51.5 s) has pitch-wheel bends that had been transcribed as wrong notes; it
+  is left out. Refitted on the first stretch: cutoff again exactly the chart's 752 Hz; the
+  bands from 22 Hz to 1.4 kHz within 0.7 dB in the middle but one (2.6).
+- **Minimoog Trilogy lead: "in the real instrument a much clearer sharp start often, while in
+  your version it is smoothed".** At the joins the recording's pitch arrives within 0 to 10 ms;
+  the rebuild took 25 ms (the glide I had kept because the chart has glide on, against the
+  fit, which wanted none). And the recording stays bright for seconds, which a tune of joined
+  notes with a filter sweep that sustains at nothing cannot do: its notes are struck, but the
+  sweep lasts longer than the notes, so a struck note is hardly brighter than the last and the
+  transcriber's test cannot see it. Three readings of the struck notes were fitted and
+  compared: only the first note (5.9 dB off), where the loudness sags at the join (4.7), every
+  note (4.4). **Every note struck, no glide (taken).** Joins that disagree on brightness: 4 of
+  64 (were 12).
+- **Prophet-5 Sync II: "very close but there is an extra small note in between the real
+  notes".** The cuts of the reference ran to where the level fell, which on a phrase is into
+  the next note, and kept a quarter second more. A cut now ends where the pitch leaves the
+  note (three moments in a row within 15 cents, from the end backwards), with a 25 ms fade.
+- **Prophet-5 Brass: "sounds like a midi pc sound card".** Offered: fit it to the real
+  recording by working out its chords (recommended), drop it, or keep guessing from documents.
+  **The user: fit it.** The recording's long events are held chords on which the player brings
+  in the wheel's vibrato after about 0.7 s; read over their whole length the chords came out as
+  clusters of semitones. `tools/audition/transcribe_chords.py` now reads the peaks of a short
+  window with a tuning per chord, and five chords were checked by hand (A minor seventh, F,
+  E minor seventh, C, E minor), each cut before the vibrato. Fitted: the filter's reach stayed
+  exactly at the factory data's 5.6 octaves; cutoff 0.2 octave above nominal, the filter's
+  times 0.6 of nominal, sustain 0.4. Bands from 176 Hz to 5.6 kHz within 1.5 dB in the middle.
+  The candidate has a side-by-side now. `CoolSynthRender --cc` moves a controller in time
+  (not needed in the end: the cuts stop before the vibrato).
+- **"i don't know what attack and decay mean".** The page's verdicts say it in plain words
+  now ("how notes start", "how notes fade or end", "how one note passes into the next").
+
+Order, the user's choice: Minimoog first, then Sync II, recorders, Brass.

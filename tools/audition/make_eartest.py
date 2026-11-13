@@ -15,8 +15,12 @@ the chord; the chord without its third (E6, whose recording is the noisiest of t
 author's gain for it is 18 dB and it stands 26 dB over its noise, the others 37 to 41); and the
 chord with that E6 taken from the recording a tone below instead.
 
+recorder-notes (done, decision D113): none of the six has it. So it is that one recording's
+overtones against the other notes; its keys now play from the neighbouring recordings.
+
 Writes <audition>/eartest/<id>/*.flac and <audition>/eartest/index.json for the page. A test
-marked done keeps its clips and moves to the archive page with its outcome.
+marked done moves to the archive page with its outcome, and its clips are kept as the user
+heard them: they are not rendered again (the instrument may have changed since).
 
 usage: python -I make_eartest.py <CoolSynthRender.exe> <audition-dir>
 """
@@ -39,6 +43,7 @@ CHORD = {"preset": "Conservatory: Recorders", "style": 0, "notes": [79, 84, 88, 
 TESTS = [
     {
         "id": "recorder-notes", "title": "Recorder chord, note by note", "kind": "parts", **CHORD,
+        "done": """You: none of these has it. No single note, and not the chord without the E6 or with the E6 from the recording next to it: the overdrive is the E6 recording's strong overtones clashing with the other notes. At your choice the E6 and F sharp 6 keys now play from the clean recordings beside them.""",
         "doubt": 2,           # the note whose recording is in doubt: the third of the chord, E6
         "stand_in": 86,       # the recording a tone below it, played a tone up in its place
         "facts": "Your first test says the overdrive is in the recorder clips and not in the sine tones: so it is not your ear, not the "
@@ -163,10 +168,16 @@ def parts(test, scratch):
 
 
 index = []
+index_path = os.path.join(out_root, "index.json")
+earlier = {e["id"]: e for e in json.load(open(index_path, encoding="utf-8"))} if os.path.exists(index_path) else {}
 with tempfile.TemporaryDirectory() as scratch:
     for test in TESTS:
         out_dir = os.path.join(out_root, test["id"])
         os.makedirs(out_dir, exist_ok=True)
+        if test.get("done") and test["id"] in earlier:
+            index.append(dict(earlier[test["id"]], done=test["done"], facts=test["facts"]))
+            print(test["id"], "is done: its clips are kept as they were heard")
+            continue
         clips, rate, gain = (causes if test["kind"] == "causes" else parts)(test, scratch)
         held = slice(int(0.5 * rate), int((HOLD - 0.2) * rate))
         target = float(np.sqrt(np.mean(clips[1][2][held] ** 2)))
