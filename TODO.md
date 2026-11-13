@@ -77,7 +77,14 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    samples), `SampleGenerator.h`, `GrainGenerator.h`, `tests/V3SampleTests.cpp`; Observatory
    Granular Sky. The bank is complete at 68 presets.
 33. Phase 9: the real UI. Not started: it is designed with the user once the engine has settled.
-34. Left open by phases 2 to 8, in the order they would pay off:
+34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
+    - download the CC0 libraries, build an audition page, and let the user pick instruments;
+    - measure the physical-model presets against real recordings, and classic synth references;
+    - three insert slots per part (the rack stays as the master);
+    - a granular effect as an insert type;
+    - after the user's picks: key zones in the sample generator, sample files beside the plugin
+      at the best quality, install options.
+35. Left open by phases 2 to 8, in the order they would pay off:
     - effects as slot types, and with them the three insert slots per part (D72);
     - grains from another generator, which needs a buffer pool handed out by the part (D79);
     - user sample import (D78);
