@@ -2,18 +2,22 @@
 
 index.html       the listening page: what is waiting for the user's ear, newest first, each with
                  a verdict and a note; one button copies all verdicts as text for the chat.
-                   Museum            rebuilt classic synth sounds against a reference (museum/index.json)
+                   Listening test    clips that tell where something heard comes from (eartest/index.json)
+                   Museum            rebuilt classic synth sounds against a reference, not yet admitted
+                                     (museum/index.json)
                    Model check       presets corrected from recordings, still to be judged (modelcheck/index.json)
-                   Granular effect   the insert's demonstration (graindemo/index.json)
+                   Granular effect   the insert's demonstration (graindemo/index.json), until it is judged
                    Conservatory      every recorded instrument as the synth plays it (conservatory/index.json),
                                      folded by family
-recordings.html  the archive: the raw recordings the instruments were picked from, with the
-                 picks, and the model checks already judged.
+recordings.html  the archive: what has been judged (admitted Museum sounds, model checks, the
+                 granular effect) and the raw recordings the instruments were picked from, with
+                 the picks.
 
-A section whose index file is missing is left out. Verdicts and picks are kept in the browser.
-Every player's address carries its file's time of writing, so a clip rendered again is never
-played from the browser's memory of the old one. RENEWED names the sounds changed since the
-user last judged them, with a line on what changed; their cards say so.
+A section whose index file is missing or has nothing waiting is left out. Verdicts and picks are
+kept in the browser; a verdict on a card that has left the page stays in the store. Every
+player's address carries its file's time of writing, so a clip rendered again is never played
+from the browser's memory of the old one. REMARKS puts a line on a card (what changed since the
+user's verdict, or where its open question is dealt with).
 
 usage: python make_page.py <audition-dir>
 """
@@ -26,19 +30,16 @@ import sys
 audition = sys.argv[1]
 esc = html.escape
 
-# Model checks the user has judged (decision D94): they move to the archive page.
-JUDGED_CHECKS = {"marimba", "kalimba", "harp"}
+# Model checks the user has judged (decisions D94, D105, D107): they move to the archive page.
+JUDGED_CHECKS = {"marimba", "kalimba", "harp", "harp2"}
 
-# Changed since the verdicts of 13 November (decisions D105, D106): "group|title" and what changed.
-RENEWED = {
-    "Museum|DX7 E.PIANO 1": "You heard a buzz on top. The two detuned operators were five times too far apart, so the upper harmonics "
-                            "beat about ten times a second. They are now a fifth of a hertz apart, as in the reference.",
-    "Model check|Harp String, second try": "You missed the echo. The preset clips were dry and mono against a stereo recording in a room; "
-                                            "the last player is new: the preset as it is played, with its own reverb.",
-    "Granular effect|Granular effect": "You found it too sharp sometimes. The cloud replayed note attacks at full strength; it now turns a "
-                                       "grain down as it passes an attack. The last player is the octave-up clip as it was, to compare.",
-    "Conservatory|Recorders": "You heard overdrive on the chord. The reverb's input was soft-clipped, which put distortion 40 dB under any "
-                              "hot chord; that clip is gone (for every preset with reverb).",
+# The granular effect was judged good on 13 November 2026 (decision D107): its clips move to the archive.
+GRAIN_JUDGED = True
+
+# A line on a card: "group|title" -> (its first words, the rest).
+REMARKS = {
+    "Conservatory|Recorders": ("Still open.", "You still hear overdrive on the chord. Nothing in the sound shows it, so the listening "
+                                              "test at the top of this page is there to find where it comes from."),
 }
 
 
@@ -61,19 +62,36 @@ def verdict(group, title, options):
     """A verdict menu and a note, saved under group and title."""
     key = f"{group}|{title}"
     choices = "".join(f"<option>{esc(o)}</option>" for o in options)
-    renewed = f'<p class="renewed"><b>Changed since your verdict, listen again.</b> {esc(RENEWED[key])}</p>' if key in RENEWED else ""
+    renewed = f'<p class="renewed"><b>{esc(REMARKS[key][0])}</b> {esc(REMARKS[key][1])}</p>' if key in REMARKS else ""
     return (renewed + f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}" aria-label="Verdict on {esc(title)}">'
             f'<option value="">not judged yet</option>{choices}</select>'
             f'<input type="text" data-note="{esc(key)}" placeholder="a note, if something is off (optional)" aria-label="Note on {esc(title)}"></div>')
 
 
 # ---- the listening page ---------------------------------------------------------------------
-sections, nav = [], []
+sections, nav, waiting = [], [], []
 
-museum = load("museum", "index.json") or []
+tests = load("eartest", "index.json") or []
+if tests:
+    cards = []
+    for t in tests:
+        audio = "".join(player(c["title"], "eartest/" + t["id"] + "/" + c["file"]) for c in t["clips"])
+        cards.append(f'<article class="card"><h3>{esc(t["title"])}</h3><p class="facts">{esc(t["facts"])}</p>'
+                     f'<div class="players">{audio}</div>' + verdict("Listening test", t["title"], t["options"]) + "</article>")
+        waiting.append("the listening test on the " + t["title"].lower())
+    nav.append(("eartest", "Listening test"))
+    sections.append('<section id="eartest"><h2>Listening test</h2>'
+                    '<p class="lead">Not a sound to approve: a few clips that differ in one thing each, to find where something you '
+                    'heard comes from. Play them at the loudness you normally listen at, then say which of them have it.</p>'
+                    + "".join(cards) + "</section>")
+
+all_museum = load("museum", "index.json") or []
+museum = [m for m in all_museum if not m.get("admitted")]
+admitted = [m for m in all_museum if m.get("admitted")]
 if museum:
     cards = []
     for m in museum:
+        waiting.append(m["title"] + " for the Museum")
         base = "museum/" + m["id"] + "/"
         cards.append(
             f'<article class="card"><h3>{esc(m["title"])}</h3>'
@@ -92,6 +110,7 @@ open_checks = [c for c in checks if c["id"] not in JUDGED_CHECKS]
 if open_checks:
     cards = []
     for c in open_checks:
+        waiting.append(c["title"])
         base = "modelcheck/" + c["id"] + "/"
         labels = [("real", "The real instrument"), ("before", "My preset before, dry"), ("after", "My preset now, dry"),
                   ("room", "My preset now, in its room")]
@@ -102,11 +121,12 @@ if open_checks:
                      + "</article>")
     nav.append(("check", "Model check"))
     sections.append('<section id="check"><h2>Model check</h2>'
-                    '<p class="lead">A modelled preset against a recording of the real instrument: the same notes three times, equally loud, '
-                    'without effects.</p>' + "".join(cards) + "</section>")
+                    '<p class="lead">A modelled preset against a recording of the real instrument: the same notes each time, equally '
+                    'loud. The clips marked dry are without effects.</p>' + "".join(cards) + "</section>")
 
 grain = load("graindemo", "index.json")
-if grain:
+if grain and not GRAIN_JUDGED:
+    waiting.append("the granular effect")
     audio = "".join(player(c["title"], "graindemo/" + c["file"]) for c in grain["clips"])
     nav.append(("grain", "Granular effect"))
     sections.append('<section id="grain"><h2>Granular effect</h2>'
@@ -225,7 +245,7 @@ __SECTIONS__
   <textarea id="out" readonly></textarea>
 </section>
 </main>
-<footer>Earlier material, nothing to do there: <a href="recordings.html">the raw recordings the instruments were picked from, and the model checks already judged</a>.</footer>
+<footer>Earlier material, nothing to do there: <a href="recordings.html">what you have judged (the admitted Museum sound, the granular effect, earlier model checks) and the raw recordings the instruments were picked from</a>.</footer>
 <script>
 const STORE = "coolsynth-verdicts";
 const selects = [...document.querySelectorAll("select[data-key]")];
@@ -258,7 +278,8 @@ function refresh() {
     const own = [...d.querySelectorAll("select[data-key]")];
     d.querySelector("[data-family-count]").textContent = own.filter(s => s.value).length + " of " + own.length + " judged";
   });
-  try { localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(selects.map(s => [s.dataset.key, { v: s.value, n: notes[s.dataset.key].value }])))); } catch (e) {}
+  for (const s of selects) saved[s.dataset.key] = { v: s.value, n: notes[s.dataset.key].value };
+  try { localStorage.setItem(STORE, JSON.stringify(saved)); } catch (e) {}
 }
 for (const s of selects) {
   const was = saved[s.dataset.key];
@@ -286,10 +307,9 @@ refresh();
 </html>
 """
 renewed_line = ""
-if RENEWED:
-    names = ", ".join(key.split("|", 1)[1] for key in RENEWED)
-    renewed_line = (f'<p class="lead"><b>{len(RENEWED)} sounds changed after your verdicts</b> and are marked on their cards: {esc(names)}. '
-                    'The other 39 are as you judged them.</p>')
+if waiting:
+    renewed_line = (f'<p class="lead"><b>Waiting for you now:</b> {esc(", ".join(waiting))}. Everything else is as you judged it; '
+                    'what you accepted has moved to the archive.</p>')
 listening = (listening.replace("__STYLE__", STYLE).replace("__ONE__", ONE_AT_A_TIME).replace("__RENEWED__", renewed_line)
              .replace("__NAV__", "".join(f'<a href="#{anchor}">{esc(label)}</a>' for anchor, label in nav))
              .replace("__SECTIONS__", "\n".join(sections)))
@@ -358,19 +378,36 @@ for e in entries:
         groups.setdefault(family_of(e["path"]), []).append(e)
 
 archive_sections, total = [], 0
+if admitted:
+    cards = []
+    for m in admitted:
+        base = "museum/" + m["id"] + "/"
+        cards.append(f'<article class="card"><h3>{esc(m["title"])}</h3><p class="facts">{esc(m["reference"])} {esc(m["source"])}</p>'
+                     f'<div class="players">{player("The reference", base + "reference.flac")}'
+                     f'{player("The preset in the Museum room", base + "rebuild.flac")}</div></article>')
+    archive_sections.append('<details class="family"><summary><span class="family-name">Museum: admitted</span>'
+                            f'<span class="family-count">{len(admitted)}</span></summary>'
+                            '<p class="lead">Classic synth sounds you admitted in a side-by-side. They are in the plugin, in the room Museum.</p>'
+                            + "".join(cards) + "</details>")
+if grain and GRAIN_JUDGED:
+    audio = "".join(player(c["title"], "graindemo/" + c["file"]) for c in grain["clips"])
+    archive_sections.append('<details class="family"><summary><span class="family-name">Granular effect: accepted</span>'
+                            f'<span class="family-count">{len(grain["clips"])} clips</span></summary>'
+                            f'<p class="lead">The insert type Grain on {esc(grain["preset"])}, judged good once it softened the attacks it replays.</p>'
+                            f'<article class="card"><div class="players">{audio}</div></article></details>')
 judged_checks = [c for c in checks if c["id"] in JUDGED_CHECKS]
 if judged_checks:
     cards = []
     for c in judged_checks:
         base = "modelcheck/" + c["id"] + "/"
-        labels = [("real", "The real instrument"), ("before", "My preset before"), ("after", "My preset after")]
+        labels = [("real", "The real instrument"), ("before", "My preset before"), ("after", "My preset after"), ("room", "My preset after, with reverb")]
         audio = "".join(player(label, base + c["files"][key]) for key, label in labels if key in c["files"])
         cards.append(f'<article class="card"><h3>{esc(c["title"])}</h3><p class="facts">{esc(c["changed"])}</p>'
                      f'<div class="players">{audio}</div></article>')
     archive_sections.append('<details class="family"><summary><span class="family-name">Model checks already judged</span>'
                             f'<span class="family-count">{len(judged_checks)}</span></summary>'
-                            '<p class="lead">Marimba and Kalimba: the corrected presets were found closer. Harp String: neither was close; '
-                            'its second try is on the listening page.</p>' + "".join(cards) + "</details>")
+                            '<p class="lead">Marimba and Kalimba: the corrected presets were found closer. Harp String: the first try was not '
+                            'close, the second closer but not there; a later try is on the listening page.</p>' + "".join(cards) + "</details>")
 for family in [name for name, _ in FAMILIES] + ["Other"]:
     items = groups.get(family, [])
     if not items:
@@ -387,15 +424,15 @@ archive = """<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CoolSynth recordings archive</title>
+<title>CoolSynth archive</title>
 <style>__STYLE__</style>
 </head>
 <body>
 <header>
-  <h1>Archive: the raw recordings</h1>
-  <p class="lead"><a href="index.html">Back to the listening page.</a> Nothing here needs doing. These are the __COUNT__ instrument recordings
-  from the two CC0 libraries (VSCO 2 Community Edition and VCSL), unprocessed, from which you picked the 74 that became the Conservatory.
-  Your ticks are still shown; changing them and copying sends a new list of picks.</p>
+  <h1>Archive</h1>
+  <p class="lead"><a href="index.html">Back to the listening page.</a> Nothing here needs doing. First what you have judged; then the
+  __COUNT__ instrument recordings from the two CC0 libraries (VSCO 2 Community Edition and VCSL), unprocessed, from which you picked the 74
+  that became the Conservatory. Your ticks are still shown; changing them and copying sends a new list of picks.</p>
 </header>
 <div id="bar"><div class="bar-in">
   <span id="progress"></span>

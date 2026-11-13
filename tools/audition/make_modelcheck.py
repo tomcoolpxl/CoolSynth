@@ -6,10 +6,16 @@ modelcheck/index.json for the page. before.wav and after.wav are the preset with
 room.wav, if it is there, is the preset as it is played, with its own reverb: a recording has
 its room in it, and a dry preset beside it sounds as if it lacked something.
 
-usage: python -I make_modelcheck.py <audition-dir>
+With the render tool as a second argument, an entry marked "render" gets its after.wav and
+room.wav played afresh from the factory preset (the tool must be built after the bank changed),
+and "before_from" names the earlier check whose after.wav is this one's before.wav.
+
+usage: python -I make_modelcheck.py <audition-dir> [<CoolSynthRender.exe>]
 """
 import json
 import os
+import shutil
+import subprocess
 import sys
 
 import numpy as np
@@ -18,6 +24,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib
 import audiolib  # noqa: E402
 
 audition = sys.argv[1]
+render = sys.argv[2] if len(sys.argv) > 2 else None
 libraries = os.path.join(audition, "libraries")
 out_root = os.path.join(audition, "modelcheck")
 
@@ -54,7 +61,36 @@ CHECKS = [
                    "room, and the first two preset clips are dry and mono. The last clip is the preset as it is played, with its "
                    "own reverb.",
     },
+    {
+        "id": "harp3", "title": "Harp String, third try", "preset": "Greenhouse: Harp String", "spacing": 2.0,
+        "folder": "VCSL/Chordophones/Composite Chordophones/Concert Harp", "words": ["mf"],
+        "notes": ["A2", "E3", "G3", "B3", "D4", "F4", "A4", "C5", "E5"],
+        "render": True, "before_from": "harp2",
+        "changed": "\"Before\" is the second try, which had too much echo with its reverb and too little without. Measured again, "
+                   "harmonic by harmonic at three moments of each note, three things were off and are now set from the recording. "
+                   "The real harp's upper harmonics die two to four times faster than mine did: a second after the pluck it is "
+                   "almost a pure tone. Its second and fourth harmonics are weaker: the string is plucked nearer its middle. And "
+                   "the pluck has about 8 dB more finger noise between 2 and 8 kHz. The room: the recording's is a small one, its "
+                   "reflections strong for the first 40 ms and gone within a quarter of a second. My reverb is a plate, which "
+                   "starts weak and rings long; the last clip has it at its shortest, which is less echo but still not that kind "
+                   "of room.",
+    },
 ]
+
+NOTE_NUMBERS = {name: number for number, name in enumerate(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"])}
+
+
+def play_preset(check, out_dir):
+    """after.wav (no effects) and room.wav (as it is played) from the factory preset; before.wav from an earlier check."""
+    spacing = check["spacing"]
+    notes = ",".join(f"{NOTE_NUMBERS[n[:-1]] + 12 * (int(n[-1]) + 1)}:{i * spacing:g}:{spacing - 0.1:g}:90" for i, n in enumerate(check["notes"]))
+    for name, flags in (("after", ["--no-fx"]), ("room", [])):
+        result = subprocess.run([render, "--preset", check["preset"], "--notes", notes, "--seconds", f"{len(check['notes']) * spacing:g}",
+                                 "--out", os.path.join(out_dir, name + ".wav")] + flags, capture_output=True, text=True)
+        if result.returncode != 0:
+            raise SystemExit(f"{check['id']}: render failed: " + (result.stderr or result.stdout).strip()[-300:])
+    if "before_from" in check:
+        shutil.copyfile(os.path.join(out_root, check["before_from"], "after.wav"), os.path.join(out_dir, "before.wav"))
 
 
 def level(x, target_rms=0.09):
@@ -103,6 +139,8 @@ for check in CHECKS:
         pieces.append(slot)
     out_dir = os.path.join(out_root, check["id"])
     os.makedirs(out_dir, exist_ok=True)
+    if render and check.get("render"):
+        play_preset(check, out_dir)
     audiolib.write_wav16(os.path.join(out_dir, "real_level.wav"), rate_used, level(np.concatenate(pieces)))
     entry = {k: check[k] for k in ("id", "title", "preset", "changed")}
     entry["source"] = check["folder"]

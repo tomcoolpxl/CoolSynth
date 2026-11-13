@@ -1,8 +1,9 @@
 """Museum side-by-sides: a classic synth sound as a reference plays it, and the rebuild, on the same notes.
 
 Each entry names a candidate preset in resources/museum-candidates/museum.csbank (the Museum's
-waiting room: a sound enters the plugin's bank only when the user admits it) and reference
-recordings of single notes (one file per note and velocity). The reference notes are laid end to end at a fixed spacing; the preset
+waiting room: a sound enters the plugin's bank only when the user admits it; an admitted entry
+plays from the plugin's own Museum room) and reference recordings of single notes (one file per
+note and velocity). The reference notes are laid end to end at a fixed spacing; the preset
 plays the same notes at the same velocities through CoolSynthRender, without effects; both
 clips are levelled alike. Writes <audition>/museum/<id>/reference.flac, rebuild.flac and
 <audition>/museum/index.json for the page.
@@ -31,6 +32,7 @@ ENTRIES = [
         # note name as the reference files spell it, MIDI note, velocity
         "notes": [("C3", 48, 80), ("F#3", 54, 80), ("C4", 60, 60), ("C4", 60, 100), ("F#4", 66, 80), ("C5", 72, 80), ("C5", 72, 100),
                   ("C2", 36, 100), ("F#5", 78, 80)],
+        "admitted": True,  # by the user on 13 November 2026 (decision D107): it plays from the plugin's own bank
         "reference": "Recorded from Hexter, an open emulation of the DX7, playing the E. Piano 1 voice (FreePats, FM Piano 1, CC0).",
         "source": "The voice's published data (ROM 1A, voice 11): algorithm 5 with feedback 6, six operators' ratios, levels, envelopes "
                   "and velocity sensitivities, converted to radians and decibels a second after Dexed's envelope and Chowning's index table.",
@@ -83,14 +85,15 @@ with tempfile.TemporaryDirectory() as scratch:
 
         notes = ",".join(f"{midi}:{i * spacing:.2f}:{spacing - 0.25:.2f}:{velocity}" for i, (_, midi, velocity) in enumerate(entry["notes"]))
         wav = os.path.join(scratch, "rebuild.wav")
-        result = subprocess.run([render, "--preset", entry["preset"], "--bank", candidates, "--no-fx", "--notes", notes, "--seconds", f"{len(entry['notes']) * spacing:.1f}",
+        source = ["--preset", "Museum: " + entry["preset"]] if entry.get("admitted") else ["--preset", entry["preset"], "--bank", candidates]
+        result = subprocess.run([render] + source + ["--no-fx", "--notes", notes, "--seconds", f"{len(entry['notes']) * spacing:.1f}",
                                  "--out", wav], capture_output=True, text=True)
         if result.returncode != 0 or not os.path.exists(wav):
             print(entry["id"], "render failed:", (result.stderr or result.stdout).strip()[-300:])
             continue
         rate, y = audiolib.read_wav(wav)
         write_flac(os.path.join(out_dir, "rebuild.flac"), rate, level(y), scratch)
-        index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")})
+        index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")} | {"admitted": bool(entry.get("admitted"))})
         print(entry["id"], "->", entry["preset"])
 
 with open(os.path.join(out_root, "index.json"), "w", encoding="utf-8", newline="\n") as handle:

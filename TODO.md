@@ -83,16 +83,21 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - three insert slots per part (the rack stays as the master): done, D93;
     - a granular effect as an insert type: done, D102;
     - Harp String: the user found neither version close to the recording (D94); redone as a
-      finger's pluck (D101), on the audition page for a verdict;
+      finger's pluck (D101): "closer, but not there", too little echo dry and too much with
+      its reverb (D105, D107); refitted harmonic by harmonic, third try on the audition page.
+      Its room is open: the recording's is a small room, the reverb is a plate (D107);
+    - Recorders: the user hears overdrive on chords that no measurement shows; a listening
+      test on the audition page is to tell the reverb, the tuning, the recordings and the ear
+      apart (D107);
     - after the user's picks: key zones in the sample generator, sample files beside the plugin
       at the best quality, install options;
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each
       admitted by the user in a side-by-side against a reference recording (D88). The user
       chose the first sounds (D103): DX7 E.PIANO 1 and BASS 1, Prophet-5 sync lead and brass,
       a Minimoog bass and lead, and the hoover, LatelyBass and Juno-106 patches (sources for
-      the last three still to be found). DX7 E.PIANO 1 is built as a candidate and waits
-      for the user's verdict on the audition page (D104). Next: a reference recording for
-      BASS 1, then the Prophet-5 and Minimoog sounds from their patch sheets.
+      the last three still to be found). DX7 E.PIANO 1 is admitted (D107) and is the
+      first preset of the room Museum. Next: a reference recording for BASS 1, then the
+      Prophet-5 and Minimoog sounds from their patch sheets.
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
     (start the `audition` preview server to hear it); marimba and kalimba corrected and
     accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in

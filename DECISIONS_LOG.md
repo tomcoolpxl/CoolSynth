@@ -1627,7 +1627,7 @@ All 43 sounds judged. 39 of the 40 Conservatory instruments: good. Four remarks:
   masters moved by half a decibel or a whole one in the loudness pass (the reverb is slightly
   louder where its input used to be squeezed). Keeping the clip with a higher threshold was the
   other option: it protects nothing a linear reverb needs protecting from.
-  Whether this was all the user heard is for his ear: the recorders' own tones, four at once,
+  Whether this was all the user heard is for the user's ear: the recorders' own tones, four at once,
   also make combination tones in the ear at high level.
 - **DX7 E.PIANO 1: "an extra buzzing sound on top".** In the reference the detuned operators
   lie 0.2 to 0.35 Hz apart per harmonic; in the rebuild 1.3 Hz, so its upper harmonics beat 7
@@ -1670,3 +1670,62 @@ On the page's clip an octave up, the bursts of treble at the replays (1.96, 2.10
 away from a played note is 0.9 dB. A test feeds a note that starts with a burst: its replay
 comes out at less than a third of the burst's level, the held part as it was. The old clip
 stays on the page beside the new one.
+
+## D107. The user's second round of verdicts (2026-11-13)
+
+The four sounds changed after D105 and D106, judged again.
+
+- **DX7 E.PIANO 1: "admit it".** It moves from `resources/museum-candidates/museum.csbank` to
+  `resources/presets/12-museum.csbank` and so into the plugin: the room "Museum" exists, with
+  one preset, and the bank has 109. No effects on it; master -2.5 dB from the loudness tool.
+  The note still on its card ("an extra buzzing sound on top") is read as left over from the
+  round before, as the one on the granular card is: both verdicts changed, both notes did not.
+- **Granular effect: "good".** Its clips move to the archive page.
+- **Harp String, second try: "closer, but not there: too much echo this time"** (dry it had
+  "not enough echo", D105). Measured again against the recording, each note's first six
+  harmonics at three moments (60 to 260 ms, 450 to 750 ms, 1.0 to 1.4 s), three things in the
+  string itself were off, more than the reverb:
+  - the real harp's upper harmonics die two to four times faster than the preset's in the
+    middle of the instrument (third harmonic of B3: 27 dB in a second against 6): a second
+    after the pluck it is almost a pure tone. The string's loop filter loses treble per
+    period, so a low string needs more of it for the same loss per second: Damping 0.52,
+    falling with the key (0.75 at A2, 0.28 at E5);
+  - its second and fourth harmonics are 8 to 20 dB weaker: Pick Position 0.47, moving to the
+    exact middle going up;
+  - its pluck has about 8 dB more noise between 2 and 8 kHz in the first 40 ms: the finger
+    burst is now pink noise, 25 ms, at 0.6 (was white, 12 ms, at 0.25).
+  **All three are set from the recording (taken):** a search over eight settings, one at a
+  time, brought the robust mean difference over notes, moments and harmonics from 5.3 to 2.4;
+  early harmonics 1, 3 and 5 stay within 1.2 dB, the late ones go from 5.4 to 3.7 dB off.
+  The room: in the recording the treble after a pluck is strong for 40 ms (6.5 dB under the
+  pluck), decorrelated between the channels, and at the noise floor after a quarter of a
+  second: a small room's reflections. The preset's reverb is a plate: its treble sits 15 to
+  20 dB under the pluck from the start and stays there for over a third of a second at any
+  size, mix or damping tried. **The preset's reverb goes to its shortest (size 0, mix 0.25,
+  taken)**: less echo, 10 dB less tail after a third of a second, still not that kind of room.
+  Not taken: only turning the reverb down (the string's own mismatch was the larger one), and a
+  short delay as a stand-in for reflections (a few discrete echoes colour the sound). A room
+  of the recording's kind needs a new effect; that is put to the user as a pick list.
+- **Recorders: verdict unchanged, "a bit oversteer at the end when multiple notes are
+  playing".** The clips the user heard were rendered after the reverb fix. Measured on the
+  four styles' chords: each is the sum of its notes to -119 to -123 dB; no clip peaks above
+  -4.4 dB; no click or burst anywhere; and the envelope within each third-octave band
+  fluctuates by 2 to 5 % (the flute chord, judged good: 30 %; the ocarinas: 4 to 7 %). The
+  sound itself shows nothing. What is left is hearing: four loud, steady, near-pure tones
+  close together make combination tones in the ear and in small loudspeakers, and in equal
+  temperament they do not agree: the soprano chord's neighbours lie 263, 274 and 246 Hz apart,
+  so the difference tones beat against each other 11 to 27 times a second, a rough buzz under
+  the chord. Tuned pure they fall on one note (262 Hz), which is why recorder players tune
+  thirds by them (UNSW Music Acoustics, "Tartini tones and temperament",
+  https://newt.phys.unsw.edu.au/jw/tartini-temperament.html; Wikipedia, "Combination tone").
+  This is a hypothesis about the user's ear, not a measurement of it. **A listening test goes
+  on the page (taken)**, `tools/audition/make_eartest.py`: the soprano chord four times,
+  equally loud: as the preset plays it; without reverb; without reverb and tuned pure (each
+  note rendered alone, retuned by a windowed sinc and added: differences 264, 262 and 261 Hz);
+  and four sine tones at the same pitches and levels, with no recorder and no synth in them.
+  Which of them have the overdrive says whether it is the reverb, the tuning, the recordings
+  or the ear. Not taken: lowering the preset's level or darkening it on a guess.
+
+The listening page now shows what waits: the listening test, the harp's third try, and the
+Conservatory. What was accepted is on the archive page; a verdict on a card that has left the
+page stays in the browser's store.
