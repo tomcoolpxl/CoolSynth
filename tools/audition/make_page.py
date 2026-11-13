@@ -1,4 +1,16 @@
-"""Write audition/index.html from previews/index.json: instruments grouped by family, with players and tick boxes.
+"""Write the two pages of the audition folder.
+
+index.html       the listening page: what is waiting for the user's ear, newest first, each with
+                 a verdict and a note; one button copies all verdicts as text for the chat.
+                   Museum            rebuilt classic synth sounds against a reference (museum/index.json)
+                   Model check       presets corrected from recordings, still to be judged (modelcheck/index.json)
+                   Granular effect   the insert's demonstration (graindemo/index.json)
+                   Conservatory      every recorded instrument as the synth plays it (conservatory/index.json),
+                                     folded by family
+recordings.html  the archive: the raw recordings the instruments were picked from, with the
+                 picks, and the model checks already judged.
+
+A section whose index file is missing is left out. Verdicts and picks are kept in the browser.
 
 usage: python make_page.py <audition-dir>
 """
@@ -9,8 +21,257 @@ import re
 import sys
 
 audition = sys.argv[1]
-with open(os.path.join(audition, "previews", "index.json"), encoding="utf-8") as handle:
-    entries = json.load(handle)
+esc = html.escape
+
+# Model checks the user has judged (decision D94): they move to the archive page.
+JUDGED_CHECKS = {"marimba", "kalimba", "harp"}
+
+
+def load(*parts):
+    path = os.path.join(audition, *parts)
+    if not os.path.exists(path):
+        return None
+    with open(path, encoding="utf-8") as handle:
+        return json.load(handle)
+
+
+def player(label, source):
+    return (f'<label class="player"><span>{esc(label)}</span>'
+            f'<audio controls preload="none" src="{esc(source)}"></audio></label>')
+
+
+def verdict(group, title, options):
+    """A verdict menu and a note, saved under group and title."""
+    key = f"{group}|{title}"
+    choices = "".join(f"<option>{esc(o)}</option>" for o in options)
+    return (f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}" aria-label="Verdict on {esc(title)}">'
+            f'<option value="">not judged yet</option>{choices}</select>'
+            f'<input type="text" data-note="{esc(key)}" placeholder="a note, if something is off (optional)" aria-label="Note on {esc(title)}"></div>')
+
+
+# ---- the listening page ---------------------------------------------------------------------
+sections, nav = [], []
+
+museum = load("museum", "index.json") or []
+if museum:
+    cards = []
+    for m in museum:
+        base = "museum/" + m["id"] + "/"
+        cards.append(
+            f'<article class="card"><h3>{esc(m["title"])}</h3>'
+            f'<p class="facts">{esc(m["reference"])} {esc(m["source"])}</p>'
+            f'<div class="players">{player("The reference", base + "reference.flac")}{player("My rebuild", base + "rebuild.flac")}</div>'
+            + verdict("Museum", m["title"], ["admit it", "not yet: too bright", "not yet: too dull", "not yet: the attack is wrong",
+                                             "not yet: the decay is wrong", "not yet: something else"]) + "</article>")
+    nav.append(("museum", "Museum"))
+    sections.append('<section id="museum"><h2>Museum</h2>'
+                    '<p class="lead">A classic synth sound rebuilt from its published settings. The same notes twice, at the same '
+                    'velocities, without effects and equally loud: a reference, then my rebuild. It enters the Museum room only if you admit it.</p>'
+                    + "".join(cards) + "</section>")
+
+checks = load("modelcheck", "index.json") or []
+open_checks = [c for c in checks if c["id"] not in JUDGED_CHECKS]
+if open_checks:
+    cards = []
+    for c in open_checks:
+        base = "modelcheck/" + c["id"] + "/"
+        labels = [("real", "The real instrument"), ("before", "My preset before"), ("after", "My preset now")]
+        audio = "".join(player(label, base + c["files"][key]) for key, label in labels if key in c["files"])
+        cards.append(f'<article class="card"><h3>{esc(c["title"])}</h3><p class="facts">{esc(c["changed"])}</p>'
+                     f'<div class="players">{audio}</div>'
+                     + verdict("Model check", c["title"], ["close enough now", "closer, but not there", "no better than before", "worse than before"])
+                     + "</article>")
+    nav.append(("check", "Model check"))
+    sections.append('<section id="check"><h2>Model check</h2>'
+                    '<p class="lead">A modelled preset against a recording of the real instrument: the same notes three times, equally loud, '
+                    'without effects.</p>' + "".join(cards) + "</section>")
+
+grain = load("graindemo", "index.json")
+if grain:
+    audio = "".join(player(c["title"], "graindemo/" + c["file"]) for c in grain["clips"])
+    nav.append(("grain", "Granular effect"))
+    sections.append('<section id="grain"><h2>Granular effect</h2>'
+                    f'<p class="lead">The new insert on a part: it remembers the last four seconds of what the part plays and plays them back '
+                    f'as a cloud of grains. The same phrase on {esc(grain["preset"])}, four times. Its Freeze switch cannot be shown in a '
+                    'recording; try it in the plugin (insert type Grain).</p>'
+                    f'<article class="card"><div class="players">{audio}</div>'
+                    + verdict("Granular effect", "Granular effect", ["good", "too loud or too quiet", "sounds wrong", "something else is wrong"])
+                    + "</article></section>")
+
+demos = load("conservatory", "index.json") or []
+if demos:
+    families = {}
+    for d in demos:
+        families.setdefault(d["family"], {}).setdefault(d["instrument"], []).append(d)
+    blocks = []
+    for number, (family, instruments) in enumerate(families.items()):
+        rows = []
+        for instrument, styles in instruments.items():
+            audio = "".join(player(s["style"], "conservatory/" + s["file"]) for s in styles)
+            rows.append(f'<article class="card"><h3>{esc(instrument)}</h3><div class="players">{audio}</div>'
+                        + verdict("Conservatory", instrument, ["good", "wrong notes or out of tune", "too quiet or too loud",
+                                                               "uneven from note to note", "a loop or a click is audible",
+                                                               "something else is wrong"]) + "</article>")
+        blocks.append(f'<details class="family"{" open" if number == 0 else ""}><summary><span class="family-name">{esc(family)}</span>'
+                      f'<span class="family-count" data-family-count>{len(instruments)} instruments</span></summary>{"".join(rows)}</details>')
+    nav.append(("conservatory", "Conservatory"))
+    sections.append('<section id="conservatory"><h2>Conservatory</h2>'
+                    f'<p class="lead">The {sum(len(i) for i in families.values())} recorded instruments as the synth plays them, one player per '
+                    'playing style: eight notes climbing through the instrument from soft to loud, then a chord. Open a family to hear it.</p>'
+                    + "".join(blocks) + "</section>")
+
+STYLE = """
+:root { --bg:#f6f5f2; --panel:#ffffff; --ink:#1d1d1b; --soft:#5d5b55; --line:#dcd9d1; --accent:#0b6e4f; --accent-ink:#ffffff; --done:#e7f3ee; }
+@media (prefers-color-scheme: dark) {
+  :root { --bg:#161614; --panel:#1f1f1c; --ink:#ecebe6; --soft:#a5a299; --line:#34332e; --accent:#5fc29f; --accent-ink:#10231c; --done:#1c2a25; }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 64px; }
+body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, "Segoe UI", sans-serif; }
+header, main, .bar-in { max-width: 900px; margin: 0 auto; padding: 0 16px; }
+header { padding-top: 26px; padding-bottom: 6px; }
+h1 { font-size: 1.5rem; margin: 0 0 4px; }
+h2 { font-size: 1.2rem; margin: 0 0 4px; }
+h3 { font-size: 1rem; margin: 0 0 8px; }
+p.lead { color: var(--soft); margin: 0 0 12px; max-width: 72ch; }
+section { margin: 34px 0; }
+a { color: var(--accent); }
+#bar { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
+.bar-in { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; padding-top: 9px; padding-bottom: 9px; }
+.bar-in nav { display: flex; gap: 4px 14px; flex-wrap: wrap; }
+.bar-in nav a { text-decoration: none; font-weight: 600; font-size: .92rem; }
+#progress { color: var(--soft); font-size: .92rem; margin-left: auto; }
+button { font: inherit; border: 0; border-radius: 8px; padding: 7px 14px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+button.quiet { background: transparent; color: var(--soft); border: 1px solid var(--line); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+.card.judged { background: var(--done); border-color: var(--accent); }
+.facts { margin: 0 0 10px; color: var(--soft); font-size: .88rem; max-width: 80ch; }
+.players { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 8px 14px; }
+.player span { display: block; font-size: .8rem; color: var(--soft); margin-bottom: 2px; }
+audio { width: 100%; height: 34px; display: block; }
+.verdict { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+select, input[type=text] { font: inherit; font-size: .92rem; padding: 6px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); }
+.verdict select { flex: 0 1 250px; min-width: 0; }
+.verdict input { flex: 1 1 220px; min-width: 0; }
+details.family { border: 1px solid var(--line); border-radius: 10px; margin: 8px 0; padding: 0 12px; }
+details.family[open] { padding-bottom: 4px; }
+summary { cursor: pointer; padding: 11px 2px; display: flex; gap: 12px; align-items: baseline; }
+.family-name { font-weight: 600; }
+.family-count { color: var(--soft); font-size: .88rem; margin-left: auto; }
+textarea { width: 100%; min-height: 110px; margin: 8px 0 12px; font: 13px/1.4 ui-monospace, Consolas, monospace; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+footer { max-width: 900px; margin: 0 auto; padding: 8px 16px 48px; color: var(--soft); font-size: .92rem; }
+.pick { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.pick input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.name { font-weight: 600; }
+.lib { margin-left: auto; color: var(--soft); font-size: .8rem; border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
+.card.picked { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+"""
+
+ONE_AT_A_TIME = """
+// Only one player at a time.
+document.addEventListener("play", e => { document.querySelectorAll("audio").forEach(a => { if (a !== e.target) a.pause(); }); }, true);
+// Stopping rewinds: the next play starts from the beginning, never from where it was stopped.
+document.addEventListener("pause", e => {
+  const a = e.target;
+  if (a.tagName === "AUDIO" && !a.ended && !a.seeking) { try { a.currentTime = 0; } catch (err) {} }
+}, true);
+"""
+
+listening = """<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoolSynth listening</title>
+<style>__STYLE__</style>
+</head>
+<body>
+<header>
+  <h1>Listening page</h1>
+  <p class="lead">What is waiting for your ear, newest first. Set a verdict under each sound, add a note where something is off,
+  then press <b>Copy my verdicts</b> and paste the text into the chat. Verdicts are kept in this browser, so you can stop and come back.</p>
+</header>
+<div id="bar"><div class="bar-in">
+  <nav>__NAV__</nav>
+  <span id="progress"></span>
+  <button id="copy">Copy my verdicts</button>
+</div></div>
+<main>
+__SECTIONS__
+<section id="text">
+  <h2>Your verdicts as text</h2>
+  <p class="lead">What the button copies. If copying is blocked, select this text and copy it yourself.</p>
+  <textarea id="out" readonly></textarea>
+</section>
+</main>
+<footer>Earlier material, nothing to do there: <a href="recordings.html">the raw recordings the instruments were picked from, and the model checks already judged</a>.</footer>
+<script>
+const STORE = "coolsynth-verdicts";
+const selects = [...document.querySelectorAll("select[data-key]")];
+const notes = Object.fromEntries([...document.querySelectorAll("input[data-note]")].map(n => [n.dataset.note, n]));
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem(STORE) || "{}"); } catch (e) { saved = {}; }
+// Verdicts set on the page as it was before it was tidied up.
+try {
+  const old = JSON.parse(localStorage.getItem("coolsynth-sample-picks-demos") || "{}");
+  for (const [name, value] of Object.entries(old)) {
+    if (!value) continue;
+    const key = name.startsWith("Museum, ") ? "Museum|" + name.slice(8) : name === "Granular effect" ? "Granular effect|Granular effect" : "Conservatory|" + name;
+    if (!saved[key]) saved[key] = { v: value, n: "" };
+  }
+} catch (e) {}
+function refresh() {
+  const groups = new Map();
+  let judged = 0;
+  for (const s of selects) {
+    const note = notes[s.dataset.key].value.trim();
+    s.closest(".card").classList.toggle("judged", !!s.value);
+    if (!s.value && !note) continue;
+    if (s.value) judged++;
+    if (!groups.has(s.dataset.group)) groups.set(s.dataset.group, []);
+    groups.get(s.dataset.group).push("- " + s.dataset.title + ": " + (s.value || "no verdict") + (note ? " (" + note + ")" : ""));
+  }
+  document.getElementById("progress").textContent = judged + " of " + selects.length + " judged";
+  document.getElementById("out").value = [...groups].map(([group, lines]) => group + ":\\n" + lines.join("\\n")).join("\\n");
+  document.querySelectorAll("details.family").forEach(d => {
+    const own = [...d.querySelectorAll("select[data-key]")];
+    d.querySelector("[data-family-count]").textContent = own.filter(s => s.value).length + " of " + own.length + " judged";
+  });
+  try { localStorage.setItem(STORE, JSON.stringify(Object.fromEntries(selects.map(s => [s.dataset.key, { v: s.value, n: notes[s.dataset.key].value }])))); } catch (e) {}
+}
+for (const s of selects) {
+  const was = saved[s.dataset.key];
+  if (was) {
+    if ([...s.options].some(o => o.value === was.v || o.text === was.v)) s.value = was.v;
+    notes[s.dataset.key].value = was.n || "";
+  }
+  s.addEventListener("change", refresh);
+  notes[s.dataset.key].addEventListener("input", refresh);
+}
+document.getElementById("copy").addEventListener("click", async () => {
+  const button = document.getElementById("copy");
+  const text = document.getElementById("out").value;
+  if (!text) { button.textContent = "Nothing judged yet"; }
+  else {
+    try { await navigator.clipboard.writeText(text); button.textContent = "Copied"; }
+    catch (e) { document.getElementById("out").select(); button.textContent = "Copy the text at the bottom"; }
+  }
+  setTimeout(() => button.textContent = "Copy my verdicts", 2500);
+});
+__ONE__
+refresh();
+</script>
+</body>
+</html>
+"""
+listening = (listening.replace("__STYLE__", STYLE).replace("__ONE__", ONE_AT_A_TIME)
+             .replace("__NAV__", "".join(f'<a href="#{anchor}">{esc(label)}</a>' for anchor, label in nav))
+             .replace("__SECTIONS__", "\n".join(sections)))
+with open(os.path.join(audition, "index.html"), "w", encoding="utf-8", newline="\n") as handle:
+    handle.write(listening)
+
+# ---- the archive: raw recordings and judged model checks ------------------------------------
+entries = load("previews", "index.json") or []
 
 HIDDEN = re.compile(r"/Releases|/Rel$|Legacy|Shaker|Tambourine|Triangles|Guiro|Cowbells|Conga|Frame Drum|Snare|Mark Trees|"
                     r"Bell Tree|Cymbals|Camo|log_drum|glock_glisses|Misc 1|Flexatone|VSCO-2-CE/Percussion$", re.I)
@@ -40,8 +301,7 @@ def family_of(path):
 
 def title_of(path):
     parts = path.split("/")
-    library = parts[0]
-    rest = parts[1:]
+    library, rest = parts[0], parts[1:]
     if library == "VCSL":
         rest = rest[2:] if len(rest) > 2 else rest  # drop the two classification levels
     else:
@@ -49,268 +309,106 @@ def title_of(path):
     return " / ".join(rest), ("VCSL" if library == "VCSL" else "VSCO 2 CE")
 
 
+def recording(e):
+    title, library = title_of(e["path"])
+    base = "previews/" + e["id"]
+    facts = [f"{e['low']} to {e['high']}", f"{e['pitches']} recorded pitches",
+             f"{e['layers']} dynamic layer{'s' if e['layers'] != 1 else ''}",
+             f"{e['robins']} take{'s' if e['robins'] != 1 else ''} per note", f"{e['megabytes']:.0f} MB",
+             f"{e['rate'] / 1000:g} kHz, {e['bits']} bit"]
+    players = [("Every note, low to high", "run.wav"), (f"One long note ({e['long_seconds']:g} s)", "long.wav")]
+    if e.get("layers_in_preview", 0) > 1:
+        players.append(("Same note, soft to loud", "layers.wav"))
+    audio = "".join(player(label, base + "/" + name) for label, name in players)
+    return (f'<article class="card" data-id="{esc(e["id"])}">'
+            f'<label class="pick"><input type="checkbox" data-id="{esc(e["id"])}" data-title="{esc(title)}">'
+            f'<span class="name">{esc(title)}</span><span class="lib">{library}</span></label>'
+            f'<p class="facts" style="margin-top:6px">{esc(" · ".join(facts))}</p><div class="players">{audio}</div></article>')
+
+
 groups = {}
 for e in entries:
-    if HIDDEN.search(e["path"]):
-        continue
-    groups.setdefault(family_of(e["path"]), []).append(e)
+    if not HIDDEN.search(e["path"]):
+        groups.setdefault(family_of(e["path"]), []).append(e)
 
-order = [name for name, _ in FAMILIES] + ["Other"]
-rows_total = 0
-sections = []
-for family in order:
+archive_sections, total = [], 0
+judged_checks = [c for c in checks if c["id"] in JUDGED_CHECKS]
+if judged_checks:
+    cards = []
+    for c in judged_checks:
+        base = "modelcheck/" + c["id"] + "/"
+        labels = [("real", "The real instrument"), ("before", "My preset before"), ("after", "My preset after")]
+        audio = "".join(player(label, base + c["files"][key]) for key, label in labels if key in c["files"])
+        cards.append(f'<article class="card"><h3>{esc(c["title"])}</h3><p class="facts">{esc(c["changed"])}</p>'
+                     f'<div class="players">{audio}</div></article>')
+    archive_sections.append('<details class="family"><summary><span class="family-name">Model checks already judged</span>'
+                            f'<span class="family-count">{len(judged_checks)}</span></summary>'
+                            '<p class="lead">Marimba and Kalimba: the corrected presets were found closer. Harp String: neither was close; '
+                            'its second try is on the listening page.</p>' + "".join(cards) + "</details>")
+for family in [name for name, _ in FAMILIES] + ["Other"]:
     items = groups.get(family, [])
     if not items:
         continue
-    main = [e for e in items if not SECONDARY.search(e["path"])]
+    main_items = [e for e in items if not SECONDARY.search(e["path"])]
     extra = [e for e in items if SECONDARY.search(e["path"])]
+    total += len(items)
+    archive_sections.append(f'<details class="family"><summary><span class="family-name">{esc(family)}</span>'
+                            f'<span class="family-count">{len(items)} recordings</span></summary>'
+                            + "".join(recording(e) for e in main_items + extra) + "</details>")
 
-    def row(e):
-        title, library = title_of(e["path"])
-        base = "previews/" + e["id"]
-        facts = [f"{e['low']} to {e['high']}", f"{e['pitches']} recorded pitches",
-                 f"{e['layers']} dynamic layer{'s' if e['layers'] != 1 else ''}",
-                 f"{e['robins']} take{'s' if e['robins'] != 1 else ''} per note", f"{e['megabytes']:.0f} MB",
-                 f"{e['rate'] / 1000:g} kHz, {e['bits']} bit"]
-        players = [("Every note, low to high", "run.wav"), (f"One long note ({e['long_seconds']:g} s)", "long.wav")]
-        if e.get("layers_in_preview", 0) > 1:
-            players.append(("Same note, soft to loud", "layers.wav"))
-        audio = "".join(
-            f'<label class="player"><span>{html.escape(label)}</span>'
-            f'<audio controls preload="none" src="{html.escape(base + "/" + name)}"></audio></label>'
-            for label, name in players)
-        return (f'<article class="item" data-id="{html.escape(e["id"])}">'
-                f'<label class="pick"><input type="checkbox" data-id="{html.escape(e["id"])}" data-title="{html.escape(title)}">'
-                f'<span class="name">{html.escape(title)}</span><span class="lib">{library}</span></label>'
-                f'<p class="facts">{html.escape(" · ".join(facts))}</p><div class="players">{audio}</div></article>')
-
-    body = "".join(row(e) for e in main)
-    if extra:
-        body += (f'<details><summary>{len(extra)} more articulation{"s" if len(extra) != 1 else ""} '
-                 f'(short notes, plucks, tremolo, mutes)</summary>' + "".join(row(e) for e in extra) + "</details>")
-    rows_total += len(items)
-    sections.append(f'<section><h2>{html.escape(family)} <span class="count">{len(items)}</span></h2>{body}</section>')
-
-check_path = os.path.join(audition, "modelcheck", "index.json")
-checks_html = ""
-if os.path.exists(check_path):
-    with open(check_path, encoding="utf-8") as handle:
-        checks = json.load(handle)
-    blocks = []
-    for c in checks:
-        base = "modelcheck/" + c["id"] + "/"
-        labels = [("real", "The real instrument"), ("before", "My preset before"), ("after", "My preset now")]
-        audio = "".join(
-            f'<label class="player"><span>{label}</span><audio controls preload="none" src="{html.escape(base + c["files"][key])}"></audio></label>'
-            for key, label in labels if key in c["files"])
-        blocks.append(
-            f'<article class="item check"><div class="pick"><span class="name">{html.escape(c["title"])}</span>'
-            f'<span class="lib">{html.escape(c["preset"])}</span></div>'
-            f'<p class="facts">{html.escape(c["changed"])}</p><div class="players">{audio}</div>'
-            f'<label class="verdict">Your verdict <select data-check="{html.escape(c["id"])}" data-title="{html.escape(c["title"])}">'
-            f'<option value="">not judged yet</option><option>the new one is closer</option><option>the old one was closer</option>'
-            f'<option>neither is close</option><option>both are fine</option></select></label></article>')
-    checks_html = ('<section><h2>Model check <span class="count">my presets against the real instruments</span></h2>'
-                   '<p class="lead">The same notes three times: the recording, my preset as it was this morning, and my preset after '
-                   'correcting it from measurements of that recording. All three are equally loud and have no effects.</p>'
-                   + "".join(blocks) + "</section>")
-
-demo_path = os.path.join(audition, "conservatory", "index.json")
-demos_html = ""
-if os.path.exists(demo_path):
-    with open(demo_path, encoding="utf-8") as handle:
-        demos = json.load(handle)
-    families = {}
-    for d in demos:
-        families.setdefault(d["family"], {}).setdefault(d["instrument"], []).append(d)
-    blocks = []
-    for family, instruments in families.items():
-        blocks.append(f'<h3>{html.escape(family)}</h3>')
-        for instrument, styles in instruments.items():
-            audio = "".join(
-                f'<label class="player"><span>{html.escape(s["style"])}</span>'
-                f'<audio controls preload="none" src="{html.escape("conservatory/" + s["file"])}"></audio></label>'
-                for s in styles)
-            blocks.append(
-                f'<article class="item check"><div class="pick"><span class="name">{html.escape(instrument)}</span>'
-                f'<span class="lib">{len(styles)} style{"s" if len(styles) != 1 else ""}</span></div>'
-                f'<div class="players">{audio}</div>'
-                f'<label class="verdict">Your verdict <select data-demo="{html.escape(instrument)}">'
-                f'<option value="">not judged yet</option><option>good</option><option>wrong notes or out of tune</option>'
-                f'<option>too quiet or too loud</option><option>uneven from note to note</option>'
-                f'<option>a loop or a click is audible</option><option>something else is wrong</option></select></label></article>')
-    demos_html = ('<section><h2>Conservatory <span class="count">the recorded instruments as the synth plays them</span></h2>'
-                  '<p class="lead">Each player is the preset played through the plugin: eight notes climbing through the '
-                  'instrument, from soft to loud, then a chord. One player per playing style. This is the synth, not the raw '
-                  'recording; the raw recordings are further down.</p>' + "".join(blocks) + "</section>")
-
-grain_path = os.path.join(audition, "graindemo", "index.json")
-grain_html = ""
-if os.path.exists(grain_path):
-    with open(grain_path, encoding="utf-8") as handle:
-        grain = json.load(handle)
-    audio = "".join(
-        f'<label class="player"><span>{html.escape(c["title"])}</span>'
-        f'<audio controls preload="none" src="{html.escape("graindemo/" + c["file"])}"></audio></label>'
-        for c in grain["clips"])
-    grain_html = ('<section><h2>Granular effect <span class="count">the new insert on a part</span></h2>'
-                  f'<p class="lead">The same phrase on {html.escape(grain["preset"])}, four times. The effect remembers the last four '
-                  'seconds of what a part plays and plays them back as a cloud of grains. Its Freeze switch, which holds the cloud for '
-                  'as long as it is on, cannot be shown in a recording like this: try it in the plugin (insert type Grain).</p>'
-                  f'<article class="item check"><div class="players">{audio}</div>'
-                  '<label class="verdict">Your verdict <select data-demo="Granular effect">'
-                  '<option value="">not judged yet</option><option>good</option><option>too loud or too quiet</option>'
-                  '<option>sounds wrong</option><option>something else is wrong</option></select></label></article></section>')
-
-museum_path = os.path.join(audition, "museum", "index.json")
-museum_html = ""
-if os.path.exists(museum_path):
-    with open(museum_path, encoding="utf-8") as handle:
-        museum = json.load(handle)
-    blocks = []
-    for m in museum:
-        base = "museum/" + m["id"] + "/"
-        audio = "".join(
-            f'<label class="player"><span>{label}</span><audio controls preload="none" src="{html.escape(base + name)}"></audio></label>'
-            for label, name in (("The reference", "reference.flac"), ("My rebuild", "rebuild.flac")))
-        blocks.append(
-            f'<article class="item check"><div class="pick"><span class="name">{html.escape(m["title"])}</span>'
-            f'<span class="lib">{html.escape(m["preset"])}</span></div>'
-            f'<p class="facts">{html.escape(m["reference"])} {html.escape(m["source"])}</p><div class="players">{audio}</div>'
-            f'<label class="verdict">Your verdict <select data-demo="Museum, {html.escape(m["title"])}">'
-            '<option value="">not judged yet</option><option>admit it</option><option>not yet: too bright</option>'
-            '<option>not yet: too dull</option><option>not yet: the attack is wrong</option>'
-            '<option>not yet: the decay is wrong</option><option>not yet: something else</option></select></label></article>')
-    if blocks:
-        museum_html = ('<section><h2>Museum <span class="count">classic synth sounds rebuilt from their published settings</span></h2>'
-                       '<p class="lead">The same notes twice, at the same velocities, without effects and equally loud: a reference, and '
-                       'my rebuild in the synth. A sound enters the Museum room only when you admit it here.</p>'
-                       + "".join(blocks) + "</section>")
-
-page = """<!doctype html>
+archive = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CoolSynth sample audition</title>
-<style>
-:root { --bg:#f6f5f2; --panel:#ffffff; --ink:#1d1d1b; --soft:#5d5b55; --line:#dcd9d1; --accent:#0b6e4f; --accent-ink:#ffffff; }
-@media (prefers-color-scheme: dark) {
-  :root { --bg:#161614; --panel:#1f1f1c; --ink:#ecebe6; --soft:#a5a299; --line:#34332e; --accent:#5fc29f; --accent-ink:#10231c; }
-}
-* { box-sizing: border-box; }
-body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui, "Segoe UI", sans-serif; }
-header, main { max-width: 980px; margin: 0 auto; padding: 0 16px; }
-header { padding-top: 28px; }
-h1 { font-size: 1.6rem; margin: 0 0 6px; }
-h2 { font-size: 1.15rem; margin: 34px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
-h3 { font-size: 1rem; margin: 22px 0 6px; color: var(--soft); }
-.count { color: var(--soft); font-weight: 400; font-size: .9rem; }
-p.lead { color: var(--soft); margin: 0 0 10px; max-width: 70ch; }
-.item { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
-.item.picked { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
-.pick { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-.pick input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
-.name { font-weight: 600; }
-.lib { margin-left: auto; color: var(--soft); font-size: .8rem; border: 1px solid var(--line); border-radius: 999px; padding: 1px 9px; white-space: nowrap; }
-.facts { margin: 6px 0 8px 30px; color: var(--soft); font-size: .88rem; }
-.players { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px 14px; margin-left: 30px; }
-.player span { display: block; font-size: .8rem; color: var(--soft); margin-bottom: 2px; }
-audio { width: 100%; height: 34px; }
-details { margin: 8px 0 0; }
-summary { cursor: pointer; color: var(--soft); padding: 6px 0; }
-#bar { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); }
-#bar .in { max-width: 980px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-button { font: inherit; border: 0; border-radius: 8px; padding: 8px 14px; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
-button.quiet { background: transparent; color: var(--soft); border: 1px solid var(--line); }
-#picked { color: var(--soft); }
-.check .pick { cursor: default; }
-.check .facts, .check .players { margin-left: 0; }
-.verdict { display: block; margin-top: 10px; font-size: .9rem; color: var(--soft); }
-select { font: inherit; margin-left: 8px; padding: 5px 8px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); }
-textarea { width: 100%; min-height: 90px; margin: 10px 0 40px; font: 13px/1.4 ui-monospace, Consolas, monospace; background: var(--panel); color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
-@media (max-width: 560px) { .facts, .players { margin-left: 0; } }
-</style>
+<title>CoolSynth recordings archive</title>
+<style>__STYLE__</style>
 </head>
 <body>
 <header>
-  <h1>Sample audition</h1>
-  <p class="lead">__COUNT__ instrument recordings from two libraries, VSCO 2 Community Edition and VCSL. Both are CC0: free to build into the synth.
-  Nothing here is processed: each player is the raw recording, only made equally loud.</p>
-  <p class="lead"><b>Every note, low to high</b> plays 1.3 seconds of each recorded pitch at a middle dynamic, so you hear how even the instrument is across its range.
-  <b>One long note</b> is the middle of the range in full. <b>Soft to loud</b> is one pitch at every recorded dynamic.</p>
-  <p class="lead">Tick what you would want in the synth, then press <b>Copy my picks</b> and paste the text into the chat.</p>
+  <h1>Archive: the raw recordings</h1>
+  <p class="lead"><a href="index.html">Back to the listening page.</a> Nothing here needs doing. These are the __COUNT__ instrument recordings
+  from the two CC0 libraries (VSCO 2 Community Edition and VCSL), unprocessed, from which you picked the 74 that became the Conservatory.
+  Your ticks are still shown; changing them and copying sends a new list of picks.</p>
 </header>
-<div id="bar"><div class="in">
-  <button id="copy">Copy my picks</button>
-  <button id="clear" class="quiet">Clear</button>
-  <span id="picked">Nothing picked yet</span>
+<div id="bar"><div class="bar-in">
+  <span id="progress"></span>
+  <button id="copy" class="quiet">Copy my picks</button>
 </div></div>
 <main>
-__MUSEUM__
-__DEMOS__
-__CHECKS__
-__GRAIN__
+<section>
 __SECTIONS__
-<h2>Your picks as text</h2>
-<textarea id="out" readonly></textarea>
+</section>
+<textarea id="out" readonly hidden></textarea>
 </main>
 <script>
 const KEY = "coolsynth-sample-picks";
 const boxes = [...document.querySelectorAll('input[type=checkbox][data-id]')];
 let saved = [];
 try { saved = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { saved = []; }
-const verdicts = [...document.querySelectorAll('select[data-check]')];
-let savedVerdicts = {};
-try { savedVerdicts = JSON.parse(localStorage.getItem(KEY + "-verdicts") || "{}"); } catch (e) { savedVerdicts = {}; }
-const demos = [...document.querySelectorAll('select[data-demo]')];
-let savedDemos = {};
-try { savedDemos = JSON.parse(localStorage.getItem(KEY + "-demos") || "{}"); } catch (e) { savedDemos = {}; }
 function refresh() {
   const picked = boxes.filter(b => b.checked);
-  const judged = verdicts.filter(v => v.value);
-  const heard = demos.filter(v => v.value);
-  boxes.forEach(b => b.closest(".item").classList.toggle("picked", b.checked));
-  document.getElementById("picked").textContent =
-    (picked.length ? picked.length + " picked" : "Nothing picked yet") + (judged.length + heard.length ? ", " + (judged.length + heard.length) + " judged" : "");
-  let text = "";
-  if (heard.length) text += "Heard on the page:\\n" + heard.map(v => "- " + v.dataset.demo + ": " + v.value).join("\\n") + "\\n";
-  if (judged.length) text += "Model check:\\n" + judged.map(v => "- " + v.dataset.title + ": " + v.value).join("\\n") + "\\n";
-  if (picked.length) text += "My sample picks:\\n" + picked.map(b => "- " + b.dataset.title + "  [" + b.dataset.id + "]").join("\\n");
-  document.getElementById("out").value = text;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(picked.map(b => b.dataset.id)));
-    localStorage.setItem(KEY + "-verdicts", JSON.stringify(Object.fromEntries(verdicts.map(v => [v.dataset.check, v.value]))));
-    localStorage.setItem(KEY + "-demos", JSON.stringify(Object.fromEntries(demos.map(v => [v.dataset.demo, v.value]))));
-  } catch (e) {}
+  boxes.forEach(b => b.closest(".card").classList.toggle("picked", b.checked));
+  document.getElementById("progress").textContent = picked.length + " picked";
+  document.getElementById("out").value = picked.length ? "My sample picks:\\n" + picked.map(b => "- " + b.dataset.title + "  [" + b.dataset.id + "]").join("\\n") : "";
+  try { localStorage.setItem(KEY, JSON.stringify(picked.map(b => b.dataset.id))); } catch (e) {}
 }
-verdicts.forEach(v => { v.value = savedVerdicts[v.dataset.check] || ""; v.addEventListener("change", refresh); });
-demos.forEach(v => { v.value = savedDemos[v.dataset.demo] || ""; v.addEventListener("change", refresh); });
 boxes.forEach(b => { b.checked = saved.includes(b.dataset.id); b.addEventListener("change", refresh); });
-document.getElementById("clear").addEventListener("click", () => { boxes.forEach(b => b.checked = false); refresh(); });
 document.getElementById("copy").addEventListener("click", async () => {
-  const text = document.getElementById("out").value;
   const button = document.getElementById("copy");
-  try { await navigator.clipboard.writeText(text); button.textContent = "Copied"; }
-  catch (e) { document.getElementById("out").select(); button.textContent = "Select the text below and copy it"; }
+  try { await navigator.clipboard.writeText(document.getElementById("out").value); button.textContent = "Copied"; }
+  catch (e) { const out = document.getElementById("out"); out.hidden = false; out.select(); button.textContent = "Copy the text at the bottom"; }
   setTimeout(() => button.textContent = "Copy my picks", 2500);
 });
-// Only one player at a time.
-document.addEventListener("play", e => { document.querySelectorAll("audio").forEach(a => { if (a !== e.target) a.pause(); }); }, true);
-// Stopping rewinds: the next play starts from the beginning, never from where it was stopped.
-document.addEventListener("pause", e => {
-  const a = e.target;
-  if (a.tagName === "AUDIO" && !a.ended && !a.seeking) { try { a.currentTime = 0; } catch (err) {} }
-}, true);
+__ONE__
 refresh();
 </script>
 </body>
 </html>
 """
-page = page.replace("__COUNT__", str(rows_total)).replace("__SECTIONS__", "\n".join(sections)).replace("__CHECKS__", checks_html).replace("__DEMOS__", demos_html).replace("__GRAIN__", grain_html).replace("__MUSEUM__", museum_html)
-with open(os.path.join(audition, "index.html"), "w", encoding="utf-8", newline="\n") as handle:
-    handle.write(page)
-print(rows_total, "instruments on the page in", len(sections), "families")
-for family in order:
-    if groups.get(family):
-        print(f"  {len(groups[family]):3d}  {family}")
+archive = (archive.replace("__STYLE__", STYLE).replace("__ONE__", ONE_AT_A_TIME).replace("__COUNT__", str(total))
+           .replace("__SECTIONS__", "\n".join(archive_sections)))
+with open(os.path.join(audition, "recordings.html"), "w", encoding="utf-8", newline="\n") as handle:
+    handle.write(archive)
+
+print(f"index.html: {len(nav)} sections ({', '.join(label for _, label in nav)}); recordings.html: {total} recordings")
