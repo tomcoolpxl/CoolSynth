@@ -25,6 +25,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 12. Audition the 14 presets; retune by ear what the ear flags, then rerun the loudness tool with
    `--apply` (from the build directory).
 13. Phase 2.1: LFO class (local and global, sync, shapes) and Juno Pad.
+   Before or with it: the VA generator's cost. Release, eight-note chords: Supersaw 36 % of real
+   time (worst block 60 %), Clav Keys 25 %; a 16-voice Supersaw would reach the limit. Debug runs
+   the same at four to six times the cost (Supersaw 154 %), too slow to play. Measure with
+   `COOLSYNTH_CPU_REPORT=1` and the test executable.
 14. Phase 2.2: the matrix, 808 Boom and the Sync Lead sweep.
 
 ## Carried over from the V2 backlog

@@ -36,7 +36,7 @@ namespace coolsynth::synth::v3
     {
     public:
         static constexpr int maxUnison = 7;
-        static constexpr int latencySamples = 2;
+        static constexpr int latencySamples = generatorLatencySamples;
 
         enum Param : int { shape = 0, pulseWidth, unison, detune, spread, mix, randomPhase, sub, paramCount };
 

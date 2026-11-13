@@ -27,8 +27,9 @@
 
     The voice owns its own handover: a start on a sounding voice fades the old note out over
     1.5 ms and then starts the new one from silence with every module reset, so the allocator
-    never has to know about clicks. A start on a silent voice snaps every smoothed value to the
-    patch and applies a waiting type change at once, so a note never begins with a stale sweep.
+    never has to know about clicks. Every note begins inside render(), after the block's patch
+    has been read: smoothed values snap to it, a waiting type change applies at once, and the
+    envelopes start with the patch's own times, so a note never carries the previous preset.
 */
 namespace coolsynth::synth::v3
 {
@@ -167,6 +168,7 @@ namespace coolsynth::synth::v3
         void snapToSettings() noexcept;
         void restartModules() noexcept;
         void beginNote(const NoteStart& start) noexcept;
+        void startPendingNote() noexcept;
         void retarget(int noteNumber, float detuneCents, bool glide) noexcept;
         void renderSubBlock(float* left, float* right, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept;
         void advancePitch(int n, const VoiceSettings& settings) noexcept;
@@ -184,9 +186,9 @@ namespace coolsynth::synth::v3
         bool pending = false;
         bool pendingReleased = false;
         bool released = false;
-        bool snapPending = false;
         bool prepared = false;
         int stealRemaining = 0;
+        int envelopeHold = 0; // samples the envelopes wait at a fresh note, matching the generators' latency
         int stealTotal = 1;
 
         float currentPitch = 60.0f;

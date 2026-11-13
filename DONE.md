@@ -539,3 +539,10 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] The processor lists the factory bank as host programs named "Room: Preset"; choosing one applies it and sets the patch name.
 - [x] Added the throwaway `src/plugin/AuditionEditor`: a factory preset menu grouped by room above JUCE's generic editor (phase 1.6, replaced in phase 9).
 - [x] Tests: the bank is the program list and applying a program sets its parameters; the editor builds and lays out headlessly. Verified Debug build without warnings, `ctest` green, Release standalone and VST3 rebuilt.
+
+## Fix: the previous preset leaking into new notes (2026-11-13)
+
+- [x] Reported: after a preset change, notes for several seconds carried pieces of the previous preset, and some notes were silent for a while. Cause: a note on a silent voice started its envelopes before the voice read the new patch, so the first note on each of the 16 voices ran the previous preset's attack, curve and velocity response; coming from a slow-attack preset, short notes on fresh voices were nearly inaudible. Every note now starts inside `Voice::render()` after the patch is read.
+- [x] Found with it: the generators' two-sample output delay met an envelope that had already started, so a zero-attack pulse onset stepped 0.20; the envelopes now wait for the same two samples at a fresh note (step 0.074). `generatorLatencySamples` in `Module.h` fixes that delay for every generator type.
+- [x] Added a voice regression test (2 ms after a slow-to-fast patch change the note is at full level; it was at 1.1 %), a performance fuzz over the factory presets with preset switches (930 key states checked: every key has its voice, mono stacks play the priority key, nothing hangs after release), and an opt-in CPU report (`COOLSYNTH_CPU_REPORT=1`).
+- [x] Measured CPU: Release stays below 36 % of real time for eight-note chords on every preset; Debug exceeds real time on Supersaw, Clav Keys, OB Strings and Prophet Brass. Verified Debug build without warnings and `ctest` green.

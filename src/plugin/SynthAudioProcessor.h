@@ -86,6 +86,7 @@ public:
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+    coolsynth::synth::v3::Part& getPartForTesting() noexcept { return synthEngine.partForTesting(); }
 
     coolsynth::plugin::ProcessorScopeFifo& getScopeFifo() noexcept { return scopeFifo; }
 

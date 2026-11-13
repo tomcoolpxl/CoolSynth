@@ -25,6 +25,10 @@ namespace coolsynth::synth::v3
 {
     inline constexpr int maxSlotParameters = 8;
 
+    /** Every generator's output runs this many samples late, so layered generators stay aligned;
+        the voice holds its envelopes for as long at a note's start so the onset meets the sound. */
+    inline constexpr int generatorLatencySamples = 2;
+
     enum class Skew { linear, logarithmic, squared };
     enum class Unit { generic, hertz, milliseconds, decibels, semitones, cents, percent, choice };
 

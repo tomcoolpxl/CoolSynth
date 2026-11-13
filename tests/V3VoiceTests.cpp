@@ -444,6 +444,28 @@ public:
             expect(largestGap > 0.05f);
         }
 
+        beginTest("a_note_on_a_silent_voice_uses_the_current_patch_from_its_first_sample");
+        {
+            // Regression: the envelopes used to start with the previous patch's times, because the
+            // note began before the block read the new settings; after a preset change the first
+            // note on every voice then sounded like the old preset.
+            auto voice = makeVoice();
+            auto slow = basicSettings(Wave::sine);
+            slow.envelopes[0].attack = 0.5f;
+            slow.envelopes[0].release = 0.01f;
+            voice->start(noteAt(60));
+            renderVoice(*voice, slow, 48000);
+            voice->release();
+            renderVoice(*voice, slow, 4800);
+            expect(! voice->isActive());
+
+            auto fast = basicSettings(Wave::sine);
+            fast.envelopes[0].attack = 0.001f;
+            voice->start(noteAt(60));
+            renderVoice(*voice, fast, 96); // 2 ms
+            expect(voice->ampLevel() > 0.99f, "the attack still runs at the previous patch's speed: amp " + juce::String(voice->ampLevel(), 3));
+        }
+
         beginTest("voice_pan_shifts_the_image");
         {
             auto voice = makeVoice();

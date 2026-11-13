@@ -49,8 +49,8 @@ namespace coolsynth::synth::v3
         pending = false;
         pendingReleased = false;
         released = false;
-        snapPending = false;
         stealRemaining = 0;
+        envelopeHold = 0;
     }
 
     bool Voice::isActive() const noexcept
@@ -76,20 +76,29 @@ namespace coolsynth::synth::v3
         if (! prepared)
             return;
 
-        if (stealRemaining > 0 || (envelopes[0].isActive() && envelopes[0].getValue() > kSilentLevel))
-        {
-            // Hand over: the sounding note fades out, this one waits. A start during a fade replaces the waiting note.
-            if (stealRemaining == 0)
-                stealRemaining = stealTotal;
-            pendingNote = start;
-            pending = true;
-            pendingReleased = false;
-            return;
-        }
+        // The note always waits for the next render, which reads the patch before it starts the
+        // note: starting here would run the envelopes with the previous patch's times. A sounding
+        // voice first fades its old note out; a start during that fade replaces the waiting note.
+        const bool sounding = stealRemaining > 0 || (envelopes[0].isActive() && envelopes[0].getValue() > kSilentLevel);
+        if (sounding && stealRemaining == 0)
+            stealRemaining = stealTotal;
+        pendingNote = start;
+        pending = true;
+        pendingReleased = false;
+    }
 
+    void Voice::startPendingNote() noexcept
+    {
         restartModules();
-        beginNote(start);
-        snapPending = true;
+        pending = false;
+        envelopeHold = generatorLatencySamples;
+        beginNote(pendingNote);
+        snapToSettings();
+        if (pendingReleased)
+        {
+            pendingReleased = false;
+            release(releaseVelocity);
+        }
     }
 
     void Voice::retrigger(const NoteStart& start) noexcept
@@ -242,11 +251,8 @@ namespace coolsynth::synth::v3
             return;
 
         applySettings(settings);
-        if (snapPending)
-        {
-            snapToSettings();
-            snapPending = false;
-        }
+        if (pending && stealRemaining == 0)
+            startPendingNote();
 
         int done = 0;
         while (done < numSamples && isActive())
@@ -262,18 +268,7 @@ namespace coolsynth::synth::v3
             {
                 stealRemaining -= n;
                 if (stealRemaining == 0)
-                {
-                    // The old note is silent now: start the waiting one from a clean slate.
-                    restartModules();
-                    pending = false;
-                    beginNote(pendingNote);
-                    snapToSettings();
-                    if (pendingReleased)
-                    {
-                        pendingReleased = false;
-                        release(releaseVelocity);
-                    }
-                }
+                    startPendingNote(); // the old note is silent now: start the waiting one from a clean slate
             }
         }
     }
@@ -286,11 +281,14 @@ namespace coolsynth::synth::v3
         const float pitch = currentPitch + globals.bendSemitones + driftValue * settings.driftCents * 0.01f;
         const float noteHz = dsp::pitchToHz(pitch);
 
+        // At a fresh note the envelopes wait while the generators' first samples are still on their way.
+        const int held = std::min(envelopeHold, n);
+        envelopeHold -= held;
         float* amp = ampBuffer.data();
         for (int s = 0; s < n; ++s)
-            amp[s] = envelopes[0].getNextSample();
-        const float env2 = envelopes[1].advance(n);
-        const float env3 = envelopes[2].advance(n);
+            amp[s] = s < held ? 0.0f : envelopes[0].getNextSample();
+        const float env2 = envelopes[1].advance(n - held);
+        const float env3 = envelopes[2].advance(n - held);
 
         sources = globals.sources;
         sources.set(ModSource::velocity, note.velocity);

@@ -213,6 +213,13 @@ start on a sounding voice fades it over 1.5 ms and starts the waiting note from 
 start on a silent voice snaps every smoothed value and applies a waiting type at once. The
 measured handover step equals the steady-state step of the louder note.
 
+Fixed 2026-11-13: every note now begins inside render(), after the block's patch has been read.
+Starting it in start() ran the envelopes with the previous patch's times, so after a preset
+change the first note on each of the 16 voices sounded like the old preset (a slow attack
+made short notes nearly silent). Every generator's output runs `generatorLatencySamples` (2)
+late, and at a fresh note the envelopes wait as long, so a zero-attack onset steps 0.074
+instead of 0.202.
+
 ## 5. Global modulators and the matrix
 
 Per part: GLFO1 and GLFO2 (same shapes as the local LFOs, tempo-synced, one phase shared by all

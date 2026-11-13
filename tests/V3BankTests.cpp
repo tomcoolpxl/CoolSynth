@@ -1,5 +1,6 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 
@@ -210,3 +211,206 @@ env1 = loop=maybe attack=abc
 };
 
 static V3BankTests v3BankTests;
+
+/**
+    Plays random phrases on every non-arp factory preset, switching presets between phrases the
+    way someone auditioning does, and after every block checks what must hold: each pressed key
+    in poly mode has a voice playing it, the mono, legato and unison stacks play the key with
+    priority, and once every key is up and the releases are over, no voice is left running.
+*/
+class V3PerformanceFuzz final : public juce::UnitTest
+{
+public:
+    V3PerformanceFuzz() : juce::UnitTest("V3 performance fuzz", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("random_playing_across_presets_always_sounds_the_right_notes");
+
+        auto processor = std::make_unique<SynthAudioProcessor>();
+        processor->prepareToPlay(48000.0, 256);
+        auto& part = processor->getPartForTesting();
+        juce::Random random(20261113);
+        juce::AudioBuffer<float> buffer(2, 256);
+        int failures = 0;
+        int checkedNotes = 0;
+
+        std::vector<int> candidates;
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+        {
+            bool arp = false;
+            for (const auto& e : coolsynth::presets::getFactoryPreset(i).entries)
+                arp = arp || (e.parameterId == "arpEnabled" && e.text == "on");
+            if (! arp)
+                candidates.push_back(i);
+        }
+
+        auto render = [&](juce::MidiBuffer& midi)
+        {
+            buffer.clear();
+            processor->processBlock(buffer, midi);
+        };
+
+        for (int phrase = 0; phrase < 16 && failures < 10; ++phrase)
+        {
+            const int presetIndex = candidates[static_cast<std::size_t>(random.nextInt(static_cast<int>(candidates.size())))];
+            processor->setCurrentProgram(presetIndex);
+            const auto& preset = coolsynth::presets::getFactoryPreset(presetIndex);
+            const int mode = static_cast<int>(processor->getValueTreeState().getRawParameterValue("pA.play.mode")->load());
+            const int priority = static_cast<int>(processor->getValueTreeState().getRawParameterValue("pA.play.priority")->load());
+            const int polyphony = static_cast<int>(processor->getValueTreeState().getRawParameterValue("pA.play.voices")->load());
+
+            std::vector<std::pair<int, std::uint64_t>> held; // note, order pressed
+            std::uint64_t order = 0;
+
+            for (int step = 0; step < 30 && failures < 10; ++step)
+            {
+                juce::MidiBuffer midi;
+                const bool press = held.empty() || (held.size() < 6 && random.nextFloat() < 0.55f);
+                if (press)
+                {
+                    int note = 0;
+                    do { note = 36 + random.nextInt(48); }
+                    while (std::any_of(held.begin(), held.end(), [note](const auto& h) { return h.first == note; }));
+                    held.emplace_back(note, ++order);
+                    midi.addEvent(juce::MidiMessage::noteOn(1, note, static_cast<juce::uint8>(40 + random.nextInt(87))), random.nextInt(256));
+                }
+                else
+                {
+                    const auto victim = static_cast<std::size_t>(random.nextInt(static_cast<int>(held.size())));
+                    midi.addEvent(juce::MidiMessage::noteOff(1, held[victim].first), random.nextInt(256));
+                    held.erase(held.begin() + static_cast<std::ptrdiff_t>(victim));
+                }
+                render(midi);
+                juce::MidiBuffer none;
+                for (int b = 0, gap = 1 + random.nextInt(16); b < gap; ++b)
+                    render(none); // up to 85 ms between key events
+
+                if (held.empty())
+                    continue;
+
+                std::vector<int> soundingKeys;
+                for (int v = 0; v < coolsynth::synth::v3::Part::maxVoices; ++v)
+                    if (part.voiceForTesting(v).isActive() && part.voiceKeyDownForTesting(v))
+                        soundingKeys.push_back(part.voiceForTesting(v).currentNote());
+
+                auto describe = [&]
+                {
+                    juce::String keys, sounding;
+                    for (const auto& h : held) keys << h.first << " ";
+                    for (int n : soundingKeys) sounding << n << " ";
+                    return preset.name + ", step " + juce::String(step) + ": keys down " + keys + "| voices playing " + sounding;
+                };
+
+                if (mode == 0)
+                {
+                    // Poly: the newest keys up to the polyphony limit must all be playing.
+                    std::vector<std::pair<int, std::uint64_t>> newest(held);
+                    std::sort(newest.begin(), newest.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
+                    for (std::size_t k = 0; k < newest.size() && static_cast<int>(k) < polyphony; ++k)
+                    {
+                        ++checkedNotes;
+                        if (std::find(soundingKeys.begin(), soundingKeys.end(), newest[k].first) == soundingKeys.end())
+                        {
+                            ++failures;
+                            expect(false, "key " + juce::String(newest[k].first) + " is down but silent. " + describe());
+                        }
+                    }
+                }
+                else
+                {
+                    int expected = held.front().first;
+                    for (const auto& h : held)
+                    {
+                        if (priority == 0 && h.second > std::find_if(held.begin(), held.end(), [expected](const auto& x) { return x.first == expected; })->second)
+                            expected = h.first;
+                        if (priority == 1 && h.first < expected)
+                            expected = h.first;
+                        if (priority == 2 && h.first > expected)
+                            expected = h.first;
+                    }
+                    ++checkedNotes;
+                    const bool playing = ! soundingKeys.empty()
+                        && std::all_of(soundingKeys.begin(), soundingKeys.end(), [expected](int n) { return n == expected; });
+                    if (! playing)
+                    {
+                        ++failures;
+                        expect(false, "expected the stack to play " + juce::String(expected) + ". " + describe());
+                    }
+                }
+            }
+
+            // Every key up: after the releases nothing may still be running.
+            juce::MidiBuffer releaseAll;
+            for (const auto& h : held)
+                releaseAll.addEvent(juce::MidiMessage::noteOff(1, h.first), 0);
+            render(releaseAll);
+            juce::MidiBuffer none;
+            for (int b = 0; b < 200; ++b) // about a second, longer than any release in the bank
+                render(none);
+            if (part.activeVoiceCountForTesting() != 0)
+            {
+                ++failures;
+                expect(false, preset.name + ": " + juce::String(part.activeVoiceCountForTesting()) + " voices still running a second after the last key went up");
+            }
+        }
+
+        logMessage("checked " + juce::String(checkedNotes) + " key states, " + juce::String(failures) + " failures");
+        expect(checkedNotes > 500);
+    }
+};
+
+static V3PerformanceFuzz v3PerformanceFuzz;
+
+/**
+    Opt-in (set COOLSYNTH_CPU_REPORT): renders every factory preset for two seconds with an
+    eight-note chord and prints how long that took against real time. Above 100 % the audio
+    device misses deadlines and the output drops out.
+*/
+class V3CpuReport final : public juce::UnitTest
+{
+public:
+    V3CpuReport() : juce::UnitTest("V3 CPU report", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("cpu_load_per_preset");
+        if (juce::SystemStats::getEnvironmentVariable("COOLSYNTH_CPU_REPORT", {}).isEmpty())
+        {
+            logMessage("skipped: set COOLSYNTH_CPU_REPORT=1 to measure");
+            return;
+        }
+
+        constexpr double sampleRate = 48000.0;
+        constexpr int block = 256;
+        constexpr int blocks = static_cast<int>(2.0 * sampleRate) / block;
+        for (int index = 0; index < coolsynth::presets::getFactoryPresetCount(); ++index)
+        {
+            const auto& preset = coolsynth::presets::getFactoryPreset(index);
+            auto processor = std::make_unique<SynthAudioProcessor>();
+            processor->prepareToPlay(sampleRate, block);
+            coolsynth::presets::applyFactoryPreset(processor->getValueTreeState(), preset);
+
+            juce::AudioBuffer<float> buffer(2, block);
+            double worstBlock = 0.0;
+            const auto start = juce::Time::getHighResolutionTicks();
+            for (int b = 0; b < blocks; ++b)
+            {
+                juce::MidiBuffer midi;
+                if (b == 0)
+                    for (int note : { 48, 52, 55, 59, 60, 64, 67, 72 })
+                        midi.addEvent(juce::MidiMessage::noteOn(1, note, static_cast<juce::uint8>(100)), 0);
+                buffer.clear();
+                const auto blockStart = juce::Time::getHighResolutionTicks();
+                processor->processBlock(buffer, midi);
+                worstBlock = std::max(worstBlock, juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - blockStart));
+            }
+            const double seconds = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start);
+            const double blockSeconds = block / sampleRate;
+            logMessage(preset.name.paddedRight(' ', 16) + " average " + juce::String(100.0 * seconds / 2.0, 1)
+                       + " % of real time, worst block " + juce::String(100.0 * worstBlock / blockSeconds, 1) + " %");
+        }
+    }
+};
+
+static V3CpuReport v3CpuReport;
