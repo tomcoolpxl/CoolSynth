@@ -43,3 +43,30 @@ env2 = attack=0.5 decay=180 sustain=0 release=150
 voice = env2ToP1=0.5 velToP1=0.12
 reverb = on size=0.6 damping=0.45 mix=0.22
 master = 4
+
+[Kalimba]
+room = Greenhouse
+# A heavily damped string an octave up, struck near its middle with a soft click, so it rings
+# like a tine, with a five-millisecond puff of noise for the thumb.
+g1 = String decay=1.6 damp=0.6 pick=0.35 pos=0.4 release=0.3 excite=click oct=1 level=0.9
+g2 = Noise type=white tone=0.7 level=0
+p1 = Off
+env1 = attack=1 decay=2500 sustain=0 release=600 velocity=0.5
+env3 = attack=0.5 decay=5 sustain=0 release=5
+mod = src=env3 dst=g2.level amount=0.35
+mod = src=velocity dst=g1.pick amount=0.25
+voice = env2ToP1=0
+reverb = on size=0.45 damping=0.5 mix=0.2 predelay=10
+master = 2.5
+
+[Harp String]
+room = Greenhouse
+# A bright string plucked a fifth of the way along. It rings for seconds while the key is held;
+# letting go lays a hand on it. Harder playing plucks brighter.
+g1 = String decay=7 damp=0.22 pick=0.8 pos=0.2 release=0.75 level=0.9
+p1 = Off
+env1 = attack=1 decay=9000 sustain=0 release=450 velocity=0.5
+mod = src=velocity dst=g1.pick amount=0.2
+voice = env2ToP1=0 drift=1
+reverb = on size=0.6 damping=0.4 mix=0.25 predelay=15
+master = 5

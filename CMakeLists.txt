@@ -176,6 +176,7 @@ if(BUILD_TESTING)
             tests/V3ReverbTests.cpp
             tests/V3LoFiTests.cpp
             tests/V3ModernFxTests.cpp
+            tests/V3StringTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp

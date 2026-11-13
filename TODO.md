@@ -62,7 +62,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    Cassette Keys, Blanket Pad, Bedroom Bass, lo-fi on Vinyl Choir and Concrete Pad. 60 presets.
 27. Phase 5.3 done 2026-11-13: `src/synth/ModernFx.h` (pump, EQ, flanger), 13 parameters,
    `tests/V3ModernFxTests.cpp`; Main Stage Future Chord. Phase 5 complete: 61 presets.
-28. Phase 6.1: Karplus-Strong generator; Greenhouse Kalimba and Harp String.
+28. Phase 6.1 done 2026-11-13: `src/synth/v3/StringGenerator.h`, the `noteOff` and `strike` module
+   hooks, `tests/V3StringTests.cpp`; Greenhouse Kalimba and Harp String. 63 presets.
+29. Phase 6.2: modal generator; Greenhouse Marimba and Bedroom Dusty Mallet.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

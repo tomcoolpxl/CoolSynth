@@ -171,7 +171,7 @@ lands with chord memory in 7.1). Shipped 2026-11-13 (decisions D54 to D57). Phas
 
 6.1 Karplus-Strong. Excitation, pick position, damping, string decay, release damping, pitch-
 correct loop filter. Tests: tuning across the range, decay time. Ships: Greenhouse Kalimba, Harp
-String.
+String. Shipped 2026-11-13 with both (decisions D58 to D60).
 
 6.2 Modal. Partials with material morph, mallet hardness, strike position. Ships: Greenhouse
 Marimba, Bedroom Dusty Mallet.

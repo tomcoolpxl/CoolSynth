@@ -728,3 +728,43 @@ One CPU reading of 154 % for a single block of Future Chord did not repeat in th
 runs (17 to 26 % worst block, 11 to 12 % average); the machine was busy.
 
 Phase 5 is complete: 61 presets.
+
+## D58. The plucked string (2026-11-13, phase 6.1)
+
+Checked online: Jaffe and Smith's extensions of Karplus-Strong tune the loop by its phase delay
+at the fundamental and set brightness with a low-pass on the pluck (CCRMA, "Extended
+Karplus-Strong Algorithm").
+
+- **A delay line of one period minus the damping low-pass's phase delay at the fundamental, read
+  with a 4-point Hermite interpolator and ramped per sample (taken, recommended).** Measured:
+  within 1.78 cents from C2 to C7 at light and heavy damping. An allpass fractional delay, the
+  paper's choice, has a flatter top octave but clicks when the pitch moves, and this string must
+  bend, glide and take vibrato.
+- **Decay is the time to fall 60 dB; Damping a one-pole low-pass in the loop (taken).** Measured
+  30 dB a second at Decay 2 s.
+- **Pick Position as a comb on the output, the same filter as one on the pluck (taken).** No
+  second buffer for the excitation; position 0.5 removes the even harmonics (tested).
+- **The pluck's brightness is a cutoff counted in harmonics of the note, 1.5 to 40 (taken).**
+  Found by the loudness tool: a white-noise pluck put its energy in the top octaves, which die
+  within a few loops, leaving a loud tick and a faint string. The click excitation was raised to
+  twice full scale for the same reason.
+- **Release Damp shortens the decay when the key goes up, from no effect to 30 ms; a retriggered
+  voice plucks the ringing string again (taken).** Both need the module to hear about the key:
+  see D59.
+
+## D59. Modules may hear note-off and a re-strike (2026-11-13, phase 6.1)
+
+- **Two optional module hooks, `noteOff()` and `strike()`, which a slot calls only on the types
+  that have them (taken, recommended).** The voice calls them at release and at retrigger. No
+  existing module changes; the string uses both.
+- A gate flag in the per-sub-block parameters. Every module would carry a value one uses, and a
+  retrigger inside one sub-block would be missed.
+
+## D60. Phase 6.1 presets (2026-11-13, phase 6.1)
+
+- **Kalimba: a heavily damped string an octave up, struck near its middle with the click
+  excitation, plus a 5 ms puff of noise for the thumb (taken).**
+- **Harp String: a bright pluck a fifth of the way along, ringing for seven seconds while held,
+  damped in about 100 ms on release, brighter with velocity (taken).**
+
+Both are held at the tool's peak ceiling, as plucks are.

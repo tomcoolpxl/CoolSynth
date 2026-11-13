@@ -282,6 +282,26 @@ namespace coolsynth::synth::v3
             std::visit([&](auto& module) { module.noteOn(note); }, instances[active].module);
         }
 
+        /** Key up, for the module types that react to it (a string's damper); the others ignore it. */
+        void noteOff() noexcept
+        {
+            std::visit([](auto& module)
+            {
+                if constexpr (requires { module.noteOff(); })
+                    module.noteOff();
+            }, instances[active].module);
+        }
+
+        /** The same voice plays again without a restart, for the types that are struck (a string). */
+        void strike() noexcept
+        {
+            std::visit([](auto& module)
+            {
+                if constexpr (requires { module.strike(); })
+                    module.strike();
+            }, instances[active].module);
+        }
+
         void process(float* left, float* right, int numSamples, const SlotParams& params) noexcept
         {
             jassert(prepared && numSamples <= maxSubBlock);

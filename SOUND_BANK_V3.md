@@ -348,7 +348,7 @@ loudness-normalised):
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
 | Bedroom | Cassette Keys, Blanket Pad, Bedroom Bass, Tape Flute, Vinyl Choir | Dusty Mallet (modal, 6.2) |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Static Hit, SCC Lead | Chip Chord (chord memory, 7.1) |
-| Greenhouse | Glass Bell, Rain Chime, Crystal Pluck | Marimba (modal, 6.2), Kalimba, Harp String (Karplus-Strong, 6.1) |
+| Greenhouse | Glass Bell, Kalimba, Rain Chime, Crystal Pluck, Harp String | Marimba (modal, 6.2) |
 | Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field | Granular Sky (8.2) |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad | Chord Trigger (7.1) |
 | Main Stage | Reese, Supersaw (no sub layer), Future Chord (played as a chord), Neuro Growl, Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |

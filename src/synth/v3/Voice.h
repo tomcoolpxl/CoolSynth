@@ -17,6 +17,7 @@
 #include "OffModules.h"
 #include "ResonatorProcessors.h"
 #include "ShaperProcessors.h"
+#include "StringGenerator.h"
 #include "SvfProcessor.h"
 #include "VaGenerator.h"
 #include "WavetableGenerator.h"
@@ -51,7 +52,8 @@
 */
 namespace coolsynth::synth::v3
 {
-    using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator, WavetableGenerator>; // new types only at the end
+    using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator, WavetableGenerator,
+                                        StringGenerator>; // new types only at the end
     using ProcessorTypes = std::variant<OffProcessor, LadderProcessor, SvfProcessor, CrusherProcessor, FolderProcessor, DriveProcessor,
                                         FormantProcessor, CombProcessor>; // new types only at the end
     using GeneratorSlot = Slot<GeneratorTypes>;
@@ -65,6 +67,7 @@ namespace coolsynth::synth::v3
         inline constexpr int fm2 = 3;
         inline constexpr int fm4 = 4;
         inline constexpr int wavetable = 5;
+        inline constexpr int string = 6;
     }
     namespace processorType
     {
@@ -82,6 +85,7 @@ namespace coolsynth::synth::v3
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::fm2, GeneratorTypes>, FmGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::fm4, GeneratorTypes>, Fm4Generator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::wavetable, GeneratorTypes>, WavetableGenerator>);
+    static_assert(std::is_same_v<std::variant_alternative_t<generatorType::string, GeneratorTypes>, StringGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::ladder, ProcessorTypes>, LadderProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::svf, ProcessorTypes>, SvfProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::folder, ProcessorTypes>, FolderProcessor>);

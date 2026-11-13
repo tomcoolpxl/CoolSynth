@@ -661,3 +661,10 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] 13 new parameters (`flanger*`, `eq*`, `pump*`) and the bank sections `flanger`, `eq`, `pump`.
 - [x] Preset: Main Stage Future Chord (played as a chord). 61 presets; phase 5 complete.
 - [x] Added `tests/V3ModernFxTests.cpp` (4 tests): the pump's gain curve and a click-free duck to 0.4 at depth 0.6; EQ shelves and tilt within 0.7 dB of their settings and matching a measured sine; flanger notch depth and bounds; the rack running the stages and the bank sections. Verified Debug build without warnings and `ctest` green; Future Chord 11 to 12 % of real time for eight-note chords.
+
+## V3 phase 6.1: plucked string (2026-11-13)
+
+- [x] Added `src/synth/v3/StringGenerator.h` ("String", generator type 6): a Karplus-Strong string tuned by its loop's phase delay, Hermite-read, with Decay, Damping, Pick (a cutoff in harmonics), Pick Position (an output comb), Release Damp and noise or click excitation.
+- [x] Slots forward two optional hooks to the module types that have them: `noteOff()` (the voice's release) and `strike()` (a retrigger of the same voice).
+- [x] Presets: Greenhouse Kalimba and Harp String. 63 presets.
+- [x] Added `tests/V3StringTests.cpp` (5 tests): tuning within 3 cents from C2 to C7 at two dampings (worst 1.78), 30 dB a second at Decay 2 s, damping on key-up and ringing on at Release 0, no even harmonics at position 0.5, a retriggered voice plucking again. Verified Debug build without warnings and `ctest` green; both presets under 7 % of real time for eight-note chords.

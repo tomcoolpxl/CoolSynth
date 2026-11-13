@@ -44,7 +44,7 @@ mod = src=genv dst=g2.tone amount=0.6
 mod = src=genv dst=g2.level amount=0.2
 voice = env2ToP1=0
 reverb = on size=0.85 damping=0.4 mix=0.3
-master = -2
+master = -1.5
 
 [Pluck Drop]
 room = Main Stage

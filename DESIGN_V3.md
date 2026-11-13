@@ -81,6 +81,13 @@ type 2: a trapezoidal state-variable filter with LP, HP, BP (peak gain 1) and no
 Q 0.5 to 40, a soft limit on the band state, drive as an input stage, key tracking, cutoff and
 resonance ramped per sample (decision D38).
 
+Shipped (phase 6.1, 2026-11-13): `StringGenerator` ("String") in
+`src/synth/v3/StringGenerator.h`, generator type 6: Karplus-Strong after Jaffe and Smith. A
+delay line of one period less the loop low-pass's phase delay, Hermite-read; Decay as the 60 dB
+time, Damping, Pick as a cutoff in harmonics, Pick Position as an output comb, Release Damp on
+key-up, noise or click excitation. Slots gained the optional module hooks `noteOff()` and
+`strike()` (decisions D58, D59).
+
 Shipped (phase 4.2, 2026-11-13): `CrusherProcessor` and `FolderProcessor` in
 `src/synth/v3/ShaperProcessors.h`, processor types 3 and 4. Crusher: sample-and-hold at Rate,
 rounding to 2^bits levels (bits continuous), Mix. Folder: a sine folder with first-order

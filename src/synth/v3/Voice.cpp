@@ -120,6 +120,8 @@ namespace coolsynth::synth::v3
         note = start;
         released = false;
         lfoRestartPending = true;
+        for (auto& g : generators)
+            g.slot.strike(); // a string is plucked again; oscillators run on
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
         startEnvelopes(envelopeTimeFactors(sources, start, noteRandom)); // this voice's sources are current
     }
@@ -189,6 +191,8 @@ namespace coolsynth::synth::v3
         releaseVelocity = velocity;
         for (auto& e : envelopes)
             e.noteOff();
+        for (auto& g : generators)
+            g.slot.noteOff(); // a string's damper comes down
     }
 
     void Voice::beginNote(const NoteStart& start, const ModSources& base) noexcept
