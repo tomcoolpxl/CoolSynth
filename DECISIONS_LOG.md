@@ -1721,7 +1721,8 @@ The four sounds changed after D105 and D106, judged again.
   This is a hypothesis about the user's ear, not a measurement of it. **A listening test goes
   on the page (taken)**, `tools/audition/make_eartest.py`: the soprano chord four times,
   equally loud: as the preset plays it; without reverb; without reverb and tuned pure (each
-  note rendered alone, retuned by a windowed sinc and added: differences 264, 262 and 261 Hz);
+  note rendered alone, retuned by a windowed sinc and added: differences of 261.6 Hz each, each
+  note's pitch taken as the mean slope of its fundamental's phase, since a blown note wanders);
   and four sine tones at the same pitches and levels, with no recorder and no synth in them.
   Which of them have the overdrive says whether it is the reverb, the tuning, the recordings
   or the ear. Not taken: lowering the preset's level or darkening it on a guess.

@@ -70,14 +70,19 @@ def resample(x, ratio):
 
 
 def fundamental(mono, rate, expected):
-    """The strongest peak within 60 cents of the expected pitch, over the held part: (hz, amplitude)."""
-    segment = mono[int(0.5 * rate):int((HOLD - 0.3) * rate)]
-    size = 1 << int(np.ceil(np.log2(len(segment) * 8)))
-    spectrum = np.abs(np.fft.rfft(segment * np.hanning(len(segment)), size))
-    hz = np.fft.rfftfreq(size, 1.0 / rate)
-    low, high = np.searchsorted(hz, expected * 2 ** (-60 / 1200)), np.searchsorted(hz, expected * 2 ** (60 / 1200))
-    peak = low + int(np.argmax(spectrum[low:high]))
-    return float(hz[peak]), float(spectrum[peak]) * 4.0 / len(segment)
+    """A note's fundamental over the held part: (its mean frequency, its amplitude).
+
+    A blown note's pitch wanders by a few cents, and a spectrum's peak follows whichever stretch
+    is loudest. The mean frequency is the slope of the fundamental's phase: the band within a
+    semitone of the expected pitch as an analytic signal, its phase unwrapped, a straight line
+    fitted through it."""
+    spectrum = np.fft.fft(mono)
+    hz = np.fft.fftfreq(len(mono), 1.0 / rate)
+    analytic = np.fft.ifft(np.where((hz > expected * 2 ** (-1 / 12)) & (hz < expected * 2 ** (1 / 12)), 2.0 * spectrum, 0.0))
+    held = slice(int(0.5 * rate), int((HOLD - 0.2) * rate))
+    phase = np.unwrap(np.angle(analytic[held]))
+    slope = np.polyfit(np.arange(len(phase)) / rate, phase, 1)[0]
+    return float(slope / (2 * np.pi)), float(np.mean(np.abs(analytic[held])))
 
 
 def fit(x, length):
