@@ -184,6 +184,17 @@ their coefficients need it.
   ENV3 is free.
 - LFO1, LFO2: sine, triangle, saw up, saw down, square, sample-and-hold, smoothed random, 16-step
   shape; rate in Hz or a tempo division; start phase; key retrigger; fade-in time; one-shot.
+  Shipped (phase 2.1, 2026-11-13): `Lfo` in `src/synth/v3/Lfo.h`, the same class for LFO1..2
+  and GLFO1..2. Bipolar output times a depth that a delay and a straight-line fade build up from
+  the last restart; the delay and fade restart at every note, retrigger (or one-shot) also
+  restarts the phase at the start phase and holds it through the delay. 16 tempo divisions from
+  8 bars to 1/32 with dotted and triplet values; a synced LFO that does not restart follows the
+  host's song position while the transport plays. "Steps" is a rising 16-level staircase. A
+  voice restarts its LFOs on a new or retriggered note (legato keeps them) and advances them
+  only while it sounds; the mod wheel scales LFO1 by `voice.wheelToLfo1`. Global LFOs run in
+  the part all the time, one value per voice sub-block, and restart at the first note after
+  silence. Tempo is the host's, else the arp's internal tempo. Decisions D1 to D5 in
+  `DECISIONS_LOG.md`.
 - Sources without parameters: velocity, release velocity, key position (bipolar around C3),
   note random (new per note), aftertouch (channel or poly), MPE pressure and slide, per-voice
   drift (the V2 Vintage random walk, now a source with no fixed destination).

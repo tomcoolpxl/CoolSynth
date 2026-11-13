@@ -7,6 +7,7 @@
 
 #include "Envelope.h"
 #include "LadderProcessor.h"
+#include "Lfo.h"
 #include "Modulation.h"
 #include "Module.h"
 #include "OffModules.h"
@@ -20,6 +21,11 @@
     modulator can be silent in the mix and still drive the next slot. The mixer applies each
     slot's level with a per-sample ramp. Three processor slots run in series on the stereo mix,
     then the amplifier envelope (per sample) and, while a stolen voice hands over, a short fade.
+
+    LFO1 and LFO2 restart at every note the voice starts or retriggers (legato keeps them
+    running) and only advance while the voice sounds, so with retrigger off a voice picks up its
+    LFO where its previous note left it. Global sources that move inside a block arrive as one
+    frame per sub-block.
 
     Pitch lives in semitones throughout: note, constant-time glide, bend, a slow per-voice drift,
     and per-slot offsets meet in one place and become a frequency per generator. Generators with
@@ -54,6 +60,19 @@ namespace coolsynth::synth::v3
     inline constexpr int generatorSlotCount = 3;
     inline constexpr int processorSlotCount = 3;
     inline constexpr int envelopeCount = 3;
+    inline constexpr int localLfoCount = 2;
+    inline constexpr int globalLfoCount = 2;
+
+    /**
+        Global sources that move inside a block. The part computes one frame of them for every
+        voice sub-block of a render call, so a global LFO is as smooth as a local one.
+    */
+    inline constexpr std::array<ModSource, 2> trackedGlobalSources { ModSource::glfo1, ModSource::glfo2 };
+
+    struct GlobalFrame
+    {
+        std::array<float, trackedGlobalSources.size()> values {};
+    };
 
     /** One generator slot as the patch sets it. Generic values are normalised 0..1. */
     struct GeneratorSettings
@@ -85,6 +104,8 @@ namespace coolsynth::synth::v3
         float velocityToP1 = 0.0f; // -1..1, same destination, times the note velocity
         float glideSeconds = 0.0f; // constant time, whatever the interval
         float driftCents = 0.0f;   // depth of the slow per-voice pitch drift
+        std::array<LfoSettings, localLfoCount> lfos {};
+        float wheelToLfo1 = 0.0f;  // 0..1: how much LFO1's depth follows the mod wheel
     };
 
     /** Part-wide state the voice reads each block. */
@@ -92,6 +113,10 @@ namespace coolsynth::synth::v3
     {
         float bendSemitones = 0.0f;
         ModSources sources {}; // global sources; the voice adds its local ones on top
+        LfoClock clock {};     // tempo, and song position at the start of the render call
+        double ppqPerSample = 0.0;           // song position per voice sample
+        const GlobalFrame* frames = nullptr; // one per sub-block of the render call, or none
+        int frameCount = 0;
     };
 
     struct NoteStart
@@ -144,6 +169,7 @@ namespace coolsynth::synth::v3
         [[nodiscard]] const ModSources& sourcesForTesting() const noexcept { return sources; }
         [[nodiscard]] float pitchForTesting() const noexcept { return currentPitch; }
         [[nodiscard]] float driftForTesting() const noexcept { return driftValue; }
+        [[nodiscard]] const Lfo& lfoForTesting(int index) const noexcept { return lfos[static_cast<std::size_t>(index)]; }
         [[nodiscard]] int generatorTypeForTesting(int slot) const noexcept
         {
             return generators[static_cast<std::size_t>(slot)].slot.typeIndex();
@@ -170,7 +196,7 @@ namespace coolsynth::synth::v3
         void beginNote(const NoteStart& start) noexcept;
         void startPendingNote() noexcept;
         void retarget(int noteNumber, float detuneCents, bool glide) noexcept;
-        void renderSubBlock(float* left, float* right, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept;
+        void renderSubBlock(float* left, float* right, int offset, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept;
         void advancePitch(int n, const VoiceSettings& settings) noexcept;
         void advanceDrift(int n) noexcept;
         float nextRandom() noexcept; // -1..1
@@ -178,6 +204,8 @@ namespace coolsynth::synth::v3
         std::array<GeneratorState, generatorSlotCount> generators;
         std::array<ProcessorState, processorSlotCount> processors;
         std::array<Envelope, envelopeCount> envelopes;
+        std::array<Lfo, localLfoCount> lfos;
+        bool lfoRestartPending = false;
         std::array<Envelope::Parameters, envelopeCount> appliedEnvelopes {};
         std::array<float, maxSubBlock> ampBuffer {}, mixLeft {}, mixRight {};
         ModSources sources;

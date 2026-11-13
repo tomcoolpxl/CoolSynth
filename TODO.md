@@ -24,12 +24,16 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    loudness tool with `--apply`; 14 presets in Workshop, Studio 1982, Engine Room, Main Stage.
 12. Audition the 14 presets; retune by ear what the ear flags, then rerun the loudness tool with
    `--apply` (from the build directory).
-13. Phase 2.1: LFO class (local and global, sync, shapes) and Juno Pad.
-   Before or with it: the VA generator's cost. Release, eight-note chords: Supersaw 36 % of real
+13. Phase 2.1 done 2026-11-13: `src/synth/v3/Lfo.h`, LFO1..2 per voice and GLFO1..2 per part,
+   their parameters and bank sections, `tests/V3LfoTests.cpp`. Juno Pad moved to 2.2.
+   Still open: the VA generator's cost. Release, eight-note chords: Supersaw 36 % of real
    time (worst block 60 %), Clav Keys 25 %; a 16-voice Supersaw would reach the limit. The
    optimised Debug build measures the same as Release. Measure with `COOLSYNTH_CPU_REPORT=1`
    and the test executable.
-14. Phase 2.2: the matrix, 808 Boom and the Sync Lead sweep.
+14. Phase 2.2: the matrix, Juno Pad, 808 Boom and the Sync Lead sweep.
+
+Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
+review them.
 
 ## Carried over from the V2 backlog
 

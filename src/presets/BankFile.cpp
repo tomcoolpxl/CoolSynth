@@ -49,7 +49,7 @@ namespace coolsynth::presets
 
         const juce::StringArray& voiceKeys()
         {
-            static const juce::StringArray keys { "env2ToP1", "velToP1", "glide", "drift" };
+            static const juce::StringArray keys { "env2ToP1", "velToP1", "glide", "drift", "wheelToLfo1" };
             return keys;
         }
 
@@ -209,6 +209,15 @@ namespace coolsynth::presets
                 readPairs(0, [&](const juce::String& k) -> juce::String
                 {
                     return envelopeKeys().contains(k) ? pv3::envelopeParameterId(pv3::Part::a, envelope, k.toRawUTF8()) : juce::String();
+                }, noBareWords);
+                continue;
+            }
+
+            if (key == "lfo1" || key == "lfo2" || key == "glfo1" || key == "glfo2")
+            {
+                readPairs(0, [&](const juce::String& k) -> juce::String
+                {
+                    return pv3::lfoFields().contains(k) ? pv3::lfoParameterId(pv3::Part::a, key, k.toRawUTF8()) : juce::String();
                 }, noBareWords);
                 continue;
             }

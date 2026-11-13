@@ -17,6 +17,9 @@ namespace coolsynth::synth::v3
 
         busLeft.assign(static_cast<std::size_t>(maxBlock * oversampleFactor), 0.0f);
         busRight.assign(static_cast<std::size_t>(maxBlock * oversampleFactor), 0.0f);
+        frames.assign(static_cast<std::size_t>((maxBlock * oversampleFactor) / Voice::maxSubBlock + 2), {});
+        for (std::size_t i = 0; i < globalLfos.size(); ++i)
+            globalLfos[i].prepare(voiceRate, seed ^ (0x51ED2700u + static_cast<std::uint32_t>(i)));
         arpeggiator.prepare(hostRate);
 
         // The polyphase decimator has a short, fixed group delay: measure it once with an impulse.
@@ -56,6 +59,16 @@ namespace coolsynth::synth::v3
         monoNote = -1;
         monoVoiceCount = 0;
         globals = {};
+        for (auto& l : globalLfos)
+            l.reset();
+    }
+
+    bool Part::anyVoiceActive() const noexcept
+    {
+        for (const auto& v : voices)
+            if (v.isActive())
+                return true;
+        return false;
     }
 
     int Part::activeVoiceCountForTesting() const noexcept
@@ -106,6 +119,12 @@ namespace coolsynth::synth::v3
         std::fill_n(busLeft.data(), voiceSamples, 0.0f);
         std::fill_n(busRight.data(), voiceSamples, 0.0f);
         updateGlobals(settings);
+
+        const bool hostTempo = transport.hostHasTempo && transport.hostBpm > 0.0;
+        chunkClock.bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.arp.internalTempoBpm), 20.0, 400.0);
+        chunkClock.playing = hostTempo && transport.hostHasPpq && transport.hostIsPlaying;
+        ppqPerHostSample = chunkClock.bpm / 60.0 / hostRate;
+        chunkClock.ppq = transport.hostPpqAtBlockStart + static_cast<double>(offsetBase) * ppqPerHostSample;
 
         const bool arpEnabled = settings.arp.enabled;
         arpeggiator.setParameters(settings.arp);
@@ -208,6 +227,26 @@ namespace coolsynth::synth::v3
     {
         const int offset = start * oversampleFactor;
         const int length = count * oversampleFactor;
+
+        // The global sources for this span, one frame per voice sub-block.
+        LfoClock clock = chunkClock;
+        clock.ppq += static_cast<double>(start) * ppqPerHostSample;
+        const double ppqPerVoiceSample = ppqPerHostSample / oversampleFactor;
+        const int frameCount = std::min(static_cast<int>(frames.size()), (length + Voice::maxSubBlock - 1) / Voice::maxSubBlock);
+        for (int f = 0; f < frameCount; ++f)
+        {
+            const int samples = std::min(Voice::maxSubBlock, length - f * Voice::maxSubBlock);
+            LfoClock frameClock = clock;
+            frameClock.ppq += static_cast<double>(f * Voice::maxSubBlock) * ppqPerVoiceSample;
+            auto& frame = frames[static_cast<std::size_t>(f)];
+            for (std::size_t k = 0; k < globalLfos.size(); ++k)
+                frame.values[k] = globalLfos[k].advance(samples, settings.globalLfos[k], frameClock);
+        }
+        globals.clock = clock;
+        globals.ppqPerSample = ppqPerVoiceSample;
+        globals.frames = frames.data();
+        globals.frameCount = frameCount;
+
         for (std::size_t i = 0; i < voices.size(); ++i)
         {
             auto& v = voices[i];
@@ -235,6 +274,9 @@ namespace coolsynth::synth::v3
         switch (event.type)
         {
             case EngineMidiEventType::noteOn:
+                if (! anyVoiceActive())
+                    for (std::size_t k = 0; k < globalLfos.size(); ++k)
+                        globalLfos[k].restart(settings.globalLfos[k]); // the first note after silence
                 if (settings.playMode == PlayMode::poly)
                     polyNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp, settings);
                 else

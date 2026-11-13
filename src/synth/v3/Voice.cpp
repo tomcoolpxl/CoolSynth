@@ -30,6 +30,8 @@ namespace coolsynth::synth::v3
         }
         for (auto& e : envelopes)
             e.setSampleRate(newSampleRate);
+        for (std::size_t i = 0; i < lfos.size(); ++i)
+            lfos[i].prepare(newSampleRate, seed * 31u + static_cast<std::uint32_t>(i) + 1u);
         for (auto& applied : appliedEnvelopes)
             applied.attack = -1.0f; // forces the first apply
 
@@ -46,6 +48,9 @@ namespace coolsynth::synth::v3
     void Voice::reset() noexcept
     {
         restartModules();
+        for (auto& l : lfos)
+            l.reset();
+        lfoRestartPending = false;
         pending = false;
         pendingReleased = false;
         released = false;
@@ -110,6 +115,7 @@ namespace coolsynth::synth::v3
         }
         note = start;
         released = false;
+        lfoRestartPending = true;
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
         const float keyOctaves = (static_cast<float>(start.note) - 60.0f) / 12.0f;
         for (auto& e : envelopes)
@@ -159,6 +165,7 @@ namespace coolsynth::synth::v3
         currentPitch = start.glideFrom >= 0 ? static_cast<float>(start.glideFrom) + start.detuneCents * 0.01f : targetPitch;
         glideSpan = std::abs(targetPitch - currentPitch);
         noteRandom = nextRandom();
+        lfoRestartPending = true;
 
         NoteContext context;
         context.noteNumber = start.note;
@@ -261,7 +268,7 @@ namespace coolsynth::synth::v3
             if (stealRemaining > 0)
                 n = std::min(n, stealRemaining);
 
-            renderSubBlock(left + done, right + done, n, settings, globals);
+            renderSubBlock(left + done, right + done, done, n, settings, globals);
             done += n;
 
             if (stealRemaining > 0)
@@ -273,8 +280,15 @@ namespace coolsynth::synth::v3
         }
     }
 
-    void Voice::renderSubBlock(float* left, float* right, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept
+    void Voice::renderSubBlock(float* left, float* right, int offset, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept
     {
+        if (lfoRestartPending)
+        {
+            for (std::size_t i = 0; i < lfos.size(); ++i)
+                lfos[i].restart(settings.lfos[i]);
+            lfoRestartPending = false;
+        }
+
         advancePitch(n, settings);
         advanceDrift(n);
 
@@ -291,6 +305,20 @@ namespace coolsynth::synth::v3
         const float env3 = envelopes[2].advance(n - held);
 
         sources = globals.sources;
+        if (globals.frames != nullptr && globals.frameCount > 0)
+        {
+            const auto& frame = globals.frames[std::min(offset / maxSubBlock, globals.frameCount - 1)];
+            for (std::size_t k = 0; k < trackedGlobalSources.size(); ++k)
+                sources.set(trackedGlobalSources[k], frame.values[k]);
+        }
+
+        LfoClock clock = globals.clock;
+        clock.ppq += static_cast<double>(offset) * globals.ppqPerSample;
+        const float wheelAmount = std::clamp(settings.wheelToLfo1, 0.0f, 1.0f);
+        const float lfo1Depth = 1.0f - wheelAmount + wheelAmount * globals.sources.get(ModSource::wheel);
+        sources.set(ModSource::lfo1, lfo1Depth * lfos[0].advance(n, settings.lfos[0], clock));
+        sources.set(ModSource::lfo2, lfos[1].advance(n, settings.lfos[1], clock));
+
         sources.set(ModSource::velocity, note.velocity);
         sources.set(ModSource::releaseVelocity, releaseVelocity);
         sources.set(ModSource::key, std::clamp((static_cast<float>(note.note) - 60.0f) / 64.0f, -1.0f, 1.0f));

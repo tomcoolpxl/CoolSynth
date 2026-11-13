@@ -551,3 +551,11 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 
 - [x] The plain Debug build was too slow to play (Supersaw 154 % of real time for an eight-note chord, Clav Keys 115 %, OB Strings and Prophet Brass about 90 % with worst blocks over 100 %), and every Debug build installs the VST3 the user plays. CoolSynth targets now use `coolsynth_config_flags` instead of JUCE's recommended config flags: Debug compiles with /O2 /Ob2 /Zi without /RTC1, JUCE's Debug assertions stay on.
 - [x] Measured: optimised Debug matches Release (Supersaw 27.9 %, Clav Keys 25 %, everything else below 17 %); the test suite runs in 4 s instead of 20 s. Verified Debug build without warnings and `ctest` green.
+
+## V3 phase 2.1: LFOs (2026-11-13)
+
+- [x] Added `src/synth/v3/Lfo.h`: sine, triangle, saw up, saw down, square, sample-and-hold, smoothed random and a 16-level staircase; rate in Hz or one of 16 tempo divisions; start phase; retrigger; delay and straight-line fade-in; one-shot; rate scale for the matrix; song-position lock for synced free-running LFOs while the host plays.
+- [x] Voices carry LFO1 and LFO2 as sources (restart on new and retriggered notes, legato keeps them, the mod wheel scales LFO1 through `pA.voice.wheelToLfo1`); the part runs GLFO1 and GLFO2 all the time, hands the voices one value per sub-block, and restarts them at the first note after silence. Tempo is the host's, else the arp's internal tempo.
+- [x] 37 new part parameters (`pA.lfo1`, `pA.lfo2`, `pA.glfo1`, `pA.glfo2`, nine fields each, and `pA.voice.wheelToLfo1`) and the bank sections `lfo1`, `lfo2`, `glfo1`, `glfo2`.
+- [x] Added `tests/V3LfoTests.cpp` (13 tests): shape start points and range, sample-and-hold and step counts, smoothness, cycle length at all 16 divisions at two tempos (within one sample), song-position lock, retrigger and free running, delay and fade, one-shot, rate scale, voice sources and the wheel, mono restart versus legato, the shared global LFO and its restart rule, global values inside a block, the tempo source, bank sections.
+- [x] Juno Pad moved to phase 2.2 with the matrix (decision D1 in `DECISIONS_LOG.md`). Verified Debug build without warnings and `ctest` green.

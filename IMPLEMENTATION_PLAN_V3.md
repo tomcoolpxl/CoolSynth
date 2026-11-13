@@ -87,13 +87,14 @@ random, 16-step), Hz and tempo division from transport or internal tempo, phase,
 fade-in, one-shot. Used for LFO1..2 (local) and GLFO1..2 (global). Tests: period at each
 division against the transport, retrigger phase, fade-in curve.
 
-2.1 also ships Studio 1982 Juno Pad.
+2.1 also ships Studio 1982 Juno Pad. Shipped 2026-11-13 without it: Juno Pad needs an LFO
+route, so it moves to 2.2 (decision D1).
 
 2.2 Matrix. 24 slots, sources, destinations enumerated from descriptors, via, curve, per-sub-
 block evaluation into offsets. Tests: arithmetic, every destination reachable without NaN,
 amount scaling by via.
 
-2.2 also ships Engine Room 808 Boom and the pitch sweep of Studio 1982 Sync Lead.
+2.2 also ships Engine Room 808 Boom, the pitch sweep of Studio 1982 Sync Lead and Juno Pad.
 
 2.3 Global envelope, step modulator, macros, chaos. GENV with bar-length stages and first-note
 or every-note trigger; STEP with 16 values, slides, division and length; four macros; chaos

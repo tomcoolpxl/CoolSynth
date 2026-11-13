@@ -26,6 +26,10 @@
     release; legato keeps the envelopes running across overlapping keys. Unison stacks 2 to 8
     voices on one note, spread in pitch and across the stereo field. Glide can be limited to
     overlapping keys.
+
+    The global LFOs run whether or not anything sounds, one value per voice sub-block, and
+    restart at the first note after silence. Tempo is the host's when it reports one, otherwise
+    the arpeggiator's internal tempo, so the arp and synced LFOs always agree.
 */
 namespace coolsynth::synth::v3
 {
@@ -49,6 +53,7 @@ namespace coolsynth::synth::v3
         float unisonSpread = 0.7f;       // pan of the outermost voices
         float bendRangeSemitones = 2.0f;
         bool glideLegatoOnly = false;
+        std::array<LfoSettings, globalLfoCount> globalLfos {}; // GLFO1, GLFO2: one phase for every voice
         ArpParametersV2 arp {};
     };
 
@@ -95,6 +100,8 @@ namespace coolsynth::synth::v3
         [[nodiscard]] int arpHeldNoteCountForTesting() const noexcept { return arpeggiator.getHeldNoteCountForTesting(); }
         [[nodiscard]] int arpLatchedNoteCountForTesting() const noexcept { return arpeggiator.getLatchedNoteCountForTesting(); }
         [[nodiscard]] int arpRingingNoteCountForTesting() const noexcept { return arpeggiator.getRingingNoteCountForTesting(); }
+        [[nodiscard]] const Lfo& globalLfoForTesting(int index) const noexcept { return globalLfos[static_cast<std::size_t>(index)]; }
+        [[nodiscard]] double tempoForTesting() const noexcept { return chunkClock.bpm; }
 
     private:
         struct VoiceState
@@ -119,6 +126,7 @@ namespace coolsynth::synth::v3
         void renderSpan(int start, int count, const PartSettings& settings) noexcept;
         void handleEvent(const EngineMidiEvent& event, const PartSettings& settings) noexcept;
         void updateGlobals(const PartSettings& settings) noexcept;
+        [[nodiscard]] bool anyVoiceActive() const noexcept;
 
         void polyNoteOn(int note, float velocity, bool fromArp, const PartSettings& settings) noexcept;
         void polyNoteOff(int note, float releaseVelocity) noexcept;
@@ -146,6 +154,10 @@ namespace coolsynth::synth::v3
         HalfBandDecimator2x decimatorLeft, decimatorRight;
         Arpeggiator arpeggiator;
         VoiceGlobals globals;
+        std::array<Lfo, globalLfoCount> globalLfos;
+        std::vector<GlobalFrame> frames;
+        LfoClock chunkClock {};
+        double ppqPerHostSample = 0.0;
 
         std::uint64_t counter = 0;
         int lastNote = -1;

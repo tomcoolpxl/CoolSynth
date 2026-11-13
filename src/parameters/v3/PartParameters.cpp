@@ -92,6 +92,62 @@ namespace coolsynth::parameters::v3
             return group;
         }
 
+        juce::AudioParameterFloatAttributes hzAttributes()
+        {
+            return juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int)
+            {
+                return juce::String(v, v < 1.0f ? 3 : 2) + " Hz";
+            });
+        }
+
+        juce::AudioParameterFloatAttributes degreeAttributes()
+        {
+            return juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int)
+            {
+                return juce::String(static_cast<int>(std::round(v))) + juce::String(juce::CharPointer_UTF8("\xc2\xb0"));
+            });
+        }
+
+        std::unique_ptr<juce::AudioProcessorParameterGroup> makeLfoGroup(Part part, const juce::String& lfo, const juce::String& title, bool global)
+        {
+            auto id = [&](const char* field) { return lfoParameterId(part, lfo, field); };
+            const juce::String n = title + " ";
+
+            juce::StringArray divisions;
+            for (const auto& d : sv3::lfoDivisions)
+                divisions.add(d.name);
+
+            auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + "." + lfo, title, "|");
+            group->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(id("shape")), n + "Shape",
+                juce::StringArray { "Sine", "Triangle", "Saw Up", "Saw Down", "Square", "S&H", "Smooth Random", "Steps" }, 0));
+            group->addChild(floatParameter(id("rate"), n + "Rate", logRange(0.01f, 50.0f), 2.0f, hzAttributes()));
+            group->addChild(std::make_unique<juce::AudioParameterBool>(makeId(id("sync")), n + "Sync", global));
+            group->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(id("division")), n + "Division", divisions,
+                                                                         sv3::lfoDefaultDivision));
+            group->addChild(floatParameter(id("phase"), n + "Phase", { 0.0f, 360.0f }, 0.0f, degreeAttributes()));
+            group->addChild(std::make_unique<juce::AudioParameterBool>(makeId(id("retrigger")), n + "Retrigger", ! global));
+            group->addChild(floatParameter(id("delay"), n + "Delay", squaredRange(0.0f, 10000.0f), 0.0f, msAttributes()));
+            group->addChild(floatParameter(id("fade"), n + "Fade In", squaredRange(0.0f, 10000.0f), 0.0f, msAttributes()));
+            group->addChild(std::make_unique<juce::AudioParameterBool>(makeId(id("oneShot")), n + "One Shot", false));
+            return group;
+        }
+
+        LfoPointers bindLfoPointers(juce::AudioProcessorValueTreeState& state, Part part, const juce::String& lfo)
+        {
+            auto get = [&](const char* field) { return state.getRawParameterValue(lfoParameterId(part, lfo, field)); };
+            LfoPointers p;
+            p.shape = get("shape");
+            p.rate = get("rate");
+            p.sync = get("sync");
+            p.division = get("division");
+            p.phase = get("phase");
+            p.retrigger = get("retrigger");
+            p.delay = get("delay");
+            p.fade = get("fade");
+            p.oneShot = get("oneShot");
+            return p;
+        }
+
         float load(const std::atomic<float>* p, float fallback) noexcept { return p != nullptr ? p->load() : fallback; }
         int loadInt(const std::atomic<float>* p, int fallback) noexcept
         {
@@ -108,6 +164,17 @@ namespace coolsynth::parameters::v3
 
     juce::String voiceParameterId(Part part, const char* field) { return partPrefix(part) + ".voice." + field; }
     juce::String playParameterId(Part part, const char* field) { return partPrefix(part) + ".play." + field; }
+
+    juce::String lfoParameterId(Part part, const juce::String& lfo, const char* field)
+    {
+        return partPrefix(part) + "." + lfo + "." + field;
+    }
+
+    const juce::StringArray& lfoFields()
+    {
+        static const juce::StringArray fields { "shape", "rate", "sync", "division", "phase", "retrigger", "delay", "fade", "oneShot" };
+        return fields;
+    }
 
     bool isPartParameterId(juce::StringRef parameterId) noexcept
     {
@@ -127,12 +194,17 @@ namespace coolsynth::parameters::v3
                                           "Processor " + juce::String(i), i == 1 ? sv3::processorType::ladder : sv3::processorType::off));
         for (int i = 1; i <= partEnvelopes; ++i)
             group->addChild(makeEnvelopeGroup(part, i));
+        for (int i = 1; i <= partLocalLfos; ++i)
+            group->addChild(makeLfoGroup(part, "lfo" + juce::String(i), "LFO " + juce::String(i), false));
+        for (int i = 1; i <= partGlobalLfos; ++i)
+            group->addChild(makeLfoGroup(part, "glfo" + juce::String(i), "Global LFO " + juce::String(i), true));
 
         auto voice = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".voice", "Voice", "|");
         voice->addChild(floatParameter(voiceParameterId(part, "env2ToP1"), "Env 2 to P1", { -1.0f, 1.0f }, 0.2f, percentAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "velToP1"), "Velocity to P1", { -1.0f, 1.0f }, 0.0f, percentAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "glide"), "Glide", squaredRange(0.0f, 5000.0f), 0.0f, msAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "drift"), "Drift", { 0.0f, 25.0f }, 0.0f, centsAttributes()));
+        voice->addChild(floatParameter(voiceParameterId(part, "wheelToLfo1"), "Wheel to LFO 1", { 0.0f, 1.0f }, 0.0f, percentAttributes()));
         group->addChild(std::move(voice));
 
         auto play = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".play", "Play", "|");
@@ -179,6 +251,12 @@ namespace coolsynth::parameters::v3
             e.loop = get("loop");
             e.oneShot = get("oneShot");
         }
+
+        for (int i = 0; i < partLocalLfos; ++i)
+            p.lfos[static_cast<std::size_t>(i)] = bindLfoPointers(state, part, "lfo" + juce::String(i + 1));
+        for (int i = 0; i < partGlobalLfos; ++i)
+            p.globalLfos[static_cast<std::size_t>(i)] = bindLfoPointers(state, part, "glfo" + juce::String(i + 1));
+        p.wheelToLfo1 = state.getRawParameterValue(voiceParameterId(part, "wheelToLfo1"));
 
         p.env2ToP1 = state.getRawParameterValue(voiceParameterId(part, "env2ToP1"));
         p.velToP1 = state.getRawParameterValue(voiceParameterId(part, "velToP1"));
@@ -236,6 +314,26 @@ namespace coolsynth::parameters::v3
             out.loop = load(e.loop, 0.0f) >= 0.5f;
             out.oneShot = load(e.oneShot, 0.0f) >= 0.5f;
         }
+
+        auto readLfo = [](const LfoPointers& l, bool global)
+        {
+            sv3::LfoSettings s;
+            s.shape = static_cast<sv3::LfoShape>(juce::jlimit(0, sv3::lfoShapeCount - 1, loadInt(l.shape, 0)));
+            s.rateHz = load(l.rate, 2.0f);
+            s.sync = load(l.sync, global ? 1.0f : 0.0f) >= 0.5f;
+            s.division = juce::jlimit(0, static_cast<int>(sv3::lfoDivisions.size()) - 1, loadInt(l.division, sv3::lfoDefaultDivision));
+            s.startPhase = load(l.phase, 0.0f) / 360.0f;
+            s.retrigger = load(l.retrigger, global ? 0.0f : 1.0f) >= 0.5f;
+            s.delaySeconds = 0.001f * load(l.delay, 0.0f);
+            s.fadeSeconds = 0.001f * load(l.fade, 0.0f);
+            s.oneShot = load(l.oneShot, 0.0f) >= 0.5f;
+            return s;
+        };
+        for (std::size_t i = 0; i < settings.voice.lfos.size(); ++i)
+            settings.voice.lfos[i] = readLfo(pointers.lfos[i], false);
+        for (std::size_t i = 0; i < settings.globalLfos.size(); ++i)
+            settings.globalLfos[i] = readLfo(pointers.globalLfos[i], true);
+        settings.voice.wheelToLfo1 = load(pointers.wheelToLfo1, 0.0f);
 
         settings.voice.env2ToP1 = load(pointers.env2ToP1, 0.0f);
         settings.voice.velocityToP1 = load(pointers.velToP1, 0.0f);

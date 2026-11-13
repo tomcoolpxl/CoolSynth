@@ -151,6 +151,7 @@ if(BUILD_TESTING)
             tests/V3ParameterTests.cpp
             tests/V3GeneratorTests.cpp
             tests/V3ProcessorTests.cpp
+            tests/V3LfoTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp

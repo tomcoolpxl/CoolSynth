@@ -63,13 +63,13 @@ public:
                 registeredIds.add(parameter->paramID);
             }
 
-            // part A: 3 generators x 17, 3 processors x 9, 3 envelopes x 13, 4 voice, 8 play
-            constexpr int partParameterCount = 3 * 17 + 3 * 9 + 3 * 13 + 4 + 8;
+            // part A: 3 generators x 17, 3 processors x 9, 3 envelopes x 13, 4 LFOs x 9, 5 voice, 8 play
+            constexpr int partParameterCount = 3 * 17 + 3 * 9 + 3 * 13 + 4 * 9 + 5 + 8;
             expectEquals(registeredIds.size(), static_cast<int>(coolsynth::parameters::allParameterIds.size()) + partParameterCount);
 
             for (const auto* expectedId : coolsynth::parameters::allParameterIds)
                 expect(registeredIds.contains(expectedId));
-            for (const auto* partId : { "pA.g1.type", "pA.g3.amount", "pA.p1.p8", "pA.env3.oneShot", "pA.voice.drift", "pA.play.glideLegato" })
+            for (const auto* partId : { "pA.g1.type", "pA.g3.amount", "pA.p1.p8", "pA.env3.oneShot", "pA.lfo2.oneShot", "pA.glfo1.division", "pA.voice.wheelToLfo1", "pA.voice.drift", "pA.play.glideLegato" })
                 expect(registeredIds.contains(partId), juce::String("missing ") + partId);
         }
 
