@@ -83,7 +83,7 @@ room = Bedroom
 # A felt mallet on a small metal bar, damped until only a round note and a glint of chime are
 # left: half kalimba, half music box. It plays off a dusty record, with crackle, a slow wow and
 # a narrow top, in a small room.
-g1 = Modal material=metal decay=0.9 hard=0.12 pos=0.35 damp=0.7 release=0 level=0.9
+g1 = Modal material=metal decay=0.9 hard=0.12 pos=0.35 damp=0.12 release=0 level=0.9
 p1 = Off
 env1 = attack=1 decay=3000 sustain=0 release=1200 velocity=0.5
 mod = src=velocity dst=g1.hard amount=0.25

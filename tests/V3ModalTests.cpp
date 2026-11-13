@@ -15,7 +15,7 @@ namespace
 
     constexpr double kRate = 96000.0;
     constexpr int kSubBlock = 32;
-    constexpr float kWood = 0.0f, kMetal = 1.0f, kGlass = 2.0f;
+    constexpr float kWood = 0.0f, kMetal = 1.0f, kGlass = 2.0f, kTine = 3.0f;
 
     struct Modal
     {
@@ -109,7 +109,7 @@ public:
         beginTest("each_material_rings_at_its_own_partial_ratios");
         {
             double worst = 0.0;
-            for (float material : { kWood, kMetal, kGlass })
+            for (float material : { kWood, kMetal, kGlass, kTine })
             {
                 std::array<float, ModalGenerator::partials> ratio {};
                 float exponent = 0.0f;
@@ -127,11 +127,15 @@ public:
             }
             logMessage("worst partial tuning error " + juce::String(worst, 2) + " cents");
 
-            // The tables themselves: a tuned bar, a uniform bar, a glass.
+            // The tables themselves: a tuned bar, a uniform bar, a glass, a clamped bar.
             std::array<float, ModalGenerator::partials> ratio {};
             float exponent = 0.0f;
             ModalGenerator::materialAt(kWood, ratio, exponent);
-            expectWithinAbsoluteError(ratio[1], 3.932f, 0.001f);
+            expectWithinAbsoluteError(ratio[1], 4.0f, 0.001f);
+            expectWithinAbsoluteError(ratio[2], 10.1f, 0.001f);
+            ModalGenerator::materialAt(kTine, ratio, exponent);
+            expectWithinAbsoluteError(ratio[1], 6.267f, 0.001f);
+            expectWithinAbsoluteError(ratio[2], 17.548f, 0.001f);
             ModalGenerator::materialAt(kMetal, ratio, exponent);
             expectWithinAbsoluteError(ratio[1], 2.757f, 0.001f);
             expectWithinAbsoluteError(ratio[3], 8.933f, 0.001f);
@@ -139,7 +143,7 @@ public:
             expectWithinAbsoluteError(ratio[1], 2.32f, 0.001f);
             // Half way between two materials every ratio lies between theirs.
             ModalGenerator::materialAt(0.5f, ratio, exponent);
-            expect(ratio[1] > 2.757f && ratio[1] < 3.932f);
+            expect(ratio[1] > 2.757f && ratio[1] < 4.0f);
             expectWithinAbsoluteError(ratio[0], 1.0f, 1.0e-6f);
         }
 
@@ -153,31 +157,29 @@ public:
             expectWithinAbsoluteError(db(early / late), 30.0, 1.5, "30 dB a second at Decay 2 s");
         }
 
-        beginTest("wood_loses_its_upper_partials_at_once_and_metal_keeps_them");
+        beginTest("a_partial_rings_in_inverse_proportion_to_its_frequency");
         {
-            auto second = [](float material)
+            // How far a component falls between 0.1-0.2 s and 0.3-0.4 s after the strike: 12 dB per 60 dB time fifth.
+            auto drop = [](float material, double ratio, float damping)
             {
-                std::array<float, ModalGenerator::partials> ratio {};
-                float exponent = 0.0f;
-                ModalGenerator::materialAt(material, ratio, exponent);
                 auto m = makeModal();
+                auto p = modalParams(220.0, material, 2.0f, 1.0f);
+                p.p[ModalGenerator::damping] = damping;
                 std::vector<float> out;
-                render(m->generator, modalParams(220.0, material, 2.0f, 1.0f), 28800, out);
-                // 150 to 250 ms after the strike, against the fundamental.
-                return db(levelAt(out, 14400, 9600, 220.0 * ratio[1]) / levelAt(out, 14400, 9600, 220.0));
+                render(m->generator, p, 40000, out);
+                return db(levelAt(out, 9600, 9600, 220.0 * ratio) / levelAt(out, 28800, 9600, 220.0 * ratio));
             };
-            const double wood = second(kWood), metal = second(kMetal);
-            logMessage("second partial against the fundamental after 200 ms: wood " + juce::String(wood, 1) + " dB, metal " + juce::String(metal, 1) + " dB");
-            expectLessThan(wood, -30.0);
-            expectGreaterThan(metal, -12.0);
-
-            // Damping takes the upper partials of any material down faster.
-            auto m = makeModal();
-            auto p = modalParams(220.0, kMetal, 2.0f, 1.0f);
-            p.p[ModalGenerator::damping] = 1.0f;
-            std::vector<float> damped;
-            render(m->generator, p, 28800, damped);
-            expectLessThan(db(levelAt(damped, 14400, 9600, 220.0 * 2.757) / levelAt(damped, 14400, 9600, 220.0)), metal - 10.0);
+            // Decay 2 s: the fundamental falls 6 dB in 0.2 s.
+            expectWithinAbsoluteError(drop(kWood, 1.0, 0.0f), 6.0, 0.5);
+            // The wooden bar's second partial, four times as high, lasts a quarter as long: 24 dB.
+            expectWithinAbsoluteError(drop(kWood, 4.0, 0.0f), 24.0, 1.5);
+            // Metal's upper partials go a little faster than that: 2.757 to the power 1.2.
+            expectWithinAbsoluteError(drop(kMetal, 2.757, 0.0f), 12.0 / (2.0 * std::pow(2.757, -1.2)), 1.5);
+            // The tine's first overtone, 6.27 times as high: 37.6 dB.
+            expectWithinAbsoluteError(drop(kTine, 6.267, 0.0f), 12.0 * 6.267 / 2.0, 2.5);
+            // Damping takes the upper partials down faster and leaves the fundamental alone.
+            expectWithinAbsoluteError(drop(kWood, 4.0, 0.25f), 12.0 / (2.0 * std::pow(4.0, -1.3)), 2.5);
+            expectWithinAbsoluteError(drop(kWood, 1.0, 1.0f), 6.0, 0.5);
         }
 
         beginTest("a_hard_mallet_is_brighter_and_the_fundamental_as_loud");
@@ -235,7 +237,7 @@ public:
         beginTest("the_strike_stays_in_bounds_and_a_bar_that_rang_out_is_silent_until_struck_again");
         {
             float highest = 0.0f, lowest = 10.0f;
-            for (float material : { kWood, kMetal, kGlass })
+            for (float material : { kWood, kMetal, kGlass, kTine })
             {
                 for (int note = 36; note <= 108; note += 12)
                 {
@@ -269,12 +271,12 @@ public:
 
         beginTest("partials_above_the_band_are_left_out");
         {
-            // C8 on the tuned bar: the third partial would sit at 39.9 kHz. Nothing may ring above 20 kHz.
+            // C8 on the tuned bar: the third partial would sit at 42.3 kHz. Nothing may ring above 20 kHz.
             auto m = makeModal();
             std::vector<float> out;
             render(m->generator, modalParams(4186.0, kWood, 4.0f, 1.0f), 9600, out);
             expectGreaterThan(levelAt(out, 960, 4800, 4186.0), 0.1);
-            expectLessThan(db(levelAt(out, 960, 4800, 4186.0 * 9.538) / levelAt(out, 960, 4800, 4186.0)), -80.0);
+            expectLessThan(db(levelAt(out, 960, 4800, 4186.0 * 10.1) / levelAt(out, 960, 4800, 4186.0)), -80.0);
         }
 
         beginTest("a_retriggered_voice_strikes_the_ringing_bar_again");

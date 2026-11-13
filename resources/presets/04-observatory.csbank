@@ -96,4 +96,4 @@ p1 = SVF mode=lp cutoff=6000 res=0.05 key=0.3
 env1 = attack=2000 decay=2000 sustain=1 release=4000
 voice = env2ToP1=0
 reverb = on size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
-master = 2
+master = 1.5

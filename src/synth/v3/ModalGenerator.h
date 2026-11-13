@@ -20,18 +20,20 @@
     fundamental answers) to a single sample (a hard one: every partial does). The fundamental's
     level does not depend on the pulse's width.
 
-    Material morphs the partial ratios and how fast the upper partials die:
+    Material morphs the partial ratios:
 
-        Wood    a tuned (undercut) bar, the marimba's 1 : 3.93 : 9.54; upper partials gone at once
-        Metal   a uniform free bar, the glockenspiel's 1 : 2.76 : 5.40 : 8.93; long and bright
-        Glass   a wine glass, 1 : 2.32 : 4.25 : 6.63 : 9.38; in between
+        Wood    a tuned (undercut) bar, the marimba's 1 : 4 : 10.1 : 19.1
+        Metal   a uniform free bar, the glockenspiel's 1 : 2.76 : 5.40 : 8.93
+        Glass   a wine glass, 1 : 2.32 : 4.25 : 6.63 : 9.38
+        Tine    a bar clamped at one end, the kalimba's 1 : 6.27 : 17.5 : 34.4
 
-    The uniform bar's ratios are the theory's ((2n+1)^2 over 3.011^2); the tuned bar's and the
-    glass's first five or six are measured ones (the Csound manual's modal frequency table),
-    extended along their trend.
+    The uniform and the clamped bar's ratios are the theory's. The tuned bar's are measured on a
+    recorded marimba (4.00 to 4.02, 10.09 to 10.15, 18.8 to 19.4, 30.7), the glass's first five
+    are the Csound manual's; both are extended along their trend.
 
-    Decay is the fundamental's 60 dB time; a partial at ratio q lasts q^-e times as long, with e
-    set by the material and raised by Damping. Strike Position weights partial k by
+    Decay is the fundamental's 60 dB time; a partial at ratio q lasts q^-e times as long. Measured
+    on recorded bars e is close to 1 (a material rings for about as many cycles whatever the
+    partial): 1.0 for wood, glass and tine, 1.2 for metal. Damping adds up to 1.2 to it. Strike Position weights partial k by
     sin(k pi position), as a bar struck there answers: at 0.5 every second partial is silent.
     Release Damp shortens every decay when the key goes up (0 leaves the bar ringing). Partials
     above 20 kHz are left out, and a partial that has rung out costs nothing. A retriggered voice
@@ -50,7 +52,7 @@ namespace coolsynth::synth::v3
         {
             static const ModuleDescriptor d {
                 "Modal", 2,
-                {{ { "material", "Material",     0.0f,  2.0f,  0.0f, Skew::linear,      Unit::generic, true, "Wood|Metal|Glass" },
+                {{ { "material", "Material",     0.0f,  3.0f,  0.0f, Skew::linear,      Unit::generic, true, "Wood|Metal|Glass|Tine" },
                    { "decay",    "Decay",        0.05f, 10.0f, 1.0f, Skew::logarithmic, Unit::generic, true },
                    { "hard",     "Hardness",     0.0f,  1.0f,  0.4f, Skew::linear,      Unit::percent, true },
                    { "pos",      "Strike Pos",   0.02f, 0.5f,  0.3f, Skew::linear,      Unit::percent, true },
@@ -60,16 +62,17 @@ namespace coolsynth::synth::v3
             return d;
         }
 
-        /** Partial ratios and the exponent of the material's upper-partial damping, at a position 0..2. */
+        /** Partial ratios and the exponent of the material's upper-partial damping, at a position 0..3. */
         static void materialAt(float position, std::array<float, partials>& ratio, float& dampingExponent) noexcept
         {
-            static constexpr float ratios[3][partials] = {
-                { 1.0f, 3.932f, 9.538f, 16.688f, 24.566f, 31.147f, 42.2f, 54.2f, 67.7f, 82.7f, 99.2f, 117.2f },        // tuned bar
+            static constexpr float ratios[4][partials] = {
+                { 1.0f, 4.0f, 10.1f, 19.1f, 30.7f, 44.7f, 61.0f, 79.5f, 100.0f, 123.0f, 148.0f, 175.0f },              // tuned bar
                 { 1.0f, 2.757f, 5.404f, 8.933f, 13.344f, 18.638f, 24.814f, 31.872f, 39.812f, 48.635f, 58.340f, 68.928f }, // uniform bar
-                { 1.0f, 2.32f, 4.25f, 6.63f, 9.38f, 12.45f, 15.82f, 19.48f, 23.42f, 27.63f, 32.11f, 36.86f } };        // wine glass
-            static constexpr float exponents[3] = { 1.4f, 0.5f, 0.8f };
-            const float x = juce::jlimit(0.0f, 2.0f, position);
-            const int lower = std::min(1, static_cast<int>(x));
+                { 1.0f, 2.32f, 4.25f, 6.63f, 9.38f, 12.45f, 15.82f, 19.48f, 23.42f, 27.63f, 32.11f, 36.86f },           // wine glass
+                { 1.0f, 6.267f, 17.548f, 34.386f, 56.843f, 84.91f, 118.6f, 157.9f, 202.8f, 253.3f, 309.5f, 371.2f } };  // clamped bar
+            static constexpr float exponents[4] = { 1.0f, 1.2f, 1.0f, 1.0f };
+            const float x = juce::jlimit(0.0f, 3.0f, position);
+            const int lower = std::min(2, static_cast<int>(x));
             const float t = x - static_cast<float>(lower);
             for (std::size_t k = 0; k < ratio.size(); ++k)
                 ratio[k] = t <= 0.0f ? ratios[lower][k]

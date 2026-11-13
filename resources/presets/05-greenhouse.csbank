@@ -46,44 +46,50 @@ master = 4
 
 [Kalimba]
 room = Greenhouse
-# A heavily damped string an octave up, struck near its middle with a soft click, so it rings
-# like a tine, with a five-millisecond puff of noise for the thumb.
-g1 = String decay=1.6 damp=0.6 pick=0.35 pos=0.4 release=0.3 excite=click oct=1 level=0.9
+# A steel tine clamped at one end, as a kalimba's is: the note, and far above it the tine's own
+# overtones at 6.3 and 17.5 times its pitch, which no string has. It rings about three seconds
+# and sounds an octave above the key, with a five-millisecond puff of noise for the thumb.
+g1 = Modal material=tine decay=3 hard=0.15 pos=0.3 damp=0.2 release=0 oct=1 level=0.9
 g2 = Noise type=white tone=0.7 level=0
 p1 = Off
-env1 = attack=1 decay=2500 sustain=0 release=600 velocity=0.5
+env1 = attack=1 decay=12000 sustain=0 release=3000 velocity=0.5
 env3 = attack=0.5 decay=5 sustain=0 release=5
 mod = src=env3 dst=g2.level amount=0.35
-mod = src=velocity dst=g1.pick amount=0.25
+mod = src=velocity dst=g1.hard amount=0.2
+mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.2 predelay=10
-master = 2.5
+master = -0
 
 [Harp String]
 room = Greenhouse
-# A bright string plucked a fifth of the way along. It rings for seconds while the key is held;
-# letting go lays a hand on it. Harder playing plucks brighter.
-g1 = String decay=7 damp=0.22 pick=0.8 pos=0.2 release=0.75 level=0.9
+# A bright string plucked near its middle, where a harpist plucks, so the even harmonics stay
+# quiet. It rings for seconds while the key is held, longer in the bass; letting go lays a hand
+# on it. Harder playing plucks brighter.
+g1 = String decay=5 damp=0.22 pick=0.8 pos=0.45 release=0.75 level=0.9
 p1 = Off
-env1 = attack=1 decay=9000 sustain=0 release=450 velocity=0.5
+env1 = attack=1 decay=16000 sustain=0 release=450 velocity=0.5
 mod = src=velocity dst=g1.pick amount=0.2
+mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0 drift=1
 reverb = on size=0.6 damping=0.4 mix=0.25 predelay=15
-master = 5
+master = 5.5
 
 [Marimba]
 room = Greenhouse
-# A tuned wooden bar: the fundamental and its partner two octaves up, struck a third of the way
-# along. Playing harder makes the mallet harder. A few milliseconds of noise at the note's pitch
-# are the knock of the mallet, and the low bars ring longer than the high ones, as they do.
-g1 = Modal material=wood decay=1.1 hard=0.1 pos=0.3 damp=0.3 release=0 level=0.9
+# A tuned wooden bar, set from a recorded marimba: the fundamental, its partner exactly two
+# octaves up and a third partial a little over three octaves up, each ringing in proportion to
+# its period. The bar rings four seconds at middle C, half as long an octave higher and twice as
+# long an octave lower. Playing harder makes the mallet harder, and a few milliseconds of noise
+# at the note's pitch are its knock.
+g1 = Modal material=wood decay=4 hard=0.1 pos=0.3 damp=0 release=0 level=0.9
 g2 = Noise type=band res=0.2 tone=0.8 level=0
 p1 = Off
-env1 = attack=0.5 decay=4000 sustain=0 release=1500 velocity=0.6
+env1 = attack=0.5 decay=16000 sustain=0 release=4000 velocity=0.6
 env3 = attack=0.5 decay=8 sustain=0 release=8
 mod = src=velocity dst=g1.hard amount=0.45
-mod = src=key dst=g1.decay amount=-0.5
+mod = src=key dst=g1.decay amount=-0.7
 mod = src=env3 dst=g2.level amount=0.25
 voice = env2ToP1=0
 reverb = on size=0.4 damping=0.55 mix=0.16 predelay=8
-master = 1
+master = -0

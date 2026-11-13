@@ -94,7 +94,9 @@ one raised-cosine pulse. Material morphs the partial ratios and the upper partia
 Wood (a tuned bar) through Metal (a uniform bar) to Glass (a wine glass); Decay is the
 fundamental's 60 dB time, Hardness the pulse's length, Strike Pos a sin(k pi position) weight,
 Damping and Release Damp shorten the ring. Coefficients are recomputed only for the values that
-changed (decisions D61 to D63).
+changed (decisions D61 to D63). Corrected from recordings on 2026-11-13: Wood is 1 : 4 : 10.1 :
+19.1, a fourth material Tine (a clamped bar) was added, and a partial at ratio q lasts about
+1/q as long (decision D90).
 
 Shipped (phase 8, 2026-11-13): `SampleBank` in `src/synth/v3/Samples.h`, five factory samples the
 program makes at first use (Glass, Choir, Strings, Air, Harp: four seconds, mono, 48 kHz, tuned

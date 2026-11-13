@@ -219,6 +219,43 @@ if(BUILD_TESTING)
     add_test(NAME CoolSynthMidiLearnTests COMMAND CoolSynthMidiLearnTests)
 endif()
 
+# Offline preset renderer (a preset playing given notes, to a WAV file). Not part of ALL:
+#   cmake --build <build-dir> --config <Config> --target CoolSynthRender
+juce_add_console_app(CoolSynthRender)
+set_target_properties(CoolSynthRender PROPERTIES EXCLUDE_FROM_ALL TRUE)
+
+target_sources(CoolSynthRender
+    PRIVATE
+        tools/RenderPreset.cpp
+        ${COOLSYNTH_SHARED_SOURCES})
+
+target_include_directories(CoolSynthRender
+    PRIVATE
+        src
+        ${CMAKE_CURRENT_BINARY_DIR})
+
+target_compile_features(CoolSynthRender PUBLIC cxx_std_20)
+
+target_compile_definitions(CoolSynthRender
+    PRIVATE
+        COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}")
+
+add_dependencies(CoolSynthRender UpdateBuildInfo)
+
+target_link_libraries(CoolSynthRender
+    PRIVATE
+        juce::juce_core
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_gui_basics
+        juce::juce_dsp
+        CoolSynthControllerProfiles
+        CoolSynthFactoryBank
+        coolsynth_config_flags
+        juce::juce_recommended_warning_flags)
+
 # Offline preset-loudness tool. Not part of ALL: build it on demand with
 #   cmake --build <build-dir> --config <Config> --target CoolSynthPresetNormalizer
 juce_add_console_app(CoolSynthPresetNormalizer)

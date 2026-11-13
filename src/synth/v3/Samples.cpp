@@ -167,10 +167,11 @@ namespace coolsynth::synth::v3
                 const double driftCents = 2.5 * std::sin(twoPi * 0.31 * t + 0.7) + 1.5 * std::sin(twoPi * 0.83 * t + 2.1);
                 cycles += c4 * std::exp2(driftCents / 1200.0) / rate;
                 const double beat = 1.0 - 0.30 * (0.5 + 0.5 * std::sin(twoPi * 3.7 * t)) - 0.15 * (0.5 + 0.5 * std::sin(twoPi * 0.6 * t + 1.0));
-                const double tone = std::sin(twoPi * cycles) + 0.12 * std::sin(2.0 * twoPi * cycles + 0.4)
-                                    + 0.05 * std::sin(3.0 * twoPi * cycles + 1.1) + 0.02 * std::sin(4.0 * twoPi * cycles);
+                // Measured on recorded glasses: the harmonics sit 30 to 45 dB under the fundamental.
+                const double tone = std::sin(twoPi * cycles) + 0.025 * std::sin(2.0 * twoPi * cycles + 0.4)
+                                    + 0.02 * std::sin(3.0 * twoPi * cycles + 1.1) + 0.008 * std::sin(4.0 * twoPi * cycles);
                 // The glass's own higher modes, which are not harmonics, ring faintly along.
-                const double ring = 0.04 * std::sin(2.32 * twoPi * cycles) + 0.02 * std::sin(4.25 * twoPi * cycles + 0.9);
+                const double ring = 0.02 * std::sin(2.32 * twoPi * cycles) + 0.01 * std::sin(4.25 * twoPi * cycles + 0.9);
                 const double noise = random.next();
                 const double friction = 0.06 * rubLow.process(noise) + 0.03 * rubHigh.process(noise);
                 x[static_cast<std::size_t>(i)] = beat * (tone + ring) + (0.6 + 0.4 * beat) * friction;

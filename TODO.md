@@ -87,7 +87,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each
       admitted by the user in a side-by-side against a reference recording (D88).
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
-    (start the `audition` preview server to hear it).
+    (start the `audition` preview server to hear it); marimba, kalimba and harp measured and
+    their presets corrected (D90, D91), waiting for the user's verdict on the page.
 35. Left open by phases 2 to 8, in the order they would pay off:
     - effects as slot types, and with them the three insert slots per part (D72);
     - grains from another generator, which needs a buffer pool handed out by the part (D79);

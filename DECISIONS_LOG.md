@@ -1190,3 +1190,65 @@ synths, admitted only when exact or nearly exact. Offered:
 - The page lives in `/audition` with the libraries (15 GB, ignored by git) and is served by a
   small local server (`.claude/launch.json`, name `audition`, port 8765), because the app shows
   local files as snapshots without sound. Picks are ticked on the page and pasted into the chat.
+
+## D90. The modal materials, corrected from recordings (2026-11-13)
+
+Follows D85 and replaces the numbers of D62. Measured on the CC0 recordings in `/audition`
+with `tools/audition/measure_struck.py` (pitch, partial ratios, 60 dB time per partial):
+
+| Instrument | Partials (ratio to the fundamental) | Fundamental's 60 dB time | Upper partials |
+| --- | --- | --- | --- |
+| Marimba (VCSL) | 1 : 4.00 to 4.02 : 10.09 to 10.15 : 18.8 to 19.4 : 30.7 | 8.7 s at C3, 3.5 s at F4, 2.2 s at C5, 0.8 s at F6 | 4x lasts about a quarter as long, 10x about a tenth |
+| Xylophone (VCSL) | 1 : 3.0 : 6.6 to 6.9 | 2.1 to 2.9 s at G4, 0.6 s at C7 | |
+| Glockenspiel (VCSL) | 1 : 2.9 to 3.0 : 5.4 to 5.7 : 8.9 to 9.0 | 8 to 12 s at G5, 4 s at G7 | 1 to 1.9 s |
+| Vibraphone (VCSL) | 1 : 4.00 : 10.4 to 10.7 | 8 to 20 s | 4x lasts about a quarter as long |
+| Kalimba (VCSL, two) | 1 : 6.4 to 6.9 : 17.8 to 18 | 2 to 6 s in the middle | |
+
+Checked online: marimba bars are tuned with the second partial at 4:1 and the third at 10:1
+(Percussion Clinic Adelaide, "building a marimba").
+
+- **Wood becomes 1 : 4 : 10.1 : 19.1 : 30.7 (taken, recommended).** D62's ratios (3.93, 9.54,
+  from the Csound table's "xylophone" row) put the second partial 34 cents and the third 99
+  cents flat of a real marimba's.
+- **A partial at ratio q now lasts q^-1 as long for wood, glass and tine and q^-1.2 for metal
+  (taken).** Measured: a bar rings for about as many cycles whatever the partial. D62 had 1.4
+  for wood (upper partials gone three times too fast) and 0.5 for metal (ringing far longer
+  than a real glockenspiel's or vibraphone's).
+- **A fourth material, Tine: a bar clamped at one end, 1 : 6.27 : 17.5 : 34.4 (taken).** A
+  kalimba's overtones are those of its tines; no setting of a string model produces them.
+  Material now runs 0 to 3. Alternative: leave the kalimba to the string generator, as D60 did.
+- Metal keeps the theoretical uniform bar (2.76, 5.40, 8.93). The one glockenspiel measured
+  sits a little above it (2.9 to 3.0), which is that instrument, not the rule.
+- The generated Glass sample's harmonics drop to 30 to 40 dB under the fundamental, as measured
+  on the recorded wine glasses (D77 had them at 18 and 26 dB).
+
+## D91. Presets corrected from recordings (2026-11-13)
+
+Each is on the audition page three times, same notes, no effects: the recording, the preset
+before, the preset now. The user's verdict there decides whether the change stays.
+
+- **Marimba: Decay 4 s at middle C (was 1.1 s), halving per octave up (key to Decay -0.7, was
+  -0.5), Damping 0 (was 0.3); the amp envelope only bounds the voice (16 s) (taken).** The
+  recording rings 3.5 s at F4 and its 60 dB time times its pitch is nearly constant. The bank's
+  recipe says "short, D400"; that was written before there was a recording to measure, and it
+  describes how a marimba is heard in a mix, where the tail is masked.
+- **Kalimba: the modal generator on Tine, Decay 3 s, a soft pluck (was a damped string an
+  octave up) (taken).** The thumb's noise puff stays.
+- **Harp String: Pick Position 0.45 (was 0.2), Decay 5 s at middle C and longer in the bass (key
+  to Decay -0.4; was 7 s everywhere) (taken).** The recorded harp's second harmonic lies 15 to
+  29 dB under the fundamental and its third only 2 to 15 dB under: a string plucked near its
+  middle. Its 60 dB times run from 15 to 19 s in the bass to about 4.5 s in the middle.
+- **Dusty Mallet: Damping 0.12 instead of 0.7 (taken).** It keeps the upper partials' decay it
+  had; the number changes because metal's own exponent rose from 0.5 to 1.2.
+
+Kalimba and Marimba came out 2.5 and 1 dB louder and were levelled again; Rain Chime's master
+was put back after the tool's usual random wobble.
+
+## D92. A render tool and the model check (2026-11-13)
+
+- **`CoolSynthRender` renders a preset playing given notes to a WAV file through the real
+  plugin, with an option to switch all effects off; `tools/audition` holds the scripts that
+  build the previews, the measurements, the three-way comparisons and the page (taken).** It is
+  what puts every claim about a sound in front of the user's ears, and the Museum room (D88)
+  needs the same side-by-side. The scripts read the libraries in `/audition` and write only
+  there.
