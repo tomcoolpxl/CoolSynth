@@ -768,3 +768,70 @@ Karplus-Strong Algorithm").
   damped in about 100 ms on release, brighter with velocity (taken).**
 
 Both are held at the tool's peak ceiling, as plucks are.
+
+## D61. The modal generator's resonators (2026-11-13, phase 6.2)
+
+- **Twelve rotating complex resonators, z = (z + x) r e^(j theta) (taken, recommended).** The
+  ring is a decaying sine of exactly the set frequency and 60 dB time (measured: every partial
+  within 0.01 cent, 30 dB a second at Decay 2 s), and frequency or decay can move every
+  sub-block without a click or a jump in level, so the bar bends and takes vibrato. A partial
+  that has rung out is cleared and costs nothing.
+- A bank of band-pass state-variable filters, as Rings does. The same sound, but the filter's
+  peak drifts from its set frequency towards the top of the band and its ring time has to be
+  derived from Q per partial.
+- Twenty-four or more partials. The requirement allows 8 to 24; beyond the twelfth the partials
+  of these materials lie above 20 kHz for most of the keyboard, where they are left out anyway.
+
+## D62. What Wood, Metal and Glass are (2026-11-13, phase 6.2)
+
+Checked online: the free-free bar's modes are 1 : 2.76 : 5.40 : 8.93 (BYU acoustics, "Free-Free
+Bar"; University of Colorado PHYS 1240 lab handout); measured ratios of tuned bars and a wine
+glass are in the Csound manual's "Modal Frequency Ratios" table (compiled by John Bower for
+Scott Lindroth), which also warns that some sets only sound right in their own register.
+
+- **Wood is a tuned (undercut) bar, 1 : 3.93 : 9.54 : 16.7; Metal a uniform bar, 1 : 2.76 :
+  5.40 : 8.93; Glass a wine glass, 1 : 2.32 : 4.25 : 6.63 : 9.38 (taken, recommended).** A
+  marimba sounds like one because its second partial is tuned two octaves up; a glockenspiel
+  bar is close to uniform. Between two materials every ratio moves geometrically, which between
+  Wood and Metal is what cutting a bar's arch deeper does. The measured rows give five or six
+  ratios; the rest follow their trend and are marked so in the code.
+- Wood as the uniform bar and Metal as a plate. My first draft: its "plate" ratios turned out to
+  be a drum membrane's (the zeros of Bessel functions), and a uniform bar with wooden damping is
+  a wood block, not a marimba.
+- One inharmonicity control from a string to a bar, as Rings has. A continuous sweep, but no
+  position on it is a tuned bar.
+- **Each material also sets how fast upper partials die: a partial at ratio q rings q^-e times
+  as long as the fundamental, e = 1.4 for wood, 0.5 for metal, 0.8 for glass, and Damping adds
+  up to 1.2 (taken).** Measured 200 ms after a hard strike: the second partial is 38.6 dB under
+  the fundamental on wood and 6.9 dB under on metal.
+
+## D63. The mallet (2026-11-13, phase 6.2)
+
+- **Hardness sets the length of one raised-cosine pulse, from half the note's period down to one
+  sample, scaled to sum to one (taken, recommended).** The fundamental's level stays within 2 dB
+  whatever the hardness (tested) while a hard mallet raises the third partial by more than
+  20 dB, so velocity to Hardness reads as the same note struck harder. The length follows the
+  note, so a soft mallet is soft on every key.
+- A fixed contact time in milliseconds. Closer to a real mallet, but the same setting would be
+  dull at the top of the keyboard and bright at the bottom.
+- A low-pass on a one-sample strike. The same result with one more filter to tune.
+- **A strike excites partial k by sin(k pi position), and by one over the square root of its
+  ratio (taken).** Without the tilt a hard strike is white: equal partials up to 20 kHz. With
+  it the hardest strike peaks between 1.25 and 2.16 across six octaves and three materials.
+- **Release Damp defaults to 0: a bar rings on when the key goes up (taken).** At 1 the key's
+  release stops it in 30 ms, for a damped vibraphone.
+
+## D64. Phase 6.2 presets (2026-11-13, phase 6.2)
+
+- **Marimba: Wood, Decay 1.1 s at middle C, falling to about 0.4 s two octaves up and rising to
+  about 3 s two octaves down (key to Decay), mallet hardness 0.1 to 0.55 with velocity, and 8 ms
+  of band-passed noise at the note's pitch for the knock (taken).** The Csound table's note that
+  wooden objects only sound wooden with a noise component is why the knock is there.
+- **Dusty Mallet: Metal with Damping 0.7 and a felt mallet, so a round note keeps a glint of
+  the bar's chime; lo-fi crackle 0.45, wow, flutter, a narrow top and a small room (taken).**
+  The recipe's "kalimba-like" is met by the short, damped metal bar rather than by the string
+  generator, which already carries the Greenhouse Kalimba.
+
+Both are held at the tool's peak ceiling, as plucks are. The loudness tool moved three presets
+with random elements by half a decibel when the two new ones changed the order of its random
+numbers; those three were put back.

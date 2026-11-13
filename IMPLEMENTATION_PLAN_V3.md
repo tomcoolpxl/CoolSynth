@@ -174,7 +174,7 @@ correct loop filter. Tests: tuning across the range, decay time. Ships: Greenhou
 String. Shipped 2026-11-13 with both (decisions D58 to D60).
 
 6.2 Modal. Partials with material morph, mallet hardness, strike position. Ships: Greenhouse
-Marimba, Bedroom Dusty Mallet.
+Marimba, Bedroom Dusty Mallet. Shipped 2026-11-13 with both (decisions D61 to D64).
 
 ## Phase 7: note layer and parts
 

@@ -70,3 +70,20 @@ mod = src=velocity dst=g1.pick amount=0.2
 voice = env2ToP1=0 drift=1
 reverb = on size=0.6 damping=0.4 mix=0.25 predelay=15
 master = 5
+
+[Marimba]
+room = Greenhouse
+# A tuned wooden bar: the fundamental and its partner two octaves up, struck a third of the way
+# along. Playing harder makes the mallet harder. A few milliseconds of noise at the note's pitch
+# are the knock of the mallet, and the low bars ring longer than the high ones, as they do.
+g1 = Modal material=wood decay=1.1 hard=0.1 pos=0.3 damp=0.3 release=0 level=0.9
+g2 = Noise type=band res=0.2 tone=0.8 level=0
+p1 = Off
+env1 = attack=0.5 decay=4000 sustain=0 release=1500 velocity=0.6
+env3 = attack=0.5 decay=8 sustain=0 release=8
+mod = src=velocity dst=g1.hard amount=0.45
+mod = src=key dst=g1.decay amount=-0.5
+mod = src=env3 dst=g2.level amount=0.25
+voice = env2ToP1=0
+reverb = on size=0.4 damping=0.55 mix=0.16 predelay=8
+master = 1

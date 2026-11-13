@@ -77,3 +77,18 @@ voice = env2ToP1=0
 play = mode=mono
 lofi = on wow=0.3 flutter=0.2 bandwidth=0.85
 master = -0
+
+[Dusty Mallet]
+room = Bedroom
+# A felt mallet on a small metal bar, damped until only a round note and a glint of chime are
+# left: half kalimba, half music box. It plays off a dusty record, with crackle, a slow wow and
+# a narrow top, in a small room.
+g1 = Modal material=metal decay=0.9 hard=0.12 pos=0.35 damp=0.7 release=0 level=0.9
+p1 = Off
+env1 = attack=1 decay=3000 sustain=0 release=1200 velocity=0.5
+mod = src=velocity dst=g1.hard amount=0.25
+mod = src=key dst=g1.decay amount=-0.4
+voice = env2ToP1=0 drift=3
+lofi = on wow=0.3 flutter=0.15 crackle=0.45 hiss=0.12 bandwidth=0.6
+reverb = on size=0.35 damping=0.6 mix=0.2
+master = 2.5

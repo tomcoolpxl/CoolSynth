@@ -668,3 +668,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Slots forward two optional hooks to the module types that have them: `noteOff()` (the voice's release) and `strike()` (a retrigger of the same voice).
 - [x] Presets: Greenhouse Kalimba and Harp String. 63 presets.
 - [x] Added `tests/V3StringTests.cpp` (5 tests): tuning within 3 cents from C2 to C7 at two dampings (worst 1.78), 30 dB a second at Decay 2 s, damping on key-up and ringing on at Release 0, no even harmonics at position 0.5, a retriggered voice plucking again. Verified Debug build without warnings and `ctest` green; both presets under 7 % of real time for eight-note chords.
+
+## V3 phase 6.2: modal generator (2026-11-13)
+
+- [x] Added `src/synth/v3/ModalGenerator.h` ("Modal", generator type 7): twelve rotating complex resonators with Material (Wood, a tuned bar; Metal, a uniform bar; Glass, a wine glass; morphing between), Decay, Hardness (the strike pulse's length), Strike Pos, Damping and Release Damp.
+- [x] Presets: Greenhouse Marimba and Bedroom Dusty Mallet. 65 presets.
+- [x] Added `tests/V3ModalTests.cpp` (9 tests): every material's first four partials within 2 cents of its table (worst 0.00), 30 dB a second at Decay 2 s, wood's second partial 38.6 dB down after 200 ms against metal's 6.9, a hard mallet 20 dB brighter with the fundamental within 2 dB, every second partial silent at position 0.5, damping on key-up only when asked, exact silence once rung out, nothing above 20 kHz, a retriggered voice striking again. Verified Debug build without warnings and `ctest` green; both presets at 6 % of real time for eight-note chords.

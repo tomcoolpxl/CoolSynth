@@ -88,6 +88,14 @@ time, Damping, Pick as a cutoff in harmonics, Pick Position as an output comb, R
 key-up, noise or click excitation. Slots gained the optional module hooks `noteOff()` and
 `strike()` (decisions D58, D59).
 
+Shipped (phase 6.2, 2026-11-13): `ModalGenerator` ("Modal") in
+`src/synth/v3/ModalGenerator.h`, generator type 7: twelve rotating complex resonators struck by
+one raised-cosine pulse. Material morphs the partial ratios and the upper partials' decay from
+Wood (a tuned bar) through Metal (a uniform bar) to Glass (a wine glass); Decay is the
+fundamental's 60 dB time, Hardness the pulse's length, Strike Pos a sin(k pi position) weight,
+Damping and Release Damp shorten the ring. Coefficients are recomputed only for the values that
+changed (decisions D61 to D63).
+
 Shipped (phase 4.2, 2026-11-13): `CrusherProcessor` and `FolderProcessor` in
 `src/synth/v3/ShaperProcessors.h`, processor types 3 and 4. Crusher: sample-and-hold at Rate,
 rounding to 2^bits levels (bits continuous), Mix. Folder: a sine folder with first-order

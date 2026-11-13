@@ -64,7 +64,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    `tests/V3ModernFxTests.cpp`; Main Stage Future Chord. Phase 5 complete: 61 presets.
 28. Phase 6.1 done 2026-11-13: `src/synth/v3/StringGenerator.h`, the `noteOff` and `strike` module
    hooks, `tests/V3StringTests.cpp`; Greenhouse Kalimba and Harp String. 63 presets.
-29. Phase 6.2: modal generator; Greenhouse Marimba and Bedroom Dusty Mallet.
+29. Phase 6.2 done 2026-11-13: `src/synth/v3/ModalGenerator.h`, `tests/V3ModalTests.cpp`;
+   Greenhouse Marimba and Bedroom Dusty Mallet. 65 presets.
+30. Phase 7.1: chord memory (types, learned chord, strum, into the arp); Arcade Chip Chord, Clock
+   Tower Chord Trigger, one-key Main Stage Future Chord.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.
