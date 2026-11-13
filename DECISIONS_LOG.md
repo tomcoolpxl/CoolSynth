@@ -237,3 +237,66 @@ The tool measures 4 s of each preset; Riser takes 16 s to rise.
 Found while testing, before commit: the global envelope read a block's settings after that
 block's events, so the first note after a change started it with stale times (the same ordering
 trap as the earlier preset leak). The settings are now applied before the events.
+
+## D21. Synced delay note values (2026-11-13, phase 2.4)
+
+- **Fourteen values from 1/32 to one bar, with dotted and triplet values, default 1/8; the
+  longest delay grows from 1 s to 4 s, a bar at 60 BPM (taken, recommended).** Covers every
+  common echo (1/8, dotted 1/8, 1/4) at any usable tempo. The free time knob keeps its 1 s range.
+- Reuse the LFO divisions. They run to eight bars, useless for an echo, and miss 1/2. and 1/2T.
+- Keep the 1 s line. A synced 1/4 note would cut off below 60 BPM, a dotted 1/4 below 90.
+
+Tempo comes from the host when it reports one, else the arp's internal tempo (as in D2).
+
+## D22. How ping-pong works (2026-11-13, phase 2.4)
+
+Checked online: the E-MU Proteus X manual and Steinberg's Multi Delay sum the input to mono into
+the left line and cross-couple the two lines; pyo's example warns that a block-based version
+runs the right side one block late.
+
+- **Mono sum into the left line, the lines cross-coupled per sample through the same darkening
+  feedback path as tape mode (taken, recommended).** Echoes land left at T, right at 2T, left at
+  3T (tested), each bounce scaled by the feedback and a little darker, so ping-pong and tape
+  sound like the same echo unit. Per-sample coupling has no block lag. With no feedback there
+  is a single echo on the left.
+- A clean, unfiltered feedback path for ping-pong. Brighter, but a second voice for the delay.
+- Stereo cross-feedback without the mono sum (Retrologue's "Cross"). Keeps the input's stereo
+  image but a centred source no longer bounces.
+
+Changing mode clears the lines, since the two leave very different echoes behind.
+
+## D23. The delay starts at its settings (2026-11-13, phase 2.4)
+
+Found while writing the tap test: after prepare, and after the delay is switched on, its time
+glided from the default 250 ms to the setting over about 80 ms and its mix ramped from zero.
+The first echoes of a freshly loaded patch bent in pitch, and at full mix the dry signal
+leaked through for 20 ms.
+
+- **Start at the settings on the first block after a reset or after switching on; keep the
+  tape-style glide for changes while it runs (taken, recommended).**
+- Leave it. Every preset load would bend its first echoes.
+
+An older effect test (disabling time-based effects clears their tails) had relied on that
+leak; it now renders long enough for the first echo to arrive.
+
+## D24. Outrun and Clock Tower authoring choices (2026-11-13, phase 2.4)
+
+- **"UNISON-N" in Neon Brass and Sunset Strings is the VA generator's own unison (2 and 4 per
+  saw), not the part's Unison play mode (taken, recommended).** The play mode is monophonic;
+  brass and strings must stay polyphonic.
+- **Gated Pad gates through one global square LFO at 1/16, restarted with the first chord and
+  starting open (taken, recommended).** Every voice chops together. A per-voice LFO would chop
+  each note on its own grid, which smears the gate. Retrigger off would lock to a DAW's grid
+  but start at a random point in the standalone.
+- **Polyrhythm Pad: pulse width from LFO1 at 1/4 (free-running, so in a DAW it locks to the
+  song) and cutoff from GLFO1 at 1/4T, three against two (taken).**
+- **Bank files `03-outrun.csbank` and `10-clock-tower.csbank`, numbered by the room order of
+  `SOUND_BANK_V3.md` (taken).** Grid Keys waits for four-operator FM (3.3), Chord Trigger for
+  chord memory (7.1).
+- Random Walk's voice level was raised so it reaches its loudness target under the +6 dB master
+  cap. Euclid Pulse and Ratchet Run are held below target by the tool's -3 dBFS peak ceiling,
+  as plucks are.
+
+Also met: a stale debug database of the embedded bank library made the linker reject it
+(LNK1236) after two bank files were added; deleting `build/CoolSynthFactoryBank.dir/Debug`
+fixed it. Nothing to decide, noted in case it returns.

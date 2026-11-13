@@ -15,6 +15,11 @@ namespace coolsynth::synth
      * of the repeats instead of clicking or jumping. The feedback path runs
      * through a soft clip, a one-pole low-pass and a one-pole high-pass, so
      * every repeat comes back a little darker and thinner than the last.
+     *
+     * Tape mode echoes each channel in place. Ping-pong sums the input to
+     * mono into the left line and cross-couples the lines through the same
+     * feedback path, so the echoes alternate left, right, left at the delay
+     * time, each bounce scaled by the feedback. Changing mode clears the lines.
      */
     class GlobalDelay final
     {
@@ -24,12 +29,14 @@ namespace coolsynth::synth
         void prepare(double sampleRate, int samplesPerBlock, int outputChannelCount);
         void reset() noexcept;
         void clear() noexcept;
+        /** The next block starts at the settings instead of gliding to them. */
+        void rearm() noexcept { primed = false; }
         void process(juce::AudioBuffer<float>& buffer,
                      const DelayParametersV2& parameters) noexcept;
 
     private:
         static constexpr float minDelayTimeMs = 1.0f;
-        static constexpr float maxDelayTimeMs = 1000.0f;
+        static constexpr float maxDelayTimeMs = 4000.0f; // a synced bar at 60 BPM
         static constexpr double timeSlewSeconds = 0.08;
         static constexpr double parameterSmoothingSeconds = 0.02;
         static constexpr float feedbackLowPassHz = 5500.0f;
@@ -47,6 +54,7 @@ namespace coolsynth::synth
         float clampDelayMs(float timeMs) const noexcept;
         float delayMsToSamples(float timeMs) const noexcept;
         float readHermite(const Channel& channel, float delaySamples) const noexcept;
+        float feedbackFilter(Channel& channel, float wet) const noexcept;
         void updateTargets(const DelayParametersV2& parameters) noexcept;
 
         std::vector<Channel> channels;
@@ -60,5 +68,7 @@ namespace coolsynth::synth
         float lowPassCoefficient = 0.0f;
         float highPassCoefficient = 0.0f;
         bool prepared = false;
+        bool pingPongActive = false;
+        bool primed = false;
     };
 }

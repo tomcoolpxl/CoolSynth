@@ -456,8 +456,9 @@ public:
             buffer.clear();
             engine.render(buffer, noteOff, parameters);
 
+            // Long enough for the first 300 ms echo: with the delay's mix at 1 there is no dry signal.
             float tailPeak = 0.0f;
-            for (int block = 0; block < 4; ++block)
+            for (int block = 0; block < 80; ++block)
             {
                 buffer.clear();
                 engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);

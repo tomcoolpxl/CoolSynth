@@ -46,7 +46,15 @@ namespace coolsynth::synth::v3
         if (part->consumeSoundOff())
             fxRack.clear();
 
-        fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, settings.delay, settings.reverb, settings.compressor);
+        // A synced delay takes its time from the tempo the part plays at: the host's, else the arp's.
+        auto delay = settings.delay;
+        if (delay.sync)
+        {
+            const bool hostTempo = transport.hostHasTempo && transport.hostBpm > 0.0;
+            const double bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.part.arp.internalTempoBpm), 20.0, 400.0);
+            delay.timeMs = coolsynth::synth::delayDivisionMs(delay.division, bpm);
+        }
+        fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, delay, settings.reverb, settings.compressor);
 
         // The first block after prepare starts at the setting; ramping from unity would make the
         // first notes after loading louder than the patch.

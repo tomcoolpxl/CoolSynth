@@ -863,6 +863,9 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     settings.delay.timeMs = juce::jlimit(1.0f, 1000.0f, v.delayTimeMs->load());
     settings.delay.feedback = juce::jlimit(0.0f, coolsynth::synth::GlobalDelay::maxFeedback, v.delayFeedback->load());
     settings.delay.mix = v.delayMix->load();
+    settings.delay.sync = decodeBool(v.delaySync->load());
+    settings.delay.division = juce::jlimit(0, static_cast<int>(coolsynth::synth::delayDivisions.size()) - 1, index(v.delayDivision));
+    settings.delay.pingPong = index(v.delayMode) == 1;
 
     settings.reverb.enabled = decodeBool(v.reverbEnabled->load());
     settings.reverb.size = v.reverbSize->load();

@@ -42,3 +42,19 @@ mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=genv
 voice = env2ToP1=0
 reverb = on size=0.85 damping=0.4 mix=0.3
 master = -1.5
+
+[Pluck Drop]
+room = Main Stage
+# A saw and pulse pluck whose pitch falls an octave in its first 40 ms, through a decaying
+# filter, a synced eighth echo and a plate.
+g1 = VA shape=saw level=0.7
+g2 = VA shape=pulse pw=0.35 level=0.45
+p1 = Ladder cutoff=900 res=0.25 key=0.6
+env1 = attack=1 decay=600 sustain=0 release=300 velocity=0.5
+env2 = attack=1 decay=260 sustain=0 release=200
+env3 = attack=0.5 decay=40 sustain=0 release=40 decayCurve=-0.6
+mod = src=env3 dst=pitch amount=0.25
+voice = env2ToP1=0.45 velToP1=0.15
+delay = on sync=on division=1/8 feedback=0.3 mix=0.18
+reverb = on size=0.6 damping=0.4 mix=0.2
+master = 4

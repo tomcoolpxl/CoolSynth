@@ -311,6 +311,13 @@ hiss, crackle, bandwidth, bit depth, sample rate), pump (tempo-synced ducker). E
 the transport (tempo, position, playing) for synced times, with the internal tempo as fallback
 exactly as the arpeggiator does today.
 
+Shipped (phase 2.4, 2026-11-13), on the V2 rack until the effect slots arrive: the delay has
+Sync with 14 note values (1/32 to one bar, dotted and triplet) and Mode Tape or Ping-Pong. The
+engine sets the synced time from the host tempo, else the arp's internal tempo; the line holds
+4 s. Ping-pong sums the input to mono into the left line and cross-couples the lines per sample
+through the tape feedback path. The delay starts at its settings after a reset or when switched
+on (decisions D21 to D23).
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs

@@ -36,6 +36,7 @@ namespace coolsynth::synth
         targetDelaySamples = currentDelaySamples;
         feedbackSmoother.setCurrentAndTargetValue(0.25f);
         mixSmoother.setCurrentAndTargetValue(0.0f);
+        primed = false;
     }
 
     void GlobalDelay::clear() noexcept
@@ -57,9 +58,58 @@ namespace coolsynth::synth
             return;
 
         updateTargets(parameters);
+        if (! primed)
+        {
+            // The first block after a reset starts at the settings: gliding from the default time
+            // would bend the first echoes of a freshly loaded patch, and ramping the mix would let
+            // its dry signal through.
+            currentDelaySamples = targetDelaySamples;
+            feedbackSmoother.setCurrentAndTargetValue(feedbackSmoother.getTargetValue());
+            mixSmoother.setCurrentAndTargetValue(mixSmoother.getTargetValue());
+            primed = true;
+        }
 
         const int numChannels = juce::jmin(buffer.getNumChannels(), static_cast<int>(channels.size()));
         const int numSamples = buffer.getNumSamples();
+
+        const bool pingPong = parameters.pingPong && numChannels >= 2;
+        if (pingPong != pingPongActive)
+        {
+            clear(); // the two modes leave very different echoes in the lines
+            pingPongActive = pingPong;
+        }
+
+        if (pingPong)
+        {
+            auto& left = channels[0];
+            auto& right = channels[1];
+            for (int sample = 0; sample < numSamples; ++sample)
+            {
+                currentDelaySamples += (targetDelaySamples - currentDelaySamples) * (1.0f - timeSlewCoefficient);
+                const float feedback = feedbackSmoother.getNextValue();
+                const float mix = mixSmoother.getNextValue();
+
+                const float dryL = buffer.getSample(0, sample);
+                const float dryR = buffer.getSample(1, sample);
+                const float wetL = readHermite(left, currentDelaySamples);
+                const float wetR = readHermite(right, currentDelaySamples);
+
+                // Each line's echo, darkened, feeds the other line: left, right, left, ...
+                const float toRight = std::tanh(feedbackFilter(left, wetL) * feedback);
+                float toLeft = 0.5f * (dryL + dryR) + std::tanh(feedbackFilter(right, wetR) * feedback);
+                if (std::abs(toLeft) < 1.0e-7f)
+                    toLeft = 0.0f;
+
+                left.buffer[static_cast<size_t>(left.writeIndex)] = toLeft;
+                right.buffer[static_cast<size_t>(right.writeIndex)] = std::abs(toRight) < 1.0e-7f ? 0.0f : toRight;
+                left.writeIndex = (left.writeIndex + 1) % bufferLength;
+                right.writeIndex = (right.writeIndex + 1) % bufferLength;
+
+                buffer.setSample(0, sample, dryL + (wetL - dryL) * mix);
+                buffer.setSample(1, sample, dryR + (wetR - dryR) * mix);
+            }
+            return;
+        }
 
         for (int sample = 0; sample < numSamples; ++sample)
         {
@@ -75,11 +125,7 @@ namespace coolsynth::synth
                 const float wet = readHermite(channel, currentDelaySamples);
 
                 // Feedback path: darken, thin out, then soft-clip so runaway settings stay musical.
-                channel.lowPassState += (wet - channel.lowPassState) * lowPassCoefficient;
-                const float darkened = channel.lowPassState;
-                channel.highPassState = highPassCoefficient * (channel.highPassState + darkened - channel.highPassPreviousInput);
-                channel.highPassPreviousInput = darkened;
-                float feedbackInput = dry + std::tanh(channel.highPassState * feedback);
+                float feedbackInput = dry + std::tanh(feedbackFilter(channel, wet) * feedback);
 
                 if (std::abs(feedbackInput) < 1.0e-7f)
                     feedbackInput = 0.0f;
@@ -90,6 +136,15 @@ namespace coolsynth::synth
                 buffer.setSample(ch, sample, dry + (wet - dry) * mix);
             }
         }
+    }
+
+    float GlobalDelay::feedbackFilter(Channel& channel, float wet) const noexcept
+    {
+        channel.lowPassState += (wet - channel.lowPassState) * lowPassCoefficient;
+        const float darkened = channel.lowPassState;
+        channel.highPassState = highPassCoefficient * (channel.highPassState + darkened - channel.highPassPreviousInput);
+        channel.highPassPreviousInput = darkened;
+        return channel.highPassState;
     }
 
     float GlobalDelay::clampDelayMs(float timeMs) const noexcept

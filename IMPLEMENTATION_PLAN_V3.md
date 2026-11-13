@@ -108,6 +108,7 @@ Shipped 2026-11-13 with both; Riser waits for its noise layer until 3.1 (decisio
 for the existing dark feedback path. Tests: tap spacing at 1/8 and dotted 1/8. Ships: Clock
 Tower (Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad), Outrun (Neon Brass,
 Night Drive, Laser Lead, Sunset Strings, Gated Pad through LFO to VCA), Main Stage Pluck Drop.
+Shipped 2026-11-13 with all eleven presets (decisions D21 to D24). Phase 2 complete.
 
 ## Phase 3: generators
 

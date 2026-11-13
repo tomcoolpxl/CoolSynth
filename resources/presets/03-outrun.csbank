@@ -1,0 +1,78 @@
+# Outrun: synthwave. Stacked saws, chorus, synced delay and reverb on everything, gated
+# rhythms, bright and wide. Produced, where Studio 1982 is played.
+
+[Neon Brass]
+room = Outrun
+# Two saw pairs a few cents apart under a fast filter envelope, chorused, with a dotted-eighth
+# echo and a big room.
+g1 = VA shape=saw unison=2 detune=10 spread=0.5 level=0.7
+g2 = VA shape=saw unison=2 detune=10 spread=0.5 fine=7 level=0.7
+p1 = Ladder cutoff=1100 res=0.18 key=0.5 bass=0.6
+env1 = attack=15 decay=400 sustain=0.5 release=350 velocity=0.5
+env2 = attack=20 decay=500 sustain=0.35 release=350
+voice = env2ToP1=0.42 velToP1=0.1 drift=3
+play = voices=8
+chorus = on rate=0.45 depth=0.5 mix=0.4
+delay = on sync=on division=1/8. feedback=0.3 mix=0.16
+reverb = on size=0.7 damping=0.45 mix=0.22
+master = 1.5
+
+[Gated Pad]
+room = Outrun
+# A saw and pulse pad chopped at 1/16 by one global square LFO, so every voice opens and shuts
+# together. The LFO restarts with the first chord, starting open.
+g1 = VA shape=saw unison=3 detune=14 spread=0.7 level=0.7
+g2 = VA shape=pulse pw=0.4 level=0.4
+p1 = Ladder cutoff=3200 res=0.12 key=0.4
+env1 = attack=180 decay=800 sustain=0.9 release=500
+glfo1 = shape=square sync=on division=1/16 phase=180 retrigger=on
+mod = src=glfo1 dst=vca amount=-1 curve=unipolar
+voice = env2ToP1=0 drift=3
+chorus = on rate=0.4 depth=0.45 mix=0.35
+reverb = on size=0.75 damping=0.4 mix=0.28
+master = 3.5
+
+[Night Drive]
+room = Outrun
+# The octave-jumping sixteenth bass line: hold one note, the arp plays it and the octave above.
+g1 = VA shape=saw oct=-1 level=0.8
+g2 = VA shape=pulse oct=-1 pw=0.3 level=0.45
+p1 = Ladder cutoff=650 res=0.25 key=0.5 bass=0.7
+env1 = attack=1 decay=220 sustain=0.4 release=90 velocity=0.4
+env2 = attack=1 decay=180 sustain=0.15 release=90
+voice = env2ToP1=0.32
+arp = on rate=1/16 pattern=up octaves=2 gate=0.6
+drive = on amount=0.12 mix=0.5
+delay = on sync=on division=1/8 feedback=0.2 mix=0.1
+reverb = on size=0.45 damping=0.5 mix=0.1
+master = -3.5
+
+[Laser Lead]
+room = Outrun
+# G2 is hard-synced to a silent G1 and its pitch swept down from about two and a half octaves
+# above by the filter envelope; legato with glide, into a ping-pong echo.
+g1 = VA shape=saw level=0
+g2 = VA shape=saw combine=sync semi=5 level=0.85
+g3 = VA shape=pulse pw=0.4 oct=-1 level=0.25
+p1 = Ladder cutoff=4200 res=0.2 key=0.5
+env1 = attack=3 decay=300 sustain=1 release=200
+env2 = attack=2 decay=900 sustain=0.2 release=250
+mod = src=env2 dst=g2.pitch amount=0.6
+voice = env2ToP1=0.18 glide=60
+play = mode=legato
+chorus = on rate=0.5 depth=0.3 mix=0.25
+delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+reverb = on size=0.6 damping=0.45 mix=0.15
+master = 6
+
+[Sunset Strings]
+room = Outrun
+# Two four-saw stacks spread left and right through a gentle low-pass, a slow phaser and a hall.
+g1 = VA shape=saw unison=4 detune=12 spread=0.8 pan=-0.3 fine=-4 level=0.6
+g2 = VA shape=saw unison=4 detune=12 spread=0.8 pan=0.3 fine=4 level=0.6
+p1 = Ladder mode=lp12 cutoff=2800 res=0.08 key=0.5
+env1 = attack=700 decay=1500 sustain=1 release=1200 velocity=0.3
+voice = env2ToP1=0 drift=4
+phaser = on rate=0.3 depth=0.5
+reverb = on size=0.8 damping=0.45 mix=0.3
+master = -3

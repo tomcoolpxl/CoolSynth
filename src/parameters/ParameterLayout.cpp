@@ -1,5 +1,7 @@
 #include "ParameterLayout.h"
 
+#include "synth/SynthParameters.h"
+
 #include <cmath>
 
 #include "ParameterIDs.h"
@@ -267,6 +269,14 @@ namespace
             juce::NormalisableRange<float>(0.0f, 1.0f),
             0.0f,
             percentAttributes()));
+        group->addChild(makeBoolParameter(delaySync, parameterVersionHint, "Sync", false));
+        juce::StringArray divisions;
+        for (const auto& d : coolsynth::synth::delayDivisions)
+            divisions.add(d.name);
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(
+            makeV2ParameterId(delayDivision), "Division", divisions, coolsynth::synth::delayDefaultDivision));
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(
+            makeV2ParameterId(delayMode), "Mode", juce::StringArray { "Tape", "Ping-Pong" }, 0));
         return group;
     }
 

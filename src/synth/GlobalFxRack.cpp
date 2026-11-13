@@ -161,7 +161,7 @@ namespace coolsynth::synth
 
         if (hasAudibleDelayTail(delayParameters))
         {
-            const double delaySeconds = static_cast<double>(juce::jlimit(1.0f, 1000.0f, delayParameters.timeMs)) / 1000.0;
+            const double delaySeconds = static_cast<double>(juce::jlimit(1.0f, 4000.0f, delayParameters.timeMs)) / 1000.0;
             const double feedback = static_cast<double>(juce::jlimit(0.0f, GlobalDelay::maxFeedback, delayParameters.feedback));
 
             if (feedback <= 0.0)
@@ -306,6 +306,8 @@ namespace coolsynth::synth
             return;
         }
 
+        if (! delayWasAudible)
+            delay.rearm(); // switched on: start at the settings, not where the time was left
         delay.process(buffer, parameters);
         delayWasAudible = true;
     }

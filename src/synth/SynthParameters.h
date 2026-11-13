@@ -57,12 +57,37 @@ namespace coolsynth::synth
         float mix = 0.3f;
     };
 
+    /** Note values a synced delay can take, in quarter notes. */
+    struct DelayDivision
+    {
+        const char* name;
+        double beats;
+    };
+
+    inline constexpr std::array<DelayDivision, 14> delayDivisions { {
+        { "1/32", 0.125 }, { "1/16T", 1.0 / 6.0 }, { "1/16", 0.25 }, { "1/16.", 0.375 }, { "1/8T", 1.0 / 3.0 },
+        { "1/8", 0.5 },    { "1/8.", 0.75 },       { "1/4T", 2.0 / 3.0 }, { "1/4", 1.0 }, { "1/4.", 1.5 },
+        { "1/2T", 4.0 / 3.0 }, { "1/2", 2.0 },     { "1/2.", 3.0 },  { "1 Bar", 4.0 },
+    } };
+    inline constexpr int delayDefaultDivision = 5; // 1/8
+
+    /** The length of a delay division at a tempo, in milliseconds. */
+    [[nodiscard]] inline float delayDivisionMs(int division, double bpm) noexcept
+    {
+        const auto index = static_cast<std::size_t>(division < 0 ? 0 : (division >= static_cast<int>(delayDivisions.size())
+                                                                             ? static_cast<int>(delayDivisions.size()) - 1 : division));
+        return static_cast<float>(delayDivisions[index].beats * 60000.0 / (bpm > 1.0 ? bpm : 1.0));
+    }
+
     struct DelayParametersV2
     {
         bool enabled = false;
-        float timeMs = 250.0f;
+        float timeMs = 250.0f; // what the delay plays; the engine sets it from the division when synced
         float feedback = 0.25f;
         float mix = 0.0f;
+        bool sync = false;
+        int division = delayDefaultDivision;
+        bool pingPong = false; // off: tape (both channels echo in place, darkening)
     };
 
     struct ReverbParametersV2
@@ -139,6 +164,9 @@ namespace coolsynth::synth
         std::atomic<float>* delayTimeMs = nullptr;
         std::atomic<float>* delayFeedback = nullptr;
         std::atomic<float>* delayMix = nullptr;
+        std::atomic<float>* delaySync = nullptr;
+        std::atomic<float>* delayDivision = nullptr;
+        std::atomic<float>* delayMode = nullptr;
         std::atomic<float>* reverbEnabled = nullptr;
         std::atomic<float>* reverbSize = nullptr;
         std::atomic<float>* reverbDamping = nullptr;
@@ -184,6 +212,9 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::delayTimeMs,          &GlobalParameterPointers::delayTimeMs          },
         { coolsynth::parameters::ids::delayFeedback,        &GlobalParameterPointers::delayFeedback        },
         { coolsynth::parameters::ids::delayMix,             &GlobalParameterPointers::delayMix             },
+        { coolsynth::parameters::ids::delaySync,            &GlobalParameterPointers::delaySync            },
+        { coolsynth::parameters::ids::delayDivision,        &GlobalParameterPointers::delayDivision        },
+        { coolsynth::parameters::ids::delayMode,            &GlobalParameterPointers::delayMode            },
         { coolsynth::parameters::ids::reverbEnabled,        &GlobalParameterPointers::reverbEnabled        },
         { coolsynth::parameters::ids::reverbSize,           &GlobalParameterPointers::reverbSize           },
         { coolsynth::parameters::ids::reverbDamping,        &GlobalParameterPointers::reverbDamping        },

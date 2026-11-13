@@ -46,6 +46,9 @@ namespace coolsynth::parameters::ids
     inline constexpr char delayTimeMs[] = "delayTimeMs";
     inline constexpr char delayFeedback[] = "delayFeedback";
     inline constexpr char delayMix[] = "delayMix";
+    inline constexpr char delaySync[] = "delaySync";
+    inline constexpr char delayDivision[] = "delayDivision";
+    inline constexpr char delayMode[] = "delayMode";
 
     inline constexpr char reverbEnabled[] = "reverbEnabled";
     inline constexpr char reverbSize[] = "reverbSize";
@@ -141,6 +144,9 @@ namespace coolsynth::parameters
         ids::delayTimeMs,
         ids::delayFeedback,
         ids::delayMix,
+        ids::delaySync,
+        ids::delayDivision,
+        ids::delayMode,
         ids::reverbEnabled,
         ids::reverbSize,
         ids::reverbDamping,
