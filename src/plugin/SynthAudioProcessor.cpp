@@ -871,6 +871,10 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     settings.reverb.size = v.reverbSize->load();
     settings.reverb.damping = v.reverbDamping->load();
     settings.reverb.mix = v.reverbMix->load();
+    settings.reverb.preDelayMs = v.reverbPreDelay->load();
+    settings.reverb.lowCutHz = v.reverbLowCut->load();
+    settings.reverb.modulation = v.reverbModulation->load();
+    settings.reverb.shimmer = v.reverbShimmer->load();
 
     settings.phaser.enabled = decodeBool(v.phaserEnabled->load());
     settings.phaser.rateHz = juce::jlimit(0.05f, 8.0f, v.phaserRateHz->load());

@@ -96,6 +96,10 @@ namespace coolsynth::synth
         float size = 0.4f;
         float damping = 0.5f;
         float mix = 0.2f;
+        float preDelayMs = 0.0f;
+        float lowCutHz = 20.0f;
+        float modulation = 0.5f;
+        float shimmer = 0.0f;
     };
 
     struct PhaserParametersV2
@@ -171,6 +175,10 @@ namespace coolsynth::synth
         std::atomic<float>* reverbSize = nullptr;
         std::atomic<float>* reverbDamping = nullptr;
         std::atomic<float>* reverbMix = nullptr;
+        std::atomic<float>* reverbPreDelay = nullptr;
+        std::atomic<float>* reverbLowCut = nullptr;
+        std::atomic<float>* reverbModulation = nullptr;
+        std::atomic<float>* reverbShimmer = nullptr;
         std::atomic<float>* masterGainDb = nullptr;
         std::atomic<float>* phaserEnabled = nullptr;
         std::atomic<float>* phaserRateHz = nullptr;
@@ -219,6 +227,10 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::reverbSize,           &GlobalParameterPointers::reverbSize           },
         { coolsynth::parameters::ids::reverbDamping,        &GlobalParameterPointers::reverbDamping        },
         { coolsynth::parameters::ids::reverbMix,            &GlobalParameterPointers::reverbMix            },
+        { coolsynth::parameters::ids::reverbPreDelay,       &GlobalParameterPointers::reverbPreDelay       },
+        { coolsynth::parameters::ids::reverbLowCut,         &GlobalParameterPointers::reverbLowCut         },
+        { coolsynth::parameters::ids::reverbModulation,     &GlobalParameterPointers::reverbModulation     },
+        { coolsynth::parameters::ids::reverbShimmer,        &GlobalParameterPointers::reverbShimmer        },
         { coolsynth::parameters::ids::masterGainDb,         &GlobalParameterPointers::masterGainDb         },
         { coolsynth::parameters::ids::phaserEnabled,        &GlobalParameterPointers::phaserEnabled        },
         { coolsynth::parameters::ids::phaserRateHz,         &GlobalParameterPointers::phaserRateHz         },

@@ -370,6 +370,11 @@ engine sets the synced time from the host tempo, else the arp's internal tempo; 
 through the tape feedback path. The delay starts at its settings after a reset or when switched
 on (decisions D21 to D23).
 
+Shipped (phase 5.1, 2026-11-13), also on the V2 rack: the plate has Pre-Delay (0 to 250 ms), Low
+Cut (an input high-pass), Modulation (a trim on the tank's excursion) and Shimmer (the tank's
+output, band-limited, an octave up through a two-head delay-line shifter, fed back into the tank;
+0 is the plain plate) (decision D50).
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs

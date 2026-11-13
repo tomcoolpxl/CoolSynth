@@ -56,8 +56,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 24. Phase 4.4 done 2026-11-13: `src/synth/v3/ResonatorProcessors.h` (formant, comb),
    `tests/V3ResonatorTests.cpp`; Vinyl Choir, Furnace Drone, Neuro Growl. Phase 4 complete: 55
    presets.
-25. Phase 5.1: plate pre-delay, input high-pass, modulation trim, shimmer; Observatory Shimmer
-   Drone and Satellite Ping.
+25. Phase 5.1 done 2026-11-13: plate pre-delay, low cut, modulation and shimmer,
+   `tests/V3ReverbTests.cpp`; Shimmer Drone, Satellite Ping, Nebula Pad's pre-delay. 57 presets.
+26. Phase 5.2: lo-fi effect; Bedroom Cassette Keys, Blanket Pad, Bedroom Bass, and the lo-fi on
+   Concrete Pad and Vinyl Choir.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

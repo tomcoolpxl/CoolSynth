@@ -630,3 +630,34 @@ The plan asks to audit ring and FM combine for level and aliasing.
   a 1/8 synced LFO, tube drive and the SVF; the wheel doubles the talking rate (taken).**
 
 Phase 4 is complete.
+
+## D50. The plate's additions and shimmer (2026-11-13, phase 5.1)
+
+The plan asks for plate pre-delay, input high-pass, modulation trim and a shimmer type. Checked
+online: Eventide's ShimmerVerb puts its pitch shifters inside the feedback loop; on the Csound
+list a reverb-plus-shifter loop "quickly goes into distortion", and shifting inside the reverb's
+own loop was the suggested fix.
+
+- **Pre-delay 0 to 250 ms, Low Cut a one-pole high-pass from 20 Hz (open) to 1 kHz, Modulation
+  0 to 1 with 0.5 the paper's excursion, so existing presets sound as before (taken).**
+- **Shimmer as an amount, 0 a plain plate, instead of a separate type plus an amount (taken,
+  recommended).** One knob does both; a plate with Shimmer 0 is the old plate exactly.
+- **The shifter inside the tank's loop: the tank output band-limited to 180 Hz to 5 kHz, an
+  octave up through a two-head delay-line shifter (45 ms window, sin-squared crossfades),
+  soft-limited and fed back into the tank input (taken, recommended).** Every pass climbs
+  another octave; the band limit keeps the doubled signal below Nyquist and the lows from piling
+  up; the tank's own decay keeps it from running away. Measured: the octave sits 45 dB higher in
+  the tail than without shimmer, and the tail keeps falling at size 0.8 and shimmer 0.8.
+- Shimmer as a separate effect after the reverb. It shifts the tail once, a thinner effect.
+- A phase-vocoder or granular shifter. Cleaner, several times the cost, and the delay-line
+  shifter's slight warble is part of the shimmer sound.
+- A choice of interval (fifth, two octaves). Possible later; the octave is the classic.
+
+## D51. Phase 5.1 presets (2026-11-13, phase 5.1)
+
+- **Shimmer Drone: a dark saw and sine under a plate with shimmer 0.6, pre-delay 40 ms and a
+  120 Hz low cut (taken).**
+- **Satellite Ping: sine blips two octaves up, a third of the eighths at random, into a
+  dotted-quarter ping-pong echo at 0.7 feedback and a large plate (taken).** The one Observatory
+  preset allowed a fast attack.
+- **Nebula Pad gets the recipe's 80 ms pre-delay and an 80 Hz low cut (taken).**

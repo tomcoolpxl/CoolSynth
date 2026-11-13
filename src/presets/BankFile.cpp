@@ -39,7 +39,9 @@ namespace coolsynth::presets
                 { "chorus", { ids::chorusEnabled, { { "rate", ids::chorusRateHz }, { "depth", ids::chorusDepth }, { "mix", ids::chorusMix } } } },
                 { "delay", { ids::delayEnabled, { { "time", ids::delayTimeMs }, { "feedback", ids::delayFeedback }, { "mix", ids::delayMix },
                                                   { "sync", ids::delaySync }, { "division", ids::delayDivision }, { "mode", ids::delayMode } } } },
-                { "reverb", { ids::reverbEnabled, { { "size", ids::reverbSize }, { "damping", ids::reverbDamping }, { "mix", ids::reverbMix } } } },
+                { "reverb", { ids::reverbEnabled, { { "size", ids::reverbSize }, { "damping", ids::reverbDamping }, { "mix", ids::reverbMix },
+                                                   { "predelay", ids::reverbPreDelay }, { "lowcut", ids::reverbLowCut },
+                                                   { "modulation", ids::reverbModulation }, { "shimmer", ids::reverbShimmer } } } },
                 { "phaser", { ids::phaserEnabled, { { "rate", ids::phaserRateHz }, { "depth", ids::phaserDepth } } } },
                 { "compressor", { ids::compressorEnabled, { { "amount", ids::compressorAmount }, { "mix", ids::compressorMix } } } },
             };

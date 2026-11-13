@@ -336,6 +336,10 @@ namespace coolsynth::synth
 
         reverb.setSize(clampUnit(parameters.size));
         reverb.setDamping(clampUnit(parameters.damping));
+        reverb.setPreDelay(parameters.preDelayMs);
+        reverb.setLowCut(parameters.lowCutHz);
+        reverb.setModulation(parameters.modulation);
+        reverb.setShimmer(parameters.shimmer);
 
         const auto numChannels = buffer.getNumChannels();
         const auto numSamples  = buffer.getNumSamples();

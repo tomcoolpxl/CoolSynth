@@ -641,3 +641,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/v3/ResonatorProcessors.h`: `FormantProcessor` (processor type 6: three parallel band-passes on the a e i o u formants, Vowel morph, Size, Resonance with make-up, Mix) and `CombProcessor` (type 7: key-tracked feedback comb with Tune, damping, soft limit, polarity, Hermite read, Mix).
 - [x] Presets: Bedroom Vinyl Choir, Basement Furnace Drone, Main Stage Neuro Growl. 55 presets; phase 4 complete.
 - [x] Added `tests/V3ResonatorTests.cpp` (6 tests): vowel peaks for a and i, Size scaling, a click-free vowel sweep and a bounded full resonance, comb echoes at the note period within a sample, negative polarity alternating and Tune +12 halving the period, full feedback bounded. Verified Debug build without warnings and `ctest` green; Furnace Drone 29.8 %, Vinyl Choir 18.8 %, Neuro Growl 2.9 % of real time for eight-note chords.
+
+## V3 phase 5.1: plate pre-delay, low cut, modulation, shimmer (2026-11-13)
+
+- [x] `PlateReverb` gained Pre-Delay (0 to 250 ms), Low Cut (input one-pole high-pass), Modulation (tank excursion trim, 0.5 as before) and Shimmer (an octave-up delay-line shifter in the tank's loop, band-limited and soft-limited). Four new parameters (`reverbPreDelay`, `reverbLowCut`, `reverbModulation`, `reverbShimmer`) and bank keys `predelay`, `lowcut`, `modulation`, `shimmer`.
+- [x] Presets: Observatory Shimmer Drone and Satellite Ping; Nebula Pad's 80 ms pre-delay. 57 presets.
+- [x] Added `tests/V3ReverbTests.cpp` (4 tests): pre-delay moves the onset by 100 ms within 2 samples, a 600 Hz low cut takes 60 Hz down by more than 15 dB, shimmer raises the tail's octave by 45 dB and the tail keeps falling, the bank keys. Verified Debug build without warnings and `ctest` green.

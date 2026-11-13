@@ -54,6 +54,10 @@ namespace coolsynth::parameters::ids
     inline constexpr char reverbSize[] = "reverbSize";
     inline constexpr char reverbDamping[] = "reverbDamping";
     inline constexpr char reverbMix[] = "reverbMix";
+    inline constexpr char reverbPreDelay[] = "reverbPreDelay";
+    inline constexpr char reverbLowCut[] = "reverbLowCut";
+    inline constexpr char reverbModulation[] = "reverbModulation";
+    inline constexpr char reverbShimmer[] = "reverbShimmer";
 
     inline constexpr char masterGainDb[] = "masterGainDb";
 
@@ -151,6 +155,10 @@ namespace coolsynth::parameters
         ids::reverbSize,
         ids::reverbDamping,
         ids::reverbMix,
+        ids::reverbPreDelay,
+        ids::reverbLowCut,
+        ids::reverbModulation,
+        ids::reverbShimmer,
         ids::masterGainDb,
         ids::phaserEnabled,
         ids::phaserRateHz,

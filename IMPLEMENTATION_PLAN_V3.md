@@ -157,7 +157,8 @@ Shipped 2026-11-13 with all three (decisions D47 to D49). Phase 4 complete.
 ## Phase 5: effects
 
 5.1 Plate pre-delay, input high-pass, modulation trim; shimmer type. Ships: Observatory Shimmer
-Drone and Satellite Ping.
+Drone and Satellite Ping. Shipped 2026-11-13 with both, shimmer as an amount (decisions D50,
+D51).
 
 5.2 Lo-fi type. Wow, flutter, hiss, crackle, bandwidth, bit depth, sample rate. Ships: Bedroom
 Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi added).

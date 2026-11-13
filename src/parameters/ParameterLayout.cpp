@@ -289,6 +289,12 @@ namespace
         group->addChild(makePercentParameter(reverbSize, parameterVersionHint, "Size", 0.4f));
         group->addChild(makePercentParameter(reverbDamping, parameterVersionHint, "Damping", 0.5f));
         group->addChild(makePercentParameter(reverbMix, parameterVersionHint, "Mix", 0.2f));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(reverbPreDelay), "Pre-Delay", juce::NormalisableRange<float>(0.0f, 250.0f), 0.0f, millisecondsAttributes()));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(reverbLowCut), "Low Cut", makeLogRange(20.0f, 1000.0f), 20.0f, hertzAttributes()));
+        group->addChild(makePercentParameter(reverbModulation, parameterVersionHint, "Modulation", 0.5f));
+        group->addChild(makePercentParameter(reverbShimmer, parameterVersionHint, "Shimmer", 0.0f));
         return group;
     }
 

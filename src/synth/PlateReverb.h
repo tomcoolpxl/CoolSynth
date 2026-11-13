@@ -16,6 +16,13 @@ namespace coolsynth::synth
      * second all-pass. Left and right outputs are sums of taps spread through
      * both halves. Every delay length is scaled from the 29.761 kHz reference
      * rate used in the paper to the prepared sample rate. Output is fully wet.
+     *
+     * Around the paper's design: a pre-delay before the bandwidth filter, a
+     * one-pole high-pass on the input (Low Cut), a trim on the tank's
+     * modulation depth, and Shimmer: the tank's output, band-limited, shifted
+     * an octave up by a two-head delay-line shifter and soft-limited, fed back
+     * into the tank's input. Inside the loop every pass climbs another octave,
+     * as on Eventide's shimmer; the tank's own decay keeps it from running away.
      */
     class PlateReverb final
     {
@@ -30,12 +37,12 @@ namespace coolsynth::synth
             inputDiffuser3.resize(379, scale);
             inputDiffuser4.resize(277, scale);
 
-            leftModulatedAllpass.resize(672 + kMaxExcursion, scale);
+            leftModulatedAllpass.resize(672 + 2 * kMaxExcursion, scale);
             leftDelay1.resize(4453, scale);
             leftAllpass2.resize(1800, scale);
             leftDelay2.resize(3720, scale);
 
-            rightModulatedAllpass.resize(908 + kMaxExcursion, scale);
+            rightModulatedAllpass.resize(908 + 2 * kMaxExcursion, scale);
             rightDelay1.resize(4217, scale);
             rightAllpass2.resize(2656, scale);
             rightDelay2.resize(3163, scale);
@@ -43,11 +50,46 @@ namespace coolsynth::synth
             lengthScale = static_cast<float>(scale);
             leftModulatedLength = 672.0f * lengthScale;
             rightModulatedLength = 908.0f * lengthScale;
-            excursion = static_cast<float>(kMaxExcursion) * lengthScale;
+            maxExcursion = static_cast<float>(kMaxExcursion) * lengthScale;
+            excursion = maxExcursion * 2.0f * modulation;
             modulationIncrement = static_cast<float>(kModulationRateHz / currentSampleRate);
+
+            preDelayLine.assign(static_cast<size_t>(std::ceil(kMaxPreDelaySeconds * currentSampleRate)) + 4, 0.0f);
+            shifterLength = std::max(64, static_cast<int>(std::lround(kShifterWindowSeconds * currentSampleRate)));
+            shifterLine.assign(static_cast<size_t>(shifterLength) + 4, 0.0f);
+            const auto onePole = [this](double hz) { return static_cast<float>(1.0 - std::exp(-2.0 * kPiDouble * hz / currentSampleRate)); };
+            shimmerLowPassCoefficient = onePole(kShimmerLowPassHz);
+            shimmerHighPassCoefficient = onePole(kShimmerHighPassHz);
+            setLowCut(lowCutHz);
+            setPreDelay(preDelayMs);
 
             reset();
         }
+
+        /** 0 .. 250 ms before the reverb starts. */
+        void setPreDelay(float milliseconds) noexcept
+        {
+            preDelayMs = std::clamp(milliseconds, 0.0f, static_cast<float>(kMaxPreDelaySeconds * 1000.0));
+            preDelaySamples = std::min(static_cast<int>(preDelayLine.size()) - 2,
+                                       static_cast<int>(std::lround(preDelayMs * 0.001 * currentSampleRate)));
+        }
+
+        /** Input high-pass, 20 Hz (open) to 1 kHz. */
+        void setLowCut(float hz) noexcept
+        {
+            lowCutHz = std::clamp(hz, 20.0f, 1000.0f);
+            lowCutCoefficient = static_cast<float>(std::exp(-2.0 * kPiDouble * lowCutHz / currentSampleRate));
+        }
+
+        /** Tank modulation depth 0..1; 0.5 is the paper's excursion. */
+        void setModulation(float amount) noexcept
+        {
+            modulation = std::clamp(amount, 0.0f, 1.0f);
+            excursion = maxExcursion * 2.0f * modulation;
+        }
+
+        /** 0 (a plain plate) .. 1: how much octave-up signal returns into the tank. */
+        void setShimmer(float amount) noexcept { shimmer = std::clamp(amount, 0.0f, 1.0f); }
 
         void reset() noexcept
         {
@@ -56,6 +98,12 @@ namespace coolsynth::synth
                                 &rightModulatedAllpass, &rightDelay1, &rightAllpass2, &rightDelay2 })
                 line->clear();
 
+            std::fill(preDelayLine.begin(), preDelayLine.end(), 0.0f);
+            std::fill(shifterLine.begin(), shifterLine.end(), 0.0f);
+            preDelayWrite = shifterWrite = 0;
+            shifterPhase = 0.0f;
+            shimmerFeed = shimmerLowA = shimmerLowB = shimmerHighState = 0.0f;
+            lowCutState = lowCutPrevious = 0.0f;
             bandwidthState = 0.0f;
             leftDampingState = 0.0f;
             rightDampingState = 0.0f;
@@ -79,7 +127,26 @@ namespace coolsynth::synth
         {
             for (int i = 0; i < numSamples; ++i)
             {
-                const float input = 0.5f * (left[i] + right[i]);
+                float input = 0.5f * (left[i] + right[i]);
+
+                // Pre-delay, then the input high-pass.
+                if (preDelaySamples > 0)
+                {
+                    const int size = static_cast<int>(preDelayLine.size());
+                    preDelayLine[static_cast<size_t>(preDelayWrite)] = input;
+                    int read = preDelayWrite - preDelaySamples;
+                    if (read < 0)
+                        read += size;
+                    input = preDelayLine[static_cast<size_t>(read)];
+                    preDelayWrite = (preDelayWrite + 1) % size;
+                }
+                if (lowCutHz > 20.5f)
+                {
+                    lowCutState = lowCutCoefficient * (lowCutState + input - lowCutPrevious);
+                    lowCutPrevious = input;
+                    input = lowCutState;
+                }
+                input += shimmerFeed;
 
                 // Input bandwidth and diffusion.
                 bandwidthState = kBandwidth * input + (1.0f - kBandwidth) * bandwidthState;
@@ -137,10 +204,58 @@ namespace coolsynth::synth
 
                 left[i] = outL;
                 right[i] = outR;
+
+                shimmerFeed = shimmer > 0.0f ? shimmer * kShimmerGain * shiftUp(0.5f * (outL + outR)) : 0.0f;
             }
         }
 
     private:
+        /**
+            One sample through the octave-up shifter: band-limited first (so the doubled signal stays
+            below Nyquist and the low end does not pile up), then two heads reading a short window at
+            twice the speed, each faded out (sin^2) where it wraps, then soft-limited.
+        */
+        float shiftUp(float x) noexcept
+        {
+            shimmerLowA += (x - shimmerLowA) * shimmerLowPassCoefficient;
+            shimmerLowB += (shimmerLowA - shimmerLowB) * shimmerLowPassCoefficient;
+            shimmerHighState += (shimmerLowB - shimmerHighState) * shimmerHighPassCoefficient;
+            const float band = shimmerLowB - shimmerHighState;
+
+            const int size = static_cast<int>(shifterLine.size());
+            shifterLine[static_cast<size_t>(shifterWrite)] = band;
+
+            // Ratio 2: the read heads gain one sample on the write head every sample.
+            shifterPhase += 1.0f / static_cast<float>(shifterLength);
+            if (shifterPhase >= 1.0f)
+                shifterPhase -= 1.0f;
+            auto head = [&](float phase)
+            {
+                const float delay = 1.0f + (1.0f - phase) * static_cast<float>(shifterLength - 2);
+                float position = static_cast<float>(shifterWrite) - delay;
+                if (position < 0.0f)
+                    position += static_cast<float>(size);
+                const int whole = static_cast<int>(position);
+                const float frac = position - static_cast<float>(whole);
+                const float a = shifterLine[static_cast<size_t>(whole % size)];
+                const float b = shifterLine[static_cast<size_t>((whole + 1) % size)];
+                const float s = std::sin(kTwoPi * 0.5f * phase);
+                return (a + (b - a) * frac) * s * s;
+            };
+            float phaseB = shifterPhase + 0.5f;
+            if (phaseB >= 1.0f)
+                phaseB -= 1.0f;
+            const float shifted = head(shifterPhase) + head(phaseB);
+            shifterWrite = (shifterWrite + 1) % size;
+            return std::tanh(shifted);
+        }
+
+        static constexpr double kPiDouble = 3.14159265358979323846;
+        static constexpr double kMaxPreDelaySeconds = 0.25;
+        static constexpr double kShifterWindowSeconds = 0.045;
+        static constexpr double kShimmerLowPassHz = 5000.0;
+        static constexpr double kShimmerHighPassHz = 180.0;
+        static constexpr float kShimmerGain = 0.7f;
         static constexpr double kReferenceSampleRate = 29761.0;
         static constexpr int kMaxExcursion = 16;
         static constexpr double kModulationRateHz = 0.9;
@@ -240,5 +355,14 @@ namespace coolsynth::synth
         float rightTankOut = 0.0f;
         float decay = 0.5f;
         float damping = 0.4f;
+        float maxExcursion = 16.0f;
+        float modulation = 0.5f;
+
+        std::vector<float> preDelayLine, shifterLine;
+        int preDelayWrite = 0, preDelaySamples = 0, shifterWrite = 0, shifterLength = 2048;
+        float preDelayMs = 0.0f, lowCutHz = 20.0f, lowCutCoefficient = 1.0f, lowCutState = 0.0f, lowCutPrevious = 0.0f;
+        float shimmer = 0.0f, shimmerFeed = 0.0f, shifterPhase = 0.0f;
+        float shimmerLowPassCoefficient = 0.5f, shimmerHighPassCoefficient = 0.02f;
+        float shimmerLowA = 0.0f, shimmerLowB = 0.0f, shimmerHighState = 0.0f;
     };
 }
