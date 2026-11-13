@@ -191,6 +191,7 @@ if(BUILD_TESTING)
             tests/V3PartsTests.cpp
             tests/V3SampleTests.cpp
             tests/V3InsertTests.cpp
+            tests/V3RoomTests.cpp
             tests/V3InstrumentTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp

@@ -84,8 +84,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - a granular effect as an insert type: done, D102;
     - Harp String: the user found neither version close to the recording (D94); redone as a
       finger's pluck (D101): "closer, but not there", too little echo dry and too much with
-      its reverb (D105, D107); refitted harmonic by harmonic, third try on the audition page.
-      Its room is open: the recording's is a small room, the reverb is a plate (D107);
+      its reverb (D105, D107); refitted harmonic by harmonic, with a second string for the
+      pluck's bright ring and the new Room effect set from the recording's reflections
+      (D108): third try on the audition page for a verdict;
     - Recorders: the user hears overdrive on chords that no measurement shows; a listening
       test on the audition page is to tell the reverb, the tuning, the recordings and the ear
       apart (D107);

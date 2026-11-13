@@ -177,6 +177,11 @@ int main(int argc, char* argv[])
                                 ids::flangerEnabled, ids::eqEnabled, ids::pumpEnabled, ids::phaserEnabled, ids::compressorEnabled })
             if (auto* parameter = processor.getValueTreeState().getParameter(id))
                 parameter->setValueNotifyingHost(0.0f);
+        // The parts' insert slots too: their first type is Off.
+        for (const char* part : { "pA", "pB" })
+            for (int slot = 1; slot <= 3; ++slot)
+                if (auto* parameter = processor.getValueTreeState().getParameter(juce::String(part) + ".i" + juce::String(slot) + ".type"))
+                    parameter->setValueNotifyingHost(0.0f);
     }
 
     const int total = static_cast<int>(std::llround(seconds * kSampleRate));

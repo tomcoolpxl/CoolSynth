@@ -64,26 +64,32 @@ master = -1
 [Harp String]
 room = Greenhouse
 # A string plucked at its middle with the pad of a finger, as a harpist plucks: a round, dark
-# note that is almost a pure tone a second after the pluck, with the finger's noise at its start.
-# Set from a recorded concert harp, harmonic by harmonic at three moments of each note: the
-# pluck is softer and nearer the middle the higher the string, the upper harmonics die several
-# times faster than the note itself (more so in the bass strings), the bass rings for ten
-# seconds and the treble for two. Letting go lays a hand on the string; harder playing plucks
-# a little brighter. The reverb is at its shortest: the recording's room is a small one.
+# note that is almost a pure tone a second after the pluck. Set from a recorded concert harp,
+# harmonic by harmonic at three moments of each note. The first string is the note: plucked
+# softer and nearer the middle the higher the string, its upper harmonics dying several times
+# faster than the note itself (more so in the bass), the bass ringing for ten seconds and the
+# treble for two. The second string, far quieter, is the pluck's bright ring: a narrow pluck
+# on the same note that is gone in a third of a second, as the recorded harp's band from 1.5
+# to 5 kHz is. A puff of noise is the finger. Letting go lays a hand on the strings; harder
+# playing plucks brighter. The Room is the recording's: small, wide, over in 0.4 s.
 g1 = String decay=5.2 damp=0.52 pick=0.23 pos=0.47 release=0.75 level=0.9 excite=click
 g2 = Noise type=pink tone=0.6 level=0
+g3 = String decay=1.08 damp=0.13 pick=0.9 pos=0.15 release=0.75 level=0.06 excite=click
 p1 = Off
 env1 = attack=1 decay=16000 sustain=0 release=450 velocity=0.5
 env3 = attack=0.5 decay=25 sustain=0 release=25
-mod = src=env3 dst=g2.level amount=0.6
+mod = src=env3 dst=g2.level amount=0.4
 mod = src=velocity dst=g1.pick amount=0.15
 mod = src=key dst=g1.decay amount=-0.425
 mod = src=key dst=g1.pick amount=-1
 mod = src=key dst=g1.damp amount=-0.96
 mod = src=key dst=g1.pos amount=0.12
+mod = src=key dst=g3.decay amount=0.15
+mod = src=key dst=g3.level amount=-0.25
+mod = src=velocity dst=g3.level amount=0.05
 voice = env2ToP1=0 drift=1
-reverb = on size=0 damping=0.5 mix=0.25 predelay=0
-master = -2
+i1 = Room size=0.55 damping=0.3 width=1 mix=0.42
+master = 1
 
 [Marimba]
 room = Greenhouse

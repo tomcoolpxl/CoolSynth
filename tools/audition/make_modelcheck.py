@@ -67,13 +67,13 @@ CHECKS = [
         "notes": ["A2", "E3", "G3", "B3", "D4", "F4", "A4", "C5", "E5"],
         "render": True, "before_from": "harp2",
         "changed": "\"Before\" is the second try, which had too much echo with its reverb and too little without. Measured again, "
-                   "harmonic by harmonic at three moments of each note, three things were off and are now set from the recording. "
-                   "The real harp's upper harmonics die two to four times faster than mine did: a second after the pluck it is "
-                   "almost a pure tone. Its second and fourth harmonics are weaker: the string is plucked nearer its middle. And "
-                   "the pluck has about 8 dB more finger noise between 2 and 8 kHz. The room: the recording's is a small one, its "
-                   "reflections strong for the first 40 ms and gone within a quarter of a second. My reverb is a plate, which "
-                   "starts weak and rings long; the last clip has it at its shortest, which is less echo but still not that kind "
-                   "of room.",
+                   "harmonic by harmonic at three moments of each note, the string itself was off in three ways, now set from the "
+                   "recording. The real harp's upper harmonics die two to four times faster than mine did: a second after the "
+                   "pluck it is almost a pure tone. Its second and fourth harmonics are weaker: the string is plucked nearer its "
+                   "middle. And the pluck has a bright ring between 1.5 and 5 kHz that lasts about a third of a second, which mine "
+                   "lacked: a second, quiet string now carries it. The room is new: the recording's is a small one, its "
+                   "reflections strong for the first 40 ms and gone in under half a second, which a plate reverb cannot do. The "
+                   "last clip has the new Room effect, set from the recording's reflections.",
     },
 ]
 

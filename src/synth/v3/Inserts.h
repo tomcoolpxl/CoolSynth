@@ -10,14 +10,16 @@
 #include "GrainInsert.h"
 #include "Modulation.h"
 #include "Module.h"
+#include "RoomInsert.h"
 
 /*
     V3 insert slots (DESIGN_V3.md section 8; decision D81): three per part, between the part's
     voices and its place in the mix. A slot holds one effect at a time, any of the ten the master
     rack has. It runs that effect's own code (a rack of its own with only that stage switched
     on), so an insert sounds exactly as the same effect does in the master section, with the
-    same smoothing when a value moves or the effect is switched. An eleventh type, Grain, exists
-    only as an insert: the granular effect on a part (GrainInsert.h, decision D82).
+    same smoothing when a value moves or the effect is switched. Two more types exist only as
+    inserts: Grain, the granular effect on a part (GrainInsert.h, decision D82), and Room, a small
+    room around an instrument (RoomInsert.h, decision D108).
 
     A slot has a type and eight generic values, named and ranged by the type's descriptor, like a
     generator or processor slot. Values arrive normalised 0..1. A synced delay and the pump take
@@ -41,7 +43,8 @@ namespace coolsynth::synth::v3
         inline constexpr int eq = 9;
         inline constexpr int pump = 10;
         inline constexpr int grain = 11;
-        inline constexpr int count = 12; // new types only at the end: the index is saved in patches
+        inline constexpr int room = 12;
+        inline constexpr int count = 13; // new types only at the end: the index is saved in patches
     }
 
     /** Name and parameters of an insert type. The ranges are the master rack's. */
@@ -109,6 +112,11 @@ namespace coolsynth::synth::v3
                  { "spread",   "Spread",   0.0f,   1.0f,    0.5f,   Skew::linear,      Unit::percent,      true },
                  { "freeze",   "Freeze",   0.0f,   1.0f,    0.0f,   Skew::linear,      Unit::choice,       false, "Off|On" },
                  { "mix",      "Mix",      0.0f,   1.0f,    0.5f,   Skew::linear,      Unit::percent,      true } }}, 8 },
+            { "Room", 2,
+              {{ { "size",    "Size",    0.0f, 1.0f, 0.4f, Skew::linear, Unit::percent, true },
+                 { "damping", "Damping", 0.0f, 1.0f, 0.5f, Skew::linear, Unit::percent, true },
+                 { "width",   "Width",   0.0f, 1.0f, 1.0f, Skew::linear, Unit::percent, true },
+                 { "mix",     "Mix",     0.0f, 1.0f, 0.3f, Skew::linear, Unit::percent, true } }}, 4 },
         }};
         return table[static_cast<std::size_t>(std::clamp(typeIndex, 0, insertType::count - 1))];
     }
@@ -137,6 +145,7 @@ namespace coolsynth::synth::v3
         {
             rack.prepare(sampleRate, std::max(1, maxBlockSize), 2);
             grain.prepare(sampleRate);
+            room.prepare(sampleRate);
             lastType = insertType::off;
         }
 
@@ -145,6 +154,7 @@ namespace coolsynth::synth::v3
         {
             rack.clear();
             grain.clear();
+            room.clear();
         }
 
         [[nodiscard]] const GrainInsert& grainForTesting() const noexcept { return grain; }
@@ -184,6 +194,23 @@ namespace coolsynth::synth::v3
             }
             if (lastType == insertType::grain)
                 grain.clear();
+
+            // So is the room.
+            if (type == insertType::room)
+            {
+                if (lastType != insertType::room)
+                    clear();
+                RoomInsert::Settings r;
+                r.size = units(0);
+                r.damping = units(1);
+                r.width = units(2);
+                r.mix = units(3);
+                room.process(stereo, r);
+                lastType = type;
+                return;
+            }
+            if (lastType == insertType::room)
+                room.clear();
 
             coolsynth::synth::DriveParametersV2 drive;
             coolsynth::synth::PhaserParametersV2 phaser;
@@ -287,6 +314,7 @@ namespace coolsynth::synth::v3
     private:
         coolsynth::synth::GlobalFxRack rack;
         GrainInsert grain;
+        RoomInsert room;
         int lastType = insertType::off;
     };
 }

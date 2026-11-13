@@ -1729,3 +1729,57 @@ The four sounds changed after D105 and D106, judged again.
 The listening page now shows what waits: the listening test, the harp's third try, and the
 Conservatory. What was accepted is on the archive page; a verdict on a card that has left the
 page stays in the browser's store.
+
+## D108. The user's answers: a Room effect, and every Museum sound chosen (2026-11-13)
+
+Two pick lists after D107.
+
+**The harp's room.** Offered:
+
+- **A new Room effect (chosen by the user, recommended):** a thirteenth insert type; the plate
+  stays for halls.
+- A Plate/Room switch on the reverb: fewer types, but a slot is one or the other, and Shimmer
+  and Modulation mean nothing in a room.
+- Hear the third try with the plate at its shortest first.
+- No reverb on the harp.
+
+Built as `src/synth/v3/RoomInsert.h`, in two stages after Moorer (1979). Early reflections:
+the 24 image sources of the first and second order of a box-shaped room (5.0 x 3.9 x 2.7 m at
+the middle of Size), as two microphones a little apart hear an instrument 1.3 m away: taps on
+a delay line, each as late as its path is longer and as much weaker (distance and one loss per
+wall). Late field: sixteen delay lines through a Hadamard matrix, each losing what gives one
+decay time on all of them, with Jot's one-pole filter for a faster decay in the treble
+(Damping). The reflections feed the late field with a weight (5) found on a prototype so that
+the decay runs straight from the first reflection (within 2 dB of a straight line down to
+-30 dB). Size is the decay time, 0.1 to 1.2 s; the room's dimensions grow with its root and
+the walls' loss follows from Sabine's formula, so a larger room is also a livelier one. The
+wet sound is brought to one level over Size and Damping (a parabola fitted on the prototype;
+a test holds it within 2 dB). A change of Size fades the room out, rebuilds it and fades it
+in: delay lines cannot change length while they sound. Parameters: Size, Damping, Width, Mix.
+Measured decay times: 0.08, 0.24, 0.51 and 1.07 s at Size 0, 0.4, 0.7 and 1 (asked: 0.10,
+0.27, 0.57, 1.20). Sources: Moorer, "About This Reverberation Business", Computer Music
+Journal 3(2); Jot and Chaigne, "Digital delay networks for designing artificial
+reverberators", AES 1991; J. O. Smith, "Physical Audio Signal Processing", Early Reflections
+(https://ccrma.stanford.edu/~jos/pasp05/Early_Reflections.html).
+
+**Harp String with it.** Set from the recording's reflections: Size 0.55 (0.39 s), Damping
+0.3, Width 1, Mix 0.42; the plate is off. The treble after a pluck now falls as in the
+recording (7.8, 14.0 and 20.4 dB under the pluck in the stretches 15 to 40, 40 to 80 and 80 to
+160 ms; the recording 6.5, 13.4 and 21.2), and between 1.5 and 5 kHz the two channels are as
+alike as the recording's (0.68 to 0.75; the recording 0.68 to 0.79).
+Checking the room showed one more thing in the string: between 1.5 and 5 kHz the real harp
+rings for about a third of a second after the pluck (50 dB a second), 10 to 17 dB above the
+preset for the first 160 ms. One pluck pulse cannot be both dark in its first six harmonics
+and bright above them, so **a second string carries the bright ring (taken)**: the same note,
+a narrow pluck, a decay of one second, at a tenth of the level, quieter going up and brighter
+when played harder. The mismatch in that band falls to a third (robust mean 3.1 to 1.0 dB)
+with the harmonics as they were (2.4). The finger noise goes back to 0.4: with the second
+string the first 40 ms are within 1 dB of the recording in all four bands from 1 to 16 kHz.
+Not taken: a brighter single pluck with more damping (tried: it trades the harmonics for the
+band and stays 10 dB short on the low strings).
+The render tool's `--no-fx` now empties the parts' insert slots too; it used to leave them
+on, which would have put the room in the clip marked dry.
+
+**The Museum's next sound.** Offered: DX7 BASS 1 (recommended), a Minimoog bass and lead,
+Prophet-5 sync lead and brass, or none now. **The user: "all of the above"**: all three groups
+are built as candidates, each for a side-by-side.

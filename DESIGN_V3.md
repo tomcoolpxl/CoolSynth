@@ -464,6 +464,14 @@ to cross the point being written, is read through the windowed sinc of `SincKern
 the cloud's level follows the root of its overlap (the overlap itself when every grain plays
 the same moment).
 
+Room insert (2026-11-13, decision D108): a thirteenth insert type, Room, a small room around
+an instrument, which a plate cannot be: it answers at once and is over in a fraction of a
+second. `RoomInsert`: the 24 first- and second-order image sources of a box-shaped room as
+two microphones hear them (taps on one delay line of the part's sound), feeding sixteen delay
+lines through a Hadamard matrix with one decay time on all of them and a faster one in the
+treble. Size (decay 0.1 to 1.2 s, the room's dimensions and its walls' loss with it),
+Damping, Width, Mix. A change of Size rebuilds the room inside a 30 ms fade.
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs
