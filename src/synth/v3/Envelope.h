@@ -4,14 +4,18 @@
 #include <cmath>
 
 /*
-    V3 envelope (DESIGN_V3.md section 4.3): the V2 AnalogEnvelope extended.
+    V3 envelope (DESIGN_V3.md section 4.3).
 
-    Each stage is a one-pole run toward a target a little past the stage end (the EarLevel
-    design), which gives the convex attack and concave decay and release of an RC envelope. The
-    overshoot ratio is now a per-stage curve: 0 is the V2 exponential shape, 1 is close to a
-    straight line. Added: velocity sensitivity on the peak, loop (attack and decay cycle while the
-    gate is held) and one-shot (decay runs to its end and goes straight to release, whatever the
-    gate does).
+    Delay, attack, hold, decay, sustain, release. Every segment lasts exactly its programmed time
+    and follows an exponential curve of adjustable sign and depth,
+        shape(t) = (e^(c t) - 1) / (e^c - 1),   t in 0..1,
+    where a negative curve starts fast and settles slowly (an RC charge, the analogue feel), zero
+    is a straight line and a positive curve starts slowly. Velocity sets the peak, so a retrigger
+    with a different velocity moves to the new level without a jump. A retrigger continues from the
+    current level and shortens the attack by the distance already covered. Times can shrink with
+    the key, as plucked and struck instruments do. Loop cycles attack, hold and decay while the
+    gate is held; one-shot runs to the end of the decay whatever the gate does. Sustain changes
+    are followed with 5 ms smoothing.
 */
 namespace coolsynth::synth::v3
 {
@@ -20,168 +24,262 @@ namespace coolsynth::synth::v3
     public:
         struct Parameters
         {
-            float attack = 0.01f;   // seconds
-            float decay = 0.1f;
-            float sustain = 1.0f;   // 0..1
-            float release = 0.1f;
-            float attackCurve = 0.58f;  // 0 exponential .. 1 linear; 0.58 reproduces the V2 attack
-            float decayCurve = 0.0f;
-            float releaseCurve = 0.0f;
-            float velocitySensitivity = 0.0f; // 0: full level always; 1: peak follows velocity
+            float delay = 0.0f;   // seconds before the attack; from silence only
+            float attack = 0.005f;
+            float hold = 0.0f;    // seconds at the peak
+            float decay = 0.2f;
+            float sustain = 1.0f; // share of the peak
+            float release = 0.2f;
+            float attackCurve = -0.3f;  // -1..1, see above
+            float decayCurve = -0.6f;
+            float releaseCurve = -0.6f;
+            float velocitySensitivity = 0.0f; // 0: peak 1 always; 1: peak equals velocity
+            float keyTimeTracking = 0.0f;     // 1: every time halves per octave above C4
             bool loop = false;
             bool oneShot = false;
+
+            bool operator==(const Parameters&) const = default;
         };
 
-        enum class State { idle, attack, decay, sustain, release };
+        enum class Stage { idle, delay, attack, hold, decay, sustain, release };
+
+        static constexpr float curveRange = 8.0f; // curve 1 is an exponent of 8
 
         void setSampleRate(double newSampleRate) noexcept
         {
             sampleRate = std::max(1.0, newSampleRate);
-            recalculate();
+            sustainCoefficient = static_cast<float>(1.0 - std::exp(-1.0 / (0.005 * sampleRate)));
         }
 
-        void setParameters(const Parameters& newParameters) noexcept
+        /** Times and curves apply from the next segment; the sustain level is followed at once. */
+        void setParameters(const Parameters& p) noexcept
         {
-            parameters = newParameters;
-            parameters.sustain = std::clamp(parameters.sustain, 0.0f, 1.0f);
-            parameters.attackCurve = std::clamp(parameters.attackCurve, 0.0f, 1.0f);
-            parameters.decayCurve = std::clamp(parameters.decayCurve, 0.0f, 1.0f);
-            parameters.releaseCurve = std::clamp(parameters.releaseCurve, 0.0f, 1.0f);
-            parameters.velocitySensitivity = std::clamp(parameters.velocitySensitivity, 0.0f, 1.0f);
-            recalculate();
+            parameters = p;
+            parameters.delay = std::max(0.0f, p.delay);
+            parameters.attack = std::max(0.0f, p.attack);
+            parameters.hold = std::max(0.0f, p.hold);
+            parameters.decay = std::max(0.0f, p.decay);
+            parameters.release = std::max(0.0f, p.release);
+            parameters.sustain = std::clamp(p.sustain, 0.0f, 1.0f);
+            parameters.attackCurve = std::clamp(p.attackCurve, -1.0f, 1.0f);
+            parameters.decayCurve = std::clamp(p.decayCurve, -1.0f, 1.0f);
+            parameters.releaseCurve = std::clamp(p.releaseCurve, -1.0f, 1.0f);
+            parameters.velocitySensitivity = std::clamp(p.velocitySensitivity, 0.0f, 1.0f);
+            parameters.keyTimeTracking = std::clamp(p.keyTimeTracking, 0.0f, 1.0f);
         }
 
         [[nodiscard]] const Parameters& getParameters() const noexcept { return parameters; }
-        [[nodiscard]] bool isActive() const noexcept { return state != State::idle; }
-        [[nodiscard]] State getState() const noexcept { return state; }
-        [[nodiscard]] float getValue() const noexcept { return value * velocityGain; }
+        [[nodiscard]] bool isActive() const noexcept { return stage != Stage::idle; }
+        [[nodiscard]] Stage getStage() const noexcept { return stage; }
+        [[nodiscard]] float getValue() const noexcept { return value; }
+        [[nodiscard]] float getPeak() const noexcept { return peak; }
 
         void reset() noexcept
         {
+            stage = Stage::idle;
             value = 0.0f;
-            state = State::idle;
-            gateHeld = false;
+            gate = false;
+            remaining = 0;
         }
 
-        /** Starts the attack from the current level, so retriggers never click. */
-        void noteOn(float velocity = 1.0f) noexcept
+        /** keyOctaves: the note's distance from C4 in octaves, for key time tracking. */
+        void noteOn(float velocity = 1.0f, float keyOctaves = 0.0f) noexcept
         {
-            const float v = std::clamp(velocity, 0.0f, 1.0f);
-            velocityGain = 1.0f - parameters.velocitySensitivity + parameters.velocitySensitivity * v;
-            gateHeld = true;
-            state = State::attack;
+            const float sensitivity = parameters.velocitySensitivity;
+            peak = 1.0f - sensitivity + sensitivity * std::clamp(velocity, 0.0f, 1.0f);
+            timeScale = std::exp2(-parameters.keyTimeTracking * keyOctaves);
+            gate = true;
+
+            if (value <= kSilent && parameters.delay > 0.0f)
+            {
+                value = 0.0f;
+                stage = Stage::delay;
+                remaining = samplesFor(parameters.delay);
+                return;
+            }
+            startAttack();
         }
 
         void noteOff() noexcept
         {
-            gateHeld = false;
-            if (state == State::idle)
+            gate = false;
+            if (stage == Stage::idle || stage == Stage::release)
                 return;
-
-            // One-shot finishes its decay first; the release follows from there.
-            if (parameters.oneShot && (state == State::attack || state == State::decay))
-                return;
-
-            enterRelease();
+            if (parameters.oneShot && stage != Stage::sustain)
+                return; // finishes its decay first
+            startRelease();
         }
 
         float getNextSample() noexcept
         {
-            switch (state)
+            switch (stage)
             {
-                case State::idle:
+                case Stage::idle:
                     return 0.0f;
 
-                case State::attack:
-                    value = attackBase + value * attackCoefficient;
-                    if (value >= 1.0f)
+                case Stage::delay:
+                    if (--remaining <= 0)
+                        startAttack();
+                    break;
+
+                case Stage::attack:
+                    value = segmentStep(peak);
+                    if (segmentDone())
                     {
-                        value = 1.0f;
-                        state = State::decay;
+                        value = peak;
+                        startHold();
                     }
                     break;
 
-                case State::decay:
-                    value = decayBase + value * decayCoefficient;
-                    if (value <= parameters.sustain)
+                case Stage::hold:
+                    if (--remaining <= 0)
+                        startDecay();
+                    break;
+
+                case Stage::decay:
+                    value = segmentStep(sustainLevel());
+                    if (segmentDone())
                     {
-                        value = parameters.sustain;
-                        if (parameters.oneShot)
-                            enterRelease();
-                        else if (parameters.loop && gateHeld)
-                            state = State::attack;
-                        else
-                            state = State::sustain;
+                        value = sustainLevel();
+                        endDecay();
                     }
                     break;
 
-                case State::sustain:
-                    value = parameters.sustain;
+                case Stage::sustain:
+                    value += (sustainLevel() - value) * sustainCoefficient;
                     break;
 
-                case State::release:
-                    value = releaseBase + value * releaseCoefficient;
-                    if (value <= 0.0f)
+                case Stage::release:
+                    value = segmentStep(0.0f);
+                    if (segmentDone())
                     {
                         value = 0.0f;
-                        state = State::idle;
+                        stage = Stage::idle;
                     }
                     break;
             }
+            return value;
+        }
 
-            return value * velocityGain;
+        /** Runs n samples and returns the last value, for modulation envelopes read once per sub-block. */
+        float advance(int numSamples) noexcept
+        {
+            for (int i = 0; i < numSamples; ++i)
+                getNextSample();
+            return value;
         }
 
     private:
-        /** Curve 0 is the V2 decay ratio (deeply exponential), curve 1 overshoots by 100x (nearly linear). */
-        static float ratioFor(float curve) noexcept
+        static constexpr float kSilent = 1.0e-6f;
+
+        [[nodiscard]] float sustainLevel() const noexcept { return parameters.sustain * peak; }
+
+        [[nodiscard]] int samplesFor(float seconds) const noexcept
         {
-            return std::pow(10.0f, -4.0f + 6.0f * curve);
+            return static_cast<int>(std::lround(static_cast<double>(seconds) * static_cast<double>(timeScale) * sampleRate));
         }
 
-        [[nodiscard]] float coefficientFor(float seconds, float targetRatio) const noexcept
+        void startSegment(Stage newStage, float seconds, float curve) noexcept
         {
-            const float samples = std::max(1.0f, seconds * static_cast<float>(sampleRate));
-            return std::exp(-std::log((1.0f + targetRatio) / targetRatio) / samples);
-        }
-
-        void recalculate() noexcept
-        {
-            const float attackRatio = ratioFor(parameters.attackCurve);
-            attackCoefficient = coefficientFor(parameters.attack, attackRatio);
-            attackBase = (1.0f + attackRatio) * (1.0f - attackCoefficient);
-
-            const float decayRatio = ratioFor(parameters.decayCurve);
-            decayCoefficient = coefficientFor(parameters.decay, decayRatio);
-            decayBase = (parameters.sustain - decayRatio) * (1.0f - decayCoefficient);
-
-            const float releaseRatio = ratioFor(parameters.releaseCurve);
-            releaseCoefficient = coefficientFor(parameters.release, releaseRatio);
-            releaseBase = -releaseRatio * (1.0f - releaseCoefficient);
-        }
-
-        void enterRelease() noexcept
-        {
-            if (parameters.release > 0.0f)
-                state = State::release;
-            else
+            stage = newStage;
+            segmentFrom = value;
+            segmentLength = std::max(1, samplesFor(seconds));
+            segmentIndex = 0;
+            const double c = static_cast<double>(curve) * curveRange;
+            segmentLinear = std::abs(c) < 1.0e-3;
+            if (! segmentLinear)
             {
-                value = 0.0f;
-                state = State::idle;
+                segmentRatio = std::exp(c / static_cast<double>(segmentLength));
+                segmentPower = 1.0;
+                segmentDenominator = std::exp(c) - 1.0;
             }
         }
 
+        float segmentStep(float to) noexcept
+        {
+            ++segmentIndex;
+            double shape = 0.0;
+            if (segmentLinear)
+                shape = static_cast<double>(segmentIndex) / static_cast<double>(segmentLength);
+            else
+            {
+                segmentPower *= segmentRatio;
+                shape = (segmentPower - 1.0) / segmentDenominator;
+            }
+            return segmentFrom + (to - segmentFrom) * static_cast<float>(shape);
+        }
+
+        [[nodiscard]] bool segmentDone() const noexcept { return segmentIndex >= segmentLength; }
+
+        void startAttack() noexcept
+        {
+            if (value >= peak)
+            {
+                // Already at or above the new peak: settle towards the sustain of this velocity.
+                if (value > peak + kSilent)
+                    startDecay();
+                else
+                {
+                    value = peak;
+                    startHold();
+                }
+                return;
+            }
+            const float remainingShare = peak > 0.0f ? (peak - value) / peak : 1.0f;
+            startSegment(Stage::attack, parameters.attack * remainingShare, parameters.attackCurve);
+        }
+
+        void startHold() noexcept
+        {
+            const int samples = samplesFor(parameters.hold);
+            if (samples < 1)
+            {
+                startDecay();
+                return;
+            }
+            stage = Stage::hold;
+            remaining = samples;
+        }
+
+        void startDecay() noexcept { startSegment(Stage::decay, parameters.decay, parameters.decayCurve); }
+
+        void endDecay() noexcept
+        {
+            if (parameters.oneShot)
+                startRelease();
+            else if (parameters.loop && gate)
+                startAttack();
+            else
+                stage = Stage::sustain;
+        }
+
+        void startRelease() noexcept
+        {
+            if (value <= kSilent)
+            {
+                value = 0.0f;
+                stage = Stage::idle;
+                return;
+            }
+            startSegment(Stage::release, parameters.release, parameters.releaseCurve);
+        }
+
         Parameters parameters;
-        State state = State::idle;
+        Stage stage = Stage::idle;
         double sampleRate = 48000.0;
+        float sustainCoefficient = 0.004f;
         float value = 0.0f;
-        float velocityGain = 1.0f;
-        bool gateHeld = false;
-        float attackCoefficient = 0.0f;
-        float attackBase = 0.0f;
-        float decayCoefficient = 0.0f;
-        float decayBase = 0.0f;
-        float releaseCoefficient = 0.0f;
-        float releaseBase = 0.0f;
+        float peak = 1.0f;
+        float timeScale = 1.0f;
+        bool gate = false;
+        int remaining = 0;
+
+        float segmentFrom = 0.0f;
+        int segmentLength = 1;
+        int segmentIndex = 0;
+        bool segmentLinear = true;
+        double segmentRatio = 1.0;
+        double segmentPower = 1.0;
+        double segmentDenominator = 1.0;
     };
 }

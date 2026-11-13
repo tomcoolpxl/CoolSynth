@@ -45,6 +45,11 @@ public:
                 expectWithinAbsoluteError(unitsToNormalised(linParam, descriptorToUnits(linParam, t)), t, 1.0e-6f);
             }
 
+            const ParameterDescriptor squaredParam { "depth", "Depth", 0.0f, 200.0f, 20.0f, Skew::squared, Unit::cents, true };
+            expectWithinAbsoluteError(descriptorToUnits(squaredParam, 0.5f), 50.0f, 1.0e-4f);
+            for (float t = 0.0f; t <= 1.0f; t += 0.125f)
+                expectWithinAbsoluteError(unitsToNormalised(squaredParam, descriptorToUnits(squaredParam, t)), t, 1.0e-5f);
+
             expectWithinAbsoluteError(descriptorToUnits(logParam, 2.0f), 20000.0f, 1.0e-1f);
             expectWithinAbsoluteError(descriptorToUnits(linParam, -3.0f), -1.0f, 1.0e-6f);
         }
@@ -128,6 +133,7 @@ public:
             offsets.level = 0.5f; // clamps to 1
             offsets.pan = 0.75f;  // clamps to 1
             offsets.pitchSemitones = -5.0f;
+            offsets.amount = 0.9f;  // base amount 0, clamps to 1 after the sum
 
             const auto params = buildSlotParams(d, base, offsets);
             expectWithinAbsoluteError(params.p[0], descriptorToUnits(d.params[0], 0.75f), 1.0e-2f);
@@ -136,6 +142,7 @@ public:
             expectEquals(params.level, 1.0f);
             expectEquals(params.pan, 1.0f);
             expectEquals(params.pitchSemitones, 7.0f);
+            expectEquals(params.combineAmount, 0.9f);
 
             offsets.clear();
             offsets.p[0] = -2.0f;

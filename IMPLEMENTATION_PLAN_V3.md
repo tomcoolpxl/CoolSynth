@@ -41,7 +41,7 @@ V2 filter tests ported, envelope reaches full level within the programmed attack
 sources (velocity, key, random, drift). Tests: combine modes (sync, ring, FM, AM) produce the
 expected spectra, voice headroom constant with polyphony.
 
-1.4 Part and engine. `Part` with voices, allocator (V2 logic plus caps), oversampled bus and
+1.4 Part and engine. `Part` with voices, a new allocator with per-patch and per-part caps (the voice already fades a stolen note itself), oversampled bus and
 decimator, `EngineV3` with one part. The processor switches to `EngineV3`; the V2 engine is
 deleted together with poly-mod and Vintage parameters. Tests: all V2 engine tests ported, V2
 parity figures logged.

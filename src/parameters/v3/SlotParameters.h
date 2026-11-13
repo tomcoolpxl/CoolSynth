@@ -96,6 +96,7 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* fineCents = nullptr;
         std::atomic<float>* keyTrack = nullptr;
         std::atomic<float>* combine = nullptr;
+        std::atomic<float>* amount = nullptr;
     };
 
     [[nodiscard]] SlotParameterPointers bindSlotPointers(juce::AudioProcessorValueTreeState& state, const SlotPath& path);
@@ -110,6 +111,7 @@ namespace coolsynth::parameters::v3
         float pitchSemitones = 0.0f;
         bool keyTrack = true;
         CombineMode combine = CombineMode::off;
+        float amount = 0.5f;
     };
 
     [[nodiscard]] SlotTargets readSlotTargets(const SlotParameterPointers& pointers) noexcept;

@@ -103,7 +103,7 @@ public:
             expect(genericParameterId({ Part::a, SlotKind::generator, 1 }, 1) == "pA.g1.p1");
             expect(genericParameterId({ Part::b, SlotKind::master, 2 }, 8) == "f2.p8");
             expect(fixedParameterId({ Part::a, SlotKind::generator, 1 }, "level") == "pA.g1.level");
-            expectEquals(parameterCountForKind(SlotKind::generator), 16);
+            expectEquals(parameterCountForKind(SlotKind::generator), 17);
             expectEquals(parameterCountForKind(SlotKind::processor), 9);
             expectEquals(parameterCountForKind(SlotKind::master), 9);
         }
@@ -122,8 +122,9 @@ public:
                     ids.add(withId->paramID);
                 }
             }
-            // two parts x (3 generators x 16 + 3 processors x 9 + 3 inserts x 9) + 6 master x 9
-            expectEquals(ids.size(), 2 * (3 * 16 + 3 * 9 + 3 * 9) + 6 * 9);
+            // two parts x (3 generators x 17 + 3 processors x 9 + 3 inserts x 9) + 6 master x 9
+            expectEquals(ids.size(), 2 * (3 * 17 + 3 * 9 + 3 * 9) + 6 * 9);
+            expect(ids.contains("pA.g1.amount"));
             expect(ids.contains("pA.g1.combine"));
             expect(! ids.contains("pA.p1.combine"));
             expect(ids.contains("f6.p8"));
@@ -184,6 +185,7 @@ public:
             setParameterValue(state, fixedParameterId(generator, "fine"), 50.0f);
             setParameterValue(state, fixedParameterId(generator, "key"), 0.0f);
             setParameterValue(state, fixedParameterId(generator, "combine"), static_cast<float>(CombineMode::ring));
+            setParameterValue(state, fixedParameterId(generator, "amount"), 0.3f);
 
             const auto pointers = bindSlotPointers(state, generator);
             expect(pointers.type != nullptr && pointers.p[0] != nullptr && pointers.combine != nullptr);
@@ -195,6 +197,7 @@ public:
             expectWithinAbsoluteError(targets.pitchSemitones, 19.5f, 1.0e-5f);
             expect(! targets.keyTrack);
             expect(targets.combine == CombineMode::ring);
+            expectWithinAbsoluteError(targets.amount, 0.3f, 1.0e-6f);
 
             const auto processorPointers = bindSlotPointers(state, processor);
             expect(processorPointers.type != nullptr && processorPointers.level == nullptr);
@@ -212,6 +215,7 @@ public:
             expectWithinAbsoluteError(base.levelValue(), 0.6f, 1.0e-6f);
             expectWithinAbsoluteError(base.panValue(), -0.25f, 1.0e-6f);
             expectWithinAbsoluteError(base.pitchValue(), 19.5f, 1.0e-5f);
+            expectWithinAbsoluteError(base.amountValue(), 0.3f, 1.0e-6f);
         }
     }
 };

@@ -16,15 +16,21 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 7. Phase 1.1 done 2026-11-13: `src/synth/v3/VaGenerator.h` and `tests/V3GeneratorTests.cpp`.
 8. Phase 1.2 done 2026-11-13: `src/synth/v3/LadderProcessor.h`, `src/synth/v3/Envelope.h` and
    `tests/V3ProcessorTests.cpp`.
-9. Phase 1.3: `Voice` with G1..G3, mixer and combine wiring, P1..P3, VCA, pan, sub-block
-   rendering and local sources; combine and headroom tests.
+9. Phase 1.3 done 2026-11-13: `src/synth/v3/Voice.h/.cpp`, `OffModules.h`, `DspMath.h` and
+   `tests/V3VoiceTests.cpp`; the VA generator, ladder and envelope rebuilt from first principles.
+10. Phase 1.4: `Part` and `EngineV3` designed fresh: a new allocator with per-patch and per-part
+   caps, fixed voice headroom, the oversampled bus and decimator; switch the processor over,
+   delete the V2 engine with its poly-mod and Vintage parameters, keep only the V2 tests that
+   still describe wanted behaviour.
 
 ## Carried over from the V2 backlog
 
 Still valid independently of the engine shape:
 
-- Ladder tuning by ear: the bass makeup factor, whether to expose a small filter drive amount,
-  and whether a per-stage-saturated Moog-style mode is wanted next to the input-saturated voicing.
+- Ladder by ear: drive headroom, the bass default, the mode level matching, and whether the
+  self-oscillation level (rms 0.15 at full resonance) wants an output lift.
+- If the saw's -79 dB alias floor at A7 ever shows in a mix, go to a 6-point (quintic B-spline)
+  BLEP: about another 25 dB for two more samples of latency.
 - Measurement-style regressions still missing: THD of a sine through the ladder at low resonance
   below a stated bound; attack reaching full level within the programmed time; reverb RT60 within
   a range for a given size.

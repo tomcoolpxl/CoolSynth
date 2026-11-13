@@ -118,35 +118,45 @@ the previous generator's phase or output at sample rate, so generators expose th
 sub-block output and, for VA and Wavetable, a phase-wrap flag per sample. The mixer sums at
 fixed voice headroom (the V2 constant 0.5) so levels do not pump with polyphony.
 
-Shipped (phase 1.1, 2026-11-13): `VaGenerator` with parameters wave, pulse width, unison
-(1..7), detune (cents), spread, sub and FM depth. The generator applies its own level and
-constant-power pan; unison copies are detuned symmetrically, spread across the field around the
-slot pan, start evenly spaced in phase, and are scaled by 1/sqrt(N). The sub is a sine one
-octave down at the slot pan. Combine: the previous generator's output arrives in the buffer the
-generator overwrites (ring multiplies, AM scales by 0.5 + 0.5 x input, FM adds up to half a
-cycle of phase); hard sync reads the previous generator's wrap track (fraction of the sample at
-which copy 0 wrapped, or -1) through `setSyncInput`, resets every copy and applies the V2
-PolyBLEP step correction. `SlotParams` gained `frequencyHz` (set by the voice) and `combine`;
-`memoryFloats` takes the sub-block size. Measured at 48 kHz: tuning within 0.03 cents on all
-waves at 55, 440 and 1760 Hz; saw alias after 2x rendering and decimation -101 dB at A4 and
--86 dB at A7 (the V2 figure of -106 dB at A7 was taken behind the ladder low-pass); a 7-copy
-stack at 30 cents sits 0.4 dB below a single saw.
+Shipped (phase 1.1, rebuilt in 1.3, 2026-11-13): `VaGenerator`, written new rather than
+ported. Parameters: shape (continuous morph sine, triangle, saw, pulse, all four aligned to
+start at zero rising so a morph never cancels the fundamental), pulse width, unison 1..7,
+detune 0..200 cents (squared skew), spread, mix (centre versus sides), phase rand, sub.
+Band-limiting is event based: every crossing of a break point (saw jump, pulse edges, triangle
+corners) is located on the rendered phase trajectory and corrected with the 4-point BLEP or
+BLAMP from the integrated cubic B-spline; the output runs two samples late so the correction can
+reach back. The crossing test uses the same arithmetic as the phase update, so a point hit
+exactly is never counted twice. Sync resets every copy at the exact time from the previous
+generator's wrap track and corrects the step and slope change on both sides; FM finds crossings
+on the modulated trajectory. Unison detune follows a JP-8000-like curve (positions u^1.5, upper
+side 2 % narrower), the centre copy or pair against the sides by the mix, power-normalised;
+start phases are random per note by Phase Rand. The voice applies level; the generator renders
+at unit level and hands on its mono signal and the wrap track of an undetuned reference phase.
+Measured after 2x rendering and decimation (inharmonic energy 20 Hz to 20 kHz, whole-period
+frames): saw -88.8 dB at 439 Hz, -79.4 dB at 3.5 kHz, -72.9 dB at 7 kHz, each 26 to 27 dB
+below the 2-point polyBLEP; triangle -114 dB and pulse -87.5 dB at 3.5 kHz; hard-synced saw
+-87.4 dB; tuning within 1 cent; a 7-copy stack +0.3 dB against one copy.
 
 Three processor slots run in series on the stereo pair. Processors are stereo in and out; the
 ladder and SVF process left and right with shared coefficients. Then the VCA applies ENV1 times
 velocity sensitivity times the voice gain modulation destination, and the pan stage applies pan
 spread plus modulation.
 
-Shipped (phase 1.2, 2026-11-13): `LadderProcessor` with cutoff, resonance, drive (0..24 dB
-into the saturator) and key tracking (0..1, neutral at C4, applied to the `frequencyHz` the
-voice supplies). Stereo with shared coefficients; cutoff and feedback ramp per sample across the
-sub-block. The resonance law changed from V2: feedback is 4.3 sqrt(r) instead of 4 sqrt(r), so
-the ladder self-oscillates from about 0.87 upwards and the saturator sets the level (measured:
-1000.0 Hz at cutoff 1 kHz, peak 0.41 from a single impulse). A silent input never starts the
-oscillation; presets that want it (Basement Siren) add a trace of noise. Measured: -28 dB one
-octave above cutoff and -49 dB two octaves above (four-pole), -0.07 dB well below cutoff,
-+24 dB drive raises the third harmonic of a half-scale sine from -34 dB to -10 dB with the peak
-held at 1.0.
+Shipped (phase 1.2, rebuilt in 1.3, 2026-11-13): `LadderProcessor`, written new. Every one of
+the four stages integrates tanh(previous) - tanh(own) and the input pair sees
+tanh(input - k output), as in the Moog ladder; the loop is solved without a unit delay by
+linearising each tanh around an operating point and solving the linear ladder exactly, twice per
+sample (around the last sample, then around the first answer), which keeps it well behaved near
+Nyquist. Parameters: cutoff (capped at 24 kHz), resonance, drive (peak-normalised tanh stage
+before the ladder, nearly clean at 0 dB), key tracking, mode (LP24, LP12, BP, HP12 taps, BP and
+HP scaled with the feedback so every mode sings at about the same level) and bass (input gain
+1 + bass k on the low-pass taps). Resonance maps to k = 4 sqrt(r / 0.9) up to the threshold at
+0.9 and rises to 5 at the top; a 4.1 % per unit cutoff correction above the threshold keeps the
+self-oscillation in tune, and a -110 dB noise floor lets it start from silence. Measured at
+48 kHz: LP24 -27.8 and -49.1 dB one and two octaves above cutoff, LP12 -13.8 and -24.5 dB, HP12
+0.1 dB an octave above and -38 dB below, BP 0.2 dB at the centre; self-oscillation starts in
+28 ms, within 3.3 cents of the cutoff from 250 Hz to 4 kHz, rms 0.15; bass 1 restores 50 Hz to
+0.2 dB at resonance 0.8; full-scale noise at full resonance, drive and bass peaks at 3.3 at most.
 
 ### 4.2 Sub-block rendering
 
@@ -169,8 +179,7 @@ their coefficients need it.
 
 ### 4.3 Local modulators
 
-- ENV1, ENV2, ENV3: the V2 `AnalogEnvelope` extended with a per-stage curve (0 exponential to 1
-  linear), velocity sensitivity, loop (attack-decay cycling while the gate is held), one-shot.
+- ENV1, ENV2, ENV3: a delay-attack-hold-decay-sustain-release envelope with a bipolar curve per stage, velocity sensitivity, loop (attack-decay cycling while the gate is held), one-shot.
   ENV1 is hardwired to the VCA, ENV2 has a hardwired amount to P1 cutoff (parameter, not matrix),
   ENV3 is free.
 - LFO1, LFO2: sine, triangle, saw up, saw down, square, sample-and-hold, smoothed random, 16-step
@@ -179,17 +188,30 @@ their coefficients need it.
   note random (new per note), aftertouch (channel or poly), MPE pressure and slide, per-voice
   drift (the V2 Vintage random walk, now a source with no fixed destination).
 
-Shipped (phase 1.2, 2026-11-13): `Envelope` keeps the V2 one-pole segments and adds a curve
-per stage (overshoot ratio 10^(-4 + 6 curve): 0 is the V2 exponential, 1 is near linear; the
-attack default 0.58 reproduces V2), velocity sensitivity on the peak, loop (attack and decay
-cycle while the gate is held) and one-shot (the decay runs to its end and goes straight to
-release). Every curve lands on full level at exactly the programmed attack time; a 10 ms + 10 ms
-loop repeats every 960 samples at 48 kHz.
+Shipped (phase 1.2, rebuilt in 1.3, 2026-11-13): `Envelope`, written new: delay, attack,
+hold, decay, sustain, release, each segment exactly its programmed time with the curve
+(e^(c t) - 1) / (e^c - 1), curve -1..1 to c -8..8 (negative is the analogue RC feel). Velocity
+sets the peak, so a retrigger at a new velocity moves without a jump (largest step 0.0005 in the
+test); a retrigger shortens the attack by the distance already covered; key time tracking halves
+the times per octave above C4; loop, one-shot, and 5 ms sustain smoothing.
 
 ### 4.4 Note context
 
 `noteOn` receives note number, velocity, glide start note, unison index and count, and the
 chord/arp origin flag so generators can randomise phase per note where the type wants it.
+
+### 4.5 Shipped voice
+
+Shipped (phase 1.3, 2026-11-13): `Voice` in `src/synth/v3/Voice.h/.cpp`. Generators render
+into their own buffers at unit level; a generator with a combine mode gets the previous one's
+link, so a silent modulator still drives it. The mixer ramps each level per sample. Processors
+run in series; P1's first parameter takes the hardwired ENV2 and velocity amounts as normalised
+offsets. ENV1 is per sample with a 0.5 ms attack and 2 ms release floor; ENV2 and ENV3 run per
+sub-block. Pitch stays in semitones (note, constant-time glide, bend, drift) until each
+generator turns it into a frequency; key tracking off sits at C4. The voice owns its handover: a
+start on a sounding voice fades it over 1.5 ms and starts the waiting note from a clean slate, a
+start on a silent voice snaps every smoothed value and applies a waiting type at once. The
+measured handover step equals the steady-state step of the louder note.
 
 ## 5. Global modulators and the matrix
 
@@ -217,8 +239,8 @@ bend to pitch with range, key tracking per generator and per processor.
 In order, per part: chord memory (Off or one of 12 chord types plus one learned chord; strum
 time; applied to each incoming note), then the V2 arpeggiator unchanged, then play mode (poly,
 mono, legato, unison with count 2 to 8 and detune cents and stereo spread), key priority, glide
-(time, legato only, constant rate), then the allocator. The allocator is the V2 one (release-
-first stealing with the 1.5 ms steal fade and pending note start), extended with a per-patch
+(time, legato only, constant rate), then the allocator. The allocator is new: release-first stealing, with the stolen voice fading itself out over
+1.5 ms and starting the waiting note (section 4.5), extended with a per-patch
 polyphony cap and a per-part cap so two parts share the pool of 16 fairly (each part is
 guaranteed its cap, default 8 and 8; a part may be set to 16 when the other is Off).
 
@@ -338,9 +360,9 @@ components are reused. The full redesign stays parked.
 
 | V2 | V3 |
 | --- | --- |
-| `SynthVoice` fixed path | `Voice` with slots; oscillator code becomes `VaGenerator` |
-| `VoiceLadderFilter` | `LadderProcessor` |
-| `AnalogEnvelope` | extended, used by ENV1..3 and GENV |
+| `SynthVoice` fixed path | `Voice` with slots, written new; `VaGenerator` written new with event-based 4-point BLEP |
+| `VoiceLadderFilter` | `LadderProcessor`, written new with per-stage nonlinearity |
+| `AnalogEnvelope` | `Envelope`, written new (DAHDSR, exact-time curves), used by ENV1..3 and GENV |
 | global LFO in `SynthEngineV2` | `Lfo` class used by LFO1..2 and GLFO1..2 |
 | poly-mod parameters | matrix routes; removed as parameters |
 | Vintage amount | drift source; the fixed filter and envelope offsets are removed |

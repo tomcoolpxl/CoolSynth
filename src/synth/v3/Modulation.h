@@ -16,7 +16,7 @@
     clears every slot's SlotOffsets, lets the modulators and the matrix add into the offsets,
     then builds the SlotParams each module sees with buildSlotParams(). Generic parameters live
     in normalised 0..1 space until that last step, so smoothing and modulation behave the same
-    for linear and logarithmic parameters.
+    for linear, logarithmic and squared parameters.
 */
 namespace coolsynth::synth::v3
 {
@@ -79,6 +79,7 @@ namespace coolsynth::synth::v3
         float level = 0.0f;          // normalised, added to the level base
         float pan = 0.0f;            // -1..1 units
         float pitchSemitones = 0.0f; // semitones
+        float amount = 0.0f;         // normalised, added to the combine amount
 
         void clear() noexcept
         {
@@ -86,6 +87,7 @@ namespace coolsynth::synth::v3
             level = 0.0f;
             pan = 0.0f;
             pitchSemitones = 0.0f;
+            amount = 0.0f;
         }
     };
 
@@ -95,6 +97,8 @@ namespace coolsynth::synth::v3
         const float t = std::clamp(normalised, 0.0f, 1.0f);
         if (d.skew == Skew::logarithmic && d.min > 0.0f && d.max > d.min)
             return d.min * std::pow(d.max / d.min, t);
+        if (d.skew == Skew::squared)
+            return d.min + t * t * (d.max - d.min);
         return d.min + t * (d.max - d.min);
     }
 
@@ -106,13 +110,15 @@ namespace coolsynth::synth::v3
         const float u = std::clamp(units, std::min(d.min, d.max), std::max(d.min, d.max));
         if (d.skew == Skew::logarithmic && d.min > 0.0f)
             return std::log(u / d.min) / std::log(d.max / d.min);
+        if (d.skew == Skew::squared)
+            return std::sqrt((u - d.min) / (d.max - d.min));
         return (u - d.min) / (d.max - d.min);
     }
 
     /**
-        The host-set values of one slot, each moving linearly toward its target by at most one
-        step per sub-block. Generic values are normalised 0..1; level is normalised; pan is
-        -1..1; pitch is in semitones.
+        The host-set values of one slot, each moving linearly toward its target by at most a fixed
+        rate. Generic values, level and combine amount are normalised 0..1; pan is -1..1; pitch is
+        in semitones. step(n) advances by n samples, so sub-blocks of any length smooth alike.
     */
     class SlotBase final
     {
@@ -122,12 +128,8 @@ namespace coolsynth::synth::v3
 
         void prepare(double sampleRate, int subBlockSamples, double smoothingSeconds = defaultSmoothingSeconds)
         {
-            const double fraction = static_cast<double>(std::max(1, subBlockSamples))
-                                    / (std::max(1.0, sampleRate) * std::max(1.0e-4, smoothingSeconds));
-            const float f = static_cast<float>(std::min(1.0, fraction));
-            maxStepNormalised = f;
-            maxStepPan = 2.0f * f;
-            maxStepPitch = pitchSpanSemitones * f;
+            subBlock = std::max(1, subBlockSamples);
+            perSample = static_cast<float>(1.0 / (std::max(1.0, sampleRate) * std::max(1.0e-4, smoothingSeconds)));
             snapToTargets();
         }
 
@@ -141,8 +143,9 @@ namespace coolsynth::synth::v3
         {
             pitch.target = std::clamp(semitones, -pitchSpanSemitones, pitchSpanSemitones);
         }
+        void setAmountTarget(float normalised) noexcept { amount.target = std::clamp(normalised, 0.0f, 1.0f); }
 
-        /** Jumps every value to its target: for reset and patch load. */
+        /** Jumps every value to its target: for reset and note start. */
         void snapToTargets() noexcept
         {
             for (auto& s : p)
@@ -150,16 +153,21 @@ namespace coolsynth::synth::v3
             level.value = level.target;
             pan.value = pan.target;
             pitch.value = pitch.target;
+            amount.value = amount.target;
         }
 
-        /** Once per sub-block. */
-        void step() noexcept
+        /** One sub-block of the prepared length. */
+        void step() noexcept { step(subBlock); }
+
+        void step(int numSamples) noexcept
         {
+            const float f = std::min(1.0f, perSample * static_cast<float>(std::max(0, numSamples)));
             for (auto& s : p)
-                approach(s, maxStepNormalised);
-            approach(level, maxStepNormalised);
-            approach(pan, maxStepPan);
-            approach(pitch, maxStepPitch);
+                approach(s, f);
+            approach(level, f);
+            approach(amount, f);
+            approach(pan, 2.0f * f);
+            approach(pitch, pitchSpanSemitones * f);
         }
 
         [[nodiscard]] bool isSmoothing() const noexcept
@@ -167,13 +175,15 @@ namespace coolsynth::synth::v3
             for (const auto& s : p)
                 if (s.value != s.target)
                     return true;
-            return level.value != level.target || pan.value != pan.target || pitch.value != pitch.target;
+            return level.value != level.target || pan.value != pan.target || pitch.value != pitch.target
+                   || amount.value != amount.target;
         }
 
         [[nodiscard]] float value(int index) const noexcept { return p[static_cast<std::size_t>(index)].value; }
         [[nodiscard]] float levelValue() const noexcept { return level.value; }
         [[nodiscard]] float panValue() const noexcept { return pan.value; }
         [[nodiscard]] float pitchValue() const noexcept { return pitch.value; }
+        [[nodiscard]] float amountValue() const noexcept { return amount.value; }
 
     private:
         struct Smoothed
@@ -195,9 +205,9 @@ namespace coolsynth::synth::v3
         Smoothed level { 1.0f, 1.0f };
         Smoothed pan {};
         Smoothed pitch {};
-        float maxStepNormalised = 1.0f;
-        float maxStepPan = 2.0f;
-        float maxStepPitch = pitchSpanSemitones;
+        Smoothed amount {};
+        int subBlock = 32;
+        float perSample = 1.0f;
     };
 
     /**
@@ -229,6 +239,7 @@ namespace coolsynth::synth::v3
         params.pitchSemitones = std::clamp(base.pitchValue() + offsets.pitchSemitones,
                                            -SlotBase::pitchSpanSemitones,
                                            SlotBase::pitchSpanSemitones);
+        params.combineAmount = std::clamp(base.amountValue() + offsets.amount, 0.0f, 1.0f);
         return params;
     }
 }

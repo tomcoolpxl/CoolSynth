@@ -13,6 +13,7 @@
 namespace
 {
     using namespace coolsynth::synth::v3;
+    using Mode = LadderProcessor::Mode;
 
     constexpr int kSubBlock = 32;
     constexpr double kRate = 48000.0;
@@ -21,17 +22,20 @@ namespace
     {
         std::vector<float> x(static_cast<std::size_t>(samples));
         for (int i = 0; i < samples; ++i)
-            x[static_cast<std::size_t>(i)] = amplitude * std::sin(static_cast<float>(i) * 2.0f * juce::MathConstants<float>::pi * hz / static_cast<float>(kRate));
+            x[static_cast<std::size_t>(i)] = amplitude * std::sin(static_cast<float>(i) * 6.2831853f * hz / static_cast<float>(kRate));
         return x;
     }
 
-    SlotParams ladderParams(float cutoffHz, float res, float driveDb = 0.0f, float key = 0.0f, float noteHz = LadderProcessor::keyReferenceHz)
+    SlotParams ladderParams(float cutoffHz, float res, Mode mode = Mode::lowpass24, float driveDb = 0.0f, float bass = 0.5f,
+                            float key = 0.0f, float noteHz = LadderProcessor::keyReferenceHz)
     {
         SlotParams p;
         p.p[LadderProcessor::cutoff] = cutoffHz;
         p.p[LadderProcessor::resonance] = res;
         p.p[LadderProcessor::drive] = driveDb;
         p.p[LadderProcessor::keyTrack] = key;
+        p.p[LadderProcessor::mode] = static_cast<float>(mode);
+        p.p[LadderProcessor::bass] = bass;
         p.frequencyHz = noteHz;
         return p;
     }
@@ -40,15 +44,13 @@ namespace
     {
         SlotMemory memory;
         memory.allocate(0);
-        LadderProcessor ladder;
-        ladder.prepare(kRate, kSubBlock, memory);
-        ladder.noteOn(NoteContext {});
-
+        auto ladder = std::make_unique<LadderProcessor>();
+        ladder->prepare(kRate, kSubBlock, memory);
         std::vector<float> left(input), right(input);
         for (std::size_t start = 0; start < left.size(); start += kSubBlock)
         {
             const int n = static_cast<int>(std::min<std::size_t>(kSubBlock, left.size() - start));
-            ladder.process(left.data() + start, right.data() + start, n, params);
+            ladder->process(left.data() + start, right.data() + start, n, params);
         }
         return left;
     }
@@ -59,6 +61,11 @@ namespace
         for (std::size_t i = skip; i < x.size(); ++i)
             sum += static_cast<double>(x[i]) * static_cast<double>(x[i]);
         return static_cast<float>(std::sqrt(sum / static_cast<double>(x.size() - skip)));
+    }
+
+    float gainDb(const std::vector<float>& out, const std::vector<float>& in, std::size_t skip)
+    {
+        return 20.0f * std::log10(rms(out, skip) / rms(in, skip));
     }
 
     float peakAbs(const std::vector<float>& x)
@@ -88,165 +95,313 @@ namespace
         std::vector<float> buffer(static_cast<std::size_t>(kFftSize) * 2, 0.0f);
         for (int i = 0; i < kFftSize; ++i)
             buffer[static_cast<std::size_t>(i)] = x[skip + static_cast<std::size_t>(i)];
-        juce::dsp::WindowingFunction<float> window(static_cast<std::size_t>(kFftSize), juce::dsp::WindowingFunction<float>::hann);
+        juce::dsp::WindowingFunction<float> window(static_cast<std::size_t>(kFftSize), juce::dsp::WindowingFunction<float>::blackmanHarris);
         window.multiplyWithWindowingTable(buffer.data(), static_cast<std::size_t>(kFftSize));
         juce::dsp::FFT fft(kFftOrder);
         fft.performFrequencyOnlyForwardTransform(buffer.data());
         const int bin = static_cast<int>(std::round(hz * kFftSize / kRate));
         float peak = 0.0f;
-        for (int b = std::max(1, bin - 3); b <= bin + 3; ++b)
+        for (int b = std::max(1, bin - 4); b <= bin + 4; ++b)
             peak = std::max(peak, buffer[static_cast<std::size_t>(b)]);
         return peak;
     }
 
-    Envelope makeEnvelope(const Envelope::Parameters& parameters)
+    std::unique_ptr<Envelope> makeEnvelope(const Envelope::Parameters& parameters)
     {
-        Envelope envelope;
-        envelope.setSampleRate(kRate);
-        envelope.setParameters(parameters);
+        auto envelope = std::make_unique<Envelope>();
+        envelope->setSampleRate(kRate);
+        envelope->setParameters(parameters);
         return envelope;
+    }
+
+    /** Samples until the stage changes away from `stage`, counting the sample that ends it. */
+    int samplesInStage(Envelope& envelope, Envelope::Stage stage, int limit = 480000)
+    {
+        int samples = 0;
+        while (envelope.getStage() == stage && samples < limit)
+        {
+            envelope.getNextSample();
+            ++samples;
+        }
+        return samples;
     }
 }
 
-class V3ProcessorTests final : public juce::UnitTest
+class V3LadderTests final : public juce::UnitTest
 {
 public:
-    V3ProcessorTests() : juce::UnitTest("V3 ladder and envelope", "V3") {}
+    V3LadderTests() : juce::UnitTest("V3 ladder", "V3") {}
 
     void runTest() override
     {
-        beginTest("ladder_descriptor_and_four_pole_slope");
+        beginTest("descriptor_and_four_pole_slope");
         {
             expect(juce::String(LadderProcessor::descriptor().name) == "Ladder");
             expectEquals(LadderProcessor::descriptor().usedParams, static_cast<int>(LadderProcessor::paramCount));
-
             const auto input = sine(440.0f, 0.1f, 8192);
-            const auto oneOctaveAbove = runLadder(input, ladderParams(220.0f, 0.0f));
-            const auto twoOctavesAbove = runLadder(input, ladderParams(110.0f, 0.0f));
-            const float nearRms = rms(oneOctaveAbove, 4096);
-            const float farRms = rms(twoOctavesAbove, 4096);
-            logMessage("one octave above cutoff: " + juce::String(20.0f * std::log10(nearRms / rms(input, 4096)), 1)
-                       + " dB, two octaves: " + juce::String(20.0f * std::log10(farRms / rms(input, 4096)), 1) + " dB");
-            expect(farRms > 0.0f);
-            expect(nearRms > farRms * 8.0f); // one extra octave costs about 24 dB, not 12 dB
+            const float near = gainDb(runLadder(input, ladderParams(220.0f, 0.0f)), input, 4096);
+            const float far = gainDb(runLadder(input, ladderParams(110.0f, 0.0f)), input, 4096);
+            logMessage("LP24 one octave above cutoff " + juce::String(near, 1) + " dB, two octaves " + juce::String(far, 1) + " dB");
+            expect(near - far > 18.0f);
         }
 
-        beginTest("ladder_passes_signal_well_below_cutoff");
+        beginTest("passband_is_flat");
         {
             const auto input = sine(440.0f, 0.1f, 8192);
-            const auto output = runLadder(input, ladderParams(8000.0f, 0.0f));
-            const float gainDb = 20.0f * std::log10(rms(output, 4096) / rms(input, 4096));
-            logMessage("440 Hz through cutoff 8 kHz: " + juce::String(gainDb, 2) + " dB");
-            expect(std::abs(gainDb) < 0.5f);
+            const float db = gainDb(runLadder(input, ladderParams(8000.0f, 0.0f)), input, 4096);
+            logMessage("440 Hz through cutoff 8 kHz: " + juce::String(db, 2) + " dB");
+            expect(std::abs(db) < 0.5f);
         }
 
-        beginTest("ladder_self_oscillates_at_the_cutoff_with_full_resonance");
+        beginTest("modes_have_their_slopes");
         {
-            std::vector<float> input(24000, 0.0f);
-            input[0] = 0.5f;
-            const auto output = runLadder(input, ladderParams(1000.0f, 1.0f));
-            const double hz = measureFrequency(output, 12000);
-            logMessage("self-oscillation at cutoff 1 kHz: " + juce::String(hz, 1) + " Hz, peak " + juce::String(peakAbs(output), 3));
-            expect(std::abs(hz - 1000.0) < 30.0);
-            expect(rms(output, 12000) > 0.05f);
-            expect(peakAbs(output) < 4.0f);
+            const auto input440 = sine(440.0f, 0.1f, 8192);
+            const float lp12Near = gainDb(runLadder(input440, ladderParams(220.0f, 0.0f, Mode::lowpass12)), input440, 4096);
+            const float lp12Far = gainDb(runLadder(input440, ladderParams(110.0f, 0.0f, Mode::lowpass12)), input440, 4096);
+            logMessage("LP12 one octave above " + juce::String(lp12Near, 1) + " dB, two octaves " + juce::String(lp12Far, 1) + " dB");
+            expect(lp12Near - lp12Far > 8.0f && lp12Near - lp12Far < 14.0f);
+
+            const auto high = sine(8000.0f, 0.1f, 8192);
+            const auto low = sine(110.0f, 0.1f, 8192);
+            const float hpPass = gainDb(runLadder(high, ladderParams(1000.0f, 0.0f, Mode::highpass12)), high, 4096);
+            const float hpStop = gainDb(runLadder(low, ladderParams(1000.0f, 0.0f, Mode::highpass12)), low, 4096);
+            logMessage("HP12 at 1 kHz: 8 kHz " + juce::String(hpPass, 1) + " dB, 110 Hz " + juce::String(hpStop, 1) + " dB");
+            expect(std::abs(hpPass) < 1.0f);
+            expect(hpStop < -30.0f);
+
+            const auto atCutoff = sine(1000.0f, 0.1f, 8192);
+            const auto decade = sine(10000.0f, 0.1f, 8192);
+            const float bpPeak = gainDb(runLadder(atCutoff, ladderParams(1000.0f, 0.0f, Mode::bandpass)), atCutoff, 4096);
+            const float bpFar = gainDb(runLadder(decade, ladderParams(1000.0f, 0.0f, Mode::bandpass)), decade, 4096);
+            logMessage("BP at 1 kHz: centre " + juce::String(bpPeak, 1) + " dB, 10 kHz " + juce::String(bpFar, 1) + " dB");
+            expect(std::abs(bpPeak) < 1.0f);
+            expect(bpFar < -12.0f);
         }
 
-        beginTest("ladder_key_tracking_raises_the_cutoff_with_the_note");
+        beginTest("self_oscillates_from_silence_at_the_cutoff");
         {
-            const auto input = sine(2000.0f, 0.1f, 8192);
-            const float twoOctavesUp = LadderProcessor::keyReferenceHz * 4.0f;
-            const auto tracked = runLadder(input, ladderParams(500.0f, 0.0f, 0.0f, 1.0f, twoOctavesUp));
-            const auto fixed = runLadder(input, ladderParams(500.0f, 0.0f, 0.0f, 0.0f, twoOctavesUp));
-            const float ratioDb = 20.0f * std::log10(rms(tracked, 4096) / rms(fixed, 4096));
-            logMessage("full key tracking two octaves up passes " + juce::String(ratioDb, 1) + " dB more");
-            expect(ratioDb > 12.0f);
-        }
+            const std::vector<float> silence(96000, 0.0f);
+            const auto output = runLadder(silence, ladderParams(1000.0f, 1.0f));
+            std::size_t onset = 0;
+            while (onset < output.size() && std::abs(output[onset]) < 0.01f)
+                ++onset;
+            const double hz = measureFrequency(output, 48000);
+            const float level = rms(output, 48000);
+            logMessage("self-oscillation from the noise floor: reaches 0.01 after " + juce::String(static_cast<double>(onset) / kRate * 1000.0, 1)
+                       + " ms, " + juce::String(hz, 1) + " Hz, rms " + juce::String(level, 3) + ", peak " + juce::String(peakAbs(output), 3));
+            expect(onset < 24000);
+            expect(level > 0.05f);
+            expect(peakAbs(output) < 2.0f);
 
-        beginTest("ladder_drive_adds_harmonics_and_stays_bounded");
-        {
-            const auto input = sine(234.375f, 0.5f, 4096 + kFftSize); // bin 40: its third harmonic sits on bin 120
-            const auto clean = runLadder(input, ladderParams(20000.0f, 0.0f, 0.0f));
-            const auto driven = runLadder(input, ladderParams(20000.0f, 0.0f, 24.0f));
-            const float cleanThird = peakNearHz(clean, 4096, 703.125) / peakNearHz(clean, 4096, 234.375);
-            const float drivenThird = peakNearHz(driven, 4096, 703.125) / peakNearHz(driven, 4096, 234.375);
-            logMessage("third harmonic: clean " + juce::String(20.0f * std::log10(cleanThird), 1)
-                       + " dB, driven " + juce::String(20.0f * std::log10(drivenThird), 1) + " dB");
-            expect(drivenThird > cleanThird * 10.0f);
-            expect(20.0f * std::log10(drivenThird) > -30.0f);
-            expect(peakAbs(driven) <= 1.0f + 1.0e-4f);
-        }
-
-        beginTest("ladder_extreme_settings_stay_finite_and_bounded");
-        {
-            std::mt19937 rng(7);
-            std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
-            std::vector<float> noise(8192);
-            for (auto& v : noise)
-                v = dist(rng);
-            const auto output = runLadder(noise, ladderParams(20000.0f, 1.0f, 24.0f, 1.0f, 8000.0f));
-            bool finite = true;
-            for (auto v : output)
-                finite = finite && std::isfinite(v);
-            expect(finite);
-            logMessage("extreme settings peak: " + juce::String(peakAbs(output), 3));
-            expect(peakAbs(output) < 2.0f * (1.0f + 0.5f * 4.3f)); // twice the saturator bound times the bass makeup
-        }
-
-        beginTest("envelope_attack_reaches_full_level_in_the_programmed_time");
-        {
-            for (float curve : { 0.0f, 0.58f, 1.0f })
+            for (float cutoffHz : { 250.0f, 1000.0f, 4000.0f })
             {
-                Envelope::Parameters p;
-                p.attack = 0.010f;
-                p.attackCurve = curve;
-                auto envelope = makeEnvelope(p);
-                envelope.noteOn(1.0f);
-                int samples = 0;
-                while (envelope.getNextSample() < 1.0f && samples < 2000)
-                    ++samples;
-                logMessage("curve " + juce::String(curve, 2) + ": full level after " + juce::String(samples + 1) + " samples");
-                expect(std::abs(samples + 1 - 480) <= 3);
+                const auto sung = runLadder(silence, ladderParams(cutoffHz, 1.0f));
+                const double cents = 1200.0 * std::log2(measureFrequency(sung, 48000) / static_cast<double>(cutoffHz));
+                logMessage("self-oscillation at cutoff " + juce::String(cutoffHz, 0) + " Hz is " + juce::String(cents, 1) + " cents off");
+                expect(std::abs(cents) < 25.0);
             }
         }
 
-        beginTest("envelope_curve_shapes_the_attack");
+        beginTest("key_tracking_raises_the_cutoff_with_the_note");
         {
-            auto valueAtHalfTime = [](float curve)
+            const auto input = sine(2000.0f, 0.1f, 8192);
+            const float twoOctavesUp = LadderProcessor::keyReferenceHz * 4.0f;
+            const float tracked = gainDb(runLadder(input, ladderParams(500.0f, 0.0f, Mode::lowpass24, 0.0f, 0.5f, 1.0f, twoOctavesUp)), input, 4096);
+            const float fixed = gainDb(runLadder(input, ladderParams(500.0f, 0.0f, Mode::lowpass24, 0.0f, 0.5f, 0.0f, twoOctavesUp)), input, 4096);
+            expect(tracked - fixed > 12.0f);
+        }
+
+        beginTest("drive_adds_harmonics_and_keeps_the_peak");
+        {
+            const auto input = sine(234.375f, 0.5f, 4096 + kFftSize); // bin 40; its third harmonic sits on bin 120
+            const auto clean = runLadder(input, ladderParams(20000.0f, 0.0f, Mode::lowpass24, 0.0f));
+            const auto driven = runLadder(input, ladderParams(20000.0f, 0.0f, Mode::lowpass24, 24.0f));
+            const float cleanThird = peakNearHz(clean, 4096, 703.125) / peakNearHz(clean, 4096, 234.375);
+            const float drivenThird = peakNearHz(driven, 4096, 703.125) / peakNearHz(driven, 4096, 234.375);
+            logMessage("third harmonic: clean " + juce::String(20.0f * std::log10(cleanThird), 1)
+                       + " dB, driven " + juce::String(20.0f * std::log10(drivenThird), 1) + " dB, driven peak " + juce::String(peakAbs(driven), 3));
+            expect(20.0f * std::log10(cleanThird) < -45.0f);
+            expect(20.0f * std::log10(drivenThird) > -25.0f);
+            expect(peakAbs(driven) < 1.1f);
+        }
+
+        beginTest("bass_restores_the_low_end_lost_to_resonance");
+        {
+            const auto input = sine(50.0f, 0.05f, 24000);
+            const float thin = gainDb(runLadder(input, ladderParams(2000.0f, 0.8f, Mode::lowpass24, 0.0f, 0.0f)), input, 12000);
+            const float full = gainDb(runLadder(input, ladderParams(2000.0f, 0.8f, Mode::lowpass24, 0.0f, 1.0f)), input, 12000);
+            logMessage("50 Hz under a resonant ladder: bass 0 " + juce::String(thin, 1) + " dB, bass 1 " + juce::String(full, 1) + " dB");
+            expect(thin < -10.0f);
+            expect(std::abs(full) < 1.5f);
+        }
+
+        beginTest("extreme_settings_and_sweeps_stay_finite_and_bounded");
+        {
+            std::mt19937 rng(7);
+            std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+            std::vector<float> noise(48000);
+            for (auto& v : noise)
+                v = dist(rng);
+
+            for (auto mode : { Mode::lowpass24, Mode::lowpass12, Mode::bandpass, Mode::highpass12 })
+            {
+                const auto output = runLadder(noise, ladderParams(20000.0f, 1.0f, mode, 24.0f, 1.0f, 1.0f, 8000.0f));
+                bool finite = true;
+                for (auto v : output)
+                    finite = finite && std::isfinite(v);
+                expect(finite);
+                const auto selfOscillating = runLadder(std::vector<float>(96000, 0.0f), ladderParams(1000.0f, 1.0f, mode));
+                logMessage("mode " + juce::String(static_cast<int>(mode)) + ": extreme noise peak " + juce::String(peakAbs(output), 2)
+                           + ", self-oscillation at 1 kHz rms " + juce::String(rms(selfOscillating, 48000), 3));
+                expect(peakAbs(output) < 8.0f, "mode " + juce::String(static_cast<int>(mode)) + " peak " + juce::String(peakAbs(output), 2));
+            }
+
+            SlotMemory memory;
+            memory.allocate(0);
+            auto ladder = std::make_unique<LadderProcessor>();
+            ladder->prepare(kRate, kSubBlock, memory);
+            std::vector<float> left(noise), right(noise);
+            float peak = 0.0f;
+            bool finite = true;
+            for (std::size_t start = 0, block = 0; start + kSubBlock <= left.size(); start += kSubBlock, ++block)
+            {
+                const float sweep = 0.5f + 0.5f * std::sin(static_cast<float>(block) * 0.05f);
+                ladder->process(left.data() + start, right.data() + start, kSubBlock, ladderParams(20.0f * std::pow(1000.0f, sweep), 0.95f));
+                for (std::size_t i = start; i < start + kSubBlock; ++i)
+                {
+                    finite = finite && std::isfinite(left[i]);
+                    peak = std::max(peak, std::abs(left[i]));
+                }
+            }
+            expect(finite);
+            expect(peak < 8.0f, "sweep peak " + juce::String(peak, 2));
+        }
+    }
+};
+
+class V3EnvelopeTests final : public juce::UnitTest
+{
+public:
+    V3EnvelopeTests() : juce::UnitTest("V3 envelope", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("every_segment_lasts_its_programmed_time");
+        {
+            for (float curve : { -1.0f, 0.0f, 1.0f })
+            {
+                Envelope::Parameters p;
+                p.attack = 0.010f;
+                p.decay = 0.020f;
+                p.sustain = 0.5f;
+                p.release = 0.030f;
+                p.attackCurve = p.decayCurve = p.releaseCurve = curve;
+                auto envelope = makeEnvelope(p);
+                envelope->noteOn(1.0f);
+                expectEquals(samplesInStage(*envelope, Envelope::Stage::attack), 480);
+                expectEquals(envelope->getValue(), 1.0f);
+                expectEquals(samplesInStage(*envelope, Envelope::Stage::decay), 960);
+                expectEquals(envelope->getValue(), 0.5f);
+                envelope->noteOff();
+                expectEquals(samplesInStage(*envelope, Envelope::Stage::release), 1440);
+                expectEquals(envelope->getValue(), 0.0f);
+                expect(! envelope->isActive());
+            }
+        }
+
+        beginTest("curve_sign_bends_the_segment");
+        {
+            auto valueAtHalfAttack = [](float curve)
             {
                 Envelope::Parameters p;
                 p.attack = 0.010f;
                 p.attackCurve = curve;
                 auto envelope = makeEnvelope(p);
-                envelope.noteOn(1.0f);
-                float value = 0.0f;
-                for (int i = 0; i < 240; ++i)
-                    value = envelope.getNextSample();
-                return value;
+                envelope->noteOn(1.0f);
+                return envelope->advance(240);
             };
-            const float convex = valueAtHalfTime(0.0f);
-            const float linear = valueAtHalfTime(1.0f);
-            logMessage("attack at half time: curve 0 " + juce::String(convex, 3) + ", curve 1 " + juce::String(linear, 3));
-            expect(convex > 0.75f);
-            expect(std::abs(linear - 0.5f) < 0.06f);
+            const float fast = valueAtHalfAttack(-1.0f);
+            const float straight = valueAtHalfAttack(0.0f);
+            const float slow = valueAtHalfAttack(1.0f);
+            logMessage("attack at half time: curve -1 " + juce::String(fast, 3) + ", 0 " + juce::String(straight, 3) + ", +1 " + juce::String(slow, 3));
+            expect(fast > 0.9f);
+            expectWithinAbsoluteError(straight, 0.5f, 1.0e-4f);
+            expect(slow < 0.1f);
         }
 
-        beginTest("envelope_loop_cycles_attack_and_decay_while_held");
+        beginTest("delay_and_hold_last_their_times");
+        {
+            Envelope::Parameters p;
+            p.delay = 0.005f;
+            p.attack = 0.002f;
+            p.hold = 0.010f;
+            auto envelope = makeEnvelope(p);
+            envelope->noteOn(1.0f);
+            expect(envelope->getStage() == Envelope::Stage::delay);
+            expectEquals(samplesInStage(*envelope, Envelope::Stage::delay), 240);
+            expectEquals(samplesInStage(*envelope, Envelope::Stage::attack), 96);
+            expectEquals(samplesInStage(*envelope, Envelope::Stage::hold), 480);
+            expect(envelope->getStage() == Envelope::Stage::decay);
+        }
+
+        beginTest("velocity_sets_peak_and_sustain");
+        {
+            Envelope::Parameters p;
+            p.attack = 0.002f;
+            p.decay = 0.010f;
+            p.sustain = 0.5f;
+            p.velocitySensitivity = 1.0f;
+            auto envelope = makeEnvelope(p);
+            envelope->noteOn(0.6f);
+            samplesInStage(*envelope, Envelope::Stage::attack);
+            expectWithinAbsoluteError(envelope->getValue(), 0.6f, 1.0e-6f);
+            samplesInStage(*envelope, Envelope::Stage::decay);
+            expectWithinAbsoluteError(envelope->getValue(), 0.3f, 1.0e-6f);
+        }
+
+        beginTest("retrigger_never_jumps_even_with_a_new_velocity");
+        {
+            Envelope::Parameters p;
+            p.attack = 0.020f;
+            p.decay = 0.050f;
+            p.sustain = 0.7f;
+            p.release = 0.100f;
+            p.velocitySensitivity = 1.0f;
+            auto envelope = makeEnvelope(p);
+            envelope->noteOn(1.0f);
+            float value = envelope->advance(2400);
+            envelope->noteOff();
+            value = envelope->advance(480);
+            float largestStep = 0.0f;
+            envelope->noteOn(0.3f); // softer than the level it is at
+            float previous = value;
+            for (int i = 0; i < 9600; ++i)
+            {
+                const float v = envelope->getNextSample();
+                largestStep = std::max(largestStep, std::abs(v - previous));
+                previous = v;
+            }
+            logMessage("largest step after a softer retrigger: " + juce::String(largestStep, 5));
+            expect(largestStep < 0.01f);
+            expectWithinAbsoluteError(envelope->getValue(), 0.21f, 1.0e-3f); // sustain of the new velocity
+        }
+
+        beginTest("loop_cycles_while_held");
         {
             Envelope::Parameters p;
             p.attack = 0.010f;
+            p.hold = 0.005f;
             p.decay = 0.010f;
             p.sustain = 0.0f;
             p.loop = true;
             auto envelope = makeEnvelope(p);
-            envelope.noteOn(1.0f);
-
+            envelope->noteOn(1.0f);
             std::vector<int> peaks;
             bool armed = true;
             for (int i = 0; i < 48000; ++i)
             {
-                const float v = envelope.getNextSample();
-                if (armed && v >= 0.999f)
+                const float v = envelope->getNextSample();
+                if (armed && v >= 1.0f)
                 {
                     peaks.push_back(i);
                     armed = false;
@@ -254,16 +409,15 @@ public:
                 if (v < 0.5f)
                     armed = true;
             }
-            expect(peaks.size() >= 40);
+            expect(peaks.size() >= 30);
             for (std::size_t i = 1; i < peaks.size(); ++i)
-                expect(std::abs(peaks[i] - peaks[i - 1] - 960) <= 10, "loop period " + juce::String(peaks[i] - peaks[i - 1]));
-            envelope.noteOff();
-            for (int i = 0; i < 48000; ++i)
-                envelope.getNextSample();
-            expect(! envelope.isActive());
+                expect(std::abs(peaks[i] - peaks[i - 1] - 1200) <= 1, "loop period " + juce::String(peaks[i] - peaks[i - 1]));
+            envelope->noteOff();
+            envelope->advance(48000);
+            expect(! envelope->isActive());
         }
 
-        beginTest("envelope_one_shot_ignores_the_gate_and_finishes");
+        beginTest("one_shot_runs_its_decay_whatever_the_gate_does");
         {
             Envelope::Parameters p;
             p.attack = 0.005f;
@@ -272,70 +426,56 @@ public:
             p.release = 0.010f;
             p.oneShot = true;
             auto envelope = makeEnvelope(p);
-            envelope.noteOn(1.0f);
-            float value = 1.0f;
+            envelope->noteOn(1.0f);
+            envelope->advance(300);
+            envelope->noteOff();
+            expect(envelope->getStage() == Envelope::Stage::decay);
+
+            auto held = makeEnvelope(p);
+            held->noteOn(1.0f);
             int samples = 0;
-            while (samples < 48000)
+            while (held->isActive() && samples < 48000)
             {
-                value = envelope.getNextSample();
+                held->getNextSample();
                 ++samples;
-                if (! envelope.isActive())
-                    break;
             }
-            logMessage("one-shot finished after " + juce::String(samples) + " samples");
-            expect(! envelope.isActive());
-            expect(samples < 1440); // attack + decay + release
-            expectEquals(value, 0.0f);
-
-            // A note off during the decay is honoured only once the decay has ended.
-            auto second = makeEnvelope(p);
-            second.noteOn(1.0f);
-            for (int i = 0; i < 300; ++i)
-                second.getNextSample();
-            second.noteOff();
-            expect(second.getState() == Envelope::State::decay);
+            expectEquals(samples, 240 + 480 + 480); // attack, decay, release, with the gate still held
         }
 
-        beginTest("envelope_velocity_sensitivity_scales_the_peak");
-        {
-            auto peakFor = [](float sensitivity, float velocity)
-            {
-                Envelope::Parameters p;
-                p.attack = 0.005f;
-                p.decay = 0.1f;
-                p.velocitySensitivity = sensitivity;
-                auto envelope = makeEnvelope(p);
-                envelope.noteOn(velocity);
-                float peak = 0.0f;
-                for (int i = 0; i < 480; ++i)
-                    peak = std::max(peak, envelope.getNextSample());
-                return peak;
-            };
-            expectWithinAbsoluteError(peakFor(1.0f, 0.5f), 0.5f, 1.0e-4f);
-            expectWithinAbsoluteError(peakFor(0.0f, 0.5f), 1.0f, 1.0e-4f);
-            expectWithinAbsoluteError(peakFor(0.5f, 0.5f), 0.75f, 1.0e-4f);
-        }
-
-        beginTest("envelope_retrigger_continues_from_the_current_level");
+        beginTest("key_time_tracking_halves_times_an_octave_up");
         {
             Envelope::Parameters p;
-            p.attack = 0.020f;
-            p.release = 0.050f;
+            p.attack = 0.010f;
+            p.keyTimeTracking = 1.0f;
             auto envelope = makeEnvelope(p);
-            envelope.noteOn(1.0f);
-            float value = 0.0f;
-            for (int i = 0; i < 480; ++i)
-                value = envelope.getNextSample();
-            envelope.noteOff();
-            for (int i = 0; i < 240; ++i)
-                value = envelope.getNextSample();
-            expect(value > 0.1f && value < 1.0f);
-            envelope.noteOn(1.0f);
-            const float next = envelope.getNextSample();
-            expect(next >= value - 1.0e-4f);
-            expect(next < value + 0.05f);
+            envelope->noteOn(1.0f, 1.0f);
+            expectEquals(samplesInStage(*envelope, Envelope::Stage::attack), 240);
+        }
+
+        beginTest("sustain_changes_are_smoothed");
+        {
+            Envelope::Parameters p;
+            p.attack = 0.001f;
+            p.decay = 0.001f;
+            p.sustain = 0.8f;
+            auto envelope = makeEnvelope(p);
+            envelope->noteOn(1.0f);
+            envelope->advance(480);
+            p.sustain = 0.2f;
+            envelope->setParameters(p);
+            float previous = envelope->getValue();
+            float largestStep = 0.0f;
+            for (int i = 0; i < 4800; ++i)
+            {
+                const float v = envelope->getNextSample();
+                largestStep = std::max(largestStep, std::abs(v - previous));
+                previous = v;
+            }
+            expect(largestStep < 0.01f);
+            expectWithinAbsoluteError(envelope->getValue(), 0.2f, 1.0e-3f);
         }
     }
 };
 
-static V3ProcessorTests v3ProcessorTests;
+static V3LadderTests v3LadderTests;
+static V3EnvelopeTests v3EnvelopeTests;

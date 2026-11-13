@@ -25,7 +25,7 @@ namespace coolsynth::synth::v3
 {
     inline constexpr int maxSlotParameters = 8;
 
-    enum class Skew { linear, logarithmic };
+    enum class Skew { linear, logarithmic, squared };
     enum class Unit { generic, hertz, milliseconds, decibels, semitones, cents, percent, choice };
 
     struct ParameterDescriptor
@@ -61,15 +61,26 @@ namespace coolsynth::synth::v3
     /** How a generator combines with the previous generator slot. */
     enum class Combine : int { off = 0, sync, ring, fm, am };
 
+    /**
+        What a generator hands the next one for its combine mode, in its own output time.
+        The pointers cover the samples of its last process() call.
+    */
+    struct GeneratorLink
+    {
+        const float* signal = nullptr; // mono, unit level, after its own combine, before level and pan; null is silence
+        const float* wraps = nullptr;  // per sample: tau in (0, 1] when its phase wrapped since the previous sample, else -1; null without a phase
+    };
+
     /** Parameter values for one sub-block, in descriptor units with modulation applied. */
     struct SlotParams
     {
         std::array<float, maxSlotParameters> p {};
-        float level = 1.0f;          // generators only
-        float pan = 0.0f;            // generators only, -1..1
-        float pitchSemitones = 0.0f; // generators only: octave, semitone, fine and modulation
+        float level = 1.0f;          // generators: applied by the voice, not by the module
+        float pan = 0.0f;            // generators, -1..1
+        float pitchSemitones = 0.0f; // generators: octave, semitone, fine and modulation
         float frequencyHz = 440.0f;  // set by the voice from the note, glide, bend and pitchSemitones
         Combine combine = Combine::off;
+        float combineAmount = 0.0f;  // 0..1: FM depth, or the wet share of ring and AM
     };
 
     /** Arena of floats, sized once off the audio thread; modules take spans from it in prepare(). */
@@ -225,6 +236,35 @@ namespace coolsynth::synth::v3
             pendingType.store(typeIndex);
         }
 
+        /** Audio thread, for a silent voice about to start a note: applies a waiting type at once, without a crossfade. */
+        void switchTypeNow() noexcept
+        {
+            const int pending = pendingType.exchange(-1);
+            fadeRemaining = 0;
+            if (pending < 0 || pending >= typeCount || pending == typeIndex())
+                return;
+
+            Types::emplace(instances[active].module, pending);
+            prepareInstance(instances[active]);
+            if (noteStarted)
+                std::visit([&](auto& module) { module.noteOn(lastNote); }, instances[active].module);
+        }
+
+        /** Generator slots: the previous generator's link, handed to every module this slot runs. */
+        void setLink(const GeneratorLink& link) noexcept { inputLink = link; }
+
+        /** Generator slots: what the active module hands the next generator, valid until the next process(). */
+        [[nodiscard]] GeneratorLink link() const noexcept
+        {
+            return std::visit([](const auto& module) -> GeneratorLink
+            {
+                if constexpr (requires { module.link(); })
+                    return module.link();
+                else
+                    return {};
+            }, instances[active].module);
+        }
+
         [[nodiscard]] int typeIndex() const noexcept { return static_cast<int>(instances[active].module.index()); }
         [[nodiscard]] const ModuleDescriptor& descriptor() const { return Types::descriptor(typeIndex()); }
         [[nodiscard]] bool isCrossfading() const noexcept { return fadeRemaining > 0; }
@@ -334,7 +374,12 @@ namespace coolsynth::synth::v3
                 clamped.p[static_cast<std::size_t>(i)] = std::clamp(params.p[static_cast<std::size_t>(i)], range.min, range.max);
             }
 
-            std::visit([&](auto& module) { module.process(left, right, numSamples, clamped); }, instance.module);
+            std::visit([&](auto& module)
+            {
+                if constexpr (requires { module.setLink(inputLink); })
+                    module.setLink(inputLink);
+                module.process(left, right, numSamples, clamped);
+            }, instance.module);
         }
 
         std::array<Instance, 2> instances {};
@@ -346,6 +391,7 @@ namespace coolsynth::synth::v3
         int fadeTotal = 1;
         int fadeRemaining = 0;
         NoteContext lastNote {};
+        GeneratorLink inputLink {};
         bool noteStarted = false;
         bool prepared = false;
     };

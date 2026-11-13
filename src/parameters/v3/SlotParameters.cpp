@@ -211,6 +211,8 @@ namespace coolsynth::parameters::v3
                 makeId(fixedParameterId(path, "key")), "Key Track", true));
             group->addChild(std::make_unique<juce::AudioParameterChoice>(
                 makeId(fixedParameterId(path, "combine")), "Combine", combineModeNames, 0));
+            group->addChild(std::make_unique<juce::AudioParameterFloat>(
+                makeId(fixedParameterId(path, "amount")), "Combine Amount", juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
         }
 
         return group;
@@ -219,7 +221,7 @@ namespace coolsynth::parameters::v3
     int parameterCountForKind(SlotKind kind) noexcept
     {
         constexpr int common = 1 + genericParameterCount;
-        return kind == SlotKind::generator ? common + 7 : common;
+        return kind == SlotKind::generator ? common + 8 : common;
     }
 
     SlotParameterPointers bindSlotPointers(juce::AudioProcessorValueTreeState& state, const SlotPath& path)
@@ -238,6 +240,7 @@ namespace coolsynth::parameters::v3
             pointers.fineCents = state.getRawParameterValue(fixedParameterId(path, "fine"));
             pointers.keyTrack = state.getRawParameterValue(fixedParameterId(path, "key"));
             pointers.combine = state.getRawParameterValue(fixedParameterId(path, "combine"));
+            pointers.amount = state.getRawParameterValue(fixedParameterId(path, "amount"));
         }
         return pointers;
     }
@@ -269,6 +272,8 @@ namespace coolsynth::parameters::v3
         if (pointers.combine != nullptr)
             targets.combine = static_cast<CombineMode>(juce::jlimit(0, combineModeNames.size() - 1,
                                                                    static_cast<int>(std::lround(pointers.combine->load()))));
+        if (pointers.amount != nullptr)
+            targets.amount = pointers.amount->load();
         return targets;
     }
 
@@ -279,5 +284,6 @@ namespace coolsynth::parameters::v3
         base.setLevelTarget(targets.level);
         base.setPanTarget(targets.pan);
         base.setPitchTarget(targets.pitchSemitones);
+        base.setAmountTarget(targets.amount);
     }
 }
