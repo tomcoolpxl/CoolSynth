@@ -77,6 +77,9 @@ JUCE's generic editor, which phase 1.4 already ships: every parameter as a slide
 formatted by its slot's current type. Replace it only if auditioning becomes impractical, and
 then with a minimal panel that phase 9 throws away. No layout, look or UI tests before phase 9.
 
+Shipped 2026-11-13: `plugin/AuditionEditor`, a factory preset menu grouped by room above the
+generic editor; the processor also lists the bank as host programs ("Room: Preset").
+
 ## Phase 2: modulation
 
 2.1 LFO class. Shapes (sine, triangle, saw up, saw down, square, sample-and-hold, smoothed

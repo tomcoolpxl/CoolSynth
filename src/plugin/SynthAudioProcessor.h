@@ -37,10 +37,11 @@ public:
     bool isMidiEffect() const override { return false; }
     double getTailLengthSeconds() const override;
 
-    int getNumPrograms() override { return 1; }
-    int getCurrentProgram() override { return 0; }
-    void setCurrentProgram(int) override {}
-    const juce::String getProgramName(int) override { return {}; }
+    // The factory bank as host programs, named "Room: Preset".
+    int getNumPrograms() override;
+    int getCurrentProgram() override { return currentProgram; }
+    void setCurrentProgram(int index) override;
+    const juce::String getProgramName(int index) override;
     void changeProgramName(int, const juce::String&) override {}
 
     void getStateInformation(juce::MemoryBlock& destData) override;
@@ -140,6 +141,7 @@ private:
     coolsynth::synth::v3::EngineSettings engineSettings;
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
+    int currentProgram = 0;
     mutable juce::CriticalSection midiMappingStateLock;
     std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};
     juce::AbstractFifo pendingPluginControllerEventQueue { static_cast<int> (pendingPluginControllerEvents.size()) };

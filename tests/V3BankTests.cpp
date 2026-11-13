@@ -140,6 +140,34 @@ env1 = loop=maybe attack=abc
             expectEquals(problems.size(), 5);
         }
 
+        beginTest("the_bank_is_the_processors_program_list");
+        {
+            auto processor = std::make_unique<SynthAudioProcessor>();
+            expectEquals(processor->getNumPrograms(), coolsynth::presets::getFactoryPresetCount());
+            int moogBass = -1;
+            for (int i = 0; i < processor->getNumPrograms(); ++i)
+                if (coolsynth::presets::getFactoryPreset(i).name == "Moog Bass")
+                    moogBass = i;
+            expect(moogBass >= 0);
+            expect(processor->getProgramName(moogBass) == "Studio 1982: Moog Bass");
+            processor->setCurrentProgram(moogBass);
+            expectEquals(processor->getCurrentProgram(), moogBass);
+            expectEquals(static_cast<int>(rawValue(*processor, "pA.play.mode")), 2); // legato
+            expect(processor->getPatchName() == "Moog Bass");
+        }
+
+        beginTest("audition_editor_builds_and_lays_out");
+        {
+            auto processor = std::make_unique<SynthAudioProcessor>();
+            {
+                std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
+                expect(editor != nullptr);
+                expect(editor->getWidth() >= 560 && editor->getHeight() > 100);
+                editor->setSize(900, 700);
+                expect(editor->getNumChildComponents() >= 2); // the preset menu, the sliders, and the resize corner
+            }
+        }
+
         beginTest("every_factory_preset_sounds_and_stays_bounded");
         {
             for (int index = 0; index < coolsynth::presets::getFactoryPresetCount(); ++index)

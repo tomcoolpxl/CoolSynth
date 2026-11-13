@@ -10,6 +10,8 @@
 #include "midi/MidiToControllerEvent.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
+#include "plugin/AuditionEditor.h"
+#include "presets/FactoryPresets.h"
 
 namespace
 {
@@ -263,10 +265,31 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     }
 }
 
+int SynthAudioProcessor::getNumPrograms()
+{
+    return coolsynth::presets::getFactoryPresetCount();
+}
+
+const juce::String SynthAudioProcessor::getProgramName(int index)
+{
+    const auto& preset = coolsynth::presets::getFactoryPreset(index);
+    return preset.category + ": " + preset.name;
+}
+
+void SynthAudioProcessor::setCurrentProgram(int index)
+{
+    if (index < 0 || index >= getNumPrograms())
+        return;
+    currentProgram = index;
+    const auto& preset = coolsynth::presets::getFactoryPreset(index);
+    coolsynth::presets::applyFactoryPreset(parameters, preset);
+    setPatchIdentity(preset.name, false);
+}
+
 juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()
 {
-    // Until the V3 audition UI exists (phase 1.6): every parameter as a slider, named by its slot's type.
-    return new juce::GenericAudioProcessorEditor(*this);
+    // Throwaway until phase 9: a preset menu over every parameter as a slider, named by its slot's type.
+    return new AuditionEditor(*this);
 }
 
 void SynthAudioProcessor::getStateInformation(juce::MemoryBlock& destData)

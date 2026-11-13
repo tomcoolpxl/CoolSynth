@@ -533,3 +533,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] The master gain starts at its setting after prepare instead of ramping from unity, which made the first notes after loading louder; the master default is now -6 dB.
 - [x] Authored 14 presets: Workshop (Init Saw, Init Pulse, Init Sine, Init Arp), Studio 1982 (Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead), Engine Room (Pure Sub, Donk, Fat Analog), Main Stage (Reese, Supersaw), normalised to -15 to -18.6 LUFS.
 - [x] Added `tests/V3BankTests.cpp` (mapping, error reports, type defaults on apply, unreadable values, every preset sounds and stays within full scale), a clean-bank patch test and a master-priming engine test. Verified Debug build without warnings, `ctest` green, Release standalone and VST3 built.
+
+## V3 audition editor and programs (2026-11-13)
+
+- [x] The processor lists the factory bank as host programs named "Room: Preset"; choosing one applies it and sets the patch name.
+- [x] Added the throwaway `src/plugin/AuditionEditor`: a factory preset menu grouped by room above JUCE's generic editor (phase 1.6, replaced in phase 9).
+- [x] Tests: the bank is the program list and applying a program sets its parameters; the editor builds and lays out headlessly. Verified Debug build without warnings, `ctest` green, Release standalone and VST3 rebuilt.

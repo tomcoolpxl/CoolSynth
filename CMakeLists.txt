@@ -67,6 +67,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/Voice.cpp
     src/synth/v3/Part.cpp
     src/synth/v3/EngineV3.cpp
+    src/plugin/AuditionEditor.cpp
     src/plugin/SynthAudioProcessor.cpp
     src/standalone/CoolSynthStandaloneApp.cpp
     src/standalone/SettingsStore.cpp

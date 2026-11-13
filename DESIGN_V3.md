@@ -380,7 +380,9 @@ The real UI is designed after the engine, presets and arpeggiator are finished (
 as a condensed view of everything the engine can do. Until then the UI is throwaway: since phase
 1.4 the processor shows JUCE's generic editor, in which every parameter is a slider whose name
 and text come from the descriptor of its slot's current type, so parameter names, units and
-groups must stay clean. Nothing UI-specific is built before phase 9.
+groups must stay clean. Nothing UI-specific is built before phase 9 beyond the throwaway
+audition editor: a factory preset menu grouped by room above the generic editor. The
+processor lists the bank as host programs named "Room: Preset".
 
 ## 13. Migration from V2
 
