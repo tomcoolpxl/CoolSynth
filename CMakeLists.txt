@@ -172,6 +172,7 @@ if(BUILD_TESTING)
             tests/V3WavetableTests.cpp
             tests/V3SvfTests.cpp
             tests/V3ShaperTests.cpp
+            tests/V3ResonatorTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp

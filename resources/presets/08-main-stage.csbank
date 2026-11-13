@@ -76,3 +76,22 @@ voice = env2ToP1=0 glide=12
 play = mode=legato
 delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
 master = 5
+
+[Neuro Growl]
+room = Main Stage
+# A digital wavetable and a sub-octave FM pair an octave down, talking through a formant filter
+# whose vowel an LFO synced at 1/8 sweeps, then tube drive per voice and a resonant low-pass.
+# The mod wheel doubles the talking rate.
+g1 = Wavetable table=digital pos=0.35 oct=-1 level=1
+g2 = FM2 ratio=0.5 index=0.6 feedback=0.2 oct=-1 level=0.75
+p1 = Formant vowel=0 size=1.1 res=0.65 mix=1
+p2 = Drive curve=tube drive=18 tone=0.8 mix=1
+p3 = SVF mode=lp cutoff=2200 res=0.35 key=0.3
+env1 = attack=2 decay=400 sustain=0.9 release=120
+lfo1 = shape=triangle sync=on division=1/8 retrigger=on
+mod = src=lfo1 dst=p1.vowel amount=0.5 curve=unipolar
+mod = src=lfo1 dst=g1.pos amount=0.2
+mod = src=wheel dst=lfo1.rate amount=0.25
+voice = env2ToP1=0 glide=30
+play = mode=legato glideLegato=on
+master = 4.5

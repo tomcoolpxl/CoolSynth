@@ -152,6 +152,7 @@ Shipped 2026-11-13 with Metal Hit; Neuro Growl moves to 4.4 (decision D46).
 
 4.4 Formant and comb. Five-vowel morph with size and resonance; tuned comb with feedback and
 polarity. Ships: Bedroom Vinyl Choir, Basement Furnace Drone, Main Stage Neuro Growl.
+Shipped 2026-11-13 with all three (decisions D47 to D49). Phase 4 complete.
 
 ## Phase 5: effects
 

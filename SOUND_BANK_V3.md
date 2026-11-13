@@ -342,13 +342,13 @@ loudness-normalised):
 | Room | Shipped | Waiting for |
 | --- | --- | --- |
 | Workshop | Init Saw, Init Pulse, Init Sine, Init Arp, Init Noise, Init FM, Init Wavetable | none |
-| Basement | Acid, Rust Bass, Metal Hit, Concrete Pad (no lo-fi yet), Siren | Furnace Drone (comb, 4.4), the lo-fi on Concrete Pad (5.2) |
+| Basement | Acid, Rust Bass, Metal Hit, Furnace Drone, Concrete Pad (no lo-fi yet), Siren | the lo-fi on Concrete Pad (5.2) |
 | Studio 1982 | Juno Pad, Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
-| Bedroom | Tape Flute | Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi, 5.2), Dusty Mallet (modal, 6.2), Vinyl Choir (formant, 4.4) |
+| Bedroom | Tape Flute, Vinyl Choir (no lo-fi yet) | Cassette Keys, Blanket Pad, Bedroom Bass and Vinyl Choir's dust (lo-fi, 5.2), Dusty Mallet (modal, 6.2) |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Static Hit, SCC Lead | Chip Chord (chord memory, 7.1) |
 | Greenhouse | Glass Bell, Rain Chime, Crystal Pluck | Marimba (modal, 6.2), Kalimba, Harp String (Karplus-Strong, 6.1) |
 | Observatory | Solar Wind, Nebula Pad, Deep Field | Shimmer Drone, Satellite Ping (5.1), Granular Sky (8.2) |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad | Chord Trigger (7.1) |
-| Main Stage | Reese, Supersaw (no sub layer), Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |
+| Main Stage | Reese, Supersaw (no sub layer), Neuro Growl, Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |

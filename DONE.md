@@ -635,3 +635,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Preset: Basement Metal Hit. 52 presets.
 - [x] Added `V3DriveTests` (4 tests): 0 dB nearly clean, every curve bounded at 36 dB; soft odd and tube even harmonics; hard curve ADAA -55 dB against -41 dB naive; the combine audit. Verified Debug build without warnings and `ctest` green; Metal Hit 18 % of real time for eight-note chords.
 - [x] Rule recorded in GEMINI.md: no heredocs in shell commands; scripts and commit messages go through files.
+
+## V3 phase 4.4: formant and comb (2026-11-13)
+
+- [x] Added `src/synth/v3/ResonatorProcessors.h`: `FormantProcessor` (processor type 6: three parallel band-passes on the a e i o u formants, Vowel morph, Size, Resonance with make-up, Mix) and `CombProcessor` (type 7: key-tracked feedback comb with Tune, damping, soft limit, polarity, Hermite read, Mix).
+- [x] Presets: Bedroom Vinyl Choir, Basement Furnace Drone, Main Stage Neuro Growl. 55 presets; phase 4 complete.
+- [x] Added `tests/V3ResonatorTests.cpp` (6 tests): vowel peaks for a and i, Size scaling, a click-free vowel sweep and a bounded full resonance, comb echoes at the note period within a sample, negative polarity alternating and Tune +12 halving the period, full feedback bounded. Verified Debug build without warnings and `ctest` green; Furnace Drone 29.8 %, Vinyl Choir 18.8 %, Neuro Growl 2.9 % of real time for eight-note chords.

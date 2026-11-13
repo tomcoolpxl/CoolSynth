@@ -595,3 +595,38 @@ The plan asks to audit ring and FM combine for level and aliasing.
 - **Neuro Growl moves to 4.4 (taken, recommended).** The plan lists it in 4.3 "formant pending";
   its talking quality is the formant filter, so it ships once, with the formant, instead of
   twice.
+
+## D47. The formant filter (2026-11-13, phase 4.4)
+
+- **Three band-passes in parallel on the first three formants of a male a, e, i, o and u; Vowel
+  morphs between neighbours (frequencies in the log domain); Size scales all formants 0.5 to 2;
+  Resonance sets Q 3 to 25 with a make-up gain of about sqrt(Q) so the loudness holds; Mix
+  (taken, recommended).** Tested: each vowel peaks at its formants (a at 730 and 1090 Hz, i at
+  270 and 2290 Hz), Size 2 moves them an octave down, a vowel sweep has no clicks.
+- A cascade of peaking filters. Closer to a vocal tract, harder to keep level.
+- Five formants. More realistic vowels, five filters per channel for a synth growl that does not
+  need them.
+
+## D48. The comb (2026-11-13, phase 4.4)
+
+- **A feedback comb tuned to the note (or C4) plus Tune, a one-pole damping low-pass and a soft
+  limit in the loop, positive or negative polarity, a Hermite read with the delay ramped per
+  sample, down to 20 Hz, feedback up to 0.98, Mix (taken, recommended).** Tested: echoes every
+  note period within a sample, negative polarity alternating in sign, Tune +12 halving the
+  period, full feedback bounded.
+- A feed-forward comb. A flanger-like notch pattern, not a resonator.
+- Allpass interpolation. Flatter in the top octave, but it clicks when the delay is modulated,
+  and Furnace Drone sweeps it.
+
+## D49. Phase 4.4 presets (2026-11-13, phase 4.4)
+
+- **Vinyl Choir: two pulse waves with opposed PWM through the formant, its vowel wandering on a
+  smooth-random LFO (taken).** The recipe's slow vowel sweep, less predictable than a sine.
+- **Furnace Drone: two low saws and dark noise through a resonant comb whose tuning a 0.05 Hz
+  global LFO drags over a fifth, then soft drive per voice (taken).** At 30 % of real time for
+  an eight-note chord it is the heaviest preset; it is a drone and is played with one or two
+  keys.
+- **Neuro Growl: a digital wavetable and a sub-octave FM pair through the formant, its vowel on
+  a 1/8 synced LFO, tube drive and the SVF; the wheel doubles the talking rate (taken).**
+
+Phase 4 is complete.

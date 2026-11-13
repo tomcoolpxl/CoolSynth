@@ -44,6 +44,23 @@ voice = env2ToP1=0
 reverb = on size=0.3 damping=0.4 mix=0.2
 master = 5.5
 
+[Furnace Drone]
+room = Basement
+# Two saws two octaves down, nine cents apart, with a rumble of dark noise, through a resonant
+# comb whose tuning a slow global LFO drags up and down a fifth, then a soft per-voice drive.
+g1 = VA shape=saw oct=-2 level=0.6
+g2 = VA shape=saw oct=-2 fine=-9 level=0.6
+g3 = Noise type=pink tone=0.25 level=0.15
+p1 = Comb tune=12 fb=0.85 damp=0.3 key=1 mix=0.6
+p2 = Drive curve=soft drive=10 tone=0.6 mix=1
+p3 = Ladder cutoff=1800 res=0.1 key=0.3
+env1 = attack=2000 decay=2000 sustain=1 release=3000
+glfo1 = shape=sine sync=off rate=0.05 retrigger=off
+mod = src=glfo1 dst=p1.tune amount=0.15
+voice = env2ToP1=0 drift=5
+reverb = on size=0.7 damping=0.6 mix=0.2
+master = -5
+
 [Concrete Pad]
 room = Basement
 # Two detuned saws with the bass taken away (state-variable high-pass at 200 Hz) and the top too

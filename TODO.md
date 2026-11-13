@@ -53,8 +53,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    Pad, Siren, Main Stage Hyper Lead. 51 presets.
 23. Phase 4.3 done 2026-11-13: the Drive processor, the combine audit (no change needed),
    `V3DriveTests`; Basement Metal Hit. 52 presets.
-24. Phase 4.4: formant and comb processors; Bedroom Vinyl Choir, Basement Furnace Drone, Main
-   Stage Neuro Growl.
+24. Phase 4.4 done 2026-11-13: `src/synth/v3/ResonatorProcessors.h` (formant, comb),
+   `tests/V3ResonatorTests.cpp`; Vinyl Choir, Furnace Drone, Neuro Growl. Phase 4 complete: 55
+   presets.
+25. Phase 5.1: plate pre-delay, input high-pass, modulation trim, shimmer; Observatory Shimmer
+   Drone and Satellite Ping.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

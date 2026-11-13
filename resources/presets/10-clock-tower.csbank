@@ -53,7 +53,7 @@ voice = env2ToP1=0.2
 arp = on rate=1/16 pattern=randomWalk octaves=2 gate=0.6 chance=0.8
 delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
 reverb = on size=0.5 damping=0.5 mix=0.15
-master = 5.5
+master = 6
 
 [Polyrhythm Pad]
 room = Clock Tower

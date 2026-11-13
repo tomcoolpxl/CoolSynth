@@ -92,6 +92,12 @@ processor type 5: Soft, Hard and Tube curves with first-order antiderivative ant
 ladder's headroom, peak normalisation by the larger peak, Tone, Mix. The ring and FM combine
 modes were audited and left as they are (decisions D44, D45).
 
+Shipped (phase 4.4, 2026-11-13): `FormantProcessor` and `CombProcessor` in
+`src/synth/v3/ResonatorProcessors.h`, processor types 6 and 7. Formant: three parallel
+band-passes on the a e i o u formants, Vowel morph, Size, Resonance with make-up, Mix. Comb: a
+key-tracked feedback comb with Tune, damping, a soft limit, polarity, a Hermite read and Mix
+(decisions D47, D48).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

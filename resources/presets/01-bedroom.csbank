@@ -16,3 +16,23 @@ mod = src=env3 dst=g2.level amount=0.35
 voice = env2ToP1=0 drift=2
 reverb = on size=0.55 damping=0.55 mix=0.25
 master = -6
+
+[Vinyl Choir]
+room = Bedroom
+# Two pulse waves whose widths drift against each other, sung through a formant filter that
+# wanders from vowel to vowel over about twelve seconds, softened and put in a room. The vinyl
+# dust arrives with the lo-fi effect in phase 5.2.
+g1 = VA shape=pulse pw=0.4 level=0.6
+g2 = VA shape=pulse pw=0.6 fine=7 level=0.6
+p1 = Formant vowel=0.5 size=1 res=0.55 mix=1
+p2 = Ladder mode=lp12 cutoff=3500 res=0.05 key=0.3
+env1 = attack=450 decay=1500 sustain=1 release=1400
+lfo1 = shape=triangle rate=0.3 retrigger=off
+lfo2 = shape=smoothRandom rate=0.08 retrigger=off
+mod = src=lfo1 dst=g1.pw amount=0.2
+mod = src=lfo1 dst=g2.pw amount=-0.2
+mod = src=lfo2 dst=p1.vowel amount=0.4
+voice = env2ToP1=0 drift=4
+chorus = on rate=0.25 depth=0.4 mix=0.3
+reverb = on size=0.6 damping=0.55 mix=0.3
+master = -1.5
