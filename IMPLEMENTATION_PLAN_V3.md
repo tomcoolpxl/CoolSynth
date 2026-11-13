@@ -144,6 +144,7 @@ Shipped 2026-11-13 with all three (decisions D38, D39).
 4.2 Crusher and folder. Bit depth continuous, sample-rate reduction, dry/wet; wavefolder with
 symmetry and pre-gain. Tests: bit steps, fold harmonics. Ships: Arcade SCC Lead, Basement (Acid,
 Rust Bass, Concrete Pad, Siren), Main Stage Hyper Lead.
+Shipped 2026-11-13 with all six (decisions D40 to D43).
 
 4.3 Per-voice drive and ring combine polish. Drive processor type; ring and FM combine audited
 for level and aliasing. Ships: Basement Metal Hit, Main Stage Neuro Growl (formant pending).

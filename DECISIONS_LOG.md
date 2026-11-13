@@ -355,7 +355,17 @@ musicdsp pink-noise page notes that fixed pinking coefficients degrade at higher
 Random Walk's measured loudness moves by about 1 dB between runs because its arp pattern is
 random, so the tool may nudge its master by 0.5 dB on a rerun; nothing to fix.
 
-## D29. Link errors on the embedded bank library (2026-11-13, phases 3.1 and 3.2)
+## D29. Link errors on the embedded bank library (2026-11-13, phases 3.1 to 4.2)
+
+Corrected a second time in phase 4.2, below the original entry: the cause is the incremental
+linker, not CMake reconfiguring. After 06-basement.csbank was added, the failure came back even
+with the library deleted and built on its own first; deleting the `.ilk` files fixed it, and
+every failure had followed a new bank file (a new library member). Taken: incremental linking
+off in Debug (`/INCREMENTAL:NO`; little to gain with an optimised build), the TODO note now says
+to delete the `.ilk` files if it ever returns. The alternative, keeping incremental linking and
+deleting `.ilk` files by hand after each new bank file, was rejected as a trap. The original
+entry follows.
+
 
 The embedded bank library failed to link four times (LNK1236, once LNK1106). Every time, CMake
 had reconfigured itself in the middle of the build, which a new bank file or a CMakeLists change
@@ -504,3 +514,51 @@ FFT, 2048 samples, is the common practice; hard switching between octave tables 
 - **Nebula Pad's soft low-pass moves to the SVF (taken).**
 - **Deep Field ships on the ladder, 400 Hz, breathing on a 20-second global LFO (taken).** The
   recipe asks for LP4, which is the ladder.
+
+## D40. The crusher (2026-11-13, phase 4.2)
+
+- **Sample-and-hold at Rate, then rounding to 2^bits levels with the bit count continuous, and a
+  dry/wet mix; the top of the Rate knob is no reduction (taken, recommended).** A Bits sweep
+  moves through the steps without jumps; the aliasing of the rate reduction is the sound, as on
+  every crusher. At full wet the crushed value is output exactly.
+- Dither before rounding. Smoother at high bit counts, but crushing is meant to be rough.
+- Band-limit the rate reduction. Clean, but not a crusher any more.
+
+## D41. The wavefolder (2026-11-13, phase 4.2)
+
+Checked online: Parker, Zavalishin and Le Bivic (DAFx 2016) introduced antiderivative
+anti-aliasing; Esqueda, Pontynen, Parker and Bilbao apply it to the Lockhart and Serge
+wavefolders.
+
+- **A sine folder, sin(pi/2 u), with first-order antiderivative anti-aliasing; Drive 0 to 30 dB,
+  Symmetry as an offset with a DC blocker after, the dry signal delayed half a sample to match
+  (taken, recommended).** Measured on a 4 kHz sine at 30 dB of drive: the worst alias below
+  20 kHz -94 dB, against -72 dB for the same folder without it.
+- A triangle folder (Buchla style). Brighter, but its corners alias more and its antiderivative
+  is piecewise.
+- Circuit models of the Lockhart or Serge folders. More character, several times the cost.
+- Second-order ADAA or extra oversampling. Cleaner still, at more cost, for aliasing that is
+  already below -90 dB.
+
+## D42. A quantized curve in the matrix (2026-11-13, phase 4.2)
+
+Hyper Lead's recipe asks for a sample-and-hold to pitch "quantised to semitones".
+
+- **A sixth curve, Quantized: the slot's whole contribution is rounded at its destination, to
+  whole semitones on pitch destinations and to sixteenths of the range elsewhere (taken,
+  recommended).** Works for any amount and any source; added at the end of the curve list, so
+  saved curves keep their meaning.
+- Quantizing the source before the amount. It would only land on semitones for some amounts.
+- A scale-aware pitch quantizer per voice. More musical (scales, keys), but a module of its own;
+  a later addition if presets need it.
+
+## D43. Basement and Hyper Lead (2026-11-13, phase 4.2)
+
+- **Siren has every generator Off: the ladder sings at full resonance from its own -110 dB noise
+  floor, its cutoff dragged by a 0.1 Hz global saw LFO, into an 0.8-feedback echo (taken).**
+- **Rust Bass folds per voice, the fold deepening with ENV3 and velocity, then a ladder (taken).**
+  This is what the recipe's "FOLD per voice from env" asks; the global drive would smear chords.
+- **Concrete Pad: state-variable high-pass at 200 Hz, ladder at 1 kHz, crushed to 12 bits at
+  22 kHz (taken).** The lo-fi of the recipe waits for 5.2.
+- **New bank file `06-basement.csbank` (taken).** Metal Hit waits for 4.3, Furnace Drone for the
+  comb (4.4).

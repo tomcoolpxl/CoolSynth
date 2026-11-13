@@ -49,10 +49,9 @@ master = 1.5
 [SCC Lead]
 room = Arcade
 # The 4-bit, 32-step chip table: its pulse width climbs through eight duty cycles at 1/16, one
-# frame per step, with a vibrato that fades in and one slap back. The 4-bit crusher arrives
-# with phase 4.2.
+# frame per step, through a 4-bit crusher, with a vibrato that fades in and one slap back.
 g1 = Wavetable table=chip pos=0 rand=0 level=0.75
-p1 = Off
+p1 = Crusher bits=4 rate=48000 mix=1
 env1 = attack=1 decay=1 sustain=1 release=40
 step = values=0,0.0667,0.1333,0.2,0.2667,0.3333,0.4,0.4667 length=8 division=1/16
 lfo1 = shape=triangle rate=6 fade=250 retrigger=on
@@ -61,4 +60,4 @@ mod = src=lfo1 dst=pitch amount=0.008
 voice = env2ToP1=0 glide=30
 play = mode=legato
 delay = on time=120 feedback=0 mix=0.18
-master = -0.5
+master = -1

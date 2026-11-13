@@ -48,8 +48,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    `tests/V3WavetableTests.cpp`; Init Wavetable, Nebula Pad, SCC Lead. Phase 3 complete: 45 presets.
 21. Phase 4.1 done 2026-11-13: `src/synth/v3/SvfProcessor.h`, `tests/V3SvfTests.cpp`; Supersaw and
    Nebula Pad on the SVF, Deep Field. 46 presets.
-22. Phase 4.2: crusher and wavefolder; SCC Lead's crusher, Basement (Acid, Rust Bass, Concrete
-   Pad, Siren), Main Stage Hyper Lead.
+22. Phase 4.2 done 2026-11-13: `src/synth/v3/ShaperProcessors.h` (crusher, folder), the Quantized
+   matrix curve, `tests/V3ShaperTests.cpp`; SCC Lead's crusher, Basement Acid, Rust Bass, Concrete
+   Pad, Siren, Main Stage Hyper Lead. 51 presets.
+23. Phase 4.3: per-voice drive processor, ring and FM combine audit; Basement Metal Hit.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.
@@ -78,10 +80,9 @@ Absorbed into V3 (do not do them on V2):
 
 ## Standing notes
 
-- After adding a bank file (or editing CMakeLists.txt), configure first:
-  `cmake --preset vs2022-debug`. Letting the build reconfigure itself can leave the embedded
-  bank library truncated, and every later build then fails to link it (LNK1236 or LNK1106).
-  If that happens, delete `build/Debug/CoolSynthFactoryBank.lib` and build again.
+- Adding a bank file used to make the link fail (LNK1236 on the embedded bank library) because
+  of stale incremental-link databases; incremental linking is now off in Debug. If it ever
+  returns, delete the `.ilk` files under `build` and build again.
 
 - UI comes last (plan phase 9). Until then only throwaway UI: the generic editor. In the
   standalone the MiniLab knobs do nothing until then (their mapping lived in the V2 editor);

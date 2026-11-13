@@ -619,3 +619,11 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/v3/SvfProcessor.h` (processor type 2): trapezoidal SVF with LP, HP, BP and notch, resonance Q 0.5 to 40, a soft limit on the band state, drive, key tracking, per-sample ramps.
 - [x] Presets: Supersaw high-passed by the SVF at 120 Hz (and 28 % down to 20 % of real time), Nebula Pad's low-pass on the SVF, Observatory Deep Field. 46 presets.
 - [x] Added `tests/V3SvfTests.cpp` (4 tests): the four response shapes (-6 dB at the cutoff and 40 dB a decade beyond at Q 0.5, band-pass unity at the centre, notch below -40 dB), the resonance peak equal to Q, full resonance with full drive bounded on noise with a jumping cutoff and an impulse ring that decays, key tracking. Verified Debug build without warnings and `ctest` green.
+
+## V3 phase 4.2: crusher, wavefolder and the Basement (2026-11-13)
+
+- [x] Added `src/synth/v3/ShaperProcessors.h`: `CrusherProcessor` (processor type 3: sample-and-hold at Rate, continuous Bits, Mix) and `FolderProcessor` (type 4: sine folder with first-order antiderivative anti-aliasing, Drive, Symmetry, DC blocker, Mix).
+- [x] The matrix gained a Quantized curve (whole semitones on pitch, sixteenths elsewhere).
+- [x] Presets: SCC Lead's 4-bit crusher; Basement Acid, Rust Bass, Concrete Pad, Siren (`06-basement.csbank`); Main Stage Hyper Lead. 51 presets.
+- [x] Added `tests/V3ShaperTests.cpp` (5 tests): 4-bit output on a grid of 0.125, 16 bits transparent within 2e-5, at most 1000 new values a second at 1 kHz, mix 0 dry; fold harmonics growing with drive and bounded; ADAA aliases -94 dB against -72 dB for a naive folder; no DC with symmetry, mix 0 as the half-sample-delayed dry; quantized routes on whole semitones and sixteenths.
+- [x] Fixed the recurring LNK1236 link failure after new bank files: incremental linking is off in Debug (stale `.ilk` databases were the cause; decision D29 corrected). Verified Debug build without warnings and `ctest` green; Concrete Pad 26.6 %, the other new presets under 5 % of real time.

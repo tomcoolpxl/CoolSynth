@@ -18,6 +18,14 @@ if(MSVC)
         # libraries (the embedded bank, the controller profiles) need none.
         string(REPLACE "/Zi" "" ${flagVariable} "${${flagVariable}}")
     endforeach()
+    # No incremental linking: when a new bank file added a member to the embedded bank library,
+    # the stale incremental-link databases made the linker reject the library (LNK1236), and an
+    # optimised Debug build gains little from linking incrementally.
+    foreach(linkerVariable CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_SHARED_LINKER_FLAGS_DEBUG CMAKE_MODULE_LINKER_FLAGS_DEBUG)
+        string(REPLACE "/INCREMENTAL:NO" "" ${linkerVariable} "${${linkerVariable}}")
+        string(REPLACE "/INCREMENTAL" "" ${linkerVariable} "${${linkerVariable}}")
+        string(APPEND ${linkerVariable} " /INCREMENTAL:NO")
+    endforeach()
     target_compile_options(coolsynth_config_flags INTERFACE
         $<IF:$<CONFIG:Debug>,/O2 /Ob2 /Zi,/Ox> /MP /EHsc)
 else()
@@ -163,6 +171,7 @@ if(BUILD_TESTING)
             tests/V3FmTests.cpp
             tests/V3WavetableTests.cpp
             tests/V3SvfTests.cpp
+            tests/V3ShaperTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp
             tests/V3BankTests.cpp

@@ -310,7 +310,7 @@ namespace coolsynth::parameters::v3
 
     const juce::StringArray& modCurveNames()
     {
-        static const juce::StringArray names { "Linear", "Unipolar", "Exponential", "Logarithmic", "S-Curve" };
+        static const juce::StringArray names { "Linear", "Unipolar", "Exponential", "Logarithmic", "S-Curve", "Quantized" };
         return names;
     }
 

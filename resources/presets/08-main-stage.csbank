@@ -61,3 +61,18 @@ voice = env2ToP1=0.45 velToP1=0.15
 delay = on sync=on division=1/8 feedback=0.3 mix=0.18
 reverb = on size=0.6 damping=0.4 mix=0.2
 master = 4
+
+[Hyper Lead]
+room = Main Stage
+# Three detuned saws whose pitch jumps to a random semitone every sixteenth (sample-and-hold,
+# quantised), half crushed, into a synced ping-pong echo.
+g1 = VA shape=saw unison=3 detune=20 spread=0.6 level=0.8
+p1 = Ladder cutoff=3500 res=0.25 key=0.5
+p2 = Crusher bits=7 rate=16000 mix=0.5
+env1 = attack=2 decay=300 sustain=0.9 release=150
+lfo1 = shape=s&h sync=on division=1/16 retrigger=on
+mod = src=lfo1 dst=pitch amount=0.25 curve=quantized
+voice = env2ToP1=0 glide=12
+play = mode=legato
+delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+master = 5

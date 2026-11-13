@@ -26,10 +26,14 @@ namespace coolsynth::synth::v3
     inline constexpr float matrixPitchSemitones = 48.0f;
     inline constexpr float matrixRateOctaves = 4.0f;
 
-    enum class ModCurve : int { linear = 0, unipolar, exponential, logarithmic, sCurve };
-    inline constexpr int modCurveCount = 5;
+    enum class ModCurve : int { linear = 0, unipolar, exponential, logarithmic, sCurve, quantized };
+    inline constexpr int modCurveCount = 6;
 
-    /** A source value bent by a curve. Unipolar turns -1..1 into 0..1; the others keep the sign. */
+    /**
+        A source value bent by a curve. Unipolar turns -1..1 into 0..1; the others keep the sign.
+        Quantized passes the source unchanged here: the slot's whole contribution is rounded at its
+        destination instead, to whole semitones on pitch and to sixteenths of the range elsewhere.
+    */
     [[nodiscard]] inline float applyCurve(ModCurve curve, float x) noexcept
     {
         const float a = std::min(1.0f, std::abs(x));
@@ -40,6 +44,7 @@ namespace coolsynth::synth::v3
             case ModCurve::exponential: return std::copysign(a * a, x);
             case ModCurve::logarithmic: return std::copysign(std::sqrt(a), x);
             case ModCurve::sCurve:      return std::copysign(a * a * (3.0f - 2.0f * a), x);
+            case ModCurve::quantized:   return x;
         }
         return x;
     }
@@ -175,6 +180,17 @@ namespace coolsynth::synth::v3
         }
     }
 
+    /** Whole semitones on a pitch destination, sixteenths of the range elsewhere. */
+    [[nodiscard]] inline float quantizeContribution(int destination, float value) noexcept
+    {
+        namespace d = modDestination;
+        const bool pitch = destination == d::pitch
+                           || (destination >= d::generatorBase && destination < d::processorBase
+                               && (destination - d::generatorBase) % d::generatorFields == d::generatorField::pitch);
+        const float steps = pitch ? matrixPitchSemitones : 16.0f;
+        return std::round(value * steps) / steps;
+    }
+
     /** Clears `out` and adds every slot of `matrix` for the current source values. */
     inline void evaluateMatrix(const MatrixSettings& matrix, const ModSources& sources, MatrixOffsets& out) noexcept
     {
@@ -185,6 +201,8 @@ namespace coolsynth::synth::v3
             float value = applyCurve(slot.curve, sources.get(slot.source)) * slot.amount;
             if (slot.via != ModSource::none)
                 value *= sources.get(slot.via);
+            if (slot.curve == ModCurve::quantized)
+                value = quantizeContribution(slot.destination, value);
             addToDestination(slot.destination, value, out);
         }
     }

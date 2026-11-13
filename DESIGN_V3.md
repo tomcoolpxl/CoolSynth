@@ -81,6 +81,12 @@ type 2: a trapezoidal state-variable filter with LP, HP, BP (peak gain 1) and no
 Q 0.5 to 40, a soft limit on the band state, drive as an input stage, key tracking, cutoff and
 resonance ramped per sample (decision D38).
 
+Shipped (phase 4.2, 2026-11-13): `CrusherProcessor` and `FolderProcessor` in
+`src/synth/v3/ShaperProcessors.h`, processor types 3 and 4. Crusher: sample-and-hold at Rate,
+rounding to 2^bits levels (bits continuous), Mix. Folder: a sine folder with first-order
+antiderivative anti-aliasing, Drive, Symmetry with a DC blocker, Mix. The matrix gained a sixth
+curve, Quantized (decisions D40 to D42).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

@@ -1,0 +1,63 @@
+# Basement: dark industrial and techno. Distortion and resonance, low, menacing, metallic;
+# sweeps that scream. Nothing pretty. Room rule: drive or fold on every preset.
+
+[Acid]
+room = Basement
+# The squelch: a saw an octave down through a resonant, driven ladder that its envelope snaps
+# open. Harder notes accent the filter; overlapping notes slide.
+g1 = VA shape=saw oct=-1 level=0.85
+p1 = Ladder cutoff=280 res=0.75 drive=8 key=0.3 bass=0.6
+env1 = attack=1 decay=200 sustain=0.6 release=60
+env2 = attack=1 decay=200 sustain=0 release=80 decayCurve=-0.7
+voice = env2ToP1=0.55 velToP1=0.3 glide=40
+play = mode=legato glideLegato=on
+drive = on amount=0.3 mix=0.7
+master = -6
+
+[Rust Bass]
+room = Basement
+# A saw and a pulse an octave down, folded per voice harder as each note's envelope opens, then
+# a ladder takes the fizz off.
+g1 = VA shape=saw oct=-1 level=0.7
+g2 = VA shape=pulse pw=0.3 oct=-1 level=0.45
+p1 = Folder drive=6 sym=0.15 mix=1
+p2 = Ladder cutoff=900 res=0.2 key=0.4 bass=0.7
+env1 = attack=1 decay=500 sustain=0.8 release=90
+env3 = attack=1 decay=350 sustain=0.2 release=150
+mod = src=env3 dst=p1.drive amount=0.45
+mod = src=velocity dst=p1.drive amount=0.15
+voice = env2ToP1=0
+play = mode=mono
+drive = on amount=0.15 mix=0.5
+master = -10.5
+
+[Concrete Pad]
+room = Basement
+# Two detuned saws with the bass taken away (state-variable high-pass at 200 Hz) and the top too
+# (ladder at 1 kHz), crushed to 12 bits at 22 kHz. The tape grit of the recipe arrives with the
+# lo-fi effect in phase 5.2.
+g1 = VA shape=saw fine=-8 level=0.7
+g2 = VA shape=saw fine=8 level=0.7
+p1 = SVF mode=hp cutoff=200 res=0.1 key=0
+p2 = Ladder cutoff=1000 res=0.15 key=0.3
+p3 = Crusher bits=12 rate=22000 mix=1
+env1 = attack=600 decay=1500 sustain=1 release=1500
+voice = env2ToP1=0 drift=4
+drive = on amount=0.15 mix=0.5
+reverb = on size=0.6 damping=0.6 mix=0.2
+master = -8.5
+
+[Siren]
+room = Basement
+# No oscillator at all: the ladder sings at full resonance from its own noise floor while a
+# slow global saw LFO drags its cutoff up, into a long, overdriven echo.
+g1 = Off
+p1 = Ladder cutoff=500 res=1 key=0 drive=6
+env1 = attack=40 decay=500 sustain=1 release=1500
+glfo1 = shape=sawUp sync=off rate=0.1 retrigger=on
+mod = src=glfo1 dst=p1.cutoff amount=0.3
+voice = env2ToP1=0
+play = mode=mono
+drive = on amount=0.2 mix=0.6
+delay = on time=375 feedback=0.8 mix=0.3
+master = -0
