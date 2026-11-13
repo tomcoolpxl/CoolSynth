@@ -161,7 +161,8 @@ Drone and Satellite Ping. Shipped 2026-11-13 with both, shimmer as an amount (de
 D51).
 
 5.2 Lo-fi type. Wow, flutter, hiss, crackle, bandwidth, bit depth, sample rate. Ships: Bedroom
-Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi added).
+Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi added). Shipped 2026-11-13 with all three and the
+lo-fi on Vinyl Choir and Concrete Pad (decisions D52, D53).
 
 5.3 Pump, EQ, flanger. Ships: Main Stage Future Chord as a played chord (the one-key version
 lands with chord memory in 7.1).

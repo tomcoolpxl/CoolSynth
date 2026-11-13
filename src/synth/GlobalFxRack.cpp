@@ -48,6 +48,7 @@ namespace coolsynth::synth
 
         chorus.prepare(sampleRate);
         reverb.prepare(sampleRate);
+        lofi.prepare(sampleRate, outputChannelCount);
         delay.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         phaser.prepare(sampleRate, samplesPerBlock, outputChannelCount);
         compressor.prepare(sampleRate, samplesPerBlock, outputChannelCount);
@@ -66,6 +67,7 @@ namespace coolsynth::synth
 
     void GlobalFxRack::reset() noexcept
     {
+        lofi.reset();
         chorus.reset();
         delay.reset();
         reverb.reset();
@@ -78,6 +80,7 @@ namespace coolsynth::synth
 
     void GlobalFxRack::clear() noexcept
     {
+        lofi.reset();
         chorus.reset();
         delay.clear();
         reverb.reset();
@@ -94,7 +97,8 @@ namespace coolsynth::synth
                                const ChorusParametersV2& chorusParameters,
                                const DelayParametersV2& delayParameters,
                                const ReverbParametersV2& reverbParametersIn,
-                               const CompressorParametersV2& compressorParameters) noexcept
+                               const CompressorParametersV2& compressorParameters,
+                               const LoFiParameters& lofiParameters) noexcept
     {
         if (! prepared)
             return;
@@ -111,7 +115,7 @@ namespace coolsynth::synth
         if (totalSamples <= chunkCapacity)
         {
             processChunk(buffer, driveParameters, phaserParameters, chorusParameters,
-                         delayParameters, reverbParametersIn, compressorParameters);
+                         delayParameters, reverbParametersIn, compressorParameters, lofiParameters);
             return;
         }
 
@@ -123,7 +127,7 @@ namespace coolsynth::synth
                                            start,
                                            chunkSamples);
             processChunk(chunk, driveParameters, phaserParameters, chorusParameters,
-                         delayParameters, reverbParametersIn, compressorParameters);
+                         delayParameters, reverbParametersIn, compressorParameters, lofiParameters);
         }
     }
 
@@ -133,9 +137,11 @@ namespace coolsynth::synth
                                     const ChorusParametersV2& chorusParameters,
                                     const DelayParametersV2& delayParameters,
                                     const ReverbParametersV2& reverbParametersIn,
-                                    const CompressorParametersV2& compressorParameters) noexcept
+                                    const CompressorParametersV2& compressorParameters,
+                                    const LoFiParameters& lofiParameters) noexcept
     {
         processDrive(buffer, driveParameters);
+        lofi.process(buffer, lofiParameters); // tape after the drive, before the modulation and space effects
         phaser.process(buffer, phaserParameters);
         processChorus(buffer, chorusParameters);
         processDelay(buffer, delayParameters);

@@ -1,5 +1,4 @@
-# Bedroom: lo-fi and cozy. Soft attacks, warm tops, a little air. The tape and vinyl character
-# arrives with the lo-fi effect in phase 5.2.
+# Bedroom: lo-fi and cozy. Soft attacks, warm tops, a little air, worn tape and dusty vinyl.
 
 [Tape Flute]
 room = Bedroom
@@ -20,8 +19,8 @@ master = -6
 [Vinyl Choir]
 room = Bedroom
 # Two pulse waves whose widths drift against each other, sung through a formant filter that
-# wanders from vowel to vowel over about twelve seconds, softened and put in a room. The vinyl
-# dust arrives with the lo-fi effect in phase 5.2.
+# wanders from vowel to vowel over about twelve seconds, softened, dusted with vinyl crackle
+# and put in a room.
 g1 = VA shape=pulse pw=0.4 level=0.6
 g2 = VA shape=pulse pw=0.6 fine=7 level=0.6
 p1 = Formant vowel=0.5 size=1 res=0.55 mix=1
@@ -33,6 +32,48 @@ mod = src=lfo1 dst=g1.pw amount=0.2
 mod = src=lfo1 dst=g2.pw amount=-0.2
 mod = src=lfo2 dst=p1.vowel amount=0.4
 voice = env2ToP1=0 drift=4
+lofi = on wow=0.2 crackle=0.35 hiss=0.15 bandwidth=0.75
 chorus = on rate=0.25 depth=0.4 mix=0.3
 reverb = on size=0.6 damping=0.55 mix=0.3
-master = -1.5
+master = -0.5
+
+[Cassette Keys]
+room = Bedroom
+# Soft electric-piano keys from a triangle and a quiet sine an octave up, played off a worn
+# cassette: slow wow, a little flutter and hiss, a narrow top, a slow chorus and a small room.
+g1 = VA shape=triangle rand=0 level=0.8
+g2 = VA shape=sine oct=1 rand=0 level=0.3
+p1 = Ladder cutoff=1800 res=0.1 key=0.5
+env1 = attack=5 decay=600 sustain=0.3 release=400 velocity=0.5
+voice = env2ToP1=0 drift=3
+lofi = on wow=0.45 flutter=0.35 hiss=0.3 bandwidth=0.7
+chorus = on rate=0.3 depth=0.35 mix=0.3
+reverb = on size=0.35 damping=0.5 mix=0.18
+master = 5
+
+[Blanket Pad]
+room = Bedroom
+# Two saws eight cents apart under a dark ladder, a slow global wobble of three cents in pitch,
+# a gentle tape wow and a soft top, into a warm plate.
+g1 = VA shape=saw fine=-4 level=0.65
+g2 = VA shape=saw fine=4 level=0.65
+p1 = Ladder cutoff=900 res=0.12 key=0.4
+env1 = attack=900 decay=1500 sustain=1 release=1500
+glfo1 = shape=sine sync=off rate=0.2 retrigger=off
+mod = src=glfo1 dst=pitch amount=0.000625
+voice = env2ToP1=0 drift=3
+lofi = on wow=0.2 bandwidth=0.8 hiss=0.08
+reverb = on size=0.65 damping=0.6 mix=0.25
+master = -3
+
+[Bedroom Bass]
+room = Bedroom
+# A triangle an octave down with a sine sub two octaves down, through a closed ladder, mono, on
+# a tape that wobbles just enough to hear.
+g1 = VA shape=triangle oct=-1 sub=0.6 rand=0 level=0.85
+p1 = Ladder cutoff=350 res=0.1 key=0.3 bass=0.7
+env1 = attack=2 decay=300 sustain=0.7 release=120 velocity=0.3
+voice = env2ToP1=0
+play = mode=mono
+lofi = on wow=0.3 flutter=0.2 bandwidth=0.85
+master = -0

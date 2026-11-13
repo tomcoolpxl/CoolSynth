@@ -42,6 +42,9 @@ namespace coolsynth::presets
                 { "reverb", { ids::reverbEnabled, { { "size", ids::reverbSize }, { "damping", ids::reverbDamping }, { "mix", ids::reverbMix },
                                                    { "predelay", ids::reverbPreDelay }, { "lowcut", ids::reverbLowCut },
                                                    { "modulation", ids::reverbModulation }, { "shimmer", ids::reverbShimmer } } } },
+                { "lofi", { ids::lofiEnabled, { { "wow", ids::lofiWow }, { "flutter", ids::lofiFlutter }, { "hiss", ids::lofiHiss },
+                                                { "crackle", ids::lofiCrackle }, { "bandwidth", ids::lofiBandwidth }, { "bits", ids::lofiBits },
+                                                { "rate", ids::lofiRate }, { "mix", ids::lofiMix } } } },
                 { "phaser", { ids::phaserEnabled, { { "rate", ids::phaserRateHz }, { "depth", ids::phaserDepth } } } },
                 { "compressor", { ids::compressorEnabled, { { "amount", ids::compressorAmount }, { "mix", ids::compressorMix } } } },
             };

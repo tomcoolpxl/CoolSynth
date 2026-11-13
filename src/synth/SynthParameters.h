@@ -171,6 +171,15 @@ namespace coolsynth::synth
         std::atomic<float>* delaySync = nullptr;
         std::atomic<float>* delayDivision = nullptr;
         std::atomic<float>* delayMode = nullptr;
+        std::atomic<float>* lofiEnabled = nullptr;
+        std::atomic<float>* lofiWow = nullptr;
+        std::atomic<float>* lofiFlutter = nullptr;
+        std::atomic<float>* lofiHiss = nullptr;
+        std::atomic<float>* lofiCrackle = nullptr;
+        std::atomic<float>* lofiBandwidth = nullptr;
+        std::atomic<float>* lofiBits = nullptr;
+        std::atomic<float>* lofiRate = nullptr;
+        std::atomic<float>* lofiMix = nullptr;
         std::atomic<float>* reverbEnabled = nullptr;
         std::atomic<float>* reverbSize = nullptr;
         std::atomic<float>* reverbDamping = nullptr;
@@ -223,6 +232,15 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::delaySync,            &GlobalParameterPointers::delaySync            },
         { coolsynth::parameters::ids::delayDivision,        &GlobalParameterPointers::delayDivision        },
         { coolsynth::parameters::ids::delayMode,            &GlobalParameterPointers::delayMode            },
+        { coolsynth::parameters::ids::lofiEnabled,          &GlobalParameterPointers::lofiEnabled          },
+        { coolsynth::parameters::ids::lofiWow,              &GlobalParameterPointers::lofiWow              },
+        { coolsynth::parameters::ids::lofiFlutter,          &GlobalParameterPointers::lofiFlutter          },
+        { coolsynth::parameters::ids::lofiHiss,             &GlobalParameterPointers::lofiHiss             },
+        { coolsynth::parameters::ids::lofiCrackle,          &GlobalParameterPointers::lofiCrackle          },
+        { coolsynth::parameters::ids::lofiBandwidth,        &GlobalParameterPointers::lofiBandwidth        },
+        { coolsynth::parameters::ids::lofiBits,             &GlobalParameterPointers::lofiBits             },
+        { coolsynth::parameters::ids::lofiRate,             &GlobalParameterPointers::lofiRate             },
+        { coolsynth::parameters::ids::lofiMix,              &GlobalParameterPointers::lofiMix              },
         { coolsynth::parameters::ids::reverbEnabled,        &GlobalParameterPointers::reverbEnabled        },
         { coolsynth::parameters::ids::reverbSize,           &GlobalParameterPointers::reverbSize           },
         { coolsynth::parameters::ids::reverbDamping,        &GlobalParameterPointers::reverbDamping        },

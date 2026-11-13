@@ -661,3 +661,28 @@ own loop was the suggested fix.
   dotted-quarter ping-pong echo at 0.7 feedback and a large plate (taken).** The one Observatory
   preset allowed a fast attack.
 - **Nebula Pad gets the recipe's 80 ms pre-delay and an 80 Hz low cut (taken).**
+
+## D52. The lo-fi effect (2026-11-13, phase 5.2)
+
+- **One global stage after the drive and before phaser, chorus, delay and reverb (taken).** The
+  recipes put tape before the chorus and the plate; a per-voice tape would cost sixteen times
+  as much for no audible gain.
+- **Wow at 0.45 Hz with a slow random drift (up to about 14 cents) and flutter at 6.5 Hz (up to
+  about 6 cents) on a short delay line; Bandwidth a 2-pole low-pass from 20 kHz to 1.5 kHz; Bits
+  and Rate as on the crusher (taken).** Measured: wow and flutter at full spread a 1 kHz sine's
+  cycle lengths by 47 cents.
+- **Hiss and Crackle follow the signal through an envelope (5 ms attack, 0.4 s release), so
+  silence stays silent (taken, recommended).** A constant noise floor is what real tape does,
+  but the plugin would hiss with no note playing.
+- **A fixed 6 ms delay on the tape path, with the dry signal delayed as much (taken).** A
+  partial mix never comb-filters; the price is 6 ms of extra latency while Lo-Fi is on, which the
+  host is not told about.
+
+## D53. Phase 5.2 presets (2026-11-13, phase 5.2)
+
+- **Bedroom Cassette Keys, Blanket Pad and Bedroom Bass ship with their recipes and the lo-fi
+  (taken).** Blanket Pad's three-cent wobble is a 0.2 Hz global LFO on pitch.
+- **Vinyl Choir gets crackle and a narrow top; Concrete Pad a dirty tape (taken).** Tape Flute
+  stays without lo-fi, as its recipe has none.
+
+Phase 5.2 brings the bank to 60 presets.

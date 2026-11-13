@@ -50,6 +50,16 @@ namespace coolsynth::parameters::ids
     inline constexpr char delayDivision[] = "delayDivision";
     inline constexpr char delayMode[] = "delayMode";
 
+    inline constexpr char lofiEnabled[] = "lofiEnabled";
+    inline constexpr char lofiWow[] = "lofiWow";
+    inline constexpr char lofiFlutter[] = "lofiFlutter";
+    inline constexpr char lofiHiss[] = "lofiHiss";
+    inline constexpr char lofiCrackle[] = "lofiCrackle";
+    inline constexpr char lofiBandwidth[] = "lofiBandwidth";
+    inline constexpr char lofiBits[] = "lofiBits";
+    inline constexpr char lofiRate[] = "lofiRate";
+    inline constexpr char lofiMix[] = "lofiMix";
+
     inline constexpr char reverbEnabled[] = "reverbEnabled";
     inline constexpr char reverbSize[] = "reverbSize";
     inline constexpr char reverbDamping[] = "reverbDamping";
@@ -151,6 +161,15 @@ namespace coolsynth::parameters
         ids::delaySync,
         ids::delayDivision,
         ids::delayMode,
+        ids::lofiEnabled,
+        ids::lofiWow,
+        ids::lofiFlutter,
+        ids::lofiHiss,
+        ids::lofiCrackle,
+        ids::lofiBandwidth,
+        ids::lofiBits,
+        ids::lofiRate,
+        ids::lofiMix,
         ids::reverbEnabled,
         ids::reverbSize,
         ids::reverbDamping,

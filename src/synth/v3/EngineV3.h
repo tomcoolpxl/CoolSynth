@@ -23,6 +23,7 @@ namespace coolsynth::synth::v3
         coolsynth::synth::ChorusParametersV2 chorus {};
         coolsynth::synth::DelayParametersV2 delay {};
         coolsynth::synth::ReverbParametersV2 reverb {};
+        coolsynth::synth::LoFiParameters lofi {};
         coolsynth::synth::CompressorParametersV2 compressor {};
         float masterGainLinear = 1.0f;
     };

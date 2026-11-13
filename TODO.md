@@ -58,8 +58,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    presets.
 25. Phase 5.1 done 2026-11-13: plate pre-delay, low cut, modulation and shimmer,
    `tests/V3ReverbTests.cpp`; Shimmer Drone, Satellite Ping, Nebula Pad's pre-delay. 57 presets.
-26. Phase 5.2: lo-fi effect; Bedroom Cassette Keys, Blanket Pad, Bedroom Bass, and the lo-fi on
-   Concrete Pad and Vinyl Choir.
+26. Phase 5.2 done 2026-11-13: `src/synth/LoFi.h`, nine `lofi*` parameters, `tests/V3LoFiTests.cpp`;
+   Cassette Keys, Blanket Pad, Bedroom Bass, lo-fi on Vinyl Choir and Concrete Pad. 60 presets.
+27. Phase 5.3: pump, EQ, flanger; Main Stage Future Chord as a played chord.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

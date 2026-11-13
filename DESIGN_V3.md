@@ -375,6 +375,10 @@ Cut (an input high-pass), Modulation (a trim on the tank's excursion) and Shimme
 output, band-limited, an octave up through a two-head delay-line shifter, fed back into the tank;
 0 is the plain plate) (decision D50).
 
+Shipped (phase 5.2, 2026-11-13): `LoFi` in `src/synth/LoFi.h`, a global stage after the drive:
+wow and flutter on a short delay line, a bandwidth low-pass, bit and rate crushing, hiss and
+crackle that follow the signal, Mix with a matched dry delay (decision D52).
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs

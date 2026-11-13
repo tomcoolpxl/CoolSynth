@@ -54,7 +54,7 @@ namespace coolsynth::synth::v3
             const double bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.part.arp.internalTempoBpm), 20.0, 400.0);
             delay.timeMs = coolsynth::synth::delayDivisionMs(delay.division, bpm);
         }
-        fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, delay, settings.reverb, settings.compressor);
+        fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, delay, settings.reverb, settings.compressor, settings.lofi);
 
         // The first block after prepare starts at the setting; ramping from unity would make the
         // first notes after loading louder than the patch.

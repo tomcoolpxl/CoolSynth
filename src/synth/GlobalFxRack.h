@@ -6,6 +6,7 @@
 #include "Compressor.h"
 #include "GlobalDelay.h"
 #include "HalfBand2x.h"
+#include "LoFi.h"
 #include "Phaser.h"
 #include "PlateReverb.h"
 #include "StereoChorus.h"
@@ -25,7 +26,8 @@ namespace coolsynth::synth
                      const ChorusParametersV2& chorus,
                      const DelayParametersV2& delay,
                      const ReverbParametersV2& reverb,
-                     const CompressorParametersV2& compressor) noexcept;
+                     const CompressorParametersV2& compressor,
+                     const LoFiParameters& lofi = LoFiParameters {}) noexcept;
 
         [[nodiscard]] static double estimateTailLengthSeconds(const DelayParametersV2& delay,
                                                               const ReverbParametersV2& reverb) noexcept;
@@ -37,7 +39,8 @@ namespace coolsynth::synth
                           const ChorusParametersV2& chorus,
                           const DelayParametersV2& delay,
                           const ReverbParametersV2& reverb,
-                          const CompressorParametersV2& compressor) noexcept;
+                          const CompressorParametersV2& compressor,
+                          const LoFiParameters& lofi) noexcept;
         void processDrive(juce::AudioBuffer<float>& buffer, const DriveParametersV2& parameters) noexcept;
         void processChorus(juce::AudioBuffer<float>& buffer, const ChorusParametersV2& parameters) noexcept;
         void processDelay(juce::AudioBuffer<float>& buffer, const DelayParametersV2& parameters) noexcept;
@@ -48,6 +51,7 @@ namespace coolsynth::synth
         Compressor compressor;
         StereoChorus chorus;
         PlateReverb reverb;
+        LoFi lofi;
         std::vector<HalfBandUpsampler2x> driveUpsamplers;  // drive shapes at 2x so its harmonics do not alias
         std::vector<HalfBandDecimator2x> driveDecimators;
         std::vector<float> driveToneStates;                 // one-pole low-pass on the shaped signal

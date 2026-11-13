@@ -867,6 +867,16 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     settings.delay.division = juce::jlimit(0, static_cast<int>(coolsynth::synth::delayDivisions.size()) - 1, index(v.delayDivision));
     settings.delay.pingPong = index(v.delayMode) == 1;
 
+    settings.lofi.enabled = decodeBool(v.lofiEnabled->load());
+    settings.lofi.wow = v.lofiWow->load();
+    settings.lofi.flutter = v.lofiFlutter->load();
+    settings.lofi.hiss = v.lofiHiss->load();
+    settings.lofi.crackle = v.lofiCrackle->load();
+    settings.lofi.bandwidth = v.lofiBandwidth->load();
+    settings.lofi.bits = v.lofiBits->load();
+    settings.lofi.rateHz = v.lofiRate->load();
+    settings.lofi.mix = v.lofiMix->load();
+
     settings.reverb.enabled = decodeBool(v.reverbEnabled->load());
     settings.reverb.size = v.reverbSize->load();
     settings.reverb.damping = v.reverbDamping->load();

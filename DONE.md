@@ -647,3 +647,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] `PlateReverb` gained Pre-Delay (0 to 250 ms), Low Cut (input one-pole high-pass), Modulation (tank excursion trim, 0.5 as before) and Shimmer (an octave-up delay-line shifter in the tank's loop, band-limited and soft-limited). Four new parameters (`reverbPreDelay`, `reverbLowCut`, `reverbModulation`, `reverbShimmer`) and bank keys `predelay`, `lowcut`, `modulation`, `shimmer`.
 - [x] Presets: Observatory Shimmer Drone and Satellite Ping; Nebula Pad's 80 ms pre-delay. 57 presets.
 - [x] Added `tests/V3ReverbTests.cpp` (4 tests): pre-delay moves the onset by 100 ms within 2 samples, a 600 Hz low cut takes 60 Hz down by more than 15 dB, shimmer raises the tail's octave by 45 dB and the tail keeps falling, the bank keys. Verified Debug build without warnings and `ctest` green.
+
+## V3 phase 5.2: lo-fi (2026-11-13)
+
+- [x] Added `src/synth/LoFi.h`, a global stage after the drive: wow (0.45 Hz with drift) and flutter (6.5 Hz) on a short delay line, a bandwidth low-pass, bits and rate, hiss and crackle that follow the signal, Mix with a matched dry delay. Nine parameters (`lofiEnabled` .. `lofiMix`), the bank section `lofi`.
+- [x] Presets: Bedroom Cassette Keys, Blanket Pad, Bedroom Bass; lo-fi on Vinyl Choir and Concrete Pad. 60 presets.
+- [x] Added `tests/V3LoFiTests.cpp` (5 tests): neutral settings are a clean 6 ms delay, wow and flutter spread a sine's cycles by 47 cents, bandwidth closes the top by more than 20 dB, hiss and crackle silent in silence and present under a tone, the bank section. Verified Debug build without warnings and `ctest` green.

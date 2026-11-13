@@ -280,6 +280,25 @@ namespace
         return group;
     }
 
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeLoFiGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("lofi", "Lo-Fi", " / ");
+        group->addChild(makeBoolParameter(lofiEnabled, parameterVersionHint, "Enabled", false));
+        group->addChild(makePercentParameter(lofiWow, parameterVersionHint, "Wow", 0.0f));
+        group->addChild(makePercentParameter(lofiFlutter, parameterVersionHint, "Flutter", 0.0f));
+        group->addChild(makePercentParameter(lofiHiss, parameterVersionHint, "Hiss", 0.0f));
+        group->addChild(makePercentParameter(lofiCrackle, parameterVersionHint, "Crackle", 0.0f));
+        group->addChild(makePercentParameter(lofiBandwidth, parameterVersionHint, "Bandwidth", 1.0f));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(lofiBits), "Bits", juce::NormalisableRange<float>(1.0f, 16.0f), 16.0f));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(lofiRate), "Rate", makeLogRange(1000.0f, 48000.0f), 48000.0f, hertzAttributes()));
+        group->addChild(makePercentParameter(lofiMix, parameterVersionHint, "Mix", 1.0f));
+        return group;
+    }
+
     std::unique_ptr<juce::AudioProcessorParameterGroup> makeReverbGroup()
     {
         using namespace coolsynth::parameters::ids;
@@ -369,6 +388,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::creat
                makeDriveGroup(),
                makePhaserGroup(),
                makeChorusGroup(),
+               makeLoFiGroup(),
                makeDelayGroup(),
                makeReverbGroup(),
                makeCompressorGroup(),

@@ -64,8 +64,7 @@ master = -5
 [Concrete Pad]
 room = Basement
 # Two detuned saws with the bass taken away (state-variable high-pass at 200 Hz) and the top too
-# (ladder at 1 kHz), crushed to 12 bits at 22 kHz. The tape grit of the recipe arrives with the
-# lo-fi effect in phase 5.2.
+# (ladder at 1 kHz), crushed to 12 bits at 22 kHz, then run through a dirty tape.
 g1 = VA shape=saw fine=-8 level=0.7
 g2 = VA shape=saw fine=8 level=0.7
 p1 = SVF mode=hp cutoff=200 res=0.1 key=0
@@ -74,6 +73,7 @@ p3 = Crusher bits=12 rate=22000 mix=1
 env1 = attack=600 decay=1500 sustain=1 release=1500
 voice = env2ToP1=0 drift=4
 drive = on amount=0.15 mix=0.5
+lofi = on wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7
 reverb = on size=0.6 damping=0.6 mix=0.2
 master = -8.5
 

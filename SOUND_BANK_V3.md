@@ -342,11 +342,11 @@ loudness-normalised):
 | Room | Shipped | Waiting for |
 | --- | --- | --- |
 | Workshop | Init Saw, Init Pulse, Init Sine, Init Arp, Init Noise, Init FM, Init Wavetable | none |
-| Basement | Acid, Rust Bass, Metal Hit, Furnace Drone, Concrete Pad (no lo-fi yet), Siren | the lo-fi on Concrete Pad (5.2) |
+| Basement | Acid, Rust Bass, Metal Hit, Furnace Drone, Concrete Pad, Siren | none |
 | Studio 1982 | Juno Pad, Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
-| Bedroom | Tape Flute, Vinyl Choir (no lo-fi yet) | Cassette Keys, Blanket Pad, Bedroom Bass and Vinyl Choir's dust (lo-fi, 5.2), Dusty Mallet (modal, 6.2) |
+| Bedroom | Cassette Keys, Blanket Pad, Bedroom Bass, Tape Flute, Vinyl Choir | Dusty Mallet (modal, 6.2) |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Static Hit, SCC Lead | Chip Chord (chord memory, 7.1) |
 | Greenhouse | Glass Bell, Rain Chime, Crystal Pluck | Marimba (modal, 6.2), Kalimba, Harp String (Karplus-Strong, 6.1) |
 | Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field | Granular Sky (8.2) |
