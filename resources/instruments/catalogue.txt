@@ -1,4 +1,4 @@
-# The sampled instruments (decisions D96 to D98): family | instrument | style | sustains | source
+# The sampled instruments (decisions D96 to D100): family | instrument | style | sustains | source | options
 #
 # One line per style. An instrument is the lines that share its name; its number is the order in
 # which it first appears and its styles are numbered in order, both saved in patches: never
@@ -7,84 +7,91 @@
 # "sustains" says whether a held note should go on for as long as the key is down (yes: the
 # library builder gives every sample a loop) or ring out as recorded (no).
 # "source" is the folder under audition/libraries the style is built from. Both libraries are CC0.
+# "options" are for the library builder alone (tools/audition/build_library.py explains them).
+# The builder takes each recording's note, keys, velocities, level and tuning from the mapping
+# files the recordings' author publishes; the options say which mapping file, where the
+# author's mapping is set aside, and how the tuning is measured where the author gives none.
+# The plugin reads the first four columns.
 
-Keys | Steinway Grand | Grand | no | VCSL/Chordophones/Zithers/Grand Piano, Steinway B/Sus
-Keys | Yamaha Upright | Upright | no | VCSL/Chordophones/Zithers/Upright Piano, Yamaha/Sustains
-Keys | Old Upright | Upright | no | VSCO-2-CE/Keys/Upright Nr1
-Keys | Flemish Harpsichord | 8' | no | VCSL/Chordophones/Zithers/Harpsichord, Flemish/Sustains/Low
-Keys | Italian Harpsichord | 8' | no | VCSL/Chordophones/Zithers/Harpsichord, Italian/Sustains/stop1
-Keys | FM Keys | Piano | no | VCSL/Electrophones/TX81Z/Piano 1
-Keys | FM Keys | E-Piano | no | VCSL/Electrophones/TX81Z/FM Piano
-Keys | FM Keys | Clav | no | VCSL/Electrophones/TX81Z/Clavisynth
+Keys | Steinway Grand | Grand | no | VCSL/Chordophones/Zithers/Grand Piano, Steinway B/Sus | tune=keep
+Keys | Yamaha Upright | Upright | no | VCSL/Chordophones/Zithers/Upright Piano, Yamaha/Sustains | tune=keep
+Keys | Old Upright | Upright | no | VSCO-2-CE/Keys/Upright Nr1 | tune=keep
+Keys | Flemish Harpsichord | 8' | no | VCSL/Chordophones/Zithers/Harpsichord, Flemish/Sustains/Low | tune=keep
+Keys | Italian Harpsichord | 8' | no | VCSL/Chordophones/Zithers/Harpsichord, Italian/Sustains/stop1 | tune=keep
+Keys | FM Keys | Piano | no | VCSL/Electrophones/TX81Z/Piano 1 | tune=keep
+Keys | FM Keys | E-Piano | no | VCSL/Electrophones/TX81Z/FM Piano | shift=-12 tune=keep trim=1.7
+Keys | FM Keys | Clav | no | VCSL/Electrophones/TX81Z/Clavisynth | shift=12 tune=keep trim=-1.5
 
 Strings | Violins | Sustain | yes | VSCO-2-CE/Strings/Violin Section/susVib
 Strings | Violas | Sustain | yes | VSCO-2-CE/Strings/Viola Section/susvib
-Strings | Violas | Pizzicato | no | VSCO-2-CE/Strings/Viola Section/pizz
-Strings | Violas | Spiccato | no | VSCO-2-CE/Strings/Viola Section/spic
+Strings | Violas | Pizzicato | no | VSCO-2-CE/Strings/Viola Section/pizz | trim=2
+Strings | Violas | Spiccato | no | VSCO-2-CE/Strings/Viola Section/spic | trim=-1.8
 Strings | Cellos | Sustain | yes | VSCO-2-CE/Strings/Cello Section/susvib
-Strings | Cellos | Tremolo | yes | VSCO-2-CE/Strings/Cello Section/trem
-Strings | Cellos | Pizzicato | no | VSCO-2-CE/Strings/Cello Section/pizzT
+Strings | Cellos | Tremolo | yes | VSCO-2-CE/Strings/Cello Section/trem | trim=0.9
+Strings | Cellos | Pizzicato | no | VSCO-2-CE/Strings/Cello Section/pizzT | trim=0.3
 Strings | Double Bass | Vibrato | yes | VSCO-2-CE/Strings/Solo Contrabass/SusVib
-Strings | Double Bass | Straight | yes | VSCO-2-CE/Strings/Solo Contrabass/SusNV
-Strings | Double Bass | Pizzicato | no | VSCO-2-CE/Strings/Solo Contrabass/Pizz
+Strings | Double Bass | Straight | yes | VSCO-2-CE/Strings/Solo Contrabass/SusNV | trim=0.9
+Strings | Double Bass | Pizzicato | no | VSCO-2-CE/Strings/Solo Contrabass/Pizz | trim=-0.7
 Strings | Solo Violin | Sustain | yes | VSCO-2-CE/Strings/Solo Violin/Arco Vib
-Strings | Solo Violin | Tremolo | yes | VSCO-2-CE/Strings/Solo Violin/Trem
-Strings | Solo Violin | Pizzicato | no | VSCO-2-CE/Strings/Solo Violin/Pizz
-Strings | Solo Violin | Spiccato | no | VSCO-2-CE/Strings/Solo Violin/spic
+Strings | Solo Violin | Tremolo | yes | VSCO-2-CE/Strings/Solo Violin/Trem | trim=2.1
+Strings | Solo Violin | Pizzicato | no | VSCO-2-CE/Strings/Solo Violin/Pizz | trim=-3.9
+Strings | Solo Violin | Spiccato | no | VSCO-2-CE/Strings/Solo Violin/spic | trim=-0.5
 
 Plucked | Folk Harp | Plucked | no | VCSL/Chordophones/Composite Chordophones/Folk Harp
 Plucked | Dan Tranh | Normal | no | VCSL/Chordophones/Zithers/Dan Tranh/Normal
-Plucked | Dan Tranh | Tremolo | yes | VCSL/Chordophones/Zithers/Dan Tranh/Tremolo
-Plucked | Kalimba | Plucked | no | VCSL/Idiophones/Plucked Idiophones/Kalimba, Tanzania
+Plucked | Dan Tranh | Tremolo | yes | VCSL/Chordophones/Zithers/Dan Tranh/Tremolo | trim=-1.8
+Plucked | Kalimba | Plucked | no | VCSL/Idiophones/Plucked Idiophones/Kalimba, Tanzania | tune=first
 
 Brass | Horn | Sustain | yes | VSCO-2-CE/Brass/F Horn/sus
 Brass | Trumpet | Straight | yes | VSCO-2-CE/Brass/Trumpet/sus
-Brass | Trumpet | Vibrato | yes | VSCO-2-CE/Brass/Trumpet/susvib
+Brass | Trumpet | Vibrato | yes | VSCO-2-CE/Brass/Trumpet/susvib | trim=-0.5
 Brass | Tuba | Sustain | yes | VSCO-2-CE/Brass/Tuba/sus
 Brass | Trombone | Straight | yes | VSCO-2-CE/Brass/Tenor Trombone/sus
-Brass | Trombone | Vibrato | yes | VSCO-2-CE/Brass/Tenor Trombone/vib
+Brass | Trombone | Vibrato | yes | VSCO-2-CE/Brass/Tenor Trombone/vib | trim=-0.2
 Brass | Old Trombone | Straight | yes | VSCO-2-CE/Brass/OldTrombone/Sustain
-Brass | Old Trombone | Vibrato | yes | VSCO-2-CE/Brass/OldTrombone/Vibrato
+Brass | Old Trombone | Vibrato | yes | VSCO-2-CE/Brass/OldTrombone/Vibrato | trim=-0.4
 
 Winds | Flute | Sustain | yes | VSCO-2-CE/Woodwinds/Flute/susvib
 Winds | Clarinet | Sustain | yes | VSCO-2-CE/Woodwinds/Clarinet/susLong
 Winds | Bassoon | Sustain | yes | VSCO-2-CE/Woodwinds/Bassoon/vib
 Winds | Saxello | Vibrato | yes | VCSL/Aerophones/Reed Aerophones/Saxello/Vibrato
 Winds | Tenor Sax | Straight | yes | VCSL/Aerophones/Reed Aerophones/Tenor Saxophone/Non-Vibrato
-Winds | Tenor Sax | Vibrato | yes | VCSL/Aerophones/Reed Aerophones/Tenor Saxophone/Vibrato
+Winds | Tenor Sax | Vibrato | yes | VCSL/Aerophones/Reed Aerophones/Tenor Saxophone/Vibrato | trim=-1.1
 Winds | Recorders | Soprano | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Soprano Recorder/Sustain
-Winds | Recorders | Alto | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Alto Recorder/SusVib
-Winds | Recorders | Tenor | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Tenor Recorder/Sustain
-Winds | Recorders | Bass | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Bass Recorder/SusVib
+Winds | Recorders | Alto | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Alto Recorder/SusVib | trim=5
+Winds | Recorders | Tenor | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Tenor Recorder/Sustain | trim=4.1
+Winds | Recorders | Bass | yes | VCSL/Aerophones/Edge-blown Aerophones/Baroque Bass Recorder/SusVib | trim=5.1
 Winds | Ocarina | Small | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Small/Sustain
-Winds | Ocarina | Large | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Typical/Sustains/Sus
-Winds | Ocarina | Large Vibrato | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Typical/Sustains/SusVib
+Winds | Ocarina | Large | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Typical/Sustains/Sus | trim=2.2
+Winds | Ocarina | Large Vibrato | yes | VCSL/Aerophones/Edge-blown Aerophones/Ocarina, Typical/Sustains/SusVib | trim=3.1
 Winds | Harmonica | Sustain | yes | VCSL/Aerophones/Free Aerophones/Harmonica-Hohner-Special20-C/Sustains/Normal
-Winds | Didgeridoo | Drone | yes | VCSL/Aerophones/Lip Aerophones/Didgeridoo
+Winds | Didgeridoo | Drone | yes | VCSL/Aerophones/Lip Aerophones/Didgeridoo | sfz=none files=Sus root=37
+Winds | Didgeridoo | Phrases | no | VCSL/Aerophones/Lip Aerophones/Didgeridoo | sfz=none files=Phrase root=37 tune=keep trim=2
+Winds | Didgeridoo | Calls | no | VCSL/Aerophones/Lip Aerophones/Didgeridoo | sfz=none files=Bark,Short,Tap keys=36,48,60,72 tune=keep trim=-1.1
 
 Organs | Pipe Organ | Loud | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Loud
-Organs | Pipe Organ | Quiet | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Quiet
-Organs | Pipe Organ | Pedal | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Loud Pedal
+Organs | Pipe Organ | Quiet | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Quiet | trim=-1.3
+Organs | Pipe Organ | Pedal | yes | VCSL/Aerophones/Edge-blown Aerophones/Pipe Organ/Loud Pedal | trim=2.1
 Organs | Renaissance Organ | 8' | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/8'
-Organs | Renaissance Organ | 4' | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/4'
-Organs | Renaissance Organ | Full | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/Full
+Organs | Renaissance Organ | 4' | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/4' | trim=-2.2
+Organs | Renaissance Organ | Full | yes | VCSL/Aerophones/Edge-blown Aerophones/Renaissance Organ/Full | trim=1.8
 
-Mallets and Bells | Marimba | Mallets | no | VCSL/Idiophones/Struck Idiophones/Marimba
-Mallets and Bells | Vibraphone | Soft | no | VCSL/Idiophones/Struck Idiophones/Vibraphone/Soft Mallets
-Mallets and Bells | Vibraphone | Hard | no | VCSL/Idiophones/Struck Idiophones/Vibraphone/Hard Mallets
-Mallets and Bells | Vibraphone | Bowed | yes | VCSL/Idiophones/Struck Idiophones/Vibraphone/Bowed
-Mallets and Bells | Xylophone | Medium | no | VCSL/Idiophones/Struck Idiophones/Xylophone/Medium Mallets
-Mallets and Bells | Xylophone | Soft | no | VCSL/Idiophones/Struck Idiophones/Xylophone/Soft Mallets
-Mallets and Bells | Balafon | Hard | no | VCSL/Idiophones/Struck Idiophones/Balafon/Hard Mallet
-Mallets and Bells | Balafon | Soft | no | VCSL/Idiophones/Struck Idiophones/Balafon/Soft Mallet
-Mallets and Bells | Glockenspiel | A | no | VCSL/Idiophones/Struck Idiophones/Glockenspiel
-Mallets and Bells | Glockenspiel | B | no | VSCO-2-CE/Percussion/Glock
-Mallets and Bells | Tubular Bells | A | no | VCSL/Idiophones/Struck Idiophones/Tubular Bells 1
-Mallets and Bells | Tubular Bells | B | no | VCSL/Idiophones/Struck Idiophones/Tubular Bells 2
-Mallets and Bells | Tubular Glock | Mallets | no | VCSL/Idiophones/Struck Idiophones/Tubular Glockenspiel
-Mallets and Bells | Hand Chimes | Mallets | no | VCSL/Idiophones/Struck Idiophones/Hand Chimes
-Mallets and Bells | Wine Glasses | Slow | yes | VCSL/Idiophones/Friction Idiophones/Wine Glasses/Sustains/Slow
-Mallets and Bells | Wine Glasses | Fast | yes | VCSL/Idiophones/Friction Idiophones/Wine Glasses/Sustains/Fast
-Mallets and Bells | Timpani | A | no | VCSL/Membranophones/Struck Membranophones/Timpani 1/Hit
-Mallets and Bells | Timpani | B | no | VCSL/Membranophones/Struck Membranophones/Timpani 2/Hit
-Mallets and Bells | Timpani | C | no | VSCO-2-CE/Percussion/Timpani
+Mallets and Bells | Marimba | Mallets | no | VCSL/Idiophones/Struck Idiophones/Marimba | tune=first
+Mallets and Bells | Vibraphone | Soft | no | VCSL/Idiophones/Struck Idiophones/Vibraphone/Soft Mallets | tune=first
+Mallets and Bells | Vibraphone | Hard | no | VCSL/Idiophones/Struck Idiophones/Vibraphone/Hard Mallets | tune=first trim=0.3
+Mallets and Bells | Vibraphone | Bowed | yes | VCSL/Idiophones/Struck Idiophones/Vibraphone/Bowed | tune=first trim=-4.4
+Mallets and Bells | Xylophone | Medium | no | VCSL/Idiophones/Struck Idiophones/Xylophone/Medium Mallets | shift=12 tune=first
+Mallets and Bells | Xylophone | Soft | no | VCSL/Idiophones/Struck Idiophones/Xylophone/Soft Mallets | shift=12 tune=first trim=0.1
+Mallets and Bells | Balafon | Hard | no | VCSL/Idiophones/Struck Idiophones/Balafon/Hard Mallet | tune=first
+Mallets and Bells | Balafon | Soft | no | VCSL/Idiophones/Struck Idiophones/Balafon/Soft Mallet | tune=first trim=-3.2
+Mallets and Bells | Glockenspiel | A | no | VCSL/Idiophones/Struck Idiophones/Glockenspiel | shift=12 tune=first
+Mallets and Bells | Glockenspiel | B | no | VSCO-2-CE/Percussion/Glock | shift=12 tune=first trim=1.4
+Mallets and Bells | Tubular Bells | A | no | VCSL/Idiophones/Struck Idiophones/Tubular Bells 1 | tune=keep
+Mallets and Bells | Tubular Bells | B | no | VCSL/Idiophones/Struck Idiophones/Tubular Bells 2 | tune=keep trim=-1
+Mallets and Bells | Tubular Glock | Mallets | no | VCSL/Idiophones/Struck Idiophones/Tubular Glockenspiel | shift=12 tune=first
+Mallets and Bells | Hand Chimes | Mallets | no | VCSL/Idiophones/Struck Idiophones/Hand Chimes | tune=first
+Mallets and Bells | Wine Glasses | Slow | yes | VCSL/Idiophones/Friction Idiophones/Wine Glasses/Sustains/Slow | tune=first
+Mallets and Bells | Wine Glasses | Fast | yes | VCSL/Idiophones/Friction Idiophones/Wine Glasses/Sustains/Fast | tune=first trim=1.3
+Mallets and Bells | Timpani | A | no | VCSL/Membranophones/Struck Membranophones/Timpani 1/Hit | tune=drum
+Mallets and Bells | Timpani | B | no | VCSL/Membranophones/Struck Membranophones/Timpani 2/Hit | sfz=Scale tune=drum trim=2.2
+Mallets and Bells | Timpani | C | no | VSCO-2-CE/Percussion/Timpani | tune=drum trim=1.5

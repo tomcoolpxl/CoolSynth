@@ -16,17 +16,21 @@
     not in the repository). Every style of the catalogue gets the same small set of recordings,
     written as 16-bit mono WAV files, a quarter of a second each:
 
-        C3 (48)   a sine at C3, one layer
-        C4 (60)   a sine at C4 at two dynamics: layer 0 at 0.25, layer 1 at 0.5
-        C5 (72)   a sine at C5 in two takes: the second is the first upside down
+        C3 (48)   a sine at C3 for keys 0 to 56, every velocity
+        C4 (60)   a sine at C4 for keys 57 to 66: at 0.25 for velocities up to 63, at 0.5 above
+        C5 (72)   a sine at C5 for keys 67 to 96 in two takes: the second is the first upside down
 
-    Sustaining styles carry a loop over the middle of each recording. The manifest's gain is 1.
+    Keys above 96 belong to no recording: the nearest one plays. Sustaining styles carry a loop
+    over the middle of each recording. The manifest's gain is 1 and loudness does not follow
+    velocity (veltrack 0), so levels in tests are the recordings' own.
 */
 namespace coolsynth::testing
 {
     inline constexpr int testSampleRate = 44100;
     inline constexpr int testSampleFrames = 11025;
     inline constexpr int testLoopStart = 4410, testLoopEnd = 8820, testLoopFade = 1102;
+    inline constexpr const char* testManifestColumns =
+        "# file | root | low key | high key | low velocity | high velocity | take | frames | rate | channels | loop start | loop end | loop fade | cents | gain dB\n";
 
     inline void writeSineWav(const juce::File& file, double hz, double amplitude)
     {
@@ -60,17 +64,20 @@ namespace coolsynth::testing
         struct Entry
         {
             const char* file;
-            int root, layer, take;
+            int root, lowKey, highKey, lowVelocity, highVelocity, take;
             double amplitude;
         };
-        const Entry entries[] { { "000.wav", 48, 0, 0, 0.5 },  { "001.wav", 60, 0, 0, 0.25 }, { "002.wav", 60, 1, 0, 0.5 },
-                                { "003.wav", 72, 0, 0, 0.5 },  { "004.wav", 72, 0, 1, -0.5 } };
-        juce::String manifest = "gain | 1.0\n# file | root | layer | take | frames | rate | channels | loop start | loop end | loop fade\n";
+        const Entry entries[] { { "000.wav", 48, 0, 56, 0, 127, 0, 0.5 },    { "001.wav", 60, 57, 66, 0, 63, 0, 0.25 },
+                                { "002.wav", 60, 57, 66, 64, 127, 0, 0.5 },  { "003.wav", 72, 67, 96, 0, 127, 0, 0.5 },
+                                { "004.wav", 72, 67, 96, 0, 127, 1, -0.5 } };
+        juce::String manifest = "gain | 1.0\nveltrack | 0.0\nrelease | 0.5\n";
+        manifest << testManifestColumns;
         for (const auto& e : entries)
         {
             writeSineWav(folder.getChildFile(e.file), 440.0 * std::exp2((e.root - 69) / 12.0), e.amplitude);
-            manifest << e.file << " | " << e.root << " | " << e.layer << " | " << e.take << " | " << testSampleFrames << " | " << testSampleRate
-                     << " | 1 | " << (sustains ? testLoopStart : 0) << " | " << (sustains ? testLoopEnd : 0) << " | " << (sustains ? testLoopFade : 0) << "\n";
+            manifest << e.file << " | " << e.root << " | " << e.lowKey << " | " << e.highKey << " | " << e.lowVelocity << " | " << e.highVelocity
+                     << " | " << e.take << " | " << testSampleFrames << " | " << testSampleRate << " | 1 | " << (sustains ? testLoopStart : 0)
+                     << " | " << (sustains ? testLoopEnd : 0) << " | " << (sustains ? testLoopFade : 0) << " | 0 | 0\n";
         }
         folder.getChildFile("manifest.txt").replaceWithText(manifest, false, false, "\n");
     }

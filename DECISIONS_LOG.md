@@ -1393,3 +1393,77 @@ To be corrected in the builder next: the octave given per style where a detector
 trusted; drums and unnamed sets grouped and placed by their measured main partial; a tuning
 correction per recording for sets that are not in tune; and, the user's choice, whether levels
 are evened out across the keyboard.
+
+## D100. The library is built from the author's own mapping files (2026-11-13)
+
+Correcting the faults of D99 turned up what makes them moot: the recordings' author publishes
+his instruments as SFZ mapping files, 258 of them (github.com/sgossner/VCSL branch `sfz`,
+github.com/sgossner/VSCO-2-CE branch `SFZ`; `tools/audition/fetch_sfz.py` downloads them). For
+each recording they give the note it sounds, the keys and the velocities that play it, a level
+correction and often a tuning correction, and for each instrument a release time and whether
+loudness follows velocity. A note in the Steinway's folder says its dynamic layers are
+levelled alike and need a velocity curve to get their dynamics back. The first build knew
+none of this: it guessed notes from file names and a pitch detector, split velocities evenly,
+and played level-matched layers through an envelope that gave them 6 dB of dynamics.
+
+- **The builder takes notes, keys, velocities and levels from the author's mapping files
+  (taken, recommended).** 74 of the 76 styles have one. Every fault of D99 goes with it: the
+  horn is A1 to F5, the tubular bells C4 to F5, the timpani are five drums on five notes.
+  Keeping my own mapping and correcting it by hand where it was found wrong would leave the
+  faults nobody found. The Old Trombone has no mapping file and is still placed by its file
+  names, its layers splitting the velocities evenly and its recordings levelled alike.
+- **The Sample generator plays a sampled instrument with the law those levels are made for:
+  level = velocity squared, as far as the instrument follows velocity at all (not at all for
+  the organs and harpsichords) (taken).** The Conservatory presets switch the amplifier
+  envelope's own velocity off. The alternative, the envelope's straight-line law, gives a
+  piano whose softest note is 6 dB below its loudest, or needs every preset to undo the
+  author's levels.
+- **A zone is the keys and velocities the mapping gives a recording; a note outside every zone
+  takes the nearest recorded note (taken).** Where the author crossfades two dynamic layers
+  (marimba, folk harp, glockenspiel, the second timpani) the layers switch at the middle of
+  the fade: D98 stands, two recordings of a note are not mixed.
+- **Tuning is measured here, not taken from the mapping files (taken).** Their corrections
+  come from a tuner that is steady on wind and string tones and wanders on drums and bars:
+  six hits of one kettledrum get corrections from -12 to +78 cents, while its main partial is
+  steady within 2. Measured here per recording from the first eight harmonics (winds,
+  strings, brass, organs: within 1 to 6 cents of the author's values where he gives any), from
+  the first partial alone (bars, tines, glasses: xylophone and glockenspiel are 15 cents
+  sharp as recorded, the kalimba up to 50 off its notes), and per drum from its main partial.
+  Left as recorded: the pianos and harpsichords (stretched on purpose), the tubular bells (a
+  bell has no partial at its note) and the three TX81Z patches (exact as they are). Taking
+  the author's corrections is a builder option (`tune=author`) and is not used.
+- **An instrument sounds the key that is played, also where the author maps it otherwise
+  (taken; the user is asked).** His mappings put the xylophone an octave and the
+  glockenspiels an octave below where they sound, as they are written; the TX81Z electric
+  piano sounds an octave below its key and the Clavisynth an octave above (his note says so);
+  the tubular glockenspiel's file names are not its pitches. All are moved to where they
+  sound (`shift=` in the catalogue). The other option: leave them as the author mapped them,
+  as a player of the written part expects.
+- **The didgeridoo is three styles, not the author's kit (taken).** His mapping puts its twelve
+  recordings on twelve keys. Here the three drones are one pitched, looped instrument on C#2,
+  and the phrases and the calls are styles of their own.
+- **The second timpani set is the author's "Scale" mapping (taken):** 54 of its 204 hits,
+  chosen to make a scale. That mapping is hand-made and not consistent with itself (one
+  drum's two layers are given pitches 135 cents apart), so each drum's pitch is measured and
+  the keys stay his. Four of its nine drum tunings differ from his by more than 40 cents;
+  the user's ear decides.
+- The release of each Conservatory preset is the author's (0.4 s for the grand, 0.8 s for
+  bowed strings, 15 to 30 s for mallets, bells, harp and timpani, which ring on after the key
+  as the instruments do; the envelope allows 20 s), and its attack is 2 ms: the recording
+  brings its own.
+- **Levels (taken).** Recordings levelled alike by the author do not peak alike, so a style's
+  gain puts the middle one of its loudest notes at half of full scale instead of its single
+  highest peak at 0.9 (which left whole instruments 10 dB down). A preset has one level and
+  an instrument several styles, so each style after the first carries a trim, measured by the
+  loudness tool (`CoolSynthPresetNormalizer --styles`, written to the catalogue by
+  `apply_trims.py`): -4.4 dB for the bowed vibraphone, +5 dB for the lower recorders; after
+  it every style needs the same preset level within 0.1 dB. The loudness tool leaves a
+  sampled preset room for fortissimo: its test chord at velocity 100 may peak at -6.2 dB, so
+  the same chord at full velocity stays under the output's soft clipper. At a normal touch
+  the pianos, mallets and harp therefore sit about 10 dB under the synth presets, bowed and
+  blown instruments 3 to 6 dB under (the user is asked whether that is wanted).
+- The demonstrations on the audition page (`make_demos.py`) are measured by `check_demos.py`:
+  every style gets louder with velocity (26 dB from velocity 45 to 120 on the grand), notes
+  are in tune within 5 cents in the middle of each style, and no file peaks above -1.5 dB.
+- The library after the rebuild: 2,216 zones in 76 styles, 2,213 files, 1,393 MB;
+  `verify_library.py` compared 2,213 files with their recordings, none different.

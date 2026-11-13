@@ -115,6 +115,35 @@ if os.path.exists(check_path):
                    'correcting it from measurements of that recording. All three are equally loud and have no effects.</p>'
                    + "".join(blocks) + "</section>")
 
+demo_path = os.path.join(audition, "conservatory", "index.json")
+demos_html = ""
+if os.path.exists(demo_path):
+    with open(demo_path, encoding="utf-8") as handle:
+        demos = json.load(handle)
+    families = {}
+    for d in demos:
+        families.setdefault(d["family"], {}).setdefault(d["instrument"], []).append(d)
+    blocks = []
+    for family, instruments in families.items():
+        blocks.append(f'<h3>{html.escape(family)}</h3>')
+        for instrument, styles in instruments.items():
+            audio = "".join(
+                f'<label class="player"><span>{html.escape(s["style"])}</span>'
+                f'<audio controls preload="none" src="{html.escape("conservatory/" + s["file"])}"></audio></label>'
+                for s in styles)
+            blocks.append(
+                f'<article class="item check"><div class="pick"><span class="name">{html.escape(instrument)}</span>'
+                f'<span class="lib">{len(styles)} style{"s" if len(styles) != 1 else ""}</span></div>'
+                f'<div class="players">{audio}</div>'
+                f'<label class="verdict">Your verdict <select data-demo="{html.escape(instrument)}">'
+                f'<option value="">not judged yet</option><option>good</option><option>wrong notes or out of tune</option>'
+                f'<option>too quiet or too loud</option><option>uneven from note to note</option>'
+                f'<option>a loop or a click is audible</option><option>something else is wrong</option></select></label></article>')
+    demos_html = ('<section><h2>Conservatory <span class="count">the recorded instruments as the synth plays them</span></h2>'
+                  '<p class="lead">Each player is the preset played through the plugin: eight notes climbing through the '
+                  'instrument, from soft to loud, then a chord. One player per playing style. This is the synth, not the raw '
+                  'recording; the raw recordings are further down.</p>' + "".join(blocks) + "</section>")
+
 page = """<!doctype html>
 <html lang="en">
 <head>
@@ -132,6 +161,7 @@ header, main { max-width: 980px; margin: 0 auto; padding: 0 16px; }
 header { padding-top: 28px; }
 h1 { font-size: 1.6rem; margin: 0 0 6px; }
 h2 { font-size: 1.15rem; margin: 34px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
+h3 { font-size: 1rem; margin: 22px 0 6px; color: var(--soft); }
 .count { color: var(--soft); font-weight: 400; font-size: .9rem; }
 p.lead { color: var(--soft); margin: 0 0 10px; max-width: 70ch; }
 .item { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
@@ -174,6 +204,7 @@ textarea { width: 100%; min-height: 90px; margin: 10px 0 40px; font: 13px/1.4 ui
   <span id="picked">Nothing picked yet</span>
 </div></div>
 <main>
+__DEMOS__
 __CHECKS__
 __SECTIONS__
 <h2>Your picks as text</h2>
@@ -187,22 +218,29 @@ try { saved = JSON.parse(localStorage.getItem(KEY) || "[]"); } catch (e) { saved
 const verdicts = [...document.querySelectorAll('select[data-check]')];
 let savedVerdicts = {};
 try { savedVerdicts = JSON.parse(localStorage.getItem(KEY + "-verdicts") || "{}"); } catch (e) { savedVerdicts = {}; }
+const demos = [...document.querySelectorAll('select[data-demo]')];
+let savedDemos = {};
+try { savedDemos = JSON.parse(localStorage.getItem(KEY + "-demos") || "{}"); } catch (e) { savedDemos = {}; }
 function refresh() {
   const picked = boxes.filter(b => b.checked);
   const judged = verdicts.filter(v => v.value);
+  const heard = demos.filter(v => v.value);
   boxes.forEach(b => b.closest(".item").classList.toggle("picked", b.checked));
   document.getElementById("picked").textContent =
-    (picked.length ? picked.length + " picked" : "Nothing picked yet") + (judged.length ? ", " + judged.length + " judged" : "");
+    (picked.length ? picked.length + " picked" : "Nothing picked yet") + (judged.length + heard.length ? ", " + (judged.length + heard.length) + " judged" : "");
   let text = "";
+  if (heard.length) text += "Conservatory:\\n" + heard.map(v => "- " + v.dataset.demo + ": " + v.value).join("\\n") + "\\n";
   if (judged.length) text += "Model check:\\n" + judged.map(v => "- " + v.dataset.title + ": " + v.value).join("\\n") + "\\n";
   if (picked.length) text += "My sample picks:\\n" + picked.map(b => "- " + b.dataset.title + "  [" + b.dataset.id + "]").join("\\n");
   document.getElementById("out").value = text;
   try {
     localStorage.setItem(KEY, JSON.stringify(picked.map(b => b.dataset.id)));
     localStorage.setItem(KEY + "-verdicts", JSON.stringify(Object.fromEntries(verdicts.map(v => [v.dataset.check, v.value]))));
+    localStorage.setItem(KEY + "-demos", JSON.stringify(Object.fromEntries(demos.map(v => [v.dataset.demo, v.value]))));
   } catch (e) {}
 }
 verdicts.forEach(v => { v.value = savedVerdicts[v.dataset.check] || ""; v.addEventListener("change", refresh); });
+demos.forEach(v => { v.value = savedDemos[v.dataset.demo] || ""; v.addEventListener("change", refresh); });
 boxes.forEach(b => { b.checked = saved.includes(b.dataset.id); b.addEventListener("change", refresh); });
 document.getElementById("clear").addEventListener("click", () => { boxes.forEach(b => b.checked = false); refresh(); });
 document.getElementById("copy").addEventListener("click", async () => {
@@ -224,7 +262,7 @@ refresh();
 </body>
 </html>
 """
-page = page.replace("__COUNT__", str(rows_total)).replace("__SECTIONS__", "\n".join(sections)).replace("__CHECKS__", checks_html)
+page = page.replace("__COUNT__", str(rows_total)).replace("__SECTIONS__", "\n".join(sections)).replace("__CHECKS__", checks_html).replace("__DEMOS__", demos_html)
 with open(os.path.join(audition, "index.html"), "w", encoding="utf-8", newline="\n") as handle:
     handle.write(page)
 print(rows_total, "instruments on the page in", len(sections), "families")

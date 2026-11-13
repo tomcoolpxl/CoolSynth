@@ -1,10 +1,12 @@
 // Renders a preset playing given notes to a WAV file, through the real plugin signal path.
 //
 //   CoolSynthRender --preset "Marimba" --notes "60:0:1.5,64:0.5:1.5:80" --seconds 6 --out marimba.wav
-//                   [--bank some.csbank] [--no-fx] [--list]
+//                   [--bank some.csbank] [--style N] [--no-fx] [--list]
 //
+// --preset  a preset's name, or "Room: Name" where two rooms have a preset of that name
 // --notes   comma-separated note:start:length[:velocity], times in seconds, velocity 1..127 (100)
 // --bank    take the preset from this bank file instead of the built-in bank
+// --style   the Nth style, from 0, of the sampled instrument in the first generator slot
 // --no-fx   switch every effect off, to hear the voices alone
 // --list    print the built-in preset names and exit
 //
@@ -161,6 +163,10 @@ int main(int argc, char* argv[])
     processor.prepareToPlay(kSampleRate, kBlockSize);
     for (const auto& problem : coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset))
         std::cerr << problem << "\n";
+    // --style N: the Nth style (from 0) of the sampled instrument in the first generator slot.
+    if (const auto styleText = value("--style"); styleText.isNotEmpty())
+        if (auto* styleParameter = processor.getValueTreeState().getParameter("pA.g1.p8"))
+            styleParameter->setValueNotifyingHost(styleParameter->getValueForText(juce::String(styleText.getIntValue() + 1))); // the parameter shows styles from 1
     if (! processor.loadSampledInstrumentsNow())
         std::cerr << "a sampled instrument of this preset is not installed: it will be silent\n";
 

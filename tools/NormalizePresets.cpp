@@ -27,6 +27,7 @@
 #include "synth/v3/Modulation.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
+#include "synth/v3/InstrumentCatalogue.h"
 
 namespace
 {
@@ -92,6 +93,9 @@ namespace
     {
         double integratedLufs = -120.0;
         double peakDb         = -120.0;
+        // How much louder the preset's loudest playing is than the test's velocity of 100: a sampled instrument
+        // follows the square of velocity, so its fortissimo is 4 dB above the test and needs that much room.
+        double fortissimoDb = 0.0;
     };
 
     // BS.1770 gated integrated loudness: 400 ms blocks with 75% overlap,
@@ -292,17 +296,27 @@ namespace
         return midi;
     }
 
-    LoudnessResult renderAndMeasure(const coolsynth::presets::FactoryPreset& preset)
+    /** `style` from 0 switches the sampled instrument in the first generator slot to another of its styles. */
+    LoudnessResult renderAndMeasure(const coolsynth::presets::FactoryPreset& preset, int style = -1)
     {
         SynthAudioProcessor processor;
         processor.setPlayConfigDetails(0, 2, kSampleRate, kBlockSize);
         processor.prepareToPlay(kSampleRate, kBlockSize);
 
         coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset);
+        if (style >= 0)
+            if (auto* styleParameter = processor.getValueTreeState().getParameter("pA.g1.p8"))
+                styleParameter->setValueNotifyingHost(styleParameter->getValueForText(juce::String(style + 1))); // shown from 1
         processor.loadSampledInstrumentsNow(); // a sampled instrument is read in before the first note
         int stimulusRoot = 60, lowestRecorded = 0, highestRecorded = 0;
+        double fortissimoDb = 0.0;
         if (processor.sampledInstrumentRange(lowestRecorded, highestRecorded))
+        {
             stimulusRoot = (lowestRecorded + highestRecorded) / 2 - 6;
+            const double track = processor.sampledVelocityTrack();
+            const double tested = 100.0 / 127.0;
+            fortissimoDb = -20.0 * std::log10(1.0 - track + track * tested * tested);
+        }
 
         // A preset that routes the global envelope is measured once that envelope has risen
         // (a riser is judged at its top, not at its quiet start).
@@ -340,13 +354,67 @@ namespace
 
         processor.releaseResources();
 
-        return measureLoudness(collected);
+        auto measured = measureLoudness(collected);
+        measured.fortissimoDb = fortissimoDb;
+        return measured;
+    }
+}
+
+namespace
+{
+    /** The change of master gain a measurement asks for, and which rule set it. */
+    double correctionFor(const LoudnessResult& loudness, double& targetLufs, std::string& limitedBy)
+    {
+        const double crestFactor = loudness.peakDb - loudness.integratedLufs;
+        const double crestBoost = std::clamp((crestFactor - kCrestBoostKneeDb) * kCrestBoostSlope, 0.0, kCrestBoostMaxDb);
+        targetLufs = kBaseTargetLufs + crestBoost;
+
+        const double lufsDelta = targetLufs - loudness.integratedLufs;
+        // A sampled instrument's loudest chord must still stay under the output's soft clipper (it bends from -1.9 dB).
+        const double peakCeiling = loudness.fortissimoDb > 0.0 ? -2.0 - loudness.fortissimoDb : kPeakCeilingDb;
+        const double peakDelta = peakCeiling - loudness.peakDb;
+        limitedBy = peakDelta < lufsDelta ? "peak" : "lufs";
+        return std::min(lufsDelta, peakDelta);
+    }
+
+    /** --styles: for every preset that plays a sampled instrument, how much louder or quieter each of the
+        instrument's other styles would have to be to need the same master gain as its first. The library builder
+        takes these as the styles' trims (the catalogue's trim= option), so one preset level suits every style. */
+    int reportStyleTrims()
+    {
+        namespace sv3 = coolsynth::synth::v3;
+        const auto& catalogue = sv3::InstrumentCatalogue::instance();
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+        {
+            const auto& preset = coolsynth::presets::getFactoryPreset(i);
+            const auto* type = findEntry(preset, "pA.g1.type");
+            const auto* sample = findEntry(preset, "pA.g1.p1");
+            const int instrument = type != nullptr && sample != nullptr && type->text.equalsIgnoreCase("Sample")
+                                       ? catalogue.find(sample->text.toStdString()) : -1;
+            if (instrument < 0)
+                continue;
+            const auto& styles = catalogue.at(instrument).styles;
+            double target = 0.0;
+            std::string limitedBy;
+            const double first = correctionFor(renderAndMeasure(preset, 0), target, limitedBy);
+            for (int s = 1; s < static_cast<int>(styles.size()); ++s)
+            {
+                const double other = correctionFor(renderAndMeasure(preset, s), target, limitedBy);
+                std::cout << "trim | " << catalogue.at(instrument).name << " | " << styles[static_cast<std::size_t>(s)].name << " | "
+                          << std::fixed << std::setprecision(1) << (other - first) << "\n" << std::flush;
+            }
+        }
+        return 0;
     }
 }
 
 int main(int argc, char* argv[])
 {
     juce::ScopedJuceInitialiser_GUI juceInit;
+
+    for (int a = 1; a < argc; ++a)
+        if (juce::String(argv[a]) == "--styles")
+            return reportStyleTrims();
 
     // --apply [bank directory]: write the corrected master gains into the bank files.
     bool apply = false;
@@ -384,19 +452,9 @@ int main(int argc, char* argv[])
         const auto loudness = renderAndMeasure(preset);
 
         const double crestFactor = loudness.peakDb - loudness.integratedLufs;
-        const double crestBoost  = std::clamp((crestFactor - kCrestBoostKneeDb) * kCrestBoostSlope,
-                                              0.0, kCrestBoostMaxDb);
-        const double targetLufs  = kBaseTargetLufs + crestBoost;
-
-        double lufsDelta = targetLufs - loudness.integratedLufs;
-        double peakDelta = kPeakCeilingDb - loudness.peakDb;
-        std::string limitedBy = "lufs";
-        double correction = lufsDelta;
-        if (peakDelta < correction)
-        {
-            correction = peakDelta;
-            limitedBy = "peak";
-        }
+        double targetLufs = 0.0;
+        std::string limitedBy;
+        const double correction = correctionFor(loudness, targetLufs, limitedBy);
 
         double newMasterDb = oldMasterDb + correction;
         // Round to 0.5 dB so the written value reads cleanly in source.

@@ -4,6 +4,7 @@
 #include <cmath>
 #include <tuple>
 
+#include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_formats/juce_audio_formats.h>
 
 namespace coolsynth::synth::v3
@@ -13,36 +14,57 @@ namespace coolsynth::synth::v3
         if (zones.empty())
             return nullptr;
 
-        // The nearest recorded note; of two equally near, the lower (a recording sounds better raised than lowered).
-        int bestRoot = zones.front().root;
-        float bestDistance = 1.0e9f;
+        const int key = static_cast<int>(std::lround(midiNote));
+        const int struck = std::clamp(static_cast<int>(std::lround(velocity * 127.0f)), 0, 127);
+
+        // The zones whose keys hold the note. Outside all of them (above or below what the instrument was mapped
+        // for) the nearest recorded note plays; of two equally near, the lower: a recording sounds better raised.
+        bool held = false;
         for (const auto& z : zones)
+            held = held || (key >= z.lowKey && key <= z.highKey);
+        int nearestRoot = zones.front().root;
+        if (! held)
         {
-            const float distance = std::abs(static_cast<float>(z.root) - midiNote);
-            if (distance < bestDistance)
-            {
-                bestDistance = distance;
-                bestRoot = z.root;
-            }
+            float nearest = 1.0e9f;
+            for (const auto& z : zones)
+                if (const float distance = std::abs(static_cast<float>(z.root) - midiNote); distance < nearest)
+                {
+                    nearest = distance;
+                    nearestRoot = z.root;
+                }
         }
 
-        // Of the layers recorded for that note, the nearest to the one the velocity asks for.
-        const int wanted = std::min(layers - 1, static_cast<int>(std::clamp(velocity, 0.0f, 1.0f) * static_cast<float>(layers)));
-        int bestLayer = -1;
+        // Of those, the zone whose velocities hold the note's, else the nearest in velocity; of several, the nearest note.
+        const SampleZone* best = nullptr;
+        int bestMiss = 0;
+        float bestDistance = 0.0f;
         for (const auto& z : zones)
-            if (z.root == bestRoot && (bestLayer < 0 || std::abs(z.layer - wanted) < std::abs(bestLayer - wanted)))
-                bestLayer = z.layer;
+        {
+            if (held ? (key < z.lowKey || key > z.highKey) : z.root != nearestRoot)
+                continue;
+            const int miss = struck < z.lowVelocity ? z.lowVelocity - struck : struck > z.highVelocity ? struck - z.highVelocity : 0;
+            const float distance = std::abs(static_cast<float>(z.root) - midiNote);
+            if (best == nullptr || miss < bestMiss || (miss == bestMiss && distance < bestDistance))
+            {
+                best = &z;
+                bestMiss = miss;
+                bestDistance = distance;
+            }
+        }
+        if (best == nullptr)
+            return nullptr;
 
         const SampleZone* first = nullptr;
         unsigned takes = 0;
         for (const auto& z : zones)
-            if (z.root == bestRoot && z.layer == bestLayer)
+            if (z.root == best->root && z.lowKey == best->lowKey && z.highKey == best->highKey
+                && z.lowVelocity == best->lowVelocity && z.highVelocity == best->highVelocity)
             {
                 if (first == nullptr)
                     first = &z;
                 ++takes;
             }
-        return first != nullptr ? first + (turn % takes) : nullptr; // takes of one note and layer lie together
+        return first + (turn % takes); // the takes of one zone lie together
     }
 
     std::unique_ptr<LoadedStyle> SampleLibrary::readStyle(const juce::File& folder)
@@ -55,9 +77,11 @@ namespace coolsynth::synth::v3
         {
             juce::String file;
             SampleZone zone;
+            float gain = 1.0f; // this recording's own level correction
         };
         std::vector<Row> rows;
         float gain = 1.0f; // one factor for the whole style: quietly recorded instruments are not quiet in the synth
+        auto style = std::make_unique<LoadedStyle>();
         for (const auto& line : juce::StringArray::fromLines(manifest.loadFileAsString()))
         {
             const auto text = line.upToFirstOccurrenceOf("#", false, false).trim();
@@ -65,31 +89,45 @@ namespace coolsynth::synth::v3
                 continue;
             auto parts = juce::StringArray::fromTokens(text, "|", "");
             parts.trim();
-            if (parts.size() == 2 && parts[0] == "gain")
+            if (parts.size() == 2)
             {
-                gain = juce::jlimit(0.01f, 100.0f, parts[1].getFloatValue());
+                if (parts[0] == "gain")
+                    gain *= juce::jlimit(1.0e-4f, 1.0e4f, parts[1].getFloatValue());
+                else if (parts[0] == "trim") // decibels: makes an instrument's styles need the same preset level
+                    gain *= juce::Decibels::decibelsToGain(juce::jlimit(-40.0f, 40.0f, parts[1].getFloatValue()));
+                else if (parts[0] == "veltrack")
+                    style->velocityTrack = juce::jlimit(0.0f, 1.0f, parts[1].getFloatValue());
+                else if (parts[0] == "release")
+                    style->releaseSeconds = juce::jlimit(0.0f, 60.0f, parts[1].getFloatValue());
                 continue;
             }
-            if (parts.size() < 10)
+            // file | root | low key | high key | low velocity | high velocity | take | frames | rate | channels
+            //      | loop start | loop end | loop fade | cents | gain dB
+            if (parts.size() < 15)
                 continue;
             Row row;
             row.file = parts[0];
             row.zone.root = juce::jlimit(0, 127, parts[1].getIntValue());
-            row.zone.layer = std::max(0, parts[2].getIntValue());
-            row.zone.take = std::max(0, parts[3].getIntValue());
-            row.zone.frames = std::max(0, parts[4].getIntValue());
-            row.zone.rate = std::max(1000.0, parts[5].getDoubleValue());
-            row.zone.loopStart = std::max(0, parts[7].getIntValue());
-            row.zone.loopEnd = std::max(0, parts[8].getIntValue());
-            row.zone.loopFade = std::max(0, parts[9].getIntValue());
+            row.zone.lowKey = juce::jlimit(0, 127, parts[2].getIntValue());
+            row.zone.highKey = juce::jlimit(row.zone.lowKey, 127, parts[3].getIntValue());
+            row.zone.lowVelocity = juce::jlimit(0, 127, parts[4].getIntValue());
+            row.zone.highVelocity = juce::jlimit(row.zone.lowVelocity, 127, parts[5].getIntValue());
+            row.zone.take = std::max(0, parts[6].getIntValue());
+            row.zone.frames = std::max(0, parts[7].getIntValue());
+            row.zone.rate = std::max(1000.0, parts[8].getDoubleValue());
+            row.zone.loopStart = std::max(0, parts[10].getIntValue());
+            row.zone.loopEnd = std::max(0, parts[11].getIntValue());
+            row.zone.loopFade = std::max(0, parts[12].getIntValue());
+            row.zone.tuneCents = juce::jlimit(-100.0f, 100.0f, parts[13].getFloatValue());
+            row.gain = juce::Decibels::decibelsToGain(juce::jlimit(-80.0f, 80.0f, parts[14].getFloatValue()));
             rows.push_back(row);
         }
         std::stable_sort(rows.begin(), rows.end(), [](const Row& a, const Row& b)
         {
-            return std::tie(a.zone.root, a.zone.layer, a.zone.take) < std::tie(b.zone.root, b.zone.layer, b.zone.take);
+            return std::tie(a.zone.root, a.zone.lowKey, a.zone.highKey, a.zone.lowVelocity, a.zone.highVelocity, a.zone.take)
+                 < std::tie(b.zone.root, b.zone.lowKey, b.zone.highKey, b.zone.lowVelocity, b.zone.highVelocity, b.zone.take);
         });
 
-        auto style = std::make_unique<LoadedStyle>();
         constexpr int guard = LoadedStyle::guardFrames;
         std::size_t floats = 0;
         for (const auto& row : rows)
@@ -119,10 +157,11 @@ namespace coolsynth::synth::v3
                 const float* left = scratch.getReadPointer(0);
                 const float* right = scratch.getReadPointer(reader->numChannels > 1 ? 1 : 0);
                 float* out = style->storage.data() + offset + 2u * static_cast<std::size_t>(guard);
+                const float level = gain * row.gain;
                 for (int i = 0; i < frames; ++i)
                 {
-                    out[2 * i] = left[i] * gain;
-                    out[2 * i + 1] = right[i] * gain;
+                    out[2 * i] = left[i] * level;
+                    out[2 * i + 1] = right[i] * level;
                 }
                 row.zone.rate = reader->sampleRate;
             }
@@ -136,7 +175,6 @@ namespace coolsynth::synth::v3
         for (std::size_t i = 0; i < rows.size(); ++i)
         {
             rows[i].zone.data = style->storage.data() + offsets[i];
-            style->layers = std::max(style->layers, rows[i].zone.layer + 1);
             style->zones.push_back(rows[i].zone);
         }
         return style;

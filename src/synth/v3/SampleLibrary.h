@@ -14,11 +14,13 @@
     The sampled instruments' audio (decisions D96 to D98): files beside the plugin, read into
     memory when a patch asks for them.
 
-    On disk a style is a folder of FLAC files and a manifest (one line per recording: the note
-    it plays, its dynamic layer, its take, its length and, for sustaining styles, a loop; and one
-    gain for the whole style, applied as it is read, that evens out how loudly instruments were
-    recorded). The
-    folders sit under the library root: the folder named in COOLSYNTH_LIBRARY, else the one
+    On disk a style is a folder of FLAC files and a manifest. One line per recording: the note
+    it sounds, the keys and the velocities that play it, its take, its length, for sustaining
+    styles a loop, how many cents it is off its note, and a level correction. These come from
+    the mapping files the recordings' author publishes, so an instrument plays as its author
+    built it. Three lines for the whole style: a gain that evens out how loudly instruments
+    were recorded, how far loudness follows velocity, and the release time the author gave it.
+    The folders sit under the library root: the folder named in COOLSYNTH_LIBRARY, else the one
     written in "CoolSynth/library.path" in the user's application data, else "CoolSynth/Library"
     in the common application data.
 
@@ -33,12 +35,14 @@ namespace coolsynth::synth::v3
 {
     struct SampleZone
     {
-        int root = 60;        // the MIDI note the recording plays
-        int layer = 0;        // dynamic layer, 0 the softest
-        int take = 0;         // which of several recordings of this note and layer
+        int root = 60;                           // the MIDI note the recording sounds
+        int lowKey = 0, highKey = 127;           // the keys that play it
+        int lowVelocity = 0, highVelocity = 127; // the MIDI velocities that play it
+        int take = 0;                            // which of several recordings of these keys and velocities
         int frames = 0;
         double rate = 44100.0;
         int loopStart = 0, loopEnd = 0, loopFade = 0; // in frames; no loop when loopEnd is 0
+        float tuneCents = 0.0f;                       // how far above its note the recording sounds; taken out as it plays
         const float* data = nullptr;                  // interleaved left, right; guardFrames readable before and after
     };
 
@@ -46,12 +50,20 @@ namespace coolsynth::synth::v3
     {
         static constexpr int guardFrames = 16;
 
-        std::vector<SampleZone> zones; // sorted by root, then layer, then take
+        std::vector<SampleZone> zones; // sorted by root, keys, velocities, then take: the takes of one zone lie together
         std::vector<float> storage;
-        int layers = 1;
+        float velocityTrack = 1.0f;  // 0: every note at full level (an organ); 1: level follows velocity squared
+        float releaseSeconds = 0.5f; // the release the author gave the instrument: for presets, not used in playing
 
-        /** The recording for a note (fractional MIDI) at a velocity 0..1; `turn` picks among takes. Null when empty. */
+        /** The recording for a note (fractional MIDI) at a velocity 0..1; `turn` picks among takes. Null when empty.
+            A zone whose keys and velocities hold the note wins; outside every zone the nearest recorded note plays. */
         [[nodiscard]] const SampleZone* pick(float midiNote, float velocity, unsigned turn) const noexcept;
+        /** The level a velocity 0..1 plays at: the square law the mapping files are built on, as far as the style follows it. */
+        [[nodiscard]] float velocityGain(float velocity) const noexcept
+        {
+            const float v = velocity < 0.0f ? 0.0f : velocity > 1.0f ? 1.0f : velocity;
+            return 1.0f - velocityTrack + velocityTrack * v * v;
+        }
         [[nodiscard]] std::size_t bytes() const noexcept { return storage.size() * sizeof(float); }
     };
 

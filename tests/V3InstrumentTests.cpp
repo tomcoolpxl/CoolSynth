@@ -142,7 +142,7 @@ public:
                 expect(! instrument.styles.empty() && static_cast<int>(instrument.styles.size()) <= maxInstrumentStyles, instrument.name);
                 styles += static_cast<int>(instrument.styles.size());
             }
-            expectEquals(styles, 74);
+            expectEquals(styles, 76);
             // The numbers are saved in patches: these must never move.
             expectEquals(catalogue.find("Steinway Grand"), 0);
             expectEquals(catalogue.find("steinway-grand"), 0);
@@ -176,21 +176,28 @@ public:
             if (style == nullptr)
                 return;
             expectEquals(static_cast<int>(style->zones.size()), 5);
-            expectEquals(style->layers, 2);
+            expectEquals(style->velocityTrack, 0.0f);
+            expectEquals(style->releaseSeconds, 0.5f);
             expectEquals(style->zones.front().root, 48);
             expectEquals(style->zones.back().root, 72);
             expectEquals(style->zones.front().frames, coolsynth::testing::testSampleFrames);
             expectEquals(style->zones.front().loopEnd, coolsynth::testing::testLoopEnd);
 
-            // The nearest recorded note; of two equally near, the lower.
+            // The recording whose keys hold the note plays, even where another's note is nearer:
+            // key 56 belongs to the C3 recording (keys up to 56), four semitones from C4 and eight from C3.
             expectEquals(style->pick(50.0f, 1.0f, 0)->root, 48);
-            expectEquals(style->pick(54.0f, 1.0f, 0)->root, 48);
-            expectEquals(style->pick(55.0f, 1.0f, 0)->root, 60);
+            expectEquals(style->pick(56.0f, 1.0f, 0)->root, 48);
+            expectEquals(style->pick(57.0f, 1.0f, 0)->root, 60);
+            expectEquals(style->pick(67.0f, 1.0f, 0)->root, 72);
+            // Above every recording's keys the nearest recorded note plays.
             expectEquals(style->pick(100.0f, 1.0f, 0)->root, 72);
-            // Velocity picks the layer where the note has more than one.
-            expectEquals(style->pick(60.0f, 0.2f, 0)->layer, 0);
-            expectEquals(style->pick(60.0f, 0.9f, 0)->layer, 1);
-            expectEquals(style->pick(48.0f, 0.9f, 0)->layer, 0);
+            expectEquals(style->pick(127.0f, 0.1f, 0)->root, 72);
+            // Velocity picks among the recordings of a key: up to 63 the soft one, above it the loud one.
+            expectEquals(style->pick(60.0f, 0.2f, 0)->highVelocity, 63);
+            expectEquals(style->pick(60.0f, 63.0f / 127.0f, 0)->highVelocity, 63);
+            expectEquals(style->pick(60.0f, 64.0f / 127.0f, 0)->lowVelocity, 64);
+            expectEquals(style->pick(60.0f, 0.9f, 0)->lowVelocity, 64);
+            expectEquals(style->pick(48.0f, 0.9f, 0)->lowVelocity, 0);
             // Takes come round in turn.
             expectEquals(style->pick(72.0f, 0.5f, 0)->take, 0);
             expectEquals(style->pick(72.0f, 0.5f, 1)->take, 1);
@@ -205,7 +212,8 @@ public:
 
         beginTest("a_flac_file_is_read_bit_for_bit_and_takes_the_styles_gain");
         {
-            // tests/data/flac-style: 0.1 s of a 440 Hz sine at 1/8 of full scale, as FLAC; the manifest's gain is 2.
+            // tests/data/flac-style: 0.1 s of a 440 Hz sine at 1/8 of full scale, as FLAC. The manifest's gain is 2,
+            // the recording's own correction -6.02 dB, and loudness follows velocity in full.
             const auto folder = juce::File(COOLSYNTH_SOURCE_DIR).getChildFile("tests/data/flac-style");
             const auto style = SampleLibrary::readStyle(folder);
             expect(style != nullptr, "tests/data/flac-style is part of the repository");
@@ -221,8 +229,12 @@ public:
                     peak = std::max(peak, std::abs(zone.data[2 * i]));
                     crossings += zone.data[2 * (i - 1)] < 0.0f && zone.data[2 * i] >= 0.0f ? 1 : 0;
                 }
-                expectWithinAbsoluteError(peak, 0.25f, 0.005f);
+                expectWithinAbsoluteError(peak, 0.125f, 0.003f);
                 expectWithinAbsoluteError(crossings, 44, 1);
+                expectEquals(style->velocityTrack, 1.0f);
+                expectWithinAbsoluteError(style->releaseSeconds, 0.4f, 1.0e-6f);
+                expectWithinAbsoluteError(style->velocityGain(1.0f), 1.0f, 1.0e-6f);
+                expectWithinAbsoluteError(style->velocityGain(0.5f), 0.25f, 1.0e-6f);
             }
         }
 
@@ -293,6 +305,32 @@ public:
             expectGreaterThan(rms(second.left, 480, 4800), 0.2);
             const bool wasThere = rms(first.left, 480, 4800) > 0.2;
             expect(wasThere || rms(first.left, 0, 4800) == 0.0);
+        }
+
+        beginTest("a_recording_off_its_note_is_played_in_tune_and_velocity_sets_its_level");
+        {
+            // One recording 30 cents above C4 at half scale, said so in its manifest, with a correction of -6.02 dB
+            // and loudness following velocity in full.
+            const int xylophone = catalogue.find("Xylophone");
+            const auto folder = libraryFolder.getChildFile(juce::String(catalogue.at(xylophone).styles[0].folder));
+            coolsynth::testing::writeSineWav(folder.getChildFile("sharp.wav"), 261.6256 * std::exp2(30.0 / 1200.0), 0.5);
+            folder.getChildFile("manifest.txt").replaceWithText(juce::String("gain | 1.0\nveltrack | 1.0\nrelease | 2.0\n")
+                + "sharp.wav | 60 | 0 | 127 | 0 | 127 | 0 | 11025 | 44100 | 1 | 0 | 0 | 0 | 30.0 | -6.0206\n", false, false, "\n");
+            library.setRoot(libraryFolder);
+            expect(library.loadNow(xylophone, 0) != nullptr);
+
+            const auto full = play(xylophone, 0, 60, 1.0f, 19200);
+            expectWithinAbsoluteError(zeroCrossingHz(full.left, 960, 17000), 261.626, 0.15, "the 30 cents are taken out");
+            expectWithinAbsoluteError(rms(full.left, 960, 17000), 0.25 / std::sqrt(2.0), 0.002);
+            const auto octave = play(xylophone, 0, 72, 1.0f, 9600);
+            expectWithinAbsoluteError(zeroCrossingHz(octave.left, 960, 8000), 523.251, 0.3);
+            // Half the velocity is a quarter of the level: 12 dB down.
+            const auto half = play(xylophone, 0, 60, 0.5f, 19200);
+            expectWithinAbsoluteError(rms(half.left, 960, 17000) / rms(full.left, 960, 17000), 0.25, 0.003);
+
+            folder.getChildFile("sharp.wav").deleteFile();
+            coolsynth::testing::writeTestStyle(folder, false);
+            library.setRoot(libraryFolder);
         }
 
         beginTest("a_bank_preset_names_its_instrument_its_style_and_its_family");

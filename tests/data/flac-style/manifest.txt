@@ -1,3 +1,5 @@
 gain | 2.0
-# file | root | layer | take | frames | rate | channels | loop start | loop end | loop fade
-000.flac | 69 | 0 | 0 | 4410 | 44100 | 2 | 0 | 0 | 0
+veltrack | 1.0
+release | 0.4
+# file | root | low key | high key | low velocity | high velocity | take | frames | rate | channels | loop start | loop end | loop fade | cents | gain dB
+000.flac | 69 | 0 | 127 | 0 | 127 | 0 | 4410 | 44100 | 2 | 0 | 0 | 0 | 0 | -6.0206

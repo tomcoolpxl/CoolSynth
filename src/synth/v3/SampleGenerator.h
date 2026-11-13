@@ -29,8 +29,10 @@
     two band levels.
 
     A sampled instrument from the catalogue (InstrumentCatalogue.h), in the Style chosen. Every
-    note picks the recording nearest its pitch, the dynamic layer its velocity asks for, and the
-    next of several takes, and plays it in stereo at the speed that gives the note. Loop on keeps
+    note picks the recording mapped to its key and velocity (the mapping is the one the
+    recordings' author publishes) and the next of several takes, and plays it in stereo at the
+    speed that gives the note, at the level its velocity gives it on that instrument: the square
+    of the velocity for most, none at all for an organ or a harpsichord. Loop on keeps
     a sustaining style going on the loop its recording carries, crossfaded; Loop off, and every
     struck or plucked style, lets the recording ring out. Start skips into the recording. The
     read is a 16-point windowed-sinc one (Kaiser, 256 phases, interpolated), with a narrower
@@ -331,6 +333,7 @@ namespace coolsynth::synth::v3
                     const float midi = static_cast<float>(69.0 + 12.0 * std::log2(hz / 440.0));
                     static std::atomic<unsigned> turns { 0 };
                     zone = loaded->pick(midi, noteVelocity, turns.fetch_add(1, std::memory_order_relaxed));
+                    velocityLevel = loaded->velocityGain(noteVelocity);
                     if (zone != nullptr && zone->frames > 0)
                     {
                         position = juce::jlimit(0.0, static_cast<double>(zone->frames - 1), static_cast<double>(params.p[start]) * zone->frames);
@@ -347,7 +350,8 @@ namespace coolsynth::synth::v3
 
             // A balance, not a pan: the recording is stereo already.
             const float pan = juce::jlimit(-1.0f, 1.0f, params.pan);
-            const float gainLeft = pan > 0.0f ? 1.0f - pan : 1.0f, gainRight = pan < 0.0f ? 1.0f + pan : 1.0f;
+            // The instrument's own dynamics: its recordings are levelled for a square law of velocity (an organ's for none).
+            const float gainLeft = velocityLevel * (pan > 0.0f ? 1.0f - pan : 1.0f), gainRight = velocityLevel * (pan < 0.0f ? 1.0f + pan : 1.0f);
 
             if (finished || zone == nullptr)
             {
@@ -356,7 +360,8 @@ namespace coolsynth::synth::v3
                 return;
             }
 
-            const double rootHz = 440.0 * std::exp2((static_cast<double>(zone->root) - 69.0) / 12.0);
+            // The pitch the recording sounds at: its note, and the cents the manifest says it is off it.
+            const double rootHz = 440.0 * std::exp2((static_cast<double>(zone->root) - 69.0 + 0.01 * static_cast<double>(zone->tuneCents)) / 12.0);
             const double step = juce::jlimit(1.0 / 64.0, 32.0, hz / rootHz) * zone->rate / sampleRate;
             const int cutoff = SincKernels::cutoffFor(step);
             const bool looping = params.p[loop] >= 0.5f && zone->loopEnd > 0;
@@ -409,7 +414,7 @@ namespace coolsynth::synth::v3
                             finished = true;
                     }
                 }
-                emit(left, right, s, valueLeft * gainLeft, valueRight * gainRight, 0.5f * (valueLeft + valueRight), params);
+                emit(left, right, s, valueLeft * gainLeft, valueRight * gainRight, 0.5f * velocityLevel * (valueLeft + valueRight), params);
             }
         }
 
@@ -420,6 +425,7 @@ namespace coolsynth::synth::v3
         bool startPending = false;
         bool finished = true;
         float noteVelocity = 1.0f;
+        float velocityLevel = 1.0f; // the level this note's velocity gives it on a sampled instrument
         const LoadedStyle* playingStyle = nullptr; // the style in memory this note started on
         const SampleZone* zone = nullptr;
         std::array<float, 4> ringLeft {}, ringRight {}, ringMono {};

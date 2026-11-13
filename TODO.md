@@ -92,10 +92,13 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in
     `audition/library`) that the Sample generator plays, with the room "Conservatory" of 40
     presets (D96 to D98).
-    Open on the sampled instruments (D99): the horn, the tubular bells, the timpani and the
-    didgeridoo are placed wrongly by the first build; tuning and levels across the keyboard;
-    the loudness pass over the Conservatory presets; install options and packs; the wine
-    glasses as a source for the Grain generator.
+    The library is rebuilt from the author's own mapping files (D100), which corrects the
+    faults of D99; the Conservatory presets are loudness-normalised and each style has a
+    demonstration on the audition page, waiting for the user's ear.
+    Open on the sampled instruments: the user's verdicts; a voice whose one-shot recording has
+    ended still holds its voice until its release is over (up to 20 s on bells and mallets:
+    no sound is lost, older voices are taken first, but it costs processing); install options
+    and packs; the wine glasses as a source for the Grain generator.
 35. Left open by phases 2 to 8, in the order they would pay off:
     - effects as slot types, and with them the three insert slots per part (D72);
     - grains from another generator, which needs a buffer pool handed out by the part (D79);
