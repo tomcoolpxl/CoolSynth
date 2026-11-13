@@ -55,5 +55,9 @@ for key, title, _ in VARIANTS:
     index.append({"title": title, "file": key + ".flac"})
     print(key, "->", result.stdout.strip().split("(")[-1].rstrip(")"))
 
+# A clip kept from an earlier build, to hear a change against: put it in the folder under this name.
+if os.path.exists(os.path.join(out_dir, "octave_before.flac")):
+    index.append({"title": "An octave up as it was before: replayed attacks at full strength", "file": "octave_before.flac"})
+
 with open(os.path.join(out_dir, "index.json"), "w", encoding="utf-8", newline="\n") as handle:
     json.dump({"preset": SOURCE_PRESET, "clips": index}, handle, indent=1)

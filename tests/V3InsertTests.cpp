@@ -363,6 +363,51 @@ public:
             expectLessThan(lastSecond(false), 1.0e-4);
         }
 
+        beginTest("the_cloud_softens_the_attacks_it_replays");
+        {
+            // Half a second of silence, then a note that starts with a 10 ms burst at 0.8 and goes on as a
+            // sine at 0.3. The cloud alone, a quarter second back, nothing scattered: it is the note a quarter
+            // second late. Its copy of the burst comes out at a fraction of its level, the sine as it was.
+            GrainInsert grain;
+            grain.prepare(kRate);
+            GrainInsert::Settings g;
+            g.positionMs = 250.0f;
+            g.spray = 0.0f;
+            g.spread = 0.0f;
+            g.mix = 1.0f;
+            juce::Random noise(7);
+            const int onset = 24000, total = 120000;
+            std::vector<float> in(static_cast<std::size_t>(total), 0.0f), out;
+            for (int i = onset; i < total; ++i)
+            {
+                const float sine = 0.3f * std::sin(juce::MathConstants<float>::twoPi * 440.0f * static_cast<float>(i - onset) / static_cast<float>(kRate));
+                const float burst = i < onset + 480 ? 0.8f * (noise.nextFloat() * 2.0f - 1.0f) * (1.0f - static_cast<float>(i - onset) / 480.0f) : 0.0f;
+                in[static_cast<std::size_t>(i)] = sine + burst;
+            }
+            juce::AudioBuffer<float> block(2, kBlock);
+            for (int start = 0; start < total; start += kBlock)
+            {
+                const int n = std::min(kBlock, total - start);
+                for (int ch = 0; ch < 2; ++ch)
+                    for (int s = 0; s < n; ++s)
+                        block.setSample(ch, s, in[static_cast<std::size_t>(start + s)]);
+                juce::AudioBuffer<float> piece(block.getArrayOfWritePointers(), 2, n);
+                grain.process(piece, g);
+                out.insert(out.end(), piece.getReadPointer(0), piece.getReadPointer(0) + n);
+            }
+            auto peakIn = [](const std::vector<float>& x, int from, int to)
+            {
+                float most = 0.0f;
+                for (int i = from; i < to; ++i)
+                    most = std::max(most, std::abs(x[static_cast<std::size_t>(i)]));
+                return most;
+            };
+            const int replay = onset + 12000; // a quarter second later
+            expectGreaterThan(peakIn(in, onset, onset + 480), 0.7f);
+            expectLessThan(peakIn(out, replay - 480, replay + 960), 0.25f, "the replayed burst is 10 dB and more down");
+            expectWithinAbsoluteError(rms(out, static_cast<std::size_t>(replay + 14400), static_cast<std::size_t>(replay + 43200)), 0.3 / std::sqrt(2.0), 0.07);
+        }
+
         beginTest("the_grain_insert_stays_in_bounds_whatever_is_asked_of_it");
         {
             // Noise in, every setting thrown about block by block, Freeze flipping: the output stays finite and

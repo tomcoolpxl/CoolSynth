@@ -1648,3 +1648,25 @@ All 43 sounds judged. 39 of the 40 Conservatory instruments: good. Four remarks:
   and brighter (bursts above 3 kHz at 1.96, 2.10 and 3.78 s, where no note starts). What the
   effect should do about it changes how it behaves or what it controls, so it is put to the
   user as a pick list.
+
+## D106. The granular effect softens the attacks it replays (2026-11-13)
+
+The user found the effect "too sharp sometimes" (D105). Offered:
+
+- **Soften replayed attacks (chosen by the user, recommended).** As it records, the effect marks
+  where the sound's level jumps: its peak level against the same level smoothed over 20 ms
+  (a steady sound gives 1; a mark begins at 1.2 and is full at 1.7). A grain passing over a
+  mark is turned down by up to 20 dB, within 2 ms and a little ahead of the attack, and comes
+  back over a tenth of a second: it swells into the note instead of striking it. The part's
+  own sound is not touched. Cost: the cloud can no longer stutter or echo attacks; a rhythmic
+  repeat is the delay's job.
+- A Tone control in Spread's place: a low-pass on the cloud; no adjustable stereo width, and
+  the replayed attacks only duller.
+- Both.
+- Leave the effect and make the page's clip gentler: it would still be sharp on struck sounds.
+
+On the page's clip an octave up, the bursts of treble at the replays (1.96, 2.10 and 3.78 s,
+5.7 dB over the clip's level, as strong as the played attacks) are gone: the strongest left
+away from a played note is 0.9 dB. A test feeds a note that starts with a burst: its replay
+comes out at less than a third of the burst's level, the held part as it was. The old clip
+stays on the page beside the new one.

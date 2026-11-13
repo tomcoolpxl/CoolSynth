@@ -25,7 +25,14 @@
     recording is being written: one that would catch up with it, or run back past the oldest
     sound, starts where it has room instead. Grains are read with the sampled instruments'
     windowed sinc, narrower when a grain is pitched up, so a cloud two octaves up does not fold
-    back on itself. Nothing is allocated while playing.
+    back on itself.
+
+    Replayed attacks are softened (decision D106): a cloud that plays a struck note's attack
+    again and again, at odd moments and perhaps an octave up, is sharp where the playing was
+    not. As the effect records it marks where the sound's level jumps (its peak level against
+    the same level smoothed over 20 ms), and a grain passing over a mark is turned down by up
+    to 20 dB and comes back over a tenth of a second: it swells into the note instead of striking
+    it. The part's own sound is not touched. Nothing is allocated while playing.
 */
 namespace coolsynth::synth::v3
 {
@@ -52,6 +59,12 @@ namespace coolsynth::synth::v3
             rate = std::max(8000.0, sampleRate);
             length = static_cast<int>(std::ceil(bufferSeconds * rate));
             buffer.assign(2u * static_cast<std::size_t>(length), 0.0f);
+            marks.assign(static_cast<std::size_t>(length / markHop + 2), 0.0f);
+            peakFall = static_cast<float>(std::exp(-1.0 / (0.015 * rate)));
+            smoothRise = static_cast<float>(1.0 - std::exp(-1.0 / (0.020 * rate)));
+            duckFall = static_cast<float>(1.0 - std::exp(-1.0 / (0.002 * rate)));
+            duckRise = static_cast<float>(1.0 - std::exp(-1.0 / (0.060 * rate)));
+            duckAhead = 0.004 * rate;
             clear();
         }
 
@@ -59,6 +72,8 @@ namespace coolsynth::synth::v3
         void clear() noexcept
         {
             std::fill(buffer.begin(), buffer.end(), 0.0f);
+            std::fill(marks.begin(), marks.end(), 0.0f);
+            peak = smoothed = 0.0f;
             for (auto& grain : grains)
                 grain.remaining = 0;
             write = 0;
@@ -107,6 +122,13 @@ namespace coolsynth::synth::v3
                 {
                     buffer[2u * static_cast<std::size_t>(write)] = left[s];
                     buffer[2u * static_cast<std::size_t>(write) + 1u] = right[s];
+                    // Where the level jumps: the peak level against itself smoothed. A steady sound gives 1,
+                    // a note struck from silence, or well above what was sounding, gives 1.7 and more.
+                    peak = std::max(std::max(std::abs(left[s]), std::abs(right[s])), peak * peakFall);
+                    smoothed += (peak - smoothed) * smoothRise;
+                    const float jump = peak > 1.0e-3f ? std::clamp((peak / (smoothed + 1.0e-4f) - 1.2f) / 0.5f, 0.0f, 1.0f) : 0.0f;
+                    auto& mark = marks[static_cast<std::size_t>(write / markHop)];
+                    mark = write % markHop == 0 ? jump : std::max(mark, jump);
                     write = write + 1 == length ? 0 : write + 1;
                     recorded = std::min(recorded + 1, length);
                 }
@@ -130,8 +152,11 @@ namespace coolsynth::synth::v3
                     grain.windowCos = turned;
                     float valueLeft = 0.0f, valueRight = 0.0f;
                     read(grain.position, cutoff, valueLeft, valueRight);
-                    sumLeft += valueLeft * window * grain.gainLeft;
-                    sumRight += valueRight * window * grain.gainRight;
+                    // Down quickly as an attack comes up (it is looked for a little ahead), back slowly after it.
+                    const float wanted = 1.0f - attackDuck * std::max(markAt(grain.position), markAt(grain.position + duckAhead * grain.step));
+                    grain.duck += (wanted - grain.duck) * (wanted < grain.duck ? duckFall : duckRise);
+                    sumLeft += valueLeft * window * grain.duck * grain.gainLeft;
+                    sumRight += valueRight * window * grain.duck * grain.gainRight;
                     grain.position += grain.step;
                     if (grain.position >= static_cast<double>(length))
                         grain.position -= static_cast<double>(length);
@@ -152,7 +177,16 @@ namespace coolsynth::synth::v3
             float gainLeft = 1.0f, gainRight = 1.0f;
             float windowCos = 1.0f, windowSin = 0.0f; // where the window's cosine stands
             float turnCos = 1.0f, turnSin = 0.0f;     // one sample's turn of it
+            float duck = 1.0f;                        // turned down while it passes over an attack
         };
+
+        /** How much of an attack the recording holds at a frame, 0..1. */
+        [[nodiscard]] float markAt(double position) const noexcept
+        {
+            int frame = static_cast<int>(position);
+            frame = frame >= length ? frame - length : frame;
+            return marks[static_cast<std::size_t>(frame / markHop)];
+        }
 
         /** Starts one grain if a place is free and the recording has room for it. */
         void start(const Settings& settings, double sizeSamples, double step) noexcept
@@ -185,6 +219,7 @@ namespace coolsynth::synth::v3
             free->step = step;
             free->total = std::max(8, static_cast<int>(sizeSamples));
             free->remaining = free->total;
+            free->duck = 1.0f - attackDuck * markAt(position);
             const double turn = 2.0 * juce::MathConstants<double>::pi / static_cast<double>(free->total);
             free->windowCos = 1.0f;
             free->windowSin = 0.0f;
@@ -238,7 +273,13 @@ namespace coolsynth::synth::v3
         const SincKernels* kernels = &SincKernels::instance();
         double rate = 48000.0;
         int length = 0;
+        static constexpr int markHop = 64;       // frames one attack mark stands for
+        static constexpr float attackDuck = 0.9f; // a replayed attack comes 20 dB down
         std::vector<float> buffer; // interleaved left, right
+        std::vector<float> marks;  // per markHop frames of the recording: how much of an attack is there, 0..1
+        float peak = 0.0f, smoothed = 0.0f; // the recording's peak level, and that smoothed over 20 ms
+        float peakFall = 0.999f, smoothRise = 0.001f, duckFall = 0.01f, duckRise = 0.001f;
+        double duckAhead = 192.0; // frames of the cloud's own time an attack is looked for ahead
         std::array<Grain, maxGrains> grains {};
         int write = 0;     // where the next frame is recorded
         int recorded = 0;  // how many frames back from there hold sound
