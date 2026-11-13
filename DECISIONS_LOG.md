@@ -1886,3 +1886,31 @@ factor of two). A fit on badly cut stabs wandered to values no unit has. It is p
 ran (one had opened a browser tab), and the user was sent to a dead page. Restarted; agents
 are told to keep out of the browser, and the page is checked with a request before anyone is
 sent to it.
+
+## D111. The user's third round of verdicts (2026-11-14)
+
+Judged on the page while the Museum candidates of D110 were being built.
+
+- **DX7 BASS 1: "admit it".** Moved to `resources/presets/12-museum.csbank`: the Museum room
+  has two presets, the bank 110. Master -2.5 dB from the loudness tool.
+- **Harp String, third try: "close enough now".** The model check is closed after three tries
+  (D94, D101, D107, D108); its clips are on the archive page.
+- **Recorder listening test: "1, 2 and 3 (the recorders), not the sines".** The overdrive is
+  in the three recorder clips (with reverb, without, tuned pure) and not in sine tones at the
+  same pitches and levels. That rules out what D107 supposed (the ear's own combination
+  tones), the reverb and the tuning: it is in the recordings.
+  Looked at, in the soprano's thirteen recordings: none is clipped (peaks 12 to 35 dB under
+  full scale in the files); the fundamentals flutter less than the flute's, which was judged
+  good. But the chord's third, E6 (the author's file SopRecorder_Sus_E5), is a different kind
+  of note from its neighbours: its second and third harmonics lie 12 and 14 dB under the tone
+  (the C6 beside it: 31 dB under and less), it stands 26 dB over what lies between its
+  harmonics (the others of the chord: 37 to 41), it has side tones 20 to 40 Hz from its
+  fundamental, and with the author's gain of 18 dB it comes out the loudest of the four by 3
+  to 10 dB. An overblown note, edgy and a little rough. F#6, A#6 and C7 measure alike; G6 is
+  clean.
+  **A second listening test goes on the page (taken):** the chord's four notes one at a time,
+  as loud as they are in the chord, the chord without the E6, and the chord with the E6 played
+  from the recording a tone below. If the user's answer confirms it, what to do about it is
+  the user's choice (it is how that instrument sounds in its top register; the alternatives
+  change the recording's notes or their balance). Not taken: changing the instrument now on
+  this measurement alone.

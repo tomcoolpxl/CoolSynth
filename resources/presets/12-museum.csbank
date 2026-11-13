@@ -33,3 +33,33 @@ mod = src=key dst=g1.ratio3 amount=0.000806
 mod = src=key dst=g1.ratio4 amount=-0.000806
 voice = env2ToP1=0
 master = -2.5
+
+[DX7 BASS 1]
+room = Museum
+# The DX7's bass (ROM 1A, voice 15): algorithm 16, one sine carrier with three modulators. It
+# sounds two octaves under the key, as on the instrument (the voice is transposed an octave
+# down and its carrier runs at half the note). A modulator at the carrier's pitch (2.5 radians,
+# fading a little faster than the note) makes the round body. A second one is itself modulated
+# at ten times the pitch (3.9 radians, gone in a second): the bark at the start of each note,
+# stronger the harder the key is hit. A third, with a modulator at eighteen times the pitch and
+# full feedback, is a click that only the upper keys have. Ratios, indices, decay rates, rate
+# scaling and velocity laws are the voice's own numbers converted; nothing is fitted. Against a
+# recording of the voice (Hexter, at key velocity 100) the first sixteen harmonics are within
+# 1.3 dB in the middle, over seven keys and two seconds.
+g1 = FM2 ratio=9 carrier=0.5 index=0 feedback=1 oct=-1 level=0
+g2 = FM4 algo=stackPlusOne ratio2=1 ratio3=1 ratio4=10 level2=0 level3=0 level4=0 fb=0 combine=fm amount=0 oct=-2 level=0.8
+p1 = Off
+env1 = attack=1 decay=13724 sustain=0 release=134 decayCurve=-1 releaseCurve=-1 velocity=0 keyTime=0.875
+env2 = attack=1 decay=2451 sustain=0 release=100 decayCurve=-1 keyTime=0.69
+env3 = attack=1 decay=536 sustain=0 release=100 decayCurve=-1 keyTime=0.125
+mod = src=env1 dst=g2.level2 amount=0.2812 curve=logarithmic
+mod = src=env1 dst=g2.level2 amount=0.2812
+mod = src=env2 dst=g2.level3 amount=0.2275 via=velocity curve=logarithmic
+mod = src=env2 dst=g2.level3 amount=0.1145 curve=logarithmic
+mod = src=env2 dst=g2.level4 amount=0.8517 via=velocity
+mod = src=env2 dst=g2.level4 amount=0.0302
+mod = src=env3 dst=g1.index amount=0.7767 via=velocity curve=logarithmic
+mod = src=env3 dst=g1.index amount=-0.1252 curve=logarithmic
+mod = src=key dst=g2.amount amount=0.8
+voice = env2ToP1=0
+master = -2.5

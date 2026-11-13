@@ -57,6 +57,7 @@ ENTRIES = [
         "samples": "museum/synth-bass-2/SynthBass2 SFZ+FLAC-20210405/samples", "pattern": "{name}.flac",
         # the reference file's name (its sounding note an octave up), the DX7 key that makes it (it sounds two octaves under the key), velocity
         "notes": [("C3", 60, 100), ("F#3", 66, 100), ("C4", 72, 100), ("C2", 48, 100), ("F#2", 54, 100), ("F#4", 78, 100), ("C5", 84, 100)],
+        "admitted": True,  # by the user on 14 November 2026 (decision D111)
         "reference": "Recorded from Hexter, an open emulation of the DX7, playing the BASS 1 voice (FreePats, Synth Bass 2, CC0). One "
                      "velocity was recorded; the rebuild plays at 100, where it fits.",
         "source": "The voice's published data (ROM 1A, voice 15): algorithm 16 with feedback 7, six operators' ratios, levels, envelopes, "

@@ -86,10 +86,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       finger's pluck (D101): "closer, but not there", too little echo dry and too much with
       its reverb (D105, D107); refitted harmonic by harmonic, with a second string for the
       pluck's bright ring and the new Room effect set from the recording's reflections
-      (D108): third try on the audition page for a verdict;
-    - Recorders: the user hears overdrive on chords that no measurement shows; a listening
-      test on the audition page is to tell the reverb, the tuning, the recordings and the ear
-      apart (D107);
+      (D108): the user found the third try close enough (D111). Done;
+    - Recorders: the user hears overdrive on chords. A first listening test put it in the
+      recordings (not the ear, the reverb or the tuning); the soprano's E6 is an overblown,
+      edgy note and the loudest of the chord. A second test, note by note, is on the audition
+      page (D111); what to do about it is the user's choice once it is confirmed;
     - after the user's picks: key zones in the sample generator, sample files beside the plugin
       at the best quality, install options;
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each
@@ -97,8 +98,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       chose the first sounds (D103): DX7 E.PIANO 1 and BASS 1, Prophet-5 sync lead and brass,
       a Minimoog bass and lead, and the hoover, LatelyBass and Juno-106 patches (sources for
       the last three still to be found). DX7 E.PIANO 1 is admitted (D107) and is the
-      first preset of the room Museum. Candidates on the audition page for a verdict: DX7
-      BASS 1 (D109), Minimoog Fat Bass and Trilogy lead, Prophet-5 Sync II (D110). Prophet-5
+      first preset of the room Museum and DX7 BASS 1 the second (D111). Candidates on the
+      audition page for a verdict: Minimoog Fat Bass and Trilogy lead, Prophet-5 Sync II (D110). Prophet-5
       Brass has its data but no usable reference recording (D110). A CC0 recording of
       LatelyBass exists at FreePats (made with Dexed, not a TX81Z); hoover and Juno-106 still
       have no source.

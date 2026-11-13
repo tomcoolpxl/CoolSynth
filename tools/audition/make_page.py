@@ -30,16 +30,16 @@ import sys
 audition = sys.argv[1]
 esc = html.escape
 
-# Model checks the user has judged (decisions D94, D105, D107): they move to the archive page.
-JUDGED_CHECKS = {"marimba", "kalimba", "harp", "harp2"}
+# Model checks the user has judged (decisions D94, D105, D107, D111): they move to the archive page.
+JUDGED_CHECKS = {"marimba", "kalimba", "harp", "harp2", "harp3"}
 
 # The granular effect was judged good on 13 November 2026 (decision D107): its clips move to the archive.
 GRAIN_JUDGED = True
 
 # A line on a card: "group|title" -> (its first words, the rest).
 REMARKS = {
-    "Conservatory|Recorders": ("Still open.", "You still hear overdrive on the chord. Nothing in the sound shows it, so the listening "
-                                              "test at the top of this page is there to find where it comes from."),
+    "Conservatory|Recorders": ("Still open.", "Your first test put the overdrive in the recordings themselves (not the ear, the reverb "
+                                              "or the tuning). A second, short test at the top of this page finds which recording."),
 }
 
 
@@ -71,7 +71,9 @@ def verdict(group, title, options):
 # ---- the listening page ---------------------------------------------------------------------
 sections, nav, waiting = [], [], []
 
-tests = load("eartest", "index.json") or []
+all_tests = load("eartest", "index.json") or []
+tests = [t for t in all_tests if not t.get("done")]
+done_tests = [t for t in all_tests if t.get("done")]
 if tests:
     cards = []
     for t in tests:
@@ -378,6 +380,14 @@ for e in entries:
         groups.setdefault(family_of(e["path"]), []).append(e)
 
 archive_sections, total = [], 0
+if done_tests:
+    cards = []
+    for t in done_tests:
+        audio = "".join(player(c["title"], "eartest/" + t["id"] + "/" + c["file"]) for c in t["clips"])
+        cards.append(f'<article class="card"><h3>{esc(t["title"])}</h3><p class="facts">{esc(t["facts"])} <b>{esc(t["done"])}</b></p>'
+                     f'<div class="players">{audio}</div></article>')
+    archive_sections.append('<details class="family"><summary><span class="family-name">Listening tests done</span>'
+                            f'<span class="family-count">{len(done_tests)}</span></summary>' + "".join(cards) + "</details>")
 if admitted:
     cards = []
     for m in admitted:
@@ -407,7 +417,7 @@ if judged_checks:
     archive_sections.append('<details class="family"><summary><span class="family-name">Model checks already judged</span>'
                             f'<span class="family-count">{len(judged_checks)}</span></summary>'
                             '<p class="lead">Marimba and Kalimba: the corrected presets were found closer. Harp String: the first try was not '
-                            'close, the second closer but not there; a later try is on the listening page.</p>' + "".join(cards) + "</details>")
+                            'close, the second closer but not there, the third close enough.</p>' + "".join(cards) + "</details>")
 for family in [name for name, _ in FAMILIES] + ["Other"]:
     items = groups.get(family, [])
     if not items:
