@@ -46,7 +46,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    `tests/V3FmTests.cpp`; Outrun Grid Keys. 42 presets.
 20. Phase 3.4 done 2026-11-13: `src/synth/v3/Wavetables.h/.cpp`, `WavetableGenerator.h`,
    `tests/V3WavetableTests.cpp`; Init Wavetable, Nebula Pad, SCC Lead. Phase 3 complete: 45 presets.
-21. Phase 4.1: state-variable filter; Supersaw on the SVF, Observatory Nebula Pad and Deep Field.
+21. Phase 4.1 done 2026-11-13: `src/synth/v3/SvfProcessor.h`, `tests/V3SvfTests.cpp`; Supersaw and
+   Nebula Pad on the SVF, Deep Field. 46 presets.
+22. Phase 4.2: crusher and wavefolder; SCC Lead's crusher, Basement (Acid, Rust Bass, Concrete
+   Pad, Siren), Main Stage Hyper Lead.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

@@ -613,3 +613,9 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Presets: Workshop Init Wavetable, Arcade SCC Lead (stepped pulse width through the step modulator), Observatory Nebula Pad. 45 presets; phase 3 complete.
 - [x] Added `tests/V3WavetableTests.cpp` (7 tests): frame 0 is a sine within 1e-4 and every band limit keeps its band (-100 dB outside); the level choice; the A7 saw's largest alias after decimation -118.6 dB; tuning within 0.05 cents; a position sweep without steps; five unison copies within 1.5 dB of one and random start phases; bank lines. Test fixes: the unknown-type example, a longer window for random arps, and the fuzz test waiting each preset's own release.
 - [x] Verified Debug build without warnings and `ctest` green; Nebula Pad 21.5 %, Init Wavetable 14.2 % of real time for eight-note chords.
+
+## V3 phase 4.1: state-variable filter (2026-11-13)
+
+- [x] Added `src/synth/v3/SvfProcessor.h` (processor type 2): trapezoidal SVF with LP, HP, BP and notch, resonance Q 0.5 to 40, a soft limit on the band state, drive, key tracking, per-sample ramps.
+- [x] Presets: Supersaw high-passed by the SVF at 120 Hz (and 28 % down to 20 % of real time), Nebula Pad's low-pass on the SVF, Observatory Deep Field. 46 presets.
+- [x] Added `tests/V3SvfTests.cpp` (4 tests): the four response shapes (-6 dB at the cutoff and 40 dB a decade beyond at Q 0.5, band-pass unity at the centre, notch below -40 dB), the resonance peak equal to Q, full resonance with full drive bounded on noise with a jumping cutoff and an impulse ring that decays, key tracking. Verified Debug build without warnings and `ctest` green.

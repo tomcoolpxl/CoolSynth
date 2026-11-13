@@ -139,6 +139,7 @@ Shipped 2026-11-13 with all three (decisions D34 to D37). Phase 3 complete.
 
 4.1 SVF. LP2, HP, BP, notch with drive. Tests: response shapes, stability at resonance 1.
 Ships: Main Stage Supersaw (without the sub part), Observatory (Nebula Pad, Deep Field).
+Shipped 2026-11-13 with all three (decisions D38, D39).
 
 4.2 Crusher and folder. Bit depth continuous, sample-rate reduction, dry/wet; wavefolder with
 symmetry and pre-gain. Tests: bit steps, fold harmonics. Ships: Arcade SCC Lead, Basement (Acid,

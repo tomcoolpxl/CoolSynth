@@ -348,6 +348,6 @@ bank files today (`resources/presets`, loudness-normalised):
 | Bedroom | Tape Flute | Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi, 5.2), Dusty Mallet (modal, 6.2), Vinyl Choir (formant, 4.4) |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Static Hit, SCC Lead (no crusher yet) | the crusher on SCC Lead (4.2), Chip Chord (chord memory, 7.1) |
 | Greenhouse | Glass Bell, Rain Chime, Crystal Pluck | Marimba (modal, 6.2), Kalimba, Harp String (Karplus-Strong, 6.1) |
-| Observatory | Solar Wind, Nebula Pad (ladder for now) | the SVF on Nebula Pad and Deep Field (4.1), Shimmer Drone, Satellite Ping (5.1), Granular Sky (8.2) |
+| Observatory | Solar Wind, Nebula Pad, Deep Field | Shimmer Drone, Satellite Ping (5.1), Granular Sky (8.2) |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad | Chord Trigger (7.1) |
 | Main Stage | Reese, Supersaw (no sub layer), Riser, Pluck Drop | the sub layer (parts, 7.2); the rest per its Needs column |

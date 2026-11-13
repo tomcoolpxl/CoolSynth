@@ -20,11 +20,11 @@ master = -4.5
 room = Observatory
 # Two wavetable stacks drifting through their tables on slow per-voice LFOs (20 and 27 s a
 # cycle), so every note's timbre wanders on its own: vocal formants under a sync-swept digital
-# shimmer, through a soft low-pass into a large plate. The state-variable filter and the plate's
-# pre-delay arrive with phases 4.1 and 5.1.
+# shimmer, through a soft state-variable low-pass into a large plate. The plate's pre-delay
+# arrives with phase 5.1.
 g1 = Wavetable table=vocal pos=0.5 unison=3 detune=14 spread=0.8 level=0.7
 g2 = Wavetable table=digital pos=0.25 unison=2 detune=10 spread=1 level=0.28
-p1 = Ladder mode=lp12 cutoff=2400 res=0.1 key=0.4
+p1 = SVF mode=lp cutoff=2600 res=0.12 key=0.4
 env1 = attack=2000 decay=2000 sustain=1 release=4000
 lfo1 = shape=sine rate=0.05 retrigger=off
 lfo2 = shape=sine rate=0.037 retrigger=off
@@ -33,4 +33,18 @@ mod = src=lfo2 dst=g2.pos amount=0.25
 voice = env2ToP1=0 drift=3
 chorus = on rate=0.3 depth=0.35 mix=0.25
 reverb = on size=0.9 damping=0.4 mix=0.38
-master = -2.5
+master = -2
+
+[Deep Field]
+room = Observatory
+# A saw two octaves down and a sine one octave down under a dark ladder whose cutoff breathes
+# on a 20-second global LFO; it swells in over two and a half seconds into a long plate.
+g1 = VA shape=saw oct=-2 level=0.55
+g2 = VA shape=sine oct=-1 rand=0 level=0.7
+p1 = Ladder cutoff=400 res=0.2 key=0.3 bass=0.7
+env1 = attack=2500 decay=2000 sustain=1 release=4500
+glfo1 = shape=sine sync=off rate=0.05 retrigger=off
+mod = src=glfo1 dst=p1.cutoff amount=0.15
+voice = env2ToP1=0 drift=3
+reverb = on size=0.85 damping=0.5 mix=0.3
+master = -5

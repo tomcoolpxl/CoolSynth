@@ -76,6 +76,11 @@ tables (Classic, Digital, Vocal, Chip) of 16 frames of 2048 samples, built from 
 band limit its frequency needs (harmonics under 0.75 fs) with a Hermite read; Unison 1 to 5,
 Detune, Spread, Phase Rand; combine FM, ring and AM; no sync input (decisions D34 to D36).
 
+Shipped (phase 4.1, 2026-11-13): `SvfProcessor` in `src/synth/v3/SvfProcessor.h`, processor
+type 2: a trapezoidal state-variable filter with LP, HP, BP (peak gain 1) and notch, resonance
+Q 0.5 to 40, a soft limit on the band state, drive as an input stage, key tracking, cutoff and
+resonance ramped per sample (decision D38).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

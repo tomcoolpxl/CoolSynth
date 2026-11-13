@@ -482,3 +482,25 @@ FFT, 2048 samples, is the common practice; hard switching between octave tables 
   unknown type; the every-preset-sounds test gives presets whose arp skips steps at random four
   seconds instead of one (Rain Chime once skipped every step of a second); the fuzz test waits
   out each preset's own release instead of a fixed two seconds (Glass Bell releases for 2.5 s).
+
+## D38. The state-variable filter (2026-11-13, phase 4.1)
+
+- **Andy Simper's trapezoidal SVF, 12 dB per octave, LP, HP, band-pass at a peak gain of 1 and
+  notch; resonance from Q 0.5 to Q 40, growing exponentially (taken, recommended).** The SVF is
+  the clean, precise filter next to the ladder's character: high-passing supersaws, breath and
+  wind. At Q 40 it rings long but always decays (tested); self-oscillation stays the ladder's job.
+- A self-oscillating SVF (Q to infinity). Duplicates the ladder and needs a level control.
+- **A soft limit on the band state, 4 tanh(v / 4), and drive as an input stage like the ladder's
+  (taken).** Keeps a fully resonant, fully driven filter bounded (largest output 12 at full-scale
+  noise with the cutoff jumping every sub-block) and does nothing at normal levels. A fully
+  nonlinear SVF (Oberheim SEM style) was the alternative: more colour, but the clean filter is
+  the point of this type.
+- 24 dB cascades. The ladder covers four poles.
+
+## D39. Phase 4.1 presets (2026-11-13, phase 4.1)
+
+- **Supersaw's high-pass moves to the SVF at 120 Hz, resonance 0.1, as the recipe says (taken).**
+  It also costs less: Supersaw went from 28 % to 20 % of real time.
+- **Nebula Pad's soft low-pass moves to the SVF (taken).**
+- **Deep Field ships on the ladder, 400 Hz, breathing on a 20-second global LFO (taken).** The
+  recipe asks for LP4, which is the ladder.
