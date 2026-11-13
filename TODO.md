@@ -97,8 +97,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       chose the first sounds (D103): DX7 E.PIANO 1 and BASS 1, Prophet-5 sync lead and brass,
       a Minimoog bass and lead, and the hoover, LatelyBass and Juno-106 patches (sources for
       the last three still to be found). DX7 E.PIANO 1 is admitted (D107) and is the
-      first preset of the room Museum. Next: a reference recording for BASS 1, then the
-      Prophet-5 and Minimoog sounds from their patch sheets.
+      first preset of the room Museum. DX7 BASS 1 is a candidate on the audition page (D109).
+      The user asked for all the others too (D108): the Prophet-5 and Minimoog sounds from
+      their patch sheets come next. A CC0 recording of LatelyBass exists at FreePats (made
+      with Dexed, not a TX81Z).
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
     (start the `audition` preview server to hear it); marimba and kalimba corrected and
     accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in

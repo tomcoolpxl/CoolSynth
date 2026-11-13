@@ -1783,3 +1783,36 @@ on, which would have put the room in the clip marked dry.
 **The Museum's next sound.** Offered: DX7 BASS 1 (recommended), a Minimoog bass and lead,
 Prophet-5 sync lead and brass, or none now. **The user: "all of the above"**: all three groups
 are built as candidates, each for a side-by-side.
+
+## D109. The Museum's second candidate: DX7 BASS 1 (2026-11-13)
+
+**Reference.** No renderer had to be built from an emulation's code: FreePats publishes
+"Synth Bass 2", the BASS 1 voice recorded from Hexter, CC0
+(https://freepats.zenvoid.org/Synthesizer/synth-bass.html), the same source as the E.PIANO 1
+reference. Nine notes, one velocity, not stated. A file named C3 sounds 65.4 Hz: the voice is
+transposed an octave down and its carrier runs at half the note, so it sounds two octaves under
+the key; the decay rates of the files confirm which key made which (rate scaling follows the
+key).
+
+**The voice** (ROM 1A, voice 15, from https://cdn.jsdelivr.net/npm/dx7-patches@1.0.1):
+algorithm 16, one carrier with three modulators, two of them with a modulator of their own.
+In this engine: an FM4 on "Stack Plus One" (carrier, a single modulator, and a stack) two
+octaves down, and an FM2 before it, silent itself, that drives the FM4's carrier through the
+FM link (the third modulator and its own, with the voice's feedback). Three envelopes for six
+operators: env1 is the carrier's decay (5.1 dB a second at key C4, 1.8 times faster per octave:
+keyTime 0.875) and the single modulator's index follows it, half through its root and half
+directly, which falls 1.5 times as fast (the voice: 1.4); env2 serves the stack, the lower
+modulator through its root and the upper one directly, twice as fast (the voice: 24 and 57 dB
+a second; taken: 28 and 57); env3 the click's modulator (130 dB a second). Velocity laws are
+straight lines through the root of the voice's level law per sensitivity. The third
+modulator's level scaling (1.25 dB less per key below key 85) is a parabola in the key here:
+within 4 dB from key 66 to 96, where it is small anyway.
+
+**Fit.** Nothing in the patch is fitted. Searched: the velocity the reference was played at
+(64, 80, 100, 115, 127: 100 fits, and 95 and 105 are within 0.5 dB of it) and a scale on all
+indices (0.8, 1.0, 1.2: 1.0 fits). Over seven keys and five moments up to two seconds the
+first sixteen harmonics are 1.3 dB off in the middle (mean 2.0), the level over time 1.0 dB.
+The feedback amount makes no difference below the top octave (0.6 and 1.0 score alike); it is
+at full, as feedback 7 is.
+
+It waits in `resources/museum-candidates/museum.csbank` for the user's side-by-side.
