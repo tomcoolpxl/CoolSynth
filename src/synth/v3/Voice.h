@@ -8,6 +8,7 @@
 #include "Envelope.h"
 #include "LadderProcessor.h"
 #include "Lfo.h"
+#include "ModMatrix.h"
 #include "Modulation.h"
 #include "Module.h"
 #include "OffModules.h"
@@ -26,6 +27,10 @@
     running) and only advance while the voice sounds, so with retrigger off a voice picks up its
     LFO where its previous note left it. Global sources that move inside a block arrive as one
     frame per sub-block.
+
+    Once per sub-block, after every source has its value, the matrix adds its offsets: into each
+    slot's parameters, the voice pitch and pan, the LFO rates (used from the next sub-block) and
+    the VCA, whose gain ramps across the sub-block.
 
     Pitch lives in semitones throughout: note, constant-time glide, bend, a slow per-voice drift,
     and per-slot offsets meet in one place and become a frequency per generator. Generators with
@@ -106,6 +111,7 @@ namespace coolsynth::synth::v3
         float driftCents = 0.0f;   // depth of the slow per-voice pitch drift
         std::array<LfoSettings, localLfoCount> lfos {};
         float wheelToLfo1 = 0.0f;  // 0..1: how much LFO1's depth follows the mod wheel
+        MatrixSettings matrix {};
     };
 
     /** Part-wide state the voice reads each block. */
@@ -169,6 +175,7 @@ namespace coolsynth::synth::v3
         [[nodiscard]] const ModSources& sourcesForTesting() const noexcept { return sources; }
         [[nodiscard]] float pitchForTesting() const noexcept { return currentPitch; }
         [[nodiscard]] float driftForTesting() const noexcept { return driftValue; }
+        [[nodiscard]] const MatrixOffsets& matrixOffsetsForTesting() const noexcept { return matrixOffsets; }
         [[nodiscard]] const Lfo& lfoForTesting(int index) const noexcept { return lfos[static_cast<std::size_t>(index)]; }
         [[nodiscard]] int generatorTypeForTesting(int slot) const noexcept
         {
@@ -206,6 +213,10 @@ namespace coolsynth::synth::v3
         std::array<Envelope, envelopeCount> envelopes;
         std::array<Lfo, localLfoCount> lfos;
         bool lfoRestartPending = false;
+        MatrixOffsets matrixOffsets {};
+        std::array<float, localLfoCount> lfoRateScale { 1.0f, 1.0f }; // from the previous sub-block's matrix
+        float vcaGain = 1.0f;
+        bool vcaSnap = true;
         std::array<Envelope::Parameters, envelopeCount> appliedEnvelopes {};
         std::array<float, maxSubBlock> ampBuffer {}, mixLeft {}, mixRight {};
         ModSources sources;

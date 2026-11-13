@@ -440,6 +440,19 @@ public:
                 ++samples;
             }
             expectEquals(samples, 240 + 480 + 480); // attack, decay, release, with the gate still held
+
+            // A preset change turns one-shot off while a released one-shot is still decaying: the
+            // envelope must still let go at the end of its decay instead of waiting at sustain.
+            auto switched = makeEnvelope(p);
+            switched->noteOn(1.0f);
+            switched->advance(300);
+            switched->noteOff();
+            auto plain = p;
+            plain.oneShot = false;
+            plain.sustain = 1.0f;
+            switched->setParameters(plain);
+            switched->advance(48000);
+            expect(! switched->isActive(), "a released one-shot hung at sustain after one-shot was turned off");
         }
 
         beginTest("key_time_tracking_halves_times_an_octave_up");

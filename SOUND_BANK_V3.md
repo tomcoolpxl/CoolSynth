@@ -342,6 +342,6 @@ bank files today (`resources/presets`, loudness-normalised):
 | Room | Shipped | Waiting for |
 | --- | --- | --- |
 | Workshop | Init Saw, Init Pulse, Init Sine, Init Arp | Init Noise (3.1), Init FM (3.2), Init Wavetable (3.4) |
-| Studio 1982 | Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead (fixed ratio) | Juno Pad and the Sync Lead sweep (matrix, 2.2) |
-| Engine Room | Pure Sub, Donk, Fat Analog | 808 Boom (pitch envelope, 2.2), FM Knock (3.2), Wobble (2.3) |
+| Studio 1982 | Juno Pad, Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
+| Engine Room | 808 Boom, Pure Sub, Donk, Fat Analog | FM Knock (3.2), Wobble (2.3) |
 | Main Stage | Reese, Supersaw (no sub layer) | the sub layer (parts, 7.2); the rest per its Needs column |

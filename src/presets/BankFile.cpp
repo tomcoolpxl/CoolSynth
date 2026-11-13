@@ -1,5 +1,7 @@
 #include "BankFile.h"
 
+#include <algorithm>
+#include <array>
 #include <map>
 
 #include "parameters/ParameterIDs.h"
@@ -77,12 +79,90 @@ namespace coolsynth::presets
             const int n = rest.getIntValue();
             return n >= 1 && n <= count ? n : 0;
         }
+
+        /** What a preset has set so far that later lines depend on. */
+        struct PresetContext
+        {
+            std::array<int, pv3::partGeneratorSlots> generatorTypes { sv3::generatorType::va, sv3::generatorType::off, sv3::generatorType::off };
+            std::array<int, pv3::partProcessorSlots> processorTypes { sv3::processorType::ladder, sv3::processorType::off, sv3::processorType::off };
+            int nextMod = 1;
+        };
+
+        /** A source as the bank writes it ("lfo1", "env2", "wheel") to its choice name, or empty. */
+        juce::String sourceText(const juce::String& token)
+        {
+            static const std::map<juce::String, juce::String> aliases {
+                { "none", "Off" }, { "wheel", "Mod Wheel" }, { "bend", "Pitch Bend" }, { "genv", "Global Env" },
+                { "random", "Note Random" }, { "vel", "Velocity" }, { "at", "Aftertouch" }, { "pressure", "MPE Pressure" },
+                { "slide", "MPE Slide" }, { "releasevel", "Release Velocity" } };
+            const auto key = pv3::normaliseOptionName(token);
+            if (const auto found = aliases.find(key); found != aliases.end())
+                return found->second;
+            for (const auto& name : pv3::modSourceNames())
+                if (pv3::normaliseOptionName(name) == key)
+                    return name;
+            return {};
+        }
+
+        /**
+            A destination as the bank writes it to its choice name, or empty: "pitch", "vca", "pan",
+            "lfo1.rate", "g2.pitch", "g1.level", "g1.pan", "g1.amount", a slot parameter by its key
+            for the slot's type in this preset ("g1.pw", "p1.cutoff") or by number ("p1.p3").
+        */
+        juce::String destinationText(const juce::String& token, const PresetContext& context)
+        {
+            namespace d = sv3::modDestination;
+            const auto& names = pv3::modDestinationNames();
+            const auto t = token.toLowerCase();
+            if (t == "off" || t == "none") return names[d::none];
+            if (t == "pitch") return names[d::pitch];
+            if (t == "vca") return names[d::vca];
+            if (t == "pan") return names[d::pan];
+            if (t == "lfo1.rate") return names[d::lfo1Rate];
+            if (t == "lfo2.rate") return names[d::lfo2Rate];
+
+            const int dot = t.indexOfChar('.');
+            if (dot <= 0)
+                return {};
+            const auto slotName = t.substring(0, dot);
+            const auto field = t.substring(dot + 1);
+            const int generator = slotNumber(slotName, "g", d::generatorSlots);
+            const int processor = generator == 0 ? slotNumber(slotName, "p", d::processorSlots) : 0;
+            if (generator == 0 && processor == 0)
+                return {};
+
+            if (generator != 0)
+            {
+                const juce::StringArray fixed { "pitch", "level", "pan", "amount" };
+                if (const int f = fixed.indexOf(field); f >= 0)
+                    return names[d::generator(generator - 1, f)];
+            }
+
+            int index = -1;
+            if (field.length() == 2 && field[0] == 'p' && field[1] >= '1' && field[1] <= '8')
+            {
+                index = field[1] - '1';
+            }
+            else
+            {
+                const auto& descriptor = generator != 0
+                    ? sv3::GeneratorSlot::typeTable().descriptor(context.generatorTypes[static_cast<std::size_t>(generator - 1)])
+                    : sv3::ProcessorSlot::typeTable().descriptor(context.processorTypes[static_cast<std::size_t>(processor - 1)]);
+                for (int i = 0; i < descriptor.usedParams; ++i)
+                    if (pv3::normaliseOptionName(descriptor.params[static_cast<std::size_t>(i)].id) == pv3::normaliseOptionName(field))
+                        index = i;
+            }
+            if (index < 0)
+                return {};
+            return names[generator != 0 ? d::generatorParameter(generator - 1, index) : d::processorParameter(processor - 1, index)];
+        }
     }
 
     BankParseResult parseBankFile(const juce::String& text, const juce::String& sourceFile)
     {
         BankParseResult result;
         const auto lines = juce::StringArray::fromLines(text);
+        PresetContext context;
 
         for (int lineIndex = 0; lineIndex < lines.size(); ++lineIndex)
         {
@@ -103,6 +183,7 @@ namespace coolsynth::presets
                     continue;
                 }
                 BankPreset preset;
+                context = {};
                 preset.name = line.substring(1, line.length() - 1).trim();
                 preset.sourceFile = sourceFile;
                 result.presets.push_back(std::move(preset));
@@ -191,6 +272,10 @@ namespace coolsynth::presets
                 }
 
                 const auto& descriptor = table.descriptor(typeIndex);
+                if (generator != 0)
+                    context.generatorTypes[static_cast<std::size_t>(generator - 1)] = typeIndex;
+                else
+                    context.processorTypes[static_cast<std::size_t>(processor - 1)] = typeIndex;
                 add(pv3::typeParameterId(path), descriptor.name);
                 readPairs(1, [&](const juce::String& k) -> juce::String
                 {
@@ -210,6 +295,45 @@ namespace coolsynth::presets
                 {
                     return envelopeKeys().contains(k) ? pv3::envelopeParameterId(pv3::Part::a, envelope, k.toRawUTF8()) : juce::String();
                 }, noBareWords);
+                continue;
+            }
+
+            if (key == "mod" || (key.startsWith("mod") && key.length() > 3 && key.substring(3).containsOnly("0123456789")))
+            {
+                const int slot = key == "mod" ? context.nextMod : key.substring(3).getIntValue();
+                if (slot < 1 || slot > sv3::matrixSlotCount)
+                {
+                    error(key == "mod" ? juce::String("more than 24 modulation slots") : "'" + key + "' is not a slot from mod1 to mod24");
+                    continue;
+                }
+                context.nextMod = std::max(context.nextMod, slot + 1);
+                for (const auto& token : tokens)
+                {
+                    const int split = token.indexOfChar('=');
+                    const auto k = split > 0 ? token.substring(0, split) : token;
+                    const auto v = split > 0 ? token.substring(split + 1) : juce::String();
+                    if (split <= 0 || v.isEmpty())
+                    {
+                        error("'" + token + "' needs a key=value form");
+                        continue;
+                    }
+                    juce::String resolved;
+                    if (k == "src" || k == "via")
+                        resolved = sourceText(v);
+                    else if (k == "dst")
+                        resolved = destinationText(v, context);
+                    else if (k == "amount" || k == "curve")
+                        resolved = v;
+                    else
+                    {
+                        error("'" + key + "' has no setting '" + k + "'");
+                        continue;
+                    }
+                    if (resolved.isEmpty())
+                        error("'" + v + "' is not a " + (k == "dst" ? "destination of this preset" : "modulation source"));
+                    else
+                        add(pv3::matrixParameterId(pv3::Part::a, slot, k.toRawUTF8()), resolved);
+                }
                 continue;
             }
 

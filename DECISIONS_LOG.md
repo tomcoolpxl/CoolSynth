@@ -76,3 +76,87 @@ Smaller calls made while writing the class, each with what else was possible:
 - **Shape start points: sine and triangle at 0 rising, the saws and steps at their low end
   (saw down at its top), square high (taken).** The alternative, all shapes from their low
   point, makes sine and triangle start with a jump when routed to pitch.
+
+## D6. How far a pitch route reaches (2026-11-13, phase 2.2)
+
+Matrix amounts run from -1 to 1. The design says pitch destinations are in semitones but not
+what an amount of 1 means.
+
+- **1 is 48 semitones (taken, recommended).** Four octaves cover the 808 drop (24), the sync
+  sweep (24 to 36) and a riser; vibrato of a quarter tone is 0.005, still writable in a bank
+  file. Matches the slot pitch span.
+- 1 is 24 semitones. Finer for vibrato, but a three-octave sync sweep needs two slots.
+- 1 is 96 semitones. Covers everything in one slot, but vibrato amounts get tiny.
+- Amounts written in semitones for pitch slots. Most readable, but the amount parameter would
+  have to know its slot's destination; a job for the real UI in phase 9.
+
+Changing it: `matrixPitchSemitones` in `src/synth/v3/ModMatrix.h`; presets scale with it.
+
+## D7. What the VCA destination does (2026-11-13, phase 2.2)
+
+- **Gain is 1 plus the offset, held between 0 and 1 (taken, recommended).** Negative amounts
+  duck, a unipolar LFO with amount -1 gates (Outrun's Gated Pad), and modulation can never push
+  a voice above its envelope, so headroom stays as measured. The gain ramps across each
+  sub-block, so a square gate does not click (tested).
+- Held between 0 and 2. Positive amounts could boost, but a voice could double in level and
+  break the fixed headroom.
+- An offset in decibels. Natural for tremolo, but a gate needs a very large negative amount.
+
+Changing it: the VCA lines at the end of `Voice::renderSubBlock`.
+
+## D8. Matrix curves (2026-11-13, phase 2.2)
+
+The design names linear, exponential and S-curve. Checked online: HALion and Waldorf split
+sources into unipolar (0..1) and bipolar (-1..1); X-Stream offers logarithmic positive and
+negative curves; Ultra and HISE multiply the amount by the aux (via) source.
+
+- **Linear, Unipolar, Exponential, Logarithmic, S-Curve (taken, recommended).** Unipolar turns
+  a bipolar LFO into 0..1, which gating and one-sided vibrato need; logarithmic is the inward
+  curve next to the outward exponential. Curves keep the sign; the via source scales after.
+- The design's three only. A unipolar LFO would need an extra slot with a constant offset,
+  which the matrix has no source for.
+
+Changing it: `ModCurve` and `applyCurve` in `ModMatrix.h`; add new curves only at the end.
+
+## D9. Matrix destinations left for later (2026-11-13, phase 2.2)
+
+The design also lists envelope times and other matrix slots' amounts as destinations.
+
+- **Defer both to phase 2.3 or later (taken, recommended).** Envelope times are read once per
+  segment, so they need a note-on evaluation path, which comes naturally with the global
+  envelope in 2.3. A slot amount as destination does what the via source already does.
+  Destination numbers stay stable because new ones go at the end.
+- Build them now. More work in 2.2 for no preset that needs them yet.
+
+## D10. Juno Pad uses a global LFO (2026-11-13, phase 2.2)
+
+- **GLFO1, free-running, sweeping every voice's pulse width together (taken, recommended).**
+  The Juno-106 has a single LFO for all voices (checked online), and the pad's shimmer comes
+  from the voices moving together under the chorus.
+- LFO1 per voice. Each note would sweep on its own, an ensemble feel, but not a Juno.
+
+## D11. 808 Boom playing behaviour (2026-11-13, phase 2.2)
+
+- **Legato with 70 ms glide on overlapping keys, both envelopes one-shot (taken,
+  recommended).** Overlapping keys slide without restarting the boom (the trap 808 slide),
+  detached keys hit again, and a short tap still booms for its full 1.4 s.
+- Mono with retrigger. Every key restarts the boom; no slides.
+- Poly. Booms stack into mud on fast notes.
+
+The recipe's pitch drop (24 semitones in 60 ms) is the modern 808-bass punch; the original
+TR-808 sweeps much less (one study of samples found a median under a semitone), checked online.
+
+## D12. Bank master gains corrected by 0.5 to 2 dB (2026-11-13, phase 2.2)
+
+The loudness tool is not part of the default build, so its executable dated from phase 1.5.
+Rebuilt, it raised every preset by 0.5 to 2 dB. A build of the tool at the commit before phase
+2.1 asks for the same corrections, so the shift came from the earlier preset-leak fix, not from
+the LFOs or the matrix (the one-voice level test is also unchanged).
+
+- **Apply the corrections (taken, recommended).** The bank is back on its loudness targets; a
+  second pass changes nothing.
+- Keep the old masters. Every preset 1 to 2 dB under target, and the new presets louder than
+  the old ones.
+
+Also taken: the TODO now says to build the tool's target before running it. Adding it to the
+default build was the alternative; it would make every build slower for a tool run rarely.

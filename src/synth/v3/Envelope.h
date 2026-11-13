@@ -245,7 +245,10 @@ namespace coolsynth::synth::v3
 
         void endDecay() noexcept
         {
-            if (parameters.oneShot)
+            // A gate that closed during a one-shot decay releases now, even if the patch has
+            // since turned one-shot off: otherwise the voice would wait at sustain for a note-off
+            // that already came.
+            if (parameters.oneShot || ! gate)
                 startRelease();
             else if (parameters.loop && gate)
                 startAttack();

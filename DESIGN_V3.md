@@ -248,6 +248,17 @@ once per block per part, local ones per voice), then for each active slot add am
 source times via into the destination's offset. Offsets are in the destination's normalised
 range and the slot clamps after summing. Pitch destinations are in semitones.
 
+Shipped (phase 2.2, 2026-11-13): `src/synth/v3/ModMatrix.h`. 24 slots of source, destination,
+amount, via and curve (linear, unipolar, exponential, logarithmic, S-curve). Destinations: pitch,
+VCA, pan, LFO1 and LFO2 rate, each generator's pitch, level, pan, combine amount and P1..P8,
+each processor's P1..P8 (66 in all; new ones only at the end). An amount of 1 is the whole
+normalised range, 48 semitones for pitch, four octaves for an LFO rate; the VCA gain is 1 plus
+the offset held in 0..1 and ramps across the sub-block. Each voice evaluates the packed list of
+active slots once per sub-block after its sources; LFO rate offsets apply from the next
+sub-block. Bank files name destinations by key for the slot's type in that preset
+(`mod = src=lfo1 dst=g1.pw amount=0.3 via=wheel curve=unipolar`). Envelope-time and
+slot-amount destinations wait (decision D9).
+
 Hardwired routes that stay as plain parameters so simple patches need no matrix entries:
 ENV1 to VCA, ENV2 to P1 cutoff amount, velocity to VCA and to P1 cutoff, wheel to LFO1 depth,
 bend to pitch with range, key tracking per generator and per processor.

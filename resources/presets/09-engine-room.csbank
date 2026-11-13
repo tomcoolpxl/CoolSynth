@@ -1,5 +1,4 @@
 # Engine Room: one of each bass family, mono or legato, tight, no reverb.
-# 808 Boom (a pitch envelope) arrives with the modulation matrix in phase 2.2.
 
 [Pure Sub]
 room = Engine Room
@@ -8,7 +7,22 @@ p1 = Off
 env1 = attack=2 decay=80 sustain=1 release=60 velocity=0.3
 voice = env2ToP1=0
 play = mode=legato
-master = -7
+master = -6.5
+
+[808 Boom]
+room = Engine Room
+# A sine two octaves under the key whose pitch falls 24 semitones in its first 60 ms, the punch
+# of a modern 808 bass. Both envelopes run to the end whatever the key does; overlapping keys
+# slide without restarting the boom.
+g1 = VA shape=sine oct=-2 rand=0 level=0.9
+p1 = Off
+env1 = attack=0.5 decay=1400 sustain=0 release=1400 velocity=0.3 decayCurve=-0.5 oneShot=on
+env3 = attack=0.5 decay=60 sustain=0 release=60 decayCurve=-0.7 oneShot=on
+mod = src=env3 dst=pitch amount=0.5
+voice = env2ToP1=0 glide=70
+play = mode=legato glideLegato=on
+drive = on amount=0.3 mix=0.5
+master = -1
 
 [Donk]
 room = Engine Room
@@ -18,7 +32,7 @@ env1 = attack=0.5 decay=260 sustain=0.55 release=80 velocity=0.5
 env2 = attack=0.5 decay=130 sustain=0 release=90 decayCurve=-0.8
 voice = env2ToP1=0.52 velToP1=0.12
 play = mode=mono
-master = -0.5
+master = 0.5
 
 [Fat Analog]
 room = Engine Room
@@ -28,4 +42,4 @@ env1 = attack=2 decay=320 sustain=1 release=90 velocity=0.4
 env2 = attack=2 decay=360 sustain=0.3 release=150
 voice = env2ToP1=0.3 glide=20 drift=2
 play = mode=legato priority=low glideLegato=on
-master = -3
+master = -2.5

@@ -259,6 +259,8 @@ public:
             const int mode = static_cast<int>(processor->getValueTreeState().getRawParameterValue("pA.play.mode")->load());
             const int priority = static_cast<int>(processor->getValueTreeState().getRawParameterValue("pA.play.priority")->load());
             const int polyphony = static_cast<int>(processor->getValueTreeState().getRawParameterValue("pA.play.voices")->load());
+            // A one-shot amplifier (a drum) runs out on its own while the key is still down.
+            const bool oneShot = processor->getValueTreeState().getRawParameterValue("pA.env1.oneShot")->load() >= 0.5f;
 
             std::vector<std::pair<int, std::uint64_t>> held; // note, order pressed
             std::uint64_t order = 0;
@@ -286,7 +288,7 @@ public:
                 for (int b = 0, gap = 1 + random.nextInt(16); b < gap; ++b)
                     render(none); // up to 85 ms between key events
 
-                if (held.empty())
+                if (held.empty() || oneShot)
                     continue;
 
                 std::vector<int> soundingKeys;
@@ -346,12 +348,12 @@ public:
                 releaseAll.addEvent(juce::MidiMessage::noteOff(1, h.first), 0);
             render(releaseAll);
             juce::MidiBuffer none;
-            for (int b = 0; b < 200; ++b) // about a second, longer than any release in the bank
+            for (int b = 0; b < 400; ++b) // about two seconds, longer than any release or one-shot decay in the bank
                 render(none);
             if (part.activeVoiceCountForTesting() != 0)
             {
                 ++failures;
-                expect(false, preset.name + ": " + juce::String(part.activeVoiceCountForTesting()) + " voices still running a second after the last key went up");
+                expect(false, preset.name + ": " + juce::String(part.activeVoiceCountForTesting()) + " voices still running two seconds after the last key went up");
             }
         }
 

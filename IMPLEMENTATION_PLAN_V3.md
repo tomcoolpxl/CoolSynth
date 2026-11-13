@@ -95,6 +95,8 @@ block evaluation into offsets. Tests: arithmetic, every destination reachable wi
 amount scaling by via.
 
 2.2 also ships Engine Room 808 Boom, the pitch sweep of Studio 1982 Sync Lead and Juno Pad.
+Shipped 2026-11-13 with all three; envelope-time and slot-amount destinations move to 2.3
+(decision D9).
 
 2.3 Global envelope, step modulator, macros, chaos. GENV with bar-length stages and first-note
 or every-note trigger; STEP with 16 values, slides, division and length; four macros; chaos

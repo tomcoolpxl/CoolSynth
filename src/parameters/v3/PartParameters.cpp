@@ -132,6 +132,34 @@ namespace coolsynth::parameters::v3
             return group;
         }
 
+        juce::AudioParameterFloatAttributes amountAttributes()
+        {
+            return juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int)
+            {
+                return juce::String(v, 3);
+            });
+        }
+
+        std::unique_ptr<juce::AudioProcessorParameterGroup> makeMatrixGroup(Part part)
+        {
+            auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".matrix", "Matrix", "|");
+            for (int i = 1; i <= sv3::matrixSlotCount; ++i)
+            {
+                auto id = [&](const char* field) { return makeId(matrixParameterId(part, i, field)); };
+                const juce::String n = "Mod " + juce::String(i) + " ";
+                auto slot = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".mod" + juce::String(i),
+                                                                                 "Mod " + juce::String(i), "|");
+                slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("src"), n + "Source", modSourceNames(), 0));
+                slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("dst"), n + "Destination", modDestinationNames(), 0));
+                slot->addChild(std::make_unique<juce::AudioParameterFloat>(id("amount"), n + "Amount", juce::NormalisableRange<float> { -1.0f, 1.0f },
+                                                                           0.0f, amountAttributes()));
+                slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("via"), n + "Via", modSourceNames(), 0));
+                slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("curve"), n + "Curve", modCurveNames(), 0));
+                group->addChild(std::move(slot));
+            }
+            return group;
+        }
+
         LfoPointers bindLfoPointers(juce::AudioProcessorValueTreeState& state, Part part, const juce::String& lfo)
         {
             auto get = [&](const char* field) { return state.getRawParameterValue(lfoParameterId(part, lfo, field)); };
@@ -170,6 +198,53 @@ namespace coolsynth::parameters::v3
         return partPrefix(part) + "." + lfo + "." + field;
     }
 
+    juce::String matrixParameterId(Part part, int oneBasedSlot, const char* field)
+    {
+        return partPrefix(part) + ".mod" + juce::String(oneBasedSlot) + "." + field;
+    }
+
+    const juce::StringArray& modSourceNames()
+    {
+        static const juce::StringArray names = []
+        {
+            juce::StringArray n { "Off", "Velocity", "Release Velocity", "Key", "Note Random", "Aftertouch", "MPE Pressure",
+                                  "MPE Slide", "Drift", "Env 1", "Env 2", "Env 3", "LFO 1", "LFO 2", "GLFO 1", "GLFO 2",
+                                  "Global Env", "Step", "Macro 1", "Macro 2", "Macro 3", "Macro 4", "Mod Wheel", "Pitch Bend",
+                                  "Expression", "Chaos" };
+            jassert(n.size() == sv3::ModSources::count);
+            return n;
+        }();
+        return names;
+    }
+
+    const juce::StringArray& modDestinationNames()
+    {
+        static const juce::StringArray names = []
+        {
+            namespace d = sv3::modDestination;
+            juce::StringArray n { "Off", "Pitch", "VCA", "Pan", "LFO 1 Rate", "LFO 2 Rate" };
+            for (int g = 1; g <= d::generatorSlots; ++g)
+            {
+                const juce::String slot = "G" + juce::String(g) + " ";
+                n.addArray(juce::StringArray { slot + "Pitch", slot + "Level", slot + "Pan", slot + "Amount" });
+                for (int k = 1; k <= sv3::maxSlotParameters; ++k)
+                    n.add(slot + "Param " + juce::String(k));
+            }
+            for (int p = 1; p <= d::processorSlots; ++p)
+                for (int k = 1; k <= sv3::maxSlotParameters; ++k)
+                    n.add("P" + juce::String(p) + " Param " + juce::String(k));
+            jassert(n.size() == d::count);
+            return n;
+        }();
+        return names;
+    }
+
+    const juce::StringArray& modCurveNames()
+    {
+        static const juce::StringArray names { "Linear", "Unipolar", "Exponential", "Logarithmic", "S-Curve" };
+        return names;
+    }
+
     const juce::StringArray& lfoFields()
     {
         static const juce::StringArray fields { "shape", "rate", "sync", "division", "phase", "retrigger", "delay", "fade", "oneShot" };
@@ -198,6 +273,7 @@ namespace coolsynth::parameters::v3
             group->addChild(makeLfoGroup(part, "lfo" + juce::String(i), "LFO " + juce::String(i), false));
         for (int i = 1; i <= partGlobalLfos; ++i)
             group->addChild(makeLfoGroup(part, "glfo" + juce::String(i), "Global LFO " + juce::String(i), true));
+        group->addChild(makeMatrixGroup(part));
 
         auto voice = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".voice", "Voice", "|");
         voice->addChild(floatParameter(voiceParameterId(part, "env2ToP1"), "Env 2 to P1", { -1.0f, 1.0f }, 0.2f, percentAttributes()));
@@ -257,6 +333,16 @@ namespace coolsynth::parameters::v3
         for (int i = 0; i < partGlobalLfos; ++i)
             p.globalLfos[static_cast<std::size_t>(i)] = bindLfoPointers(state, part, "glfo" + juce::String(i + 1));
         p.wheelToLfo1 = state.getRawParameterValue(voiceParameterId(part, "wheelToLfo1"));
+        for (int i = 0; i < sv3::matrixSlotCount; ++i)
+        {
+            auto& m = p.matrix[static_cast<std::size_t>(i)];
+            auto get = [&](const char* field) { return state.getRawParameterValue(matrixParameterId(part, i + 1, field)); };
+            m.source = get("src");
+            m.destination = get("dst");
+            m.amount = get("amount");
+            m.via = get("via");
+            m.curve = get("curve");
+        }
 
         p.env2ToP1 = state.getRawParameterValue(voiceParameterId(part, "env2ToP1"));
         p.velToP1 = state.getRawParameterValue(voiceParameterId(part, "velToP1"));
@@ -334,6 +420,18 @@ namespace coolsynth::parameters::v3
         for (std::size_t i = 0; i < settings.globalLfos.size(); ++i)
             settings.globalLfos[i] = readLfo(pointers.globalLfos[i], true);
         settings.voice.wheelToLfo1 = load(pointers.wheelToLfo1, 0.0f);
+
+        settings.voice.matrix = {};
+        for (const auto& m : pointers.matrix)
+        {
+            sv3::MatrixSlot slot;
+            slot.source = static_cast<sv3::ModSource>(juce::jlimit(0, sv3::ModSources::count - 1, loadInt(m.source, 0)));
+            slot.destination = juce::jlimit(0, sv3::modDestination::count - 1, loadInt(m.destination, 0));
+            slot.amount = load(m.amount, 0.0f);
+            slot.via = static_cast<sv3::ModSource>(juce::jlimit(0, sv3::ModSources::count - 1, loadInt(m.via, 0)));
+            slot.curve = static_cast<sv3::ModCurve>(juce::jlimit(0, sv3::modCurveCount - 1, loadInt(m.curve, 0)));
+            settings.voice.matrix.add(slot);
+        }
 
         settings.voice.env2ToP1 = load(pointers.env2ToP1, 0.0f);
         settings.voice.velocityToP1 = load(pointers.velToP1, 0.0f);

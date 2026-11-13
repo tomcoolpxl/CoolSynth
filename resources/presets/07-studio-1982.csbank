@@ -1,6 +1,22 @@
 # Studio 1982: clean polysynth classics with audible filter envelopes and light effects.
 # Played, not produced: at most one or two effects per preset.
-# Juno Pad (pulse width from an LFO) arrives with the LFOs in phase 2.1.
+
+[Juno Pad]
+room = Studio 1982
+# One DCO's pulse and saw, as on the Juno-106: both start in phase, so every note has the same
+# colour. One global LFO sweeps the pulse width of every voice together, like the Juno's single
+# LFO, and Chorus I-style slow chorus widens it.
+g1 = VA shape=pulse pw=0.5 rand=0 level=0.7
+g2 = VA shape=saw rand=0 level=0.4
+p1 = Ladder cutoff=1500 res=0.12 key=0.4 bass=0.5
+env1 = attack=400 decay=1500 sustain=0.9 release=900 velocity=0.2
+env2 = attack=600 decay=1800 sustain=0.6 release=900
+glfo1 = shape=triangle sync=off rate=0.5 retrigger=off
+mod = src=glfo1 dst=g1.pw amount=0.3
+voice = env2ToP1=0.06 drift=3
+chorus = on rate=0.5 depth=0.55 mix=0.5
+reverb = on size=0.55 damping=0.5 mix=0.15
+master = -5.5
 
 [Prophet Brass]
 room = Studio 1982
@@ -12,7 +28,7 @@ env2 = attack=70 decay=650 sustain=0.4 release=300
 voice = env2ToP1=0.36 velToP1=0.1 drift=3
 play = voices=8
 reverb = on size=0.45 damping=0.55 mix=0.12
-master = -6
+master = -5
 
 [OB Strings]
 room = Studio 1982
@@ -24,7 +40,7 @@ env2 = attack=400 decay=1500 sustain=0.6 release=900
 voice = env2ToP1=0.08 drift=4
 phaser = on rate=0.25 depth=0.6
 reverb = on size=0.65 damping=0.5 mix=0.22
-master = -5
+master = -4
 
 [Moog Bass]
 room = Studio 1982
@@ -35,7 +51,7 @@ env1 = attack=1 decay=400 sustain=0.9 release=80 velocity=0.4
 env2 = attack=1 decay=280 sustain=0.15 release=120
 voice = env2ToP1=0.36 velToP1=0.15 glide=30
 play = mode=legato priority=low glideLegato=on
-master = -2.5
+master = -1.5
 
 [Clav Keys]
 room = Studio 1982
@@ -46,20 +62,21 @@ env1 = attack=0.5 decay=320 sustain=0.2 release=70 velocity=0.8 decayCurve=-0.8
 env2 = attack=0.5 decay=110 sustain=0 release=80 decayCurve=-0.8
 voice = env2ToP1=0.32 velToP1=0.2
 drive = on amount=0.12 mix=0.6
-master = -2.5
+master = -2
 
 [Sync Lead]
 room = Studio 1982
-# G1 is the silent master; G2 is synced to it a fifth and a bit higher. The sweep of the
-# slave pitch comes with the modulation matrix in phase 2.2.
+# G1 is the silent master; G2 is synced to it a fifth and a bit higher. The filter envelope
+# also sweeps the slave's pitch down from two octaves above, the Prophet-5 poly-mod sync sweep.
 g1 = VA shape=saw level=0
 g2 = VA shape=saw combine=sync semi=7 fine=30 level=0.85
 g3 = VA shape=saw oct=-1 level=0.3
 p1 = Ladder cutoff=3600 res=0.2 key=0.5
 env1 = attack=3 decay=300 sustain=1 release=160
-env2 = attack=2 decay=450 sustain=0.5 release=200
+env2 = attack=2 decay=700 sustain=0.25 release=200
+mod = src=env2 dst=g2.pitch amount=0.5
 voice = env2ToP1=0.22 glide=45
 play = mode=mono
 delay = on time=330 feedback=0.3 mix=0.18
 reverb = on size=0.4 damping=0.5 mix=0.1
-master = 0.5
+master = 2.5

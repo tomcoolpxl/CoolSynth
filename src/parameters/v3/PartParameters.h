@@ -20,6 +20,7 @@
         pA.lfo1, pA.lfo2    local LFOs: shape, rate (Hz), sync, division, phase (degrees),
                             retrigger, delay and fade (ms), oneShot
         pA.glfo1, pA.glfo2  global LFOs, the same fields; synced and free-running by default
+        pA.mod1 .. mod24    matrix slots: src, dst, amount (-1..1), via, curve
         pA.voice.*          env2ToP1, velToP1, glide (ms), drift (cents), wheelToLfo1
         pA.play.*           mode, priority, voices, unison, unisonDetune, unisonSpread,
                             bendRange, glideLegato
@@ -40,6 +41,12 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] juce::String lfoParameterId(Part part, const juce::String& lfo, const char* field);
     /** The fields of every LFO, in parameter order. */
     [[nodiscard]] const juce::StringArray& lfoFields();
+
+    [[nodiscard]] juce::String matrixParameterId(Part part, int oneBasedSlot, const char* field);
+    /** Choice names of the matrix: sources by ModSource, destinations by destination number, curves by ModCurve. */
+    [[nodiscard]] const juce::StringArray& modSourceNames();
+    [[nodiscard]] const juce::StringArray& modDestinationNames();
+    [[nodiscard]] const juce::StringArray& modCurveNames();
 
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part);
 
@@ -76,6 +83,15 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* oneShot = nullptr;
     };
 
+    struct MatrixSlotPointers
+    {
+        std::atomic<float>* source = nullptr;
+        std::atomic<float>* destination = nullptr;
+        std::atomic<float>* amount = nullptr;
+        std::atomic<float>* via = nullptr;
+        std::atomic<float>* curve = nullptr;
+    };
+
     struct PartParameterPointers
     {
         std::array<SlotParameterPointers, partGeneratorSlots> generators {};
@@ -83,6 +99,7 @@ namespace coolsynth::parameters::v3
         std::array<EnvelopePointers, partEnvelopes> envelopes {};
         std::array<LfoPointers, partLocalLfos> lfos {};
         std::array<LfoPointers, partGlobalLfos> globalLfos {};
+        std::array<MatrixSlotPointers, coolsynth::synth::v3::matrixSlotCount> matrix {};
         std::atomic<float>* wheelToLfo1 = nullptr;
         std::atomic<float>* env2ToP1 = nullptr;
         std::atomic<float>* velToP1 = nullptr;

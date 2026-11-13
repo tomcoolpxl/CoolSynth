@@ -7,7 +7,7 @@ g1 = VA shape=saw level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -9
+master = -7
 
 [Init Pulse]
 room = Workshop
@@ -15,7 +15,7 @@ g1 = VA shape=pulse pw=0.5 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -15.5
+master = -13.5
 
 [Init Sine]
 room = Workshop
@@ -23,7 +23,7 @@ g1 = VA shape=sine level=0.8
 p1 = Off
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -11
+master = -9
 
 [Init Arp]
 room = Workshop

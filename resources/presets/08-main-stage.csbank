@@ -10,7 +10,7 @@ env1 = attack=4 decay=200 sustain=1 release=140 velocity=0.3
 voice = env2ToP1=0.06 glide=20
 play = mode=legato glideLegato=on
 drive = on amount=0.18 mix=0.75
-master = -12
+master = -11.5
 
 [Supersaw]
 room = Main Stage
@@ -23,4 +23,4 @@ env1 = attack=8 decay=500 sustain=0.9 release=420 velocity=0.5
 voice = env2ToP1=0
 reverb = on size=0.75 damping=0.45 mix=0.24
 delay = on time=375 feedback=0.25 mix=0.12
-master = -3
+master = -2

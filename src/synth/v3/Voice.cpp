@@ -166,6 +166,8 @@ namespace coolsynth::synth::v3
         glideSpan = std::abs(targetPitch - currentPitch);
         noteRandom = nextRandom();
         lfoRestartPending = true;
+        lfoRateScale = { 1.0f, 1.0f };
+        vcaSnap = true;
 
         NoteContext context;
         context.noteNumber = start.note;
@@ -292,9 +294,6 @@ namespace coolsynth::synth::v3
         advancePitch(n, settings);
         advanceDrift(n);
 
-        const float pitch = currentPitch + globals.bendSemitones + driftValue * settings.driftCents * 0.01f;
-        const float noteHz = dsp::pitchToHz(pitch);
-
         // At a fresh note the envelopes wait while the generators' first samples are still on their way.
         const int held = std::min(envelopeHold, n);
         envelopeHold -= held;
@@ -304,6 +303,7 @@ namespace coolsynth::synth::v3
         const float env2 = envelopes[1].advance(n - held);
         const float env3 = envelopes[2].advance(n - held);
 
+        // Sources: the part's, its per-sub-block frame, then this voice's own.
         sources = globals.sources;
         if (globals.frames != nullptr && globals.frameCount > 0)
         {
@@ -316,8 +316,8 @@ namespace coolsynth::synth::v3
         clock.ppq += static_cast<double>(offset) * globals.ppqPerSample;
         const float wheelAmount = std::clamp(settings.wheelToLfo1, 0.0f, 1.0f);
         const float lfo1Depth = 1.0f - wheelAmount + wheelAmount * globals.sources.get(ModSource::wheel);
-        sources.set(ModSource::lfo1, lfo1Depth * lfos[0].advance(n, settings.lfos[0], clock));
-        sources.set(ModSource::lfo2, lfos[1].advance(n, settings.lfos[1], clock));
+        sources.set(ModSource::lfo1, lfo1Depth * lfos[0].advance(n, settings.lfos[0], clock, lfoRateScale[0]));
+        sources.set(ModSource::lfo2, lfos[1].advance(n, settings.lfos[1], clock, lfoRateScale[1]));
 
         sources.set(ModSource::velocity, note.velocity);
         sources.set(ModSource::releaseVelocity, releaseVelocity);
@@ -327,6 +327,14 @@ namespace coolsynth::synth::v3
         sources.set(ModSource::env1, amp[n - 1]);
         sources.set(ModSource::env2, env2);
         sources.set(ModSource::env3, env3);
+
+        evaluateMatrix(settings.matrix, sources, matrixOffsets);
+        for (std::size_t i = 0; i < lfoRateScale.size(); ++i)
+            lfoRateScale[i] = std::exp2(std::clamp(matrixOffsets.lfoRateOctaves[i], -8.0f, 8.0f));
+
+        const float pitch = currentPitch + globals.bendSemitones + driftValue * settings.driftCents * 0.01f
+                            + std::clamp(matrixOffsets.pitchSemitones, -SlotBase::pitchSpanSemitones, SlotBase::pitchSpanSemitones);
+        const float noteHz = dsp::pitchToHz(pitch);
 
         float* mixL = mixLeft.data();
         float* mixR = mixRight.data();
@@ -340,8 +348,8 @@ namespace coolsynth::synth::v3
             const auto& gs = settings.generators[i];
 
             g.base.step(n);
-            SlotOffsets offsets;
-            offsets.pan = note.pan;
+            SlotOffsets offsets = matrixOffsets.generators[i];
+            offsets.pan += note.pan + matrixOffsets.pan;
             SlotParams params = buildSlotParams(g.slot.descriptor(), g.base, offsets);
             params.frequencyHz = dsp::pitchToHz((gs.keyTrack ? pitch : 60.0f) + params.pitchSemitones);
             params.combine = i == 0 ? Combine::off : gs.combine;
@@ -372,18 +380,25 @@ namespace coolsynth::synth::v3
         {
             auto& p = processors[j];
             p.base.step(n);
-            SlotOffsets offsets;
+            SlotOffsets offsets = matrixOffsets.processors[j];
             if (j == 0)
-                offsets.p[0] = settings.env2ToP1 * env2 + settings.velocityToP1 * note.velocity;
+                offsets.p[0] += settings.env2ToP1 * env2 + settings.velocityToP1 * note.velocity;
             SlotParams params = buildSlotParams(p.slot.descriptor(), p.base, offsets);
             params.frequencyHz = noteHz;
             p.slot.process(mixL, mixR, n, params);
         }
 
+        // The VCA ramps from the previous sub-block's gain, so a gating LFO does not click.
+        const float vcaTarget = std::clamp(1.0f + matrixOffsets.vca, 0.0f, 1.0f);
+        const float vcaFrom = vcaSnap ? vcaTarget : vcaGain;
+        vcaSnap = false;
+        vcaGain = vcaTarget;
+        const float vcaStep = (vcaTarget - vcaFrom) / static_cast<float>(n);
+
         const float fadeScale = 1.0f / static_cast<float>(stealTotal);
         for (int s = 0; s < n; ++s)
         {
-            float gain = amp[s];
+            float gain = amp[s] * (vcaFrom + vcaStep * static_cast<float>(s + 1));
             if (stealRemaining > 0)
                 gain *= static_cast<float>(stealRemaining - 1 - s) * fadeScale;
             left[s] += mixL[s] * gain;
