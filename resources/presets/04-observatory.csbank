@@ -15,3 +15,22 @@ mod = src=glfo2 dst=g2.pitch amount=0.35
 voice = env2ToP1=0
 reverb = on size=0.9 damping=0.35 mix=0.4
 master = -4.5
+
+[Nebula Pad]
+room = Observatory
+# Two wavetable stacks drifting through their tables on slow per-voice LFOs (20 and 27 s a
+# cycle), so every note's timbre wanders on its own: vocal formants under a sync-swept digital
+# shimmer, through a soft low-pass into a large plate. The state-variable filter and the plate's
+# pre-delay arrive with phases 4.1 and 5.1.
+g1 = Wavetable table=vocal pos=0.5 unison=3 detune=14 spread=0.8 level=0.7
+g2 = Wavetable table=digital pos=0.25 unison=2 detune=10 spread=1 level=0.28
+p1 = Ladder mode=lp12 cutoff=2400 res=0.1 key=0.4
+env1 = attack=2000 decay=2000 sustain=1 release=4000
+lfo1 = shape=sine rate=0.05 retrigger=off
+lfo2 = shape=sine rate=0.037 retrigger=off
+mod = src=lfo1 dst=g1.pos amount=0.5
+mod = src=lfo2 dst=g2.pos amount=0.25
+voice = env2ToP1=0 drift=3
+chorus = on rate=0.3 depth=0.35 mix=0.25
+reverb = on size=0.9 damping=0.4 mix=0.38
+master = -2.5

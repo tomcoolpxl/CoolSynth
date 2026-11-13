@@ -432,3 +432,53 @@ The plan asks for six algorithms with "per-operator level and ratio across P1..P
 
 Grid Keys (Outrun) ships on the Two Pairs algorithm: a 1:1 body with velocity bark and a 1:14
 tine that rings for 250 ms.
+
+## D34. The factory wavetables (2026-11-13, phase 3.4)
+
+The plan asks for an embedded factory set: classic, digital, vocal, chip 4-bit.
+
+- **Four tables of 16 frames, computed from their spectra at first use, not stored as audio
+  files (taken, recommended).** No third-party tables to license, nothing in the repository but
+  code, and every frame is exact. Classic blends sine, triangle, saw and square spectrum by
+  spectrum with the fundamental in phase (no thin spot mid-morph); Digital is a hard-synced saw
+  whose slave ratio climbs from 1 to 8; Vocal is a saw through the formants of a, e, i, o, u on
+  a 110 Hz harmonic grid (the formants move with pitch, as in every wavetable synth); Chip is
+  32-step 4-bit waves (pulse widths 1/8 to 1/2, the NES triangle, a stepped saw, four SCC-style
+  waves).
+- Embedded WAV tables. Richer at once, but they need a source and a licence.
+- User table import. Later, with the real UI.
+
+## D35. Band-limited playback (2026-11-13, phase 3.4)
+
+Checked online (KVR, Electric Druid): one band-limited table per octave by FFT, clear, inverse
+FFT, 2048 samples, is the common practice; hard switching between octave tables can crackle.
+
+- **11 octave levels per frame; the level is chosen so harmonics stay under 0.75 fs, so what
+  folds back lands above fs / 4 and the voice's decimator removes it; a 4-point Hermite read
+  (taken, recommended).** At the 96 kHz voice rate a level switch only ever removes harmonics
+  above 36 kHz, so switching is inaudible and needs no crossfade. Measured: the largest alias at
+  A7 is -118.6 dB.
+- Two or four tables per octave, or crossfading levels. More memory or more reads for nothing
+  audible here.
+
+## D36. The wavetable generator's parameters (2026-11-13, phase 3.4)
+
+- **Table, Position (crossfading neighbour frames, ramped across each sub-block), Unison 1 to 5,
+  Detune, Spread, Phase Rand (taken).**
+- **No hard sync input (taken).** A reset without band-limited correction would alias; the VA
+  generator does sync properly. Combine FM moves the phase of every copy; ring and AM as usual.
+- **The table bank is built in `Part::prepare`, off the audio thread (taken).** Building it the
+  first time a slot switches to Wavetable would cost the audio thread about 20 ms once.
+
+## D37. Phase 3.4 presets and test fixes (2026-11-13, phase 3.4)
+
+- **SCC Lead steps its pulse width with the step modulator, eight values that land exactly on
+  the chip table's eight pulse-width frames at 1/16 (taken).** An LFO with the Steps shape would
+  fall between frames and crossfade. The 4-bit crusher of the recipe waits for 4.2.
+- **Nebula Pad layers a vocal stack and a digital stack, each drifting on its own per-voice LFO
+  (20 and 27 s a cycle), through the ladder in LP12 until the state-variable filter (4.1) and the
+  plate's pre-delay (5.1) arrive (taken).**
+- Tests corrected, not the engine: an old bank-error test used "Wavetable" as its example of an
+  unknown type; the every-preset-sounds test gives presets whose arp skips steps at random four
+  seconds instead of one (Rain Chime once skipped every step of a second); the fuzz test waits
+  out each preset's own release instead of a fixed two seconds (Glass Bell releases for 2.5 s).

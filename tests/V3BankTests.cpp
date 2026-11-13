@@ -78,7 +78,7 @@ master = -6
         {
             const auto parsed = parseBankFile(R"(room = Nowhere
 [Broken]
-g1 = Wavetable position=0.5
+g1 = Granular position=0.5
 g2 = VA wobble=3
 p1 = Ladder cutoff
 envelope = attack=5
@@ -88,7 +88,7 @@ delay = maybe time=300
                 logMessage(e);
             expectEquals(parsed.errors.size(), 6);
             expect(parsed.errors[0].startsWith("broken.csbank:1:"));
-            expect(parsed.errors[1].contains(":3:") && parsed.errors[1].contains("Wavetable"));
+            expect(parsed.errors[1].contains(":3:") && parsed.errors[1].contains("Granular"));
             expect(parsed.errors[2].contains(":4:") && parsed.errors[2].contains("wobble"));
             expect(parsed.errors[3].contains(":5:"));
             expect(parsed.errors[4].contains(":6:") && parsed.errors[4].contains("envelope"));
@@ -178,11 +178,17 @@ env1 = loop=maybe attack=abc
                 processor->prepareToPlay(48000.0, 256);
                 coolsynth::presets::applyFactoryPreset(processor->getValueTreeState(), preset);
 
+                // An arp that skips steps at random could stay silent for a second; give it four.
+                bool randomArp = false;
+                for (const auto& e : preset.entries)
+                    randomArp = randomArp || (e.parameterId == "arpChance" && e.text.getFloatValue() < 1.0f);
+                const int blocks = randomArp ? 750 : 188;
+
                 juce::AudioBuffer<float> buffer(2, 256);
                 double sum = 0.0;
                 float peak = 0.0f;
                 bool finite = true;
-                for (int block = 0; block < 188; ++block) // about one second
+                for (int block = 0; block < blocks; ++block) // about one second, or four
                 {
                     juce::MidiBuffer midi;
                     if (block == 0)
@@ -201,7 +207,7 @@ env1 = loop=maybe attack=abc
                         }
                     }
                 }
-                const float rms = static_cast<float>(std::sqrt(sum / (188.0 * 256.0 * 2.0)));
+                const float rms = static_cast<float>(std::sqrt(sum / (static_cast<double>(blocks) * 256.0 * 2.0)));
                 expect(finite, preset.name + " produced a non-finite sample");
                 expect(rms > 1.0e-3f, preset.name + " is silent: rms " + juce::String(rms, 6));
                 expect(peak <= 1.0f, preset.name + " peaks at " + juce::String(peak, 3));
@@ -347,13 +353,19 @@ public:
             for (const auto& h : held)
                 releaseAll.addEvent(juce::MidiMessage::noteOff(1, h.first), 0);
             render(releaseAll);
+            // Wait out this preset's own release (or a one-shot's decay), with half a second to spare.
+            auto& state = processor->getValueTreeState();
+            const float oneShotMs = state.getRawParameterValue("pA.env1.oneShot")->load() >= 0.5f ? state.getRawParameterValue("pA.env1.decay")->load() : 0.0f;
+            const float waitMs = std::max(state.getRawParameterValue("pA.env1.release")->load(), oneShotMs) + 500.0f;
+            const int waitBlocks = static_cast<int>(std::ceil(waitMs * 0.001f * 48000.0f / 256.0f));
             juce::MidiBuffer none;
-            for (int b = 0; b < 400; ++b) // about two seconds, longer than any release or one-shot decay in the bank
+            for (int b = 0; b < waitBlocks; ++b)
                 render(none);
             if (part.activeVoiceCountForTesting() != 0)
             {
                 ++failures;
-                expect(false, preset.name + ": " + juce::String(part.activeVoiceCountForTesting()) + " voices still running two seconds after the last key went up");
+                expect(false, preset.name + ": " + juce::String(part.activeVoiceCountForTesting()) + " voices still running "
+                                  + juce::String(waitMs / 1000.0f, 1) + " s after the last key went up");
             }
         }
 

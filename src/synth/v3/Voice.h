@@ -16,6 +16,7 @@
 #include "NoiseGenerator.h"
 #include "OffModules.h"
 #include "VaGenerator.h"
+#include "WavetableGenerator.h"
 
 /*
     V3 voice (DESIGN_V3.md section 4).
@@ -47,7 +48,7 @@
 */
 namespace coolsynth::synth::v3
 {
-    using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator>; // new types only at the end
+    using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator, WavetableGenerator>; // new types only at the end
     using ProcessorTypes = std::variant<OffProcessor, LadderProcessor>;
     using GeneratorSlot = Slot<GeneratorTypes>;
     using ProcessorSlot = Slot<ProcessorTypes>;
@@ -59,6 +60,7 @@ namespace coolsynth::synth::v3
         inline constexpr int noise = 2;
         inline constexpr int fm2 = 3;
         inline constexpr int fm4 = 4;
+        inline constexpr int wavetable = 5;
     }
     namespace processorType
     {
@@ -69,6 +71,7 @@ namespace coolsynth::synth::v3
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::noise, GeneratorTypes>, NoiseGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::fm2, GeneratorTypes>, FmGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::fm4, GeneratorTypes>, Fm4Generator>);
+    static_assert(std::is_same_v<std::variant_alternative_t<generatorType::wavetable, GeneratorTypes>, WavetableGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::ladder, ProcessorTypes>, LadderProcessor>);
 
     inline constexpr int generatorSlotCount = 3;

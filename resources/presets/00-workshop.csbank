@@ -50,3 +50,11 @@ p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
 master = -8
+
+[Init Wavetable]
+room = Workshop
+g1 = Wavetable table=classic pos=0.667 level=0.8
+p1 = Ladder cutoff=20000 res=0 key=0 bass=0
+env1 = attack=2 decay=300 sustain=1 release=150
+voice = env2ToP1=0
+master = -5.5

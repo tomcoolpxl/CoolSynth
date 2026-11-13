@@ -69,6 +69,13 @@ organ). A Level is an index where the operator modulates and an output level whe
 carriers are normalised by their total level; every modulation uses FM2's alias limit
 (decision D33).
 
+Shipped (phase 3.4, 2026-11-13): `WavetableGenerator` in `src/synth/v3/WavetableGenerator.h`,
+generator type 5, playing `WavetableBank` (`src/synth/v3/Wavetables.h/.cpp`): four factory
+tables (Classic, Digital, Vocal, Chip) of 16 frames of 2048 samples, built from their spectra at
+11 octave band limits. Position crossfades frames and ramps per sample; each copy reads the
+band limit its frequency needs (harmonics under 0.75 fs) with a Hermite read; Unison 1 to 5,
+Detune, Spread, Phase Rand; combine FM, ring and AM; no sync input (decisions D34 to D36).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

@@ -605,3 +605,11 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/v3/Fm4Generator.h` ("FM4", generator type 4): four sine operators with six algorithms (stack, two into one, stack plus one, two pairs, one into three, organ), ratios and levels for operators 2 to 4, averaged feedback on operator 4, carriers normalised by their total level, FM2's alias limit on every modulation, per-sample ramps, double-precision phases, signal and wrap track for the next generator, combine FM, ring and AM.
 - [x] Preset: Outrun Grid Keys, the DX electric piano on two pairs (1:1 body with velocity bark, 1:14 tine). 42 presets; Outrun complete.
 - [x] Added `V3Fm4Tests` (4 tests): the routing tables; Two Pairs with one pair silent equal to FM2 within 1e-5; the organ's four partials equal within 0.1 dB; the alias limit per driven operator and every algorithm bounded at full levels and feedback. Verified Debug build without warnings and `ctest` green; Grid Keys 10.6 % of real time for eight-note chords.
+
+## V3 phase 3.4: wavetables (2026-11-13)
+
+- [x] Added `src/synth/v3/Wavetables.h/.cpp`: the factory bank, four tables (Classic, Digital, Vocal, Chip) of 16 frames, each frame 2048 samples at 11 octave band limits, built once from spectra with JUCE's FFT and warmed in `Part::prepare`.
+- [x] Added `src/synth/v3/WavetableGenerator.h` (generator type 5): position morph with per-sample ramps, band limit per copy (harmonics under 0.75 fs), Hermite reads, unison 1 to 5 with detune and spread, phase rand, wrap track, combine FM, ring, AM.
+- [x] Presets: Workshop Init Wavetable, Arcade SCC Lead (stepped pulse width through the step modulator), Observatory Nebula Pad. 45 presets; phase 3 complete.
+- [x] Added `tests/V3WavetableTests.cpp` (7 tests): frame 0 is a sine within 1e-4 and every band limit keeps its band (-100 dB outside); the level choice; the A7 saw's largest alias after decimation -118.6 dB; tuning within 0.05 cents; a position sweep without steps; five unison copies within 1.5 dB of one and random start phases; bank lines. Test fixes: the unknown-type example, a longer window for random arps, and the fuzz test waiting each preset's own release.
+- [x] Verified Debug build without warnings and `ctest` green; Nebula Pad 21.5 %, Init Wavetable 14.2 % of real time for eight-note chords.

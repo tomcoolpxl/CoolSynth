@@ -133,6 +133,7 @@ Shipped 2026-11-13 with Grid Keys; eight parameters without paging (decision D33
 mapped band-limited playback, position with crossfade morph, phase randomisation. Tests: alias
 floor at A7, position interpolation continuity. Ships: Observatory Nebula Pad (SVF pending),
 Arcade SCC Lead (crusher pending), Workshop Init Wavetable.
+Shipped 2026-11-13 with all three (decisions D34 to D37). Phase 3 complete.
 
 ## Phase 4: processors
 
