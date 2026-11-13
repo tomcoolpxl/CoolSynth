@@ -21,8 +21,8 @@ Where all that comes from: the SFZ mapping files the recordings' author publishe
 (fetch_sfz.py downloads them). They give each recording its note, keys, velocities, a level
 that makes the layers of a note join up under a square law of velocity, and for most
 instruments a tuning correction. The style's gain then puts the middle one of its loudest
-notes (the peaks of the recordings its top velocities play, corrections included) at half of
-full scale, and no note above 1.4 times full scale: recordings levelled alike by ear do not
+notes (the peaks of the recordings its top velocities play, corrections included) at 0.8 of
+full scale, and no note above 2.2 times full scale: recordings levelled alike by ear do not
 peak alike, and a gain set by the one that peaks highest leaves the whole instrument 10 dB
 down. Samples are floats; the preset's loudness is set afterwards. A style without a mapping file is placed by the notes in its file names
 (moved by whole octaves to where a pitch detector hears the style), its layers split the
@@ -42,8 +42,11 @@ The catalogue's sixth column, "key=value" words:
 
     sfz=Scale       of several mapping files for the folder, the one with this in its name;
                     sfz=none ignores the author's mapping (it is a kit of sounds, say)
-    shift=12        semitones added to the mapping's notes and keys (a patch that sounds an
-                    octave off its key is placed where it sounds)
+    shift=12        semitones added to the mapping's notes and keys (to place an instrument
+                    where it sounds; not used: the user chose the author's keys, D103)
+    sounds=12       the instrument sounds this many semitones above the key the mapping gives
+                    it (a xylophone is mapped as it is written, an octave under its sound):
+                    its tuning is measured there
     files=Sus,Hit   only files whose name contains one of these
     root=37         without a mapping: every file plays this note
     keys=36,48      without a mapping: each file its own key, in name order
@@ -309,6 +312,7 @@ for style in read_catalogue(catalogue_path):
     out_dir = os.path.join(out_root, slug(style["family"]), slug(style["instrument"]), slug(style["style"]))
     tune = options.get("tune", "harmonic")
     shift = int(options.get("shift", 0))
+    sounds = int(options.get("sounds", 0))
 
     mapping, regions = None, []
     if options.get("sfz") != "none":
@@ -439,7 +443,7 @@ for style in read_catalogue(catalogue_path):
                 e["cents"] = 100.0 * (pitch - e["root"])
     elif tune != "keep" or (dry and authors_tuning):
         for e in entries:
-            cents = tuning_cents(e["mono"], e["rate"], e["root"], 1 if tune == "first" else 8)
+            cents = tuning_cents(e["mono"], e["rate"], e["root"] + sounds, 1 if tune == "first" else 8)
             if cents is None or abs(cents) > 65.0:
                 unclear += 1  # nothing clear near the note: left as recorded
             else:
@@ -465,8 +469,8 @@ for style in read_catalogue(catalogue_path):
         return e["peak"] * 10.0 ** (e["volume"] / 20.0) * (1.0 - veltrack + veltrack * (e["hivel"] / 127.0) ** 2)
 
     loudest = sorted(loudest_possible(e) for e in entries if e["hivel"] >= 127) or sorted(loudest_possible(e) for e in entries)
-    gain = 0.5 / loudest[len(loudest) // 2]
-    gain = min(gain, 1.4 / max(loudest_possible(e) for e in entries))
+    gain = 0.8 / loudest[len(loudest) // 2]
+    gain = min(gain, 2.2 / max(loudest_possible(e) for e in entries))
     roots = sorted({e["root"] for e in entries})
 
     if dry:

@@ -93,9 +93,10 @@ namespace
     {
         double integratedLufs = -120.0;
         double peakDb         = -120.0;
-        // How much louder the preset's loudest playing is than the test's velocity of 100: a sampled instrument
-        // follows the square of velocity, so its fortissimo is 4 dB above the test and needs that much room.
-        double fortissimoDb = 0.0;
+        // True for a preset that plays a sampled instrument. Its loudness follows the square of velocity, so its
+        // hardest playing is 4 dB above the test's velocity of 100. The user chose "half way" (decision D103):
+        // the test chord may peak just under the output's soft clipper, and the hardest chords reach it.
+        bool sampled = false;
     };
 
     // BS.1770 gated integrated loudness: 400 ms blocks with 75% overlap,
@@ -309,14 +310,9 @@ namespace
                 styleParameter->setValueNotifyingHost(styleParameter->getValueForText(juce::String(style + 1))); // shown from 1
         processor.loadSampledInstrumentsNow(); // a sampled instrument is read in before the first note
         int stimulusRoot = 60, lowestRecorded = 0, highestRecorded = 0;
-        double fortissimoDb = 0.0;
-        if (processor.sampledInstrumentRange(lowestRecorded, highestRecorded))
-        {
+        const bool sampled = processor.sampledInstrumentRange(lowestRecorded, highestRecorded);
+        if (sampled)
             stimulusRoot = (lowestRecorded + highestRecorded) / 2 - 6;
-            const double track = processor.sampledVelocityTrack();
-            const double tested = 100.0 / 127.0;
-            fortissimoDb = -20.0 * std::log10(1.0 - track + track * tested * tested);
-        }
 
         // A preset that routes the global envelope is measured once that envelope has risen
         // (a riser is judged at its top, not at its quiet start).
@@ -355,7 +351,7 @@ namespace
         processor.releaseResources();
 
         auto measured = measureLoudness(collected);
-        measured.fortissimoDb = fortissimoDb;
+        measured.sampled = sampled;
         return measured;
     }
 }
@@ -370,8 +366,8 @@ namespace
         targetLufs = kBaseTargetLufs + crestBoost;
 
         const double lufsDelta = targetLufs - loudness.integratedLufs;
-        // A sampled instrument's loudest chord must still stay under the output's soft clipper (it bends from -1.9 dB).
-        const double peakCeiling = loudness.fortissimoDb > 0.0 ? -2.0 - loudness.fortissimoDb : kPeakCeilingDb;
+        // A sampled instrument's test chord may come up to the output's soft clipper (it bends from -1.9 dB).
+        const double peakCeiling = loudness.sampled ? -2.0 : kPeakCeilingDb;
         const double peakDelta = peakCeiling - loudness.peakDb;
         limitedBy = peakDelta < lufsDelta ? "peak" : "lufs";
         return std::min(lufsDelta, peakDelta);

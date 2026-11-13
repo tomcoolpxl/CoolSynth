@@ -1534,3 +1534,35 @@ Carries out D82: live granulation as an effect on a whole part. Choices inside t
   with a cloud, with the cloud an octave up, and smeared. Freeze cannot be shown in a
   rendered clip; it is tested (a note frozen while it sounds is still there three seconds
   after it stopped).
+
+## D103. The user's answers on the Conservatory and the Museum (2026-11-13)
+
+Four pick lists at the end of the day's run:
+
+- Instruments that sound an octave off the key their author mapped them to. Offered: where
+  they sound (recommended, and what D100 had built), or **as the author mapped them (chosen)**.
+  So the xylophone, both glockenspiels and the tubular glockenspiel play an octave under their
+  sound, as they are written; the TX81Z electric piano sounds an octave below its key and the
+  Clavisynth an octave above, as the patches do. The builder's `shift=` is no longer used;
+  `sounds=12` tells it where such an instrument's tuning is to be measured, so the bars and
+  tubes stay corrected (they are 15 cents sharp as recorded).
+- Marimba and Kalimba in two rooms. Offered: **the same name in two rooms (chosen,
+  recommended)**, rename the models (Marimba Bar, Kalimba Tine), or rename the recordings.
+- How loud the recorded instruments sit. Offered: room for fortissimo (recommended, and what
+  D100 had built), **half way (chosen)**, or as loud as the synth presets. So a sampled
+  preset's test chord at velocity 100 may now peak at -2 dB, just under the output's soft
+  clipper, about 4 dB up on before; chords played harder than about velocity 110 reach the
+  clipper and their attacks are rounded off slightly. A style's gain puts the middle one of
+  its loudest notes at 0.8 of full scale (it was 0.5), so the presets' master gains still fit
+  their range.
+- The Museum's first sounds (several could be picked): **all four groups chosen**: the DX7's
+  E.PIANO 1 and BASS 1; the Prophet-5's sync lead and brass; a Minimoog bass and lead; and
+  the Alpha Juno hoover ("What the?"), the TX81Z LatelyBass and Juno-106 factory patches.
+  Sources found so far: the DX7's full voice data (the `dx7-patches` collection, from Dave
+  Benson's DX7 pages: every operator's ratio, level, envelope and scaling; E.PIANO 1 is
+  algorithm 5, three two-operator pairs, which is three FM2 generators in one voice here);
+  the Prophet-5's 40 factory patch sheets, scanned from its manual (midi.org, "Original
+  Prophet 5 Patch Sheets"); Tom Rhea's 1974 "Sound Charts" for the Minimoog and Moog's own
+  Model D patch sheets. Not found yet: published values for the hoover, LatelyBass and the
+  Juno-106 patches; they need their patch dumps decoded, and a sound without a source cannot
+  enter the Museum (D88).

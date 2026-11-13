@@ -87,7 +87,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - after the user's picks: key zones in the sample generator, sample files beside the plugin
       at the best quality, install options;
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each
-      admitted by the user in a side-by-side against a reference recording (D88).
+      admitted by the user in a side-by-side against a reference recording (D88). The user
+      chose the first sounds (D103): DX7 E.PIANO 1 and BASS 1, Prophet-5 sync lead and brass,
+      a Minimoog bass and lead, and the hoover, LatelyBass and Juno-106 patches (sources for
+      the last three still to be found). Next to build, the DX7 pair first.
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
     (start the `audition` preview server to hear it); marimba and kalimba corrected and
     accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in

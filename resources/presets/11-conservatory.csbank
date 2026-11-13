@@ -22,7 +22,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.4 damping=0.5 mix=0.12
-master = 5.5
+master = 6
 
 [Old Upright]
 room = Conservatory
@@ -33,7 +33,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.4 damping=0.5 mix=0.12
-master = 5
+master = 5.5
 
 [Flemish Harpsichord]
 room = Conservatory
@@ -44,7 +44,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.4 damping=0.5 mix=0.12
-master = 3.5
+master = 1.5
 
 [Italian Harpsichord]
 room = Conservatory
@@ -55,7 +55,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.4 damping=0.5 mix=0.12
-master = 4.5
+master = 2.5
 
 [FM Keys]
 room = Conservatory
@@ -77,7 +77,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.55 damping=0.5 mix=0.2
-master = 5.5
+master = 2
 
 [Violas]
 room = Conservatory
@@ -88,7 +88,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.55 damping=0.5 mix=0.2
-master = 5
+master = 2.5
 
 [Cellos]
 room = Conservatory
@@ -99,7 +99,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.55 damping=0.5 mix=0.2
-master = 5
+master = 3.5
 
 [Double Bass]
 room = Conservatory
@@ -110,7 +110,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.55 damping=0.5 mix=0.2
-master = 2
+master = -1
 
 [Solo Violin]
 room = Conservatory
@@ -121,7 +121,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.55 damping=0.5 mix=0.2
-master = 4.5
+master = 0.5
 
 [Folk Harp]
 room = Conservatory
@@ -165,7 +165,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.5 damping=0.5 mix=0.18
-master = 5.5
+master = 2
 
 [Trumpet]
 room = Conservatory
@@ -176,7 +176,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.5 damping=0.5 mix=0.18
-master = 2.5
+master = -0
 
 [Tuba]
 room = Conservatory
@@ -187,7 +187,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.5 damping=0.5 mix=0.18
-master = 3.5
+master = 3
 
 [Trombone]
 room = Conservatory
@@ -220,7 +220,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = 1.5
+master = -2.5
 
 [Clarinet]
 room = Conservatory
@@ -231,7 +231,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = 1.5
+master = -2.5
 
 [Bassoon]
 room = Conservatory
@@ -242,7 +242,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = 1
+master = -3
 
 [Saxello]
 room = Conservatory
@@ -253,7 +253,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = 4.5
+master = 1.5
 
 [Tenor Sax]
 room = Conservatory
@@ -264,7 +264,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = 4.5
+master = 0.5
 
 [Recorders]
 room = Conservatory
@@ -275,7 +275,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = -1
+master = -5
 
 [Ocarina]
 room = Conservatory
@@ -286,7 +286,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = 0
+master = -4
 
 [Harmonica]
 room = Conservatory
@@ -297,7 +297,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=100 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = 1.5
+master = -2.5
 
 [Didgeridoo]
 room = Conservatory
@@ -319,7 +319,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.7 damping=0.5 mix=0.25
-master = 2
+master = -2.5
 
 [Renaissance Organ]
 room = Conservatory
@@ -330,7 +330,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.7 damping=0.5 mix=0.25
-master = -3.5
+master = -7.5
 
 [Marimba]
 room = Conservatory
@@ -352,7 +352,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.5 damping=0.5 mix=0.18
-master = 4.5
+master = 4
 
 [Xylophone]
 room = Conservatory
@@ -429,7 +429,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.5 damping=0.5 mix=0.18
-master = 6
+master = 4
 
 [Timpani]
 room = Conservatory

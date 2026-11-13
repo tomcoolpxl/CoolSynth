@@ -315,17 +315,6 @@ bool SynthAudioProcessor::sampledInstrumentRange(int& lowestNote, int& highestNo
     return true;
 }
 
-float SynthAudioProcessor::sampledVelocityTrack()
-{
-    float track = 0.0f;
-    forEachSampledStyle([&](const coolsynth::synth::v3::LoadedStyle* style)
-    {
-        if (style != nullptr)
-            track = std::max(track, style->velocityTrack);
-    });
-    return track;
-}
-
 template <typename Visit>
 void SynthAudioProcessor::forEachSampledStyle(Visit&& visit)
 {

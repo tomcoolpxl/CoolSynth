@@ -71,8 +71,6 @@ public:
     /** Offline use: the lowest and highest notes the patch's sampled instruments were recorded at, read in if
         need be. False if the patch plays no sampled instrument or it is not installed. */
     bool sampledInstrumentRange(int& lowestNote, int& highestNote);
-    /** Offline use: how far the loudness of the patch's sampled instruments follows velocity, 0..1 (0 if it plays none). */
-    float sampledVelocityTrack();
 
     // ---- Undo and patch identity (message thread) ----------------------------
     // Every UI gesture becomes one undo step automatically. Bulk edits (preset,

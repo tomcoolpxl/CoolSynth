@@ -52,12 +52,14 @@ def cents_off(mono, rate, note, partials):
     return None if best is None or best[1] < spectrum.max() * 0.05 else float(best[0])
 
 
-sustains = {}
+sustains, sounds = {}, {}
 for line in open(catalogue_path, encoding="utf-8"):
     line = line.split("#", 1)[0].strip()
     if line:
         parts = [p.strip() for p in line.split("|")]
         sustains[(parts[1], parts[2])] = parts[3].lower() == "yes"
+        options = dict(word.split("=", 1) for word in parts[5].split()) if len(parts) > 5 else {}
+        sounds[(parts[1], parts[2])] = int(options.get("sounds", 0))
 
 index = json.load(open(os.path.join(audition, "conservatory", "index.json"), encoding="utf-8"))
 with tempfile.TemporaryDirectory() as scratch:
@@ -80,7 +82,7 @@ with tempfile.TemporaryDirectory() as scratch:
             start = int((i * step + (0.25 if held else 0.04)) * rate)
             segment = mono[start:int((i * step + hold * 0.9) * rate)]
             levels.append(20.0 * np.log10(float(np.abs(x[int(i * step * rate):int((i * step + hold) * rate)]).max()) + 1.0e-9))
-            cents = cents_off(segment, rate, note, 4)
+            cents = cents_off(segment, rate, note + sounds.get((entry["instrument"], entry["style"]), 0), 4)
             if only:  # a closer look at the styles asked for: every note
                 print(f"    {audiolib.note_name(note):4s} {'unmeasured' if cents is None else f'{cents:+6.1f} cents'}  peak {levels[-1]:6.1f} dB")
             if cents is None:
