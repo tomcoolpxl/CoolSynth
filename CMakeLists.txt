@@ -4,6 +4,24 @@ project(CoolSynth VERSION 0.1.0 LANGUAGES CXX)
 
 add_subdirectory(external/JUCE)
 
+# Debug is the everyday build, and the plugin it installs must play in real time: compile it
+# optimised, with debug info and JUCE's assertions still on. CMake's /RTC1 cannot be combined
+# with optimisation, and JUCE's recommended config flags force /Od in Debug, so CoolSynth targets
+# use this flags target instead of the juce_recommended_config_flags target.
+add_library(coolsynth_config_flags INTERFACE)
+if(MSVC)
+    foreach(flagVariable CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_DEBUG)
+        string(REPLACE "/RTC1" "" ${flagVariable} "${${flagVariable}}")
+        string(REPLACE "/Ob0" "" ${flagVariable} "${${flagVariable}}")
+        string(REPLACE "/Od" "" ${flagVariable} "${${flagVariable}}")
+    endforeach()
+    target_compile_options(coolsynth_config_flags INTERFACE
+        $<IF:$<CONFIG:Debug>,/O2 /Ob2 /Zi,/Ox> /MP /EHsc)
+else()
+    target_compile_options(coolsynth_config_flags INTERFACE
+        $<IF:$<CONFIG:Debug>,-O2 -g,-O3>)
+endif()
+
 file(GLOB COOLSYNTH_BANK_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resources/presets/*.csbank)
 juce_add_binary_data(CoolSynthFactoryBank
     HEADER_NAME FactoryBankData.h
@@ -116,7 +134,7 @@ target_link_libraries(CoolSynth
         juce::juce_dsp
         CoolSynthControllerProfiles
         CoolSynthFactoryBank
-        juce::juce_recommended_config_flags
+        coolsynth_config_flags
         juce::juce_recommended_warning_flags)
 
 include(CTest)
@@ -163,7 +181,7 @@ if(BUILD_TESTING)
             juce::juce_dsp
             CoolSynthControllerProfiles
             CoolSynthFactoryBank
-            juce::juce_recommended_config_flags
+            coolsynth_config_flags
             juce::juce_recommended_warning_flags
     )
 
@@ -204,5 +222,5 @@ target_link_libraries(CoolSynthPresetNormalizer
         juce::juce_dsp
         CoolSynthControllerProfiles
         CoolSynthFactoryBank
-        juce::juce_recommended_config_flags
+        coolsynth_config_flags
         juce::juce_recommended_warning_flags)

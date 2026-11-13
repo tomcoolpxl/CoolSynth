@@ -34,6 +34,7 @@ Project rules:
 - Ask before making a large refactor, changing the directory structure, or removing tests.
 - Before moving work to `DONE.md`, review the diff, run the required checks, and update docs if the change affected scope or structure.
 - Required checks are the Debug build and `ctest`; Release builds only on request (there are no releases while V3 is in flux).
+- The Debug configuration is compiled optimised (`coolsynth_config_flags`), so the Debug plugin and standalone play in real time; keep JUCE's recommended config flags off CoolSynth targets.
 - Commit on `main` and push to `origin` after each verified chunk; no branches, no pull requests.
 - In this workspace, keep terminal commands profile-free (`login: false` or PowerShell `-NoProfile`) to avoid irrelevant profile-side access-denied noise in the transcript.
 

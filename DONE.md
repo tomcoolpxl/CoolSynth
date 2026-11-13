@@ -546,3 +546,8 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Found with it: the generators' two-sample output delay met an envelope that had already started, so a zero-attack pulse onset stepped 0.20; the envelopes now wait for the same two samples at a fresh note (step 0.074). `generatorLatencySamples` in `Module.h` fixes that delay for every generator type.
 - [x] Added a voice regression test (2 ms after a slow-to-fast patch change the note is at full level; it was at 1.1 %), a performance fuzz over the factory presets with preset switches (930 key states checked: every key has its voice, mono stacks play the priority key, nothing hangs after release), and an opt-in CPU report (`COOLSYNTH_CPU_REPORT=1`).
 - [x] Measured CPU: Release stays below 36 % of real time for eight-note chords on every preset; Debug exceeds real time on Supersaw, Clav Keys, OB Strings and Prophet Brass. Verified Debug build without warnings and `ctest` green.
+
+## Optimised Debug build (2026-11-13)
+
+- [x] The plain Debug build was too slow to play (Supersaw 154 % of real time for an eight-note chord, Clav Keys 115 %, OB Strings and Prophet Brass about 90 % with worst blocks over 100 %), and every Debug build installs the VST3 the user plays. CoolSynth targets now use `coolsynth_config_flags` instead of JUCE's recommended config flags: Debug compiles with /O2 /Ob2 /Zi without /RTC1, JUCE's Debug assertions stay on.
+- [x] Measured: optimised Debug matches Release (Supersaw 27.9 %, Clav Keys 25 %, everything else below 17 %); the test suite runs in 4 s instead of 20 s. Verified Debug build without warnings and `ctest` green.
