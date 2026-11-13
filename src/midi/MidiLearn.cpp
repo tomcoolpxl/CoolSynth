@@ -1,6 +1,7 @@
 #include "MidiLearn.h"
 #include <algorithm>
 #include "parameters/ParameterIDs.h"
+#include "parameters/v3/PartParameters.h"
 #include "midi/MidiMappingEngine.h"
 
 namespace coolsynth::midi
@@ -13,7 +14,7 @@ namespace coolsynth::midi
             if (parameterId == juce::StringRef(knownId))
                 return true;
 
-        return false;
+        return parameters::v3::isPartParameterId(parameterId);
     }
 
     bool MidiLearnManager::isLearnableParameter(juce::StringRef parameterId) const noexcept

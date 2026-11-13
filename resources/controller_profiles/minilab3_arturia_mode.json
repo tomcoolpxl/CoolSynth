@@ -11,70 +11,70 @@
       "displayName": "Knob 1",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 74 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "filterCutoffHz" }
+      "target": { "kind": "parameter", "parameterId": "pA.p1.p1" }
     },
     {
       "bindingId": "knob2-filter-resonance",
       "displayName": "Knob 2",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 71 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "filterResonance" }
+      "target": { "kind": "parameter", "parameterId": "pA.p1.p2" }
     },
     {
       "bindingId": "knob3-filter-env-amount",
       "displayName": "Knob 3",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 76 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "filterEnvAmount" }
+      "target": { "kind": "parameter", "parameterId": "pA.voice.env2ToP1" }
     },
     {
       "bindingId": "knob4-oscb-fine",
       "displayName": "Knob 4",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 77 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "oscBFineCents" }
+      "target": { "kind": "parameter", "parameterId": "pA.g2.fine" }
     },
     {
       "bindingId": "knob5-amp-attack",
       "displayName": "Knob 5",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 93 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "ampAttackMs" }
+      "target": { "kind": "parameter", "parameterId": "pA.env1.attack" }
     },
     {
       "bindingId": "knob6-amp-decay",
       "displayName": "Knob 6",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 18 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "ampDecayMs" }
+      "target": { "kind": "parameter", "parameterId": "pA.env1.decay" }
     },
     {
       "bindingId": "knob7-amp-sustain",
       "displayName": "Knob 7",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 19 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "ampSustain" }
+      "target": { "kind": "parameter", "parameterId": "pA.env1.sustain" }
     },
     {
       "bindingId": "knob8-amp-release",
       "displayName": "Knob 8",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 16 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "ampReleaseMs" }
+      "target": { "kind": "parameter", "parameterId": "pA.env1.release" }
     },
     {
       "bindingId": "fader1-osca-level",
       "displayName": "Fader 1",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 82 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "oscALevel" }
+      "target": { "kind": "parameter", "parameterId": "pA.g1.level" }
     },
     {
       "bindingId": "fader2-oscb-level",
       "displayName": "Fader 2",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 83 },
       "valueMode": "absolute7",
-      "target": { "kind": "parameter", "parameterId": "oscBLevel" }
+      "target": { "kind": "parameter", "parameterId": "pA.g2.level" }
     },
     {
       "bindingId": "fader3-master-gain",
@@ -88,7 +88,7 @@
       "displayName": "Main Encoder",
       "signature": { "kind": "controlChange", "channel": "omni", "data1": 114 },
       "valueMode": "relativeBinaryOffset",
-      "target": { "kind": "parameter", "parameterId": "oscAWave" }
+      "target": { "kind": "parameter", "parameterId": "pA.g1.p1" }
     },
     {
       "bindingId": "pad8-panic",

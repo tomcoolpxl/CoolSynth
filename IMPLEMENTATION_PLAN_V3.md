@@ -46,15 +46,25 @@ decimator, `EngineV3` with one part. The processor switches to `EngineV3`; the V
 deleted together with poly-mod and Vintage parameters. Tests: all V2 engine tests ported, V2
 parity figures logged.
 
+Shipped 2026-11-13 (1.4a and 1.4b): `Part` and `EngineV3` written fresh; the processor runs
+`EngineV3` with the V3 part parameters plus the arp, effect and output parameters; JUCE's
+generic editor replaces the V2 editor, which went together with the standalone MIDI dialog,
+the arp overlay, the tooltips and the signal-chain view; the standalone Options button opens
+JUCE's audio and MIDI settings; the V2 engine, voice, filter, envelope, bank, YAML and preset
+scripts are deleted; the MiniLab profile targets V3 IDs; processor state format 9 and patch
+format 8 reject older state. In the standalone, controller-profile CC mapping (the MiniLab
+knobs) lived in the V2 editor and is back with phase 9; the plugin applies it as before.
+
 1.5 State and presets v3. `patchFormatVersion = 8`, rejection of 7, the YAML to table generator
 rewritten for slots using the descriptor export tool, the old bank and its YAML deleted, the
 normaliser pointed at the new table. Ships: Workshop (Init Saw, Init Pulse, Init Sine, Init
 Noise, Init Arp), Studio 1982 (all six), Engine Room (Pure Sub, 808 Boom, Donk), Main Stage
 (Reese).
 
-1.6 Audition UI. Type menus and eight generic knobs per slot relabelled from the descriptor, the
-envelope panel, the existing effect panels mapped to F1..F6 with the V2 order as default types.
-Enough to hear every preset; no redesign.
+1.6 Audition UI, throwaway. The UI is designed last (phase 9), so until then auditioning uses
+JUCE's generic editor, which phase 1.4 already ships: every parameter as a slider, named and
+formatted by its slot's current type. Replace it only if auditioning becomes impractical, and
+then with a minimal panel that phase 9 throws away. No layout, look or UI tests before phase 9.
 
 ## Phase 2: modulation
 
@@ -147,6 +157,15 @@ Ships: Main Stage Supersaw with the sub part; a layered variant of Juno Pad and 
 8.1 Sample generator with an embedded factory set. 8.2 Grain generator. Ships: Observatory
 Granular Sky. All 68 presets exist; the bank is complete.
 
+## Phase 9: the real UI
+
+Designed only once phases 1 to 8 have settled what the engine can do, presets included. The UI
+condenses those possibilities: it hides most of the depth behind a few well-chosen controls and
+pages while staying enjoyable to tweak, the way a good hardware synth does. It also brings back
+what left with the V2 editor: the preset browser, MIDI learn, the standalone MIDI and
+controller-profile settings (with the MiniLab knobs in the standalone), the scope and the
+keyboard. Write its design as its own document before any code.
+
 ## Per-phase close
 
 After every chunk: `TODO.md` item moved to `DONE.md` with what was verified, `DESIGN_V3.md`
@@ -163,4 +182,5 @@ V3 is not finished until all of these hold:
   plus a VA generator unison that makes a JP-8000-style stack (seven saws, non-linear detune
   curve, centre-versus-sides mix, high-passed low end) from a few knobs.
 - Two parts can play at once as a layer or a split from one patch.
-- The processor runs the V3 engine only, the state format is 8, and the suite is green.
+- The processor runs the V3 engine only, the patch format is 8 (state 9), and the suite is green.
+- The phase 9 UI exists and the throwaway audition UI is gone.

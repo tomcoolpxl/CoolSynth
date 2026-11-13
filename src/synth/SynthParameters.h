@@ -1,85 +1,20 @@
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <cstdint>
+#include <utility>
+
 #include "parameters/ParameterIDs.h"
 
+/*
+    Engine-facing types shared by the processor, the arpeggiator and the effect rack: the MIDI
+    event model, the arpeggiator and effect settings, and the raw value pointers of the
+    parameters outside a V3 part. The part's own settings live in synth/v3.
+*/
 namespace coolsynth::synth
 {
-    inline constexpr int defaultVoiceCount = 16;
-    inline constexpr double masterGainRampSeconds = 0.004;
     inline constexpr int maxEngineEventsPerBlock = 1024;
-    // LFO updates every N samples with linear interpolation (~0.7 ms at 44.1 kHz — inaudible)
-    inline constexpr int lfoSubRateSamples = 32;
-
-    struct EnvelopeParameters
-    {
-        float attackSeconds = 0.01f;
-        float decaySeconds = 0.2f;
-        float sustainLevel = 0.8f;
-        float releaseSeconds = 0.3f;
-    };
-
-    struct OscillatorParametersV2
-    {
-        coolsynth::parameters::OscillatorWaveShape waveShape =
-            coolsynth::parameters::OscillatorWaveShape::saw;
-        int octaveIndex = 2;
-        float fineCents = 0.0f;
-        float level = 0.75f;
-        float pulseWidth = 0.5f;
-        bool syncEnabled = false;
-        bool lowFrequencyMode = false;
-    };
-
-    struct MixerParametersV2
-    {
-        float noiseLevel = 0.0f;
-    };
-
-    struct FilterParametersV2
-    {
-        float cutoffHz = 10000.0f;
-        float resonanceNormalized = 0.1f;
-        float envelopeAmount = 0.0f;
-        coolsynth::parameters::FilterKeyTrackingMode keyTracking =
-            coolsynth::parameters::FilterKeyTrackingMode::half;
-    };
-
-    struct LfoParametersV2
-    {
-        float rateHz = 5.0f;
-        coolsynth::parameters::LfoWaveShape waveShape =
-            coolsynth::parameters::LfoWaveShape::triangle;
-        float oscPitchDepth = 0.0f;
-        float pulseWidthDepth = 0.0f;
-        float filterCutoffDepth = 0.0f;
-        float modWheelDepth = 1.0f;
-    };
-
-    struct PolyModParametersV2
-    {
-        float oscBToOscPitch = 0.0f;
-        float envToOscPitch = 0.0f;
-        float oscBToPulseWidth = 0.0f;
-        float envToPulseWidth = 0.0f;
-        float oscBToFilterCutoff = 0.0f;
-        float envToFilterCutoff = 0.0f;
-    };
-
-    struct PerformanceParametersV2
-    {
-        float glideTimeSeconds = 0.0f;
-        coolsynth::parameters::PlayModeChoice playMode =
-            coolsynth::parameters::PlayModeChoice::poly;
-        coolsynth::parameters::KeyPriorityChoice keyPriority =
-            coolsynth::parameters::KeyPriorityChoice::last;
-        float pitchBendRangeSemitones = 2.0f;
-        float vintageAmount = 0.0f;
-        float panSpread = 0.0f;
-        float velocityToAmp = 1.0f;
-        float velocityToFilter = 0.0f;
-    };
 
     struct ArpParametersV2
     {
@@ -152,27 +87,6 @@ namespace coolsynth::synth
         float mix = 1.0f;
     };
 
-    struct BlockRenderParametersV2
-    {
-        OscillatorParametersV2 oscA;
-        OscillatorParametersV2 oscB;
-        MixerParametersV2 mixer;
-        FilterParametersV2 filter;
-        EnvelopeParameters filterEnvelope;
-        EnvelopeParameters ampEnvelope;
-        LfoParametersV2 lfo;
-        PolyModParametersV2 polyMod;
-        PerformanceParametersV2 performance;
-        ArpParametersV2 arp;
-        DriveParametersV2 drive;
-        PhaserParametersV2 phaser;
-        ChorusParametersV2 chorus;
-        DelayParametersV2 delay;
-        ReverbParametersV2 reverb;
-        CompressorParametersV2 compressor;
-        float masterGainLinear = 1.0f;
-    };
-
     enum class EngineMidiEventType : uint8_t
     {
         noteOn,
@@ -194,53 +108,9 @@ namespace coolsynth::synth
         bool fromArp = false;
     };
 
-    struct ParameterValuePointersV2
+    /** Raw values of the parameters outside a part, resolved by ID once. */
+    struct GlobalParameterPointers
     {
-        std::atomic<float>* oscAWave = nullptr;
-        std::atomic<float>* oscAOctave = nullptr;
-        std::atomic<float>* oscAFineCents = nullptr;
-        std::atomic<float>* oscALevel = nullptr;
-        std::atomic<float>* oscAPulseWidth = nullptr;
-        std::atomic<float>* oscASyncEnabled = nullptr;
-        std::atomic<float>* oscBWave = nullptr;
-        std::atomic<float>* oscBOctave = nullptr;
-        std::atomic<float>* oscBFineCents = nullptr;
-        std::atomic<float>* oscBLevel = nullptr;
-        std::atomic<float>* oscBPulseWidth = nullptr;
-        std::atomic<float>* oscBLowFrequencyMode = nullptr;
-        std::atomic<float>* noiseLevel = nullptr;
-        std::atomic<float>* filterCutoffHz = nullptr;
-        std::atomic<float>* filterResonance = nullptr;
-        std::atomic<float>* filterEnvAmount = nullptr;
-        std::atomic<float>* filterKeyTracking = nullptr;
-        std::atomic<float>* filterAttackMs = nullptr;
-        std::atomic<float>* filterDecayMs = nullptr;
-        std::atomic<float>* filterSustain = nullptr;
-        std::atomic<float>* filterReleaseMs = nullptr;
-        std::atomic<float>* ampAttackMs = nullptr;
-        std::atomic<float>* ampDecayMs = nullptr;
-        std::atomic<float>* ampSustain = nullptr;
-        std::atomic<float>* ampReleaseMs = nullptr;
-        std::atomic<float>* lfoRateHz = nullptr;
-        std::atomic<float>* lfoWave = nullptr;
-        std::atomic<float>* lfoToOscPitch = nullptr;
-        std::atomic<float>* lfoToPulseWidth = nullptr;
-        std::atomic<float>* lfoToFilterCutoff = nullptr;
-        std::atomic<float>* modWheelToLfoDepth = nullptr;
-        std::atomic<float>* polyModOscBToOscPitch = nullptr;
-        std::atomic<float>* polyModEnvToOscPitch = nullptr;
-        std::atomic<float>* polyModOscBToPulseWidth = nullptr;
-        std::atomic<float>* polyModEnvToPulseWidth = nullptr;
-        std::atomic<float>* polyModOscBToFilterCutoff = nullptr;
-        std::atomic<float>* polyModEnvToFilterCutoff = nullptr;
-        std::atomic<float>* glideTimeMs = nullptr;
-        std::atomic<float>* playMode = nullptr;
-        std::atomic<float>* keyPriority = nullptr;
-        std::atomic<float>* pitchBendRangeSemitones = nullptr;
-        std::atomic<float>* vintageAmount = nullptr;
-        std::atomic<float>* panSpread = nullptr;
-        std::atomic<float>* velocityToAmp = nullptr;
-        std::atomic<float>* velocityToFilter = nullptr;
         std::atomic<float>* arpEnabled = nullptr;
         std::atomic<float>* arpInternalTempoBpm = nullptr;
         std::atomic<float>* arpRateDivision = nullptr;
@@ -274,9 +144,6 @@ namespace coolsynth::synth
         std::atomic<float>* reverbDamping = nullptr;
         std::atomic<float>* reverbMix = nullptr;
         std::atomic<float>* masterGainDb = nullptr;
-        // --- v3 additions ---
-        std::atomic<float>* timbre = nullptr;
-        std::atomic<float>* excite = nullptr;
         std::atomic<float>* phaserEnabled = nullptr;
         std::atomic<float>* phaserRateHz = nullptr;
         std::atomic<float>* phaserDepth = nullptr;
@@ -285,99 +152,48 @@ namespace coolsynth::synth
         std::atomic<float>* compressorMix = nullptr;
     };
 
-    using ParamMemberPtr = std::atomic<float>* ParameterValuePointersV2::*;
+    using GlobalParamMemberPtr = std::atomic<float>* GlobalParameterPointers::*;
 
-    inline const std::array<std::pair<const char*, ParamMemberPtr>,
-        coolsynth::parameters::allParameterIds.size()> kParamPtrBindings = {{
-        { coolsynth::parameters::ids::oscAWave,                 &ParameterValuePointersV2::oscAWave                 },
-        { coolsynth::parameters::ids::oscAOctave,               &ParameterValuePointersV2::oscAOctave               },
-        { coolsynth::parameters::ids::oscAFineCents,            &ParameterValuePointersV2::oscAFineCents            },
-        { coolsynth::parameters::ids::oscALevel,                &ParameterValuePointersV2::oscALevel                },
-        { coolsynth::parameters::ids::oscAPulseWidth,           &ParameterValuePointersV2::oscAPulseWidth           },
-        { coolsynth::parameters::ids::oscASyncEnabled,          &ParameterValuePointersV2::oscASyncEnabled          },
-        { coolsynth::parameters::ids::oscBWave,                 &ParameterValuePointersV2::oscBWave                 },
-        { coolsynth::parameters::ids::oscBOctave,               &ParameterValuePointersV2::oscBOctave               },
-        { coolsynth::parameters::ids::oscBFineCents,            &ParameterValuePointersV2::oscBFineCents            },
-        { coolsynth::parameters::ids::oscBLevel,                &ParameterValuePointersV2::oscBLevel                },
-        { coolsynth::parameters::ids::oscBPulseWidth,           &ParameterValuePointersV2::oscBPulseWidth           },
-        { coolsynth::parameters::ids::oscBLowFrequencyMode,     &ParameterValuePointersV2::oscBLowFrequencyMode     },
-        { coolsynth::parameters::ids::noiseLevel,               &ParameterValuePointersV2::noiseLevel               },
-        { coolsynth::parameters::ids::filterCutoffHz,           &ParameterValuePointersV2::filterCutoffHz           },
-        { coolsynth::parameters::ids::filterResonance,          &ParameterValuePointersV2::filterResonance          },
-        { coolsynth::parameters::ids::filterEnvAmount,          &ParameterValuePointersV2::filterEnvAmount          },
-        { coolsynth::parameters::ids::filterKeyTracking,        &ParameterValuePointersV2::filterKeyTracking        },
-        { coolsynth::parameters::ids::filterAttackMs,           &ParameterValuePointersV2::filterAttackMs           },
-        { coolsynth::parameters::ids::filterDecayMs,            &ParameterValuePointersV2::filterDecayMs            },
-        { coolsynth::parameters::ids::filterSustain,            &ParameterValuePointersV2::filterSustain            },
-        { coolsynth::parameters::ids::filterReleaseMs,          &ParameterValuePointersV2::filterReleaseMs          },
-        { coolsynth::parameters::ids::ampAttackMs,              &ParameterValuePointersV2::ampAttackMs              },
-        { coolsynth::parameters::ids::ampDecayMs,               &ParameterValuePointersV2::ampDecayMs               },
-        { coolsynth::parameters::ids::ampSustain,               &ParameterValuePointersV2::ampSustain               },
-        { coolsynth::parameters::ids::ampReleaseMs,             &ParameterValuePointersV2::ampReleaseMs             },
-        { coolsynth::parameters::ids::lfoRateHz,                &ParameterValuePointersV2::lfoRateHz                },
-        { coolsynth::parameters::ids::lfoWave,                  &ParameterValuePointersV2::lfoWave                  },
-        { coolsynth::parameters::ids::lfoToOscPitch,            &ParameterValuePointersV2::lfoToOscPitch            },
-        { coolsynth::parameters::ids::lfoToPulseWidth,          &ParameterValuePointersV2::lfoToPulseWidth          },
-        { coolsynth::parameters::ids::lfoToFilterCutoff,        &ParameterValuePointersV2::lfoToFilterCutoff        },
-        { coolsynth::parameters::ids::modWheelToLfoDepth,       &ParameterValuePointersV2::modWheelToLfoDepth       },
-        { coolsynth::parameters::ids::polyModOscBToOscPitch,    &ParameterValuePointersV2::polyModOscBToOscPitch    },
-        { coolsynth::parameters::ids::polyModEnvToOscPitch,     &ParameterValuePointersV2::polyModEnvToOscPitch     },
-        { coolsynth::parameters::ids::polyModOscBToPulseWidth,  &ParameterValuePointersV2::polyModOscBToPulseWidth  },
-        { coolsynth::parameters::ids::polyModEnvToPulseWidth,   &ParameterValuePointersV2::polyModEnvToPulseWidth   },
-        { coolsynth::parameters::ids::polyModOscBToFilterCutoff,&ParameterValuePointersV2::polyModOscBToFilterCutoff},
-        { coolsynth::parameters::ids::polyModEnvToFilterCutoff, &ParameterValuePointersV2::polyModEnvToFilterCutoff },
-        { coolsynth::parameters::ids::glideTimeMs,              &ParameterValuePointersV2::glideTimeMs              },
-        { coolsynth::parameters::ids::playMode,                 &ParameterValuePointersV2::playMode                 },
-        { coolsynth::parameters::ids::keyPriority,              &ParameterValuePointersV2::keyPriority              },
-        { coolsynth::parameters::ids::pitchBendRangeSemitones,  &ParameterValuePointersV2::pitchBendRangeSemitones  },
-        { coolsynth::parameters::ids::vintageAmount,            &ParameterValuePointersV2::vintageAmount            },
-        { coolsynth::parameters::ids::panSpread,                &ParameterValuePointersV2::panSpread                },
-        { coolsynth::parameters::ids::velocityToAmp,            &ParameterValuePointersV2::velocityToAmp            },
-        { coolsynth::parameters::ids::velocityToFilter,         &ParameterValuePointersV2::velocityToFilter         },
-        { coolsynth::parameters::ids::arpEnabled,               &ParameterValuePointersV2::arpEnabled               },
-        { coolsynth::parameters::ids::arpInternalTempoBpm,      &ParameterValuePointersV2::arpInternalTempoBpm      },
-        { coolsynth::parameters::ids::arpRateDivision,          &ParameterValuePointersV2::arpRateDivision          },
-        { coolsynth::parameters::ids::arpPattern,               &ParameterValuePointersV2::arpPattern               },
-        { coolsynth::parameters::ids::arpOctaveRange,           &ParameterValuePointersV2::arpOctaveRange           },
-        { coolsynth::parameters::ids::arpGate,                  &ParameterValuePointersV2::arpGate                  },
-        { coolsynth::parameters::ids::arpSwing,                 &ParameterValuePointersV2::arpSwing                 },
-        { coolsynth::parameters::ids::arpChance,                &ParameterValuePointersV2::arpChance                },
-        { coolsynth::parameters::ids::arpRatchetCount,          &ParameterValuePointersV2::arpRatchetCount          },
-        { coolsynth::parameters::ids::arpRatchetChance,         &ParameterValuePointersV2::arpRatchetChance         },
-        { coolsynth::parameters::ids::arpAccentEvery,           &ParameterValuePointersV2::arpAccentEvery           },
-        { coolsynth::parameters::ids::arpAccentAmount,          &ParameterValuePointersV2::arpAccentAmount          },
-        { coolsynth::parameters::ids::arpRhythm,                &ParameterValuePointersV2::arpRhythm                },
-        { coolsynth::parameters::ids::arpEuclideanPulses,       &ParameterValuePointersV2::arpEuclideanPulses       },
-        { coolsynth::parameters::ids::arpEuclideanSteps,        &ParameterValuePointersV2::arpEuclideanSteps        },
-        { coolsynth::parameters::ids::arpEuclideanRotation,     &ParameterValuePointersV2::arpEuclideanRotation     },
-        { coolsynth::parameters::ids::arpLatch,                 &ParameterValuePointersV2::arpLatch                 },
-        { coolsynth::parameters::ids::driveEnabled,             &ParameterValuePointersV2::driveEnabled             },
-        { coolsynth::parameters::ids::driveAmount,              &ParameterValuePointersV2::driveAmount              },
-        { coolsynth::parameters::ids::driveMix,                 &ParameterValuePointersV2::driveMix                 },
-        { coolsynth::parameters::ids::chorusEnabled,            &ParameterValuePointersV2::chorusEnabled            },
-        { coolsynth::parameters::ids::chorusRateHz,             &ParameterValuePointersV2::chorusRateHz             },
-        { coolsynth::parameters::ids::chorusDepth,              &ParameterValuePointersV2::chorusDepth              },
-        { coolsynth::parameters::ids::chorusMix,                &ParameterValuePointersV2::chorusMix                },
-        { coolsynth::parameters::ids::delayEnabled,             &ParameterValuePointersV2::delayEnabled             },
-        { coolsynth::parameters::ids::delayTimeMs,              &ParameterValuePointersV2::delayTimeMs              },
-        { coolsynth::parameters::ids::delayFeedback,            &ParameterValuePointersV2::delayFeedback            },
-        { coolsynth::parameters::ids::delayMix,                 &ParameterValuePointersV2::delayMix                 },
-        { coolsynth::parameters::ids::reverbEnabled,            &ParameterValuePointersV2::reverbEnabled            },
-        { coolsynth::parameters::ids::reverbSize,               &ParameterValuePointersV2::reverbSize               },
-        { coolsynth::parameters::ids::reverbDamping,            &ParameterValuePointersV2::reverbDamping            },
-        { coolsynth::parameters::ids::reverbMix,                &ParameterValuePointersV2::reverbMix                },
-        { coolsynth::parameters::ids::masterGainDb,             &ParameterValuePointersV2::masterGainDb             },
-        // --- v3 additions ---
-        { coolsynth::parameters::ids::timbre,                   &ParameterValuePointersV2::timbre                   },
-        { coolsynth::parameters::ids::excite,                   &ParameterValuePointersV2::excite                   },
-        { coolsynth::parameters::ids::phaserEnabled,            &ParameterValuePointersV2::phaserEnabled            },
-        { coolsynth::parameters::ids::phaserRateHz,             &ParameterValuePointersV2::phaserRateHz             },
-        { coolsynth::parameters::ids::phaserDepth,              &ParameterValuePointersV2::phaserDepth              },
-        { coolsynth::parameters::ids::compressorEnabled,        &ParameterValuePointersV2::compressorEnabled        },
-        { coolsynth::parameters::ids::compressorAmount,         &ParameterValuePointersV2::compressorAmount         },
-        { coolsynth::parameters::ids::compressorMix,            &ParameterValuePointersV2::compressorMix            },
+    inline const std::array<std::pair<const char*, GlobalParamMemberPtr>,
+                            coolsynth::parameters::allParameterIds.size()> kGlobalParamPtrBindings = {{
+        { coolsynth::parameters::ids::arpEnabled,           &GlobalParameterPointers::arpEnabled           },
+        { coolsynth::parameters::ids::arpInternalTempoBpm,  &GlobalParameterPointers::arpInternalTempoBpm  },
+        { coolsynth::parameters::ids::arpRateDivision,      &GlobalParameterPointers::arpRateDivision      },
+        { coolsynth::parameters::ids::arpPattern,           &GlobalParameterPointers::arpPattern           },
+        { coolsynth::parameters::ids::arpOctaveRange,       &GlobalParameterPointers::arpOctaveRange       },
+        { coolsynth::parameters::ids::arpGate,              &GlobalParameterPointers::arpGate              },
+        { coolsynth::parameters::ids::arpSwing,             &GlobalParameterPointers::arpSwing             },
+        { coolsynth::parameters::ids::arpChance,            &GlobalParameterPointers::arpChance            },
+        { coolsynth::parameters::ids::arpRatchetCount,      &GlobalParameterPointers::arpRatchetCount      },
+        { coolsynth::parameters::ids::arpRatchetChance,     &GlobalParameterPointers::arpRatchetChance     },
+        { coolsynth::parameters::ids::arpAccentEvery,       &GlobalParameterPointers::arpAccentEvery       },
+        { coolsynth::parameters::ids::arpAccentAmount,      &GlobalParameterPointers::arpAccentAmount      },
+        { coolsynth::parameters::ids::arpRhythm,            &GlobalParameterPointers::arpRhythm            },
+        { coolsynth::parameters::ids::arpEuclideanPulses,   &GlobalParameterPointers::arpEuclideanPulses   },
+        { coolsynth::parameters::ids::arpEuclideanSteps,    &GlobalParameterPointers::arpEuclideanSteps    },
+        { coolsynth::parameters::ids::arpEuclideanRotation, &GlobalParameterPointers::arpEuclideanRotation },
+        { coolsynth::parameters::ids::arpLatch,             &GlobalParameterPointers::arpLatch             },
+        { coolsynth::parameters::ids::driveEnabled,         &GlobalParameterPointers::driveEnabled         },
+        { coolsynth::parameters::ids::driveAmount,          &GlobalParameterPointers::driveAmount          },
+        { coolsynth::parameters::ids::driveMix,             &GlobalParameterPointers::driveMix             },
+        { coolsynth::parameters::ids::chorusEnabled,        &GlobalParameterPointers::chorusEnabled        },
+        { coolsynth::parameters::ids::chorusRateHz,         &GlobalParameterPointers::chorusRateHz         },
+        { coolsynth::parameters::ids::chorusDepth,          &GlobalParameterPointers::chorusDepth          },
+        { coolsynth::parameters::ids::chorusMix,            &GlobalParameterPointers::chorusMix            },
+        { coolsynth::parameters::ids::delayEnabled,         &GlobalParameterPointers::delayEnabled         },
+        { coolsynth::parameters::ids::delayTimeMs,          &GlobalParameterPointers::delayTimeMs          },
+        { coolsynth::parameters::ids::delayFeedback,        &GlobalParameterPointers::delayFeedback        },
+        { coolsynth::parameters::ids::delayMix,             &GlobalParameterPointers::delayMix             },
+        { coolsynth::parameters::ids::reverbEnabled,        &GlobalParameterPointers::reverbEnabled        },
+        { coolsynth::parameters::ids::reverbSize,           &GlobalParameterPointers::reverbSize           },
+        { coolsynth::parameters::ids::reverbDamping,        &GlobalParameterPointers::reverbDamping        },
+        { coolsynth::parameters::ids::reverbMix,            &GlobalParameterPointers::reverbMix            },
+        { coolsynth::parameters::ids::masterGainDb,         &GlobalParameterPointers::masterGainDb         },
+        { coolsynth::parameters::ids::phaserEnabled,        &GlobalParameterPointers::phaserEnabled        },
+        { coolsynth::parameters::ids::phaserRateHz,         &GlobalParameterPointers::phaserRateHz         },
+        { coolsynth::parameters::ids::phaserDepth,          &GlobalParameterPointers::phaserDepth          },
+        { coolsynth::parameters::ids::compressorEnabled,    &GlobalParameterPointers::compressorEnabled    },
+        { coolsynth::parameters::ids::compressorAmount,     &GlobalParameterPointers::compressorAmount     },
+        { coolsynth::parameters::ids::compressorMix,        &GlobalParameterPointers::compressorMix        },
     }};
-
-    static_assert(kParamPtrBindings.size() == coolsynth::parameters::allParameterIds.size(),
-                  "kParamPtrBindings must have one entry per parameter in allParameterIds");
 }

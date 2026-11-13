@@ -2,6 +2,11 @@
 
 #include <array>
 
+/*
+    IDs of the parameters outside a V3 part: the arpeggiator, the effect rack and the output.
+    A part's own parameters (generator and processor slots, envelopes, voice and play settings)
+    are built from slot paths in parameters/v3 and are not listed here.
+*/
 namespace coolsynth::parameters::ids
 {
     inline constexpr int parameterVersionHint = 2;
@@ -9,60 +14,6 @@ namespace coolsynth::parameters::ids
     inline constexpr int parameterVersionHintV4 = 4;
     inline constexpr int parameterVersionHintV5 = 5;
     inline constexpr int parameterVersionHintV6 = 6;
-
-    inline constexpr char oscAWave[] = "oscAWave";
-    inline constexpr char oscAOctave[] = "oscAOctave";
-    inline constexpr char oscAFineCents[] = "oscAFineCents";
-    inline constexpr char oscALevel[] = "oscALevel";
-    inline constexpr char oscAPulseWidth[] = "oscAPulseWidth";
-    inline constexpr char oscASyncEnabled[] = "oscASyncEnabled";
-
-    inline constexpr char oscBWave[] = "oscBWave";
-    inline constexpr char oscBOctave[] = "oscBOctave";
-    inline constexpr char oscBFineCents[] = "oscBFineCents";
-    inline constexpr char oscBLevel[] = "oscBLevel";
-    inline constexpr char oscBPulseWidth[] = "oscBPulseWidth";
-    inline constexpr char oscBLowFrequencyMode[] = "oscBLowFrequencyMode";
-
-    inline constexpr char noiseLevel[] = "noiseLevel";
-
-    inline constexpr char filterCutoffHz[] = "filterCutoffHz";
-    inline constexpr char filterResonance[] = "filterResonance";
-    inline constexpr char filterEnvAmount[] = "filterEnvAmount";
-    inline constexpr char filterKeyTracking[] = "filterKeyTracking";
-
-    inline constexpr char filterAttackMs[] = "filterAttackMs";
-    inline constexpr char filterDecayMs[] = "filterDecayMs";
-    inline constexpr char filterSustain[] = "filterSustain";
-    inline constexpr char filterReleaseMs[] = "filterReleaseMs";
-
-    inline constexpr char ampAttackMs[] = "ampAttackMs";
-    inline constexpr char ampDecayMs[] = "ampDecayMs";
-    inline constexpr char ampSustain[] = "ampSustain";
-    inline constexpr char ampReleaseMs[] = "ampReleaseMs";
-
-    inline constexpr char lfoRateHz[] = "lfoRateHz";
-    inline constexpr char lfoWave[] = "lfoWave";
-    inline constexpr char lfoToOscPitch[] = "lfoToOscPitch";
-    inline constexpr char lfoToPulseWidth[] = "lfoToPulseWidth";
-    inline constexpr char lfoToFilterCutoff[] = "lfoToFilterCutoff";
-    inline constexpr char modWheelToLfoDepth[] = "modWheelToLfoDepth";
-
-    inline constexpr char polyModOscBToOscPitch[] = "polyModOscBToOscPitch";
-    inline constexpr char polyModEnvToOscPitch[] = "polyModEnvToOscPitch";
-    inline constexpr char polyModOscBToPulseWidth[] = "polyModOscBToPulseWidth";
-    inline constexpr char polyModEnvToPulseWidth[] = "polyModEnvToPulseWidth";
-    inline constexpr char polyModOscBToFilterCutoff[] = "polyModOscBToFilterCutoff";
-    inline constexpr char polyModEnvToFilterCutoff[] = "polyModEnvToFilterCutoff";
-
-    inline constexpr char glideTimeMs[] = "glideTimeMs";
-    inline constexpr char playMode[] = "playMode";
-    inline constexpr char keyPriority[] = "keyPriority";
-    inline constexpr char pitchBendRangeSemitones[] = "pitchBendRangeSemitones";
-    inline constexpr char vintageAmount[] = "vintageAmount";
-    inline constexpr char panSpread[] = "panSpread";
-    inline constexpr char velocityToAmp[] = "velocityToAmp";
-    inline constexpr char velocityToFilter[] = "velocityToFilter";
 
     inline constexpr char arpEnabled[] = "arpEnabled";
     inline constexpr char arpInternalTempoBpm[] = "arpInternalTempoBpm";
@@ -103,10 +54,6 @@ namespace coolsynth::parameters::ids
 
     inline constexpr char masterGainDb[] = "masterGainDb";
 
-    // --- v3 additions (Phase C–E: macros, phaser, compressor) ---
-    inline constexpr char timbre[]            = "timbre";
-    inline constexpr char excite[]            = "excite";
-
     inline constexpr char phaserEnabled[]     = "phaserEnabled";
     inline constexpr char phaserRateHz[]      = "phaserRateHz";
     inline constexpr char phaserDepth[]       = "phaserDepth";
@@ -118,43 +65,6 @@ namespace coolsynth::parameters::ids
 
 namespace coolsynth::parameters
 {
-    enum class OscillatorWaveShape : int
-    {
-        pulse = 0,
-        triangle = 1,
-        saw = 2,
-        sine = 3,
-    };
-
-    enum class FilterKeyTrackingMode : int
-    {
-        off = 0,
-        half = 1,
-        full = 2,
-    };
-
-    enum class LfoWaveShape : int
-    {
-        saw = 0,
-        triangle = 1,
-        square = 2,
-        sine = 3,
-    };
-
-    enum class PlayModeChoice : int
-    {
-        poly = 0,
-        mono = 1,
-        unison = 2,
-    };
-
-    enum class KeyPriorityChoice : int
-    {
-        last = 0,
-        low = 1,
-        high = 2,
-    };
-
     enum class ArpRateChoice : int
     {
         quarter = 0,
@@ -203,51 +113,6 @@ namespace coolsynth::parameters
     };
 
     inline constexpr auto allParameterIds = std::to_array<const char*>({
-        ids::oscAWave,
-        ids::oscAOctave,
-        ids::oscAFineCents,
-        ids::oscALevel,
-        ids::oscAPulseWidth,
-        ids::oscASyncEnabled,
-        ids::oscBWave,
-        ids::oscBOctave,
-        ids::oscBFineCents,
-        ids::oscBLevel,
-        ids::oscBPulseWidth,
-        ids::oscBLowFrequencyMode,
-        ids::noiseLevel,
-        ids::filterCutoffHz,
-        ids::filterResonance,
-        ids::filterEnvAmount,
-        ids::filterKeyTracking,
-        ids::filterAttackMs,
-        ids::filterDecayMs,
-        ids::filterSustain,
-        ids::filterReleaseMs,
-        ids::ampAttackMs,
-        ids::ampDecayMs,
-        ids::ampSustain,
-        ids::ampReleaseMs,
-        ids::lfoRateHz,
-        ids::lfoWave,
-        ids::lfoToOscPitch,
-        ids::lfoToPulseWidth,
-        ids::lfoToFilterCutoff,
-        ids::modWheelToLfoDepth,
-        ids::polyModOscBToOscPitch,
-        ids::polyModEnvToOscPitch,
-        ids::polyModOscBToPulseWidth,
-        ids::polyModEnvToPulseWidth,
-        ids::polyModOscBToFilterCutoff,
-        ids::polyModEnvToFilterCutoff,
-        ids::glideTimeMs,
-        ids::playMode,
-        ids::keyPriority,
-        ids::pitchBendRangeSemitones,
-        ids::vintageAmount,
-        ids::panSpread,
-        ids::velocityToAmp,
-        ids::velocityToFilter,
         ids::arpEnabled,
         ids::arpInternalTempoBpm,
         ids::arpRateDivision,
@@ -281,9 +146,6 @@ namespace coolsynth::parameters
         ids::reverbDamping,
         ids::reverbMix,
         ids::masterGainDb,
-        // --- v3 additions (macros, phaser, compressor) ---
-        ids::timbre,
-        ids::excite,
         ids::phaserEnabled,
         ids::phaserRateHz,
         ids::phaserDepth,
@@ -292,5 +154,6 @@ namespace coolsynth::parameters
         ids::compressorMix,
     });
 
+    /** The fixed parameters MIDI learn accepts; part parameters are accepted by their slot-path prefix. */
     inline constexpr auto learnableParameterIds = allParameterIds;
 }

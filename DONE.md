@@ -512,3 +512,14 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Added `src/synth/v3/EngineV3.h/.cpp`: one part, the existing effect rack, a smoothed master gain and a tanh soft clipper; mono output buffers get the sum.
 - [x] Voice: retrigger and legato glide only when the part passes a note to glide from.
 - [x] Added `tests/V3PartTests.cpp` (17 tests across part and engine). Verified Debug build without warnings and `ctest` green; measured one-voice peak 0.354 (headroom 0.5), legato amp held at 0.300 while mono restarts to 0.931, eight saws at +12 dB master peaking at 1.000, latency 3 host samples.
+
+## V3 phase 1.4b: the product runs V3 (2026-11-13)
+
+- [x] Added `src/parameters/v3/PartParameters.h/.cpp`: part A's 129 parameters (three generator and three processor slots with per-slot default types, G1 VA and P1 ladder; three DAHDSR envelopes with curves, velocity, key time, loop and one-shot; env2-to-P1, velocity-to-P1, glide and drift; play mode, priority, voices, unison count, detune and spread, bend range, legato-only glide), the pointer table and the lock-free reader into `PartSettings`.
+- [x] Pruned `ParameterIDs.h` and `SynthParameters.h` to the arp, effect and output parameters and the engine event types; the layout builds part A plus those groups.
+- [x] The processor renders `EngineV3`; JUCE's generic editor replaces the V2 editor (UI is throwaway until plan phase 9); the standalone Options button opens JUCE's audio and MIDI settings.
+- [x] Deleted the V2 engine, voice, ladder, envelope and sound classes, the V2 editor, arp overlay, tooltips, standalone MIDI dialog and signal-chain view, and the V2 bank with its YAML and preset scripts; the factory bank is Init only until phase 1.5.
+- [x] Remapped the MiniLab 3 profile to V3 IDs; MIDI learn accepts part IDs; a relative encoder on a continuous parameter now moves 1/64 per detent (it moved nothing before).
+- [x] Fixed the patch and state loader to validate against every registered parameter instead of the static list, which would have dropped every part parameter; All Sound Off now also clears decimator memory and effect tails; processor state format 9, patch format 8.
+- [x] Ported tests: `tests/EngineTestAdapter.h` runs the 35 arpeggiator and 10 effect-rack regressions on V3; the half-band check has its own suite; V2-only suites and the six editor tests removed; MIDI-learn and patch tests use V3 IDs.
+- [x] Verified Debug build without warnings, `ctest` green (173 tests), Release standalone and VST3 built, loudness tool builds and runs on the new engine.

@@ -9,7 +9,9 @@
 #include "midi/MidiMappingEngine.h"
 #include "plugin/ParameterUndoHistory.h"
 #include "plugin/ProcessorScopeFifo.h"
-#include "synth/SynthEngineV2.h"
+#include "parameters/v3/PartParameters.h"
+#include "synth/SynthParameters.h"
+#include "synth/v3/EngineV3.h"
 
 class SynthAudioProcessor final : public juce::AudioProcessor,
                                   private juce::AudioProcessorParameter::Listener
@@ -117,8 +119,9 @@ private:
     void applyParameterChange(const coolsynth::midi::MappedParameterChange& change);
     void applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept;
 
-    coolsynth::synth::BlockRenderParametersV2 makeBlockRenderParameters() const noexcept;
-    static coolsynth::synth::ParameterValuePointersV2 bindParameterPointers(APVTS& state);
+    /** Reads every parameter into the engine settings once per block; lock-free. */
+    const coolsynth::synth::v3::EngineSettings& makeEngineSettings() noexcept;
+    static coolsynth::synth::GlobalParameterPointers bindParameterPointers(APVTS& state);
 
     void parameterValueChanged(int parameterIndex, float newValue) override;
     void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
@@ -126,30 +129,16 @@ private:
     std::vector<float> captureNormalisedValues() const;
     void restoreSnapshot(const coolsynth::plugin::ParameterUndoHistory::Snapshot& snapshot);
 
-    // C6: typed choice-parameter pointers — getIndex() avoids per-block std::round + cast
-    struct ChoiceParameterPointers
-    {
-        juce::AudioParameterChoice* oscAWave       = nullptr;
-        juce::AudioParameterChoice* oscBWave       = nullptr;
-        juce::AudioParameterChoice* filterKeyTrack = nullptr;
-        juce::AudioParameterChoice* lfoWave        = nullptr;
-        juce::AudioParameterChoice* playMode       = nullptr;
-        juce::AudioParameterChoice* keyPriority    = nullptr;
-        juce::AudioParameterChoice* arpRate        = nullptr;
-        juce::AudioParameterChoice* arpPattern     = nullptr;
-        juce::AudioParameterChoice* arpRatchet     = nullptr;
-        juce::AudioParameterChoice* arpAccentEvery = nullptr;
-        juce::AudioParameterChoice* arpRhythm      = nullptr;
-    };
-    static ChoiceParameterPointers bindChoicePointers(APVTS& state);
 
     APVTS parameters;
     juce::MidiKeyboardState keyboardState;
     coolsynth::midi::MidiMappingEngine midiMappingEngine;
     std::vector<coolsynth::midi::LearnedCcBinding> learnedMidiBindings;
-    coolsynth::synth::ParameterValuePointersV2 parameterValues;
-    ChoiceParameterPointers choiceParams;
-    coolsynth::synth::SynthEngineV2 synthEngine;
+    coolsynth::synth::GlobalParameterPointers parameterValues;
+    juce::StringArray knownParameterIds; // every parameter, for patch and state validation
+    coolsynth::parameters::v3::PartParameterPointers partParameterValues;
+    coolsynth::synth::v3::EngineSettings engineSettings;
+    coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
     mutable juce::CriticalSection midiMappingStateLock;
     std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};

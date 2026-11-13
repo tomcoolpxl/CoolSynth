@@ -121,13 +121,14 @@ namespace coolsynth::parameters::v3
     GenericSlotParameter::GenericSlotParameter(const juce::ParameterID& parameterId,
                                                int zeroBasedIndex,
                                                coolsynth::synth::v3::SlotTypeTable typeTable,
-                                               const juce::AudioParameterChoice& typeParameter)
+                                               const juce::AudioParameterChoice& typeParameter,
+                                               int defaultType)
         : juce::AudioParameterFloat(parameterId,
                                     "P" + juce::String(zeroBasedIndex + 1),
                                     juce::NormalisableRange<float>(0.0f, 1.0f),
                                     [&]
                                     {
-                                        const auto& d = typeTable.descriptor(0);
+                                        const auto& d = typeTable.descriptor(juce::jlimit(0, typeTable.count - 1, defaultType));
                                         if (zeroBasedIndex >= d.usedParams)
                                             return 0.0f;
                                         const auto& p = d.params[static_cast<std::size_t>(zeroBasedIndex)];
@@ -178,7 +179,8 @@ namespace coolsynth::parameters::v3
 
     std::unique_ptr<juce::AudioProcessorParameterGroup> makeSlotGroup(const SlotPath& path,
                                                                       coolsynth::synth::v3::SlotTypeTable typeTable,
-                                                                      const juce::String& groupName)
+                                                                      const juce::String& groupName,
+                                                                      int defaultType)
     {
         jassert(typeTable.count > 0 && typeTable.descriptor != nullptr);
 
@@ -188,12 +190,13 @@ namespace coolsynth::parameters::v3
 
         auto group = std::make_unique<juce::AudioProcessorParameterGroup>(slotPrefix(path), groupName, "|");
 
-        auto typeParameter = std::make_unique<juce::AudioParameterChoice>(makeId(typeParameterId(path)), "Type", typeNames, 0);
+        const int initialType = juce::jlimit(0, typeTable.count - 1, defaultType);
+        auto typeParameter = std::make_unique<juce::AudioParameterChoice>(makeId(typeParameterId(path)), "Type", typeNames, initialType);
         const auto& typeRef = *typeParameter;
         group->addChild(std::move(typeParameter));
 
         for (int i = 0; i < genericParameterCount; ++i)
-            group->addChild(std::make_unique<GenericSlotParameter>(makeId(genericParameterId(path, i + 1)), i, typeTable, typeRef));
+            group->addChild(std::make_unique<GenericSlotParameter>(makeId(genericParameterId(path, i + 1)), i, typeTable, typeRef, initialType));
 
         if (path.kind == SlotKind::generator)
         {

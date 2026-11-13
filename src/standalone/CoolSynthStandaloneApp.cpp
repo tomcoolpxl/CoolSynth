@@ -9,8 +9,6 @@
 #include <juce_gui_extra/juce_gui_extra.h>
 #include <juce_data_structures/juce_data_structures.h>
 #include <juce_audio_plugin_client/Standalone/juce_StandaloneFilterWindow.h>
-#include "ui/StandaloneSettingsDialog.h"
-#include "plugin/SynthAudioProcessorEditor.h"
 
 namespace
 {
@@ -55,21 +53,10 @@ private:
     juce::Button* originalOptionsButton = nullptr;
     void openCustomSettings()
     {
+        // The custom MIDI dialog left with the V2 editor. Until the V3 audition UI (phase 1.6),
+        // JUCE's own audio and MIDI settings choose the devices.
         if (auto* holder = getPluginHolder())
-        {
-            if (auto* processor = holder->processor.get())
-            {
-                if (auto* editor = dynamic_cast<SynthAudioProcessorEditor*>(processor->getActiveEditor()))
-                {
-                    auto* deviceManager = &holder->deviceManager;
-                    auto* midiController = editor->getStandaloneMidiController();
-                    if (deviceManager != nullptr && midiController != nullptr)
-                    {
-                        showStandaloneSettingsDialog(this, *deviceManager, *midiController, *editor);
-                    }
-                }
-            }
-        }
+            holder->showAudioSettingsDialog();
     }
 };
 

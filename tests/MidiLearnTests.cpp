@@ -6,7 +6,6 @@
 #include "midi/ControllerProfile.h"
 #include "midi/MidiMappingEngine.h"
 #include "plugin/SynthAudioProcessor.h"
-#include "plugin/SynthAudioProcessorEditor.h"
 #include "presets/FactoryPresets.h"
 #include "standalone/SettingsStore.h"
 #include "synth/GlobalDelay.h"
@@ -32,21 +31,21 @@ public:
 
     void runTest() override
     {
-        beginTest("learn_manager_accepts_v2_panel_parameters_across_continuous_and_discrete_controls");
+        beginTest("learn_manager_accepts_part_and_fixed_parameters_across_continuous_and_discrete_controls");
         {
             MidiLearnManager manager;
-            expect(manager.isLearnableParameter(coolsynth::parameters::ids::filterCutoffHz));
+            expect(manager.isLearnableParameter("pA.p1.p1"));
             expect(manager.isLearnableParameter(coolsynth::parameters::ids::masterGainDb));
-            expect(manager.isLearnableParameter(coolsynth::parameters::ids::oscAWave));
+            expect(manager.isLearnableParameter("pA.g1.type"));
             expect(manager.isLearnableParameter(coolsynth::parameters::ids::arpEnabled));
-            expect(manager.isLearnableParameter(coolsynth::parameters::ids::playMode));
+            expect(manager.isLearnableParameter("pA.play.mode"));
             expect(!manager.isLearnableParameter("invalid_id"));
         }
 
         beginTest("learn_manager_rejects_note_events_without_mutating_bindings");
         {
             MidiLearnManager manager;
-            manager.beginLearning(coolsynth::parameters::ids::filterCutoffHz, "Cutoff");
+            manager.beginLearning("pA.p1.p1", "Cutoff");
             
             ControllerMidiEvent noteOnEvent{ ControllerMidiEventType::noteOn, 1, 60, 100 };
             auto outcome = manager.handleIncomingEvent(noteOnEvent);
@@ -59,7 +58,7 @@ public:
         beginTest("learn_manager_rejects_reserved_performance_ccs_without_mutating_bindings");
         {
             MidiLearnManager manager;
-            manager.beginLearning(coolsynth::parameters::ids::filterCutoffHz, "Cutoff");
+            manager.beginLearning("pA.p1.p1", "Cutoff");
 
             auto modWheelOutcome = manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 1, 100 });
             expectEquals((int)modWheelOutcome.result, (int)MidiLearnCaptureResult::ignored);
@@ -80,13 +79,13 @@ public:
         beginTest("learn_manager_replaces_existing_binding_by_parameter");
         {
             MidiLearnManager manager;
-            manager.beginLearning(coolsynth::parameters::ids::filterCutoffHz, "Cutoff");
+            manager.beginLearning("pA.p1.p1", "Cutoff");
             manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 74, 64 });
             
             expectEquals((int)manager.getBindings().size(), 1);
             expect(manager.getBindings()[0].cc.controllerNumber == 74);
 
-            manager.beginLearning(coolsynth::parameters::ids::filterCutoffHz, "Cutoff");
+            manager.beginLearning("pA.p1.p1", "Cutoff");
             manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 75, 64 }); // Re-learn
             
             expectEquals((int)manager.getBindings().size(), 1);
@@ -96,14 +95,14 @@ public:
         beginTest("learn_manager_replaces_existing_binding_by_cc_signature");
         {
             MidiLearnManager manager;
-            manager.beginLearning(coolsynth::parameters::ids::filterCutoffHz, "Cutoff");
+            manager.beginLearning("pA.p1.p1", "Cutoff");
             manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 74, 64 });
 
-            manager.beginLearning(coolsynth::parameters::ids::filterResonance, "Resonance");
+            manager.beginLearning("pA.p1.p2", "Resonance");
             manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 74, 64 }); // Same CC
 
             expectEquals((int)manager.getBindings().size(), 1);
-            expect(manager.getBindings()[0].parameterId == coolsynth::parameters::ids::filterResonance);
+            expect(manager.getBindings()[0].parameterId == "pA.p1.p2");
         }
 
         beginTest("settings_store_round_trips_learned_mapping_xml");
@@ -112,15 +111,15 @@ public:
             coolsynth::standalone::StandaloneSettingsStore store(props);
             
             std::vector<LearnedCcBinding> bindings = {
-                { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } },
-                { coolsynth::parameters::ids::oscAWave, { 2, 83 } }
+                { "pA.p1.p1", { 1, 74 } },
+                { "pA.g1.type", { 2, 83 } }
             };
             store.saveLearnedMidiMappings(bindings);
             
             auto loaded = store.loadLearnedMidiMappings();
             expectEquals((int)loaded.size(), 2);
-            expect(loaded[0].parameterId == coolsynth::parameters::ids::filterCutoffHz);
-            expect(loaded[1].parameterId == coolsynth::parameters::ids::oscAWave);
+            expect(loaded[0].parameterId == "pA.p1.p1");
+            expect(loaded[1].parameterId == "pA.g1.type");
             expect(loaded[1].cc.channel == 2);
             expect(loaded[1].cc.controllerNumber == 83);
         }
@@ -131,7 +130,7 @@ public:
             auto xml = std::make_unique<juce::XmlElement>("MIDI_LEARN_MAPPINGS");
             
             auto* valid = xml->createNewChildElement("MAPPING");
-            valid->setAttribute("parameterId", coolsynth::parameters::ids::filterCutoffHz);
+            valid->setAttribute("parameterId", "pA.p1.p1");
             valid->setAttribute("channel", 1);
             valid->setAttribute("controller", 74);
 
@@ -141,7 +140,7 @@ public:
             invalidParam->setAttribute("controller", 75);
 
             auto* invalidCC = xml->createNewChildElement("MAPPING");
-            invalidCC->setAttribute("parameterId", coolsynth::parameters::ids::filterResonance);
+            invalidCC->setAttribute("parameterId", "pA.p1.p2");
             invalidCC->setAttribute("channel", 1);
             invalidCC->setAttribute("controller", 200); // Invalid CC
 
@@ -156,7 +155,7 @@ public:
             
             // Should only keep the valid one
             expectEquals((int)normalized.size(), 1);
-            expect(normalized[0].parameterId == coolsynth::parameters::ids::filterCutoffHz);
+            expect(normalized[0].parameterId == "pA.p1.p1");
         }
 
         beginTest("controller_profile_registry_loads_builtin_minilab_profile");
@@ -212,7 +211,7 @@ public:
             store.setShowCcLabels(false);
 
             std::vector<LearnedCcBinding> bindings = {
-                { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } }
+                { "pA.p1.p1", { 1, 74 } }
             };
             store.saveLearnedMidiMappings(bindings);
 
@@ -254,10 +253,10 @@ public:
         {
             SynthAudioProcessor processor;
             auto& state = processor.getValueTreeState();
-            auto* waveform = state.getParameter(coolsynth::parameters::ids::oscAWave);
-            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
-            auto* oscALevel = state.getParameter(coolsynth::parameters::ids::oscALevel);
-            auto* oscBLevel = state.getParameter(coolsynth::parameters::ids::oscBLevel);
+            auto* waveform = state.getParameter("pA.g1.p1"); // G1 shape, a continuous morph
+            auto* cutoff = state.getParameter("pA.p1.p1");
+            auto* oscALevel = state.getParameter("pA.g1.level");
+            auto* oscBLevel = state.getParameter("pA.g2.level");
 
             expect(waveform != nullptr);
             expect(cutoff != nullptr);
@@ -266,7 +265,7 @@ public:
             expect(processor.setActiveControllerProfile("arturia.minilab3.arturia-mode.v1"));
 
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 114, 63 });
-            expectWithinAbsoluteError(waveform->getValue(), 0.333333f, 0.001f);
+            expectWithinAbsoluteError(waveform->getValue(), 2.0f / 3.0f - 1.0f / 64.0f, 0.001f); // one detent down from saw
 
             processor.handleStandaloneControllerEvent({ ControllerMidiEventType::controlChange, 1, 74, 0 });
             expectWithinAbsoluteError(cutoff->getValue(), 0.0f, 0.001f);
@@ -291,8 +290,8 @@ public:
         {
             SynthAudioProcessor processor;
             auto& state = processor.getValueTreeState();
-            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
-            auto* oscBLevel = state.getParameter(coolsynth::parameters::ids::oscBLevel);
+            auto* cutoff = state.getParameter("pA.p1.p1");
+            auto* oscBLevel = state.getParameter("pA.g2.level");
 
             expect(cutoff != nullptr);
             expect(oscBLevel != nullptr);
@@ -301,7 +300,7 @@ public:
             const auto initialOscBLevel = oscBLevel != nullptr ? oscBLevel->getValue() : 0.0f;
 
             const std::array<LearnedCcBinding, 1> bindings {{
-                { coolsynth::parameters::ids::filterCutoffHz, { 1, 83 } }
+                { "pA.p1.p1", { 1, 83 } }
             }};
             processor.setLearnedMidiBindings(bindings);
 
@@ -315,7 +314,7 @@ public:
         {
             SynthAudioProcessor processor;
             const std::array<LearnedCcBinding, 1> bindings {{
-                { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } }
+                { "pA.p1.p1", { 1, 74 } }
             }};
             processor.setLearnedMidiBindings(bindings);
 
@@ -326,7 +325,7 @@ public:
             processor.processBlock(buffer, midi);
             processor.flushMappedControllerEventsSync();
 
-            auto* cutoff = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            auto* cutoff = processor.getValueTreeState().getParameter("pA.p1.p1");
             expect(cutoff != nullptr);
             expectWithinAbsoluteError(cutoff->getValue(), 1.0f, 0.001f);
 
@@ -386,11 +385,11 @@ public:
         {
             SynthAudioProcessor processor;
             const std::array<LearnedCcBinding, 1> bindings {{
-                { coolsynth::parameters::ids::filterCutoffHz, { 1, 123 } }
+                { "pA.p1.p1", { 1, 123 } }
             }};
             processor.setLearnedMidiBindings(bindings);
 
-            auto* cutoff = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::filterCutoffHz);
+            auto* cutoff = processor.getValueTreeState().getParameter("pA.p1.p1");
             expect(cutoff != nullptr);
             const auto initialValue = cutoff != nullptr ? cutoff->getValue() : 0.0f;
 
@@ -539,7 +538,7 @@ public:
             expectTailNear(12.0);
         }
 
-        beginTest("processor_process_block_routes_note_events_through_the_v2_allocator");
+        beginTest("processor_process_block_routes_note_events_through_the_allocator");
         {
             SynthAudioProcessor processor;
             processor.prepareToPlay(48000.0, 128);
@@ -571,8 +570,8 @@ public:
             SynthAudioProcessor target;
 
             const std::array<LearnedCcBinding, 2> bindings {{
-                { coolsynth::parameters::ids::filterCutoffHz, { 1, 74 } },
-                { coolsynth::parameters::ids::oscAWave, { 2, 83 } }
+                { "pA.p1.p1", { 1, 74 } },
+                { "pA.g1.type", { 2, 83 } }
             }};
             source.setLearnedMidiBindings(bindings);
 
@@ -585,121 +584,13 @@ public:
 
             if (restored.size() == 2)
             {
-                expect(restored[0].parameterId == coolsynth::parameters::ids::filterCutoffHz);
+                expect(restored[0].parameterId == "pA.p1.p1");
                 expectEquals((int) restored[0].cc.channel, 1);
                 expectEquals((int) restored[0].cc.controllerNumber, 74);
-                expect(restored[1].parameterId == coolsynth::parameters::ids::oscAWave);
+                expect(restored[1].parameterId == "pA.g1.type");
                 expectEquals((int) restored[1].cc.channel, 2);
                 expectEquals((int) restored[1].cc.controllerNumber, 83);
             }
-        }
-
-        beginTest("editor_arp_overlay_toggles_and_euclidean_controls_follow_rhythm_choice");
-        {
-            SynthAudioProcessor processor;
-            SynthAudioProcessorEditor editor(processor);
-            auto& state = processor.getValueTreeState();
-
-            expect(!editor.isArpAdvancedOverlayVisibleForTesting());
-
-            editor.setArpAdvancedOverlayVisibleForTesting(true);
-            expect(editor.isArpAdvancedOverlayVisibleForTesting());
-
-            auto* rhythm = state.getParameter(coolsynth::parameters::ids::arpRhythm);
-            expect(rhythm != nullptr);
-
-            if (rhythm != nullptr)
-            {
-                rhythm->setValueNotifyingHost(rhythm->convertTo0to1(1.0f));
-                editor.refreshArpUiForTesting();
-                expect(editor.areArpEuclideanControlsVisibleForTesting());
-
-                rhythm->setValueNotifyingHost(rhythm->convertTo0to1(0.0f));
-                editor.refreshArpUiForTesting();
-                expect(!editor.areArpEuclideanControlsVisibleForTesting());
-            }
-
-            editor.setArpAdvancedOverlayVisibleForTesting(false);
-            expect(!editor.isArpAdvancedOverlayVisibleForTesting());
-        }
-
-        beginTest("editor_arp_overlay_summary_reports_non_default_advanced_state");
-        {
-            SynthAudioProcessor processor;
-            SynthAudioProcessorEditor editor(processor);
-            auto& state = processor.getValueTreeState();
-
-            auto setPlainValue = [](juce::RangedAudioParameter* parameter, float value)
-            {
-                if (parameter != nullptr)
-                    parameter->setValueNotifyingHost(parameter->convertTo0to1(value));
-            };
-
-            setPlainValue(state.getParameter(coolsynth::parameters::ids::arpRhythm), 1.0f);
-            setPlainValue(state.getParameter(coolsynth::parameters::ids::arpEuclideanPulses), 5.0f);
-            setPlainValue(state.getParameter(coolsynth::parameters::ids::arpChance), 0.5f);
-
-            editor.refreshArpUiForTesting();
-            const auto summary = editor.getArpAdvancedSummaryTextForTesting();
-            expect(summary.contains("Euc 5/8"));
-            expect(summary.contains("Chance"));
-        }
-
-        beginTest("editor_gives_every_visible_control_a_usable_size");
-        {
-            // A row that is shorter than a widget's label bands leaves its knob,
-            // toggle or segment buttons with a zero or near-zero rectangle while
-            // isVisible() still reports true. Walk every visible slider, button and
-            // combo box in the main panel and in the Advanced overlay (Euclidean
-            // mode, so the Euclidean knobs are included) and require a real size.
-            constexpr int minimumControlSize = 16;
-
-            struct ControlSizeChecker
-            {
-                juce::UnitTest& test;
-                juce::String context;
-
-                void walk(const juce::Component& component) const
-                {
-                    for (auto* child : component.getChildren())
-                    {
-                        if (child == nullptr || ! child->isVisible())
-                            continue;
-
-                        const bool isControl = dynamic_cast<juce::Slider*>(child) != nullptr
-                                            || dynamic_cast<juce::Button*>(child) != nullptr
-                                            || dynamic_cast<juce::ComboBox*>(child) != nullptr;
-
-                        if (isControl)
-                        {
-                            auto name = child->getName();
-                            if (auto* parent = child->getParentComponent();
-                                parent != nullptr && parent->getName().isNotEmpty())
-                                name = parent->getName() + " / " + name;
-
-                            test.expect(child->getWidth() >= minimumControlSize
-                                            && child->getHeight() >= minimumControlSize,
-                                        context + ": " + name + " is "
-                                            + juce::String(child->getWidth()) + "x"
-                                            + juce::String(child->getHeight()) + " px");
-                        }
-
-                        walk(*child);
-                    }
-                }
-            };
-
-            SynthAudioProcessor processor;
-            SynthAudioProcessorEditor editor(processor);
-
-            ControlSizeChecker { *this, "main panel" }.walk(editor);
-
-            editor.setArpAdvancedOverlayVisibleForTesting(true);
-            if (auto* rhythm = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::arpRhythm))
-                rhythm->setValueNotifyingHost(rhythm->convertTo0to1(1.0f));
-            editor.refreshArpUiForTesting();
-
-            ControlSizeChecker { *this, "advanced overlay" }.walk(editor);
         }
 
     }
@@ -710,106 +601,20 @@ static MidiLearnTests midiLearnTests;
 // Editor UX regressions (resizing, keyboard focus, undo, patch identity). Kept in
 // their own runTest() frame: MSVC Debug reserves a stack slot for every
 // block-scoped local of a function, and processors and editors are large.
-class EditorUxTests final : public juce::UnitTest
+class ProcessorUxTests final : public juce::UnitTest
 {
 public:
-    EditorUxTests() : juce::UnitTest("EditorUx", "UI") {}
+    ProcessorUxTests() : juce::UnitTest("ProcessorUx", "CoolSynth") {}
 
     void runTest() override
     {
-        beginTest("editor_scales_content_uniformly_when_resized");
-        {
-            // The window is user-resizable with a fixed aspect ratio: the content
-            // panel keeps its design size and is scaled to fit the editor bounds, so
-            // every control keeps its design-space geometry at any zoom.
-            auto processorHolder = std::make_unique<SynthAudioProcessor>();
-            auto& processor = *processorHolder;
-            auto editorHolder = std::make_unique<SynthAudioProcessorEditor>(processor);
-            auto& editor = *editorHolder;
-
-            const int designWidth = editor.getWidth();
-            const int designHeight = editor.getHeight();
-            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 1.0f, 0.001f);
-
-            editor.setContentScaleForTesting(0.5f);
-            expectEquals(editor.getWidth(), juce::roundToInt(designWidth * 0.5f));
-            expectEquals(editor.getHeight(), juce::roundToInt(designHeight * 0.5f));
-            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 0.5f, 0.01f);
-
-            editor.setContentScaleForTesting(1.5f);
-            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 1.5f, 0.01f);
-
-            // Out-of-range requests are clamped to the resize limits.
-            editor.setContentScaleForTesting(9.0f);
-            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 2.0f, 0.01f);
-            editor.setContentScaleForTesting(0.1f);
-            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 0.5f, 0.01f);
-
-            // A host-driven resize that breaks the aspect ratio still scales uniformly.
-            editor.setSize(designWidth, designHeight * 2);
-            expectWithinAbsoluteError(editor.getContentScaleForTesting(), 1.0f, 0.01f);
-
-            expect(editor.isResizable());
-        }
-
-        beginTest("editor_controls_are_keyboard_focusable_and_named");
-        {
-            // Every slider and button must be reachable with Tab and expose an
-            // accessible name (title or button text) for screen readers.
-            struct FocusChecker
-            {
-                juce::UnitTest& test;
-
-                void walk(const juce::Component& component) const
-                {
-                    for (auto* child : component.getChildren())
-                    {
-                        if (child == nullptr || ! child->isVisible())
-                            continue;
-
-                        if (auto* slider = dynamic_cast<juce::Slider*>(child))
-                        {
-                            test.expect(slider->getWantsKeyboardFocus(),
-                                        "slider without keyboard focus: " + slider->getName());
-                            test.expect(slider->getTitle().isNotEmpty(),
-                                        "slider without accessible title: " + slider->getName());
-                        }
-                        else if (auto* button = dynamic_cast<juce::Button*>(child))
-                        {
-                            // A disabled button (Undo with nothing to undo) is not focusable.
-                            test.expect(button->getWantsKeyboardFocus() || ! button->isEnabled(),
-                                        "button without keyboard focus: " + button->getName());
-                            test.expect(button->getTitle().isNotEmpty() || button->getButtonText().isNotEmpty(),
-                                        "button without accessible name: " + button->getName());
-                        }
-                        else if (auto* box = dynamic_cast<juce::ComboBox*>(child))
-                        {
-                            test.expect(box->getTitle().isNotEmpty(),
-                                        "combo box without accessible title: " + box->getName());
-                        }
-
-                        walk(*child);
-                    }
-                }
-            };
-
-            auto processorHolder = std::make_unique<SynthAudioProcessor>();
-            auto& processor = *processorHolder;
-            auto editorHolder = std::make_unique<SynthAudioProcessorEditor>(processor);
-            auto& editor = *editorHolder;
-            FocusChecker { *this }.walk(editor);
-
-            editor.setArpAdvancedOverlayVisibleForTesting(true);
-            FocusChecker { *this }.walk(editor);
-        }
-
         beginTest("processor_undo_and_redo_follow_gestures_and_bulk_edits");
         {
             auto processorHolder = std::make_unique<SynthAudioProcessor>();
             auto& processor = *processorHolder;
             auto& state = processor.getValueTreeState();
-            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
-            auto* resonance = state.getParameter(coolsynth::parameters::ids::filterResonance);
+            auto* cutoff = state.getParameter("pA.p1.p1");
+            auto* resonance = state.getParameter("pA.p1.p2");
             expect(cutoff != nullptr && resonance != nullptr);
             if (cutoff == nullptr || resonance == nullptr)
                 return;
@@ -885,48 +690,10 @@ public:
             expect(! target.canUndo());
         }
 
-        beginTest("editor_preset_selector_clears_on_edit_and_follows_undo");
-        {
-            auto processorHolder = std::make_unique<SynthAudioProcessor>();
-            auto& processor = *processorHolder;
-            auto editorHolder = std::make_unique<SynthAudioProcessorEditor>(processor);
-            auto& editor = *editorHolder;
-            auto& state = processor.getValueTreeState();
-
-            expectEquals(editor.getPatchNameTextForTesting(), juce::String("Init"));
-            expectEquals(editor.getSelectedPresetIdForTesting(), 0);
-
-            const auto& preset = coolsynth::presets::getFactoryPreset(0);
-            editor.selectPresetForTesting(1);
-            expectEquals(editor.getPatchNameTextForTesting(), juce::String(preset.name));
-            expectEquals(editor.getSelectedPresetIdForTesting(), 1);
-            expect(processor.canUndo());
-
-            auto* cutoff = state.getParameter(coolsynth::parameters::ids::filterCutoffHz);
-            expect(cutoff != nullptr);
-            if (cutoff != nullptr)
-            {
-                cutoff->beginChangeGesture();
-                cutoff->setValueNotifyingHost(cutoff->getValue() > 0.5f ? 0.1f : 0.9f);
-                cutoff->endChangeGesture();
-            }
-
-            editor.refreshPatchIdentityForTesting();
-            expectEquals(editor.getPatchNameTextForTesting(), juce::String(preset.name) + " *");
-            expectEquals(editor.getSelectedPresetIdForTesting(), 0);
-
-            editor.performUndoForTesting();
-            expectEquals(editor.getPatchNameTextForTesting(), juce::String(preset.name));
-            expectEquals(editor.getSelectedPresetIdForTesting(), 1);
-
-            editor.performUndoForTesting();
-            expectEquals(editor.getPatchNameTextForTesting(), juce::String("Init"));
-            expectEquals(editor.getSelectedPresetIdForTesting(), 0);
-        }
     }
 };
 
-static EditorUxTests editorUxTests;
+static ProcessorUxTests processorUxTests;
 
 int main()
 {

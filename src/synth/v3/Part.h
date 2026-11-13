@@ -74,6 +74,14 @@ namespace coolsynth::synth::v3
                     const PartSettings& settings,
                     const EngineTransportInfo& transport) noexcept;
 
+        /** True once after an All Sound Off, so the engine clears its effect tails too. */
+        [[nodiscard]] bool consumeSoundOff() noexcept
+        {
+            const bool requested = soundOffPending;
+            soundOffPending = false;
+            return requested;
+        }
+
         /** Host samples between a note event and its sound: decimator plus generator delay. */
         [[nodiscard]] int latencySamples() const noexcept { return decimatorLatency + generatorLatency; }
 
@@ -83,6 +91,10 @@ namespace coolsynth::synth::v3
         [[nodiscard]] bool voiceKeyDownForTesting(int index) const noexcept { return state[static_cast<std::size_t>(index)].keyDown; }
         [[nodiscard]] float bendSemitonesForTesting() const noexcept { return globals.bendSemitones; }
         [[nodiscard]] int heldNoteCountForTesting() const noexcept { return heldCount; }
+        [[nodiscard]] int lastPlayedNoteForTesting() const noexcept { return lastNote; }
+        [[nodiscard]] int arpHeldNoteCountForTesting() const noexcept { return arpeggiator.getHeldNoteCountForTesting(); }
+        [[nodiscard]] int arpLatchedNoteCountForTesting() const noexcept { return arpeggiator.getLatchedNoteCountForTesting(); }
+        [[nodiscard]] int arpRingingNoteCountForTesting() const noexcept { return arpeggiator.getRingingNoteCountForTesting(); }
 
     private:
         struct VoiceState
@@ -141,6 +153,7 @@ namespace coolsynth::synth::v3
         int monoVoiceCount = 0;
         PlayMode currentMode = PlayMode::poly;
         bool sustainDown = false;
+        bool soundOffPending = false;
         bool previousArpEnabled = false;
         bool prepared = false;
         float bendNormalised = 0.0f;

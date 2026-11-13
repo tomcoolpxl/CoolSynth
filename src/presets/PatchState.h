@@ -7,7 +7,7 @@
 namespace coolsynth::presets
 {
     inline constexpr char patchRootTag[] = "COOLSYNTH_PATCH";
-    inline constexpr int patchFormatVersion = 7;
+    inline constexpr int patchFormatVersion = 8; // 8: V3 parameter contract; older patches are rejected
     inline constexpr char defaultPatchExtension[] = ".cspatch";
 
     enum class PatchStateError : uint8_t

@@ -56,24 +56,20 @@ set(COOLSYNTH_SHARED_SOURCES
     src/midi/MidiMonitor.cpp
     src/parameters/ParameterLayout.cpp
     src/parameters/v3/SlotParameters.cpp
+    src/parameters/v3/PartParameters.cpp
     src/synth/v3/Voice.cpp
     src/synth/v3/Part.cpp
     src/synth/v3/EngineV3.cpp
-    src/plugin/ArpAdvancedOverlay.cpp
     src/plugin/SynthAudioProcessor.cpp
-    src/plugin/EditorTooltips.cpp
-    src/plugin/SynthAudioProcessorEditor.cpp
     src/standalone/CoolSynthStandaloneApp.cpp
     src/standalone/SettingsStore.cpp
     src/standalone/StandaloneAudioSupport.cpp
     src/standalone/StandaloneMidiInput.cpp
     src/synth/Arpeggiator.cpp
-    src/synth/SynthEngineV2.cpp
     src/synth/GlobalDelay.cpp
     src/synth/GlobalFxRack.cpp
     src/synth/Phaser.cpp
     src/synth/Compressor.cpp
-    src/synth/SynthVoice.cpp
     src/ui/HardwareFader.cpp
     src/ui/HardwareKnob.cpp
     src/ui/LedToggleButton.cpp
@@ -81,10 +77,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/ui/PianoBarComponent.cpp
     src/ui/SegmentedChoiceGroup.cpp
     src/ui/StandaloneMidiInputPanel.cpp
-    src/ui/StandaloneSettingsDialog.cpp
     src/ui/StandaloneStatusBar.cpp
-    src/ui/SynthSection.cpp
-    src/ui/SignalChainVisualizer.cpp)
+    src/ui/SynthSection.cpp)
 
 target_sources(CoolSynth PRIVATE ${COOLSYNTH_SHARED_SOURCES})
 

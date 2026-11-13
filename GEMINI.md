@@ -2,7 +2,8 @@
 
 This is the main repo or agent memory file. If you need to adapt your memory file, adapt this file.
 
-The V2 engine is shipped. V3 (the "Places" sound bank and a modular engine) is in design: see `SOUND_BANK_V3.md` and `REQUIREMENTS_V3.md`.
+The V3 engine replaced V2 in the product on 2026-11-13 (plan phase 1.4); the plan is `IMPLEMENTATION_PLAN_V3.md`.
+The UI is designed last, after engine, presets and arpeggiator; until then any UI is throwaway (the generic editor).
 
 ## Compatibility Stance
 

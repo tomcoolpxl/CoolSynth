@@ -187,13 +187,13 @@ namespace
         return -12.0f;
     }
 
-    coolsynth::parameters::PlayModeChoice lookupPlayMode(const coolsynth::presets::FactoryPreset& preset)
+    /** True unless the preset sets part A to mono, legato or unison. */
+    bool lookupPolyMode(const coolsynth::presets::FactoryPreset& preset)
     {
-        namespace ids = coolsynth::parameters::ids;
         for (int i = 0; i < preset.valueCount; ++i)
-            if (juce::StringRef(preset.values[i].parameterId) == juce::StringRef(ids::playMode))
-                return static_cast<coolsynth::parameters::PlayModeChoice>(static_cast<int>(preset.values[i].value));
-        return coolsynth::parameters::PlayModeChoice::poly;
+            if (juce::StringRef(preset.values[i].parameterId) == juce::StringRef("pA.play.mode"))
+                return static_cast<int>(preset.values[i].value) == 0;
+        return true;
     }
 
     bool lookupArpEnabled(const coolsynth::presets::FactoryPreset& preset)
@@ -211,14 +211,14 @@ namespace
         if (! firstBlock)
             return midi;
 
-        const auto mode = lookupPlayMode(preset);
+        const bool isPoly = lookupPolyMode(preset);
         const bool isArp = lookupArpEnabled(preset);
 
         // Mono/unison: single sustained note (60 = C4).
         // Poly without arp: 4-note chord (C, Eb, G, C+1oct) — covers thirds and fifths.
         // Poly with arp: single held note; arp generates the steps internally.
         const juce::uint8 velocity = 100;
-        if (mode == coolsynth::parameters::PlayModeChoice::poly && ! isArp)
+        if (isPoly && ! isArp)
         {
             for (int note : { 60, 63, 67, 72 })
                 midi.addEvent(juce::MidiMessage::noteOn(1, note, velocity), 0);

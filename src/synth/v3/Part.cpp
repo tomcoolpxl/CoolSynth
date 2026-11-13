@@ -276,12 +276,16 @@ namespace coolsynth::synth::v3
                 break;
 
             case EngineMidiEventType::allSoundOff:
+                // Silence now: voices, the decimators' memory and (through the engine) effect tails.
                 for (auto& v : voices)
                     v.kill();
                 state.fill({});
                 heldCount = 0;
                 monoVoiceCount = 0;
                 sustainDown = false;
+                decimatorLeft.reset();
+                decimatorRight.reset();
+                soundOffPending = true;
                 break;
 
             case EngineMidiEventType::resetControllers:

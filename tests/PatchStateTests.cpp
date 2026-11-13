@@ -1,3 +1,4 @@
+#include <cmath>
 #include <juce_core/juce_core.h>
 
 #include "parameters/ParameterIDs.h"
@@ -45,7 +46,7 @@ public:
 
     void runTest() override
     {
-        beginTest("v2_parameter_layout_registers_every_expected_id_exactly_once");
+        beginTest("parameter_layout_registers_every_expected_id_exactly_once");
         {
             SynthAudioProcessor processor;
             juce::StringArray registeredIds;
@@ -62,10 +63,14 @@ public:
                 registeredIds.add(parameter->paramID);
             }
 
-            expectEquals(registeredIds.size(), static_cast<int>(coolsynth::parameters::allParameterIds.size()));
+            // part A: 3 generators x 17, 3 processors x 9, 3 envelopes x 13, 4 voice, 8 play
+            constexpr int partParameterCount = 3 * 17 + 3 * 9 + 3 * 13 + 4 + 8;
+            expectEquals(registeredIds.size(), static_cast<int>(coolsynth::parameters::allParameterIds.size()) + partParameterCount);
 
             for (const auto* expectedId : coolsynth::parameters::allParameterIds)
                 expect(registeredIds.contains(expectedId));
+            for (const auto* partId : { "pA.g1.type", "pA.g3.amount", "pA.p1.p8", "pA.env3.oneShot", "pA.voice.drift", "pA.play.glideLegato" })
+                expect(registeredIds.contains(partId), juce::String("missing ") + partId);
         }
 
         beginTest("init_patch_resets_all_automatable_parameters_to_defaults");
@@ -75,25 +80,26 @@ public:
 
             apvts.getParameter("delayMix")->setValueNotifyingHost(1.0f);
             apvts.getParameter("masterGainDb")->setValueNotifyingHost(1.0f);
-            apvts.getParameter(coolsynth::parameters::ids::oscBFineCents)->setValueNotifyingHost(0.0f);
-            apvts.getParameter(coolsynth::parameters::ids::filterEnvAmount)->setValueNotifyingHost(0.0f);
+            apvts.getParameter("pA.g2.fine")->setValueNotifyingHost(0.0f);
+            apvts.getParameter("pA.voice.env2ToP1")->setValueNotifyingHost(0.0f);
 
             processor.resetAutomatableParametersToDefaults();
 
             expectWithinAbsoluteError(apvts.getParameter("delayMix")->getValue(),
                                       apvts.getParameter("delayMix")->getDefaultValue(),
                                       0.0001f);
-            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::filterCutoffHz)->load(),
-                                      3200.0f,
-                                      0.1f);
-            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::filterEnvAmount)->load(),
-                                      0.35f,
+            // P1 defaults to the ladder: its cutoff parameter stores 3200 Hz in normalised form.
+            expectWithinAbsoluteError(apvts.getRawParameterValue("pA.p1.p1")->load(),
+                                      std::log(3200.0f / 20.0f) / std::log(1000.0f),
                                       0.0001f);
-            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::oscBFineCents)->load(),
-                                      4.0f,
+            expectWithinAbsoluteError(apvts.getRawParameterValue("pA.voice.env2ToP1")->load(),
+                                      0.2f,
                                       0.0001f);
-            expectWithinAbsoluteError(apvts.getRawParameterValue(coolsynth::parameters::ids::ampSustain)->load(),
-                                      0.72f,
+            expectWithinAbsoluteError(apvts.getRawParameterValue("pA.g2.fine")->load(),
+                                      0.0f,
+                                      0.0001f);
+            expectWithinAbsoluteError(apvts.getRawParameterValue("pA.env1.sustain")->load(),
+                                      1.0f,
                                       0.0001f);
         }
 
@@ -103,8 +109,8 @@ public:
             SynthAudioProcessor target;
 
             auto& sourceState = source.getValueTreeState();
-            sourceState.getParameter(coolsynth::parameters::ids::oscAWave)->setValueNotifyingHost(0.0f);
-            sourceState.getParameter(coolsynth::parameters::ids::filterEnvAmount)->setValueNotifyingHost(0.75f);
+            sourceState.getParameter("pA.g1.type")->setValueNotifyingHost(0.0f);
+            sourceState.getParameter("pA.voice.env2ToP1")->setValueNotifyingHost(0.75f);
             sourceState.getParameter(coolsynth::parameters::ids::arpEnabled)->setValueNotifyingHost(1.0f);
             sourceState.getParameter(coolsynth::parameters::ids::reverbMix)->setValueNotifyingHost(0.35f);
 
@@ -117,11 +123,11 @@ public:
             expect(parsed.succeeded());
             expect(parsed.parameterStateXml != nullptr);
             expect(target.applyParameterStateXml(*parsed.parameterStateXml));
-            expectWithinAbsoluteError(target.getValueTreeState().getParameter(coolsynth::parameters::ids::oscAWave)->getValue(),
+            expectWithinAbsoluteError(target.getValueTreeState().getParameter("pA.g1.type")->getValue(),
                                       0.0f,
                                       0.0001f);
-            expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::filterEnvAmount)->load(),
-                                      0.75f,
+            expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue("pA.voice.env2ToP1")->load(),
+                                      0.5f, // normalised 0.75 on a -1..1 range
                                       0.0001f);
             expectWithinAbsoluteError(target.getValueTreeState().getParameter(coolsynth::parameters::ids::arpEnabled)->getValue(),
                                       1.0f,
@@ -264,12 +270,12 @@ public:
 
             juce::XmlElement partialOverlapState(processor.getParameterStateTypeName());
             auto* child = partialOverlapState.createNewChildElement("PARAM");
-            child->setAttribute("id", coolsynth::parameters::ids::filterCutoffHz);
+            child->setAttribute("id", "pA.p1.p1");
             child->setAttribute("value", 250.0f);
 
             expect(!processor.applyParameterStateXml(partialOverlapState));
-            expectWithinAbsoluteError(processor.getValueTreeState().getRawParameterValue(coolsynth::parameters::ids::filterCutoffHz)->load(),
-                                      3200.0f,
+            expectWithinAbsoluteError(processor.getValueTreeState().getRawParameterValue("pA.p1.p1")->load(),
+                                      std::log(3200.0f / 20.0f) / std::log(1000.0f), // the ladder default, normalised
                                       0.1f);
         }
 
@@ -318,53 +324,19 @@ public:
             tempDir.deleteRecursively();
         }
 
-        beginTest("factory_presets_cover_full_parameter_contract_and_curated_arp_bank");
+        beginTest("factory_bank_starts_with_init_and_names_only_existing_parameters");
         {
-            int arpPresetCount = 0;
-            bool hasRandomWalkPluck = false;
-            bool hasTranceGate = false;
-            bool hasTresilloBass = false;
-            bool hasCinquilloLead = false;
-            bool hasPolymeterStab = false;
-            bool hasConvergeBell = false;
-            bool hasRandomSparks = false;
-            bool hasInsideOrbit = false;
-            bool hasOutsidePlucker = false;
-            bool hasDivergeSweep = false;
+            expect(coolsynth::presets::getFactoryPresetCount() >= 1);
+            expect(juce::String(coolsynth::presets::getFactoryPreset(0).name) == "Init");
 
+            SynthAudioProcessor processor;
             for (int index = 0; index < coolsynth::presets::getFactoryPresetCount(); ++index)
             {
                 const auto& preset = coolsynth::presets::getFactoryPreset(index);
-                expectEquals(preset.valueCount,
-                             static_cast<int>(coolsynth::parameters::allParameterIds.size()));
-
-                if (juce::String(preset.category) == "Arp")
-                    ++arpPresetCount;
-
-                const auto presetName = juce::String(preset.name);
-                hasRandomWalkPluck = hasRandomWalkPluck || presetName == "Random Walk Pluck";
-                hasTranceGate = hasTranceGate || presetName == "Trance Gate";
-                hasTresilloBass = hasTresilloBass || presetName == "Tresillo Bass";
-                hasCinquilloLead = hasCinquilloLead || presetName == "Cinquillo Lead";
-                hasPolymeterStab = hasPolymeterStab || presetName == "Polymeter Stab";
-                hasConvergeBell = hasConvergeBell || presetName == "Converge Bell";
-                hasRandomSparks = hasRandomSparks || presetName == "Random Sparks";
-                hasInsideOrbit = hasInsideOrbit || presetName == "Inside Orbit";
-                hasOutsidePlucker = hasOutsidePlucker || presetName == "Outside Plucker";
-                hasDivergeSweep = hasDivergeSweep || presetName == "Diverge Sweep";
+                for (int i = 0; i < preset.valueCount; ++i)
+                    expect(processor.getValueTreeState().getParameter(preset.values[i].parameterId) != nullptr,
+                           juce::String(preset.name) + " names an unknown parameter");
             }
-
-            expect(arpPresetCount >= 15);
-            expect(hasRandomWalkPluck);
-            expect(hasTranceGate);
-            expect(hasTresilloBass);
-            expect(hasCinquilloLead);
-            expect(hasPolymeterStab);
-            expect(hasConvergeBell);
-            expect(hasRandomSparks);
-            expect(hasInsideOrbit);
-            expect(hasOutsidePlucker);
-            expect(hasDivergeSweep);
         }
 
         beginTest("factory_presets_round_trip_through_wrapped_patch_state");
@@ -425,7 +397,7 @@ public:
             source.getValueTreeState().getParameter(coolsynth::parameters::ids::delayMix)->setValueNotifyingHost(0.61f);
             target.getValueTreeState().getParameter(coolsynth::parameters::ids::delayMix)->setValueNotifyingHost(0.12f);
             const std::array<coolsynth::midi::LearnedCcBinding, 1> targetBindings {{
-                { coolsynth::parameters::ids::oscAWave, { 3, 70 } }
+                { "pA.g1.type", { 3, 70 } }
             }};
             target.setLearnedMidiBindings(targetBindings);
 

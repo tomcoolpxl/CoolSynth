@@ -244,6 +244,15 @@ mono, legato, unison with count 2 to 8 and detune cents and stereo spread), key 
 polyphony cap and a per-part cap so two parts share the pool of 16 fairly (each part is
 guaranteed its cap, default 8 and 8; a part may be set to 16 when the other is Off).
 
+Shipped (phase 1.4a, 2026-11-13): `Part` holds 16 voices at twice the host rate with a fixed
+headroom of 0.5 and one decimator. Poly allocation: a sounding key reuses its voice, then the
+least recently used silent voice, the quietest released, the quietest pedal-held, the oldest
+held; voices above the polyphony limit finish and rest. Mono and legato play from a note stack
+with last, low or high priority and return to held keys; unison stacks 2 to 8 voices spread in
+pitch and pan; glide may be limited to overlapping keys. All Sound Off silences at once,
+decimator memory and effect tails included. The arpeggiator is reused with its merge rules.
+Per-part caps and the shared pool arrive with parts in phase 7.2.
+
 ## 7. Parts
 
 A part is one complete patch: three generator slots, three processor slots, local and global
@@ -304,6 +313,11 @@ and `applySlotTargets` pushes a slot's targets into its `SlotBase`. Parameter ve
 requires. The patch XML stores every parameter by ID plus the chord-memory learned chord and the
 step shapes. Presets are authored in YAML with the same IDs, grouped by slot:
 
+Shipped (phase 1.4, 2026-11-13): processor state format 9 and patch format 8; older state is
+rejected. The patch and state loader validates against every parameter the processor
+registers (each known ID exactly once, unknown IDs ignored), not against a static list, so
+part parameters built from slot paths round-trip like the fixed ones.
+
 ```
 name: Reese
 room: Main Stage
@@ -349,12 +363,13 @@ The V2 suites stay and are ported to the new parameter struct. New suites:
   preset loads, every slot type appears in at least one preset).
 - Performance: the cost-12 patch at 16 voices, printed per run.
 
-## 12. UI consequences (parked)
+## 12. UI consequences (designed last)
 
-The editor needs, at minimum to audition: a type menu per slot, eight generic knobs per slot
-relabelled from the descriptor, an envelope and LFO panel, a matrix page as a table, a part
-selector, and the effect chain as six type menus. The existing `SynthSection`, knob and fader
-components are reused. The full redesign stays parked.
+The real UI is designed after the engine, presets and arpeggiator are finished (plan phase 9),
+as a condensed view of everything the engine can do. Until then the UI is throwaway: since phase
+1.4 the processor shows JUCE's generic editor, in which every parameter is a slider whose name
+and text come from the descriptor of its slot's current type, so parameter names, units and
+groups must stay clean. Nothing UI-specific is built before phase 9.
 
 ## 13. Migration from V2
 

@@ -42,6 +42,8 @@ namespace coolsynth::synth::v3
 
         juce::AudioBuffer<float> stereo(work.getArrayOfWritePointers(), 2, n);
         part->render(stereo.getWritePointer(0), stereo.getWritePointer(1), n, events, settings.part, transport);
+        if (part->consumeSoundOff())
+            fxRack.clear();
 
         fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, settings.delay, settings.reverb, settings.compressor);
 

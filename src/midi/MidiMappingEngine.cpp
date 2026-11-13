@@ -107,8 +107,12 @@ namespace coolsynth::midi
                     if (event.data2 == 64)
                         return std::nullopt;
 
-                    const int steps = juce::jmax(2, parameter.getNumSteps());
-                    const float stepSize = 1.0f / static_cast<float>(steps - 1);
+                    // A continuous parameter reports a huge step count, which would make a detent
+                    // move nothing; there one detent moves 1/64 of the range instead.
+                    const int parameterSteps = parameter.getNumSteps();
+                    const float stepSize = parameterSteps > 128
+                        ? 1.0f / 64.0f
+                        : 1.0f / static_cast<float>(juce::jmax(2, parameterSteps) - 1);
                     const float delta = event.data2 > 64 ? stepSize : -stepSize;
                     const float currentValue = parameter.getValue();
                     const float nextValue = juce::jlimit(0.0f, 1.0f, currentValue + delta);

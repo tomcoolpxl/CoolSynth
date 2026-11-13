@@ -18,10 +18,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    `tests/V3ProcessorTests.cpp`.
 9. Phase 1.3 done 2026-11-13: `src/synth/v3/Voice.h/.cpp`, `OffModules.h`, `DspMath.h` and
    `tests/V3VoiceTests.cpp`; the VA generator, ladder and envelope rebuilt from first principles.
-10. Phase 1.4: `Part` and `EngineV3` designed fresh: a new allocator with per-patch and per-part
-   caps, fixed voice headroom, the oversampled bus and decimator; switch the processor over,
-   delete the V2 engine with its poly-mod and Vintage parameters, keep only the V2 tests that
-   still describe wanted behaviour.
+10. Phase 1.4 done 2026-11-13: `Part`, `EngineV3`, `PartParameters`, the processor on V3, the
+   generic editor, the V2 engine, editor and bank deleted, tests ported (`EngineTestAdapter.h`).
+11. Phase 1.5: v3 preset pipeline: YAML by slot and descriptor key, a generator writing the
+   table, the loudness tool on the new table; author Workshop, Studio 1982, Engine Room and Reese.
+12. Phase 2.1: LFO class (local and global, sync, shapes), then the matrix (2.2).
 
 ## Carried over from the V2 backlog
 
@@ -46,6 +47,10 @@ Absorbed into V3 (do not do them on V2):
   the arpeggiator itself carries into V3 unchanged.
 
 ## Standing notes
+
+- UI comes last (plan phase 9). Until then only throwaway UI: the generic editor. In the
+  standalone the MiniLab knobs do nothing until then (their mapping lived in the V2 editor);
+  notes work, devices are chosen in JUCE's audio and MIDI settings.
 
 - Supersaw must exist by the end of the project: see the done criteria at the end of
   `IMPLEMENTATION_PLAN_V3.md`. The VA generator unison from phase 1.1 is the base; the JP-8000

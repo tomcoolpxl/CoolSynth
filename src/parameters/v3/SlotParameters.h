@@ -58,10 +58,12 @@ namespace coolsynth::parameters::v3
     class GenericSlotParameter final : public juce::AudioParameterFloat
     {
     public:
+        /** The default value is the default of this parameter for the slot's default type. */
         GenericSlotParameter(const juce::ParameterID& parameterId,
                              int zeroBasedIndex,
                              coolsynth::synth::v3::SlotTypeTable typeTable,
-                             const juce::AudioParameterChoice& typeParameter);
+                             const juce::AudioParameterChoice& typeParameter,
+                             int defaultType = 0);
 
         juce::String getName(int maximumStringLength) const override;
         juce::String getText(float normalisedValue, int maximumStringLength) const override;
@@ -79,7 +81,8 @@ namespace coolsynth::parameters::v3
     /** Builds the parameter group of one slot: type, p1..p8 and, for generators, the fixed parameters. */
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makeSlotGroup(const SlotPath& path,
                                                                                     coolsynth::synth::v3::SlotTypeTable typeTable,
-                                                                                    const juce::String& groupName);
+                                                                                    const juce::String& groupName,
+                                                                                    int defaultType = 0);
 
     /** Number of parameters makeSlotGroup() creates for a kind. */
     [[nodiscard]] int parameterCountForKind(SlotKind kind) noexcept;
