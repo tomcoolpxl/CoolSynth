@@ -85,7 +85,8 @@ Shipped (phase 6.1, 2026-11-13): `StringGenerator` ("String") in
 `src/synth/v3/StringGenerator.h`, generator type 6: Karplus-Strong after Jaffe and Smith. A
 delay line of one period less the loop low-pass's phase delay, Hermite-read; Decay as the 60 dB
 time, Damping, Pick as a cutoff in harmonics, Pick Position as an output comb, Release Damp on
-key-up, noise or click excitation. Slots gained the optional module hooks `noteOff()` and
+key-up, noise or click excitation (the click is a smooth pulse up to half a period wide, a
+finger's pluck: decision D101). Slots gained the optional module hooks `noteOff()` and
 `strike()` (decisions D58, D59).
 
 Shipped (phase 6.2, 2026-11-13): `ModalGenerator` ("Modal") in

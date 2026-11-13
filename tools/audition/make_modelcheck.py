@@ -41,6 +41,15 @@ CHECKS = [
         "changed": "Plucked near the middle of the string instead of a fifth of the way along (the recordings show weak even "
                    "harmonics); the bass strings now ring longer than the treble.",
     },
+    {
+        "id": "harp2", "title": "Harp String, second try", "preset": "Greenhouse: Harp String", "spacing": 2.0,
+        "folder": "VCSL/Chordophones/Composite Chordophones/Concert Harp", "words": ["mf"],
+        "notes": ["A2", "E3", "G3", "B3", "D4", "F4", "A4", "C5", "E5"],
+        "changed": "\"Before\" is the version you found not close. The pluck was a burst of bright noise: its harmonics up to the "
+                   "tenth were 10 to 30 dB stronger than the recorded harp's. It is now the smooth pulse of a finger's pad, softer "
+                   "the higher the string: the first harmonics are within a decibel or two of the recording's, the bass rings "
+                   "longer, and a breath of finger noise starts each note.",
+    },
 ]
 
 

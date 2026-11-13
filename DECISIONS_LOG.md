@@ -1467,3 +1467,33 @@ and played level-matched layers through an envelope that gave them 6 dB of dynam
   are in tune within 5 cents in the middle of each style, and no file peaks above -1.5 dB.
 - The library after the rebuild: 2,216 zones in 76 styles, 2,213 files, 1,393 MB;
   `verify_library.py` compared 2,213 files with their recordings, none different.
+
+## D101. Harp String, second try: a finger's pluck (2026-11-13)
+
+The user found neither version of Harp String close to the recorded harp (D94). Measured
+harmonic by harmonic against the same recording (VCSL Concert Harp, nine notes A2 to E5), the
+reason is plain: the recorded harp is dark, mostly its fundamental and third harmonic, its
+sixth to tenth harmonics 30 to 80 dB down, with almost nothing above the twelfth even in the
+attack. The preset's pluck was a burst of low-passed noise: at its brightness setting the
+harmonics up to the tenth were within 20 dB of the strongest, different on every note, and
+nearly all of the first 30 ms lay above the twelfth harmonic. The pluck position and decay
+corrected in D91 were not what was wrong.
+
+- **Harp String uses the string generator's Click excitation, a smooth pulse, made wider:
+  half a period at Pick 0, a twentieth at Pick 1, at equal energy (taken, recommended).** A
+  raised-cosine pulse a quarter to half a period wide has the recorded harp's fall of
+  harmonics. No preset used Click, so nothing else changes; the pulse was at most a quarter
+  period wide before.
+- Keep the noise pluck and give it a steeper filter: it would change what Pick means for every
+  string preset, and a noise pluck is still different on every note, which a finger is not.
+- Drop the model and point the preset at the recorded Folk Harp: the Greenhouse is the room
+  of modelled instruments, and the Conservatory already has the recording.
+- The preset: Pick 0.3 at middle C, falling with the key (the recording's pluck is softer the
+  higher the string), rising a little with velocity; Pick Position 0.44; Damping 0.3; Decay
+  8 s at middle C, longer in the bass (key to Decay -0.5); a 12 ms breath of noise for the
+  finger. Against the recording the first, third and fifth harmonics are now within 1 dB in
+  the middle of the nine notes (11.5 dB before), and their levels a second later within 5 dB
+  (10 dB before). Still different: the recording has more above the twelfth harmonic in its
+  first 30 ms (by 3 to 17 dB), and its upper harmonics beat.
+- It is on the audition page as "Harp String, second try": the recording, the version the
+  user rejected, and this one. The user's ear decides.

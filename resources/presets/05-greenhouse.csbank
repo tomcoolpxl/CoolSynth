@@ -63,17 +63,23 @@ master = -0
 
 [Harp String]
 room = Greenhouse
-# A bright string plucked near its middle, where a harpist plucks, so the even harmonics stay
-# quiet. It rings for seconds while the key is held, longer in the bass; letting go lays a hand
-# on it. Harder playing plucks brighter.
-g1 = String decay=5 damp=0.22 pick=0.8 pos=0.45 release=0.75 level=0.9
+# A string plucked near its middle with the pad of a finger, as a harpist plucks: a round, dark
+# note, mostly its fundamental and third harmonic, with a breath of finger noise at the start.
+# Set from a recorded concert harp: the pluck is softer the higher the string, the bass rings
+# for a quarter of a minute and the treble for a few seconds. Letting go lays a hand on the
+# string; harder playing plucks a little brighter.
+g1 = String decay=8 damp=0.3 pick=0.3 pos=0.44 release=0.75 level=0.9 excite=click
+g2 = Noise type=white tone=0.5 level=0
 p1 = Off
 env1 = attack=1 decay=16000 sustain=0 release=450 velocity=0.5
-mod = src=velocity dst=g1.pick amount=0.2
-mod = src=key dst=g1.decay amount=-0.4
+env3 = attack=0.5 decay=12 sustain=0 release=12
+mod = src=env3 dst=g2.level amount=0.25
+mod = src=velocity dst=g1.pick amount=0.15
+mod = src=key dst=g1.decay amount=-0.5
+mod = src=key dst=g1.pick amount=-1
 voice = env2ToP1=0 drift=1
 reverb = on size=0.6 damping=0.4 mix=0.25 predelay=15
-master = 5.5
+master = -1
 
 [Marimba]
 room = Greenhouse

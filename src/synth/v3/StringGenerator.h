@@ -23,9 +23,13 @@
     damping; the read is a 4-point Hermite one and the length ramps per sample, so bends, glides
     and vibrato do not click.
 
-    A pluck injects one period of excitation into the loop: noise through a low-pass whose cutoff
-    is counted in harmonics of the note (Pick: 1.5 harmonics, soft, to 40, bright), or a short
-    click. Pick Position is a comb on the output, the same filter as
+    A pluck injects one period of excitation into the loop. Noise: through a low-pass whose
+    cutoff is counted in harmonics of the note (Pick: 1.5 harmonics, soft, to 40, bright); every
+    pluck is a little different and has a breath of noise in it, a plectrum or a nail. Click: one
+    smooth pulse, half a period wide at Pick 0 and a twentieth at Pick 1; its harmonics fall
+    away steeply and the same way every time, the pad of a finger. A recorded harp's first ten
+    harmonics match the wide pulse within a few decibels and are 20 to 60 dB under the noise
+    pluck's (decision D101). Pick Position is a comb on the output, the same filter as
     plucking the string at that share of its length: at 0.5 the even harmonics vanish. When the
     key goes up, Release shortens the decay (0 lets it ring, 1 stops it in 30 ms), the damper of
     a harp or a hand on the strings. A retriggered note plucks the ringing string again instead
@@ -178,11 +182,12 @@ namespace coolsynth::synth::v3
                     const int index = exciteTotal - exciteRemaining;
                     if (click)
                     {
-                        // A raised-cosine pulse over the first eighth of the period (narrower when Pick is bright).
-                        const float width = std::max(4.0f, static_cast<float>(exciteTotal) * (0.25f - 0.2f * pickAmount));
+                        // A raised-cosine pulse: half the period wide at Pick 0 (a finger's pad), a twentieth at Pick 1.
+                        const float share = 0.5f - 0.45f * pickAmount;
+                        const float width = std::max(4.0f, static_cast<float>(exciteTotal) * share);
                         const float x = static_cast<float>(index) / width;
-                        // Twice full scale: a narrow pulse carries far less energy than a period of noise.
-                        excite = x < 1.0f ? 2.0f * (0.5f - 0.5f * std::cos(juce::MathConstants<float>::twoPi * x)) : 0.0f;
+                        // The narrower the pulse the taller, so Pick changes colour and not loudness: equal energy.
+                        excite = x < 1.0f ? (0.5f - 0.5f * std::cos(juce::MathConstants<float>::twoPi * x)) / std::sqrt(share) : 0.0f;
                     }
                     else
                     {

@@ -175,7 +175,7 @@ Signature: percussive attacks, inharmonic or sine-rich decays, no sustain, organ
 | 3 | Kalimba | Thumb pluck with a click | KS pluck, damping high; NOISE click 5 ms | KS | PH |
 | 4 | Rain Chime | Random high sine plucks | VA sine 2' + tri; amp D300; ARP random 1/16 chance 0.5 over 3 octaves; DELAY; PLATE | none | Now |
 | 5 | Crystal Pluck | Bright saw pluck | VA saw + pulse 4'; LP4 env fast D180 res 0.3, key tracking full; PLATE | none | Now |
-| 6 | Harp String | Plucked string, bright pick | KS pick position 0.2; release damps | KS | PH |
+| 6 | Harp String | Plucked string, a finger's dark pluck (D101) | KS smooth-pulse pluck near the middle; release damps | KS | PH |
 
 ### Basement (dark industrial, techno)
 

@@ -82,7 +82,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - measure the physical-model presets against real recordings, and classic synth references;
     - three insert slots per part (the rack stays as the master): done, D93;
     - a granular effect as an insert type;
-    - Harp String: the user found neither version close to the recording (D94);
+    - Harp String: the user found neither version close to the recording (D94); redone as a
+      finger's pluck (D101), on the audition page for a verdict;
     - after the user's picks: key zones in the sample generator, sample files beside the plugin
       at the best quality, install options;
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each
