@@ -95,14 +95,22 @@ public:
     uint64_t getDroppedMappedControllerEventCount() const noexcept
         { return droppedMappedControllerEventCount.load(std::memory_order_relaxed); }
 
-    void flushMappedControllerEventsSync() { dispatchPendingMappedControllerEvents(); }
+    void flushMappedControllerEventsSync()
+    {
+        dispatchPendingMappedControllerEvents();
+        applyPendingLearnedChord();
+    }
 
 private:
     class PluginMappedActionAsyncBridge : public juce::AsyncUpdater
     {
     public:
         explicit PluginMappedActionAsyncBridge(SynthAudioProcessor& o) : owner(o) {}
-        void handleAsyncUpdate() override { owner.dispatchPendingMappedControllerEvents(); }
+        void handleAsyncUpdate() override
+        {
+            owner.dispatchPendingMappedControllerEvents();
+            owner.applyPendingLearnedChord();
+        }
     private:
         SynthAudioProcessor& owner;
     };
@@ -113,6 +121,8 @@ private:
     void enqueuePluginMappedControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept;
     int drainPendingMappedControllerEvents(coolsynth::midi::ControllerMidiEvent* destination, int maxEvents) noexcept;
     void dispatchPendingMappedControllerEvents();
+    /** Message thread: writes a chord the engine learned into the chord parameters and ends learning. */
+    void applyPendingLearnedChord();
     std::unique_ptr<juce::XmlElement> createProcessorStateXml() const;
     std::vector<coolsynth::midi::LearnedCcBinding> parseLearnedMidiBindingsXml(const juce::XmlElement& parent) const;
     void applyMappedAction(const coolsynth::midi::MappedAction& action);
@@ -150,6 +160,7 @@ private:
     juce::AbstractFifo pendingPluginMappedControllerEventQueue { static_cast<int> (pendingPluginMappedControllerEvents.size()) };
     std::atomic<uint64_t> droppedControllerEventCount { 0 };
     std::atomic<uint64_t> droppedMappedControllerEventCount { 0 };
+    std::atomic<std::uint32_t> pendingLearnedChord { 0 }; // packed by the audio thread, applied on the message thread
     coolsynth::plugin::ProcessorScopeFifo scopeFifo;
     std::vector<float> monoMixScratch;
     PluginMappedActionAsyncBridge mappedActionBridge;

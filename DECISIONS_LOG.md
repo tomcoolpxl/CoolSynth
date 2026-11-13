@@ -835,3 +835,77 @@ Scott Lindroth), which also warns that some sets only sound right in their own r
 Both are held at the tool's peak ceiling, as plucks are. The loudness tool moved three presets
 with random elements by half a decibel when the two new ones changed the order of its random
 numbers; those three were put back.
+
+## D65. Where chord memory sits and how it keeps track (2026-11-13, phase 7.1)
+
+- **A stage of its own in front of the arpeggiator that rewrites one chunk's events: every key
+  remembers the notes it started, and a count per note says how many keys hold it (taken,
+  recommended).** A release ends exactly what that key started, even if the chord type changed
+  while it was down or chord memory was switched off; a note two keys share is struck again by
+  the second and ends with the last. The arpeggiator, the play modes and the allocator are
+  untouched: they see keys.
+- Expanding inside the allocator. Fewer events, but the arp would not see the chord, which the
+  requirement asks for, and mono and unison would each need their own chord handling.
+- **The global envelope still follows the keys as played (taken).** The part merges three
+  streams in time order (arp steps, chord notes, played keys); a key is tracked just before the
+  first event it caused. With chord memory off the order of every call is what it was (the
+  existing note-layer tests pass unchanged). Alternative: let the envelope follow the chord's
+  notes, which with "every note" and a strum would restart it on every strummed note.
+- **A key struck again without a release keeps the notes both chords share and lets the others
+  go (taken).** With chord memory off that is one note-on, as before.
+
+## D66. The twelve chord types (2026-11-13, phase 7.1)
+
+Checked online: Plaits' chord table (pichenettes/eurorack, `plaits/dsp/chords/chord_bank.cc`)
+is Octave, Fifth, sus4, m, m7, m9, m11, 6/9, M9, M7, M, each as four notes; its alternative
+table adds 6th, dominant 7th and diminished chords.
+
+- **Octave, Fifth (root, fifth, octave), Major, Minor, Sus2, Sus4, Major 7, Minor 7,
+  Dominant 7, Major 9, Minor 9, Minor 11, in close position with every chord tone (taken,
+  recommended).** Plaits' eleven without 6/9, plus Sus2 (the Chord Trigger recipe asks for it)
+  and Dominant 7 (the one basic seventh chord its main table lacks). Triads are three notes, not
+  four with the octave: the arp's octave range adds octaves, and a chip arpeggio wants three.
+- Plaits' table as it is. Its four-note voicings drop the fifth from the ninths and suit an
+  oscillator; a keyboard chord memory is expected to play the whole chord.
+- More types (6th, 6/9, diminished, augmented). The requirement says twelve; the learned chord
+  covers the rest.
+
+## D67. Strum (2026-11-13, phase 7.1)
+
+- **One time, from each note to the next, -200 to 200 ms: positive strums from the bottom up,
+  negative from the top down (taken, recommended).** One parameter gives both directions.
+  Notes still waiting when the key goes up never sound. Strummed notes reach the arp as they
+  arrive.
+- A strum time and a separate direction choice (up, down, alternating). One more parameter for
+  one more mode.
+- A total strum time divided over the notes. A six-note chord would then strum faster per note
+  than a triad.
+
+## D68. The learned chord (2026-11-13, phase 7.1)
+
+- **The learned chord is five parameters, `pA.chord.n1` to `n5`: semitones above the played
+  key, up to 36, 0 unused (taken, recommended).** Presets and bank files can carry it, the state
+  saves it like any parameter, and the host can automate it; nothing extra in the patch format
+  (the design note about storing it beside the parameters is superseded).
+- A list kept outside the parameters. No limit on size, but a second kind of state to save,
+  validate and undo.
+- **Learning is a switch, `pA.chord.learn` (taken).** While it is on, keys play plain notes and
+  are collected on the audio thread; when the last key goes up the lowest becomes the root, up
+  to five others within three octaves become the intervals, and the message thread writes them,
+  selects Learned and switches Learn off (through the processor's existing async bridge). The
+  real UI can drive the same switch. Alternative: learning only as an editor function, which
+  the throwaway UI does not have.
+
+## D69. Phase 7.1 presets (2026-11-13, phase 7.1)
+
+- **Chip Chord: a square wave, mono, Major, arp up at 1/32 with gate 1 (taken).**
+- **Chord Trigger: Sus2 through the arp up and down over two octaves in eighths, a plucked saw
+  and pulse under a ladder, ping-pong dotted-eighth echo (taken).** Its own level was raised
+  (generator levels, a little sustain) after the tool wanted more than the master's +6 dB.
+- **Future Chord gets `chord = type=minor7`: one key now plays what the recipe describes
+  (taken).**
+- **The loudness tool plays one key instead of its four-note chord when chord memory is on
+  (taken).** Otherwise it would measure sixteen notes and turn the preset down too far.
+
+The tool again moved four presets with random elements by up to 1.5 dB (Rain Chime, Random
+Walk, Furnace Drone, Riser); they were put back, as in phase 6.2.

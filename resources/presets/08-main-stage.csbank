@@ -98,17 +98,18 @@ master = 4.5
 
 [Future Chord]
 room = Main Stage
-# A wide stack of four soft wavetable voices that ducks on every quarter note and swells back,
-# the sidechain pump of future bass, chorused and brightened. Play a chord; the one-key minor
-# seventh arrives with chord memory in phase 7.1.
+# One key plays a minor seventh chord: a wide stack of four soft wavetable voices on each of its
+# notes, ducking on every quarter note and swelling back, the sidechain pump of future bass,
+# chorused and brightened.
 g1 = Wavetable table=classic pos=0.45 unison=4 detune=22 spread=1 level=0.85
 p1 = SVF mode=lp cutoff=3200 res=0.15 key=0.4
 env1 = attack=8 decay=700 sustain=0.75 release=450 velocity=0.4
 env2 = attack=5 decay=500 sustain=0.3 release=400
 mod = src=env2 dst=p1.cutoff amount=0.15
 voice = env2ToP1=0 drift=2
+chord = type=minor7
 chorus = on rate=0.35 depth=0.45 mix=0.35
 reverb = on size=0.6 damping=0.45 mix=0.22 predelay=20 lowcut=150
 eq = on low=-1 tilt=0 high=2.5
 pump = on depth=0.6 division=1/4 release=0.55
-master = -0.5
+master = -1

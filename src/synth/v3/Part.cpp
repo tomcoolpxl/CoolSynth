@@ -26,6 +26,11 @@ namespace coolsynth::synth::v3
         stepModulator.prepare(voiceRate);
         chaos.prepare(voiceRate, seed ^ 0xC4A05000u);
         arpeggiator.prepare(hostRate);
+        chordMemory.prepare(hostRate);
+        const auto chordCapacity = static_cast<std::size_t>(ChordMemory::maxEventsPerInput * coolsynth::synth::maxEngineEventsPerBlock
+                                                            + ChordMemory::maxPending);
+        chordEvents.assign(chordCapacity, {});
+        chordInputsBefore.assign(chordCapacity, 0);
 
         // The polyphase decimator has a short, fixed group delay: measure it once with an impulse.
         HalfBandDecimator2x probe;
@@ -51,6 +56,7 @@ namespace coolsynth::synth::v3
             v.kill();
         state.fill({});
         heldCount = 0;
+        chordMemory.reset();
         arpeggiator.panic();
         decimatorLeft.reset();
         decimatorRight.reset();
@@ -221,9 +227,13 @@ namespace coolsynth::synth::v3
         }
         previousArpEnabled = arpEnabled;
 
+        // Chord memory first: from here on the notes are what the keys play, offsets relative to the chunk.
+        const int chordCount = chordMemory.process(events, offsetBase, n, settings.chord, chordEvents, chordInputsBefore);
+        const std::span<const EngineMidiEvent> played(chordEvents.data(), static_cast<std::size_t>(chordCount));
+
         // Note-ons reach the arp before it generates this block's steps, note-offs after.
         if (arpEnabled)
-            for (const auto& event : events)
+            for (const auto& event : played)
                 if (event.type == EngineMidiEventType::noteOn)
                     arpeggiator.onNoteOn(static_cast<int>(event.noteNumber), std::clamp(event.value, 0.0f, 1.0f));
 
@@ -232,7 +242,7 @@ namespace coolsynth::synth::v3
 
         if (arpEnabled)
         {
-            for (const auto& event : events)
+            for (const auto& event : played)
             {
                 switch (event.type)
                 {
@@ -250,18 +260,25 @@ namespace coolsynth::synth::v3
             }
         }
 
+        // Three streams in time order: the arp's steps, what chord memory plays, and the keys as
+        // played, which only the global envelope follows. A key is tracked just before the first
+        // event it caused, or at its own offset if it caused none.
         int rendered = 0;
-        std::size_t midiIndex = 0;
+        std::size_t keyIndex = 0;
+        int chordIndex = 0;
         int arpIndex = 0;
-        while (midiIndex < events.size() || arpIndex < arpCount)
+        while (keyIndex < events.size() || chordIndex < chordCount || arpIndex < arpCount)
         {
-            const int midiOffset = midiIndex < events.size()
-                ? std::clamp(events[midiIndex].sampleOffset - offsetBase, 0, n - 1)
+            const int keyOffset = keyIndex < events.size()
+                ? std::clamp(events[keyIndex].sampleOffset - offsetBase, 0, n - 1)
+                : std::numeric_limits<int>::max();
+            const int chordOffset = chordIndex < chordCount
+                ? std::clamp(chordEvents[static_cast<std::size_t>(chordIndex)].sampleOffset, 0, n - 1)
                 : std::numeric_limits<int>::max();
             const int arpOffset = arpIndex < arpCount
                 ? std::clamp(arpEvents[static_cast<std::size_t>(arpIndex)].sampleOffset, 0, n)
                 : std::numeric_limits<int>::max();
-            const int next = std::min(midiOffset, arpOffset);
+            const int next = std::min({ keyOffset, chordOffset, arpOffset });
             if (next >= n)
                 break;
 
@@ -278,13 +295,19 @@ namespace coolsynth::synth::v3
                 ++arpIndex;
             }
 
-            if (midiOffset == next && midiIndex < events.size())
+            if (chordOffset == next)
             {
-                const auto& event = events[midiIndex++];
-                trackKeys(event, settings);
+                const auto readBefore = static_cast<std::size_t>(chordInputsBefore[static_cast<std::size_t>(chordIndex)]);
+                while (keyIndex < std::min(readBefore, events.size()))
+                    trackKeys(events[keyIndex++], settings);
+                const auto& event = chordEvents[static_cast<std::size_t>(chordIndex++)];
                 const bool isNote = event.type == EngineMidiEventType::noteOn || event.type == EngineMidiEventType::noteOff;
                 if (! (arpEnabled && isNote)) // the arp already has it
                     handleEvent(event, settings);
+            }
+            else if (keyOffset == next)
+            {
+                trackKeys(events[keyIndex++], settings);
             }
         }
 

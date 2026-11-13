@@ -47,6 +47,8 @@ namespace coolsynth::synth::v3
         void panic() noexcept;
 
         [[nodiscard]] int getLatencySamples() const noexcept { return part->latencySamples(); }
+        /** The chord a part just learned, packed (see packLearnedChord), or 0. Audio thread; reading clears it. */
+        [[nodiscard]] std::uint32_t consumeLearnedChord() noexcept { return part->consumeLearnedChord(); }
         [[nodiscard]] Part& partForTesting() noexcept { return *part; }
 
         /** Above 0.8 the output bends into a tanh knee and never passes 1. */

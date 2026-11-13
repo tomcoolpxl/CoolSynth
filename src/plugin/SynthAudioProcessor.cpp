@@ -250,6 +250,13 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                        makeEngineSettings(),
                        transportInfo);
 
+    // A chord learned from the keys becomes parameter values on the message thread.
+    if (const auto learned = synthEngine.consumeLearnedChord(); learned != 0)
+    {
+        pendingLearnedChord.store(learned, std::memory_order_release);
+        mappedActionBridge.triggerAsyncUpdate();
+    }
+
     const int numSamples = buffer.getNumSamples();
     if (buffer.getNumChannels() >= 2 && numSamples <= static_cast<int>(monoMixScratch.size()))
     {
@@ -733,6 +740,32 @@ void SynthAudioProcessor::dispatchPendingMappedControllerEvents()
             applyMappedAction(action);
         }
     }
+}
+
+void SynthAudioProcessor::applyPendingLearnedChord()
+{
+    const auto packed = pendingLearnedChord.exchange(0, std::memory_order_acq_rel);
+    if (packed == 0)
+        return;
+
+    namespace pv3 = coolsynth::parameters::v3;
+    namespace sv3 = coolsynth::synth::v3;
+    const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
+    auto set = [this](const juce::String& id, float plainValue)
+    {
+        if (auto* parameter = parameters.getParameter(id))
+        {
+            parameter->beginChangeGesture();
+            parameter->setValueNotifyingHost(parameter->convertTo0to1(plainValue));
+            parameter->endChangeGesture();
+        }
+    };
+
+    const auto intervals = sv3::unpackLearnedChord(packed);
+    for (std::size_t i = 0; i < intervals.size(); ++i)
+        set(pv3::chordParameterId(pv3::Part::a, "n" + juce::String(static_cast<int>(i) + 1)), static_cast<float>(intervals[i]));
+    set(pv3::chordParameterId(pv3::Part::a, "type"), static_cast<float>(sv3::chordType::learned));
+    set(pv3::chordParameterId(pv3::Part::a, "learn"), 0.0f);
 }
 
 void SynthAudioProcessor::applyMappedAction(const coolsynth::midi::MappedAction& action)

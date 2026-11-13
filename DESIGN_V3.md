@@ -358,6 +358,15 @@ pitch and pan; glide may be limited to overlapping keys. All Sound Off silences 
 decimator memory and effect tails included. The arpeggiator is reused with its merge rules.
 Per-part caps and the shared pool arrive with parts in phase 7.2.
 
+Shipped (phase 7.1, 2026-11-13): `ChordMemory` in `src/synth/v3/ChordMemory.h`, the first stage
+of the note layer. Twelve chord types and a learned chord of up to six notes, strum from note to
+note (negative downwards), per-key memory of what was started and a holder count per note.
+Parameters `pA.chord.type`, `strum`, `n1` to `n5` (the learned chord, so it is saved and
+automated like everything else) and `learn`; a chord played while Learn is on is collected on
+the audio thread and written to the parameters on the message thread. The part merges the arp's
+steps, the chord's notes and the played keys in time order; the global envelope follows the
+played keys (decisions D65 to D68).
+
 ## 7. Parts
 
 A part is one complete patch: three generator slots, three processor slots, local and global

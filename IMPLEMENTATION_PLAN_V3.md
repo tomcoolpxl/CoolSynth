@@ -180,7 +180,7 @@ Marimba, Bedroom Dusty Mallet. Shipped 2026-11-13 with both (decisions D61 to D6
 
 7.1 Chord memory. Chord types, learned chord, strum, feeding the arpeggiator. Tests: chord
 through arp ordering. Ships: Arcade Chip Chord, Clock Tower Chord Trigger, Main Stage Future
-Chord.
+Chord. Shipped 2026-11-13 with all three (decisions D65 to D69).
 
 7.2 Parts. Second part, part mix, modes, per-part caps, per-part inserts, part selector in the
 audition UI, state for both parts. Tests: layer and split allocation, caps, state round trip.

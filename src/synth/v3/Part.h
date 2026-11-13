@@ -7,15 +7,17 @@
 
 #include "synth/Arpeggiator.h"
 #include "synth/HalfBand2x.h"
+#include "ChordMemory.h"
 #include "GlobalModulators.h"
 #include "Voice.h"
 
 /*
     V3 part (DESIGN_V3.md sections 6 and 7): one patch playing on a pool of voices.
 
-    The note layer runs in this order: the arpeggiator (reused unchanged, with the rule that a
-    note-on is absorbed before steps are generated and a note-off after, so a tap shorter than a
-    block still fires), then the play mode, then the allocator. Voices render at twice the host
+    The note layer runs in this order: chord memory (one key plays a chord, see ChordMemory.h),
+    the arpeggiator (reused unchanged, with the rule that a note-on is absorbed before steps are
+    generated and a note-off after, so a tap shorter than a block still fires), then the play
+    mode, then the allocator. Voices render at twice the host
     rate into one bus with a fixed headroom, so a held note never changes level when others join;
     the bus is decimated once per part.
 
@@ -31,7 +33,7 @@
     The global LFOs, the step modulator, the chaos source and the smoothed macros run whether or
     not anything sounds, one value per voice sub-block; the LFOs and the step modulator restart
     at the first note after silence. The global envelope's gate follows the keys as played,
-    before the arpeggiator: it opens with the first key of a phrase (or every key) and closes when
+    before chord memory and the arpeggiator: it opens with the first key of a phrase (or every key) and closes when
     the last key and the pedal are up and no latched arp notes remain. Synced, its times are
     written as at 120 BPM and scale with the tempo. Tempo is the host's when it reports one, otherwise
     the arpeggiator's internal tempo, so the arp and synced LFOs always agree.
@@ -68,6 +70,7 @@ namespace coolsynth::synth::v3
         StepSettings step {};
         std::array<float, macroCount> macros {};
         float chaosRateHz = 0.5f;
+        ChordSettings chord {};
         ArpParametersV2 arp {};
     };
 
@@ -109,6 +112,9 @@ namespace coolsynth::synth::v3
             return started;
         }
 
+        /** The chord just learned, packed (see packLearnedChord), or 0. Audio thread; reading clears it. */
+        [[nodiscard]] std::uint32_t consumeLearnedChord() noexcept { return chordMemory.consumeLearned(); }
+
         /** Host samples between a note event and its sound: decimator plus generator delay. */
         [[nodiscard]] int latencySamples() const noexcept { return decimatorLatency + generatorLatency; }
 
@@ -119,6 +125,7 @@ namespace coolsynth::synth::v3
         [[nodiscard]] float bendSemitonesForTesting() const noexcept { return globals.bendSemitones; }
         [[nodiscard]] int heldNoteCountForTesting() const noexcept { return heldCount; }
         [[nodiscard]] int lastPlayedNoteForTesting() const noexcept { return lastNote; }
+        [[nodiscard]] const ChordMemory& chordMemoryForTesting() const noexcept { return chordMemory; }
         [[nodiscard]] int arpHeldNoteCountForTesting() const noexcept { return arpeggiator.getHeldNoteCountForTesting(); }
         [[nodiscard]] int arpLatchedNoteCountForTesting() const noexcept { return arpeggiator.getLatchedNoteCountForTesting(); }
         [[nodiscard]] int arpRingingNoteCountForTesting() const noexcept { return arpeggiator.getRingingNoteCountForTesting(); }
@@ -179,6 +186,9 @@ namespace coolsynth::synth::v3
 
         std::vector<float> busLeft, busRight;
         HalfBandDecimator2x decimatorLeft, decimatorRight;
+        ChordMemory chordMemory;
+        std::vector<EngineMidiEvent> chordEvents;     // one chunk's events after chord memory
+        std::vector<std::uint16_t> chordInputsBefore; // per chord event: the played events read by then
         Arpeggiator arpeggiator;
         VoiceGlobals globals;
         std::array<Lfo, globalLfoCount> globalLfos;

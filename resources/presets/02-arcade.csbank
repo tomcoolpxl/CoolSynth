@@ -61,3 +61,16 @@ voice = env2ToP1=0 glide=30
 play = mode=legato
 delay = on time=120 feedback=0 mix=0.18
 master = -1
+
+[Chip Chord]
+room = Arcade
+# One key plays a major triad and the arp runs up it at 1/32, the way a three-voice sound chip
+# faked a chord: a square wave, no filter, each step held until the next.
+g1 = VA shape=pulse pw=0.5 rand=0 level=0.75
+p1 = Off
+env1 = attack=1 decay=1 sustain=1 release=15
+voice = env2ToP1=0
+play = mode=mono
+chord = type=major
+arp = on rate=1/32 pattern=up octaves=1 gate=1
+master = -7

@@ -241,6 +241,19 @@ namespace coolsynth::parameters::v3
 
     juce::String voiceParameterId(Part part, const char* field) { return partPrefix(part) + ".voice." + field; }
     juce::String playParameterId(Part part, const char* field) { return partPrefix(part) + ".play." + field; }
+    juce::String chordParameterId(Part part, const juce::String& field) { return partPrefix(part) + ".chord." + field; }
+
+    const juce::StringArray& chordTypeNames()
+    {
+        static const juce::StringArray names = []
+        {
+            juce::StringArray n { "Off", "Octave", "Fifth", "Major", "Minor", "Sus2", "Sus4", "Major 7", "Minor 7",
+                                  "Dominant 7", "Major 9", "Minor 9", "Minor 11", "Learned" };
+            jassert(n.size() == sv3::chordType::count);
+            return n;
+        }();
+        return names;
+    }
 
     juce::String lfoParameterId(Part part, const juce::String& lfo, const char* field)
     {
@@ -368,6 +381,19 @@ namespace coolsynth::parameters::v3
         play->addChild(std::make_unique<juce::AudioParameterBool>(makeId(playParameterId(part, "glideLegato")), "Glide Legato Only", false));
         group->addChild(std::move(play));
 
+        auto chord = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".chord", "Chord Memory", "|");
+        chord->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(chordParameterId(part, "type")), "Chord", chordTypeNames(), 0));
+        chord->addChild(floatParameter(chordParameterId(part, "strum"), "Chord Strum", { -200.0f, 200.0f }, 0.0f,
+                                       juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int)
+                                       {
+                                           return juce::String(v, 1) + " ms";
+                                       })));
+        for (int i = 1; i <= sv3::learnedIntervalCount; ++i)
+            chord->addChild(std::make_unique<juce::AudioParameterInt>(makeId(chordParameterId(part, "n" + juce::String(i))),
+                                                                      "Learned Note " + juce::String(i), 0, sv3::maxLearnedInterval, 0));
+        chord->addChild(std::make_unique<juce::AudioParameterBool>(makeId(chordParameterId(part, "learn")), "Chord Learn", false));
+        group->addChild(std::move(chord));
+
         return group;
     }
 
@@ -455,6 +481,11 @@ namespace coolsynth::parameters::v3
         p.unisonSpread = state.getRawParameterValue(playParameterId(part, "unisonSpread"));
         p.bendRange = state.getRawParameterValue(playParameterId(part, "bendRange"));
         p.glideLegato = state.getRawParameterValue(playParameterId(part, "glideLegato"));
+        p.chordType = state.getRawParameterValue(chordParameterId(part, "type"));
+        p.chordStrum = state.getRawParameterValue(chordParameterId(part, "strum"));
+        for (int i = 0; i < sv3::learnedIntervalCount; ++i)
+            p.chordNotes[static_cast<std::size_t>(i)] = state.getRawParameterValue(chordParameterId(part, "n" + juce::String(i + 1)));
+        p.chordLearn = state.getRawParameterValue(chordParameterId(part, "learn"));
         return p;
     }
 
@@ -576,5 +607,11 @@ namespace coolsynth::parameters::v3
         settings.unisonSpread = load(pointers.unisonSpread, 0.7f);
         settings.bendRangeSemitones = load(pointers.bendRange, 2.0f);
         settings.glideLegatoOnly = load(pointers.glideLegato, 0.0f) >= 0.5f;
+
+        settings.chord.type = juce::jlimit(0, sv3::chordType::count - 1, loadInt(pointers.chordType, 0));
+        settings.chord.strumMs = load(pointers.chordStrum, 0.0f);
+        for (std::size_t i = 0; i < settings.chord.learned.size(); ++i)
+            settings.chord.learned[i] = juce::jlimit(0, sv3::maxLearnedInterval, loadInt(pointers.chordNotes[i], 0));
+        settings.chord.learn = load(pointers.chordLearn, 0.0f) >= 0.5f;
     }
 }

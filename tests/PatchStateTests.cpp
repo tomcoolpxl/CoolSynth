@@ -65,7 +65,7 @@ public:
 
             // part A: 3 generators x 17, 3 processors x 9, 3 envelopes x 13, 4 LFOs x 9, 24 matrix slots x 5,
             // global envelope 12, step 16 + 16 + 4, 4 macros, chaos 1, 5 voice, 8 play
-            constexpr int partParameterCount = 3 * 17 + 3 * 9 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 5 + 8;
+            constexpr int partParameterCount = 3 * 17 + 3 * 9 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 5 + 8 + 8;
             expectEquals(registeredIds.size(), static_cast<int>(coolsynth::parameters::allParameterIds.size()) + partParameterCount);
 
             for (const auto* expectedId : coolsynth::parameters::allParameterIds)

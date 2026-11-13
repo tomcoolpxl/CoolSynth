@@ -75,6 +75,12 @@ namespace coolsynth::presets
             return keys;
         }
 
+        const juce::StringArray& chordKeys()
+        {
+            static const juce::StringArray keys { "type", "strum", "n1", "n2", "n3", "n4", "n5" };
+            return keys;
+        }
+
         const juce::StringArray& generatorFixedKeys()
         {
             static const juce::StringArray keys { "level", "pan", "oct", "semi", "fine", "key", "combine", "amount" };
@@ -466,13 +472,14 @@ namespace coolsynth::presets
                 continue;
             }
 
-            if (key == "voice" || key == "play")
+            if (key == "voice" || key == "play" || key == "chord")
             {
-                const bool voice = key == "voice";
                 readPairs(0, [&](const juce::String& k) -> juce::String
                 {
-                    if (voice)
+                    if (key == "voice")
                         return voiceKeys().contains(k) ? pv3::voiceParameterId(pv3::Part::a, k.toRawUTF8()) : juce::String();
+                    if (key == "chord")
+                        return chordKeys().contains(k) ? pv3::chordParameterId(pv3::Part::a, k) : juce::String();
                     return playKeys().contains(k) ? pv3::playParameterId(pv3::Part::a, k.toRawUTF8()) : juce::String();
                 }, noBareWords);
                 continue;

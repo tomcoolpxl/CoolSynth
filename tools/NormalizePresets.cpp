@@ -208,6 +208,13 @@ namespace
         return entry != nullptr && entry->text.trim().equalsIgnoreCase("on");
     }
 
+    /** True if one key already plays a chord (chord memory on). */
+    bool lookupChordMemory(const coolsynth::presets::FactoryPreset& preset)
+    {
+        const auto* entry = findEntry(preset, "pA.chord.type");
+        return entry != nullptr && ! entry->text.trim().equalsIgnoreCase("off");
+    }
+
     /** Sets, or adds after the header, the master line of one preset in a bank file's text. */
     juce::String setMasterLine(const juce::String& text, const juce::String& presetName, double masterDb)
     {
@@ -269,8 +276,9 @@ namespace
         // Mono/unison: single sustained note (60 = C4).
         // Poly without arp: 4-note chord (C, Eb, G, C+1oct) — covers thirds and fifths.
         // Poly with arp: single held note; arp generates the steps internally.
+        // Poly with chord memory: single held note; the key plays the chord.
         const juce::uint8 velocity = 100;
-        if (isPoly && ! isArp)
+        if (isPoly && ! isArp && ! lookupChordMemory(preset))
         {
             for (int note : { 60, 63, 67, 72 })
                 midi.addEvent(juce::MidiMessage::noteOn(1, note, velocity), 0);

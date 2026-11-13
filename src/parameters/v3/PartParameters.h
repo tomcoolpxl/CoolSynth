@@ -28,6 +28,8 @@
         pA.voice.*          env2ToP1, velToP1, glide (ms), drift (cents), wheelToLfo1
         pA.play.*           mode, priority, voices, unison, unisonDetune, unisonSpread,
                             bendRange, glideLegato
+        pA.chord.*          type, strum (ms, negative downwards), n1 .. n5 (the learned chord:
+                            semitones above the key, 0 unused), learn
 */
 namespace coolsynth::parameters::v3
 {
@@ -41,6 +43,9 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] juce::String envelopeParameterId(Part part, int oneBasedEnvelope, const char* field);
     [[nodiscard]] juce::String voiceParameterId(Part part, const char* field);
     [[nodiscard]] juce::String playParameterId(Part part, const char* field);
+    /** type, strum, n1 .. n5, learn. */
+    [[nodiscard]] juce::String chordParameterId(Part part, const juce::String& field);
+    [[nodiscard]] const juce::StringArray& chordTypeNames();
     /** lfo is "lfo1", "lfo2", "glfo1" or "glfo2". */
     [[nodiscard]] juce::String lfoParameterId(Part part, const juce::String& lfo, const char* field);
     /** The fields of every LFO, in parameter order. */
@@ -141,6 +146,10 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* unisonSpread = nullptr;
         std::atomic<float>* bendRange = nullptr;
         std::atomic<float>* glideLegato = nullptr;
+        std::atomic<float>* chordType = nullptr;
+        std::atomic<float>* chordStrum = nullptr;
+        std::array<std::atomic<float>*, coolsynth::synth::v3::learnedIntervalCount> chordNotes {};
+        std::atomic<float>* chordLearn = nullptr;
     };
 
     [[nodiscard]] PartParameterPointers bindPartPointers(juce::AudioProcessorValueTreeState& state, Part part);

@@ -66,8 +66,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    hooks, `tests/V3StringTests.cpp`; Greenhouse Kalimba and Harp String. 63 presets.
 29. Phase 6.2 done 2026-11-13: `src/synth/v3/ModalGenerator.h`, `tests/V3ModalTests.cpp`;
    Greenhouse Marimba and Bedroom Dusty Mallet. 65 presets.
-30. Phase 7.1: chord memory (types, learned chord, strum, into the arp); Arcade Chip Chord, Clock
-   Tower Chord Trigger, one-key Main Stage Future Chord.
+30. Phase 7.1 done 2026-11-13: `src/synth/v3/ChordMemory.h`, the `pA.chord.*` parameters, chord
+   learning through the processor, `tests/V3ChordTests.cpp`; Arcade Chip Chord, Clock Tower Chord
+   Trigger, one-key Main Stage Future Chord. 67 presets.
+31. Phase 7.2: parts (second part, part mix, modes, caps, state for both); Supersaw with its sub
+   part, layered Juno Pad and Deep Field.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

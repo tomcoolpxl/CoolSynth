@@ -347,8 +347,8 @@ loudness-normalised):
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
 | Bedroom | Cassette Keys, Blanket Pad, Dusty Mallet, Bedroom Bass, Tape Flute, Vinyl Choir | none |
-| Arcade | Coin Pulse, Boss Bass, Power-Up, Static Hit, SCC Lead | Chip Chord (chord memory, 7.1) |
+| Arcade | Coin Pulse, Boss Bass, Power-Up, Chip Chord, Static Hit, SCC Lead | none |
 | Greenhouse | Glass Bell, Marimba, Kalimba, Rain Chime, Crystal Pluck, Harp String | none |
 | Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field | Granular Sky (8.2) |
-| Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad | Chord Trigger (7.1) |
-| Main Stage | Reese, Supersaw (no sub layer), Future Chord (played as a chord), Neuro Growl, Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |
+| Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad, Chord Trigger | none |
+| Main Stage | Reese, Supersaw (no sub layer), Future Chord, Neuro Growl, Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |

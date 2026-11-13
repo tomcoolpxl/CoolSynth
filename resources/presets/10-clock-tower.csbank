@@ -70,3 +70,20 @@ voice = env2ToP1=0 drift=3
 chorus = on rate=0.4 depth=0.4 mix=0.3
 reverb = on size=0.7 damping=0.45 mix=0.25
 master = -0.5
+
+[Chord Trigger]
+room = Clock Tower
+# One key sets off a sus2 chord that the arp walks up and down over two octaves in eighths: a
+# plucked saw and pulse through a ladder that opens on every note, with a dotted-eighth echo
+# that bounces from side to side.
+g1 = VA shape=saw level=0.9
+g2 = VA shape=pulse pw=0.4 fine=6 level=0.7
+p1 = Ladder cutoff=1500 res=0.25 key=0.5
+env1 = attack=1 decay=600 sustain=0.25 release=350 velocity=0.4
+env2 = attack=1 decay=320 sustain=0 release=200
+voice = env2ToP1=0.45
+chord = type=sus2
+arp = on rate=1/8 pattern=updown octaves=2 gate=0.6
+delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+reverb = on size=0.5 damping=0.5 mix=0.15
+master = 3
