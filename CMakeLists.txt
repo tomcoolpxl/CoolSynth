@@ -57,6 +57,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/parameters/ParameterLayout.cpp
     src/parameters/v3/SlotParameters.cpp
     src/synth/v3/Voice.cpp
+    src/synth/v3/Part.cpp
+    src/synth/v3/EngineV3.cpp
     src/plugin/ArpAdvancedOverlay.cpp
     src/plugin/SynthAudioProcessor.cpp
     src/plugin/EditorTooltips.cpp
@@ -129,6 +131,7 @@ if(BUILD_TESTING)
             tests/V3GeneratorTests.cpp
             tests/V3ProcessorTests.cpp
             tests/V3VoiceTests.cpp
+            tests/V3PartTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests

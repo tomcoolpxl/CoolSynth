@@ -1,0 +1,153 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+#include <span>
+#include <vector>
+
+#include "synth/Arpeggiator.h"
+#include "synth/HalfBand2x.h"
+#include "Voice.h"
+
+/*
+    V3 part (DESIGN_V3.md sections 6 and 7): one patch playing on a pool of voices.
+
+    The note layer runs in this order: the arpeggiator (reused unchanged, with the rule that a
+    note-on is absorbed before steps are generated and a note-off after, so a tap shorter than a
+    block still fires), then the play mode, then the allocator. Voices render at twice the host
+    rate into one bus with a fixed headroom, so a held note never changes level when others join;
+    the bus is decimated once per part.
+
+    Allocation in poly mode: a key that is still sounding takes its own voice again, so repeated
+    notes never stack; otherwise the least recently used silent voice, then the quietest released
+    voice, then the quietest voice held only by the pedal, then the oldest held voice. Voices
+    above the polyphony limit finish what they play and are not used again. Mono and legato play
+    one voice from a note stack with last, low or high priority and return to a held key on
+    release; legato keeps the envelopes running across overlapping keys. Unison stacks 2 to 8
+    voices on one note, spread in pitch and across the stereo field. Glide can be limited to
+    overlapping keys.
+*/
+namespace coolsynth::synth::v3
+{
+    using coolsynth::synth::Arpeggiator;
+    using coolsynth::synth::ArpParametersV2;
+    using coolsynth::synth::EngineMidiEvent;
+    using coolsynth::synth::EngineMidiEventType;
+    using coolsynth::synth::EngineTransportInfo;
+
+    enum class PlayMode : int { poly = 0, mono, legato, unison };
+    enum class KeyPriority : int { last = 0, low, high };
+
+    struct PartSettings
+    {
+        VoiceSettings voice {};
+        PlayMode playMode = PlayMode::poly;
+        KeyPriority keyPriority = KeyPriority::last;
+        int polyphony = 16;
+        int unisonVoices = 4;
+        float unisonDetuneCents = 15.0f; // outermost voice; the others are spread evenly inside
+        float unisonSpread = 0.7f;       // pan of the outermost voices
+        float bendRangeSemitones = 2.0f;
+        bool glideLegatoOnly = false;
+        ArpParametersV2 arp {};
+    };
+
+    class Part final
+    {
+    public:
+        static constexpr int maxVoices = 16;
+        static constexpr int maxUnisonVoices = 8;
+        static constexpr int oversampleFactor = 2;
+        static constexpr float voiceHeadroom = 0.5f;
+
+        /** Message thread. Allocates the voice bus for blocks up to maxBlockSize; longer blocks are split. */
+        void prepare(double hostSampleRate, int maxBlockSize, std::uint32_t seed);
+
+        /** Panic: silence, empty note stack, controllers at rest. */
+        void reset() noexcept;
+
+        /** Writes (not adds) the part's host-rate output. Event offsets are relative to this call. */
+        void render(float* left,
+                    float* right,
+                    int numSamples,
+                    std::span<const EngineMidiEvent> events,
+                    const PartSettings& settings,
+                    const EngineTransportInfo& transport) noexcept;
+
+        /** Host samples between a note event and its sound: decimator plus generator delay. */
+        [[nodiscard]] int latencySamples() const noexcept { return decimatorLatency + generatorLatency; }
+
+        [[nodiscard]] int activeVoiceCountForTesting() const noexcept;
+        [[nodiscard]] const Voice& voiceForTesting(int index) const noexcept { return voices[static_cast<std::size_t>(index)]; }
+        [[nodiscard]] int voiceNoteForTesting(int index) const noexcept { return state[static_cast<std::size_t>(index)].note; }
+        [[nodiscard]] bool voiceKeyDownForTesting(int index) const noexcept { return state[static_cast<std::size_t>(index)].keyDown; }
+        [[nodiscard]] float bendSemitonesForTesting() const noexcept { return globals.bendSemitones; }
+        [[nodiscard]] int heldNoteCountForTesting() const noexcept { return heldCount; }
+
+    private:
+        struct VoiceState
+        {
+            int note = -1;
+            bool keyDown = false;
+            bool sustained = false;  // key up, held by the pedal
+            std::uint64_t order = 0; // when it last started a note
+        };
+
+        struct HeldNote
+        {
+            int note = -1;
+            float velocity = 0.0f;
+            std::uint64_t order = 0;
+        };
+
+        static constexpr int maxHeldNotes = 32;
+
+        void renderChunk(float* left, float* right, int n, std::span<const EngineMidiEvent> events, int offsetBase,
+                         const PartSettings& settings, const EngineTransportInfo& transport) noexcept;
+        void renderSpan(int start, int count, const PartSettings& settings) noexcept;
+        void handleEvent(const EngineMidiEvent& event, const PartSettings& settings) noexcept;
+        void updateGlobals(const PartSettings& settings) noexcept;
+
+        void polyNoteOn(int note, float velocity, bool fromArp, const PartSettings& settings) noexcept;
+        void polyNoteOff(int note, float releaseVelocity) noexcept;
+        void monoNoteOn(int note, float velocity, bool fromArp, const PartSettings& settings) noexcept;
+        void monoNoteOff(int note, float releaseVelocity, const PartSettings& settings) noexcept;
+        void playMono(int note, float velocity, bool overlapping, bool fromArp, const PartSettings& settings) noexcept;
+        [[nodiscard]] int pickVoice(int limit) const noexcept;
+        [[nodiscard]] int glideSource(const PartSettings& settings, bool overlapping) const noexcept;
+
+        void addHeld(int note, float velocity) noexcept;
+        void removeHeld(int note) noexcept;
+        [[nodiscard]] int priorityNote(KeyPriority priority) const noexcept;
+        [[nodiscard]] float heldVelocity(int note) const noexcept;
+
+        void releaseVoice(int index, float releaseVelocity) noexcept;
+        void releaseAll() noexcept;
+        void releaseSustained() noexcept;
+
+        std::array<Voice, maxVoices> voices;
+        std::array<VoiceState, maxVoices> state {};
+        std::array<HeldNote, maxHeldNotes> held {};
+        int heldCount = 0;
+
+        std::vector<float> busLeft, busRight;
+        HalfBandDecimator2x decimatorLeft, decimatorRight;
+        Arpeggiator arpeggiator;
+        VoiceGlobals globals;
+
+        std::uint64_t counter = 0;
+        int lastNote = -1;
+        int monoNote = -1;
+        int monoVoiceCount = 0;
+        PlayMode currentMode = PlayMode::poly;
+        bool sustainDown = false;
+        bool previousArpEnabled = false;
+        bool prepared = false;
+        float bendNormalised = 0.0f;
+        float wheel = 0.0f;
+        double hostRate = 48000.0;
+        int maxBlock = 512;
+        int decimatorLatency = 0;
+        int generatorLatency = 1;
+    };
+}

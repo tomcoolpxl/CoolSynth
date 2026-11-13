@@ -389,10 +389,16 @@ public:
             renderVoice(*voice, settings, 3200);
             expectEquals(voice->pitchForTesting(), 69.0f);
 
-            voice->legato(noteAt(57));
+            auto glideDown = noteAt(57);
+            glideDown.glideFrom = 69;
+            voice->legato(glideDown);
             renderVoice(*voice, settings, 2400);
             expectWithinAbsoluteError(voice->pitchForTesting(), 63.0f, 0.02f);
             expect(voice->ampLevel() >= 0.999f);
+
+            voice->legato(noteAt(48)); // no glide source: jumps
+            renderVoice(*voice, settings, 32);
+            expectEquals(voice->pitchForTesting(), 48.0f);
         }
 
         beginTest("local_and_global_sources");

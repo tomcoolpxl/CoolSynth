@@ -101,7 +101,7 @@ namespace coolsynth::synth::v3
         }
         note = start;
         released = false;
-        retarget(start.note, start.detuneCents);
+        retarget(start.note, start.detuneCents, start.glideFrom >= 0);
         const float keyOctaves = (static_cast<float>(start.note) - 60.0f) / 12.0f;
         for (auto& e : envelopes)
             e.noteOn(start.velocity, keyOctaves);
@@ -122,7 +122,7 @@ namespace coolsynth::synth::v3
         }
         note.note = start.note;
         note.detuneCents = start.detuneCents;
-        retarget(start.note, start.detuneCents);
+        retarget(start.note, start.detuneCents, start.glideFrom >= 0);
     }
 
     void Voice::release(float velocity) noexcept
@@ -168,9 +168,11 @@ namespace coolsynth::synth::v3
             e.noteOn(start.velocity, keyOctaves);
     }
 
-    void Voice::retarget(int noteNumber, float detuneCents) noexcept
+    void Voice::retarget(int noteNumber, float detuneCents, bool glide) noexcept
     {
         targetPitch = static_cast<float>(noteNumber) + detuneCents * 0.01f;
+        if (! glide)
+            currentPitch = targetPitch;
         glideSpan = std::abs(targetPitch - currentPitch);
     }
 

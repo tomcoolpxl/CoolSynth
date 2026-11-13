@@ -121,9 +121,12 @@ namespace coolsynth::synth::v3
 
         /** A fresh note: from silence, every module restarted; a sounding voice fades out first. */
         void start(const NoteStart& note) noexcept;
-        /** The same voice again: envelopes restart from their current level, oscillators run on, pitch glides. */
+        /**
+            The same voice again: envelopes restart from their current level and oscillators run on.
+            With glideFrom >= 0 the pitch glides from where it is; otherwise it jumps.
+        */
         void retrigger(const NoteStart& note) noexcept;
-        /** Pitch only: envelopes carry on. */
+        /** Pitch only, envelopes carry on; glides like retrigger(). */
         void legato(const NoteStart& note) noexcept;
         void release(float releaseVelocity = 0.5f) noexcept;
         void kill() noexcept { reset(); }
@@ -164,7 +167,7 @@ namespace coolsynth::synth::v3
         void snapToSettings() noexcept;
         void restartModules() noexcept;
         void beginNote(const NoteStart& start) noexcept;
-        void retarget(int noteNumber, float detuneCents) noexcept;
+        void retarget(int noteNumber, float detuneCents, bool glide) noexcept;
         void renderSubBlock(float* left, float* right, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept;
         void advancePitch(int n, const VoiceSettings& settings) noexcept;
         void advanceDrift(int n) noexcept;
