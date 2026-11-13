@@ -151,7 +151,7 @@ namespace coolsynth::testing
         {
             using coolsynth::synth::v3::LadderProcessor;
             coolsynth::synth::v3::EngineSettings s;
-            auto& voice = s.part.voice;
+            auto& voice = s.parts[0].voice;
             voice.generators[0] = generator(p.oscA);
             if (p.oscB.level > 0.0f)
                 voice.generators[1] = generator(p.oscB);
@@ -171,7 +171,7 @@ namespace coolsynth::testing
             voice.envelopes[1] = envelope(p.filterEnvelope);
             voice.env2ToP1 = 0.5f * p.filter.envelopeAmount;
 
-            s.part.arp = p.arp;
+            s.parts[0].arp = p.arp;
             s.drive = p.drive;
             s.phaser = p.phaser;
             s.chorus = p.chorus;

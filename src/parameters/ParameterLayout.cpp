@@ -429,7 +429,8 @@ namespace
 juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::a),
+    layout.add(coolsynth::parameters::v3::makePartsGroup(),
+               coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::a),
                makeArpGroup(),
                makeDriveGroup(),
                makePhaserGroup(),
@@ -441,6 +442,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::creat
                makeCompressorGroup(),
                makeEqGroup(),
                makePumpGroup(),
-               makeOutputGroup());
+               makeOutputGroup(),
+               coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::b));
     return layout;
 }

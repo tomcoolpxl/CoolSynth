@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <map>
 #include <optional>
+#include <set>
 #include <span>
 
 #include "midi/LearnedBindingsXml.h"
@@ -134,7 +136,9 @@ SynthAudioProcessor::SynthAudioProcessor()
     , parameters(*this, nullptr, "CoolSynthState", coolsynth::parameters::createParameterLayout())
     , midiMappingEngine(parameters)
     , parameterValues(bindParameterPointers(parameters))
-    , partParameterValues(coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::a))
+    , partParameterValues { coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::a),
+                            coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::b) }
+    , partModeValue(parameters.getRawParameterValue(coolsynth::parameters::v3::partModeParameterId))
     , mappedActionBridge(*this)
 {
     for (auto* parameter : getParameters())
@@ -251,10 +255,13 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                        transportInfo);
 
     // A chord learned from the keys becomes parameter values on the message thread.
-    if (const auto learned = synthEngine.consumeLearnedChord(); learned != 0)
+    for (int part = 0; part < coolsynth::synth::v3::partCount; ++part)
     {
-        pendingLearnedChord.store(learned, std::memory_order_release);
-        mappedActionBridge.triggerAsyncUpdate();
+        if (const auto learned = synthEngine.consumeLearnedChord(part); learned != 0)
+        {
+            pendingLearnedChord[static_cast<size_t>(part)].store(learned, std::memory_order_release);
+            mappedActionBridge.triggerAsyncUpdate();
+        }
     }
 
     const int numSamples = buffer.getNumSamples();
@@ -289,6 +296,7 @@ void SynthAudioProcessor::setCurrentProgram(int index)
         return;
     currentProgram = index;
     const auto& preset = coolsynth::presets::getFactoryPreset(index);
+    const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
     coolsynth::presets::applyFactoryPreset(parameters, preset);
     setPatchIdentity(preset.name, false);
 }
@@ -386,9 +394,17 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
         return false;
 
     sanitizedState = parameters.copyState();
-    juce::StringArray seenParameterIds;
     int appliedParameterCount = 0;
     std::vector<bool> seenKnownParameters(static_cast<size_t>(knownParameterIds.size()), false);
+
+    // Several hundred parameters: look IDs up instead of scanning the lists for each one.
+    std::map<juce::String, int> knownIndexById;
+    for (int i = 0; i < knownParameterIds.size(); ++i)
+        knownIndexById.emplace(knownParameterIds[i], i);
+    std::map<juce::String, juce::ValueTree> sanitizedChildById;
+    for (auto sanitizedChild : sanitizedState)
+        sanitizedChildById.emplace(sanitizedChild.getProperty(apvtsParameterIdProperty).toString(), sanitizedChild);
+    std::set<juce::String> seenParameterIds;
 
     for (auto incomingChild : incomingState)
     {
@@ -403,27 +419,21 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
         if (parameterId.isEmpty())
             continue;
 
-        if (seenParameterIds.contains(parameterId))
+        if (! seenParameterIds.insert(parameterId).second)
             return false;
 
-        seenParameterIds.add(parameterId);
-
-        const int matchedParameterIndex = knownParameterIds.indexOf(parameterId);
-        if (matchedParameterIndex < 0)
+        const auto known = knownIndexById.find(parameterId);
+        if (known == knownIndexById.end())
             continue;
 
-        seenKnownParameters[static_cast<size_t>(matchedParameterIndex)] = true;
+        seenKnownParameters[static_cast<size_t>(known->second)] = true;
 
-        for (auto sanitizedChild : sanitizedState)
+        if (auto sanitizedChild = sanitizedChildById.find(parameterId); sanitizedChild != sanitizedChildById.end())
         {
-            if (sanitizedChild.getProperty(apvtsParameterIdProperty).toString() != parameterId)
-                continue;
-
-            sanitizedChild.setProperty(apvtsParameterValueProperty,
-                                       incomingChild.getProperty(apvtsParameterValueProperty),
-                                       nullptr);
+            sanitizedChild->second.setProperty(apvtsParameterValueProperty,
+                                               incomingChild.getProperty(apvtsParameterValueProperty),
+                                               nullptr);
             ++appliedParameterCount;
-            break;
         }
     }
 
@@ -744,13 +754,8 @@ void SynthAudioProcessor::dispatchPendingMappedControllerEvents()
 
 void SynthAudioProcessor::applyPendingLearnedChord()
 {
-    const auto packed = pendingLearnedChord.exchange(0, std::memory_order_acq_rel);
-    if (packed == 0)
-        return;
-
     namespace pv3 = coolsynth::parameters::v3;
     namespace sv3 = coolsynth::synth::v3;
-    const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
     auto set = [this](const juce::String& id, float plainValue)
     {
         if (auto* parameter = parameters.getParameter(id))
@@ -761,11 +766,20 @@ void SynthAudioProcessor::applyPendingLearnedChord()
         }
     };
 
-    const auto intervals = sv3::unpackLearnedChord(packed);
-    for (std::size_t i = 0; i < intervals.size(); ++i)
-        set(pv3::chordParameterId(pv3::Part::a, "n" + juce::String(static_cast<int>(i) + 1)), static_cast<float>(intervals[i]));
-    set(pv3::chordParameterId(pv3::Part::a, "type"), static_cast<float>(sv3::chordType::learned));
-    set(pv3::chordParameterId(pv3::Part::a, "learn"), 0.0f);
+    for (std::size_t index = 0; index < pendingLearnedChord.size(); ++index)
+    {
+        const auto packed = pendingLearnedChord[index].exchange(0, std::memory_order_acq_rel);
+        if (packed == 0)
+            continue;
+
+        const auto part = index == 0 ? pv3::Part::a : pv3::Part::b;
+        const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
+        const auto intervals = sv3::unpackLearnedChord(packed);
+        for (std::size_t i = 0; i < intervals.size(); ++i)
+            set(pv3::chordParameterId(part, "n" + juce::String(static_cast<int>(i) + 1)), static_cast<float>(intervals[i]));
+        set(pv3::chordParameterId(part, "type"), static_cast<float>(sv3::chordType::learned));
+        set(pv3::chordParameterId(part, "learn"), 0.0f);
+    }
 }
 
 void SynthAudioProcessor::applyMappedAction(const coolsynth::midi::MappedAction& action)
@@ -859,12 +873,18 @@ namespace
 const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSettings() noexcept
 {
     auto& settings = engineSettings;
-    coolsynth::parameters::v3::readPartSettings(partParameterValues, settings.part);
+    for (std::size_t part = 0; part < partParameterValues.size(); ++part)
+    {
+        coolsynth::parameters::v3::readPartSettings(partParameterValues[part], settings.parts[part]);
+        coolsynth::parameters::v3::readPartMix(partParameterValues[part], settings.mix[part]);
+    }
+    settings.partMode = static_cast<coolsynth::synth::v3::PartMode>(
+        juce::jlimit(0, 3, static_cast<int>(std::lround(partModeValue != nullptr ? partModeValue->load() : 0.0f))));
 
     const auto& v = parameterValues;
     auto index = [](const std::atomic<float>* p) { return static_cast<int>(std::lround(p->load())); };
 
-    auto& arp = settings.part.arp;
+    auto& arp = settings.parts[0].arp;
     arp.enabled = decodeBool(v.arpEnabled->load());
     arp.internalTempoBpm = v.arpInternalTempoBpm->load();
     arp.rate = static_cast<coolsynth::parameters::ArpRateChoice>(index(v.arpRateDivision));
@@ -882,6 +902,7 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     arp.euclideanSteps = index(v.arpEuclideanSteps);
     arp.euclideanRotation = index(v.arpEuclideanRotation);
     arp.latch = decodeBool(v.arpLatch->load());
+    settings.parts[1].arp = arp; // one arpeggiator setting; each part's mix says whether it follows
 
     settings.drive.enabled = decodeBool(v.driveEnabled->load());
     settings.drive.amount = v.driveAmount->load();

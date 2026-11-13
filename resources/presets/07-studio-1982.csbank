@@ -4,8 +4,11 @@
 [Juno Pad]
 room = Studio 1982
 # One DCO's pulse and saw, as on the Juno-106: both start in phase, so every note has the same
-# colour. One global LFO sweeps the pulse width of every voice together, like the Juno's single
-# LFO, and Chorus I-style slow chorus widens it.
+# colour, and one global LFO sweeps the pulse width of every voice together, like the Juno's
+# single LFO. Two of them are stacked the way a Jupiter's Dual mode stacks two patches: part A
+# to the left, part B to the right, seven cents sharp with more saw and its own slower LFO.
+# Chorus I-style slow chorus over both.
+parts = layer
 g1 = VA shape=pulse pw=0.5 rand=0 level=0.7
 g2 = VA shape=saw rand=0 level=0.4
 p1 = Ladder cutoff=1500 res=0.12 key=0.4 bass=0.5
@@ -14,9 +17,19 @@ env2 = attack=600 decay=1800 sustain=0.6 release=900
 glfo1 = shape=triangle sync=off rate=0.5 retrigger=off
 mod = src=glfo1 dst=g1.pw amount=0.3
 voice = env2ToP1=0.06 drift=3
+mix = pan=-0.4
+b.g1 = VA shape=pulse pw=0.45 rand=0 level=0.5
+b.g2 = VA shape=saw rand=0 level=0.6
+b.p1 = Ladder cutoff=1700 res=0.1 key=0.4 bass=0.5
+b.env1 = attack=550 decay=1500 sustain=0.9 release=1100 velocity=0.2
+b.env2 = attack=800 decay=1800 sustain=0.6 release=1000
+b.glfo1 = shape=triangle sync=off rate=0.37 retrigger=off
+b.mod = src=glfo1 dst=g1.pw amount=0.25
+b.voice = env2ToP1=0.06 drift=3
+b.mix = pan=0.4 fine=7 level=-1.5
 chorus = on rate=0.5 depth=0.55 mix=0.5
 reverb = on size=0.55 damping=0.5 mix=0.15
-master = -5.5
+master = -5
 
 [Prophet Brass]
 room = Studio 1982

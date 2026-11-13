@@ -909,3 +909,100 @@ table adds 6th, dominant 7th and diminished chords.
 
 The tool again moved four presets with random elements by up to 1.5 dB (Rain Chime, Random
 Walk, Furnace Drone, Riser); they were put back, as in phase 6.2.
+
+## D70. Two parts and their voices (2026-11-13, phase 7.2)
+
+- **The engine owns two parts, each with its own sixteen voices, and hands out the shared
+  budget of sixteen as limits (taken, recommended).** With both parts playing, each may use what
+  its patch asks for (its polyphony, one voice for mono and legato, its unison count), is sure
+  of eight, and gets more when the other asks for fewer: 16 and 16 become 8 and 8; a poly part
+  over a mono sub gets 15 and 1. One part alone keeps all sixteen. The part and its allocator
+  are unchanged, and a part the mode leaves out is not rendered once it has rung out.
+- One pool of sixteen voices that both parts allocate from. What the design sketches, and no
+  second set of voices in memory, but the allocator, the voice state and every play mode would
+  have to learn about a second owner; the sound is the same.
+- A fixed 8 and 8. Wastes seven voices under a mono sub layer.
+- A cap parameter per part. One more setting; the part's own Voices setting already says what it
+  wants.
+
+## D71. Part modes, ranges and transpose (2026-11-13, phase 7.2)
+
+- **`part.mode`: A, Layer, Split, B. Layer plays every key on both parts; Split plays a key on
+  each part whose key range holds it (ranges may overlap); a velocity range applies whenever both
+  play; one part alone ignores both ranges (taken, recommended).** The ranges default to a split
+  at middle C, so switching to Split does something at once.
+- Key ranges also in Layer. Then Layer and Split would be the same mode.
+- **Transpose moves the keys a part is sent (taken).** The engine remembers the note it sent for
+  every key, so a release ends that note even if Transpose, the ranges or the mode changed while
+  the key was down. Fine detune is added to the part's pitch. Alternative: transpose as pitch,
+  which would leave key tracking and key ranges on the played key.
+- **A part the mode switches off lets go of its notes and rings out; switching it on again does
+  not start the keys already held (taken).**
+- **Everything that is not a note (bend, wheel, pedal) reaches both parts (taken).**
+
+## D72. Part mix, and no insert slots yet (2026-11-13, phase 7.2)
+
+The requirement asks for three insert slots per part. Effects are not slot types yet: the
+effect-slot rebuild planned for phase 5 was put off there, and the chain is still the fixed rack.
+
+- **Each part gets a level (-60 dB is off), a balance and an effects share: that share of the
+  part passes through the rack and the rest joins after it (taken, recommended).** It covers
+  what the bank needs from inserts today, a sub layer that stays out of the chorus, delay and
+  plate, with one parameter. Part gains move across the block, so a change never steps.
+- Build effect slots now (inserts and master slots). The real answer to the requirement, but it
+  means rewrapping ten effects as modules and renaming every effect parameter in 67 presets; it
+  belongs with the effect-slot work, which is still open. **Review: this is the one part of the
+  7.2 plan line that is not delivered as written.**
+- No per-part routing. The Supersaw's sub would sit in the plate.
+- **Pan is a balance: the far side fades, the near side stays at unity (taken).** A
+  constant-power law would raise a panned part by 3 dB into the master's clipper.
+
+## D73. One arpeggiator setting, a switch per part (2026-11-13, phase 7.2)
+
+- **The arp's parameters stay where they are and drive both parts; `pA.mix.arp` and
+  `pB.mix.arp` say whether a part follows (taken, recommended).** A split can keep a bass under
+  an arpeggiated right hand.
+- An arpeggiator per part with its own parameters. More flexible, and 17 more parameters per
+  part that no preset needs yet.
+
+## D74. Part B in parameters, bank files and the audition UI (2026-11-13, phase 7.2)
+
+- **Part B is the same parameter group under `pB.`, with `pA.mix.*`, `pB.mix.*` and `part.mode`
+  added: 851 part parameters in all (taken).** State saves both parts as it saves everything.
+  State written before today is rejected, as every earlier V3 state is.
+- **Bank files write part B with a `b.` prefix on the same lines (`b.g1`, `b.env1`, `b.mod`,
+  `b.mix`), `mix =` for a part's mix and `parts = layer` for the mode (taken, recommended).**
+  Each part resolves modulation destinations against its own slot types. Patch-wide lines with a
+  prefix are errors. Alternative: a second `[Name:B]` section, which would duplicate the header
+  and scatter one preset over two places.
+- **No part selector in the audition UI (taken).** The generic editor already shows Parts,
+  Part A and Part B as groups; a selector belongs to the real UI in phase 9.
+- **Chord learning works per part (taken).**
+
+## D75. The layered presets (2026-11-13, phase 7.2)
+
+- **The three presets are upgraded in place; the bank stays on its way to 68 (taken,
+  recommended).** Alternative: add "layered" copies beside the originals, which would take the
+  bank past the 68 the plan fixes.
+- **Supersaw: part B is one sine an octave under the lowest key held (legato, low priority,
+  25 ms glide), 5 dB down, effects share 0 (taken).**
+- **Juno Pad: two Juno patches stacked as a Jupiter's Dual mode would, part A left, part B
+  right, seven cents sharp with more saw and its own slower LFO (taken).**
+- **Deep Field: part B is three triangles an octave up through a drifting band-pass, arriving
+  six seconds into the note (taken).** The loudness tool's render ends before part B has risen,
+  so the preset is a little louder at full bloom than the tool measured.
+
+The tool moved the four presets with random elements again (Rain Chime 6 to 5, Random Walk 6 to
+5.5, Furnace Drone -5 to -4.5, Riser -1.5 to -2); a second part changes the order of the random
+numbers. The same readings came back three runs in a row, so this time they are kept.
+
+## D76. Preset changes and state loads with 900 parameters (2026-11-13, phase 7.2)
+
+Found by a timing test after the parameter count doubled: a preset change took 45 ms and a state
+load 125 ms.
+
+- **A preset sets only the parameters whose value changes; a program change is one bulk edit
+  without an undo snapshot per parameter; the state check looks IDs up in a map (taken).**
+  Measured: preset 0.7 ms, state load 9.5 ms, and the test suite runs faster than before parts.
+- Leave it. Audible as a pause when browsing presets, and it grows with the square of the
+  parameter count.

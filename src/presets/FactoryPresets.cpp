@@ -99,8 +99,11 @@ namespace coolsynth::presets
             return parameter.convertTo0to1(juce::jlimit(range.start, range.end, value));
         }
 
+        /** Sets a parameter that is not already there: a preset moves a few dozen of several hundred. */
         void set(juce::RangedAudioParameter& parameter, float normalised)
         {
+            if (parameter.getValue() == normalised)
+                return;
             parameter.beginChangeGesture();
             parameter.setValueNotifyingHost(normalised);
             parameter.endChangeGesture();

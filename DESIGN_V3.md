@@ -376,6 +376,15 @@ only, Layer (both on every note), Split (each by key range), B only. Parts share
 chain and the master gain. Each part has its own oversampled bus and decimator; the two
 host-rate outputs are summed before F1.
 
+Shipped (phase 7.2, 2026-11-13): `EngineV3` owns two parts. `part.mode` is A, Layer, Split or B;
+Split uses each part's key range, a velocity range applies whenever both play, Transpose moves
+the keys a part is sent (the engine remembers what it sent per key) and Fine detunes the part.
+The parts share sixteen voices as limits: each is sure of eight and gets more when the other
+asks for fewer. Part mix: level, balance and an effects share (that share passes through the
+rack, the rest joins after it); `mix.arp` says whether the part follows the arpeggiator. Part B
+has part A's parameters under `pB.`; bank files write it with a `b.` prefix. Insert slots wait
+for the effect-slot work (decisions D70 to D74).
+
 ## 8. Effects
 
 Insert slots I1..I3 per part and master slots F1..F6 take the same effect types. The chain

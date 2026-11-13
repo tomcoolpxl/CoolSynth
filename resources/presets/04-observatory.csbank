@@ -37,7 +37,10 @@ master = -1
 [Deep Field]
 room = Observatory
 # A saw two octaves down and a sine one octave down under a dark ladder whose cutoff breathes
-# on a 20-second global LFO; it swells in over two and a half seconds into a long plate.
+# on a 20-second global LFO; it swells in over two and a half seconds into a long plate. Part B
+# is the light above it: three triangles an octave up through a band-pass that drifts on its
+# own 33-second LFO, arriving six seconds into the note and leaving last.
+parts = layer
 g1 = VA shape=saw oct=-2 level=0.55
 g2 = VA shape=sine oct=-1 rand=0 level=0.7
 p1 = Ladder cutoff=400 res=0.2 key=0.3 bass=0.7
@@ -45,6 +48,13 @@ env1 = attack=2500 decay=2000 sustain=1 release=4500
 glfo1 = shape=sine sync=off rate=0.05 retrigger=off
 mod = src=glfo1 dst=p1.cutoff amount=0.15
 voice = env2ToP1=0 drift=3
+b.g1 = VA shape=triangle oct=1 unison=3 detune=18 spread=1 level=0.6
+b.p1 = SVF mode=bp cutoff=1800 res=0.2 key=0.5
+b.env1 = attack=6000 decay=3000 sustain=0.8 release=6500
+b.glfo1 = shape=sine sync=off rate=0.03 retrigger=off
+b.mod = src=glfo1 dst=p1.cutoff amount=0.2
+b.voice = env2ToP1=0 drift=5
+b.mix = level=-8
 reverb = on size=0.85 damping=0.5 mix=0.3
 master = -5
 

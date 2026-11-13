@@ -14,15 +14,23 @@ master = -11.5
 [Supersaw]
 room = Main Stage
 # Seven saws on the JP-8000 detune curve with the low end high-passed away by the
-# state-variable filter at 120 Hz. The sub layer underneath arrives with parts in phase 7.2.
+# state-variable filter at 120 Hz. Part B is the sub: one sine an octave under the lowest key
+# held, gliding from note to note, kept out of the delay and the plate.
+parts = layer
 g1 = VA shape=saw unison=7 detune=50 spread=1 mix=0.75 rand=1 level=0.85
 p1 = SVF mode=hp cutoff=120 res=0.1 key=0
 p2 = Ladder cutoff=12000 res=0.05 key=0.3
 env1 = attack=8 decay=500 sustain=0.9 release=420 velocity=0.5
 voice = env2ToP1=0
+b.g1 = VA shape=sine oct=-1 rand=0 level=0.9
+b.p1 = Off
+b.env1 = attack=6 decay=300 sustain=1 release=260 velocity=0.3
+b.voice = env2ToP1=0 glide=25
+b.play = mode=legato priority=low
+b.mix = level=-5 fx=0
 reverb = on size=0.75 damping=0.45 mix=0.24
 delay = on time=375 feedback=0.25 mix=0.12
-master = -2.5
+master = -4
 
 [Riser]
 room = Main Stage
@@ -44,7 +52,7 @@ mod = src=genv dst=g2.tone amount=0.6
 mod = src=genv dst=g2.level amount=0.2
 voice = env2ToP1=0
 reverb = on size=0.85 damping=0.4 mix=0.3
-master = -1.5
+master = -2
 
 [Pluck Drop]
 room = Main Stage

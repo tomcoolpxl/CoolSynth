@@ -383,7 +383,7 @@ namespace coolsynth::synth::v3
 
     void Part::updateGlobals(const PartSettings& settings) noexcept
     {
-        globals.bendSemitones = bendNormalised * std::clamp(settings.bendRangeSemitones, 0.0f, 48.0f);
+        globals.bendSemitones = bendNormalised * std::clamp(settings.bendRangeSemitones, 0.0f, 48.0f) + settings.tuneSemitones;
         globals.sources.set(ModSource::bend, bendNormalised);
         globals.sources.set(ModSource::wheel, wheel);
     }

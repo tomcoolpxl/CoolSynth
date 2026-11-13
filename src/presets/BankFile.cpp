@@ -81,6 +81,12 @@ namespace coolsynth::presets
             return keys;
         }
 
+        const juce::StringArray& partModeWords()
+        {
+            static const juce::StringArray words { "a", "layer", "split", "b" };
+            return words;
+        }
+
         const juce::StringArray& generatorFixedKeys()
         {
             static const juce::StringArray keys { "level", "pan", "oct", "semi", "fine", "key", "combine", "amount" };
@@ -213,7 +219,7 @@ namespace coolsynth::presets
     {
         BankParseResult result;
         const auto lines = juce::StringArray::fromLines(text);
-        PresetContext context;
+        std::array<PresetContext, 2> contexts; // part A, part B
 
         for (int lineIndex = 0; lineIndex < lines.size(); ++lineIndex)
         {
@@ -234,7 +240,7 @@ namespace coolsynth::presets
                     continue;
                 }
                 BankPreset preset;
-                context = {};
+                contexts = {};
                 preset.name = line.substring(1, line.length() - 1).trim();
                 preset.sourceFile = sourceFile;
                 result.presets.push_back(std::move(preset));
@@ -254,7 +260,17 @@ namespace coolsynth::presets
                 error("expected key = value");
                 continue;
             }
-            const auto key = line.substring(0, equals).trim();
+            // "b.g1 = ...", "b.mix = ...": the same settings on part B. "a." may be written for part A.
+            auto key = line.substring(0, equals).trim();
+            auto part = pv3::Part::a;
+            bool onPart = false;
+            if (key.startsWithIgnoreCase("a.") || key.startsWithIgnoreCase("b."))
+            {
+                part = key.startsWithIgnoreCase("b.") ? pv3::Part::b : pv3::Part::a;
+                key = key.substring(2);
+                onPart = true;
+            }
+            auto& context = contexts[part == pv3::Part::a ? 0u : 1u];
             const auto value = line.substring(equals + 1).trim();
             auto tokens = juce::StringArray::fromTokens(value, " \t", "");
             tokens.removeEmptyStrings();
@@ -287,6 +303,13 @@ namespace coolsynth::presets
             };
             auto noBareWords = [](const juce::String&) { return false; };
 
+            // Room, master, the part mode, the arp and the effects belong to the patch, not to a part.
+            if (onPart && (key == "room" || key == "master" || key == "parts" || globalSections().count(key) != 0))
+            {
+                error("'" + key + "' belongs to the patch, not to a part");
+                continue;
+            }
+
             if (key == "room")
             {
                 preset.category = value;
@@ -299,11 +322,20 @@ namespace coolsynth::presets
                 continue;
             }
 
+            if (key == "parts")
+            {
+                if (const int mode = partModeWords().indexOf(value.toLowerCase()); mode >= 0)
+                    add(pv3::partModeParameterId, pv3::partModeNames()[mode]);
+                else
+                    error("parts is a, layer, split or b");
+                continue;
+            }
+
             const int generator = slotNumber(key, "g", pv3::partGeneratorSlots);
             const int processor = generator == 0 ? slotNumber(key, "p", pv3::partProcessorSlots) : 0;
             if (generator != 0 || processor != 0)
             {
-                const pv3::SlotPath path { pv3::Part::a, generator != 0 ? pv3::SlotKind::generator : pv3::SlotKind::processor,
+                const pv3::SlotPath path { part, generator != 0 ? pv3::SlotKind::generator : pv3::SlotKind::processor,
                                            generator != 0 ? generator : processor };
                 const auto table = generator != 0 ? sv3::GeneratorSlot::typeTable() : sv3::ProcessorSlot::typeTable();
                 if (tokens.isEmpty())
@@ -344,7 +376,7 @@ namespace coolsynth::presets
             {
                 readPairs(0, [&](const juce::String& k) -> juce::String
                 {
-                    return envelopeKeys().contains(k) ? pv3::envelopeParameterId(pv3::Part::a, envelope, k.toRawUTF8()) : juce::String();
+                    return envelopeKeys().contains(k) ? pv3::envelopeParameterId(part, envelope, k.toRawUTF8()) : juce::String();
                 }, noBareWords);
                 continue;
             }
@@ -383,7 +415,7 @@ namespace coolsynth::presets
                     if (resolved.isEmpty())
                         error("'" + v + "' is not a " + (k == "dst" ? "destination of this preset" : "modulation source"));
                     else
-                        add(pv3::matrixParameterId(pv3::Part::a, slot, k.toRawUTF8()), resolved);
+                        add(pv3::matrixParameterId(part, slot, k.toRawUTF8()), resolved);
                 }
                 continue;
             }
@@ -413,7 +445,7 @@ namespace coolsynth::presets
                         if (timeText.isEmpty())
                             error("'" + v + "' is not a time");
                         else
-                            add(pv3::globalEnvelopeParameterId(pv3::Part::a, k.toRawUTF8()), timeText);
+                            add(pv3::globalEnvelopeParameterId(part, k.toRawUTF8()), timeText);
                     }
                     else if (key == "step")
                     {
@@ -430,13 +462,13 @@ namespace coolsynth::presets
                                 auto item = items[i].trim();
                                 if (k == "slides")
                                     item = item == "1" ? juce::String("on") : (item == "0" ? juce::String("off") : item);
-                                add(pv3::stepParameterId(pv3::Part::a, (k == "values" ? "s" : "slide") + juce::String(i + 1)), item);
+                                add(pv3::stepParameterId(part, (k == "values" ? "s" : "slide") + juce::String(i + 1)), item);
                             }
                         }
                         else if (pv3::stepFields().contains(k) || indexedKey(k, "s", sv3::stepCount) != 0
                                  || indexedKey(k, "slide", sv3::stepCount) != 0)
                         {
-                            add(pv3::stepParameterId(pv3::Part::a, k), v);
+                            add(pv3::stepParameterId(part, k), v);
                         }
                         else
                         {
@@ -449,11 +481,11 @@ namespace coolsynth::presets
                         if (macro < 1 || macro > sv3::macroCount)
                             error("'macros' has no setting '" + k + "'");
                         else
-                            add(pv3::macroParameterId(pv3::Part::a, macro), v);
+                            add(pv3::macroParameterId(part, macro), v);
                     }
                     else if (k == "rate")
                     {
-                        add(pv3::chaosParameterId(pv3::Part::a), v);
+                        add(pv3::chaosParameterId(part), v);
                     }
                     else
                     {
@@ -467,20 +499,22 @@ namespace coolsynth::presets
             {
                 readPairs(0, [&](const juce::String& k) -> juce::String
                 {
-                    return pv3::lfoFields().contains(k) ? pv3::lfoParameterId(pv3::Part::a, key, k.toRawUTF8()) : juce::String();
+                    return pv3::lfoFields().contains(k) ? pv3::lfoParameterId(part, key, k.toRawUTF8()) : juce::String();
                 }, noBareWords);
                 continue;
             }
 
-            if (key == "voice" || key == "play" || key == "chord")
+            if (key == "voice" || key == "play" || key == "chord" || key == "mix")
             {
                 readPairs(0, [&](const juce::String& k) -> juce::String
                 {
                     if (key == "voice")
-                        return voiceKeys().contains(k) ? pv3::voiceParameterId(pv3::Part::a, k.toRawUTF8()) : juce::String();
+                        return voiceKeys().contains(k) ? pv3::voiceParameterId(part, k.toRawUTF8()) : juce::String();
                     if (key == "chord")
-                        return chordKeys().contains(k) ? pv3::chordParameterId(pv3::Part::a, k) : juce::String();
-                    return playKeys().contains(k) ? pv3::playParameterId(pv3::Part::a, k.toRawUTF8()) : juce::String();
+                        return chordKeys().contains(k) ? pv3::chordParameterId(part, k) : juce::String();
+                    if (key == "mix")
+                        return pv3::mixFields().contains(k) ? pv3::mixParameterId(part, k) : juce::String();
+                    return playKeys().contains(k) ? pv3::playParameterId(part, k.toRawUTF8()) : juce::String();
                 }, noBareWords);
                 continue;
             }

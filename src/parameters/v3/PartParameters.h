@@ -30,6 +30,11 @@
                             bendRange, glideLegato
         pA.chord.*          type, strum (ms, negative downwards), n1 .. n5 (the learned chord:
                             semitones above the key, 0 unused), learn
+        pA.mix.*            level (dB), pan, transpose, fine (cents), keyLow, keyHigh, velLow,
+                            velHigh, fx (the share through the effects), arp
+
+    Part B has the same parameters under "pB.". One parameter belongs to the patch as a whole:
+        part.mode           A, Layer, Split, B
 */
 namespace coolsynth::parameters::v3
 {
@@ -46,6 +51,10 @@ namespace coolsynth::parameters::v3
     /** type, strum, n1 .. n5, learn. */
     [[nodiscard]] juce::String chordParameterId(Part part, const juce::String& field);
     [[nodiscard]] const juce::StringArray& chordTypeNames();
+    [[nodiscard]] juce::String mixParameterId(Part part, const juce::String& field);
+    [[nodiscard]] const juce::StringArray& mixFields();
+    inline constexpr char partModeParameterId[] = "part.mode";
+    [[nodiscard]] const juce::StringArray& partModeNames();
     /** lfo is "lfo1", "lfo2", "glfo1" or "glfo2". */
     [[nodiscard]] juce::String lfoParameterId(Part part, const juce::String& lfo, const char* field);
     /** The fields of every LFO, in parameter order. */
@@ -66,6 +75,8 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] juce::String chaosParameterId(Part part);
 
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part);
+    /** What belongs to the patch as a whole: the part mode. */
+    [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartsGroup();
 
     /** True for IDs inside a part ("pA." or "pB."), which MIDI learn accepts. */
     [[nodiscard]] bool isPartParameterId(juce::StringRef parameterId) noexcept;
@@ -124,6 +135,20 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* chaosRate = nullptr;
     };
 
+    struct MixPointers
+    {
+        std::atomic<float>* level = nullptr;
+        std::atomic<float>* pan = nullptr;
+        std::atomic<float>* transpose = nullptr;
+        std::atomic<float>* fine = nullptr;
+        std::atomic<float>* keyLow = nullptr;
+        std::atomic<float>* keyHigh = nullptr;
+        std::atomic<float>* velLow = nullptr;
+        std::atomic<float>* velHigh = nullptr;
+        std::atomic<float>* fx = nullptr;
+        std::atomic<float>* arp = nullptr;
+    };
+
     struct PartParameterPointers
     {
         std::array<SlotParameterPointers, partGeneratorSlots> generators {};
@@ -150,10 +175,12 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* chordStrum = nullptr;
         std::array<std::atomic<float>*, coolsynth::synth::v3::learnedIntervalCount> chordNotes {};
         std::atomic<float>* chordLearn = nullptr;
+        MixPointers mix {};
     };
 
     [[nodiscard]] PartParameterPointers bindPartPointers(juce::AudioProcessorValueTreeState& state, Part part);
 
     /** Fills everything except settings.arp, which lives outside the part. */
     void readPartSettings(const PartParameterPointers& pointers, coolsynth::synth::v3::PartSettings& settings) noexcept;
+    void readPartMix(const PartParameterPointers& pointers, coolsynth::synth::v3::PartMix& mix) noexcept;
 }

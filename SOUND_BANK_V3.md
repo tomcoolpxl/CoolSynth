@@ -343,12 +343,12 @@ loudness-normalised):
 | --- | --- | --- |
 | Workshop | Init Saw, Init Pulse, Init Sine, Init Arp, Init Noise, Init FM, Init Wavetable | none |
 | Basement | Acid, Rust Bass, Metal Hit, Furnace Drone, Concrete Pad, Siren | none |
-| Studio 1982 | Juno Pad, Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
+| Studio 1982 | Juno Pad (two layers), Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
 | Bedroom | Cassette Keys, Blanket Pad, Dusty Mallet, Bedroom Bass, Tape Flute, Vinyl Choir | none |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Chip Chord, Static Hit, SCC Lead | none |
 | Greenhouse | Glass Bell, Marimba, Kalimba, Rain Chime, Crystal Pluck, Harp String | none |
-| Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field | Granular Sky (8.2) |
+| Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field (two layers) | Granular Sky (8.2) |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad, Chord Trigger | none |
-| Main Stage | Reese, Supersaw (no sub layer), Future Chord, Neuro Growl, Riser, Pluck Drop, Hyper Lead | the sub layer (parts, 7.2); the rest per its Needs column |
+| Main Stage | Reese, Supersaw (with its sub part), Future Chord, Neuro Growl, Riser, Pluck Drop, Hyper Lead | none |

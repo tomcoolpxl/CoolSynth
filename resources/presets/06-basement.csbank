@@ -59,7 +59,7 @@ glfo1 = shape=sine sync=off rate=0.05 retrigger=off
 mod = src=glfo1 dst=p1.tune amount=0.15
 voice = env2ToP1=0 drift=5
 reverb = on size=0.7 damping=0.6 mix=0.2
-master = -5
+master = -4.5
 
 [Concrete Pad]
 room = Basement

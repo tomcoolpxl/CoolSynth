@@ -185,6 +185,8 @@ Chord. Shipped 2026-11-13 with all three (decisions D65 to D69).
 7.2 Parts. Second part, part mix, modes, per-part caps, per-part inserts, part selector in the
 audition UI, state for both parts. Tests: layer and split allocation, caps, state round trip.
 Ships: Main Stage Supersaw with the sub part; a layered variant of Juno Pad and Deep Field.
+Shipped 2026-11-13 with all three, except the insert slots: an effects share per part stands in
+for them until effects are slot types (decisions D70 to D76).
 
 ## Phase 8: sample and grain
 

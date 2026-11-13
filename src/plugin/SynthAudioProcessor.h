@@ -148,7 +148,8 @@ private:
     std::vector<coolsynth::midi::LearnedCcBinding> learnedMidiBindings;
     coolsynth::synth::GlobalParameterPointers parameterValues;
     juce::StringArray knownParameterIds; // every parameter, for patch and state validation
-    coolsynth::parameters::v3::PartParameterPointers partParameterValues;
+    std::array<coolsynth::parameters::v3::PartParameterPointers, coolsynth::synth::v3::partCount> partParameterValues;
+    std::atomic<float>* partModeValue = nullptr;
     coolsynth::synth::v3::EngineSettings engineSettings;
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
@@ -160,7 +161,8 @@ private:
     juce::AbstractFifo pendingPluginMappedControllerEventQueue { static_cast<int> (pendingPluginMappedControllerEvents.size()) };
     std::atomic<uint64_t> droppedControllerEventCount { 0 };
     std::atomic<uint64_t> droppedMappedControllerEventCount { 0 };
-    std::atomic<std::uint32_t> pendingLearnedChord { 0 }; // packed by the audio thread, applied on the message thread
+    // Per part: a learned chord packed by the audio thread, applied on the message thread.
+    std::array<std::atomic<std::uint32_t>, coolsynth::synth::v3::partCount> pendingLearnedChord {};
     coolsynth::plugin::ProcessorScopeFifo scopeFifo;
     std::vector<float> monoMixScratch;
     PluginMappedActionAsyncBridge mappedActionBridge;

@@ -360,7 +360,7 @@ public:
             logMessage("engine latency: " + juce::String(engine->getLatencySamples()) + " samples");
 
             EngineSettings settings;
-            settings.part = basicPart();
+            settings.parts[0] = basicPart();
             juce::AudioBuffer<float> buffer(2, kBlock);
 
             auto renderPeak = [&](EngineSettings s, std::vector<EngineMidiEvent> events, int blocks)
@@ -382,7 +382,7 @@ public:
             expectWithinAbsoluteError(20.0f * std::log10(half / full), -6.02f, 0.1f);
 
             settings.masterGainLinear = 4.0f;
-            settings.part.voice.generators[0].p[VaGenerator::shape] = vaNorm(VaGenerator::shape, 2.0f);
+            settings.parts[0].voice.generators[0].p[VaGenerator::shape] = vaNorm(VaGenerator::shape, 2.0f);
             const float loud = renderPeak(settings, { on(48), on(52), on(55), on(59), on(62), on(65), on(69), on(72) }, 40);
             logMessage("eight saws at +12 dB master peak at " + juce::String(loud, 3));
             expect(loud <= 1.0f);
@@ -400,7 +400,7 @@ public:
             auto engine = std::make_unique<EngineV3>();
             engine->prepare(kRate, kBlock, 2);
             EngineSettings settings;
-            settings.part = basicPart();
+            settings.parts[0] = basicPart();
             settings.masterGainLinear = 0.25f;
             juce::AudioBuffer<float> buffer(2, kBlock);
             const std::vector<EngineMidiEvent> events { on(69) };
@@ -424,7 +424,7 @@ public:
             auto engine = std::make_unique<EngineV3>();
             engine->prepare(kRate, kBlock, 1);
             EngineSettings settings;
-            settings.part = basicPart();
+            settings.parts[0] = basicPart();
             juce::AudioBuffer<float> buffer(1, kBlock);
             const std::vector<EngineMidiEvent> events { on(69) };
             float peak = 0.0f;

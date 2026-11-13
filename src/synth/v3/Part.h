@@ -52,6 +52,22 @@ namespace coolsynth::synth::v3
     enum class GenvTrigger : int { firstNote = 0, everyNote };
     inline constexpr int macroCount = 4;
 
+    /** Which of a patch's two parts the keys reach. */
+    enum class PartMode : int { aOnly = 0, layer, split, bOnly };
+
+    /** A part's place in the patch: where it sits in the mix and which keys reach it (see EngineV3.h). */
+    struct PartMix
+    {
+        float levelDb = 0.0f;
+        float pan = 0.0f;                        // -1..1, a balance
+        int transpose = 0;                       // semitones, on the keys the part is sent
+        float fineCents = 0.0f;
+        int keyLow = 0, keyHigh = 127;           // Split only
+        int velocityLow = 1, velocityHigh = 127; // whenever both parts play
+        float fx = 1.0f;                         // the share that passes through the effects; the rest joins after them
+        bool arp = true;                         // follows the arpeggiator when it is on
+    };
+
     struct PartSettings
     {
         VoiceSettings voice {};
@@ -70,6 +86,7 @@ namespace coolsynth::synth::v3
         StepSettings step {};
         std::array<float, macroCount> macros {};
         float chaosRateHz = 0.5f;
+        float tuneSemitones = 0.0f; // the part's fine detune, on every voice
         ChordSettings chord {};
         ArpParametersV2 arp {};
     };
@@ -111,6 +128,9 @@ namespace coolsynth::synth::v3
             phraseStartPending = false;
             return started;
         }
+
+        /** True while any voice sounds, releases included. */
+        [[nodiscard]] bool isSounding() const noexcept { return anyVoiceActive(); }
 
         /** The chord just learned, packed (see packLearnedChord), or 0. Audio thread; reading clears it. */
         [[nodiscard]] std::uint32_t consumeLearnedChord() noexcept { return chordMemory.consumeLearned(); }

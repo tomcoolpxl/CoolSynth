@@ -69,8 +69,12 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 30. Phase 7.1 done 2026-11-13: `src/synth/v3/ChordMemory.h`, the `pA.chord.*` parameters, chord
    learning through the processor, `tests/V3ChordTests.cpp`; Arcade Chip Chord, Clock Tower Chord
    Trigger, one-key Main Stage Future Chord. 67 presets.
-31. Phase 7.2: parts (second part, part mix, modes, caps, state for both); Supersaw with its sub
-   part, layered Juno Pad and Deep Field.
+31. Phase 7.2 done 2026-11-13: two parts in `EngineV3` (modes, ranges, transpose, shared voice
+   limits, part mix with an effects share), `pB.*`, `pA.mix.*`, `part.mode`, `b.` lines in bank
+   files, `tests/V3PartsTests.cpp`; Supersaw with its sub part, Juno Pad and Deep Field in two
+   layers. Open from this phase: per-part insert slots, which need effects as slot types.
+32. Phase 8: sample generator with an embedded factory set, grain generator; Observatory Granular
+   Sky completes the bank at 68.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

@@ -243,6 +243,27 @@ namespace coolsynth::parameters::v3
     juce::String playParameterId(Part part, const char* field) { return partPrefix(part) + ".play." + field; }
     juce::String chordParameterId(Part part, const juce::String& field) { return partPrefix(part) + ".chord." + field; }
 
+    juce::String mixParameterId(Part part, const juce::String& field) { return partPrefix(part) + ".mix." + field; }
+
+    const juce::StringArray& mixFields()
+    {
+        static const juce::StringArray fields { "level", "pan", "transpose", "fine", "keyLow", "keyHigh", "velLow", "velHigh", "fx", "arp" };
+        return fields;
+    }
+
+    const juce::StringArray& partModeNames()
+    {
+        static const juce::StringArray names { "A", "Layer", "Split", "B" };
+        return names;
+    }
+
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makePartsGroup()
+    {
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("parts", "Parts", "|");
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(partModeParameterId), "Part Mode", partModeNames(), 0));
+        return group;
+    }
+
     const juce::StringArray& chordTypeNames()
     {
         static const juce::StringArray names = []
@@ -394,6 +415,25 @@ namespace coolsynth::parameters::v3
         chord->addChild(std::make_unique<juce::AudioParameterBool>(makeId(chordParameterId(part, "learn")), "Chord Learn", false));
         group->addChild(std::move(chord));
 
+        // Split by default at middle C: part A below it, part B from it upwards. Layer ignores the key range.
+        const bool lower = part == Part::a;
+        auto mix = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".mix", "Part Mix", "|");
+        mix->addChild(floatParameter(mixParameterId(part, "level"), "Part Level", { -60.0f, 6.0f }, 0.0f,
+                                     juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int)
+                                     {
+                                         return v <= -60.0f ? juce::String("off") : juce::String(v, 1) + " dB";
+                                     })));
+        mix->addChild(floatParameter(mixParameterId(part, "pan"), "Part Pan", { -1.0f, 1.0f }, 0.0f, amountAttributes()));
+        mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "transpose")), "Part Transpose", -36, 36, 0));
+        mix->addChild(floatParameter(mixParameterId(part, "fine"), "Part Fine", { -100.0f, 100.0f }, 0.0f, centsAttributes()));
+        mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "keyLow")), "Key Low", 0, 127, lower ? 0 : 60));
+        mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "keyHigh")), "Key High", 0, 127, lower ? 59 : 127));
+        mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "velLow")), "Velocity Low", 1, 127, 1));
+        mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "velHigh")), "Velocity High", 1, 127, 127));
+        mix->addChild(floatParameter(mixParameterId(part, "fx"), "Part Effects", { 0.0f, 1.0f }, 1.0f, percentAttributes()));
+        mix->addChild(std::make_unique<juce::AudioParameterBool>(makeId(mixParameterId(part, "arp")), "Part Arp", true));
+        group->addChild(std::move(mix));
+
         return group;
     }
 
@@ -486,6 +526,16 @@ namespace coolsynth::parameters::v3
         for (int i = 0; i < sv3::learnedIntervalCount; ++i)
             p.chordNotes[static_cast<std::size_t>(i)] = state.getRawParameterValue(chordParameterId(part, "n" + juce::String(i + 1)));
         p.chordLearn = state.getRawParameterValue(chordParameterId(part, "learn"));
+        p.mix.level = state.getRawParameterValue(mixParameterId(part, "level"));
+        p.mix.pan = state.getRawParameterValue(mixParameterId(part, "pan"));
+        p.mix.transpose = state.getRawParameterValue(mixParameterId(part, "transpose"));
+        p.mix.fine = state.getRawParameterValue(mixParameterId(part, "fine"));
+        p.mix.keyLow = state.getRawParameterValue(mixParameterId(part, "keyLow"));
+        p.mix.keyHigh = state.getRawParameterValue(mixParameterId(part, "keyHigh"));
+        p.mix.velLow = state.getRawParameterValue(mixParameterId(part, "velLow"));
+        p.mix.velHigh = state.getRawParameterValue(mixParameterId(part, "velHigh"));
+        p.mix.fx = state.getRawParameterValue(mixParameterId(part, "fx"));
+        p.mix.arp = state.getRawParameterValue(mixParameterId(part, "arp"));
         return p;
     }
 
@@ -613,5 +663,22 @@ namespace coolsynth::parameters::v3
         for (std::size_t i = 0; i < settings.chord.learned.size(); ++i)
             settings.chord.learned[i] = juce::jlimit(0, sv3::maxLearnedInterval, loadInt(pointers.chordNotes[i], 0));
         settings.chord.learn = load(pointers.chordLearn, 0.0f) >= 0.5f;
+    }
+
+    void readPartMix(const PartParameterPointers& pointers, coolsynth::synth::v3::PartMix& mix) noexcept
+    {
+        auto value = [](const std::atomic<float>* p, float fallback) { return p != nullptr ? p->load(std::memory_order_relaxed) : fallback; };
+        auto whole = [&](const std::atomic<float>* p, int fallback) { return static_cast<int>(std::lround(value(p, static_cast<float>(fallback)))); };
+        const auto& m = pointers.mix;
+        mix.levelDb = value(m.level, 0.0f);
+        mix.pan = value(m.pan, 0.0f);
+        mix.transpose = juce::jlimit(-36, 36, whole(m.transpose, 0));
+        mix.fineCents = value(m.fine, 0.0f);
+        mix.keyLow = juce::jlimit(0, 127, whole(m.keyLow, 0));
+        mix.keyHigh = juce::jlimit(0, 127, whole(m.keyHigh, 127));
+        mix.velocityLow = juce::jlimit(1, 127, whole(m.velLow, 1));
+        mix.velocityHigh = juce::jlimit(1, 127, whole(m.velHigh, 127));
+        mix.fx = juce::jlimit(0.0f, 1.0f, value(m.fx, 1.0f));
+        mix.arp = value(m.arp, 1.0f) >= 0.5f;
     }
 }

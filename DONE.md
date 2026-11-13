@@ -682,3 +682,13 @@ Completed on 2026-05-15. V2 now exposes a true sine oscillator option again acro
 - [x] Parameters `pA.chord.type`, `strum`, `n1` to `n5`, `learn`; bank files take a `chord =` line. A chord played while Learn is on becomes the learned chord: collected on the audio thread, written to the parameters on the message thread.
 - [x] Presets: Arcade Chip Chord, Clock Tower Chord Trigger; Main Stage Future Chord now plays its minor seventh from one key. 67 presets. The loudness tool plays one key when chord memory is on.
 - [x] Added `tests/V3ChordTests.cpp` (13 tests): pass-through when off, every type's notes and release, shared notes, strum across blocks and downwards, release mid-strum, type change while held, a key struck again, All Notes Off, learning (collection, limits, single key), a chord in a part with the global envelope following the key, the arp walking the chord in order, learning through the processor into the parameters. Verified Debug build without warnings and `ctest` green; Future Chord at 22 % of real time with eight keys held (16 voices), Chord Trigger 5.5 %, Chip Chord under 1 %.
+
+## V3 phase 7.2: parts (2026-11-13)
+
+- [x] `EngineV3` owns two parts. Part mode A, Layer, Split or B; key ranges in Split, velocity ranges whenever both play, Transpose on the keys (with a per-key memory of what was sent), Fine on the pitch. A part the mode switches off lets go and rings out, and costs nothing once silent.
+- [x] The parts share sixteen voices as limits: each is sure of eight and gets more when the other asks for fewer (a poly part over a mono sub gets fifteen).
+- [x] Part mix: level, balance and an effects share that keeps the rest of a part past the rack; `mix.arp` says whether the part follows the arpeggiator. Gains move across the block.
+- [x] Parameters: part B under `pB.`, `pA.mix.*` and `pB.mix.*`, `part.mode`. Bank files: `b.` lines, `mix =`, `parts =`. Chord learning per part.
+- [x] Presets: Supersaw with its sub part; Juno Pad and Deep Field in two layers. 67 presets.
+- [x] Faster with 900 parameters: a preset sets only what changes (45 ms to 0.7 ms), the state check looks IDs up (125 ms to 9.5 ms).
+- [x] Added `tests/V3PartsTests.cpp` (13 tests): modes, split ranges, velocity ranges, transpose and release, fine detune, a part switched off, voice limits, level and pan, the effects share, the arp switch, `b.` lines in a bank file, a layered preset through the processor with a state round trip, start-up and load times. Verified Debug build without warnings and `ctest` green; single-part presets cost what they did, Juno Pad 33 % and Deep Field 27 % of real time with eight keys held.
