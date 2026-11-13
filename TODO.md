@@ -38,8 +38,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
    envelope-time destinations, `tests/V3GlobalModulatorTests.cpp`; Wobble and Riser shipped.
 16. Phase 2.4 done 2026-11-13: delay sync and ping-pong, `tests/V3DelayTests.cpp`; Outrun (five
    presets), Clock Tower (five) and Pluck Drop shipped. Phase 2 complete: 29 presets.
-17. Phase 3.1: noise generator; Bedroom Tape Flute, Observatory Solar Wind, Arcade, Init Noise,
-   and Riser's noise layer.
+17. Phase 3.1 done 2026-11-13: `src/synth/v3/NoiseGenerator.h`, `tests/V3NoiseTests.cpp`; Init
+   Noise, Tape Flute, Solar Wind, Coin Pulse, Boss Bass, Power-Up, Static Hit, Riser's noise.
+18. Phase 3.2: two-operator FM; Greenhouse Glass Bell, Rain Chime, Crystal Pluck, Engine Room FM
+   Knock, Workshop Init FM.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.
@@ -67,6 +69,9 @@ Absorbed into V3 (do not do them on V2):
   the arpeggiator itself carries into V3 unchanged.
 
 ## Standing notes
+
+- After adding a bank file, CMake reconfigures during the next build and the link of the
+  embedded bank library can fail once (LNK1236 or LNK1106); building again links it.
 
 - UI comes last (plan phase 9). Until then only throwaway UI: the generic editor. In the
   standalone the MiniLab knobs do nothing until then (their mapping lived in the V2 editor);

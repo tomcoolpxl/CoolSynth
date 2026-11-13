@@ -118,6 +118,7 @@ divider. Tests: spectra, LFSR period. Ships: Bedroom Tape Flute, Observatory Sol
 Static Hit).
 
 3.1 also ships Workshop Init Noise.
+Shipped 2026-11-13 with all of them and Riser's noise layer (decisions D25 to D29).
 
 3.2 FM generator, two operators. Carrier and modulator with ratio, fine, index, feedback, index
 envelope through ENV3 or the matrix. Tests: ratio tuning, index to bandwidth, feedback stability.

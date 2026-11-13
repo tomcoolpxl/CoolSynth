@@ -34,3 +34,11 @@ env2 = attack=1 decay=160 sustain=0 release=120
 voice = env2ToP1=0.25
 arp = on rate=1/16 pattern=up octaves=2 gate=0.5
 master = 6
+
+[Init Noise]
+room = Workshop
+g1 = Noise type=white width=0.5 level=0.8
+p1 = Ladder cutoff=20000 res=0 key=0 bass=0
+env1 = attack=2 decay=300 sustain=1 release=150
+voice = env2ToP1=0
+master = -3.5

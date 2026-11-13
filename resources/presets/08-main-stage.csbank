@@ -27,9 +27,10 @@ master = -2
 [Riser]
 room = Main Stage
 # Eight bars at the tempo (16 s at 120 BPM): the global envelope climbs an octave, opens the
-# filter, widens the stack and brings in a pulse that speeds up from 1/8 to 1/32. Hold a note or
-# a chord. The noise layer of the recipe arrives with the noise generator in phase 3.1.
+# filter, widens the stack, brightens a wide noise layer and brings in a pulse that speeds up
+# from 1/8 to 1/32. Hold a note or a chord.
 g1 = VA shape=saw unison=7 detune=20 spread=0.8 mix=0.65 rand=1 level=0.85
+g2 = Noise type=pink width=1 tone=0.35 level=0.25
 p1 = Ladder cutoff=280 res=0.3 key=0 bass=0.5
 env1 = attack=150 decay=500 sustain=1 release=1800
 genv = attack=8bars attackCurve=0.4 sustain=1 release=1800 sync=on
@@ -39,9 +40,11 @@ mod = src=genv dst=p1.cutoff amount=0.65
 mod = src=genv dst=g1.detune amount=0.35
 mod = src=genv dst=lfo1.rate amount=0.5
 mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=genv
+mod = src=genv dst=g2.tone amount=0.6
+mod = src=genv dst=g2.level amount=0.2
 voice = env2ToP1=0
 reverb = on size=0.85 damping=0.4 mix=0.3
-master = -1.5
+master = -2
 
 [Pluck Drop]
 room = Main Stage

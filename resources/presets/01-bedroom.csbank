@@ -1,0 +1,18 @@
+# Bedroom: lo-fi and cozy. Soft attacks, warm tops, a little air. The tape and vinyl character
+# arrives with the lo-fi effect in phase 5.2.
+
+[Tape Flute]
+room = Bedroom
+# A sine with a breath of band-passed noise on the note, a chiff of extra breath at the start,
+# a warm low-pass and a plate. The mod wheel brings in a 5 Hz vibrato.
+g1 = VA shape=sine rand=0 level=0.85
+g2 = Noise type=band res=0.15 tone=0.8 width=0.3 level=0.18
+p1 = Ladder cutoff=2500 res=0.05 key=0.6
+env1 = attack=70 decay=400 sustain=0.9 release=260 velocity=0.4
+env3 = attack=5 decay=160 sustain=0 release=100
+glfo1 = shape=sine sync=off rate=5 retrigger=off
+mod = src=glfo1 dst=pitch amount=0.007 via=wheel
+mod = src=env3 dst=g2.level amount=0.35
+voice = env2ToP1=0 drift=2
+reverb = on size=0.55 damping=0.55 mix=0.25
+master = -6

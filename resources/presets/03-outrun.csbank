@@ -75,4 +75,4 @@ env1 = attack=700 decay=1500 sustain=1 release=1200 velocity=0.3
 voice = env2ToP1=0 drift=4
 phaser = on rate=0.3 depth=0.5
 reverb = on size=0.8 damping=0.45 mix=0.3
-master = -3
+master = -4

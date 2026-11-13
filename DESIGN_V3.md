@@ -46,6 +46,13 @@ effect modules that need it oversample internally, as the V2 drive does.
 A slot holds one type at a time. Changing the type never changes any other slot. "Off" costs
 nothing and passes signal through (processors and effects) or produces silence (generators).
 
+Shipped (phase 3.1, 2026-11-13): `NoiseGenerator` in `src/synth/v3/NoiseGenerator.h`, generator
+type 2. Kinds White, Pink (seven shelves designed at the running rate), Band (state-variable
+band-pass on the note with level compensation) and Chip (NES 15-bit register, Long or Short,
+clocked at 93 times the note, Clock in semitones, steps band-limited with the VA's BLEP, which
+moved to `dsp::blepResidual`). Tone, Width, pan, ring and AM; output two samples late like the
+VA; every kind about 3 dB under a saw (decisions D25, D26).
+
 ### 3.2 Module interface
 
 Each type is a plain class with the same four operations; no virtual base is needed because a

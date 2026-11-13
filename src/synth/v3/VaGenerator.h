@@ -8,6 +8,7 @@
 
 #include <juce_core/juce_core.h>
 
+#include "DspMath.h"
 #include "Module.h"
 
 /*
@@ -347,23 +348,8 @@ namespace coolsynth::synth::v3
         }
 
         // Integral of the cubic B-spline from -2 to t, for t in [-2, 0].
-        static float splineIntegral(float t) noexcept
-        {
-            if (t <= -1.0f)
-            {
-                const float u = t + 2.0f;
-                return u * u * u * u * (1.0f / 24.0f);
-            }
-            return 1.0f / 24.0f + (2.75f + t * (4.0f + t * t * (-2.0f - 0.75f * t))) * (1.0f / 6.0f);
-        }
-
         /** Band-limited unit step minus the ideal step, x samples from the step, zero outside (-2, 2). */
-        static float stepResidual(float x) noexcept
-        {
-            if (x <= -2.0f || x >= 2.0f)
-                return 0.0f;
-            return x < 0.0f ? splineIntegral(x) : -splineIntegral(-x);
-        }
+        static float stepResidual(float x) noexcept { return dsp::blepResidual(x); }
 
         /** Band-limited unit-slope corner minus the ideal corner: the integral of stepResidual. Even in x. */
         static float rampResidual(float x) noexcept

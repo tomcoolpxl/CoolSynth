@@ -300,3 +300,69 @@ leak; it now renders long enough for the first echo to arrive.
 Also met: a stale debug database of the embedded bank library made the linker reject it
 (LNK1236) after two bank files were added; deleting `build/CoolSynthFactoryBank.dir/Debug`
 fixed it. Nothing to decide, noted in case it returns.
+
+## D25. How the noise generator makes its four kinds (2026-11-13, phase 3.1)
+
+Checked online: the NESdev wiki and emulator sources give the NES noise channel as a 15-bit
+shift register with feedback from bit 1 (32767 steps) or bit 6 (93 steps, "short mode"); the
+musicdsp pink-noise page notes that fixed pinking coefficients degrade at higher sample rates.
+
+- **Pink from seven first-order shelves designed at the running sample rate, poles every two
+  octaves from 10 Hz, zeros an octave above (taken, recommended).** Measured within 0.67 dB per
+  octave from 62 Hz to 16 kHz at the 96 kHz voice rate. The alternatives: Paul Kellet's fixed
+  coefficients (made for 44.1 kHz, they drift at 96 kHz), or Voss-McCartney (cheap, but rippled).
+- **Band noise: a state-variable band-pass on the note, its gain set from the resonance and the
+  note so the level stays even (taken).** Measured within 0.4 dB from 200 Hz wide to 3 kHz narrow.
+  Without the compensation a high, narrow band would be 20 dB quieter than a low, wide one.
+- **Chip: the register clocked at 93 times the note, so Short mode plays the note; Clock moves it
+  in semitones like the NES period divider; every register step band-limited with the VA's
+  4-point BLEP (taken, recommended).** A Short register at 375 Hz repeats every 256 samples to
+  within 0.001. A naive register aliases badly once the clock passes the sample rate. Keeping
+  the aliasing as "chip character" was the alternative; the crusher (4.2) can add it on purpose.
+- **Every kind sits about 3 dB under a saw at the same slot level (taken).** Noise sounds louder
+  than a saw at equal RMS, and the presets set their own levels anyway.
+
+## D26. Noise runs on across notes (2026-11-13, phase 3.1)
+
+- **Each generator instance gets its own noise sequence at prepare and never reseeds (taken,
+  recommended).** Every note is a different burst, as with analogue noise; two voices never
+  sum the same noise coherently.
+- Restart the noise at each note. Every hit identical, like a sample; fine for a drum machine,
+  wrong for breath and wind.
+
+## D27. Phase 3.1 preset choices (2026-11-13, phase 3.1)
+
+- **Tape Flute's breath is band noise on the note, with a 160 ms chiff from ENV3 (taken).** The
+  recipe said LP4 noise and "SVF band-pass for the breath"; the band type in the noise
+  generator is that band-pass.
+- **Solar Wind: two key-independent noise bands drifting on separate slow global LFOs (0.07 and
+  0.045 Hz) over two octaves (taken).** One band was the recipe; the second, off-phase, keeps the
+  sweep from sounding like one filter going back and forth.
+- **Static Hit uses Short mode (taken).** The recipe says "pitched periodic noise"; Long mode
+  would be a pitch-coloured hiss instead.
+- **Riser's noise layer is wide pink noise whose tone and level the global envelope opens
+  (taken).**
+- **New bank files `01-bedroom`, `02-arcade` and `04-observatory`, numbered by room order
+  (taken).**
+
+## D28. The loudness tool waits for slow swells too (2026-11-13, phase 3.1)
+
+- **When the amplifier's delay, attack and hold exceed half a second, the tool renders through
+  them (up to 10 s) before its 4 s measurement (taken, recommended).** Solar Wind (3 s attack)
+  is judged at full swell; measured during the swell it came out 3 dB too loud.
+- Measure as before. Every slow pad would be pushed above the bank.
+
+Random Walk's measured loudness moves by about 1 dB between runs because its arp pattern is
+random, so the tool may nudge its master by 0.5 dB on a rerun; nothing to fix.
+
+## D29. The bank library without debug info (2026-11-13, phase 3.1)
+
+The embedded bank library failed to link twice after bank files were added (LNK1236, once
+LNK1106). Each time CMake was reconfiguring in the middle of a build, which adding a bank file
+triggers. A second build always linked.
+
+- **Build the two data-only libraries without debug info (their shared .pdb could go stale) and
+  note in TODO that a link error on the bank library after adding a bank file goes away with a
+  second build (taken, recommended).** Code targets keep their debug info from
+  `coolsynth_config_flags`.
+- Run a separate configure before every build. Reliable, but slower for every change.

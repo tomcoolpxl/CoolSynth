@@ -341,9 +341,12 @@ bank files today (`resources/presets`, loudness-normalised):
 
 | Room | Shipped | Waiting for |
 | --- | --- | --- |
-| Workshop | Init Saw, Init Pulse, Init Sine, Init Arp | Init Noise (3.1), Init FM (3.2), Init Wavetable (3.4) |
+| Workshop | Init Saw, Init Pulse, Init Sine, Init Arp, Init Noise | Init FM (3.2), Init Wavetable (3.4) |
 | Studio 1982 | Juno Pad, Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
 | Engine Room | 808 Boom, Wobble, Pure Sub, Donk, Fat Analog | FM Knock (3.2) |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Sunset Strings | Grid Keys (3.3) |
+| Bedroom | Tape Flute | Cassette Keys, Blanket Pad, Bedroom Bass (lo-fi, 5.2), Dusty Mallet (modal, 6.2), Vinyl Choir (formant, 4.4) |
+| Arcade | Coin Pulse, Boss Bass, Power-Up, Static Hit | SCC Lead (wavetable 3.4, crusher 4.2), Chip Chord (chord memory, 7.1) |
+| Observatory | Solar Wind | Nebula Pad, Deep Field (SVF, 4.1), Shimmer Drone, Satellite Ping (5.1), Granular Sky (8.2) |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad | Chord Trigger (7.1) |
-| Main Stage | Reese, Supersaw (no sub layer), Riser (no noise layer), Pluck Drop | the sub layer (parts, 7.2); the rest per its Needs column |
+| Main Stage | Reese, Supersaw (no sub layer), Riser, Pluck Drop | the sub layer (parts, 7.2); the rest per its Needs column |

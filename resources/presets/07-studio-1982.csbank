@@ -40,7 +40,7 @@ env2 = attack=400 decay=1500 sustain=0.6 release=900
 voice = env2ToP1=0.08 drift=4
 phaser = on rate=0.25 depth=0.6
 reverb = on size=0.65 damping=0.5 mix=0.22
-master = -4
+master = -4.5
 
 [Moog Bass]
 room = Studio 1982

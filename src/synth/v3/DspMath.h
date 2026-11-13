@@ -25,4 +25,27 @@ namespace coolsynth::synth::v3::dsp
     {
         return 440.0f * std::exp2((midiPitch - 69.0f) * (1.0f / 12.0f));
     }
+
+    /** Integral of the cubic B-spline from -2 to t, for t in (-2, 0]. */
+    [[nodiscard]] inline float splineIntegral(float t) noexcept
+    {
+        if (t <= -1.0f)
+        {
+            const float u = t + 2.0f;
+            return u * u * u * u * (1.0f / 24.0f);
+        }
+        return 1.0f / 24.0f + (2.75f + t * (4.0f + t * t * (-2.0f - 0.75f * t))) * (1.0f / 6.0f);
+    }
+
+    /**
+        The 4-point band-limited unit step (integrated cubic B-spline, Valimaki, Pekonen and Nam,
+        JASA 2012) minus the ideal step, x samples from the step; zero outside (-2, 2). Adding
+        jump * blepResidual over the two samples before and after a step makes it band-limited.
+    */
+    [[nodiscard]] inline float blepResidual(float x) noexcept
+    {
+        if (x <= -2.0f || x >= 2.0f)
+            return 0.0f;
+        return x < 0.0f ? splineIntegral(x) : -splineIntegral(-x);
+    }
 }

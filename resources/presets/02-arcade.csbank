@@ -1,0 +1,47 @@
+# Arcade: chip sounds. Pulse waves at 12.5, 25 and 50 percent, arpeggio-fast pitch, periodic
+# noise. Thin, fast, cheerful. Room rule: filter open, no reverb, at most one slap of delay.
+
+[Coin Pulse]
+room = Arcade
+# A 25 percent pulse lead whose vibrato fades in over 300 ms, with one slap back.
+g1 = VA shape=pulse pw=0.25 rand=0 level=0.75
+p1 = Off
+env1 = attack=1 decay=1 sustain=1 release=20
+lfo1 = shape=triangle rate=6 fade=300 retrigger=on
+mod = src=lfo1 dst=pitch amount=0.01
+voice = env2ToP1=0
+play = mode=mono
+delay = on time=90 feedback=0 mix=0.2
+master = -2.5
+
+[Boss Bass]
+room = Arcade
+# A 12.5 percent pulse bass that jumps between the note and its octave every sixteenth.
+g1 = VA shape=pulse pw=0.125 oct=-1 rand=0 level=0.8
+p1 = Off
+env1 = attack=1 decay=1 sustain=1 release=30
+glfo1 = shape=square sync=on division=1/16 phase=180 retrigger=on
+mod = src=glfo1 dst=pitch amount=0.25 curve=unipolar
+voice = env2ToP1=0
+play = mode=mono
+master = -2.5
+
+[Power-Up]
+room = Arcade
+# A square bleep that rises an octave in 120 ms and stops.
+g1 = VA shape=pulse pw=0.5 rand=0 level=0.75
+p1 = Off
+env1 = attack=1 decay=130 sustain=0 release=30
+env2 = attack=120 attackCurve=0 decay=1 sustain=1 release=30
+mod = src=env2 dst=pitch amount=0.25
+voice = env2ToP1=0
+master = -1
+
+[Static Hit]
+room = Arcade
+# The NES noise channel in short mode, its 93-step buzz on the played note, cut short.
+g1 = Noise type=chip chip=short level=0.8
+p1 = Off
+env1 = attack=0.5 decay=80 sustain=0 release=60 velocity=0.4
+voice = env2ToP1=0
+master = 1.5

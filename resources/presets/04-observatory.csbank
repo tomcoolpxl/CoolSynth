@@ -1,0 +1,17 @@
+# Observatory: space and ambient. Slow swells, wide stereo, long tails, no hurry.
+
+[Solar Wind]
+room = Observatory
+# Two resonant noise bands that ignore the key, each drifting on its own slow global LFO across
+# two octaves, wide in stereo, swelling in over three seconds into a long plate.
+g1 = Noise type=band res=0.7 width=1 key=off oct=1 level=0.6
+g2 = Noise type=band res=0.6 width=1 key=off oct=2 pan=0.2 level=0.35
+p1 = Off
+env1 = attack=3000 decay=2000 sustain=1 release=4000
+glfo1 = shape=sine sync=off rate=0.07 retrigger=off
+glfo2 = shape=sine sync=off rate=0.045 phase=120 retrigger=off
+mod = src=glfo1 dst=g1.pitch amount=0.5
+mod = src=glfo2 dst=g2.pitch amount=0.35
+voice = env2ToP1=0
+reverb = on size=0.9 damping=0.35 mix=0.4
+master = -4.5

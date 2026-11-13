@@ -232,10 +232,16 @@ namespace
         return lines.joinIntoString("\n");
     }
 
-    /** Seconds the global envelope takes to reach its sustain when a matrix slot uses it; else 0. */
+    /**
+        Seconds to render before measuring: the global envelope's rise when a matrix slot uses it,
+        or a slow amplifier attack (over half a second), whichever is longer; else 0. A swell or a
+        riser is judged once it has arrived.
+    */
     double globalEnvelopeRiseSeconds(juce::AudioProcessorValueTreeState& state)
     {
         auto value = [&](const juce::String& id) { auto* p = state.getRawParameterValue(id); return p != nullptr ? p->load() : 0.0f; };
+        const double ampRise = (value("pA.env1.delay") + value("pA.env1.attack") + value("pA.env1.hold")) / 1000.0;
+        const double ampPreroll = ampRise > 0.5 ? std::min(10.0, ampRise) : 0.0;
         constexpr float genvSource = static_cast<float>(coolsynth::synth::v3::ModSource::genv);
         bool used = false;
         for (int slot = 1; slot <= 24; ++slot)
@@ -244,11 +250,11 @@ namespace
             used = used || std::abs(value(prefix + "src") - genvSource) < 0.5f || std::abs(value(prefix + "via") - genvSource) < 0.5f;
         }
         if (! used)
-            return 0.0;
+            return ampPreroll;
         double ms = value("pA.genv.delay") + value("pA.genv.attack") + value("pA.genv.hold") + value("pA.genv.decay");
         if (value("pA.genv.sync") >= 0.5f)
             ms *= 120.0 / std::max(20.0f, value("arpInternalTempoBpm"));
-        return std::min(40.0, ms / 1000.0);
+        return std::max(ampPreroll, std::min(40.0, ms / 1000.0));
     }
 
     juce::MidiBuffer buildStimulus(const coolsynth::presets::FactoryPreset& preset, bool firstBlock)
