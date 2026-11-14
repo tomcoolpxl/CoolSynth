@@ -285,11 +285,14 @@ namespace coolsynth::synth::v3
             }
             const double gainStep = (targetGain - gain) / static_cast<double>(std::max(1, numSamples));
 
+            // The larger of the two peaks: the tube's bias saturates its negative side harder. It changes only while
+            // the gain moves, so a steady gain works it out once (the same value, decision D138).
+            auto normaliseFor = [c](double at) { return 1.0 / std::max(1.0e-6, std::max(std::abs(shape(c, at)), std::abs(shape(c, -at)))); };
+            const double steadyNormalise = gainStep == 0.0 ? normaliseFor(gain) : 0.0;
             for (int i = 0; i < numSamples; ++i)
             {
                 gain += gainStep;
-                // The larger of the two peaks: the tube's bias saturates its negative side harder.
-                const double normalise = 1.0 / std::max(1.0e-6, std::max(std::abs(shape(c, gain)), std::abs(shape(c, -gain))));
+                const double normalise = gainStep == 0.0 ? steadyNormalise : normaliseFor(gain);
                 leftSamples[i] = driveChannel(left, leftSamples[i], c, normalise, wet, toneOn, toneCoefficient);
                 rightSamples[i] = driveChannel(right, rightSamples[i], c, normalise, wet, toneOn, toneCoefficient);
             }
@@ -299,6 +302,8 @@ namespace coolsynth::synth::v3
         struct Channel
         {
             double previousU = 0.0;
+            double previousIntegral = 0.0; // the curve's antiderivative at previousU, kept from the last sample
+            int integralCurve = -1;        // the curve it was taken on; -1: none yet
             float previousDry = 0.0f;
             float dcIn = 0.0f, dcOut = 0.0f, tone = 0.0f;
         };
@@ -313,8 +318,21 @@ namespace coolsynth::synth::v3
         {
             const double u = gain * static_cast<double>(x);
             const double du = u - ch.previousU;
-            const double y = std::abs(du) > 1.0e-5 ? (shapeIntegral(c, u) - shapeIntegral(c, ch.previousU)) / du
-                                                   : shape(c, 0.5 * (u + ch.previousU));
+            double y;
+            if (std::abs(du) > 1.0e-5)
+            {
+                // The antiderivative at the previous input was taken one sample ago: kept, not worked out again.
+                const double integral = shapeIntegral(c, u);
+                const double previous = ch.integralCurve == static_cast<int>(c) ? ch.previousIntegral : shapeIntegral(c, ch.previousU);
+                y = (integral - previous) / du;
+                ch.previousIntegral = integral;
+                ch.integralCurve = static_cast<int>(c);
+            }
+            else
+            {
+                y = shape(c, 0.5 * (u + ch.previousU));
+                ch.integralCurve = -1; // the antiderivative at u was not taken
+            }
             ch.previousU = u;
             const float dry = 0.5f * (x + ch.previousDry);
             ch.previousDry = x;

@@ -2673,3 +2673,30 @@ Taken within those choices:
   one), but it lets the user try his own sounds now.
 - Checked: all presets render as before; tests read real WAV files written with and without the
   clm and sampler chunks, and play a table, a sample and grains at the right pitch.
+
+## D138. The cost of playing: measured, and two exact speed-ups (2026-11-14)
+
+Asked what to do after the interface's engine parts ("Start designing the interface
+(Recommended)", "Try my own sounds first", "Back to the Museum", "Remaining engine odds and
+ends"), the user chose **"Remaining engine odds and ends"**: the sawtooth generator's cost
+(TODO item 35) and grains from a live sound.
+
+- **Measured first (taken).** A new opt-in report (tests/V3ModuleCostReport.cpp, run with
+  COOLSYNTH_CPU_REPORT=1; the test runner now takes COOLSYNTH_TEST_ONLY to run one test) times
+  each module alone for an eight-note chord, two seconds, best of three. The VA saw was cheap:
+  4.5 % of real time with the voices' own 2.9 %, so under 2 % itself. The cost of the "eight-note
+  saw chord at 15 %" in TODO was the ladder after it (13.5 %), and the Drive processor cost
+  11.5 %. Both were made cheaper instead; the VA was left as it is.
+- **The ladder runs left and right side by side in one SSE register (taken).** Every operation
+  of the one-channel code, in the same order, on two lanes: IEEE arithmetic gives the same
+  result in a lane as alone, so the output is the same to the last bit. 13.5 % to about 8 %.
+  Alternatives: process one channel when both are equal (only centred voices gain, and the
+  generators' pan gains differ by a bit, so rarely exact); an approximation that changes the
+  sound (refused: quality first).
+- **The Drive processor keeps what does not change (taken):** its normalising peak is worked out
+  once while the drive amount is steady (it took two tanh a sample), and the curve's
+  antiderivative at the previous input is kept from the sample before (a log and an exp per
+  channel a sample). The same values, so the same output. 11.5 % to about 6 %.
+- **Checked: all 118 presets rendered before and after; the 114 that use no randomness are bit
+  for bit the same** (the other four differ between any two renders).
+- Next costs, from the same report: FM4 (about 10 %), the Comb (about 7 %).

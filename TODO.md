@@ -126,8 +126,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       Pressure and MPE Slide sources are listed but fed by nothing). Later, the user's choice
       (D136): key pressure and the expression pedal are built, MPE waits for an MPE controller;
     - grains from another generator, which needs a buffer pool handed out by the part (D79);
-    - the VA generator's CPU cost (an eight-note saw chord is about 15 % of real time in the
-      optimised Debug build).
+    - processing cost, measured per module by the opt-in report (COOLSYNTH_CPU_REPORT=1,
+      tests/V3ModuleCostReport.cpp; eight notes, optimised Debug): after D138 the ladder costs
+      about 8 % of real time, FM4 about 10 %, the Drive processor and the Comb about 6 to 7 %,
+      the VA saw under 2 %. FM4 and the Comb are the next to look at.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

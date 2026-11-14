@@ -676,7 +676,17 @@ int main()
     // No test reads the real sampled-instrument library: a small stand-in is written and used instead.
     coolsynth::testing::installTestSampleLibrary();
     juce::UnitTestRunner runner;
-    runner.runAllTests();
+    // COOLSYNTH_TEST_ONLY=part of a test's name runs only the tests whose names contain it.
+    if (const auto only = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_TEST_ONLY", {}); only.isNotEmpty())
+    {
+        juce::Array<juce::UnitTest*> chosen;
+        for (auto* test : juce::UnitTest::getAllTests())
+            if (test->getName().containsIgnoreCase(only))
+                chosen.add(test);
+        runner.runTests(chosen);
+    }
+    else
+        runner.runAllTests();
     coolsynth::testing::removeTestSampleLibrary();
 
     int failures = 0;
