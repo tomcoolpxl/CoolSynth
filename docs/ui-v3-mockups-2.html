@@ -134,6 +134,8 @@ header{display:flex;flex-direction:column;gap:10px}
 .legend td:first-child{white-space:nowrap;padding-right:14px;font-weight:600;width:1%}
 .oled{background:#050607;border-radius:8px;padding:12px 14px;width:250px;max-width:100%;min-height:68px;box-sizing:border-box;font-family:var(--f-mono);color:#f2f5f8;display:flex;align-items:center;gap:10px}
 .oled .otx{flex:1;min-width:0}
+.oled .oic{display:inline-block;margin-right:3ch}
+.oled .oic.tri{font-size:.6em;vertical-align:.15em}
 .oled .og{display:block;height:40px;width:auto}
 .oled .l1{font-size:15px;font-weight:600;white-space:pre;overflow:hidden}
 .oled .l2{font-size:12px;white-space:pre;overflow:hidden;color:#b9c1c9}
@@ -567,7 +569,8 @@ function render(){
  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.m===S.model)));
  let h=screenHTML();if(S.toast&&Date.now()<S.toast.until)h+=`<div class="toast">${esc(S.toast.t)}</div>`;
  document.getElementById("screen").innerHTML=h;
- const OL=oled();document.getElementById("o1").textContent=(OL.icon1?OL.icon1+" ":"")+OL.l1;document.getElementById("o2").textContent=(OL.icon2?OL.icon2+" ":"")+OL.l2;document.getElementById("og").innerHTML=oledGraphic(OL.pop);
+ const OL=oled();const oline=(id,ic,t)=>{const el=document.getElementById(id);el.textContent="";if(ic){const s=document.createElement("span");s.className="oic"+(ic==="▶"?" tri":"");s.textContent=ic;el.appendChild(s)}el.appendChild(document.createTextNode(t))};
+ oline("o1",OL.icon1,OL.l1);oline("o2",OL.icon2,OL.l2);document.getElementById("og").innerHTML=oledGraphic(OL.pop);
  document.getElementById("shift").classList.toggle("lit",shift());
  const r=roles();document.getElementById("e-turn").textContent=r.turn;document.getElementById("e-press").textContent=r.press;
  const lab=[],vals=[];
