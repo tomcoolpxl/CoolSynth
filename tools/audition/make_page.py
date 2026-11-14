@@ -44,8 +44,8 @@ REJUDGE = {
     "Museum|Minimoog: Trilogy lead": "2026-11-14-strike",
     "Museum|Prophet-5: Sync II": "2026-11-14-joins",
     "Museum|Prophet-5: Brass": "2026-11-14-joins",
-    "Conservatory|Recorders": "2026-11-14-joins",
     "Museum|Contact opening: the second synth": "2026-11-14-bass",
+    "Museum|Contact opening: the first synth": "2026-11-14-tab",
 }
 
 # A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
@@ -157,7 +157,7 @@ sections, nav, waiting = [], [], []
 now_cards = []   # what waits for the user's ear: shown first, nothing to hunt for
 
 # Admitted Museum sounds whose comparison clip changed after the verdict: back at the top for one more listen.
-REVIEW_ADMITTED = {"contact-opening-2"}
+REVIEW_ADMITTED = {"contact-opening-1", "contact-opening-2"}
 MUSEUM_OPTIONS = ["admit it", "not yet: too bright", "not yet: too dull or muffled",
                   "not yet: how notes start is wrong", "not yet: how notes fade or end is wrong",
                   "not yet: how one note passes into the next is wrong", "not yet: something else"]
@@ -167,7 +167,10 @@ MUSEUM_OPTIONS = ["admit it", "not yet: too bright", "not yet: too dull or muffl
 LISTEN_FOR = {
     "Museum|Minimoog: Trilogy lead": "Changed after your \"almost\": each note now begins with the slide, and stays bright for a "
                                      "moment before it mellows. Listen to how the notes begin.",
-    "Museum|Contact opening: the second synth": "Only the bass changed. The low notes under the chords are now as strong as on the record.",
+    "Museum|Contact opening: the first synth": "As you asked, it no longer plays my reading of the notes: it plays the chords "
+                                               "and the little tune as published for \"Contact\". Only the notes changed, not the sound.",
+    "Museum|Contact opening: the second synth": "You found the original slightly grittier. Nothing changed here yet: I measured "
+                                                "what the grit is and am asking you how you want it.",
     "Conservatory|Recorders": "Play the first clip, Soprano. The overdrive you heard on chords should be gone.",
 }
 

@@ -2424,3 +2424,32 @@ sharper. brighter.").
   listen (taken out of their family), each with one line on what to listen for, the players
   ("1. The real one", "2. Mine", the changed clip first and marked), the verdict, and the
   background folded under it.
+
+## D131. Recorders good; the notes looked up; the second synth's grit measured (2026-11-14)
+
+Read from the page's verdict store, and the user's words in the chat.
+
+- **Recorders: "good"** (the Soprano clip with E6 and F sharp 6 from clean neighbours, D113).
+  Settled; it leaves the top of the page.
+- **Second Contact synth: "still not right", "i dont know what it is but original is slightly
+  grittier"; in the chat: "the second synth is very, very close."**
+- **"your notes are different from the original. I don't care. Don't try to fix that by
+  recognizing but look up the notes online ... The chords."** Looked up: no chord chart exists
+  for The Sherbs' song; for "Contact" Hooktheory has a user-contributed transcription of the
+  intro (hooktheory.com/theorytab/view/daft-punk/contact; its notes come from the site's public
+  API): B minor, G for two bars, A for two, G, Em7, A for two, with the tune D, C sharp, D, E.
+  That is exactly the eight bars Daft Punk sampled (3.3 to 19.05 s of the record). **Taken:
+  the first synth's comparison plays those chords and that tune over those eight bars,** laid
+  out on the keys as the record's lines show (bass doubled at the octave, A3 and B3 held, the
+  tune in pairs over A); the bands from 176 Hz to 2.8 kHz are 1.3 to 2.4 dB apart in the
+  middle, as with my own reading. The record's second phrase (19 to 26 s) and the stretch
+  with the second synth are in no published source: the second synth's clip keeps my reading.
+- **The grit, measured.** Between its spectral lines the record holds a floor that follows the
+  sound: 43 to 45 dB under the strongest line of every band from 150 Hz to 8 kHz. The rebuild's
+  second synth alone has 68 to 80 dB there. Tried on the admitted preset: the filter driven 9
+  or 18 dB harder leaves the floor where it is (distortion lands on the lines, not between
+  them); a noise generator in each voice raises it by 4 to 5 dB for every doubling (0.04 gives
+  -52 to -58 dB), so about 0.15 would meet the record's. A floor that follows the signal by
+  the same distance in every band is what tape and a lossy file leave (this record reached us
+  as AAC at 128 kbit/s), more than what an instrument does. Whether it goes into the sound is
+  the user's choice; asked.

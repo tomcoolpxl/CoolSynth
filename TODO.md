@@ -89,8 +89,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       (D108): the user found the third try close enough (D111). Done;
     - Recorders: the user heard overdrive on chords. Two listening tests traced it to the
       soprano's E6 recording, whose overtones clash with the other notes; at the user's
-      choice E6 and F sharp 6 now play from clean neighbours (D113). The new Soprano clip waits
-      for the user's ear;
+      choice E6 and F sharp 6 now play from clean neighbours (D113); the user found the new
+      Soprano clip good (D131). Done;
     - after the user's picks: key zones in the sample generator, sample files beside the plugin
       at the best quality, install options;
     - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each

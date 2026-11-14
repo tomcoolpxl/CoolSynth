@@ -185,13 +185,13 @@
   "poly": {
    "file": "museum/contact/we_ride_tonight_0_70.flac",
    "begin": 4.3,
-   "end": 26.4,
-   "notes": "museum/contact/synth1_notes.json",
+   "end": 19.05,
+   "notes": "museum/contact/synth1_tab_notes.json",
    "key_offset": 0,
    "tune_cents": 15,
-   "transcribed_with": "transcribe_held_chords.py <clip> 4.3 26.4 36 66 <out> mid 6 12"
+   "transcribed_with": "not transcribed: the chords and the tune of the published transcription (Hooktheory TheoryTab 'Contact', intro: G, A, G, Em7, A with the tune D, C sharp, D, E), laid out on the keys as the record's lines show; built by contact1_tab_notes.py"
   },
-  "reference": "The Sherbs, \"We Ride Tonight\" (1981), the record Daft Punk sampled for \"Contact\": its first synth, playing alone (copyrighted: kept in the audition folder for this comparison only). My rebuild plays the chords as I could read them from the recording; a few inner notes may be wrong. The record runs 15 cents sharp; the rebuild is tuned to it for this clip.",
+  "reference": "The Sherbs, \"We Ride Tonight\" (1981): the eight bars Daft Punk sampled for \"Contact\", its first synth playing alone (copyrighted: kept in the audition folder for this comparison only). My rebuild plays the chords and the tune as published for \"Contact\" (Hooktheory), not my own reading of the record. The record runs 15 cents sharp; the rebuild is tuned to it for this clip.",
   "source": "No published settings: nobody has said which instrument this is. Built from what the recording shows (two sawtooth oscillators a note, 17 cents apart; one steep low-pass that opens at each note and closes over seconds), then fitted to it.",
   "admitted": true
  },
