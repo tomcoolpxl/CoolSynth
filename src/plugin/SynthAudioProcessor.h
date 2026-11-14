@@ -14,6 +14,8 @@
 #include "synth/SynthParameters.h"
 #include "synth/v3/EngineV3.h"
 
+namespace coolsynth::ui { class InterfaceModel; }
+
 class SynthAudioProcessor final : public juce::AudioProcessor,
                                   private juce::AudioProcessorParameter::Listener,
                                   private juce::ValueTree::Listener
@@ -104,6 +106,9 @@ public:
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+
+    /** The interface's state (docs/interface-v3.md), shared by the panel and the MiniLab driver. Message thread. */
+    coolsynth::ui::InterfaceModel& getInterfaceModel();
     coolsynth::synth::v3::Part& getPartForTesting() noexcept { return synthEngine.partForTesting(); }
 
     coolsynth::plugin::ProcessorScopeFifo& getScopeFifo() noexcept { return scopeFifo; }
@@ -208,6 +213,8 @@ private:
     std::atomic<bool> patchDirty { false };
     juce::String patchName { "Init" };
     mutable juce::CriticalSection patchIdentityLock;
+
+    std::unique_ptr<coolsynth::ui::InterfaceModel> interfaceModel; // last: it refers to the parameters
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)
 };

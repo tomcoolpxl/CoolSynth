@@ -2,6 +2,8 @@
 
 #include "StandaloneAudioSupport.h"
 #include "SettingsStore.h"
+#include "MiniLab3Driver.h"
+#include "plugin/SynthAudioProcessor.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -36,6 +38,13 @@ public:
         customOptionsButton.setButtonText("Options");
         customOptionsButton.onClick = [this] { openCustomSettings(); };
         addAndMakeVisible(&customOptionsButton);
+
+        // A connected MiniLab 3 becomes the panel's hardware twin (docs/interface-v3.md section 5).
+        if (auto* pluginHolder = getPluginHolder())
+            if (auto* synth = dynamic_cast<SynthAudioProcessor*>(pluginHolder->processor.get()))
+                miniLab = std::make_unique<coolsynth::standalone::MiniLab3Driver>(synth->getInterfaceModel(),
+                                                                                  pluginHolder->deviceManager,
+                                                                                  pluginHolder->player.getMidiMessageCollector());
     }
 
     void resized() override
@@ -49,6 +58,7 @@ public:
     }
 
 private:
+    std::unique_ptr<coolsynth::standalone::MiniLab3Driver> miniLab; // destroyed before the holder
     juce::TextButton customOptionsButton;
     juce::Button* originalOptionsButton = nullptr;
     void openCustomSettings()

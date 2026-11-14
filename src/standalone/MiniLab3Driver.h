@@ -1,0 +1,62 @@
+#pragma once
+
+#include <array>
+#include <memory>
+#include <vector>
+
+#include <juce_audio_devices/juce_audio_devices.h>
+#include <juce_events/juce_events.h>
+
+namespace coolsynth::ui { class InterfaceModel; }
+
+/*
+    Drives a connected Arturia MiniLab 3 from the standalone app (docs/interface-v3.md section 5):
+    opens its DAW port ("Minilab3 MIDI") for input and output, switches it to the DAW program,
+    turns its knobs, main knob, pads and faders into InterfaceModel actions, passes its keys, bend,
+    mod wheel and pressure on to the sound, and keeps its screen and pad colours in step with the
+    model. Finds the device again after it is unplugged and plugged back in. Message thread.
+*/
+namespace coolsynth::standalone
+{
+    class MiniLab3Driver final : private juce::MidiInputCallback,
+                                 private juce::Timer
+    {
+    public:
+        /** keys: where note and performance messages go (the standalone player's collector). */
+        MiniLab3Driver(coolsynth::ui::InterfaceModel& model,
+                       juce::AudioDeviceManager& deviceManager,
+                       juce::MidiMessageCollector& keys);
+        ~MiniLab3Driver() override;
+
+        [[nodiscard]] bool isConnected() const noexcept { return output != nullptr && input != nullptr; }
+
+    private:
+        void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
+        void timerCallback() override;
+
+        void tryOpen();
+        void close();
+        void apply(const juce::MidiMessage& message);
+        void refreshDevice(bool force);
+        void send(const juce::MidiMessage& message);
+
+        coolsynth::ui::InterfaceModel& model;
+        juce::AudioDeviceManager& devices;
+        juce::MidiMessageCollector& keyCollector;
+
+        std::unique_ptr<juce::MidiInput> input;
+        std::unique_ptr<juce::MidiOutput> output;
+        juce::String inputIdentifier;
+
+        juce::CriticalSection queueLock;
+        std::vector<juce::MidiMessage> queue;   // control messages from the MIDI thread
+
+        bool shiftHeld = false;
+        std::array<int, 8> lastKnobValue { -1, -1, -1, -1, -1, -1, -1, -1 };
+        juce::String sentLine1, sentLine2;
+        int sentPosition = -1;
+        std::array<juce::uint32, 8> sentPadColours {};
+        int sentPopupSerial = 0;
+        int ticksSinceProbe = 0;
+    };
+}

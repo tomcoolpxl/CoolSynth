@@ -3,6 +3,7 @@
 #include <juce_core/juce_core.h>
 
 #include "interface/InterfaceModel.h"
+#include "midi/MiniLab3Protocol.h"
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
 
@@ -190,3 +191,53 @@ public:
 };
 
 static InterfaceModelTests interfaceModelTests;
+
+/* The MiniLab 3's DAW program: the bytes tested on the device (docs/minilab3-screen.md). */
+class MiniLab3ProtocolTests final : public juce::UnitTest
+{
+public:
+    MiniLab3ProtocolTests() : juce::UnitTest("MiniLab3Protocol", "CoolSynth") {}
+
+    void runTest() override
+    {
+        namespace ml = coolsynth::midi::minilab3;
+        auto bytes = [](const juce::MidiMessage& m)
+        {
+            juce::String s;
+            for (int i = 0; i < m.getRawDataSize(); ++i)
+                s << juce::String::toHexString(m.getRawData()[i]).paddedLeft('0', 2).toUpperCase() << " ";
+            return s.trim();
+        };
+
+        beginTest("Connect, pad colour and the scroll screen are the bytes that worked on the device");
+        expectEquals(bytes(ml::connect()), juce::String("F0 00 20 6B 7F 42 02 00 40 6A 21 F7"));
+        expectEquals(bytes(ml::padColour(0, juce::Colour(0xff, 0xa2, 0x3a))), juce::String("F0 00 20 6B 7F 42 02 02 16 34 7F 51 1D F7"));
+        expectEquals(bytes(ml::scrollScreen("Outrun", "Neon Brass *", 0)),
+                     juce::String("F0 00 20 6B 7F 42 04 02 60 1F 06 00 00 00 7F 00 00 01 4F 75 74 72 75 6E 00 02 "
+                                  "4E 65 6F 6E 20 42 72 61 73 73 20 2A 00 F7"));
+        expect(bytes(ml::popup(false, "Cutoff", "1.2 kHz", 0.5f)).startsWith("F0 00 20 6B 7F 42 04 02 60 1F 03 02 40 00 00 01"));
+
+        beginTest("Screen text keeps to printable ASCII and the line widths");
+        const auto text = ml::screenText(juce::String(juce::CharPointer_UTF8("Sound \xc2\xb7 Wave and much more text")), 16);
+        expectEquals(static_cast<int>(text.size()), 16);
+        expectEquals(static_cast<int>(text[6]), static_cast<int>('-'));
+
+        beginTest("Decoding: knobs, main knob, press, faders, pads on channel 10; keys pass through");
+        auto kindOf = [](const juce::MidiMessage& m) { return ml::decode(m).kind; };
+        using Kind = ml::Control::Kind;
+        expect(kindOf(juce::MidiMessage::controllerEvent(1, 86, 40)) == Kind::knob);
+        expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 117, 40)).index, 7);
+        expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 28, 62)).value, -2);
+        expect(kindOf(juce::MidiMessage::controllerEvent(1, 118, 127)) == Kind::mainPress);
+        expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 31, 100)).index, 3);
+        expectEquals(ml::decode(juce::MidiMessage::noteOn(10, 43, 0.8f)).index, 7);
+        expect(kindOf(juce::MidiMessage::noteOn(1, 43, 0.8f)) == Kind::other);   // a key
+        expect(kindOf(juce::MidiMessage::controllerEvent(1, 1, 64)) == Kind::other); // mod wheel
+        expect(kindOf(juce::MidiMessage::pitchWheel(1, 9000)) == Kind::other);
+        expect(ml::isDawPort("Minilab3 MIDI"));
+        expect(! ml::isDawPort("Minilab3 DIN THRU"));
+        expect(! ml::isDawPort("Minilab3 ALV"));
+    }
+};
+
+static MiniLab3ProtocolTests miniLab3ProtocolTests;

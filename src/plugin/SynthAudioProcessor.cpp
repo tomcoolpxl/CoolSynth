@@ -13,6 +13,7 @@
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 #include "plugin/AuditionEditor.h"
+#include "interface/InterfaceModel.h"
 #include "presets/FactoryPresets.h"
 #include "presets/StateMigration.h"
 #include "synth/v3/UserLibrary.h"
@@ -462,6 +463,13 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
     coolsynth::presets::applyFactoryPreset(parameters, preset);
     setPatchIdentity(preset.name, false);
+}
+
+coolsynth::ui::InterfaceModel& SynthAudioProcessor::getInterfaceModel()
+{
+    if (interfaceModel == nullptr)
+        interfaceModel = std::make_unique<coolsynth::ui::InterfaceModel>(*this);
+    return *interfaceModel;
 }
 
 juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()
