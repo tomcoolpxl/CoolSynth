@@ -135,6 +135,11 @@ header{display:flex;flex-direction:column;gap:10px}
 .oled{background:#050607;border-radius:8px;padding:12px 14px;width:250px;max-width:100%;min-height:68px;box-sizing:border-box;font-family:var(--f-mono);color:#f2f5f8;display:flex;align-items:center;gap:10px}
 .oled .otx{flex:1;min-width:0}
 .oled .oic{display:inline-block;margin-right:3ch}
+.oled .l2.sc{display:flex;justify-content:space-between}
+.oled.scr .l1{font-size:12px;font-weight:400;color:#b9c1c9}
+.oled.scr .l2{font-size:15px;font-weight:600;color:#f2f5f8}
+.oled .om{position:relative;height:4px;margin-top:4px}
+.oled .om i{position:absolute;top:1px;width:1.5ch;height:1px;background:#f2f5f8;font-size:12px}
 .oled .oic.tri{font-size:.6em;vertical-align:.15em}
 .oled .og{display:block;height:40px;width:auto}
 .oled .l1{font-size:15px;font-weight:600;white-space:pre;overflow:hidden}
@@ -200,8 +205,8 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
   </div>
   <div class="box">
     <h2>On the MiniLab 3 itself</h2>
-    <div class="oled" aria-label="MiniLab 3 screen"><div class="otx"><div class="l1" id="o1"></div><div class="l2" id="o2"></div></div><div id="og"></div></div>
-    <p class="note">Tested on your MiniLab. The top line is the big one, 16 characters; the bottom line is smaller, 18. In a list, the big line is the selected item behind a ▶ cursor, and the small line is the next item; turning scrolls the list under the cursor. ✓ marks the sound that is playing (or the slot's current type). Turning a knob or moving a fader shows a pop-up with its name, its value and a knob or bar graphic for about a second; the device draws it only while a control moves.</p>
+    <div class="oled" aria-label="MiniLab 3 screen"><div class="otx"><div class="l1" id="o1"></div><div class="l2" id="o2"></div><div class="om" id="om" hidden><i></i></div></div><div id="og"></div></div>
+    <p class="note">Tested on your MiniLab. The top line is the big one, 16 characters; the bottom line is smaller, 18. In a list (your choice: the scroll screen) the sizes flip: line two is big and holds the selected item between &lt; and &gt;, with * if it is the sound playing or the slot's current type; line one, small, says where you are, for example "Outrun"; a small marker slides along with the position. Turning a knob or moving a fader shows a pop-up with its name, its value and a knob or bar graphic for about a second; the device draws it only while a control moves.</p>
     <div class="about" id="about"></div>
   </div>
 </div>
@@ -519,13 +524,18 @@ function oled(){
  const x=curItem();
  /* lists: the big top line is the selected item behind the ▶ cursor (✓ when it is the one in use),
     the small bottom line the next item */
- const list=(L,sel,used)=>({l1:cut(L[sel],W1),icon1:used(sel)?"✓":"▶",l2:sel+1<L.length?cut(L[sel+1],W2):"",icon2:sel+1<L.length&&used(sel+1)?"✓":""});
- if(S.overlay){const L=S.overlay.list.map(t=>t==="‹ Back"?"< Back":t==="Off"?"Empty":t);return list(L,S.overlay.idx,i=>S.overlay.list[i]===x.type)}
- if(S.lvl==="sounds"){const o=S.br;if(!o.inRoom)return list(ROOMS.map(r=>r[0]),o.room,()=>false);
-  return list(["< Back"].concat(ROOMS[o.room][1]),o.idx+1,i=>o.room===S.room&&i-1===S.idx)}
- const ps=curPages(),pg=ps.length?ps[curPageIdx()][0]+" "+(curPageIdx()+1)+"/"+ps.length:"empty";
+ /* lists use the MiniLab's scroll screen (1F 06), the user's choice. In it line 2 is the big one: the selected item
+    (* if it is the one in use) between the device's < > arrows; line 1 (small) says where and n/m; a small marker
+    shows the position in the list */
+ const list=(where,L,sel,used)=>({l1:cut(where,W2),l2:cut(L[sel]+(used(sel)?" *":""),W1),scroll:L.length>1?sel/(L.length-1):0});
+ if(S.overlay){const L=S.overlay.list.map(t=>t==="‹ Back"?"< Back":t==="Off"?"Empty":t);return list("Type "+x.slot,L,S.overlay.idx,i=>S.overlay.list[i]===x.type)}
+ if(S.lvl==="sounds"){const o=S.br;if(!o.inRoom)return list("Categories",ROOMS.map(r=>r[0]),o.room,()=>false);
+  return list(ROOMS[o.room][0],["< Back"].concat(ROOMS[o.room][1]),o.idx+1,i=>o.room===S.room&&i-1===S.idx)}
+ const ps=curPages(),pg=ps.length?ps[curPageIdx()][0]:"empty";
  if(S.model==="drill"&&S.lvl==="map")return{l1:cut(curSec().name.toUpperCase()+" map",W1),l2:cut(slotName(x),W2)};
- return{l1:cut(curSec().name.toUpperCase()+" "+slotName(x),W1),l2:cut(pg,W2)};
+ /* a section is a list too (the main knob moves between its slots): same scroll screen, no numbers */
+ const its=curSec().items,si=S.item[S.sec];
+ return{l1:cut(curSec().name+" · "+pg,W2),l2:cut(x.slot+" "+(x.type==="Off"?"empty":x.type),W1),scroll:its.length>1?si/(its.length-1):0};
 }
 function oledGraphic(p){if(!p||p.v==null)return"";const v=clamp(p.v,0,1);
  if(p.kind==="fader")return`<svg viewBox="0 0 14 40" class="og"><rect x="4" y="1" width="6" height="38" rx="2" fill="none" stroke="#5b636b"/><rect x="4" y="${1+38*(1-v)}" width="6" height="${38*v}" rx="2" fill="#f2f5f8"/></svg>`;
@@ -570,7 +580,11 @@ function render(){
  let h=screenHTML();if(S.toast&&Date.now()<S.toast.until)h+=`<div class="toast">${esc(S.toast.t)}</div>`;
  document.getElementById("screen").innerHTML=h;
  const OL=oled();const oline=(id,ic,t)=>{const el=document.getElementById(id);el.textContent="";if(ic){const s=document.createElement("span");s.className="oic"+(ic==="▶"?" tri":"");s.textContent=ic;el.appendChild(s)}el.appendChild(document.createTextNode(t))};
- oline("o1",OL.icon1,OL.l1);oline("o2",OL.icon2,OL.l2);document.getElementById("og").innerHTML=oledGraphic(OL.pop);
+ oline("o1",OL.icon1,OL.l1);
+ const o2=document.getElementById("o2"),om=document.getElementById("om");
+ document.querySelector(".oled").classList.toggle("scr",OL.scroll!=null);
+ if(OL.scroll!=null){o2.textContent="";o2.classList.add("sc");["<",OL.l2,">"].forEach(t=>{const s=document.createElement("span");s.textContent=t;o2.appendChild(s)});om.hidden=false;om.firstChild.style.left="calc("+(OL.scroll*100)+"% - "+(OL.scroll*1.5)+"ch)"}
+ else{o2.classList.remove("sc");oline("o2",OL.icon2,OL.l2);om.hidden=true}document.getElementById("og").innerHTML=oledGraphic(OL.pop);
  document.getElementById("shift").classList.toggle("lit",shift());
  const r=roles();document.getElementById("e-turn").textContent=r.turn;document.getElementById("e-press").textContent=r.press;
  const lab=[],vals=[];

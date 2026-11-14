@@ -2908,3 +2908,17 @@ Tested on the user's MiniLab 3 (details and bytes: `docs/minilab3-screen.md`).
 - My mistakes in the testing, for the record: one-shot pop-ups that vanished before the user
   looked, a long sequence the user had to remember, a background test that overwrote the
   screen, and the line sizes taken the wrong way round at first.
+
+## D147. Lists on the MiniLab use its scroll screen (2026-11-14)
+
+The user's choice after trying it live, driven by the main knob, replacing D146's icon menu:
+
+- The scroll screen (`1F 06`) flips the sizes: line 2 is big. The selected item goes there,
+  between the device's `<` `>` arrows, with ` *` when it is the sound playing (or the slot's
+  current type); line 1, small, says where (`Outrun`, `Categories`, `Type P1`); a small marker
+  slides with the position. Verified on the device: a third icon byte shows nothing.
+- No counts: `2/6` was tried and dropped by the user as confusing; page counts went too.
+- A section is a list too (the main knob moves between its slots), so it uses the same screen:
+  line 1 `Sound · Wave`, line 2 `< G1 VA >`. Taken without asking, for consistency, after the
+  user objected to the old section line `SOUND G1 VA` / `Wave 1/3`.
+- Rejected: the icon menu (selected item big behind a triangle, next item small, check mark).

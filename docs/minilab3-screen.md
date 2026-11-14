@@ -22,11 +22,14 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
 | Fader pop-up | as the knob pop-up with `1F 04 02` | bar graphic |
 | Pad pop-up | as the knob pop-up with `1F 05 02` | pad graphic |
 | Parameter pop-up | `04 02 60 1F 08 02 <knob CC> 00 01 <name> 00 02 <value text> 00` | the device draws from its own knob value |
+| Scroll screen | `04 02 60 1F 06 00 <position> 00 <length> 00 00 01 <line 1> 00 02 <line 2> 00` | stays; line 1 small, **line 2 big** between `<` and `>` arrows, a small marker (about 1.5 characters wide) at position/length |
 
 - **The top line is the big one**, 16 characters; the bottom line is smaller, 18 characters
   (measured with digits and capitals). Longer text is cut, not scrolled.
 - **Icons**, one at the start of each line, then a space, then the text: 0 none, 1 heart,
-  2 play triangle, 3 record dot, 4 note, 5 check mark (each checked on the device).
+  2 play triangle, 3 record dot, 4 note, 5 check mark (each checked on the device). The third
+  icon byte shows nothing: one icon per line at most.
+- **In the scroll screen the sizes flip**: line 2 is the big one.
 - **Pop-ups are transient**, about a second, and **draw their graphic only while a control is
   physically moving**. A pop-up sent while nothing moves shows at most its text, briefly. So the
   app sends a pop-up in answer to each knob or fader message, never on its own.
@@ -37,23 +40,23 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
 
 ## The screen in CoolSynth (navigation E; D143-D146)
 
-**Lists** (categories, a category's sounds, the type list) use one layout, tried on the device
-and approved by the user:
+**Lists** (categories, a category's sounds, the type list) use the **scroll screen**, the user's
+choice after trying it live (D147; it replaced the icon menu of D146):
 
-- Top line (big): the selected item, with the play triangle (icon 2) as the cursor in front.
-- Bottom line (small): the next item, as a preview.
-- Turning the main knob scrolls the list under the fixed cursor; pressing opens or loads.
-- The check mark (icon 5) marks the sound that is playing, on whichever line it is; when the
-  cursor is on it, the check mark takes the cursor's place.
+- Line 2 (big): the selected item between the device's `<` `>` arrows, with ` *` after it when it
+  is the sound playing (or the slot's current type).
+- Line 1 (small): where you are, `Outrun`, and nothing else (a count like `2/6` was tried and
+  dropped by the user as confusing).
+- The marker slides with position/length; the app redraws the screen on every turn.
 - Inside a category the first row is `< Back`; pressing it returns to the categories.
 
-| Where | Top line, big (16) | Bottom line, small (18) |
+| Where | Line 1 | Line 2 |
 |---|---|---|
-| Category list | ▶ `Outrun` | `Observatory` |
-| A category | ▶ `Gated Pad` (✓ if playing) | `Night Drive` |
-| Its first row | ▶ `< Back` | `Neon Brass` |
-| The type list | ▶ `SVF` | `Crusher` |
-| A section | `SHAPE P1 Ladder` | `Filter 1/2` |
+| Category list (scroll) | `Categories`, small | `< Outrun >`, big |
+| A category (scroll) | `Outrun`, small | `< Gated Pad >`, big (`*` if playing) |
+| Its first row (scroll) | `Outrun`, small | `< < Back >`, big |
+| The type list (scroll) | `Type P1`, small | `< SVF >`, big |
+| A section (scroll; the main knob moves between its slots) | `Shape · Filter`, small (section and page) | `< P1 Ladder >`, big |
 | Turning knob 1-4 or 6-8 | parameter name | value with unit, plus the knob graphic |
 | Moving a fader | `Part A` | `80%`, plus the bar graphic |
 
