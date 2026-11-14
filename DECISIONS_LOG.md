@@ -1996,3 +1996,48 @@ which the user rightly objected to. Verdicts, the user's choices (pick lists) an
   now ("how notes start", "how notes fade or end", "how one note passes into the next").
 
 Order, the user's choice: Minimoog first, then Sync II, recorders, Brass.
+
+## D114. Oscillator 3 shakes the ladder's cutoff (2026-11-14)
+
+End-of-run pick list after D113, while five redone sounds waited for the user's ear. Offered:
+
+- **Give the Fat Bass its growl (chosen by the user, recommended):** the chart has the
+  filter-modulation switch on with the wheel a little raised, which this engine could not do.
+- Build nothing until the verdicts are in.
+- LatelyBass next.
+- Search for hoover and Juno-106 sources.
+
+**The path.** The ladder gets a seventh value, `fm` (0 to 3 octaves, squared travel, 0 by
+default): generator 3's signal, at unit level whatever its level in the mix, scales the
+cutoff's coefficient by 2^(fm * signal) every sample, held under the filter's highest cutoff.
+The voice hands generator 3's signal for the sub-block to every processor
+(`SlotParams::modulator`). Not taken: a matrix route (the matrix runs once per sub-block, 3000
+times a second, and its sources are not audio), and a free choice of the source generator
+(the Minimoog has one, oscillator 3; a second value for a choice nobody asked for).
+A test: at 0, or with no signal in slot 3, the output is bit for bit what it was; shaken by
+two octaves, a 2 kHz tone through a ladder closed to 1 kHz gets side tones 110 Hz either side
+at -43 dB that were at -174 dB, and comes through 12 dB louder; at full swing and full
+resonance on noise it stays finite and bounded.
+
+**Fat Bass with it.** Fitted with the comparison reaching down to bands 58 dB under the
+reference's level: the shake comes out at a tenth of an octave (the chart only draws the wheel
+"a little up"), with the cutoff at 900 Hz at middle C (the manual's reading: 752), the
+contour's reach 2.5 octaves. The band from 1.4 to 2.8 kHz closes from 4.2 dB short to 1.3.
+Above 3 kHz the rebuild stays 10 dB short of a sizzle that sits 50 to 60 dB under the note:
+more shake does not supply it (the fit refuses it), so it is not the modulation; a Minimoog's
+oscillators leak a little past its filter. Left as it is and said so on the preset; adding a
+leak by layering unfiltered oscillators 50 dB down is possible if the user hears the lack.
+
+## D115. The user's fifth round: two Prophet sounds admitted (2026-11-14)
+
+Judged while D114 was being built, on the versions of D113.
+
+- **Prophet-5 Sync II: "admit it". Prophet-5 Brass: "admit it".** Both move to
+  `resources/presets/12-museum.csbank`: four presets in the Museum room, 112 in the bank.
+  Masters -9 and -1.5 dB from the loudness tool.
+- **Minimoog Fat Bass: "not yet: too dull or muffled"** (on the version without the filter
+  shake). The shake of D114 closes 3 dB between 1.4 and 2.8 kHz; above that the rebuild is
+  still 10 dB short. More is needed and follows.
+- **Minimoog Trilogy lead: "the beginning in the reference instrument is more of a ramp up
+  curve".** To be measured at the notes' starts and fixed.
+- Recorders (Soprano, with E6 and F sharp 6 from clean neighbours): not judged yet.

@@ -78,7 +78,8 @@
    ]
   },
   "reference": "A real Prophet-5 Rev 3 playing factory program 32, recorded by SynthMania (copyrighted: kept in the audition folder for this comparison only). Four single notes cut out of the demonstration, three low and one high (the player bends most of the high ones with the pitch wheel, so they cannot be compared); my rebuild plays the same notes for the same lengths, each at the pitch the recording has it (that instrument is a fifth of a semitone sharp, and further off in its top octaves).",
-  "source": "Sequential's own factory data for program 3-2 (the 2020 Prophet-5's factory bank, which holds the original forty programs, and the 1978 patch sheet), with the service manual's calibration: oscillators, pulse width, Poly-Mod depth, envelope shape. The filter envelope's reach, the cutoff and the decay time are fitted to the recording."
+  "source": "Sequential's own factory data for program 3-2 (the 2020 Prophet-5's factory bank, which holds the original forty programs, and the 1978 patch sheet), with the service manual's calibration: oscillators, pulse width, Poly-Mod depth, envelope shape. The filter envelope's reach, the cutoff and the decay time are fitted to the recording.",
+  "admitted": true
  },
  {
   "id": "prophet5-brass",
@@ -141,6 +142,7 @@
    ]
   },
   "reference": "A real Prophet-5 Rev 3 playing factory program 11, recorded by SynthMania (copyrighted: kept in the audition folder for this comparison only). Five chords cut out of the demonstration, each from its start to just before the player brings in the wheel's vibrato: A minor seventh, F, G, C, E minor. My rebuild plays the same chords and is cut at the same moments.",
-  "source": "Sequential's own factory data for program 1-1 with the service manual's calibration: oscillator, the filter's reach, the envelopes' shapes. The cutoff, the envelopes' times and their sustain levels are fitted to those five chords."
+  "source": "Sequential's own factory data for program 1-1 with the service manual's calibration: oscillator, the filter's reach, the envelopes' shapes. The cutoff, the envelopes' times and their sustain levels are fitted to those five chords.",
+  "admitted": true
  }
 ]

@@ -276,6 +276,78 @@ public:
             expect(finite);
             expect(peak < 8.0f, "sweep peak " + juce::String(peak, 2));
         }
+
+        beginTest("generator_3_shakes_the_cutoff_at_audio_rate");
+        {
+            // A 2 kHz tone into a ladder closed to 1 kHz, and a 110 Hz tone at full level as generator 3's signal.
+            const int total = 48000;
+            const auto input = sine(2000.0f, 0.05f, total);
+            const auto shaker = sine(110.0f, 1.0f, total);
+            auto run = [&](float octaves, bool withShaker, float res = 0.0f, const std::vector<float>* source = nullptr)
+            {
+                SlotMemory memory;
+                memory.allocate(0);
+                auto ladder = std::make_unique<LadderProcessor>();
+                ladder->prepare(kRate, kSubBlock, memory);
+                std::vector<float> left(source != nullptr ? *source : input), right(left);
+                for (std::size_t start = 0; start + kSubBlock <= left.size(); start += kSubBlock)
+                {
+                    auto params = ladderParams(1000.0f, res);
+                    params.p[LadderProcessor::fm] = octaves;
+                    params.modulator = withShaker ? shaker.data() + start : nullptr;
+                    ladder->process(left.data() + start, right.data() + start, kSubBlock, params);
+                }
+                return left;
+            };
+            auto toneLevel = [&](const std::vector<float>& x, float hz)
+            {
+                double re = 0.0, im = 0.0;
+                for (std::size_t i = 24000; i < x.size(); ++i)
+                {
+                    const double phase = static_cast<double>(i) * 6.283185307179586 * hz / kRate;
+                    re += x[i] * std::cos(phase);
+                    im += x[i] * std::sin(phase);
+                }
+                return 20.0 * std::log10(2.0 * std::sqrt(re * re + im * im) / static_cast<double>(x.size() - 24000) + 1.0e-12);
+            };
+
+            // At FM 0 the signal of generator 3 changes nothing, and without that signal neither does FM.
+            const auto plain = run(0.0f, false);
+            const auto unused = run(0.0f, true);
+            const auto unfed = run(2.0f, false);
+            bool same = true;
+            for (std::size_t i = 0; i < plain.size(); ++i)
+                same = same && plain[i] == unused[i] && plain[i] == unfed[i];
+            expect(same, "FM at 0, or no generator 3 signal: the filter is as it was");
+
+            // Shaken by two octaves the 2 kHz tone gets side tones 110 Hz either side, which it did not have,
+            // and comes through louder: the cutoff is above it half the time.
+            const auto shaken = run(2.0f, true);
+            logMessage("2 kHz through a 1 kHz ladder: plain " + juce::String(toneLevel(plain, 2000.0f), 1) + " dB, shaken "
+                       + juce::String(toneLevel(shaken, 2000.0f), 1) + " dB; side tone at 2110 Hz plain "
+                       + juce::String(toneLevel(plain, 2110.0f), 1) + " dB, shaken " + juce::String(toneLevel(shaken, 2110.0f), 1) + " dB");
+            expectGreaterThan(toneLevel(shaken, 2110.0f), toneLevel(plain, 2110.0f) + 30.0);
+            expectGreaterThan(toneLevel(shaken, 1890.0f), toneLevel(plain, 1890.0f) + 30.0);
+            expectGreaterThan(toneLevel(shaken, 2000.0f), toneLevel(plain, 2000.0f) + 3.0);
+
+            // Full swing, full resonance, noise: finite and bounded.
+            std::mt19937 rng(11);
+            std::uniform_real_distribution<float> dist(-1.0f, 1.0f);
+            std::vector<float> noise(static_cast<std::size_t>(total));
+            for (auto& v : noise)
+                v = dist(rng);
+            const auto wild = run(3.0f, true, 1.0f, &noise);
+            bool finite = true;
+            for (auto v : wild)
+                finite = finite && std::isfinite(v);
+            expect(finite);
+            expect(peakAbs(wild) < 8.0f, "shaken at full: peak " + juce::String(peakAbs(wild), 2));
+
+            const auto& d = LadderProcessor::descriptor().params[LadderProcessor::fm];
+            expectEquals(juce::String(d.id), juce::String("fm"));
+            expectEquals(d.def, 0.0f);
+            expectEquals(d.max, 3.0f);
+        }
     }
 };
 

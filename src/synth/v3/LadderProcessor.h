@@ -22,6 +22,13 @@
     Self-oscillation settles at the level the transistors allow, and a -110 dB noise floor lets it
     start from silence as the analogue circuit does.
 
+    FM is the Minimoog's filter-modulation switch with oscillator 3 as the source (decision D114):
+    generator 3's signal, whatever its level in the mix, moves the cutoff up and down by that
+    many octaves, sample by sample. At the note's own pitch or an octave under it this is not a
+    wobble but a growl: side tones around every harmonic the filter passes, and brightness the
+    low-pass alone would have taken away. The cutoff's coefficient is scaled by 2^(FM * signal)
+    per sample and held under the filter's highest cutoff.
+
     Before the ladder, Drive feeds a peak-normalised tanh stage that is nearly clean at 0 dB.
     Bass restores the low end the feedback takes away, at the input, so self-oscillation is not
     boosted with it. Mode taps the stages: 24 and 12 dB low-pass, band-pass and 12 dB high-pass,
@@ -32,7 +39,7 @@ namespace coolsynth::synth::v3
     class LadderProcessor final
     {
     public:
-        enum Param : int { cutoff = 0, resonance, drive, keyTrack, mode, bass, paramCount };
+        enum Param : int { cutoff = 0, resonance, drive, keyTrack, mode, bass, fm, paramCount };
         enum class Mode : int { lowpass24 = 0, lowpass12, bandpass, highpass12 };
 
         static constexpr float keyReferenceHz = 261.6256f; // C4: key tracking is neutral here
@@ -61,7 +68,8 @@ namespace coolsynth::synth::v3
                    { "drive",  "Drive",     0.0f,  24.0f,    0.0f,    Skew::linear,      Unit::decibels, true },
                    { "key",    "Key Track", 0.0f,  1.0f,     0.5f,    Skew::linear,      Unit::percent,  false },
                    { "mode",   "Mode",      0.0f,  3.0f,     0.0f,    Skew::linear,      Unit::choice,   false, "LP24|LP12|BP|HP12" },
-                   { "bass",   "Bass",      0.0f,  1.0f,     0.5f,    Skew::linear,      Unit::percent,  true } }},
+                   { "bass",   "Bass",      0.0f,  1.0f,     0.5f,    Skew::linear,      Unit::percent,  true },
+                   { "fm",     "G3 To Cutoff", 0.0f, 3.0f,   0.0f,    Skew::squared,     Unit::generic,  true } }},
                 paramCount };
             return d;
         }
@@ -73,6 +81,7 @@ namespace coolsynth::synth::v3
             sampleRate = static_cast<float>(std::max(1000.0, newSampleRate));
             // Above 24 kHz the filter is inaudible; stopping there keeps the solve well away from Nyquist.
             maxCutoffHz = std::min(24000.0f, 0.45f * sampleRate);
+            maxG = std::tan(juce::MathConstants<float>::pi * maxCutoffHz / sampleRate);
             reset();
         }
 
@@ -115,9 +124,15 @@ namespace coolsynth::synth::v3
             const float gStep = (gTarget - g) * inverse;
             const float kStep = (kTarget - k) * inverse;
 
+            // Generator 3 shaking the cutoff: octaves of swing for a full-level signal.
+            const float shake = juce::jlimit(0.0f, 3.0f, params.p[fm]);
+            const float* modulator = shake > 0.0f ? params.modulator : nullptr;
+            float gRamp = g;
+
             for (int i = 0; i < numSamples; ++i)
             {
-                g += gStep;
+                gRamp += gStep;
+                g = modulator != nullptr ? std::min(maxG, gRamp * std::exp2(shake * modulator[i])) : gRamp;
                 k += kStep;
                 const float inputGain = (1.0f + bassAmount * k) * driveNormalise;
                 const float floor = kNoiseFloor * nextNoise();
@@ -133,6 +148,7 @@ namespace coolsynth::synth::v3
         static constexpr float kDriveHeadroom = 0.25f; // drive 0 dB: a full-scale input bends by under 2 %
         static constexpr float kNoiseFloor = 3.0e-6f;  // about -110 dB
         static constexpr float kOscillationTuning = 0.041f;
+        float maxG = 1.0f;
 
         struct Channel
         {

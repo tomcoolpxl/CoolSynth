@@ -3,7 +3,8 @@
 # and so into the plugin, when the user admits it in a side-by-side on the audition page.
 # This folder is not built into the plugin.
 #
-# DX7 E.PIANO 1 was admitted on 13 November 2026 (decision D107), DX7 BASS 1 on 14 November (D111).
+# DX7 E.PIANO 1 was admitted on 13 November 2026 (decision D107), DX7 BASS 1 (D111) and Prophet-5 Sync II and
+# Brass (D115) on 14 November.
 
 [Minimoog Fat Bass]
 room = Museum
@@ -15,22 +16,27 @@ room = Museum
 # two under middle C: the key is the 8' pitch, as on the instrument. One voice; a note joined
 # to the one before it does not start the filter's sweep again, a note struck anew does, and
 # that sweep at every struck note is the sound.
+# The chart also has the filter-modulation switch on with the wheel a little raised: oscillator
+# 3 shakes the cutoff at its own pitch, a growl more than a wobble. That is the ladder's FM
+# here, a tenth of an octave either way.
 # From the chart and the service manual: the oscillators, and the cutoff (-2 on the dial is
-# about 250 Hz at the lowest key and follows the keyboard: 752 Hz at middle C; the fit to the
-# recording left it exactly there). What the documents do not pin down is fitted to a recording
-# of a real Model D set to this chart, played with every note struck: how far the contour opens
-# the filter (3.0 octaves; the manuals say between 1.4 and 2.2), emphasis 5 (0.1: little, with
-# three oscillators driving the filter), the contours' times (the legend is close to the time
-# a contour takes to finish), sustain 5 (0.7 of full).
-# Not here: the chart also lets oscillator 3 shake the filter at audio rate, a little, by the
-# modulation wheel; this engine has no such path, and the real one has more above 1.5 kHz.
+# about 250 Hz at the lowest key and follows the keyboard: 752 Hz at middle C by the manual;
+# fitted 900). What the documents do not pin down is fitted to a recording of a real Model D
+# set to this chart, played with every note struck: how far the contour opens the filter (2.5
+# octaves; the manuals say between 1.4 and 2.2), emphasis 5 (0.06: little, with three
+# oscillators driving the filter), the contours' times (the legend is close to the time a
+# contour takes to finish), sustain 5 (0.65 of full), and how far oscillator 3 shakes the
+# filter (the chart only draws the wheel "a little up").
+# Still short of the recording: above 3 kHz the real one has a faint sizzle, 50 to 60 dB under
+# the note, that the shake does not account for; a Minimoog's oscillators leak a little past
+# its filter.
 g1 = VA shape=saw oct=-2 level=0.8
 g2 = VA shape=saw oct=-1 fine=3 level=0.8
 g3 = VA shape=saw oct=-1 fine=-2 level=0.8
-p1 = Ladder cutoff=752 res=0.095 key=1 drive=0 bass=0
-env1 = attack=1 decay=780 sustain=0.7 release=780 decayCurve=-1 releaseCurve=-1 velocity=0
+p1 = Ladder cutoff=902 res=0.06 key=1 drive=0 bass=0 fm=0.1
+env1 = attack=1 decay=624 sustain=0.65 release=624 decayCurve=-1 releaseCurve=-1 velocity=0
 env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
-voice = env2ToP1=0.3 velToP1=0 drift=1
+voice = env2ToP1=0.255 velToP1=0 drift=1
 play = mode=legato priority=low
 master = 0
 
@@ -57,56 +63,4 @@ env1 = attack=1 decay=1140 sustain=1 release=1140 decayCurve=-1 releaseCurve=-1 
 env2 = attack=1 decay=3042 sustain=0 release=3042 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.17 velToP1=0 drift=1
 play = mode=legato priority=low
-master = 0
-
-[Prophet-5 Sync II]
-room = Museum
-# The Prophet-5's sync lead: factory program 3-2, "Sync II", the sound of The Cars' "Let's Go".
-# Oscillator B, silent, is the master; oscillator A, a pulse near square, is locked to it and
-# pulled up by the filter envelope through Poly-Mod: two octaves above at the envelope's peak,
-# falling over a second to a third of an octave. That falling is the sweep. No resonance; the
-# same envelope opens the filter; the amplifier is a plain gate; five voices. The wheel adds a
-# vibrato to the master, as the program's Wheel-Mod does.
-# From the instrument's own data (the 2020 Prophet-5's factory bank holds the original forty
-# programs as numbers; the 1978 patch sheet agrees but for one knob) and the service manual's
-# calibration: oscillator pitches, the pulse width (52 %; fitted 53.5), the Poly-Mod depth
-# (1.97 octaves; fitted 2.04), envelope sustain (0.16 to 0.23; fitted 0.15) and attack (53 ms;
-# fitted 40). Fitted to a recording of a real Rev 3 playing this program, where units differ
-# and the documents disagree: the filter envelope's reach (4.1 octaves: the patch sheet gives
-# 3.2, the stored data 4.9), the cutoff (0.7 octave above the nominal), and the decay time
-# (1.2 s time constant: 1.7 nominal, and real units run faster).
-g1 = VA shape=saw level=0
-g2 = VA shape=pulse pw=0.535 combine=sync level=0.5
-p1 = Ladder cutoff=756 res=0 key=1 drive=0 bass=0
-env1 = attack=1 decay=100 sustain=1 release=4 velocity=0
-env2 = attack=40 decay=9900 sustain=0.15 release=80 decayCurve=-1 releaseCurve=-1
-lfo1 = shape=triangle rate=6 retrigger=off
-mod = src=env2 dst=g2.pitch amount=0.51
-mod = src=lfo1 dst=g1.pitch amount=0.008 via=wheel
-voice = env2ToP1=0.41 velToP1=0 drift=1
-play = mode=poly voices=5
-master = 0
-
-[Prophet-5 Brass]
-room = Museum
-# The Prophet-5's brass: factory program 1-1, the first sound the instrument plays. One
-# sawtooth oscillator at full level (oscillator B is set up but switched off), no resonance,
-# five voices. The sound is its filter: closed under the note when a key goes down, it opens
-# over five and a half octaves in a twentieth of a second and settles a good part of the way
-# back within a few tenths: a bright blare that mellows as the chord is held. The wheel adds a
-# vibrato of about five a second, as the player of the reference recording does on long chords.
-# From Sequential's own factory data and the service manual's calibration: the oscillator, the
-# filter's reach (5.6 octaves: the fit to the recording left it exactly there), the envelopes'
-# shapes. Fitted to five chords of a real Rev 3 playing this program, where units differ: the
-# cutoff (0.2 octave above nominal), the filter's opening and settling times (0.6 of nominal)
-# and sustain, the amplifier's decay and sustain. A first version, built from the documents
-# alone with two values borrowed from Sync II, sounded "like a midi pc sound card" to the user.
-g1 = VA shape=saw level=0.8
-p1 = Ladder cutoff=105 res=0 key=1 drive=0 bass=0
-env1 = attack=17 decay=3000 sustain=0.63 release=704 decayCurve=-1 releaseCurve=-1 velocity=0
-env2 = attack=49 decay=1440 sustain=0.4 release=392 decayCurve=-1 releaseCurve=-1
-lfo1 = shape=triangle rate=5 retrigger=off
-mod = src=lfo1 dst=pitch amount=0.008 via=wheel
-voice = env2ToP1=0.56 velToP1=0 drift=1
-play = mode=poly voices=5
 master = 0

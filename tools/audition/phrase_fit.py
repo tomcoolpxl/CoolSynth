@@ -71,7 +71,7 @@ def evaluate(trial):
     use = loud[:count]
     difference = bands[:count][use] - ref_bands[:count][use]
     # bands the reference hardly has (48 dB under its level: hiss, the codec's noise) do not count
-    heard = ref_bands[:count][use] > -48.0
+    heard = ref_bands[:count][use] > job.get("heard_db", -48.0)
     cost = float(np.minimum(np.abs(difference), 12.0)[heard].mean())
     return cost, np.where(heard, difference, np.nan), float(np.nanmean(np.abs(total[:count][use] - ref_total[:count][use])))
 

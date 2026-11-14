@@ -427,6 +427,7 @@ namespace coolsynth::synth::v3
                 offsets.p[0] += settings.env2ToP1 * env2 + settings.velocityToP1 * note.velocity;
             SlotParams params = buildSlotParams(p.slot.descriptor(), p.base, offsets);
             params.frequencyHz = noteHz;
+            params.modulator = generators.back().slot.link().signal; // generator 3, for a filter that it shakes
             p.slot.process(mixL, mixR, n, params);
         }
 

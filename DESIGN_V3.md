@@ -464,6 +464,14 @@ to cross the point being written, is read through the windowed sinc of `SincKern
 the cloud's level follows the root of its overlap (the overlap itself when every grain plays
 the same moment).
 
+Ladder FM (2026-11-14, decision D114): the ladder's seventh value, "fm", lets generator 3's
+signal (unit level, whatever its level in the mix) move the cutoff by up to three octaves
+either way, sample by sample: the Minimoog's filter-modulation switch with oscillator 3 as its
+source. The voice hands every processor generator 3's signal for the sub-block
+(`SlotParams::modulator`); the ladder scales its cutoff coefficient by 2^(fm * signal) and
+holds it under its highest cutoff. At 0, or with nothing in slot 3, the filter is bit for bit
+as before.
+
 Room insert (2026-11-13, decision D108): a thirteenth insert type, Room, a small room around
 an instrument, which a plate cannot be: it answers at once and is over in a fraction of a
 second. `RoomInsert`: the 24 first- and second-order image sources of a box-shaped room as

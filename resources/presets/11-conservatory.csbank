@@ -275,7 +275,7 @@ p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 reverb = on size=0.45 damping=0.5 mix=0.16
-master = -5
+master = -4.5
 
 [Ocarina]
 room = Conservatory

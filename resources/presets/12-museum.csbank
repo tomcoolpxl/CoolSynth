@@ -62,4 +62,56 @@ mod = src=env3 dst=g1.index amount=0.7767 via=velocity curve=logarithmic
 mod = src=env3 dst=g1.index amount=-0.1252 curve=logarithmic
 mod = src=key dst=g2.amount amount=0.8
 voice = env2ToP1=0
-master = -2.5
+master = -3.5
+
+[Prophet-5 Sync II]
+room = Museum
+# The Prophet-5's sync lead: factory program 3-2, "Sync II", the sound of The Cars' "Let's Go".
+# Oscillator B, silent, is the master; oscillator A, a pulse near square, is locked to it and
+# pulled up by the filter envelope through Poly-Mod: two octaves above at the envelope's peak,
+# falling over a second to a third of an octave. That falling is the sweep. No resonance; the
+# same envelope opens the filter; the amplifier is a plain gate; five voices. The wheel adds a
+# vibrato to the master, as the program's Wheel-Mod does.
+# From the instrument's own data (the 2020 Prophet-5's factory bank holds the original forty
+# programs as numbers; the 1978 patch sheet agrees but for one knob) and the service manual's
+# calibration: oscillator pitches, the pulse width (52 %; fitted 53.5), the Poly-Mod depth
+# (1.97 octaves; fitted 2.04), envelope sustain (0.16 to 0.23; fitted 0.15) and attack (53 ms;
+# fitted 40). Fitted to a recording of a real Rev 3 playing this program, where units differ
+# and the documents disagree: the filter envelope's reach (4.1 octaves: the patch sheet gives
+# 3.2, the stored data 4.9), the cutoff (0.7 octave above the nominal), and the decay time
+# (1.2 s time constant: 1.7 nominal, and real units run faster).
+g1 = VA shape=saw level=0
+g2 = VA shape=pulse pw=0.535 combine=sync level=0.5
+p1 = Ladder cutoff=756 res=0 key=1 drive=0 bass=0
+env1 = attack=1 decay=100 sustain=1 release=4 velocity=0
+env2 = attack=40 decay=9900 sustain=0.15 release=80 decayCurve=-1 releaseCurve=-1
+lfo1 = shape=triangle rate=6 retrigger=off
+mod = src=env2 dst=g2.pitch amount=0.51
+mod = src=lfo1 dst=g1.pitch amount=0.008 via=wheel
+voice = env2ToP1=0.41 velToP1=0 drift=1
+play = mode=poly voices=5
+master = -9
+
+[Prophet-5 Brass]
+room = Museum
+# The Prophet-5's brass: factory program 1-1, the first sound the instrument plays. One
+# sawtooth oscillator at full level (oscillator B is set up but switched off), no resonance,
+# five voices. The sound is its filter: closed under the note when a key goes down, it opens
+# over five and a half octaves in a twentieth of a second and settles a good part of the way
+# back within a few tenths: a bright blare that mellows as the chord is held. The wheel adds a
+# vibrato of about five a second, as the player of the reference recording does on long chords.
+# From Sequential's own factory data and the service manual's calibration: the oscillator, the
+# filter's reach (5.6 octaves: the fit to the recording left it exactly there), the envelopes'
+# shapes. Fitted to five chords of a real Rev 3 playing this program, where units differ: the
+# cutoff (0.2 octave above nominal), the filter's opening and settling times (0.6 of nominal)
+# and sustain, the amplifier's decay and sustain. A first version, built from the documents
+# alone with two values borrowed from Sync II, sounded "like a midi pc sound card" to the user.
+g1 = VA shape=saw level=0.8
+p1 = Ladder cutoff=105 res=0 key=1 drive=0 bass=0
+env1 = attack=17 decay=3000 sustain=0.63 release=704 decayCurve=-1 releaseCurve=-1 velocity=0
+env2 = attack=49 decay=1440 sustain=0.4 release=392 decayCurve=-1 releaseCurve=-1
+lfo1 = shape=triangle rate=5 retrigger=off
+mod = src=lfo1 dst=pitch amount=0.008 via=wheel
+voice = env2ToP1=0.56 velToP1=0 drift=1
+play = mode=poly voices=5
+master = -1.5

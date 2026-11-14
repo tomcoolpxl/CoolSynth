@@ -86,6 +86,8 @@ namespace coolsynth::synth::v3
         float frequencyHz = 440.0f;  // set by the voice from the note, glide, bend and pitchSemitones
         Combine combine = Combine::off;
         float combineAmount = 0.0f;  // 0..1: FM depth, or the wet share of ring and AM
+        const float* modulator = nullptr; // processors: generator 3's signal for this sub-block (unit level, before
+                                          // its level and pan), for a filter shaken at audio rate; null is silence
     };
 
     /** Arena of floats, sized once off the audio thread; modules take spans from it in prepare(). */

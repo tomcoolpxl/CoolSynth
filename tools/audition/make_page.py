@@ -37,8 +37,15 @@ JUDGED_CHECKS = {"marimba", "kalimba", "harp", "harp2", "harp3"}
 GRAIN_JUDGED = True
 
 # A sound changed since the user judged it shows as not judged until it is judged again (the note the user
-# wrote stays). The stamp names the round of changes; a new round takes a new stamp.
-REJUDGE_STAMP = "2026-11-14-joins"
+# wrote stays). Each sound has its own stamp, the round in which it last changed: a verdict set on that round's
+# version stands; changing one sound again must not hide the verdicts given on the others meanwhile.
+REJUDGE = {
+    "Museum|Minimoog: Emerson's Fat Bass": "2026-11-14-growl",
+    "Museum|Minimoog: Trilogy lead": "2026-11-14-joins",
+    "Museum|Prophet-5: Sync II": "2026-11-14-joins",
+    "Museum|Prophet-5: Brass": "2026-11-14-joins",
+    "Conservatory|Recorders": "2026-11-14-joins",
+}
 
 # A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
 REMARKS = {
@@ -46,7 +53,8 @@ REMARKS = {
                                             "You heard notes start muffled. A third of the notes were being joined to the note before "
                                             "instead of struck anew, so the filter did not open again on them. Every note is struck now, "
                                             "as in the recording. A middle stretch where the player bends notes with the pitch wheel is "
-                                            "left out; two stretches of the riff remain."),
+                                            "left out; two stretches of the riff remain. And the growl you asked for is in: oscillator 3 "
+                                            "now shakes the filter, as the chart has it. The recording supports only a little of it."),
     "Museum|Minimoog: Trilogy lead": ("Changed since your verdict, listen again.",
                                       "You heard the notes' starts smoothed. My version slid into each new pitch and joined most notes to "
                                       "the one before; the recording changes pitch at once and strikes every note anew. Both are as in "
@@ -84,7 +92,7 @@ def verdict(group, title, options):
     key = f"{group}|{title}"
     choices = "".join(f"<option>{esc(o)}</option>" for o in options)
     renewed = f'<p class="renewed"><b>{esc(REMARKS[key][0])}</b> {esc(REMARKS[key][1])}</p>' if key in REMARKS else ""
-    again = f' data-rejudge="{REJUDGE_STAMP}"' if key in REMARKS and REMARKS[key][0].startswith("Changed") else ""
+    again = f' data-rejudge="{REJUDGE[key]}"' if key in REJUDGE else ""
     return (renewed + f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}"{again} aria-label="Verdict on {esc(title)}">'
             f'<option value="">not judged yet</option>{choices}</select>'
             f'<input type="text" data-note="{esc(key)}" placeholder="a note, if something is off (optional)" aria-label="Note on {esc(title)}"></div>')
