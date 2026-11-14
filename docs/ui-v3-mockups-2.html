@@ -1,0 +1,597 @@
+<title>CoolSynth Panel Round Two</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600&display=swap">
+<style>
+/* Round two: same workbench and same panel as round one; only navigation changes. */
+:root{
+  --bg:#e9ecef; --ink:#1c2024; --muted:#646c75; --line:#d3d8dd; --link:#2563c9;
+  --panel:#f8f9fa; --panel-edge:#d9dee3; --knob:#ffffff; --knob-edge:#c9d0d7; --print:#7d858e;
+  --screen:#0b0d10; --screen-ink:#e6ebf0; --screen-dim:#79828c; --screen-line:#262b31;
+  --pad-off:#1a1d21;
+  --c-sound:#f2a33a; --c-shape:#35b8e0; --c-motion:#9b7bff; --c-fx:#ec5fa6; --c-perform:#a4d23f;
+  --c-home:#e8edf2; --c-play:#3ccf73; --c-rec:#f0524f; --c-stop:#c8d0d8;
+  --f-display:"Space Grotesk",system-ui,sans-serif; --f-body:"Inter",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#131619; --ink:#e4e8ec; --muted:#9aa3ac; --line:#2e343a; --link:#7fa8ff;
+  --panel:#1e2226; --panel-edge:#2f353b; --knob:#2b3036; --knob-edge:#3e454d; --print:#8d959e; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#131619; --ink:#e4e8ec; --muted:#9aa3ac; --line:#2e343a; --link:#7fa8ff;
+  --panel:#1e2226; --panel-edge:#2f353b; --knob:#2b3036; --knob-edge:#3e454d; --print:#8d959e; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--f-body)}
+.wrap{max-width:1180px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;line-height:1.2}
+h1{font-size:1.9rem} h2{font-size:1.25rem} h3{font-size:1rem}
+p{margin:0} a{color:var(--link)}
+.lede{max-width:72ch;color:var(--muted)}
+.eyebrow{font:600 .72rem/1 var(--f-body);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+header{display:flex;flex-direction:column;gap:10px}
+.tabs{display:flex;flex-wrap:wrap;gap:8px}
+.tab{font:500 .92rem var(--f-body);color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:999px;padding:8px 16px;cursor:pointer}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.tab:focus-visible,button:focus-visible,input:focus-visible,.knob:focus-visible{outline:2px solid var(--link);outline-offset:2px}
+
+.rig{overflow-x:auto;padding-bottom:6px}
+.panel{width:1100px;box-sizing:border-box;background:var(--panel);border:1px solid var(--panel-edge);border-radius:22px;padding:26px 28px 22px;display:grid;
+  grid-template-columns:118px 360px 308px 1fr;grid-template-rows:auto auto auto;gap:20px 26px;user-select:none}
+.left{grid-column:1;grid-row:1/3;display:flex;flex-direction:column;gap:14px}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}
+.hb{font:600 .7rem var(--f-body);height:30px;border-radius:7px;border:1px solid var(--knob-edge);background:var(--knob);color:var(--ink);cursor:pointer}
+.hb.lit{background:var(--ink);color:var(--bg)}
+.print{font-size:.62rem;color:var(--print);text-align:center;letter-spacing:.02em}
+.strips{display:flex;gap:12px;flex:1;min-height:170px}
+.strip{flex:1;border:1px solid var(--knob-edge);border-radius:10px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:.62rem;color:var(--print)}
+.screenbox{grid-column:2;grid-row:1;background:var(--screen);border-radius:12px;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.screen{width:100%;height:318px;box-sizing:border-box;border:1px solid var(--screen-line);border-radius:6px;color:var(--screen-ink);font:12px/1.35 var(--f-mono);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.enc{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;width:100%;color:var(--screen-dim);font:.7rem/1.25 var(--f-body)}
+.enc .el{text-align:right} .enc b{color:var(--screen-ink);font-weight:600}
+.knobs{grid-column:3;grid-row:1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px 14px;align-content:space-around}
+.kw{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+.knob{width:52px;height:52px;border-radius:50%;background:var(--knob);border:1px solid var(--knob-edge);box-shadow:0 2px 0 var(--knob-edge);position:relative;cursor:ns-resize;touch-action:none}
+.knob i{position:absolute;left:50%;top:5px;width:3px;height:14px;margin-left:-1.5px;border-radius:2px;background:var(--ink);transform-origin:50% 21px}
+.knob.main{width:58px;height:58px;background:#1c1f23;border-color:#30353b;box-shadow:0 2px 0 #000;cursor:pointer}
+.knob.main i{background:#8a939c;transform-origin:50% 24px}
+.knob.nav{box-shadow:0 0 0 3px color-mix(in srgb,var(--link) 45%,transparent)}
+.kn{font:600 .68rem var(--f-body);color:var(--print)}
+.kl{font:.7rem/1.2 var(--f-body);color:var(--ink);text-align:center;min-height:2.4em;max-width:76px;overflow-wrap:anywhere}
+.kl.dim{color:var(--muted)}
+.faders{grid-column:4;grid-row:1;display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.fw{display:flex;flex-direction:column;align-items:center;gap:6px}
+.fw input{writing-mode:vertical-lr;direction:rtl;height:178px;width:30px;accent-color:var(--ink);cursor:ns-resize}
+.fw input:disabled{opacity:.35}
+.pads{grid-column:2/5;grid-row:2;display:grid;grid-template-columns:repeat(8,1fr);gap:16px}
+.pw{display:flex;flex-direction:column;align-items:center;gap:6px}
+.pad{width:100%;aspect-ratio:1.12;max-width:100%;border-radius:9px;border:3px solid color-mix(in srgb,var(--c,#888) var(--b,0%),#2a2e33);background:var(--pad-off);color:color-mix(in srgb,var(--c,#888) 70%,#fff);font:600 .72rem var(--f-body);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s;touch-action:none}
+.pad.on{box-shadow:0 0 14px color-mix(in srgb,var(--c) 70%,transparent)}
+.pl{font:.72rem/1.2 var(--f-body);text-align:center;min-height:2.4em}
+.keys{grid-column:1/5;grid-row:3}
+.keys svg{display:block;width:100%;height:58px}
+
+/* screen contents */
+.sh{display:flex;align-items:center;gap:8px;padding:7px 9px 5px;min-height:20px}
+.chip{font-weight:600;font-size:10.5px;letter-spacing:.06em;padding:2px 7px;border-radius:4px;background:color-mix(in srgb,var(--c) 85%,#000);color:#0b0d10}
+.sh .r{margin-left:auto;color:var(--screen-dim);white-space:nowrap}
+.crumbs{padding:0 9px 6px;border-bottom:1px solid var(--screen-line);font-size:10.5px;color:var(--screen-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.crumbs b{color:var(--screen-ink);font-weight:600}
+.crumbs .sep{margin:0 4px;color:var(--screen-line)}
+.sb{flex:1;padding:8px 10px;display:flex;flex-direction:column;gap:6px;min-height:0}
+.big{font:600 19px/1.15 var(--f-display);color:var(--screen-ink)}
+.hint{color:var(--screen-dim);font-size:10.5px}
+.mark{display:inline-block;min-width:14px;padding:0 3px;border:1px solid var(--screen-dim);border-radius:7px;font-size:9.5px;line-height:1.3;text-align:center;color:var(--screen-dim);margin-right:3px}
+.mark.m{border-color:var(--screen-ink);color:var(--screen-ink)}
+.itabs{display:flex;gap:4px;flex-wrap:wrap}
+.itab{padding:2px 6px;border-radius:3px;border:1px solid var(--screen-line);color:var(--screen-dim);font-size:10.5px}
+.itab.on{border-color:var(--c);color:var(--screen-ink);background:color-mix(in srgb,var(--c) 22%,transparent)}
+.dots{display:inline-flex;gap:4px;vertical-align:middle;margin-left:6px}
+.dots b{width:6px;height:6px;border-radius:50%;background:var(--screen-line)}
+.dots b.on{background:var(--c)}
+.list{display:flex;flex-direction:column;gap:2px}
+.li{padding:1px 6px;border-radius:3px;color:var(--screen-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.li.on{background:color-mix(in srgb,var(--c) 28%,transparent);color:var(--screen-ink)}
+.li .cur{color:var(--c-play)}
+.blk .li{white-space:normal;font-size:10.5px;padding:3px 6px}
+.blk .li b{color:var(--screen-ink)}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:7px 8px 8px;border-top:1px solid var(--screen-line)}
+.card{display:flex;flex-direction:column;gap:2px;min-width:0}
+.card .cr{font-size:9px;letter-spacing:.07em;color:var(--screen-dim);text-transform:uppercase;white-space:nowrap;overflow:hidden}
+.card .cn{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card .cv{font-size:11px;color:var(--c)}
+.card .bar{height:3px;background:var(--screen-line);border-radius:2px;overflow:hidden}
+.card .bar i{display:block;height:100%;width:calc(var(--v)*100%);background:var(--c)}
+.card.none .cn,.card.none .cv{color:var(--screen-line)}
+.map{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;flex:1;min-height:0}
+.mc{display:flex;flex-direction:column;gap:2px;min-width:0}
+.mc .mh{font-size:9.5px;letter-spacing:.06em;color:var(--c);text-transform:uppercase}
+.mc .mh.on{color:var(--screen-ink);text-decoration:underline;text-decoration-color:var(--c);text-underline-offset:2px}
+.mb{font-size:9.5px;line-height:1.25;padding:0 4px;border-radius:3px;border:1px solid var(--screen-line);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--screen-ink)}
+.mb.empty{border-style:dashed;color:var(--screen-dim)}
+.mb.on{border-color:var(--screen-ink);background:color-mix(in srgb,var(--c) 32%,transparent)}
+.mgap{height:3px}
+.smap{display:flex;flex-direction:column;gap:7px}
+.srow{display:flex;align-items:center;gap:4px}
+.srl{width:62px;flex:none;font-size:9.5px;color:var(--screen-dim);text-transform:uppercase;letter-spacing:.05em}
+.sbx{display:flex;flex-direction:column;min-width:52px;padding:2px 6px;border-radius:4px;border:1px solid var(--screen-line);font-size:10.5px;line-height:1.25}
+.sbx small{font-size:9px;color:var(--screen-dim)}
+.sbx.empty{border-style:dashed;color:var(--screen-dim)}
+.sbx.on{border-color:var(--screen-ink);background:color-mix(in srgb,var(--c) 30%,transparent)}
+.arr{color:var(--screen-dim);font-size:11px}
+.toast{position:absolute;left:8px;right:8px;bottom:64px;background:#e8edf2;color:#0b0d10;border-radius:4px;padding:4px 8px;font-size:11px}
+
+.below{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px}
+@media (max-width:820px){.below{grid-template-columns:1fr}}
+.box{display:flex;flex-direction:column;gap:12px;min-width:0}
+.legend{border-collapse:collapse;width:100%;font-size:.88rem}
+.legend td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.legend td:first-child{white-space:nowrap;padding-right:14px;font-weight:600;width:1%}
+.oled{background:#050607;border-radius:8px;padding:12px 14px;width:220px;max-width:100%;box-sizing:border-box;font-family:var(--f-mono);color:#f2f5f8}
+.oled .l1{font-size:12px;white-space:pre;overflow:hidden}
+.oled .l2{font-size:15px;font-weight:600;white-space:pre;overflow:hidden}
+.note{font-size:.86rem;color:var(--muted)}
+.about p+p{margin-top:8px}
+section.doc{display:flex;flex-direction:column;gap:12px;max-width:900px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px}
+ul.tight{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.tablewrap{overflow-x:auto}
+table.cmp{border-collapse:collapse;min-width:680px;font-size:.88rem}
+table.cmp th,table.cmp td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+table.cmp th{font:600 .75rem var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.try{border:1px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+.try ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.try .diff{font-weight:600}
+.doc .mark{border-color:var(--muted);color:var(--ink);font-family:var(--f-mono)}
+kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padding:0 4px}
+@media (prefers-reduced-motion:reduce){.pad{transition:none}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="eyebrow">CoolSynth V3 · interface phase 9 · round two</span>
+  <h1>Three more ways around the panel, built from your notes</h1>
+  <p class="lede">All three keep what you liked in round one: the coloured pads for Sound, Shape, Motion and Effects, the slots, and the map. All three also add what you asked for. The sounds sit one level above the editing. Pad 8 is now Back. The black main knob moves something in every view, and the words beside it say what it does right now. They differ in how deep you go and what knob 5 does. Turn knobs with the mouse wheel or by dragging up and down, and click the main knob to press it. Keys: <kbd>←</kbd><kbd>→</kbd> turn the main knob, <kbd>↑</kbd><kbd>↓</kbd> turn knob 5, <kbd>Enter</kbd> presses it, <kbd>Esc</kbd> or <kbd>8</kbd> is Back, <kbd>0</kbd> is holding Back, <kbd>1</kbd>–<kbd>7</kbd> are the pads, and holding <kbd>Shift</kbd> is the Shift button. Round one is still <a href="https://claude.ai/artifact/VMPRDzsSiWmcTbLg5twSZy">here</a>.</p>
+  <div class="tabs" role="tablist" aria-label="Mock-up">
+    <button class="tab" role="tab" data-m="drill">D · Map, then open a block</button>
+    <button class="tab" role="tab" data-m="sect">E · One map per section</button>
+    <button class="tab" role="tab" data-m="flat">F · Map you edit in place</button>
+  </div>
+</header>
+
+<div class="try" id="try"></div>
+
+<div class="rig">
+<div class="panel" id="panel">
+  <div class="left">
+    <div class="btns">
+      <button class="hb" id="shift">Shift</button><button class="hb" id="hold">Hold</button>
+      <span></span><span class="print">Chord</span>
+      <button class="hb" id="octm">Oct -</button><button class="hb" id="octp">Oct +</button>
+    </div>
+    <div class="print">← Transpose →</div>
+    <div class="strips"><div class="strip">Pitch</div><div class="strip">Mod</div></div>
+  </div>
+  <div class="screenbox">
+    <div class="screen" id="screen" aria-live="polite"></div>
+    <div class="enc"><span class="el">turn<br><b id="e-turn"></b></span><div class="knob main" id="k0" tabindex="0" aria-label="Main knob"><i></i></div><span>press<br><b id="e-press"></b></span></div>
+  </div>
+  <div class="knobs" id="knobs"></div>
+  <div class="faders" id="faders"></div>
+  <div class="pads" id="pads"></div>
+  <div class="keys" id="keys"></div>
+</div>
+</div>
+
+<div class="below">
+  <div class="box">
+    <h2>What each control does here</h2>
+    <table class="legend"><tbody id="legend"></tbody></table>
+  </div>
+  <div class="box">
+    <h2>On the MiniLab 3 itself</h2>
+    <div class="oled" aria-label="MiniLab 3 screen"><div class="l1" id="o1"></div><div class="l2" id="o2"></div></div>
+    <p class="note">Two short lines, about 18 and 15 characters. Line one says where you are, and line two says what the main knob is on. A turned knob shows its name and value for a second.</p>
+    <div class="about" id="about"></div>
+  </div>
+</div>
+
+<section class="doc">
+  <h2>What I took from your notes</h2>
+  <ul class="tight">
+    <li><b>Sounds one level up.</b> The top of everything is a sound list: turn to look, press to load, and knob 5 jumps a room. The loaded sound's four macros stay on knobs 1–4.</li>
+    <li><b>The main knob navigates in every view.</b> It moves through sounds, blocks, slots, pages or a type list, and its job is printed beside it. It never sits idle.</li>
+    <li><b>A real Back button.</b> Pad 8: tap it to go up one level, hold it to jump to the sounds. The Hydrasynth has EXIT and HOME buttons for this, and Elektron uses its NO key the same way. Shift + pad 8 still switches part A and B.</li>
+    <li><b>Colours and slots stay.</b> Pads 1–4 are Sound, Shape, Motion and Effects in their own colours, and the same colours mark the map.</li>
+    <li><b>The map picks the slot.</b> D and F show the whole map. E shows only the part of the map that belongs to the pad you pressed.</li>
+    <li><b>Where you are is always one line.</b> A trail under the title reads, for example, Neon Brass › Shape › P1 Ladder › Filter. The <span class="mark">◎</span> and <span class="mark">5</span> marks show which part each of the two knobs moves.</li>
+  </ul>
+</section>
+
+<section class="doc">
+  <h2>How the three compare</h2>
+  <div class="tablewrap"><table class="cmp">
+    <thead><tr><th></th><th>D · Map, then open a block</th><th>E · One map per section</th><th>F · Map you edit in place</th></tr></thead>
+    <tbody>
+      <tr><td><b>Levels</b></td><td>Sounds › map › block</td><td>Sounds › section</td><td>Sounds › map</td></tr>
+      <tr><td><b>Main knob</b></td><td>Moves at the level you are on: sound, block or page</td><td>Slot within the section</td><td>Block, across the whole map</td></tr>
+      <tr><td><b>Knob 5</b></td><td>The level above: room, section or block</td><td>Pages of the slot</td><td>Pages of the block</td></tr>
+      <tr><td><b>Main press</b></td><td>Go in: load, open the block, then type</td><td>Change the type</td><td>Change the type</td></tr>
+      <tr><td><b>Knobs 1–4</b></td><td>The focused block, in the map and inside it</td><td>The focused slot</td><td>The focused block</td></tr>
+      <tr><td><b>Strong</b></td><td>One rule everywhere: press goes in, Back comes out, knob 5 moves the level above. Inside a block the pages get the whole screen.</td><td>Short distances. The screen draws each section as it is wired, for example three filters in a row. Fewest presses.</td><td>The whole sound in view all the time. Nothing to open or close.</td></tr>
+      <tr><td><b>Weak</b></td><td>One more level than E and F. The main knob changes job when you go in.</td><td>You never see the whole sound at once. Moving to another section takes a pad.</td><td>A small page on a busy screen. 20 blocks for the main knob to pass.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section class="doc">
+  <h2>The same in all three</h2>
+  <div class="cols">
+    <ul class="tight">
+      <li><b>Knobs 6–8</b> are Glide, Brightness and Space on every page.</li>
+      <li><b>Faders</b> are the mixer: Part A, Part B, Effects and Master, with pickup.</li>
+      <li><b>Shift + any knob</b> turns it ten times finer. <b>Shift + press</b> is a second Back.</li>
+    </ul>
+    <ul class="tight">
+      <li><b>Pads 1–4</b> open their section; press the lit pad again for the next slot. <b>Shift + pad 1</b> opens Perform (chord, arp, voice).</li>
+      <li><b>Pads 5–7</b> stay free for the recorder.</li>
+      <li><b>Pad 8</b> is Back. Its light dims when there is nowhere left to go.</li>
+    </ul>
+  </div>
+</section>
+</div>
+
+<script>
+(function(){
+const ROOMS=[
+ ["Workshop",["Init Saw","Init Pulse","Init Sine","Init Arp","Init Noise","Init FM","Init Wavetable"]],
+ ["Bedroom",["Tape Flute","Vinyl Choir","Cassette Keys","Blanket Pad","Bedroom Bass","Dusty Mallet"]],
+ ["Arcade",["Coin Pulse","Boss Bass","Power-Up","Static Hit","SCC Lead","Chip Chord"]],
+ ["Outrun",["Neon Brass","Gated Pad","Night Drive","Laser Lead","Sunset Strings","Grid Keys"]],
+ ["Observatory",["Solar Wind","Nebula Pad","Deep Field","Shimmer Drone","Satellite Ping","Granular Sky"]],
+ ["Greenhouse",["Glass Bell","Rain Chime","Crystal Pluck","Kalimba","Harp String","Marimba"]],
+ ["Basement",["Acid","Rust Bass","Metal Hit","Furnace Drone","Concrete Pad","Siren"]],
+ ["Studio 1982",["Juno Pad","Prophet Brass","OB Strings","Moog Bass","Clav Keys","Sync Lead"]],
+ ["Main Stage",["Reese","Supersaw","Riser","Pluck Drop","Hyper Lead","Neuro Growl","Future Chord"]],
+ ["Engine Room",["Pure Sub","808 Boom","Wobble","FM Knock","Donk","Fat Analog"]],
+ ["Clock Tower",["Euclid Pulse","Ratchet Run","Step Filter","Random Walk","Polyrhythm Pad","Chord Trigger"]],
+ ["Conservatory",["Steinway Grand","Yamaha Upright","Violins","Cellos","Horn","Flute","Pipe Organ","Vibraphone","Tubular Bells","Timpani"]],
+ ["Museum",["DX7 E.PIANO 1","DX7 BASS 1","Prophet-5 Sync II","Prophet-5 Brass","Minimoog Fat Bass","TX81Z LatelyBass"]]
+];
+const MACRO_NAMES={"Neon Brass":["Blare","Thickness","Swell","Shimmer"],"Gated Pad":["Glow","Width","Gate","Sweep"],"Night Drive":["Snap","Grit","Pluck","Echo"],"Laser Lead":["Zap","Sync","Glide","Vibrato"],"Sunset Strings":["Haze","Ensemble","Bow","Drift"],"Grid Keys":["Bark","Body","Ring","Wobble"],"Acid":["Squelch","Bite","Decay","Slide"],"Glass Bell":["Clang","Material","Ring","Shimmer"],"Steinway Grand":["Brilliance","Hammer","Sustain","Room"],"Reese":["Growl","Width","Punch","Phase"]};
+const ROLES=["Tone","Character","Time","Movement"];
+const GEN_TYPES=["Off","VA","Noise","FM2","FM4","Wavetable","String","Modal","Sample","Grain"];
+const PROC_TYPES=["Off","Ladder","SVF","Crusher","Folder","Drive","Formant","Comb"];
+const FX_TYPES=["Off","Drive","Lo-fi","Phaser","Flanger","Chorus","Delay","Reverb","Compressor","EQ","Pump","Room","Grain"];
+const TPL={
+ gen:{VA:[["Wave",["Shape:Sine|Triangle|Saw|Pulse","Pulse width","Sub","Phase rand"]],["Stack",["Voices","Detune","Spread","Centre mix"]]],
+  Noise:[["Noise",["Kind:White|Pink|Band|Chip","Tone","Width","Clock"]]],
+  FM2:[["FM",["Ratio","Index","Feedback","Carrier:1|2|3|4"]],["Blend",["Mix","Ratio fine","—","—"]]],
+  FM4:[["Operators",["Algorithm:Stack|2 into 1|Stack + 1|Two pairs|1 into 3|Organ","Op 2 level","Op 3 level","Op 4 level"]],["Ratios",["Op 2 ratio","Op 3 ratio","Op 4 ratio","Feedback"]]],
+  Wavetable:[["Table",["Table:Classic|Digital|Vocal|Chip","Position","Voices","Detune"]],["Stack",["Spread","Phase rand","—","—"]]],
+  String:[["Pluck",["Decay","Damping","Pick","Pick position"]],["Release",["Release damping","Excite:Noise|Click","—","—"]]],
+  Modal:[["Strike",["Material:Wood|Tine|Metal|Glass","Decay","Hardness","Strike position"]],["Damp",["Damping","Release damping","—","—"]]],
+  Sample:[["Sample",["Sample:Glass|Choir|Strings|Air|Harp","Start","Loop:Off|On","Reverse:Off|On"]],["Loop",["Loop start","Loop end","Loop fade","—"]]],
+  Grain:[["Cloud",["Position","Scan","Size","Density"]],["Scatter",["Spray","Pitch spray","Spread","—"]]]},
+ proc:{Ladder:[["Filter",["Cutoff","Resonance","Drive","Key track"]],["Tone",["Mode:LP24|LP12|BP|HP12","Bass","Envelope","Velocity"]]],
+  SVF:[["Filter",["Mode:LP|HP|BP|Notch","Cutoff","Resonance","Drive"]],["Track",["Key track","Envelope","Velocity","—"]]],
+  Crusher:[["Crush",["Rate","Bits","Mix","—"]]],Folder:[["Fold",["Drive","Symmetry","Mix","—"]]],
+  Drive:[["Drive",["Curve:Soft|Hard|Tube","Drive","Tone","Mix"]]],Formant:[["Vowel",["Vowel:A|E|I|O|U","Size","Resonance","Mix"]]],
+  Comb:[["Comb",["Tune","Damping","Feedback","Mix"]]]},
+ fx:{Drive:[["Drive",["Amount","Tone","Mix","—"]]],"Lo-fi":[["Tape",["Wow","Flutter","Hiss","Mix"]],["Crush",["Bandwidth","Bits","Rate","Crackle"]]],
+  Phaser:[["Phaser",["Rate","Depth","Feedback","Mix"]]],Flanger:[["Flanger",["Rate","Depth","Feedback","Mix"]]],
+  Chorus:[["Chorus",["Rate","Depth","Mix","—"]]],Delay:[["Delay",["Time:1/16|1/8|1/8 dotted|1/4|1/4 dotted|1/2","Feedback","Mix","Mode:Tape|Ping-pong"]]],
+  Reverb:[["Plate",["Size","Damping","Mix","Pre-delay"]],["Colour",["Low cut","Modulation","Shimmer","—"]]],
+  Compressor:[["Comp",["Threshold","Ratio","Attack","Release"]]],EQ:[["EQ",["Tilt","Low","High","—"]]],
+  Pump:[["Pump",["Division:1/2|1/4|1/8","Depth","Shape","—"]]],Room:[["Room",["Size","Damping","Width","Mix"]]],
+  Grain:[["Grain",["Size","Density","Position","Mix"]],["Spray",["Spray","Pitch","Spread","Freeze:Off|On"]]]},
+ fixed:{Env:[["Envelope",["Attack","Decay","Sustain","Release"]],["Extra",["Delay","Hold","Curve","Velocity"]]],
+  LFO:[["LFO",["Shape:Sine|Triangle|Saw up|Saw down|Square|S&H|Smooth|Steps","Rate","Fade","Delay"]],["Sync",["Sync:Off|On","Phase","Retrigger:Off|On","One-shot:Off|On"]]],
+  Arp:[["Arp",["Arp:Off|On","Rate:1/4|1/8|1/16|1/32","Pattern:Up|Down|Up/Down|As played|Random|Chord","Octaves:1|2|3|4"]],["Groove",["Gate","Swing","Chance","Latch:Off|On"]]],
+  Chord:[["Chord",["Chord:Off|Major|Minor|Sus4|Maj7|Min7|Power|Learned","Strum","Learn:Off|On","—"]]],
+  Voice:[["Voice",["Mode:Poly|Mono|Legato|Unison","Polyphony:1|2|4|6|8|12|16","Glide","Bend range:2|7|12|24"]]]}
+};
+const it=(slot,label,type)=>({slot,label,type});
+const SEC=[
+ {name:"Sound",c:"var(--c-sound)",kind:"gen",types:GEN_TYPES,items:[it("G1","Gen 1","VA"),it("G2","Gen 2","VA"),it("G3","Gen 3","Off")],
+  rows:[{l:"mixed",i:[0,1,2],j:"+",after:"→ Shape"}]},
+ {name:"Shape",c:"var(--c-shape)",kind:"proc",types:PROC_TYPES,items:[it("P1","Shaper 1","Ladder"),it("P2","Shaper 2","Off"),it("P3","Shaper 3","Off")],
+  rows:[{l:"in a row",i:[0,1,2],j:"→",after:"→ Effects"}]},
+ {name:"Motion",c:"var(--c-motion)",kind:"fixed",items:[it("E1","Amp env","Env"),it("E2","Filter env","Env"),it("E3","Mod env","Env"),it("L1","LFO 1","LFO"),it("L2","LFO 2","LFO")],
+  rows:[{l:"envelopes",i:[0,1,2],j:""},{l:"LFOs",i:[3,4],j:""}]},
+ {name:"Effects",c:"var(--c-fx)",kind:"fx",types:FX_TYPES,items:[it("I1","Insert 1","Off"),it("I2","Insert 2","Off"),it("I3","Insert 3","Off"),it("F1","Master 1","Chorus"),it("F2","Master 2","Delay"),it("F3","Master 3","Reverb"),it("F4","Master 4","Off"),it("F5","Master 5","Off"),it("F6","Master 6","Off")],
+  rows:[{l:"part A",i:[0,1,2],j:"→"},{l:"master",i:[3,4,5],j:"→"},{l:"",i:[6,7,8],j:"→"}]},
+ {name:"Perform",c:"var(--c-perform)",kind:"fixed",items:[it("CH","Chord","Chord"),it("AR","Arp","Arp"),it("VO","Voice","Voice")],
+  rows:[{l:"your notes",i:[0,1,2],j:"→",after:"→ voices"}]}
+];
+const BLOCKS=[];SEC.slice(0,4).forEach((s,si)=>s.items.forEach((_,ii)=>BLOCKS.push([si,ii])));
+const VAL={};
+const SEED={"G1.VA.Shape":.6,"G2.VA.Shape":.6,"G1.VA.Voices":.17,"G2.VA.Voices":.17,"G1.VA.Detune":.05,"G2.VA.Detune":.05,"G1.VA.Level":.7,"G2.VA.Level":.7,"G2.VA.Fine":.57,
+ "P1.Ladder.Cutoff":.51,"P1.Ladder.Resonance":.18,"P1.Ladder.Drive":.1,"P1.Ladder.Key track":.5,"P1.Ladder.Envelope":.71,
+ "E1.Env.Attack":.29,"E1.Env.Decay":.65,"E1.Env.Sustain":.5,"E1.Env.Release":.64,"E2.Env.Attack":.33,"E2.Env.Decay":.67,"E2.Env.Sustain":.35,
+ "F1.Chorus.Rate":.45,"F1.Chorus.Depth":.5,"F1.Chorus.Mix":.4,"F2.Delay.Time":.4,"F2.Delay.Feedback":.3,"F2.Delay.Mix":.16,"F3.Reverb.Size":.7,"F3.Reverb.Damping":.45,"F3.Reverb.Mix":.22};
+function hash(s){let h=7;for(const ch of s)h=(h*31+ch.charCodeAt(0))%9973;return h/9973}
+function getV(k,name){if(!(k in VAL)){const b=name.split(":")[0];VAL[k]=k in SEED?SEED[k]:/^(Level)$/.test(b)?.7:/^(Pan|Fine|Octave|Ratio fine)$/.test(b)?.5:/Off\|On/.test(name)?0:.2+.6*hash(k)}return VAL[k]}
+const sg=x=>(x>0?"+":"")+x;
+function hz(f){return f>=1000?(f/1000).toFixed(f>=10000?0:1)+" kHz":f>=10?Math.round(f)+" Hz":f.toFixed(2)+" Hz"}
+function ms(t){return t>=1000?(t/1000).toFixed(t>=10000?0:1)+" s":Math.round(t)+" ms"}
+function fmt(name,v){
+ if(name==="—")return"";
+ const [b,o]=name.split(":");
+ if(o){const L=o.split("|");return L[Math.min(L.length-1,Math.floor(v*L.length))]}
+ if(/damp|Damp/.test(b))return Math.round(v*100)+"%";
+ if(/Cutoff|Tune|Low cut/.test(b))return hz(20*Math.pow(1000,v));
+ if(/Rate/.test(b))return hz(.05*Math.pow(400,v));
+ if(/Attack|Decay|Release|^Delay|Hold|Fade|Glide|Pre-delay|Strum|Loop fade/.test(b))return ms(Math.pow(10000,v));
+ if(/Detune/.test(b))return Math.round(v*200)+" ct";
+ if(b==="Fine"||b==="Ratio fine")return sg(Math.round(v*100-50))+" ct";
+ if(b==="Octave")return sg(Math.round(v*4-2));
+ if(b==="Pan"){const x=Math.round(v*200-100);return x===0?"C":(x<0?"L"+(-x):"R"+x)}
+ if(/Envelope|Tilt|Curve|Symmetry|Brightness/.test(b))return sg(Math.round(v*200-100))+"%";
+ if(/Voices/.test(b))return String(1+Math.round(v*6));
+ if(/Ratio/.test(b))return(.25*Math.pow(64,v)).toFixed(2);
+ if(/Bits/.test(b))return(1+v*15).toFixed(1)+" bit";
+ return Math.round(v*100)+"%";
+}
+const base=n=>n.split(":")[0];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* state: lvl is sounds | map | block | sec */
+const S={model:"drill",lvl:"map",room:3,idx:0,br:{room:3,idx:0},sec:0,item:[0,0,0,0,0],page:{},overlay:null,ret:null,
+ shiftLatch:false,shiftKey:false,toast:null,trans:null,macros:[.5,.4,.3,.35],glob:[0,.5,.5],faders:[.8,0,1,.8],part:"A",navAng:[0,0]};
+const shift=()=>S.shiftLatch||S.shiftKey;
+const presetName=(r=S.room,i=S.idx)=>ROOMS[r][1][i];
+const curSec=()=>SEC[S.sec];
+const curItem=()=>curSec().items[S.item[S.sec]];
+function pagesOf(si,ii){const s=SEC[si],x=s.items[ii];if(x.type==="Off")return[];let p=(TPL[s.kind][x.type]||[]).slice();
+ if(s.kind==="gen"){p.push(["Mix",["Level","Pan","Octave","Fine"]]);if(ii>0)p.push(["Link",["Combine:Off|Sync|Ring|FM|AM","Amount","—","—"]])}return p}
+const curPages=()=>pagesOf(S.sec,S.item[S.sec]);
+const pk=()=>S.sec+"-"+S.item[S.sec];
+const curPageIdx=()=>S.page[pk()]||0;
+const setPage=v=>{S.page[pk()]=v};
+const focusIdx=()=>BLOCKS.findIndex(b=>b[0]===S.sec&&b[1]===S.item[S.sec]);
+function focusTo(f){f=clamp(f,0,BLOCKS.length-1);const [si,ii]=BLOCKS[f];S.sec=si;S.item[si]=ii}
+function toast(t){S.toast={t,until:Date.now()+1700};setTimeout(render,1750)}
+function trans(l1,l2){S.trans={l1,l2,until:Date.now()+1100};setTimeout(render,1150)}
+const isPerform=()=>S.lvl==="sec"&&S.sec===4;
+const cursorOnLoaded=()=>S.br.room===S.room&&S.br.idx===S.idx;
+
+/* navigation */
+function goSounds(){S.overlay=null;S.lvl="sounds";S.br={room:S.room,idx:S.idx};S.ret=null}
+function editLvl(){return S.model==="sect"?"sec":"map"}
+function browse(d){const o=S.br;let i=o.idx+d;
+ while(i<0&&o.room>0){o.room--;i+=ROOMS[o.room][1].length}
+ while(i>=ROOMS[o.room][1].length&&o.room<ROOMS.length-1){i-=ROOMS[o.room][1].length;o.room++}
+ o.idx=clamp(i,0,ROOMS[o.room][1].length-1)}
+function room(d){S.br.room=clamp(S.br.room+d,0,ROOMS.length-1);S.br.idx=0}
+function slotStep(d){S.item[S.sec]=clamp(S.item[S.sec]+d,0,curSec().items.length-1)}
+function pageStep(d){const n=curPages().length;if(!n){toast("Empty slot: press the main knob to choose a type");return}setPage(clamp(curPageIdx()+d,0,n-1))}
+function openType(){const s=curSec();if(s.kind==="fixed"){toast(curItem().label+" has only one type");return}S.overlay={list:s.types,idx:s.types.indexOf(curItem().type)}}
+
+function mainTurn(d){
+ S.navAng[0]+=d*24;
+ if(S.overlay){S.overlay.idx=clamp(S.overlay.idx+d,0,S.overlay.list.length-1);return}
+ if(S.lvl==="sounds"){shift()?room(d):browse(d);return}
+ if(S.lvl==="sec"){slotStep(d);return}
+ if(S.lvl==="map"){focusTo(focusIdx()+d);return}
+ if(S.lvl==="block"){pageStep(d)}
+}
+function k5Turn(d){
+ S.navAng[1]+=d*24;
+ if(S.overlay){S.overlay.idx=clamp(S.overlay.idx+d,0,S.overlay.list.length-1);return}
+ if(S.lvl==="sounds"){room(d);return}
+ if(S.lvl==="sec"){pageStep(d);return}
+ if(S.model==="drill"&&S.lvl==="map"){S.sec=clamp(S.sec+d,0,3);return}
+ if(S.model==="drill"&&S.lvl==="block"){focusTo(focusIdx()+d);return}
+ if(S.lvl==="map")pageStep(d);
+}
+function mainPress(){
+ if(shift())return back();
+ const o=S.overlay;
+ if(o){curItem().type=o.list[o.idx];setPage(0);S.overlay=null;toast(curItem().label+" is now "+(o.list[o.idx]==="Off"?"empty":o.list[o.idx]));return}
+ if(S.lvl==="sounds"){
+  if(!cursorOnLoaded()){S.room=S.br.room;S.idx=S.br.idx;toast("Loaded "+presetName());return}
+  if(S.model==="drill"){S.lvl="map";return}
+  toast("Playing now. Pads 1–4 open its sections.");return}
+ if(S.model==="drill"&&S.lvl==="map"){S.lvl="block";return}
+ openType();
+}
+function back(){
+ if(S.overlay){S.overlay=null;return}
+ if(isPerform()&&S.ret){S.lvl=S.ret.lvl;S.sec=S.ret.sec;S.ret=null;return}
+ if(S.lvl==="block"){S.lvl="map";return}
+ if(S.lvl==="map"||S.lvl==="sec"){goSounds();return}
+ if(S.lvl==="sounds"){if(!cursorOnLoaded()){S.br={room:S.room,idx:S.idx};toast("Back to the sound that is playing");return}toast("Already at the top")}
+}
+function pad(i){
+ if(shift()&&i===0){if(!isPerform())S.ret=S.lvl==="sounds"?null:{lvl:S.lvl,sec:S.sec};S.overlay=null;S.lvl="sec";S.sec=4;return}
+ if(i<4){S.overlay=null;S.ret=null;
+  const here=(S.lvl===editLvl()&&S.sec===i);
+  if(here){S.item[i]=(S.item[i]+1)%SEC[i].items.length;return}
+  S.sec=i;S.lvl=editLvl();return}
+ if(i<7){toast("Kept for the recorder (later)");return}
+}
+function pad8tap(){if(shift()){toast("Neon Brass has one part");return}back()}
+function paramTurn(k,d){
+ const step=(shift()?.002:.02)*d;
+ if(k>=6){S.glob[k-6]=clamp(S.glob[k-6]+step,0,1);trans(["Glide","Brightness","Space"][k-6],fmtGlob(k-6));return}
+ if(S.overlay)return;
+ if(S.lvl==="sounds"){S.macros[k-1]=clamp(S.macros[k-1]+step,0,1);trans(macroNames()[k-1],Math.round(S.macros[k-1]*100)+"%");return}
+ const ps=curPages();if(!ps.length)return;const name=ps[curPageIdx()][1][k-1];if(name==="—")return;
+ const key=curItem().slot+"."+curItem().type+"."+base(name);VAL[key]=clamp(getV(key,name)+step,0,1);trans(base(name),fmt(name,VAL[key]))
+}
+const fmtGlob=i=>i===0?(S.glob[0]<.005?"Off":ms(Math.pow(10000,S.glob[0]))):i===1?fmt("Brightness",S.glob[1]):Math.round(S.glob[2]*100)+"%";
+const macroNames=()=>MACRO_NAMES[presetName()]||ROLES;
+
+/* what the two knobs do, as words */
+function roles(){
+ if(S.overlay)return{turn:"Type",press:"Set",k5:"Type"};
+ const fixed=curSec().kind==="fixed";
+ if(S.lvl==="sounds")return{turn:"Sound",press:cursorOnLoaded()?(S.model==="drill"?"Open":"—"):"Load",k5:"Room"};
+ if(S.lvl==="sec")return{turn:"Slot",press:fixed?"—":"Type",k5:"Page"};
+ if(S.model==="drill"&&S.lvl==="map")return{turn:"Block",press:"Open",k5:"Section"};
+ if(S.lvl==="block")return{turn:"Page",press:fixed?"—":"Type",k5:"Block"};
+ return{turn:"Block",press:fixed?"—":"Type",k5:"Page"};
+}
+
+/* rendering */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const mk=(m,strong)=>`<span class="mark ${strong?"m":""}">${m}</span>`;
+function cards(list){return'<div class="cards">'+list.map(c=>c?`<div class="card"><span class="cr">${esc(c.r||"")}</span><span class="cn">${esc(c.n)}</span><span class="cv">${esc(c.v)}</span><span class="bar"><i style="--v:${c.x}"></i></span></div>`:`<div class="card none"><span class="cr">&nbsp;</span><span class="cn">—</span><span class="cv">&nbsp;</span><span class="bar"></span></div>`).join("")+"</div>"}
+function pageCards(){const ps=curPages();if(!ps.length)return cards([null,null,null,null]);
+ return cards(ps[curPageIdx()][1].map((n,k)=>{if(n==="—")return null;const key=curItem().slot+"."+curItem().type+"."+base(n);const v=getV(key,n);return{r:"knob "+(k+1),n:base(n),v:fmt(n,v),x:v}}))}
+function slotName(x){return x.slot+" "+(x.type==="Off"?"empty":x.type)}
+function crumbs(){
+ const C=[],r=roles();
+ const add=(t,m,on)=>C.push((m?mk(m,on):"")+(on?`<b>${esc(t)}</b>`:esc(t)));
+ if(S.lvl==="sounds"){add(ROOMS[S.br.room][0],"5");add(ROOMS[S.br.room][1][S.br.idx],"◎",true)}
+ else{
+  const x=curItem(),ps=curPages(),pg=ps.length?ps[curPageIdx()][0]:"no pages";
+  add(presetName());
+  if(S.model==="drill"&&S.lvl==="map"){add(curSec().name,"5");add(slotName(x),"◎",true)}
+  else if(S.lvl==="block"){add(curSec().name);add(slotName(x),"5");add(pg,"◎",true)}
+  else{add(curSec().name);add(slotName(x),"◎",true);add(pg,"5")}
+ }
+ return`<div class="crumbs">${C.join('<span class="sep">›</span>')}</div>`;
+}
+function header(chip,c,right){return`<div class="sh"><span class="chip" style="--c:${c}">${esc(chip)}</span><span class="r">${esc(right)}</span></div>`}
+function dots(n,on){return'<span class="dots">'+Array.from({length:n},(_,i)=>`<b class="${i===on?"on":""}"></b>`).join("")+"</span>"}
+function wholeMap(){
+ return`<div class="map">`+SEC.slice(0,4).map((c,si)=>`<div class="mc" style="--c:${c.c}"><span class="mh ${si===S.sec?"on":""}">${esc(c.name)}</span>`+
+  c.items.map((y,ii)=>(si===3&&ii===3?'<span class="mgap"></span>':"")+`<span class="mb ${y.type==="Off"?"empty":""} ${si===S.sec&&ii===S.item[si]?"on":""}">${esc(y.slot)} ${y.type==="Off"?"·":esc(y.type)}</span>`).join("")+"</div>").join("")+`</div>`}
+function sectionMap(){
+ const s=curSec();
+ return`<div class="smap">`+s.rows.map(r=>`<div class="srow"><span class="srl">${esc(r.l)}</span>`+r.i.map((ii,j)=>{const y=s.items[ii],on=ii===S.item[S.sec];
+  const ps=pagesOf(S.sec,ii);const sub=on&&ps.length?ps[curPageIdx()][0]:(y.type==="Off"?"empty":y.label);
+  return(j&&r.j?`<span class="arr">${r.j}</span>`:"")+`<span class="sbx ${y.type==="Off"?"empty":""} ${on?"on":""}"><span>${esc(y.slot)} ${y.type==="Off"?"·":esc(y.type)}</span><small>${esc(sub)}</small></span>`}).join("")+(r.after?`<span class="arr">${esc(r.after)}</span>`:"")+`</div>`).join("")+`</div>`}
+function screenHTML(){
+ const o=S.overlay,s=curSec(),x=curItem();
+ if(o){const lo=clamp(o.idx-4,0,Math.max(0,o.list.length-9));
+  return header(s.name.toUpperCase(),s.c,"choose a type")+crumbs()+`<div class="sb" style="--c:${s.c}"><div>Type for <b>${esc(x.label)}</b></div><div class="list">`+o.list.slice(lo,lo+9).map((n,j)=>{const i=lo+j;return`<div class="li ${i===o.idx?"on":""}">${i===o.idx?mk("◎",1):""}${esc(n==="Off"?"Empty":n)}${n===x.type?' <span class="cur">●</span>':""}</div>`}).join("")+
+  `</div></div><div class="cards" style="grid-template-columns:1fr"><span class="hint">Turn ◎ to pick · press ◎ to set · Back cancels</span></div>`}
+ if(S.lvl==="sounds"){const L=ROOMS[S.br.room][1],lo=clamp(S.br.idx-3,0,Math.max(0,L.length-7)),N=macroNames();
+  return header("SOUNDS","var(--c-home)","room "+(S.br.room+1)+" / "+ROOMS.length)+crumbs()+`<div class="sb" style="--c:var(--c-home)"><div class="list">`+
+  L.slice(lo,lo+7).map((n,j)=>{const i=lo+j,loaded=S.br.room===S.room&&i===S.idx;return`<div class="li ${i===S.br.idx?"on":""}">${i===S.br.idx?mk("◎",1):""}${esc(n)}${loaded?' <span class="cur">● playing</span>':""}</div>`}).join("")+
+  `</div><span class="hint" style="margin-top:auto">${cursorOnLoaded()?(S.model==="drill"?"Press ◎ to open this sound's map · pads 1–4 open a section":"Pads 1–4 open this sound's sections"):"Press ◎ to load · Back returns to the one playing"}</span></div>`+
+  `<div style="--c:var(--c-home)">`+cards(N.map((n,k)=>({r:ROLES[k],n,v:Math.round(S.macros[k]*100)+"%",x:S.macros[k]})))+"</div>"}
+ const ps=curPages(),pi=curPageIdx();let body="";
+ if(S.lvl==="sec"){
+  body=sectionMap()+`<div style="margin-top:auto">${mk("◎")}<b>${esc(x.label)}</b> ${x.type==="Off"?"empty":esc(x.type)} &nbsp;${mk("5")}${ps.length?esc(ps[pi][0])+dots(ps.length,pi):"press ◎ for a type"}</div>`}
+ else if(S.lvl==="block"){
+  body=`<span class="big">${esc(x.label)} · ${x.type==="Off"?"empty":esc(x.type)}</span>`+
+   (ps.length?`<div class="list blk">${ps.map((p,j)=>`<div class="li ${j===pi?"on":""}">${j===pi?mk("◎",1):""}<b>${esc(p[0])}</b> &nbsp;${p[1].filter(n=>n!=="—").map(n=>esc(base(n))+" "+esc(fmt(n,getV(x.slot+"."+x.type+"."+base(n),n)))).join(" · ")}</div>`).join("")}</div>`:`<span class="hint">Empty block. Press ◎ to choose a type.</span>`)+
+   `<span class="hint" style="margin-top:auto">${mk("◎")}pages · ${mk("5")}next block without leaving · Back to the map</span>`}
+ else{
+  body=wholeMap()+(S.model==="drill"?`<div>${mk("◎")}<b>${esc(x.label)}</b> ${x.type==="Off"?"empty":esc(x.type)} &nbsp;${mk("5")}section &nbsp;<span class="hint">press ◎ to open</span></div>`
+   :`<div>${mk("◎")}<b>${esc(x.label)}</b> ${x.type==="Off"?"empty":esc(x.type)} &nbsp;${mk("5")}${ps.length?esc(ps[pi][0])+dots(ps.length,pi):"press ◎ for a type"}</div>`)}
+ return header(s.name.toUpperCase(),s.c,"Part "+S.part)+crumbs()+`<div class="sb" style="--c:${s.c}">${body}</div><div style="--c:${s.c}">${pageCards()}</div>`;
+}
+function oled(){
+ const cut=(t,n)=>String(t).slice(0,n);
+ if(S.trans&&Date.now()<S.trans.until)return[cut(S.trans.l1,18),cut(S.trans.l2,15)];
+ const x=curItem();
+ if(S.overlay)return[cut("TYPE "+x.slot,18),cut("> "+S.overlay.list[S.overlay.idx],15)];
+ if(S.lvl==="sounds")return[cut(ROOMS[S.br.room][0]+" "+(S.br.idx+1)+"/"+ROOMS[S.br.room][1].length,18),cut((cursorOnLoaded()?"":"> ")+ROOMS[S.br.room][1][S.br.idx],15)];
+ const ps=curPages(),pg=ps.length?ps[curPageIdx()][0]+" "+(curPageIdx()+1)+"/"+ps.length:"empty";
+ if(S.model==="drill"&&S.lvl==="map")return[cut(curSec().name.toUpperCase()+" map",18),cut("> "+slotName(x),15)];
+ if(S.lvl==="block")return[cut(curSec().name.toUpperCase()+" "+slotName(x),18),cut("> "+pg,15)];
+ return[cut(curSec().name.toUpperCase()+" > "+slotName(x),18),cut(pg,15)];
+}
+function legend(){
+ const R=[],r=roles();
+ if(S.overlay)R.push(["Main knob, turn","Pick a type"],["Main knob, press","Set it"],["Back (pad 8)","Cancel"]);
+ else if(S.lvl==="sounds")R.push(["Main knob, turn","Look through the sounds; the list runs on into the next room"],["Knob 5","Jump a whole room"],["Main knob, press",cursorOnLoaded()?(S.model==="drill"?"Open the playing sound's map":"Nothing: this sound is already playing"):"Load the highlighted sound"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"],["Back (pad 8)",cursorOnLoaded()?"Nothing above this":"Return the cursor to the sound that is playing"]);
+ else if(S.lvl==="sec")R.push(["Main knob, turn","Move between the slots of "+curSec().name],["Knob 5","Pages of the focused slot"],["Main knob, press",r.press==="—"?"Nothing: these slots have one type":"Choose the slot's type"],["Knobs 1–4","The page, straight away"],["Lit pad again","Next slot"],["Back (pad 8)",isPerform()&&S.ret?"Return to where you were":"Up to the sounds"]);
+ else if(S.model==="drill"&&S.lvl==="map")R.push(["Main knob, turn","Move the frame across all 20 blocks"],["Knob 5","Jump to the next section's column"],["Main knob, press","Open the framed block"],["Knobs 1–4","Already play the block's first page"],["Pads 1–4","Jump to a column; again for the next block"],["Back (pad 8)","Up to the sounds"]);
+ else if(S.lvl==="block")R.push(["Main knob, turn","The block's pages"],["Knob 5","The next or previous block, without going back to the map"],["Main knob, press",r.press==="—"?"Nothing: one type only":"Choose the block's type"],["Knobs 1–4","The page"],["Back (pad 8)","Up to the map"]);
+ else R.push(["Main knob, turn","Move the frame across all 20 blocks"],["Knob 5","Pages of the framed block"],["Main knob, press",r.press==="—"?"Nothing: one type only":"Choose the block's type"],["Knobs 1–4","The page, straight away"],["Pads 1–4","Jump to a column; again for the next block"],["Back (pad 8)","Up to the sounds"]);
+ R.push(["Hold Back (pad 8)","Straight to the sounds, from anywhere"],["Knobs 6–8","Glide, Brightness, Space: always"],["Faders","Part A, Part B, Effects, Master: always"]);
+ return R;
+}
+const ABOUT={
+ drill:["D · Map, then open a block","Three levels: sounds, the map of the sound, one block. At every level the main knob moves through that level, pressing goes in, and Back comes out. Knob 5 always moves the level above, so inside a block it changes the block without leaving.","The trail on the screen shows the rule: ◎ is on the last step, 5 on the one before it. This is a classic hardware menu (Elektron's YES and NO, the Hydrasynth's EXIT) with the map as its middle level.","The price is one more level and a main knob whose job changes when you go in. The reward is a block view with room for its pages."],
+ sect:["E · One map per section","Two levels: sounds, and one section. A pad opens its section, and the screen draws only that part of the sound, wired as it really is: three generators mixed, three shapers in a row, inserts then master effects. The main knob moves between the slots, knob 5 turns pages, and knobs 1–4 edit right away.","This is round one's A with the map you liked drawn inside each section, and with the main knob, not knob 5, picking the slot.","The fewest presses of the three. But you never see the whole sound at once, and going to another section always takes a pad."],
+ flat:["F · Map you edit in place","Two levels: sounds, and the whole map. The main knob walks the frame across all 20 blocks, knob 5 turns the framed block's pages, and knobs 1–4 edit it right away. Nothing opens or closes.","This is round one's C kept as it was, with the sounds one level up and Back on pad 8.","The whole sound is always in view. The page gets the least room of the three, and the main knob has the most blocks to pass."]
+};
+const TRY={
+ drill:["Press goes in, Back comes out. Knob 5 always moves the level above.",["Turn the black main knob: the frame walks the map. Turn knob 5 (blue ring): it jumps a whole section.","Press the main knob: the block opens. Now the main knob turns its pages, and knob 5 moves to the next block without leaving.","Tap pad 8 (Back): you are on the map again. Tap it once more: the sound list. Press the main knob there to come back in."]],
+ sect:["Each pad opens its own small map; the main knob picks the slot, knob 5 the page.",["Turn the black main knob: the frame moves between Gen 1, 2 and 3.","Turn knob 5 (blue ring): the pages of that one generator. Knobs 1–4 already edit.","Press pad 4 (Effects): the inserts and the master chain, drawn in signal order. Tap pad 8 (Back) for the sound list."]],
+ flat:["The whole sound stays on screen; you never open anything.",["Turn the black main knob: the frame walks all 20 blocks. Knobs 1–4 edit whatever is framed.","Turn knob 5 (blue ring): the framed block's pages.","Tap pad 8 (Back) for the sound list, or hold it from anywhere."]]
+};
+
+/* build static panel parts */
+const knobsEl=document.getElementById("knobs");
+for(let k=1;k<=8;k++){knobsEl.insertAdjacentHTML("beforeend",`<div class="kw"><div class="knob ${k===5?"nav":""}" id="k${k}" tabindex="0" aria-label="Knob ${k}"><i></i></div><span class="kn">${k}</span><span class="kl" id="kl${k}"></span></div>`)}
+const FN=["Part A","Part B","Effects","Master"];
+document.getElementById("faders").innerHTML=FN.map((n,i)=>`<div class="fw"><input type="range" id="f${i}" min="0" max="100" value="${S.faders[i]*100}" aria-label="Fader ${i+1}: ${n}" ${i===1?"disabled":""}><span class="kn">${i+1}</span><span class="kl">${n}</span></div>`).join("");
+const PRINT=["Sound","Shape","Motion","Effects","Stop","Play","Record","Back"];
+document.getElementById("pads").innerHTML=PRINT.map((p,i)=>`<div class="pw"><button class="pad" id="p${i}" aria-label="Pad ${i+1}">${p}</button><span class="pl" id="pl${i}"></span></div>`).join("");
+(function keys(){let w="",b="";const W=1500/15,blk=[0,1,3,4,5];for(let i=0;i<15;i++){w+=`<rect x="${i*W}" y="0" width="${W-3}" height="100" rx="4" fill="var(--knob)" stroke="var(--knob-edge)"/>`;if(i<14&&blk.includes(i%7))b+=`<rect x="${i*W+W*0.66}" y="0" width="${W*0.62}" height="60" rx="3" fill="var(--ink)"/>`}
+ document.getElementById("keys").innerHTML=`<svg viewBox="0 0 1500 100" preserveAspectRatio="none" aria-label="25 keys">${w}${b}</svg>`})();
+
+function render(){
+ document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.m===S.model)));
+ let h=screenHTML();if(S.toast&&Date.now()<S.toast.until)h+=`<div class="toast">${esc(S.toast.t)}</div>`;
+ document.getElementById("screen").innerHTML=h;
+ const [l1,l2]=oled();document.getElementById("o1").textContent=l1;document.getElementById("o2").textContent=l2;
+ document.getElementById("shift").classList.toggle("lit",shift());
+ const r=roles();document.getElementById("e-turn").textContent=r.turn;document.getElementById("e-press").textContent=r.press;
+ const lab=[],vals=[];
+ if(S.overlay){for(let k=1;k<=4;k++){lab[k]="—";vals[k]=null}}
+ else if(S.lvl==="sounds"){const N=macroNames();for(let k=1;k<=4;k++){lab[k]=N[k-1];vals[k]=S.macros[k-1]}}
+ else{const ps=curPages();for(let k=1;k<=4;k++){const n=ps.length?ps[curPageIdx()][1][k-1]:"—";lab[k]=n==="—"?"—":base(n);vals[k]=n==="—"?null:getV(curItem().slot+"."+curItem().type+"."+base(n),n)}}
+ lab[5]=r.k5;lab[6]="Glide";lab[7]="Brightness";lab[8]="Space";vals[6]=S.glob[0];vals[7]=S.glob[1];vals[8]=S.glob[2];
+ for(let k=1;k<=8;k++){const el=document.getElementById("kl"+k);el.textContent=lab[k];el.classList.toggle("dim",lab[k]==="—");
+  const ang=k===5?S.navAng[1]:(vals[k]==null?-135:-135+270*vals[k]);document.querySelector("#k"+k+" i").style.transform=`rotate(${ang}deg)`}
+ document.querySelector("#k0 i").style.transform=`rotate(${S.navAng[0]}deg)`;
+ const sh=shift(),editing=S.lvl!=="sounds"&&!isPerform();
+ for(let i=0;i<8;i++){const p=document.getElementById("p"+i),l=document.getElementById("pl"+i);let c="#888",b=0,txt="";
+  let face=PRINT[i];
+  if(i<4){c=SEC[i].c;txt=i===0?"Shift: Perform":"";b=editing&&S.sec===i?95:38;if(isPerform()&&i===0)b=95;if(sh&&i===0){c=SEC[4].c;face="Perform";txt="";b=isPerform()?95:60}}
+  else if(i<7){c=["var(--c-stop)","var(--c-play)","var(--c-rec)"][i-4];b=14;txt="recorder, later"}
+  else{c="var(--c-home)";const top=S.lvl==="sounds"&&!S.overlay&&cursorOnLoaded();txt=sh?"":"hold: Sounds · Shift: Part A/B";face=sh?"Part A/B":"Back";b=sh?60:top?12:75}
+  if(isPerform()&&i===0&&!sh){c=SEC[4].c;face="Perform"}
+  p.textContent=face;p.style.setProperty("--c",c);p.style.setProperty("--b",b+"%");p.classList.toggle("on",b>=90);l.textContent=txt}
+ document.getElementById("legend").innerHTML=legend().map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
+ const A=ABOUT[S.model];document.getElementById("about").innerHTML=`<h3>${esc(A[0])}</h3><p>${esc(A[1])}</p><p class="note">${esc(A[2])}</p><p class="note">${esc(A[3])}</p>`;
+}
+
+/* input */
+function bindTurn(el,fn,click){
+ el.addEventListener("wheel",e=>{e.preventDefault();fn(e.deltaY<0?1:-1);render()},{passive:false});
+ let y0=null,moved=false;
+ el.addEventListener("pointerdown",e=>{y0=e.clientY;moved=false;el.setPointerCapture(e.pointerId)});
+ el.addEventListener("pointermove",e=>{if(y0===null)return;const steps=Math.trunc((y0-e.clientY)/12);if(steps){y0-=steps*12;moved=true;for(let i=0;i<Math.abs(steps);i++)fn(Math.sign(steps));render()}});
+ el.addEventListener("pointerup",()=>{if(y0!==null&&!moved&&click){click();render()}y0=null});
+ el.addEventListener("keydown",e=>{if(e.key==="+"||e.key==="="){fn(1);render()}if(e.key==="-"){fn(-1);render()}});
+}
+bindTurn(document.getElementById("k0"),mainTurn,mainPress);
+bindTurn(document.getElementById("k5"),k5Turn);
+[1,2,3,4,6,7,8].forEach(k=>bindTurn(document.getElementById("k"+k),d=>paramTurn(k,d)));
+for(let i=0;i<7;i++)document.getElementById("p"+i).addEventListener("click",()=>{pad(i);render()});
+(function(){const p=document.getElementById("p7");let t=null,held=false;
+ p.addEventListener("pointerdown",()=>{held=false;t=setTimeout(()=>{held=true;t=null;if(!shift()){goSounds();toast("Held Back: the sounds");render()}},500)});
+ const up=()=>{if(t){clearTimeout(t);t=null;pad8tap();render()}};
+ p.addEventListener("pointerup",up);p.addEventListener("pointerleave",()=>{if(t){clearTimeout(t);t=null}});
+ p.addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();e.stopPropagation();pad8tap();render()}})})();
+document.getElementById("shift").addEventListener("click",()=>{S.shiftLatch=!S.shiftLatch;render()});
+["hold","octm","octp"].forEach(id=>document.getElementById(id).addEventListener("click",()=>{toast("Hold and Oct work inside the keyboard itself");render()}));
+FN.forEach((n,i)=>document.getElementById("f"+i).addEventListener("input",e=>{S.faders[i]=e.target.value/100;trans(n,e.target.value+"%");render()}));
+document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>setModel(t.dataset.m)));
+document.addEventListener("keydown",e=>{
+ if(e.target.tagName==="INPUT")return;
+ if(e.key==="Shift"){if(!S.shiftKey){S.shiftKey=true;render()}return}
+ const map={ArrowRight:()=>mainTurn(1),ArrowLeft:()=>mainTurn(-1),ArrowUp:()=>k5Turn(1),ArrowDown:()=>k5Turn(-1),Enter:()=>mainPress(),Escape:()=>back()};
+ if(map[e.key]&&!(e.key==="Enter"&&e.target.tagName==="BUTTON")){e.preventDefault();map[e.key]();render();return}
+ if(e.code==="Digit8"){pad8tap();render();return}
+ if(e.code==="Digit0"){goSounds();render();return}
+ if(/^Digit[1-7]$/.test(e.code)){pad(+e.code.slice(5)-1);render()}
+});
+document.addEventListener("keyup",e=>{if(e.key==="Shift"){S.shiftKey=false;render()}});
+window.addEventListener("blur",()=>{S.shiftKey=false;render()});
+function setModel(m){if(!ABOUT[m])m="drill";S.model=m;S.overlay=null;S.ret=null;S.sec=0;S.item=[0,0,0,0,0];S.page={};S.lvl=m==="sect"?"sec":"map";S.br={room:S.room,idx:S.idx};
+ const T=TRY[m];document.getElementById("try").innerHTML=`<span class="eyebrow">Try this in ${esc(ABOUT[m][0])}</span><p class="diff">${esc(T[0])}</p><ol>${T[1].map(s=>`<li>${esc(s)}</li>`).join("")}</ol>`;
+ if(location.hash!=="#"+m)history.replaceState(null,"","#"+m);render()}
+window.addEventListener("hashchange",()=>setModel(location.hash.slice(1)));
+setModel(location.hash.slice(1)||"drill");
+})();
+</script>

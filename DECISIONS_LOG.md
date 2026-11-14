@@ -2817,3 +2817,27 @@ judges them on the listening page):
   tools/audition/make_livegrains.py), so the ear hears what the live grains add. Options: both
   good, one of them, or neither with a note.
 - The Observatory room has seven presets now; the factory bank 120.
+
+## D142. The interface, round two of the navigation mock-ups (2026-11-14)
+
+The user's notes on round one (D140, models A, B, C): they like the signal map (C), the coloured
+section pads Sound, Shape, Motion, Effects and the slots (A), and the pages. The main knob should
+navigate inside every view and never sit idle; many menus need a back button; choosing a sound
+was not easy, but can sit one level above. The pads need not copy the MiniLab's printing (Arp,
+Pad, Prog): print what they do. Three new mock-ups, `docs/ui-v3-mockups-2.html`, published at
+https://claude.ai/artifact/2bUoUQmdY8dg4VCxwC6mwe:
+
+- **Common to all three (taken from the notes):** a sound list at the top level (turn to look,
+  press to load, knob 5 a room, knobs 1-4 the playing sound's macros); pad 8 printed Back, tap
+  one level up, hold to the sounds, Shift + pad 8 part A/B (the Hydrasynth's EXIT and HOME and
+  Elektron's NO key work this way); the main knob's current job printed beside it; a trail under
+  the screen title (Neon Brass › Shape › P1 Ladder › Filter) whose marks show which part the main
+  knob and knob 5 move; pads printed Sound, Shape, Motion, Effects, Stop, Play, Record, Back.
+- **D, map then open a block:** sounds › map › block. The main knob moves at the current level,
+  press goes in, Back comes out, knob 5 moves the level above (room, section, block).
+- **E, one map per section:** sounds › section. A pad draws only its section, wired as in the
+  engine (generators mixed, shapers in a row, inserts then master). Main knob: slot; knob 5:
+  pages; press: type.
+- **F, map edited in place:** sounds › whole map. Main knob: block; knob 5: pages; press: type.
+  Round one's C with the notes applied.
+- Open, for the user: which of D, E, F; and whether pad 8 as Back is the right control.
