@@ -21,7 +21,7 @@
     inserts: Grain, the granular effect on a part (GrainInsert.h, decision D82), and Room, a small
     room around an instrument (RoomInsert.h, decision D108).
 
-    A slot has a type and eight generic values, named and ranged by the type's descriptor, like a
+    A slot has a type and twelve generic values, named and ranged by the type's descriptor, like a
     generator or processor slot. Values arrive normalised 0..1. A synced delay and the pump take
     their time from the tempo and the beat the engine passes in. An empty slot costs nothing.
 */

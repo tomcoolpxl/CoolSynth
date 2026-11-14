@@ -49,6 +49,13 @@ REJUDGE = {
 
 # A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
 REMARKS = {
+    "Museum|TX81Z: LatelyBass": ("New. Bass speakers or headphones: its notes sit at 33 to 90 Hz.",
+                                 "The house bass of the late eighties, from the instrument's own settings (read out of its "
+                                 "firmware), nothing tuned by ear. It needed something my FM section did not have: the TX81Z's "
+                                 "special wave shapes, now built in. The real one is a recording of a TX81Z playing a bass line; "
+                                 "mine plays the same notes, each as hard as the recording says it was hit. On paper the two are "
+                                 "within a decibel or two per note. The real recording carries a little hiss and has a touch more "
+                                 "of the very lowest bass (its recording chain); mine is clean."),
     "Museum|Minimoog: Emerson's Fat Bass": ("Changed since your verdict, listen again.",
                                             "You heard notes start muffled. A third of the notes were being joined to the note before "
                                             "instead of struck anew, so the filter did not open again on them. Every note is struck now, "

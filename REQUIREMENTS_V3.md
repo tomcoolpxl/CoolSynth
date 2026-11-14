@@ -207,7 +207,7 @@ Why it fits:
   processor type, the rack blocks become effect types.
 
 Parameter model: each slot exposes a type parameter and a fixed set of generic parameters
-(P1..P8) whose names, ranges and defaults come from a descriptor table per module type, so the
+(P1..P12; eight until decision D117) whose names, ranges and defaults come from a descriptor table per module type, so the
 parameter tree stays static and the host sees stable IDs while the display changes with the type.
 Patch state is versioned; V3 rejects V2 state.
 

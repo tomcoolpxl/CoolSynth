@@ -101,9 +101,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       first preset of the room Museum, DX7 BASS 1 the second (D111), Prophet-5 Sync II and
       Brass the third and fourth (D115). Still candidates: Minimoog Fat Bass ("too dull or
       muffled") and Trilogy lead ("the beginning is more of a ramp up curve"), being worked on
-      (D113 to D115). A CC0 recording of
-      LatelyBass exists at FreePats (made with Dexed, not a TX81Z); hoover and Juno-106 still
-      have no source.
+      (D113 to D116). TX81Z LatelyBass is a candidate since D117, from the instrument's own
+      preset data, beside a recording of a real TX81Z; it waits for the user's ear. Hoover and
+      Juno-106 still have no source. Asked for on 14 November: the slow brass-like synth that
+      opens Daft Punk's "Contact" (a sample of The Sherbs' "We Ride Tonight", 1981; no source
+      names the instrument, so it would be rebuilt from the recording alone).
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
     (start the `audition` preview server to hear it); marimba and kalimba corrected and
     accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in

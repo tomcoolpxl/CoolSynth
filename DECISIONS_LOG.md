@@ -2061,3 +2061,68 @@ On the two verdicts of D115.
   1 dB in the middle, 2.8 to 5.6 kHz is 6.6 dB short (was 10.8), above that 12. Share of
   energy above 1.4 kHz at a note's start: within 2 dB of the recording's. What stays short is
   a floor above 3 kHz that the recording keeps through the whole note at about -61 dB.
+
+## D117. LatelyBass, and the engine grows for it (2026-11-14)
+
+The user chose "LatelyBass next (Recommended)" and pointed at Dexed.
+
+- **Dexed has no LatelyBass and could not hold one.** Its built-in library (1,056 voices) was
+  searched; the FreePats "LatelyBass" (CC0) is an imitation made on Dexed's six sine operators.
+  The real voice needs the TX81Z's operator waves. **Taken: the real voice.**
+- **The voice's data** comes from the instrument's own preset table in its firmware
+  (github.com/raybellis/TX81Z, preset C15): algorithm 2, feedback 7, transpose -12; operators at
+  0.5, 0.5, 1, 1 times the note, levels 99, 74, 71, 79, the third on wave 5. The chip's rules
+  come from ymfm's OPZ core (github.com/aaronsgiles/ymfm): a modulator at full level swings a
+  phase by 8 pi, feedback 7 by 4 pi through the mean of the last two outputs, 0.75 dB a level
+  step, decay 0.1067 (4 + (r & 3)) 2^(r >> 2) dB a second. The key-velocity law is the
+  firmware's own table: (15 - 2 KVS) + floor(map[velocity] KVS / 8) steps of 0.375 dB, so a
+  velocity-sensitive operator is 0.4 to 4.9 dB under its level even at the hardest key. The
+  reference is a recording of a real TX81Z playing this voice (one note, github.com/cesaref/TX81Z,
+  the material of the talk "Emulating the TX81Z", ADC 2024); a plain model of those rules
+  (`tools/audition/lib/tx81z.py`) matches it within a decibel or two per harmonic, and stands in
+  for the instrument at other keys and velocities.
+- **The engine could not make it: its FM operators were sines and every slot type was full at
+  eight values.** The user, asked nothing, wrote: "expand the engine (12 slots etc) if needed".
+  **Taken: a slot type may use twelve values.** Options weighed: (a) twelve values for every
+  slot, the first eight keeping their IDs and matrix numbers, P9 to P12 added at the end (taken:
+  nothing saved changes meaning; costs 72 more host parameters); (b) a separate "FM4 with
+  waves" generator type (refused: two types for one thing); (c) one packed "waves" value
+  (refused: 4,096 combinations cannot be a choice a person reads).
+- **FM4 operator waves (taken): the TX81Z's eight**, W1 the sine, W2 the sine squared with its
+  sign, W3 and W4 their first halves, W5 to W8 the same at twice the pitch in half the cycle.
+  W2 is drawn pointed in the instrument's manual; a recording of the instrument in the talk's
+  slides shows it round-topped, as ymfm has it, and that is what is built. A carrier on a wave
+  with an average (W3, W4, W7, W8) would put a step under every note: the plain wave's average
+  is taken off and a 5 Hz high-pass takes what modulation adds. The real instrument blocks the
+  step only after its envelopes, so its notes thump; ours do not. Patches of sines are
+  bit-for-bit as before.
+- **The feedback follows operator 4's level on the chip** (it is taken after the level and the
+  envelope: feedback 7 is half the operator's index). **Taken: the matrix does it in the preset**
+  (the envelope that sets operator 4's index also sets the feedback, with a straight line through
+  the velocity law). A built-in "feedback follows level" was refused for now: it would change
+  the two admitted DX7 sounds or need a thirteenth value.
+- **Result, nothing fitted.** Against the real note: the first sixteen harmonics within 0.9 dB
+  on average (2.6 at most) over half a second, the level within 0.5 dB. Against the chip's
+  rules over fifteen keys and velocities: 0.3 to 1.4 dB on average. The vibrato is the voice's
+  own (pitch depth 7 of the chip's 127 at sensitivity 5: 5.5 cents either way; the recording's
+  long notes swing 4 to 5 cents at about 3.5 Hz, taken for LFO speed 25).
+- **The side-by-side** uses SynthMania's recording of a TX81Z playing C15 (copyrighted, kept in
+  the audition folder only): three stretches, 36 notes. A new transcriber
+  (`tools/audition/transcribe_fmbass.py`) was needed: this bass starts each note with the
+  octave 14 to 21 dB louder than the note, and both pitch trackers lost the tune. It finds
+  note starts by the jump of the spectrum, the pitch from spectral peaks, and each note's key
+  velocity as the one whose tone fits by the chip's rules (the carrier ignores velocity, so only
+  the tone says how hard a key was hit); the octave of a short note is settled by tone too.
+  Thirty-four of the 36 notes fit the rules within 3.1 dB, most within 2. That recording has
+  4 dB more of the band under 44 Hz than the rebuild and the direct recording has 2 to 4 dB
+  less: the recording chains differ, so nothing was changed.
+- **Left open, heard by nobody yet:** the real output converter (ten bits with a shifting
+  range) leaves a haze 55 to 60 dB under the note; the rebuild is clean. Operator 3's detune of
+  -3 (a tenth of a hertz) and operator 4's second, slow decay from 36 dB down are left out.
+
+Asked the same day: the slow brass-like synth that opens Daft Punk's "Contact". It is a sample
+of The Sherbs' "We Ride Tonight" (1981, album "Defying Gravity"; keyboards Garth Porter, who
+confirmed in 2013 that "the bit they used was just my bit; the keyboard bit"). No source found
+names the instrument: album credits say only "keyboards", interviews do not say, no forum
+thread identifies it. The opening was cut from the user's own copy of the album into the
+audition folder for study.

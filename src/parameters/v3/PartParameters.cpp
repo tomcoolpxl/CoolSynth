@@ -310,14 +310,21 @@ namespace coolsynth::parameters::v3
             {
                 const juce::String slot = "G" + juce::String(g) + " ";
                 n.addArray(juce::StringArray { slot + "Pitch", slot + "Level", slot + "Pan", slot + "Amount" });
-                for (int k = 1; k <= sv3::maxSlotParameters; ++k)
+                for (int k = 1; k <= d::firstSlotParameters; ++k)
                     n.add(slot + "Param " + juce::String(k));
             }
             for (int p = 1; p <= d::processorSlots; ++p)
-                for (int k = 1; k <= sv3::maxSlotParameters; ++k)
+                for (int k = 1; k <= d::firstSlotParameters; ++k)
                     n.add("P" + juce::String(p) + " Param " + juce::String(k));
             for (int e = 1; e <= d::envelopeTimes; ++e)
                 n.add("Env " + juce::String(e) + " Time");
+            // The values a slot gained later, after everything that was there before.
+            for (int g = 1; g <= d::generatorSlots; ++g)
+                for (int k = d::firstSlotParameters + 1; k <= sv3::maxSlotParameters; ++k)
+                    n.add("G" + juce::String(g) + " Param " + juce::String(k));
+            for (int p = 1; p <= d::processorSlots; ++p)
+                for (int k = d::firstSlotParameters + 1; k <= sv3::maxSlotParameters; ++k)
+                    n.add("P" + juce::String(p) + " Param " + juce::String(k));
             jassert(n.size() == d::count);
             return n;
         }();

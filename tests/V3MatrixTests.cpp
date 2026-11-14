@@ -194,6 +194,27 @@ public:
             expectEquals(pv3::modCurveNames().size(), modCurveCount);
             expectEquals(pv3::modDestinationNames()[dst::generatorParameter(1, 2)], juce::String("G2 Param 3"));
             expectEquals(pv3::modDestinationNames()[dst::processorParameter(0, 0)], juce::String("P1 Param 1"));
+
+            // Saved patches hold destination numbers: what existed keeps its number, the values a slot
+            // gained later (P9 and up) come after everything else.
+            expectEquals(dst::generatorParameter(0, 0), 10);
+            expectEquals(dst::generatorParameter(2, 7), 41);
+            expectEquals(dst::processorParameter(0, 0), 42);
+            expectEquals(dst::processorParameter(2, 7), 65);
+            expectEquals(dst::envelopeTimeBase, 66);
+            expectEquals(dst::generatorParameter(0, 8), 69);
+            expectEquals(dst::processorParameter(2, maxSlotParameters - 1), dst::count - 1);
+            expectEquals(pv3::modDestinationNames()[dst::generatorParameter(1, 8)], juce::String("G2 Param 9"));
+            expectEquals(pv3::modDestinationNames()[dst::processorParameter(2, 11)], juce::String("P3 Param 12"));
+            MatrixOffsets added;
+            added.clear();
+            addToDestination(dst::generatorParameter(1, 9), 0.25f, added);
+            addToDestination(dst::processorParameter(2, 11), -0.5f, added);
+            addToDestination(dst::processorParameter(1, 7), 0.125f, added);
+            expectWithinAbsoluteError(added.generators[1].p[9], 0.25f, 1.0e-6f);
+            expectWithinAbsoluteError(added.processors[2].p[11], -0.5f, 1.0e-6f);
+            expectWithinAbsoluteError(added.processors[1].p[7], 0.125f, 1.0e-6f);
+            expectWithinAbsoluteError(added.generators[0].p[9] + added.processors[0].p[11] + added.envelopeTimeOctaves[0], 0.0f, 1.0e-6f);
             expectEquals(pv3::modSourceNames()[static_cast<int>(ModSource::glfo2)], juce::String("GLFO 2"));
             expectEquals(pv3::modSourceNames()[static_cast<int>(ModSource::wheel)], juce::String("Mod Wheel"));
         }

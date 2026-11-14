@@ -12,10 +12,10 @@
 /*
     V3 slot parameters (DESIGN_V3.md section 9.1).
 
-    Every slot exposes one type choice and eight generic floats in normalised 0..1 form whose
+    Every slot exposes one type choice and twelve generic floats in normalised 0..1 form whose
     names, ranges, skews and units come from the descriptor of the slot's current type. Generator
     slots add fixed parameters (level, pan, octave, semitone, fine, key tracking, combine). IDs
-    follow the slot path, never the type: pA.g1.type, pA.g1.p1 .. pA.g1.p8, pA.g1.level, ...
+    follow the slot path, never the type: pA.g1.type, pA.g1.p1 .. pA.g1.p12, pA.g1.level, ...
 */
 namespace coolsynth::parameters::v3
 {
@@ -87,7 +87,7 @@ namespace coolsynth::parameters::v3
         const juce::AudioParameterChoice& typeChoice;
     };
 
-    /** Builds the parameter group of one slot: type, p1..p8 and, for generators, the fixed parameters. */
+    /** Builds the parameter group of one slot: type, p1..p12 and, for generators, the fixed parameters. */
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makeSlotGroup(const SlotPath& path,
                                                                                     coolsynth::synth::v3::SlotTypeTable typeTable,
                                                                                     const juce::String& groupName,

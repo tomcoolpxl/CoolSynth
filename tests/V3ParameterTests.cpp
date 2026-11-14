@@ -102,10 +102,11 @@ public:
             expect(typeParameterId({ Part::a, SlotKind::generator, 1 }) == "pA.g1.type");
             expect(genericParameterId({ Part::a, SlotKind::generator, 1 }, 1) == "pA.g1.p1");
             expect(genericParameterId({ Part::b, SlotKind::master, 2 }, 8) == "f2.p8");
+            expect(genericParameterId({ Part::a, SlotKind::generator, 2 }, 12) == "pA.g2.p12");
             expect(fixedParameterId({ Part::a, SlotKind::generator, 1 }, "level") == "pA.g1.level");
-            expectEquals(parameterCountForKind(SlotKind::generator), 17);
-            expectEquals(parameterCountForKind(SlotKind::processor), 9);
-            expectEquals(parameterCountForKind(SlotKind::master), 9);
+            expectEquals(parameterCountForKind(SlotKind::generator), 21);
+            expectEquals(parameterCountForKind(SlotKind::processor), 13);
+            expectEquals(parameterCountForKind(SlotKind::master), 13);
         }
 
         beginTest("layout_registers_unique_ids_and_the_designed_count");
@@ -122,12 +123,14 @@ public:
                     ids.add(withId->paramID);
                 }
             }
-            // two parts x (3 generators x 17 + 3 processors x 9 + 3 inserts x 9) + 6 master x 9
-            expectEquals(ids.size(), 2 * (3 * 17 + 3 * 9 + 3 * 9) + 6 * 9);
+            // two parts x (3 generators x 21 + 3 processors x 13 + 3 inserts x 13) + 6 master x 13
+            expectEquals(ids.size(), 2 * (3 * 21 + 3 * 13 + 3 * 13) + 6 * 13);
             expect(ids.contains("pA.g1.amount"));
             expect(ids.contains("pA.g1.combine"));
             expect(! ids.contains("pA.p1.combine"));
             expect(ids.contains("f6.p8"));
+            expect(ids.contains("f6.p12"));
+            expect(! ids.contains("f6.p13"));
         }
 
         beginTest("generic_parameter_name_text_and_parsing_follow_the_selected_type");

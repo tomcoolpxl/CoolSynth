@@ -400,6 +400,81 @@ public:
                 expectLessOrEqual(largest, 1.0f + 1.0e-5f, "algorithm " + juce::String(algorithm + 1));
             }
         }
+
+        beginTest("the_eight_operator_waves_have_their_shapes");
+        {
+            const double turn = 2.0 * juce::MathConstants<double>::pi;
+            auto at = [turn](int wave, double turns) { return Fm4Generator::operatorWave(wave, turns * turn); };
+            expectWithinAbsoluteError(at(0, 0.25), 1.0, 1.0e-12);     // W1: the sine
+            expectWithinAbsoluteError(at(0, 0.75), -1.0, 1.0e-12);
+            expectWithinAbsoluteError(at(1, 1.0 / 12.0), 0.25, 1.0e-12); // W2: the sine squared, with its sign
+            expectWithinAbsoluteError(at(1, 0.75), -1.0, 1.0e-12);
+            expectWithinAbsoluteError(at(2, 0.25), 1.0, 1.0e-12);     // W3: half a sine
+            expectWithinAbsoluteError(at(2, 0.75), 0.0, 1.0e-12);
+            expectWithinAbsoluteError(at(3, 1.0 / 12.0), 0.25, 1.0e-12); // W4: half of W2
+            expectWithinAbsoluteError(at(3, 0.75), 0.0, 1.0e-12);
+            expectWithinAbsoluteError(at(4, 0.125), 1.0, 1.0e-12);    // W5: a whole sine in the first half
+            expectWithinAbsoluteError(at(4, 0.375), -1.0, 1.0e-12);
+            expectWithinAbsoluteError(at(4, 0.625), 0.0, 1.0e-12);
+            expectWithinAbsoluteError(at(5, 0.375), -1.0, 1.0e-12);   // W6: a whole W2 in the first half
+            expectWithinAbsoluteError(at(5, 1.0 / 24.0), 0.25, 1.0e-12);
+            expectWithinAbsoluteError(at(5, 0.875), 0.0, 1.0e-12);
+            expectWithinAbsoluteError(at(6, 0.375), 1.0, 1.0e-12);    // W7: two humps
+            expectWithinAbsoluteError(at(6, 0.625), 0.0, 1.0e-12);
+            expectWithinAbsoluteError(at(7, 0.375), 1.0, 1.0e-12);    // W8: two squared humps
+            expectWithinAbsoluteError(at(7, 1.0 / 24.0), 0.25, 1.0e-12);
+            expectWithinAbsoluteError(at(7, 0.875), 0.0, 1.0e-12);
+            for (int wave = 0; wave < Fm4Generator::waveCount; ++wave)
+                expectWithinAbsoluteError(at(wave, 3.25), at(wave, 0.25), 1.0e-9, "a wave repeats, also at a modulated phase");
+            expectWithinAbsoluteError(at(4, -0.875), at(4, 0.125), 1.0e-9, "and below zero");
+        }
+
+        beginTest("a_wave_brings_its_own_harmonics_and_sines_are_untouched");
+        {
+            // W5 is a sine at twice the pitch for half the time: half its level sits at the octave,
+            // 4 / (3 pi) at the note, 4 / (5 pi) at the twelfth.
+            auto fm = makeFm4();
+            const double f = 64.0 * kVoiceRate / kFftSize;
+            auto p = fm4Params(5, static_cast<float>(f));
+            p.p[Fm4Generator::wave1] = 4.0f;
+            const auto m = spectrum(renderFm4(fm->generator, p, kFftSize + 4096), 4096);
+            const double note = peakNear(m, f);
+            expectWithinAbsoluteError(20.0 * std::log10(peakNear(m, 2.0 * f) / note), 20.0 * std::log10(0.5 / (4.0 / (3.0 * juce::MathConstants<double>::pi))), 0.1);
+            expectWithinAbsoluteError(20.0 * std::log10(peakNear(m, 3.0 * f) / note), 20.0 * std::log10(3.0 / 5.0), 0.1);
+
+            // As a modulator it gives the carrier sidebands a sine modulator cannot: at the note plus twice the modulator.
+            auto sine = makeFm4();
+            auto shaped = makeFm4();
+            auto q = fm4Params(0, static_cast<float>(f));
+            q.p[Fm4Generator::ratio2] = 3.0f;
+            q.p[Fm4Generator::level2] = 0.01f; // 0.08 radians: only first-order sidebands
+            const auto plain = spectrum(renderFm4(sine->generator, q, kFftSize + 4096), 4096);
+            q.p[Fm4Generator::wave2] = 4.0f;
+            const auto rich = spectrum(renderFm4(shaped->generator, q, kFftSize + 4096), 4096);
+            expectLessThan(peakNear(plain, 7.0 * f) / peakNear(plain, f), 1.0e-3);
+            expectGreaterThan(peakNear(rich, 7.0 * f) / peakNear(rich, f), 0.015);
+        }
+
+        beginTest("a_carrier_on_a_half_wave_adds_no_step_under_the_note");
+        {
+            for (int wave : { 2, 3, 6, 7 })
+            {
+                auto fm = makeFm4();
+                const double f = 64.0 * kVoiceRate / kFftSize;
+                auto p = fm4Params(5, static_cast<float>(f));
+                p.p[Fm4Generator::wave1] = static_cast<float>(wave);
+                const auto out = renderFm4(fm->generator, p, kFftSize + 4096);
+                const int period = static_cast<int>(std::lround(kVoiceRate / f));
+                double first = 0.0, late = 0.0;
+                for (int i = 0; i < 8 * period; ++i)
+                {
+                    first += out[static_cast<std::size_t>(4 + i)];
+                    late += out[out.size() - 1 - static_cast<std::size_t>(i)];
+                }
+                expectLessThan(std::abs(first / (8.0 * period)), 0.01, "wave " + juce::String(wave + 1) + ", the first cycles");
+                expectLessThan(std::abs(late / (8.0 * period)), 0.002, "wave " + juce::String(wave + 1) + ", later");
+            }
+        }
     }
 };
 

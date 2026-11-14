@@ -23,7 +23,10 @@
 */
 namespace coolsynth::synth::v3
 {
-    inline constexpr int maxSlotParameters = 8;
+    /** How many values a slot type may use. There were eight; four were added for the FM operators'
+        waves (DECISIONS_LOG.md D117). Saved patches and the matrix know the first eight by their old
+        numbers: see firstSlotParameters in ModMatrix.h. */
+    inline constexpr int maxSlotParameters = 12;
 
     /** Every generator's output runs this many samples late, so layered generators stay aligned;
         the voice holds its envelopes for as long at a note's start so the onset meets the sound. */

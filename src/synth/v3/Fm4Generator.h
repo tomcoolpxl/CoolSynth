@@ -14,7 +14,7 @@
     V3 four-operator FM generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: four operators
     with fixed algorithms).
 
-    Four sine operators. Operator 1 always sounds at the note; operators 2, 3 and 4 run at their
+    Four operators. Operator 1 always sounds at the note; operators 2, 3 and 4 run at their
     Ratio times the note. Six algorithms (the arrow is "modulates"):
 
         1  4 > 3 > 2 > 1             one stack: the brightest, most metallic
@@ -34,14 +34,40 @@
     ramp across each sub-block. Phases in double precision restart at a fresh note. Output two
     samples late like every generator, with the signal and operator 1's wrap track for the next
     generator; combine FM drives operator 1, ring and AM work as on the VA.
+
+    Each operator has a Wave, the eight of Yamaha's four-operator instruments of 1987 (TX81Z,
+    DX11), all cut from a sine (s is the sine of the phase, s2 the sine of twice the phase; the
+    shapes are those of ymfm's OPZ core, and a recording of a TX81Z shows W2 round-topped as here,
+    not pointed as its manual draws it):
+
+        W1  s                                 the sine
+        W2  s |s|                             a sine squared that keeps its sign: flat through zero
+        W3  s in the first half, then nothing a half sine
+        W4  s s in the first half, then nothing
+        W5  s2 in the first half, then nothing one whole cycle at twice the pitch, then a rest
+        W6  s2 |s2| in the first half, then nothing
+        W7  |s2| in the first half, then nothing two humps, then a rest
+        W8  s2 s2 in the first half, then nothing
+
+    A wave other than the sine brings its own harmonics, so one operator does what took two. As a
+    modulator it is used as it is, its average included (a constant only turns the phase). As a
+    carrier its average would be a step under every note, so the average of the plain wave is taken
+    off and what the modulation adds to it goes through a 5 Hz high-pass; carriers on W1, W2, W5 and
+    W6 are untouched, so a patch of sines sounds exactly as before. The index limit treats a
+    modulator that is not a sine as three times higher, for its harmonics. A carrier's own
+    harmonics are not band-limited (they fall at 12 dB an octave or faster): at the top of the
+    keyboard a little of them folds back, far less than on the instruments, which ran at 55.9 kHz
+    with no guard at all.
 */
 namespace coolsynth::synth::v3
 {
     class Fm4Generator final
     {
     public:
-        enum Param : int { algorithm = 0, ratio2, ratio3, ratio4, level2, level3, level4, feedback, paramCount };
+        enum Param : int { algorithm = 0, ratio2, ratio3, ratio4, level2, level3, level4, feedback, wave1, wave2, wave3, wave4, paramCount };
         static constexpr int algorithmCount = 6;
+        static constexpr int waveCount = 8;
+        static constexpr double dcBlockHz = 5.0;
         static constexpr int latencySamples = generatorLatencySamples;
         static constexpr double levelRadians = 8.0;
         static constexpr double maxFeedbackRadians = 1.5;
@@ -57,9 +83,44 @@ namespace coolsynth::synth::v3
                    { "level2", "Op 2 Level", 0.0f,  1.0f,  0.2f, Skew::squared,     Unit::percent, true },
                    { "level3", "Op 3 Level", 0.0f,  1.0f,  0.0f, Skew::squared,     Unit::percent, true },
                    { "level4", "Op 4 Level", 0.0f,  1.0f,  0.0f, Skew::squared,     Unit::percent, true },
-                   { "fb",     "Feedback",   0.0f,  1.0f,  0.0f, Skew::linear,      Unit::percent, true } }},
+                   { "fb",     "Feedback",   0.0f,  1.0f,  0.0f, Skew::linear,      Unit::percent, true },
+                   { "wave1",  "Op 1 Wave",  0.0f,  7.0f,  0.0f, Skew::linear,      Unit::choice,  false, waveNames },
+                   { "wave2",  "Op 2 Wave",  0.0f,  7.0f,  0.0f, Skew::linear,      Unit::choice,  false, waveNames },
+                   { "wave3",  "Op 3 Wave",  0.0f,  7.0f,  0.0f, Skew::linear,      Unit::choice,  false, waveNames },
+                   { "wave4",  "Op 4 Wave",  0.0f,  7.0f,  0.0f, Skew::linear,      Unit::choice,  false, waveNames } }},
                 paramCount };
             return d;
+        }
+
+        /** An operator wave (0 = W1 .. 7 = W8) at a phase in radians. */
+        [[nodiscard]] static double operatorWave(int wave, double phaseRadians) noexcept
+        {
+            if (wave <= 0)
+                return std::sin(phaseRadians);
+            if (wave == 1)
+            {
+                const double s = std::sin(phaseRadians);
+                return s * std::abs(s);
+            }
+            double turns = phaseRadians * (1.0 / kTwoPi);
+            turns -= std::floor(turns);
+            if (turns >= 0.5)
+                return 0.0;
+            switch (wave)
+            {
+                case 2: return std::sin(phaseRadians);
+                case 3: { const double s = std::sin(phaseRadians); return s * s; }
+                case 4: return std::sin(2.0 * phaseRadians);
+                case 5: { const double s = std::sin(2.0 * phaseRadians); return s * std::abs(s); }
+                case 6: return std::abs(std::sin(2.0 * phaseRadians));
+                default: { const double s = std::sin(2.0 * phaseRadians); return s * s; }
+            }
+        }
+
+        /** The average of a wave over its cycle: what a carrier on it would add under the sound. */
+        [[nodiscard]] static constexpr double waveAverage(int wave) noexcept
+        {
+            return wave == 2 || wave == 6 ? 0.31830988618379067154 : (wave == 3 || wave == 7 ? 0.25 : 0.0);
         }
 
         static std::size_t memoryFloats(double, int maxSubBlock) { return 2 * static_cast<std::size_t>(std::max(1, maxSubBlock)); }
@@ -77,6 +138,7 @@ namespace coolsynth::synth::v3
         {
             phases.fill(0.0);
             feedback1 = feedback2 = 0.0;
+            dcIn = dcOut = 0.0;
             ringLeft.fill(0.0f);
             ringRight.fill(0.0f);
             ringMono.fill(0.0f);
@@ -121,6 +183,17 @@ namespace coolsynth::synth::v3
             const Routing route = routing(algo);
             const double note = std::max(0.0, static_cast<double>(params.frequencyHz));
 
+            std::array<int, 4> waves {};
+            std::array<double, 4> average {};
+            bool blockDc = false;
+            for (std::size_t i = 0; i < 4; ++i)
+            {
+                waves[i] = juce::jlimit(0, waveCount - 1, static_cast<int>(std::lround(params.p[wave1 + static_cast<int>(i)])));
+                average[i] = waveAverage(waves[i]);
+                blockDc = blockDc || (route.carrier[i] && average[i] != 0.0);
+            }
+            const double dcPole = 1.0 - kTwoPi * dcBlockHz / sampleRate;
+
             std::array<double, 4> hz {};
             hz[0] = std::min(0.45 * sampleRate, note);
             for (int i = 1; i < 4; ++i)
@@ -143,7 +216,8 @@ namespace coolsynth::synth::v3
                     if (route.modulatedBy[static_cast<std::size_t>(to)][ui])
                     {
                         modulates = true;
-                        limit = std::min(limit, FmGenerator::indexLimit(hz[static_cast<std::size_t>(to)], hz[ui], sampleRate));
+                        limit = std::min(limit, FmGenerator::indexLimit(hz[static_cast<std::size_t>(to)],
+                                                                        hz[ui] * (waves[ui] == 0 ? 1.0 : 3.0), sampleRate));
                     }
                 if (modulates)
                     targetIndex[ui] = std::min(levelRadians * setting, limit);
@@ -204,7 +278,7 @@ namespace coolsynth::synth::v3
                         phase += currentFeedback * 0.5 * (feedback1 + feedback2);
                     if (i == 0 && useFm)
                         phase += externalDepth * static_cast<double>(input.signal[s]);
-                    out[ui] = std::sin(phase);
+                    out[ui] = operatorWave(waves[ui], phase);
                 }
                 feedback2 = feedback1;
                 feedback1 = out[3];
@@ -213,10 +287,17 @@ namespace coolsynth::synth::v3
                 for (std::size_t i = 0; i < 4; ++i)
                     if (route.carrier[i])
                     {
-                        sum += level[i] * out[i];
+                        sum += level[i] * (out[i] - average[i]);
                         weight += level[i];
                     }
-                const float sample = static_cast<float>(sum / std::max(1.0, weight));
+                double mixed = sum / std::max(1.0, weight);
+                if (blockDc)
+                {
+                    dcOut = mixed - dcIn + dcPole * dcOut;
+                    dcIn = mixed;
+                    mixed = dcOut;
+                }
+                const float sample = static_cast<float>(mixed);
 
                 float wrapTau = -1.0f;
                 const double next = phases[0] + step[0];
@@ -257,10 +338,12 @@ namespace coolsynth::synth::v3
 
     private:
         static constexpr double kTwoPi = 6.283185307179586476925;
+        static constexpr const char* waveNames = "W1|W2|W3|W4|W5|W6|W7|W8";
 
         double sampleRate = 96000.0;
         std::array<double, 4> phases {}, index {}, level {}, step {};
         double feedback1 = 0.0, feedback2 = 0.0, currentFeedback = 0.0;
+        double dcIn = 0.0, dcOut = 0.0;
         bool primed = false;
         std::array<float, 4> ringLeft {}, ringRight {}, ringMono {}, ringWrap {};
         unsigned int cursor = 0;

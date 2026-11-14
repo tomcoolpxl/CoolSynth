@@ -197,9 +197,11 @@ namespace coolsynth::presets
             }
 
             int index = -1;
-            if (field.length() == 2 && field[0] == 'p' && field[1] >= '1' && field[1] <= '8')
+            if (field.length() >= 2 && field.length() <= 3 && field[0] == 'p' && field.substring(1).containsOnly("0123456789"))
             {
-                index = field[1] - '1';
+                const int number = field.substring(1).getIntValue();
+                if (number >= 1 && number <= sv3::maxSlotParameters)
+                    index = number - 1;
             }
             else
             {

@@ -58,13 +58,17 @@ namespace coolsynth::synth::v3
         inline constexpr int lfo1Rate = 4;
         inline constexpr int lfo2Rate = 5;
         inline constexpr int generatorBase = 6;
-        inline constexpr int generatorFields = 12; // pitch, level, pan, amount, then P1..P8
+        inline constexpr int firstSlotParameters = 8; // P1..P8 keep the numbers they had when a slot had eight values
+        inline constexpr int extraSlotParameters = maxSlotParameters - firstSlotParameters; // P9 and up, added at the end
+        inline constexpr int generatorFields = 4 + firstSlotParameters; // pitch, level, pan, amount, then P1..P8
         inline constexpr int generatorSlots = 3;
         inline constexpr int processorBase = generatorBase + generatorSlots * generatorFields;
         inline constexpr int processorSlots = 3;
-        inline constexpr int envelopeTimeBase = processorBase + processorSlots * maxSlotParameters;
+        inline constexpr int envelopeTimeBase = processorBase + processorSlots * firstSlotParameters;
         inline constexpr int envelopeTimes = 3;
-        inline constexpr int count = envelopeTimeBase + envelopeTimes;
+        inline constexpr int extraGeneratorBase = envelopeTimeBase + envelopeTimes;
+        inline constexpr int extraProcessorBase = extraGeneratorBase + generatorSlots * extraSlotParameters;
+        inline constexpr int count = extraProcessorBase + processorSlots * extraSlotParameters;
 
         [[nodiscard]] constexpr bool isEnvelopeTime(int destination) noexcept
         {
@@ -83,11 +87,13 @@ namespace coolsynth::synth::v3
         [[nodiscard]] constexpr int generator(int slot, int field) noexcept { return generatorBase + slot * generatorFields + field; }
         [[nodiscard]] constexpr int generatorParameter(int slot, int index) noexcept
         {
-            return generator(slot, generatorField::firstParameter + index);
+            return index < firstSlotParameters ? generator(slot, generatorField::firstParameter + index)
+                                               : extraGeneratorBase + slot * extraSlotParameters + (index - firstSlotParameters);
         }
         [[nodiscard]] constexpr int processorParameter(int slot, int index) noexcept
         {
-            return processorBase + slot * maxSlotParameters + index;
+            return index < firstSlotParameters ? processorBase + slot * firstSlotParameters + index
+                                               : extraProcessorBase + slot * extraSlotParameters + (index - firstSlotParameters);
         }
     }
 
@@ -146,12 +152,27 @@ namespace coolsynth::synth::v3
             out.envelopeTimeOctaves[static_cast<std::size_t>(destination - d::envelopeTimeBase)] += value * matrixRateOctaves;
             return;
         }
+        if (destination >= d::extraProcessorBase)
+        {
+            const int index = destination - d::extraProcessorBase;
+            const int slot = index / d::extraSlotParameters;
+            if (slot < d::processorSlots)
+                out.processors[static_cast<std::size_t>(slot)].p[static_cast<std::size_t>(d::firstSlotParameters + index % d::extraSlotParameters)] += value;
+            return;
+        }
+        if (destination >= d::extraGeneratorBase)
+        {
+            const int index = destination - d::extraGeneratorBase;
+            out.generators[static_cast<std::size_t>(index / d::extraSlotParameters)]
+                .p[static_cast<std::size_t>(d::firstSlotParameters + index % d::extraSlotParameters)] += value;
+            return;
+        }
         if (destination >= d::processorBase)
         {
             const int index = destination - d::processorBase;
-            const int slot = index / maxSlotParameters;
+            const int slot = index / d::firstSlotParameters;
             if (slot < d::processorSlots)
-                out.processors[static_cast<std::size_t>(slot)].p[static_cast<std::size_t>(index % maxSlotParameters)] += value;
+                out.processors[static_cast<std::size_t>(slot)].p[static_cast<std::size_t>(index % d::firstSlotParameters)] += value;
             return;
         }
         if (destination >= d::generatorBase)

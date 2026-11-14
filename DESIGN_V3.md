@@ -67,7 +67,11 @@ generator type 4: four sine operators, operator 1 at the note, ratios and levels
 feedback on 4, six algorithms (stack, two into one, stack plus one, two pairs, one into three,
 organ). A Level is an index where the operator modulates and an output level where it sounds;
 carriers are normalised by their total level; every modulation uses FM2's alias limit
-(decision D33).
+(decision D33). Since D117 (2026-11-14) each operator has a Wave, the eight of the TX81Z (W1 the
+sine, W2 the sine squared with its sign, W3 and W4 their first halves, W5 to W8 the same four at
+twice the pitch squeezed into half the cycle): a wave other than the sine is used as it is where
+the operator modulates, and loses its average where it sounds (the plain wave's average, and a
+5 Hz high-pass for what modulation adds), so no step sits under a note. Sines are untouched.
 
 Shipped (phase 3.4, 2026-11-13): `WavetableGenerator` in `src/synth/v3/WavetableGenerator.h`,
 generator type 5, playing `WavetableBank` (`src/synth/v3/Wavetables.h/.cpp`): four factory
@@ -158,7 +162,7 @@ noteOn(const NoteContext&)                                        // generators 
 process(float* left, float* right, int n, const SlotParams& p)   // in place, realtime safe
 ```
 
-`SlotParams` is the slot's eight generic parameter values plus the kind-specific fixed ones
+`SlotParams` is the slot's twelve generic parameter values (eight until D117) plus the kind-specific fixed ones
 (level, pan, pitch offset for generators; none for processors), already summed with the
 modulation offsets for this sub-block and clamped to the descriptor ranges. Generators write,
 processors and effects read and write in place. Modules keep no pointers to anything outside
@@ -173,7 +177,7 @@ struct ParameterDescriptor { const char* id; const char* name; float min, max, d
 struct ModuleDescriptor    { ModuleType type; const char* name; CostClass cost; std::array<ParameterDescriptor, 8> params; int usedParams; size_t memoryBytes(double sampleRate); };
 ```
 
-The descriptor tells the parameter layer how to display P1..P8 for that type, the voice how
+The descriptor tells the parameter layer how to display P1..P12 for that type, the voice how
 much `SlotMemory` to reserve, and the allocator how expensive a voice is. Descriptors are the
 single source for UI labels, bank file keys and test expectations.
 
@@ -351,7 +355,9 @@ range and the slot clamps after summing. Pitch destinations are in semitones.
 Shipped (phase 2.2, 2026-11-13): `src/synth/v3/ModMatrix.h`. 24 slots of source, destination,
 amount, via and curve (linear, unipolar, exponential, logarithmic, S-curve). Destinations: pitch,
 VCA, pan, LFO1 and LFO2 rate, each generator's pitch, level, pan, combine amount and P1..P8,
-each processor's P1..P8 (66 in all; new ones only at the end). An amount of 1 is the whole
+each processor's P1..P8 (66), the three envelope times (69), and, added at the end when a slot
+went from eight values to twelve (D117), each generator's and each processor's P9..P12 (93 in
+all; new ones only at the end, so a saved number keeps its meaning). An amount of 1 is the whole
 normalised range, 48 semitones for pitch, four octaves for an LFO rate; the VCA gain is 1 plus
 the offset held in 0..1 and ramps across the sub-block. Each voice evaluates the packed list of
 active slots once per sub-block after its sources; LFO rate offsets apply from the next
@@ -493,9 +499,9 @@ pA.env1.a .. pA.env1.loop         pA.lfo1.shape .. pA.lfo1.oneshot
 pA.glfo1.*  pA.genv.*  pA.step.s1 .. s16 pA.step.div ...  pA.macro1 .. 4
 pA.m1.src  pA.m1.dst  pA.m1.amt  pA.m1.via  pA.m1.curve   (24 slots)
 pA.chord.*  pA.arp.*  pA.play.*  pA.glide.*  pA.poly.cap
-pA.i1.type  pA.i1.p1 .. p8       pA.mix.level .. pA.mix.velHi
+pA.i1.type  pA.i1.p1 .. p12      pA.mix.level .. pA.mix.velHi
 pB.*  (same)
-part.mode   f1.type f1.p1 .. p8  .. f6.*   master.gain
+part.mode   f1.type f1.p1 .. p12 .. f6.*   master.gain
 ```
 
 Generic parameters are `AudioParameterFloat` in 0..1 normalised form; the descriptor supplies
@@ -538,7 +544,7 @@ i1: { type: Drive, amount: 0.15 }
 ```
 
 The generator script maps descriptor names (`cutoff`) to generic IDs (`pA.p1.p1`) using the
-descriptor table exported by a small tool, so preset YAML never mentions P1..P8. Factory presets
+descriptor table exported by a small tool, so preset YAML never mentions P1..P12. Factory presets
 are still compiled in as a table; the normaliser and the master-gain script carry over.
 
 Shipped (phase 1.5, 2026-11-13), replacing the YAML and generator above: bank files in

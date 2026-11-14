@@ -144,5 +144,35 @@
   "reference": "A real Prophet-5 Rev 3 playing factory program 11, recorded by SynthMania (copyrighted: kept in the audition folder for this comparison only). Five chords cut out of the demonstration, each from its start to just before the player brings in the wheel's vibrato: A minor seventh, F, G, C, E minor. My rebuild plays the same chords and is cut at the same moments.",
   "source": "Sequential's own factory data for program 1-1 with the service manual's calibration: oscillator, the filter's reach, the envelopes' shapes. The cutoff, the envelopes' times and their sustain levels are fitted to those five chords.",
   "admitted": true
+ },
+ {
+  "id": "tx81z-latelybass",
+  "title": "TX81Z: LatelyBass",
+  "preset": "TX81Z LatelyBass",
+  "phrase": {
+   "file": "museum/tx81z/C15_LatelyBass_synthmania.mp3",
+   "stretches": [
+    {
+     "begin": 0.0,
+     "end": 2.9,
+     "notes": "museum/tx81z/lately_notes_a.json"
+    },
+    {
+     "begin": 3.25,
+     "end": 5.36,
+     "notes": "museum/tx81z/lately_notes_b.json"
+    },
+    {
+     "begin": 5.6,
+     "end": 12.75,
+     "notes": "museum/tx81z/lately_notes_c.json"
+    }
+   ],
+   "key_offset": 24,
+   "tune_cents": 20,
+   "transcribed_with": "transcribe_fmbass.py <clip> <begin> <end> 24 62 <out> 20 (per stretch; every note struck, each with the key velocity whose tone fits it best by the chip's rules)"
+  },
+  "reference": "A real Yamaha TX81Z playing its preset C15, recorded by SynthMania (copyrighted: kept in the audition folder for this comparison only). My rebuild plays the same notes, transcribed from the recording, each as hard as the recording's tone says it was hit. That recording is 20 cents sharp; the rebuild is tuned to it for this clip.",
+  "source": "The instrument's own preset table, read out of its firmware (raybellis/TX81Z on GitHub), converted by the chip's rules (ymfm's OPZ core; the firmware's velocity table). Nothing is fitted to the recording."
  }
 ]

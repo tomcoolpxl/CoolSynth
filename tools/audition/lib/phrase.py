@@ -33,7 +33,8 @@ def notes_spec(notes, key_offset, velocity=100):
             starts[i + 1] = max(starts[i] + 0.005, turn - OVERLAP)
         else:
             ends[i] = turn + OVERLAP
-    return ",".join(f"{k}:{max(0.0, s):.3f}:{max(0.02, e - s):.3f}:{velocity}" for k, s, e in zip(keys, starts, ends))
+    velocities = [n.get("velocity", velocity) for n in notes]   # a transcription may say how hard each key was hit
+    return ",".join(f"{k}:{max(0.0, s):.3f}:{max(0.02, e - s):.3f}:{v}" for k, s, e, v in zip(keys, starts, ends, velocities))
 
 
 def chords_spec(events, velocity=100, key_up_early=0.0):
