@@ -5,6 +5,8 @@
 #
 # DX7 E.PIANO 1 was admitted on 13 November 2026 (decision D107), DX7 BASS 1 (D111), Prophet-5 Sync II and
 # Brass (D115) and Minimoog Fat Bass (D118) on 14 November.
+# TX81Z LatelyBass was admitted on 14 November 2026 (decision D119).
+
 
 [Minimoog Trilogy Lead]
 room = Museum
@@ -35,43 +37,4 @@ env1 = attack=2 decay=1140 sustain=1 release=300 decayCurve=-1 releaseCurve=-1 v
 env2 = attack=10 decay=3850 sustain=0 release=3850 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.17 velToP1=0 drift=1
 play = mode=legato priority=low
-master = 0
-
-[TX81Z LatelyBass]
-room = Museum
-# The Yamaha TX81Z's LatelyBass (1987, preset C15): the bass of late-eighties house and new jack
-# swing. Play it around the octave under middle C: it sounds two octaves under the key, as on the
-# instrument (the voice is transposed an octave down and its carrier runs at half the note).
-# The voice, from the instrument's own preset table (read out of its firmware): algorithm 2, two
-# modulators into one into the carrier. The carrier and the modulator on it run at the same
-# pitch (1.7 radians at a hard key, fading with the note): the round, hollow body. On that
-# modulator sit two more an octave higher, both gone within a third of a second: a sine with
-# full feedback (3 radians at a hard key: the bark), and one on the TX81Z's fifth wave, a whole
-# sine squeezed into half the cycle (1.3 radians: the click). A light key leaves most of the
-# bark out; the note itself is as loud at any velocity, as on the instrument. A slow wobble of
-# pitch, five cents either way, is the voice's own LFO.
-# Nothing is fitted: levels, ratios, rates, rate scaling and the velocity law (the firmware's
-# table) are the chip's rules converted; the feedback follows operator 4's level, as on the
-# chip. Against a recording of a real TX81Z playing this voice (one note, hardest velocity) the
-# first sixteen harmonics are within 0.9 dB on average over half a second, and against the
-# chip's rules within 0.3 to 1.4 dB over fifteen keys and velocities.
-# Needed the operator waves on the FM4 generator (decision D117).
-g1 = FM4 algo=twoIntoOne ratio2=1 ratio3=2 ratio4=2 level2=0 level3=0 level4=0 fb=0 wave3=W5 oct=-2 level=0.8
-p1 = Off
-env1 = attack=1 decay=4700 sustain=0 release=294 decayCurve=-1 releaseCurve=-1 velocity=0 keyTime=0.25
-env2 = attack=1 decay=294 sustain=0 release=294 decayCurve=-1 releaseCurve=-1 keyTime=0.25
-env3 = attack=1 decay=511 sustain=0.0158 release=363 decayCurve=-1 releaseCurve=-1 keyTime=0.125
-mod = src=env1 dst=g1.level2 amount=0.1294 via=velocity curve=logarithmic
-mod = src=env1 dst=g1.level2 amount=0.3362 curve=logarithmic
-mod = src=env2 dst=g1.level3 amount=0.1137 via=velocity curve=logarithmic
-mod = src=env2 dst=g1.level3 amount=0.2954 curve=logarithmic
-mod = src=env3 dst=g1.level4 amount=0.4315 via=velocity curve=logarithmic
-mod = src=env3 dst=g1.level4 amount=0.2025 curve=logarithmic
-mod = src=env3 dst=g1.fb amount=1.0000 via=velocity
-mod = src=env3 dst=g1.fb amount=0.0877 via=velocity
-mod = src=env3 dst=g1.fb amount=-0.0616
-lfo1 = shape=triangle rate=3.5 retrigger=off
-mod = src=lfo1 dst=pitch amount=0.00115
-voice = env2ToP1=0 velToP1=0
-play = mode=poly voices=8
 master = 0

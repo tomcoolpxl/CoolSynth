@@ -2141,3 +2141,20 @@ Read from the page's verdict store after D117.
   brightness and pitch).
 - Recorders (Soprano with E6 and F sharp 6 from clean neighbours): still not judged.
 - TX81Z LatelyBass (D117): on the page, not judged yet.
+
+## D119. LatelyBass admitted (2026-11-14)
+
+- **TX81Z LatelyBass: "admit it"** on the page, and in the user's words "TX81Z: LatelyBass is
+  good btw". It moves to `resources/presets/12-museum.csbank`: six presets in the Museum room,
+  114 in the bank. Master -2.5 dB from the loudness tool; no other preset's master moved.
+- With one more preset in the bank the performance fuzz test drew another sequence and failed
+  on Prophet-5 Sync II (five voices): it expected a key whose voice a sixth key had taken to
+  sound again once another key went up. No polyphonic synthesizer does that, and the engine
+  rightly does not. **The test's rule was wrong and is corrected (taken):** a key that gave its
+  voice to a newer key stays silent while held; every other held key must sound; never more
+  keys sound than the preset has voices. 1,257 key states checked, none failing.
+- The user chose the opening of "Contact" as the next work (pick list: "Contact synth
+  (Recommended)", "Trilogy lead first", "Both, Contact then Trilogy", "Nothing, I listen
+  first"), gave the original record as a file ("We Ride Tonight", The Sherbs, 1981), and added:
+  "In the beginning, the first 40 seconds, there are two synths. The first starting synth, and
+  then the heavier second part. It would be nice if you can identify both."

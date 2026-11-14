@@ -223,8 +223,10 @@ static V3BankTests v3BankTests;
 /**
     Plays random phrases on every non-arp factory preset, switching presets between phrases the
     way someone auditioning does, and after every block checks what must hold: each pressed key
-    in poly mode has a voice playing it, the mono, legato and unison stacks play the key with
-    priority, and once every key is up and the releases are over, no voice is left running.
+    in poly mode has a voice playing it (unless more keys were down than the preset has voices and
+    a newer key took its voice: it then stays silent until it is let go, as on any polyphonic
+    synthesizer), the mono, legato and unison stacks play the key with priority, and once every key
+    is up and the releases are over, no voice is left running.
 */
 class V3PerformanceFuzz final : public juce::UnitTest
 {
@@ -276,6 +278,7 @@ public:
             const bool oneShot = processor->getValueTreeState().getRawParameterValue("pA.env1.oneShot")->load() >= 0.5f;
 
             std::vector<std::pair<int, std::uint64_t>> held; // note, order pressed
+            std::vector<int> pushedOut;                      // held keys whose voice a newer key took (poly)
             std::uint64_t order = 0;
 
             for (int step = 0; step < 30 && failures < 10; ++step)
@@ -289,11 +292,20 @@ public:
                     while (std::any_of(held.begin(), held.end(), [note](const auto& h) { return h.first == note; }));
                     held.emplace_back(note, ++order);
                     midi.addEvent(juce::MidiMessage::noteOn(1, note, static_cast<juce::uint8>(40 + random.nextInt(87))), random.nextInt(256));
+                    // Every voice the preset allows is held by a key: the oldest of them gives its voice to the new one.
+                    if (mode == 0 && static_cast<int>(held.size() - pushedOut.size()) > polyphony)
+                        for (const auto& h : held) // in the order pressed
+                            if (std::find(pushedOut.begin(), pushedOut.end(), h.first) == pushedOut.end())
+                            {
+                                pushedOut.push_back(h.first);
+                                break;
+                            }
                 }
                 else
                 {
                     const auto victim = static_cast<std::size_t>(random.nextInt(static_cast<int>(held.size())));
                     midi.addEvent(juce::MidiMessage::noteOff(1, held[victim].first), random.nextInt(256));
+                    pushedOut.erase(std::remove(pushedOut.begin(), pushedOut.end(), held[victim].first), pushedOut.end());
                     held.erase(held.begin() + static_cast<std::ptrdiff_t>(victim));
                 }
                 render(midi);
@@ -319,17 +331,23 @@ public:
 
                 if (mode == 0)
                 {
-                    // Poly: the newest keys up to the polyphony limit must all be playing.
-                    std::vector<std::pair<int, std::uint64_t>> newest(held);
-                    std::sort(newest.begin(), newest.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
-                    for (std::size_t k = 0; k < newest.size() && static_cast<int>(k) < polyphony; ++k)
+                    // Poly: every key that is down and still has its voice must be playing, and no more keys
+                    // than the preset has voices.
+                    for (const auto& h : held)
                     {
+                        if (std::find(pushedOut.begin(), pushedOut.end(), h.first) != pushedOut.end())
+                            continue;
                         ++checkedNotes;
-                        if (std::find(soundingKeys.begin(), soundingKeys.end(), newest[k].first) == soundingKeys.end())
+                        if (std::find(soundingKeys.begin(), soundingKeys.end(), h.first) == soundingKeys.end())
                         {
                             ++failures;
-                            expect(false, "key " + juce::String(newest[k].first) + " is down but silent. " + describe());
+                            expect(false, "key " + juce::String(h.first) + " is down but silent. " + describe());
                         }
+                    }
+                    if (static_cast<int>(soundingKeys.size()) > polyphony)
+                    {
+                        ++failures;
+                        expect(false, "more keys sound than the preset has voices. " + describe());
                     }
                 }
                 else
