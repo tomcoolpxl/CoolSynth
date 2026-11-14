@@ -132,9 +132,11 @@ header{display:flex;flex-direction:column;gap:10px}
 .legend{border-collapse:collapse;width:100%;font-size:.88rem}
 .legend td{padding:6px 0;border-bottom:1px solid var(--line);vertical-align:top}
 .legend td:first-child{white-space:nowrap;padding-right:14px;font-weight:600;width:1%}
-.oled{background:#050607;border-radius:8px;padding:12px 14px;width:220px;max-width:100%;box-sizing:border-box;font-family:var(--f-mono);color:#f2f5f8}
-.oled .l1{font-size:12px;white-space:pre;overflow:hidden}
-.oled .l2{font-size:15px;font-weight:600;white-space:pre;overflow:hidden}
+.oled{background:#050607;border-radius:8px;padding:12px 14px;width:250px;max-width:100%;min-height:68px;box-sizing:border-box;font-family:var(--f-mono);color:#f2f5f8;display:flex;align-items:center;gap:10px}
+.oled .otx{flex:1;min-width:0}
+.oled .og{display:block;height:40px;width:auto}
+.oled .l1{font-size:15px;font-weight:600;white-space:pre;overflow:hidden}
+.oled .l2{font-size:12px;white-space:pre;overflow:hidden;color:#b9c1c9}
 .note{font-size:.86rem;color:var(--muted)}
 .about p+p{margin-top:8px}
 section.doc{display:flex;flex-direction:column;gap:12px;max-width:900px}
@@ -196,8 +198,8 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
   </div>
   <div class="box">
     <h2>On the MiniLab 3 itself</h2>
-    <div class="oled" aria-label="MiniLab 3 screen"><div class="l1" id="o1"></div><div class="l2" id="o2"></div></div>
-    <p class="note">Two short lines, about 18 and 15 characters. Line one says where you are, and line two says what the main knob is on. A turned knob shows its name and value for a second.</p>
+    <div class="oled" aria-label="MiniLab 3 screen"><div class="otx"><div class="l1" id="o1"></div><div class="l2" id="o2"></div></div><div id="og"></div></div>
+    <p class="note">Tested on your MiniLab. The top line is the big one, 16 characters; the bottom line is smaller, 18. In a list, the big line is the selected item behind a ▶ cursor, and the small line is the next item; turning scrolls the list under the cursor. ✓ marks the sound that is playing (or the slot's current type). Turning a knob or moving a fader shows a pop-up with its name, its value and a knob or bar graphic for about a second; the device draws it only while a control moves.</p>
     <div class="about" id="about"></div>
   </div>
 </div>
@@ -359,7 +361,8 @@ const setPage=v=>{S.page[pk()]=v};
 const focusIdx=()=>BLOCKS.findIndex(b=>b[0]===S.sec&&b[1]===S.item[S.sec]);
 function focusTo(f){f=clamp(f,0,BLOCKS.length-1);const [si,ii]=BLOCKS[f];S.sec=si;S.item[si]=ii}
 function toast(t){S.toast={t,until:Date.now()+1700};setTimeout(render,1750)}
-function trans(l1,l2){S.trans={l1,l2,until:Date.now()+1100};setTimeout(render,1150)}
+/* a pop-up on the MiniLab: name, value text and a graphic (knob or fader), about a second, while the control moves */
+function trans(l1,l2,v,kind){S.trans={l1,l2,v,kind:kind||"knob",until:Date.now()+1100};setTimeout(render,1150)}
 const isPerform=()=>S.lvl==="sec"&&S.sec===4;
 const cursorOnLoaded=()=>S.br.inRoom&&S.br.room===S.room&&S.br.idx===S.idx;
 
@@ -416,11 +419,11 @@ function pad(i){
 function pad8tap(){if(shift()){toast("Neon Brass has one part");return}if(S.lvl!=="sounds")goSounds();else S.overlay=null}
 function paramTurn(k,d){
  const step=(shift()?.002:.02)*d;
- if(k>=6){S.glob[k-6]=clamp(S.glob[k-6]+step,0,1);trans(["Glide","Brightness","Space"][k-6],fmtGlob(k-6));return}
+ if(k>=6){S.glob[k-6]=clamp(S.glob[k-6]+step,0,1);trans(["Glide","Brightness","Space"][k-6],fmtGlob(k-6),S.glob[k-6]);return}
  if(S.overlay)return;
  if(S.lvl==="sounds"){liveTurn(k,step);return}
  const ps=curPages();if(!ps.length)return;const name=ps[curPageIdx()][1][k-1];if(name==="—")return;
- const key=curItem().slot+"."+curItem().type+"."+base(name);VAL[key]=clamp(getV(key,name)+step,0,1);trans(base(name),fmt(name,VAL[key]))
+ const key=curItem().slot+"."+curItem().type+"."+base(name);VAL[key]=clamp(getV(key,name)+step,0,1);trans(base(name),fmt(name,VAL[key]),VAL[key])
 }
 const fmtGlob=i=>i===0?(S.glob[0]<.005?"Off":ms(Math.pow(10000,S.glob[0]))):i===1?fmt("Brightness",S.glob[1]):Math.round(S.glob[2]*100)+"%";
 const macroNames=()=>MACRO_NAMES[presetName()]||ROLES;
@@ -432,8 +435,8 @@ function liveKnob(k){const p=livePages()[liveIdx()];
  if(!p.slot){const n=macroNames()[k-1];return{n,v:S.macros[k-1],txt:Math.round(S.macros[k-1]*100)+"%",r:ROLES[k-1]}}
  const name=p.params[k-1];if(name==="—")return null;const key=p.slot+"."+p.type+"."+base(name),v=getV(key,name);return{n:base(name),v,txt:fmt(name,v),r:p.type,key,name}}
 function liveTurn(k,step){const p=livePages()[liveIdx()];
- if(!p.slot){S.macros[k-1]=clamp(S.macros[k-1]+step,0,1);trans(macroNames()[k-1],Math.round(S.macros[k-1]*100)+"%");return}
- const L=liveKnob(k);if(!L)return;VAL[L.key]=clamp(L.v+step,0,1);trans(L.n,fmt(L.name,VAL[L.key]))}
+ if(!p.slot){S.macros[k-1]=clamp(S.macros[k-1]+step,0,1);trans(macroNames()[k-1],Math.round(S.macros[k-1]*100)+"%",S.macros[k-1]);return}
+ const L=liveKnob(k);if(!L)return;VAL[L.key]=clamp(L.v+step,0,1);trans(L.n,fmt(L.name,VAL[L.key]),VAL[L.key])}
 const liveColour=()=>liveIdx()===0?"var(--c-sounds)":"var(--c-perform)";
 
 /* what the two knobs do, as words */
@@ -506,18 +509,26 @@ function screenHTML(){
    :`<div>${mk("◎")}<b>${esc(x.label)}</b> ${x.type==="Off"?"empty":esc(x.type)} &nbsp;${mk("5")}${ps.length?esc(ps[pi][0])+dots(ps.length,pi):"press ◎ for a type"}</div>`)}
  return header(s.name.toUpperCase(),s.c,"Part "+S.part)+crumbs()+`<div class="sb" style="--c:${s.c}">${body}</div><div style="--c:${s.c}">${pageCards()}</div>`;
 }
+/* The MiniLab's own screen, as tested on the device (docs/minilab3-screen.md): top line 16 characters,
+   bottom line 18, one icon per line, and a pop-up with a graphic while a control moves. */
 function oled(){
- const cut=(t,n)=>String(t).slice(0,n);
- if(S.trans&&Date.now()<S.trans.until)return[cut(S.trans.l1,18),cut(S.trans.l2,15)];
+ const cut=(t,n)=>String(t).slice(0,n),W1=16,W2=18;
+ if(S.trans&&Date.now()<S.trans.until)return{l1:cut(S.trans.l1,W1),l2:cut(S.trans.l2,W2),pop:{v:S.trans.v,kind:S.trans.kind}};
  const x=curItem();
- if(S.overlay)return[cut("TYPE "+x.slot,18),cut("> "+S.overlay.list[S.overlay.idx],15)];
- if(S.lvl==="sounds"){const o=S.br;if(!o.inRoom)return["CATEGORIES "+(o.room+1)+"/"+ROOMS.length,cut("> "+ROOMS[o.room][0],15)];
-  return[cut(ROOMS[o.room][0]+(o.idx<0?"":" "+(o.idx+1)+"/"+ROOMS[o.room][1].length),18),cut(o.idx<0?"> < Back":(cursorOnLoaded()?"":"> ")+ROOMS[o.room][1][o.idx],15)]}
+ /* lists: the big top line is the selected item behind the ▶ cursor (✓ when it is the one in use),
+    the small bottom line the next item */
+ const list=(L,sel,used)=>({l1:cut(L[sel],W1),icon1:used(sel)?"✓":"▶",l2:sel+1<L.length?cut(L[sel+1],W2):"",icon2:sel+1<L.length&&used(sel+1)?"✓":""});
+ if(S.overlay){const L=S.overlay.list.map(t=>t==="‹ Back"?"< Back":t==="Off"?"Empty":t);return list(L,S.overlay.idx,i=>S.overlay.list[i]===x.type)}
+ if(S.lvl==="sounds"){const o=S.br;if(!o.inRoom)return list(ROOMS.map(r=>r[0]),o.room,()=>false);
+  return list(["< Back"].concat(ROOMS[o.room][1]),o.idx+1,i=>o.room===S.room&&i-1===S.idx)}
  const ps=curPages(),pg=ps.length?ps[curPageIdx()][0]+" "+(curPageIdx()+1)+"/"+ps.length:"empty";
- if(S.model==="drill"&&S.lvl==="map")return[cut(curSec().name.toUpperCase()+" map",18),cut("> "+slotName(x),15)];
- if(S.lvl==="block")return[cut(curSec().name.toUpperCase()+" "+slotName(x),18),cut("> "+pg,15)];
- return[cut(curSec().name.toUpperCase()+" > "+slotName(x),18),cut(pg,15)];
+ if(S.model==="drill"&&S.lvl==="map")return{l1:cut(curSec().name.toUpperCase()+" map",W1),l2:cut(slotName(x),W2)};
+ return{l1:cut(curSec().name.toUpperCase()+" "+slotName(x),W1),l2:cut(pg,W2)};
 }
+function oledGraphic(p){if(!p||p.v==null)return"";const v=clamp(p.v,0,1);
+ if(p.kind==="fader")return`<svg viewBox="0 0 14 40" class="og"><rect x="4" y="1" width="6" height="38" rx="2" fill="none" stroke="#5b636b"/><rect x="4" y="${1+38*(1-v)}" width="6" height="${38*v}" rx="2" fill="#f2f5f8"/></svg>`;
+ const a0=-225,a=a0+270*v,pt=d=>{const r=(d)*Math.PI/180;return[20+15*Math.cos(r),20+15*Math.sin(r)]},[x0,y0]=pt(a0),[x1,y1]=pt(a),[xe,ye]=pt(a0+270);
+ return`<svg viewBox="0 0 40 40" class="og"><path d="M${x0} ${y0} A15 15 0 1 1 ${xe} ${ye}" fill="none" stroke="#3a4047" stroke-width="4" stroke-linecap="round"/>${v>0.004?`<path d="M${x0} ${y0} A15 15 0 ${270*v>180?1:0} 1 ${x1} ${y1}" fill="none" stroke="#f2f5f8" stroke-width="4" stroke-linecap="round"/>`:""}</svg>`}
 function legend(){
  const R=[],r=roles();
  if(S.overlay)R.push(["Main knob, turn","Pick a type; the top row is ‹ Back"],["Main knob, press",S.overlay.idx===0?"Close the list and keep the type":"Set it"]);
@@ -556,7 +567,7 @@ function render(){
  document.querySelectorAll(".tab").forEach(t=>t.setAttribute("aria-selected",String(t.dataset.m===S.model)));
  let h=screenHTML();if(S.toast&&Date.now()<S.toast.until)h+=`<div class="toast">${esc(S.toast.t)}</div>`;
  document.getElementById("screen").innerHTML=h;
- const [l1,l2]=oled();document.getElementById("o1").textContent=l1;document.getElementById("o2").textContent=l2;
+ const OL=oled();document.getElementById("o1").textContent=(OL.icon1?OL.icon1+" ":"")+OL.l1;document.getElementById("o2").textContent=(OL.icon2?OL.icon2+" ":"")+OL.l2;document.getElementById("og").innerHTML=oledGraphic(OL.pop);
  document.getElementById("shift").classList.toggle("lit",shift());
  const r=roles();document.getElementById("e-turn").textContent=r.turn;document.getElementById("e-press").textContent=r.press;
  const lab=[],vals=[];
@@ -597,7 +608,7 @@ for(let i=0;i<7;i++)document.getElementById("p"+i).addEventListener("click",()=>
 document.getElementById("p7").addEventListener("click",()=>{pad8tap();render()});
 document.getElementById("shift").addEventListener("click",()=>{S.shiftLatch=!S.shiftLatch;render()});
 ["hold","octm","octp"].forEach(id=>document.getElementById(id).addEventListener("click",()=>{toast("Hold and Oct work inside the keyboard itself");render()}));
-FN.forEach((n,i)=>document.getElementById("f"+i).addEventListener("input",e=>{S.faders[i]=e.target.value/100;trans(n,e.target.value+"%");render()}));
+FN.forEach((n,i)=>document.getElementById("f"+i).addEventListener("input",e=>{S.faders[i]=e.target.value/100;trans(n,e.target.value+"%",e.target.value/100,"fader");render()}));
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>setModel(t.dataset.m)));
 document.addEventListener("keydown",e=>{
  if(e.target.tagName==="INPUT")return;

@@ -2887,3 +2887,24 @@ Shift + pad 1; Perform on one of the recorder pads.
   page. Taken without asking: knob 5 gave up stepping to the next category for this, because
   it is E's page knob everywhere else; categories are changed in the category list.
 - Shift + pad 1 no longer opens anything.
+
+## D146. The MiniLab's own screen, tested on the device (2026-11-14)
+
+Tested on the user's MiniLab 3 (details and bytes: `docs/minilab3-screen.md`).
+
+- **Verified:** connecting to the DAW program, pad colours, the full screen with one icon per
+  line (1 heart, 2 play triangle, 3 record dot, 4 note, 5 check mark), the top line big
+  (16 characters) and the bottom line small (18), and pop-ups for knob, fader, pad and
+  parameter. Pop-ups draw their graphic only while a control physically moves, so the app
+  answers each knob or fader message with one. Main knob: CC 28 offset from 64; press CC 118.
+- **Knob pop-up (the user's choice): the knob format** (`1F 03`), the app sending the value.
+  Rejected: the parameter format (device draws from its own knob position), the fader format
+  for everything, the pad format.
+- **Lists (the user's idea, approved on the device):** the selected item on the big top line
+  behind the play-triangle cursor, the next item small below, the list scrolling under the
+  fixed cursor; the check mark for the sound playing (it replaces the cursor when the cursor is
+  on it); `< Back` as a category's first row. The mock-up's MiniLab box shows the same and was
+  checked against the device step by step.
+- My mistakes in the testing, for the record: one-shot pop-ups that vanished before the user
+  looked, a long sequence the user had to remember, a background test that overwrote the
+  screen, and the line sizes taken the wrong way round at first.
