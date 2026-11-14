@@ -38,7 +38,8 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] juce::String fixedParameterId(const SlotPath& path, const char* suffix);
 
     using CombineMode = coolsynth::synth::v3::Combine;
-    inline const juce::StringArray combineModeNames { "Off", "Sync", "Ring", "FM", "AM" };
+    // New modes only at the end: a saved state keeps the choice's index.
+    inline const juce::StringArray combineModeNames { "Off", "Sync", "Ring", "FM", "AM", "Live" };
     inline constexpr int octaveMin = -2, octaveMax = 2;
     inline constexpr int semitoneMin = -12, semitoneMax = 12;
     inline constexpr float fineCentsMin = -50.0f, fineCentsMax = 50.0f;

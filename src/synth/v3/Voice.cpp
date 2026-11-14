@@ -18,6 +18,9 @@ namespace coolsynth::synth::v3
     void Voice::prepare(double newSampleRate, std::uint32_t seed)
     {
         sampleRate = static_cast<float>(std::max(1000.0, newSampleRate));
+        if (liveBuffer == nullptr)
+            liveBuffer = std::make_unique<LiveBuffer>();
+        liveBuffer->prepare(newSampleRate);
         for (auto& g : generators)
         {
             g.slot.prepare(newSampleRate, maxSubBlock);
@@ -101,6 +104,8 @@ namespace coolsynth::synth::v3
         envelopeHold = generatorLatencySamples;
         polyPressure = 0.0f;     // a fresh note: no pressure of its own yet,
         pressurePrimed = false;  // and the keyboard's pressure and the pedal as they are now
+        if (liveBuffer != nullptr)
+            liveBuffer->clear(); // a live grain cloud starts from this note, not the last one's tail
         ModSources base = globals.sources;
         if (globals.frames != nullptr && globals.frameCount > 0)
             for (std::size_t k = 0; k < trackedGlobalSources.size(); ++k)
@@ -408,6 +413,12 @@ namespace coolsynth::synth::v3
         std::fill_n(mixL, n, 0.0f);
         std::fill_n(mixR, n, 0.0f);
 
+        // The first Grain slot set to Live gets the voice's recording of the generator before it.
+        std::size_t liveSlot = generators.size();
+        for (std::size_t i = 1; i < generators.size() && liveSlot == generators.size(); ++i)
+            if (settings.generators[i].type == generatorType::grain && settings.generators[i].combine == Combine::live)
+                liveSlot = i;
+
         GeneratorLink previous {};
         for (std::size_t i = 0; i < generators.size(); ++i)
         {
@@ -421,6 +432,7 @@ namespace coolsynth::synth::v3
             params.frequencyHz = dsp::pitchToHz((gs.keyTrack ? pitch : 60.0f) + params.pitchSemitones);
             params.combine = i == 0 ? Combine::off : gs.combine;
             params.userSound = gs.userSound;
+            params.live = i == liveSlot ? liveBuffer.get() : nullptr;
 
             g.slot.setLink(params.combine != Combine::off ? previous : GeneratorLink {});
             g.slot.process(g.left.data(), g.right.data(), n, params);

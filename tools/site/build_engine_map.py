@@ -493,8 +493,8 @@ GEN_ROWS = [
     ("Modal", "12 struck partials. Material morphs from wood (a marimba bar, 1 : 4 : 10.1 : 19.1, measured on "
               "a recording) through metal and glass to a tine. Mallet hardness, strike position."),
     ("Sample", "Plays the Conservatory’s recorded instruments (16-point sinc read), or 5 factory loops."),
-    ("Grain", "A cloud of up to 12 grains per voice from a sample: position, scan (0 freezes it), size, "
-              "density, spray, pitch spray."),
+    ("Grain", "A cloud of up to 12 grains per voice from a sample, or live from the generator before it: "
+              "position, scan (0 freezes it), size, density, spray, pitch spray."),
 ]
 PROC_ROWS = [
     ("Ladder", "4-pole transistor ladder with saturation in every stage. LP24, LP12, BP, HP12. Self-oscillates "
@@ -521,7 +521,7 @@ FX_ROWS = [
 panels = [
     dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 9 types · any type in any of the 3 slots",
          rows=GEN_ROWS, namew=84,
-         note=[R("Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots. Planned: grains from a live generator.")], italic=True),
+         note=[R("Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots.")], italic=True),
     dict(x=634, w=462, kind="proc", head="PROCESSOR SLOT", sub="one of 7 types · per voice",
          rows=PROC_ROWS, namew=70,
          note=[R("Three in series, per voice: a chord is filtered, folded and driven note by note, before the "

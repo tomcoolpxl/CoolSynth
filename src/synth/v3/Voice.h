@@ -6,7 +6,10 @@
 #include <type_traits>
 #include <variant>
 
+#include <memory>
+
 #include "Envelope.h"
+#include "LiveBuffer.h"
 #include "Fm4Generator.h"
 #include "FmGenerator.h"
 #include "GrainGenerator.h"
@@ -302,5 +305,8 @@ namespace coolsynth::synth::v3
         int driftSamplesToNext = 0;
         std::uint32_t rng = 1;
         float sampleRate = 96000.0f;
+        // The last second of the generator before a Grain slot set to Live (decision D139); on the heap, a voice is
+        // kept in an array. Only the first such slot gets it.
+        std::unique_ptr<LiveBuffer> liveBuffer;
     };
 }

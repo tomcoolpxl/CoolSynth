@@ -2700,3 +2700,35 @@ ends"), the user chose **"Remaining engine odds and ends"**: the sawtooth genera
 - **Checked: all 118 presets rendered before and after; the 114 that use no randomness are bit
   for bit the same** (the other four differ between any two renders).
 - Next costs, from the same report: FM4 (about 10 %), the Comb (about 7 %).
+
+## D139. Grains from a live sound (2026-11-14)
+
+The second of the user's "engine odds and ends" (D138). D79 left it out because every voice
+would need memory to record into; D82 gave the user a granular effect on a whole part instead.
+This is the per-voice form the requirement names. Taken without asking, under the standing rule
+to build what the engine needs and log the options:
+
+- **Turned on as a new combine mode, Live, on a Grain slot in place 2 or 3 (taken).** Combine is
+  already "how this slot takes the generator before it"; Live joins Sync, Ring, FM and AM at the
+  end of the list, so a saved state keeps its index. Other types treat Live as Off.
+  Alternative: "Live" as one more choice among the grain samples. That choice is stored as a
+  share of its range, so adding to it would move every saved Harp to Live.
+- **Each voice records the last second of that generator (taken),** at the host rate through
+  the half-band filter the voice's own output uses (nothing that would fold back when a grain
+  plays it an octave up), and at the factory samples' three band limits (the full band, then 4th-
+  order Butterworth low-passes at about a fifth and a tenth of the rate) for grains transposed
+  further. About 0.6 MB a voice at 48 kHz, held by the voice (on the heap). Only the first Live
+  Grain slot of a voice gets it. Alternatives: a pool the part hands out (D79's idea: less memory
+  when few voices use it, but a piece of lifetime work of its own); a longer recording (more
+  memory for a reach few clouds use).
+- **What the controls mean for a live source (taken):** Position is how far back the cloud
+  reaches, from one grain's length behind now (a grain transposed up must not catch up with the
+  recording) to a second ago; Spray scatters around that; Scan at 0 freezes: the recording stops
+  and the cloud keeps what it holds, any other Scan keeps it running. The source already sounds
+  the note, so only the slot's own transposition (octave, semitone, fine, pitch modulation)
+  moves the grains; Pitch Spray works as before. A fresh note clears the recording.
+- Tests: the recording keeps 1 kHz whole and loses what lies above the host's band; its darker
+  levels are 20 dB down where they should be; a cloud on a sine sounds its pitch, an octave up
+  with the slot at +12; frozen, the cloud keeps its pitch while the source bends up a tone, and
+  running, it follows.
+- No factory preset uses it yet; every preset renders as before.

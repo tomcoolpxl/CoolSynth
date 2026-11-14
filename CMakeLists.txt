@@ -200,6 +200,7 @@ if(BUILD_TESTING)
             tests/V3PressureTests.cpp
             tests/V3UserSoundTests.cpp
             tests/V3ModuleCostReport.cpp
+            tests/V3LiveGrainTests.cpp
             tests/V3BankTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 

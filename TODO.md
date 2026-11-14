@@ -125,7 +125,6 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     - MPE: each note on its own MIDI channel with its own bend, pressure and slide (the MPE
       Pressure and MPE Slide sources are listed but fed by nothing). Later, the user's choice
       (D136): key pressure and the expression pedal are built, MPE waits for an MPE controller;
-    - grains from another generator, which needs a buffer pool handed out by the part (D79);
     - processing cost, measured per module by the opt-in report (COOLSYNTH_CPU_REPORT=1,
       tests/V3ModuleCostReport.cpp; eight notes, optimised Debug): after D138 the ladder costs
       about 8 % of real time, FM4 about 10 %, the Drive processor and the Comb about 6 to 7 %,

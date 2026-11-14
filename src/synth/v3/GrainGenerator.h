@@ -11,6 +11,7 @@
 
 #include "Module.h"
 #include "SampleGenerator.h"
+#include "LiveBuffer.h"
 #include "Samples.h"
 #include "UserLibrary.h"
 
@@ -30,6 +31,9 @@
     second either way) and loosens the grains' timing; at 0 the grains fall on a strict grid,
     which at high densities is heard as a tone of its own. Pitch Spray detunes each grain at
     random, a few cents at small settings and up to an octave either way at full.
+
+    With combine Live (decision D139) the grains come instead from the generator just before this
+    slot, as it plays: the voice records its last second (LiveBuffer.h) and the cloud reads that.
 
     The level follows the square root of the overlap, so thin and thick clouds are about as
     loud. A new note starts its scan at Position; grains already sounding in a retriggered voice
@@ -85,6 +89,7 @@ namespace coolsynth::synth::v3
             for (auto& g : grains)
                 g.active = false;
             grainSource = nullptr;
+            liveMode = false;
             std::fill(signalTrack.begin(), signalTrack.end(), 0.0f);
             untilNext = 0.0;
             scanFrames = 0.0;
@@ -111,6 +116,19 @@ namespace coolsynth::synth::v3
 
         void process(float* left, float* right, int numSamples, const SlotParams& params) noexcept
         {
+            if (params.combine == Combine::live && params.live != nullptr)
+            {
+                processLive(left, right, numSamples, params, *params.live);
+                return;
+            }
+            if (liveMode)
+            {
+                // Grains reading the live recording end: the source is a sample again.
+                for (auto& g : grains)
+                    g.active = false;
+                liveMode = false;
+            }
+
             // The user's own sample when the slot names one. Grains still reading a source that was swapped or
             // dropped end at once rather than read freed memory.
             const UserGrainSource* user = params.userSound >= 0 ? UserLibrary::instance().grains(params.userSound) : nullptr;
@@ -204,6 +222,109 @@ namespace coolsynth::synth::v3
             scanFrames += static_cast<double>(n) * juce::jlimit(-2.0, 2.0, static_cast<double>(params.p[scan])) * framesPerSample;
             scanFrames -= frames * std::floor(scanFrames / frames);
 
+            finish(left, right, numSamples, n, params);
+        }
+
+    private:
+        /**
+            Live (decision D139): the grains come from the voice's recording of the generator before this one.
+            Position is how far back they reach, from a grain's length behind now to a second ago; Scan at 0
+            freezes the recording, any other value keeps it running. The source already sounds the note, so
+            only the slot's own transposition (octave, semitone, fine, pitch modulation) moves the grains.
+        */
+        void processLive(float* left, float* right, int numSamples, const SlotParams& params, LiveBuffer& live) noexcept
+        {
+            if (! liveMode)
+            {
+                for (auto& g : grains) // grains reading a sample end: the source is the recording now
+                    g.active = false;
+                liveMode = true;
+                grainSource = nullptr;
+            }
+            const int n = std::min(numSamples, static_cast<int>(sumLeft.size()));
+            const bool frozen = std::abs(params.p[scan]) < 0.01f;
+            if (! frozen)
+                live.record(input.signal, numSamples);
+
+            const double frames = live.frames();
+            const double framesPerSample = live.sampleRate() / sampleRate;
+            const double ratio = std::exp2(juce::jlimit(-48.0, 48.0, static_cast<double>(params.pitchSemitones)) / 12.0);
+            const double sizeSamples = std::max(32.0, 0.001 * juce::jlimit(10.0, 500.0, static_cast<double>(params.p[size])) * sampleRate);
+            const double interval = sampleRate / juce::jlimit(1.0, 80.0, static_cast<double>(params.p[density]));
+            const double sprayAmount = juce::jlimit(0.0, 1.0, static_cast<double>(params.p[spray]));
+            const double pitchAmount = juce::jlimit(0.0, 1.0, static_cast<double>(params.p[pitchSpray]));
+            const float spreadAmount = juce::jlimit(0.0f, 1.0f, params.p[spread]);
+            const double overlap = std::min(static_cast<double>(maxGrains), sizeSamples / interval);
+            const float level = static_cast<float>(std::min(1.0, 0.9 / std::sqrt(0.41 * overlap)));
+
+            // A grain must not catch up with the recording: it starts at least as far back as it reads in its life.
+            const double fastest = ratio * std::exp2(pitchAmount * pitchAmount * pitchSpraySemitones / 12.0);
+            const double room = frames - 4.0;
+            const double ahead = std::min(room, frozen ? 4.0 : sizeSamples * framesPerSample * std::max(1.0, fastest) + 4.0);
+            const double reach = std::max(0.0, room - ahead);
+            const double back = ahead + juce::jlimit(0.0, 1.0, static_cast<double>(params.p[position])) * reach;
+
+            std::fill_n(sumLeft.begin(), n, 0.0f);
+            std::fill_n(sumRight.begin(), n, 0.0f);
+
+            while (untilNext < static_cast<double>(n))
+            {
+                const int offset = std::max(0, static_cast<int>(untilNext));
+                if (Grain* g = freeGrain())
+                {
+                    const double detune = pitchAmount * pitchAmount * pitchSpraySemitones * nextBipolar();
+                    const double grainRatio = ratio * std::exp2(detune / 12.0);
+                    const double distance = juce::jlimit(ahead, room, back + sprayAmount * sprayAmount * 0.5 * reach * nextBipolar());
+                    // The recording's newest frame is at the end of this block; a grain starting earlier in it starts further back.
+                    double from = static_cast<double>(live.writePosition()) - static_cast<double>(n - offset) * framesPerSample - distance;
+                    from -= frames * std::floor(from / frames);
+
+                    g->active = true;
+                    g->offset = offset;
+                    g->frame = from;
+                    g->step = grainRatio * framesPerSample;
+                    g->data = nullptr;
+                    g->level = SampleBank::levelFor(grainRatio);
+                    g->phase = 0.0f;
+                    g->phaseStep = static_cast<float>(1.0 / sizeSamples);
+                    const float pan = juce::jlimit(-1.0f, 1.0f, params.pan + spreadAmount * static_cast<float>(nextBipolar()));
+                    const float angle = (pan + 1.0f) * 0.25f * juce::MathConstants<float>::pi;
+                    g->gainLeft = level * std::cos(angle);
+                    g->gainRight = level * std::sin(angle);
+                }
+                untilNext += std::max(1.0, interval * (1.0 + 0.5 * sprayAmount * nextBipolar()));
+            }
+            untilNext -= static_cast<double>(n);
+
+            for (auto& g : grains)
+            {
+                if (! g.active)
+                    continue;
+                for (int s = g.offset; s < n; ++s)
+                {
+                    const float v = live.read(g.level, g.frame);
+                    const float bump = 4.0f * g.phase * (1.0f - g.phase);
+                    const float windowed = v * bump * bump;
+                    sumLeft[static_cast<std::size_t>(s)] += windowed * g.gainLeft;
+                    sumRight[static_cast<std::size_t>(s)] += windowed * g.gainRight;
+                    g.frame += g.step;
+                    if (g.frame >= frames)
+                        g.frame -= frames;
+                    g.phase += g.phaseStep;
+                    if (g.phase >= 1.0f)
+                    {
+                        g.active = false;
+                        break;
+                    }
+                }
+                g.offset = 0;
+            }
+            finish(left, right, numSamples, n, params);
+        }
+
+        /** The block's sums out, two samples late, with the previous generator's ring or AM on them. */
+        void finish(float* left, float* right, int numSamples, int n, const SlotParams& params) noexcept
+        {
             const float amount = juce::jlimit(0.0f, 1.0f, params.combineAmount);
             const bool useRing = params.combine == Combine::ring && input.signal != nullptr;
             const bool useAm = params.combine == Combine::am && input.signal != nullptr;
@@ -229,14 +350,14 @@ namespace coolsynth::synth::v3
             }
         }
 
-    private:
         struct Grain
         {
             bool active = false;
             int offset = 0;        // where in the current block it begins
             double frame = 0.0;    // in source frames
             double step = 0.0;
-            const float* data = nullptr;
+            const float* data = nullptr; // a sample's band level, or null when reading the live recording
+            int level = 0;               // the live recording's band level
             float phase = 0.0f, phaseStep = 0.0f; // through its window
             float gainLeft = 0.0f, gainRight = 0.0f;
         };
@@ -261,6 +382,7 @@ namespace coolsynth::synth::v3
         double sampleRate = 96000.0;
         const SampleBank* bank = nullptr;
         const UserGrainSource* grainSource = nullptr; // the user's sample the grains read, or none (the factory's)
+        bool liveMode = false;                        // the grains read the voice's live recording
         std::array<Grain, maxGrains> grains {};
         double untilNext = 0.0;  // output samples until the next grain starts
         double scanFrames = 0.0; // how far Scan has moved the spot

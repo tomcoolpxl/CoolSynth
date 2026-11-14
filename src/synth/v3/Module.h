@@ -67,7 +67,10 @@ namespace coolsynth::synth::v3
     };
 
     /** How a generator combines with the previous generator slot. */
-    enum class Combine : int { off = 0, sync, ring, fm, am };
+    // Live (decision D139): a Grain slot's grains come from the generator before it, as it plays. Other types treat it as Off.
+    enum class Combine : int { off = 0, sync, ring, fm, am, live };
+
+    class LiveBuffer; // LiveBuffer.h: a voice's recording of the generator before a live Grain slot
 
     /**
         What a generator hands the next one for its combine mode, in its own output time.
@@ -92,6 +95,7 @@ namespace coolsynth::synth::v3
         const float* modulator = nullptr; // processors: generator 3's signal for this sub-block (unit level, before
                                           // its level and pan), for a filter shaken at audio rate; null is silence
         int userSound = -1;               // generators: a handle of the user's own sound (UserLibrary), or -1
+        LiveBuffer* live = nullptr;       // a Grain slot with combine Live: the voice's recording to write and read
     };
 
     /** Arena of floats, sized once off the audio thread; modules take spans from it in prepare(). */
