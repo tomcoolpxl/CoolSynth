@@ -2214,3 +2214,13 @@ notes may be wrong.
 **Open:** the second synth needs a part of its own and the first under it for a fair
 side-by-side from 26.5 s on; and the engine has no way yet to place each voice between the
 speakers except a random pan per note through the matrix.
+
+## D121. The first Contact synth admitted (2026-11-14)
+
+- Asked what next after D120 (pick list: "Build the second synth (Recommended)", "First synth:
+  wait for my ear", "Trilogy lead's note starts", "Nothing, I listen first"), the user chose
+  **"First synth: wait for my ear"**, listened, marked it **"admit it"** and wrote "good
+  version". "Contact Opening I" moves to `resources/presets/12-museum.csbank`: seven presets in
+  the Museum room, 115 in the bank. Master -7 dB from the loudness tool; no other master moved.
+- It is the first sound in the room built from a record alone: its preset says so, and that the
+  instrument (a Prophet-5 by its make) is a reading.

@@ -191,6 +191,7 @@
    "transcribed_with": "transcribe_held_chords.py <clip> 4.3 26.4 36 66 <out> mid 6 12"
   },
   "reference": "The Sherbs, \"We Ride Tonight\" (1981), the record Daft Punk sampled for \"Contact\": its first synth, playing alone (copyrighted: kept in the audition folder for this comparison only). My rebuild plays the chords as I could read them from the recording; a few inner notes may be wrong. The record runs 15 cents sharp; the rebuild is tuned to it for this clip.",
-  "source": "No published settings: nobody has said which instrument this is. Built from what the recording shows (two sawtooth oscillators a note, 17 cents apart; one steep low-pass that opens at each note and closes over seconds), then fitted to it."
+  "source": "No published settings: nobody has said which instrument this is. Built from what the recording shows (two sawtooth oscillators a note, 17 cents apart; one steep low-pass that opens at each note and closes over seconds), then fitted to it.",
+  "admitted": true
  }
 ]

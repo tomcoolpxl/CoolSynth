@@ -104,8 +104,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       instrument is still different", D118). TX81Z LatelyBass, from the instrument's own
       preset data, is the sixth (D117, admitted D119). Hoover and
       Juno-106 still have no source. The opening of Daft Punk's "Contact" (a sample of The Sherbs'
-      "We Ride Tonight", 1981; no source names the instruments): the first synth is a candidate
-      built from the recording alone (D120), waiting for the user's ear; the second, heavier
+      "We Ride Tonight", 1981; no source names the instruments): the first synth, built from the
+      recording alone (D120), is admitted (D121); the second, heavier
       synth (bright, every voice at its own place between the speakers) is measured but not
       built.
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`

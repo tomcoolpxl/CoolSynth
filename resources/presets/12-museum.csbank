@@ -188,3 +188,27 @@ mod = src=lfo1 dst=pitch amount=0.00115
 voice = env2ToP1=0 velToP1=0
 play = mode=poly voices=8
 master = -2.5
+
+[Contact Opening I]
+room = Museum
+# The synth that opens The Sherbs' "We Ride Tonight" (1981), the record Daft Punk sampled for
+# "Contact" (2013): slow chords, alone for the first 23 seconds. No source names the instrument
+# (the album credits say "keyboards"), so this is built from the recording alone, not from
+# published settings like the rest of the room.
+# What the recording shows: every note is two lines of equal strength, 17 cents apart (9 on the
+# bass notes): two sawtooth oscillators a voice, one tuned a sixth of a semitone flat. One
+# low-pass for both, steep above its corner (about 24 dB an octave above 5 kHz at a chord's
+# start), that jumps open within 40 ms at each new note and closes over seconds. Nearly mono.
+# Never more than five or six notes at once. That is the make of a Prophet-5 more than of
+# anything else of 1980, but it is a reading, not a fact.
+# Fitted to the recording (22 seconds, 60 notes transcribed from it): the cutoff, the filter
+# contour's reach, time and resting level, the emphasis (almost none). The recording runs 15
+# cents sharp; the comparison clip is tuned to it.
+g1 = VA shape=saw level=0.8
+g2 = VA shape=saw fine=-17 level=0.8
+p1 = Ladder cutoff=1920 res=0.025 key=1 drive=0 bass=0
+env1 = attack=30 decay=1000 sustain=1 release=250 velocity=0
+env2 = attack=15 decay=4410 sustain=0.3 release=4410 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.2 velToP1=0 drift=1
+play = mode=poly voices=8
+master = -7
