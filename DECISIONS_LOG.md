@@ -2303,3 +2303,18 @@ gaps", "Fat Bass: add the faint sizzle", "Hoover or Juno-106 next"), the user wr
   in each: the two oscillators of a voice sit apart. **Generator 1 at 0.8 left, generator 2 at
   0.8 right of the voice's own place (taken; 0.5 was tried: narrower).** Left and right are
   0.53 to 0.62 alike (were 0.60 to 0.70; the record 0.46 to 0.51).
+
+## D125. The second Contact synth admitted; Trilogy still not (2026-11-14)
+
+Read from the page's verdict store after D124.
+
+- **Contact opening, the second synth: "admit it".** "Contact Opening II" moves to
+  `resources/presets/12-museum.csbank`: eight presets in the Museum room, 116 in the bank.
+  Master -4 dB from the loudness tool; no other master moved.
+- **Minimoog Trilogy lead: "not yet: how notes start is wrong", "the beginning of a note in the
+  reference instrument is still very very different. maybe you dont see note boundaries
+  properly"** (on the version of D122). The measurements of D116 and D122 all rest on the note
+  starts the transcriber found; the user doubts exactly those. Next: single note boundaries of
+  the recording looked at directly (waveform, pitch and level in millisecond steps), before
+  anything else is changed.
+- Fat Bass with the sizzle, Recorders' Soprano: not judged yet.
