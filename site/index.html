@@ -1,0 +1,652 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoolSynth V3 Engine</title>
+<meta name="description" content="The engine of CoolSynth, a slot-based software synthesizer: its architecture, what each slot can hold, and where the project stands.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%235042B5'/%3E%3Cpath d='M5 20c3-9 5-9 7 0s4 9 7 0 4-9 8 0' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Semi+Condensed:wght@400;700&display=swap">
+<style>
+/* Layout: one wide figure first. The signal flow is a left-to-right spine; the type lists and notes hang beneath
+   it. A few short sections follow in a reading column. */
+:root {
+  --bg: #EEF1F4;
+  --surface: #FFFFFF;
+  --panel: #F6F8FA;
+  --ink: #17212B;
+  --ink2: #44515E;
+  --ink3: #5C6976;
+  --line: #B7C1CB;
+  --note-bg: #E4E9EE;
+  --note-line: #8693A0;
+  --gen: #875000;
+  --gen-bg: #FCEED0;
+  --gen-line: #D49B32;
+  --proc: #0A6A63;
+  --proc-bg: #D6F0EB;
+  --proc-line: #45A398;
+  --fx: #5042B5;
+  --fx-bg: #E8E4FB;
+  --fx-line: #978BE0;
+  --mod: #AD1F5B;
+  --mod-bg: #FBE4ED;
+  --mod-line: #D56C9A;
+  --key-white: #FFFFFF;
+  --key-black: #17212B;
+  --font-text: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Barlow Semi Condensed", "Barlow", "Arial Narrow", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #10151B;
+    --surface: #1B232D;
+    --panel: #151C24;
+    --ink: #E8EDF2;
+    --ink2: #B4C0CB;
+    --ink3: #8D9AA7;
+    --line: #3B4753;
+    --note-bg: #232D38;
+    --note-line: #5E6C7A;
+    --gen: #F2BC5E;
+    --gen-bg: #34290F;
+    --gen-line: #94702A;
+    --proc: #62D5C8;
+    --proc-bg: #0F302C;
+    --proc-line: #2F8279;
+    --fx: #B7ACFF;
+    --fx-bg: #27214A;
+    --fx-line: #685CB8;
+    --mod: #FF93BC;
+    --mod-bg: #3A1627;
+    --mod-line: #B5507E;
+    --key-white: #DCE2E8;
+    --key-black: #0B1015;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #10151B;
+  --surface: #1B232D;
+  --panel: #151C24;
+  --ink: #E8EDF2;
+  --ink2: #B4C0CB;
+  --ink3: #8D9AA7;
+  --line: #3B4753;
+  --note-bg: #232D38;
+  --note-line: #5E6C7A;
+  --gen: #F2BC5E;
+  --gen-bg: #34290F;
+  --gen-line: #94702A;
+  --proc: #62D5C8;
+  --proc-bg: #0F302C;
+  --proc-line: #2F8279;
+  --fx: #B7ACFF;
+  --fx-bg: #27214A;
+  --fx-line: #685CB8;
+  --mod: #FF93BC;
+  --mod-bg: #3A1627;
+  --mod-line: #B5507E;
+  --key-white: #DCE2E8;
+  --key-black: #0B1015;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-text); font-size: 16px; line-height: 1.55; }
+.wrap {
+  max-width: 1680px; margin: 0 auto; padding-block: 28px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+header { max-width: 80ch; margin-bottom: 22px; }
+.kicker { margin: 0 0 6px; font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: 1.4px;
+          text-transform: uppercase; color: var(--fx); }
+h1 { margin: 0 0 10px; font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 4.2vw, 44px);
+     line-height: 1.05; letter-spacing: 0.2px; }
+.lead { margin: 0; font-size: 18px; color: var(--ink2); text-wrap: pretty; }
+.flux { display: inline-block; margin-top: 14px; padding: 4px 10px; border: 1px dashed var(--note-line);
+        border-radius: 999px; font-size: 13.5px; color: var(--ink2); background: var(--surface); }
+figure { margin: 0; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.scroller { overflow-x: auto; max-width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
+.scroller:focus-visible { outline: 2px solid var(--fx); outline-offset: 2px; }
+.map { display: block; width: 100%; min-width: 1180px; height: auto; }
+.map text { font-family: var(--font-text); font-variant-numeric: tabular-nums; }
+.map text.disp { font-family: var(--font-display); }
+.hint { display: none; margin: 0; font-size: 13px; color: var(--ink3); }
+@media (max-width: 1210px) { .hint { display: block; } }
+figcaption { max-width: 80ch; color: var(--ink2); font-size: 14.5px; text-wrap: pretty; }
+figcaption a { color: inherit; }
+.columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 18px; margin-top: 34px; }
+section { min-width: 0; padding: 18px 20px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
+section.wide { grid-column: 1 / -1; }
+h2 { margin: 0 0 10px; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: 1.2px;
+     text-transform: uppercase; }
+.s-gen h2 { color: var(--gen); } .s-proc h2 { color: var(--proc); } .s-fx h2 { color: var(--fx); } .s-mod h2 { color: var(--mod); }
+section p { margin: 0 0 10px; color: var(--ink2); text-wrap: pretty; }
+section p:last-child { margin-bottom: 0; }
+ul { margin: 0; padding-left: 18px; color: var(--ink2); }
+li { margin: 5px 0; text-wrap: pretty; }
+li b { color: var(--ink); font-weight: 600; }
+a { color: var(--fx); text-underline-offset: 2px; }
+footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink3); font-size: 13.5px; }
+.f-bg{fill:var(--bg)} .s-bg{stroke:var(--bg)}
+.f-surface{fill:var(--surface)} .s-surface{stroke:var(--surface)}
+.f-panel{fill:var(--panel)} .s-panel{stroke:var(--panel)}
+.f-ink{fill:var(--ink)} .s-ink{stroke:var(--ink)}
+.f-ink2{fill:var(--ink2)} .s-ink2{stroke:var(--ink2)}
+.f-ink3{fill:var(--ink3)} .s-ink3{stroke:var(--ink3)}
+.f-line{fill:var(--line)} .s-line{stroke:var(--line)}
+.f-note-bg{fill:var(--note-bg)} .s-note-bg{stroke:var(--note-bg)}
+.f-note-line{fill:var(--note-line)} .s-note-line{stroke:var(--note-line)}
+.f-gen{fill:var(--gen)} .s-gen{stroke:var(--gen)}
+.f-gen-bg{fill:var(--gen-bg)} .s-gen-bg{stroke:var(--gen-bg)}
+.f-gen-line{fill:var(--gen-line)} .s-gen-line{stroke:var(--gen-line)}
+.f-proc{fill:var(--proc)} .s-proc{stroke:var(--proc)}
+.f-proc-bg{fill:var(--proc-bg)} .s-proc-bg{stroke:var(--proc-bg)}
+.f-proc-line{fill:var(--proc-line)} .s-proc-line{stroke:var(--proc-line)}
+.f-fx{fill:var(--fx)} .s-fx{stroke:var(--fx)}
+.f-fx-bg{fill:var(--fx-bg)} .s-fx-bg{stroke:var(--fx-bg)}
+.f-fx-line{fill:var(--fx-line)} .s-fx-line{stroke:var(--fx-line)}
+.f-mod{fill:var(--mod)} .s-mod{stroke:var(--mod)}
+.f-mod-bg{fill:var(--mod-bg)} .s-mod-bg{stroke:var(--mod-bg)}
+.f-mod-line{fill:var(--mod-line)} .s-mod-line{stroke:var(--mod-line)}
+.f-key-white{fill:var(--key-white)} .s-key-white{stroke:var(--key-white)}
+.f-key-black{fill:var(--key-black)} .s-key-black{stroke:var(--key-black)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <p class="kicker">CoolSynth · V3 engine</p>
+    <h1>A synthesizer built from slots</h1>
+    <p class="lead">CoolSynth is a polyphonic software synthesizer, a VST3 plugin and a standalone app, written in C++
+    with JUCE. Its engine is made of slots: any sound source in any of three generator slots, any filter or shaper in
+    any of three processor slots, any effect in any effect slot, all of it modulated from one matrix.</p>
+    <p class="flux">Work in progress: the engine still changes week to week, and the instrument's own interface comes last.</p>
+  </header>
+
+  <figure>
+    <p class="hint">The map is wider than this screen: scroll it sideways to follow the signal.</p>
+    <div class="scroller" tabindex="0" role="group" aria-label="Engine map; scrolls sideways on narrow screens">
+<svg class="map" viewBox="0 0 1600 1352" role="img" aria-label="CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation sources and a 24-routing matrix feed the voice from below. Both parts are mixed into a master effect section, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.">
+<rect x="0" y="0" width="1600" height="1352" class="f-bg"/>
+<text class="f-ink2 disp" x="24" y="50" font-size="11.5"><tspan class="f-ink" font-weight="700" font-size="30">CoolSynth V3</tspan><tspan class="f-ink2" font-weight="400" font-size="20" dx="14">engine architecture</tspan></text>
+<text class="f-ink2" x="24" y="76" font-size="13">Signal flow of one patch, left to right. Every slot takes any module of its kind; the choices are listed underneath.</text>
+<text class="f-ink" x="1576" y="44" font-size="12.5" font-weight="600" text-anchor="end">2 parts · 16 voices · 3 generator + 3 processor slots per voice · 24 modulation routings per part · 118 factory presets</text>
+<polyline class="s-ink2" points="1143.33,68 1167.38,68" fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink2" points="1173.33,68 1166.33,71.22 1166.33,64.78"/>
+<text class="f-ink2" x="1180.33" y="72" font-size="11.5">notes</text>
+<polyline class="s-ink" points="1230.46,68 1253.66,68" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1260.46,68 1252.46,71.68 1252.46,64.32"/>
+<text class="f-ink2" x="1267.46" y="72" font-size="11.5">audio</text>
+<polyline class="s-mod" points="1317.6,68 1341.65,68" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<polygon class="f-mod" points="1347.6,68 1340.6,71.22 1340.6,64.78"/>
+<text class="f-ink2" x="1354.6" y="72" font-size="11.5">modulation</text>
+<rect class="s-ink3" x="1434.86" y="61" width="26" height="14" rx="3" fill="none" stroke-width="1.2" stroke-dasharray="4 3"/>
+<text class="f-ink2" x="1469.86" y="72" font-size="11.5">planned, not built yet</text>
+<rect class="f-note-bg s-note-line" x="24" y="193" width="124" height="112" rx="6" stroke-width="1.2"/>
+<text class="f-ink" x="36" y="214" font-size="10.5" font-weight="700" letter-spacing="0.8">KEYS · MIDI</text>
+<rect class="f-key-white s-note-line" x="36" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="47" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="58" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="69" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="80" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="91" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="102" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="113" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-white s-note-line" x="124" y="223" width="11" height="20" rx="1.5" stroke-width="0.9"/>
+<rect class="f-key-black" x="43.5" y="223" width="7" height="12" rx="1"/>
+<rect class="f-key-black" x="54.5" y="223" width="7" height="12" rx="1"/>
+<rect class="f-key-black" x="76.5" y="223" width="7" height="12" rx="1"/>
+<rect class="f-key-black" x="87.5" y="223" width="7" height="12" rx="1"/>
+<rect class="f-key-black" x="98.5" y="223" width="7" height="12" rx="1"/>
+<rect class="f-key-black" x="120.5" y="223" width="7" height="12" rx="1"/>
+<text class="f-ink2" x="36" y="263" font-size="11">notes, velocity,</text>
+<text class="f-ink2" x="36" y="277.5" font-size="11">release velocity,</text>
+<text class="f-ink2" x="36" y="292" font-size="11">wheel, bend, pedal</text>
+<text class="f-ink2" x="24" y="334" font-size="10.5" font-weight="700" letter-spacing="0.8">PART MODE</text>
+<text class="f-ink" x="24" y="352" font-size="12" font-weight="600">A · Layer · Split · B</text>
+<text class="f-ink2" x="24" y="369" font-size="11">Split by key range. Each</text>
+<text class="f-ink2" x="24" y="383.5" font-size="11">part has its own velocity</text>
+<text class="f-ink2" x="24" y="398" font-size="11">range and transpose.</text>
+<rect class="f-panel s-line" x="172" y="104" width="1246" height="464" rx="10" stroke-width="1.2"/>
+<text class="f-ink2" x="188" y="123" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">PART A</tspan><tspan class="f-ink2" dx="10">one complete synth: its own patch, note layer, voices, modulation and insert effects</tspan></text>
+<text class="f-ink2" x="188" y="184" font-size="10.5" font-weight="700" letter-spacing="0.8">NOTE LAYER</text>
+<rect class="f-note-bg s-note-line" x="188" y="193" width="118" height="112" rx="6" stroke-width="1.2"/>
+<text class="f-ink" x="198" y="215" font-size="12.5" font-weight="600">Chord memory</text>
+<text class="f-ink2" x="198" y="235" font-size="11">12 chord types</text>
+<text class="f-ink2" x="198" y="249.5" font-size="11">+ a learned chord</text>
+<text class="f-ink2" x="198" y="264" font-size="11">of up to 6 notes;</text>
+<text class="f-ink2" x="198" y="278.5" font-size="11">strum up or down</text>
+<rect class="f-note-bg s-note-line" x="320" y="193" width="126" height="112" rx="6" stroke-width="1.2"/>
+<text class="f-ink" x="330" y="215" font-size="12.5" font-weight="600">Arpeggiator</text>
+<text class="f-ink2" x="330" y="235" font-size="11">11 patterns</text>
+<text class="f-ink2" x="330" y="249.5" font-size="11">Euclidean rhythms</text>
+<text class="f-ink2" x="330" y="264" font-size="11">ratchets ×2 to ×4</text>
+<text class="f-ink2" x="330" y="278.5" font-size="11">chance, accent,</text>
+<text class="f-ink2" x="330" y="293" font-size="11">swing, latch</text>
+<rect class="f-note-bg s-note-line" x="460" y="193" width="126" height="112" rx="6" stroke-width="1.2"/>
+<text class="f-ink" x="470" y="215" font-size="12.5" font-weight="600">Play mode</text>
+<text class="f-ink2" x="470" y="235" font-size="11">poly · mono · legato</text>
+<text class="f-ink2" x="470" y="249.5" font-size="11">unison: 2 to 8 voices</text>
+<text class="f-ink2" x="470" y="264" font-size="11">glide, key priority</text>
+<text class="f-ink2" x="470" y="278.5" font-size="11">voice spread: each</text>
+<text class="f-ink2" x="470" y="293" font-size="11">voice has its place</text>
+<polyline class="s-ink2" points="148,249 182.05,249" fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink2" points="188,249 181,252.22 181,245.78"/>
+<polyline class="s-ink2" points="160,249 160,627 182.05,627" fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink2" points="188,627 181,630.22 181,623.78"/>
+<circle class="f-ink2" cx="160" cy="249" r="2.8"/>
+<polyline class="s-ink2" points="306,249 314.05,249" fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink2" points="320,249 313,252.22 313,245.78"/>
+<polyline class="s-ink2" points="446,249 454.05,249" fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink2" points="460,249 453,252.22 453,245.78"/>
+<polyline class="s-ink2" points="586,249 602.05,249" fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink2" points="608,249 601,252.22 601,245.78"/>
+<rect class="f-surface s-line" x="614" y="134" width="598" height="212" rx="8" stroke-width="1.2"/>
+<rect class="f-surface s-line" x="611" y="137" width="598" height="212" rx="8" stroke-width="1.2"/>
+<rect class="f-surface s-line" x="608" y="140" width="598" height="212" rx="8" stroke-width="1.3"/>
+<text class="f-ink2" x="626" y="159" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">VOICE</tspan><tspan class="f-ink2" dx="10">up to 16 at once · each one computed at 2× the sample rate</tspan></text>
+<text class="f-gen" x="626" y="176" font-size="10.5" font-weight="700" letter-spacing="0.7">3 GENERATOR SLOTS</text>
+<rect class="f-gen-bg s-gen-line" x="626" y="182" width="130" height="34" rx="6" stroke-width="1.2"/>
+<text class="f-gen" x="636" y="204" font-size="13" font-weight="700">G1</text>
+<text class="f-ink" x="664" y="204" font-size="11.5">Wavetable</text>
+<polygon class="f-gen" points="738,196 746,196 742,201.5"/>
+<rect class="f-gen-bg s-gen-line" x="626" y="232" width="130" height="34" rx="6" stroke-width="1.2"/>
+<text class="f-gen" x="636" y="254" font-size="13" font-weight="700">G2</text>
+<text class="f-ink" x="664" y="254" font-size="11.5">FM4</text>
+<polygon class="f-gen" points="738,246 746,246 742,251.5"/>
+<rect class="f-gen-bg s-gen-line" x="626" y="282" width="130" height="34" rx="6" stroke-width="1.2"/>
+<text class="f-gen" x="636" y="304" font-size="13" font-weight="700">G3</text>
+<text class="f-ink" x="664" y="304" font-size="11.5">VA</text>
+<polygon class="f-gen" points="738,296 746,296 742,301.5"/>
+<polyline class="s-gen" points="644,216 644,226.9" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-gen" points="644,232 641.24,226 646.76,226"/>
+<text class="f-gen" x="656" y="228" font-size="10.5">sync · ring · FM · AM</text>
+<polyline class="s-gen" points="644,266 644,276.9" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-gen" points="644,282 641.24,276 646.76,276"/>
+<text class="f-gen" x="656" y="278" font-size="10.5">sync · ring · FM · AM</text>
+<polyline class="s-ink" points="756,199 792,199 792,231.2" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="792,238 788.32,230 795.68,230"/>
+<polyline class="s-ink" points="756,249 774.2,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="781,249 773,252.68 773,245.32"/>
+<polyline class="s-ink" points="756,299 792,299 792,266.8" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="792,260 795.68,268 788.32,268"/>
+<circle class="f-surface s-ink" cx="792" cy="249" r="11" stroke-width="1.5"/>
+<polyline class="s-ink" points="787,249 797,249" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline class="s-ink" points="792,244 792,254" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline class="s-ink" points="803,249 821.2,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="828,249 820,252.68 820,245.32"/>
+<text class="f-proc" x="828" y="212" font-size="10.5" font-weight="700" letter-spacing="0.7">3 PROCESSOR SLOTS, IN SERIES</text>
+<rect class="f-proc-bg s-proc-line" x="828" y="221" width="86" height="56" rx="6" stroke-width="1.2"/>
+<text class="f-proc" x="838" y="244" font-size="13" font-weight="700">P1</text>
+<text class="f-ink" x="838" y="263" font-size="11.5">Ladder</text>
+<polygon class="f-proc" points="896,236 904,236 900,241.5"/>
+<rect class="f-proc-bg s-proc-line" x="930" y="221" width="86" height="56" rx="6" stroke-width="1.2"/>
+<text class="f-proc" x="940" y="244" font-size="13" font-weight="700">P2</text>
+<text class="f-ink" x="940" y="263" font-size="11.5">Comb</text>
+<polygon class="f-proc" points="998,236 1006,236 1002,241.5"/>
+<rect class="f-proc-bg s-proc-line" x="1032" y="221" width="86" height="56" rx="6" stroke-width="1.2"/>
+<text class="f-proc" x="1042" y="244" font-size="13" font-weight="700">P3</text>
+<text class="f-ink" x="1042" y="263" font-size="11.5">Drive</text>
+<polygon class="f-proc" points="1100,236 1108,236 1104,241.5"/>
+<polyline class="s-ink" points="914,249 924.05,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="930,249 923,252.22 923,245.78"/>
+<polyline class="s-ink" points="1016,249 1026.05,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1032,249 1025,252.22 1025,245.78"/>
+<polyline class="s-ink" points="1118,249 1128.05,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1134,249 1127,252.22 1127,245.78"/>
+<rect class="f-surface s-ink" x="1134" y="221" width="58" height="56" rx="6" stroke-width="1.3"/>
+<text class="f-ink" x="1163" y="246" font-size="12" font-weight="700" text-anchor="middle" letter-spacing="0.6">AMP</text>
+<text class="f-ink2" x="1163" y="263" font-size="10.5" text-anchor="middle">+ pan</text>
+<polyline class="s-ink" points="1192,249 1218.2,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1225,249 1217,252.68 1217,245.32"/>
+<circle class="f-surface s-ink" cx="1236" cy="249" r="11" stroke-width="1.5"/>
+<text class="f-ink" x="1236" y="253.5" font-size="13" font-weight="700" text-anchor="middle">Σ</text>
+<text class="f-ink2" x="1236" y="276" font-size="10" text-anchor="middle">2× → 1×</text>
+<polyline class="s-ink" points="1247,249 1256.05,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1262,249 1255,252.22 1255,245.78"/>
+<text class="f-fx" x="1262" y="212" font-size="10.5" font-weight="700" letter-spacing="0.7">3 INSERT SLOTS</text>
+<rect class="f-fx-bg s-fx-line" x="1262" y="221" width="42" height="56" rx="6" stroke-width="1.2"/>
+<text class="f-fx" x="1283" y="244" font-size="12.5" font-weight="700" text-anchor="middle">I1</text>
+<text class="f-ink" x="1283" y="263" font-size="10.5" text-anchor="middle">Chorus</text>
+<rect class="f-fx-bg s-fx-line" x="1315" y="221" width="42" height="56" rx="6" stroke-width="1.2"/>
+<text class="f-fx" x="1336" y="244" font-size="12.5" font-weight="700" text-anchor="middle">I2</text>
+<text class="f-ink" x="1336" y="263" font-size="10.5" text-anchor="middle">Room</text>
+<rect class="f-fx-bg s-fx-line" x="1368" y="221" width="42" height="56" rx="6" stroke-width="1.2"/>
+<text class="f-fx" x="1389" y="244" font-size="12.5" font-weight="700" text-anchor="middle">I3</text>
+<text class="f-ink" x="1389" y="263" font-size="10.5" text-anchor="middle">Delay</text>
+<polyline class="s-ink" points="1304,249 1309.9,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1315,249 1309,251.76 1309,246.24"/>
+<polyline class="s-ink" points="1357,249 1362.9,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1368,249 1362,251.76 1362,246.24"/>
+<polyline class="s-gen" points="700,316 700,330 852,330 852,282.95" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="4 3"/>
+<polygon class="f-gen" points="852,277 855.22,284 848.78,284"/>
+<text class="f-gen" x="706" y="344" font-size="10.5">generator 3 → ladder cutoff, at audio rate</text>
+<text class="f-ink2" x="868" y="300" font-size="11">Modulation refreshed 3,000 times a second</text>
+<text class="f-ink2" x="868" y="315" font-size="11">(at 48 kHz). Values ramp between updates.</text>
+<polyline class="s-mod" points="691,366 1163,366" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<polyline class="s-mod" points="691,366 691,358.95" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<polygon class="f-mod" points="691,353 694.22,360 687.78,360"/>
+<polyline class="s-mod" points="973,366 973,358.95" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<polygon class="f-mod" points="973,353 976.22,360 969.78,360"/>
+<polyline class="s-mod" points="1163,366 1163,358.95" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<polygon class="f-mod" points="1163,353 1166.22,360 1159.78,360"/>
+<polyline class="s-mod" points="1075,392 1075,366" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<text class="f-mod" x="703" y="381" font-size="10.5">into any slot value, pitch, level, pan, combine amount, amp level</text>
+<text class="f-mod" x="1087" y="381" font-size="10.5">also LFO rates and envelope times</text>
+<rect class="f-surface s-mod-line" x="188" y="392" width="742" height="164" rx="6" stroke-width="1.2"/>
+<text class="f-mod" x="204" y="413" font-size="10.5" font-weight="700" letter-spacing="0.7">MODULATION SOURCES · PER VOICE</text>
+<text class="f-mod" x="572" y="413" font-size="10.5" font-weight="700" letter-spacing="0.7">PER PART, SHARED BY ITS VOICES</text>
+<polyline class="s-line" points="556,402 556,546" fill="none" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-ink2" x="204" y="434" font-size="11.5"><tspan class="f-ink" font-weight="700">3 envelopes </tspan><tspan class="f-ink2">delay, attack, hold, decay, sustain, release; a curve</tspan></text>
+<text class="f-ink2" x="204" y="449" font-size="11.5"><tspan class="f-ink2">per stage; times that shorten up the keyboard; loop; one-shot</tspan></text>
+<text class="f-ink2" x="204" y="469" font-size="11.5"><tspan class="f-ink" font-weight="700">2 LFOs </tspan><tspan class="f-ink2">8 shapes with sample-and-hold and a 16-step staircase;</tspan></text>
+<text class="f-ink2" x="204" y="484" font-size="11.5"><tspan class="f-ink2">in Hz or 16 tempo divisions; delay and fade-in</tspan></text>
+<text class="f-ink2" x="204" y="504" font-size="11.5"><tspan class="f-ink" font-weight="700">Per note </tspan><tspan class="f-ink2">velocity, release velocity, key position, a random value, a</tspan></text>
+<text class="f-ink2" x="204" y="519" font-size="11.5"><tspan class="f-ink2">slow drift</tspan></text>
+<text class="f-ink2" x="572" y="434" font-size="11.5"><tspan class="f-ink" font-weight="700">2 global LFOs </tspan><tspan class="f-ink2">one phase for all voices; song-position lock</tspan></text>
+<text class="f-ink2" x="572" y="454" font-size="11.5"><tspan class="f-ink" font-weight="700">Global envelope </tspan><tspan class="f-ink2">from a phrase’s first key, or from every key</tspan></text>
+<text class="f-ink2" x="572" y="474" font-size="11.5"><tspan class="f-ink" font-weight="700">16-step sequencer </tspan><tspan class="f-ink2">slide per step, 1 to 16 steps, tempo-locked</tspan></text>
+<text class="f-ink2" x="572" y="494" font-size="11.5"><tspan class="f-ink" font-weight="700">4 macros · chaos · wheel · bend </tspan><tspan class="f-ink2">(chaos: a slow random walk)</tspan></text>
+<rect class="s-ink3" x="566" y="506" width="327.69" height="20" rx="4" fill="none" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text class="f-ink3" x="573" y="520" font-size="11" font-style="italic">planned: aftertouch · MPE pressure and slide · expression pedal</text>
+<polyline class="s-mod" points="930,472 946.05,472" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
+<polygon class="f-mod" points="952,472 945,475.22 945,468.78"/>
+<rect class="f-mod-bg s-mod-line" x="952" y="392" width="246" height="164" rx="6" stroke-width="1.2"/>
+<text class="f-mod" x="968" y="415" font-size="13" font-weight="700" letter-spacing="0.5">MOD MATRIX</text>
+<text class="f-ink" x="968" y="433" font-size="12" font-weight="600">24 routings per part</text>
+<text class="f-ink" x="968" y="453" font-size="11.5">Each routing: a source, a destination, an</text>
+<text class="f-ink" x="968" y="468" font-size="11.5">amount, a second source that scales it</text>
+<text class="f-ink" x="968" y="483" font-size="11.5">(via) and one of 6 curves. One curve</text>
+<text class="f-ink" x="968" y="498" font-size="11.5">snaps pitch to semitones.</text>
+<text class="f-ink" x="968" y="543" font-size="11.5" font-weight="600">Over 20 sources, over 90 destinations</text>
+<text class="f-ink2" x="1214" y="413" font-size="10.5" font-weight="700" letter-spacing="0.7">ALWAYS CONNECTED</text>
+<text class="f-ink2" x="1214" y="434" font-size="11.5">ENV1 → amp</text>
+<text class="f-ink2" x="1214" y="449" font-size="11.5">ENV2 → P1 cutoff</text>
+<text class="f-ink2" x="1214" y="464" font-size="11.5">velocity → amp and P1 cutoff</text>
+<text class="f-ink2" x="1214" y="479" font-size="11.5">wheel → LFO1 depth</text>
+<text class="f-ink2" x="1214" y="494" font-size="11.5">bend → pitch</text>
+<text class="f-ink2" x="1214" y="509" font-size="11.5">key tracking per slot</text>
+<rect class="f-panel s-line" x="172" y="582" width="1246" height="70" rx="10" stroke-width="1.2"/>
+<text class="f-ink2" x="188" y="602" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">PART B</tspan><tspan class="f-ink2" dx="10">the same chain again with its own patch · the two parts share the 16 voices, each sure of 8</tspan></text>
+<rect class="f-note-bg s-note-line" x="188" y="614" width="398" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-ink2" x="387" y="631" font-size="10.5" text-anchor="middle">chord memory → arpeggiator (shared settings, on or off per part) → play mode</text>
+<polyline class="s-ink2" points="586,627 620.05,627" fill="none" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink2" points="626,627 619,630.22 619,623.78"/>
+<rect class="f-gen-bg s-gen-line" x="626" y="614" width="38" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-gen" x="645" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">G1</text>
+<rect class="f-gen-bg s-gen-line" x="672" y="614" width="38" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-gen" x="691" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">G2</text>
+<rect class="f-gen-bg s-gen-line" x="718" y="614" width="38" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-gen" x="737" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">G3</text>
+<polyline class="s-ink" points="756,627 822.05,627" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="828,627 821,630.22 821,623.78"/>
+<rect class="f-proc-bg s-proc-line" x="828" y="614" width="38" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-proc" x="847" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">P1</text>
+<rect class="f-proc-bg s-proc-line" x="874" y="614" width="38" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-proc" x="893" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">P2</text>
+<rect class="f-proc-bg s-proc-line" x="920" y="614" width="38" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-proc" x="939" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">P3</text>
+<polyline class="s-ink" points="958,627 974.05,627" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="980,627 973,630.22 973,623.78"/>
+<rect class="f-surface s-ink" x="980" y="614" width="46" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-ink" x="1003" y="631.5" font-size="11" font-weight="700" text-anchor="middle" letter-spacing="0.5">AMP</text>
+<polyline class="s-ink" points="1026,627 1221.05,627" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1227,627 1220,630.22 1220,623.78"/>
+<circle class="f-surface s-ink" cx="1236" cy="627" r="9" stroke-width="1.5"/>
+<text class="f-ink" x="1236" y="631" font-size="11.5" font-weight="700" text-anchor="middle">Σ</text>
+<polyline class="s-ink" points="1245,627 1256.05,627" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1262,627 1255,630.22 1255,623.78"/>
+<rect class="f-fx-bg s-fx-line" x="1262" y="614" width="42" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-fx" x="1283" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">I1</text>
+<rect class="f-fx-bg s-fx-line" x="1315" y="614" width="42" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-fx" x="1336" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">I2</text>
+<rect class="f-fx-bg s-fx-line" x="1368" y="614" width="42" height="26" rx="5" stroke-width="1.2"/>
+<text class="f-fx" x="1389" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle">I3</text>
+<rect class="f-panel s-line" x="1446" y="104" width="130" height="548" rx="10" stroke-width="1.2"/>
+<polyline class="s-ink" points="1410,249 1432,249" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline class="s-ink" points="1410,627 1432,627 1432,156 1453.2,156" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1460,156 1452,159.68 1452,152.32"/>
+<circle class="f-ink" cx="1432" cy="249" r="2.8"/>
+<text class="f-ink" x="1460" y="126" font-size="10.5" font-weight="700" letter-spacing="0.8">MASTER</text>
+<rect class="f-surface s-ink" x="1460" y="140" width="102" height="32" rx="6" stroke-width="1.3"/>
+<text class="f-ink" x="1511" y="161" font-size="12" font-weight="600" text-anchor="middle">MIX  A + B</text>
+<polyline class="s-ink" points="1511,172 1511,190.05" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1511,196 1507.78,189 1514.22,189"/>
+<rect class="f-surface s-fx-line" x="1460" y="196" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text class="f-fx" x="1470" y="216" font-size="12" font-weight="700">FX 1</text>
+<text class="f-ink3" x="1553" y="216" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<polyline class="s-ink" points="1511,226 1511,234" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<rect class="f-surface s-fx-line" x="1460" y="234" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text class="f-fx" x="1470" y="254" font-size="12" font-weight="700">FX 2</text>
+<text class="f-ink3" x="1553" y="254" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<polyline class="s-ink" points="1511,264 1511,272" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<rect class="f-surface s-fx-line" x="1460" y="272" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text class="f-fx" x="1470" y="292" font-size="12" font-weight="700">FX 3</text>
+<text class="f-ink3" x="1553" y="292" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<polyline class="s-ink" points="1511,302 1511,310" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<rect class="f-surface s-fx-line" x="1460" y="310" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text class="f-fx" x="1470" y="330" font-size="12" font-weight="700">FX 4</text>
+<text class="f-ink3" x="1553" y="330" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<polyline class="s-ink" points="1511,340 1511,348" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<rect class="f-surface s-fx-line" x="1460" y="348" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text class="f-fx" x="1470" y="368" font-size="12" font-weight="700">FX 5</text>
+<text class="f-ink3" x="1553" y="368" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<polyline class="s-ink" points="1511,378 1511,386" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+<rect class="f-surface s-fx-line" x="1460" y="386" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
+<text class="f-fx" x="1470" y="406" font-size="12" font-weight="700">FX 6</text>
+<text class="f-ink3" x="1553" y="406" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<polyline class="s-ink" points="1511,416 1511,432.05" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1511,438 1507.78,431 1514.22,431"/>
+<rect class="f-surface s-ink" x="1460" y="438" width="102" height="30" rx="6" stroke-width="1.3"/>
+<text class="f-ink" x="1511" y="458" font-size="10.5" font-weight="700" text-anchor="middle" letter-spacing="0.5">MASTER GAIN</text>
+<polyline class="s-ink" points="1511,468 1511,478.05" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1511,484 1507.78,477 1514.22,477"/>
+<rect class="f-surface s-ink" x="1460" y="484" width="102" height="30" rx="6" stroke-width="1.3"/>
+<text class="f-ink" x="1511" y="504" font-size="10.5" font-weight="700" text-anchor="middle" letter-spacing="0.5">SOFT CLIPPER</text>
+<polyline class="s-ink" points="1511,514 1511,534.05" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+<polygon class="f-ink" points="1511,540 1507.78,533 1514.22,533"/>
+<rect class="f-ink" x="1460" y="540" width="102" height="30" rx="15"/>
+<text class="f-bg" x="1511" y="560" font-size="10.5" font-weight="700" text-anchor="middle" letter-spacing="0.6">STEREO OUT</text>
+<text class="f-ink2" x="1511" y="594" font-size="10.5" text-anchor="middle">Today: ten effects in</text>
+<text class="f-ink2" x="1511" y="608" font-size="10.5" text-anchor="middle">a fixed order (see the</text>
+<text class="f-ink2" x="1511" y="622" font-size="10.5" text-anchor="middle">effect list below).</text>
+<rect class="f-gen-bg" x="24" y="674" width="594" height="32" rx="8"/>
+<rect class="f-gen-bg" x="24" y="690" width="594" height="16"/>
+<rect class="f-surface" x="24" y="706" width="594" height="344" rx="8"/>
+<rect class="f-surface" x="24" y="706" width="594" height="12"/>
+<rect class="s-gen-line" x="24" y="674" width="594" height="376" rx="8" fill="none" stroke-width="1.3"/>
+<text class="f-ink2" x="40" y="695" font-size="11.5"><tspan class="f-gen" font-weight="700" letter-spacing="0.7">GENERATOR SLOT</tspan><tspan class="f-ink" dx="10">one of 9 types · any type in any of the 3 slots</tspan></text>
+<text class="f-gen" x="40" y="724" font-size="12.5" font-weight="700">VA</text>
+<text class="f-ink" x="124" y="724" font-size="11.5">Sine, triangle, saw and pulse as one morph, PWM, sub, unison of up to 7 on a JP-8000-style</text>
+<text class="f-ink" x="124" y="738.5" font-size="11.5">detune curve. Band-limited edges, also under hard sync: saw aliasing −79 dB at 3.5 kHz.</text>
+<polyline class="s-line" points="36,746 606,746" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="764" font-size="12.5" font-weight="700">Noise</text>
+<text class="f-ink" x="124" y="764" font-size="11.5">White, pink, a pitch-tracked band, or the NES noise channel’s 15-bit shift register.</text>
+<polyline class="s-line" points="36,771.5 606,771.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="789.5" font-size="12.5" font-weight="700">FM2</text>
+<text class="f-ink" x="124" y="789.5" font-size="11.5">Two sine operators: ratio 0.25 to 16, index up to 10 radians, self-feedback.</text>
+<polyline class="s-line" points="36,797 606,797" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="815" font-size="12.5" font-weight="700">FM4</text>
+<text class="f-ink" x="124" y="815" font-size="11.5">Four operators, 6 algorithms, feedback; each operator plays one of the TX81Z’s 8 waves.</text>
+<polyline class="s-line" points="36,822.5 606,822.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="840.5" font-size="12.5" font-weight="700">Wavetable</text>
+<text class="f-ink" x="124" y="840.5" font-size="11.5">4 tables of 16 frames with position morph; unison of up to 5. Every frame is kept at 11 band</text>
+<text class="f-ink" x="124" y="855" font-size="11.5">limits: aliasing −118 dB at A7.</text>
+<polyline class="s-line" points="36,862.5 606,862.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="880.5" font-size="12.5" font-weight="700">String</text>
+<text class="f-ink" x="124" y="880.5" font-size="11.5">Plucked-string model: decay, damping, pick position, a noise or a fingertip pluck, a damper on</text>
+<text class="f-ink" x="124" y="895" font-size="11.5">release. Stays in tune however dark the damping.</text>
+<polyline class="s-line" points="36,902.5 606,902.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="920.5" font-size="12.5" font-weight="700">Modal</text>
+<text class="f-ink" x="124" y="920.5" font-size="11.5">12 struck partials. Material morphs from wood (a marimba bar, 1 : 4 : 10.1 : 19.1, measured on</text>
+<text class="f-ink" x="124" y="935" font-size="11.5">a recording) through metal and glass to a tine. Mallet hardness, strike position.</text>
+<polyline class="s-line" points="36,942.5 606,942.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="960.5" font-size="12.5" font-weight="700">Sample</text>
+<text class="f-ink" x="124" y="960.5" font-size="11.5">Plays the Conservatory’s recorded instruments (16-point sinc read), or 5 factory loops.</text>
+<polyline class="s-line" points="36,968 606,968" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-gen" x="40" y="986" font-size="12.5" font-weight="700">Grain</text>
+<text class="f-ink" x="124" y="986" font-size="11.5">A cloud of up to 12 grains per voice from a sample: position, scan (0 freezes it), size, density,</text>
+<text class="f-ink" x="124" y="1000.5" font-size="11.5">spray, pitch spray.</text>
+<polyline class="s-line" points="36,1022 606,1022" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-ink2" x="40" y="1038" font-size="11" font-style="italic">Planned: your own wavetables and samples; grains from a live generator.</text>
+<rect class="f-proc-bg" x="634" y="674" width="462" height="32" rx="8"/>
+<rect class="f-proc-bg" x="634" y="690" width="462" height="16"/>
+<rect class="f-surface" x="634" y="706" width="462" height="344" rx="8"/>
+<rect class="f-surface" x="634" y="706" width="462" height="12"/>
+<rect class="s-proc-line" x="634" y="674" width="462" height="376" rx="8" fill="none" stroke-width="1.3"/>
+<text class="f-ink2" x="650" y="695" font-size="11.5"><tspan class="f-proc" font-weight="700" letter-spacing="0.7">PROCESSOR SLOT</tspan><tspan class="f-ink" dx="10">one of 7 types · per voice</tspan></text>
+<text class="f-proc" x="650" y="724" font-size="12.5" font-weight="700">Ladder</text>
+<text class="f-ink" x="720" y="724" font-size="11.5">4-pole transistor ladder with saturation in every stage. LP24, LP12, BP,</text>
+<text class="f-ink" x="720" y="738.5" font-size="11.5">HP12. Self-oscillates from its own noise floor, within 3.3 cents of the</text>
+<text class="f-ink" x="720" y="753" font-size="11.5">cutoff (250 Hz to 4 kHz). Generator 3 can modulate the cutoff at audio</text>
+<text class="f-ink" x="720" y="767.5" font-size="11.5">rate, up to 3 octaves either way.</text>
+<polyline class="s-line" points="646,775 1084,775" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-proc" x="650" y="793" font-size="12.5" font-weight="700">SVF</text>
+<text class="f-ink" x="720" y="793" font-size="11.5">2-pole state-variable filter: low-pass, high-pass, band-pass, notch. Q</text>
+<text class="f-ink" x="720" y="807.5" font-size="11.5">from 0.5 to 40, drive.</text>
+<polyline class="s-line" points="646,815 1084,815" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-proc" x="650" y="833" font-size="12.5" font-weight="700">Comb</text>
+<text class="f-ink" x="720" y="833" font-size="11.5">Feedback comb tuned to the key: tune, damping, either polarity.</text>
+<polyline class="s-line" points="646,840.5 1084,840.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-proc" x="650" y="858.5" font-size="12.5" font-weight="700">Formant</text>
+<text class="f-ink" x="720" y="858.5" font-size="11.5">Three band-passes on the vowels a, e, i, o, u, with morph and throat</text>
+<text class="f-ink" x="720" y="873" font-size="11.5">size.</text>
+<polyline class="s-line" points="646,880.5 1084,880.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-proc" x="650" y="898.5" font-size="12.5" font-weight="700">Folder</text>
+<text class="f-ink" x="720" y="898.5" font-size="11.5">Sine wavefolder with up to 30 dB of drive and symmetry; anti-aliased.</text>
+<polyline class="s-line" points="646,906 1084,906" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-proc" x="650" y="924" font-size="12.5" font-weight="700">Crusher</text>
+<text class="f-ink" x="720" y="924" font-size="11.5">1 to 16 bits, continuous; sample-and-hold down to 1 kHz.</text>
+<polyline class="s-line" points="646,931.5 1084,931.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-proc" x="650" y="949.5" font-size="12.5" font-weight="700">Drive</text>
+<text class="f-ink" x="720" y="949.5" font-size="11.5">Soft, hard or tube curve with tone; anti-aliased.</text>
+<polyline class="s-line" points="646,1008 1084,1008" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-ink2" x="650" y="1024" font-size="11">Three in series, per voice: a chord is filtered, folded and driven note by note, before the</text>
+<text class="f-ink2" x="650" y="1038" font-size="11">notes are summed.</text>
+<rect class="f-fx-bg" x="1112" y="674" width="464" height="32" rx="8"/>
+<rect class="f-fx-bg" x="1112" y="690" width="464" height="16"/>
+<rect class="f-surface" x="1112" y="706" width="464" height="344" rx="8"/>
+<rect class="f-surface" x="1112" y="706" width="464" height="12"/>
+<rect class="s-fx-line" x="1112" y="674" width="464" height="376" rx="8" fill="none" stroke-width="1.3"/>
+<text class="f-ink2" x="1128" y="695" font-size="11.5"><tspan class="f-fx" font-weight="700" letter-spacing="0.7">EFFECT SLOT</tspan><tspan class="f-ink" dx="10">one of 12 effects · 3 insert slots per part</tspan></text>
+<text class="f-fx" x="1128" y="724" font-size="12.5" font-weight="700">Drive</text>
+<text class="f-ink" x="1228" y="724" font-size="11.5">saturation, shaped at 2× oversampling</text>
+<polyline class="s-line" points="1124,731.5 1564,731.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-fx" x="1128" y="749.5" font-size="12.5" font-weight="700">Lo-fi</text>
+<text class="f-ink" x="1228" y="749.5" font-size="11.5">wow, flutter, hiss, crackle, bandwidth, bit and rate crush</text>
+<polyline class="s-line" points="1124,757 1564,757" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-fx" x="1128" y="775" font-size="12.5" font-weight="700">Modulation</text>
+<text class="f-ink" x="1228" y="775" font-size="11.5">phaser · flanger with feedback of either polarity · chorus</text>
+<polyline class="s-line" points="1124,782.5 1564,782.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-fx" x="1128" y="800.5" font-size="12.5" font-weight="700">Delay</text>
+<text class="f-ink" x="1228" y="800.5" font-size="11.5">tape or ping-pong; free, or 14 tempo-synced note values</text>
+<polyline class="s-line" points="1124,808 1564,808" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-fx" x="1128" y="826" font-size="12.5" font-weight="700">Plate reverb</text>
+<text class="f-ink" x="1228" y="826" font-size="11.5">pre-delay, low cut, modulation; shimmer feeds the tail back an</text>
+<text class="f-ink" x="1228" y="840.5" font-size="11.5">octave up</text>
+<polyline class="s-line" points="1124,848 1564,848" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-fx" x="1128" y="866" font-size="12.5" font-weight="700">Dynamics, EQ</text>
+<text class="f-ink" x="1228" y="866" font-size="11.5">compressor · EQ with low shelf, tilt and high shelf · pump:</text>
+<text class="f-ink" x="1228" y="880.5" font-size="11.5">tempo-synced ducking</text>
+<polyline class="s-line" points="1124,888 1564,888" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-fx" x="1128" y="906" font-size="12.5" font-weight="700">Room</text>
+<text class="f-ink" x="1228" y="906" font-size="11.5">24 early reflections of a box-shaped room into a 16-line feedback</text>
+<text class="f-ink" x="1228" y="920.5" font-size="11.5"><tspan >delay network; decay 0.1 to 1.2 s. </tspan><tspan class="f-ink2" font-style="italic">Inserts only.</tspan></text>
+<polyline class="s-line" points="1124,928 1564,928" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-fx" x="1128" y="946" font-size="12.5" font-weight="700">Grain</text>
+<text class="f-ink" x="1228" y="946" font-size="11.5">replays the last 4 seconds as a cloud of up to 32 grains; freeze.</text>
+<text class="f-ink" x="1228" y="960.5" font-size="11.5"><tspan class="f-ink2" font-style="italic">Inserts only.</tspan></text>
+<polyline class="s-line" points="1124,994 1564,994" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-ink2" x="1128" y="1010" font-size="11">Master section today: the first ten (drive to pump) in this order, then gain and a soft</text>
+<text class="f-ink2" x="1128" y="1024" font-size="11"><tspan >clipper. Each part sets what share of it passes through them. </tspan><tspan font-style="italic">Planned: six free master</tspan></text>
+<text class="f-ink2" x="1128" y="1038" font-size="11"><tspan font-style="italic">slots.</tspan></text>
+<rect class="f-surface s-ink" x="24" y="1070" width="700" height="228" rx="8" stroke-width="1.3"/>
+<text class="f-ink2" x="40" y="1094" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">THE MUSEUM</tspan><tspan class="f-ink2" dx="10">classic sounds rebuilt from the instruments’ own numbers</tspan></text>
+<text class="f-ink2" x="40" y="1116" font-size="12"><tspan class="f-ink" font-weight="700">Ten so far: </tspan><tspan >DX7 E.PIANO 1 and BASS 1 · Prophet-5 Sync II and Brass · Minimoog Fat Bass and the Trilogy lead · TX81Z</tspan></text>
+<text class="f-ink2" x="40" y="1132" font-size="12">LatelyBass · and the two synths that open a 1981 record, rebuilt from the record alone (the second also in a rougher version).</text>
+<text class="f-ink2" x="40" y="1154" font-size="12"><tspan class="f-ink" font-weight="700">Method: </tspan><tspan >start from the instrument’s own patch data (DX7 voice data, Prophet-5 factory programs, a 1974 Minimoog sound</tspan></text>
+<text class="f-ink2" x="40" y="1170" font-size="12">chart, the TX81Z preset table read from its firmware), convert the numbers to this engine’s units, and compare with a</text>
+<text class="f-ink2" x="40" y="1186" font-size="12">reference recording. A sound is admitted only after a side-by-side listening test.</text>
+<text class="f-ink2" x="40" y="1208" font-size="12"><tspan class="f-ink" font-weight="700">Measured: </tspan><tspan >LatelyBass, with nothing tuned by ear, has its first 16 harmonics within 0.9 dB on average of a recorded TX81Z</tspan></text>
+<text class="f-ink2" x="40" y="1224" font-size="12">note. Fat Bass is typically within 1 dB per band up to 2.8 kHz of a recorded Minimoog; Sync II within 1 dB of a recorded</text>
+<text class="f-ink2" x="40" y="1240" font-size="12">Prophet-5.</text>
+<text class="f-ink2" x="40" y="1262" font-size="12"><tspan class="f-ink" font-weight="700">References: </tspan><tspan >recordings of the hardware; for the DX7 pair, of an open DX7 emulation. </tspan><tspan class="f-ink" font-weight="700">The engine grew for it: </tspan><tspan >oscillator-3</tspan></text>
+<text class="f-ink2" x="40" y="1278" font-size="12">filter FM for the Minimoog, eight operator waves for the TX81Z.</text>
+<rect class="f-surface s-ink" x="740" y="1070" width="440" height="228" rx="8" stroke-width="1.3"/>
+<text class="f-ink2" x="756" y="1094" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">THE CONSERVATORY</tspan><tspan class="f-ink2" dx="10">40 recorded acoustic instruments</tspan></text>
+<text class="f-ink2" x="756" y="1116" font-size="12">Seven families: keys, strings, plucked, brass, winds, organs, mallets and</text>
+<text class="f-ink2" x="756" y="1132" font-size="12">bells. 76 playing styles.</text>
+<text class="f-ink2" x="756" y="1154" font-size="12">2,213 lossless recordings: every recorded pitch, dynamic layer and take, at</text>
+<text class="f-ink2" x="756" y="1170" font-size="12">full length, in stereo.</text>
+<text class="f-ink2" x="756" y="1192" font-size="12">They play through the Sample generator, so a grand piano or a cello section</text>
+<text class="f-ink2" x="756" y="1208" font-size="12">sits in a slot like any oscillator: layer it with FM, send it through the ladder,</text>
+<text class="f-ink2" x="756" y="1224" font-size="12">modulate it from the matrix.</text>
+<text class="f-ink2" x="756" y="1246" font-size="12">Instruments load in the background; a note never waits for the disk.</text>
+<rect class="f-surface s-ink" x="1196" y="1070" width="380" height="228" rx="8" stroke-width="1.3"/>
+<text class="f-ink2" x="1212" y="1094" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">2× VOICES</tspan><tspan class="f-ink2" dx="10">and FM that does not fold back</tspan></text>
+<text class="f-ink2" x="1212" y="1116" font-size="12">Every voice is computed at twice the sample rate and brought</text>
+<text class="f-ink2" x="1212" y="1132" font-size="12">down once per part.</text>
+<text class="f-ink2" x="1212" y="1154" font-size="12">FM2 and FM4 also hold the index, note by note, where the first</text>
+<text class="f-ink2" x="1212" y="1170" font-size="12">sideband that would fold back into the audible band stays under</text>
+<text class="f-ink2" x="1212" y="1186" font-size="12">−80 dB. Low and middle notes never reach the limit.</text>
+<text class="f-ink2" x="1212" y="1208" font-size="12">Measured: with index 10 asked for on a 2 kHz carrier, the largest</text>
+<text class="f-ink2" x="1212" y="1224" font-size="12">alias below 20 kHz sits at −75 dB.</text>
+<text class="f-ink2" x="1212" y="1246" font-size="12">Changing a slot’s type under a held note crossfades in 5 ms;</text>
+<text class="f-ink2" x="1212" y="1262" font-size="12">nothing else in the patch moves.</text>
+<text class="f-ink2" x="24" y="1328" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">118 FACTORY PRESETS IN 13 ROOMS</tspan><tspan class="f-ink2" dx="12">Workshop · Bedroom · Arcade · Outrun · Observatory · Greenhouse · Basement · Studio 1982 · Main Stage · Engine Room · Clock Tower · Conservatory · Museum</tspan></text>
+</svg>
+    </div>
+    <figcaption>The signal path of one CoolSynth V3 patch. Keys pass through the note layer into two parts; each part is a complete synth whose voices chain three generator slots, three processor slots and an amplifier, followed by three insert effects, the mix and the master section. Modulation enters the voice from below. Dashed outlines mark what is designed but not built yet; the user interface comes last and is not drawn. <a href="engine-map.svg">The map alone, as SVG.</a></figcaption>
+  </figure>
+
+  <div class="columns">
+    <section>
+      <h2>A patch</h2>
+      <p>Two parts, each a complete synth with its own voices, modulation and effects, played alone, layered or split
+      across the keyboard. They share sixteen voices: each is sure of eight and gets more when the other needs fewer.</p>
+      <p>Each voice runs three generator slots into three processor slots in series and an amplifier, at twice the
+      host's sample rate. Play modes: poly, mono, legato and unison, with glide by time or by rate.</p>
+    </section>
+    <section class="s-mod">
+      <h2>Modulation</h2>
+      <p>Per voice: three envelopes with hold, curves and key-scaled times, two LFOs, velocity, key, note random and
+      drift. Per part: two global LFOs, a looping global envelope, a 16-step sequencer with slides, four macros and a
+      chaos source.</p>
+      <p>A 24-slot matrix routes any of them to pitch, level, pan, any slot's values and the envelope times; each
+      routing can be scaled by a second source and bent by a curve.</p>
+    </section>
+    <section>
+      <h2>Notes in</h2>
+      <p>Chord memory (twelve chord shapes, or one learned from the keys), strum, and an arpeggiator with eleven
+      patterns, swing, ratchets, accents and Euclidean rhythms, all before the parts.</p>
+      <p>What each slot can hold, generator, processor or effect, is listed under the map.</p>
+    </section>
+    <section class="wide">
+      <h2>Sounds, and how they are checked</h2>
+      <p>118 factory presets in 13 rooms. The Conservatory holds 40 recorded acoustic instruments from free (CC0)
+      sample libraries, played through the Sample generator. The Museum holds classic synth sounds rebuilt from the
+      instruments' own patch data, or from a record when no data exists, and each is admitted only after a
+      side-by-side listening test against a recording of the real thing.</p>
+      <p>Every module has unit tests, and sounds are measured against recordings (harmonic levels, band levels,
+      envelopes, pitch) before they are judged by ear.</p>
+    </section>
+    <section class="wide">
+      <h2>Being built now</h2>
+      <ul>
+        <li><b>The master section as six free effect slots,</b> any of the effect types in any order, in place of the fixed chain of ten.</li>
+        <li><b>Key pressure, MPE pressure and slide, and the expression pedal</b> as working modulation sources.</li>
+        <li><b>Your own samples and wavetables,</b> loaded into the Sample, Grain and Wavetable generators.</li>
+        <li><b>Then the interface,</b> designed once the engine has settled.</li>
+      </ul>
+    </section>
+  </div>
+
+  <footer>Updated 14 November 2026 · <a href="https://github.com/tomcoolpxl/CoolSynth">Source on GitHub</a> · This page and its map are generated by
+  <code>tools/site/build_engine_map.py</code>.</footer>
+</div>
+</body>
+</html>
