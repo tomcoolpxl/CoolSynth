@@ -247,6 +247,19 @@ namespace coolsynth::synth::v3
             }
             const double feedbackDelta = (targetFeedback - currentFeedback) * inverse;
 
+            // An operator whose output meets only zeros all block (no level where it sounds, no depth where it
+            // modulates) is not worked out: what it would add is zero either way (decision D140). Operator 1 always
+            // sounds; operator 4's output also runs its own feedback memory, so it always runs.
+            std::array<bool, 4> needed { true, true, true, true };
+            for (std::size_t i = 1; i < 3; ++i)
+            {
+                const bool sounds = route.carrier[i] && (level[i] != 0.0 || levelDelta[i] != 0.0);
+                bool drives = false;
+                for (std::size_t to = 0; to < 4; ++to)
+                    drives = drives || (route.modulatedBy[to][i] && (index[i] != 0.0 || indexDelta[i] != 0.0));
+                needed[i] = sounds || drives;
+            }
+
             const float panAngle = (juce::jlimit(-1.0f, 1.0f, params.pan) + 1.0f) * 0.25f * juce::MathConstants<float>::pi;
             const float gainLeft = std::cos(panAngle), gainRight = std::sin(panAngle);
             const float amount = juce::jlimit(0.0f, 1.0f, params.combineAmount);
@@ -270,6 +283,8 @@ namespace coolsynth::synth::v3
                 for (int i = 3; i >= 0; --i)
                 {
                     const auto ui = static_cast<std::size_t>(i);
+                    if (! needed[ui])
+                        continue; // its output stays 0: every use multiplies it by a zero
                     double phase = kTwoPi * phases[ui];
                     for (std::size_t from = 0; from < 4; ++from)
                         if (route.modulatedBy[ui][from])

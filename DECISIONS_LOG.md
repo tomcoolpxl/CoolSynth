@@ -2773,3 +2773,25 @@ Three clickable mock-ups that differ only in navigation are in `docs/ui-v3-mocku
 section pages (knob 5 picks the slot, the main knob its pages); B, the main knob always browses
 sounds and knob 5 walks every page of the section; C, a signal map the main knob crosses and
 knob 5 descends. The user steers from there.
+
+## D140. The Comb and FM4 (2026-11-14)
+
+Asked what next ("Start designing the interface (Recommended)", "A preset that shows live
+grains", "Make FM4 and Comb cheaper too", "Back to the Museum"), the user chose **"Make FM4 and
+Comb cheaper too"** and **"A preset that shows live grains"**, with the rule of D138: the sound
+stays exactly the same.
+
+- **The Comb (taken):** it found each of its four read places with an integer remainder, and
+  both channels worked the same places out again: nine divisions a sample. Now the places are
+  worked out once for both lines, and wrapped with a comparison (the delay lies inside the line,
+  so one wrap gives what the remainder gave). About 7 % of real time for eight notes to under 4 %.
+- **FM4 (taken):** operators 2 and 3 skip their sine when, all block, their output meets only
+  zeros (no level where they sound, no depth where they modulate). Operator 1 always sounds and
+  operator 4 runs its own feedback memory, so they always run. A small gain, and only in patches
+  that leave an operator out.
+- **A faster sine for FM4, measured and dropped.** Its cost is four double sines a sample per
+  voice; a reduced polynomial (Taylor to r^19, within 1.5e-15 of std::sin over FM4's phases) took
+  13.4 ns a call against std::sin's 14.2 ns in this build: 6 % for output that is no longer bit
+  for bit the same. Not worth it, so the user was not asked.
+- Checked: all 118 presets rendered before and after; the 114 without randomness are bit for
+  bit the same.

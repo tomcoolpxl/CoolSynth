@@ -129,8 +129,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       (D136): key pressure and the expression pedal are built, MPE waits for an MPE controller;
     - processing cost, measured per module by the opt-in report (COOLSYNTH_CPU_REPORT=1,
       tests/V3ModuleCostReport.cpp; eight notes, optimised Debug): after D138 the ladder costs
-      about 8 % of real time, FM4 about 10 %, the Drive processor and the Comb about 6 to 7 %,
-      the VA saw under 2 %. FM4 and the Comb are the next to look at.
+      about 8 % of real time, FM4 about 7 % of its own (the sine itself: a faster one gains 6 %,
+      D140), the Drive processor about 6 %, the Comb under 4 %, the VA saw under 2 %.
 
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.

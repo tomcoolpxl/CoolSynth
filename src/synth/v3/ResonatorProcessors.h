@@ -223,35 +223,56 @@ namespace coolsynth::synth::v3
             for (int s = 0; s < numSamples; ++s)
             {
                 delay += delayStep;
-                left[s] = tick(lineLeft, dampLeft, left[s], fb, dampCoefficient, wet);
-                right[s] = tick(lineRight, dampRight, right[s], fb, dampCoefficient, wet);
-                write = (write + 1) % length;
+                // Both lines are read at the same place: worked out once (decision D140).
+                const Tap tap = tapAt(delay);
+                left[s] = tick(lineLeft, dampLeft, left[s], fb, dampCoefficient, wet, tap);
+                right[s] = tick(lineRight, dampRight, right[s], fb, dampCoefficient, wet, tap);
+                if (++write >= length) // what (write + 1) % length gives, without a division
+                    write = 0;
             }
         }
 
     private:
-        float read(std::span<float> line, float delaySamples) const noexcept
+        /** Where a delay reads: the four neighbours' places in the line and the fraction between the middle two. */
+        struct Tap
+        {
+            std::array<std::size_t, 4> index {};
+            float t = 0.0f;
+        };
+
+        Tap tapAt(float delaySamples) const noexcept
         {
             const float position = static_cast<float>(write) - delaySamples;
-            int base = static_cast<int>(std::floor(position));
-            const float t = position - static_cast<float>(base);
-            auto at = [&](int i)
+            const int base = static_cast<int>(std::floor(position));
+            Tap tap;
+            tap.t = position - static_cast<float>(base);
+            // The delay lies within the line, so a neighbour is at most one length behind: a single wrap gives what
+            // the remainder did, without the divisions.
+            for (int k = 0; k < 4; ++k)
             {
-                int index = i % length;
+                int index = base - 1 + k;
                 if (index < 0)
                     index += length;
-                return line[static_cast<std::size_t>(index)];
-            };
-            const float xm1 = at(base - 1), x0 = at(base), x1 = at(base + 1), x2 = at(base + 2);
+                else if (index >= length)
+                    index -= length;
+                tap.index[static_cast<std::size_t>(k)] = static_cast<std::size_t>(index);
+            }
+            return tap;
+        }
+
+        static float read(std::span<float> line, const Tap& tap) noexcept
+        {
+            const float xm1 = line[tap.index[0]], x0 = line[tap.index[1]], x1 = line[tap.index[2]], x2 = line[tap.index[3]];
+            const float t = tap.t;
             const float c1 = 0.5f * (x1 - xm1);
             const float c2 = xm1 - 2.5f * x0 + 2.0f * x1 - 0.5f * x2;
             const float c3 = 0.5f * (x2 - xm1) + 1.5f * (x0 - x1);
             return ((c3 * t + c2) * t + c1) * t + x0;
         }
 
-        float tick(std::span<float> line, float& dampState, float x, float fb, float dampCoefficient, float wet) noexcept
+        float tick(std::span<float> line, float& dampState, float x, float fb, float dampCoefficient, float wet, const Tap& tap) noexcept
         {
-            const float delayed = read(line, delay);
+            const float delayed = read(line, tap);
             dampState += (delayed - dampState) * dampCoefficient;
             float in = x + fb * dampState;
             in = 2.0f * dsp::fastTanh(0.5f * in); // soft limit: high feedback rings without running away
