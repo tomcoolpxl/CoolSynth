@@ -119,6 +119,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     ended still holds its voice until its release is over (up to 20 s on bells and mallets:
     no sound is lost, older voices are taken first, but it costs processing); install options
     and packs; the wine glasses as a source for the Grain generator.
+    For phase 9 (asked by the user on 14 November, D132): effect slots and a preset's noise
+    quick to reach, and saving one's own version of a preset.
 35. Left open by phases 2 to 8, in the order they would pay off:
     - effects as slot types, and with them the three insert slots per part (D72);
     - grains from another generator, which needs a buffer pool handed out by the part (D79);

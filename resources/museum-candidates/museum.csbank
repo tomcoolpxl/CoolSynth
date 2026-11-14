@@ -10,3 +10,24 @@
 # Contact Opening II was admitted on 14 November 2026 (decision D125).
 # The Fat Bass with the sizzle replaced the admitted Minimoog Fat Bass on 14 November 2026 (decision D128).
 # Minimoog Trilogy Lead was admitted on 14 November 2026 (decision D130).
+
+[Contact Opening II Grit]
+room = Museum
+# The twin of "Contact Opening II" (see resources/presets/12-museum.csbank) with the record's
+# grit: the user found the original "slightly grittier". On the record the space between the
+# sound's spectral lines holds a noise 43 to 45 dB under the strongest line of every band from
+# 150 Hz to 8 kHz. The lossless "Contact" has the same floor as the compressed file of the 1981
+# record, so it is in the recording itself (its tape, or the instrument), not added by a codec.
+# The clean preset has 68 to 80 dB there. Driving the filter harder does not fill it (distortion
+# lands on the lines); a white-noise generator in each voice does, through the voice's own
+# filter and loudness contour, so it rides on every note. Its level is set where the rebuild's
+# floor meets the record's.
+g1 = VA shape=saw pan=-0.8 level=0.8
+g2 = VA shape=saw fine=4 pan=0.8 level=0.8
+g3 = Noise type=white level=0.2
+p1 = Ladder cutoff=1800 res=0.05 key=0.35 drive=0 bass=0
+env1 = attack=87.5 decay=1000 sustain=1 release=300 velocity=1
+env2 = attack=10 decay=2940 sustain=0.65 release=2940 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.15 velToP1=0 drift=1
+play = mode=poly voices=16 voiceSpread=1
+master = 0

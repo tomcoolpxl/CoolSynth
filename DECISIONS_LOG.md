@@ -2453,3 +2453,27 @@ Read from the page's verdict store, and the user's words in the chat.
   the same distance in every band is what tape and a lossy file leave (this record reached us
   as AAC at 128 kbit/s), more than what an instrument does. Whether it goes into the sound is
   the user's choice; asked.
+
+## D132. The second Contact synth's gritty twin (2026-11-14)
+
+Asked how to handle the grit (pick list: "Second version to compare (Recommended)", "Put it
+straight into the sound", "As a switchable effect", "Leave it clean"), the user first asked
+whether he could add an effect himself later. Answer given: yes (three effect slots a part,
+Lo-fi has a hiss; a noise generator is a setting too), but only clumsily until the real
+interface exists: the plugin has a throwaway panel and no way to save a preset. Asked again
+("Leave it clean (Recommended)", "Also make a gritty twin", "Put the grit into it now"), he
+chose **"Also make a gritty twin"**.
+
+- **The grit belongs to the 1981 recording, not to the download.** The lossless "Contact" has
+  the same floor between the spectral lines over the same bars (-46.8, -44.3, -46.4, -46.9,
+  -42.4 dB under each band's strongest line) as the AAC file of the Sherbs record (-47.9, -44.6,
+  -46.0, -43.8, -40.6). D131's guess at the codec was wrong.
+- **Taken: candidate "Contact Opening II Grit"**, the admitted preset with a third generator,
+  white noise at 0.2, through the voice's own filter and loudness contour. White against pink:
+  pink falls 8 dB too far from the lowest band to the highest, white stays within 3. Level:
+  0.12 leaves the floor 3 to 5 dB under the record's, 0.2 within 0.4 to 3.3 dB (-47.9, -45.9,
+  -44.7, -42.6, -46.5 against -45.0, -44.9, -44.3, -43.4, -43.2). Its comparison has the first
+  synth underneath, as the clean one's has. The clean preset is untouched and stays admitted.
+- Noted for the interface (phase 9): effect slots and a preset's noise must be quick to reach,
+  and a player must be able to save his own version of a preset; the user asked for exactly
+  this ("can i later tweak the sound and add an effect myself easily").

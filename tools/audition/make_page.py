@@ -44,7 +44,6 @@ REJUDGE = {
     "Museum|Minimoog: Trilogy lead": "2026-11-14-strike",
     "Museum|Prophet-5: Sync II": "2026-11-14-joins",
     "Museum|Prophet-5: Brass": "2026-11-14-joins",
-    "Museum|Contact opening: the second synth": "2026-11-14-bass",
     "Museum|Contact opening: the first synth": "2026-11-14-tab",
 }
 
@@ -169,8 +168,12 @@ LISTEN_FOR = {
                                      "moment before it mellows. Listen to how the notes begin.",
     "Museum|Contact opening: the first synth": "As you asked, it no longer plays my reading of the notes: it plays the chords "
                                                "and the little tune as published for \"Contact\". Only the notes changed, not the sound.",
-    "Museum|Contact opening: the second synth": "You found the original slightly grittier. Nothing changed here yet: I measured "
-                                                "what the grit is and am asking you how you want it.",
+    "Museum|Contact opening: the second synth": "The clean one you admitted, unchanged. It is here only so you can compare it "
+                                                "with the gritty twin above.",
+    "Museum|Contact opening: the second synth, gritty twin": "The twin you asked for: the same sound with the record's faint "
+                                                             "noise riding on every note. Compare \"Mine\" here with the real "
+                                                             "one, and with the clean one below. Admit it to keep it as a "
+                                                             "second preset beside the clean one.",
     "Conservatory|Recorders": "Play the first clip, Soprano. The overdrive you heard on chords should be gone.",
 }
 
