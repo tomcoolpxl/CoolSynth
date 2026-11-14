@@ -1,5 +1,6 @@
 #include "MiniLab3Driver.h"
 
+#include "diagnostics/FlightRecorder.h"
 #include "interface/InterfaceModel.h"
 #include "midi/MiniLab3Protocol.h"
 
@@ -52,6 +53,7 @@ namespace coolsynth::standalone
         inputIdentifier = inInfo.identifier;
         input->start();
         send(ml::connect());
+        coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, "connected, DAW program");
         lastKnobValue.fill(-1);
         refreshDevice(true);
     }
@@ -83,15 +85,10 @@ namespace coolsynth::standalone
             if (message.isNoteOn())
             {
                 const int velocity = message.getVelocity();
-                const bool faulty = velocity <= 1;
+                if (velocity <= 1)
                 {
-                    const juce::ScopedLock lock(queueLock);
-                    noteLog.push_back(juce::Time::getCurrentTime().toString(false, true, true, true) + " note "
-                                + juce::String(message.getNoteNumber()) + " velocity " + juce::String(velocity)
-                                + (faulty ? "  (velocity-1 fault: played at " + juce::String(lastGoodVelocity) + ")" : juce::String()));
-                }
-                if (faulty)
-                {
+                    // the processor's flight recorder logs every note with its velocity; this one is the fault
+                    coolsynth::diag::record(coolsynth::diag::Event::velocityFixed, message.getNoteNumber(), lastGoodVelocity);
                     auto fixed = juce::MidiMessage::noteOn(message.getChannel(), message.getNoteNumber(),
                                                            static_cast<juce::uint8>(lastGoodVelocity));
                     fixed.setTimeStamp(message.getTimeStamp());
@@ -190,20 +187,9 @@ namespace coolsynth::standalone
     void MiniLab3Driver::timerCallback()
     {
         std::vector<juce::MidiMessage> pending;
-        std::vector<juce::String> notes;
         {
             const juce::ScopedLock lock(queueLock);
             pending.swap(queue);
-            notes.swap(noteLog);
-        }
-        if (! notes.empty())
-        {
-            if (noteLogFile == juce::File())
-                noteLogFile = juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile("CoolSynth-minilab-notes.log");
-            juce::String text;
-            for (const auto& line : notes)
-                text << line << "\n";
-            noteLogFile.appendText(text, false, false, "\n");
         }
         for (const auto& message : pending)
             apply(message);
@@ -225,6 +211,7 @@ namespace coolsynth::standalone
                 if (! present)
                 {
                     // the device is gone: drop the ports without talking to it
+                    coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, "unplugged");
                     input = nullptr;
                     output = nullptr;
                     inputIdentifier = {};

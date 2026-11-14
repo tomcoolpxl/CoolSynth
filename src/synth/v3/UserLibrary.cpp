@@ -276,9 +276,7 @@ namespace coolsynth::synth::v3
 
         // The sample: one recording over every key and velocity, as the file is.
         auto style = std::make_unique<LoadedStyle>();
-        constexpr int guard = LoadedStyle::guardFrames;
-        style->storage.assign(2u * static_cast<std::size_t>(frames + 2 * guard), 0.0f);
-        float* out = style->storage.data() + 2 * guard;
+        float* out = style->addRecording(frames);
         for (int i = 0; i < frames; ++i)
         {
             out[2 * i] = left[i];

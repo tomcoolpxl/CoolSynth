@@ -214,6 +214,12 @@ private:
     juce::String patchName { "Init" };
     mutable juce::CriticalSection patchIdentityLock;
 
+    // The flight recorder's tripwires (diagnostics/FlightRecorder.h): audio thread only.
+    void checkBlockTripwires(juce::AudioBuffer<float>& buffer, double startMs) noexcept;
+    void startFlightRecorderIfWanted();
+    float tripwireWorstMs = 0.0f, tripwirePeak = 0.0f;
+    int tripwireVoices = 0, tripwireClipped = 0, tripwireSamples = 0;
+
     std::unique_ptr<coolsynth::ui::InterfaceModel> interfaceModel; // last: it refers to the parameters
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)

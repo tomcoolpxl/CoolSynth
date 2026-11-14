@@ -116,6 +116,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/standalone/StandaloneAudioSupport.cpp
     src/standalone/StandaloneMidiInput.cpp
     src/standalone/MiniLab3Driver.cpp
+    src/diagnostics/FlightRecorder.cpp
     src/synth/Arpeggiator.cpp
     src/synth/GlobalDelay.cpp
     src/synth/GlobalFxRack.cpp

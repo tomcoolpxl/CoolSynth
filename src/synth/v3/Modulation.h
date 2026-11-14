@@ -145,6 +145,15 @@ namespace coolsynth::synth::v3
         }
         void setAmountTarget(float normalised) noexcept { amount.target = std::clamp(normalised, 0.0f, 1.0f); }
 
+        /** Jumps one value to its target. A choice (which instrument, which wave, a switch) must never slide
+            through the options between the old and the new one (D151: a sample slot sliding from one preset's
+            instrument to the next asked the library for every instrument in between, up to a gigabyte). */
+        void snap(int index) noexcept
+        {
+            auto& s = p[static_cast<std::size_t>(index)];
+            s.value = s.target;
+        }
+
         /** Jumps every value to its target: for reset and note start. */
         void snapToTargets() noexcept
         {

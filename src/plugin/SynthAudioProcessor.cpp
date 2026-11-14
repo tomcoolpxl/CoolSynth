@@ -12,6 +12,8 @@
 #include "midi/MidiToControllerEvent.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
+#include "BuildInfo.h"
+#include "diagnostics/FlightRecorder.h"
 #include "plugin/AuditionEditor.h"
 #include "plugin/PanelEditor.h"
 #include "interface/InterfaceModel.h"
@@ -278,6 +280,7 @@ void SynthAudioProcessor::valueTreeRedirected(juce::ValueTree&)
 
 void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
+    startFlightRecorderIfWanted();
     synthEngine.prepare(sampleRate, samplesPerBlock, getTotalNumOutputChannels());
     setLatencySamples(synthEngine.getLatencySamples());
     scopeFifo.clear();
@@ -312,6 +315,14 @@ bool SynthAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) con
 void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
     juce::ScopedNoDenormals noDenormals;
+    const double blockStartMs = juce::Time::getMillisecondCounterHiRes();
+    struct BlockTripwires
+    {
+        SynthAudioProcessor& owner;
+        juce::AudioBuffer<float>& audio;
+        double startMs;
+        ~BlockTripwires() { owner.checkBlockTripwires(audio, startMs); }
+    } tripwires { *this, buffer, blockStartMs };
     buffer.clear();
 
     if (panicRequested.exchange(false, std::memory_order_acq_rel))
@@ -333,6 +344,10 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             if (const auto event = makeEngineMidiEvent(metadata.getMessage(), metadata.samplePosition))
                 engineEvents[static_cast<size_t> (engineEventCount++)] = *event;
         }
+        if (const auto message = metadata.getMessage(); message.isNoteOn())
+            coolsynth::diag::record(coolsynth::diag::Event::noteOn, message.getNoteNumber(), message.getVelocity());
+        else if (message.isNoteOff())
+            coolsynth::diag::record(coolsynth::diag::Event::noteOff, message.getNoteNumber());
 
         if (juce::JUCEApplicationBase::isStandaloneApp())
             continue;
@@ -400,6 +415,60 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     }
 }
 
+void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, double startMs) noexcept
+{
+    namespace diag = coolsynth::diag;
+    if (! diag::FlightRecorder::instance().running())
+        return;
+    const int n = buffer.getNumSamples();
+    const double rate = getSampleRate() > 0.0 ? getSampleRate() : 48000.0;
+    const float budget = static_cast<float>(1000.0 * n / rate);
+    const float took = static_cast<float>(juce::Time::getMillisecondCounterHiRes() - startMs);
+
+    // broken values make clicks: count and silence them
+    int nonFinite = 0;
+    float peak = 0.0f;
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+    {
+        auto* data = buffer.getWritePointer(ch);
+        for (int i = 0; i < n; ++i)
+        {
+            if (! std::isfinite(data[i]))
+            {
+                data[i] = 0.0f;
+                ++nonFinite;
+            }
+            peak = std::max(peak, std::abs(data[i]));
+        }
+    }
+    if (nonFinite > 0)
+        diag::record(diag::Event::nonFinite, nonFinite);
+
+    const auto& stage = synthEngine.slowestStage();
+    if (took > budget)
+        diag::record(diag::Event::blockOverrun, stage.code, static_cast<int>(stage.milliseconds * 100.0f), took, budget);
+    else if (took > 0.5f * budget)
+        diag::record(diag::Event::blockSlow, stage.code, static_cast<int>(stage.milliseconds * 100.0f), took, budget);
+
+    // once per second of audio: a summary line
+    tripwireWorstMs = std::max(tripwireWorstMs, took);
+    tripwirePeak = std::max(tripwirePeak, peak);
+    tripwireVoices = std::max(tripwireVoices, synthEngine.activeVoiceCount());
+    tripwireClipped += synthEngine.consumeClippedSamples();
+    tripwireSamples += n;
+    if (tripwireSamples >= static_cast<int>(rate))
+    {
+        char peakText[16];
+        std::snprintf(peakText, sizeof(peakText), "%.1f", juce::Decibels::gainToDecibels(tripwirePeak, -120.0f));
+        diag::record(diag::Event::secondSummary, tripwireVoices, tripwireClipped, tripwireWorstMs, budget, peakText);
+        tripwireWorstMs = 0.0f;
+        tripwirePeak = 0.0f;
+        tripwireVoices = 0;
+        tripwireClipped = 0;
+        tripwireSamples = 0;
+    }
+}
+
 int SynthAudioProcessor::getNumPrograms()
 {
     return coolsynth::presets::getFactoryPresetCount();
@@ -461,9 +530,24 @@ void SynthAudioProcessor::setCurrentProgram(int index)
         return;
     currentProgram = index;
     const auto& preset = coolsynth::presets::getFactoryPreset(index);
+    coolsynth::diag::record(coolsynth::diag::Event::presetLoaded, index, 0, 0.0f, 0.0f, preset.name.toRawUTF8());
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
     coolsynth::presets::applyFactoryPreset(parameters, preset);
     setPatchIdentity(preset.name, false);
+}
+
+void SynthAudioProcessor::startFlightRecorderIfWanted()
+{
+    // The standalone app and the plugin record; tools and tests only when asked (COOLSYNTH_FLIGHT_LOG).
+    if (wrapperType != wrapperType_Undefined || juce::SystemStats::getEnvironmentVariable("COOLSYNTH_FLIGHT_LOG", {}).isNotEmpty())
+    {
+        auto& recorder = coolsynth::diag::FlightRecorder::instance();
+        const bool first = ! recorder.running();
+        recorder.start();
+        if (first)
+            coolsynth::diag::record(coolsynth::diag::Event::sessionStart, 0, 0, 0.0f, 0.0f,
+                                    coolsynth::build::getBuildIdentity().toRawUTF8());
+    }
 }
 
 coolsynth::ui::InterfaceModel& SynthAudioProcessor::getInterfaceModel()

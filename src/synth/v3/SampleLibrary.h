@@ -51,7 +51,20 @@ namespace coolsynth::synth::v3
         static constexpr int guardFrames = 16;
 
         std::vector<SampleZone> zones; // sorted by root, keys, velocities, then take: the takes of one zone lie together
-        std::vector<float> storage;
+        /** One block of memory per recording, never one for the whole instrument (D152): a single allocation of a
+            large instrument (979 MB for the Steinway) took Windows 115 ms and stalled the audio thread throughout. */
+        std::vector<std::unique_ptr<float[]>> recordings;
+        std::size_t storedFloats = 0;
+
+        /** Memory for one recording of `frames` stereo frames plus guard frames on both sides, silent; returns where
+            the frames start (guardFrames readable before and after). */
+        float* addRecording(int frames)
+        {
+            const auto floats = 2u * static_cast<std::size_t>(std::max(0, frames) + 2 * guardFrames);
+            recordings.push_back(std::make_unique<float[]>(floats)); // value-initialised: silence
+            storedFloats += floats;
+            return recordings.back().get() + 2 * guardFrames;
+        }
         float velocityTrack = 1.0f;  // 0: every note at full level (an organ); 1: level follows velocity squared
         float releaseSeconds = 0.5f; // the release the author gave the instrument: for presets, not used in playing
 
@@ -64,7 +77,7 @@ namespace coolsynth::synth::v3
             const float v = velocity < 0.0f ? 0.0f : velocity > 1.0f ? 1.0f : velocity;
             return 1.0f - velocityTrack + velocityTrack * v * v;
         }
-        [[nodiscard]] std::size_t bytes() const noexcept { return storage.size() * sizeof(float); }
+        [[nodiscard]] std::size_t bytes() const noexcept { return storedFloats * sizeof(float); }
     };
 
     class SampleLibrary final : private juce::Thread

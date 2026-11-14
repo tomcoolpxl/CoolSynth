@@ -31,12 +31,15 @@
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/BankFile.h"
 #include "presets/FactoryPresets.h"
+#include "synth/v3/InstrumentCatalogue.h"
+#include "synth/v3/SampleLibrary.h"
 
 namespace
 {
     // --rate and --block change these, to render as a live audio device runs (e.g. 44100 and 480)
     double kSampleRate = 48000.0;
     int kBlockSize = 256;
+    int backgroundInstrument = -1; // --background-load
 
     struct NoteEvent
     {
@@ -166,9 +169,63 @@ int main(int argc, char* argv[])
         return 1;
     }
 
+    // --background-load NAME: the library starts reading this instrument (its first style) in the background just
+    // before the render starts, without waiting: does reading it disturb the audio blocks?
+    if (const auto loadName = value("--background-load"); loadName.isNotEmpty())
+    {
+        const int instrument = coolsynth::synth::v3::InstrumentCatalogue::instance().find(loadName.toStdString());
+        if (instrument < 0)
+            std::cerr << "--background-load: no instrument named '" << loadName << "'\n";
+        else
+            backgroundInstrument = instrument;
+    }
+
     SynthAudioProcessor processor;
     processor.setPlayConfigDetails(0, 2, kSampleRate, kBlockSize);
     processor.prepareToPlay(kSampleRate, kBlockSize);
+
+    // --history "A;B;C": play these presets first through the same running engine (a chord held, then let go),
+    // as a player does before switching to the preset under test; what they leave behind is then heard.
+    for (const auto& earlierName : juce::StringArray::fromTokens(value("--history"), ";", ""))
+    {
+        const coolsynth::presets::FactoryPreset* earlier = nullptr;
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount() && earlier == nullptr; ++i)
+            if (coolsynth::presets::getFactoryPreset(i).name.equalsIgnoreCase(earlierName.trim()))
+                earlier = &coolsynth::presets::getFactoryPreset(i);
+        if (earlier == nullptr)
+        {
+            std::cerr << "--history: no preset named '" << earlierName << "'\n";
+            continue;
+        }
+        coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), *earlier);
+        processor.loadSampledInstrumentsNow();
+        // Many four-note chords, one after another, as the user played them: --history-chords per preset (default
+        // 12), each held for 0.4 s and followed by 0.1 s before the next.
+        juce::AudioBuffer<float> scratch(2, kBlockSize);
+        const int chords = juce::jlimit(1, 200, value("--history-chords", "12").getIntValue());
+        // --history-period: seconds from one chord to the next (default 0.5); held for 80 % of it
+        const double period = juce::jlimit(0.03, 5.0, value("--history-period", "0.5").getDoubleValue());
+        const int perChord = juce::jmax(2, static_cast<int>(period * kSampleRate / kBlockSize));
+        const int held = juce::jmax(1, perChord * 4 / 5);
+        static constexpr int roots[] { 48, 53, 55, 57, 60, 62, 64, 65 };
+        for (int c = 0; c < chords; ++c)
+        {
+            const int root = roots[c % 8];
+            for (int b = 0; b < perChord; ++b)
+            {
+                juce::MidiBuffer midi;
+                if (b == 0)
+                    for (int interval : { 0, 4, 7, 12 })
+                        midi.addEvent(juce::MidiMessage::noteOn(1, root + interval, static_cast<juce::uint8>(105)), 0);
+                if (b == held)
+                    for (int interval : { 0, 4, 7, 12 })
+                        midi.addEvent(juce::MidiMessage::noteOff(1, root + interval), 0);
+                scratch.clear();
+                processor.processBlock(scratch, midi);
+            }
+        }
+    }
+
     for (const auto& problem : coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset))
         std::cerr << problem << "\n";
     // --style N: the Nth style (from 0) of the sampled instrument in the first generator slot.
@@ -230,6 +287,10 @@ int main(int argc, char* argv[])
     rendered.clear();
     juce::AudioBuffer<float> block(2, kBlockSize);
     std::size_t next = 0;
+    double blockMillisSum = 0.0, blockMillisMax = 0.0;
+    int blockCount = 0;
+    if (backgroundInstrument >= 0)
+        (void) coolsynth::synth::v3::SampleLibrary::instance().request(backgroundInstrument, 0); // read in from now on
     for (int start = 0; start < total; start += kBlockSize)
     {
         const int n = std::min(kBlockSize, total - start);
@@ -250,11 +311,22 @@ int main(int argc, char* argv[])
         }
         juce::AudioBuffer<float> span(block.getArrayOfWritePointers(), 2, n);
         span.clear();
+        const double began = juce::Time::getMillisecondCounterHiRes();
         processor.processBlock(span, midi);
+        const double took = juce::Time::getMillisecondCounterHiRes() - began;
+        blockMillisSum += took;
+        blockMillisMax = std::max(blockMillisMax, took);
+        ++blockCount;
+        if (took > 2.0)
+            std::cout << "slow block at " << start / kSampleRate << " s: " << took << " ms\n";
         for (int ch = 0; ch < 2; ++ch)
             rendered.copyFrom(ch, start, span, ch, 0, n);
     }
     processor.releaseResources();
+    // How long the blocks took against the time they stand for: what a live audio device allows.
+    const double budget = 1000.0 * kBlockSize / kSampleRate;
+    std::cout << "blocks: mean " << blockMillisSum / std::max(1, blockCount) << " ms, worst " << blockMillisMax
+              << " ms, of " << budget << " ms each\n";
 
     const juce::File outFile(juce::File::getCurrentWorkingDirectory().getChildFile(outPath));
     outFile.getParentDirectory().createDirectory();

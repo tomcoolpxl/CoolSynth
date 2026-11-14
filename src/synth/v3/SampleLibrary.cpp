@@ -7,6 +7,8 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_formats/juce_audio_formats.h>
 
+#include "diagnostics/FlightRecorder.h"
+
 namespace coolsynth::synth::v3
 {
     const SampleZone* LoadedStyle::pick(float midiNote, float velocity, unsigned turn) const noexcept
@@ -128,17 +130,11 @@ namespace coolsynth::synth::v3
                  < std::tie(b.zone.root, b.zone.lowKey, b.zone.highKey, b.zone.lowVelocity, b.zone.highVelocity, b.zone.take);
         });
 
-        constexpr int guard = LoadedStyle::guardFrames;
-        std::size_t floats = 0;
-        for (const auto& row : rows)
-            floats += 2u * static_cast<std::size_t>(row.zone.frames + 2 * guard);
-        style->storage.assign(floats, 0.0f);
-
+        // Each recording its own memory, allocated just before it is decoded (D152): one allocation for the whole
+        // instrument (979 MB for the Steinway) took Windows 115 ms and stalled the audio thread for exactly as long.
         juce::FlacAudioFormat flac;
         juce::WavAudioFormat wav;
         juce::AudioBuffer<float> scratch;
-        std::size_t offset = 0;
-        std::vector<std::size_t> offsets;
         for (auto& row : rows)
         {
             const auto file = folder.getChildFile(row.file);
@@ -148,6 +144,9 @@ namespace coolsynth::synth::v3
                 juce::AudioFormat& format = file.hasFileExtension("wav") ? static_cast<juce::AudioFormat&>(wav) : flac;
                 reader.reset(format.createReaderFor(stream.release(), true));
             }
+            // This recording's place, silent until written, with guard frames on both sides.
+            float* out = style->addRecording(row.zone.frames);
+            row.zone.data = out;
             // What the manifest promises is what gets a place; a short or missing file leaves silence there.
             const int frames = reader != nullptr ? std::min(row.zone.frames, static_cast<int>(reader->lengthInSamples)) : 0;
             if (frames > 0)
@@ -156,7 +155,6 @@ namespace coolsynth::synth::v3
                 reader->read(&scratch, 0, frames, 0, true, true);
                 const float* left = scratch.getReadPointer(0);
                 const float* right = scratch.getReadPointer(reader->numChannels > 1 ? 1 : 0);
-                float* out = style->storage.data() + offset + 2u * static_cast<std::size_t>(guard);
                 const float level = gain * row.gain;
                 for (int i = 0; i < frames; ++i)
                 {
@@ -168,15 +166,10 @@ namespace coolsynth::synth::v3
             row.zone.loopEnd = std::min(row.zone.loopEnd, row.zone.frames);
             if (row.zone.loopEnd - row.zone.loopStart < 64 || row.zone.loopFade > row.zone.loopStart)
                 row.zone.loopStart = row.zone.loopEnd = row.zone.loopFade = 0;
-            offsets.push_back(offset + 2u * static_cast<std::size_t>(guard));
-            offset += 2u * static_cast<std::size_t>(row.zone.frames + 2 * guard);
         }
 
-        for (std::size_t i = 0; i < rows.size(); ++i)
-        {
-            rows[i].zone.data = style->storage.data() + offsets[i];
-            style->zones.push_back(rows[i].zone);
-        }
+        for (const auto& row : rows)
+            style->zones.push_back(row.zone);
         return style;
     }
 
@@ -247,7 +240,8 @@ namespace coolsynth::synth::v3
         if (slot == nullptr)
             return nullptr;
         slot->lastAsked.store(juce::Time::getMillisecondCounter(), std::memory_order_relaxed);
-        slot->wanted.store(true, std::memory_order_relaxed);
+        if (! slot->wanted.exchange(true, std::memory_order_relaxed))
+            diag::record(diag::Event::message, instrument, style, 0.0f, 0.0f, "instrument style asked for (instrument, style)");
         return slot->loaded.load(std::memory_order_acquire);
     }
 
@@ -293,12 +287,16 @@ namespace coolsynth::synth::v3
                     if (! slot.wanted.load(std::memory_order_relaxed) || slot.owner != nullptr || slot.notThere.load(std::memory_order_relaxed))
                         continue;
 
+                    const double readStart = juce::Time::getMillisecondCounterHiRes();
                     auto loaded = readStyle(root().getChildFile(styles[static_cast<std::size_t>(style)].folder));
                     if (loaded == nullptr || loaded->zones.empty())
                     {
                         slot.notThere.store(true, std::memory_order_relaxed);
+                        diag::record(diag::Event::styleMissing, instrument, style);
                         continue;
                     }
+                    diag::record(diag::Event::styleLoaded, instrument, style, static_cast<float>(loaded->bytes()) / 1048576.0f,
+                                 static_cast<float>(juce::Time::getMillisecondCounterHiRes() - readStart));
                     loadedBytes.fetch_add(loaded->bytes(), std::memory_order_relaxed);
                     slot.owner = std::move(loaded);
                     slot.loaded.store(slot.owner.get(), std::memory_order_release);
@@ -324,6 +322,8 @@ namespace coolsynth::synth::v3
             slot.wanted.store(false, std::memory_order_relaxed);
             slot.loaded.store(nullptr, std::memory_order_release);
             loadedBytes.fetch_sub(slot.owner->bytes(), std::memory_order_relaxed);
+            diag::record(diag::Event::styleDropped, static_cast<int>((&slot - slots.data()) / maxInstrumentStyles),
+                         static_cast<int>((&slot - slots.data()) % maxInstrumentStyles), static_cast<float>(slot.owner->bytes()) / 1048576.0f);
             slot.owner.reset();
             if (loadedBytes.load(std::memory_order_relaxed) <= memoryBudgetBytes)
                 return;

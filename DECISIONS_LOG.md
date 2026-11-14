@@ -2961,3 +2961,38 @@ From the user's first session with the built interface:
   it is still needed.
 - No sound at first: the app's output was the computer's own speakers; the user chose the USB card.
 - The render tool takes --rate and --block, to render as a live device runs.
+
+## D150. The flight recorder (2026-11-15)
+
+The user asked for tripwires and a log, so problems need no explaining after a session; it must
+not slow the audio. Built as the standard pattern for real-time audio (a lock-free ring from the
+audio thread to a logging thread, as JACK, PortAudio and CoreAudio hand data off):
+`src/diagnostics/FlightRecorder.*`. Fixed-size records, one atomic add to claim a slot, no locks
+or allocation; a background thread writes `%LOCALAPPDATA%\CoolSynth\logs\session-*.log` four times
+a second, the newest 20 kept; when it falls behind the oldest records are overwritten and counted.
+Tripwires: a block over half its time (slow) or over all of it (dropout) with the engine's slowest
+stage; NaN or infinity in the output (silenced and counted); a summary each second (worst block,
+voices, peak, samples into the clipper). Events: notes with velocity, presets loaded, instruments
+asked for, read in (size, time) and dropped, MiniLab connected or unplugged, velocity-1 fixes. On
+in the app and the plugin; in tools and tests with COOLSYNTH_FLIGHT_LOG set. The render tool also
+gained --history (sounds played first, --history-chords, --history-period), --background-load and
+block timing, to reproduce what a player does.
+
+## D151. A choice never slides (2026-11-15)
+
+Found with the flight recorder: after playing one sound, switching to a recorded instrument stalled
+the audio 14 to 145 ms (Init Wavetable before Violins: 145 ms every time). Every slot value glides to
+its new setting over 10 ms, choices too; the sample slot's "which instrument" slid from the old
+value to the new one and asked the library for every instrument in between, among them the 979 MB
+Steinway. Fixed in Voice::applySettings: a value whose unit is a choice jumps. Worst block after the
+same switches: under 1.1 ms (limit 10.9 ms at 44.1 kHz, 480 samples).
+
+## D152. No giant allocations while audio plays (2026-11-15)
+
+Found with the flight recorder and --background-load: while the library read an instrument, the
+audio stalled 115 to 142 ms, though the two threads share no code. The loader's one allocation of
+the whole instrument (979 MB for the Steinway) took Windows 115 ms, and the audio thread waited
+exactly as long. (First tried: reserving without zero-filling; no change, so not the cause.) Fixed:
+each recording its own memory (LoadedStyle::addRecording). A synth playing through the Steinway's
+read now peaks at 3.6 ms a block (alone: 1.2 ms). Recordings are read identically (Steinway's
+render peak unchanged to 0.00001 dB). Streaming from disk, as large samplers do, is the later step.

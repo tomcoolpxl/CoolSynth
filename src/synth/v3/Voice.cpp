@@ -251,8 +251,13 @@ namespace coolsynth::synth::v3
             const int type = std::clamp(s.type, 0, GeneratorSlot::typeCount - 1);
             if (type != g.slot.typeIndex())
                 g.slot.requestType(type);
+            const auto& d = GeneratorSlot::typeTable().descriptor(type);
             for (int k = 0; k < maxSlotParameters; ++k)
+            {
                 g.base.setTarget(k, s.p[static_cast<std::size_t>(k)]);
+                if (d.params[static_cast<std::size_t>(k)].unit == Unit::choice)
+                    g.base.snap(k); // a choice jumps, never slides through the options in between (D151)
+            }
             g.base.setLevelTarget(s.level);
             g.base.setPanTarget(s.pan);
             g.base.setPitchTarget(s.pitchSemitones);
@@ -266,8 +271,13 @@ namespace coolsynth::synth::v3
             const int type = std::clamp(s.type, 0, ProcessorSlot::typeCount - 1);
             if (type != p.slot.typeIndex())
                 p.slot.requestType(type);
+            const auto& d = ProcessorSlot::typeTable().descriptor(type);
             for (int k = 0; k < maxSlotParameters; ++k)
+            {
                 p.base.setTarget(k, s.p[static_cast<std::size_t>(k)]);
+                if (d.params[static_cast<std::size_t>(k)].unit == Unit::choice)
+                    p.base.snap(k); // a choice jumps (D151)
+            }
         }
 
         noteSlotCount = 0;

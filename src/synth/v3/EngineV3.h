@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <span>
+#include <utility>
 #include <vector>
 
 #include <juce_audio_basics/juce_audio_basics.h>
@@ -72,6 +73,21 @@ namespace coolsynth::synth::v3
         void panic() noexcept;
 
         [[nodiscard]] int getLatencySamples() const noexcept { return parts[0]->latencySamples(); }
+
+        // ---- For the flight recorder's tripwires (diagnostics/FlightRecorder.h), audio thread ----------------
+        struct StageTiming
+        {
+            int code = 0;              // diag::Stage: part A/B voices, inserts, master F1..F6
+            float milliseconds = 0.0f;
+        };
+        /** The slowest stage of the last block. */
+        [[nodiscard]] const StageTiming& slowestStage() const noexcept { return slowest; }
+        [[nodiscard]] int activeVoiceCount() const noexcept
+        {
+            return parts[0]->activeVoiceCountForTesting() + parts[1]->activeVoiceCountForTesting();
+        }
+        /** Samples since the last call that went into the output's soft clipper (above its knee), then zero. */
+        [[nodiscard]] int consumeClippedSamples() noexcept { return std::exchange(clippedSamples, 0); }
         /** The chord a part just learned, packed (see packLearnedChord), or 0. Audio thread; reading clears it. */
         [[nodiscard]] std::uint32_t consumeLearnedChord(int partIndex) noexcept
         {
@@ -149,6 +165,8 @@ namespace coolsynth::synth::v3
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;
         bool prepared = false;
         bool masterPrimed = false;
+        StageTiming slowest;      // flight recorder: the last block's slowest stage
+        int clippedSamples = 0;   // flight recorder: samples into the soft clipper's knee since last asked
         double hostRate = 48000.0;
         double freeBeats = 0.0; // the beat count while no host position drives it
     };

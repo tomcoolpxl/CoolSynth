@@ -5,6 +5,20 @@
 
 namespace coolsynth::synth::v3
 {
+    // The flight recorder's stage timing: two clock reads per stage, kept for the block's slowest one.
+    struct StageClock
+    {
+        EngineV3::StageTiming& slowest;
+        int code;
+        double start = juce::Time::getMillisecondCounterHiRes();
+        ~StageClock()
+        {
+            const float took = static_cast<float>(juce::Time::getMillisecondCounterHiRes() - start);
+            if (took > slowest.milliseconds)
+                slowest = { code, took };
+        }
+    };
+
     EngineV3::EngineV3()
     {
         for (auto& part : parts)
@@ -196,6 +210,7 @@ namespace coolsynth::synth::v3
         }
 
         const std::array<bool, partCount> active { settings.partMode != PartMode::bOnly, settings.partMode != PartMode::aOnly };
+        slowest = {};
         routeEvents(events, settings, active);
 
         std::array<int, partCount> voices { voicesWanted(settings.parts[0]), voicesWanted(settings.parts[1]) };
@@ -220,6 +235,7 @@ namespace coolsynth::synth::v3
             patch.arp.enabled = patch.arp.enabled && settings.mix[p].arp;
             patch.tuneSemitones = settings.mix[p].fineCents * 0.01f;
 
+            const StageClock stageClock { slowest, p == 0 ? 1 : 2 };
             part.render(partBuffers[p].getWritePointer(0), partBuffers[p].getWritePointer(1), n,
                         std::span<const EngineMidiEvent>(partEvents[p].data(), static_cast<std::size_t>(partEventCount[p])), patch, transport);
             soundOff = part.consumeSoundOff() || soundOff;
@@ -273,8 +289,11 @@ namespace coolsynth::synth::v3
                 continue;
 
             juce::AudioBuffer<float> partAudio(partBuffers[p].getArrayOfWritePointers(), 2, n);
+            const StageClock insertsClock { slowest, p == 0 ? 3 : 4 };
             for (std::size_t slot = 0; slot < inserts[p].size(); ++slot)
+            {
                 inserts[p][slot].process(partAudio, settings.inserts[p][slot], beat);
+            }
 
             const float* pl = partAudio.getReadPointer(0);
             const float* pr = partAudio.getReadPointer(1);
@@ -314,7 +333,10 @@ namespace coolsynth::synth::v3
 
         // The master slots, F1 to F6 in turn.
         for (std::size_t slot = 0; slot < masterSlots->size(); ++slot)
+        {
+            const StageClock masterClock { slowest, 10 + static_cast<int>(slot) };
             (*masterSlots)[slot].process(stereo, settings.master[slot], beat);
+        }
 
         // What the parts kept out of the effects joins here.
         if (dryUsed)
@@ -337,8 +359,10 @@ namespace coolsynth::synth::v3
         for (int i = 0; i < n; ++i)
         {
             const float g = masterGain.getNextValue();
-            l[i] = softClip(l[i] * g);
-            r[i] = softClip(r[i] * g);
+            const float a = l[i] * g, b = r[i] * g;
+            clippedSamples += (std::abs(a) > 0.8f ? 1 : 0) + (std::abs(b) > 0.8f ? 1 : 0);
+            l[i] = softClip(a);
+            r[i] = softClip(b);
         }
 
         const int channels = buffer.getNumChannels();
