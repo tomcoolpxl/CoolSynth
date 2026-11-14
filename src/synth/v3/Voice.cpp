@@ -56,6 +56,8 @@ namespace coolsynth::synth::v3
         released = false;
         stealRemaining = 0;
         envelopeHold = 0;
+        polyPressure = 0.0f;
+        pressurePrimed = false;
     }
 
     bool Voice::isActive() const noexcept
@@ -97,6 +99,8 @@ namespace coolsynth::synth::v3
         restartModules();
         pending = false;
         envelopeHold = generatorLatencySamples;
+        polyPressure = 0.0f;     // a fresh note: no pressure of its own yet,
+        pressurePrimed = false;  // and the keyboard's pressure and the pedal as they are now
         ModSources base = globals.sources;
         if (globals.frames != nullptr && globals.frameCount > 0)
             for (std::size_t k = 0; k < trackedGlobalSources.size(); ++k)
@@ -120,6 +124,7 @@ namespace coolsynth::synth::v3
         note = start;
         released = false;
         lfoRestartPending = true;
+        polyPressure = 0.0f; // a key struck again starts without pressure of its own; the smoothed value follows
         for (auto& g : generators)
             g.slot.strike(); // a string is plucked again; oscillators run on
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
@@ -174,6 +179,7 @@ namespace coolsynth::synth::v3
         }
         note.note = start.note;
         note.detuneCents = start.detuneCents;
+        polyPressure = 0.0f; // another key now: its own pressure starts at 0
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
     }
 
@@ -366,6 +372,25 @@ namespace coolsynth::synth::v3
         sources.set(ModSource::key, std::clamp((static_cast<float>(note.note) - 60.0f) / 64.0f, -1.0f, 1.0f));
         sources.set(ModSource::noteRandom, noteRandom);
         sources.set(ModSource::drift, driftValue);
+
+        // Key pressure (the larger of the whole keyboard's and this key's own) and the expression pedal, smoothed
+        // over about 10 ms: both arrive in 128 steps at uneven times, and a step on the loudness would click.
+        const float pressureTarget = std::max(std::clamp(globals.channelPressure, 0.0f, 1.0f), polyPressure);
+        const float expressionTarget = std::clamp(globals.expression, 0.0f, 1.0f);
+        if (! pressurePrimed)
+        {
+            pressureValue = pressureTarget;
+            expressionValue = expressionTarget;
+            pressurePrimed = true;
+        }
+        else
+        {
+            const float follow = 1.0f - std::exp(-static_cast<float>(n) / (pressureSmoothingSeconds * sampleRate));
+            pressureValue += (pressureTarget - pressureValue) * follow;
+            expressionValue += (expressionTarget - expressionValue) * follow;
+        }
+        sources.set(ModSource::aftertouch, pressureValue);
+        sources.set(ModSource::expression, expressionValue);
         sources.set(ModSource::env1, amp[n - 1]);
         sources.set(ModSource::env2, env2);
         sources.set(ModSource::env3, env3);

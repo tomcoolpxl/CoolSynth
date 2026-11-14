@@ -87,6 +87,29 @@ namespace
             return event;
         }
 
+        // Key pressure and the expression pedal (decision D136).
+        if (message.isChannelPressure())
+        {
+            event.type = EngineMidiEventType::channelPressure;
+            event.value = static_cast<float> (message.getChannelPressureValue()) / 127.0f;
+            return event;
+        }
+
+        if (message.isAftertouch())
+        {
+            event.type = EngineMidiEventType::polyPressure;
+            event.noteNumber = static_cast<uint8_t> (message.getNoteNumber());
+            event.value = static_cast<float> (message.getAfterTouchValue()) / 127.0f;
+            return event;
+        }
+
+        if (message.isControllerOfType(11))
+        {
+            event.type = EngineMidiEventType::expression;
+            event.value = static_cast<float> (message.getControllerValue()) / 127.0f;
+            return event;
+        }
+
         if (message.isAllNotesOff())
         {
             event.type = EngineMidiEventType::allNotesOff;

@@ -126,6 +126,9 @@ namespace coolsynth::synth
         allNotesOff,
         allSoundOff,
         resetControllers,
+        channelPressure, // the whole keyboard's pressure (channel aftertouch), value 0..1
+        polyPressure,    // one key's pressure (polyphonic aftertouch), noteNumber and value 0..1
+        expression,      // the expression pedal (CC 11), value 0..1
     };
 
     struct EngineMidiEvent

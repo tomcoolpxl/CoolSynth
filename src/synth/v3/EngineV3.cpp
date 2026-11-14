@@ -154,6 +154,13 @@ namespace coolsynth::synth::v3
                     }
                     break;
 
+                case EngineMidiEventType::polyPressure:
+                    // A key's pressure goes to the note that key sent each part (its transpose applied).
+                    for (int p = 0; p < partCount; ++p)
+                        if (const int sent = sentNote[static_cast<std::size_t>(p)][static_cast<std::size_t>(key)]; sent >= 0)
+                            pushNote(p, EngineMidiEventType::polyPressure, sent, event.value, event.sampleOffset);
+                    break;
+
                 case EngineMidiEventType::allNotesOff:
                 case EngineMidiEventType::allSoundOff:
                     for (auto& sent : sentNote)

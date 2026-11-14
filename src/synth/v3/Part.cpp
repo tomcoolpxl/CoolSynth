@@ -65,6 +65,8 @@ namespace coolsynth::synth::v3
         std::fill(busRight.begin(), busRight.end(), 0.0f);
         bendNormalised = 0.0f;
         wheel = 0.0f;
+        channelPressure = 0.0f;
+        expressionPedal = 0.0f;
         sustainDown = false;
         previousArpEnabled = false;
         lastNote = -1;
@@ -402,6 +404,11 @@ namespace coolsynth::synth::v3
         globals.bendSemitones = bendNormalised * std::clamp(settings.bendRangeSemitones, 0.0f, 48.0f) + settings.tuneSemitones;
         globals.sources.set(ModSource::bend, bendNormalised);
         globals.sources.set(ModSource::wheel, wheel);
+        // Each voice smooths these two (Voice::pressureSmoothingSeconds); a note starting reads them as they are.
+        globals.channelPressure = channelPressure;
+        globals.expression = expressionPedal;
+        globals.sources.set(ModSource::aftertouch, channelPressure);
+        globals.sources.set(ModSource::expression, expressionPedal);
     }
 
     void Part::handleEvent(const EngineMidiEvent& event, const PartSettings& settings) noexcept
@@ -442,6 +449,23 @@ namespace coolsynth::synth::v3
                 updateGlobals(settings);
                 break;
 
+            case EngineMidiEventType::channelPressure:
+                channelPressure = std::clamp(event.value, 0.0f, 1.0f);
+                updateGlobals(settings);
+                break;
+
+            case EngineMidiEventType::expression:
+                expressionPedal = std::clamp(event.value, 0.0f, 1.0f);
+                updateGlobals(settings);
+                break;
+
+            case EngineMidiEventType::polyPressure:
+                // Every voice on that note: a key held and its release tail, or the stack of a unison note.
+                for (auto& v : voices)
+                    if (v.isActive() && v.currentNote() == note)
+                        v.setPolyPressure(event.value);
+                break;
+
             case EngineMidiEventType::sustainPedal:
             {
                 const bool down = event.value >= 0.5f;
@@ -478,6 +502,10 @@ namespace coolsynth::synth::v3
             case EngineMidiEventType::resetControllers:
                 bendNormalised = 0.0f;
                 wheel = 0.0f;
+                channelPressure = 0.0f;
+                expressionPedal = 0.0f;
+                for (auto& v : voices)
+                    v.setPolyPressure(0.0f);
                 updateGlobals(settings);
                 if (sustainDown)
                 {

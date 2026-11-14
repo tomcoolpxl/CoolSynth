@@ -352,7 +352,7 @@ y = item(204, y, 338, "3 envelopes",
          "loop; one-shot")
 y = item(204, y, 338, "2 LFOs",
          "8 shapes with sample-and-hold and a 16-step staircase; in Hz or 16 tempo divisions; delay and fade-in")
-y = item(204, y, 338, "Per note", "velocity, release velocity, key position, a random value, a slow drift")
+y = item(204, y, 338, "Per note", "velocity, release velocity, key position, a random value, a slow drift, key pressure (the keyboard's or the key's own)")
 if y - 5 > MBY + MBH - 4:
     c.warn.append("per-voice sources overflow their box: %.0f" % y)
 
@@ -360,8 +360,8 @@ y = MBY + 42
 y = item(572, y, 346, "2 global LFOs", "one phase for all voices; song-position lock")
 y = item(572, y, 346, "Global envelope", "from a phrase’s first key, or from every key")
 y = item(572, y, 346, "16-step sequencer", "slide per step, 1 to 16 steps, tempo-locked")
-y = item(572, y, 346, "4 macros · chaos · wheel · bend", "(chaos: a slow random walk)")
-pl = "planned: aftertouch · MPE pressure and slide · expression pedal"
+y = item(572, y, 346, "4 macros · chaos · wheel · bend · pedal", "(chaos: a slow random walk; pedal: CC 11)")
+pl = "planned: MPE, each note with its own bend, pressure and slide"
 y += 6
 c.rect(566, y - 14, measure(pl, 11, italic=True) + 14, 20, fill=None, stroke="ink3", rx=4, sw=1.1, dash="4 3")
 c.text(573, y, pl, size=11, fill="ink3", italic=True, maxw=346)
@@ -840,8 +840,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
     </section>
     <section class="s-mod">
       <h2>Modulation</h2>
-      <p>Per voice: three envelopes with hold, curves and key-scaled times, two LFOs, velocity, key, note random and
-      drift. Per part: two global LFOs, a looping global envelope, a 16-step sequencer with slides, four macros and a
+      <p>Per voice: three envelopes with hold, curves and key-scaled times, two LFOs, velocity, key, note random,
+      drift and key pressure (the whole keyboard's or the key's own, whichever is larger). Per part: the expression
+      pedal, two global LFOs, a looping global envelope, a 16-step sequencer with slides, four macros and a
       chaos source.</p>
       <p>A 24-slot matrix routes any of them to pitch, level, pan, any slot's values and the envelope times; each
       routing can be scaled by a second source and bent by a curve.</p>
@@ -865,9 +866,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
     <section class="wide">
       <h2>Being built now</h2>
       <ul>
-        <li><b>Key pressure, MPE pressure and slide, and the expression pedal</b> as working modulation sources.</li>
         <li><b>Your own samples and wavetables,</b> loaded into the Sample, Grain and Wavetable generators.</li>
         <li><b>Then the interface,</b> designed once the engine has settled.</li>
+        <li><b>Later: MPE,</b> each note with its own bend, pressure and slide, for MPE controllers.</li>
       </ul>
     </section>
   </div>

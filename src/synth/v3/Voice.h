@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <type_traits>
@@ -161,6 +162,8 @@ namespace coolsynth::synth::v3
     struct VoiceGlobals
     {
         float bendSemitones = 0.0f;
+        float channelPressure = 0.0f; // 0..1: the whole keyboard's pressure; a voice smooths it with its key's own
+        float expression = 0.0f;      // 0..1: the expression pedal; each voice smooths it
         ModSources sources {}; // global sources; the voice adds its local ones on top
         LfoClock clock {};     // tempo, and song position at the start of the render call
         double ppqPerSample = 0.0;           // song position per voice sample
@@ -205,6 +208,11 @@ namespace coolsynth::synth::v3
         void legato(const NoteStart& note) noexcept;
         void release(float releaseVelocity = 0.5f) noexcept;
         void kill() noexcept { reset(); }
+        /** The pressure on this voice's own key (polyphonic aftertouch), 0..1. A new key starts at 0. */
+        void setPolyPressure(float value) noexcept { polyPressure = std::clamp(value, 0.0f, 1.0f); }
+
+        /** Key pressure and the expression pedal reach the matrix smoothed over about this long. */
+        static constexpr float pressureSmoothingSeconds = 0.01f;
 
         /** Adds the voice into left and right. */
         void render(float* left, float* right, int numSamples, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept;
@@ -283,6 +291,10 @@ namespace coolsynth::synth::v3
         float glideSpan = 0.0f;
         float releaseVelocity = 0.0f;
         float noteRandom = 0.0f;
+        float polyPressure = 0.0f;     // the key's own pressure, as last sent
+        float pressureValue = 0.0f;    // the aftertouch source: the larger of the two pressures, smoothed
+        float expressionValue = 0.0f;  // the expression source, smoothed
+        bool pressurePrimed = false;   // a fresh note takes both values as they are, without a ramp
         float driftStage = 0.0f;
         float driftValue = 0.0f;
         float driftTarget = 0.0f;

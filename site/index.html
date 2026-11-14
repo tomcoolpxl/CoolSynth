@@ -293,13 +293,14 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <text class="f-ink2" x="204" y="469" font-size="11.5"><tspan class="f-ink" font-weight="700">2 LFOs </tspan><tspan class="f-ink2">8 shapes with sample-and-hold and a 16-step staircase;</tspan></text>
 <text class="f-ink2" x="204" y="484" font-size="11.5"><tspan class="f-ink2">in Hz or 16 tempo divisions; delay and fade-in</tspan></text>
 <text class="f-ink2" x="204" y="504" font-size="11.5"><tspan class="f-ink" font-weight="700">Per note </tspan><tspan class="f-ink2">velocity, release velocity, key position, a random value, a</tspan></text>
-<text class="f-ink2" x="204" y="519" font-size="11.5"><tspan class="f-ink2">slow drift</tspan></text>
+<text class="f-ink2" x="204" y="519" font-size="11.5"><tspan class="f-ink2">slow drift, key pressure (the keyboard's or the key's own)</tspan></text>
 <text class="f-ink2" x="572" y="434" font-size="11.5"><tspan class="f-ink" font-weight="700">2 global LFOs </tspan><tspan class="f-ink2">one phase for all voices; song-position lock</tspan></text>
 <text class="f-ink2" x="572" y="454" font-size="11.5"><tspan class="f-ink" font-weight="700">Global envelope </tspan><tspan class="f-ink2">from a phrase’s first key, or from every key</tspan></text>
 <text class="f-ink2" x="572" y="474" font-size="11.5"><tspan class="f-ink" font-weight="700">16-step sequencer </tspan><tspan class="f-ink2">slide per step, 1 to 16 steps, tempo-locked</tspan></text>
-<text class="f-ink2" x="572" y="494" font-size="11.5"><tspan class="f-ink" font-weight="700">4 macros · chaos · wheel · bend </tspan><tspan class="f-ink2">(chaos: a slow random walk)</tspan></text>
-<rect class="s-ink3" x="566" y="506" width="327.69" height="20" rx="4" fill="none" stroke-width="1.1" stroke-dasharray="4 3"/>
-<text class="f-ink3" x="573" y="520" font-size="11" font-style="italic">planned: aftertouch · MPE pressure and slide · expression pedal</text>
+<text class="f-ink2" x="572" y="494" font-size="11.5"><tspan class="f-ink" font-weight="700">4 macros · chaos · wheel · bend · pedal </tspan><tspan class="f-ink2">(chaos: a slow random</tspan></text>
+<text class="f-ink2" x="572" y="509" font-size="11.5"><tspan class="f-ink2">walk; pedal: CC 11)</tspan></text>
+<rect class="s-ink3" x="566" y="521" width="320.97" height="20" rx="4" fill="none" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text class="f-ink3" x="573" y="535" font-size="11" font-style="italic">planned: MPE, each note with its own bend, pressure and slide</text>
 <polyline class="s-mod" points="930,472 946.05,472" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
 <polygon class="f-mod" points="952,472 945,475.22 945,468.78"/>
 <rect class="f-mod-bg s-mod-line" x="952" y="392" width="246" height="164" rx="6" stroke-width="1.2"/>
@@ -558,8 +559,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
     </section>
     <section class="s-mod">
       <h2>Modulation</h2>
-      <p>Per voice: three envelopes with hold, curves and key-scaled times, two LFOs, velocity, key, note random and
-      drift. Per part: two global LFOs, a looping global envelope, a 16-step sequencer with slides, four macros and a
+      <p>Per voice: three envelopes with hold, curves and key-scaled times, two LFOs, velocity, key, note random,
+      drift and key pressure (the whole keyboard's or the key's own, whichever is larger). Per part: the expression
+      pedal, two global LFOs, a looping global envelope, a 16-step sequencer with slides, four macros and a
       chaos source.</p>
       <p>A 24-slot matrix routes any of them to pitch, level, pan, any slot's values and the envelope times; each
       routing can be scaled by a second source and bent by a curve.</p>
@@ -583,9 +585,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
     <section class="wide">
       <h2>Being built now</h2>
       <ul>
-        <li><b>Key pressure, MPE pressure and slide, and the expression pedal</b> as working modulation sources.</li>
         <li><b>Your own samples and wavetables,</b> loaded into the Sample, Grain and Wavetable generators.</li>
         <li><b>Then the interface,</b> designed once the engine has settled.</li>
+        <li><b>Later: MPE,</b> each note with its own bend, pressure and slide, for MPE controllers.</li>
       </ul>
     </section>
   </div>

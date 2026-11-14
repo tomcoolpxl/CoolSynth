@@ -176,13 +176,14 @@
 <text x="204" y="469" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">2 LFOs </tspan><tspan fill="#B4C0CB">8 shapes with sample-and-hold and a 16-step staircase;</tspan></text>
 <text x="204" y="484" font-size="11.5" fill="#B4C0CB"><tspan fill="#B4C0CB">in Hz or 16 tempo divisions; delay and fade-in</tspan></text>
 <text x="204" y="504" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">Per note </tspan><tspan fill="#B4C0CB">velocity, release velocity, key position, a random value, a</tspan></text>
-<text x="204" y="519" font-size="11.5" fill="#B4C0CB"><tspan fill="#B4C0CB">slow drift</tspan></text>
+<text x="204" y="519" font-size="11.5" fill="#B4C0CB"><tspan fill="#B4C0CB">slow drift, key pressure (the keyboard's or the key's own)</tspan></text>
 <text x="572" y="434" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">2 global LFOs </tspan><tspan fill="#B4C0CB">one phase for all voices; song-position lock</tspan></text>
 <text x="572" y="454" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">Global envelope </tspan><tspan fill="#B4C0CB">from a phrase’s first key, or from every key</tspan></text>
 <text x="572" y="474" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">16-step sequencer </tspan><tspan fill="#B4C0CB">slide per step, 1 to 16 steps, tempo-locked</tspan></text>
-<text x="572" y="494" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">4 macros · chaos · wheel · bend </tspan><tspan fill="#B4C0CB">(chaos: a slow random walk)</tspan></text>
-<rect x="566" y="506" width="327.69" height="20" rx="4" fill="none" stroke="#8D9AA7" stroke-width="1.1" stroke-dasharray="4 3"/>
-<text x="573" y="520" font-size="11" font-style="italic" fill="#8D9AA7">planned: aftertouch · MPE pressure and slide · expression pedal</text>
+<text x="572" y="494" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">4 macros · chaos · wheel · bend · pedal </tspan><tspan fill="#B4C0CB">(chaos: a slow random</tspan></text>
+<text x="572" y="509" font-size="11.5" fill="#B4C0CB"><tspan fill="#B4C0CB">walk; pedal: CC 11)</tspan></text>
+<rect x="566" y="521" width="320.97" height="20" rx="4" fill="none" stroke="#8D9AA7" stroke-width="1.1" stroke-dasharray="4 3"/>
+<text x="573" y="535" font-size="11" font-style="italic" fill="#8D9AA7">planned: MPE, each note with its own bend, pressure and slide</text>
 <polyline points="930,472 946.05,472" fill="none" stroke="#FF93BC" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="5 4"/>
 <polygon points="952,472 945,475.22 945,468.78" fill="#FF93BC"/>
 <rect x="952" y="392" width="246" height="164" rx="6" fill="#3A1627" stroke="#B5507E" stroke-width="1.2"/>

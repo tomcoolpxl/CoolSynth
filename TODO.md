@@ -122,8 +122,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     For phase 9 (asked by the user on 14 November, D132): effect slots and a preset's noise
     quick to reach, and saving one's own version of a preset.
 35. Left open by phases 2 to 8, in the order they would pay off:
-    - key pressure (aftertouch), MPE pressure and slide, the expression pedal: listed as matrix
-      sources, fed by nothing yet;
+    - MPE: each note on its own MIDI channel with its own bend, pressure and slide (the MPE
+      Pressure and MPE Slide sources are listed but fed by nothing). Later, the user's choice
+      (D136): key pressure and the expression pedal are built, MPE waits for an MPE controller;
     - grains from another generator, which needs a buffer pool handed out by the part (D79);
     - user sample import (D78);
     - the VA generator's CPU cost (an eight-note saw chord is about 15 % of real time in the

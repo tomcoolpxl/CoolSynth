@@ -252,6 +252,8 @@ namespace coolsynth::synth::v3
         bool prepared = false;
         float bendNormalised = 0.0f;
         float wheel = 0.0f;
+        float channelPressure = 0.0f; // the whole keyboard's pressure, 0..1
+        float expressionPedal = 0.0f; // the expression pedal, 0..1 (0 until it moves)
         double hostRate = 48000.0;
         int maxBlock = 512;
         int decimatorLatency = 0;

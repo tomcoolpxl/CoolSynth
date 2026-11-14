@@ -177,6 +177,21 @@ namespace coolsynth::synth::v3
                     case EngineMidiEventType::noteOff:
                         keyUp(key, event.value, offset, inputs, writer);
                         break;
+                    case EngineMidiEventType::polyPressure:
+                    {
+                        // The pressure on a key reaches every note of the chord it plays.
+                        const auto& held = keys[static_cast<std::size_t>(key)];
+                        if (held.count == 0)
+                        {
+                            auto passed = event;
+                            passed.sampleOffset = offset;
+                            writer.write(passed, inputs);
+                            break;
+                        }
+                        for (int i = 0; i < held.count; ++i)
+                            writer.note(EngineMidiEventType::polyPressure, held.notes[static_cast<std::size_t>(i)], event.value, offset, inputs);
+                        break;
+                    }
                     case EngineMidiEventType::allNotesOff:
                     case EngineMidiEventType::allSoundOff:
                         reset();

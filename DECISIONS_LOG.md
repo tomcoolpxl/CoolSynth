@@ -2600,3 +2600,34 @@ engine map: https://tomcoolpxl.github.io/CoolSynth/ (`site/`, built by
 `tools/site/build_engine_map.py`, published by `.github/workflows/pages.yml` on every push that
 changes `site/`). The repository is public, so the page is too; it holds nothing private and no
 copyrighted material.
+
+## D136. Key pressure and the expression pedal (2026-11-14)
+
+The second part of D134. Asked first how far to go ("Full MPE (Recommended)", "Pressure and pedal,
+MPE light", "Only key pressure and pedal"), the user asked instead whether MPE keyboards are
+common and whether a slightly dearer keyboard than the MiniLab 3 would have been one. Checked
+online: the MiniLab 3's keys send no pressure, its pads do, each its own (MusicRadar); the KeyLab
+Essential mk3 has none on its keys, the KeyLab mk3 one pressure for the whole keyboard; MPE
+controllers are a niche of their own (Exquis, ROLI LUMI and Seaboard Block M about $270 to $350,
+LinnStrument and Osmose about $1,050 to $1,730). Asked again with that ("Pressure and pedal now
+(Recommended)", "Full MPE as well", "Own samples first"), the user chose **"Pressure and pedal
+now"**.
+
+- **The Aftertouch source of a voice is the larger of the whole keyboard's pressure (channel
+  aftertouch) and its own key's (polyphonic aftertouch) (taken).** A keyboard sends one kind or
+  the other; taking the larger means either works and neither cancels the other. Alternative:
+  two sources. One more name in every source menu for a difference no controller makes.
+- **Smoothed per voice over 10 ms, the macros' time (taken).** Pressure arrives in 128 steps at
+  uneven times; routed to the loudness, a step clicks (a test routes full pressure to silence and
+  finds the first millisecond still over half the level). A note struck while pressing starts at
+  that pressure, without a ramp from nothing; a key's own pressure starts at 0 with each new key.
+- **A key's pressure follows what the key plays (taken):** the engine sends it to the note that
+  key sent each part (its transpose applied), and chord memory to every note of the chord that
+  key holds.
+- **The expression pedal (CC 11) feeds Expression, 0 until the pedal moves (taken).** MIDI's
+  reset value for CC 11 is full; as a source "how far the pedal is down" reads better from 0, so
+  a preset that uses it does nothing until the pedal moves. Reset All Controllers sets both
+  pressures and the pedal to 0.
+- **MPE stays for later:** the MPE Pressure and MPE Slide sources stay in the menus, fed by
+  nothing; per-note bend would need each voice to follow its own MIDI channel. TODO item 35.
+- Checked: all presets render as before (none uses these sources).
