@@ -209,11 +209,36 @@
     "preset": "Contact Opening I",
     "admitted": true,
     "notes": "museum/contact/synth1b_notes.json",
-    "db": 3.0
+    "db": 0.0
    },
    "transcribed_with": "transcribe_held_chords.py <clip> 26.5 37.0 36 92 <out> side 9 12 auto window=4:24 (its chords, from the side signal), plus ... 28 46 <out> mid 2 10 auto window=4:26 (its bass, from the middle), merged; the first synth under it: ... 36 70 <out> mid 6 12 auto window=-14:3 (its flat oscillators)"
   },
   "reference": "The Sherbs, \"We Ride Tonight\" (1981), from where the second synth joins to just before the cymbals: both synths play (copyrighted: kept in the audition folder for this comparison only). My rebuild is both of mine together: the first synth you admitted, underneath, and the new second one. The notes of both are my reading of the record and will have errors.",
   "source": "No published settings: nobody has said which instrument this is. Built from what the record shows (bright sawtooths, every voice at its own place between the speakers, places changing from strike to strike), then fitted to it."
+ },
+ {
+  "id": "minimoog-fatbass-sizzle",
+  "title": "Minimoog: Fat Bass with the faint sizzle",
+  "preset": "Minimoog Fat Bass Sizzle",
+  "phrase": {
+   "file": "museum/minimoog/audio/synthmania/synthmania_soundcharts_1105_1203.flac",
+   "key_offset": 24,
+   "tune_cents": 0,
+   "stretches": [
+    {
+     "begin": 38.5,
+     "end": 45.32,
+     "notes": "museum/minimoog/fatbass_a_notes.json"
+    },
+    {
+     "begin": 51.5,
+     "end": 58.2,
+     "notes": "museum/minimoog/fatbass_b_notes.json"
+    }
+   ],
+   "transcribed_with": "transcribe_mono.py <clip> <begin> <end> 17 55 110 16 80 (the 32' oscillator is tracked; the key is two octaves above it; every note comes out struck)"
+  },
+  "reference": "A real Minimoog Model D set to this chart and played by SynthMania (\"Minimoog Sound Charts by Tom Rhea\", YouTube, copyrighted: kept in the audition folder for this comparison only). Two stretches of the riff, thirty notes; the stretch between them is left out because the player bends notes with the pitch wheel there. My rebuild plays the same notes, transcribed from the recording, every one struck anew as in the recording.",
+  "source": "Tom Rhea's Sound Charts for the Minimoog (Moog Music, 1974), page 15: oscillators, levels and switches as charted; the cutoff from the dial by the service manual's calibration. The filter's contour amount, emphasis, the contours' times and sustain are fitted to the recording. The chart's slight shaking of the filter by oscillator 3 is not in it. This version adds the faint sizzle the real one keeps above 3 kHz (a little of the oscillators passing the filter), fitted to the recording."
  }
 ]

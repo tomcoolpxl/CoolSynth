@@ -2280,3 +2280,26 @@ The user's choice after admitting the first ("Second Contact synth (Recommended)
   **Known gaps:** the band from 88 to 176 Hz is 6 dB short (the low B, G and A of the chords);
   left and right are 0.60 to 0.70 alike against the record's 0.46 to 0.51 (the record is
   wider: its two oscillators a voice may sit apart, or its room adds to it).
+
+## D124. The Fat Bass's sizzle as a second version; the second synth's gaps (2026-11-14)
+
+Asked what next (pick list: "Wait for my verdicts (Recommended)", "Second synth: close the
+gaps", "Fat Bass: add the faint sizzle", "Hoover or Juno-106 next"), the user wrote **"do option
+2 and 3"**.
+
+- **Fat Bass with the sizzle.** Fitted with the comparison reaching 66 dB under the recording's
+  level, the admitted preset's values held, only the leak and oscillator 3's shake free: **leak
+  0.0045** (47 dB under the oscillators) and **shake 0.17 octave** (was 0.4: with the leak
+  explaining the top, the fit wants less shake). The bands above 2.8 kHz, 6.5, 11.5 and 22.9 dB
+  short, are within 0.7, 1.3 and 3.6 dB; the cost falls from 4.32 to 3.43 dB. **How it is
+  offered (taken): as a second candidate, "Minimoog Fat Bass Sizzle", beside the same
+  recording; the admitted preset is not touched.** Refused: changing the admitted preset and
+  asking afterwards. If admitted, it replaces the admitted preset under its name.
+- **Second Contact synth, bass.** The record's strongest line in the chords is their root (B2,
+  A2, G2), not one voice among nine of equal strength; the keys from E2 to D3 are now played at
+  full velocity, the notes above at 70, the deepest bass at 28. The band from 88 to 176 Hz is
+  2.8 dB short (was 6).
+- **Second Contact synth, width.** On the record a note in both speakers has a different pitch
+  in each: the two oscillators of a voice sit apart. **Generator 1 at 0.8 left, generator 2 at
+  0.8 right of the voice's own place (taken; 0.5 was tried: narrower).** Left and right are
+  0.53 to 0.62 alike (were 0.60 to 0.70; the record 0.46 to 0.51).

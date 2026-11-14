@@ -56,12 +56,35 @@ room = Museum
 # by its behaviour (a reading, not a fact). Here that is Voice Spread (decision D122).
 # Fitted to ten seconds of the record with the first synth playing underneath: the cutoff, the
 # contour and the loudness' slow rise. A key's loudness follows how hard it is hit, so the
-# bass can sit under the chords as it does on the record.
-g1 = VA shape=saw level=0.8
-g2 = VA shape=saw fine=4 level=0.8
+# bass can sit under the chords as it does on the record. The two oscillators of a voice sit
+# apart (0.8 left and right of the voice's place): on the record a note that is in both
+# speakers has a slightly different pitch in each.
+g1 = VA shape=saw pan=-0.8 level=0.8
+g2 = VA shape=saw fine=4 pan=0.8 level=0.8
 p1 = Ladder cutoff=1800 res=0.05 key=0.35 drive=0 bass=0
 env1 = attack=87.5 decay=1000 sustain=1 release=300 velocity=1
 env2 = attack=10 decay=2940 sustain=0.65 release=2940 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.15 velToP1=0 drift=1
 play = mode=poly voices=16 voiceSpread=1
+master = 0
+
+[Minimoog Fat Bass Sizzle]
+room = Museum
+# The admitted "Minimoog Fat Bass" (see resources/presets/12-museum.csbank for the chart and
+# what was fitted) with one thing more: the recording of the real Model D keeps a faint sizzle
+# above 3 kHz through the whole note, about 60 dB under it, that a closed filter cannot leave.
+# An analogue signal path lets a little of its oscillators past the filter; that is the
+# ladder's Leak here (decision D122). Fitted with the comparison reaching 66 dB under the
+# recording's level: a leak of 0.0045 (47 dB under the oscillators), and with it the fit wants
+# less of oscillator 3's shake, 0.17 octave instead of 0.4. The bands above 2.8 kHz, which were
+# 6.5, 11.5 and 23 dB short, are within 0.7, 1.3 and 3.6 dB.
+# If the user admits this, it replaces the admitted preset under its name.
+g1 = VA shape=saw oct=-2 level=0.8
+g2 = VA shape=saw oct=-1 fine=3 level=0.8
+g3 = VA shape=saw oct=-1 fine=-2 level=0.8
+p1 = Ladder cutoff=902 res=0.06 key=1 drive=0 bass=0 fm=0.17 leak=0.0045
+env1 = attack=1 decay=624 sustain=0.75 release=624 decayCurve=-1 releaseCurve=-1 velocity=0
+env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.285 velToP1=0 drift=1
+play = mode=legato priority=low
 master = 0

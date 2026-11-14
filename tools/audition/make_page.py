@@ -49,6 +49,14 @@ REJUDGE = {
 
 # A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
 REMARKS = {
+    "Museum|Minimoog: Fat Bass with the faint sizzle": ("A second version of the Fat Bass you admitted. Yours is untouched.",
+                                                        "The real Minimoog keeps a very faint sizzle on top through each note, far "
+                                                        "under the note itself; a little of its raw sound slips past the filter. My "
+                                                        "admitted version has none of it. This version has it, measured against the "
+                                                        "recording, and with it a little less of the growl (the measurement asks for "
+                                                        "less once the sizzle is there). The difference is small: listen for air on "
+                                                        "top of the notes. If you admit this one it replaces the admitted Fat Bass; "
+                                                        "if you prefer yours, say so and this one goes away."),
     "Museum|Contact opening: the second synth": ("New. The heavier synth that joins the first one. Headphones show its width best.",
                                                  "From 26 seconds into \"We Ride Tonight\", where the second synth comes in, to just "
                                                  "before the cymbals. The real clip has both synths playing, so mine has both too: "
@@ -57,9 +65,11 @@ REMARKS = {
                                                  "note sits at its own place between the speakers and moves when it is struck "
                                                  "again. That is how an Oberheim polysynth behaves (my reading, not a fact). "
                                                  "The engine now does the same: each voice has its own place, and voices take turns. "
-                                                 "Known gaps: mine is a little narrower than the record, the bass around the low B "
-                                                 "is about 6 dB too quiet, and the notes of both synths are my reading of the "
-                                                 "record, with errors. Judge the sound more than the notes."),
+                                                 "Since the first version of this card I closed two gaps by about half: the bass "
+                                                 "around the low B (now about 3 dB too quiet, was 6) and the width (the two "
+                                                 "oscillators of each note now sit apart, as the record shows; mine is still a "
+                                                 "touch narrower). The notes of both synths are my reading of the record, with "
+                                                 "errors. Judge the sound more than the notes."),
     "Museum|Contact opening: the first synth": ("New. The first of the two synths, the one that plays alone.",
                                                 "From The Sherbs' \"We Ride Tonight\" (1981), which \"Contact\" samples. Nobody has "
                                                 "published which instrument it is, so this one is built from the recording itself. "
