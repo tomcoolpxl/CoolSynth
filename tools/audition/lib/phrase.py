@@ -7,6 +7,8 @@ notes_spec   the --notes text that makes a single-trigger, low-note-priority mon
              again), a legato one overlapping its neighbour (they run on). With low-note priority
              the pitch moves up when the lower key is let go and down when the lower key goes
              down, so the overlap is put on the side that moves the pitch at the transcribed time.
+poly_spec    the --notes text for a polyphonic part with held notes (transcribe_held_chords.py): every note as
+             listed, from its start for its length; a note held across a chord change is one long note.
 band_levels  the level of ten octave bands (31 Hz to 16 kHz) in 10 ms steps, in dB against the
              clip's own overall level, smoothed over 30 ms: what a listener compares, without
              needing the waveforms to line up.
@@ -35,6 +37,16 @@ def notes_spec(notes, key_offset, velocity=100):
             ends[i] = turn + OVERLAP
     velocities = [n.get("velocity", velocity) for n in notes]   # a transcription may say how hard each key was hit
     return ",".join(f"{k}:{max(0.0, s):.3f}:{max(0.02, e - s):.3f}:{v}" for k, s, e, v in zip(keys, starts, ends, velocities))
+
+
+def poly_spec(notes, key_offset=0, velocity=100, shift=0.0, limit=None):
+    out = []
+    for n in notes:
+        start = n["start"] + shift
+        length = n["length"] if limit is None else min(n["length"], limit - n["start"])
+        if length > 0.02:
+            out.append(f"{n['midi'] + key_offset}:{max(0.0, start):.3f}:{length:.3f}:{n.get('velocity', velocity)}")
+    return ",".join(out)
 
 
 def chords_spec(events, velocity=100, key_up_early=0.0):

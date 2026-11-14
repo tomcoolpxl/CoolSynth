@@ -2158,3 +2158,59 @@ Read from the page's verdict store after D117.
   first"), gave the original record as a file ("We Ride Tonight", The Sherbs, 1981), and added:
   "In the beginning, the first 40 seconds, there are two synths. The first starting synth, and
   then the heavier second part. It would be nice if you can identify both."
+
+## D120. The opening of "We Ride Tonight" ("Contact"): two synths, measured (2026-11-14)
+
+The user's choice, on the record he supplied as a file, with: "there are two synths. The first
+starting synth, and then the heavier second part. It would be nice if you can identify both."
+
+**What is known from sources:** nothing about the instruments. The opening of "Contact" is a
+sample of The Sherbs' "We Ride Tonight" (1981, album "Defying Gravity", keyboards Garth Porter,
+who said in 2013 "the bit they used was just my bit; the keyboard bit"). Album credits say
+"keyboards"; no interview, gear list or forum thread names a model. So both are identified by
+measurement, and the result is a reading, not a fact.
+
+**The record's timeline:** 1 to 3.5 s a fade-in; 3.5 to 26.4 s the first synth alone (level
+steady, left and right 0.92 alike); at 26.45 s the level rises 5 dB and from 26.95 s left and
+right are half alike or less: the second synth; cymbals from 37 s; the band at 44 s.
+
+**The first synth, measured:**
+- Every note is two lines of equal strength: G2 98.38 and 98.92 Hz, A3 219.46 and 221.72, B3
+  246.60 and 249.02. One set sits 13 to 16 cents sharp of concert pitch on every note (the
+  record's speed), the other 17 cents under it (9 on the G): two oscillators a voice, one
+  detuned flat, with the small differences from voice to voice that tuned analogue oscillators
+  have. Even harmonics as strong as odd: sawtooths.
+- The strongest lines fall 6 dB an octave up to 3 kHz (a sawtooth, unfiltered), are 6 dB under
+  that at 5 kHz and fall about 24 dB an octave more from 5 to 9 kHz: one four-pole low-pass.
+- At each new note the band above 4 kHz jumps 10 to 14 dB within 40 ms and is back after a
+  second: a filter contour with a fast attack and a slow decay. The loudness does not jump.
+- Side signal 13 to 15 dB under the middle: a mono instrument (the rest is the room).
+- Five or six notes at once at most, some of them harmonics of the bass.
+**Reading: a five-voice, two-oscillator, four-pole, mono instrument: a Prophet-5 above all.**
+A Yamaha CS-80 also has two detuned oscillators a note but 12 dB filters; a Jupiter-4 or
+Polysix has one oscillator a voice.
+
+**The second synth, measured (not built yet):**
+- Far brighter: its lines hold within 9 dB from 300 Hz to 4.7 kHz and reach 9 kHz.
+- Each note sits at its own place between the speakers, and the place changes when the note is
+  struck again: D6 (1180.7 Hz) is left of centre at 27.3 s, right at 29.0 s, left at 31.0 s; B5
+  right at 27.3 s, left at 34.8 s. Where a note is in both channels it has a different pitch
+  in each (F sharp 6: 1485.75 Hz left, 1487.94 right): two voices, not one voice in two places.
+**Reading: a polysynth whose voices are panned one by one and taken in turn: an Oberheim of
+the OB series** (stereo from the outset, per Sound On Sound; the OB-X emulation OB-Xf models
+its eight voice-pan knobs). An overdub of several takes panned apart would show the same in a
+single chord but not the change of place from one strike to the next.
+
+**Taken:** the first synth as candidate "Contact Opening I", built from the recording: two
+sawtooths 17 cents apart, the ladder, a contour of 15 ms attack. Fitted to 22 seconds of the
+record (60 notes read from it by the new `transcribe_held_chords.py`: chords that change
+without a break, notes found as the non-negative mix of sawtooth keys closest to the spectral
+lines, a note in two stretches running held across the change): cutoff 1.9 kHz at middle C
+following the keyboard, the contour 2 octaves up, falling over 4.4 s to 0.3, emphasis 0.025.
+The middle difference per band is 1.4 to 2.6 dB from 176 Hz to 5.6 kHz; the band under 88 Hz
+is 6 dB short (bass notes the reading missed, or the record's low end). The card says that
+notes may be wrong.
+
+**Open:** the second synth needs a part of its own and the first under it for a fair
+side-by-side from 26.5 s on; and the engine has no way yet to place each voice between the
+speakers except a random pan per note through the matrix.

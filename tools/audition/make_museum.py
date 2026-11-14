@@ -144,6 +144,20 @@ def from_phrase(entry, scratch):
     return rate, np.concatenate(pieces), ",".join(specs), at + 0.3
 
 
+def from_poly(entry, scratch):
+    """A stretch of a recording of a polyphonic part with held notes, and its notes (transcribe_held_chords.py)."""
+    spec = entry["poly"]
+    rate, x = read_any(os.path.join(audition, *spec["file"].split("/")), scratch)
+    x = stereo(x)
+    take = x[int(spec["begin"] * rate):int(spec["end"] * rate)].copy()
+    fade = int(0.03 * rate)
+    take[:fade] *= np.linspace(0.0, 1.0, fade, dtype=np.float32)[:, None]
+    take[-fade:] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]
+    notes = json.load(open(os.path.join(audition, *spec["notes"].split("/")), encoding="utf-8"))["notes"]
+    length = spec["end"] - spec["begin"]
+    return rate, take, phrase.poly_spec(notes, spec.get("key_offset", 0), spec.get("velocity", 100), limit=length), length + 0.3
+
+
 def from_excerpts(entry, scratch):
     """Single notes cut out of a recording: [start, length, key (, cents)] each, laid end to end."""
     spec = entry["excerpts"]
@@ -190,13 +204,13 @@ with tempfile.TemporaryDirectory() as scratch:
         if "alone" in entry:
             notes, seconds = entry["alone"]["notes"], entry["alone"]["seconds"]
         else:
-            builder = from_phrase if "phrase" in entry else from_excerpts if "excerpts" in entry else from_samples
+            builder = from_phrase if "phrase" in entry else from_excerpts if "excerpts" in entry else from_poly if "poly" in entry else from_samples
             rate, reference, notes, seconds = builder(entry, scratch)
             write_flac(os.path.join(out_dir, "reference.flac"), rate, level(reference), scratch)
 
         wav = os.path.join(scratch, "rebuild.wav")
         source = ["--preset", "Museum: " + entry["preset"]] if entry.get("admitted") else ["--preset", entry["preset"], "--bank", candidates]
-        tune = entry.get("phrase", entry.get("excerpts", {})).get("tune_cents", 0)
+        tune = entry.get("phrase", entry.get("excerpts", entry.get("poly", {}))).get("tune_cents", 0)
         if entry.get("_alone"):
             # Every note on its own, at the pitch the recording has it, put where the reference has that note.
             own_rate, y = 48000, None

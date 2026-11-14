@@ -49,6 +49,17 @@ REJUDGE = {
 
 # A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
 REMARKS = {
+    "Museum|Contact opening: the first synth": ("New. The first of the two synths, the one that plays alone.",
+                                                "From The Sherbs' \"We Ride Tonight\" (1981), which \"Contact\" samples. Nobody has "
+                                                "published which instrument it is, so this one is built from the recording itself. "
+                                                "What I can hear in it by measurement: every note is two sawtooth oscillators, one "
+                                                "tuned a little flat (that is the slow shimmer); one filter that jumps open at each "
+                                                "new note and closes over a few seconds; all of it nearly in the middle, not spread "
+                                                "left and right; never more than five or six notes at once. That is how a Prophet-5 "
+                                                "is built, more than anything else of 1980, but that is my reading, not a fact. "
+                                                "I had to read the chords from the recording too: a few inner notes and one or two "
+                                                "bass notes may be wrong, so judge the sound more than the notes. The second, heavier "
+                                                "synth is not built yet."),
     "Museum|TX81Z: LatelyBass": ("New. Bass speakers or headphones: its notes sit at 33 to 90 Hz.",
                                  "The house bass of the late eighties, from the instrument's own settings (read out of its "
                                  "firmware), nothing tuned by ear. It needed something my FM section did not have: the TX81Z's "

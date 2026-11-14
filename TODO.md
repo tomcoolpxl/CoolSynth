@@ -103,9 +103,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       candidate: the Minimoog Trilogy lead ("the beginning of a note in the reference
       instrument is still different", D118). TX81Z LatelyBass, from the instrument's own
       preset data, is the sixth (D117, admitted D119). Hoover and
-      Juno-106 still have no source. Asked for on 14 November: the slow brass-like synth that
-      opens Daft Punk's "Contact" (a sample of The Sherbs' "We Ride Tonight", 1981; no source
-      names the instrument, so it would be rebuilt from the recording alone).
+      Juno-106 still have no source. The opening of Daft Punk's "Contact" (a sample of The Sherbs'
+      "We Ride Tonight", 1981; no source names the instruments): the first synth is a candidate
+      built from the recording alone (D120), waiting for the user's ear; the second, heavier
+      synth (bright, every voice at its own place between the speakers) is measured but not
+      built.
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
     (start the `audition` preview server to hear it); marimba and kalimba corrected and
     accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in

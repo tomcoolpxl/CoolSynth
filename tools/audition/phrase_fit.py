@@ -11,7 +11,8 @@ The job is a JSON file: {"reference", "begin", "end", "notes", "key_offset", "pr
 "start": {name: value}, "steps": {name: [offsets]}, "scaled": [names moved by factors], "limits": {name: [low, high]},
 "tune_cents": how sharp the recorded instrument is, so the rebuild plays at its pitch,
 "cc": controller moves for the render ("time:number:value,..."), "key_up_early": seconds, for chords}.
-The notes file is a phrase (transcribe_mono.py) or chords (transcribe_chords.py).
+The notes file is a phrase (transcribe_mono.py), chords (transcribe_chords.py) or a polyphonic part with held
+notes (transcribe_held_chords.py).
 
 usage: python -I phrase_fit.py <CoolSynthRender.exe> <job.json> <rounds> [name=value ...]
 """
@@ -49,6 +50,8 @@ loud = ref_total > ref_total.max() - 30.0
 transcription = json.load(open(os.path.join(folder, job["notes"]), encoding="utf-8"))
 if "events" in transcription:  # chords: all keys of an event together
     spec = phrase.chords_spec(transcription["events"], key_up_early=job.get("key_up_early", 0.0))
+elif transcription["notes"] and "struck" not in transcription["notes"][0]:  # a polyphonic part with held notes
+    spec = phrase.poly_spec(transcription["notes"], job.get("key_offset", 0), job.get("velocity", 100))
 else:
     spec = phrase.notes_spec(transcription["notes"], job["key_offset"])
 extra = ["--cc", job["cc"]] if job.get("cc") else []

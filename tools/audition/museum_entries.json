@@ -176,5 +176,21 @@
   "reference": "A real Yamaha TX81Z playing its preset C15, recorded by SynthMania (copyrighted: kept in the audition folder for this comparison only). My rebuild plays the same notes, transcribed from the recording, each as hard as the recording's tone says it was hit. That recording is 20 cents sharp; the rebuild is tuned to it for this clip.",
   "source": "The instrument's own preset table, read out of its firmware (raybellis/TX81Z on GitHub), converted by the chip's rules (ymfm's OPZ core; the firmware's velocity table). Nothing is fitted to the recording.",
   "admitted": true
+ },
+ {
+  "id": "contact-opening-1",
+  "title": "Contact opening: the first synth",
+  "preset": "Contact Opening I",
+  "poly": {
+   "file": "museum/contact/we_ride_tonight_0_70.flac",
+   "begin": 4.3,
+   "end": 26.4,
+   "notes": "museum/contact/synth1_notes.json",
+   "key_offset": 0,
+   "tune_cents": 15,
+   "transcribed_with": "transcribe_held_chords.py <clip> 4.3 26.4 36 66 <out> mid 6 12"
+  },
+  "reference": "The Sherbs, \"We Ride Tonight\" (1981), the record Daft Punk sampled for \"Contact\": its first synth, playing alone (copyrighted: kept in the audition folder for this comparison only). My rebuild plays the chords as I could read them from the recording; a few inner notes may be wrong. The record runs 15 cents sharp; the rebuild is tuned to it for this clip.",
+  "source": "No published settings: nobody has said which instrument this is. Built from what the recording shows (two sawtooth oscillators a note, 17 cents apart; one steep low-pass that opens at each note and closes over seconds), then fitted to it."
  }
 ]
