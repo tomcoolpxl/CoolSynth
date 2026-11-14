@@ -2875,3 +2875,15 @@ The user's choices, asked as pick lists:
 - **Home's colour (chosen: teal, #23c4b5):** rejected white and gold. The sound browser's
   screen chip and knobs 1-4's rings take the same teal.
 - **Perform (open):** the user asked for an explanation before choosing where it goes.
+
+## D145. Perform lives in Home, on live pages (2026-11-14)
+
+After the explanation (chord memory, arpeggiator, voice mode: what acts on the notes before the
+sound), the user chose "Into the browser". Rejected: Perform as its own section map under
+Shift + pad 1; Perform on one of the recorder pads.
+
+- Home (the sound browser) is the live page. Knob 5 there turns the live pages: Macros (the
+  playing sound's four, teal), then Arp, Groove, Chord, Voice (lime). Knobs 1-4 play the open
+  page. Taken without asking: knob 5 gave up stepping to the next category for this, because
+  it is E's page knob everywhere else; categories are changed in the category list.
+- Shift + pad 1 no longer opens anything.

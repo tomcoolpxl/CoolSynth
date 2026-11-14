@@ -81,8 +81,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     the user's notes (D142) in `docs/ui-v3-mockups-2.html`: sounds one level up, pad 8 as Back.
     Chosen (D143): E, one map per section, with the sounds in categories and a ‹ Back row;
     (D144) pad 8 is Home, the sound browser, teal, Shift + pad 8 part A/B; no Back button.
-    Next: where Perform goes (the user asked for an explanation), the hardware screen, the
-    recorder.
+    (D145) Perform lives in Home: knob 5 turns live pages Macros, Arp, Groove, Chord, Voice.
+    Next: the hardware screen, the recorder.
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;
