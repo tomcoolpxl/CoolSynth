@@ -58,9 +58,9 @@ namespace coolsynth::ui
             case Tint::effects: return juce::Colour(0xffec5fa6);
             case Tint::perform: return juce::Colour(0xffa4d23f);
             case Tint::home:    return juce::Colour(0xff23c4b5);
-            case Tint::stop:    return juce::Colour(0xffc8d0d8);
+            case Tint::stop:    return juce::Colour(0xffffffff);
             case Tint::play:    return juce::Colour(0xff3ccf73);
-            case Tint::record:  return juce::Colour(0xfff0524f);
+            case Tint::record:  return juce::Colour(0xffff0000); // pure red: the pad's LED shows #f0524f as pink
         }
         return juce::Colours::grey;
     }
@@ -585,6 +585,53 @@ namespace coolsynth::ui
         touched();
     }
 
+    // ---- The mouse on the screen ---------------------------------------------------------------------
+
+    void InterfaceModel::clickListRow(int row)
+    {
+        const auto view = list();
+        if (row < 0 || row >= view.rows.size())
+            return;
+        if (typeList.open)
+            typeList.row = row;
+        else if (currentView == View::home)
+        {
+            if (browser.inCategory)
+                browser.row = row;
+            else
+                browser.category = row;
+        }
+        else
+            return;
+        pressMain();
+    }
+
+    void InterfaceModel::clickSlot(int slot)
+    {
+        if (currentView != View::section)
+            return;
+        typeList.open = false;
+        slotCursor[static_cast<std::size_t>(currentSection)] = clampInt(slot, 0, static_cast<int>(slotsOf(currentSection).size()) - 1);
+        touched();
+    }
+
+    void InterfaceModel::clickPage(int page)
+    {
+        if (typeList.open)
+            return;
+        if (currentView == View::home)
+            currentLivePage = clampInt(page, 0, livePageCount - 1);
+        else
+        {
+            const auto slot = currentSlot();
+            if (slot.pages.empty())
+                return;
+            pageOfSlot[slotKey(currentSection, slotCursor[static_cast<std::size_t>(currentSection)])]
+                = clampInt(page, 0, static_cast<int>(slot.pages.size()) - 1);
+        }
+        touched();
+    }
+
     // ---- What to show -----------------------------------------------------------------------------
 
     ListView InterfaceModel::list() const
@@ -750,7 +797,8 @@ namespace coolsynth::ui
         if (pad >= 4 && pad <= 6)
         {
             static constexpr std::array<Tint, 3> tints { Tint::stop, Tint::play, Tint::record };
-            return tintColour(tints[static_cast<std::size_t>(pad - 4)]).withMultipliedBrightness(0.12f);
+            // the user's choice on the device: clearly white, green and red, though the recorder comes later
+            return tintColour(tints[static_cast<std::size_t>(pad - 4)]);
         }
         return tintColour(Tint::home).withMultipliedBrightness(currentView == View::home ? 1.0f : 0.3f);
     }

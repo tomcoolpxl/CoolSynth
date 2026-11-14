@@ -78,8 +78,29 @@ namespace coolsynth::standalone
         // MIDI thread: keys and performance go straight to the sound, controls to the message thread.
         if (ml::decode(message).kind == ml::Control::Kind::other)
         {
-            if (! message.isSysEx())
-                keyCollector.addMessageToQueue(message);
+            if (message.isSysEx())
+                return;
+            if (message.isNoteOn())
+            {
+                const int velocity = message.getVelocity();
+                const bool faulty = velocity <= 1;
+                {
+                    const juce::ScopedLock lock(queueLock);
+                    noteLog.push_back(juce::Time::getCurrentTime().toString(false, true, true, true) + " note "
+                                + juce::String(message.getNoteNumber()) + " velocity " + juce::String(velocity)
+                                + (faulty ? "  (velocity-1 fault: played at " + juce::String(lastGoodVelocity) + ")" : juce::String()));
+                }
+                if (faulty)
+                {
+                    auto fixed = juce::MidiMessage::noteOn(message.getChannel(), message.getNoteNumber(),
+                                                           static_cast<juce::uint8>(lastGoodVelocity));
+                    fixed.setTimeStamp(message.getTimeStamp());
+                    keyCollector.addMessageToQueue(fixed);
+                    return;
+                }
+                lastGoodVelocity = velocity;
+            }
+            keyCollector.addMessageToQueue(message);
             return;
         }
         const juce::ScopedLock lock(queueLock);
@@ -119,6 +140,7 @@ namespace coolsynth::standalone
                 break;
             case Kind::shift:
                 shiftHeld = control.value != 0;
+                model.setHardwareShift(shiftHeld);
                 break;
             case Kind::pad:
                 if (control.value != 0)
@@ -168,9 +190,20 @@ namespace coolsynth::standalone
     void MiniLab3Driver::timerCallback()
     {
         std::vector<juce::MidiMessage> pending;
+        std::vector<juce::String> notes;
         {
             const juce::ScopedLock lock(queueLock);
             pending.swap(queue);
+            notes.swap(noteLog);
+        }
+        if (! notes.empty())
+        {
+            if (noteLogFile == juce::File())
+                noteLogFile = juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile("CoolSynth-minilab-notes.log");
+            juce::String text;
+            for (const auto& line : notes)
+                text << line << "\n";
+            noteLogFile.appendText(text, false, false, "\n");
         }
         for (const auto& message : pending)
             apply(message);

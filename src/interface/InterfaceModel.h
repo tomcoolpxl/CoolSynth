@@ -106,6 +106,14 @@ namespace coolsynth::ui
         /** Faders 0-3; with pickup the value takes over only once it meets the stored one. */
         void moveFader(int fader, float value01, bool pickup);
 
+        // ---- The mouse on the screen ----------------------------------------------------------
+        /** A click on a row of the list in view: moves there and presses (opens, loads, goes back, sets the type). */
+        void clickListRow(int row);
+        /** A click on a slot of the section map: focuses it. */
+        void clickSlot(int slot);
+        /** A click on a page tab: the live page in Home, the focused slot's page in a section. */
+        void clickPage(int page);
+
         // ---- State ------------------------------------------------------------------------
         [[nodiscard]] View view() const noexcept { return currentView; }
         [[nodiscard]] int section() const noexcept { return currentSection; }
@@ -114,6 +122,10 @@ namespace coolsynth::ui
         [[nodiscard]] bool inCategory() const noexcept { return browser.inCategory; }
         [[nodiscard]] int livePage() const noexcept { return currentLivePage; }
         [[nodiscard]] int revision() const noexcept { return changeCount; }
+
+        /** Shift held on the MiniLab, shared with the panel so its Shift lights and acts too. */
+        void setHardwareShift(bool held) noexcept { hardwareShift = held; touched(); }
+        [[nodiscard]] bool hardwareShiftHeld() const noexcept { return hardwareShift; }
 
         // ---- What to show -----------------------------------------------------------------
         [[nodiscard]] static juce::String sectionName(int section);
@@ -194,5 +206,6 @@ namespace coolsynth::ui
         std::array<float, 4> faderLast { -1.0f, -1.0f, -1.0f, -1.0f };
         Popup lastPopup;
         int changeCount = 0;
+        bool hardwareShift = false;
     };
 }

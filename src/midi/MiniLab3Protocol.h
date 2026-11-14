@@ -101,9 +101,9 @@ namespace coolsynth::midi::minilab3
 
     inline constexpr std::array<int, 8> knobControllers { 86, 87, 89, 90, 110, 111, 116, 117 };
     inline constexpr std::array<int, 4> faderControllers { 14, 15, 30, 31 };
-    inline constexpr int mainTurnController = 28;  // offset from 64: 65 is +1, 62 is -2
+    inline constexpr int mainTurnController = 28;  // tested: 65 one click right, 62 one click left
     inline constexpr int mainPressController = 118; // 127 pressed, 0 released
-    inline constexpr int shiftController = 27;      // from Ableton's script; not yet seen on the device
+    inline constexpr int shiftController = 27;      // tested: 127 pressed, 0 released (Oct and Hold send nothing)
     inline constexpr int padChannel = 10;
     inline constexpr int firstPadNote = 36;
 
@@ -130,7 +130,12 @@ namespace coolsynth::midi::minilab3
                 if (faderControllers[static_cast<std::size_t>(i)] == cc)
                     return { Control::Kind::fader, i, value };
             if (cc == mainTurnController)
-                return { Control::Kind::mainTurn, 0, value - 64 };
+            {
+                // Tested on the device: one click right is 65 (faster 66), one click left is 62 (faster 61);
+                // 63 never comes. So below 64 the step is value - 63.
+                const int steps = value > 64 ? value - 64 : (value < 64 ? value - 63 : 0);
+                return { Control::Kind::mainTurn, 0, steps };
+            }
             if (cc == mainPressController)
                 return { Control::Kind::mainPress, 0, value > 0 ? 1 : 0 };
             if (cc == shiftController)

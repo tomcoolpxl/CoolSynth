@@ -50,6 +50,12 @@ namespace coolsynth::standalone
 
         juce::CriticalSection queueLock;
         std::vector<juce::MidiMessage> queue;   // control messages from the MIDI thread
+        std::vector<juce::String> noteLog;      // raw key velocities, written to a file by the timer
+
+        // The MiniLab 3 firmware now and then sends a key's note-on with velocity 1 (Arturia forum, "Random
+        // Velocity=1 bug"): such a note takes the previous note's velocity instead. MIDI thread only.
+        int lastGoodVelocity = 100;
+        juce::File noteLogFile;
 
         bool shiftHeld = false;
         std::array<int, 8> lastKnobValue { -1, -1, -1, -1, -1, -1, -1, -1 };

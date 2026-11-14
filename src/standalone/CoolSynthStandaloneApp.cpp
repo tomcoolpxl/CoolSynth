@@ -40,11 +40,11 @@ public:
         addAndMakeVisible(&customOptionsButton);
 
         // A connected MiniLab 3 becomes the panel's hardware twin (docs/interface-v3.md section 5).
-        if (auto* pluginHolder = getPluginHolder())
-            if (auto* synth = dynamic_cast<SynthAudioProcessor*>(pluginHolder->processor.get()))
+        if (auto* host = getPluginHolder())
+            if (auto* synth = dynamic_cast<SynthAudioProcessor*>(host->processor.get()))
                 miniLab = std::make_unique<coolsynth::standalone::MiniLab3Driver>(synth->getInterfaceModel(),
-                                                                                  pluginHolder->deviceManager,
-                                                                                  pluginHolder->player.getMidiMessageCollector());
+                                                                                  host->deviceManager,
+                                                                                  host->player.getMidiMessageCollector());
     }
 
     void resized() override

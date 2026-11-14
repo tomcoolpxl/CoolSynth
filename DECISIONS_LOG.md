@@ -2942,3 +2942,22 @@ specification. Built, each with tests, Debug build clean, full suite passing:
   sound. Not yet verified on the device: Shift sending CC 27, the pads on channel 10.
 - The Debug build installs the VST3 again (`COOLSYNTH_ENABLE_VST3_USER_INSTALL=ON` in the build
   cache; it had been off).
+
+## D149. First use on the MiniLab: fixes (2026-11-14)
+
+From the user's first session with the built interface:
+
+- The main knob skipped an item going up: one click left sends 62, read as -2. Fixed (value - 63).
+- Shift on the MiniLab (CC 27) now lights and acts on the panel's Shift. Oct and Hold send nothing,
+  so the software cannot use them.
+- Pads 5-7 white, green, pure red (the LED showed #f0524f as pink), at full brightness.
+- The mouse on the screen: list rows, slots and page tabs are clicked, the knob cards dragged;
+  sections got page tabs like Home's live pages.
+- Notes now and then much quieter, better when hammered. Offline renders (48 and 44.1 kHz, runs,
+  overlaps, four sounds) play evenly, so the engine is not it. The MiniLab runs firmware 1.2.0,
+  for which Arturia users report random velocity-1 note-ons. The driver replaces a velocity of 1
+  or less with the previous note's and logs raw velocities, to confirm on the user's unit. The
+  keyboard velocity curve the user chose (Soft / Normal / Hard) waits until the log shows whether
+  it is still needed.
+- No sound at first: the app's output was the computer's own speakers; the user chose the USB card.
+- The render tool takes --rate and --block, to render as a live device runs.

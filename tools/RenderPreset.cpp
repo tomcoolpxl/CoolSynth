@@ -34,8 +34,9 @@
 
 namespace
 {
-    constexpr double kSampleRate = 48000.0;
-    constexpr int kBlockSize = 256;
+    // --rate and --block change these, to render as a live audio device runs (e.g. 44100 and 480)
+    double kSampleRate = 48000.0;
+    int kBlockSize = 256;
 
     struct NoteEvent
     {
@@ -119,6 +120,8 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    kSampleRate = juce::jlimit(22050.0, 192000.0, value("--rate", "48000").getDoubleValue());
+    kBlockSize = juce::jlimit(16, 4096, value("--block", "256").getIntValue());
     const auto presetName = value("--preset");
     const auto outPath = value("--out");
     const double seconds = juce::jlimit(0.1, 600.0, value("--seconds", "4").getDoubleValue());

@@ -38,8 +38,16 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
   app sends a pop-up in answer to each knob or fader message, never on its own.
 - **Knobs 1-8** send absolute CCs on channel 1: 86, 87, 89, 90, 110, 111, 116, 117 (knob 1
   checked). In the DAW program the device draws nothing by itself.
-- **Main knob:** turning sends CC 28 on channel 1 as an offset from 64 (65 = +1, 62 = -2;
-  fast turns send larger steps). Pressing sends CC 118, 127 on press and 0 on release.
+- **Main knob:** turning sends CC 28 on channel 1: one click right is 65 (faster 66), one click
+  left is **62** (faster 61); 63 never comes, so below 64 a step is value - 63. Pressing sends
+  CC 118, 127 on press and 0 on release.
+- **Shift** sends CC 27 on channel 1, 127 pressed and 0 released. **Oct -, Oct + and Hold send
+  nothing** on any of the four ports (guided test with every port open, 2026-11-14).
+- **Firmware 1.2.0** (identity reply `F0 7E 7F 06 02 00 20 6B 02 00 04 04 45 00 02 01 F7`, version
+  bytes lowest first). Arturia users report that this firmware now and then sends a key's note-on
+  with velocity 1 (https://forum.arturia.com/t/random-velocity-1-bug/5669); the driver gives such a
+  note the previous note's velocity and logs every key's raw velocity to
+  `%TEMP%\CoolSynth-minilab-notes.log`.
 
 ## The screen in CoolSynth (navigation E; D143-D146)
 

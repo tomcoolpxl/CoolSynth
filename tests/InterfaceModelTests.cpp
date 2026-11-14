@@ -229,7 +229,10 @@ public:
         using Kind = ml::Control::Kind;
         expect(kindOf(juce::MidiMessage::controllerEvent(1, 86, 40)) == Kind::knob);
         expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 117, 40)).index, 7);
-        expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 28, 62)).value, -2);
+        expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 28, 62)).value, -1); // one click left
+        expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 28, 61)).value, -2);
+        expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 28, 65)).value, 1);  // one click right
+        expect(ml::decode(juce::MidiMessage::controllerEvent(1, 27, 127)).kind == Kind::shift);
         expect(kindOf(juce::MidiMessage::controllerEvent(1, 118, 127)) == Kind::mainPress);
         expectEquals(ml::decode(juce::MidiMessage::controllerEvent(1, 31, 100)).index, 3);
         expectEquals(ml::decode(juce::MidiMessage::noteOn(10, 43, 0.8f)).index, 7);

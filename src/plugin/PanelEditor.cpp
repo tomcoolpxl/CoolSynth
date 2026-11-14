@@ -213,8 +213,59 @@ class PanelEditor::Screen final : public juce::Component
 public:
     explicit Screen(InterfaceModel& m) : model(m) {}
 
+    std::function<void()> onChanged;   // after a click changed the model
+    std::function<bool()> fine;        // Shift held: cards turn ten times finer
+
+    // The mouse: rows, slots and page tabs are clicked; the four cards are dragged like their knobs.
+    void mouseDown(const juce::MouseEvent& e) override
+    {
+        const auto p = e.getPosition();
+        for (int k = 0; k < 4; ++k)
+            if (cardAreas[static_cast<std::size_t>(k)].contains(p))
+            {
+                dragKnob = k + 1;
+                dragY = e.position.y;
+                return;
+            }
+        for (const auto& hit : hits)
+            if (hit.area.contains(p))
+            {
+                hit.action();
+                if (onChanged)
+                    onChanged();
+                return;
+            }
+    }
+
+    void mouseDrag(const juce::MouseEvent& e) override
+    {
+        if (dragKnob < 0)
+            return;
+        const int steps = static_cast<int>((dragY - e.position.y) / 6.0f);
+        if (steps != 0)
+        {
+            dragY -= static_cast<float>(steps) * 6.0f;
+            model.turnKnob(dragKnob, steps, fine && fine());
+            if (onChanged)
+                onChanged();
+        }
+    }
+
+    void mouseUp(const juce::MouseEvent&) override { dragKnob = -1; }
+
+    void mouseMove(const juce::MouseEvent& e) override
+    {
+        bool over = false;
+        for (const auto& area : cardAreas)
+            over = over || area.contains(e.getPosition());
+        for (const auto& hit : hits)
+            over = over || hit.area.contains(e.getPosition());
+        setMouseCursor(over ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+    }
+
     void paint(juce::Graphics& g) override
     {
+        hits.clear();
         const auto bounds = getLocalBounds().toFloat();
         g.setColour(colours::screen);
         g.fillRoundedRectangle(bounds, 6.0f);
@@ -282,6 +333,7 @@ public:
         {
             const auto view = model.knob(k);
             auto card = cards.removeFromLeft(cardWidth).reduced(3, 0);
+            cardAreas[static_cast<std::size_t>(k - 1)] = view.active ? card : juce::Rectangle<int>();
             g.setFont(mono(9.0f));
             g.setColour(colours::screenDim);
             g.drawText(view.role.toUpperCase(), card.removeFromTop(12), juce::Justification::centredLeft);
@@ -300,18 +352,31 @@ public:
             }
         }
 
-        // Home: the live pages, under the list
-        if (home)
+        // the page tabs, clickable: Home's live pages, or the focused slot's pages in a section
+        if (! typeList)
         {
+            juce::StringArray names;
+            int current = 0;
+            if (home)
+            {
+                names = model.livePageNames();
+                current = model.livePage();
+            }
+            else
+            {
+                const auto slot = model.currentSlot();
+                for (const auto& page : slot.pages)
+                    names.add(page.name);
+                current = model.pageIndexOf(model.section(), model.slotIndex(model.section()));
+            }
             auto tabs = area.removeFromBottom(22);
             float tx = static_cast<float>(tabs.getX());
-            const auto names = model.livePageNames();
             g.setFont(mono(10.5f));
             for (int i = 0; i < names.size(); ++i)
             {
                 const float w = static_cast<float>(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), names[i])) + 12.0f;
                 const auto tab = juce::Rectangle<float>(tx, static_cast<float>(tabs.getY()) + 2.0f, w, 17.0f);
-                const bool on = i == model.livePage();
+                const bool on = i == current;
                 if (on)
                 {
                     g.setColour(pageTint.withAlpha(0.22f));
@@ -321,6 +386,7 @@ public:
                 g.drawRoundedRectangle(tab, 3.0f, 1.0f);
                 g.setColour(on ? colours::screenInk : colours::screenDim);
                 g.drawText(names[i], tab, juce::Justification::centred);
+                hits.push_back({ tab.toNearestInt(), [this, i] { model.clickPage(i); } });
                 tx += w + 4.0f;
             }
         }
@@ -351,6 +417,7 @@ private:
         for (int i = first; i < juce::jmin(list.rows.size(), first + visible); ++i)
         {
             auto row = area.removeFromTop(rowHeight);
+            hits.push_back({ row, [this, i] { model.clickListRow(i); } });
             const bool on = i == list.cursor;
             if (on)
             {
@@ -409,6 +476,7 @@ private:
                 const auto& slot = slots[static_cast<std::size_t>(index)];
                 const bool on = index == focused;
                 auto box = line.removeFromLeft(58).reduced(0, 2).toFloat();
+                hits.push_back({ box.toNearestInt(), [this, index] { model.clickSlot(index); } });
                 if (on)
                 {
                     g.setColour(tint.withAlpha(0.3f));
@@ -455,7 +523,17 @@ private:
                    info, juce::Justification::centredLeft);
     }
 
+    struct Hit
+    {
+        juce::Rectangle<int> area;
+        std::function<void()> action;
+    };
+
     InterfaceModel& model;
+    std::vector<Hit> hits;
+    std::array<juce::Rectangle<int>, 4> cardAreas;
+    int dragKnob = -1;
+    float dragY = 0.0f;
 };
 
 // ---- The panel --------------------------------------------------------------------------------------
@@ -467,6 +545,8 @@ public:
         : owner(o), model(o.model), screen(o.model),
           keyboard(o.synth.getKeyboardState(), juce::MidiKeyboardComponent::horizontalKeyboard)
     {
+        screen.onChanged = [this] { owner.timerCallback(); };
+        screen.fine = [this] { return owner.shiftHeld(); };
         addAndMakeVisible(screen);
 
         mainKnob.isMain = true;
@@ -766,6 +846,12 @@ PanelEditor::PanelEditor(SynthAudioProcessor& processor)
 }
 
 PanelEditor::~PanelEditor() = default;
+
+bool PanelEditor::shiftHeld() const noexcept
+{
+    // the on-screen Shift (clicked or the computer's Shift key) or the MiniLab's own
+    return shiftLatched || shiftKeyDown || model.hardwareShiftHeld();
+}
 
 void PanelEditor::paint(juce::Graphics& g) { g.fillAll(juce::Colour(0xff131619)); }
 

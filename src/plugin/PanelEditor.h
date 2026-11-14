@@ -43,7 +43,7 @@ private:
     class Content;
 
     void timerCallback() override;
-    [[nodiscard]] bool shiftHeld() const noexcept { return shiftLatched || shiftKeyDown; }
+    [[nodiscard]] bool shiftHeld() const noexcept;
 
     SynthAudioProcessor& synth;
     coolsynth::ui::InterfaceModel& model;
