@@ -65,7 +65,7 @@ namespace coolsynth::presets
 
         const juce::StringArray& voiceKeys()
         {
-            static const juce::StringArray keys { "env2ToP1", "velToP1", "glide", "drift", "wheelToLfo1" };
+            static const juce::StringArray keys { "env2ToP1", "velToP1", "glide", "drift", "wheelToLfo1", "glideMode", "glideDown" };
             return keys;
         }
 

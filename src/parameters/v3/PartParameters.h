@@ -26,7 +26,7 @@
         pA.step.*           s1 .. s16 (-1..1), slide1 .. slide16, division, length, glide, retrigger
         pA.macro1 .. 4      macros, 0..1
         pA.chaos.rate       the chaos source's rate (Hz)
-        pA.voice.*          env2ToP1, velToP1, glide (ms), drift (cents), wheelToLfo1
+        pA.voice.*          env2ToP1, velToP1, glide (ms), glideMode, glideDown, drift (cents), wheelToLfo1
         pA.play.*           mode, priority, voices, unison, unisonDetune, unisonSpread, voiceSpread,
                             bendRange, glideLegato
         pA.chord.*          type, strum (ms, negative downwards), n1 .. n5 (the learned chord:
@@ -166,6 +166,8 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* env2ToP1 = nullptr;
         std::atomic<float>* velToP1 = nullptr;
         std::atomic<float>* glide = nullptr;
+        std::atomic<float>* glideMode = nullptr;
+        std::atomic<float>* glideDown = nullptr;
         std::atomic<float>* drift = nullptr;
         std::atomic<float>* mode = nullptr;
         std::atomic<float>* priority = nullptr;

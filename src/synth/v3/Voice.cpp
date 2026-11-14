@@ -458,8 +458,11 @@ namespace coolsynth::synth::v3
             currentPitch = targetPitch;
             return;
         }
-        const float step = glideSpan * static_cast<float>(n) / (settings.glideSeconds * sampleRate);
         const float remaining = targetPitch - currentPitch;
+        // By rate, the pitch covers an octave in the glide time (an analogue slew: a wider interval takes longer);
+        // by time, the whole interval. A downward glide may be slower, as on a Minimoog.
+        const float seconds = settings.glideSeconds * (remaining < 0.0f ? std::clamp(settings.glideDownFactor, 0.25f, 4.0f) : 1.0f);
+        const float step = (settings.glideByRate ? 12.0f : glideSpan) * static_cast<float>(n) / (seconds * sampleRate);
         currentPitch = std::abs(remaining) <= step ? targetPitch : currentPitch + std::copysign(step, remaining);
     }
 

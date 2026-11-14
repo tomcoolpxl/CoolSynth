@@ -64,9 +64,9 @@ public:
             }
 
             // each part: 3 generators x 21, 3 processors x 13, 3 envelopes x 13, 4 LFOs x 9, 24 matrix slots x 5,
-            // global envelope 12, step 16 + 16 + 4, 4 macros, chaos 1, 5 voice, 9 play, 8 chord, 10 mix, 3 inserts x 13;
+            // global envelope 12, step 16 + 16 + 4, 4 macros, chaos 1, 7 voice, 9 play, 8 chord, 10 mix, 3 inserts x 13;
             // then the part mode
-            constexpr int onePart = 3 * 21 + 3 * 13 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 5 + 9 + 8 + 10 + 3 * 13;
+            constexpr int onePart = 3 * 21 + 3 * 13 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 7 + 9 + 8 + 10 + 3 * 13;
             constexpr int partParameterCount = 2 * onePart + 1;
             expectEquals(registeredIds.size(), static_cast<int>(coolsynth::parameters::allParameterIds.size()) + partParameterCount);
 

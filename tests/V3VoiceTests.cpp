@@ -401,6 +401,36 @@ public:
             expectEquals(voice->pitchForTesting(), 48.0f);
         }
 
+        beginTest("glide_by_rate_takes_longer_for_a_wider_interval_and_may_be_slower_down"); // decision D126
+        {
+            auto settings = basicSettings(Wave::sine);
+            settings.glideSeconds = 0.1f; // an octave in a tenth of a second
+            settings.glideByRate = true;
+            auto voice = makeVoice();
+            auto up = noteAt(72);
+            up.glideFrom = 60;
+            voice->start(up);
+            renderVoice(*voice, settings, 2400); // 50 ms: half the octave
+            expectWithinAbsoluteError(voice->pitchForTesting(), 66.0f, 0.05f);
+            renderVoice(*voice, settings, 2880);
+            expectEquals(voice->pitchForTesting(), 72.0f);
+
+            auto fifth = noteAt(79); // seven semitones: 7/12 of the time, so the same speed
+            fifth.glideFrom = 72;
+            voice->legato(fifth);
+            renderVoice(*voice, settings, 2400);
+            expectWithinAbsoluteError(voice->pitchForTesting(), 78.0f, 0.05f);
+            renderVoice(*voice, settings, 960);
+            expectEquals(voice->pitchForTesting(), 79.0f);
+
+            settings.glideDownFactor = 2.0f; // down at half the speed
+            auto down = noteAt(67);
+            down.glideFrom = 79;
+            voice->legato(down);
+            renderVoice(*voice, settings, 2400); // 50 ms: three semitones, not six
+            expectWithinAbsoluteError(voice->pitchForTesting(), 76.0f, 0.05f);
+        }
+
         beginTest("local_and_global_sources");
         {
             auto settings = basicSettings(Wave::saw);

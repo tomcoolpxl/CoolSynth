@@ -390,6 +390,10 @@ namespace coolsynth::parameters::v3
         voice->addChild(floatParameter(voiceParameterId(part, "env2ToP1"), "Env 2 to P1", { -1.0f, 1.0f }, 0.2f, percentAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "velToP1"), "Velocity to P1", { -1.0f, 1.0f }, 0.0f, percentAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "glide"), "Glide", squaredRange(0.0f, 5000.0f), 0.0f, msAttributes()));
+        voice->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(voiceParameterId(part, "glideMode")), "Glide Mode",
+                                                                    juce::StringArray { "Time", "Rate" }, 0));
+        voice->addChild(floatParameter(voiceParameterId(part, "glideDown"), "Glide Down", { 0.25f, 4.0f }, 1.0f,
+                                       juce::AudioParameterFloatAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "drift"), "Drift", { 0.0f, 25.0f }, 0.0f, centsAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "wheelToLfo1"), "Wheel to LFO 1", { 0.0f, 1.0f }, 0.0f, percentAttributes()));
         group->addChild(std::move(voice));
@@ -526,6 +530,8 @@ namespace coolsynth::parameters::v3
         p.env2ToP1 = state.getRawParameterValue(voiceParameterId(part, "env2ToP1"));
         p.velToP1 = state.getRawParameterValue(voiceParameterId(part, "velToP1"));
         p.glide = state.getRawParameterValue(voiceParameterId(part, "glide"));
+        p.glideMode = state.getRawParameterValue(voiceParameterId(part, "glideMode"));
+        p.glideDown = state.getRawParameterValue(voiceParameterId(part, "glideDown"));
         p.drift = state.getRawParameterValue(voiceParameterId(part, "drift"));
         p.mode = state.getRawParameterValue(playParameterId(part, "mode"));
         p.priority = state.getRawParameterValue(playParameterId(part, "priority"));
@@ -662,6 +668,8 @@ namespace coolsynth::parameters::v3
         settings.voice.env2ToP1 = load(pointers.env2ToP1, 0.0f);
         settings.voice.velocityToP1 = load(pointers.velToP1, 0.0f);
         settings.voice.glideSeconds = 0.001f * load(pointers.glide, 0.0f);
+        settings.voice.glideByRate = loadInt(pointers.glideMode, 0) == 1;
+        settings.voice.glideDownFactor = load(pointers.glideDown, 1.0f);
         settings.voice.driftCents = load(pointers.drift, 0.0f);
 
         settings.playMode = static_cast<sv3::PlayMode>(juce::jlimit(0, 3, loadInt(pointers.mode, 0)));

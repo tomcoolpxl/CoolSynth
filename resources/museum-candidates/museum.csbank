@@ -12,35 +12,35 @@
 
 [Minimoog Trilogy Lead]
 room = Museum
-# "Emerson, Lake and Palmer's Trilogy", from the same Sound Charts page. The chart: oscillator 2
-# at 2' and level 8 carries the tune; oscillators 1 and 3 at 16', three octaves under it, at
-# level 2; all three on the square wave; filter cutoff -1, emphasis 6, amount of contour 3, both
-# keyboard-control switches on; filter contour attack 0, decay 800 msec, sustain 0; loudness
-# contour attack 0, decay 400 msec, sustain 10; glide at 5, decay switch on. One voice, the
-# lowest key sounds; a struck note starts the filter's sweep again, a joined one does not.
-# From the chart: ranges, levels, switches. Fitted to a recording of a real Model D set to this
-# chart, in which the player strikes every note: the pulse width (that instrument's "square"
-# is nearer a third than a half: its second harmonic is strong and its third nearly gone), the
-# cutoff (4.4 kHz at middle C; the dial reading alone would give 1.4 kHz), emphasis 6 (0.4),
-# the contour's time, and its reach: 0.7 octave. (An earlier fit, on octave bands over the whole
-# phrase, had 1.7 octaves from 2.7 kHz: as good band by band, but each note then lost its top
-# twice as fast as the recording's in its first sixth of a second, and the user kept hearing
-# the notes' beginnings as different. The chart's "amount of contour 3" is a small sweep too.) No glide: the chart has it on at 5, but in the
-# recording each new pitch is there within a hundredth of a second, and a glide of even 25 ms
-# made the notes' starts sound smoothed to the user.
-# Two things at a note's edges are the instrument's, not the chart's. The filter's sweep cannot
-# start at once: with the dial at 0 its brightness still takes about a hundredth of a second to
-# come up (the manual gives 10 ms as the shortest attack), which the user heard as "more of a
-# ramp up curve" where this preset opened in a thousandth. And a note dies in under a tenth of
-# a second when the key goes up, four times faster than the chart's decay time read as a
-# release would give.
+# "Emerson, Lake and Palmer's Trilogy", from Tom Rhea's Sound Charts for the Minimoog (Moog
+# Music, 1974, page 15). The chart: oscillator 2 at 2' and level 8 carries the tune; oscillators
+# 1 and 3 at 16', three octaves under it, at level 2; all three on the square wave; filter
+# cutoff -1, emphasis 6, amount of contour 3, both keyboard-control switches on; filter contour
+# attack 0, decay 800 msec, sustain 0; loudness contour attack 0, decay 400 msec, sustain 10;
+# glide at 5, decay switch on. One voice, the lowest key sounds.
+# From the chart: ranges, levels, switches. From a recording of a real Model D set to this
+# chart, measured and fitted:
+# - the pulse width (that instrument's "square" is nearer a third than a half), the cutoff
+#   (4.4 kHz at middle C), emphasis 6 (0.4), the contour's time and its reach (0.7 octave: the
+#   chart's "amount of contour 3" is a small sweep);
+# - the glide: the pitch slides into every note at a steady speed, about 5 ms a semitone going
+#   up and 12 coming down (63 slides measured: a fifth up takes 22 ms, an octave up 60, a fifth
+#   down 55). Glide by rate: 59 ms an octave, downward 2.4 times as long;
+# - the filter's sweep takes about a hundredth of a second to come up (the shortest attack the
+#   instrument has);
+# - a note whose key is lifted falls about 115 dB a second: between detached notes of the
+#   phrase the sound dips 7 to 14 dB before the next note starts.
+# Three earlier versions were refused by the user's ear at "the beginning of a note", each time
+# rightly: one joined notes that were struck, one had no glide at all (a measurement looked for
+# the new pitch inside a band too narrow to see it travel), and none lifted a key before the
+# next note, so no note began after a dip as the recording's do.
 g1 = VA shape=pulse pw=0.3 oct=-1 level=0.15
 g2 = VA shape=pulse pw=0.3 oct=2 level=0.8
 g3 = VA shape=pulse pw=0.3 oct=-1 fine=3 level=0.15
 p1 = Ladder cutoff=4412 res=0.405 key=1 drive=3 bass=0
-env1 = attack=2 decay=1140 sustain=1 release=300 decayCurve=-1 releaseCurve=-1 velocity=0
+env1 = attack=2 decay=1140 sustain=1 release=600 decayCurve=-1 releaseCurve=-1 velocity=0
 env2 = attack=10 decay=3850 sustain=0 release=3850 decayCurve=-1 releaseCurve=-1
-voice = env2ToP1=0.07 velToP1=0 drift=1
+voice = env2ToP1=0.07 velToP1=0 drift=1 glide=59 glideMode=rate glideDown=2.4
 play = mode=legato priority=low
 master = 0
 

@@ -148,7 +148,9 @@ namespace coolsynth::synth::v3
         std::array<Envelope::Parameters, envelopeCount> envelopes {}; // 1 drives the amplifier
         float env2ToP1 = 0.0f;     // -1..1, normalised offset on the first parameter of P1 (a filter's cutoff)
         float velocityToP1 = 0.0f; // -1..1, same destination, times the note velocity
-        float glideSeconds = 0.0f; // constant time, whatever the interval
+        float glideSeconds = 0.0f; // constant time, whatever the interval (or the time for an octave: glideByRate)
+        bool glideByRate = false;      // the glide runs at a constant rate: an octave takes glideSeconds, a fifth 7/12 of it
+        float glideDownFactor = 1.0f;  // a downward glide takes this many times as long as an upward one
         float driftCents = 0.0f;   // depth of the slow per-voice pitch drift
         std::array<LfoSettings, localLfoCount> lfos {};
         float wheelToLfo1 = 0.0f;  // 0..1: how much LFO1's depth follows the mod wheel

@@ -41,7 +41,7 @@ GRAIN_JUDGED = True
 # version stands; changing one sound again must not hide the verdicts given on the others meanwhile.
 REJUDGE = {
     "Museum|Minimoog: Emerson's Fat Bass": "2026-11-14-top",
-    "Museum|Minimoog: Trilogy lead": "2026-11-14-reach",
+    "Museum|Minimoog: Trilogy lead": "2026-11-14-glide",
     "Museum|Prophet-5: Sync II": "2026-11-14-joins",
     "Museum|Prophet-5: Brass": "2026-11-14-joins",
     "Conservatory|Recorders": "2026-11-14-joins",
@@ -105,7 +105,14 @@ REMARKS = {
                                       "of a second after a note starts, the real one loses its sparkle only half as fast as mine "
                                       "did. Mine swept its filter much too far at every note (and sat too dull at rest). It now "
                                       "sweeps a third as far from a brighter resting point; the first sixth of a second of the "
-                                      "notes now follows the real ones within a decibel."),
+                                      "notes now follows the real ones within a decibel. "
+                                      "Then you wrote that the beginning was still very, very different and that I might not be "
+                                      "seeing the note boundaries properly. You were right, twice over. First: on the real one the "
+                                      "pitch slides into every note (quickly: an octave up takes a sixteenth of a second, coming "
+                                      "down more than twice as long). I had measured that wrongly and taken the slide out; it is "
+                                      "back, at the real speeds. Second: the player lifts many keys before pressing the next one, "
+                                      "so the sound dips and the next note starts with a jump. Mine held every key down. It now "
+                                      "lifts the keys where the real player does, and its notes begin where the real slides begin."),
     "Museum|Prophet-5: Sync II": ("Changed since your verdict, listen again.",
                                   "You heard an extra small note between the notes. That was my cutting of the recording: each cut ran "
                                   "on into the next note of the player's phrase. Each cut now ends before the pitch leaves its note."),

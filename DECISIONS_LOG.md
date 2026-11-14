@@ -2318,3 +2318,36 @@ Read from the page's verdict store after D124.
   the recording looked at directly (waveform, pitch and level in millisecond steps), before
   anything else is changed.
 - Fat Bass with the sizzle, Recorders' Soprano: not judged yet.
+
+## D126. Trilogy: the note boundaries, seen at last (2026-11-14)
+
+On the verdict of D125 ("still very very different. maybe you dont see note boundaries
+properly"). The user was right; single boundaries of the recording were looked at directly,
+pitch and level every 5 ms.
+
+- **The pitch slides into every note.** 63 slides measured (the 2' oscillator's pitch every
+  2.5 ms by autocorrelation): upward about 5 ms a semitone (2 semitones in 8 to 10 ms, a fifth
+  in 22, an octave in 60), downward about 12 ms a semitone (a fifth in 52 to 85); the time
+  grows with the interval, so it is a slew at a steady speed, not a glide of fixed time. The
+  chart has glide on at 5. **D113/D116 took the glide out on a wrong measurement** (the new
+  pitch was looked for in a band a semitone wide round each note, which cannot show the
+  travel); every round since inherited it.
+- **Engine: glide by rate (taken).** `voice glideMode=rate`: the glide time is the time for an
+  octave; `glideDown`: a downward glide takes that many times as long. Refused: faking it with
+  the fixed-time glide (a second and an octave would take the same time: wrong at both ends).
+  Preset: `glide=59 glideMode=rate glideDown=2.4`. At a boundary of eight semitones the
+  rebuild's pitch now follows the recording's within 0.5 semitone every 5 ms.
+- **The notes start where the slides start.** The transcriber put a note's start where the
+  pitch was nearest the new note, in the middle of the slide or after it. The comparison's
+  notes are now read from the pitch track itself (`glide_stats.py`): a note starts where the
+  pitch leaves the note before it.
+- **The player lifts keys.** In 13 of 64 notes the level leaves its plateau before the next
+  note and falls about 65 to 115 dB a second, so the next note begins after a dip of 7 to 14
+  dB. The rebuild held every key to the next one. Key-up times are now read from the level
+  (2 dB under the note's plateau and 5 dB under 40 ms later). **Release 600 ms in this engine's
+  terms (taken: the rebuild's dips are then -7.0, -6.1, -9.3, -15.3 dB where the recording's
+  are -6.7, -7.9, -10.4, -13.8; 300 ms gave -13 to -29, a straight-line 250 ms -3 to -7).** D116
+  had 300 ms from the last notes of phrases, which die faster (20 dB in 85 ms): left as it is,
+  the dips inside the phrase are heard at every lifted key.
+- Left open: brightness from note to note differs from the recording's by up to 9 dB either
+  way (how the cutoff follows the keyboard), and the top's hold after 160 ms (D122).
