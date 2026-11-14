@@ -2732,3 +2732,44 @@ to build what the engine needs and log the options:
   with the slot at +12; frozen, the cloud keeps its pitch while the source bends up a tone, and
   running, it follows.
 - No factory preset uses it yet; every preset renders as before.
+
+## D140. The interface starts: the MiniLab 3 as the panel (2026-11-14)
+
+Phase 9 begins, decided with the user. The interface copies the Arturia MiniLab 3's layout and
+drives the real one: four buttons and two touch strips on the left, a screen with the clickable
+main knob under it (larger in software, same place), knobs 1 to 8 in two rows, four faders,
+eight RGB pads, a short row of keys. A small screen with four soft knobs whose job changes per
+page, mirrored on the screen, as on the M-VAVE FM-1 firmwares; never every parameter at once. A
+simple, modern surface on the deep engine; an advanced editor much later. Navigation uses two
+knobs: the main knob (with its press) and knob 5. Research by three agents on 2026-11-14: the
+MiniLab 3's protocol (Ableton's own remote script and an Arturia forum post), the FM-1 firmwares
+(Felucca, Melodee, Groove OS, ChoralRoot, CoralFlower, SLOOP, fm1-dock), and hardware and
+software synth navigation (Elektron, Hydrasynth, OP-1, Polyend, NKS, Push, Analog Lab). Choices
+the user made from pick lists:
+
+- **Knobs 1 to 4 on a sound's home page: fixed roles, named by the preset (taken).** Knob 1
+  tone, 2 character, 3 time, 4 movement on every sound; each preset names them and sets their
+  range (Neon Brass: Blare, Thickness, Swell, Shimmer). Alternatives: free per-preset macros
+  (Analog Lab; its most common complaint is vague names that differ per preset), fixed classic
+  controls (cutoff, resonance, attack, release; dead on sounds without a filter). Consequence:
+  every factory preset needs four macros written; none has any today.
+- **Faders: the mixer (taken).** Part A, Part B, effects amount, master, with pickup in the
+  software (the hardware has none). Alternatives: the amp envelope; drive, echo, space, master.
+- **Knobs 6 to 8: Glide, Brightness, Space, the same on every page (taken).** Brightness and
+  Space need a small engine hook (a tone tilt over the whole sound, an amount over the master
+  effects). Alternatives: left free for MIDI learn; three more page knobs.
+- **Pads: 1 to 4 open four colour-coded sections, 5 to 7 kept for the recorder (taken).**
+  Sound, Shape, Motion, Effects; Stop, Play, Record keep their printed meaning for the later
+  recorder. Alternatives: all eight as sections now; pads play notes and Shift navigates.
+
+Facts from the research that bind the design: only the MiniLab's DAW program lets software
+write its screen (two short text lines plus knob and fader pop-ups) and set any RGB colour per
+pad; there, knobs 1 to 8 are endless but report absolute values, and the software can set a
+knob's stored value so a page change never jumps; the main knob sends turn, press, Shift+turn
+and Shift+press as separate messages, and Shift has its own. Whether Hold, Oct and the strips
+reach the software is not known, so nothing depends on them.
+
+Three clickable mock-ups that differ only in navigation are in `docs/ui-v3-mockups.html`: A,
+section pages (knob 5 picks the slot, the main knob its pages); B, the main knob always browses
+sounds and knob 5 walks every page of the section; C, a signal map the main knob crosses and
+knob 5 descends. The user steers from there.

@@ -76,7 +76,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 32. Phase 8 done 2026-11-13: `src/synth/v3/Samples.h` and `.cpp` (five generated factory
    samples), `SampleGenerator.h`, `GrainGenerator.h`, `tests/V3SampleTests.cpp`; Observatory
    Granular Sky. The bank is complete at 68 presets.
-33. Phase 9: the real UI. Not started: it is designed with the user once the engine has settled.
+33. Phase 9: the real UI. Started 2026-11-14 (D140): the MiniLab 3 as the panel, research done,
+    four choices taken, three navigation mock-ups in `docs/ui-v3-mockups.html`. Next: the user
+    picks a navigation model; then pad 8, part switching, the hardware screen, the recorder.
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;
