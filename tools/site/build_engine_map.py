@@ -2,8 +2,8 @@
 """Builds the CoolSynth V3 engine page for GitHub Pages: the engine map and a few words around it.
 
 Writes into site/ at the repository root (published by .github/workflows/pages.yml):
-  index.html        the page (inline SVG, themed through CSS tokens, light and dark)
-  engine-map.svg    the diagram alone (fixed light colours, generic font family)
+  index.html        the page (inline SVG, always dark: the user finds the map most readable on it)
+  engine-map.svg    the diagram alone (fixed dark colours, generic font family)
 With --png it also writes engine-map.png, a raster of the drawing in Arial, 3200 px wide (not a browser
 rendering), and with --check check-light.png and check-dark.png for looking the layout over; neither is published
 unless copied in by hand.
@@ -423,9 +423,9 @@ c.text(CMID, 161, "MIX  A + B", size=12, weight=600, fill="ink", anchor="middle"
 c.arrow([(CMID, 172), (CMID, 196)], head=7)
 for i in range(6):
     fy = 196 + i * 38
-    c.rect(1460, fy, 102, 30, "surface", "fx-line", sw=1.3, dash="4 3")
-    c.text(1470, fy + 20, "FX %d" % (i + 1), size=12, weight=700, fill="fx")
-    c.text(1553, fy + 20, "planned", size=10.5, fill="ink3", italic=True, anchor="end")
+    c.rect(1460, fy, 102, 30, "fx-bg", "fx-line", rx=5, sw=1.3)
+    c.text(1470, fy + 20, "F%d" % (i + 1), size=12, weight=700, fill="fx")
+    c.text(1553, fy + 20, "any effect", size=10.5, fill="ink2", anchor="end")
     if i < 5:
         c.line([(CMID, fy + 30), (CMID, fy + 38)], sw=1.5)
 c.arrow([(CMID, 416), (CMID, 438)], head=7)
@@ -437,7 +437,7 @@ c.text(CMID, 504, "SOFT CLIPPER", size=10.5, weight=700, fill="ink", anchor="mid
 c.arrow([(CMID, 514), (CMID, 540)], head=7)
 c.rect(1460, 540, 102, 30, "ink", None, rx=15, sw=0)
 c.text(CMID, 560, "STEREO OUT", size=10.5, weight=700, fill="bg", anchor="middle", ls=0.6)
-for j, s in enumerate(["Today: ten effects in", "a fixed order (see the", "effect list below)."]):
+for j, s in enumerate(["Any of the 12 effects", "in any master slot,", "in slot order."]):
     c.text(CMID, 594 + j * 14, s, size=10.5, fill="ink2", anchor="middle", maxw=CW - 8)
 
 # =============================================================== the three type lists
@@ -514,10 +514,9 @@ FX_ROWS = [
     ("Delay", "tape or ping-pong; free, or 14 tempo-synced note values"),
     ("Plate reverb", "pre-delay, low cut, modulation; shimmer feeds the tail back an octave up"),
     ("Dynamics, EQ", "compressor · EQ with low shelf, tilt and high shelf · pump: tempo-synced ducking"),
-    ("Room", [R("24 early reflections of a box-shaped room into a 16-line feedback delay network; decay 0.1 to "
-                "1.2 s."), R("Inserts only.", i=True, f="ink2")]),
-    ("Grain", [R("replays the last 4 seconds as a cloud of up to 32 grains; freeze."),
-               R("Inserts only.", i=True, f="ink2")]),
+    ("Room", "24 early reflections of a box-shaped room into a 16-line feedback delay network; decay 0.1 to "
+             "1.2 s."),
+    ("Grain", "replays the last 4 seconds as a cloud of up to 32 grains; freeze."),
 ]
 panels = [
     dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 9 types · any type in any of the 3 slots",
@@ -528,11 +527,10 @@ panels = [
          note=[R("Three in series, per voice: a chord is filtered, folded and driven note by note, before the "
                  "notes are summed.")],
          italic=False),
-    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 12 effects · 3 insert slots per part",
+    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 12 effects · 3 slots per part · 6 master slots",
          rows=FX_ROWS, namew=100,
-         note=[R("Master section today: the first ten (drive to pump) in this order, then gain and a soft "
-                 "clipper. Each part sets what share of it passes through them."),
-               R("Planned: six free master slots.", i=True)],
+         note=[R("Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper. "
+                 "Each part sets what share of it passes through them.")],
          italic=False),
 ]
 need = 0.0
@@ -627,7 +625,7 @@ def colour_attr(kind, token, mode, classes):
     if mode == "html":
         classes.append(("f-" if kind == "fill" else "s-") + token)
         return ""
-    return '%s="%s"' % (kind, LIGHT[token])
+    return '%s="%s"' % (kind, DARK[token]) # the standalone map is dark like the page
 
 
 def render_svg(mode):
@@ -719,15 +717,15 @@ def render_svg(mode):
 ARIA = ("CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play "
         "mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or "
         "AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation "
-        "sources and a 24-routing matrix feed the voice from below. Both parts are mixed into a master effect "
-        "section, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types "
+        "sources and a 24-routing matrix feed the voice from below. Both parts are mixed into six master effect "
+        "slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types "
         "and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.")
 
 svg_open_standalone = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" '
                        'font-family="sans-serif" role="img" aria-label="%s">' % (W, H, W, H, escape(ARIA)))
 standalone = ('<?xml version="1.0" encoding="UTF-8"?>\n' + svg_open_standalone +
               "\n<title>CoolSynth V3 engine architecture</title>\n" +
-              '<rect x="0" y="0" width="%d" height="%d" fill="%s"/>\n' % (W, H, LIGHT["bg"]) +
+              '<rect x="0" y="0" width="%d" height="%d" fill="%s"/>\n' % (W, H, DARK["bg"]) +
               render_svg("svg") + "\n</svg>\n")
 with open(os.path.join(OUT, "engine-map.svg"), "w", encoding="utf-8", newline="\n") as fh:
     fh.write(standalone)
@@ -762,20 +760,11 @@ page ="""<!doctype html>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Semi+Condensed:wght@400;700&display=swap">
 <style>
 /* Layout: one wide figure first. The signal flow is a left-to-right spine; the type lists and notes hang beneath
-   it. A few short sections follow in a reading column. */
+   it. A few short sections follow in a reading column. Always dark: the map reads best on it (the user's choice). */
 :root {
-%(light)s
+%(dark)s
   --font-text: "Barlow", "Helvetica Neue", Arial, sans-serif;
   --font-display: "Barlow Semi Condensed", "Barlow", "Arial Narrow", Arial, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-%(dark1)s
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-%(dark2)s
   color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -861,7 +850,8 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
       <h2>Notes in</h2>
       <p>Chord memory (twelve chord shapes, or one learned from the keys), strum, and an arpeggiator with eleven
       patterns, swing, ratchets, accents and Euclidean rhythms, all before the parts.</p>
-      <p>What each slot can hold, generator, processor or effect, is listed under the map.</p>
+      <p>Effects: three slots on each part, then six master slots, each holding any of twelve effects in any order.
+      What each slot can hold, generator, processor or effect, is listed under the map.</p>
     </section>
     <section class="wide">
       <h2>Sounds, and how they are checked</h2>
@@ -875,7 +865,6 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
     <section class="wide">
       <h2>Being built now</h2>
       <ul>
-        <li><b>The master section as six free effect slots,</b> any of the effect types in any order, in place of the fixed chain of ten.</li>
         <li><b>Key pressure, MPE pressure and slide, and the expression pedal</b> as working modulation sources.</li>
         <li><b>Your own samples and wavetables,</b> loaded into the Sample, Grain and Wavetable generators.</li>
         <li><b>Then the interface,</b> designed once the engine has settled.</li>
@@ -888,7 +877,7 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 </div>
 </body>
 </html>
-""" % dict(light=tokens_css(LIGHT), dark1=tokens_css(DARK, "    "), dark2=tokens_css(DARK), util=util, w=W, h=H,
+""" % dict(dark=tokens_css(DARK), util=util, w=W, h=H,
            aria=escape(ARIA, {'"': "&quot;"}), svg=render_svg("html"), caption=escape(CAPTION),
            updated=UPDATED, repo=REPO_URL)
 with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8", newline="\n") as fh:

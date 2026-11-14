@@ -11,63 +11,8 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Semi+Condensed:wght@400;700&display=swap">
 <style>
 /* Layout: one wide figure first. The signal flow is a left-to-right spine; the type lists and notes hang beneath
-   it. A few short sections follow in a reading column. */
+   it. A few short sections follow in a reading column. Always dark: the map reads best on it (the user's choice). */
 :root {
-  --bg: #EEF1F4;
-  --surface: #FFFFFF;
-  --panel: #F6F8FA;
-  --ink: #17212B;
-  --ink2: #44515E;
-  --ink3: #5C6976;
-  --line: #B7C1CB;
-  --note-bg: #E4E9EE;
-  --note-line: #8693A0;
-  --gen: #875000;
-  --gen-bg: #FCEED0;
-  --gen-line: #D49B32;
-  --proc: #0A6A63;
-  --proc-bg: #D6F0EB;
-  --proc-line: #45A398;
-  --fx: #5042B5;
-  --fx-bg: #E8E4FB;
-  --fx-line: #978BE0;
-  --mod: #AD1F5B;
-  --mod-bg: #FBE4ED;
-  --mod-line: #D56C9A;
-  --key-white: #FFFFFF;
-  --key-black: #17212B;
-  --font-text: "Barlow", "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Barlow Semi Condensed", "Barlow", "Arial Narrow", Arial, sans-serif;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #10151B;
-    --surface: #1B232D;
-    --panel: #151C24;
-    --ink: #E8EDF2;
-    --ink2: #B4C0CB;
-    --ink3: #8D9AA7;
-    --line: #3B4753;
-    --note-bg: #232D38;
-    --note-line: #5E6C7A;
-    --gen: #F2BC5E;
-    --gen-bg: #34290F;
-    --gen-line: #94702A;
-    --proc: #62D5C8;
-    --proc-bg: #0F302C;
-    --proc-line: #2F8279;
-    --fx: #B7ACFF;
-    --fx-bg: #27214A;
-    --fx-line: #685CB8;
-    --mod: #FF93BC;
-    --mod-bg: #3A1627;
-    --mod-line: #B5507E;
-    --key-white: #DCE2E8;
-    --key-black: #0B1015;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
   --bg: #10151B;
   --surface: #1B232D;
   --panel: #151C24;
@@ -91,6 +36,8 @@
   --mod-line: #B5507E;
   --key-white: #DCE2E8;
   --key-black: #0B1015;
+  --font-text: "Barlow", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Barlow Semi Condensed", "Barlow", "Arial Narrow", Arial, sans-serif;
   color-scheme: dark;
 }
 *, *::before, *::after { box-sizing: border-box; }
@@ -170,7 +117,7 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
   <figure>
     <p class="hint">The map is wider than this screen: scroll it sideways to follow the signal.</p>
     <div class="scroller" tabindex="0" role="group" aria-label="Engine map; scrolls sideways on narrow screens">
-<svg class="map" viewBox="0 0 1600 1352" role="img" aria-label="CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation sources and a 24-routing matrix feed the voice from below. Both parts are mixed into a master effect section, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.">
+<svg class="map" viewBox="0 0 1600 1352" role="img" aria-label="CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation sources and a 24-routing matrix feed the voice from below. Both parts are mixed into six master effect slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.">
 <rect x="0" y="0" width="1600" height="1352" class="f-bg"/>
 <text class="f-ink2 disp" x="24" y="50" font-size="11.5"><tspan class="f-ink" font-weight="700" font-size="30">CoolSynth V3</tspan><tspan class="f-ink2" font-weight="400" font-size="20" dx="14">engine architecture</tspan></text>
 <text class="f-ink2" x="24" y="76" font-size="13">Signal flow of one patch, left to right. Every slot takes any module of its kind; the choices are listed underneath.</text>
@@ -416,29 +363,29 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <text class="f-ink" x="1511" y="161" font-size="12" font-weight="600" text-anchor="middle">MIX  A + B</text>
 <polyline class="s-ink" points="1511,172 1511,190.05" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
 <polygon class="f-ink" points="1511,196 1507.78,189 1514.22,189"/>
-<rect class="f-surface s-fx-line" x="1460" y="196" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
-<text class="f-fx" x="1470" y="216" font-size="12" font-weight="700">FX 1</text>
-<text class="f-ink3" x="1553" y="216" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<rect class="f-fx-bg s-fx-line" x="1460" y="196" width="102" height="30" rx="5" stroke-width="1.3"/>
+<text class="f-fx" x="1470" y="216" font-size="12" font-weight="700">F1</text>
+<text class="f-ink2" x="1553" y="216" font-size="10.5" text-anchor="end">any effect</text>
 <polyline class="s-ink" points="1511,226 1511,234" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-<rect class="f-surface s-fx-line" x="1460" y="234" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
-<text class="f-fx" x="1470" y="254" font-size="12" font-weight="700">FX 2</text>
-<text class="f-ink3" x="1553" y="254" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<rect class="f-fx-bg s-fx-line" x="1460" y="234" width="102" height="30" rx="5" stroke-width="1.3"/>
+<text class="f-fx" x="1470" y="254" font-size="12" font-weight="700">F2</text>
+<text class="f-ink2" x="1553" y="254" font-size="10.5" text-anchor="end">any effect</text>
 <polyline class="s-ink" points="1511,264 1511,272" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-<rect class="f-surface s-fx-line" x="1460" y="272" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
-<text class="f-fx" x="1470" y="292" font-size="12" font-weight="700">FX 3</text>
-<text class="f-ink3" x="1553" y="292" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<rect class="f-fx-bg s-fx-line" x="1460" y="272" width="102" height="30" rx="5" stroke-width="1.3"/>
+<text class="f-fx" x="1470" y="292" font-size="12" font-weight="700">F3</text>
+<text class="f-ink2" x="1553" y="292" font-size="10.5" text-anchor="end">any effect</text>
 <polyline class="s-ink" points="1511,302 1511,310" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-<rect class="f-surface s-fx-line" x="1460" y="310" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
-<text class="f-fx" x="1470" y="330" font-size="12" font-weight="700">FX 4</text>
-<text class="f-ink3" x="1553" y="330" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<rect class="f-fx-bg s-fx-line" x="1460" y="310" width="102" height="30" rx="5" stroke-width="1.3"/>
+<text class="f-fx" x="1470" y="330" font-size="12" font-weight="700">F4</text>
+<text class="f-ink2" x="1553" y="330" font-size="10.5" text-anchor="end">any effect</text>
 <polyline class="s-ink" points="1511,340 1511,348" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-<rect class="f-surface s-fx-line" x="1460" y="348" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
-<text class="f-fx" x="1470" y="368" font-size="12" font-weight="700">FX 5</text>
-<text class="f-ink3" x="1553" y="368" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<rect class="f-fx-bg s-fx-line" x="1460" y="348" width="102" height="30" rx="5" stroke-width="1.3"/>
+<text class="f-fx" x="1470" y="368" font-size="12" font-weight="700">F5</text>
+<text class="f-ink2" x="1553" y="368" font-size="10.5" text-anchor="end">any effect</text>
 <polyline class="s-ink" points="1511,378 1511,386" fill="none" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
-<rect class="f-surface s-fx-line" x="1460" y="386" width="102" height="30" rx="6" stroke-width="1.3" stroke-dasharray="4 3"/>
-<text class="f-fx" x="1470" y="406" font-size="12" font-weight="700">FX 6</text>
-<text class="f-ink3" x="1553" y="406" font-size="10.5" text-anchor="end" font-style="italic">planned</text>
+<rect class="f-fx-bg s-fx-line" x="1460" y="386" width="102" height="30" rx="5" stroke-width="1.3"/>
+<text class="f-fx" x="1470" y="406" font-size="12" font-weight="700">F6</text>
+<text class="f-ink2" x="1553" y="406" font-size="10.5" text-anchor="end">any effect</text>
 <polyline class="s-ink" points="1511,416 1511,432.05" fill="none" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
 <polygon class="f-ink" points="1511,438 1507.78,431 1514.22,431"/>
 <rect class="f-surface s-ink" x="1460" y="438" width="102" height="30" rx="6" stroke-width="1.3"/>
@@ -451,9 +398,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <polygon class="f-ink" points="1511,540 1507.78,533 1514.22,533"/>
 <rect class="f-ink" x="1460" y="540" width="102" height="30" rx="15"/>
 <text class="f-bg" x="1511" y="560" font-size="10.5" font-weight="700" text-anchor="middle" letter-spacing="0.6">STEREO OUT</text>
-<text class="f-ink2" x="1511" y="594" font-size="10.5" text-anchor="middle">Today: ten effects in</text>
-<text class="f-ink2" x="1511" y="608" font-size="10.5" text-anchor="middle">a fixed order (see the</text>
-<text class="f-ink2" x="1511" y="622" font-size="10.5" text-anchor="middle">effect list below).</text>
+<text class="f-ink2" x="1511" y="594" font-size="10.5" text-anchor="middle">Any of the 12 effects</text>
+<text class="f-ink2" x="1511" y="608" font-size="10.5" text-anchor="middle">in any master slot,</text>
+<text class="f-ink2" x="1511" y="622" font-size="10.5" text-anchor="middle">in slot order.</text>
 <rect class="f-gen-bg" x="24" y="674" width="594" height="32" rx="8"/>
 <rect class="f-gen-bg" x="24" y="690" width="594" height="16"/>
 <rect class="f-surface" x="24" y="706" width="594" height="344" rx="8"/>
@@ -532,7 +479,7 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <rect class="f-surface" x="1112" y="706" width="464" height="344" rx="8"/>
 <rect class="f-surface" x="1112" y="706" width="464" height="12"/>
 <rect class="s-fx-line" x="1112" y="674" width="464" height="376" rx="8" fill="none" stroke-width="1.3"/>
-<text class="f-ink2" x="1128" y="695" font-size="11.5"><tspan class="f-fx" font-weight="700" letter-spacing="0.7">EFFECT SLOT</tspan><tspan class="f-ink" dx="10">one of 12 effects · 3 insert slots per part</tspan></text>
+<text class="f-ink2" x="1128" y="695" font-size="11.5"><tspan class="f-fx" font-weight="700" letter-spacing="0.7">EFFECT SLOT</tspan><tspan class="f-ink" dx="10">one of 12 effects · 3 slots per part · 6 master slots</tspan></text>
 <text class="f-fx" x="1128" y="724" font-size="12.5" font-weight="700">Drive</text>
 <text class="f-ink" x="1228" y="724" font-size="11.5">saturation, shaped at 2× oversampling</text>
 <polyline class="s-line" points="1124,731.5 1564,731.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
@@ -555,15 +502,13 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <polyline class="s-line" points="1124,888 1564,888" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text class="f-fx" x="1128" y="906" font-size="12.5" font-weight="700">Room</text>
 <text class="f-ink" x="1228" y="906" font-size="11.5">24 early reflections of a box-shaped room into a 16-line feedback</text>
-<text class="f-ink" x="1228" y="920.5" font-size="11.5"><tspan >delay network; decay 0.1 to 1.2 s. </tspan><tspan class="f-ink2" font-style="italic">Inserts only.</tspan></text>
+<text class="f-ink" x="1228" y="920.5" font-size="11.5">delay network; decay 0.1 to 1.2 s.</text>
 <polyline class="s-line" points="1124,928 1564,928" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text class="f-fx" x="1128" y="946" font-size="12.5" font-weight="700">Grain</text>
 <text class="f-ink" x="1228" y="946" font-size="11.5">replays the last 4 seconds as a cloud of up to 32 grains; freeze.</text>
-<text class="f-ink" x="1228" y="960.5" font-size="11.5"><tspan class="f-ink2" font-style="italic">Inserts only.</tspan></text>
-<polyline class="s-line" points="1124,994 1564,994" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
-<text class="f-ink2" x="1128" y="1010" font-size="11">Master section today: the first ten (drive to pump) in this order, then gain and a soft</text>
-<text class="f-ink2" x="1128" y="1024" font-size="11"><tspan >clipper. Each part sets what share of it passes through them. </tspan><tspan font-style="italic">Planned: six free master</tspan></text>
-<text class="f-ink2" x="1128" y="1038" font-size="11"><tspan font-style="italic">slots.</tspan></text>
+<polyline class="s-line" points="1124,1008 1564,1008" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-ink2" x="1128" y="1024" font-size="11">Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper.</text>
+<text class="f-ink2" x="1128" y="1038" font-size="11">Each part sets what share of it passes through them.</text>
 <rect class="f-surface s-ink" x="24" y="1070" width="700" height="228" rx="8" stroke-width="1.3"/>
 <text class="f-ink2" x="40" y="1094" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">THE MUSEUM</tspan><tspan class="f-ink2" dx="10">classic sounds rebuilt from the instruments’ own numbers</tspan></text>
 <text class="f-ink2" x="40" y="1116" font-size="12"><tspan class="f-ink" font-weight="700">Ten so far: </tspan><tspan >DX7 E.PIANO 1 and BASS 1 · Prophet-5 Sync II and Brass · Minimoog Fat Bass and the Trilogy lead · TX81Z</tspan></text>
@@ -623,7 +568,8 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
       <h2>Notes in</h2>
       <p>Chord memory (twelve chord shapes, or one learned from the keys), strum, and an arpeggiator with eleven
       patterns, swing, ratchets, accents and Euclidean rhythms, all before the parts.</p>
-      <p>What each slot can hold, generator, processor or effect, is listed under the map.</p>
+      <p>Effects: three slots on each part, then six master slots, each holding any of twelve effects in any order.
+      What each slot can hold, generator, processor or effect, is listed under the map.</p>
     </section>
     <section class="wide">
       <h2>Sounds, and how they are checked</h2>
@@ -637,7 +583,6 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
     <section class="wide">
       <h2>Being built now</h2>
       <ul>
-        <li><b>The master section as six free effect slots,</b> any of the effect types in any order, in place of the fixed chain of ten.</li>
         <li><b>Key pressure, MPE pressure and slide, and the expression pedal</b> as working modulation sources.</li>
         <li><b>Your own samples and wavetables,</b> loaded into the Sample, Grain and Wavetable generators.</li>
         <li><b>Then the interface,</b> designed once the engine has settled.</li>
