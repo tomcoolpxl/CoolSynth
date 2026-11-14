@@ -64,8 +64,8 @@ header{display:flex;flex-direction:column;gap:10px}
 .fw input:disabled{opacity:.35}
 .pads{grid-column:2/5;grid-row:2;display:grid;grid-template-columns:repeat(8,1fr);gap:16px}
 .pw{display:flex;flex-direction:column;align-items:center;gap:6px}
-.pad{width:100%;aspect-ratio:1.12;max-width:100%;border-radius:9px;border:3px solid color-mix(in srgb,var(--c,#888) var(--b,0%),#2a2e33);background:var(--pad-off);color:color-mix(in srgb,var(--c,#888) 70%,#fff);font:600 .72rem var(--f-body);display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;cursor:pointer;transition:border-color .15s,box-shadow .15s;touch-action:none}
-.pad.sym{font-size:1.5rem;align-items:center;padding-bottom:0}
+.pad{width:100%;aspect-ratio:1.12;max-width:100%;border-radius:9px;border:3px solid color-mix(in srgb,var(--c,#888) var(--b,0%),#2a2e33);background:var(--pad-off);color:color-mix(in srgb,var(--c,#888) 70%,#fff);font:600 .72rem var(--f-body);display:flex;align-items:center;justify-content:center;padding:0;cursor:pointer;transition:border-color .15s,box-shadow .15s;touch-action:none}
+.pad svg{height:1em;width:auto;fill:currentColor;display:block}
 .pad.on{box-shadow:0 0 14px color-mix(in srgb,var(--c) 70%,transparent)}
 .pl{font:.72rem/1.2 var(--f-body);text-align:center;min-height:2.4em}
 .keys{grid-column:1/5;grid-row:3}
@@ -524,7 +524,8 @@ const knobsEl=document.getElementById("knobs");
 for(let k=1;k<=8;k++){knobsEl.insertAdjacentHTML("beforeend",`<div class="kw"><div class="knob ${k===5?"nav":""}" id="k${k}" tabindex="0" aria-label="Knob ${k}"><i></i></div><span class="kn">${k}</span><span class="kl" id="kl${k}"></span></div>`)}
 const FN=["Part A","Part B","Effects","Master"];
 document.getElementById("faders").innerHTML=FN.map((n,i)=>`<div class="fw"><input type="range" id="f${i}" min="0" max="100" value="${S.faders[i]*100}" aria-label="Fader ${i+1}: ${n}" ${i===1?"disabled":""}><span class="kn">${i+1}</span><span class="kl">${n}</span></div>`).join("");
-const PRINT=["Sound","Shape","Motion","Effects","■","▶","●","Back"];
+const PRINT=["Sound","Shape","Motion","Effects","Stop","Play","Record","Back"];
+const SYM=['<svg viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10"/></svg>','<svg viewBox="0 0 9 10" aria-hidden="true"><path d="M0 0L9 5L0 10Z"/></svg>','<svg viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5"/></svg>'];
 document.getElementById("pads").innerHTML=PRINT.map((p,i)=>`<div class="pw"><button class="pad" id="p${i}" aria-label="Pad ${i+1}">${p}</button><span class="pl" id="pl${i}"></span></div>`).join("");
 (function keys(){let w="",b="";const W=1500/15,blk=[0,1,3,4,5];for(let i=0;i<15;i++){w+=`<rect x="${i*W}" y="0" width="${W-3}" height="100" rx="4" fill="var(--knob)" stroke="var(--knob-edge)"/>`;if(i<14&&blk.includes(i%7))b+=`<rect x="${i*W+W*0.66}" y="0" width="${W*0.62}" height="60" rx="3" fill="var(--ink)"/>`}
  document.getElementById("keys").innerHTML=`<svg viewBox="0 0 1500 100" preserveAspectRatio="none" aria-label="25 keys">${w}${b}</svg>`})();
@@ -551,7 +552,7 @@ function render(){
   else if(i<7){c=["var(--c-stop)","var(--c-play)","var(--c-rec)"][i-4];b=14;txt=["Stop","Play","Record"][i-4]+" (later)"}
   else{c="var(--c-home)";const top=S.lvl==="sounds"&&!S.overlay&&cursorOnLoaded();txt=sh?"":"hold: Sounds · Shift: Part A/B";face=sh?"Part A/B":"Back";b=sh?60:top?12:75}
   if(isPerform()&&i===0&&!sh){c=SEC[4].c;face="Perform"}
-  p.textContent=face;p.classList.toggle("sym",i>=4&&i<7);p.style.setProperty("--c",c);p.style.setProperty("--b",b+"%");p.classList.toggle("on",b>=90);l.textContent=txt}
+  if(i>=4&&i<7)p.innerHTML=SYM[i-4];else p.textContent=face;p.style.setProperty("--c",c);p.style.setProperty("--b",b+"%");p.classList.toggle("on",b>=90);l.textContent=txt}
  document.getElementById("legend").innerHTML=legend().map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
  const A=ABOUT[S.model];document.getElementById("about").innerHTML=`<h3>${esc(A[0])}</h3><p>${esc(A[1])}</p><p class="note">${esc(A[2])}</p><p class="note">${esc(A[3])}</p>`;
 }
