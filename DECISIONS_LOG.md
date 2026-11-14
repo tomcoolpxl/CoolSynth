@@ -2537,3 +2537,21 @@ once before (D132) and his ear did not, so the ear decides again.
   section as six free slots (it is the fixed chain of ten), key pressure, MPE and the expression
   pedal (listed as matrix sources, fed by nothing), the user's own samples and wavetables,
   grains from a live generator, the saw generator's cost.
+
+## D134. The gritty twin admitted; next, what the interface needs (2026-11-14)
+
+The user's verdict on the listening test of D133: **"7 is closest"**, then in the chat "contact
+synth ii is approved". The page had promised that the clip picked would be admitted as heard.
+
+- **Taken: candidate E becomes "Contact Opening II Grit" and enters the Museum room beside the
+  clean "Contact Opening II".** White noise 0.2 in each voice, each voice's loudness trembling at
+  random 50 times a second (lfo2, sample-and-hold, on the VCA at 0.2), Drive 0.05 in the part's
+  first effect slot. The loudness pass set its master to -9 dB. The other candidates and the
+  noise-only twin left the candidates bank, which is empty now. Ten Museum sounds, 118 presets.
+- Not taken: a further round of fine-tuning around clip 7 (the user approved it as it is).
+
+Asked what to build after the Contact synth ("Carry on with the Museum", "Every open engine
+part", "Only the free effect places", "What the interface needs (Recommended)"), the user chose
+**"What the interface needs"**: the master section as six free effect slots, the pressure
+sources (key pressure, MPE pressure and slide, the expression pedal) fed for real, and loading
+one's own samples and wavetables. The Museum pauses meanwhile.

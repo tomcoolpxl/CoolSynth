@@ -276,3 +276,26 @@ env2 = attack=10 hold=15 decay=3000 sustain=0 release=3000 decayCurve=-1 release
 voice = env2ToP1=0.075 velToP1=0 drift=1 glide=59 glideMode=rate glideDown=2.4
 play = mode=legato priority=low
 master = -0
+
+[Contact Opening II Grit]
+room = Museum
+# The gritty twin of "Contact Opening II", the user's pick from five candidates (D133, D134): "7 is
+# closest", then "contact synth ii is approved". The record's roughness comes only with the sound
+# (the recording before the first note is 50 dB quieter) and lies as strong between the spectral
+# lines in every band, 37 to 40 dB under the strongest line. Three things together give it: a white
+# noise in each voice (g3), each voice's loudness trembling at random 50 times a second (lfo2 on the
+# VCA), and the whole part a touch overdriven in its first effect slot, so the notes of a chord
+# roughen against each other as on a desk or tape driven hard. Measured against the record: 42.0,
+# 39.5, 37.0 dB against 40.0, 39.3, 37.2 (80-500 Hz, 500 Hz-2 kHz, 2-6 kHz).
+g1 = VA shape=saw pan=-0.8 level=0.8
+g2 = VA shape=saw fine=4 pan=0.8 level=0.8
+g3 = Noise type=white level=0.2
+p1 = Ladder cutoff=1800 res=0.05 key=0.35 drive=0 bass=0
+env1 = attack=87.5 decay=1000 sustain=1 release=300 velocity=1
+env2 = attack=10 decay=2940 sustain=0.65 release=2940 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.15 velToP1=0 drift=1
+play = mode=poly voices=16 voiceSpread=1
+lfo2 = shape=s&h rate=50 retrigger=off
+mod = src=lfo2 dst=vca amount=0.2
+i1 = Drive amount=0.05 mix=1
+master = -9
