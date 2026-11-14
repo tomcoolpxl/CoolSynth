@@ -521,7 +521,7 @@ FX_ROWS = [
 panels = [
     dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 9 types · any type in any of the 3 slots",
          rows=GEN_ROWS, namew=84,
-         note=[R("Planned: your own wavetables and samples; grains from a live generator.")], italic=True),
+         note=[R("Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots. Planned: grains from a live generator.")], italic=True),
     dict(x=634, w=462, kind="proc", head="PROCESSOR SLOT", sub="one of 7 types · per voice",
          rows=PROC_ROWS, namew=70,
          note=[R("Three in series, per voice: a chord is filtered, folded and driven note by note, before the "
@@ -864,10 +864,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
       envelopes, pitch) before they are judged by ear.</p>
     </section>
     <section class="wide">
-      <h2>Being built now</h2>
+      <h2>Next</h2>
       <ul>
-        <li><b>Your own samples and wavetables,</b> loaded into the Sample, Grain and Wavetable generators.</li>
-        <li><b>Then the interface,</b> designed once the engine has settled.</li>
+        <li><b>The interface,</b> now that the engine parts it depends on are in.</li>
         <li><b>Later: MPE,</b> each note with its own bend, pressure and slide, for MPE controllers.</li>
       </ul>
     </section>

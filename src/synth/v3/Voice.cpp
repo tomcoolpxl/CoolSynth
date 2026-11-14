@@ -420,6 +420,7 @@ namespace coolsynth::synth::v3
             SlotParams params = buildSlotParams(g.slot.descriptor(), g.base, offsets);
             params.frequencyHz = dsp::pitchToHz((gs.keyTrack ? pitch : 60.0f) + params.pitchSemitones);
             params.combine = i == 0 ? Combine::off : gs.combine;
+            params.userSound = gs.userSound;
 
             g.slot.setLink(params.combine != Combine::off ? previous : GeneratorLink {});
             g.slot.process(g.left.data(), g.right.data(), n, params);

@@ -15,6 +15,7 @@
 #include "plugin/AuditionEditor.h"
 #include "presets/FactoryPresets.h"
 #include "presets/StateMigration.h"
+#include "synth/v3/UserLibrary.h"
 
 namespace
 {
@@ -173,12 +174,104 @@ SynthAudioProcessor::SynthAudioProcessor()
         if (auto* withId = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameter))
             knownParameterIds.add(withId->paramID);
     }
+    for (auto& handle : userSoundHandles)
+        handle.store(-1);
+    parameters.state.addListener(this);
 }
 
 SynthAudioProcessor::~SynthAudioProcessor()
 {
+    parameters.state.removeListener(this);
+    for (auto& handle : userSoundHandles)
+        if (const int held = handle.exchange(-1); held >= 0)
+            coolsynth::synth::v3::UserLibrary::instance().release(held);
     for (auto* parameter : getParameters())
         parameter->removeListener(this);
+}
+
+// ---- The user's own sounds (decision D137) ----------------------------------------
+
+void SynthAudioProcessor::setUserFile(int part, int slot, const juce::String& name)
+{
+    namespace pv3 = coolsynth::parameters::v3;
+    const auto key = pv3::userFileKey(part == 0 ? pv3::Part::a : pv3::Part::b, juce::jlimit(1, pv3::partGeneratorSlots, slot));
+    auto files = parameters.state.getOrCreateChildWithName(pv3::userFilesTag, nullptr);
+    if (name.trim().isEmpty())
+        files.removeProperty(key, nullptr);
+    else
+        files.setProperty(key, name.trim().replaceCharacter('\\', '/'), nullptr);
+}
+
+juce::String SynthAudioProcessor::getUserFile(int part, int slot) const
+{
+    namespace pv3 = coolsynth::parameters::v3;
+    const auto key = pv3::userFileKey(part == 0 ? pv3::Part::a : pv3::Part::b, juce::jlimit(1, pv3::partGeneratorSlots, slot));
+    return parameters.state.getChildWithName(pv3::userFilesTag).getProperty(key).toString();
+}
+
+juce::String SynthAudioProcessor::getUserFileStatus(int part, int slot) const
+{
+    const auto index = static_cast<std::size_t>(juce::jlimit(0, 1, part) * coolsynth::parameters::v3::partGeneratorSlots
+                                                + juce::jlimit(1, coolsynth::parameters::v3::partGeneratorSlots, slot) - 1);
+    if (userSoundNames[index].isEmpty())
+        return {};
+    const int handle = userSoundHandles[index].load();
+    if (handle < 0)
+        return "too many files in use at once";
+    return coolsynth::synth::v3::UserLibrary::instance().problem(handle);
+}
+
+bool SynthAudioProcessor::loadUserSoundsNow(int timeoutMilliseconds)
+{
+    refreshUserSounds();
+    bool allThere = true;
+    for (std::size_t i = 0; i < userSoundHandles.size(); ++i)
+        if (userSoundNames[i].isNotEmpty())
+            allThere = coolsynth::synth::v3::UserLibrary::instance().waitUntilLoaded(userSoundHandles[i].load(), timeoutMilliseconds) && allThere;
+    return allThere;
+}
+
+void SynthAudioProcessor::refreshUserSounds()
+{
+    namespace pv3 = coolsynth::parameters::v3;
+    const auto files = parameters.state.getChildWithName(pv3::userFilesTag);
+    for (int part = 0; part < coolsynth::synth::v3::partCount; ++part)
+        for (int slot = 1; slot <= pv3::partGeneratorSlots; ++slot)
+        {
+            const auto index = static_cast<std::size_t>(part * pv3::partGeneratorSlots + slot - 1);
+            const auto name = files.getProperty(pv3::userFileKey(part == 0 ? pv3::Part::a : pv3::Part::b, slot)).toString();
+            if (name == userSoundNames[index])
+                continue;
+            // The new sound's handle first, so a file both names share stays in memory. (The library and its
+            // loader thread start only once a patch names a file.)
+            auto& library = coolsynth::synth::v3::UserLibrary::instance();
+            const int handle = library.acquire(name);
+            library.release(userSoundHandles[index].exchange(handle));
+            userSoundNames[index] = name;
+        }
+}
+
+void SynthAudioProcessor::valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier&)
+{
+    if (tree.hasType(coolsynth::parameters::v3::userFilesTag))
+        refreshUserSounds();
+}
+
+void SynthAudioProcessor::valueTreeChildAdded(juce::ValueTree&, juce::ValueTree& child)
+{
+    if (child.hasType(coolsynth::parameters::v3::userFilesTag))
+        refreshUserSounds();
+}
+
+void SynthAudioProcessor::valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree& child, int)
+{
+    if (child.hasType(coolsynth::parameters::v3::userFilesTag))
+        refreshUserSounds();
+}
+
+void SynthAudioProcessor::valueTreeRedirected(juce::ValueTree&)
+{
+    refreshUserSounds(); // a whole new state: a saved sound or a project
 }
 
 void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
@@ -524,6 +617,11 @@ bool SynthAudioProcessor::buildSanitizedParameterStateTree(const juce::ValueTree
             return false;
     }
 
+    // The user's own files the state names come with it (a state without them names none).
+    namespace pv3 = coolsynth::parameters::v3;
+    sanitizedState.removeChild(sanitizedState.getChildWithName(pv3::userFilesTag), nullptr);
+    if (const auto files = incomingState.getChildWithName(pv3::userFilesTag); files.isValid())
+        sanitizedState.appendChild(files.createCopy(), nullptr);
     return true;
 }
 
@@ -545,6 +643,8 @@ void SynthAudioProcessor::resetAutomatableParametersToDefaults()
     for (auto* parameterBase : getParameters())
         if (auto* parameter = dynamic_cast<juce::RangedAudioParameter*>(parameterBase))
             applyNormalizedParameterValue(*parameter, parameter->getDefaultValue());
+    // The init patch plays no file of the user's.
+    parameters.state.removeChild(parameters.state.getChildWithName(coolsynth::parameters::v3::userFilesTag), nullptr);
 }
 
 // ---- Undo and patch identity ---------------------------------------------------
@@ -978,6 +1078,12 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     settings.parts[1].arp = arp; // one arpeggiator setting; each part's mix says whether it follows
 
     coolsynth::parameters::v3::readMasterEffects(masterEffectValues, settings.master);
+
+    // The user's own sounds the generator slots play, by their UserLibrary handles.
+    for (int part = 0; part < coolsynth::synth::v3::partCount; ++part)
+        for (int slot = 0; slot < coolsynth::parameters::v3::partGeneratorSlots; ++slot)
+            settings.parts[static_cast<std::size_t>(part)].voice.generators[static_cast<std::size_t>(slot)].userSound =
+                userSoundHandles[static_cast<std::size_t>(part * coolsynth::parameters::v3::partGeneratorSlots + slot)].load(std::memory_order_relaxed);
 
     settings.masterGainLinear = juce::Decibels::decibelsToGain(v.masterGainDb->load());
     return settings;

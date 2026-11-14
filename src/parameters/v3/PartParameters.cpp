@@ -717,6 +717,23 @@ namespace coolsynth::parameters::v3
         }
     }
 
+    juce::String userFileKey(Part part, int oneBasedGenerator)
+    {
+        return slotPrefix({ part, SlotKind::generator, oneBasedGenerator }).replaceCharacter('.', '_');
+    }
+
+    juce::String userFileKeyForEntry(const juce::String& entryId)
+    {
+        if (! entryId.endsWith(".file"))
+            return {};
+        const auto prefix = entryId.dropLastCharacters(5);
+        for (const auto part : { Part::a, Part::b })
+            for (int g = 1; g <= partGeneratorSlots; ++g)
+                if (prefix == slotPrefix({ part, SlotKind::generator, g }))
+                    return userFileKey(part, g);
+        return {};
+    }
+
     std::unique_ptr<juce::AudioProcessorParameterGroup> makeMasterEffectsGroup()
     {
         auto group = std::make_unique<juce::AudioProcessorParameterGroup>("fx", "Master Effects", "|");

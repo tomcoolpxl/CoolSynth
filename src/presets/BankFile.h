@@ -25,7 +25,8 @@
     env1..env3, voice and play take the part parameters by name. arp takes on or off first, then
     its settings. Values are written as the parameter shows them: units for numbers, names for
     choices, on and off for switches. Anything not written keeps its default, and naming a slot
-    type loads that type's defaults.
+    type loads that type's defaults. A generator may name the user's own sound, a file inside the
+    User folder: g1 = Wavetable file="Pads/Glass.wav" pos=0.3 (quotes keep spaces in a value).
 
     The parser only maps the structure onto parameter IDs; the parameters themselves read the
     values when a preset is applied, so a value means what the generic editor would show.

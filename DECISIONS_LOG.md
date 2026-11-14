@@ -2631,3 +2631,45 @@ now"**.
 - **MPE stays for later:** the MPE Pressure and MPE Slide sources stay in the menus, fed by
   nothing; per-note bend would need each voice to follow its own MIDI channel. TODO item 35.
 - Checked: all presets render as before (none uses these sources).
+
+## D137. The user's own samples and wavetables (2026-11-14)
+
+The third part of D134. Asked where the files live ("A User folder, by name (Recommended)",
+"Anywhere, by full path", "Copied into the sound") and which wavetables to read ("The common
+WAV kind (Recommended)", "Any WAV, cut into frames"), the user chose **a User folder, by name**
+and **the common WAV kind**. Checked online for the wavetable format: one WAV of 2048-sample
+frames, the frame size optionally in Serum's "clm " chunk; Vital assumes 2048 and reads the
+left channel (KVR forum threads, community notes on the format).
+
+Taken within those choices:
+
+- **The User folder is "User" inside the sample library's root (taken):** one place the plugin
+  already knows on every machine. A preset names a file by its path inside it, with forward
+  slashes. Alternative: a folder of its own in the user's documents; a second place to set up.
+- **A generator slot names the file; the slot's type decides how it plays (taken).** A
+  Wavetable slot plays it as a table, a Sample slot as one recording over every key, a Grain
+  slot as its grains' source. The file loads once into all three forms, whichever slot uses it:
+  a sample (its root note and loop from its sampler chunk, else C4 and no loop; level following
+  velocity squared as the instruments'), a wavetable when it has at most 256 frames (the first
+  channel; frames of 2048 samples or the clm chunk's size, each resampled to 2048; a shorter
+  file is one cycle; its offset removed; the whole table scaled so its loudest frame peaks at 1,
+  so frames keep their levels against each other; the factory bank's 11 band limits), and a
+  grain source (the first minute in mono; the full band, then about a fifth and a tenth of the
+  rate through a 63-tap Kaiser-windowed sinc, as the factory samples' 10 and 5 kHz at 48 kHz).
+  Alternative: a type-specific choice ("User" among the tables, among the samples). It would
+  change the stored meaning of the existing choices.
+- **The name is not a parameter but part of the patch's state (taken):** a child USER_FILES of
+  the parameter state, one property per slot ("pA_g1"), so it travels with presets, saved sounds
+  and DAW projects without an automatable parameter for a file name. Bank files write it as the
+  generator's `file` setting, quoted when it has spaces. A preset, the init patch and a state
+  that names no file clear it.
+- **Loading never blocks the sound (taken):** a background thread reads the file; the audio
+  thread gets the sound or nothing (the slot is silent while it loads, or when the file is
+  missing). Up to 32 files at once; a file no slot has held for five seconds is dropped and its
+  memory freed two seconds later. At most five minutes of audio a file.
+- **The throwaway editor has a row of six file buttons (taken),** one per generator slot, with
+  "Choose a file...", "No file" and "Show the User folder"; a file chosen from elsewhere is
+  copied into the User folder. Throwaway like the rest of that editor (phase 9 designs the real
+  one), but it lets the user try his own sounds now.
+- Checked: all presets render as before; tests read real WAV files written with and without the
+  clm and sampler chunks, and play a table, a sample and grains at the right pitch.

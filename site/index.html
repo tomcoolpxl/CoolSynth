@@ -117,8 +117,8 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
   <figure>
     <p class="hint">The map is wider than this screen: scroll it sideways to follow the signal.</p>
     <div class="scroller" tabindex="0" role="group" aria-label="Engine map; scrolls sideways on narrow screens">
-<svg class="map" viewBox="0 0 1600 1352" role="img" aria-label="CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation sources and a 24-routing matrix feed the voice from below. Both parts are mixed into six master effect slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.">
-<rect x="0" y="0" width="1600" height="1352" class="f-bg"/>
+<svg class="map" viewBox="0 0 1600 1366" role="img" aria-label="CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation sources and a 24-routing matrix feed the voice from below. Both parts are mixed into six master effect slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.">
+<rect x="0" y="0" width="1600" height="1366" class="f-bg"/>
 <text class="f-ink2 disp" x="24" y="50" font-size="11.5"><tspan class="f-ink" font-weight="700" font-size="30">CoolSynth V3</tspan><tspan class="f-ink2" font-weight="400" font-size="20" dx="14">engine architecture</tspan></text>
 <text class="f-ink2" x="24" y="76" font-size="13">Signal flow of one patch, left to right. Every slot takes any module of its kind; the choices are listed underneath.</text>
 <text class="f-ink" x="1576" y="44" font-size="12.5" font-weight="600" text-anchor="end">2 parts · 16 voices · 3 generator + 3 processor slots per voice · 24 modulation routings per part · 118 factory presets</text>
@@ -404,9 +404,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <text class="f-ink2" x="1511" y="622" font-size="10.5" text-anchor="middle">in slot order.</text>
 <rect class="f-gen-bg" x="24" y="674" width="594" height="32" rx="8"/>
 <rect class="f-gen-bg" x="24" y="690" width="594" height="16"/>
-<rect class="f-surface" x="24" y="706" width="594" height="344" rx="8"/>
+<rect class="f-surface" x="24" y="706" width="594" height="358" rx="8"/>
 <rect class="f-surface" x="24" y="706" width="594" height="12"/>
-<rect class="s-gen-line" x="24" y="674" width="594" height="376" rx="8" fill="none" stroke-width="1.3"/>
+<rect class="s-gen-line" x="24" y="674" width="594" height="390" rx="8" fill="none" stroke-width="1.3"/>
 <text class="f-ink2" x="40" y="695" font-size="11.5"><tspan class="f-gen" font-weight="700" letter-spacing="0.7">GENERATOR SLOT</tspan><tspan class="f-ink" dx="10">one of 9 types · any type in any of the 3 slots</tspan></text>
 <text class="f-gen" x="40" y="724" font-size="12.5" font-weight="700">VA</text>
 <text class="f-ink" x="124" y="724" font-size="11.5">Sine, triangle, saw and pulse as one morph, PWM, sub, unison of up to 7 on a JP-8000-style</text>
@@ -440,12 +440,13 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <text class="f-ink" x="124" y="986" font-size="11.5">A cloud of up to 12 grains per voice from a sample: position, scan (0 freezes it), size, density,</text>
 <text class="f-ink" x="124" y="1000.5" font-size="11.5">spray, pitch spray.</text>
 <polyline class="s-line" points="36,1022 606,1022" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
-<text class="f-ink2" x="40" y="1038" font-size="11" font-style="italic">Planned: your own wavetables and samples; grains from a live generator.</text>
+<text class="f-ink2" x="40" y="1038" font-size="11" font-style="italic">Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots. Planned:</text>
+<text class="f-ink2" x="40" y="1052" font-size="11" font-style="italic">grains from a live generator.</text>
 <rect class="f-proc-bg" x="634" y="674" width="462" height="32" rx="8"/>
 <rect class="f-proc-bg" x="634" y="690" width="462" height="16"/>
-<rect class="f-surface" x="634" y="706" width="462" height="344" rx="8"/>
+<rect class="f-surface" x="634" y="706" width="462" height="358" rx="8"/>
 <rect class="f-surface" x="634" y="706" width="462" height="12"/>
-<rect class="s-proc-line" x="634" y="674" width="462" height="376" rx="8" fill="none" stroke-width="1.3"/>
+<rect class="s-proc-line" x="634" y="674" width="462" height="390" rx="8" fill="none" stroke-width="1.3"/>
 <text class="f-ink2" x="650" y="695" font-size="11.5"><tspan class="f-proc" font-weight="700" letter-spacing="0.7">PROCESSOR SLOT</tspan><tspan class="f-ink" dx="10">one of 7 types · per voice</tspan></text>
 <text class="f-proc" x="650" y="724" font-size="12.5" font-weight="700">Ladder</text>
 <text class="f-ink" x="720" y="724" font-size="11.5">4-pole transistor ladder with saturation in every stage. LP24, LP12, BP,</text>
@@ -472,14 +473,14 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <polyline class="s-line" points="646,931.5 1084,931.5" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text class="f-proc" x="650" y="949.5" font-size="12.5" font-weight="700">Drive</text>
 <text class="f-ink" x="720" y="949.5" font-size="11.5">Soft, hard or tube curve with tone; anti-aliased.</text>
-<polyline class="s-line" points="646,1008 1084,1008" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
-<text class="f-ink2" x="650" y="1024" font-size="11">Three in series, per voice: a chord is filtered, folded and driven note by note, before the</text>
-<text class="f-ink2" x="650" y="1038" font-size="11">notes are summed.</text>
+<polyline class="s-line" points="646,1022 1084,1022" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-ink2" x="650" y="1038" font-size="11">Three in series, per voice: a chord is filtered, folded and driven note by note, before the</text>
+<text class="f-ink2" x="650" y="1052" font-size="11">notes are summed.</text>
 <rect class="f-fx-bg" x="1112" y="674" width="464" height="32" rx="8"/>
 <rect class="f-fx-bg" x="1112" y="690" width="464" height="16"/>
-<rect class="f-surface" x="1112" y="706" width="464" height="344" rx="8"/>
+<rect class="f-surface" x="1112" y="706" width="464" height="358" rx="8"/>
 <rect class="f-surface" x="1112" y="706" width="464" height="12"/>
-<rect class="s-fx-line" x="1112" y="674" width="464" height="376" rx="8" fill="none" stroke-width="1.3"/>
+<rect class="s-fx-line" x="1112" y="674" width="464" height="390" rx="8" fill="none" stroke-width="1.3"/>
 <text class="f-ink2" x="1128" y="695" font-size="11.5"><tspan class="f-fx" font-weight="700" letter-spacing="0.7">EFFECT SLOT</tspan><tspan class="f-ink" dx="10">one of 12 effects · 3 slots per part · 6 master slots</tspan></text>
 <text class="f-fx" x="1128" y="724" font-size="12.5" font-weight="700">Drive</text>
 <text class="f-ink" x="1228" y="724" font-size="11.5">saturation, shaped at 2× oversampling</text>
@@ -507,43 +508,43 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
 <polyline class="s-line" points="1124,928 1564,928" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text class="f-fx" x="1128" y="946" font-size="12.5" font-weight="700">Grain</text>
 <text class="f-ink" x="1228" y="946" font-size="11.5">replays the last 4 seconds as a cloud of up to 32 grains; freeze.</text>
-<polyline class="s-line" points="1124,1008 1564,1008" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
-<text class="f-ink2" x="1128" y="1024" font-size="11">Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper.</text>
-<text class="f-ink2" x="1128" y="1038" font-size="11">Each part sets what share of it passes through them.</text>
-<rect class="f-surface s-ink" x="24" y="1070" width="700" height="228" rx="8" stroke-width="1.3"/>
-<text class="f-ink2" x="40" y="1094" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">THE MUSEUM</tspan><tspan class="f-ink2" dx="10">classic sounds rebuilt from the instruments’ own numbers</tspan></text>
-<text class="f-ink2" x="40" y="1116" font-size="12"><tspan class="f-ink" font-weight="700">Ten so far: </tspan><tspan >DX7 E.PIANO 1 and BASS 1 · Prophet-5 Sync II and Brass · Minimoog Fat Bass and the Trilogy lead · TX81Z</tspan></text>
-<text class="f-ink2" x="40" y="1132" font-size="12">LatelyBass · and the two synths that open a 1981 record, rebuilt from the record alone (the second also in a rougher version).</text>
-<text class="f-ink2" x="40" y="1154" font-size="12"><tspan class="f-ink" font-weight="700">Method: </tspan><tspan >start from the instrument’s own patch data (DX7 voice data, Prophet-5 factory programs, a 1974 Minimoog sound</tspan></text>
-<text class="f-ink2" x="40" y="1170" font-size="12">chart, the TX81Z preset table read from its firmware), convert the numbers to this engine’s units, and compare with a</text>
-<text class="f-ink2" x="40" y="1186" font-size="12">reference recording. A sound is admitted only after a side-by-side listening test.</text>
-<text class="f-ink2" x="40" y="1208" font-size="12"><tspan class="f-ink" font-weight="700">Measured: </tspan><tspan >LatelyBass, with nothing tuned by ear, has its first 16 harmonics within 0.9 dB on average of a recorded TX81Z</tspan></text>
-<text class="f-ink2" x="40" y="1224" font-size="12">note. Fat Bass is typically within 1 dB per band up to 2.8 kHz of a recorded Minimoog; Sync II within 1 dB of a recorded</text>
-<text class="f-ink2" x="40" y="1240" font-size="12">Prophet-5.</text>
-<text class="f-ink2" x="40" y="1262" font-size="12"><tspan class="f-ink" font-weight="700">References: </tspan><tspan >recordings of the hardware; for the DX7 pair, of an open DX7 emulation. </tspan><tspan class="f-ink" font-weight="700">The engine grew for it: </tspan><tspan >oscillator-3</tspan></text>
-<text class="f-ink2" x="40" y="1278" font-size="12">filter FM for the Minimoog, eight operator waves for the TX81Z.</text>
-<rect class="f-surface s-ink" x="740" y="1070" width="440" height="228" rx="8" stroke-width="1.3"/>
-<text class="f-ink2" x="756" y="1094" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">THE CONSERVATORY</tspan><tspan class="f-ink2" dx="10">40 recorded acoustic instruments</tspan></text>
-<text class="f-ink2" x="756" y="1116" font-size="12">Seven families: keys, strings, plucked, brass, winds, organs, mallets and</text>
-<text class="f-ink2" x="756" y="1132" font-size="12">bells. 76 playing styles.</text>
-<text class="f-ink2" x="756" y="1154" font-size="12">2,213 lossless recordings: every recorded pitch, dynamic layer and take, at</text>
-<text class="f-ink2" x="756" y="1170" font-size="12">full length, in stereo.</text>
-<text class="f-ink2" x="756" y="1192" font-size="12">They play through the Sample generator, so a grand piano or a cello section</text>
-<text class="f-ink2" x="756" y="1208" font-size="12">sits in a slot like any oscillator: layer it with FM, send it through the ladder,</text>
-<text class="f-ink2" x="756" y="1224" font-size="12">modulate it from the matrix.</text>
-<text class="f-ink2" x="756" y="1246" font-size="12">Instruments load in the background; a note never waits for the disk.</text>
-<rect class="f-surface s-ink" x="1196" y="1070" width="380" height="228" rx="8" stroke-width="1.3"/>
-<text class="f-ink2" x="1212" y="1094" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">2× VOICES</tspan><tspan class="f-ink2" dx="10">and FM that does not fold back</tspan></text>
-<text class="f-ink2" x="1212" y="1116" font-size="12">Every voice is computed at twice the sample rate and brought</text>
-<text class="f-ink2" x="1212" y="1132" font-size="12">down once per part.</text>
-<text class="f-ink2" x="1212" y="1154" font-size="12">FM2 and FM4 also hold the index, note by note, where the first</text>
-<text class="f-ink2" x="1212" y="1170" font-size="12">sideband that would fold back into the audible band stays under</text>
-<text class="f-ink2" x="1212" y="1186" font-size="12">−80 dB. Low and middle notes never reach the limit.</text>
-<text class="f-ink2" x="1212" y="1208" font-size="12">Measured: with index 10 asked for on a 2 kHz carrier, the largest</text>
-<text class="f-ink2" x="1212" y="1224" font-size="12">alias below 20 kHz sits at −75 dB.</text>
-<text class="f-ink2" x="1212" y="1246" font-size="12">Changing a slot’s type under a held note crossfades in 5 ms;</text>
-<text class="f-ink2" x="1212" y="1262" font-size="12">nothing else in the patch moves.</text>
-<text class="f-ink2" x="24" y="1328" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">118 FACTORY PRESETS IN 13 ROOMS</tspan><tspan class="f-ink2" dx="12">Workshop · Bedroom · Arcade · Outrun · Observatory · Greenhouse · Basement · Studio 1982 · Main Stage · Engine Room · Clock Tower · Conservatory · Museum</tspan></text>
+<polyline class="s-line" points="1124,1022 1564,1022" fill="none" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
+<text class="f-ink2" x="1128" y="1038" font-size="11">Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper.</text>
+<text class="f-ink2" x="1128" y="1052" font-size="11">Each part sets what share of it passes through them.</text>
+<rect class="f-surface s-ink" x="24" y="1084" width="700" height="228" rx="8" stroke-width="1.3"/>
+<text class="f-ink2" x="40" y="1108" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">THE MUSEUM</tspan><tspan class="f-ink2" dx="10">classic sounds rebuilt from the instruments’ own numbers</tspan></text>
+<text class="f-ink2" x="40" y="1130" font-size="12"><tspan class="f-ink" font-weight="700">Ten so far: </tspan><tspan >DX7 E.PIANO 1 and BASS 1 · Prophet-5 Sync II and Brass · Minimoog Fat Bass and the Trilogy lead · TX81Z</tspan></text>
+<text class="f-ink2" x="40" y="1146" font-size="12">LatelyBass · and the two synths that open a 1981 record, rebuilt from the record alone (the second also in a rougher version).</text>
+<text class="f-ink2" x="40" y="1168" font-size="12"><tspan class="f-ink" font-weight="700">Method: </tspan><tspan >start from the instrument’s own patch data (DX7 voice data, Prophet-5 factory programs, a 1974 Minimoog sound</tspan></text>
+<text class="f-ink2" x="40" y="1184" font-size="12">chart, the TX81Z preset table read from its firmware), convert the numbers to this engine’s units, and compare with a</text>
+<text class="f-ink2" x="40" y="1200" font-size="12">reference recording. A sound is admitted only after a side-by-side listening test.</text>
+<text class="f-ink2" x="40" y="1222" font-size="12"><tspan class="f-ink" font-weight="700">Measured: </tspan><tspan >LatelyBass, with nothing tuned by ear, has its first 16 harmonics within 0.9 dB on average of a recorded TX81Z</tspan></text>
+<text class="f-ink2" x="40" y="1238" font-size="12">note. Fat Bass is typically within 1 dB per band up to 2.8 kHz of a recorded Minimoog; Sync II within 1 dB of a recorded</text>
+<text class="f-ink2" x="40" y="1254" font-size="12">Prophet-5.</text>
+<text class="f-ink2" x="40" y="1276" font-size="12"><tspan class="f-ink" font-weight="700">References: </tspan><tspan >recordings of the hardware; for the DX7 pair, of an open DX7 emulation. </tspan><tspan class="f-ink" font-weight="700">The engine grew for it: </tspan><tspan >oscillator-3</tspan></text>
+<text class="f-ink2" x="40" y="1292" font-size="12">filter FM for the Minimoog, eight operator waves for the TX81Z.</text>
+<rect class="f-surface s-ink" x="740" y="1084" width="440" height="228" rx="8" stroke-width="1.3"/>
+<text class="f-ink2" x="756" y="1108" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">THE CONSERVATORY</tspan><tspan class="f-ink2" dx="10">40 recorded acoustic instruments</tspan></text>
+<text class="f-ink2" x="756" y="1130" font-size="12">Seven families: keys, strings, plucked, brass, winds, organs, mallets and</text>
+<text class="f-ink2" x="756" y="1146" font-size="12">bells. 76 playing styles.</text>
+<text class="f-ink2" x="756" y="1168" font-size="12">2,213 lossless recordings: every recorded pitch, dynamic layer and take, at</text>
+<text class="f-ink2" x="756" y="1184" font-size="12">full length, in stereo.</text>
+<text class="f-ink2" x="756" y="1206" font-size="12">They play through the Sample generator, so a grand piano or a cello section</text>
+<text class="f-ink2" x="756" y="1222" font-size="12">sits in a slot like any oscillator: layer it with FM, send it through the ladder,</text>
+<text class="f-ink2" x="756" y="1238" font-size="12">modulate it from the matrix.</text>
+<text class="f-ink2" x="756" y="1260" font-size="12">Instruments load in the background; a note never waits for the disk.</text>
+<rect class="f-surface s-ink" x="1196" y="1084" width="380" height="228" rx="8" stroke-width="1.3"/>
+<text class="f-ink2" x="1212" y="1108" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">2× VOICES</tspan><tspan class="f-ink2" dx="10">and FM that does not fold back</tspan></text>
+<text class="f-ink2" x="1212" y="1130" font-size="12">Every voice is computed at twice the sample rate and brought</text>
+<text class="f-ink2" x="1212" y="1146" font-size="12">down once per part.</text>
+<text class="f-ink2" x="1212" y="1168" font-size="12">FM2 and FM4 also hold the index, note by note, where the first</text>
+<text class="f-ink2" x="1212" y="1184" font-size="12">sideband that would fold back into the audible band stays under</text>
+<text class="f-ink2" x="1212" y="1200" font-size="12">−80 dB. Low and middle notes never reach the limit.</text>
+<text class="f-ink2" x="1212" y="1222" font-size="12">Measured: with index 10 asked for on a 2 kHz carrier, the largest</text>
+<text class="f-ink2" x="1212" y="1238" font-size="12">alias below 20 kHz sits at −75 dB.</text>
+<text class="f-ink2" x="1212" y="1260" font-size="12">Changing a slot’s type under a held note crossfades in 5 ms;</text>
+<text class="f-ink2" x="1212" y="1276" font-size="12">nothing else in the patch moves.</text>
+<text class="f-ink2" x="24" y="1342" font-size="11.5"><tspan class="f-ink" font-weight="700" letter-spacing="0.8">118 FACTORY PRESETS IN 13 ROOMS</tspan><tspan class="f-ink2" dx="12">Workshop · Bedroom · Arcade · Outrun · Observatory · Greenhouse · Basement · Studio 1982 · Main Stage · Engine Room · Clock Tower · Conservatory · Museum</tspan></text>
 </svg>
     </div>
     <figcaption>The signal path of one CoolSynth V3 patch. Keys pass through the note layer into two parts; each part is a complete synth whose voices chain three generator slots, three processor slots and an amplifier, followed by three insert effects, the mix and the master section. Modulation enters the voice from below. Dashed outlines mark what is designed but not built yet; the user interface comes last and is not drawn. <a href="engine-map.svg">The map alone, as SVG.</a></figcaption>
@@ -583,10 +584,9 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
       envelopes, pitch) before they are judged by ear.</p>
     </section>
     <section class="wide">
-      <h2>Being built now</h2>
+      <h2>Next</h2>
       <ul>
-        <li><b>Your own samples and wavetables,</b> loaded into the Sample, Grain and Wavetable generators.</li>
-        <li><b>Then the interface,</b> designed once the engine has settled.</li>
+        <li><b>The interface,</b> now that the engine parts it depends on are in.</li>
         <li><b>Later: MPE,</b> each note with its own bend, pressure and slide, for MPE controllers.</li>
       </ul>
     </section>

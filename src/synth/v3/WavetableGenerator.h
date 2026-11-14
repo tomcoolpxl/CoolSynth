@@ -10,13 +10,16 @@
 #include <juce_core/juce_core.h>
 
 #include "Module.h"
+#include "UserLibrary.h"
 #include "Wavetables.h"
 
 /*
     V3 wavetable generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: a factory table set,
     position with crossfade morph, band-limited playback, phase randomisation).
 
-    Plays one of the factory tables (Wavetables.h). Position runs through the table's 16 frames,
+    Plays one of the factory tables (Wavetables.h), or the user's own table when the slot names a
+    file (UserLibrary.h, decision D137): silent while that file loads. Position runs through the
+    table's frames (16 in a factory table, 1 to 256 in the user's),
     crossfading between neighbours, and ramps across each sub-block so a modulated position
     never steps. Each copy reads the frame at the band limit its frequency needs
     (WavetableBank::levelFor) with a 4-point Hermite read; the limits change only above 36 kHz,
@@ -91,6 +94,14 @@ namespace coolsynth::synth::v3
         void process(float* left, float* right, int numSamples, const SlotParams& params) noexcept
         {
             const int tableIndex = juce::jlimit(0, WavetableBank::tableCount - 1, static_cast<int>(std::lround(params.p[table])));
+            // The user's own table when the slot names one; nothing while it loads.
+            const UserWavetable* user = params.userSound >= 0 ? UserLibrary::instance().wavetable(params.userSound) : nullptr;
+            const bool silent = params.userSound >= 0 && user == nullptr;
+            const int frameCount = user != nullptr ? user->frameCount : WavetableBank::frames;
+            auto frameAt = [&](int frameIndex, int level) noexcept
+            {
+                return user != nullptr ? user->frame(frameIndex, level) : bank->frame(tableIndex, frameIndex, level);
+            };
             const int count = juce::jlimit(1, maxUnison, static_cast<int>(std::lround(params.p[unison])));
             const double detuneCents = juce::jlimit(0.0, 100.0, static_cast<double>(params.p[detune]));
             const float spreadAmount = juce::jlimit(0.0f, 1.0f, params.p[spread]);
@@ -139,9 +150,9 @@ namespace coolsynth::synth::v3
             for (int s = 0; s < numSamples; ++s)
             {
                 currentPosition += positionStep;
-                const float framePosition = juce::jlimit(0.0f, 1.0f, currentPosition) * static_cast<float>(WavetableBank::frames - 1);
-                const int frameA = std::min(WavetableBank::frames - 2, static_cast<int>(framePosition));
-                const float blend = framePosition - static_cast<float>(frameA);
+                const float framePosition = juce::jlimit(0.0f, 1.0f, currentPosition) * static_cast<float>(frameCount - 1);
+                const int frameA = std::max(0, std::min(frameCount - 2, static_cast<int>(framePosition)));
+                const float blend = frameCount > 1 ? framePosition - static_cast<float>(frameA) : 0.0f;
                 const double phaseOffset = useFm ? fmDepth * static_cast<double>(input.signal[s]) : 0.0;
 
                 float sumLeft = 0.0f, sumRight = 0.0f, sumMono = 0.0f;
@@ -150,12 +161,12 @@ namespace coolsynth::synth::v3
                     const auto ui = static_cast<std::size_t>(i);
                     double readPhase = phases[ui] + phaseOffset;
                     readPhase -= std::floor(readPhase);
-                    const float* a = bank->frame(tableIndex, frameA, bandLevels[ui]);
-                    float v = hermite(a, readPhase);
-                    if (blend > 0.0f)
+                    float v = 0.0f;
+                    if (! silent)
                     {
-                        const float* b = bank->frame(tableIndex, frameA + 1, bandLevels[ui]);
-                        v += (hermite(b, readPhase) - v) * blend;
+                        v = hermite(frameAt(frameA, bandLevels[ui]), readPhase);
+                        if (blend > 0.0f)
+                            v += (hermite(frameAt(frameA + 1, bandLevels[ui]), readPhase) - v) * blend;
                     }
                     sumLeft += v * gainsLeft[ui];
                     sumRight += v * gainsRight[ui];

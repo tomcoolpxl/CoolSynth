@@ -132,6 +132,7 @@ namespace coolsynth::synth::v3
         bool keyTrack = true;
         Combine combine = Combine::off;
         float combineAmount = 0.5f;
+        int userSound = -1; // the user's own sound this slot plays (a UserLibrary handle), or -1 for the slot's own choice
     };
 
     /** One processor slot as the patch sets it. Generic values are normalised 0..1. */

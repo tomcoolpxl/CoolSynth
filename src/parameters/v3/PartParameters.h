@@ -87,6 +87,14 @@ namespace coolsynth::parameters::v3
     /** True for IDs inside a part ("pA." or "pB."), which MIDI learn accepts. */
     [[nodiscard]] bool isPartParameterId(juce::StringRef parameterId) noexcept;
 
+    /** The user's own sound a generator slot plays (decision D137) is not a parameter but a file name, kept in a
+        child of the parameter state named userFilesTag, one property per slot ("pA_g1"); bank files write it as
+        a generator's "file" setting, which becomes the entry "pA.g1.file". */
+    inline constexpr char userFilesTag[] = "USER_FILES";
+    [[nodiscard]] juce::String userFileKey(Part part, int oneBasedGenerator);
+    /** "pA.g1.file" to "pA_g1"; empty when the ID is not a generator's file entry. */
+    [[nodiscard]] juce::String userFileKeyForEntry(const juce::String& entryId);
+
     /** The master effect slots F1..F6, each "Effect n": its type and p1 .. p12. */
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makeMasterEffectsGroup();
     /** True for IDs of a master effect slot ("f1.type" .. "f6.p12"), which MIDI learn accepts. */

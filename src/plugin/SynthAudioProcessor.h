@@ -15,7 +15,8 @@
 #include "synth/v3/EngineV3.h"
 
 class SynthAudioProcessor final : public juce::AudioProcessor,
-                                  private juce::AudioProcessorParameter::Listener
+                                  private juce::AudioProcessorParameter::Listener,
+                                  private juce::ValueTree::Listener
 {
 public:
     using APVTS = juce::AudioProcessorValueTreeState;
@@ -69,6 +70,15 @@ public:
     /** Offline use (tools, tests): waits until the sampled instruments the current patch names are in memory.
         False if one of them is not installed. */
     bool loadSampledInstrumentsNow();
+
+    /** The user's own sound a generator slot plays (decision D137): a file's path inside the User folder, or
+        empty for the slot's own choice. part 0 or 1, slot 1 to 3. Message thread. */
+    void setUserFile(int part, int slot, const juce::String& name);
+    [[nodiscard]] juce::String getUserFile(int part, int slot) const;
+    /** Empty when the slot's file is in memory (or it names none), "still loading", or why it could not be read. */
+    [[nodiscard]] juce::String getUserFileStatus(int part, int slot) const;
+    /** Waits until every user file the patch names is read; false when one is missing or unreadable. */
+    bool loadUserSoundsNow(int timeoutMilliseconds = 30000);
     /** Offline use: the lowest and highest notes the patch's sampled instruments were recorded at, read in if
         need be. False if the patch plays no sampled instrument or it is not installed. */
     bool sampledInstrumentRange(int& lowestNote, int& highestNote);
@@ -164,6 +174,16 @@ private:
     std::array<coolsynth::parameters::v3::PartParameterPointers, coolsynth::synth::v3::partCount> partParameterValues;
     std::atomic<float>* partModeValue = nullptr;
     coolsynth::parameters::v3::MasterEffectPointers masterEffectValues;
+
+    // The user's own sounds: one name and one UserLibrary handle per generator slot (part A's three, then B's).
+    static constexpr int userSoundSlots = coolsynth::synth::v3::partCount * coolsynth::parameters::v3::partGeneratorSlots;
+    std::array<juce::String, userSoundSlots> userSoundNames;   // message thread
+    std::array<std::atomic<int>, userSoundSlots> userSoundHandles; // read by the audio thread
+    void refreshUserSounds();
+    void valueTreePropertyChanged(juce::ValueTree& tree, const juce::Identifier&) override;
+    void valueTreeChildAdded(juce::ValueTree&, juce::ValueTree& child) override;
+    void valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree& child, int) override;
+    void valueTreeRedirected(juce::ValueTree&) override;
     coolsynth::synth::v3::EngineSettings engineSettings;
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };

@@ -6,6 +6,7 @@
 
 #include <FactoryBankData.h>
 
+#include "parameters/v3/PartParameters.h"
 #include "parameters/v3/SlotParameters.h"
 
 namespace coolsynth::presets
@@ -134,8 +135,18 @@ namespace coolsynth::presets
             if (auto* parameter = dynamic_cast<juce::RangedAudioParameter*>(base))
                 set(*parameter, parameter->getDefaultValue());
 
+        // The user's own files a preset names (decision D137) are not parameters: they go into the state's own child.
+        namespace pv3 = coolsynth::parameters::v3;
+        apvts.state.removeChild(apvts.state.getChildWithName(pv3::userFilesTag), nullptr);
+
         for (const auto& entry : preset.entries)
         {
+            if (const auto key = pv3::userFileKeyForEntry(entry.parameterId); key.isNotEmpty())
+            {
+                apvts.state.getOrCreateChildWithName(pv3::userFilesTag, nullptr).setProperty(key, entry.text, nullptr);
+                continue;
+            }
+
             auto* parameter = apvts.getParameter(entry.parameterId);
             if (parameter == nullptr)
             {

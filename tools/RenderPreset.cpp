@@ -174,6 +174,8 @@ int main(int argc, char* argv[])
             styleParameter->setValueNotifyingHost(styleParameter->getValueForText(juce::String(styleText.getIntValue() + 1))); // the parameter shows styles from 1
     if (! processor.loadSampledInstrumentsNow())
         std::cerr << "a sampled instrument of this preset is not installed: it will be silent\n";
+    if (! processor.loadUserSoundsNow())
+        std::cerr << "a file of the user's this preset names is missing or unreadable: its slot will be silent\n";
 
     if (args.contains("--no-fx"))
     {

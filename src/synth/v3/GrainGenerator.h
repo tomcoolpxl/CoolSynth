@@ -12,12 +12,15 @@
 #include "Module.h"
 #include "SampleGenerator.h"
 #include "Samples.h"
+#include "UserLibrary.h"
 
 /*
     V3 grain generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: source, density, size,
     pitch spray, position scan, freeze).
 
-    A cloud of up to twelve grains read from one of the factory samples (Samples.h). Density is
+    A cloud of up to twelve grains read from one of the factory samples (Samples.h), or from the
+    user's own sample when the slot names a file (UserLibrary.h, decision D137: its first minute,
+    its root note's pitch at its own speed; silent while it loads). Density is
     how many grains start each second and Size how long each lasts; every grain is a short piece
     of the sample under a smooth window, read at the note's pitch (C4 is the sample's own), and
     placed somewhere in the stereo field (Spread). Position is where in the sample the grains
@@ -81,6 +84,7 @@ namespace coolsynth::synth::v3
         {
             for (auto& g : grains)
                 g.active = false;
+            grainSource = nullptr;
             std::fill(signalTrack.begin(), signalTrack.end(), 0.0f);
             untilNext = 0.0;
             scanFrames = 0.0;
@@ -107,11 +111,24 @@ namespace coolsynth::synth::v3
 
         void process(float* left, float* right, int numSamples, const SlotParams& params) noexcept
         {
-            constexpr double frames = SampleBank::length;
+            // The user's own sample when the slot names one. Grains still reading a source that was swapped or
+            // dropped end at once rather than read freed memory.
+            const UserGrainSource* user = params.userSound >= 0 ? UserLibrary::instance().grains(params.userSound) : nullptr;
+            if (user != grainSource)
+            {
+                for (auto& g : grains)
+                    g.active = false;
+                grainSource = user;
+            }
+            const bool silent = params.userSound >= 0 && user == nullptr;
+            const double frames = user != nullptr ? static_cast<double>(user->length) : static_cast<double>(SampleBank::length);
+            const double sourceRate = user != nullptr ? user->rate : SampleBank::sourceRate;
+            const double rootHz = user != nullptr ? user->rootHz : SampleBank::rootHz;
+
             const int n = std::min(numSamples, static_cast<int>(sumLeft.size()));
             const int which = juce::jlimit(0, SampleBank::sampleCount - 1, static_cast<int>(std::lround(params.p[sample])));
-            const double ratio = juce::jlimit(1.0 / 64.0, 16.0, static_cast<double>(params.frequencyHz) / SampleBank::rootHz);
-            const double framesPerSample = SampleBank::sourceRate / sampleRate;
+            const double ratio = juce::jlimit(1.0 / 64.0, 16.0, static_cast<double>(params.frequencyHz) / rootHz);
+            const double framesPerSample = sourceRate / sampleRate;
 
             const double sizeSamples = std::max(32.0, 0.001 * juce::jlimit(10.0, 500.0, static_cast<double>(params.p[size])) * sampleRate);
             const double interval = sampleRate / juce::jlimit(1.0, 80.0, static_cast<double>(params.p[density]));
@@ -132,11 +149,11 @@ namespace coolsynth::synth::v3
             while (untilNext < static_cast<double>(n))
             {
                 const int offset = std::max(0, static_cast<int>(untilNext));
-                if (Grain* g = freeGrain())
+                if (Grain* g = silent ? nullptr : freeGrain())
                 {
                     const double detune = pitchAmount * pitchAmount * pitchSpraySemitones * nextBipolar();
                     const double grainRatio = ratio * std::exp2(detune / 12.0);
-                    const double scatter = sprayAmount * sprayAmount * sprayFrames * nextBipolar();
+                    const double scatter = sprayAmount * sprayAmount * sprayFrames * (sourceRate / SampleBank::sourceRate) * nextBipolar();
                     double from = spot + scanFrames + static_cast<double>(offset) * params.p[scan] * framesPerSample + scatter;
                     from -= frames * std::floor(from / frames);
 
@@ -144,7 +161,7 @@ namespace coolsynth::synth::v3
                     g->offset = offset;
                     g->frame = from;
                     g->step = grainRatio * framesPerSample;
-                    g->data = bank->data(which, SampleBank::levelFor(grainRatio));
+                    g->data = user != nullptr ? user->data(SampleBank::levelFor(grainRatio)) : bank->data(which, SampleBank::levelFor(grainRatio));
                     g->phase = 0.0f;
                     g->phaseStep = static_cast<float>(1.0 / sizeSamples);
                     const float pan = juce::jlimit(-1.0f, 1.0f, params.pan + spreadAmount * static_cast<float>(nextBipolar()));
@@ -243,6 +260,7 @@ namespace coolsynth::synth::v3
 
         double sampleRate = 96000.0;
         const SampleBank* bank = nullptr;
+        const UserGrainSource* grainSource = nullptr; // the user's sample the grains read, or none (the factory's)
         std::array<Grain, maxGrains> grains {};
         double untilNext = 0.0;  // output samples until the next grain starts
         double scanFrames = 0.0; // how far Scan has moved the spot

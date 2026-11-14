@@ -16,6 +16,7 @@
 #include "Module.h"
 #include "SampleLibrary.h"
 #include "Samples.h"
+#include "UserLibrary.h"
 
 /*
     V3 sample generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: one-shot or loop, start,
@@ -41,6 +42,11 @@
     kernel when a note lies so far above its recording that it would alias. The instrument's
     audio comes from the sample library, which loads it in the background: until it is in
     memory the generator is silent, and a note never starts in the middle of a recording.
+
+    Or the user's own sample when the slot names a file (UserLibrary.h, decision D137), played as
+    an instrument of one recording over every key: at its root note's speed on its root key, its
+    loop when the file has one and Loop is on, its level following velocity squared. Silent while
+    the file loads.
 
     Output is two samples late like every generator; a retriggered voice starts again.
 */
@@ -124,7 +130,9 @@ namespace coolsynth::synth::v3
         void process(float* left, float* right, int numSamples, const SlotParams& params) noexcept
         {
             const int which = std::max(0, static_cast<int>(std::lround(params.p[sample])));
-            if (which >= firstInstrument)
+            if (params.userSound >= 0)
+                renderStyle(left, right, numSamples, params, UserLibrary::instance().sample(params.userSound));
+            else if (which >= firstInstrument)
                 renderInstrument(left, right, numSamples, params, which - firstInstrument);
             else
                 renderGenerated(left, right, numSamples, params, std::min(which, SampleBank::sampleCount - 1));
@@ -251,7 +259,12 @@ namespace coolsynth::synth::v3
         void renderInstrument(float* left, float* right, int numSamples, const SlotParams& params, int instrument) noexcept
         {
             const int styleIndex = juce::jlimit(0, maxInstrumentStyles - 1, static_cast<int>(std::lround(params.p[style])));
-            const LoadedStyle* loaded = SampleLibrary::instance().request(instrument, styleIndex);
+            renderStyle(left, right, numSamples, params, SampleLibrary::instance().request(instrument, styleIndex));
+        }
+
+        /** A style in memory (an instrument's, or the user's one recording), or silence while there is none. */
+        void renderStyle(float* left, float* right, int numSamples, const SlotParams& params, const LoadedStyle* loaded) noexcept
+        {
             const double hz = std::max(1.0, static_cast<double>(params.frequencyHz));
 
             if (startPending)

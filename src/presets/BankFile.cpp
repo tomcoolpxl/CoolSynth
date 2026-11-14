@@ -267,7 +267,7 @@ namespace coolsynth::presets
             }
             auto& context = contexts[part == pv3::Part::a ? 0u : 1u];
             const auto value = line.substring(equals + 1).trim();
-            auto tokens = juce::StringArray::fromTokens(value, " \t", "");
+            auto tokens = juce::StringArray::fromTokens(value, " \t", "\""); // a quoted value may hold spaces
             tokens.removeEmptyStrings();
 
             auto add = [&](const juce::String& id, const juce::String& v) { preset.entries.push_back({ id, v }); };
@@ -286,7 +286,7 @@ namespace coolsynth::presets
                         continue;
                     }
                     const auto k = token.substring(0, split);
-                    const auto v = token.substring(split + 1);
+                    const auto v = token.substring(split + 1).unquoted();
                     const auto id = idForKey(k);
                     if (id.isEmpty())
                         error("'" + key + "' has no setting '" + k + "'");
@@ -400,6 +400,9 @@ namespace coolsynth::presets
                             return pv3::genericParameterId(path, i + 1);
                     if (generator != 0 && generatorFixedKeys().contains(k))
                         return pv3::fixedParameterId(path, k.toRawUTF8());
+                    // The user's own sound, a file's path inside the User folder (decision D137).
+                    if (generator != 0 && k == "file")
+                        return pv3::fixedParameterId(path, "file");
                     return {};
                 }, noBareWords);
                 continue;
