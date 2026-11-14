@@ -12,9 +12,9 @@ env1 = attack=15 decay=400 sustain=0.5 release=350 velocity=0.5
 env2 = attack=20 decay=500 sustain=0.35 release=350
 voice = env2ToP1=0.42 velToP1=0.1 drift=3
 play = voices=8
-chorus = on rate=0.45 depth=0.5 mix=0.4
-delay = on sync=on division=1/8. feedback=0.3 mix=0.16
-reverb = on size=0.7 damping=0.45 mix=0.22
+f1 = Chorus rate=0.45 depth=0.5 mix=0.4
+f2 = Delay sync=on division=1/8. feedback=0.3 mix=0.16
+f3 = Reverb size=0.7 damping=0.45 mix=0.22
 master = 1.5
 
 [Gated Pad]
@@ -28,8 +28,8 @@ env1 = attack=180 decay=800 sustain=0.9 release=500
 glfo1 = shape=square sync=on division=1/16 phase=180 retrigger=on
 mod = src=glfo1 dst=vca amount=-1 curve=unipolar
 voice = env2ToP1=0 drift=3
-chorus = on rate=0.4 depth=0.45 mix=0.35
-reverb = on size=0.75 damping=0.4 mix=0.28
+f1 = Chorus rate=0.4 depth=0.45 mix=0.35
+f2 = Reverb size=0.75 damping=0.4 mix=0.28
 master = 3.5
 
 [Night Drive]
@@ -42,9 +42,9 @@ env1 = attack=1 decay=220 sustain=0.4 release=90 velocity=0.4
 env2 = attack=1 decay=180 sustain=0.15 release=90
 voice = env2ToP1=0.32
 arp = on rate=1/16 pattern=up octaves=2 gate=0.6
-drive = on amount=0.12 mix=0.5
-delay = on sync=on division=1/8 feedback=0.2 mix=0.1
-reverb = on size=0.45 damping=0.5 mix=0.1
+f1 = Drive amount=0.12 mix=0.5
+f2 = Delay sync=on division=1/8 feedback=0.2 mix=0.1
+f3 = Reverb size=0.45 damping=0.5 mix=0.1
 master = -3.5
 
 [Laser Lead]
@@ -60,9 +60,9 @@ env2 = attack=2 decay=900 sustain=0.2 release=250
 mod = src=env2 dst=g2.pitch amount=0.6
 voice = env2ToP1=0.18 glide=60
 play = mode=legato
-chorus = on rate=0.5 depth=0.3 mix=0.25
-delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
-reverb = on size=0.6 damping=0.45 mix=0.15
+f1 = Chorus rate=0.5 depth=0.3 mix=0.25
+f2 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+f3 = Reverb size=0.6 damping=0.45 mix=0.15
 master = 6
 
 [Sunset Strings]
@@ -73,8 +73,8 @@ g2 = VA shape=saw unison=4 detune=12 spread=0.8 pan=0.3 fine=4 level=0.6
 p1 = Ladder mode=lp12 cutoff=2800 res=0.08 key=0.5
 env1 = attack=700 decay=1500 sustain=1 release=1200 velocity=0.3
 voice = env2ToP1=0 drift=4
-phaser = on rate=0.3 depth=0.5
-reverb = on size=0.8 damping=0.45 mix=0.3
+f1 = Phaser rate=0.3 depth=0.5
+f2 = Reverb size=0.8 damping=0.45 mix=0.3
 master = -4
 
 [Grid Keys]
@@ -90,7 +90,7 @@ mod = src=env3 dst=g1.level2 amount=0.3
 mod = src=velocity dst=g1.level2 amount=0.15
 mod = src=env2 dst=g1.level4 amount=0.35
 voice = env2ToP1=0 drift=2
-chorus = on rate=0.5 depth=0.45 mix=0.4
-delay = on sync=on division=1/8. feedback=0.25 mix=0.12
-reverb = on size=0.6 damping=0.45 mix=0.2
+f1 = Chorus rate=0.5 depth=0.45 mix=0.4
+f2 = Delay sync=on division=1/8. feedback=0.25 mix=0.12
+f3 = Reverb size=0.6 damping=0.45 mix=0.2
 master = 2

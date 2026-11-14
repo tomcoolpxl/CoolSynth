@@ -21,7 +21,7 @@ env3 = attack=0.5 decay=60 sustain=0 release=60 decayCurve=-0.7 oneShot=on
 mod = src=env3 dst=pitch amount=0.5
 voice = env2ToP1=0 glide=70
 play = mode=legato glideLegato=on
-drive = on amount=0.3 mix=0.5
+f1 = Drive amount=0.3 mix=0.5
 master = -1
 
 [Wobble]
@@ -38,7 +38,7 @@ mod = src=lfo1 dst=p1.cutoff amount=0.5 curve=unipolar
 mod = src=wheel dst=lfo1.rate amount=0.25
 voice = env2ToP1=0 glide=25
 play = mode=legato glideLegato=on
-drive = on amount=0.25 mix=0.6
+f1 = Drive amount=0.25 mix=0.6
 master = -12
 
 [FM Knock]

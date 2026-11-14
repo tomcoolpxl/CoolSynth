@@ -13,7 +13,7 @@ glfo2 = shape=sine sync=off rate=0.045 phase=120 retrigger=off
 mod = src=glfo1 dst=g1.pitch amount=0.5
 mod = src=glfo2 dst=g2.pitch amount=0.35
 voice = env2ToP1=0
-reverb = on size=0.9 damping=0.35 mix=0.4
+f1 = Reverb size=0.9 damping=0.35 mix=0.4
 master = -4.5
 
 [Nebula Pad]
@@ -30,8 +30,8 @@ lfo2 = shape=sine rate=0.037 retrigger=off
 mod = src=lfo1 dst=g1.pos amount=0.5
 mod = src=lfo2 dst=g2.pos amount=0.25
 voice = env2ToP1=0 drift=3
-chorus = on rate=0.3 depth=0.35 mix=0.25
-reverb = on size=0.9 damping=0.4 mix=0.38 predelay=80 lowcut=80
+f1 = Chorus rate=0.3 depth=0.35 mix=0.25
+f2 = Reverb size=0.9 damping=0.4 mix=0.38 predelay=80 lowcut=80
 master = -1.5
 
 [Deep Field]
@@ -55,7 +55,7 @@ b.glfo1 = shape=sine sync=off rate=0.03 retrigger=off
 b.mod = src=glfo1 dst=p1.cutoff amount=0.2
 b.voice = env2ToP1=0 drift=5
 b.mix = level=-8
-reverb = on size=0.85 damping=0.5 mix=0.3
+f1 = Reverb size=0.85 damping=0.5 mix=0.3
 master = -5.5
 
 [Shimmer Drone]
@@ -67,7 +67,7 @@ g2 = VA shape=sine rand=0 level=0.6
 p1 = SVF mode=lp cutoff=1800 res=0.1 key=0.3
 env1 = attack=1500 decay=2000 sustain=1 release=5000
 voice = env2ToP1=0 drift=3
-reverb = on size=0.85 damping=0.35 mix=0.45 predelay=40 lowcut=120 shimmer=0.6
+f1 = Reverb size=0.85 damping=0.35 mix=0.45 predelay=40 lowcut=120 shimmer=0.6
 master = -11
 
 [Satellite Ping]
@@ -79,8 +79,8 @@ p1 = Off
 env1 = attack=1 decay=150 sustain=0 release=150 velocity=0.4
 voice = env2ToP1=0
 arp = on rate=1/8 pattern=random octaves=2 gate=0.5 chance=0.35
-delay = on sync=on division=1/4. mode=pingpong feedback=0.7 mix=0.35
-reverb = on size=0.8 damping=0.4 mix=0.35 predelay=60
+f1 = Delay sync=on division=1/4. mode=pingpong feedback=0.7 mix=0.35
+f2 = Reverb size=0.8 damping=0.4 mix=0.35 predelay=60
 master = 6
 
 [Granular Sky]
@@ -95,5 +95,5 @@ g3 = Sample sample=glass loop=on level=0.2
 p1 = SVF mode=lp cutoff=6000 res=0.05 key=0.3
 env1 = attack=2000 decay=2000 sustain=1 release=4000
 voice = env2ToP1=0
-reverb = on size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
+f1 = Reverb size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
 master = 1.5

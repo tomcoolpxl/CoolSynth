@@ -14,7 +14,7 @@ namespace coolsynth::midi
             if (parameterId == juce::StringRef(knownId))
                 return true;
 
-        return parameters::v3::isPartParameterId(parameterId);
+        return parameters::v3::isPartParameterId(parameterId) || parameters::v3::isMasterEffectParameterId(parameterId);
     }
 
     bool MidiLearnManager::isLearnableParameter(juce::StringRef parameterId) const noexcept

@@ -14,7 +14,7 @@ mod = src=env3 dst=g1.index amount=0.45
 mod = src=velocity dst=g1.index amount=0.15
 mod = src=env3 dst=g2.index amount=0.3
 voice = env2ToP1=0
-reverb = on size=0.75 damping=0.4 mix=0.3
+f1 = Reverb size=0.75 damping=0.4 mix=0.3
 master = -2.5
 
 [Rain Chime]
@@ -27,8 +27,8 @@ p1 = Off
 env1 = attack=1 decay=300 sustain=0 release=250 velocity=0.5
 voice = env2ToP1=0
 arp = on rate=1/16 pattern=random octaves=3 gate=0.6 chance=0.5
-delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.25
-reverb = on size=0.7 damping=0.35 mix=0.3
+f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.25
+f2 = Reverb size=0.7 damping=0.35 mix=0.3
 master = 6
 
 [Crystal Pluck]
@@ -41,7 +41,7 @@ p1 = Ladder cutoff=600 res=0.3 key=1
 env1 = attack=1 decay=700 sustain=0 release=400 velocity=0.5
 env2 = attack=0.5 decay=180 sustain=0 release=150
 voice = env2ToP1=0.5 velToP1=0.12
-reverb = on size=0.6 damping=0.45 mix=0.22
+f1 = Reverb size=0.6 damping=0.45 mix=0.22
 master = 4
 
 [Kalimba]
@@ -58,7 +58,7 @@ mod = src=env3 dst=g2.level amount=0.35
 mod = src=velocity dst=g1.hard amount=0.2
 mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.2 predelay=10
+f1 = Reverb size=0.45 damping=0.5 mix=0.2 predelay=10
 master = -1
 
 [Harp String]
@@ -107,5 +107,5 @@ mod = src=velocity dst=g1.hard amount=0.45
 mod = src=key dst=g1.decay amount=-0.7
 mod = src=env3 dst=g2.level amount=0.25
 voice = env2ToP1=0
-reverb = on size=0.4 damping=0.55 mix=0.16 predelay=8
+f1 = Reverb size=0.4 damping=0.55 mix=0.16 predelay=8
 master = -0.5

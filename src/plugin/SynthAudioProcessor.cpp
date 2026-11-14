@@ -14,6 +14,7 @@
 #include "parameters/ParameterLayout.h"
 #include "plugin/AuditionEditor.h"
 #include "presets/FactoryPresets.h"
+#include "presets/StateMigration.h"
 
 namespace
 {
@@ -22,7 +23,8 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    inline constexpr int processorStateFormatVersion = 9; // 9: V3 parameter contract
+    // 9: V3 parameter contract; 10: the master effect slots (a version 9 state is carried over, D135)
+    inline constexpr int processorStateFormatVersion = 10;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
@@ -139,6 +141,7 @@ SynthAudioProcessor::SynthAudioProcessor()
     , partParameterValues { coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::a),
                             coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::b) }
     , partModeValue(parameters.getRawParameterValue(coolsynth::parameters::v3::partModeParameterId))
+    , masterEffectValues(coolsynth::parameters::v3::bindMasterEffectPointers(parameters))
     , mappedActionBridge(*this)
 {
     for (auto* parameter : getParameters())
@@ -364,25 +367,33 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         if (! xml->hasTagName(processorStateRootTag))
             return;
 
-        if (xml->getIntAttribute(processorStateVersionProperty, 0) != processorStateFormatVersion)
+        const int version = xml->getIntAttribute(processorStateVersionProperty, 0);
+        const bool fixedEffects = version == coolsynth::presets::processorStateVersionWithFixedEffects;
+        if (version != processorStateFormatVersion && ! fixedEffects)
             return;
 
         const auto expectedStateType = getParameterStateTypeName();
         if (xml->getStringAttribute(processorStateStateTypeProperty) != expectedStateType)
             return;
 
-        auto* parameterStateXml = findSingleMatchingChild(*xml, expectedStateType);
-        if (parameterStateXml == nullptr)
+        auto* found = findSingleMatchingChild(*xml, expectedStateType);
+        if (found == nullptr)
             return;
+
+        // A state saved before the master effect slots: its fixed effects move into the slots (D135).
+        juce::XmlElement parameterStateXml(*found);
+        std::map<juce::String, juce::String> renamed;
+        if (fixedEffects)
+            renamed = coolsynth::presets::migrateFixedMasterEffects(parameterStateXml);
 
         const AtomicFlagScope applying(applyingPatch, true);
         suppressGestureSnapshots = true;
-        const bool applied = applyParameterStateXml(*parameterStateXml);
+        const bool applied = applyParameterStateXml(parameterStateXml);
         suppressGestureSnapshots = false;
 
         if (applied)
         {
-            setLearnedMidiBindings(parseLearnedMidiBindingsXml(*xml));
+            setLearnedMidiBindings(parseLearnedMidiBindingsXml(*xml, renamed));
             setPatchIdentity(xml->getStringAttribute(processorStatePatchNameProperty, "Init"),
                              xml->getBoolAttribute(processorStatePatchDirtyProperty, false));
             undoHistory.clear();
@@ -869,35 +880,29 @@ void SynthAudioProcessor::requestPanic() noexcept
 
 double SynthAudioProcessor::getTailLengthSeconds() const
 {
-    if (parameterValues.delayEnabled == nullptr
-        || parameterValues.delayTimeMs == nullptr
-        || parameterValues.delayMix == nullptr
-        || parameterValues.delayFeedback == nullptr
-        || parameterValues.reverbEnabled == nullptr
-        || parameterValues.reverbMix == nullptr)
-    {
-        return 0.0;
-    }
-
-    coolsynth::synth::DelayParametersV2 delayParameters;
-    delayParameters.enabled = parameterValues.delayEnabled->load() >= 0.5f;
-    delayParameters.timeMs = juce::jlimit(1.0f, 1000.0f, parameterValues.delayTimeMs->load());
-    delayParameters.mix = juce::jlimit(0.0f, 1.0f, parameterValues.delayMix->load());
-    delayParameters.feedback = juce::jlimit(0.0f, coolsynth::synth::GlobalDelay::maxFeedback, parameterValues.delayFeedback->load());
-
-    coolsynth::synth::ReverbParametersV2 reverbParameters;
-    reverbParameters.enabled = parameterValues.reverbEnabled->load() >= 0.5f;
-    reverbParameters.mix = juce::jlimit(0.0f, 1.0f, parameterValues.reverbMix->load());
-
-    return coolsynth::synth::GlobalFxRack::estimateTailLengthSeconds(delayParameters, reverbParameters);
+    // The longest tail among the master effect slots (a synced delay at the internal tempo).
+    std::array<coolsynth::synth::v3::InsertSettings, coolsynth::parameters::v3::masterEffectSlots> slots {};
+    coolsynth::parameters::v3::readMasterEffects(masterEffectValues, slots);
+    const double bpm = parameterValues.arpInternalTempoBpm != nullptr ? parameterValues.arpInternalTempoBpm->load() : 120.0;
+    double tail = 0.0;
+    for (const auto& slot : slots)
+        tail = std::max(tail, coolsynth::synth::v3::insertTailSeconds(slot, bpm));
+    return tail;
 }
 
-std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::parseLearnedMidiBindingsXml(const juce::XmlElement& parent) const
+std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::parseLearnedMidiBindingsXml(
+    const juce::XmlElement& parent, const std::map<juce::String, juce::String>& renamed) const
 {
     std::vector<coolsynth::midi::LearnedCcBinding> bindings;
 
     if (const auto* mappings = parent.getChildByName(learnedMidiMappingsTag))
         bindings = coolsynth::midi::parseLearnedBindingsXml(*mappings);
+
+    // A knob learned on a parameter that moved (an old master effect's value into its slot, D135) follows it;
+    // the normaliser then drops what has no place any more.
+    for (auto& binding : bindings)
+        if (const auto moved = renamed.find(binding.parameterId); moved != renamed.end())
+            binding.parameterId = moved->second;
 
     coolsynth::midi::MidiLearnManager normalizer;
     normalizer.replaceBindings(std::move(bindings));
@@ -949,63 +954,7 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
     arp.latch = decodeBool(v.arpLatch->load());
     settings.parts[1].arp = arp; // one arpeggiator setting; each part's mix says whether it follows
 
-    settings.drive.enabled = decodeBool(v.driveEnabled->load());
-    settings.drive.amount = v.driveAmount->load();
-    settings.drive.mix = v.driveMix->load();
-
-    settings.chorus.enabled = decodeBool(v.chorusEnabled->load());
-    settings.chorus.rateHz = v.chorusRateHz->load();
-    settings.chorus.depth = v.chorusDepth->load();
-    settings.chorus.mix = v.chorusMix->load();
-
-    settings.delay.enabled = decodeBool(v.delayEnabled->load());
-    settings.delay.timeMs = juce::jlimit(1.0f, 1000.0f, v.delayTimeMs->load());
-    settings.delay.feedback = juce::jlimit(0.0f, coolsynth::synth::GlobalDelay::maxFeedback, v.delayFeedback->load());
-    settings.delay.mix = v.delayMix->load();
-    settings.delay.sync = decodeBool(v.delaySync->load());
-    settings.delay.division = juce::jlimit(0, static_cast<int>(coolsynth::synth::delayDivisions.size()) - 1, index(v.delayDivision));
-    settings.delay.pingPong = index(v.delayMode) == 1;
-
-    settings.lofi.enabled = decodeBool(v.lofiEnabled->load());
-    settings.lofi.wow = v.lofiWow->load();
-    settings.lofi.flutter = v.lofiFlutter->load();
-    settings.lofi.hiss = v.lofiHiss->load();
-    settings.lofi.crackle = v.lofiCrackle->load();
-    settings.lofi.bandwidth = v.lofiBandwidth->load();
-    settings.lofi.bits = v.lofiBits->load();
-    settings.lofi.rateHz = v.lofiRate->load();
-    settings.lofi.mix = v.lofiMix->load();
-
-    settings.flanger.enabled = decodeBool(v.flangerEnabled->load());
-    settings.flanger.rateHz = v.flangerRate->load();
-    settings.flanger.depth = v.flangerDepth->load();
-    settings.flanger.feedback = v.flangerFeedback->load();
-    settings.flanger.mix = v.flangerMix->load();
-    settings.eq.enabled = decodeBool(v.eqEnabled->load());
-    settings.eq.lowDb = v.eqLow->load();
-    settings.eq.tiltDb = v.eqTilt->load();
-    settings.eq.highDb = v.eqHigh->load();
-    settings.pump.enabled = decodeBool(v.pumpEnabled->load());
-    settings.pump.depth = v.pumpDepth->load();
-    settings.pump.division = index(v.pumpDivision);
-    settings.pump.release = v.pumpRelease->load();
-
-    settings.reverb.enabled = decodeBool(v.reverbEnabled->load());
-    settings.reverb.size = v.reverbSize->load();
-    settings.reverb.damping = v.reverbDamping->load();
-    settings.reverb.mix = v.reverbMix->load();
-    settings.reverb.preDelayMs = v.reverbPreDelay->load();
-    settings.reverb.lowCutHz = v.reverbLowCut->load();
-    settings.reverb.modulation = v.reverbModulation->load();
-    settings.reverb.shimmer = v.reverbShimmer->load();
-
-    settings.phaser.enabled = decodeBool(v.phaserEnabled->load());
-    settings.phaser.rateHz = juce::jlimit(0.05f, 8.0f, v.phaserRateHz->load());
-    settings.phaser.depth = juce::jlimit(0.0f, 1.0f, v.phaserDepth->load());
-
-    settings.compressor.enabled = decodeBool(v.compressorEnabled->load());
-    settings.compressor.amount = juce::jlimit(0.0f, 1.0f, v.compressorAmount->load());
-    settings.compressor.mix = juce::jlimit(0.0f, 1.0f, v.compressorMix->load());
+    coolsynth::parameters::v3::readMasterEffects(masterEffectValues, settings.master);
 
     settings.masterGainLinear = juce::Decibels::decibelsToGain(v.masterGainDb->load());
     return settings;

@@ -91,6 +91,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/presets/BankFile.cpp
     src/presets/FactoryPresets.cpp
     src/presets/PatchState.cpp
+    src/presets/StateMigration.cpp
     src/midi/ControllerProfile.cpp
     src/midi/MidiLearn.cpp
     src/midi/MidiMappingEngine.cpp

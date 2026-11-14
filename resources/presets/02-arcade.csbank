@@ -11,7 +11,7 @@ lfo1 = shape=triangle rate=6 fade=300 retrigger=on
 mod = src=lfo1 dst=pitch amount=0.01
 voice = env2ToP1=0
 play = mode=mono
-delay = on time=90 feedback=0 mix=0.2
+f1 = Delay time=90 feedback=0 mix=0.2
 master = -2.5
 
 [Boss Bass]
@@ -59,7 +59,7 @@ mod = src=step dst=g1.pos amount=1
 mod = src=lfo1 dst=pitch amount=0.008
 voice = env2ToP1=0 glide=30
 play = mode=legato
-delay = on time=120 feedback=0 mix=0.18
+f1 = Delay time=120 feedback=0 mix=0.18
 master = -1
 
 [Chip Chord]

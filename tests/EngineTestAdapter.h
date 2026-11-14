@@ -172,12 +172,30 @@ namespace coolsynth::testing
             voice.env2ToP1 = 0.5f * p.filter.envelopeAmount;
 
             s.parts[0].arp = p.arp;
-            s.drive = p.drive;
-            s.phaser = p.phaser;
-            s.chorus = p.chorus;
-            s.delay = p.delay;
-            s.reverb = p.reverb;
-            s.compressor = p.compressor;
+            // The effects these tests switch on, as master slots in the order of the old fixed chain (D135).
+            namespace types = coolsynth::synth::v3::insertType;
+            using coolsynth::synth::v3::InsertSettings;
+            int slot = 0;
+            auto add = [&](int type, std::initializer_list<std::pair<int, float>> units)
+            {
+                if (slot < coolsynth::synth::v3::masterSlotCount)
+                    s.master[static_cast<std::size_t>(slot++)] = InsertSettings::of(type, units);
+            };
+            if (p.drive.enabled)
+                add(types::drive, { { 0, p.drive.amount }, { 1, p.drive.mix } });
+            if (p.phaser.enabled)
+                add(types::phaser, { { 0, p.phaser.rateHz }, { 1, p.phaser.depth } });
+            if (p.chorus.enabled)
+                add(types::chorus, { { 0, p.chorus.rateHz }, { 1, p.chorus.depth }, { 2, p.chorus.mix } });
+            if (p.delay.enabled)
+                add(types::delay, { { 0, p.delay.timeMs }, { 1, p.delay.feedback }, { 2, p.delay.mix },
+                                    { 3, p.delay.sync ? 1.0f : 0.0f }, { 4, static_cast<float>(p.delay.division) },
+                                    { 5, p.delay.pingPong ? 1.0f : 0.0f } });
+            if (p.reverb.enabled)
+                add(types::reverb, { { 0, p.reverb.size }, { 1, p.reverb.damping }, { 2, p.reverb.mix }, { 3, p.reverb.preDelayMs },
+                                     { 4, p.reverb.lowCutHz }, { 5, p.reverb.modulation }, { 6, p.reverb.shimmer } });
+            if (p.compressor.enabled)
+                add(types::compressor, { { 0, p.compressor.amount }, { 1, p.compressor.mix } });
             s.masterGainLinear = p.masterGainLinear;
             return s;
         }

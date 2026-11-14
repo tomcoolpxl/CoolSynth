@@ -8,7 +8,7 @@ p1 = Ladder cutoff=850 res=0.2 key=0.3 bass=0.6
 env1 = attack=4 decay=200 sustain=1 release=140 velocity=0.3
 voice = env2ToP1=0.06 glide=20
 play = mode=legato glideLegato=on
-drive = on amount=0.18 mix=0.75
+f1 = Drive amount=0.18 mix=0.75
 master = -11.5
 
 [Supersaw]
@@ -28,8 +28,8 @@ b.env1 = attack=6 decay=300 sustain=1 release=260 velocity=0.3
 b.voice = env2ToP1=0 glide=25
 b.play = mode=legato priority=low
 b.mix = level=-5 fx=0
-reverb = on size=0.75 damping=0.45 mix=0.24
-delay = on time=375 feedback=0.25 mix=0.12
+f1 = Delay time=375 feedback=0.25 mix=0.12
+f2 = Reverb size=0.75 damping=0.45 mix=0.24
 master = -4
 
 [Riser]
@@ -51,7 +51,7 @@ mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=genv
 mod = src=genv dst=g2.tone amount=0.6
 mod = src=genv dst=g2.level amount=0.2
 voice = env2ToP1=0
-reverb = on size=0.85 damping=0.4 mix=0.3
+f1 = Reverb size=0.85 damping=0.4 mix=0.3
 master = -2
 
 [Pluck Drop]
@@ -66,8 +66,8 @@ env2 = attack=1 decay=260 sustain=0 release=200
 env3 = attack=0.5 decay=40 sustain=0 release=40 decayCurve=-0.6
 mod = src=env3 dst=pitch amount=0.25
 voice = env2ToP1=0.45 velToP1=0.15
-delay = on sync=on division=1/8 feedback=0.3 mix=0.18
-reverb = on size=0.6 damping=0.4 mix=0.2
+f1 = Delay sync=on division=1/8 feedback=0.3 mix=0.18
+f2 = Reverb size=0.6 damping=0.4 mix=0.2
 master = 4
 
 [Hyper Lead]
@@ -82,7 +82,7 @@ lfo1 = shape=s&h sync=on division=1/16 retrigger=on
 mod = src=lfo1 dst=pitch amount=0.25 curve=quantized
 voice = env2ToP1=0 glide=12
 play = mode=legato
-delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
 master = 5
 
 [Neuro Growl]
@@ -116,8 +116,8 @@ env2 = attack=5 decay=500 sustain=0.3 release=400
 mod = src=env2 dst=p1.cutoff amount=0.15
 voice = env2ToP1=0 drift=2
 chord = type=minor7
-chorus = on rate=0.35 depth=0.45 mix=0.35
-reverb = on size=0.6 damping=0.45 mix=0.22 predelay=20 lowcut=150
-eq = on low=-1 tilt=0 high=2.5
-pump = on depth=0.6 division=1/4 release=0.55
+f1 = Chorus rate=0.35 depth=0.45 mix=0.35
+f2 = Reverb size=0.6 damping=0.45 mix=0.22 predelay=20 lowcut=150
+f3 = EQ low=-1 tilt=0 high=2.5
+f4 = Pump depth=0.6 division=1/4 release=0.55
 master = -1

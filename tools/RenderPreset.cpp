@@ -177,10 +177,9 @@ int main(int argc, char* argv[])
 
     if (args.contains("--no-fx"))
     {
-        namespace ids = coolsynth::parameters::ids;
-        for (const char* id : { ids::driveEnabled, ids::chorusEnabled, ids::delayEnabled, ids::reverbEnabled, ids::lofiEnabled,
-                                ids::flangerEnabled, ids::eqEnabled, ids::pumpEnabled, ids::phaserEnabled, ids::compressorEnabled })
-            if (auto* parameter = processor.getValueTreeState().getParameter(id))
+        // The master effect slots: their first type is Off.
+        for (int slot = 1; slot <= coolsynth::parameters::v3::masterEffectSlots; ++slot)
+            if (auto* parameter = processor.getValueTreeState().getParameter("f" + juce::String(slot) + ".type"))
                 parameter->setValueNotifyingHost(0.0f);
         // The parts' insert slots too (their first type is Off), unless they are part of the sound under test.
         if (! args.contains("--keep-inserts"))

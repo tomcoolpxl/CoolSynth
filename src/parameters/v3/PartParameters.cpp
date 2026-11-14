@@ -716,4 +716,41 @@ namespace coolsynth::parameters::v3
             inserts[i].p = targets.p;
         }
     }
+
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeMasterEffectsGroup()
+    {
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("fx", "Master Effects", "|");
+        for (int i = 1; i <= masterEffectSlots; ++i)
+            group->addChild(makeSlotGroup({ Part::a, SlotKind::master, i }, sv3::insertTypeTable(), "Effect " + juce::String(i),
+                                          sv3::insertType::off));
+        return group;
+    }
+
+    bool isMasterEffectParameterId(juce::StringRef parameterId) noexcept
+    {
+        const juce::String id(parameterId);
+        for (int i = 1; i <= masterEffectSlots; ++i)
+            if (id.startsWith(slotPrefix({ Part::a, SlotKind::master, i }) + "."))
+                return true;
+        return false;
+    }
+
+    MasterEffectPointers bindMasterEffectPointers(juce::AudioProcessorValueTreeState& state)
+    {
+        MasterEffectPointers pointers {};
+        for (int i = 0; i < masterEffectSlots; ++i)
+            pointers[static_cast<std::size_t>(i)] = bindSlotPointers(state, { Part::a, SlotKind::master, i + 1 });
+        return pointers;
+    }
+
+    void readMasterEffects(const MasterEffectPointers& pointers,
+                           std::array<coolsynth::synth::v3::InsertSettings, masterEffectSlots>& slots) noexcept
+    {
+        for (std::size_t i = 0; i < slots.size(); ++i)
+        {
+            const auto targets = readSlotTargets(pointers[i]);
+            slots[i].type = juce::jlimit(0, sv3::insertType::count - 1, targets.typeIndex);
+            slots[i].p = targets.p;
+        }
+    }
 }

@@ -47,7 +47,8 @@ env1 = attack=5 decay=200 sustain=1 release=120 loop=off
 voice = env2ToP1=0.1 glide=15
 play = mode=legato priority=low
 arp = on rate=1/16 pattern=up/down
-drive = on amount=0.15 mix=0.8
+f1 = Drive amount=0.15 mix=0.8
+f2 = Reverb size=0.6
 master = -6
 )", "test.csbank");
             expect(parsed.errors.isEmpty(), parsed.errors.joinIntoString("\n"));
@@ -69,7 +70,10 @@ master = -6
             expect(entryText(preset, "pA.play.priority") == "low");
             expect(entryText(preset, "arpEnabled") == "on");
             expect(entryText(preset, "arpPattern") == "up/down");
-            expect(entryText(preset, "driveAmount") == "0.15");
+            expect(entryText(preset, "f1.type") == "Drive");
+            expect(entryText(preset, "f1.p1") == "0.15");      // amount is the drive's first value
+            expect(entryText(preset, "f2.type") == "Reverb");
+            expect(entryText(preset, "f2.p1") == "0.6");
             expect(entryText(preset, "masterGainDb") == "-6");
             expect(preset.entries.front().parameterId == "pA.g1.type"); // the type comes before its parameters
         }
@@ -82,7 +86,7 @@ g1 = Granular position=0.5
 g2 = VA wobble=3
 p1 = Ladder cutoff
 envelope = attack=5
-delay = maybe time=300
+delay = on time=300
 )", "broken.csbank");
             for (const auto& e : parsed.errors)
                 logMessage(e);
@@ -92,7 +96,7 @@ delay = maybe time=300
             expect(parsed.errors[2].contains(":4:") && parsed.errors[2].contains("wobble"));
             expect(parsed.errors[3].contains(":5:"));
             expect(parsed.errors[4].contains(":6:") && parsed.errors[4].contains("envelope"));
-            expect(parsed.errors[5].contains(":7:") && parsed.errors[5].contains("maybe"));
+            expect(parsed.errors[5].contains(":7:") && parsed.errors[5].contains("f1 = delay")); // the fixed effects are slots now
         }
 
         beginTest("apply_loads_type_defaults_and_reads_values_through_the_parameters");

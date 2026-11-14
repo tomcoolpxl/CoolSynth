@@ -13,9 +13,9 @@
 #include "Part.h"
 
 /*
-    V3 engine (DESIGN_V3.md sections 2 and 7): two parts, then the effect rack, then the master
-    gain and a soft clipper. The rack is the existing drive, lo-fi, phaser, flanger, chorus,
-    delay, plate, compressor, EQ and pump chain.
+    V3 engine (DESIGN_V3.md sections 2, 7 and 8): two parts, then the master effect slots F1..F6,
+    then the master gain and a soft clipper. A master slot holds any of the twelve effects, as an
+    insert slot does, and the chain runs in slot order (decision D135).
 
     Parts. Each part is a whole patch with its own note layer and voices. The part mode says
     which of them the keys reach: A only, Layer (both on every key), Split (each inside its key
@@ -29,13 +29,13 @@
     gets more when the other asks for fewer.
 
     Inserts. Each part runs through three insert slots of its own before the mix (Inserts.h):
-    any of the rack's ten effects, one per slot, so two parts can be treated differently.
+    any of the twelve effects, one per slot, so two parts can be treated differently.
 
     Mix. Each part has a level, a balance and an effects share: that share of the part passes
-    through the rack, the rest joins after it, before the master gain. A sub layer set to 0
-    stays out of the chorus and the plate.
+    through the master slots, the rest joins after them, before the master gain. A sub layer set
+    to 0 stays out of the chorus and the plate.
 
-    Tempo. Synced delays and pumps, in the rack and in the inserts, follow the host's tempo and
+    Tempo. Synced delays and pumps, in the master slots and in the inserts, follow the host's tempo and
     song position while it plays; otherwise the arp's tempo and a beat count that starts again
     with the first note after silence.
 */
@@ -49,16 +49,7 @@ namespace coolsynth::synth::v3
         std::array<PartMix, partCount> mix {};
         std::array<std::array<InsertSettings, insertSlotCount>, partCount> inserts {};
         PartMode partMode = PartMode::aOnly;
-        coolsynth::synth::DriveParametersV2 drive {};
-        coolsynth::synth::PhaserParametersV2 phaser {};
-        coolsynth::synth::ChorusParametersV2 chorus {};
-        coolsynth::synth::DelayParametersV2 delay {};
-        coolsynth::synth::ReverbParametersV2 reverb {};
-        coolsynth::synth::LoFiParameters lofi {};
-        coolsynth::synth::FlangerParameters flanger {};
-        coolsynth::synth::EqParameters eq {};
-        coolsynth::synth::PumpParameters pump {};
-        coolsynth::synth::CompressorParametersV2 compressor {};
+        std::array<InsertSettings, masterSlotCount> master {}; // F1..F6, in chain order
         float masterGainLinear = 1.0f;
     };
 
@@ -90,6 +81,10 @@ namespace coolsynth::synth::v3
         [[nodiscard]] const InsertSlot& insertForTesting(int part, int slot) const noexcept
         {
             return inserts[static_cast<std::size_t>(part)][static_cast<std::size_t>(slot)];
+        }
+        [[nodiscard]] const InsertSlot& masterSlotForTesting(int slot) const noexcept
+        {
+            return (*masterSlots)[static_cast<std::size_t>(slot)];
         }
 
         /** The voices a part's patch asks for: its polyphony, one for mono and legato, its unison count. */
@@ -145,11 +140,12 @@ namespace coolsynth::synth::v3
         std::array<MixGains, partCount> lastGains {};
         bool mixPrimed = false;
 
-        coolsynth::synth::GlobalFxRack fxRack;
-        juce::AudioBuffer<float> work;       // the stereo bus the rack runs on
+        // F1..F6, on the heap: each slot carries a rack, a grain buffer and a room, too much for a processor kept on a stack
+        std::unique_ptr<std::array<InsertSlot, masterSlotCount>> masterSlots = std::make_unique<std::array<InsertSlot, masterSlotCount>>();
+        juce::AudioBuffer<float> work;       // the stereo bus the master slots run on
         std::array<juce::AudioBuffer<float>, partCount> partBuffers; // each part's voices, then through its inserts
         std::array<std::array<InsertSlot, insertSlotCount>, partCount> inserts;
-        juce::AudioBuffer<float> dryBus;     // what goes past the rack
+        juce::AudioBuffer<float> dryBus;     // what goes past the master slots
         juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;
         bool prepared = false;
         bool masterPrimed = false;

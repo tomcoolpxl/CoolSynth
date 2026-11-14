@@ -3,9 +3,10 @@
 #include <array>
 
 /*
-    IDs of the parameters outside a V3 part: the arpeggiator, the effect rack and the output.
-    A part's own parameters (generator and processor slots, envelopes, voice and play settings)
-    are built from slot paths in parameters/v3 and are not listed here.
+    IDs of the parameters outside a V3 part: the arpeggiator and the output. A part's own
+    parameters (generator and processor slots, envelopes, voice and play settings) and the master
+    effect slots F1..F6 ("f1.type", "f1.p1") are built from slot paths in parameters/v3 and are not
+    listed here.
 */
 namespace coolsynth::parameters::ids
 {
@@ -33,65 +34,8 @@ namespace coolsynth::parameters::ids
     inline constexpr char arpEuclideanRotation[] = "arpEuclideanRotation";
     inline constexpr char arpLatch[] = "arpLatch";
 
-    inline constexpr char driveEnabled[] = "driveEnabled";
-    inline constexpr char driveAmount[] = "driveAmount";
-    inline constexpr char driveMix[] = "driveMix";
-
-    inline constexpr char chorusEnabled[] = "chorusEnabled";
-    inline constexpr char chorusRateHz[] = "chorusRateHz";
-    inline constexpr char chorusDepth[] = "chorusDepth";
-    inline constexpr char chorusMix[] = "chorusMix";
-
-    inline constexpr char delayEnabled[] = "delayEnabled";
-    inline constexpr char delayTimeMs[] = "delayTimeMs";
-    inline constexpr char delayFeedback[] = "delayFeedback";
-    inline constexpr char delayMix[] = "delayMix";
-    inline constexpr char delaySync[] = "delaySync";
-    inline constexpr char delayDivision[] = "delayDivision";
-    inline constexpr char delayMode[] = "delayMode";
-
-    inline constexpr char lofiEnabled[] = "lofiEnabled";
-    inline constexpr char lofiWow[] = "lofiWow";
-    inline constexpr char lofiFlutter[] = "lofiFlutter";
-    inline constexpr char lofiHiss[] = "lofiHiss";
-    inline constexpr char lofiCrackle[] = "lofiCrackle";
-    inline constexpr char lofiBandwidth[] = "lofiBandwidth";
-    inline constexpr char lofiBits[] = "lofiBits";
-    inline constexpr char lofiRate[] = "lofiRate";
-    inline constexpr char lofiMix[] = "lofiMix";
-
-    inline constexpr char flangerEnabled[] = "flangerEnabled";
-    inline constexpr char flangerRate[] = "flangerRate";
-    inline constexpr char flangerDepth[] = "flangerDepth";
-    inline constexpr char flangerFeedback[] = "flangerFeedback";
-    inline constexpr char flangerMix[] = "flangerMix";
-    inline constexpr char eqEnabled[] = "eqEnabled";
-    inline constexpr char eqLow[] = "eqLow";
-    inline constexpr char eqTilt[] = "eqTilt";
-    inline constexpr char eqHigh[] = "eqHigh";
-    inline constexpr char pumpEnabled[] = "pumpEnabled";
-    inline constexpr char pumpDepth[] = "pumpDepth";
-    inline constexpr char pumpDivision[] = "pumpDivision";
-    inline constexpr char pumpRelease[] = "pumpRelease";
-
-    inline constexpr char reverbEnabled[] = "reverbEnabled";
-    inline constexpr char reverbSize[] = "reverbSize";
-    inline constexpr char reverbDamping[] = "reverbDamping";
-    inline constexpr char reverbMix[] = "reverbMix";
-    inline constexpr char reverbPreDelay[] = "reverbPreDelay";
-    inline constexpr char reverbLowCut[] = "reverbLowCut";
-    inline constexpr char reverbModulation[] = "reverbModulation";
-    inline constexpr char reverbShimmer[] = "reverbShimmer";
-
     inline constexpr char masterGainDb[] = "masterGainDb";
 
-    inline constexpr char phaserEnabled[]     = "phaserEnabled";
-    inline constexpr char phaserRateHz[]      = "phaserRateHz";
-    inline constexpr char phaserDepth[]       = "phaserDepth";
-
-    inline constexpr char compressorEnabled[] = "compressorEnabled";
-    inline constexpr char compressorAmount[]  = "compressorAmount";
-    inline constexpr char compressorMix[]     = "compressorMix";
 }
 
 namespace coolsynth::parameters
@@ -161,57 +105,7 @@ namespace coolsynth::parameters
         ids::arpEuclideanSteps,
         ids::arpEuclideanRotation,
         ids::arpLatch,
-        ids::driveEnabled,
-        ids::driveAmount,
-        ids::driveMix,
-        ids::chorusEnabled,
-        ids::chorusRateHz,
-        ids::chorusDepth,
-        ids::chorusMix,
-        ids::delayEnabled,
-        ids::delayTimeMs,
-        ids::delayFeedback,
-        ids::delayMix,
-        ids::delaySync,
-        ids::delayDivision,
-        ids::delayMode,
-        ids::lofiEnabled,
-        ids::lofiWow,
-        ids::lofiFlutter,
-        ids::lofiHiss,
-        ids::lofiCrackle,
-        ids::lofiBandwidth,
-        ids::lofiBits,
-        ids::lofiRate,
-        ids::lofiMix,
-        ids::flangerEnabled,
-        ids::flangerRate,
-        ids::flangerDepth,
-        ids::flangerFeedback,
-        ids::flangerMix,
-        ids::eqEnabled,
-        ids::eqLow,
-        ids::eqTilt,
-        ids::eqHigh,
-        ids::pumpEnabled,
-        ids::pumpDepth,
-        ids::pumpDivision,
-        ids::pumpRelease,
-        ids::reverbEnabled,
-        ids::reverbSize,
-        ids::reverbDamping,
-        ids::reverbMix,
-        ids::reverbPreDelay,
-        ids::reverbLowCut,
-        ids::reverbModulation,
-        ids::reverbShimmer,
         ids::masterGainDb,
-        ids::phaserEnabled,
-        ids::phaserRateHz,
-        ids::phaserDepth,
-        ids::compressorEnabled,
-        ids::compressorAmount,
-        ids::compressorMix,
     });
 
     /** The fixed parameters MIDI learn accepts; part parameters are accepted by their slot-path prefix. */

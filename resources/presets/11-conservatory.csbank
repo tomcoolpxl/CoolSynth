@@ -10,7 +10,7 @@ g1 = Sample sample=steinway-grand style=grand loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.4 damping=0.5 mix=0.12
+f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = 5
 
 [Yamaha Upright]
@@ -21,7 +21,7 @@ g1 = Sample sample=yamaha-upright style=upright loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.4 damping=0.5 mix=0.12
+f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = 6
 
 [Old Upright]
@@ -32,7 +32,7 @@ g1 = Sample sample=old-upright style=upright loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.4 damping=0.5 mix=0.12
+f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = 5.5
 
 [Flemish Harpsichord]
@@ -43,7 +43,7 @@ g1 = Sample sample=flemish-harpsichord style=8 loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.4 damping=0.5 mix=0.12
+f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = 0.5
 
 [Italian Harpsichord]
@@ -54,7 +54,7 @@ g1 = Sample sample=italian-harpsichord style=8 loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.4 damping=0.5 mix=0.12
+f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = 1.5
 
 [FM Keys]
@@ -65,7 +65,7 @@ g1 = Sample sample=fm-keys style=piano loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=100 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.4 damping=0.5 mix=0.12
+f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = 2.5
 
 [Violins]
@@ -76,7 +76,7 @@ g1 = Sample sample=violins style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.55 damping=0.5 mix=0.2
+f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = 2
 
 [Violas]
@@ -87,7 +87,7 @@ g1 = Sample sample=violas style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.55 damping=0.5 mix=0.2
+f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = 2.5
 
 [Cellos]
@@ -98,7 +98,7 @@ g1 = Sample sample=cellos style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.55 damping=0.5 mix=0.2
+f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = 3.5
 
 [Double Bass]
@@ -109,7 +109,7 @@ g1 = Sample sample=double-bass style=vibrato loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.55 damping=0.5 mix=0.2
+f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = -1
 
 [Solo Violin]
@@ -120,7 +120,7 @@ g1 = Sample sample=solo-violin style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.55 damping=0.5 mix=0.2
+f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = 0.5
 
 [Folk Harp]
@@ -131,7 +131,7 @@ g1 = Sample sample=folk-harp style=plucked loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.15
+f1 = Reverb size=0.45 damping=0.5 mix=0.15
 master = 5
 
 [Dan Tranh]
@@ -142,7 +142,7 @@ g1 = Sample sample=dan-tranh style=normal loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.15
+f1 = Reverb size=0.45 damping=0.5 mix=0.15
 master = 6
 
 [Kalimba]
@@ -153,7 +153,7 @@ g1 = Sample sample=kalimba style=plucked loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.15
+f1 = Reverb size=0.45 damping=0.5 mix=0.15
 master = 3.5
 
 [Horn]
@@ -164,7 +164,7 @@ g1 = Sample sample=horn style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 2
 
 [Trumpet]
@@ -175,7 +175,7 @@ g1 = Sample sample=trumpet style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -0
 
 [Tuba]
@@ -186,7 +186,7 @@ g1 = Sample sample=tuba style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 3
 
 [Trombone]
@@ -197,7 +197,7 @@ g1 = Sample sample=trombone style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 3.5
 
 [Old Trombone]
@@ -208,7 +208,7 @@ g1 = Sample sample=old-trombone style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 6
 
 [Flute]
@@ -219,7 +219,7 @@ g1 = Sample sample=flute style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -2.5
 
 [Clarinet]
@@ -230,7 +230,7 @@ g1 = Sample sample=clarinet style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -2.5
 
 [Bassoon]
@@ -241,7 +241,7 @@ g1 = Sample sample=bassoon style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -3
 
 [Saxello]
@@ -252,7 +252,7 @@ g1 = Sample sample=saxello style=vibrato loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = 1.5
 
 [Tenor Sax]
@@ -263,7 +263,7 @@ g1 = Sample sample=tenor-sax style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = 0.5
 
 [Recorders]
@@ -274,7 +274,7 @@ g1 = Sample sample=recorders style=soprano loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -4.5
 
 [Ocarina]
@@ -285,7 +285,7 @@ g1 = Sample sample=ocarina style=small loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -4
 
 [Harmonica]
@@ -296,7 +296,7 @@ g1 = Sample sample=harmonica style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=100 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -2.5
 
 [Didgeridoo]
@@ -307,7 +307,7 @@ g1 = Sample sample=didgeridoo style=drone loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.45 damping=0.5 mix=0.16
+f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = 6
 
 [Pipe Organ]
@@ -318,7 +318,7 @@ g1 = Sample sample=pipe-organ style=loud loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.7 damping=0.5 mix=0.25
+f1 = Reverb size=0.7 damping=0.5 mix=0.25
 master = -2.5
 
 [Renaissance Organ]
@@ -329,7 +329,7 @@ g1 = Sample sample=renaissance-organ style=8 loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.7 damping=0.5 mix=0.25
+f1 = Reverb size=0.7 damping=0.5 mix=0.25
 master = -8
 
 [Marimba]
@@ -340,7 +340,7 @@ g1 = Sample sample=marimba style=mallets loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 6
 
 [Vibraphone]
@@ -351,7 +351,7 @@ g1 = Sample sample=vibraphone style=soft loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 3.5
 
 [Xylophone]
@@ -362,7 +362,7 @@ g1 = Sample sample=xylophone style=medium loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 6
 
 [Balafon]
@@ -373,7 +373,7 @@ g1 = Sample sample=balafon style=hard loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 6
 
 [Glockenspiel]
@@ -384,7 +384,7 @@ g1 = Sample sample=glockenspiel style=a loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 4.5
 
 [Tubular Bells]
@@ -395,7 +395,7 @@ g1 = Sample sample=tubular-bells style=a loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 6
 
 [Tubular Glock]
@@ -406,7 +406,7 @@ g1 = Sample sample=tubular-glock style=mallets loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 4
 
 [Hand Chimes]
@@ -417,7 +417,7 @@ g1 = Sample sample=hand-chimes style=mallets loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 6
 
 [Wine Glasses]
@@ -428,7 +428,7 @@ g1 = Sample sample=wine-glasses style=slow loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 4
 
 [Timpani]
@@ -439,5 +439,5 @@ g1 = Sample sample=timpani style=a loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-reverb = on size=0.5 damping=0.5 mix=0.18
+f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 4

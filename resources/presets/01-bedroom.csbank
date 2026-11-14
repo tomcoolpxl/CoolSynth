@@ -13,7 +13,7 @@ glfo1 = shape=sine sync=off rate=5 retrigger=off
 mod = src=glfo1 dst=pitch amount=0.007 via=wheel
 mod = src=env3 dst=g2.level amount=0.35
 voice = env2ToP1=0 drift=2
-reverb = on size=0.55 damping=0.55 mix=0.25
+f1 = Reverb size=0.55 damping=0.55 mix=0.25
 master = -6
 
 [Vinyl Choir]
@@ -32,9 +32,9 @@ mod = src=lfo1 dst=g1.pw amount=0.2
 mod = src=lfo1 dst=g2.pw amount=-0.2
 mod = src=lfo2 dst=p1.vowel amount=0.4
 voice = env2ToP1=0 drift=4
-lofi = on wow=0.2 crackle=0.35 hiss=0.15 bandwidth=0.75
-chorus = on rate=0.25 depth=0.4 mix=0.3
-reverb = on size=0.6 damping=0.55 mix=0.3
+f1 = LoFi wow=0.2 crackle=0.35 hiss=0.15 bandwidth=0.75 flutter=0
+f2 = Chorus rate=0.25 depth=0.4 mix=0.3
+f3 = Reverb size=0.6 damping=0.55 mix=0.3
 master = -0.5
 
 [Cassette Keys]
@@ -46,9 +46,9 @@ g2 = VA shape=sine oct=1 rand=0 level=0.3
 p1 = Ladder cutoff=1800 res=0.1 key=0.5
 env1 = attack=5 decay=600 sustain=0.3 release=400 velocity=0.5
 voice = env2ToP1=0 drift=3
-lofi = on wow=0.45 flutter=0.35 hiss=0.3 bandwidth=0.7
-chorus = on rate=0.3 depth=0.35 mix=0.3
-reverb = on size=0.35 damping=0.5 mix=0.18
+f1 = LoFi wow=0.45 flutter=0.35 hiss=0.3 bandwidth=0.7
+f2 = Chorus rate=0.3 depth=0.35 mix=0.3
+f3 = Reverb size=0.35 damping=0.5 mix=0.18
 master = 5
 
 [Blanket Pad]
@@ -62,8 +62,8 @@ env1 = attack=900 decay=1500 sustain=1 release=1500
 glfo1 = shape=sine sync=off rate=0.2 retrigger=off
 mod = src=glfo1 dst=pitch amount=0.000625
 voice = env2ToP1=0 drift=3
-lofi = on wow=0.2 bandwidth=0.8 hiss=0.08
-reverb = on size=0.65 damping=0.6 mix=0.25
+f1 = LoFi wow=0.2 bandwidth=0.8 hiss=0.08 flutter=0
+f2 = Reverb size=0.65 damping=0.6 mix=0.25
 master = -3
 
 [Bedroom Bass]
@@ -75,7 +75,7 @@ p1 = Ladder cutoff=350 res=0.1 key=0.3 bass=0.7
 env1 = attack=2 decay=300 sustain=0.7 release=120 velocity=0.3
 voice = env2ToP1=0
 play = mode=mono
-lofi = on wow=0.3 flutter=0.2 bandwidth=0.85
+f1 = LoFi wow=0.3 flutter=0.2 bandwidth=0.85
 master = -0
 
 [Dusty Mallet]
@@ -89,6 +89,6 @@ env1 = attack=1 decay=3000 sustain=0 release=1200 velocity=0.5
 mod = src=velocity dst=g1.hard amount=0.25
 mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0 drift=3
-lofi = on wow=0.3 flutter=0.15 crackle=0.45 hiss=0.12 bandwidth=0.6
-reverb = on size=0.35 damping=0.6 mix=0.2
+f1 = LoFi wow=0.3 flutter=0.15 crackle=0.45 hiss=0.12 bandwidth=0.6
+f2 = Reverb size=0.35 damping=0.6 mix=0.2
 master = 2.5

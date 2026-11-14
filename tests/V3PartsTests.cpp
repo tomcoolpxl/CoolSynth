@@ -314,17 +314,16 @@ public:
             expectGreaterThan(rms(fading.left, 192, 256), 0.0);
         }
 
-        beginTest("the_effects_share_keeps_a_part_out_of_the_rack");
+        beginTest("the_effects_share_keeps_a_part_out_of_the_master_effects");
         {
             auto echo = [](float fx, bool delayOn)
             {
                 auto engine = makeEngine();
                 auto settings = twoSines(PartMode::aOnly);
                 settings.mix[0].fx = fx;
-                settings.delay.enabled = delayOn;
-                settings.delay.timeMs = 100.0f;
-                settings.delay.feedback = 0.0f;
-                settings.delay.mix = 0.5f;
+                if (delayOn)
+                    settings.master[2] = coolsynth::synth::v3::InsertSettings::of(coolsynth::synth::v3::insertType::delay,
+                                                                                    { { 0, 100.0f }, { 1, 0.0f }, { 2, 0.5f } });
                 auto out = render(*engine, settings, 4800, { on(69, 0.5f) });
                 const auto tail = render(*engine, settings, 9600, { off(69) });
                 out.left.insert(out.left.end(), tail.left.begin(), tail.left.end());
@@ -338,7 +337,7 @@ public:
             expectLessThan(rms(past, 4800 + 3840, 4800 + 8640), 1.0e-4, "a part at 0 does not reach the delay");
             expectWithinAbsoluteError(rms(half, 4800 + 3840, 4800 + 8640) / echoOfThrough, 0.5, 0.02);
 
-            // Past the rack the part is what it is without effects.
+            // Past the master effects the part is what it is without effects.
             double difference = 0.0;
             for (std::size_t i = 0; i < plain.size(); ++i)
                 difference = std::max(difference, static_cast<double>(std::abs(plain[i] - past[i])));
@@ -399,7 +398,7 @@ master = -3
                 expect(entryText(preset, "pB.mix.arp") == "off");
             }
 
-            const auto wrong = coolsynth::presets::parseBankFile("[X]\nb.master = -3\nb.reverb = on\nparts = both\nb.mix = wide=1\n", "bad.csbank");
+            const auto wrong = coolsynth::presets::parseBankFile("[X]\nb.master = -3\nb.f1 = Reverb\nparts = both\nb.mix = wide=1\n", "bad.csbank");
             expectEquals(wrong.errors.size(), 4);
         }
     }

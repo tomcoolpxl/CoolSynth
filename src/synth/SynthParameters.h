@@ -157,57 +157,7 @@ namespace coolsynth::synth
         std::atomic<float>* arpEuclideanSteps = nullptr;
         std::atomic<float>* arpEuclideanRotation = nullptr;
         std::atomic<float>* arpLatch = nullptr;
-        std::atomic<float>* driveEnabled = nullptr;
-        std::atomic<float>* driveAmount = nullptr;
-        std::atomic<float>* driveMix = nullptr;
-        std::atomic<float>* chorusEnabled = nullptr;
-        std::atomic<float>* chorusRateHz = nullptr;
-        std::atomic<float>* chorusDepth = nullptr;
-        std::atomic<float>* chorusMix = nullptr;
-        std::atomic<float>* delayEnabled = nullptr;
-        std::atomic<float>* delayTimeMs = nullptr;
-        std::atomic<float>* delayFeedback = nullptr;
-        std::atomic<float>* delayMix = nullptr;
-        std::atomic<float>* delaySync = nullptr;
-        std::atomic<float>* delayDivision = nullptr;
-        std::atomic<float>* delayMode = nullptr;
-        std::atomic<float>* lofiEnabled = nullptr;
-        std::atomic<float>* lofiWow = nullptr;
-        std::atomic<float>* lofiFlutter = nullptr;
-        std::atomic<float>* lofiHiss = nullptr;
-        std::atomic<float>* lofiCrackle = nullptr;
-        std::atomic<float>* lofiBandwidth = nullptr;
-        std::atomic<float>* lofiBits = nullptr;
-        std::atomic<float>* lofiRate = nullptr;
-        std::atomic<float>* lofiMix = nullptr;
-        std::atomic<float>* flangerEnabled = nullptr;
-        std::atomic<float>* flangerRate = nullptr;
-        std::atomic<float>* flangerDepth = nullptr;
-        std::atomic<float>* flangerFeedback = nullptr;
-        std::atomic<float>* flangerMix = nullptr;
-        std::atomic<float>* eqEnabled = nullptr;
-        std::atomic<float>* eqLow = nullptr;
-        std::atomic<float>* eqTilt = nullptr;
-        std::atomic<float>* eqHigh = nullptr;
-        std::atomic<float>* pumpEnabled = nullptr;
-        std::atomic<float>* pumpDepth = nullptr;
-        std::atomic<float>* pumpDivision = nullptr;
-        std::atomic<float>* pumpRelease = nullptr;
-        std::atomic<float>* reverbEnabled = nullptr;
-        std::atomic<float>* reverbSize = nullptr;
-        std::atomic<float>* reverbDamping = nullptr;
-        std::atomic<float>* reverbMix = nullptr;
-        std::atomic<float>* reverbPreDelay = nullptr;
-        std::atomic<float>* reverbLowCut = nullptr;
-        std::atomic<float>* reverbModulation = nullptr;
-        std::atomic<float>* reverbShimmer = nullptr;
         std::atomic<float>* masterGainDb = nullptr;
-        std::atomic<float>* phaserEnabled = nullptr;
-        std::atomic<float>* phaserRateHz = nullptr;
-        std::atomic<float>* phaserDepth = nullptr;
-        std::atomic<float>* compressorEnabled = nullptr;
-        std::atomic<float>* compressorAmount = nullptr;
-        std::atomic<float>* compressorMix = nullptr;
     };
 
     using GlobalParamMemberPtr = std::atomic<float>* GlobalParameterPointers::*;
@@ -231,56 +181,6 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::arpEuclideanSteps,    &GlobalParameterPointers::arpEuclideanSteps    },
         { coolsynth::parameters::ids::arpEuclideanRotation, &GlobalParameterPointers::arpEuclideanRotation },
         { coolsynth::parameters::ids::arpLatch,             &GlobalParameterPointers::arpLatch             },
-        { coolsynth::parameters::ids::driveEnabled,         &GlobalParameterPointers::driveEnabled         },
-        { coolsynth::parameters::ids::driveAmount,          &GlobalParameterPointers::driveAmount          },
-        { coolsynth::parameters::ids::driveMix,             &GlobalParameterPointers::driveMix             },
-        { coolsynth::parameters::ids::chorusEnabled,        &GlobalParameterPointers::chorusEnabled        },
-        { coolsynth::parameters::ids::chorusRateHz,         &GlobalParameterPointers::chorusRateHz         },
-        { coolsynth::parameters::ids::chorusDepth,          &GlobalParameterPointers::chorusDepth          },
-        { coolsynth::parameters::ids::chorusMix,            &GlobalParameterPointers::chorusMix            },
-        { coolsynth::parameters::ids::delayEnabled,         &GlobalParameterPointers::delayEnabled         },
-        { coolsynth::parameters::ids::delayTimeMs,          &GlobalParameterPointers::delayTimeMs          },
-        { coolsynth::parameters::ids::delayFeedback,        &GlobalParameterPointers::delayFeedback        },
-        { coolsynth::parameters::ids::delayMix,             &GlobalParameterPointers::delayMix             },
-        { coolsynth::parameters::ids::delaySync,            &GlobalParameterPointers::delaySync            },
-        { coolsynth::parameters::ids::delayDivision,        &GlobalParameterPointers::delayDivision        },
-        { coolsynth::parameters::ids::delayMode,            &GlobalParameterPointers::delayMode            },
-        { coolsynth::parameters::ids::lofiEnabled,          &GlobalParameterPointers::lofiEnabled          },
-        { coolsynth::parameters::ids::lofiWow,              &GlobalParameterPointers::lofiWow              },
-        { coolsynth::parameters::ids::lofiFlutter,          &GlobalParameterPointers::lofiFlutter          },
-        { coolsynth::parameters::ids::lofiHiss,             &GlobalParameterPointers::lofiHiss             },
-        { coolsynth::parameters::ids::lofiCrackle,          &GlobalParameterPointers::lofiCrackle          },
-        { coolsynth::parameters::ids::lofiBandwidth,        &GlobalParameterPointers::lofiBandwidth        },
-        { coolsynth::parameters::ids::lofiBits,             &GlobalParameterPointers::lofiBits             },
-        { coolsynth::parameters::ids::lofiRate,             &GlobalParameterPointers::lofiRate             },
-        { coolsynth::parameters::ids::lofiMix,              &GlobalParameterPointers::lofiMix              },
-        { coolsynth::parameters::ids::flangerEnabled, &GlobalParameterPointers::flangerEnabled },
-        { coolsynth::parameters::ids::flangerRate, &GlobalParameterPointers::flangerRate },
-        { coolsynth::parameters::ids::flangerDepth, &GlobalParameterPointers::flangerDepth },
-        { coolsynth::parameters::ids::flangerFeedback, &GlobalParameterPointers::flangerFeedback },
-        { coolsynth::parameters::ids::flangerMix, &GlobalParameterPointers::flangerMix },
-        { coolsynth::parameters::ids::eqEnabled, &GlobalParameterPointers::eqEnabled },
-        { coolsynth::parameters::ids::eqLow, &GlobalParameterPointers::eqLow },
-        { coolsynth::parameters::ids::eqTilt, &GlobalParameterPointers::eqTilt },
-        { coolsynth::parameters::ids::eqHigh, &GlobalParameterPointers::eqHigh },
-        { coolsynth::parameters::ids::pumpEnabled, &GlobalParameterPointers::pumpEnabled },
-        { coolsynth::parameters::ids::pumpDepth, &GlobalParameterPointers::pumpDepth },
-        { coolsynth::parameters::ids::pumpDivision, &GlobalParameterPointers::pumpDivision },
-        { coolsynth::parameters::ids::pumpRelease, &GlobalParameterPointers::pumpRelease },
-        { coolsynth::parameters::ids::reverbEnabled,        &GlobalParameterPointers::reverbEnabled        },
-        { coolsynth::parameters::ids::reverbSize,           &GlobalParameterPointers::reverbSize           },
-        { coolsynth::parameters::ids::reverbDamping,        &GlobalParameterPointers::reverbDamping        },
-        { coolsynth::parameters::ids::reverbMix,            &GlobalParameterPointers::reverbMix            },
-        { coolsynth::parameters::ids::reverbPreDelay,       &GlobalParameterPointers::reverbPreDelay       },
-        { coolsynth::parameters::ids::reverbLowCut,         &GlobalParameterPointers::reverbLowCut         },
-        { coolsynth::parameters::ids::reverbModulation,     &GlobalParameterPointers::reverbModulation     },
-        { coolsynth::parameters::ids::reverbShimmer,        &GlobalParameterPointers::reverbShimmer        },
         { coolsynth::parameters::ids::masterGainDb,         &GlobalParameterPointers::masterGainDb         },
-        { coolsynth::parameters::ids::phaserEnabled,        &GlobalParameterPointers::phaserEnabled        },
-        { coolsynth::parameters::ids::phaserRateHz,         &GlobalParameterPointers::phaserRateHz         },
-        { coolsynth::parameters::ids::phaserDepth,          &GlobalParameterPointers::phaserDepth          },
-        { coolsynth::parameters::ids::compressorEnabled,    &GlobalParameterPointers::compressorEnabled    },
-        { coolsynth::parameters::ids::compressorAmount,     &GlobalParameterPointers::compressorAmount     },
-        { coolsynth::parameters::ids::compressorMix,        &GlobalParameterPointers::compressorMix        },
     }};
 }

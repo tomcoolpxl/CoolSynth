@@ -31,7 +31,8 @@ namespace coolsynth::synth::v3
         for (auto& slots : inserts)
             for (auto& slot : slots)
                 slot.prepare(sampleRate, block);
-        fxRack.prepare(sampleRate, block, 2);
+        for (auto& slot : *masterSlots)
+            slot.prepare(sampleRate, block);
         work.setSize(2, block, false, true, true);
         for (auto& buffer : partBuffers)
             buffer.setSize(2, block, false, true, true);
@@ -51,7 +52,8 @@ namespace coolsynth::synth::v3
         for (auto& slots : inserts)
             for (auto& slot : slots)
                 slot.clear();
-        fxRack.clear();
+        for (auto& slot : *masterSlots)
+            slot.clear();
         work.clear();
         for (auto& buffer : partBuffers)
             buffer.clear();
@@ -223,7 +225,8 @@ namespace coolsynth::synth::v3
             for (auto& slots : inserts)
                 for (auto& slot : slots)
                     slot.clear();
-            fxRack.clear();
+            for (auto& slot : *masterSlots)
+                slot.clear();
         }
 
         // Tempo and beat: the host's while it plays, otherwise the arp's tempo and a count that
@@ -302,19 +305,9 @@ namespace coolsynth::synth::v3
         }
         mixPrimed = true;
 
-        auto delay = settings.delay;
-        if (delay.sync)
-            delay.timeMs = coolsynth::synth::delayDivisionMs(delay.division, bpm);
-
-        coolsynth::synth::ExtraFxParameters extra { settings.lofi, settings.flanger, settings.eq, settings.pump };
-        {
-            const auto& division = coolsynth::synth::delayDivisions[static_cast<std::size_t>(
-                std::clamp(settings.pump.division, 0, static_cast<int>(coolsynth::synth::delayDivisions.size()) - 1))];
-            const double phase = beat.beatsAtStart / division.beats;
-            extra.pump.phaseAtStart = phase - std::floor(phase);
-            extra.pump.phasePerSample = beat.beatsPerSample / division.beats;
-        }
-        fxRack.process(stereo, settings.drive, settings.phaser, settings.chorus, delay, settings.reverb, settings.compressor, extra);
+        // The master slots, F1 to F6 in turn.
+        for (std::size_t slot = 0; slot < masterSlots->size(); ++slot)
+            (*masterSlots)[slot].process(stereo, settings.master[slot], beat);
 
         // What the parts kept out of the effects joins here.
         if (dryUsed)

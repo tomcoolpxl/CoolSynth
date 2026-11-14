@@ -35,14 +35,17 @@
                             velHigh, fx (the share through the effects), arp
         pA.i1 .. pA.i3      insert slots: type, p1 .. p8 (named and ranged by the type)
 
-    Part B has the same parameters under "pB.". One parameter belongs to the patch as a whole:
+    Part B has the same parameters under "pB.". Belonging to the patch as a whole:
         part.mode           A, Layer, Split, B
+        f1 .. f6            the master effect slots: type, p1 .. p12 (named and ranged by the type),
+                            a chain in slot order after the parts are mixed (decision D135)
 */
 namespace coolsynth::parameters::v3
 {
     inline constexpr int partGeneratorSlots = 3;
     inline constexpr int partProcessorSlots = 3;
     inline constexpr int partInsertSlots = coolsynth::synth::v3::insertSlotCount;
+    inline constexpr int masterEffectSlots = coolsynth::synth::v3::masterSlotCount;
     inline constexpr int partEnvelopes = 3;
     inline constexpr int partLocalLfos = 2;
     inline constexpr int partGlobalLfos = 2;
@@ -83,6 +86,16 @@ namespace coolsynth::parameters::v3
 
     /** True for IDs inside a part ("pA." or "pB."), which MIDI learn accepts. */
     [[nodiscard]] bool isPartParameterId(juce::StringRef parameterId) noexcept;
+
+    /** The master effect slots F1..F6, each "Effect n": its type and p1 .. p12. */
+    [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makeMasterEffectsGroup();
+    /** True for IDs of a master effect slot ("f1.type" .. "f6.p12"), which MIDI learn accepts. */
+    [[nodiscard]] bool isMasterEffectParameterId(juce::StringRef parameterId) noexcept;
+
+    using MasterEffectPointers = std::array<SlotParameterPointers, masterEffectSlots>;
+    [[nodiscard]] MasterEffectPointers bindMasterEffectPointers(juce::AudioProcessorValueTreeState& state);
+    void readMasterEffects(const MasterEffectPointers& pointers,
+                           std::array<coolsynth::synth::v3::InsertSettings, masterEffectSlots>& slots) noexcept;
 
     struct EnvelopePointers
     {

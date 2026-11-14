@@ -1,5 +1,7 @@
 #include "PatchState.h"
 
+#include "StateMigration.h"
+
 namespace coolsynth::presets
 {
     std::unique_ptr<juce::XmlElement> createWrappedPatchXml(const juce::XmlElement& parameterStateXml,
@@ -20,7 +22,7 @@ namespace coolsynth::presets
             return { PatchStateError::invalidRootTag, "Not a CoolSynth patch file.", nullptr };
 
         const int version = patchXml.getIntAttribute("formatVersion", 0);
-        if (version != patchFormatVersion)
+        if (version != patchFormatVersion && version != patchVersionWithFixedEffects)
             return { PatchStateError::unsupportedFormatVersion, "Unsupported CoolSynth patch version.", nullptr };
 
         if (patchXml.getStringAttribute("stateType") != expectedStateType)
@@ -44,6 +46,8 @@ namespace coolsynth::presets
 
         PatchLoadResult result;
         result.parameterStateXml.reset(new juce::XmlElement(*matchingChild));
+        if (version == patchVersionWithFixedEffects)
+            migrateFixedMasterEffects(*result.parameterStateXml); // its fixed master effects move into the slots
         return result;
     }
 

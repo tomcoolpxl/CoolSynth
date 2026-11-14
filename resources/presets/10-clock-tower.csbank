@@ -10,8 +10,8 @@ env1 = attack=1 decay=200 sustain=0 release=150 velocity=0.4
 env2 = attack=1 decay=150 sustain=0 release=100
 voice = env2ToP1=0.36
 arp = on rate=1/16 pattern=up octaves=1 gate=0.5 rhythm=euclidean pulses=5 steps=8
-delay = on sync=on division=1/8. feedback=0.3 mix=0.15
-reverb = on size=0.4 damping=0.5 mix=0.1
+f1 = Delay sync=on division=1/8. feedback=0.3 mix=0.15
+f2 = Reverb size=0.4 damping=0.5 mix=0.1
 master = 6
 
 [Ratchet Run]
@@ -23,7 +23,7 @@ env1 = attack=1 decay=160 sustain=0 release=100 velocity=0.5
 env2 = attack=1 decay=130 sustain=0 release=90
 voice = env2ToP1=0.3 velToP1=0.15
 arp = on rate=1/16 pattern=up octaves=2 gate=0.5 ratchet=x2 ratchetChance=0.3 accentEvery=/4 accent=0.5
-delay = on sync=on division=1/8 mode=pingpong feedback=0.25 mix=0.12
+f1 = Delay sync=on division=1/8 mode=pingpong feedback=0.25 mix=0.12
 master = 6
 
 [Step Filter]
@@ -37,8 +37,8 @@ env1 = attack=8 decay=600 sustain=1 release=350
 step = values=1,0.15,0.6,0.1,0.85,0.3,0.5,0,1,0.4,0.7,0.2,0.9,0.1,0.6,0.35 slides=0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1 division=1/16 glide=0.4
 mod = src=step dst=p1.cutoff amount=0.5
 voice = env2ToP1=0
-delay = on sync=on division=1/8. feedback=0.25 mix=0.12
-reverb = on size=0.45 damping=0.5 mix=0.12
+f1 = Delay sync=on division=1/8. feedback=0.25 mix=0.12
+f2 = Reverb size=0.45 damping=0.5 mix=0.12
 master = -3
 
 [Random Walk]
@@ -51,8 +51,8 @@ env1 = attack=2 decay=280 sustain=0.3 release=200 velocity=0.4
 env2 = attack=2 decay=200 sustain=0.2 release=150
 voice = env2ToP1=0.2
 arp = on rate=1/16 pattern=randomWalk octaves=2 gate=0.6 chance=0.8
-delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
-reverb = on size=0.5 damping=0.5 mix=0.15
+f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+f2 = Reverb size=0.5 damping=0.5 mix=0.15
 master = 6
 
 [Polyrhythm Pad]
@@ -67,8 +67,8 @@ glfo1 = shape=sine sync=on division=1/4T retrigger=on
 mod = src=lfo1 dst=g1.pw amount=0.3
 mod = src=glfo1 dst=p1.cutoff amount=0.18
 voice = env2ToP1=0 drift=3
-chorus = on rate=0.4 depth=0.4 mix=0.3
-reverb = on size=0.7 damping=0.45 mix=0.25
+f1 = Chorus rate=0.4 depth=0.4 mix=0.3
+f2 = Reverb size=0.7 damping=0.45 mix=0.25
 master = -0.5
 
 [Chord Trigger]
@@ -84,6 +84,6 @@ env2 = attack=1 decay=320 sustain=0 release=200
 voice = env2ToP1=0.45
 chord = type=sus2
 arp = on rate=1/8 pattern=updown octaves=2 gate=0.6
-delay = on sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
-reverb = on size=0.5 damping=0.5 mix=0.15
+f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+f2 = Reverb size=0.5 damping=0.5 mix=0.15
 master = 3

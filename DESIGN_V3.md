@@ -437,8 +437,17 @@ exactly as the arpeggiator does today.
 
 Shipped (2026-11-13, decisions D81 and D93): three insert slots per part, `InsertSlot` in
 `src/synth/v3/Inserts.h`. A slot takes any of the rack's ten effects and runs that effect's own
-code; its parameters are `pA.i1.type` and `pA.i1.p1` to `p8`. The master section stays the fixed
+code; its parameters are `pA.i1.type` and `pA.i1.p1` to `p8`. The master section stayed the fixed
 rack. Both parts' voices are rendered first, then each part passes its inserts and enters the mix.
+
+Shipped (2026-11-14, decision D135): the master section is six slots, F1..F6, after the parts
+are mixed and before the master gain and the soft clipper. Each is the same `InsertSlot` as an
+insert and takes any of the twelve types, Room and Grain included; the chain runs in slot order,
+and an empty slot costs nothing. Parameters `f1.type` and `f1.p1` to `p12`; bank files write
+`f1 = Reverb size=0.6 mix=0.25`. The fixed rack's own parameters (`driveEnabled` ... `reverbMix`)
+are gone; a state or patch saved with them is carried over (`src/presets/StateMigration.cpp`):
+each effect that was on takes the next slot in the old chain's order with its values, and a
+learned knob on one of its values follows it. The plugin's tail is the longest of the slots'.
 
 Shipped (phase 2.4, 2026-11-13), on the V2 rack until the effect slots arrive: the delay has
 Sync with 14 note values (1/32 to one bar, dotted and triplet) and Mode Tape or Ping-Pong. The

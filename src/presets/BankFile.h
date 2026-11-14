@@ -15,15 +15,17 @@
         env1 = attack=5 decay=200 sustain=1 release=120
         voice = env2ToP1=0.1 glide=15
         play = mode=legato
-        drive = on amount=0.15 mix=0.8
+        f1 = Drive amount=0.15 mix=0.8
+        f2 = Reverb size=0.6 mix=0.25
         master = -6
 
-    g1..g3 and p1..p3 name the slot type first, then its parameters by descriptor key
-    (generators also take level, pan, oct, semi, fine, key, combine, amount). env1..env3,
-    voice and play take the part parameters by name. arp, drive, chorus, delay, reverb,
-    phaser and compressor take on or off first, then their settings. Values are written as
-    the parameter shows them: units for numbers, names for choices, on and off for switches.
-    Anything not written keeps its default, and naming a slot type loads that type's defaults.
+    g1..g3, p1..p3, the part's insert slots i1..i3 and the master effect slots f1..f6 name the
+    slot type first, then its parameters by descriptor key (generators also take level, pan, oct,
+    semi, fine, key, combine, amount). The master slots run in slot order (decision D135).
+    env1..env3, voice and play take the part parameters by name. arp takes on or off first, then
+    its settings. Values are written as the parameter shows them: units for numbers, names for
+    choices, on and off for switches. Anything not written keeps its default, and naming a slot
+    type loads that type's defaults.
 
     The parser only maps the structure onto parameter IDs; the parameters themselves read the
     values when a preset is applied, so a value means what the generic editor would show.

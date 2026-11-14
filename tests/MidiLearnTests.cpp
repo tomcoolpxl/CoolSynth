@@ -16,6 +16,22 @@
 
 using namespace coolsynth::midi;
 
+namespace
+{
+    /** Puts an effect type into master slot f<slot> and sets the values given, in the type's units. */
+    void setMasterSlot(juce::AudioProcessorValueTreeState& state, int slot, int type,
+                       std::initializer_list<std::pair<int, float>> units = {})
+    {
+        const auto prefix = "f" + juce::String(slot);
+        if (auto* typeParameter = state.getParameter(prefix + ".type"))
+            typeParameter->setValueNotifyingHost(typeParameter->convertTo0to1(static_cast<float>(type)));
+        const auto& d = coolsynth::synth::v3::insertDescriptor(type);
+        for (const auto& [index, value] : units)
+            if (auto* parameter = state.getParameter(prefix + ".p" + juce::String(index + 1)))
+                parameter->setValueNotifyingHost(coolsynth::synth::v3::unitsToNormalised(d.params[static_cast<std::size_t>(index)], value));
+    }
+}
+
 class StdoutLogger : public juce::Logger
 {
 protected:
@@ -430,36 +446,17 @@ public:
             expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
         }
 
-        beginTest("processor_reset_silences_allocator_path_and_clears_full_fx_rack");
+        beginTest("processor_reset_silences_allocator_path_and_clears_the_master_effects");
         {
             SynthAudioProcessor processor;
             processor.prepareToPlay(48000.0, 128);
 
             auto& state = processor.getValueTreeState();
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::driveEnabled))
-                enabled->setValueNotifyingHost(1.0f);
-            if (auto* amount = state.getParameter(coolsynth::parameters::ids::driveAmount))
-                amount->setValueNotifyingHost(1.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::driveMix))
-                mix->setValueNotifyingHost(1.0f);
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::chorusEnabled))
-                enabled->setValueNotifyingHost(1.0f);
-            if (auto* depth = state.getParameter(coolsynth::parameters::ids::chorusDepth))
-                depth->setValueNotifyingHost(1.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::chorusMix))
-                mix->setValueNotifyingHost(1.0f);
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
-                enabled->setValueNotifyingHost(1.0f);
-            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
-                feedback->setValueNotifyingHost(1.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
-                mix->setValueNotifyingHost(1.0f);
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::reverbEnabled))
-                enabled->setValueNotifyingHost(1.0f);
-            if (auto* size = state.getParameter(coolsynth::parameters::ids::reverbSize))
-                size->setValueNotifyingHost(1.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::reverbMix))
-                mix->setValueNotifyingHost(1.0f);
+            namespace types = coolsynth::synth::v3::insertType;
+            setMasterSlot(state, 1, types::drive, { { 0, 1.0f }, { 1, 1.0f } });
+            setMasterSlot(state, 2, types::chorus, { { 1, 1.0f }, { 2, 1.0f } });
+            setMasterSlot(state, 3, types::delay, { { 0, 250.0f }, { 1, 0.85f }, { 2, 1.0f } });
+            setMasterSlot(state, 4, types::reverb, { { 0, 1.0f }, { 2, 1.0f } });
 
             juce::AudioBuffer<float> buffer(2, 128);
             juce::MidiBuffer noteOn;
@@ -484,59 +481,33 @@ public:
             expectWithinAbsoluteError(maxAbs, 0.0f, 1.0e-6f);
         }
 
-        beginTest("processor_reports_tail_for_audible_delay_or_reverb_paths");
+        beginTest("processor_reports_the_longest_tail_of_its_master_effects");
         {
             SynthAudioProcessor processor;
             auto& state = processor.getValueTreeState();
+            namespace types = coolsynth::synth::v3::insertType;
 
-            const auto expectTailNear = [&](double expected)
+            const auto expectTailNear = [&](double expected, const char* what)
             {
-                expectWithinAbsoluteError(processor.getTailLengthSeconds(), expected, 1.0e-6);
+                expectWithinAbsoluteError(processor.getTailLengthSeconds(), expected, 1.0e-4, what);
             };
 
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
-                enabled->setValueNotifyingHost(0.0f);
-            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
-                feedback->setValueNotifyingHost(1.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
-                mix->setValueNotifyingHost(1.0f);
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::reverbEnabled))
-                enabled->setValueNotifyingHost(0.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::reverbMix))
-                mix->setValueNotifyingHost(0.0f);
-            expectTailNear(0.0);
-
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
-                enabled->setValueNotifyingHost(1.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
-                mix->setValueNotifyingHost(0.0f);
-            expectTailNear(0.0);
-
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::delayMix))
-                mix->setValueNotifyingHost(1.0f);
-            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
-                feedback->setValueNotifyingHost(0.0f);
-            expectTailNear(0.5);
-
-            if (auto* feedback = state.getParameter(coolsynth::parameters::ids::delayFeedback))
-                feedback->setValueNotifyingHost(1.0f);
+            expectTailNear(0.0, "no effects");
+            setMasterSlot(state, 1, types::delay, { { 0, 250.0f }, { 1, 0.85f }, { 2, 0.0f } });
+            expectTailNear(0.0, "a delay mixed out");
+            setMasterSlot(state, 1, types::delay, { { 1, 0.0f }, { 2, 1.0f } });
+            expectTailNear(0.5, "one echo and the pad");
+            setMasterSlot(state, 1, types::delay, { { 1, 0.85f } });
             {
-                // Default delay time at the 0.85 feedback ceiling: repeats until -60 dB plus the
-                // one-shot pad. Read the raw time back because the log range does not store
-                // exactly 250 ms.
-                const double delaySeconds = static_cast<double>(
-                    state.getRawParameterValue(coolsynth::parameters::ids::delayTimeMs)->load()) / 1000.0;
-                const double feedback = static_cast<double>(coolsynth::synth::GlobalDelay::maxFeedback);
-                expectTailNear(delaySeconds * (std::log(0.001) / std::log(feedback)) + 0.25);
+                // Repeats until -60 dB, plus the pad; the time read back as the slot holds it.
+                const auto& d = coolsynth::synth::v3::insertDescriptor(types::delay);
+                const double delaySeconds = coolsynth::synth::v3::descriptorToUnits(d.params[0], state.getRawParameterValue("f1.p1")->load()) / 1000.0;
+                const double feedback = coolsynth::synth::v3::descriptorToUnits(d.params[1], state.getRawParameterValue("f1.p2")->load());
+                expectTailNear(delaySeconds * (std::log(0.001) / std::log(feedback)) + 0.25, "repeats");
             }
-
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::delayEnabled))
-                enabled->setValueNotifyingHost(0.0f);
-            if (auto* enabled = state.getParameter(coolsynth::parameters::ids::reverbEnabled))
-                enabled->setValueNotifyingHost(1.0f);
-            if (auto* mix = state.getParameter(coolsynth::parameters::ids::reverbMix))
-                mix->setValueNotifyingHost(1.0f);
-            expectTailNear(12.0);
+            setMasterSlot(state, 1, coolsynth::synth::v3::insertType::off);
+            setMasterSlot(state, 6, types::reverb, { { 2, 1.0f } });
+            expectTailNear(12.0, "a reverb in the last slot");
         }
 
         beginTest("processor_process_block_routes_note_events_through_the_allocator");

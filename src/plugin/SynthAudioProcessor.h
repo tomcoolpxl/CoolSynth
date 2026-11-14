@@ -3,6 +3,7 @@
 #include <array>
 #include <atomic>
 #include <functional>
+#include <map>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
@@ -131,7 +132,9 @@ private:
     /** Message thread: writes a chord the engine learned into the chord parameters and ends learning. */
     void applyPendingLearnedChord();
     std::unique_ptr<juce::XmlElement> createProcessorStateXml() const;
-    std::vector<coolsynth::midi::LearnedCcBinding> parseLearnedMidiBindingsXml(const juce::XmlElement& parent) const;
+    /** The learned bindings saved under parent; renamed maps an old parameter ID to the one that took its place. */
+    std::vector<coolsynth::midi::LearnedCcBinding> parseLearnedMidiBindingsXml(const juce::XmlElement& parent,
+                                                                               const std::map<juce::String, juce::String>& renamed = {}) const;
     void applyMappedAction(const coolsynth::midi::MappedAction& action);
     void applyNormalizedParameterValue(juce::RangedAudioParameter& parameter,
                                        float normalizedValue);
@@ -160,6 +163,7 @@ private:
     juce::StringArray knownParameterIds; // every parameter, for patch and state validation
     std::array<coolsynth::parameters::v3::PartParameterPointers, coolsynth::synth::v3::partCount> partParameterValues;
     std::atomic<float>* partModeValue = nullptr;
+    coolsynth::parameters::v3::MasterEffectPointers masterEffectValues;
     coolsynth::synth::v3::EngineSettings engineSettings;
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };

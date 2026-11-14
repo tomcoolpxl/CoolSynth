@@ -36,24 +36,16 @@ namespace coolsynth::presets
                     { "accentEvery", ids::arpAccentEvery }, { "accent", ids::arpAccentAmount }, { "rhythm", ids::arpRhythm },
                     { "pulses", ids::arpEuclideanPulses }, { "steps", ids::arpEuclideanSteps }, { "rotation", ids::arpEuclideanRotation },
                     { "latch", ids::arpLatch } } } },
-                { "drive", { ids::driveEnabled, { { "amount", ids::driveAmount }, { "mix", ids::driveMix } } } },
-                { "chorus", { ids::chorusEnabled, { { "rate", ids::chorusRateHz }, { "depth", ids::chorusDepth }, { "mix", ids::chorusMix } } } },
-                { "delay", { ids::delayEnabled, { { "time", ids::delayTimeMs }, { "feedback", ids::delayFeedback }, { "mix", ids::delayMix },
-                                                  { "sync", ids::delaySync }, { "division", ids::delayDivision }, { "mode", ids::delayMode } } } },
-                { "reverb", { ids::reverbEnabled, { { "size", ids::reverbSize }, { "damping", ids::reverbDamping }, { "mix", ids::reverbMix },
-                                                   { "predelay", ids::reverbPreDelay }, { "lowcut", ids::reverbLowCut },
-                                                   { "modulation", ids::reverbModulation }, { "shimmer", ids::reverbShimmer } } } },
-                { "lofi", { ids::lofiEnabled, { { "wow", ids::lofiWow }, { "flutter", ids::lofiFlutter }, { "hiss", ids::lofiHiss },
-                                                { "crackle", ids::lofiCrackle }, { "bandwidth", ids::lofiBandwidth }, { "bits", ids::lofiBits },
-                                                { "rate", ids::lofiRate }, { "mix", ids::lofiMix } } } },
-                { "flanger", { ids::flangerEnabled, { { "rate", ids::flangerRate }, { "depth", ids::flangerDepth },
-                                                      { "feedback", ids::flangerFeedback }, { "mix", ids::flangerMix } } } },
-                { "eq", { ids::eqEnabled, { { "low", ids::eqLow }, { "tilt", ids::eqTilt }, { "high", ids::eqHigh } } } },
-                { "pump", { ids::pumpEnabled, { { "depth", ids::pumpDepth }, { "division", ids::pumpDivision }, { "release", ids::pumpRelease } } } },
-                { "phaser", { ids::phaserEnabled, { { "rate", ids::phaserRateHz }, { "depth", ids::phaserDepth } } } },
-                { "compressor", { ids::compressorEnabled, { { "amount", ids::compressorAmount }, { "mix", ids::compressorMix } } } },
             };
             return sections;
+        }
+
+        /** The fixed master effects of old, now effect slots f1 to f6 (decision D135): named in an error. */
+        const juce::StringArray& fixedEffectKeys()
+        {
+            static const juce::StringArray keys { "drive", "lofi", "phaser", "flanger", "chorus", "delay", "reverb",
+                                                  "compressor", "eq", "pump" };
+            return keys;
         }
 
         const juce::StringArray& envelopeKeys()
@@ -306,10 +298,18 @@ namespace coolsynth::presets
             };
             auto noBareWords = [](const juce::String&) { return false; };
 
-            // Room, master, the part mode, the arp and the effects belong to the patch, not to a part.
-            if (onPart && (key == "room" || key == "family" || key == "master" || key == "parts" || globalSections().count(key) != 0))
+            // Room, master, the part mode, the arp and the master effect slots belong to the patch, not to a part.
+            const int masterSlot = slotNumber(key, "f", pv3::masterEffectSlots);
+            if (onPart && (key == "room" || key == "family" || key == "master" || key == "parts" || masterSlot != 0
+                           || globalSections().count(key) != 0))
             {
                 error("'" + key + "' belongs to the patch, not to a part");
+                continue;
+            }
+
+            if (fixedEffectKeys().contains(key))
+            {
+                error("'" + key + "' is an effect in a slot now: f1 = " + key + " ... (any effect in f1 to f6, in chain order)");
                 continue;
             }
 
@@ -343,11 +343,13 @@ namespace coolsynth::presets
             const int generator = slotNumber(key, "g", pv3::partGeneratorSlots);
             const int processor = generator == 0 ? slotNumber(key, "p", pv3::partProcessorSlots) : 0;
             const int insert = generator == 0 && processor == 0 ? slotNumber(key, "i", pv3::partInsertSlots) : 0;
-            if (generator != 0 || processor != 0 || insert != 0)
+            if (generator != 0 || processor != 0 || insert != 0 || masterSlot != 0)
             {
                 const pv3::SlotPath path { part,
-                                           generator != 0 ? pv3::SlotKind::generator : (processor != 0 ? pv3::SlotKind::processor : pv3::SlotKind::insert),
-                                           generator != 0 ? generator : (processor != 0 ? processor : insert) };
+                                           generator != 0 ? pv3::SlotKind::generator
+                                                          : (processor != 0 ? pv3::SlotKind::processor
+                                                                            : (insert != 0 ? pv3::SlotKind::insert : pv3::SlotKind::master)),
+                                           generator != 0 ? generator : (processor != 0 ? processor : (insert != 0 ? insert : masterSlot)) };
                 const auto table = generator != 0 ? sv3::GeneratorSlot::typeTable()
                                                   : (processor != 0 ? sv3::ProcessorSlot::typeTable() : sv3::insertTypeTable());
                 if (tokens.isEmpty())

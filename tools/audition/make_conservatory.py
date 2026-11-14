@@ -87,7 +87,7 @@ for entry in instruments:
     lines.append("p1 = Off")
     lines.append(f"env1 = attack=2 decay=1 sustain=1 release={release_ms}{curve} velocity=0")
     lines.append("voice = env2ToP1=0")
-    lines.append(f"reverb = on size={size:g} damping=0.5 mix={mix:g}")
+    lines.append(f"f1 = Reverb size={size:g} damping=0.5 mix={mix:g}")
     lines.append(f"master = {masters.get(entry['name'], '0')}")
     lines.append("")
 

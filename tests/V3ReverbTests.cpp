@@ -132,14 +132,14 @@ public:
             expectLessThan(eighth, 0.7f * fifth, "and still falling by the eighth");
         }
 
-        beginTest("bank_reverb_section_takes_the_new_keys");
+        beginTest("bank_reverb_slot_takes_the_new_keys");
         {
-            const auto result = coolsynth::presets::parseBankFile("[R]\nreverb = on predelay=80 lowcut=150 modulation=0.7 shimmer=0.6 mix=0.4\n", "r.csbank");
+            const auto result = coolsynth::presets::parseBankFile("[R]\nf1 = Reverb predelay=80 lowcut=150 modulation=0.7 shimmer=0.6 mix=0.4\n", "r.csbank");
             expect(result.errors.isEmpty(), result.errors.joinIntoString("; "));
             juce::StringArray entries;
             for (const auto& e : result.presets.front().entries)
                 entries.add(e.parameterId + "=" + e.text);
-            for (const auto* wanted : { "reverbPreDelay=80", "reverbLowCut=150", "reverbModulation=0.7", "reverbShimmer=0.6" })
+            for (const auto* wanted : { "f1.type=Reverb", "f1.p4=80", "f1.p5=150", "f1.p6=0.7", "f1.p7=0.6" })
                 expect(entries.contains(wanted), juce::String("missing ") + wanted);
         }
     }

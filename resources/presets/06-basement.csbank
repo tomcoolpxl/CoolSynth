@@ -11,7 +11,7 @@ env1 = attack=1 decay=200 sustain=0.6 release=60
 env2 = attack=1 decay=200 sustain=0 release=80 decayCurve=-0.7
 voice = env2ToP1=0.55 velToP1=0.3 glide=40
 play = mode=legato glideLegato=on
-drive = on amount=0.3 mix=0.7
+f1 = Drive amount=0.3 mix=0.7
 master = -6
 
 [Rust Bass]
@@ -28,7 +28,7 @@ mod = src=env3 dst=p1.drive amount=0.45
 mod = src=velocity dst=p1.drive amount=0.15
 voice = env2ToP1=0
 play = mode=mono
-drive = on amount=0.15 mix=0.5
+f1 = Drive amount=0.15 mix=0.5
 master = -10.5
 
 [Metal Hit]
@@ -41,7 +41,7 @@ p1 = Drive curve=hard drive=14 tone=0.8 mix=1
 p2 = Ladder cutoff=4500 res=0.2 key=0.5
 env1 = attack=0.5 decay=250 sustain=0 release=200 velocity=0.5
 voice = env2ToP1=0
-reverb = on size=0.3 damping=0.4 mix=0.2
+f1 = Reverb size=0.3 damping=0.4 mix=0.2
 master = 5.5
 
 [Furnace Drone]
@@ -58,7 +58,7 @@ env1 = attack=2000 decay=2000 sustain=1 release=3000
 glfo1 = shape=sine sync=off rate=0.05 retrigger=off
 mod = src=glfo1 dst=p1.tune amount=0.15
 voice = env2ToP1=0 drift=5
-reverb = on size=0.7 damping=0.6 mix=0.2
+f1 = Reverb size=0.7 damping=0.6 mix=0.2
 master = -4.5
 
 [Concrete Pad]
@@ -72,9 +72,9 @@ p2 = Ladder cutoff=1000 res=0.15 key=0.3
 p3 = Crusher bits=12 rate=22000 mix=1
 env1 = attack=600 decay=1500 sustain=1 release=1500
 voice = env2ToP1=0 drift=4
-drive = on amount=0.15 mix=0.5
-lofi = on wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7
-reverb = on size=0.6 damping=0.6 mix=0.2
+f1 = Drive amount=0.15 mix=0.5
+f2 = LoFi wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7 flutter=0
+f3 = Reverb size=0.6 damping=0.6 mix=0.2
 master = -8.5
 
 [Siren]
@@ -88,6 +88,6 @@ glfo1 = shape=sawUp sync=off rate=0.1 retrigger=on
 mod = src=glfo1 dst=p1.cutoff amount=0.3
 voice = env2ToP1=0
 play = mode=mono
-drive = on amount=0.2 mix=0.6
-delay = on time=375 feedback=0.8 mix=0.3
+f1 = Drive amount=0.2 mix=0.6
+f2 = Delay time=375 feedback=0.8 mix=0.3
 master = -0

@@ -194,13 +194,13 @@ public:
             expectLessThan(block.getSample(0, 32), 0.05f, "the pump at the end of the rack ducks the output");
 
             const auto result = coolsynth::presets::parseBankFile(
-                "[F]\nflanger = on rate=0.4 depth=0.8 feedback=-0.6 mix=0.5\neq = on low=3 tilt=-2 high=4\npump = on depth=0.6 division=1/4 release=0.5\n",
+                "[F]\nf1 = Flanger rate=0.4 depth=0.8 feedback=-0.6 mix=0.5\nf2 = EQ low=3 tilt=-2 high=4\nf3 = Pump depth=0.6 division=1/4 release=0.5\n",
                 "f.csbank");
             expect(result.errors.isEmpty(), result.errors.joinIntoString("; "));
             juce::StringArray entries;
             for (const auto& e : result.presets.front().entries)
                 entries.add(e.parameterId + "=" + e.text);
-            for (const auto* wanted : { "flangerEnabled=on", "flangerFeedback=-0.6", "eqTilt=-2", "eqHigh=4", "pumpEnabled=on", "pumpDivision=1/4", "pumpRelease=0.5" })
+            for (const auto* wanted : { "f1.type=Flanger", "f1.p3=-0.6", "f2.type=EQ", "f2.p2=-2", "f2.p3=4", "f3.type=Pump", "f3.p2=1/4", "f3.p3=0.5" })
                 expect(entries.contains(wanted), juce::String("missing ") + wanted);
         }
     }

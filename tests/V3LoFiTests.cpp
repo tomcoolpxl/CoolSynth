@@ -149,14 +149,14 @@ public:
             expectGreaterThan(clicks, 20, "crackle clicks");
         }
 
-        beginTest("bank_lofi_section");
+        beginTest("bank_lofi_slot");
         {
-            const auto result = coolsynth::presets::parseBankFile("[L]\nlofi = on wow=0.4 flutter=0.3 hiss=0.2 crackle=0.1 bandwidth=0.6 bits=12 rate=22000 mix=1\n", "l.csbank");
+            const auto result = coolsynth::presets::parseBankFile("[L]\nf1 = LoFi wow=0.4 flutter=0.3 hiss=0.2 crackle=0.1 bandwidth=0.6 bits=12 rate=22000 mix=1\n", "l.csbank");
             expect(result.errors.isEmpty(), result.errors.joinIntoString("; "));
             juce::StringArray entries;
             for (const auto& e : result.presets.front().entries)
                 entries.add(e.parameterId + "=" + e.text);
-            for (const auto* wanted : { "lofiEnabled=on", "lofiWow=0.4", "lofiBandwidth=0.6", "lofiBits=12", "lofiRate=22000" })
+            for (const auto* wanted : { "f1.type=LoFi", "f1.p1=0.4", "f1.p5=0.6", "f1.p6=12", "f1.p7=22000" })
                 expect(entries.contains(wanted), juce::String("missing ") + wanted);
         }
     }

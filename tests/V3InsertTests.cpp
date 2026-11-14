@@ -188,55 +188,70 @@ public:
             expectEquals(static_cast<int>(insertType::grain), 11); // saved in patches: it stays the twelfth
         }
 
-        beginTest("an_insert_sounds_exactly_like_the_same_effect_in_the_master_section");
+        beginTest("an_insert_sounds_exactly_like_the_same_effect_in_a_master_slot");
         {
             const std::vector<Timed> notes { { 0, Type::noteOn, 57 }, { 0, Type::noteOn, 64 }, { 14400, Type::noteOff, 57 }, { 14400, Type::noteOff, 64 } };
-            struct Case
-            {
-                const char* name;
-                InsertSettings insert;
-                void (*master)(EngineSettings&);
-            };
-            const std::vector<Case> cases {
-                { "drive", insertOf(insertType::drive), [](EngineSettings& s) { s.drive.enabled = true; s.drive.amount = 0.3f; s.drive.mix = 1.0f; } },
-                { "phaser", insertOf(insertType::phaser), [](EngineSettings& s) { s.phaser.enabled = true; s.phaser.rateHz = 0.5f; s.phaser.depth = 0.6f; } },
-                { "flanger", insertOf(insertType::flanger),
-                  [](EngineSettings& s) { s.flanger.enabled = true; s.flanger.rateHz = 0.3f; s.flanger.depth = 0.7f; s.flanger.feedback = 0.5f; s.flanger.mix = 0.5f; } },
-                { "chorus", insertOf(insertType::chorus), [](EngineSettings& s) { s.chorus.enabled = true; s.chorus.rateHz = 0.6f; s.chorus.depth = 0.5f; s.chorus.mix = 0.5f; } },
-                // The insert's time goes through its normalised value and comes back a millionth of a sample off:
-                // the master gets exactly that time, so the two lines read at the same place.
-                { "delay", insertOf(insertType::delay),
-                  [](EngineSettings& s)
-                  {
-                      const auto& d = insertDescriptor(insertType::delay);
-                      s.delay.enabled = true;
-                      s.delay.timeMs = descriptorToUnits(d.params[0], unitsToNormalised(d.params[0], 250.0f));
-                      s.delay.feedback = descriptorToUnits(d.params[1], unitsToNormalised(d.params[1], 0.3f));
-                      s.delay.mix = descriptorToUnits(d.params[2], unitsToNormalised(d.params[2], 0.3f));
-                  } },
-                { "reverb", insertOf(insertType::reverb),
-                  [](EngineSettings& s) { s.reverb.enabled = true; s.reverb.size = 0.4f; s.reverb.damping = 0.5f; s.reverb.mix = 0.3f; } },
-                { "compressor", insertOf(insertType::compressor), [](EngineSettings& s) { s.compressor.enabled = true; s.compressor.amount = 0.3f; s.compressor.mix = 1.0f; } },
-                { "eq", insertOf(insertType::eq, { { 0, 6.0f }, { 2, -6.0f } }),
-                  [](EngineSettings& s) { s.eq.enabled = true; s.eq.lowDb = 6.0f; s.eq.tiltDb = 0.0f; s.eq.highDb = -6.0f; } },
-                { "pump", insertOf(insertType::pump), [](EngineSettings& s) { s.pump.enabled = true; s.pump.depth = 0.6f; s.pump.division = 8; s.pump.release = 0.5f; } },
+            const std::vector<std::pair<const char*, InsertSettings>> cases {
+                { "drive", insertOf(insertType::drive) },
+                { "lofi", insertOf(insertType::lofi, { { 2, 0.0f }, { 3, 0.0f } }) }, // no hiss or crackle: those are random
+                { "phaser", insertOf(insertType::phaser) },
+                { "flanger", insertOf(insertType::flanger) },
+                { "chorus", insertOf(insertType::chorus) },
+                { "delay", insertOf(insertType::delay) },
+                { "reverb", insertOf(insertType::reverb) },
+                { "compressor", insertOf(insertType::compressor) },
+                { "eq", insertOf(insertType::eq, { { 0, 6.0f }, { 2, -6.0f } }) },
+                { "pump", insertOf(insertType::pump) },
+                { "room", insertOf(insertType::room) },
             };
             const auto plain = [&] { auto e = makeEngine(); return render(*e, onePart(), 28800, notes); }();
-            for (const auto& c : cases)
+            for (const auto& [label, insert] : cases)
             {
                 auto asInsert = makeEngine();
                 auto withInsert = onePart();
-                withInsert.inserts[0][1] = c.insert; // the middle slot: its place among empty slots does not matter
+                withInsert.inserts[0][1] = insert; // the middle slot: its place among empty slots does not matter
                 const auto a = render(*asInsert, withInsert, 28800, notes);
 
                 auto asMaster = makeEngine();
                 auto withMaster = onePart();
-                c.master(withMaster);
+                withMaster.master[4] = insert; // nor among the master slots
                 const auto b = render(*asMaster, withMaster, 28800, notes);
 
-                expectLessThan(largestDifference(a, b), 1.0e-5, c.name);
-                expectGreaterThan(largestDifference(a, plain), 1.0e-3, juce::String(c.name) + " does something");
+                expectLessThan(largestDifference(a, b), 1.0e-5, label);
+                expectGreaterThan(largestDifference(a, plain), 1.0e-3, juce::String(label) + " does something");
             }
+        }
+
+        beginTest("master_slots_run_in_slot_order");
+        {
+            const std::vector<Timed> notes { { 0, Type::noteOn, 57 }, { 0, Type::noteOn, 64 }, { 9600, Type::noteOff, 57 }, { 9600, Type::noteOff, 64 } };
+            const auto drive = insertOf(insertType::drive, { { 0, 1.0f } });
+            const auto room = insertOf(insertType::room, { { 3, 0.6f } });
+            auto chain = [&](const InsertSettings& first, const InsertSettings& second, int at)
+            {
+                auto engine = makeEngine();
+                auto settings = onePart();
+                settings.master[static_cast<std::size_t>(at)] = first;
+                settings.master[static_cast<std::size_t>(at + 2)] = second;
+                return render(*engine, settings, 24000, notes);
+            };
+            const auto driveThenRoom = chain(drive, room, 0);
+            expectLessThan(largestDifference(driveThenRoom, chain(drive, room, 3)), 1.0e-6, "only the order counts, not the slots used");
+            expectGreaterThan(largestDifference(driveThenRoom, chain(room, drive, 0)), 1.0e-2, "a room driven is not a drive in a room");
+        }
+
+        beginTest("every_effect_type_reports_its_tail");
+        {
+            expectEquals(insertTailSeconds(InsertSettings {}), 0.0, "an empty slot");
+            expectEquals(insertTailSeconds(insertOf(insertType::drive)), 0.0, "a drive has none");
+            expectEquals(insertTailSeconds(insertOf(insertType::reverb)), 12.0);
+            expectEquals(insertTailSeconds(insertOf(insertType::reverb, { { 2, 0.0f } })), 0.0, "a reverb mixed out");
+            expectWithinAbsoluteError(insertTailSeconds(insertOf(insertType::delay, { { 0, 500.0f }, { 1, 0.0f } })), 0.75, 1.0e-3,
+                                      "one echo and the pad");
+            expectWithinAbsoluteError(insertTailSeconds(insertOf(insertType::delay, { { 0, 500.0f }, { 1, 0.0f }, { 3, 1.0f }, { 4, 8.0f } }), 60.0),
+                                      1.25, 1.0e-3, "a synced quarter at 60 BPM");
+            expectGreaterThan(insertTailSeconds(insertOf(insertType::room, { { 0, 1.0f } })), 1.2);
+            expectGreaterThan(insertTailSeconds(insertOf(insertType::grain)), 4.0);
         }
 
         beginTest("inserts_belong_to_their_part");

@@ -2555,3 +2555,48 @@ part", "Only the free effect places", "What the interface needs (Recommended)"),
 **"What the interface needs"**: the master section as six free effect slots, the pressure
 sources (key pressure, MPE pressure and slide, the expression pedal) fed for real, and loading
 one's own samples and wavetables. The Museum pauses meanwhile.
+
+## D135. The master section as six effect slots (2026-11-14)
+
+Carries out the first part of D134. The design always had master slots F1..F6 taking the same
+types as the inserts (DESIGN_V3.md section 8); D81 kept the fixed rack for the time being. Taken
+without asking, under the standing rule to build what the engine needs and log the options:
+
+- **Six slots, each any of the twelve effects, Room and Grain included (taken).** Alternative:
+  only the ten the rack had. Room and Grain were inserts only because the rack had no such stage;
+  a slot has no reason to refuse them.
+- **A master slot is the insert's own `InsertSlot` (taken).** The same code as an insert, which
+  was already proven equal to the rack effect by effect (D93); a test now proves an insert equal
+  to the same effect in a master slot for eleven types. Alternative: rewrite the effects as slot
+  modules with arenas; more work for the same sound. The six slots live on the heap: inline, they
+  made a processor too large for the Debug test runner's stack.
+- **Bank files write `f1 = Reverb size=0.6 mix=0.25` (taken), and the old lines (`reverb = on
+  ...`) are an error that names the new form.** Alternative: keep reading the old lines into the
+  next free slot; two ways to write one thing. All 125 effect lines in the banks were rewritten
+  in the old chain's order (drive, lo-fi, phaser, flanger, chorus, delay, reverb, compressor, EQ,
+  pump). Where a line left a value out, the old parameter's default was written in when it
+  differs from the slot type's default: drive amount 0 (slot 0.3), lo-fi wow 0, flutter 0,
+  bandwidth 1 (0.2, 0.1, 0.8), chorus depth 0.4 and mix 0.3 (0.5, 0.5), delay feedback 0.25 and
+  mix 0 (0.3, 0.3), reverb mix 0.2 (0.3). No preset uses more than four effects.
+- **Checked: every preset rendered before and after (a chord and a short line, 5 s, effects
+  on).** 113 of 118 are sample for sample the same. Of the other five, four use randomness on
+  purpose and differ between two renders of the old engine as well; the fifth, Contact Opening II
+  Grit, differs by exactly +0.500 dB and nothing else (the residue is 127 dB down): the old render
+  tool had been built before the loudness pass set its master to -9 dB. Lesson kept in GEMINI.md:
+  the render and normaliser tools are not part of the `build-debug` preset and must be rebuilt by
+  target after a bank or engine change.
+- **States and patches saved before are carried over, not refused (taken).** Processor state
+  format 10, patch format 9; a version 9 state or version 8 patch has its fixed effects moved into
+  the slots: each effect that was on takes the next slot in the old chain's order, with its
+  values. A MIDI knob learned on one of those values follows it into its slot; one learned on an
+  on switch or on an effect that was off is dropped. Alternative: refuse them, as every earlier
+  V3 state change did (D74); but the user plays the VST3 in projects that would lose their sound.
+- **The plugin's tail is the longest of the six slots' (taken):** a delay by its time and
+  feedback (synced at the internal tempo), a reverb 12 s, a room its decay, a grain cloud 4.5 s.
+- MIDI learn accepts the slot values (`f1.p3`); `CoolSynthRender --no-fx` empties the six slots.
+
+Also on 14 November, asked by the user: a short public page about the engine, opening with the
+engine map: https://tomcoolpxl.github.io/CoolSynth/ (`site/`, built by
+`tools/site/build_engine_map.py`, published by `.github/workflows/pages.yml` on every push that
+changes `site/`). The repository is public, so the page is too; it holds nothing private and no
+copyrighted material.

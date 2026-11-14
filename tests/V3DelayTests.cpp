@@ -142,14 +142,14 @@ public:
             expectEquals(static_cast<int>(single.right.size()), 0);
         }
 
-        beginTest("bank_delay_section_takes_sync_division_and_mode");
+        beginTest("bank_delay_slot_takes_sync_division_and_mode");
         {
-            const auto result = coolsynth::presets::parseBankFile("[D]\ndelay = on sync=on division=1/8. mode=pingpong feedback=0.4 mix=0.2\n", "d.csbank");
+            const auto result = coolsynth::presets::parseBankFile("[D]\nf1 = Delay sync=on division=1/8. mode=pingpong feedback=0.4 mix=0.2\n", "d.csbank");
             expect(result.errors.isEmpty(), result.errors.joinIntoString("; "));
             juce::StringArray entries;
             for (const auto& e : result.presets.front().entries)
                 entries.add(e.parameterId + "=" + e.text);
-            for (const auto* wanted : { "delaySync=on", "delayDivision=1/8.", "delayMode=pingpong", "delayEnabled=on" })
+            for (const auto* wanted : { "f1.type=Delay", "f1.p4=on", "f1.p5=1/8.", "f1.p6=pingpong", "f1.p2=0.4" })
                 expect(entries.contains(wanted), juce::String("missing ") + wanted);
         }
     }

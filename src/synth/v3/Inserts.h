@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <initializer_list>
+#include <utility>
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -24,10 +26,18 @@
     A slot has a type and twelve generic values, named and ranged by the type's descriptor, like a
     generator or processor slot. Values arrive normalised 0..1. A synced delay and the pump take
     their time from the tempo and the beat the engine passes in. An empty slot costs nothing.
+
+    The master section is six of the same slots, F1..F6, in a chain after the parts are mixed
+    (decision D135): any type in any slot, in any order. The fixed rack of ten that was the master
+    section before is now only the code each slot runs.
 */
 namespace coolsynth::synth::v3
 {
     inline constexpr int insertSlotCount = 3;
+
+    /** The master effect slots F1..F6 (DESIGN_V3.md section 8, decision D135): the same slot and the same types as an
+        insert, in a chain after the parts are mixed, before the master gain. */
+    inline constexpr int masterSlotCount = 6;
 
     namespace insertType
     {
@@ -128,7 +138,57 @@ namespace coolsynth::synth::v3
     {
         int type = insertType::off;
         std::array<float, maxSlotParameters> p {};
+
+        /** A slot of this type with every value at the type's default, then the given values (in the type's units). */
+        [[nodiscard]] static InsertSettings of(int typeIndex, std::initializer_list<std::pair<int, float>> unitsByIndex = {}) noexcept
+        {
+            InsertSettings s;
+            s.type = std::clamp(typeIndex, 0, insertType::count - 1);
+            const auto& d = insertDescriptor(s.type);
+            for (int i = 0; i < d.usedParams; ++i)
+                s.p[static_cast<std::size_t>(i)] = unitsToNormalised(d.params[static_cast<std::size_t>(i)], d.params[static_cast<std::size_t>(i)].def);
+            for (const auto& [index, units] : unitsByIndex)
+                if (index >= 0 && index < d.usedParams)
+                    s.p[static_cast<std::size_t>(index)] = unitsToNormalised(d.params[static_cast<std::size_t>(index)], units);
+            return s;
+        }
     };
+
+    /** How long a slot keeps sounding once its input is silent: what the plugin reports to a host as its tail. */
+    [[nodiscard]] inline double insertTailSeconds(const InsertSettings& settings, double bpm = 120.0) noexcept
+    {
+        const int type = std::clamp(settings.type, 0, insertType::count - 1);
+        const auto& d = insertDescriptor(type);
+        auto units = [&](int index)
+        {
+            return descriptorToUnits(d.params[static_cast<std::size_t>(index)], settings.p[static_cast<std::size_t>(index)]);
+        };
+        coolsynth::synth::DelayParametersV2 delay;
+        coolsynth::synth::ReverbParametersV2 reverb;
+        delay.enabled = false;
+        reverb.enabled = false;
+        switch (type)
+        {
+            case insertType::delay:
+                delay.enabled = true;
+                delay.timeMs = units(0);
+                delay.feedback = units(1);
+                delay.mix = units(2);
+                if (std::lround(units(3)) == 1)
+                    delay.timeMs = coolsynth::synth::delayDivisionMs(static_cast<int>(std::lround(units(4))), bpm);
+                return coolsynth::synth::GlobalFxRack::estimateTailLengthSeconds(delay, reverb);
+            case insertType::reverb:
+                reverb.enabled = true;
+                reverb.mix = units(2);
+                return coolsynth::synth::GlobalFxRack::estimateTailLengthSeconds(delay, reverb);
+            case insertType::room:
+                return units(3) > 0.0f ? RoomInsert::reverbSeconds(units(0)) + 0.25 : 0.0;
+            case insertType::grain:
+                return units(7) > 0.0f ? GrainInsert::bufferSeconds + 0.5 : 0.0;
+            default:
+                return 0.0;
+        }
+    }
 
     /** What the effects that follow the tempo need from the engine. */
     struct InsertContext

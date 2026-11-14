@@ -27,8 +27,8 @@ b.glfo1 = shape=triangle sync=off rate=0.37 retrigger=off
 b.mod = src=glfo1 dst=g1.pw amount=0.25
 b.voice = env2ToP1=0.06 drift=3
 b.mix = pan=0.4 fine=7 level=-1.5
-chorus = on rate=0.5 depth=0.55 mix=0.5
-reverb = on size=0.55 damping=0.5 mix=0.15
+f1 = Chorus rate=0.5 depth=0.55 mix=0.5
+f2 = Reverb size=0.55 damping=0.5 mix=0.15
 master = -5
 
 [Prophet Brass]
@@ -40,7 +40,7 @@ env1 = attack=25 decay=450 sustain=0.85 release=280 velocity=0.6
 env2 = attack=70 decay=650 sustain=0.4 release=300
 voice = env2ToP1=0.36 velToP1=0.1 drift=3
 play = voices=8
-reverb = on size=0.45 damping=0.55 mix=0.12
+f1 = Reverb size=0.45 damping=0.55 mix=0.12
 master = -5
 
 [OB Strings]
@@ -51,8 +51,8 @@ p1 = Ladder mode=lp12 cutoff=2600 res=0.1 key=0.5
 env1 = attack=550 decay=900 sustain=1 release=900 velocity=0.3
 env2 = attack=400 decay=1500 sustain=0.6 release=900
 voice = env2ToP1=0.08 drift=4
-phaser = on rate=0.25 depth=0.6
-reverb = on size=0.65 damping=0.5 mix=0.22
+f1 = Phaser rate=0.25 depth=0.6
+f2 = Reverb size=0.65 damping=0.5 mix=0.22
 master = -4.5
 
 [Moog Bass]
@@ -74,7 +74,7 @@ p2 = Ladder mode=hp12 cutoff=160 res=0
 env1 = attack=0.5 decay=320 sustain=0.2 release=70 velocity=0.8 decayCurve=-0.8
 env2 = attack=0.5 decay=110 sustain=0 release=80 decayCurve=-0.8
 voice = env2ToP1=0.32 velToP1=0.2
-drive = on amount=0.12 mix=0.6
+f1 = Drive amount=0.12 mix=0.6
 master = -2
 
 [Sync Lead]
@@ -90,6 +90,6 @@ env2 = attack=2 decay=700 sustain=0.25 release=200
 mod = src=env2 dst=g2.pitch amount=0.5
 voice = env2ToP1=0.22 glide=45
 play = mode=mono
-delay = on time=330 feedback=0.3 mix=0.18
-reverb = on size=0.4 damping=0.5 mix=0.1
+f1 = Delay time=330 feedback=0.3 mix=0.18
+f2 = Reverb size=0.4 damping=0.5 mix=0.1
 master = 2.5
