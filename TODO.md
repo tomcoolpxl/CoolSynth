@@ -83,7 +83,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D144) pad 8 is Home, the sound browser, teal, Shift + pad 8 part A/B; no Back button.
     (D145) Perform lives in Home: knob 5 turns live pages Macros, Arp, Groove, Chord, Voice.
     (D146) The MiniLab's own screen tested on the device: `docs/minilab3-screen.md`.
-    Next: the remaining screen layouts (third icon slot, scroll bar), the recorder.
+    (D147) Lists and sections use the scroll screen; every screen type is now tested.
+    Next: the recorder.
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;

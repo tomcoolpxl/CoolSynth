@@ -29,7 +29,10 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
 - **Icons**, one at the start of each line, then a space, then the text: 0 none, 1 heart,
   2 play triangle, 3 record dot, 4 note, 5 check mark (each checked on the device). The third
   icon byte shows nothing: one icon per line at most.
-- **In the scroll screen the sizes flip**: line 2 is the big one.
+- **In the scroll screen the sizes flip**: line 2 is the big one. So it is in plain text with
+  no layout bytes (`04 02 60 01 <line 1> 00 02 <line 2> 00`) and in the two-lines mode
+  (`1F 02 01 00`): line 1 small, line 2 big, no arrows, no marker. Only the full screen
+  (`1F 07`) has line 1 big and the icons.
 - **Pop-ups are transient**, about a second, and **draw their graphic only while a control is
   physically moving**. A pop-up sent while nothing moves shows at most its text, briefly. So the
   app sends a pop-up in answer to each knob or fader message, never on its own.
