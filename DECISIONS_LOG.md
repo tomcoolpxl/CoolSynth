@@ -2041,3 +2041,23 @@ Judged while D114 was being built, on the versions of D113.
 - **Minimoog Trilogy lead: "the beginning in the reference instrument is more of a ramp up
   curve".** To be measured at the notes' starts and fixed.
 - Recorders (Soprano, with E6 and F sharp 6 from clean neighbours): not judged yet.
+
+## D116. Minimoog: the notes' edges, and more of the shake (2026-11-14)
+
+On the two verdicts of D115.
+
+- **Trilogy lead, "the beginning in the reference instrument is more of a ramp up curve".**
+  Measured on the notes that start from silence: the recording's loudness is up within a
+  millisecond, but its band above 3 kHz takes 7 to 48 ms; the rebuild's was up in 1 ms. The
+  filter contour cannot start at once (the manual gives 10 ms as the shortest attack; the
+  dial's 0 is that). **Filter attack 10 ms (taken, from a fit with the attack free; the two
+  onsets alone would allow 5 to 35).** The same look at the notes' ends: the recording falls
+  20 dB in 82 to 92 ms after a key goes up, the rebuild took 330 (the chart's decay time read
+  as a release time with the decay switch on). **Release 300 ms in this engine's terms
+  (taken).** Emphasis comes out at 0.4 with the attack in.
+- **Fat Bass, "too dull or muffled".** With the comparison reaching 66 dB under the
+  reference's level the fit takes four times more of oscillator 3's shake (0.4 octave) and no
+  saturation after the filter (offered to it, refused): the bands up to 2.8 kHz are within
+  1 dB in the middle, 2.8 to 5.6 kHz is 6.6 dB short (was 10.8), above that 12. Share of
+  energy above 1.4 kHz at a note's start: within 2 dB of the recording's. What stays short is
+  a floor above 3 kHz that the recording keeps through the whole note at about -61 dB.

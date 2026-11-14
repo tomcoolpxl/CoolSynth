@@ -40,8 +40,8 @@ GRAIN_JUDGED = True
 # wrote stays). Each sound has its own stamp, the round in which it last changed: a verdict set on that round's
 # version stands; changing one sound again must not hide the verdicts given on the others meanwhile.
 REJUDGE = {
-    "Museum|Minimoog: Emerson's Fat Bass": "2026-11-14-growl",
-    "Museum|Minimoog: Trilogy lead": "2026-11-14-joins",
+    "Museum|Minimoog: Emerson's Fat Bass": "2026-11-14-top",
+    "Museum|Minimoog: Trilogy lead": "2026-11-14-ramp",
     "Museum|Prophet-5: Sync II": "2026-11-14-joins",
     "Museum|Prophet-5: Brass": "2026-11-14-joins",
     "Conservatory|Recorders": "2026-11-14-joins",
@@ -54,11 +54,14 @@ REMARKS = {
                                             "instead of struck anew, so the filter did not open again on them. Every note is struck now, "
                                             "as in the recording. A middle stretch where the player bends notes with the pitch wheel is "
                                             "left out; two stretches of the riff remain. And the growl you asked for is in: oscillator 3 "
-                                            "now shakes the filter, as the chart has it. The recording supports only a little of it."),
+                                            "now shakes the filter, as the chart has it, which also answers your \"too dull or muffled\": "
+                                            "the top of the sound is within a decibel of the recording's up to 2.8 kHz now."),
     "Museum|Minimoog: Trilogy lead": ("Changed since your verdict, listen again.",
                                       "You heard the notes' starts smoothed. My version slid into each new pitch and joined most notes to "
                                       "the one before; the recording changes pitch at once and strikes every note anew. Both are as in "
-                                      "the recording now."),
+                                      "the recording now. Then you heard the real notes begin with more of a ramp: the real filter "
+                                      "takes about a hundredth of a second to open where mine opened at once. Mine does the same now, "
+                                      "and its notes end as quickly as the real ones (they rang on four times too long)."),
     "Museum|Prophet-5: Sync II": ("Changed since your verdict, listen again.",
                                   "You heard an extra small note between the notes. That was my cutting of the recording: each cut ran "
                                   "on into the next note of the player's phrase. Each cut now ends before the pitch leaves its note."),
