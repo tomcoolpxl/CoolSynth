@@ -2351,3 +2351,23 @@ pitch and level every 5 ms.
   the dips inside the phrase are heard at every lifted key.
 - Left open: brightness from note to note differs from the recording's by up to 9 dB either
   way (how the cutoff follows the keyboard), and the top's hold after 160 ms (D122).
+
+## D127. The second Contact synth's bass, again (2026-11-14)
+
+The user, after hearing the changed clip: "I thought you were gonna change something with the
+bass or something." The change of D124 was too small to hear as one (6 dB short to 2.8).
+
+- **Why it stayed weak.** In the record's first chord the root B2 (124.5 Hz) is the strongest
+  line of all, 3 dB above the D4; in the rebuild it was 5.8 dB under the D4. The note reader
+  had the bass in pieces, some an octave low (B1, A1, E2, D2), and playing those soft or hard
+  moved energy between the wrong bands.
+- **Taken: the bass as a line of its own** in the comparison's notes: B2, G2, A2, B2 where the
+  record's middle has them, at full velocity, each with a faint octave under it (the record's
+  62 Hz line is 11 dB under its 124 Hz line); every other transcribed note under C3 is
+  dropped; the chords above at velocity 50; the first synth under it at -2 dB. The band from
+  88 to 176 Hz is 1.3 dB short of the record, 44 to 88 Hz 1.6 dB short; the bands from 1.4 to
+  5.6 kHz are 1.5 to 2.2 dB lower than before. Left and right are 0.60 to 0.72 alike (were
+  0.53 to 0.62): the strong bass voice narrows the picture.
+- The admitted preset itself is unchanged: this is how the comparison plays it. A key's
+  loudness follows its velocity in this preset, so a bass played hard under chords played
+  softly is what the player does on the keys.

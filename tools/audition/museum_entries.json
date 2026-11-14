@@ -209,7 +209,7 @@
     "preset": "Contact Opening I",
     "admitted": true,
     "notes": "museum/contact/synth1b_notes.json",
-    "db": 0.0
+    "db": -2.0
    },
    "transcribed_with": "transcribe_held_chords.py <clip> 26.5 37.0 36 92 <out> side 9 12 auto window=4:24 (its chords, from the side signal), plus ... 28 46 <out> mid 2 10 auto window=4:26 (its bass, from the middle), merged; the first synth under it: ... 36 70 <out> mid 6 12 auto window=-14:3 (its flat oscillators)"
   },
