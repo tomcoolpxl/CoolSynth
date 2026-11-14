@@ -103,6 +103,10 @@ namespace coolsynth::synth::v3
             return (*masterSlots)[static_cast<std::size_t>(slot)];
         }
 
+        /** True while a sampled instrument that a playing part names is still being read into memory (one that is
+            not installed does not count). Asking is what starts the read. Audio thread, never waits. */
+        [[nodiscard]] static bool sampledInstrumentPending(const EngineSettings& settings) noexcept;
+
         /** The voices a part's patch asks for: its polyphony, one for mono and legato, its unison count. */
         [[nodiscard]] static int voicesWanted(const PartSettings& settings) noexcept
         {

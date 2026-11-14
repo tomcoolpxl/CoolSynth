@@ -15,7 +15,7 @@ mod = src=velocity dst=g1.index amount=0.15
 mod = src=env3 dst=g2.index amount=0.3
 voice = env2ToP1=0
 f1 = Reverb size=0.75 damping=0.4 mix=0.3
-master = -2.5
+master = -12
 
 [Rain Chime]
 room = Greenhouse
@@ -29,7 +29,7 @@ voice = env2ToP1=0
 arp = on rate=1/16 pattern=random octaves=3 gate=0.6 chance=0.5
 f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.25
 f2 = Reverb size=0.7 damping=0.35 mix=0.3
-master = 6
+master = -1.5
 
 [Crystal Pluck]
 room = Greenhouse
@@ -42,7 +42,7 @@ env1 = attack=1 decay=700 sustain=0 release=400 velocity=0.5
 env2 = attack=0.5 decay=180 sustain=0 release=150
 voice = env2ToP1=0.5 velToP1=0.12
 f1 = Reverb size=0.6 damping=0.45 mix=0.22
-master = 4
+master = -1.5
 
 [Kalimba]
 room = Greenhouse
@@ -59,7 +59,7 @@ mod = src=velocity dst=g1.hard amount=0.2
 mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.2 predelay=10
-master = -1
+master = -6.5
 
 [Harp String]
 room = Greenhouse
@@ -89,7 +89,7 @@ mod = src=key dst=g3.level amount=-0.25
 mod = src=velocity dst=g3.level amount=0.05
 voice = env2ToP1=0 drift=1
 i1 = Room size=0.55 damping=0.3 width=1 mix=0.42
-master = 1
+master = -7.5
 
 [Marimba]
 room = Greenhouse
@@ -108,4 +108,4 @@ mod = src=key dst=g1.decay amount=-0.7
 mod = src=env3 dst=g2.level amount=0.25
 voice = env2ToP1=0
 f1 = Reverb size=0.4 damping=0.55 mix=0.16 predelay=8
-master = -0.5
+master = -7

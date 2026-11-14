@@ -88,7 +88,19 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     MiniLab driver in the standalone app (src/standalone/MiniLab3Driver). Still to try by hand and on
     the MiniLab; unverified on the device: Shift's CC 27, pads on channel 10. Open: Brightness and
     Space hooks (knobs 7-8), per-preset macro names, the own-files buttons the old editor had.
-    Next: the recorder.
+    (D149) First use on the MiniLab: main-knob step, Shift CC 27 (verified), pads on channel 10
+    (verified), mouse on the screen, the firmware's velocity-1 notes guarded.
+    (D150) The flight recorder logs tripwires and events to `%LOCALAPPDATA%\CoolSynth\logs`.
+    (D151, D152) Two audio stalls of up to 145 ms fixed: a choice slid through the instruments in
+    between, and the loader took a whole instrument's memory at once.
+    (D153) Every preset levelled to one loudness, -20 LUFS (loudest 400 ms), with chords kept
+    clean: the test chord 6 dB under the clipper, a full-velocity chord anywhere in the range under
+    it. (D154) Home blinks while an instrument loads; the keys wait until it is ready.
+    Next: the user's ear on the new levels and the blinking Home; the findings of the real-time
+    review (preset changes cut ringing notes, effect changes cut tails, big clears on the audio
+    thread, loads while scrolling, half-applied presets, freeing memory); a keyboard velocity
+    curve; ASIO; streaming from disk; the recorder. Later: whether Rust would serve the engine
+    better.
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;

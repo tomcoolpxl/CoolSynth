@@ -7,7 +7,7 @@ g1 = VA shape=saw level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -7
+master = -11
 
 [Init Pulse]
 room = Workshop
@@ -15,7 +15,7 @@ g1 = VA shape=pulse pw=0.5 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -13.5
+master = -16
 
 [Init Sine]
 room = Workshop
@@ -23,7 +23,7 @@ g1 = VA shape=sine level=0.8
 p1 = Off
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -9
+master = -12.5
 
 [Init Arp]
 room = Workshop
@@ -33,7 +33,7 @@ env1 = attack=1 decay=180 sustain=0 release=120
 env2 = attack=1 decay=160 sustain=0 release=120
 voice = env2ToP1=0.25
 arp = on rate=1/16 pattern=up octaves=2 gate=0.5
-master = 6
+master = 5
 
 [Init Noise]
 room = Workshop
@@ -41,7 +41,7 @@ g1 = Noise type=white width=0.5 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -3.5
+master = -7
 
 [Init FM]
 room = Workshop
@@ -49,7 +49,7 @@ g1 = FM2 ratio=1 index=1 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -8
+master = -11.5
 
 [Init Wavetable]
 room = Workshop
@@ -57,4 +57,4 @@ g1 = Wavetable table=classic pos=0.667 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -5.5
+master = -10

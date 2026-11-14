@@ -145,6 +145,11 @@ namespace coolsynth::ui
         [[nodiscard]] juce::String mainPressRole() const;
         [[nodiscard]] juce::String pageKnobRole() const;
         [[nodiscard]] juce::String hint() const;
+        /** True while the sound's sampled instrument is still being read in: Home blinks, the screen says
+            "Loading..." and the keys wait (D154). */
+        [[nodiscard]] bool loadingInstrument() const;
+        /** The blink's phase now: Home lit or dark. */
+        [[nodiscard]] static bool loadingBlinkOn();
         [[nodiscard]] DeviceScreen deviceScreen() const;
         [[nodiscard]] juce::Colour padColour(int pad, bool shift) const; // colour times brightness
         [[nodiscard]] juce::String padLabel(int pad, bool shift) const;

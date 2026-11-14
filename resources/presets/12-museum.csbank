@@ -32,7 +32,7 @@ mod = src=env3 dst=g2.index amount=-0.0189 curve=logarithmic
 mod = src=key dst=g1.ratio3 amount=0.000806
 mod = src=key dst=g1.ratio4 amount=-0.000806
 voice = env2ToP1=0
-master = -2.5
+master = -11
 
 [DX7 BASS 1]
 room = Museum
@@ -62,7 +62,7 @@ mod = src=env3 dst=g1.index amount=0.7767 via=velocity curve=logarithmic
 mod = src=env3 dst=g1.index amount=-0.1252 curve=logarithmic
 mod = src=key dst=g2.amount amount=0.8
 voice = env2ToP1=0
-master = -3.5
+master = -12.5
 
 [Prophet-5 Sync II]
 room = Museum
@@ -90,7 +90,7 @@ mod = src=env2 dst=g2.pitch amount=0.51
 mod = src=lfo1 dst=g1.pitch amount=0.008 via=wheel
 voice = env2ToP1=0.41 velToP1=0 drift=1
 play = mode=poly voices=5
-master = -9
+master = -14.5
 
 [Prophet-5 Brass]
 room = Museum
@@ -114,7 +114,7 @@ lfo1 = shape=triangle rate=5 retrigger=off
 mod = src=lfo1 dst=pitch amount=0.008 via=wheel
 voice = env2ToP1=0.56 velToP1=0 drift=1
 play = mode=poly voices=5
-master = -1.5
+master = -9
 
 [Minimoog Fat Bass]
 room = Museum
@@ -151,7 +151,7 @@ env1 = attack=1 decay=624 sustain=0.75 release=624 decayCurve=-1 releaseCurve=-1
 env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.285 velToP1=0 drift=1
 play = mode=legato priority=low
-master = 3
+master = -3.5
 
 [TX81Z LatelyBass]
 room = Museum
@@ -190,7 +190,7 @@ lfo1 = shape=triangle rate=3.5 retrigger=off
 mod = src=lfo1 dst=pitch amount=0.00115
 voice = env2ToP1=0 velToP1=0
 play = mode=poly voices=8
-master = -2.5
+master = -11
 
 [Contact Opening I]
 room = Museum
@@ -214,7 +214,7 @@ env1 = attack=30 decay=1000 sustain=1 release=250 velocity=0
 env2 = attack=15 decay=4410 sustain=0.3 release=4410 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.2 velToP1=0 drift=1
 play = mode=poly voices=8
-master = -7
+master = -11.5
 
 [Contact Opening II]
 room = Museum
@@ -239,7 +239,7 @@ env1 = attack=87.5 decay=1000 sustain=1 release=300 velocity=1
 env2 = attack=10 decay=2940 sustain=0.65 release=2940 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.15 velToP1=0 drift=1
 play = mode=poly voices=16 voiceSpread=1
-master = -4
+master = -8.5
 
 [Minimoog Trilogy Lead]
 room = Museum
@@ -275,7 +275,7 @@ env1 = attack=2 decay=1140 sustain=1 release=600 decayCurve=-1 releaseCurve=-1 v
 env2 = attack=10 hold=15 decay=3000 sustain=0 release=3000 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.075 velToP1=0 drift=1 glide=59 glideMode=rate glideDown=2.4
 play = mode=legato priority=low
-master = -0
+master = -3.5
 
 [Contact Opening II Grit]
 room = Museum
@@ -298,4 +298,4 @@ play = mode=poly voices=16 voiceSpread=1
 lfo2 = shape=s&h rate=50 retrigger=off
 mod = src=lfo2 dst=vca amount=0.2
 i1 = Drive amount=0.05 mix=1
-master = -9
+master = -13

@@ -2996,3 +2996,53 @@ exactly as long. (First tried: reserving without zero-filling; no change, so not
 each recording its own memory (LoadedStyle::addRecording). A synth playing through the Steinway's
 read now peaks at 3.6 ms a block (alone: 1.2 ms). Recordings are read identically (Steinway's
 render peak unchanged to 0.00001 dB). Streaming from disk, as large samplers do, is the later step.
+
+## D153. One loudness for every preset, with room for chords (2026-11-15)
+
+The user heard the Horn distort on chords high up (Octave + once, the top keys) and found some
+instruments much quieter than others. Asked how other instruments do it (Kurzweil keeps about
+6 dB for many voices; the Solaris has a Poly Level; Pianoteq's limiter is only a safety valve;
+nothing divides a note's level by the number of notes), the user chose to level every preset
+evenly and to choose that level so chords keep their room, the soft clipper kept as the safety
+net: "do that for all". This replaces D103's "half way" for the recorded instruments.
+
+The tool (`tools/NormalizePresets.cpp`) now measures:
+- **Loudness**: the loudest 400 ms of the test chord (BS.1770 momentary loudness), not the 4 s
+  average. A struck chord is heard by its attack; the 4 s average had judged the pianos and
+  mallets 5 to 8 dB quieter than they sound, so they were held low and the pads high. (Studies
+  of the Glasberg-Moore model point the same way: the maximum of short-term loudness predicts
+  how loud a brief sound is heard.)
+- **The test chord's peak** (four notes, velocity 100, middle of the range) at most -7.9 dBFS:
+  6 dB under the clipper's knee (-1.9 dBFS).
+- **New: the worst peak of a full-velocity chord at six places over the preset's range** (the
+  recorded notes of an instrument, else C2 to C6), at most -2 dBFS, under the clipper. This is
+  what the Horn broke: its test chord peaked at -5.9 dBFS, but at full velocity near the top of
+  its range the same chord reached +6.6 dB over full scale before the clipper (12.6 dB more).
+  Steinway +5.5, Old Upright +7.6, Trombone +5.8, Balafon +5.9.
+- All levels are measured 40 dB down and lifted back, so the clipper never bends what is
+  measured.
+- Five takes of the test chord, the median loudness and the highest peak: presets that play
+  random notes (Rain Chime, Random Walk, Satellite Ping) measured up to 5.5 dB apart from one
+  4-second take to the next.
+
+The common loudness: **-20 LUFS (chosen)**. Offered by the numbers: -18 (83 of 120 presets reach
+it), -19 (93), -20 (101), -21 (108). The 19 that cannot reach -20 stay as loud as their two
+limits allow: most within 3 dB (Horn and Trombone -22.6, Steinway -21.0); the percussive effects
+lower (Static Hit -28.8, Balafon -26.8, Power-Up -25.7). Everything is quieter than before (the
+synths about 4 dB, the pianos about 8 dB, the ones that clipped most): turn the speakers up.
+The crest-factor boost of the old tool is gone: the momentary measure does that job.
+
+## D154. Home blinks while an instrument loads; the keys wait (2026-11-15)
+
+The user: a blinking Home "until the next instrument loads, and you can't do much while that's
+happening. And it needs to be completely ready before you start. This is acceptable for loading
+in wave instruments. We'll figure out later how to optimize." Built:
+- Each block, before the keys, the processor asks whether a playing part's sampled instrument is
+  still being read (`EngineV3::sampledInstrumentPending`; one not installed does not count).
+  While it is, a key is ignored; notes already sounding go on. Checked before the keys, so even
+  the first block after a preset change holds them back.
+- Home blinks (about 1.7 times a second) on the MiniLab and on the panel; the screen's small line
+  says "Loading..."; the panel's hint line says the keys play once Home stops blinking.
+- The flight recorder logs when loading starts and ends, and how many keys were ignored.
+- Taken from the real-time review on the way: the sample library is built when the part is
+  prepared, no longer on the audio thread at its first use.

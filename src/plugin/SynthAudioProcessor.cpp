@@ -337,8 +337,26 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     std::array<coolsynth::synth::EngineMidiEvent, coolsynth::synth::maxEngineEventsPerBlock> engineEvents {};
     int engineEventCount = 0;
 
+    // While the sound's sampled instrument is still being read in, a key is ignored rather than played half
+    // ready (D154); notes already sounding go on. Checked before the keys, so even the first block of a new
+    // preset holds them back.
+    const auto& settings = makeEngineSettings();
+    const bool loading = coolsynth::synth::v3::EngineV3::sampledInstrumentPending(settings);
+    if (loading != instrumentLoading.load(std::memory_order_relaxed))
+    {
+        instrumentLoading.store(loading, std::memory_order_relaxed);
+        coolsynth::diag::record(coolsynth::diag::Event::message, loading ? 0 : notesHeldBack, 0, 0.0f, 0.0f,
+                                loading ? "instrument loading: keys wait" : "instrument ready; keys ignored while loading");
+        notesHeldBack = 0;
+    }
+
     for (const auto metadata : midiMessages)
     {
+        if (loading && metadata.getMessage().isNoteOn())
+        {
+            ++notesHeldBack;
+            continue;
+        }
         if (engineEventCount < static_cast<int> (engineEvents.size()))
         {
             if (const auto event = makeEngineMidiEvent(metadata.getMessage(), metadata.samplePosition))
@@ -387,7 +405,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     synthEngine.render(buffer,
                        std::span<const coolsynth::synth::EngineMidiEvent>(engineEvents.data(),
                                                                           static_cast<size_t> (engineEventCount)),
-                       makeEngineSettings(),
+                       settings,
                        transportInfo);
 
     // A chord learned from the keys becomes parameter values on the message thread.

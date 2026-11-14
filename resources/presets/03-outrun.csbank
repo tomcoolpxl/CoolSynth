@@ -15,7 +15,7 @@ play = voices=8
 f1 = Chorus rate=0.45 depth=0.5 mix=0.4
 f2 = Delay sync=on division=1/8. feedback=0.3 mix=0.16
 f3 = Reverb size=0.7 damping=0.45 mix=0.22
-master = 1.5
+master = -3
 
 [Gated Pad]
 room = Outrun
@@ -30,7 +30,7 @@ mod = src=glfo1 dst=vca amount=-1 curve=unipolar
 voice = env2ToP1=0 drift=3
 f1 = Chorus rate=0.4 depth=0.45 mix=0.35
 f2 = Reverb size=0.75 damping=0.4 mix=0.28
-master = 3.5
+master = -2.5
 
 [Night Drive]
 room = Outrun
@@ -45,7 +45,7 @@ arp = on rate=1/16 pattern=up octaves=2 gate=0.6
 f1 = Drive amount=0.12 mix=0.5
 f2 = Delay sync=on division=1/8 feedback=0.2 mix=0.1
 f3 = Reverb size=0.45 damping=0.5 mix=0.1
-master = -3.5
+master = -7.5
 
 [Laser Lead]
 room = Outrun
@@ -63,7 +63,7 @@ play = mode=legato
 f1 = Chorus rate=0.5 depth=0.3 mix=0.25
 f2 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
 f3 = Reverb size=0.6 damping=0.45 mix=0.15
-master = 6
+master = 1
 
 [Sunset Strings]
 room = Outrun
@@ -75,7 +75,7 @@ env1 = attack=700 decay=1500 sustain=1 release=1200 velocity=0.3
 voice = env2ToP1=0 drift=4
 f1 = Phaser rate=0.3 depth=0.5
 f2 = Reverb size=0.8 damping=0.45 mix=0.3
-master = -4
+master = -9.5
 
 [Grid Keys]
 room = Outrun
@@ -93,4 +93,4 @@ voice = env2ToP1=0 drift=2
 f1 = Chorus rate=0.5 depth=0.45 mix=0.4
 f2 = Delay sync=on division=1/8. feedback=0.25 mix=0.12
 f3 = Reverb size=0.6 damping=0.45 mix=0.2
-master = 2
+master = -3.5

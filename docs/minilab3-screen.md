@@ -46,8 +46,8 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
 - **Firmware 1.2.0** (identity reply `F0 7E 7F 06 02 00 20 6B 02 00 04 04 45 00 02 01 F7`, version
   bytes lowest first). Arturia users report that this firmware now and then sends a key's note-on
   with velocity 1 (https://forum.arturia.com/t/random-velocity-1-bug/5669); the driver gives such a
-  note the previous note's velocity and logs every key's raw velocity to
-  `%TEMP%\CoolSynth-minilab-notes.log`.
+  note the previous note's velocity. The flight recorder (D150) logs every note with its velocity,
+  and each fixed note, in `%LOCALAPPDATA%\CoolSynth\logs\session-*.log`.
 
 ## The screen in CoolSynth (navigation E; D143-D146)
 

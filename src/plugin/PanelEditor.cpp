@@ -667,8 +667,9 @@ public:
         {
             auto& pad = pads[static_cast<std::size_t>(p)];
             pad.colour = model.padColour(p, shiftOn);
-            pad.lit = (p < 4 && model.view() == InterfaceModel::View::section && model.section() == p)
-                      || (p == 7 && model.view() == InterfaceModel::View::home);
+            const bool homeLit = model.loadingInstrument() ? InterfaceModel::loadingBlinkOn() // blinks while loading (D154)
+                                                           : model.view() == InterfaceModel::View::home;
+            pad.lit = (p < 4 && model.view() == InterfaceModel::View::section && model.section() == p) || (p == 7 && homeLit);
             pad.face = model.padLabel(p, shiftOn);
             pad.repaint();
         }

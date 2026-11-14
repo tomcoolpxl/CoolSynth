@@ -12,7 +12,7 @@ mod = src=lfo1 dst=pitch amount=0.01
 voice = env2ToP1=0
 play = mode=mono
 f1 = Delay time=90 feedback=0 mix=0.2
-master = -2.5
+master = -6
 
 [Boss Bass]
 room = Arcade
@@ -24,7 +24,7 @@ glfo1 = shape=square sync=on division=1/16 phase=180 retrigger=on
 mod = src=glfo1 dst=pitch amount=0.25 curve=unipolar
 voice = env2ToP1=0
 play = mode=mono
-master = -2.5
+master = -6
 
 [Power-Up]
 room = Arcade
@@ -35,7 +35,7 @@ env1 = attack=1 decay=130 sustain=0 release=30
 env2 = attack=120 attackCurve=0 decay=1 sustain=1 release=30
 mod = src=env2 dst=pitch amount=0.25
 voice = env2ToP1=0
-master = -1
+master = -6
 
 [Static Hit]
 room = Arcade
@@ -44,7 +44,7 @@ g1 = Noise type=chip chip=short level=0.8
 p1 = Off
 env1 = attack=0.5 decay=80 sustain=0 release=60 velocity=0.4
 voice = env2ToP1=0
-master = 1.5
+master = -3.5
 
 [SCC Lead]
 room = Arcade
@@ -60,7 +60,7 @@ mod = src=lfo1 dst=pitch amount=0.008
 voice = env2ToP1=0 glide=30
 play = mode=legato
 f1 = Delay time=120 feedback=0 mix=0.18
-master = -1
+master = -5.5
 
 [Chip Chord]
 room = Arcade
@@ -73,4 +73,4 @@ voice = env2ToP1=0
 play = mode=mono
 chord = type=major
 arp = on rate=1/32 pattern=up octaves=1 gate=1
-master = -7
+master = -9

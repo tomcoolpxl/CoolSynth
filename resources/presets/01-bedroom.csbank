@@ -14,7 +14,7 @@ mod = src=glfo1 dst=pitch amount=0.007 via=wheel
 mod = src=env3 dst=g2.level amount=0.35
 voice = env2ToP1=0 drift=2
 f1 = Reverb size=0.55 damping=0.55 mix=0.25
-master = -6
+master = -12.5
 
 [Vinyl Choir]
 room = Bedroom
@@ -35,7 +35,7 @@ voice = env2ToP1=0 drift=4
 f1 = LoFi wow=0.2 crackle=0.35 hiss=0.15 bandwidth=0.75 flutter=0
 f2 = Chorus rate=0.25 depth=0.4 mix=0.3
 f3 = Reverb size=0.6 damping=0.55 mix=0.3
-master = -0.5
+master = -10.5
 
 [Cassette Keys]
 room = Bedroom
@@ -49,7 +49,7 @@ voice = env2ToP1=0 drift=3
 f1 = LoFi wow=0.45 flutter=0.35 hiss=0.3 bandwidth=0.7
 f2 = Chorus rate=0.3 depth=0.35 mix=0.3
 f3 = Reverb size=0.35 damping=0.5 mix=0.18
-master = 5
+master = -1.5
 
 [Blanket Pad]
 room = Bedroom
@@ -64,7 +64,7 @@ mod = src=glfo1 dst=pitch amount=0.000625
 voice = env2ToP1=0 drift=3
 f1 = LoFi wow=0.2 bandwidth=0.8 hiss=0.08 flutter=0
 f2 = Reverb size=0.65 damping=0.6 mix=0.25
-master = -3
+master = -8.5
 
 [Bedroom Bass]
 room = Bedroom
@@ -76,7 +76,7 @@ env1 = attack=2 decay=300 sustain=0.7 release=120 velocity=0.3
 voice = env2ToP1=0
 play = mode=mono
 f1 = LoFi wow=0.3 flutter=0.2 bandwidth=0.85
-master = -0
+master = -4
 
 [Dusty Mallet]
 room = Bedroom
@@ -91,4 +91,4 @@ mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0 drift=3
 f1 = LoFi wow=0.3 flutter=0.15 crackle=0.45 hiss=0.12 bandwidth=0.6
 f2 = Reverb size=0.35 damping=0.6 mix=0.2
-master = 2.5
+master = -2.5

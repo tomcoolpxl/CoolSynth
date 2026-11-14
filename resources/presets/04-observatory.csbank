@@ -14,7 +14,7 @@ mod = src=glfo1 dst=g1.pitch amount=0.5
 mod = src=glfo2 dst=g2.pitch amount=0.35
 voice = env2ToP1=0
 f1 = Reverb size=0.9 damping=0.35 mix=0.4
-master = -4.5
+master = -9.5
 
 [Nebula Pad]
 room = Observatory
@@ -32,7 +32,7 @@ mod = src=lfo2 dst=g2.pos amount=0.25
 voice = env2ToP1=0 drift=3
 f1 = Chorus rate=0.3 depth=0.35 mix=0.25
 f2 = Reverb size=0.9 damping=0.4 mix=0.38 predelay=80 lowcut=80
-master = -1.5
+master = -7.5
 
 [Deep Field]
 room = Observatory
@@ -56,7 +56,7 @@ b.mod = src=glfo1 dst=p1.cutoff amount=0.2
 b.voice = env2ToP1=0 drift=5
 b.mix = level=-8
 f1 = Reverb size=0.85 damping=0.5 mix=0.3
-master = -5.5
+master = -12.5
 
 [Shimmer Drone]
 room = Observatory
@@ -68,7 +68,7 @@ p1 = SVF mode=lp cutoff=1800 res=0.1 key=0.3
 env1 = attack=1500 decay=2000 sustain=1 release=5000
 voice = env2ToP1=0 drift=3
 f1 = Reverb size=0.85 damping=0.35 mix=0.45 predelay=40 lowcut=120 shimmer=0.6
-master = -11
+master = -19
 
 [Satellite Ping]
 room = Observatory
@@ -81,7 +81,7 @@ voice = env2ToP1=0
 arp = on rate=1/8 pattern=random octaves=2 gate=0.5 chance=0.35
 f1 = Delay sync=on division=1/4. mode=pingpong feedback=0.7 mix=0.35
 f2 = Reverb size=0.8 damping=0.4 mix=0.35 predelay=60
-master = 6
+master = 5.5
 
 [Granular Sky]
 room = Observatory
@@ -96,7 +96,7 @@ p1 = SVF mode=lp cutoff=6000 res=0.05 key=0.3
 env1 = attack=2000 decay=2000 sustain=1 release=4000
 voice = env2ToP1=0
 f1 = Reverb size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
-master = 1.5
+master = -4.5
 
 [Live Shimmer]
 room = Observatory
@@ -111,7 +111,7 @@ env1 = attack=600 decay=1500 sustain=0.9 release=2500
 voice = env2ToP1=0
 f1 = Chorus rate=0.3 depth=0.4 mix=0.3
 f2 = Reverb size=0.85 damping=0.45 mix=0.38 predelay=30 lowcut=150
-master = -0
+master = -5.5
 
 [Frozen Pluck]
 room = Observatory
@@ -130,4 +130,4 @@ mod = src=env3 dst=g2.scan amount=0.125
 voice = env2ToP1=0
 mix = level=6
 f1 = Reverb size=0.8 damping=0.4 mix=0.3 predelay=20 lowcut=120
-master = 4.5
+master = -3

@@ -1,10 +1,12 @@
-// Offline LUFS normalizer for factory presets.
+// Offline loudness levelling for the factory presets (decision D153).
 //
-// Renders each factory preset through the real plugin signal path, measures
-// integrated K-weighted loudness (ITU-R BS.1770 with gating) plus sample peak,
-// and prints the masterGainDb correction needed to land at -18 LUFS without
-// exceeding -3 dBFS peak. Writes a CSV; with --apply it also writes each
-// corrected master line back into the bank files in resources/presets.
+// Renders each factory preset through the real plugin signal path and gives every preset one loudness:
+// the loudest 400 ms of its test chord (BS.1770 momentary loudness, K-weighted), so a struck piano chord
+// and a held pad are judged by how loud they sound when played, not by an average over the decay.
+// Two limits keep chords clean: the test chord (velocity 100) peaks at least 6 dB under the output's
+// soft clipper, and a chord at full velocity anywhere in the preset's range stays under the clipper.
+// Writes a CSV; with --apply it also writes each corrected master line back into the bank files in
+// resources/presets. --target <LUFS> tries another common loudness.
 
 #include <algorithm>
 #include <array>
@@ -34,19 +36,19 @@ namespace
     constexpr double kSampleRate         = 48000.0;
     constexpr int    kBlockSize          = 256;
     constexpr double kRenderSeconds      = 4.0;
-    constexpr double kBaseTargetLufs     = -18.0;
-    constexpr double kPeakCeilingDb      = -3.0;
+    double           kTargetLufs         = -20.0; // the one loudness: the test chord's loudest 400 ms (--target); D153
 
-    // K-weighted LUFS undercounts perceived loudness for high-crest material
-    // (sustained sine/triangle-ish patches, breathy flutes, sparse plucks) compared
-    // to dense low-crest material (saws, square leads). Adding a crest-factor-aware
-    // boost lets sparse patches sit a few dB hotter than the base LUFS target so
-    // they feel comparable to dense leads. Dense material (crest <= 3 dB) is
-    // unchanged; high-crest material gets up to +4 dB extra, still capped by the
-    // peak ceiling.
-    constexpr double kCrestBoostKneeDb   = 3.0;  // crest factor below which no boost applies
-    constexpr double kCrestBoostSlope    = 0.4;  // dB of boost per dB of crest factor above the knee
-    constexpr double kCrestBoostMaxDb    = 4.0;  // maximum boost
+    // The output's soft clipper bends from 0.8 (-1.9 dBFS). The test chord, four notes at velocity 100, peaks
+    // 6 dB under that (room for more notes and harder playing); a four-note chord at full velocity anywhere
+    // in the preset's range stays under it.
+    constexpr double kClipperKneeDb      = -1.94;
+    constexpr double kChordCeilingDb     = kClipperKneeDb - 6.0;
+    constexpr double kRangeCeilingDb     = kClipperKneeDb - 0.06;
+
+    // Every render plays at this master gain, far under the clipper, so peaks and loudness are measured
+    // without its bend; the preset's own master gain is added back afterwards (master gain is the last
+    // linear stage before the clipper).
+    constexpr float  kProbeMasterDb      = -40.0f;
 
     // ITU-R BS.1770-4 K-weighting biquads, tuned for 48 kHz sample rate.
     // Stage 1: high-shelf (~+4 dB above 1.68 kHz). Stage 2: high-pass (~38 Hz).
@@ -93,11 +95,18 @@ namespace
     {
         double integratedLufs = -120.0;
         double peakDb         = -120.0;
-        // True for a preset that plays a sampled instrument. Its loudness follows the square of velocity, so its
-        // hardest playing is 4 dB above the test's velocity of 100. The user chose "half way" (decision D103):
-        // the test chord may peak just under the output's soft clipper, and the hardest chords reach it.
-        bool sampled = false;
+        double momentaryMaxLufs = -120.0; // the loudest 400 ms block
+        bool sampled = false;             // the preset plays a sampled instrument
     };
+
+    /** Shifts every level of a measurement by `db` (the render's gain was linear). */
+    LoudnessResult lifted(LoudnessResult r, double db)
+    {
+        r.integratedLufs += db;
+        r.peakDb += db;
+        r.momentaryMaxLufs += db;
+        return r;
+    }
 
     // BS.1770 gated integrated loudness: 400 ms blocks with 75% overlap,
     // absolute gate at -70 LUFS, then relative gate at -10 LU below the
@@ -148,8 +157,11 @@ namespace
             blockMs.push_back(sum / static_cast<double>(blockSize));
         }
 
+        const double rawPeakDb = 20.0 * std::log10(std::max(rawPeak, 1e-12));
         if (blockMs.empty())
-            return { -120.0, juce::Decibels::gainToDecibels(static_cast<float>(rawPeak), -120.0f) };
+            return { -120.0, rawPeakDb };
+        const double loudestBlock = *std::max_element(blockMs.begin(), blockMs.end());
+        const double momentaryMax = -0.691 + 10.0 * std::log10(std::max(loudestBlock, 1e-30));
 
         const double absoluteGateMs = std::pow(10.0, (-70.0 + 0.691) / 10.0);
         double sumAbs = 0.0;
@@ -164,7 +176,7 @@ namespace
         }
 
         if (countAbs == 0)
-            return { -120.0, juce::Decibels::gainToDecibels(static_cast<float>(rawPeak), -120.0f) };
+            return { -120.0, rawPeakDb, momentaryMax };
 
         const double absoluteMean = sumAbs / countAbs;
         const double relativeGateMs = absoluteMean * std::pow(10.0, -10.0 / 10.0);
@@ -182,8 +194,7 @@ namespace
 
         const double finalMs = countRel > 0 ? sumRel / countRel : absoluteMean;
         const double lufs = -0.691 + 10.0 * std::log10(std::max(finalMs, 1e-30));
-        const double peakDb = juce::Decibels::gainToDecibels(static_cast<float>(rawPeak), -120.0f);
-        return { lufs, peakDb };
+        return { lufs, rawPeakDb, momentaryMax };
     }
 
     const coolsynth::presets::PresetEntry* findEntry(const coolsynth::presets::FactoryPreset& preset, juce::StringRef id)
@@ -218,6 +229,14 @@ namespace
     {
         const auto* entry = findEntry(preset, "pA.chord.type");
         return entry != nullptr && ! entry->text.trim().equalsIgnoreCase("off");
+    }
+
+    /** Plays the processor at kProbeMasterDb; returns the dB to add to what it measures to get the preset's own level. */
+    double setProbeMaster(SynthAudioProcessor& processor, const coolsynth::presets::FactoryPreset& preset)
+    {
+        auto* master = processor.getValueTreeState().getParameter(coolsynth::parameters::ids::masterGainDb);
+        master->setValueNotifyingHost(master->convertTo0to1(kProbeMasterDb));
+        return static_cast<double>(lookupMasterGainDb(preset) - kProbeMasterDb);
     }
 
     /** Sets, or adds after the header, the master line of one preset in a bank file's text. */
@@ -308,6 +327,7 @@ namespace
         if (style >= 0)
             if (auto* styleParameter = processor.getValueTreeState().getParameter("pA.g1.p8"))
                 styleParameter->setValueNotifyingHost(styleParameter->getValueForText(juce::String(style + 1))); // shown from 1
+        const double lift = setProbeMaster(processor, preset);
         processor.loadSampledInstrumentsNow(); // a sampled instrument is read in before the first note
         int stimulusRoot = 60, lowestRecorded = 0, highestRecorded = 0;
         const bool sampled = processor.sampledInstrumentRange(lowestRecorded, highestRecorded);
@@ -350,28 +370,97 @@ namespace
 
         processor.releaseResources();
 
-        auto measured = measureLoudness(collected);
+        auto measured = lifted(measureLoudness(collected), lift);
         measured.sampled = sampled;
         return measured;
+    }
+
+    /**
+        The highest peak, at the preset's own master gain and before the output's clipper, of the test
+        stimulus at full velocity (127) played at six places spread over the preset's range: a sampled
+        instrument's recorded notes (a chord's top note stays inside them), else C2 to C6. Each place is held
+        1.5 seconds (plus a swell's rise) and released for one. `worstRoot` is the lowest note where it peaked.
+    */
+    double worstPeakOverRange(const coolsynth::presets::FactoryPreset& preset, int& worstRoot)
+    {
+        SynthAudioProcessor processor;
+        processor.setPlayConfigDetails(0, 2, kSampleRate, kBlockSize);
+        processor.prepareToPlay(kSampleRate, kBlockSize);
+        coolsynth::presets::applyFactoryPreset(processor.getValueTreeState(), preset);
+        const double lift = setProbeMaster(processor, preset);
+        processor.loadSampledInstrumentsNow();
+
+        const bool chord = lookupPolyMode(preset) && ! lookupArpEnabled(preset) && ! lookupChordMemory(preset);
+        const std::vector<int> intervals = chord ? std::vector<int> { 0, 3, 7, 12 } : std::vector<int> { 0 };
+        int lowest = 36, highest = 96;
+        if (! processor.sampledInstrumentRange(lowest, highest))
+        {
+            lowest = 36;
+            highest = 96;
+        }
+        const int from = lowest, to = std::max(lowest, highest - intervals.back());
+        std::vector<int> roots;
+        for (int k = 0; k < 6; ++k)
+        {
+            const int root = from + (to - from) * k / 5;
+            if (roots.empty() || roots.back() != root)
+                roots.push_back(root);
+        }
+
+        const int holdSamples = static_cast<int>((1.5 + globalEnvelopeRiseSeconds(processor.getValueTreeState())) * kSampleRate);
+        const int segmentSamples = holdSamples + static_cast<int>(1.0 * kSampleRate);
+        juce::AudioBuffer<float> block(2, kBlockSize);
+        double worst = 0.0;
+        worstRoot = roots.front();
+        for (const int root : roots)
+        {
+            double peak = 0.0;
+            for (int rendered = 0; rendered < segmentSamples; rendered += kBlockSize)
+            {
+                const int n = std::min(kBlockSize, segmentSamples - rendered);
+                juce::MidiBuffer midi;
+                for (const int interval : intervals)
+                {
+                    if (rendered == 0)
+                        midi.addEvent(juce::MidiMessage::noteOn(1, root + interval, static_cast<juce::uint8>(127)), 0);
+                    if (rendered <= holdSamples && holdSamples < rendered + n)
+                        midi.addEvent(juce::MidiMessage::noteOff(1, root + interval), holdSamples - rendered);
+                }
+                block.setSize(2, n, false, false, true);
+                block.clear();
+                processor.processBlock(block, midi);
+                for (int ch = 0; ch < 2; ++ch)
+                    peak = std::max(peak, static_cast<double>(block.getMagnitude(ch, 0, n)));
+            }
+            if (peak > worst)
+            {
+                worst = peak;
+                worstRoot = root;
+            }
+        }
+        processor.releaseResources();
+        return 20.0 * std::log10(std::max(worst, 1e-12)) + lift;
     }
 }
 
 namespace
 {
-    /** The change of master gain a measurement asks for, and which rule set it. */
-    double correctionFor(const LoudnessResult& loudness, double& targetLufs, std::string& limitedBy)
+    /**
+        The change of master gain a measurement asks for, and which rule set it: "loudness" (the preset reaches
+        the common loudness), "chord" (the test chord's 6 dB of room) or "range" (a full-velocity chord
+        somewhere in its range would reach the clipper). `worstPeakDb` is kNoRangeLimit when not measured.
+    */
+    double correctionFor(const LoudnessResult& loudness, double worstPeakDb, std::string& limitedBy)
     {
-        const double crestFactor = loudness.peakDb - loudness.integratedLufs;
-        const double crestBoost = std::clamp((crestFactor - kCrestBoostKneeDb) * kCrestBoostSlope, 0.0, kCrestBoostMaxDb);
-        targetLufs = kBaseTargetLufs + crestBoost;
-
-        const double lufsDelta = targetLufs - loudness.integratedLufs;
-        // A sampled instrument's test chord may come up to the output's soft clipper (it bends from -1.9 dB).
-        const double peakCeiling = loudness.sampled ? -2.0 : kPeakCeilingDb;
-        const double peakDelta = peakCeiling - loudness.peakDb;
-        limitedBy = peakDelta < lufsDelta ? "peak" : "lufs";
-        return std::min(lufsDelta, peakDelta);
+        const double loudnessDelta = kTargetLufs - loudness.momentaryMaxLufs;
+        const double chordDelta = kChordCeilingDb - loudness.peakDb;
+        const double rangeDelta = kRangeCeilingDb - worstPeakDb;
+        const double correction = std::min({ loudnessDelta, chordDelta, rangeDelta });
+        limitedBy = correction == loudnessDelta ? "loudness" : (correction == chordDelta ? "chord" : "range");
+        return correction;
     }
+
+    constexpr double kNoRangeLimit = -1000.0; // worstPeakDb when the range is not measured
 
     /** --styles: for every preset that plays a sampled instrument, how much louder or quieter each of the
         instrument's other styles would have to be to need the same master gain as its first. The library builder
@@ -390,12 +479,11 @@ namespace
             if (instrument < 0)
                 continue;
             const auto& styles = catalogue.at(instrument).styles;
-            double target = 0.0;
             std::string limitedBy;
-            const double first = correctionFor(renderAndMeasure(preset, 0), target, limitedBy);
+            const double first = correctionFor(renderAndMeasure(preset, 0), kNoRangeLimit, limitedBy);
             for (int s = 1; s < static_cast<int>(styles.size()); ++s)
             {
-                const double other = correctionFor(renderAndMeasure(preset, s), target, limitedBy);
+                const double other = correctionFor(renderAndMeasure(preset, s), kNoRangeLimit, limitedBy);
                 std::cout << "trim | " << catalogue.at(instrument).name << " | " << styles[static_cast<std::size_t>(s)].name << " | "
                           << std::fixed << std::setprecision(1) << (other - first) << "\n" << std::flush;
             }
@@ -412,7 +500,7 @@ int main(int argc, char* argv[])
         if (juce::String(argv[a]) == "--styles")
             return reportStyleTrims();
 
-    // --apply [bank directory]: write the corrected master gains into the bank files.
+    // --apply [bank directory]: write the corrected master gains into the bank files. --target <LUFS>.
     bool apply = false;
     auto bankDirectory = juce::File::getCurrentWorkingDirectory().getChildFile("../resources/presets");
     for (int a = 1; a < argc; ++a)
@@ -420,6 +508,8 @@ int main(int argc, char* argv[])
         const juce::String arg(argv[a]);
         if (arg == "--apply")
             apply = true;
+        else if (arg == "--target" && a + 1 < argc)
+            kTargetLufs = juce::String(argv[++a]).getDoubleValue();
         else
             bankDirectory = juce::File::getCurrentWorkingDirectory().getChildFile(arg);
     }
@@ -432,25 +522,37 @@ int main(int argc, char* argv[])
     }
 
     const int presetCount = coolsynth::presets::getFactoryPresetCount();
-    std::cout << "Normalizing " << presetCount << " factory presets to "
-              << kBaseTargetLufs << " LUFS base (peak ceiling " << kPeakCeilingDb << " dBFS, "
-              << "crest-factor boost up to +" << kCrestBoostMaxDb << " dB).\n\n";
+    std::cout << "Levelling " << presetCount << " factory presets to " << kTargetLufs
+              << " LUFS (loudest 400 ms of the test chord); test chord peak at most " << kChordCeilingDb
+              << " dBFS, full-velocity chords over the range at most " << kRangeCeilingDb << " dBFS.\n\n";
 
     std::ostringstream csv;
-    csv << "preset,old_master_db,new_master_db,delta_db,lufs,peak_db,crest_db,target_lufs,limited_by\n";
+    csv << "preset,old_master_db,new_master_db,delta_db,integrated_lufs,momentary_max_lufs,chord_peak_db,"
+           "range_peak_db,range_peak_root,loudest_possible_lufs,limited_by\n";
 
     int adjusted = 0;
+    std::vector<std::pair<double, juce::String>> loudestPossible; // how loud each preset can be under both limits
     for (int i = 0; i < presetCount; ++i)
     {
         const auto& preset = coolsynth::presets::getFactoryPreset(i);
         const float oldMasterDb = lookupMasterGainDb(preset);
 
-        const auto loudness = renderAndMeasure(preset);
+        // Five takes: a preset that plays random notes (a random arp, chance, a random walk) measured up to 5 dB
+        // apart from one 4-second take to the next. The median loudness, the highest chord peak.
+        std::vector<LoudnessResult> takes;
+        for (int take = 0; take < 5; ++take)
+            takes.push_back(renderAndMeasure(preset));
+        std::sort(takes.begin(), takes.end(), [](const auto& x, const auto& y) { return x.momentaryMaxLufs < y.momentaryMaxLufs; });
+        auto loudness = takes[2];
+        for (const auto& t : takes)
+            loudness.peakDb = std::max(loudness.peakDb, t.peakDb);
+        int worstRoot = 0;
+        const double worstPeakDb = worstPeakOverRange(preset, worstRoot);
 
-        const double crestFactor = loudness.peakDb - loudness.integratedLufs;
-        double targetLufs = 0.0;
         std::string limitedBy;
-        const double correction = correctionFor(loudness, targetLufs, limitedBy);
+        const double correction = correctionFor(loudness, worstPeakDb, limitedBy);
+        const double possible = loudness.momentaryMaxLufs + std::min(kChordCeilingDb - loudness.peakDb, kRangeCeilingDb - worstPeakDb);
+        loudestPossible.emplace_back(possible, preset.name);
 
         double newMasterDb = oldMasterDb + correction;
         // Round to 0.5 dB so the written value reads cleanly in source.
@@ -461,20 +563,21 @@ int main(int argc, char* argv[])
         std::cout << std::left << std::setw(28) << preset.name
                   << "  master " << std::setw(7) << std::right << std::fixed << std::setprecision(1)
                   << oldMasterDb << " -> " << std::setw(6) << newMasterDb << " dB"
-                  << "  (LUFS " << std::setw(7) << std::setprecision(2) << loudness.integratedLufs
-                  << ", peak " << std::setw(6) << loudness.peakDb << " dB"
-                  << ", crest " << std::setw(5) << crestFactor << " dB"
-                  << ", tgt " << std::setw(6) << targetLufs << " LUFS"
-                  << ", limit=" << limitedBy << ")\n";
+                  << "  (loudest " << std::setw(6) << std::setprecision(1) << loudness.momentaryMaxLufs
+                  << " LUFS, chord peak " << std::setw(5) << loudness.peakDb
+                  << ", range peak " << std::setw(5) << worstPeakDb << " at " << worstRoot
+                  << ", could be " << std::setw(6) << possible << ", limit=" << limitedBy << ")\n" << std::flush;
 
         csv << "\"" << preset.name << "\","
             << oldMasterDb << ","
             << newMasterDb << ","
             << appliedDelta << ","
             << loudness.integratedLufs << ","
+            << loudness.momentaryMaxLufs << ","
             << loudness.peakDb << ","
-            << crestFactor << ","
-            << targetLufs << ","
+            << worstPeakDb << ","
+            << worstRoot << ","
+            << possible << ","
             << limitedBy << "\n";
 
         if (std::abs(appliedDelta) > 0.25)
@@ -487,6 +590,19 @@ int main(int argc, char* argv[])
 
     std::cout << "\nWrote " << csvPath.getFullPathName() << "\n";
     std::cout << adjusted << " of " << presetCount << " presets need a non-trivial adjustment.\n";
+
+    // How many presets can reach each common loudness, and the ones that hold it lowest.
+    std::sort(loudestPossible.begin(), loudestPossible.end());
+    std::cout << "\nCommon loudness and how many presets reach it:\n";
+    for (int target = -12; target >= -24; --target)
+    {
+        const auto reach = std::count_if(loudestPossible.begin(), loudestPossible.end(),
+                                         [&](const auto& p) { return p.first >= target; });
+        std::cout << "  " << target << " LUFS: " << reach << " of " << presetCount << "\n";
+    }
+    std::cout << "Lowest ceilings:\n";
+    for (std::size_t k = 0; k < std::min<std::size_t>(15, loudestPossible.size()); ++k)
+        std::cout << "  " << std::setw(6) << std::setprecision(1) << loudestPossible[k].first << "  " << loudestPossible[k].second << "\n";
 
     if (apply)
     {

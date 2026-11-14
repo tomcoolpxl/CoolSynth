@@ -730,8 +730,17 @@ namespace coolsynth::ui
         return currentView == View::home ? "Live page" : "Page";
     }
 
+    bool InterfaceModel::loadingInstrument() const { return synth.isLoadingInstrument(); }
+
+    bool InterfaceModel::loadingBlinkOn()
+    {
+        return (juce::Time::getMillisecondCounter() / 300u) % 2u == 0u; // about 1.7 blinks a second
+    }
+
     juce::String InterfaceModel::hint() const
     {
+        if (loadingInstrument())
+            return juce::String(juce::CharPointer_UTF8("Loading the instrument \xc2\xb7 the keys play once Home stops blinking"));
         if (typeList.open)
             return juce::String(juce::CharPointer_UTF8("Turn \xe2\x97\x8e to pick \xc2\xb7 press to set \xc2\xb7 \xe2\x80\xb9 Back on top keeps the type"));
         if (currentView == View::home)
@@ -764,11 +773,14 @@ namespace coolsynth::ui
                 row += " *";
             screen.line2 = row;
             screen.position = position(l.cursor, l.rows.size());
+            if (loadingInstrument())
+                screen.line1 = "Loading...";
             return screen;
         }
         const auto slots = slotsOf(currentSection);
         const auto slot = currentSlot();
-        screen.line1 = sectionName(currentSection) + " - " + (slot.empty ? juce::String("empty") : currentPage().name);
+        screen.line1 = loadingInstrument() ? juce::String("Loading...")
+                                           : sectionName(currentSection) + " - " + (slot.empty ? juce::String("empty") : currentPage().name);
         screen.line2 = slot.code + " " + (slot.empty ? juce::String("empty") : slot.typeName);
         screen.position = position(slotCursor[static_cast<std::size_t>(currentSection)], static_cast<int>(slots.size()));
         return screen;
@@ -800,6 +812,8 @@ namespace coolsynth::ui
             // the user's choice on the device: clearly white, green and red, though the recorder comes later
             return tintColour(tints[static_cast<std::size_t>(pad - 4)]);
         }
+        if (loadingInstrument()) // Home blinks until the instrument is ready (D154)
+            return tintColour(Tint::home).withMultipliedBrightness(loadingBlinkOn() ? 1.0f : 0.08f);
         return tintColour(Tint::home).withMultipliedBrightness(currentView == View::home ? 1.0f : 0.3f);
     }
 }

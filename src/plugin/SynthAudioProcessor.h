@@ -85,6 +85,10 @@ public:
         need be. False if the patch plays no sampled instrument or it is not installed. */
     bool sampledInstrumentRange(int& lowestNote, int& highestNote);
 
+    /** True while a sampled instrument the sound plays is still being read in (D154): the keys wait until it
+        is all in memory, and Home blinks. Set by the audio thread each block; read from anywhere. */
+    [[nodiscard]] bool isLoadingInstrument() const noexcept { return instrumentLoading.load(std::memory_order_relaxed); }
+
     // ---- Undo and patch identity (message thread) ----------------------------
     // Every UI gesture becomes one undo step automatically. Bulk edits (preset,
     // init, load) are wrapped in performUndoableEdit() so they become one step too.
@@ -219,6 +223,9 @@ private:
     void startFlightRecorderIfWanted();
     float tripwireWorstMs = 0.0f, tripwirePeak = 0.0f;
     int tripwireVoices = 0, tripwireClipped = 0, tripwireSamples = 0;
+
+    std::atomic<bool> instrumentLoading { false };
+    int notesHeldBack = 0; // keys pressed while loading, ignored: audio thread
 
     std::unique_ptr<coolsynth::ui::InterfaceModel> interfaceModel; // last: it refers to the parameters
 

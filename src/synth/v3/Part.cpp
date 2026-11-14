@@ -12,6 +12,7 @@ namespace coolsynth::synth::v3
         maxBlock = std::max(1, maxBlockSize);
         WavetableBank::instance(); // built here, off the audio thread, before any slot can switch to it
         SampleBank::instance();    // likewise the factory samples
+        SampleLibrary::instance(); // and the sampled instruments' library (it reads its folder and starts its loader)
 
         const double voiceRate = hostRate * oversampleFactor;
         for (std::size_t i = 0; i < voices.size(); ++i)

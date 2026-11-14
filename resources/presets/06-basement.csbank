@@ -12,7 +12,7 @@ env2 = attack=1 decay=200 sustain=0 release=80 decayCurve=-0.7
 voice = env2ToP1=0.55 velToP1=0.3 glide=40
 play = mode=legato glideLegato=on
 f1 = Drive amount=0.3 mix=0.7
-master = -6
+master = -10.5
 
 [Rust Bass]
 room = Basement
@@ -29,7 +29,7 @@ mod = src=velocity dst=p1.drive amount=0.15
 voice = env2ToP1=0
 play = mode=mono
 f1 = Drive amount=0.15 mix=0.5
-master = -10.5
+master = -13
 
 [Metal Hit]
 room = Basement
@@ -42,7 +42,7 @@ p2 = Ladder cutoff=4500 res=0.2 key=0.5
 env1 = attack=0.5 decay=250 sustain=0 release=200 velocity=0.5
 voice = env2ToP1=0
 f1 = Reverb size=0.3 damping=0.4 mix=0.2
-master = 5.5
+master = 0.5
 
 [Furnace Drone]
 room = Basement
@@ -59,7 +59,7 @@ glfo1 = shape=sine sync=off rate=0.05 retrigger=off
 mod = src=glfo1 dst=p1.tune amount=0.15
 voice = env2ToP1=0 drift=5
 f1 = Reverb size=0.7 damping=0.6 mix=0.2
-master = -4.5
+master = -11
 
 [Concrete Pad]
 room = Basement
@@ -75,7 +75,7 @@ voice = env2ToP1=0 drift=4
 f1 = Drive amount=0.15 mix=0.5
 f2 = LoFi wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7 flutter=0
 f3 = Reverb size=0.6 damping=0.6 mix=0.2
-master = -8.5
+master = -13.5
 
 [Siren]
 room = Basement
@@ -90,4 +90,4 @@ voice = env2ToP1=0
 play = mode=mono
 f1 = Drive amount=0.2 mix=0.6
 f2 = Delay time=375 feedback=0.8 mix=0.3
-master = -0
+master = -4.5

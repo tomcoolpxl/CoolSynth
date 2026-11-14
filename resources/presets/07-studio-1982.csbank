@@ -29,7 +29,7 @@ b.voice = env2ToP1=0.06 drift=3
 b.mix = pan=0.4 fine=7 level=-1.5
 f1 = Chorus rate=0.5 depth=0.55 mix=0.5
 f2 = Reverb size=0.55 damping=0.5 mix=0.15
-master = -5
+master = -11
 
 [Prophet Brass]
 room = Studio 1982
@@ -41,7 +41,7 @@ env2 = attack=70 decay=650 sustain=0.4 release=300
 voice = env2ToP1=0.36 velToP1=0.1 drift=3
 play = voices=8
 f1 = Reverb size=0.45 damping=0.55 mix=0.12
-master = -5
+master = -11
 
 [OB Strings]
 room = Studio 1982
@@ -53,7 +53,7 @@ env2 = attack=400 decay=1500 sustain=0.6 release=900
 voice = env2ToP1=0.08 drift=4
 f1 = Phaser rate=0.25 depth=0.6
 f2 = Reverb size=0.65 damping=0.5 mix=0.22
-master = -4.5
+master = -9.5
 
 [Moog Bass]
 room = Studio 1982
@@ -64,7 +64,7 @@ env1 = attack=1 decay=400 sustain=0.9 release=80 velocity=0.4
 env2 = attack=1 decay=280 sustain=0.15 release=120
 voice = env2ToP1=0.36 velToP1=0.15 glide=30
 play = mode=legato priority=low glideLegato=on
-master = -1.5
+master = -6.5
 
 [Clav Keys]
 room = Studio 1982
@@ -75,7 +75,7 @@ env1 = attack=0.5 decay=320 sustain=0.2 release=70 velocity=0.8 decayCurve=-0.8
 env2 = attack=0.5 decay=110 sustain=0 release=80 decayCurve=-0.8
 voice = env2ToP1=0.32 velToP1=0.2
 f1 = Drive amount=0.12 mix=0.6
-master = -2
+master = -7
 
 [Sync Lead]
 room = Studio 1982
@@ -92,4 +92,4 @@ voice = env2ToP1=0.22 glide=45
 play = mode=mono
 f1 = Delay time=330 feedback=0.3 mix=0.18
 f2 = Reverb size=0.4 damping=0.5 mix=0.1
-master = 2.5
+master = -1.5

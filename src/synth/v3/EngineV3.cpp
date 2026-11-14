@@ -3,8 +3,36 @@
 #include <algorithm>
 #include <cmath>
 
+#include "SampleGenerator.h"
+#include "SampleLibrary.h"
+
 namespace coolsynth::synth::v3
 {
+    bool EngineV3::sampledInstrumentPending(const EngineSettings& settings) noexcept
+    {
+        const auto& d = SampleGenerator::descriptor();
+        const std::array<bool, partCount> playing { settings.partMode != PartMode::bOnly, settings.partMode != PartMode::aOnly };
+        for (int p = 0; p < partCount; ++p)
+        {
+            if (! playing[static_cast<std::size_t>(p)])
+                continue;
+            for (const auto& generator : settings.parts[static_cast<std::size_t>(p)].voice.generators)
+            {
+                if (generator.type != generatorType::sample)
+                    continue;
+                const int which = static_cast<int>(std::lround(descriptorToUnits(d.params[SampleGenerator::sample], generator.p[SampleGenerator::sample])));
+                if (which < SampleGenerator::firstInstrument)
+                    continue;
+                const int instrument = which - SampleGenerator::firstInstrument;
+                const int style = static_cast<int>(std::lround(descriptorToUnits(d.params[SampleGenerator::style], generator.p[SampleGenerator::style])));
+                auto& library = SampleLibrary::instance();
+                if (library.request(instrument, style) == nullptr && ! library.missing(instrument, style))
+                    return true;
+            }
+        }
+        return false;
+    }
+
     // The flight recorder's stage timing: two clock reads per stage, kept for the block's slowest one.
     struct StageClock
     {
