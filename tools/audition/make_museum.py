@@ -236,6 +236,21 @@ with tempfile.TemporaryDirectory() as scratch:
             print(entry["id"], "render failed:", (result.stderr or result.stdout).strip()[-300:])
             continue
         own_rate, y = audiolib.read_wav(wav)
+        layer = entry.get("poly", {}).get("under")
+        if layer:
+            # Another instrument of the recording sounds under this one: its own preset plays its own notes.
+            layer_notes = json.load(open(os.path.join(audition, *layer["notes"].split("/")), encoding="utf-8"))["notes"]
+            layer_source = (["--preset", "Museum: " + layer["preset"]] if layer.get("admitted")
+                            else ["--preset", layer["preset"], "--bank", candidates])
+            layer_wav = os.path.join(scratch, "under.wav")
+            result = subprocess.run([render] + layer_source + ["--no-fx", "--tune", str(tune), "--notes",
+                                     phrase.poly_spec(layer_notes, limit=entry["poly"]["end"] - entry["poly"]["begin"]),
+                                     "--seconds", f"{seconds:.1f}", "--out", layer_wav], capture_output=True, text=True)
+            if result.returncode != 0:
+                raise SystemExit(entry["id"] + ": the layer's render failed: " + (result.stderr or result.stdout).strip()[-300:])
+            _, under = audiolib.read_wav(layer_wav)
+            n = min(len(y), len(under))
+            y = y[:n] + under[:n] * np.float32(10.0 ** (layer.get("db", 0.0) / 20.0))
         for at, kept, gap in entry.get("_cuts", []):  # cut and fade the rebuild where the reference's chord was cut
             end_at, fade = int((at + kept) * own_rate), int(0.025 * own_rate)
             y[end_at - fade:end_at] *= np.linspace(1.0, 0.0, fade, dtype=np.float32)[:, None]

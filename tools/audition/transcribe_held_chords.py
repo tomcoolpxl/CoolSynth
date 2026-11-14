@@ -14,8 +14,14 @@ down while others move, so the loudness never drops and transcribe_chords.py fin
 Writes JSON: {"tuning_cents", "changes": [...], "notes": [{"start", "length", "midi"}]} with times from <start-s>;
 prints each stretch with its keys, new ones marked.
 
+Two instruments tuned differently can be told apart in one recording: with window=LOW:HIGH only the lines that
+lie that many cents from the tempered scale (A = 440) are read, whatever the recording's own tuning. (The opening of
+"We Ride Tonight": the first synth's second oscillators sit 0 to 8 cents flat, everything of the second synth 7 to
+19 cents sharp.)
+
 usage: python -I transcribe_held_chords.py <file> <start-s> <end-s> <lowest-midi> <highest-midi> <out.json>
-              [mid|side|left|right] [max-notes] [floor-dB] [change times, comma separated, in the file's seconds]
+              [mid|side|left|right] [max-notes] [floor-dB] [change times, comma separated, in the file's seconds | auto]
+              [window=LOW:HIGH]
 """
 import json
 import os
@@ -79,6 +85,9 @@ def tuning_of(lines):
     return best
 
 
+WINDOW = None   # (low, high) cents from the tempered grid, or None: 30 cents either side of the recording's tuning
+
+
 def keys_of(lines, tuning, lowest, highest, max_notes, floor):
     """The keys whose sawtooth harmonics (level 1/h, to 3 kHz) add up to the lines, each semitone's strongest line
     standing for it: the non-negative mix of keys closest to the lines' powers; a key counts when its level is within
@@ -87,8 +96,13 @@ def keys_of(lines, tuning, lowest, highest, max_notes, floor):
     top = highest + 44
     observed = np.zeros(top - lowest + 1)
     for hz, db in lines:
-        m = int(round(audiolib.hz_to_midi(hz) - tuning))
-        if lowest <= m <= top and abs(audiolib.hz_to_midi(hz) - tuning - m) <= 0.3:
+        if WINDOW is not None:
+            m = int(round(audiolib.hz_to_midi(hz) - 0.005 * (WINDOW[0] + WINDOW[1])))
+            inside = WINDOW[0] <= 100.0 * (audiolib.hz_to_midi(hz) - m) <= WINDOW[1]
+        else:
+            m = int(round(audiolib.hz_to_midi(hz) - tuning))
+            inside = abs(audiolib.hz_to_midi(hz) - tuning - m) <= 0.3
+        if lowest <= m <= top and inside:
             observed[m - lowest] = max(observed[m - lowest], 10.0 ** (db / 10.0))
     candidates = list(range(lowest, highest + 1))
     model = np.zeros((len(observed), len(candidates)))
@@ -123,7 +137,10 @@ if __name__ == "__main__":
         rate, x = audiolib.read_wav(wav)
     x = x.astype(float)
     signal = {"mid": x.mean(axis=1), "side": 0.5 * (x[:, 0] - x[:, 1]), "left": x[:, 0], "right": x[:, 1]}[channel]
-    if len(sys.argv) > 10:
+    for option in [a for a in sys.argv[7:] if a.startswith("window=")]:
+        sys.argv.remove(option)
+        WINDOW = tuple(float(v) for v in option[7:].split(":"))
+    if len(sys.argv) > 10 and sys.argv[10] != "auto":
         changes = [float(v) - begin for v in sys.argv[10].split(",")]
     else:
         changes = find_changes(signal, rate)

@@ -49,6 +49,17 @@ REJUDGE = {
 
 # A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
 REMARKS = {
+    "Museum|Contact opening: the second synth": ("New. The heavier synth that joins the first one. Headphones show its width best.",
+                                                 "From 26 seconds into \"We Ride Tonight\", where the second synth comes in, to just "
+                                                 "before the cymbals. The real clip has both synths playing, so mine has both too: "
+                                                 "the first synth you admitted, underneath, and the new second one on top. "
+                                                 "What I measured on the record: it is much brighter than the first, and every "
+                                                 "note sits at its own place between the speakers and moves when it is struck "
+                                                 "again. That is how an Oberheim polysynth behaves (my reading, not a fact). "
+                                                 "The engine now does the same: each voice has its own place, and voices take turns. "
+                                                 "Known gaps: mine is a little narrower than the record, the bass around the low B "
+                                                 "is about 6 dB too quiet, and the notes of both synths are my reading of the "
+                                                 "record, with errors. Judge the sound more than the notes."),
     "Museum|Contact opening: the first synth": ("New. The first of the two synths, the one that plays alone.",
                                                 "From The Sherbs' \"We Ride Tonight\" (1981), which \"Contact\" samples. Nobody has "
                                                 "published which instrument it is, so this one is built from the recording itself. "

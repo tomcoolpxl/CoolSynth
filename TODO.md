@@ -106,8 +106,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       Juno-106 still have no source. The opening of Daft Punk's "Contact" (a sample of The Sherbs'
       "We Ride Tonight", 1981; no source names the instruments): the first synth, built from the
       recording alone (D120), is admitted (D121); the second, heavier
-      synth (bright, every voice at its own place between the speakers) is measured but not
-      built.
+      synth (bright, every voice at its own place between the speakers) is a candidate too
+      (D123), beside the record with the first synth under it; it waits for the user's ear.
     Done so far: both libraries downloaded; the audition page is at `audition/index.html`
     (start the `audition` preview server to hear it); marimba and kalimba corrected and
     accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in

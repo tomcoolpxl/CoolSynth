@@ -2253,3 +2253,30 @@ these two"), the engine feature that synth needs.
   comes from somewhere else, as on the polysynths with a pan pot per voice. Weighed: a random
   pan per note through the matrix (exists already; refused: a struck-again note can land where
   it was, and the places are not the instrument's fixed ones). Tests in `tests/V3PartTests.cpp`.
+
+## D123. The second Contact synth as a candidate (2026-11-14)
+
+The user's choice after admitting the first ("Second Contact synth (Recommended)").
+
+- **Telling the two apart in one record.** Both play the same harmony from 26.5 s on. The first
+  synth's second oscillators sit 0 to 8 cents flat of the tempered scale, everything of the
+  second synth 7 to 19 cents sharp, and the first synth is in the middle while the second is
+  spread. So: the second synth's chords are read from the side signal (left minus right), lines
+  4 to 24 cents sharp; its deep bass (B1, A1: in the middle) from the middle, same lines, the
+  two lowest keys; the first synth under it from the middle, lines 14 flat to 3 sharp only.
+  `transcribe_held_chords.py` got a `window=LOW:HIGH` option for this. 49 notes for the second
+  synth, 19 for the first; both readings have errors and the card says so.
+- **The comparison has both synths, as the record has.** Options: (a) the second synth alone
+  against the record (refused: the record never has it alone); (b) against the side signal
+  only (refused: nobody listens to a side signal); (c) both of mine together against the
+  record, the admitted first synth playing its own notes underneath (taken). `phrase_fit.py`
+  adds a rendered layer to every trial ("under", with its level as a fitted value);
+  `make_museum.py` renders the layer from its own preset and notes.
+- **The preset (candidate "Contact Opening II"):** two sawtooths 4 cents apart, the ladder at
+  1.8 kHz at middle C following the keys by a third, a contour of 1.5 octaves resting at 0.65,
+  the loudness rising over 90 ms, Voice Spread 1, sixteen voices. A key's loudness follows its
+  velocity so the deepest bass (under E2) can be played soft, as it sits in the record.
+  Fitted over 10.5 s: the middle difference per band is 1.7 to 2.5 dB from 176 Hz to 5.6 kHz.
+  **Known gaps:** the band from 88 to 176 Hz is 6 dB short (the low B, G and A of the chords);
+  left and right are 0.60 to 0.70 alike against the record's 0.46 to 0.51 (the record is
+  wider: its two oscillators a voice may sit apart, or its room adds to it).

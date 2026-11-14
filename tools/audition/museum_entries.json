@@ -193,5 +193,27 @@
   "reference": "The Sherbs, \"We Ride Tonight\" (1981), the record Daft Punk sampled for \"Contact\": its first synth, playing alone (copyrighted: kept in the audition folder for this comparison only). My rebuild plays the chords as I could read them from the recording; a few inner notes may be wrong. The record runs 15 cents sharp; the rebuild is tuned to it for this clip.",
   "source": "No published settings: nobody has said which instrument this is. Built from what the recording shows (two sawtooth oscillators a note, 17 cents apart; one steep low-pass that opens at each note and closes over seconds), then fitted to it.",
   "admitted": true
+ },
+ {
+  "id": "contact-opening-2",
+  "title": "Contact opening: the second synth",
+  "preset": "Contact Opening II",
+  "poly": {
+   "file": "museum/contact/we_ride_tonight_0_70.flac",
+   "begin": 26.5,
+   "end": 37.0,
+   "notes": "museum/contact/synth2_notes.json",
+   "key_offset": 0,
+   "tune_cents": 12,
+   "under": {
+    "preset": "Contact Opening I",
+    "admitted": true,
+    "notes": "museum/contact/synth1b_notes.json",
+    "db": 3.0
+   },
+   "transcribed_with": "transcribe_held_chords.py <clip> 26.5 37.0 36 92 <out> side 9 12 auto window=4:24 (its chords, from the side signal), plus ... 28 46 <out> mid 2 10 auto window=4:26 (its bass, from the middle), merged; the first synth under it: ... 36 70 <out> mid 6 12 auto window=-14:3 (its flat oscillators)"
+  },
+  "reference": "The Sherbs, \"We Ride Tonight\" (1981), from where the second synth joins to just before the cymbals: both synths play (copyrighted: kept in the audition folder for this comparison only). My rebuild is both of mine together: the first synth you admitted, underneath, and the new second one. The notes of both are my reading of the record and will have errors.",
+  "source": "No published settings: nobody has said which instrument this is. Built from what the record shows (bright sawtooths, every voice at its own place between the speakers, places changing from strike to strike), then fitted to it."
  }
 ]

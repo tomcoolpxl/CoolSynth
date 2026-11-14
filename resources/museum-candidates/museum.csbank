@@ -42,3 +42,26 @@ env2 = attack=10 decay=3850 sustain=0 release=3850 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.07 velToP1=0 drift=1
 play = mode=legato priority=low
 master = 0
+
+[Contact Opening II]
+room = Museum
+# The second, heavier synth of the opening of The Sherbs' "We Ride Tonight" (1981), the record
+# Daft Punk sampled for "Contact": it joins the first one after 26 seconds with wide chords over
+# four octaves and a deep bass. Like "Contact Opening I" it is built from the record alone: no
+# source names the instrument.
+# What the record shows: far brighter than the first synth (strong lines to 9 kHz); every note
+# sits at its own place between the speakers, and the place changes when the note is struck
+# again; where a note is in both speakers it has a slightly different pitch in each. That is a
+# polysynth whose voices are panned one by one and taken in turn: an Oberheim of the OB series
+# by its behaviour (a reading, not a fact). Here that is Voice Spread (decision D122).
+# Fitted to ten seconds of the record with the first synth playing underneath: the cutoff, the
+# contour and the loudness' slow rise. A key's loudness follows how hard it is hit, so the
+# bass can sit under the chords as it does on the record.
+g1 = VA shape=saw level=0.8
+g2 = VA shape=saw fine=4 level=0.8
+p1 = Ladder cutoff=1800 res=0.05 key=0.35 drive=0 bass=0
+env1 = attack=87.5 decay=1000 sustain=1 release=300 velocity=1
+env2 = attack=10 decay=2940 sustain=0.65 release=2940 decayCurve=-1 releaseCurve=-1
+voice = env2ToP1=0.15 velToP1=0 drift=1
+play = mode=poly voices=16 voiceSpread=1
+master = 0

@@ -10,7 +10,9 @@ wrong should not steer the sound). The search moves one value at a time, four tr
 The job is a JSON file: {"reference", "begin", "end", "notes", "key_offset", "preset", "template",
 "start": {name: value}, "steps": {name: [offsets]}, "scaled": [names moved by factors], "limits": {name: [low, high]},
 "tune_cents": how sharp the recorded instrument is, so the rebuild plays at its pitch,
-"cc": controller moves for the render ("time:number:value,..."), "key_up_early": seconds, for chords}.
+"cc": controller moves for the render ("time:number:value,..."), "key_up_early": seconds, for chords,
+"under": {"wav": a rendered layer on the same timeline that sounds under every trial (another instrument of the
+recording, already rebuilt), "db": its level against the trial's} - or the value "under_db" among the fitted ones}.
 The notes file is a phrase (transcribe_mono.py), chords (transcribe_chords.py) or a polyphonic part with held
 notes (transcribe_held_chords.py).
 
@@ -55,6 +57,9 @@ elif transcription["notes"] and "struck" not in transcription["notes"][0]:  # a 
 else:
     spec = phrase.notes_spec(transcription["notes"], job["key_offset"])
 extra = ["--cc", job["cc"]] if job.get("cc") else []
+under = None
+if job.get("under"):
+    under = audiolib.read_wav(os.path.join(folder, job["under"]["wav"]))[1].mean(axis=1)
 seconds = job["end"] - job["begin"] + 0.5
 
 
@@ -69,7 +74,11 @@ def evaluate(trial):
     if result.returncode != 0:
         raise SystemExit("render failed: " + (result.stderr or result.stdout)[-500:])
     own_rate, y = audiolib.read_wav(wav)
-    _, bands, total = phrase.band_levels(y.mean(axis=1), own_rate)
+    mono = y.mean(axis=1)
+    if under is not None:
+        n = min(len(mono), len(under))
+        mono = mono[:n] + under[:n] * 10.0 ** (values.get("under_db", job["under"].get("db", 0.0)) / 20.0)
+    _, bands, total = phrase.band_levels(mono, own_rate)
     count = min(len(bands), len(ref_bands))
     use = loud[:count]
     difference = bands[:count][use] - ref_bands[:count][use]
