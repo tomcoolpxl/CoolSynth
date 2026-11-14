@@ -107,6 +107,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/SampleLibrary.cpp
     src/synth/v3/UserLibrary.cpp
     src/synth/v3/EngineV3.cpp
+    src/interface/InterfaceModel.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/SynthAudioProcessor.cpp
     src/standalone/CoolSynthStandaloneApp.cpp
@@ -167,6 +168,7 @@ if(BUILD_TESTING)
     target_sources(CoolSynthMidiLearnTests
         PRIVATE
             tests/MidiLearnTests.cpp
+            tests/InterfaceModelTests.cpp
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp
             tests/V3ModuleTests.cpp
