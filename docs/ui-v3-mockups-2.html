@@ -155,10 +155,11 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
 <header>
   <span class="eyebrow">CoolSynth V3 · interface phase 9 · round two</span>
   <h1>Three more ways around the panel, built from your notes</h1>
+  <p class="lede"><b>Chosen: E, one map per section, with the sounds in categories.</b> D and F stay on the page for comparison.</p>
   <p class="lede">All three keep what you liked in round one: the coloured pads for Sound, Shape, Motion and Effects, the slots, and the map. All three also add what you asked for. The sounds sit one level above the editing. Pad 8 is now Back. The black main knob moves something in every view, and the words beside it say what it does right now. They differ in how deep you go and what knob 5 does. Turn knobs with the mouse wheel or by dragging up and down, and click the main knob to press it. Keys: <kbd>←</kbd><kbd>→</kbd> turn the main knob, <kbd>↑</kbd><kbd>↓</kbd> turn knob 5, <kbd>Enter</kbd> presses it, <kbd>Esc</kbd> or <kbd>8</kbd> is Back, <kbd>0</kbd> is holding Back, <kbd>1</kbd>–<kbd>7</kbd> are the pads, and holding <kbd>Shift</kbd> is the Shift button. Round one is still <a href="https://claude.ai/artifact/VMPRDzsSiWmcTbLg5twSZy">here</a>.</p>
   <div class="tabs" role="tablist" aria-label="Mock-up">
+    <button class="tab" role="tab" data-m="sect">E · One map per section · chosen</button>
     <button class="tab" role="tab" data-m="drill">D · Map, then open a block</button>
-    <button class="tab" role="tab" data-m="sect">E · One map per section</button>
     <button class="tab" role="tab" data-m="flat">F · Map you edit in place</button>
   </div>
 </header>
@@ -203,7 +204,7 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
 <section class="doc">
   <h2>What I took from your notes</h2>
   <ul class="tight">
-    <li><b>Sounds one level up.</b> The top of everything is a sound list: turn to look, press to load, and knob 5 jumps a room. The loaded sound's four macros stay on knobs 1–4.</li>
+    <li><b>Sounds one level up.</b> The top of everything is a list of categories. Turn the main knob to pick one and press to open it. Inside a category the first row is ‹ Back, and the sounds follow it: turn to look, press to load. Knob 5 moves to the next category without going back. The playing sound's four macros stay on knobs 1–4.</li>
     <li><b>The main knob navigates in every view.</b> It moves through sounds, blocks, slots, pages or a type list, and its job is printed beside it. It never sits idle.</li>
     <li><b>A real Back button.</b> Pad 8: tap it to go up one level, hold it to jump to the sounds. The Hydrasynth has EXIT and HOME buttons for this, and Elektron uses its NO key the same way. Shift + pad 8 still switches part A and B.</li>
     <li><b>Colours and slots stay.</b> Pads 1–4 are Sound, Shape, Motion and Effects in their own colours, and the same colours mark the map.</li>
@@ -358,16 +359,16 @@ function focusTo(f){f=clamp(f,0,BLOCKS.length-1);const [si,ii]=BLOCKS[f];S.sec=s
 function toast(t){S.toast={t,until:Date.now()+1700};setTimeout(render,1750)}
 function trans(l1,l2){S.trans={l1,l2,until:Date.now()+1100};setTimeout(render,1150)}
 const isPerform=()=>S.lvl==="sec"&&S.sec===4;
-const cursorOnLoaded=()=>S.br.room===S.room&&S.br.idx===S.idx;
+const cursorOnLoaded=()=>S.br.inRoom&&S.br.room===S.room&&S.br.idx===S.idx;
 
 /* navigation */
-function goSounds(){S.overlay=null;S.lvl="sounds";S.br={room:S.room,idx:S.idx};S.ret=null}
+function goSounds(){S.overlay=null;S.lvl="sounds";S.br={room:S.room,idx:S.idx,inRoom:true};S.ret=null}
 function editLvl(){return S.model==="sect"?"sec":"map"}
-function browse(d){const o=S.br;let i=o.idx+d;
- while(i<0&&o.room>0){o.room--;i+=ROOMS[o.room][1].length}
- while(i>=ROOMS[o.room][1].length&&o.room<ROOMS.length-1){i-=ROOMS[o.room][1].length;o.room++}
- o.idx=clamp(i,0,ROOMS[o.room][1].length-1)}
-function room(d){S.br.room=clamp(S.br.room+d,0,ROOMS.length-1);S.br.idx=0}
+/* the sound browser: a list of categories; pressing one opens its sounds, whose first row is ‹ Back */
+function browse(d){const o=S.br;if(!o.inRoom){o.room=clamp(o.room+d,0,ROOMS.length-1);return}o.idx=clamp(o.idx+d,-1,ROOMS[o.room][1].length-1)}
+function room(d){const o=S.br;o.room=clamp(o.room+d,0,ROOMS.length-1);if(o.inRoom)o.idx=o.room===S.room?S.idx:0}
+function enterRoom(){const o=S.br;o.inRoom=true;o.idx=o.room===S.room?S.idx:0}
+function leaveRoom(){S.br.inRoom=false}
 function slotStep(d){S.item[S.sec]=clamp(S.item[S.sec]+d,0,curSec().items.length-1)}
 function pageStep(d){const n=curPages().length;if(!n){toast("Empty slot: press the main knob to choose a type");return}setPage(clamp(curPageIdx()+d,0,n-1))}
 function openType(){const s=curSec();if(s.kind==="fixed"){toast(curItem().label+" has only one type");return}S.overlay={list:s.types,idx:s.types.indexOf(curItem().type)}}
@@ -394,6 +395,8 @@ function mainPress(){
  const o=S.overlay;
  if(o){curItem().type=o.list[o.idx];setPage(0);S.overlay=null;toast(curItem().label+" is now "+(o.list[o.idx]==="Off"?"empty":o.list[o.idx]));return}
  if(S.lvl==="sounds"){
+  if(!S.br.inRoom){enterRoom();return}
+  if(S.br.idx<0){leaveRoom();return}
   if(!cursorOnLoaded()){S.room=S.br.room;S.idx=S.br.idx;toast("Loaded "+presetName());return}
   if(S.model==="drill"){S.lvl="map";return}
   toast("Playing now. Pads 1–4 open its sections.");return}
@@ -405,7 +408,7 @@ function back(){
  if(isPerform()&&S.ret){S.lvl=S.ret.lvl;S.sec=S.ret.sec;S.ret=null;return}
  if(S.lvl==="block"){S.lvl="map";return}
  if(S.lvl==="map"||S.lvl==="sec"){goSounds();return}
- if(S.lvl==="sounds"){if(!cursorOnLoaded()){S.br={room:S.room,idx:S.idx};toast("Back to the sound that is playing");return}toast("Already at the top")}
+ if(S.lvl==="sounds"){if(S.br.inRoom){leaveRoom();return}toast("Already at the top")}
 }
 function pad(i){
  if(shift()&&i===0){if(!isPerform())S.ret=S.lvl==="sounds"?null:{lvl:S.lvl,sec:S.sec};S.overlay=null;S.lvl="sec";S.sec=4;return}
@@ -431,7 +434,8 @@ const macroNames=()=>MACRO_NAMES[presetName()]||ROLES;
 function roles(){
  if(S.overlay)return{turn:"Type",press:"Set",k5:"Type"};
  const fixed=curSec().kind==="fixed";
- if(S.lvl==="sounds")return{turn:"Sound",press:cursorOnLoaded()?(S.model==="drill"?"Open":"—"):"Load",k5:"Room"};
+ if(S.lvl==="sounds"){if(!S.br.inRoom)return{turn:"Category",press:"Open",k5:"Category"};
+  return{turn:"Sound",press:S.br.idx<0?"Back":cursorOnLoaded()?(S.model==="drill"?"Open":"—"):"Load",k5:"Category"}}
  if(S.lvl==="sec")return{turn:"Slot",press:fixed?"—":"Type",k5:"Page"};
  if(S.model==="drill"&&S.lvl==="map")return{turn:"Block",press:"Open",k5:"Section"};
  if(S.lvl==="block")return{turn:"Page",press:fixed?"—":"Type",k5:"Block"};
@@ -448,7 +452,7 @@ function slotName(x){return x.slot+" "+(x.type==="Off"?"empty":x.type)}
 function crumbs(){
  const C=[],r=roles();
  const add=(t,m,on)=>C.push((m?mk(m,on):"")+(on?`<b>${esc(t)}</b>`:esc(t)));
- if(S.lvl==="sounds"){add(ROOMS[S.br.room][0],"5");add(ROOMS[S.br.room][1][S.br.idx],"◎",true)}
+ if(S.lvl==="sounds"){if(!S.br.inRoom){add("Categories");add(ROOMS[S.br.room][0],"◎",true)}else{add("Categories");add(ROOMS[S.br.room][0],"5");add(S.br.idx<0?"‹ Back":ROOMS[S.br.room][1][S.br.idx],"◎",true)}}
  else{
   const x=curItem(),ps=curPages(),pg=ps.length?ps[curPageIdx()][0]:"no pages";
   add(presetName());
@@ -473,10 +477,15 @@ function screenHTML(){
  if(o){const lo=clamp(o.idx-4,0,Math.max(0,o.list.length-9));
   return header(s.name.toUpperCase(),s.c,"choose a type")+crumbs()+`<div class="sb" style="--c:${s.c}"><div>Type for <b>${esc(x.label)}</b></div><div class="list">`+o.list.slice(lo,lo+9).map((n,j)=>{const i=lo+j;return`<div class="li ${i===o.idx?"on":""}">${i===o.idx?mk("◎",1):""}${esc(n==="Off"?"Empty":n)}${n===x.type?' <span class="cur">●</span>':""}</div>`}).join("")+
   `</div></div><div class="cards" style="grid-template-columns:1fr"><span class="hint">Turn ◎ to pick · press ◎ to set · Back cancels</span></div>`}
- if(S.lvl==="sounds"){const L=ROOMS[S.br.room][1],lo=clamp(S.br.idx-3,0,Math.max(0,L.length-7)),N=macroNames();
-  return header("SOUNDS","var(--c-home)","room "+(S.br.room+1)+" / "+ROOMS.length)+crumbs()+`<div class="sb" style="--c:var(--c-home)"><div class="list">`+
-  L.slice(lo,lo+7).map((n,j)=>{const i=lo+j,loaded=S.br.room===S.room&&i===S.idx;return`<div class="li ${i===S.br.idx?"on":""}">${i===S.br.idx?mk("◎",1):""}${esc(n)}${loaded?' <span class="cur">● playing</span>':""}</div>`}).join("")+
-  `</div><span class="hint" style="margin-top:auto">${cursorOnLoaded()?(S.model==="drill"?"Press ◎ to open this sound's map · pads 1–4 open a section":"Pads 1–4 open this sound's sections"):"Press ◎ to load · Back returns to the one playing"}</span></div>`+
+ if(S.lvl==="sounds"){const N=macroNames(),o=S.br;let rows,hint;
+  if(!o.inRoom){const lo=clamp(o.room-3,0,ROOMS.length-8);
+   rows=ROOMS.slice(lo,lo+8).map(([nm,L],j)=>{const r=lo+j;return`<div class="li ${r===o.room?"on":""}">${r===o.room?mk("◎",1):""}${esc(nm)} <span style="color:var(--screen-dim)">${L.length}</span>${r===S.room?' <span class="cur">●</span>':""}</div>`}).join("");
+   hint="Turn ◎ to pick a category · press ◎ to open it · ● holds the sound playing now"}
+  else{const L=["‹ Back to categories"].concat(ROOMS[o.room][1]),at=o.idx+1,lo=clamp(at-3,0,Math.max(0,L.length-8));
+   rows=L.slice(lo,lo+8).map((n,j)=>{const i=lo+j-1,loaded=o.room===S.room&&i===S.idx;return`<div class="li ${i===o.idx?"on":""}" ${i<0?'style="font-style:italic"':""}>${i===o.idx?mk("◎",1):""}${esc(n)}${loaded?' <span class="cur">● playing</span>':""}</div>`}).join("");
+   hint=o.idx<0?"Press ◎ to go back to the categories":cursorOnLoaded()?(S.model==="drill"?"Press ◎ to open this sound's map · pads 1–4 open a section":"Playing now · pads 1–4 open its sections"):"Press ◎ to load · Back or ‹ Back for the categories"}
+  return header(o.inRoom?ROOMS[o.room][0].toUpperCase():"CATEGORIES","var(--c-home)",o.inRoom?(o.room+1)+" / "+ROOMS.length:ROOMS.length+" categories")+crumbs()+`<div class="sb" style="--c:var(--c-home)"><div class="list">`+rows+
+  `</div><span class="hint" style="margin-top:auto">${hint}</span></div>`+
   `<div style="--c:var(--c-home)">`+cards(N.map((n,k)=>({r:ROLES[k],n,v:Math.round(S.macros[k]*100)+"%",x:S.macros[k]})))+"</div>"}
  const ps=curPages(),pi=curPageIdx();let body="";
  if(S.lvl==="sec"){
@@ -495,7 +504,8 @@ function oled(){
  if(S.trans&&Date.now()<S.trans.until)return[cut(S.trans.l1,18),cut(S.trans.l2,15)];
  const x=curItem();
  if(S.overlay)return[cut("TYPE "+x.slot,18),cut("> "+S.overlay.list[S.overlay.idx],15)];
- if(S.lvl==="sounds")return[cut(ROOMS[S.br.room][0]+" "+(S.br.idx+1)+"/"+ROOMS[S.br.room][1].length,18),cut((cursorOnLoaded()?"":"> ")+ROOMS[S.br.room][1][S.br.idx],15)];
+ if(S.lvl==="sounds"){const o=S.br;if(!o.inRoom)return["CATEGORIES "+(o.room+1)+"/"+ROOMS.length,cut("> "+ROOMS[o.room][0],15)];
+  return[cut(ROOMS[o.room][0]+(o.idx<0?"":" "+(o.idx+1)+"/"+ROOMS[o.room][1].length),18),cut(o.idx<0?"> < Back":(cursorOnLoaded()?"":"> ")+ROOMS[o.room][1][o.idx],15)]}
  const ps=curPages(),pg=ps.length?ps[curPageIdx()][0]+" "+(curPageIdx()+1)+"/"+ps.length:"empty";
  if(S.model==="drill"&&S.lvl==="map")return[cut(curSec().name.toUpperCase()+" map",18),cut("> "+slotName(x),15)];
  if(S.lvl==="block")return[cut(curSec().name.toUpperCase()+" "+slotName(x),18),cut("> "+pg,15)];
@@ -504,7 +514,8 @@ function oled(){
 function legend(){
  const R=[],r=roles();
  if(S.overlay)R.push(["Main knob, turn","Pick a type"],["Main knob, press","Set it"],["Back (pad 8)","Cancel"]);
- else if(S.lvl==="sounds")R.push(["Main knob, turn","Look through the sounds; the list runs on into the next room"],["Knob 5","Jump a whole room"],["Main knob, press",cursorOnLoaded()?(S.model==="drill"?"Open the playing sound's map":"Nothing: this sound is already playing"):"Load the highlighted sound"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"],["Back (pad 8)",cursorOnLoaded()?"Nothing above this":"Return the cursor to the sound that is playing"]);
+ else if(S.lvl==="sounds"&&!S.br.inRoom)R.push(["Main knob, turn","Pick a category"],["Main knob, press","Open it: its sounds, with ‹ Back on top"],["Knob 5","The same as the main knob here"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"],["Back (pad 8)","Nothing above this"]);
+ else if(S.lvl==="sounds")R.push(["Main knob, turn","Look through the category's sounds; the top row is ‹ Back"],["Main knob, press",S.br.idx<0?"Back to the categories":cursorOnLoaded()?(S.model==="drill"?"Open the playing sound's map":"Nothing: this sound is already playing"):"Load the highlighted sound"],["Knob 5","The next or previous category, without going back"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"],["Back (pad 8)","Up to the categories"]);
  else if(S.lvl==="sec")R.push(["Main knob, turn","Move between the slots of "+curSec().name],["Knob 5","Pages of the focused slot"],["Main knob, press",r.press==="—"?"Nothing: these slots have one type":"Choose the slot's type"],["Knobs 1–4","The page, straight away"],["Lit pad again","Next slot"],["Back (pad 8)",isPerform()&&S.ret?"Return to where you were":"Up to the sounds"]);
  else if(S.model==="drill"&&S.lvl==="map")R.push(["Main knob, turn","Move the frame across all 20 blocks"],["Knob 5","Jump to the next section's column"],["Main knob, press","Open the framed block"],["Knobs 1–4","Already play the block's first page"],["Pads 1–4","Jump to a column; again for the next block"],["Back (pad 8)","Up to the sounds"]);
  else if(S.lvl==="block")R.push(["Main knob, turn","The block's pages"],["Knob 5","The next or previous block, without going back to the map"],["Main knob, press",r.press==="—"?"Nothing: one type only":"Choose the block's type"],["Knobs 1–4","The page"],["Back (pad 8)","Up to the map"]);
@@ -556,7 +567,7 @@ function render(){
   let face=PRINT[i];
   if(i<4){c=SEC[i].c;txt=i===0?"Shift: Perform":"";b=editing&&S.sec===i?95:38;if(isPerform()&&i===0)b=95;if(sh&&i===0){c=SEC[4].c;face="Perform";txt="";b=isPerform()?95:60}}
   else if(i<7){c=["var(--c-stop)","var(--c-play)","var(--c-rec)"][i-4];b=14;txt=["Stop","Play","Record"][i-4]+" (later)"}
-  else{c="var(--c-home)";const top=S.lvl==="sounds"&&!S.overlay&&cursorOnLoaded();txt=sh?"":"hold: Sounds · Shift: Part A/B";face=sh?"Part A/B":"Back";b=sh?60:top?12:75}
+  else{c="var(--c-home)";const top=S.lvl==="sounds"&&!S.overlay&&!S.br.inRoom;txt=sh?"":"hold: Sounds · Shift: Part A/B";face=sh?"Part A/B":"Back";b=sh?60:top?12:75}
   if(isPerform()&&i===0&&!sh){c=SEC[4].c;face="Perform"}
   if(i>=4&&i<7)p.innerHTML=SYM[i-4];else p.textContent=face;p.style.setProperty("--c",c);p.style.setProperty("--b",b+"%");p.classList.toggle("on",b>=90);l.textContent=txt}
  document.getElementById("legend").innerHTML=legend().map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
@@ -596,10 +607,10 @@ document.addEventListener("keydown",e=>{
 });
 document.addEventListener("keyup",e=>{if(e.key==="Shift"){S.shiftKey=false;render()}});
 window.addEventListener("blur",()=>{S.shiftKey=false;render()});
-function setModel(m){if(!ABOUT[m])m="drill";S.model=m;S.overlay=null;S.ret=null;S.sec=0;S.item=[0,0,0,0,0];S.page={};S.lvl=m==="sect"?"sec":"map";S.br={room:S.room,idx:S.idx};
+function setModel(m){if(!ABOUT[m])m="sect";S.model=m;S.overlay=null;S.ret=null;S.sec=0;S.item=[0,0,0,0,0];S.page={};S.lvl=m==="sect"?"sec":"map";S.br={room:S.room,idx:S.idx,inRoom:true};
  const T=TRY[m];document.getElementById("try").innerHTML=`<span class="eyebrow">Try this in ${esc(ABOUT[m][0])}</span><p class="diff">${esc(T[0])}</p><ol>${T[1].map(s=>`<li>${esc(s)}</li>`).join("")}</ol>`;
  if(location.hash!=="#"+m)history.replaceState(null,"","#"+m);render()}
 window.addEventListener("hashchange",()=>setModel(location.hash.slice(1)));
-setModel(location.hash.slice(1)||"drill");
+setModel(location.hash.slice(1)||"sect");
 })();
 </script>

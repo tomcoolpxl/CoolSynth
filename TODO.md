@@ -79,7 +79,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 33. Phase 9: the real UI. Started 2026-11-14 (D140): the MiniLab 3 as the panel, research done,
     four choices taken, three navigation mock-ups in `docs/ui-v3-mockups.html`; round two after
     the user's notes (D142) in `docs/ui-v3-mockups-2.html`: sounds one level up, pad 8 as Back.
-    Next: the user picks D, E or F; then part switching, the hardware screen, the recorder.
+    Chosen (D143): E, one map per section, with the sounds in categories and a ‹ Back row.
+    Next: part switching, the hardware screen, the recorder.
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;

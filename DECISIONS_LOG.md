@@ -2841,3 +2841,20 @@ https://claude.ai/artifact/2bUoUQmdY8dg4VCxwC6mwe:
 - **F, map edited in place:** sounds › whole map. Main knob: block; knob 5: pages; press: type.
   Round one's C with the notes applied.
 - Open, for the user: which of D, E, F; and whether pad 8 as Back is the right control.
+
+## D143. The interface: navigation E, and sounds in categories (2026-11-14)
+
+The user's choice after trying round two (D142):
+
+- **E, one map per section (chosen):** a pad opens its section, and the screen draws only that
+  section's slots as they are wired. Main knob: slot; knob 5: the slot's pages; press: type;
+  knobs 1-4 edit at once. Rejected: D (whole map, press opens a block, knob 5 the level above)
+  and F (whole map always on screen, knob 5 pages, nothing to open); both stay on the mock-up
+  page for comparison.
+- **Sounds in categories (the user's request):** the top level is the list of categories (the
+  rooms). The main knob picks one and a press opens it; inside, the first row is "‹ Back", then
+  the sounds: turn to look, press to load. Knob 5 steps to the next category without leaving.
+  Pad 8 (Back) leaves a category; at the category list it does nothing.
+- Pads printed with what they do (Sound, Shape, Motion, Effects; ■ ▶ ● for the recorder; Back),
+  flat knobs, knobs 1-4 ringed in the open section's colour (the user's styling notes).
+- Pad 8 as Back was not questioned again; the user used it as built.
