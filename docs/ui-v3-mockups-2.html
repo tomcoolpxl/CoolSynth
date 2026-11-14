@@ -42,7 +42,7 @@ header{display:flex;flex-direction:column;gap:10px}
 .hb{font:600 .7rem var(--f-body);height:30px;border-radius:7px;border:1px solid var(--knob-edge);background:var(--knob);color:var(--ink);cursor:pointer}
 .hb.lit{background:var(--ink);color:var(--bg)}
 .print{font-size:.62rem;color:var(--print);text-align:center;letter-spacing:.02em}
-.strips{display:flex;gap:12px;flex:1;min-height:170px}
+.strips{display:flex;gap:12px;height:110px}
 .strip{flex:1;border:1px solid var(--knob-edge);border-radius:10px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:.62rem;color:var(--print)}
 .screenbox{grid-column:2;grid-row:1;background:var(--screen);border-radius:12px;padding:12px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:12px}
 .screen{width:100%;height:318px;box-sizing:border-box;border:1px solid var(--screen-line);border-radius:6px;color:var(--screen-ink);font:12px/1.35 var(--f-mono);display:flex;flex-direction:column;overflow:hidden;position:relative}
@@ -50,9 +50,11 @@ header{display:flex;flex-direction:column;gap:10px}
 .enc .el{text-align:right} .enc b{color:var(--screen-ink);font-weight:600}
 .knobs{grid-column:3;grid-row:1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px 14px;align-content:space-around}
 .kw{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
-.knob{width:52px;height:52px;border-radius:50%;background:var(--knob);border:1px solid var(--knob-edge);box-shadow:0 2px 0 var(--knob-edge);position:relative;cursor:ns-resize;touch-action:none}
-.knob i{position:absolute;left:50%;top:5px;width:3px;height:14px;margin-left:-1.5px;border-radius:2px;background:var(--ink);transform-origin:50% 21px}
-.knob.main{width:58px;height:58px;background:#1c1f23;border-color:#30353b;box-shadow:0 2px 0 #000;cursor:pointer}
+.knob{width:52px;height:52px;box-sizing:border-box;border-radius:50%;background:var(--knob);border:1px solid var(--knob-edge);position:relative;cursor:ns-resize;touch-action:none}
+.knob.ctx{border:3px solid var(--kc,var(--knob-edge));transition:border-color .15s}
+.knob.ctx i{top:2px}
+.knob i{position:absolute;left:50%;top:4px;width:3px;height:14px;margin-left:-1.5px;border-radius:2px;background:var(--ink);transform-origin:50% 21px}
+.knob.main{width:58px;height:58px;background:#1c1f23;border-color:#30353b;cursor:pointer}
 .knob.main i{background:#8a939c;transform-origin:50% 24px}
 .knob.nav{box-shadow:0 0 0 3px color-mix(in srgb,var(--link) 45%,transparent)}
 .kn{font:600 .68rem var(--f-body);color:var(--print)}
@@ -521,7 +523,7 @@ const TRY={
 
 /* build static panel parts */
 const knobsEl=document.getElementById("knobs");
-for(let k=1;k<=8;k++){knobsEl.insertAdjacentHTML("beforeend",`<div class="kw"><div class="knob ${k===5?"nav":""}" id="k${k}" tabindex="0" aria-label="Knob ${k}"><i></i></div><span class="kn">${k}</span><span class="kl" id="kl${k}"></span></div>`)}
+for(let k=1;k<=8;k++){knobsEl.insertAdjacentHTML("beforeend",`<div class="kw"><div class="knob ${k===5?"nav":""} ${k<5?"ctx":""}" id="k${k}" tabindex="0" aria-label="Knob ${k}"><i></i></div><span class="kn">${k}</span><span class="kl" id="kl${k}"></span></div>`)}
 const FN=["Part A","Part B","Effects","Master"];
 document.getElementById("faders").innerHTML=FN.map((n,i)=>`<div class="fw"><input type="range" id="f${i}" min="0" max="100" value="${S.faders[i]*100}" aria-label="Fader ${i+1}: ${n}" ${i===1?"disabled":""}><span class="kn">${i+1}</span><span class="kl">${n}</span></div>`).join("");
 const PRINT=["Sound","Shape","Motion","Effects","Stop","Play","Record","Back"];
@@ -545,6 +547,8 @@ function render(){
  for(let k=1;k<=8;k++){const el=document.getElementById("kl"+k);el.textContent=lab[k];el.classList.toggle("dim",lab[k]==="—");
   const ang=k===5?S.navAng[1]:(vals[k]==null?-135:-135+270*vals[k]);document.querySelector("#k"+k+" i").style.transform=`rotate(${ang}deg)`}
  document.querySelector("#k0 i").style.transform=`rotate(${S.navAng[0]}deg)`;
+ const kc=S.lvl==="sounds"?"var(--print)":curSec().c;
+ for(let k=1;k<=4;k++)document.getElementById("k"+k).style.setProperty("--kc",lab[k]==="—"?"var(--knob-edge)":kc);
  const sh=shift(),editing=S.lvl!=="sounds"&&!isPerform();
  for(let i=0;i<8;i++){const p=document.getElementById("p"+i),l=document.getElementById("pl"+i);let c="#888",b=0,txt="";
   let face=PRINT[i];
