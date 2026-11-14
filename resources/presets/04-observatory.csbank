@@ -97,3 +97,37 @@ env1 = attack=2000 decay=2000 sustain=1 release=4000
 voice = env2ToP1=0
 f1 = Reverb size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
 master = 1.5
+
+[Live Shimmer]
+room = Observatory
+# A soft, slightly detuned saw pad, and a cloud of grains taken live from it (generator 2, combine
+# Live) an octave up: a quarter of a second behind the playing, scattered across the stereo field,
+# never more than a few cents apart. The chord grows a shimmer of itself over it. Through a gentle
+# ladder, a slow chorus and the long plate.
+g1 = VA shape=saw unison=3 detune=12 spread=0.6 level=0.55
+g2 = Grain combine=live pos=0.25 scan=1 size=200 density=30 spray=0.4 pitch=0.06 spread=1 oct=1 level=0.6
+p1 = Ladder cutoff=2400 res=0.1 key=0.3
+env1 = attack=600 decay=1500 sustain=0.9 release=2500
+voice = env2ToP1=0
+f1 = Chorus rate=0.3 depth=0.4 mix=0.3
+f2 = Reverb size=0.85 damping=0.45 mix=0.38 predelay=30 lowcut=150
+master = -0
+
+[Frozen Pluck]
+room = Observatory
+# A plucked string, and a cloud of grains taken live from it (generator 2, combine Live) that
+# records only the pluck's first second: the third envelope holds Scan open, then closes it to 0,
+# and the cloud freezes on what it holds. The string rings out on its own; the frozen cloud carries
+# the pluck on as a soft pad for as long as the key is held, and fades with it. The cloud reads
+# half a second into the pluck, where the string is still full; a plucked string is quiet, so the
+# part is raised.
+g1 = String decay=4 damp=0.35 pick=0.6 pos=0.2 release=0.6 level=0.9
+g2 = Grain combine=live pos=0.5 scan=0 size=220 density=35 spray=0.5 pitch=0.05 spread=0.9 level=1
+p1 = SVF mode=lp cutoff=5000 res=0.05 key=0.3
+env1 = attack=2 decay=3000 sustain=0.8 release=1800
+env3 = attack=1 decay=900 sustain=0 release=10
+mod = src=env3 dst=g2.scan amount=0.125
+voice = env2ToP1=0
+mix = level=6
+f1 = Reverb size=0.8 damping=0.4 mix=0.3 predelay=20 lowcut=120
+master = 4.5

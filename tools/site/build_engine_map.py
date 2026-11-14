@@ -179,7 +179,7 @@ c.text(24, 50, [R("CoolSynth V3", w=700, f="ink", s=30), R("engine architecture"
 c.text(24, 76, "Signal flow of one patch, left to right. Every slot takes any module of its kind; "
                "the choices are listed underneath.", size=13, fill="ink2")
 c.text(1576, 44, "2 parts · 16 voices · 3 generator + 3 processor slots per voice · "
-                 "24 modulation routings per part · 118 factory presets",
+                 "24 modulation routings per part · 120 factory presets",
        size=12.5, weight=600, fill="ink", anchor="end")
 
 legend = [("note", "notes"), ("audio", "audio"), ("mod", "modulation"), ("planned", "planned, not built yet")]
@@ -611,7 +611,7 @@ for cd in cards:
 
 # =============================================================== the rooms
 ROOM_Y = CARD_Y + card_h + 30
-c.text(24, ROOM_Y, [R("118 FACTORY PRESETS IN 13 ROOMS", w=700, f="ink", ls=0.8),
+c.text(24, ROOM_Y, [R("120 FACTORY PRESETS IN 13 ROOMS", w=700, f="ink", ls=0.8),
                     R("Workshop · Bedroom · Arcade · Outrun · Observatory · Greenhouse · Basement · Studio 1982 · "
                       "Main Stage · Engine Room · Clock Tower · Conservatory · Museum", f="ink2", dx=12)],
        size=11.5, maxw=1552)
@@ -856,7 +856,7 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
     </section>
     <section class="wide">
       <h2>Sounds, and how they are checked</h2>
-      <p>118 factory presets in 13 rooms. The Conservatory holds 40 recorded acoustic instruments from free (CC0)
+      <p>120 factory presets in 13 rooms. The Conservatory holds 40 recorded acoustic instruments from free (CC0)
       sample libraries, played through the Sample generator. The Museum holds classic synth sounds rebuilt from the
       instruments' own patch data, or from a record when no data exists, and each is admitted only after a
       side-by-side listening test against a recording of the real thing.</p>

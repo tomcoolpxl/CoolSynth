@@ -2795,3 +2795,25 @@ stays exactly the same.
   for bit the same. Not worth it, so the user was not asked.
 - Checked: all 118 presets rendered before and after; the 114 without randomness are bit for
   bit the same.
+
+## D141. Two presets for live grains (2026-11-14)
+
+The user's other choice of D140, "A preset that shows live grains". Taken without asking (the ear
+judges them on the listening page):
+
+- **Live Shimmer, Observatory (taken):** a soft three-voice saw pad (12 cents of detune) and a
+  Grain slot set to Live an octave up, a quarter of a second behind the playing, 30 grains a
+  second of 200 ms, scattered, wide, a few cents of pitch spray; a gentle ladder, a slow chorus
+  and the long plate. The chord grows a shimmer of itself. Loudness as the others (-15.2 LUFS).
+- **Frozen Pluck, Observatory (taken):** a plucked string and a Live Grain slot whose Scan the
+  third envelope holds open for the pluck's first 0.9 s and then closes to 0, so the cloud
+  freezes on what it recorded and holds it as a pad while the key is down. The cloud reads half
+  a second into the pluck, where the string is still full; at first it read 0.15 s before the
+  freeze and sat 16 dB under the pluck, now 4 to 6 dB. A plucked string is quiet, so the part is
+  raised 6 dB and the loudness pass added 4.5 (limited by the pluck's peak, as for the other
+  plucks).
+- **On the listening page as a listening card (taken):** each preset playing a short phrase,
+  then the same with its grain slot silenced (rendered from a bank of variants by
+  tools/audition/make_livegrains.py), so the ear hears what the live grains add. Options: both
+  good, one of them, or neither with a note.
+- The Observatory room has seven presets now; the factory bank 120.
