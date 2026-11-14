@@ -137,6 +137,56 @@ public:
             expectEquals(part->activeVoiceCountForTesting(), 1);
         }
 
+        beginTest("voice_spread_gives_each_voice_its_place_and_a_note_struck_again_moves");
+        {
+            // The places: sides alternate, four distances; the second eight voices mirror the first.
+            expectWithinAbsoluteError(Part::voicePlace(0), -1.0f, 1.0e-6f);
+            expectWithinAbsoluteError(Part::voicePlace(1), 1.0f, 1.0e-6f);
+            expectWithinAbsoluteError(Part::voicePlace(2), -0.4f, 1.0e-6f);
+            expectWithinAbsoluteError(Part::voicePlace(5), 0.7f, 1.0e-6f);
+            expectWithinAbsoluteError(Part::voicePlace(7), 0.15f, 1.0e-6f);
+            expectWithinAbsoluteError(Part::voicePlace(8), 1.0f, 1.0e-6f);
+            expectWithinAbsoluteError(Part::voicePlace(15), -0.15f, 1.0e-6f);
+
+            // -1 all left .. 1 all right, from the energy of the two channels once the note has settled
+            auto side = [](const Rendered& r)
+            {
+                double l = 0.0, rr = 0.0;
+                for (std::size_t i = r.left.size() / 2; i < r.left.size(); ++i)
+                {
+                    l += static_cast<double>(r.left[i]) * r.left[i];
+                    rr += static_cast<double>(r.right[i]) * r.right[i];
+                }
+                return (rr - l) / (rr + l + 1.0e-18);
+            };
+
+            auto part = makePart();
+            auto settings = basicPart();
+            expectWithinAbsoluteError(side(render(*part, settings, 4800, { on(60) })), 0.0, 0.01); // no spread: the middle
+            render(*part, settings, 4800, { off(60) });
+
+            settings.voiceSpread = 1.0f;
+            std::vector<double> places;
+            for (int strike = 0; strike < 4; ++strike)
+            {
+                places.push_back(side(render(*part, settings, 4800, { on(60) })));
+                render(*part, settings, 4800, { off(60) }); // the release is over: the next strike takes the next voice
+            }
+            // voices 1, 2, 3, 4 in turn: hard right, left of centre, right of centre, further left
+            expectGreaterThan(places[0], 0.95);
+            expectLessThan(places[1], -0.2);
+            expectGreaterThan(places[2], 0.2);
+            expectLessThan(places[3], places[1] - 0.2);
+
+            // a chord is spread: neither channel is empty, and they differ
+            const auto chord = render(*part, settings, 4800, { on(48), on(55), on(60), on(64) });
+            expect(std::abs(side(chord)) < 0.9);
+            double difference = 0.0;
+            for (std::size_t i = 2400; i < chord.left.size(); ++i)
+                difference = std::max(difference, static_cast<double>(std::abs(chord.left[i] - chord.right[i])));
+            expectGreaterThan(difference, 0.01);
+        }
+
         beginTest("fixed_headroom_sets_one_voice_level");
         {
             auto part = makePart();

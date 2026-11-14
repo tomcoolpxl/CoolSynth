@@ -77,6 +77,7 @@ namespace coolsynth::synth::v3
         int unisonVoices = 4;
         float unisonDetuneCents = 15.0f; // outermost voice; the others are spread evenly inside
         float unisonSpread = 0.7f;       // pan of the outermost voices
+        float voiceSpread = 0.0f;        // poly: how far each voice sits from the centre, at its own place (voicePlace)
         float bendRangeSemitones = 2.0f;
         bool glideLegatoOnly = false;
         std::array<LfoSettings, globalLfoCount> globalLfos {}; // GLFO1, GLFO2: one phase for every voice
@@ -188,6 +189,21 @@ namespace coolsynth::synth::v3
         void monoNoteOff(int note, float releaseVelocity, const PartSettings& settings) noexcept;
         void playMono(int note, float velocity, bool overlapping, bool fromArp, const PartSettings& settings) noexcept;
         [[nodiscard]] int pickVoice(int limit) const noexcept;
+
+    public:
+        /**
+            Where a voice sits between the speakers at full Voice Spread, -1 (left) to 1 (right): the voices
+            alternate sides at four distances, like eight pan pots set across the field on the polysynths
+            that had one per voice. With voices taken in turn, a note struck again comes from somewhere else.
+        */
+        [[nodiscard]] static constexpr float voicePlace(int voiceIndex) noexcept
+        {
+            constexpr float distance[4] = { 1.0f, 0.4f, 0.7f, 0.15f };
+            const float side = ((voiceIndex + voiceIndex / 8) & 1) == 0 ? -1.0f : 1.0f; // the second eight mirror the first
+            return side * distance[(voiceIndex / 2) & 3];
+        }
+
+    private:
         [[nodiscard]] int glideSource(const PartSettings& settings, bool overlapping) const noexcept;
 
         void addHeld(int note, float velocity) noexcept;

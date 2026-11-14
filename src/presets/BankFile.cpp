@@ -72,7 +72,7 @@ namespace coolsynth::presets
         const juce::StringArray& playKeys()
         {
             static const juce::StringArray keys { "mode", "priority", "voices", "unison", "unisonDetune", "unisonSpread",
-                                                  "bendRange", "glideLegato" };
+                                                  "bendRange", "glideLegato", "voiceSpread" };
             return keys;
         }
 

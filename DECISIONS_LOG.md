@@ -2224,3 +2224,32 @@ speakers except a random pan per note through the matrix.
   the Museum room, 115 in the bank. Master -7 dB from the loudness tool; no other master moved.
 - It is the first sound in the room built from a record alone: its preset says so, and that the
   instrument (a Prophet-5 by its make) is a reading.
+
+## D122. Trilogy's note beginnings; the ladder's leak; voice spread (2026-11-14)
+
+On the verdict of D118 ("the beginning of a note in the reference instrument is still
+different"), while the first Contact synth waited for the user's ear; then, on his choice
+"Second Contact synth (Recommended)" (other options: "Hoover or Juno-106 next", "Stop after
+these two"), the engine feature that synth needs.
+
+- **Trilogy lead, measured over 38 struck notes:** the share of energy above eight times a
+  note's pitch, against its value 40 ms in: the recording +2.4 dB at the start, -2.0 at 80 ms,
+  -6.0 at 160 ms; the rebuild +5.2, -5.6, -13.7. Every figure of the rebuild is 2.2 times the
+  recording's: the filter contour swept more than twice too far. The band fit could not see it
+  (ten octave bands, the middle difference over the phrase: a refit with the top bands counted
+  and the contour's resting level free moved nothing). **Taken: the contour's reach 0.7 octave
+  (was 1.7), the cutoff 4.4 kHz at middle C (was 2.7), drive 3 dB (was 6):** the rebuild now
+  reads +1.7, -1.9, -6.0, and the band cost is the same 4.95 dB. The chart's "amount of contour
+  3" is a small sweep too. After 160 ms the recording's top holds where the rebuild's goes on
+  falling for the band above six times the pitch (-3.0 against -11.1 at 320 ms): left open.
+- **A leak past the filter was the first reading and is wrong for the lead** (it takes a fifth
+  of the raw oscillators to hold the top up, which no Minimoog lets through). The ladder keeps
+  the value **Leak** (0 to 0.25 of the input passes the filter untouched; a test for it): it is
+  what the Fat Bass's faint sizzle is (a floor about 61 dB under the note, D116), but that sound
+  is admitted and is not touched without the user's word.
+- **Voice Spread (taken, for the second Contact synth):** a part's poly voices each have a place
+  between the speakers (sides alternate at four distances; the second eight voices mirror the
+  first), scaled by `play voiceSpread`; with the allocator's turn-taking a note struck again
+  comes from somewhere else, as on the polysynths with a pan pot per voice. Weighed: a random
+  pan per note through the matrix (exists already; refused: a struck-again note can land where
+  it was, and the places are not the instrument's fixed ones). Tests in `tests/V3PartTests.cpp`.

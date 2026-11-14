@@ -27,7 +27,7 @@
         pA.macro1 .. 4      macros, 0..1
         pA.chaos.rate       the chaos source's rate (Hz)
         pA.voice.*          env2ToP1, velToP1, glide (ms), drift (cents), wheelToLfo1
-        pA.play.*           mode, priority, voices, unison, unisonDetune, unisonSpread,
+        pA.play.*           mode, priority, voices, unison, unisonDetune, unisonSpread, voiceSpread,
                             bendRange, glideLegato
         pA.chord.*          type, strum (ms, negative downwards), n1 .. n5 (the learned chord:
                             semitones above the key, 0 unused), learn
@@ -173,6 +173,7 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* unison = nullptr;
         std::atomic<float>* unisonDetune = nullptr;
         std::atomic<float>* unisonSpread = nullptr;
+        std::atomic<float>* voiceSpread = nullptr;
         std::atomic<float>* bendRange = nullptr;
         std::atomic<float>* glideLegato = nullptr;
         std::atomic<float>* chordType = nullptr;

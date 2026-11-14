@@ -405,6 +405,7 @@ namespace coolsynth::parameters::v3
                                                                  sv3::Part::maxUnisonVoices, 4));
         play->addChild(floatParameter(playParameterId(part, "unisonDetune"), "Unison Detune", { 0.0f, 100.0f }, 15.0f, centsAttributes()));
         play->addChild(floatParameter(playParameterId(part, "unisonSpread"), "Unison Spread", { 0.0f, 1.0f }, 0.7f, percentAttributes()));
+        play->addChild(floatParameter(playParameterId(part, "voiceSpread"), "Voice Spread", { 0.0f, 1.0f }, 0.0f, percentAttributes()));
         play->addChild(std::make_unique<juce::AudioParameterInt>(makeId(playParameterId(part, "bendRange")), "Bend Range", 0, 24, 2));
         play->addChild(std::make_unique<juce::AudioParameterBool>(makeId(playParameterId(part, "glideLegato")), "Glide Legato Only", false));
         group->addChild(std::move(play));
@@ -532,6 +533,7 @@ namespace coolsynth::parameters::v3
         p.unison = state.getRawParameterValue(playParameterId(part, "unison"));
         p.unisonDetune = state.getRawParameterValue(playParameterId(part, "unisonDetune"));
         p.unisonSpread = state.getRawParameterValue(playParameterId(part, "unisonSpread"));
+        p.voiceSpread = state.getRawParameterValue(playParameterId(part, "voiceSpread"));
         p.bendRange = state.getRawParameterValue(playParameterId(part, "bendRange"));
         p.glideLegato = state.getRawParameterValue(playParameterId(part, "glideLegato"));
         p.chordType = state.getRawParameterValue(chordParameterId(part, "type"));
@@ -668,6 +670,7 @@ namespace coolsynth::parameters::v3
         settings.unisonVoices = loadInt(pointers.unison, 4);
         settings.unisonDetuneCents = load(pointers.unisonDetune, 15.0f);
         settings.unisonSpread = load(pointers.unisonSpread, 0.7f);
+        settings.voiceSpread = load(pointers.voiceSpread, 0.0f);
         settings.bendRangeSemitones = load(pointers.bendRange, 2.0f);
         settings.glideLegatoOnly = load(pointers.glideLegato, 0.0f) >= 0.5f;
 

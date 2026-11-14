@@ -358,6 +358,27 @@ public:
 
     void runTest() override
     {
+        beginTest("a_leak_lets_a_share_of_the_input_round_the_ladder");
+        {
+            // A 6 kHz tone into a ladder closed to 200 Hz: next to nothing comes through, unless some of the input
+            // leaks round the filter, and then exactly that share.
+            const auto input = sine(6000.0f, 0.5f, 24000);
+            auto level = [&](float leakAmount)
+            {
+                auto params = ladderParams(200.0f, 0.0f);
+                params.p[LadderProcessor::leak] = leakAmount;
+                const auto out = runLadder(input, params);
+                double sum = 0.0;
+                for (std::size_t i = 12000; i < out.size(); ++i)
+                    sum += static_cast<double>(out[i]) * out[i];
+                return std::sqrt(sum / static_cast<double>(out.size() - 12000));
+            };
+            const double full = 0.5 / std::sqrt(2.0);
+            expectLessThan(level(0.0f), full * 1.0e-3);
+            expectWithinAbsoluteError(level(0.05f), full * 0.05, full * 0.002);
+            expectWithinAbsoluteError(level(0.2f), full * 0.2, full * 0.004);
+        }
+
         beginTest("every_segment_lasts_its_programmed_time");
         {
             for (float curve : { -1.0f, 0.0f, 1.0f })

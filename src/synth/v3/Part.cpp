@@ -511,6 +511,7 @@ namespace coolsynth::synth::v3
         {
             if (voices[i].isActive() && state[i].note == note)
             {
+                start.pan = settings.voiceSpread * voicePlace(static_cast<int>(i));
                 voices[i].retrigger(start);
                 state[i] = { note, true, false, order };
                 lastNote = note;
@@ -519,6 +520,7 @@ namespace coolsynth::synth::v3
         }
 
         const int index = pickVoice(std::clamp(settings.polyphony, 1, maxVoices));
+        start.pan = settings.voiceSpread * voicePlace(index);
         voices[static_cast<std::size_t>(index)].start(start);
         state[static_cast<std::size_t>(index)] = { note, true, false, order };
         lastNote = note;

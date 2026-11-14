@@ -39,7 +39,7 @@ namespace coolsynth::synth::v3
     class LadderProcessor final
     {
     public:
-        enum Param : int { cutoff = 0, resonance, drive, keyTrack, mode, bass, fm, paramCount };
+        enum Param : int { cutoff = 0, resonance, drive, keyTrack, mode, bass, fm, leak, paramCount };
         enum class Mode : int { lowpass24 = 0, lowpass12, bandpass, highpass12 };
 
         static constexpr float keyReferenceHz = 261.6256f; // C4: key tracking is neutral here
@@ -69,7 +69,8 @@ namespace coolsynth::synth::v3
                    { "key",    "Key Track", 0.0f,  1.0f,     0.5f,    Skew::linear,      Unit::percent,  false },
                    { "mode",   "Mode",      0.0f,  3.0f,     0.0f,    Skew::linear,      Unit::choice,   false, "LP24|LP12|BP|HP12" },
                    { "bass",   "Bass",      0.0f,  1.0f,     0.5f,    Skew::linear,      Unit::percent,  true },
-                   { "fm",     "G3 To Cutoff", 0.0f, 3.0f,   0.0f,    Skew::squared,     Unit::generic,  true } }},
+                   { "fm",     "G3 To Cutoff", 0.0f, 3.0f,   0.0f,    Skew::squared,     Unit::generic,  true },
+                   { "leak",   "Leak",      0.0f,  0.25f,    0.0f,    Skew::squared,     Unit::generic,  true } }},
                 paramCount };
             return d;
         }
@@ -129,6 +130,11 @@ namespace coolsynth::synth::v3
             const float* modulator = shake > 0.0f ? params.modulator : nullptr;
             float gRamp = g;
 
+            // Leak: that share of the input goes round the filter. An analogue signal path lets a little of its
+            // oscillators through whatever the cutoff (a Minimoog's faint sizzle under a closed filter), so the
+            // top of a note never falls as far as the filter alone would take it.
+            const float leakGain = juce::jlimit(0.0f, 0.25f, params.p[leak]);
+
             for (int i = 0; i < numSamples; ++i)
             {
                 gRamp += gStep;
@@ -136,8 +142,9 @@ namespace coolsynth::synth::v3
                 k += kStep;
                 const float inputGain = (1.0f + bassAmount * k) * driveNormalise;
                 const float floor = kNoiseFloor * nextNoise();
-                leftSamples[i] = tick(left, dsp::fastTanh(leftSamples[i] * driveGain) * inputGain + floor, tap);
-                rightSamples[i] = tick(right, dsp::fastTanh(rightSamples[i] * driveGain) * inputGain + floor, tap);
+                const float inLeft = leftSamples[i], inRight = rightSamples[i];
+                leftSamples[i] = tick(left, dsp::fastTanh(inLeft * driveGain) * inputGain + floor, tap) + leakGain * inLeft;
+                rightSamples[i] = tick(right, dsp::fastTanh(inRight * driveGain) * inputGain + floor, tap) + leakGain * inRight;
             }
 
             g = gTarget;
