@@ -127,6 +127,9 @@ ul.tight{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
 table.cmp{border-collapse:collapse;min-width:640px;font-size:.88rem}
 table.cmp th,table.cmp td{text-align:left;padding:8px 12px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
 table.cmp th{font:600 .75rem var(--f-body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.try{border:1px solid var(--line);border-radius:12px;padding:14px 18px;display:flex;flex-direction:column;gap:8px;background:var(--panel)}
+.try ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.try .diff{font-weight:600}
 kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padding:0 4px}
 @media (prefers-reduced-motion:reduce){.pad{transition:none}}
 </style>
@@ -142,6 +145,8 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
     <button class="tab" role="tab" id="t-map" data-m="map">C · Signal map</button>
   </div>
 </header>
+
+<div class="try" id="try"></div>
 
 <div class="rig">
 <div class="panel" id="panel">
@@ -515,7 +520,13 @@ document.addEventListener("keydown",e=>{
 });
 document.addEventListener("keyup",e=>{if(e.key==="Shift"){S.shiftKey=false;render()}});
 window.addEventListener("blur",()=>{S.shiftKey=false;render()});
-function setModel(m){if(!ABOUT[m])m="pages";S.model=m;S.overlay=null;if(m==="map"&&S.sec<4)S.focus=BLOCKS.findIndex(b=>b[0]===S.sec&&b[1]===S.item[S.sec]);if(location.hash!=="#"+m)history.replaceState(null,"","#"+m);render()}
+const TRY={
+ pages:["Knob 5 picks the slot; the main knob turns that slot's pages.",["Turn knob 5 (blue ring): the screen moves between Gen 1, Gen 2 and Gen 3.","Turn the black main knob: you go through the pages of that one generator (Wave, Stack, Mix).","Press pad 4 (Effects), then turn knob 5 through the nine effect slots."]],
+ sounds:["The main knob always changes the sound; knob 5 alone does all the editing.",["Turn knob 5 (blue ring): one long list, every page of Gen 1, then of Gen 2, then of Gen 3.","Turn the black main knob: the sound list opens, even here. Press it to load, or Shift + press to cancel.","Press pad 4 (Effects), then walk knob 5 through all nine effect slots and feel how long it gets."]],
+ map:["The screen shows the whole sound; the main knob moves across it, knob 5 moves down.",["Turn the black main knob: the white frame walks from Gen 1 through the filters and envelopes to the effects.","Turn knob 5 (blue ring): you go through the pages of the framed block.","Press pad 2 (Shape) to jump straight to that column."]]
+};
+function setModel(m){if(!ABOUT[m])m="pages";S.model=m;S.overlay=null;S.view="sec";S.sec=0;S.item=[0,0,0,0,0];S.page={};
+ const T=TRY[m];document.getElementById("try").innerHTML=`<span class="eyebrow">Try this in ${esc(ABOUT[m][0])}</span><p class="diff">${esc(T[0])}</p><ol>${T[1].map(s=>`<li>${esc(s)}</li>`).join("")}</ol><p class="note">Pad 8 shows the home page, which is the same in all three.</p>`;if(m==="map"&&S.sec<4)S.focus=BLOCKS.findIndex(b=>b[0]===S.sec&&b[1]===S.item[S.sec]);if(location.hash!=="#"+m)history.replaceState(null,"","#"+m);render()}
 window.addEventListener("hashchange",()=>setModel(location.hash.slice(1)));
 setModel(location.hash.slice(1)||"pages");
 })();
