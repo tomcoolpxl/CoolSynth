@@ -109,6 +109,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/EngineV3.cpp
     src/interface/InterfaceModel.cpp
     src/plugin/AuditionEditor.cpp
+    src/plugin/PanelEditor.cpp
     src/plugin/SynthAudioProcessor.cpp
     src/standalone/CoolSynthStandaloneApp.cpp
     src/standalone/SettingsStore.cpp

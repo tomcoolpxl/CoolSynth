@@ -13,6 +13,7 @@
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 #include "plugin/AuditionEditor.h"
+#include "plugin/PanelEditor.h"
 #include "interface/InterfaceModel.h"
 #include "presets/FactoryPresets.h"
 #include "presets/StateMigration.h"
@@ -474,8 +475,8 @@ coolsynth::ui::InterfaceModel& SynthAudioProcessor::getInterfaceModel()
 
 juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()
 {
-    // Throwaway until phase 9: a preset menu over every parameter as a slider, named by its slot's type.
-    return new AuditionEditor(*this);
+    // The V3 panel (docs/interface-v3.md). The throwaway AuditionEditor stays in the sources for now.
+    return new PanelEditor(*this);
 }
 
 void SynthAudioProcessor::getStateInformation(juce::MemoryBlock& destData)

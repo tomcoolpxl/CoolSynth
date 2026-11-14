@@ -2922,3 +2922,23 @@ The user's choice after trying it live, driven by the main knob, replacing D146'
   line 1 `Sound · Wave`, line 2 `< G1 VA >`. Taken without asking, for consistency, after the
   user objected to the old section line `SOUND G1 VA` / `Wave 1/3`.
 - Rejected: the icon menu (selected item big behind a triangle, next item small, check mark).
+
+## D148. The interface built (2026-11-14)
+
+The user asked to document and build what was designed. `docs/interface-v3.md` is the
+specification. Built, each with tests, Debug build clean, full suite passing:
+
+- `src/interface/InterfaceModel`: the logic, independent of drawing, owned by the processor and
+  shared by the panel and the MiniLab driver. Taken without asking: section pages come from each
+  slot type's descriptor in fours, named after their first value; generators add Mix (level,
+  pan, octave, fine) and, for G2/G3, Link (combine, amount); envelopes get Envelope, Timing and
+  Curves pages, LFOs LFO and Sync; choosing a type loads that type's defaults (a preset does the
+  same); lists step one option per detent, other values 1 % (0.1 % with Shift); the Effects fader
+  moves both parts' effects share; knobs 7-8 show "later" until their engine hooks exist.
+- `src/plugin/PanelEditor`: the panel, replacing the throwaway AuditionEditor (kept in the
+  sources). Its own-files buttons (D137) are not on the new panel yet.
+- `src/standalone/MiniLab3Driver` and `src/midi/MiniLab3Protocol.h`: the standalone app owns the
+  MiniLab's DAW port, so its pads never play notes; keys, bend, mod wheel and pressure go on to the
+  sound. Not yet verified on the device: Shift sending CC 27, the pads on channel 10.
+- The Debug build installs the VST3 again (`COOLSYNTH_ENABLE_VST3_USER_INSTALL=ON` in the build
+  cache; it had been off).

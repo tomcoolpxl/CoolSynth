@@ -84,6 +84,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D145) Perform lives in Home: knob 5 turns live pages Macros, Arp, Groove, Chord, Voice.
     (D146) The MiniLab's own screen tested on the device: `docs/minilab3-screen.md`.
     (D147) Lists and sections use the scroll screen; every screen type is now tested.
+    (D148) Built: the panel (src/plugin/PanelEditor), the logic (src/interface/InterfaceModel), the
+    MiniLab driver in the standalone app (src/standalone/MiniLab3Driver). Still to try by hand and on
+    the MiniLab; unverified on the device: Shift's CC 27, pads on channel 10. Open: Brightness and
+    Space hooks (knobs 7-8), per-preset macro names, the own-files buttons the old editor had.
     Next: the recorder.
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;

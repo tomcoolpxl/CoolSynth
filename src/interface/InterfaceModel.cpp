@@ -117,12 +117,13 @@ namespace coolsynth::ui
 
     std::vector<SectionRow> InterfaceModel::rowsOf(int section)
     {
+        const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x86\x92"));
         switch (section)
         {
-            case 0: return { { "mixed", { 0, 1, 2 }, "+", "→ Shape" } };
-            case 1: return { { "in a row", { 0, 1, 2 }, "→", "→ Effects" } };
+            case 0: return { { "mixed", { 0, 1, 2 }, "+", arrow + " Shape" } };
+            case 1: return { { "in a row", { 0, 1, 2 }, arrow, arrow + " Effects" } };
             case 2: return { { "envelopes", { 0, 1, 2 }, "", "" }, { "LFOs", { 3, 4 }, "", "" } };
-            default: return { { "part", { 0, 1, 2 }, "→", "" }, { "master", { 3, 4, 5 }, "→", "" }, { "", { 6, 7, 8 }, "→", "" } };
+            default: return { { "part", { 0, 1, 2 }, arrow, "" }, { "master", { 3, 4, 5 }, arrow, "" }, { "", { 6, 7, 8 }, arrow, "" } };
         }
     }
 

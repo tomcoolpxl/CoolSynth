@@ -1,9 +1,11 @@
 #include <memory>
 
 #include <juce_core/juce_core.h>
+#include <juce_gui_basics/juce_gui_basics.h>
 
 #include "interface/InterfaceModel.h"
 #include "midi/MiniLab3Protocol.h"
+#include "plugin/PanelEditor.h"
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
 
@@ -241,3 +243,44 @@ public:
 };
 
 static MiniLab3ProtocolTests miniLab3ProtocolTests;
+
+/* Draws the V3 panel in a few states to PNG files in the build folder, to look at (build/panel-*.png). */
+class PanelSnapshotTests final : public juce::UnitTest
+{
+public:
+    PanelSnapshotTests() : juce::UnitTest("PanelSnapshot", "CoolSynth") {}
+
+    void runTest() override
+    {
+        beginTest("The panel draws in its main states");
+        const juce::ScopedJuceInitialiser_GUI gui;
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        auto& model = synth->getInterfaceModel();
+        std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditor());
+        expect(editor != nullptr);
+        const auto folder = juce::File::getCurrentWorkingDirectory();
+        auto shoot = [&](const juce::String& state)
+        {
+            if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))
+                panel->refresh();
+            auto image = editor->createComponentSnapshot(editor->getLocalBounds(), true, 1.0f);
+            juce::FileOutputStream out(folder.getChildFile("panel-" + state + ".png"));
+            out.setPosition(0);
+            out.truncate();
+            juce::PNGImageFormat().writeImageToStream(image, out);
+            expect(image.isValid());
+        };
+        shoot("sound");
+        model.pressPad(7, false);
+        shoot("home");
+        model.pressPad(1, false);
+        model.pressMain();
+        shoot("typelist");
+        model.pressMain();
+        model.pressPad(3, false);
+        model.turnMain(3);
+        shoot("effects");
+    }
+};
+
+static PanelSnapshotTests panelSnapshotTests;
