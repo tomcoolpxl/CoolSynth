@@ -99,9 +99,8 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
       a Minimoog bass and lead, and the hoover, LatelyBass and Juno-106 patches (sources for
       the last three still to be found). DX7 E.PIANO 1 is admitted (D107) and is the
       first preset of the room Museum, DX7 BASS 1 the second (D111), Prophet-5 Sync II and
-      Brass the third and fourth (D115), Minimoog Fat Bass the fifth (D118). Still a
-      candidate: the Minimoog Trilogy lead ("the beginning of a note in the reference
-      instrument is still different", D118). TX81Z LatelyBass, from the instrument's own
+      Brass the third and fourth (D115), Minimoog Fat Bass the fifth (D118, with its sizzle
+      D128), the Minimoog Trilogy lead after seven rounds (D130). TX81Z LatelyBass, from the instrument's own
       preset data, is the sixth (D117, admitted D119). Hoover and
       Juno-106 still have no source. The opening of Daft Punk's "Contact" (a sample of The Sherbs'
       "We Ride Tonight", 1981; no source names the instruments): the first synth, built from the

@@ -45,6 +45,7 @@ REJUDGE = {
     "Museum|Prophet-5: Sync II": "2026-11-14-joins",
     "Museum|Prophet-5: Brass": "2026-11-14-joins",
     "Conservatory|Recorders": "2026-11-14-joins",
+    "Museum|Contact opening: the second synth": "2026-11-14-bass",
 }
 
 # A line on a card: "group|title" -> (its first words, the rest). A line that begins "Changed" asks for a new verdict.
@@ -57,19 +58,13 @@ REMARKS = {
                                                         "less once the sizzle is there). The difference is small: listen for air on "
                                                         "top of the notes. If you admit this one it replaces the admitted Fat Bass; "
                                                         "if you prefer yours, say so and this one goes away."),
-    "Museum|Contact opening: the second synth": ("New. The heavier synth that joins the first one. Headphones show its width best.",
-                                                 "From 26 seconds into \"We Ride Tonight\", where the second synth comes in, to just "
-                                                 "before the cymbals. The real clip has both synths playing, so mine has both too: "
-                                                 "the first synth you admitted, underneath, and the new second one on top. "
-                                                 "What I measured on the record: it is much brighter than the first, and every "
-                                                 "note sits at its own place between the speakers and moves when it is struck "
-                                                 "again. That is how an Oberheim polysynth behaves (my reading, not a fact). "
-                                                 "The engine now does the same: each voice has its own place, and voices take turns. "
-                                                 "Since the first version of this card I closed two gaps by about half: the bass "
-                                                 "around the low B (now about 3 dB too quiet, was 6) and the width (the two "
-                                                 "oscillators of each note now sit apart, as the record shows; mine is still a "
-                                                 "touch narrower). The notes of both synths are my reading of the record, with "
-                                                 "errors. Judge the sound more than the notes."),
+    "Museum|Contact opening: the second synth": ("Changed since you admitted it: the bass. Listen once more.",
+                                                 "You expected a change to the bass and could not hear one; the first change "
+                                                 "was too small. Now the clip plays the record's bass line properly: the low "
+                                                 "B, G and A under the chords are as strong as on the record (they were less "
+                                                 "than half as loud). The sound in the plugin is the same one you admitted; "
+                                                 "this is how the clip plays it. The real clip has both synths, so mine has "
+                                                 "both too: the first synth underneath, this one on top."),
     "Museum|Contact opening: the first synth": ("New. The first of the two synths, the one that plays alone.",
                                                 "From The Sherbs' \"We Ride Tonight\" (1981), which \"Contact\" samples. Nobody has "
                                                 "published which instrument it is, so this one is built from the recording itself. "
@@ -146,11 +141,11 @@ def player(label, source):
             f'<audio controls preload="none" src="{esc(source + stamp)}"></audio></label>')
 
 
-def verdict(group, title, options):
+def verdict(group, title, options, remark=True):
     """A verdict menu and a note, saved under group and title."""
     key = f"{group}|{title}"
     choices = "".join(f"<option>{esc(o)}</option>" for o in options)
-    renewed = f'<p class="renewed"><b>{esc(REMARKS[key][0])}</b> {esc(REMARKS[key][1])}</p>' if key in REMARKS else ""
+    renewed = f'<p class="renewed"><b>{esc(REMARKS[key][0])}</b> {esc(REMARKS[key][1])}</p>' if remark and key in REMARKS else ""
     again = f' data-rejudge="{REJUDGE[key]}"' if key in REJUDGE else ""
     return (renewed + f'<div class="verdict"><select data-key="{esc(key)}" data-group="{esc(group)}" data-title="{esc(title)}"{again} aria-label="Verdict on {esc(title)}">'
             f'<option value="">not judged yet</option>{choices}</select>'
@@ -159,6 +154,44 @@ def verdict(group, title, options):
 
 # ---- the listening page ---------------------------------------------------------------------
 sections, nav, waiting = [], [], []
+now_cards = []   # what waits for the user's ear: shown first, nothing to hunt for
+
+# Admitted Museum sounds whose comparison clip changed after the verdict: back at the top for one more listen.
+REVIEW_ADMITTED = {"contact-opening-2"}
+MUSEUM_OPTIONS = ["admit it", "not yet: too bright", "not yet: too dull or muffled",
+                  "not yet: how notes start is wrong", "not yet: how notes fade or end is wrong",
+                  "not yet: how one note passes into the next is wrong", "not yet: something else"]
+
+
+# What to listen for, in one or two plain sentences, for each thing at the top of the page ("group|title").
+LISTEN_FOR = {
+    "Museum|Minimoog: Trilogy lead": "Changed after your \"almost\": each note now begins with the slide, and stays bright for a "
+                                     "moment before it mellows. Listen to how the notes begin.",
+    "Museum|Contact opening: the second synth": "Only the bass changed. The low notes under the chords are now as strong as on the record.",
+    "Conservatory|Recorders": "Play the first clip, Soprano. The overdrive you heard on chords should be gone.",
+}
+
+
+def background(key, *paragraphs):
+    """The long text of a card, folded away: where the sound comes from and what changed over the rounds."""
+    parts = [f"<p>{esc(p)}</p>" for p in paragraphs if p]
+    if key in REMARKS:
+        parts.append(f"<p>{esc(REMARKS[key][1])}</p>")
+    return f'<details class="more"><summary>Background</summary>{"".join(parts)}</details>' if parts else ""
+
+
+def museum_card(m, options=MUSEUM_OPTIONS):
+    base = "museum/" + m["id"] + "/"
+    key = "Museum|" + m["title"]
+    return (f'<article class="card"><h3>{esc(m["title"])}</h3>'
+            + (f'<p class="todo">{esc(LISTEN_FOR[key])}</p>' if key in LISTEN_FOR else "")
+            + '<div class="players">'
+            + (player("My build, from the documents (no reference)", base + "rebuild.flac") if m.get("no_reference")
+               else player("1. The real one", base + "reference.flac") + player("2. Mine", base + "rebuild.flac"))
+            + '</div>'
+            # plain words: the user judges by ear and does not use synth terms (attack, decay)
+            + verdict("Museum", m["title"], options, remark=False)
+            + background(key, m["reference"], m["source"]) + "</article>")
 
 all_tests = load("eartest", "index.json") or []
 tests = [t for t in all_tests if not t.get("done")]
@@ -179,27 +212,13 @@ if tests:
 all_museum = load("museum", "index.json") or []
 museum = [m for m in all_museum if not m.get("admitted")]
 admitted = [m for m in all_museum if m.get("admitted")]
-if museum:
-    cards = []
-    for m in museum:
-        waiting.append(m["title"] + " for the Museum")
-        base = "museum/" + m["id"] + "/"
-        cards.append(
-            f'<article class="card"><h3>{esc(m["title"])}</h3>'
-            f'<p class="facts">{esc(m["reference"])} {esc(m["source"])}</p>'
-            f'<div class="players">'
-            + (player("My build, from the documents (no reference)", base + "rebuild.flac") if m.get("no_reference")
-               else player("The reference", base + "reference.flac") + player("My rebuild", base + "rebuild.flac"))
-            + '</div>'
-            # plain words: the user judges by ear and does not use synth terms (attack, decay)
-            + verdict("Museum", m["title"], ["admit it", "not yet: too bright", "not yet: too dull or muffled",
-                                             "not yet: how notes start is wrong", "not yet: how notes fade or end is wrong",
-                                             "not yet: how one note passes into the next is wrong", "not yet: something else"]) + "</article>")
-    nav.append(("museum", "Museum"))
-    sections.append('<section id="museum"><h2>Museum</h2>'
-                    '<p class="lead">A classic synth sound rebuilt from its published settings. The same notes twice, at the same '
-                    'velocities, without effects and equally loud: a reference, then my rebuild. It enters the Museum room only if you admit it.</p>'
-                    + "".join(cards) + "</section>")
+for m in museum:
+    waiting.append(m["title"] + " for the Museum")
+    now_cards.append(museum_card(m))
+for m in admitted:
+    if m["id"] in REVIEW_ADMITTED:
+        waiting.append(m["title"] + " (its clip changed)")
+        now_cards.append(museum_card(m, ["fine now", "still not right"]))
 
 checks = load("modelcheck", "index.json") or []
 open_checks = [c for c in checks if c["id"] not in JUDGED_CHECKS]
@@ -243,10 +262,31 @@ if demos:
         rows = []
         for instrument, styles in instruments.items():
             audio = "".join(player(s["style"], "conservatory/" + s["file"]) for s in styles)
-            rows.append(f'<article class="card"><h3>{esc(instrument)}</h3><div class="players">{audio}</div>'
+            card = (f'<article class="card"><h3>{esc(instrument)}</h3><div class="players">{audio}</div>'
+                    + verdict("Conservatory", instrument, ["good", "wrong notes or out of tune", "too quiet or too loud",
+                                                           "uneven from note to note", "a loop or a click is audible",
+                                                           "something else is wrong"]) + "</article>")
+            if f"Conservatory|{instrument}" in REJUDGE:
+                # changed since the user's verdict: it waits at the top of the page, not inside its family,
+                # with the clip that was made last first and marked
+                def made(s):
+                    path = os.path.join(audition, "conservatory", s["file"])
+                    return os.path.getmtime(path) if os.path.exists(path) else 0.0
+                ordered = sorted(styles, key=made, reverse=True)
+                audio = "".join(player(s["style"] + (" (the new clip: this is the one to hear)" if i == 0 else ""), "conservatory/" + s["file"])
+                                for i, s in enumerate(ordered))
+                key = f"Conservatory|{instrument}"
+                card = (f'<article class="card"><h3>{esc(instrument)}</h3>'
+                        + (f'<p class="todo">{esc(LISTEN_FOR[key])}</p>' if key in LISTEN_FOR else "")
+                        + f'<div class="players">{audio}</div>'
                         + verdict("Conservatory", instrument, ["good", "wrong notes or out of tune", "too quiet or too loud",
                                                                "uneven from note to note", "a loop or a click is audible",
-                                                               "something else is wrong"]) + "</article>")
+                                                               "something else is wrong"], remark=False)
+                        + background(key) + "</article>")
+                waiting.append(instrument + " (changed)")
+                now_cards.append(card)
+            else:
+                rows.append(card)
         blocks.append(f'<details class="family"{" open" if number == 0 else ""}><summary><span class="family-name">{esc(family)}</span>'
                       f'<span class="family-count" data-family-count>{len(instruments)} instruments</span></summary>{"".join(rows)}</details>')
     nav.append(("conservatory", "Conservatory"))
@@ -255,7 +295,17 @@ if demos:
                     'playing style: eight notes climbing through the instrument from soft to loud, then a chord. Open a family to hear it.</p>'
                     + "".join(blocks) + "</section>")
 
+if now_cards:
+    nav.insert(0, ("now", "Waiting for your ear"))
+    sections.insert(0, '<section id="now"><h2>Waiting for your ear</h2>'
+                       f'<p class="lead">{len(now_cards)} {"thing waits" if len(now_cards) == 1 else "things wait"} for you. For each: '
+                       'read the one line, play the clips, pick a verdict. Nothing else on this page needs you.</p>'
+                       + "".join(now_cards) + "</section>")
+
 STYLE = """
+.todo { font-size: 1.05rem; font-weight: 600; margin: 4px 0 10px; }
+details.more { margin-top: 10px; color: var(--soft); font-size: 0.9rem; }
+details.more summary { cursor: pointer; }
 :root { --bg:#f6f5f2; --panel:#ffffff; --ink:#1d1d1b; --soft:#5d5b55; --line:#dcd9d1; --accent:#0b6e4f; --accent-ink:#ffffff; --done:#e7f3ee; }
 @media (prefers-color-scheme: dark) {
   :root { --bg:#161614; --panel:#1f1f1c; --ink:#ecebe6; --soft:#a5a299; --line:#34332e; --accent:#5fc29f; --accent-ink:#10231c; --done:#1c2a25; }

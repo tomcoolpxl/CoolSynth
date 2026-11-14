@@ -39,7 +39,8 @@
    "transcribed_with": "glide_stats.py <clip> 14.9 31.9 450 2600 <out> 0.4 (the pitch of the 2' oscillator every 2.5 ms; a note starts where the pitch leaves the note before it; every note struck)"
   },
   "reference": "A real Minimoog Model D set to this chart and played by SynthMania (\"Minimoog Sound Charts by Tom Rhea\", YouTube, copyrighted: kept in the audition folder for this comparison only). My rebuild plays the same notes, transcribed from the recording. That instrument is 30 cents sharp; the rebuild is tuned to it for this clip.",
-  "source": "Tom Rhea's Sound Charts for the Minimoog (Moog Music, 1974), page 15: ranges, levels and switches as charted. Fitted to the recording: the pulse width (that instrument's square wave is nearer a third than a half), cutoff, emphasis, the contour's reach and time. No glide, though the chart has it on: the recording's notes change at once."
+  "source": "Tom Rhea's Sound Charts for the Minimoog (Moog Music, 1974), page 15: ranges, levels and switches as charted. Fitted to the recording: the pulse width (that instrument's square wave is nearer a third than a half), cutoff, emphasis, the contour's reach and time. No glide, though the chart has it on: the recording's notes change at once.",
+  "admitted": true
  },
  {
   "id": "prophet5-syncii",

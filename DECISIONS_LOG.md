@@ -2407,3 +2407,20 @@ sharper. brighter.").
   recording is 1 dB brighter at 10 to 20 ms than any combination gives.
 - The first note of the excerpt is brighter still in the recording for its first 40 ms: its
   slide comes from a note played before the excerpt begins. Not reproduced.
+
+## D130. The Trilogy lead admitted; the page puts what waits first (2026-11-14)
+
+- **Minimoog Trilogy lead: "admit it"** (on the version of D129). It moves to
+  `resources/presets/12-museum.csbank`: nine presets in the Museum room, 117 in the bank; no
+  candidate is waiting. Master 0 dB from the loudness tool; no other master moved.
+- **The user, on the listening page: "the web page is garbage. The fat bass doesn't work ...
+  It's unclear. Where is the recorder? ... Put the things I need to review on the top."** Three
+  faults, all mine. (1) The card of the Fat Bass's second version stayed on the page after the
+  version was admitted and its clips removed: dead players. The Museum's index now forgets an
+  entry that no longer exists. (2) The Recorders' new clip sat inside a folded family of the
+  Conservatory, forty instruments down. (3) Every card carried the whole history of its rounds.
+  **Taken:** the page opens with "Waiting for your ear": the Museum's candidates, admitted
+  sounds whose clip changed since the verdict, and recorded instruments marked for a second
+  listen (taken out of their family), each with one line on what to listen for, the players
+  ("1. The real one", "2. Mine", the changed clip first and marked), the verdict, and the
+  background folded under it.

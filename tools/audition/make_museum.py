@@ -262,6 +262,7 @@ with tempfile.TemporaryDirectory() as scratch:
         print(entry["id"], "->", entry["preset"])
 
 order = {entry["id"]: i for i, entry in enumerate(ENTRIES)}
+index = [e for e in index if e["id"] in order]   # an entry that no longer exists leaves the page (its clips are gone)
 index.sort(key=lambda e: order.get(e["id"], 999))
 with open(os.path.join(out_root, "index.json"), "w", encoding="utf-8", newline="\n") as handle:
     json.dump(index, handle, indent=1)
