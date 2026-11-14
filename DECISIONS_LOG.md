@@ -2126,3 +2126,18 @@ confirmed in 2013 that "the bit they used was just my bit; the keyboard bit"). N
 names the instrument: album credits say only "keyboards", interviews do not say, no forum
 thread identifies it. The opening was cut from the user's own copy of the album into the
 audition folder for study.
+
+## D118. Fifth verdicts: Fat Bass admitted, Trilogy still open (2026-11-14)
+
+Read from the page's verdict store after D117.
+
+- **Minimoog Fat Bass: "admit it"** (on the version of D116, with 0.4 octave of oscillator 3's
+  shake). It moves to `resources/presets/12-museum.csbank`: five presets in the Museum room,
+  113 in the bank. Master 3 dB from the loudness tool; no other preset's master moved.
+- **Minimoog Trilogy lead: "not yet: something else", "the beginning of a note in the reference
+  instrument is still different"** (on the version of D116, with the 10 ms filter attack and
+  the fast release). Not acted on yet: what else differs at a note's start has to be measured
+  first (the first tenth of a second of the struck notes, reference against rebuild: level,
+  brightness and pitch).
+- Recorders (Soprano with E6 and F sharp 6 from clean neighbours): still not judged.
+- TX81Z LatelyBass (D117): on the page, not judged yet.

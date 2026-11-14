@@ -3,42 +3,8 @@
 # and so into the plugin, when the user admits it in a side-by-side on the audition page.
 # This folder is not built into the plugin.
 #
-# DX7 E.PIANO 1 was admitted on 13 November 2026 (decision D107), DX7 BASS 1 (D111) and Prophet-5 Sync II and
-# Brass (D115) on 14 November.
-
-[Minimoog Fat Bass]
-room = Museum
-# "Emerson's Fat Bass from Brain Salad Surgery", from Tom Rhea's Sound Charts for the Minimoog
-# (Moog Music, 1974, page 15). The chart: three sawtooth oscillators at full level, one at 32'
-# and two at 16', tuned to unison; filter cutoff -2, emphasis 5, amount of contour 3.5, both
-# keyboard-control switches on; filter contour attack 0, decay 300 msec, sustain 0; loudness
-# contour attack 0, decay 600 msec, sustain 5; decay switch on, no glide. Play it an octave or
-# two under middle C: the key is the 8' pitch, as on the instrument. One voice; a note joined
-# to the one before it does not start the filter's sweep again, a note struck anew does, and
-# that sweep at every struck note is the sound.
-# The chart also has the filter-modulation switch on with the wheel a little raised: oscillator
-# 3 shakes the cutoff at its own pitch, a growl more than a wobble. That is the ladder's FM
-# here, four tenths of an octave either way.
-# From the chart and the service manual: the oscillators, and the cutoff (-2 on the dial is
-# about 250 Hz at the lowest key and follows the keyboard: 752 Hz at middle C by the manual;
-# fitted 900). What the documents do not pin down is fitted to a recording of a real Model D
-# set to this chart, played with every note struck: how far the contour opens the filter (2.8
-# octaves; the manuals say between 1.4 and 2.2), emphasis 5 (0.06: little, with three
-# oscillators driving the filter), the contours' times (the legend is close to the time a
-# contour takes to finish), sustain 5 (0.75 of full), and how far oscillator 3 shakes the
-# filter (the chart only draws the wheel "a little up"; the top of the spectrum asks for 0.4
-# of an octave).
-# Still short of the recording: above 3 kHz the real one keeps a faint sizzle through the whole
-# note, 50 to 60 dB under it, that the shake only half accounts for.
-g1 = VA shape=saw oct=-2 level=0.8
-g2 = VA shape=saw oct=-1 fine=3 level=0.8
-g3 = VA shape=saw oct=-1 fine=-2 level=0.8
-p1 = Ladder cutoff=902 res=0.06 key=1 drive=0 bass=0 fm=0.4
-env1 = attack=1 decay=624 sustain=0.75 release=624 decayCurve=-1 releaseCurve=-1 velocity=0
-env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
-voice = env2ToP1=0.285 velToP1=0 drift=1
-play = mode=legato priority=low
-master = 0
+# DX7 E.PIANO 1 was admitted on 13 November 2026 (decision D107), DX7 BASS 1 (D111), Prophet-5 Sync II and
+# Brass (D115) and Minimoog Fat Bass (D118) on 14 November.
 
 [Minimoog Trilogy Lead]
 room = Museum
