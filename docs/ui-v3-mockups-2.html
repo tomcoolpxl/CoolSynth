@@ -11,7 +11,7 @@
   --screen:#0b0d10; --screen-ink:#e6ebf0; --screen-dim:#79828c; --screen-line:#262b31;
   --pad-off:#1a1d21; --shift-edge:#b9c1c9;
   --c-sound:#f2a33a; --c-shape:#35b8e0; --c-motion:#9b7bff; --c-fx:#ec5fa6; --c-perform:#a4d23f;
-  --c-home:#e8edf2; --c-play:#3ccf73; --c-rec:#f0524f; --c-stop:#c8d0d8;
+  --c-home:#e8edf2; --c-sounds:#23c4b5; --c-play:#3ccf73; --c-rec:#f0524f; --c-stop:#c8d0d8;
   --f-display:"Space Grotesk",system-ui,sans-serif; --f-body:"Inter",system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
 }
@@ -156,8 +156,8 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
 <header>
   <span class="eyebrow">CoolSynth V3 · interface phase 9 · round two</span>
   <h1>Three more ways around the panel, built from your notes</h1>
-  <p class="lede"><b>Chosen: E, one map per section, with the sounds in categories.</b> D and F stay on the page for comparison.</p>
-  <p class="lede">All three keep what you liked in round one: the coloured pads for Sound, Shape, Motion and Effects, the slots, and the map. All three also add what you asked for. The sounds sit one level above the editing. Pad 8 is now Back. The black main knob moves something in every view, and the words beside it say what it does right now. They differ in how deep you go and what knob 5 does. Turn knobs with the mouse wheel or by dragging up and down, and click the main knob to press it. Keys: <kbd>←</kbd><kbd>→</kbd> turn the main knob, <kbd>↑</kbd><kbd>↓</kbd> turn knob 5, <kbd>Enter</kbd> presses it, <kbd>Esc</kbd> or <kbd>8</kbd> is Back, <kbd>0</kbd> is holding Back, <kbd>1</kbd>–<kbd>7</kbd> are the pads, and holding <kbd>Shift</kbd> is the Shift button. Round one is still <a href="https://claude.ai/artifact/VMPRDzsSiWmcTbLg5twSZy">here</a>.</p>
+  <p class="lede"><b>Chosen: E, one map per section, with the sounds in categories.</b> D and F stay on the page for comparison. <b>There is no Back button:</b> pad 8 (teal, printed Home) opens the sound browser from anywhere, Shift + pad 8 switches part A/B, and every list has a ‹ Back row at the top.</p>
+  <p class="lede">All three keep what you liked in round one: the coloured pads for Sound, Shape, Motion and Effects, the slots, and the map. The black main knob moves something in every view, and the words beside it say what it does right now. They differ in how deep you go and what knob 5 does. Turn knobs with the mouse wheel or by dragging up and down, and click the main knob to press it. Keys: <kbd>←</kbd><kbd>→</kbd> turn the main knob, <kbd>↑</kbd><kbd>↓</kbd> turn knob 5, <kbd>Enter</kbd> presses it, <kbd>1</kbd>–<kbd>8</kbd> are the pads, and holding <kbd>Shift</kbd> is the Shift button. Round one is still <a href="https://claude.ai/artifact/VMPRDzsSiWmcTbLg5twSZy">here</a>.</p>
   <div class="tabs" role="tablist" aria-label="Mock-up">
     <button class="tab" role="tab" data-m="sect">E · One map per section · chosen</button>
     <button class="tab" role="tab" data-m="drill">D · Map, then open a block</button>
@@ -207,7 +207,7 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
   <ul class="tight">
     <li><b>Sounds one level up.</b> The top of everything is a list of categories. Turn the main knob to pick one and press to open it. Inside a category the first row is ‹ Back, and the sounds follow it: turn to look, press to load. Knob 5 moves to the next category without going back. The playing sound's four macros stay on knobs 1–4.</li>
     <li><b>The main knob navigates in every view.</b> It moves through sounds, blocks, slots, pages or a type list, and its job is printed beside it. It never sits idle.</li>
-    <li><b>A real Back button.</b> Pad 8: tap it to go up one level, hold it to jump to the sounds. The Hydrasynth has EXIT and HOME buttons for this, and Elektron uses its NO key the same way. Shift + pad 8 still switches part A and B.</li>
+    <li><b>No Back button (your later choice).</b> Pad 8, printed Home and teal, opens the sound browser from anywhere; Shift + pad 8 switches part A and B. Going back is a ‹ Back row at the top of each list: a category's sounds and the type list. The pads jump between sections, so the section pages need no way back.</li>
     <li><b>Colours and slots stay.</b> Pads 1–4 are Sound, Shape, Motion and Effects in their own colours, and the same colours mark the map.</li>
     <li><b>The map picks the slot.</b> D and F show the whole map. E shows only the part of the map that belongs to the pad you pressed.</li>
     <li><b>Where you are is always one line.</b> A trail under the title reads, for example, Neon Brass › Shape › P1 Ladder › Filter. The <span class="mark">◎</span> and <span class="mark">5</span> marks show which part each of the two knobs moves.</li>
@@ -224,7 +224,7 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
       <tr><td><b>Knob 5</b></td><td>The level above: room, section or block</td><td>Pages of the slot</td><td>Pages of the block</td></tr>
       <tr><td><b>Main press</b></td><td>Go in: load, open the block, then type</td><td>Change the type</td><td>Change the type</td></tr>
       <tr><td><b>Knobs 1–4</b></td><td>The focused block, in the map and inside it</td><td>The focused slot</td><td>The focused block</td></tr>
-      <tr><td><b>Strong</b></td><td>One rule everywhere: press goes in, Back comes out, knob 5 moves the level above. Inside a block the pages get the whole screen.</td><td>Short distances. The screen draws each section as it is wired, for example three filters in a row. Fewest presses.</td><td>The whole sound in view all the time. Nothing to open or close.</td></tr>
+      <tr><td><b>Strong</b></td><td>One rule everywhere: press goes in, knob 5 moves the level above. Inside a block the pages get the whole screen.</td><td>Short distances. The screen draws each section as it is wired, for example three filters in a row. Fewest presses.</td><td>The whole sound in view all the time. Nothing to open or close.</td></tr>
       <tr><td><b>Weak</b></td><td>One more level than E and F. The main knob changes job when you go in.</td><td>You never see the whole sound at once. Moving to another section takes a pad.</td><td>A small page on a busy screen. 20 blocks for the main knob to pass.</td></tr>
     </tbody>
   </table></div>
@@ -236,12 +236,12 @@ kbd{font:.8rem var(--f-mono);border:1px solid var(--line);border-radius:4px;padd
     <ul class="tight">
       <li><b>Knobs 6–8</b> are Glide, Brightness and Space on every page.</li>
       <li><b>Faders</b> are the mixer: Part A, Part B, Effects and Master, with pickup.</li>
-      <li><b>Shift + any knob</b> turns it ten times finer. <b>Shift + press</b> is a second Back.</li>
+      <li><b>Shift + any knob</b> turns it ten times finer.</li>
     </ul>
     <ul class="tight">
       <li><b>Pads 1–4</b> open their section; press the lit pad again for the next slot. <b>Shift + pad 1</b> opens Perform (chord, arp, voice).</li>
       <li><b>Pads 5–7</b> stay free for the recorder.</li>
-      <li><b>Pad 8</b> is Back. Its light dims when there is nowhere left to go.</li>
+      <li><b>Pad 8, Home,</b> opens the sound browser, lit bright while you are in it. Shift + pad 8 switches part A and B.</li>
     </ul>
   </div>
 </section>
@@ -372,7 +372,7 @@ function enterRoom(){const o=S.br;o.inRoom=true;o.idx=o.room===S.room?S.idx:0}
 function leaveRoom(){S.br.inRoom=false}
 function slotStep(d){S.item[S.sec]=clamp(S.item[S.sec]+d,0,curSec().items.length-1)}
 function pageStep(d){const n=curPages().length;if(!n){toast("Empty slot: press the main knob to choose a type");return}setPage(clamp(curPageIdx()+d,0,n-1))}
-function openType(){const s=curSec();if(s.kind==="fixed"){toast(curItem().label+" has only one type");return}S.overlay={list:s.types,idx:s.types.indexOf(curItem().type)}}
+function openType(){const s=curSec();if(s.kind==="fixed"){toast(curItem().label+" has only one type");return}S.overlay={list:["‹ Back"].concat(s.types),idx:s.types.indexOf(curItem().type)+1}}
 
 function mainTurn(d){
  S.navAng[0]+=d*24;
@@ -392,8 +392,8 @@ function k5Turn(d){
  if(S.lvl==="map")pageStep(d);
 }
 function mainPress(){
- if(shift())return back();
  const o=S.overlay;
+ if(o&&o.idx===0){S.overlay=null;return}
  if(o){curItem().type=o.list[o.idx];setPage(0);S.overlay=null;toast(curItem().label+" is now "+(o.list[o.idx]==="Off"?"empty":o.list[o.idx]));return}
  if(S.lvl==="sounds"){
   if(!S.br.inRoom){enterRoom();return}
@@ -404,13 +404,7 @@ function mainPress(){
  if(S.model==="drill"&&S.lvl==="map"){S.lvl="block";return}
  openType();
 }
-function back(){
- if(S.overlay){S.overlay=null;return}
- if(isPerform()&&S.ret){S.lvl=S.ret.lvl;S.sec=S.ret.sec;S.ret=null;return}
- if(S.lvl==="block"){S.lvl="map";return}
- if(S.lvl==="map"||S.lvl==="sec"){goSounds();return}
- if(S.lvl==="sounds"){if(S.br.inRoom){leaveRoom();return}toast("Already at the top")}
-}
+/* No Back button: lists have a ‹ Back row, the pads jump between places, pad 8 opens the sounds. */
 function pad(i){
  if(shift()&&i===0){if(!isPerform())S.ret=S.lvl==="sounds"?null:{lvl:S.lvl,sec:S.sec};S.overlay=null;S.lvl="sec";S.sec=4;return}
  if(i<4){S.overlay=null;S.ret=null;
@@ -419,7 +413,7 @@ function pad(i){
   S.sec=i;S.lvl=editLvl();return}
  if(i<7){toast("Kept for the recorder (later)");return}
 }
-function pad8tap(){if(shift()){toast("Neon Brass has one part");return}back()}
+function pad8tap(){if(shift()){toast("Neon Brass has one part");return}if(S.lvl!=="sounds")goSounds();else S.overlay=null}
 function paramTurn(k,d){
  const step=(shift()?.002:.02)*d;
  if(k>=6){S.glob[k-6]=clamp(S.glob[k-6]+step,0,1);trans(["Glide","Brightness","Space"][k-6],fmtGlob(k-6));return}
@@ -433,7 +427,7 @@ const macroNames=()=>MACRO_NAMES[presetName()]||ROLES;
 
 /* what the two knobs do, as words */
 function roles(){
- if(S.overlay)return{turn:"Type",press:"Set",k5:"Type"};
+ if(S.overlay)return{turn:"Type",press:S.overlay.idx===0?"Back":"Set",k5:"Type"};
  const fixed=curSec().kind==="fixed";
  if(S.lvl==="sounds"){if(!S.br.inRoom)return{turn:"Category",press:"Open",k5:"Category"};
   return{turn:"Sound",press:S.br.idx<0?"Back":cursorOnLoaded()?(S.model==="drill"?"Open":"—"):"Load",k5:"Category"}}
@@ -476,8 +470,8 @@ function sectionMap(){
 function screenHTML(){
  const o=S.overlay,s=curSec(),x=curItem();
  if(o){const lo=clamp(o.idx-4,0,Math.max(0,o.list.length-9));
-  return header(s.name.toUpperCase(),s.c,"choose a type")+crumbs()+`<div class="sb" style="--c:${s.c}"><div>Type for <b>${esc(x.label)}</b></div><div class="list">`+o.list.slice(lo,lo+9).map((n,j)=>{const i=lo+j;return`<div class="li ${i===o.idx?"on":""}">${i===o.idx?mk("◎",1):""}${esc(n==="Off"?"Empty":n)}${n===x.type?' <span class="cur">●</span>':""}</div>`}).join("")+
-  `</div></div><div class="cards" style="grid-template-columns:1fr"><span class="hint">Turn ◎ to pick · press ◎ to set · Back cancels</span></div>`}
+  return header(s.name.toUpperCase(),s.c,"choose a type")+crumbs()+`<div class="sb" style="--c:${s.c}"><div>Type for <b>${esc(x.label)}</b></div><div class="list">`+o.list.slice(lo,lo+9).map((n,j)=>{const i=lo+j;return`<div class="li ${i===o.idx?"on":""}" ${i===0?'style="font-style:italic"':""}>${i===o.idx?mk("◎",1):""}${esc(n==="Off"?"Empty":n)}${n===x.type?' <span class="cur">●</span>':""}</div>`}).join("")+
+  `</div></div><div class="cards" style="grid-template-columns:1fr"><span class="hint">Turn ◎ to pick · press ◎ to set · ‹ Back on top keeps the type</span></div>`}
  if(S.lvl==="sounds"){const N=macroNames(),o=S.br;let rows,hint;
   if(!o.inRoom){const lo=clamp(o.room-3,0,ROOMS.length-8);
    rows=ROOMS.slice(lo,lo+8).map(([nm,L],j)=>{const r=lo+j;return`<div class="li ${r===o.room?"on":""}">${r===o.room?mk("◎",1):""}${esc(nm)} <span style="color:var(--screen-dim)">${L.length}</span>${r===S.room?' <span class="cur">●</span>':""}</div>`}).join("");
@@ -485,9 +479,9 @@ function screenHTML(){
   else{const L=["‹ Back to categories"].concat(ROOMS[o.room][1]),at=o.idx+1,lo=clamp(at-3,0,Math.max(0,L.length-8));
    rows=L.slice(lo,lo+8).map((n,j)=>{const i=lo+j-1,loaded=o.room===S.room&&i===S.idx;return`<div class="li ${i===o.idx?"on":""}" ${i<0?'style="font-style:italic"':""}>${i===o.idx?mk("◎",1):""}${esc(n)}${loaded?' <span class="cur">● playing</span>':""}</div>`}).join("");
    hint=o.idx<0?"Press ◎ to go back to the categories":cursorOnLoaded()?(S.model==="drill"?"Press ◎ to open this sound's map · pads 1–4 open a section":"Playing now · pads 1–4 open its sections"):"Press ◎ to load · Back or ‹ Back for the categories"}
-  return header(o.inRoom?ROOMS[o.room][0].toUpperCase():"CATEGORIES","var(--c-home)",o.inRoom?(o.room+1)+" / "+ROOMS.length:ROOMS.length+" categories")+crumbs()+`<div class="sb" style="--c:var(--c-home)"><div class="list">`+rows+
+  return header(o.inRoom?ROOMS[o.room][0].toUpperCase():"CATEGORIES","var(--c-sounds)",o.inRoom?(o.room+1)+" / "+ROOMS.length:ROOMS.length+" categories")+crumbs()+`<div class="sb" style="--c:var(--c-sounds)"><div class="list">`+rows+
   `</div><span class="hint" style="margin-top:auto">${hint}</span></div>`+
-  `<div style="--c:var(--c-home)">`+cards(N.map((n,k)=>({r:ROLES[k],n,v:Math.round(S.macros[k]*100)+"%",x:S.macros[k]})))+"</div>"}
+  `<div style="--c:var(--c-sounds)">`+cards(N.map((n,k)=>({r:ROLES[k],n,v:Math.round(S.macros[k]*100)+"%",x:S.macros[k]})))+"</div>"}
  const ps=curPages(),pi=curPageIdx();let body="";
  if(S.lvl==="sec"){
   body=sectionMap()+`<div style="margin-top:auto">${mk("◎")}<b>${esc(x.label)}</b> ${x.type==="Off"?"empty":esc(x.type)} &nbsp;${mk("5")}${ps.length?esc(ps[pi][0])+dots(ps.length,pi):"press ◎ for a type"}</div>`}
@@ -514,25 +508,25 @@ function oled(){
 }
 function legend(){
  const R=[],r=roles();
- if(S.overlay)R.push(["Main knob, turn","Pick a type"],["Main knob, press","Set it"],["Back (pad 8)","Cancel"]);
- else if(S.lvl==="sounds"&&!S.br.inRoom)R.push(["Main knob, turn","Pick a category"],["Main knob, press","Open it: its sounds, with ‹ Back on top"],["Knob 5","The same as the main knob here"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"],["Back (pad 8)","Nothing above this"]);
- else if(S.lvl==="sounds")R.push(["Main knob, turn","Look through the category's sounds; the top row is ‹ Back"],["Main knob, press",S.br.idx<0?"Back to the categories":cursorOnLoaded()?(S.model==="drill"?"Open the playing sound's map":"Nothing: this sound is already playing"):"Load the highlighted sound"],["Knob 5","The next or previous category, without going back"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"],["Back (pad 8)","Up to the categories"]);
- else if(S.lvl==="sec")R.push(["Main knob, turn","Move between the slots of "+curSec().name],["Knob 5","Pages of the focused slot"],["Main knob, press",r.press==="—"?"Nothing: these slots have one type":"Choose the slot's type"],["Knobs 1–4","The page, straight away"],["Lit pad again","Next slot"],["Back (pad 8)",isPerform()&&S.ret?"Return to where you were":"Up to the sounds"]);
- else if(S.model==="drill"&&S.lvl==="map")R.push(["Main knob, turn","Move the frame across all 20 blocks"],["Knob 5","Jump to the next section's column"],["Main knob, press","Open the framed block"],["Knobs 1–4","Already play the block's first page"],["Pads 1–4","Jump to a column; again for the next block"],["Back (pad 8)","Up to the sounds"]);
- else if(S.lvl==="block")R.push(["Main knob, turn","The block's pages"],["Knob 5","The next or previous block, without going back to the map"],["Main knob, press",r.press==="—"?"Nothing: one type only":"Choose the block's type"],["Knobs 1–4","The page"],["Back (pad 8)","Up to the map"]);
- else R.push(["Main knob, turn","Move the frame across all 20 blocks"],["Knob 5","Pages of the framed block"],["Main knob, press",r.press==="—"?"Nothing: one type only":"Choose the block's type"],["Knobs 1–4","The page, straight away"],["Pads 1–4","Jump to a column; again for the next block"],["Back (pad 8)","Up to the sounds"]);
- R.push(["Hold Back (pad 8)","Straight to the sounds, from anywhere"],["Knobs 6–8","Glide, Brightness, Space: always"],["Faders","Part A, Part B, Effects, Master: always"]);
+ if(S.overlay)R.push(["Main knob, turn","Pick a type; the top row is ‹ Back"],["Main knob, press",S.overlay.idx===0?"Close the list and keep the type":"Set it"]);
+ else if(S.lvl==="sounds"&&!S.br.inRoom)R.push(["Main knob, turn","Pick a category"],["Main knob, press","Open it: its sounds, with ‹ Back on top"],["Knob 5","The same as the main knob here"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"]);
+ else if(S.lvl==="sounds")R.push(["Main knob, turn","Look through the category's sounds; the top row is ‹ Back"],["Main knob, press",S.br.idx<0?"Back to the categories":cursorOnLoaded()?(S.model==="drill"?"Open the playing sound's map":"Nothing: this sound is already playing"):"Load the highlighted sound"],["Knob 5","The next or previous category, without going back"],["Knobs 1–4","The playing sound's four macros"],["Pads 1–4","Open a section of the playing sound"]);
+ else if(S.lvl==="sec")R.push(["Main knob, turn","Move between the slots of "+curSec().name],["Knob 5","Pages of the focused slot"],["Main knob, press",r.press==="—"?"Nothing: these slots have one type":"Choose the slot's type"],["Knobs 1–4","The page, straight away"],["Lit pad again","Next slot"],["Other pads","Straight to another section"]);
+ else if(S.model==="drill"&&S.lvl==="map")R.push(["Main knob, turn","Move the frame across all 20 blocks"],["Knob 5","Jump to the next section's column"],["Main knob, press","Open the framed block"],["Knobs 1–4","Already play the block's first page"],["Pads 1–4","Jump to a column; again for the next block"]);
+ else if(S.lvl==="block")R.push(["Main knob, turn","The block's pages"],["Knob 5","The next or previous block"],["Main knob, press",r.press==="—"?"Nothing: one type only":"Choose the block's type"],["Knobs 1–4","The page"],["Pads 1–4","Out to the map, on that section's column"]);
+ else R.push(["Main knob, turn","Move the frame across all 20 blocks"],["Knob 5","Pages of the framed block"],["Main knob, press",r.press==="—"?"Nothing: one type only":"Choose the block's type"],["Knobs 1–4","The page, straight away"],["Pads 1–4","Jump to a column; again for the next block"]);
+ R.push(["Pad 8, Home","The sound browser, from anywhere. Shift + pad 8: part A / B"],["Knobs 6–8","Glide, Brightness, Space: always"],["Faders","Part A, Part B, Effects, Master: always"]);
  return R;
 }
 const ABOUT={
- drill:["D · Map, then open a block","Three levels: sounds, the map of the sound, one block. At every level the main knob moves through that level, pressing goes in, and Back comes out. Knob 5 always moves the level above, so inside a block it changes the block without leaving.","The trail on the screen shows the rule: ◎ is on the last step, 5 on the one before it. This is a classic hardware menu (Elektron's YES and NO, the Hydrasynth's EXIT) with the map as its middle level.","The price is one more level and a main knob whose job changes when you go in. The reward is a block view with room for its pages."],
+ drill:["D · Map, then open a block","Three levels: sounds, the map of the sound, one block. At every level the main knob moves through that level and pressing goes in; a section pad takes you back out to the map. Knob 5 always moves the level above, so inside a block it changes the block without leaving.","The trail on the screen shows the rule: ◎ is on the last step, 5 on the one before it. This is a classic hardware menu (Elektron's YES and NO, the Hydrasynth's EXIT) with the map as its middle level.","The price is one more level and a main knob whose job changes when you go in. The reward is a block view with room for its pages."],
  sect:["E · One map per section","Two levels: sounds, and one section. A pad opens its section, and the screen draws only that part of the sound, wired as it really is: three generators mixed, three shapers in a row, inserts then master effects. The main knob moves between the slots, knob 5 turns pages, and knobs 1–4 edit right away.","This is round one's A with the map you liked drawn inside each section, and with the main knob, not knob 5, picking the slot.","The fewest presses of the three. But you never see the whole sound at once, and going to another section always takes a pad."],
- flat:["F · Map you edit in place","Two levels: sounds, and the whole map. The main knob walks the frame across all 20 blocks, knob 5 turns the framed block's pages, and knobs 1–4 edit it right away. Nothing opens or closes.","This is round one's C kept as it was, with the sounds one level up and Back on pad 8.","The whole sound is always in view. The page gets the least room of the three, and the main knob has the most blocks to pass."]
+ flat:["F · Map you edit in place","Two levels: sounds, and the whole map. The main knob walks the frame across all 20 blocks, knob 5 turns the framed block's pages, and knobs 1–4 edit it right away. Nothing opens or closes.","This is round one's C kept as it was, with the sounds one level up on pad 8, Home.","The whole sound is always in view. The page gets the least room of the three, and the main knob has the most blocks to pass."]
 };
 const TRY={
- drill:["Press goes in, Back comes out. Knob 5 always moves the level above.",["Turn the black main knob: the frame walks the map. Turn knob 5 (blue ring): it jumps a whole section.","Press the main knob: the block opens. Now the main knob turns its pages, and knob 5 moves to the next block without leaving.","Tap pad 8 (Back): you are on the map again. Tap it once more: the sound list. Press the main knob there to come back in."]],
- sect:["Each pad opens its own small map; the main knob picks the slot, knob 5 the page.",["Turn the black main knob: the frame moves between Gen 1, 2 and 3.","Turn knob 5 (blue ring): the pages of that one generator. Knobs 1–4 already edit.","Press pad 4 (Effects): the inserts and the master chain, drawn in signal order. Tap pad 8 (Back) for the sound list."]],
- flat:["The whole sound stays on screen; you never open anything.",["Turn the black main knob: the frame walks all 20 blocks. Knobs 1–4 edit whatever is framed.","Turn knob 5 (blue ring): the framed block's pages.","Tap pad 8 (Back) for the sound list, or hold it from anywhere."]]
+ drill:["Press goes in; a section pad comes back out. Knob 5 always moves the level above.",["Turn the black main knob: the frame walks the map. Turn knob 5 (blue ring): it jumps a whole section.","Press the main knob: the block opens. Now the main knob turns its pages, and knob 5 moves to the next block without leaving.","Press the Shape pad: you are out on the map again, on the Shape column. Press pad 8 (Home) for the sound browser."]],
+ sect:["Each pad opens its own small map; the main knob picks the slot, knob 5 the page.",["Turn the black main knob: the frame moves between Gen 1, 2 and 3.","Turn knob 5 (blue ring): the pages of that one generator. Knobs 1–4 already edit.","Press pad 4 (Effects): the inserts and the master chain, drawn in signal order. Press pad 8 (Home): the sound browser, in categories; the top row of a category is ‹ Back."]],
+ flat:["The whole sound stays on screen; you never open anything.",["Turn the black main knob: the frame walks all 20 blocks. Knobs 1–4 edit whatever is framed.","Turn knob 5 (blue ring): the framed block's pages.","Press pad 8 (Home) for the sound browser."]]
 };
 
 /* build static panel parts */
@@ -540,7 +534,7 @@ const knobsEl=document.getElementById("knobs");
 for(let k=1;k<=8;k++){knobsEl.insertAdjacentHTML("beforeend",`<div class="kw"><div class="knob ${k===5?"nav":""} ${k<5?"ctx":""}" id="k${k}" tabindex="0" aria-label="Knob ${k}"><i></i></div><span class="kn">${k}</span><span class="kl" id="kl${k}"></span></div>`)}
 const FN=["Part A","Part B","Effects","Master"];
 document.getElementById("faders").innerHTML=FN.map((n,i)=>`<div class="fw"><input type="range" id="f${i}" min="0" max="100" value="${S.faders[i]*100}" aria-label="Fader ${i+1}: ${n}" ${i===1?"disabled":""}><span class="kn">${i+1}</span><span class="kl">${n}</span></div>`).join("");
-const PRINT=["Sound","Shape","Motion","Effects","Stop","Play","Record","Back"];
+const PRINT=["Sound","Shape","Motion","Effects","Stop","Play","Record","Home"];
 const SYM=['<svg viewBox="0 0 10 10" aria-hidden="true"><rect width="10" height="10"/></svg>','<svg viewBox="0 0 9 10" aria-hidden="true"><path d="M0 0L9 5L0 10Z"/></svg>','<svg viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="5"/></svg>'];
 document.getElementById("pads").innerHTML=PRINT.map((p,i)=>`<div class="pw"><button class="pad" id="p${i}" aria-label="Pad ${i+1}">${p}</button><span class="pl" id="pl${i}"></span></div>`).join("");
 (function keys(){let w="",b="";const W=1500/15,blk=[0,1,3,4,5];for(let i=0;i<15;i++){w+=`<rect x="${i*W}" y="0" width="${W-3}" height="100" rx="4" fill="#f6f7f8" stroke="#c9d0d7"/>`;const bw=W*0.5;if(i<14&&blk.includes(i%7))b+=`<rect x="${(i+1)*W-1.5-bw/2}" y="0" width="${bw}" height="60" rx="3" fill="#1c1f23"/>`}
@@ -561,14 +555,14 @@ function render(){
  for(let k=1;k<=8;k++){const el=document.getElementById("kl"+k);el.textContent=lab[k];el.classList.toggle("dim",lab[k]==="—");
   const ang=k===5?S.navAng[1]:(vals[k]==null?-135:-135+270*vals[k]);document.querySelector("#k"+k+" i").style.transform=`rotate(${ang}deg)`}
  document.querySelector("#k0 i").style.transform=`rotate(${S.navAng[0]}deg)`;
- const kc=S.lvl==="sounds"?"var(--print)":curSec().c;
+ const kc=S.lvl==="sounds"?"var(--c-sounds)":curSec().c;
  for(let k=1;k<=4;k++)document.getElementById("k"+k).style.setProperty("--kc",lab[k]==="—"?"var(--knob-edge)":kc);
  const sh=shift(),editing=S.lvl!=="sounds"&&!isPerform();
  for(let i=0;i<8;i++){const p=document.getElementById("p"+i),l=document.getElementById("pl"+i);let c="#888",b=0,txt="";
   let face=PRINT[i];
   if(i<4){c=SEC[i].c;txt=i===0?"Shift: Perform":"";b=editing&&S.sec===i?95:38;if(isPerform()&&i===0)b=95;if(sh&&i===0){c=SEC[4].c;face="Perform";txt="";b=isPerform()?95:60}}
   else if(i<7){c=["var(--c-stop)","var(--c-play)","var(--c-rec)"][i-4];b=14;txt=["Stop","Play","Record"][i-4]+" (later)"}
-  else{c="var(--c-home)";const top=S.lvl==="sounds"&&!S.overlay&&!S.br.inRoom;txt=sh?"":"hold: Sounds · Shift: Part A/B";face=sh?"Part A/B":"Back";b=sh?60:top?12:75}
+  else{c="var(--c-sounds)";txt=sh?"":"Shift: Part A/B";face=sh?"Part A/B":"Home";b=sh?60:S.lvl==="sounds"?95:38}
   if(isPerform()&&i===0&&!sh){c=SEC[4].c;face="Perform"}
   if(i>=4&&i<7)p.innerHTML=SYM[i-4];else p.textContent=face;p.style.setProperty("--c",c);p.style.setProperty("--b",b+"%");p.classList.toggle("on",b>=90);l.textContent=txt}
  document.getElementById("legend").innerHTML=legend().map(([a,b])=>`<tr><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join("");
@@ -588,11 +582,7 @@ bindTurn(document.getElementById("k0"),mainTurn,mainPress);
 bindTurn(document.getElementById("k5"),k5Turn);
 [1,2,3,4,6,7,8].forEach(k=>bindTurn(document.getElementById("k"+k),d=>paramTurn(k,d)));
 for(let i=0;i<7;i++)document.getElementById("p"+i).addEventListener("click",()=>{pad(i);render()});
-(function(){const p=document.getElementById("p7");let t=null,held=false;
- p.addEventListener("pointerdown",()=>{held=false;t=setTimeout(()=>{held=true;t=null;if(!shift()){goSounds();toast("Held Back: the sounds");render()}},500)});
- const up=()=>{if(t){clearTimeout(t);t=null;pad8tap();render()}};
- p.addEventListener("pointerup",up);p.addEventListener("pointerleave",()=>{if(t){clearTimeout(t);t=null}});
- p.addEventListener("keydown",e=>{if(e.key===" "||e.key==="Enter"){e.preventDefault();e.stopPropagation();pad8tap();render()}})})();
+document.getElementById("p7").addEventListener("click",()=>{pad8tap();render()});
 document.getElementById("shift").addEventListener("click",()=>{S.shiftLatch=!S.shiftLatch;render()});
 ["hold","octm","octp"].forEach(id=>document.getElementById(id).addEventListener("click",()=>{toast("Hold and Oct work inside the keyboard itself");render()}));
 FN.forEach((n,i)=>document.getElementById("f"+i).addEventListener("input",e=>{S.faders[i]=e.target.value/100;trans(n,e.target.value+"%");render()}));
@@ -600,10 +590,9 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>setM
 document.addEventListener("keydown",e=>{
  if(e.target.tagName==="INPUT")return;
  if(e.key==="Shift"){if(!S.shiftKey){S.shiftKey=true;render()}return}
- const map={ArrowRight:()=>mainTurn(1),ArrowLeft:()=>mainTurn(-1),ArrowUp:()=>k5Turn(1),ArrowDown:()=>k5Turn(-1),Enter:()=>mainPress(),Escape:()=>back()};
+ const map={ArrowRight:()=>mainTurn(1),ArrowLeft:()=>mainTurn(-1),ArrowUp:()=>k5Turn(1),ArrowDown:()=>k5Turn(-1),Enter:()=>mainPress()};
  if(map[e.key]&&!(e.key==="Enter"&&e.target.tagName==="BUTTON")){e.preventDefault();map[e.key]();render();return}
  if(e.code==="Digit8"){pad8tap();render();return}
- if(e.code==="Digit0"){goSounds();render();return}
  if(/^Digit[1-7]$/.test(e.code)){pad(+e.code.slice(5)-1);render()}
 });
 document.addEventListener("keyup",e=>{if(e.key==="Shift"){S.shiftKey=false;render()}});

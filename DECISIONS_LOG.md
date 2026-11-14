@@ -2858,3 +2858,20 @@ The user's choice after trying round two (D142):
 - Pads printed with what they do (Sound, Shape, Motion, Effects; ■ ▶ ● for the recorder; Back),
   flat knobs, knobs 1-4 ringed in the open section's colour (the user's styling notes).
 - Pad 8 as Back was not questioned again; the user used it as built.
+
+## D144. No Back button: pad 8 is Home, the sound browser (2026-11-14)
+
+The user's choices, asked as pick lists:
+
+- **Pad 8 (chosen: Home, Shift = Part A/B):** pad 8 is printed Home and opens the sound
+  browser from anywhere; Shift + pad 8 switches part A and B. Rejected: pad 8 as Part A/B with
+  Shift for the browser (dead on one-part sounds, most of the bank); part switching inside the
+  browser. The browser is the live page too: the playing sound's macros (Tone, Character, Time,
+  Movement) sit on knobs 1-4 there, which the user wants for live playing.
+- **Going back (chosen: only ‹ Back rows):** no Back button, no Shift + press, no long press.
+  A category's sounds and the type list start with a ‹ Back row. E needs no other way back:
+  pads 1-4 and Home jump straight to a place. (In D, a section pad leaves an open block.)
+  Rejected: ‹ Back rows plus Shift + press; a long press on the main knob.
+- **Home's colour (chosen: teal, #23c4b5):** rejected white and gold. The sound browser's
+  screen chip and knobs 1-4's rings take the same teal.
+- **Perform (open):** the user asked for an explanation before choosing where it goes.
