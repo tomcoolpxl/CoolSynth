@@ -2477,3 +2477,63 @@ chose **"Also make a gritty twin"**.
 - Noted for the interface (phase 9): effect slots and a preset's noise must be quick to reach,
   and a player must be able to save his own version of a preset; the user asked for exactly
   this ("can i later tweak the sound and add an effect myself easily").
+
+## D133. The second Contact synth's grit: five candidates for the ear (2026-11-14)
+
+The user on the gritty twin (D132): **"not yet: something else"**, "very very close, but the
+reference one is slightly grittier (a bit distortion possibly?)". My measures could not tell
+noise from distortion (line searches drown in the chord's own dense lines), so I proposed to let
+his ear choose among versions; he answered "It's okay if you give me multiple candidates, like 5
+or something, no problem."
+
+What the record shows, measured for this round:
+
+- **It is not hiss.** Before the first note the recording's spectrum lies at -81 to -95 dB
+  against full scale; while the second synth sounds, what lies between its spectral lines is at
+  -33 to -37 dB (-48 dB from 4 to 8 kHz). The roughness is there only with the sound.
+- **It is as strong against the lines in every band.** The middle level between the lines, under
+  the strongest line of the band, over three chords: 40.0 dB (80-500 Hz), 39.3 (500 Hz-2 kHz),
+  37.2 (2-6 kHz). The clean preset: 54.0, 48.1, 44.7. The twin (white noise 0.2 in each voice):
+  48.9, 43.2, 38.0: right at the top, 9 dB short at the bottom, which is where D132's band
+  floors did not look.
+- What fills the three bands, tried with the engine as it is (every clip at the admitted
+  preset's loudness on the first synth, tone balance unchanged within 0.3 dB except where said):
+  - overdrive of the summed chord (the part's first insert slot, Drive): fills the top more than
+    the bottom. Amount 0.1 with the noise 45.5, 39.6, 36.0; 0.2 without noise 43.2, 37.2, 34.0;
+    0.35 reaches the bottom (39.9) with the top 7 dB over and the highest octave 3.5 dB up;
+  - driving each voice's filter (ladder drive 6 and 12 dB), a tube or soft Drive processor after
+    it: nothing (48.9, 43.2, 38.0), as D132 found;
+  - the noise shaking each voice's filter (ladder "G3 To Cutoff" 0.05 to 1.0): top only;
+  - a fast random wobble of the pitch (sample-and-hold LFO at 50 Hz, 0.001 and 0.003): rises
+    with frequency, 47.4, 39.3, 34.6 and 42.5, 31.4, 29.2;
+  - **a fast random tremble of each voice's loudness** (sample-and-hold LFO at 50 Hz on the
+    VCA): fills every band alike, as the record has it. Depth 0.25 with the noise: **40.6, 39.8,
+    37.3**; without the noise the top falls short (40.8, 41.1, 41.9); at 25 Hz the bottom does
+    (43.3); the smooth random shape at 0.4: 37.7, 38.5, 37.2.
+
+Options: (a) take the measured match alone as the new twin; (b) the user's guess alone
+(overdrive); **(c) taken: a listening test** "Contact, second synth: which grit?" with the real
+clip, the clean preset, the twin he judged and five candidates, each a preset in the candidates
+bank so the chosen one is admitted as it is: A tremble 0.25 (steps) with the noise; B tremble
+0.4 (smooth) with the noise; C Drive 0.1 on the part with the noise; D Drive 0.2 on the part
+without it; E tremble 0.2, Drive 0.05 and the noise. A measure of mine agreed with the record
+once before (D132) and his ear did not, so the ear decides again.
+
+- The render tool gained `--keep-inserts` (with `--no-fx`: the parts' insert slots stay on), and
+  the Museum page renders with it, so a sound whose character is in an effect slot is heard as
+  it is. No Museum preset has an insert today.
+- The page: an open listening test is the first card of "Waiting for your ear". The twin's own
+  card and the two Contact cards left the top (first synth "fine now"; the clean second synth
+  and the twin are clips 1 and 2 of the test).
+- Online: nothing names the instrument or a patch for it (searches for a recreation of the
+  "Contact" intro and for The Sherbs' synth found none); forum and review texts on the Oberheim
+  OB-X speak of "raw" only by ear, no measurement of its noise or distortion.
+- Asked the same day whether the two Contact sounds are an existing instrument's or ours: ours,
+  fitted to the record (D120, D124), already named with "Contact"; the first is built as a
+  Prophet-5 makes such a sound, the second as an Oberheim OB-X does.
+- The user also asked what the architecture still marks as not built, because effects decide
+  the interface. Checked: the twelve effect types and the three insert slots per part are built
+  (D81, D93, D102, D108); TODO item 35 still said otherwise and is corrected. Open: the master
+  section as six free slots (it is the fixed chain of ten), key pressure, MPE and the expression
+  pedal (listed as matrix sources, fed by nothing), the user's own samples and wavetables,
+  grains from a live generator, the saw generator's cost.

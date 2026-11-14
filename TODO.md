@@ -122,7 +122,11 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     For phase 9 (asked by the user on 14 November, D132): effect slots and a preset's noise
     quick to reach, and saving one's own version of a preset.
 35. Left open by phases 2 to 8, in the order they would pay off:
-    - effects as slot types, and with them the three insert slots per part (D72);
+    - the master section as six free effect slots, F1 to F6 (`DESIGN_V3.md` section 8): it is
+      still the fixed chain of ten. The effect types and the three insert slots per part are
+      built (D81, D93, D102, D108). This one decides how the interface shows effects;
+    - key pressure (aftertouch), MPE pressure and slide, the expression pedal: listed as matrix
+      sources, fed by nothing yet;
     - grains from another generator, which needs a buffer pool handed out by the part (D79);
     - user sample import (D78);
     - the VA generator's CPU cost (an eight-note saw chord is about 15 % of real time in the

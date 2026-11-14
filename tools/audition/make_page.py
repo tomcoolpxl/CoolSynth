@@ -156,7 +156,7 @@ sections, nav, waiting = [], [], []
 now_cards = []   # what waits for the user's ear: shown first, nothing to hunt for
 
 # Admitted Museum sounds whose comparison clip changed after the verdict: back at the top for one more listen.
-REVIEW_ADMITTED = {"contact-opening-1", "contact-opening-2"}
+REVIEW_ADMITTED = set()
 MUSEUM_OPTIONS = ["admit it", "not yet: too bright", "not yet: too dull or muffled",
                   "not yet: how notes start is wrong", "not yet: how notes fade or end is wrong",
                   "not yet: how one note passes into the next is wrong", "not yet: something else"]
@@ -168,12 +168,6 @@ LISTEN_FOR = {
                                      "moment before it mellows. Listen to how the notes begin.",
     "Museum|Contact opening: the first synth": "As you asked, it no longer plays my reading of the notes: it plays the chords "
                                                "and the little tune as published for \"Contact\". Only the notes changed, not the sound.",
-    "Museum|Contact opening: the second synth": "The clean one you admitted, unchanged. It is here only so you can compare it "
-                                                "with the gritty twin above.",
-    "Museum|Contact opening: the second synth, gritty twin": "The twin you asked for: the same sound with the record's faint "
-                                                             "noise riding on every note. Compare \"Mine\" here with the real "
-                                                             "one, and with the clean one below. Admit it to keep it as a "
-                                                             "second preset beside the clean one.",
     "Conservatory|Recorders": "Play the first clip, Soprano. The overdrive you heard on chords should be gone.",
 }
 
@@ -202,18 +196,13 @@ def museum_card(m, options=MUSEUM_OPTIONS):
 all_tests = load("eartest", "index.json") or []
 tests = [t for t in all_tests if not t.get("done")]
 done_tests = [t for t in all_tests if t.get("done")]
-if tests:
-    cards = []
-    for t in tests:
-        audio = "".join(player(c["title"], "eartest/" + t["id"] + "/" + c["file"]) for c in t["clips"])
-        cards.append(f'<article class="card"><h3>{esc(t["title"])}</h3><p class="facts">{esc(t["facts"])}</p>'
+# An open listening test (a few clips that differ in one thing each) waits for the ear like anything else: it goes
+# first, at the top of the page.
+for t in tests:
+    audio = "".join(player(c["title"], "eartest/" + t["id"] + "/" + c["file"]) for c in t["clips"])
+    now_cards.append(f'<article class="card"><h3>{esc(t["title"])}</h3><p class="todo">{esc(t["facts"])}</p>'
                      f'<div class="players">{audio}</div>' + verdict("Listening test", t["title"], t["options"]) + "</article>")
-        waiting.append("the listening test on the " + t["title"].lower())
-    nav.append(("eartest", "Listening test"))
-    sections.append('<section id="eartest"><h2>Listening test</h2>'
-                    '<p class="lead">Not a sound to approve: a few clips that differ in one thing each, to find where something you '
-                    'heard comes from. Play them at the loudness you normally listen at, then say which of them have it.</p>'
-                    + "".join(cards) + "</section>")
+    waiting.append("the listening test \"" + t["title"] + "\"")
 
 all_museum = load("museum", "index.json") or []
 museum = [m for m in all_museum if not m.get("admitted")]

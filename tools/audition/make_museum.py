@@ -215,7 +215,7 @@ with tempfile.TemporaryDirectory() as scratch:
             # Every note on its own, at the pitch the recording has it, put where the reference has that note.
             own_rate, y = 48000, None
             for at, note, cents, room in entry["_alone"]:
-                result = subprocess.run([render] + source + ["--no-fx", "--tune", str(cents), "--notes", note, "--seconds", f"{room:.2f}", "--out", wav],
+                result = subprocess.run([render] + source + ["--no-fx", "--keep-inserts", "--tune",str(cents), "--notes", note, "--seconds", f"{room:.2f}", "--out", wav],
                                         capture_output=True, text=True)
                 if result.returncode != 0:
                     raise SystemExit(entry["id"] + ": render failed: " + (result.stderr or result.stdout).strip()[-300:])
@@ -230,7 +230,7 @@ with tempfile.TemporaryDirectory() as scratch:
             index.append({k: entry[k] for k in ("id", "title", "preset", "reference", "source")} | {"admitted": bool(entry.get("admitted"))})
             print(entry["id"], "->", entry["preset"], "(each note at the recording's pitch)")
             continue
-        result = subprocess.run([render] + source + ["--no-fx", "--tune", str(tune), "--notes", notes, "--seconds", f"{seconds:.1f}", "--out", wav],
+        result = subprocess.run([render] + source + ["--no-fx", "--keep-inserts", "--tune",str(tune), "--notes", notes, "--seconds", f"{seconds:.1f}", "--out", wav],
                                 capture_output=True, text=True)
         if result.returncode != 0 or not os.path.exists(wav):
             print(entry["id"], "render failed:", (result.stderr or result.stdout).strip()[-300:])
@@ -243,7 +243,7 @@ with tempfile.TemporaryDirectory() as scratch:
             layer_source = (["--preset", "Museum: " + layer["preset"]] if layer.get("admitted")
                             else ["--preset", layer["preset"], "--bank", candidates])
             layer_wav = os.path.join(scratch, "under.wav")
-            result = subprocess.run([render] + layer_source + ["--no-fx", "--tune", str(tune), "--notes",
+            result = subprocess.run([render] + layer_source + ["--no-fx", "--keep-inserts", "--tune",str(tune), "--notes",
                                      phrase.poly_spec(layer_notes, limit=entry["poly"]["end"] - entry["poly"]["begin"]),
                                      "--seconds", f"{seconds:.1f}", "--out", layer_wav], capture_output=True, text=True)
             if result.returncode != 0:

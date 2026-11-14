@@ -1,13 +1,15 @@
 // Renders a preset playing given notes to a WAV file, through the real plugin signal path.
 //
 //   CoolSynthRender --preset "Marimba" --notes "60:0:1.5,64:0.5:1.5:80" --seconds 6 --out marimba.wav
-//                   [--bank some.csbank] [--style N] [--no-fx] [--tune CENTS] [--cc time:number:value,...] [--list]
+//                   [--bank some.csbank] [--style N] [--no-fx [--keep-inserts]] [--tune CENTS]
+//                   [--cc time:number:value,...] [--list]
 //
 // --preset  a preset's name, or "Room: Name" where two rooms have a preset of that name
 // --notes   comma-separated note:start:length[:velocity], times in seconds, velocity 1..127 (100)
 // --bank    take the preset from this bank file instead of the built-in bank
 // --style   the Nth style, from 0, of the sampled instrument in the first generator slot
 // --no-fx   switch every effect off, to hear the voices alone
+// --keep-inserts  with --no-fx: leave the parts' own effect slots on, for a sound whose character is in one of them
 // --tune    play this many cents sharp (a reference recording's instrument is rarely at 440 Hz); a held pitch bend
 // --cc      controller moves, time in seconds, value 0..127: 0.7:1:127 pushes the modulation wheel up at 0.7 s, as a
 //           player brings in a vibrato
@@ -180,11 +182,12 @@ int main(int argc, char* argv[])
                                 ids::flangerEnabled, ids::eqEnabled, ids::pumpEnabled, ids::phaserEnabled, ids::compressorEnabled })
             if (auto* parameter = processor.getValueTreeState().getParameter(id))
                 parameter->setValueNotifyingHost(0.0f);
-        // The parts' insert slots too: their first type is Off.
-        for (const char* part : { "pA", "pB" })
-            for (int slot = 1; slot <= 3; ++slot)
-                if (auto* parameter = processor.getValueTreeState().getParameter(juce::String(part) + ".i" + juce::String(slot) + ".type"))
-                    parameter->setValueNotifyingHost(0.0f);
+        // The parts' insert slots too (their first type is Off), unless they are part of the sound under test.
+        if (! args.contains("--keep-inserts"))
+            for (const char* part : { "pA", "pB" })
+                for (int slot = 1; slot <= 3; ++slot)
+                    if (auto* parameter = processor.getValueTreeState().getParameter(juce::String(part) + ".i" + juce::String(slot) + ".type"))
+                        parameter->setValueNotifyingHost(0.0f);
     }
 
     // --tune CENTS: a pitch bend held for the whole clip, within the preset's bend range.
