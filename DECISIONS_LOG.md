@@ -2386,3 +2386,24 @@ Read from the page's verdict store after D127.
   share of energy above 5 kHz is -5 to -11 dB in the 50 ms of a strike and about -20 dB right
   after; the rebuild's sits near -11 and falls slowly: no flash. Next: the strike's first tenth
   of a second measured over all struck notes, and a short bright stage for the filter.
+
+## D129. Trilogy: the strike itself (2026-11-14)
+
+On the verdict of D128 ("almost. the beginning of the slide in the reference is different.
+sharper. brighter.").
+
+- **Measured over the 21 notes of a quarter second or more,** the share of the sound above
+  5 kHz in 10 ms windows from the note's start: the recording -9.0, -8.0, -8.4, -9.2, -9.2 in
+  the first 40 ms (flat), then -11.1 at 60 ms, -13.5 at 100, -16.9 at 150, -21.4 at 250. The
+  rebuild of D126 began falling at once (-9.3, -10.1, -10.9 by 40 ms): duller by 1.5 dB just
+  where the user hears "sharper, brighter".
+- **A note after a silence came in about 50 ms late:** its start was taken where its pitch had
+  settled, after the slide. It now starts where the sound comes back (the level within 12 dB of
+  the note's own), so its slide is played.
+- **The contour, searched over reach, time at the top and decay (18 combinations) against that
+  curve: reach 0.75 octave, 15 ms at the top, decay 3000 ms in this engine's terms (taken:
+  0.60 dB apart on average; the D126 values 0.91; more reach only lengthens the bright stage,
+  since the share above 5 kHz cannot rise further once the filter is open).** Left: the
+  recording is 1 dB brighter at 10 to 20 ms than any combination gives.
+- The first note of the excerpt is brighter still in the recording for its first 40 ms: its
+  slide comes from a note played before the excerpt begins. Not reproduced.

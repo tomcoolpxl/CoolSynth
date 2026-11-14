@@ -41,7 +41,7 @@ GRAIN_JUDGED = True
 # version stands; changing one sound again must not hide the verdicts given on the others meanwhile.
 REJUDGE = {
     "Museum|Minimoog: Emerson's Fat Bass": "2026-11-14-top",
-    "Museum|Minimoog: Trilogy lead": "2026-11-14-glide",
+    "Museum|Minimoog: Trilogy lead": "2026-11-14-strike",
     "Museum|Prophet-5: Sync II": "2026-11-14-joins",
     "Museum|Prophet-5: Brass": "2026-11-14-joins",
     "Conservatory|Recorders": "2026-11-14-joins",
@@ -112,7 +112,12 @@ REMARKS = {
                                       "down more than twice as long). I had measured that wrongly and taken the slide out; it is "
                                       "back, at the real speeds. Second: the player lifts many keys before pressing the next one, "
                                       "so the sound dips and the next note starts with a jump. Mine held every key down. It now "
-                                      "lifts the keys where the real player does, and its notes begin where the real slides begin."),
+                                      "lifts the keys where the real player does, and its notes begin where the real slides begin. "
+                                      "Then: almost, but the beginning of the slide is sharper and brighter on the real one. "
+                                      "Two causes found. After a silence my note came in a twentieth of a second late, after "
+                                      "the slide instead of with it. And the real filter stays at its brightest for a moment "
+                                      "before it starts to close, where mine began closing at once. Both are in; over the first "
+                                      "quarter second the brightness of my notes is now within 0.6 dB of the real ones on average."),
     "Museum|Prophet-5: Sync II": ("Changed since your verdict, listen again.",
                                   "You heard an extra small note between the notes. That was my cutting of the recording: each cut ran "
                                   "on into the next note of the player's phrase. Each cut now ends before the pitch leaves its note."),
