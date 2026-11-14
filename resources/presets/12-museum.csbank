@@ -128,7 +128,7 @@ room = Museum
 # that sweep at every struck note is the sound.
 # The chart also has the filter-modulation switch on with the wheel a little raised: oscillator
 # 3 shakes the cutoff at its own pitch, a growl more than a wobble. That is the ladder's FM
-# here, four tenths of an octave either way.
+# here, 0.17 of an octave either way.
 # From the chart and the service manual: the oscillators, and the cutoff (-2 on the dial is
 # about 250 Hz at the lowest key and follows the keyboard: 752 Hz at middle C by the manual;
 # fitted 900). What the documents do not pin down is fitted to a recording of a real Model D
@@ -136,14 +136,17 @@ room = Museum
 # octaves; the manuals say between 1.4 and 2.2), emphasis 5 (0.06: little, with three
 # oscillators driving the filter), the contours' times (the legend is close to the time a
 # contour takes to finish), sustain 5 (0.75 of full), and how far oscillator 3 shakes the
-# filter (the chart only draws the wheel "a little up"; the top of the spectrum asks for 0.4
-# of an octave).
-# Still short of the recording: above 3 kHz the real one keeps a faint sizzle through the whole
-# note, 50 to 60 dB under it, that the shake only half accounts for.
+# filter (the chart only draws the wheel "a little up": 0.17 of an octave).
+# The real one keeps a faint sizzle above 3 kHz through the whole note, about 60 dB under it,
+# that a closed filter cannot leave: a little of the oscillators passes the filter. That is the
+# ladder's Leak, 0.0045 (47 dB under the oscillators), fitted with the comparison reaching 66
+# dB under the recording's level; with it the bands above 2.8 kHz, which were 6.5 to 23 dB
+# short, are within 0.7 to 3.6 dB. (The first admitted version had no leak and 0.4 of an
+# octave of shake to make up for it; the user admitted this one in its place, decision D128.)
 g1 = VA shape=saw oct=-2 level=0.8
 g2 = VA shape=saw oct=-1 fine=3 level=0.8
 g3 = VA shape=saw oct=-1 fine=-2 level=0.8
-p1 = Ladder cutoff=902 res=0.06 key=1 drive=0 bass=0 fm=0.4
+p1 = Ladder cutoff=902 res=0.06 key=1 drive=0 bass=0 fm=0.17 leak=0.0045
 env1 = attack=1 decay=624 sustain=0.75 release=624 decayCurve=-1 releaseCurve=-1 velocity=0
 env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.285 velToP1=0 drift=1

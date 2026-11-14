@@ -2371,3 +2371,18 @@ bass or something." The change of D124 was too small to hear as one (6 dB short 
 - The admitted preset itself is unchanged: this is how the comparison plays it. A key's
   loudness follows its velocity in this preset, so a bass played hard under chords played
   softly is what the player does on the keys.
+
+## D128. The Fat Bass with the sizzle admitted; Trilogy "almost" (2026-11-14)
+
+Read from the page's verdict store after D127.
+
+- **Minimoog Fat Bass with the faint sizzle: "admit it".** As agreed in D124 it replaces the
+  admitted preset under its name: `p1 = Ladder ... fm=0.17 leak=0.0045` in
+  `resources/presets/12-museum.csbank`; the candidate and its page entry are gone. The loudness
+  tool leaves the master at 3 dB; no other master moved. Still eight sounds in the room, 116
+  presets. This is the ladder's Leak in use for the first time.
+- **Minimoog Trilogy lead: "not yet: something else", "almost. the beginning of the slide in
+  the reference is different. sharper. brighter."** (on the version of D126). The recording's
+  share of energy above 5 kHz is -5 to -11 dB in the 50 ms of a strike and about -20 dB right
+  after; the rebuild's sits near -11 and falls slowly: no flash. Next: the strike's first tenth
+  of a second measured over all struck notes, and a short bright stage for the filter.
