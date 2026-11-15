@@ -140,6 +140,14 @@ namespace coolsynth::synth
         bool fromArp = false;
     };
 
+    /** A fader's position (0 bottom, 1 top) as a gain (D184): the cube, an audio taper: the top as designed (0 dB),
+        half way about -18 dB, a quarter about -36 dB, the bottom off. */
+    [[nodiscard]] inline float faderGain(float position) noexcept
+    {
+        const float x = position < 0.0f ? 0.0f : (position > 1.0f ? 1.0f : position);
+        return x * x * x;
+    }
+
     /** Raw values of the parameters outside a part, resolved by ID once. */
     struct GlobalParameterPointers
     {
@@ -163,6 +171,10 @@ namespace coolsynth::synth
         std::atomic<float>* masterGainDb = nullptr;
         std::atomic<float>* brightness = nullptr;
         std::atomic<float>* space = nullptr;
+        std::atomic<float>* volumeA = nullptr;
+        std::atomic<float>* volumeB = nullptr;
+        std::atomic<float>* volumeFx = nullptr;
+        std::atomic<float>* volumeMaster = nullptr;
     };
 
     using GlobalParamMemberPtr = std::atomic<float>* GlobalParameterPointers::*;
@@ -189,5 +201,9 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::masterGainDb,         &GlobalParameterPointers::masterGainDb         },
         { coolsynth::parameters::ids::brightness,           &GlobalParameterPointers::brightness           },
         { coolsynth::parameters::ids::space,                &GlobalParameterPointers::space                },
+        { coolsynth::parameters::ids::volumeA,              &GlobalParameterPointers::volumeA              },
+        { coolsynth::parameters::ids::volumeB,              &GlobalParameterPointers::volumeB              },
+        { coolsynth::parameters::ids::volumeFx,             &GlobalParameterPointers::volumeFx             },
+        { coolsynth::parameters::ids::volumeMaster,         &GlobalParameterPointers::volumeMaster         },
     }};
 }

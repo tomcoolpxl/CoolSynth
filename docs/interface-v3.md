@@ -17,18 +17,19 @@ press) and knob 5.
 
 | Control | Job |
 |---|---|
-| Shift | Held: knobs turn ten times finer; Shift + pad 8 switches part A/B. Lit while held. Light grey border. |
-| Hold, Oct -, Oct + | Work inside the keyboard only; the app does not rely on them. |
+| Shift | Held: knobs turn ten times finer; Shift + Home (pad 1) switches part A/B. Lit while held. Light grey border. |
+| Hold, Oct -, Oct + | With a MiniLab: its own, greyed out on screen. Without one (D184): Hold holds the notes like a sustain pedal, or latches a running arp; Oct -/+ shift the screen's keys up to three octaves. |
 | Two touch strips (Pitch, Mod) | Pitch bend and mod wheel, as the keyboard sends them. |
 | Screen | The software screen (section 4). Larger in software, in the same place. |
 | Main knob | Turn: moves through the list in view. Press: opens, loads or chooses a type. Its current job is printed beside it ("turn Sound", "press Load"). |
 | Knobs 1-4 | The page in view. Ringed in the colour of the open section (teal in Home, lime on Perform pages). |
 | Knob 5 | Pages: of the focused slot in a section, of the live pages in Home. Blue navigation ring. |
 | Knobs 6-8 | Glide, Brightness, Space, the same everywhere. Brightness moves every Ladder and SVF cutoff of the sound together, up to 1.5 octaves either way; Space makes every reverb, delay and room up to twice or half as wet; in the middle the sound is as designed (D176). |
-| Faders 1-4 | Part A, Part B, Effects, Master; pickup in the software (the hardware has none). |
-| Pads 1-4 | Sound, Shape, Motion, Effects: open the section; the lit pad pressed again moves to the next slot. |
+| Faders 1-4 | Part A, Part B, Effects, Master: volumes over the sound as designed (D184), at the top as designed, half way about -18 dB, the bottom off; they start at the top and keep their place across sounds. The MiniLab's faders are taken as they are; while it is connected the screen's follow them and do not take the mouse. |
+| Pad 1 | **Home**, teal: the sound browser from anywhere. Shift + Home: part A/B. First since D184. |
+| Pads 2-4 | Sound, Shape, Motion: open the section; the lit pad pressed again moves to the next slot. |
 | Pads 5-7 | ■ ▶ ●: kept for the recorder (later), dim. |
-| Pad 8 | **Home**, teal: the sound browser from anywhere. Shift + pad 8: part A/B. |
+| Pad 8 | Effects: opens the section, as pads 2-4 (last since D184). |
 | Keys | A short row of keys. White keys white, black keys black in both themes. |
 
 All knobs are flat. Pads print their job (Sound, Shape, Motion, Effects, ■ ▶ ●, Home), centred.

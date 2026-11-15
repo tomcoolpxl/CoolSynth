@@ -48,9 +48,9 @@ public:
             expectEquals(model->currentSlot().code, juce::String("G2"));
             model->turnMain(10);
             expectEquals(model->currentSlot().code, juce::String("G3"));
-            model->pressPad(0, false);
+            model->pressPad(coolsynth::ui::InterfaceModel::padOfSection(0), false);
             expectEquals(model->currentSlot().code, juce::String("G1"));
-            model->pressPad(3, false);
+            model->pressPad(coolsynth::ui::InterfaceModel::padOfSection(3), false);
             expectEquals(model->section(), 3);
             expectEquals(model->currentSlot().code, juce::String("I1"));
             expectEquals(static_cast<int>(model->slotsOf(3).size()), 9);
@@ -74,7 +74,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
-            model->pressPad(1, false); // Shape: P1 is the ladder
+            model->pressPad(coolsynth::ui::InterfaceModel::padOfSection(1), false); // Shape: P1 is the ladder
             const auto id = model->currentPage().ids[0];
             auto* p = synth->getValueTreeState().getParameter(id);
             expect(p != nullptr);
@@ -109,9 +109,9 @@ public:
             expect(! model->typeListOpen()); // the press loaded; it did not open the type list
 
             model->turnKnob(1, 2, false);
-            model->pressPad(1, false); // leaving drops the choice
+            model->pressPad(coolsynth::ui::InterfaceModel::padOfSection(1), false); // leaving drops the choice
             expect(! model->choicePending());
-            model->pressPad(0, false);
+            model->pressPad(coolsynth::ui::InterfaceModel::padOfSection(0), false);
             model->turnKnob(1, 1, false);
             model->pressKnob(1); // a click on the knob loads too
             expect(! model->choicePending());
@@ -155,7 +155,7 @@ public:
             auto synth = std::make_unique<SynthAudioProcessor>();
             synth->setCurrentProgram(0);
             auto model = std::make_unique<InterfaceModel>(*synth);
-            model->pressPad(7, false);
+            model->pressPad(coolsynth::ui::InterfaceModel::homePad, false);
             expect(model->view() == InterfaceModel::View::home);
             expect(model->inCategory());
             auto list = model->list();
@@ -183,7 +183,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
-            model->pressPad(7, false);
+            model->pressPad(coolsynth::ui::InterfaceModel::homePad, false);
             expectEquals(model->knob(1).role, juce::String("Tone"));
             expect(model->pageTint() == coolsynth::ui::Tint::home);
             model->turnPageKnob(1);
@@ -191,27 +191,66 @@ public:
             expect(model->pageTint() == coolsynth::ui::Tint::perform);
         }
 
-        beginTest("Shift + pad 8 switches the part the sections edit");
+        beginTest("Shift + Home switches the part the sections edit");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
             expect(model->currentPage().ids[0].startsWith("pA."));
-            model->pressPad(7, true);
+            model->pressPad(coolsynth::ui::InterfaceModel::homePad, true);
             expectEquals(model->part(), 1);
             expect(model->currentPage().ids[0].startsWith("pB."));
         }
 
-        beginTest("A fader with pickup takes over only once it meets the stored value");
+        beginTest("The faders are volumes over the sound: at the top, taken as they are, kept across sounds (D184)");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
-            const float stored = model->faderValue(3);
-            const float far = stored > 0.5f ? 0.05f : 0.95f;
-            model->moveFader(3, far, true);
-            expectWithinAbsoluteError(model->faderValue(3), stored, 1.0e-4f);
-            model->moveFader(3, stored + (stored > 0.5f ? 0.01f : -0.01f), true); // crosses the stored value
-            model->moveFader(3, 0.5f, true);
-            expectWithinAbsoluteError(model->faderValue(3), 0.5f, 1.0e-3f);
+            for (int f = 0; f < 4; ++f)
+                expectWithinAbsoluteError(model->faderValue(f), 1.0f, 1.0e-6f, "they start at the top: the sound as designed");
+            model->moveFader(3, 0.05f, true); // the MiniLab's fader, far from the top: taken as it is
+            expectWithinAbsoluteError(model->faderValue(3), 0.05f, 1.0e-3f);
+            model->moveFader(0, 0.5f, false);
+            synth->setCurrentProgram(3); // another sound
+            expectWithinAbsoluteError(model->faderValue(0), 0.5f, 1.0e-3f, "a sound does not move the faders");
+            expectWithinAbsoluteError(model->faderValue(3), 0.05f, 1.0e-3f);
+            auto* volume = synth->getValueTreeState().getParameter(coolsynth::parameters::ids::volumeA);
+            expectEquals(volume->getCurrentValueAsText(), juce::String("-18.1 dB"), "half way, as an audio taper");
+            volume->setValueNotifyingHost(1.0f);
+            expectEquals(volume->getCurrentValueAsText(), juce::String("0.0 dB"));
+            volume->setValueNotifyingHost(0.0f);
+            expectEquals(volume->getCurrentValueAsText(), juce::String("off"));
+        }
+
+        beginTest("Hold and the octave work on screen without a MiniLab, not with one (D184)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            expect(! model->hardwareConnected());
+            model->toggleHold();
+            expect(model->holdOn());
+            model->shiftOctave(1);
+            model->shiftOctave(5); // held at +3
+            expectEquals(model->octaveShift(), InterfaceModel::maxOctaveShift);
+            model->setHardwareConnected(true);
+            expect(! model->holdOn(), "the MiniLab has its own Hold: the screen's lets go");
+            expectEquals(model->octaveShift(), 0);
+        }
+
+        beginTest("The pads: Home first, Sound, Shape, Motion, the recorder, Effects last (D184)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            const juce::StringArray expected { "Home", "Sound", "Shape", "Motion", "Stop", "Play", "Record", "Effects" };
+            for (int p = 0; p < 8; ++p)
+                expectEquals(model->padLabel(p, false), expected[p]);
+            expectEquals(model->padLabel(0, true), juce::String("Part A/B"));
+            model->pressPad(7, false);
+            expectEquals(model->section(), 3, "the last pad opens Effects");
+            model->pressPad(0, false);
+            expect(model->view() == InterfaceModel::View::home, "the first pad is Home");
+            // The MiniLab's LEDs get their own colours: Home what Play had before, Play a plain green.
+            expect(coolsynth::ui::miniLabColour(coolsynth::ui::Tint::home) == coolsynth::ui::tintColour(coolsynth::ui::Tint::play));
+            expect(coolsynth::ui::miniLabColour(coolsynth::ui::Tint::record) == coolsynth::ui::tintColour(coolsynth::ui::Tint::record));
         }
 
         beginTest("The MiniLab screen in a section: where small, the slot big, no counts");
@@ -309,16 +348,16 @@ public:
             expect(image.isValid());
         };
         shoot("sound");
-        model.pressPad(7, false);
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false);
         shoot("home");
-        model.pressPad(1, false);
+        model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(1), false);
         model.pressMain();
         shoot("typelist");
         model.pressMain();
-        model.pressPad(3, false);
+        model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(3), false);
         model.turnMain(3);
         shoot("effects");
-        model.pressPad(7, false);
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false);
         model.turnKnob(1, 6, false); // a macro, and Brightness: their values show in the knobs (D183)
         model.turnKnob(7, 4, false);
         shoot("knobvalue");
@@ -377,7 +416,7 @@ public:
         beginTest("The sound list carries them, row for row; the categories have none");
         auto synth = std::make_unique<SynthAudioProcessor>();
         auto& model = synth->getInterfaceModel();
-        model.pressPad(7, false); // Home: the playing sound's category
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false); // Home: the playing sound's category
         auto view = model.list();
         expectEquals(static_cast<int>(view.pills.size()), view.rows.size());
         expect(view.pills.front().isEmpty(), "the Back row has none");
@@ -614,7 +653,7 @@ public:
                 expectEquals(model.knob(knob).value, juce::String("as the sound"));
                 model.turnKnob(knob, 5, false);
                 expectGreaterThan(state.getRawParameterValue(id)->load(), before);
-                model.pressPad(1, false); // another page: the same knob
+                model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(1), false); // another page: the same knob
                 expectEquals(model.knob(knob).name, juce::String(knob == 7 ? "Brightness" : "Space"));
             }
         }
@@ -675,7 +714,7 @@ public:
         beginTest("My Sounds is the first room in Home, its sounds load from there");
         auto& model = synth->getInterfaceModel();
         synth->setCurrentProgram(named("Init Saw"));
-        model.pressPad(7, false); // Home: refreshes the rooms
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false); // Home: refreshes the rooms
         expectEquals(model.categories().front().name, juce::String("My Sounds"));
         model.turnMain(-100);
         model.pressMain(); // back to the rooms
@@ -711,13 +750,13 @@ public:
         auto& model = synth->getInterfaceModel();
 
         beginTest("Back goes up one level from a sound list, a type list and a section");
-        model.pressPad(7, false); // Home, in the playing sound's room
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false); // Home, in the playing sound's room
         expect(model.list().title != "CATEGORIES");
         model.back();
         expectEquals(model.list().title, juce::String("CATEGORIES"));
         model.back(); // already at the top: stays
         expectEquals(model.list().title, juce::String("CATEGORIES"));
-        model.pressPad(1, false); // Shape
+        model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(1), false); // Shape
         model.pressMain();        // its type list
         expect(model.typeListOpen());
         model.back();
@@ -727,7 +766,7 @@ public:
         expect(model.view() == coolsynth::ui::InterfaceModel::View::home, "a section goes Home");
 
         beginTest("The trail's items go where they name");
-        model.pressPad(7, false);
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false);
         const auto room = model.list().title;
         model.clickTrail(0); // Categories
         expectEquals(model.list().title, juce::String("CATEGORIES"));
@@ -737,13 +776,13 @@ public:
         const int page = model.livePage();
         model.clickTrail(static_cast<int>(model.trail().size()) - 1); // the page item: the next page
         expectEquals(model.livePage(), (page + 1) % 5);
-        model.pressPad(2, false); // Motion
+        model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(2), false); // Motion
         model.clickTrail(0); // the sound's name: Home
         expect(model.view() == coolsynth::ui::InterfaceModel::View::home);
         juce::ignoreUnused(room);
 
         beginTest("A slot clicked again opens its type list");
-        model.pressPad(1, false); // Shape
+        model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(1), false); // Shape
         model.clickSlot(1);
         expect(! model.typeListOpen(), "the first click chooses the slot");
         model.clickSlot(1);
@@ -754,7 +793,7 @@ public:
         std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditor());
         auto* panel = dynamic_cast<PanelEditor*>(editor.get());
         expect(panel != nullptr);
-        model.pressPad(7, false);
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false);
         model.back(); // the rooms: a list of thirteen
         panel->refresh();
         (void) editor->createComponentSnapshot(editor->getLocalBounds()); // draws once: the screen knows its areas

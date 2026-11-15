@@ -116,15 +116,18 @@ public:
         g.setColour(isMain ? juce::Colour(0xff8a939c) : colours::ink);
         g.fillPath(pointer, juce::AffineTransform::rotation(angle).translated(centre));
 
-        // While it turns, its value in the middle on a dark disc, fading out once it stops (D183).
+        // While it turns, its value in the middle on a disc of the knob's own grey, fading out once it stops (D183).
+        // A number gets a smaller disc, so more of the pointer shows as it goes round; a name keeps the larger one.
         if (flashAlpha > 0.0f && flash.isNotEmpty())
         {
-            const auto inner = circle.reduced(size * 0.13f);
-            g.setColour(colours::screen.withAlpha(0.92f * flashAlpha));
+            const bool number = flash.containsAnyOf("0123456789");
+            const auto inner = circle.reduced(size * (number ? 0.21f : 0.13f));
+            g.setColour((isMain ? colours::mainKnob : colours::knob).withAlpha(flashAlpha));
             g.fillEllipse(inner);
             g.setColour(colours::ink.withAlpha(flashAlpha));
             g.setFont(mono(10.5f, true));
-            g.drawFittedText(flash, inner.reduced(3.0f, inner.getHeight() * 0.18f).toNearestInt(), juce::Justification::centred, 2, 0.7f);
+            const auto textArea = circle.reduced(size * 0.13f); // the same text size whatever the disc
+            g.drawFittedText(flash, textArea.reduced(3.0f, textArea.getHeight() * 0.18f).toNearestInt(), juce::Justification::centred, 2, 0.7f);
         }
     }
 
@@ -392,10 +395,10 @@ public:
         g.setFont(mono(11.0f));
         const auto partText = "Part " + juce::String(model.part() == 0 ? "A" : "B");
         g.drawText(partText, header, juce::Justification::centredRight);
-        // The chip goes back one level; "Part A" switches the part, as Shift + pad 8 does (D181).
+        // The chip goes back one level; "Part A" switches the part, as Shift + Home does (D181, D184).
         hits.push_back({ chip, [this] { model.back(); } });
         const int partWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), partText) + 6;
-        hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.pressPad(7, true); } });
+        hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.pressPad(InterfaceModel::homePad, true); } });
 
         // trail: where you are, with what each knob moves
         area.removeFromTop(4);
@@ -738,7 +741,7 @@ public:
             pad.onPress = [this, p]
             {
                 model.pressPad(p, owner.shiftHeld());
-                if (p == 7 && owner.shiftLatched)
+                if (p == InterfaceModel::homePad && owner.shiftLatched)
                     owner.shiftLatched = false;
                 owner.timerCallback();
             };
@@ -759,6 +762,14 @@ public:
         hold.setButtonText("Hold");
         octDown.setButtonText("Oct -");
         octUp.setButtonText("Oct +");
+        // Without a MiniLab these work on screen (D184): Hold holds the notes (or latches a running arp), the octave
+        // shifts the keys. With a MiniLab connected they grey out: the keyboard has its own.
+        hold.setTooltip("Holds the notes like a sustain pedal; with the arp on, latches it. The MiniLab's own Hold when it is connected.");
+        octDown.setTooltip("The keys an octave down. The MiniLab's own when it is connected.");
+        octUp.setTooltip("The keys an octave up. The MiniLab's own when it is connected.");
+        hold.onClick = [this] { model.toggleHold(); owner.timerCallback(); };
+        octDown.onClick = [this] { model.shiftOctave(-1); owner.timerCallback(); };
+        octUp.onClick = [this] { model.shiftOctave(1); owner.timerCallback(); };
 
         // CoolSynth's own Options (D174), so the plugin has them too; the last second's CPU work beside it.
         options.setButtonText("Options");
@@ -797,6 +808,26 @@ public:
         }
         for (auto& knob : knobs)
             knob.ageValue(now);
+
+        // A MiniLab connected (D184): the screen's Hold and octave grey out, and the faders follow the MiniLab's
+        // without taking the mouse; without one, all of them work.
+        const bool hardware = model.hardwareConnected();
+        for (auto* button : { &hold, &octDown, &octUp })
+            if (button->isEnabled() == hardware)
+            {
+                button->setEnabled(! hardware);
+                button->setAlpha(hardware ? 0.35f : 1.0f);
+            }
+        for (auto& fader : faders)
+            if (fader.isEnabled() == hardware)
+                fader.setEnabled(! hardware);
+        hold.setToggleState(model.holdOn(), juce::dontSendNotification);
+        if (const int octave = model.octaveShift(); octave != shownOctave)
+        {
+            shownOctave = octave;
+            keyboard.setAvailableRange(48 + 12 * octave, 72 + 12 * octave);
+            keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
+        }
         const bool shiftOn = owner.shiftHeld();
         shift.setToggleState(shiftOn, juce::dontSendNotification);
         const auto pageTint = coolsynth::ui::tintColour(model.pageTint());
@@ -829,9 +860,10 @@ public:
         {
             auto& pad = pads[static_cast<std::size_t>(p)];
             pad.colour = model.padColour(p, shiftOn);
-            pad.lit = (p < 4 && model.view() == InterfaceModel::View::section && model.section() == p)
-                      || (p == 7 && model.view() == InterfaceModel::View::home);
-            pad.glow = p == 7 && model.loadingInstrument() ? InterfaceModel::loadingGlow() : -1.0f; // glows while loading (D156)
+            const int padSection = InterfaceModel::sectionOfPad(p);
+            pad.lit = (padSection >= 0 && model.view() == InterfaceModel::View::section && model.section() == padSection)
+                      || (p == InterfaceModel::homePad && model.view() == InterfaceModel::View::home);
+            pad.glow = p == InterfaceModel::homePad && model.loadingInstrument() ? InterfaceModel::loadingGlow() : -1.0f; // glows while loading (D156)
             pad.face = model.padLabel(p, shiftOn);
             pad.repaint();
         }
@@ -921,7 +953,7 @@ public:
             juce::String text;
             if (p >= 4 && p <= 6)
                 text = juce::StringArray { "Stop", "Play", "Record" }[p - 4] + " (later)";
-            else if (p == 7)
+            else if (p == InterfaceModel::homePad)
                 text = owner.shiftHeld() ? juce::String() : juce::String("Shift: Part A/B");
             g.drawText(text, b.getX() - 8, b.getBottom() + 4, b.getWidth() + 16, 16, juce::Justification::centred);
         }
@@ -1007,6 +1039,7 @@ private:
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
     int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)
+    int shownOctave = 0; // the octave the screen's keys show (D184)
 };
 
 // ---- The editor ---------------------------------------------------------------------------------------

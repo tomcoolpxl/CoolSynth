@@ -187,6 +187,8 @@ public:
     /** As chooseMultiCore: applied now and remembered (rememberVelocityCurve in the app, else per computer). */
     void chooseVelocityCurve(int curve);
     std::function<void(int)> rememberVelocityCurve;
+    /** The screen's Hold (D184): a sustain pedal held down while the arp is off, the arp's latch while it runs. */
+    void setScreenHold(bool on) noexcept { screenHold.store(on, std::memory_order_relaxed); }
     /** A note-on's velocity (0..1) through a curve; never 0, which would end the note. */
     [[nodiscard]] static float shapeVelocity(float velocity, int curve) noexcept;
     /** One MIDI thread only (the standalone app's MiniLab driver): a note, controller, bend or pressure message for
@@ -330,6 +332,8 @@ private:
     std::atomic<std::uint32_t> soundGeneration { 0 }; // counts presets and states loaded (D158)
     std::atomic<bool> multiCoreWanted { juce::SystemStats::getEnvironmentVariable("COOLSYNTH_MULTICORE", "1") != "0" };
     std::atomic<int> velocityCurveWanted { normalCurve }; // D175
+    std::atomic<bool> screenHold { false }; // D184
+    bool screenSustainSent = false;         // audio thread
     static constexpr float brightnessRangeNormalised = 0.15f; // knob 7 at its ends: 1.5 octaves of cutoff (D176)
     std::atomic<std::uint32_t> oldestSoundingGeneration { 0 }; // the audio's oldest sound still ringing
     bool loadingSound = false; // message thread: a preset or a state is being applied

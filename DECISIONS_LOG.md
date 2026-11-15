@@ -3682,3 +3682,31 @@ after the last turn, then faded out over 0.4 s; each turn brings it back. It fol
 turn pop-up, so a turn by the mouse, the wheel or the MiniLab's own knobs all show. Options for the
 timing: **0.7 s hold, 0.4 s fade (chosen)**, long enough to read a value after letting go; no hold
 (gone before it is read); 2 s (lingers over the next turn of another knob). Drawn: build/panel-knobvalue.png.
+
+## D184. Knob values on the knob's grey; pads reordered; Hold, octave and faders without a MiniLab (2026-11-15)
+
+The user, after trying the panel and the MiniLab. Asked (pick lists): the pink pad, Hold, the faders.
+- **Knob values** (D183): the disc is the knob's own grey, not the screen's black. A number gets a
+  smaller disc with the same text, so more of the pointer shows as it turns; a name keeps the larger.
+- **Pads, left to right**: Home, Sound, Shape, Motion, Stop, Play, Record, Effects (was Sound,
+  Shape, Motion, Effects, the recorder, Home). Shift + Home switches the part. The MiniLab's pads
+  follow, as do the computer keys 1-8.
+- **MiniLab pad colours**, by the user's eye: only Record was right. The LEDs get their own colours
+  (miniLabColour), the screen keeps its own: Home what Play was sent before (it lit teal), Play a
+  plain green, Stop a warmer white (white lit blue), Sound a redder orange (orange lit light pink;
+  the user's choice: "Sound: make it orange"); Shape, Motion, Effects and Record as they were. To be
+  confirmed on the device.
+- **Hold and Oct -/+** work on screen when no MiniLab is connected and grey out when one is (it has
+  its own). Hold, the user's choice "like the MiniLab": with the arp off it holds the notes like a
+  sustain pedal, with the arp on it latches the arpeggio (as the MiniLab 3 does: Arturia forum,
+  "Why doesn't the hold button hold notes when the arp is off"). Oct -/+ shift the screen's keys up
+  to three octaves. Options for Hold: **like the MiniLab (chosen)**; always sustain; always arp latch.
+- **The faders**, the user's choice "volume on top of the sound": four new volumes (volumeA,
+  volumeB, volumeFx, volumeMaster), at the top the sound as designed, a cube taper (half way about
+  -18 dB, the bottom off), all four starting at the top and kept when the sound changes (a preset
+  or a saved sound never moves them). Before, the faders wrote the sound's own levels: a part's
+  fader at the top was +6 dB and its designed level sat at 90 %, and the master fader overwrote the
+  level each preset was balanced at (D153), so the MiniLab's positions meant nothing fixed. The
+  MiniLab's faders are now taken as they are (no catching up); while it is connected the screen's
+  faders follow them and do not take the mouse. Options: **volumes over the sound (chosen)**; keep
+  writing the sound's levels, rescaled. At the top every preset renders bit for bit as before.

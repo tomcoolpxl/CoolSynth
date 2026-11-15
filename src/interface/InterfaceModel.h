@@ -22,6 +22,15 @@ namespace coolsynth::ui
 
     /** The colour of a tint, as on the panel and the mock-up. */
     [[nodiscard]] juce::Colour tintColour(Tint tint) noexcept;
+    /** The colour to send the MiniLab 3's pad LEDs for a tint, so it lights as the screen shows it (D184). */
+    [[nodiscard]] juce::Colour miniLabColour(Tint tint) noexcept;
+
+    /** A pad's light: which colour, how bright (1 lit, 0.3 dim). */
+    struct PadLight
+    {
+        Tint tint = Tint::home;
+        float brightness = 1.0f;
+    };
 
     /** What makes a preset's sound, for the pills in the software sound browser (D169, docs/interface-v3.md 6):
         one label per engine its generator slots use, in slot order (part A, then part B where the preset plays
@@ -145,6 +154,18 @@ namespace coolsynth::ui
         void setHardwareShift(bool held) noexcept { hardwareShift = held; touched(); }
         [[nodiscard]] bool hardwareShiftHeld() const noexcept { return hardwareShift; }
 
+        /** Hold and Oct -/+ on the screen (D184), for whoever has no MiniLab: Hold holds the notes like a sustain
+            pedal, or latches the arpeggio when the arp is on; the octave shifts the screen's keys. Greyed out while
+            a MiniLab is connected, which has its own. */
+        void toggleHold();
+        [[nodiscard]] bool holdOn() const noexcept { return hold; }
+        void shiftOctave(int steps);
+        [[nodiscard]] int octaveShift() const noexcept { return octave; }
+        static constexpr int maxOctaveShift = 3;
+        /** The standalone app's MiniLab driver says whether the MiniLab is there; the plugin never does. */
+        void setHardwareConnected(bool connected);
+        [[nodiscard]] bool hardwareConnected() const noexcept { return hardware; }
+
         // ---- What to show -----------------------------------------------------------------
         [[nodiscard]] static juce::String sectionName(int section);
         [[nodiscard]] static Tint sectionTint(int section) noexcept;
@@ -172,6 +193,11 @@ namespace coolsynth::ui
         [[nodiscard]] bool choicePending() const noexcept { return pendingChoice.has_value(); }
         [[nodiscard]] DeviceScreen deviceScreen() const;
         [[nodiscard]] juce::Colour padColour(int pad, bool shift) const; // colour times brightness
+        [[nodiscard]] PadLight padLight(int pad, bool shift) const;       // for the MiniLab: its own colours
+        /** The pads, left to right (D184): Home, Sound, Shape, Motion, Stop, Play, Record, Effects. */
+        static constexpr int homePad = 0;
+        [[nodiscard]] static int sectionOfPad(int pad) noexcept;   // -1 for Home and the recorder's pads
+        [[nodiscard]] static int padOfSection(int section) noexcept;
         [[nodiscard]] juce::String padLabel(int pad, bool shift) const;
         [[nodiscard]] const Popup& popup() const noexcept { return lastPopup; }
         [[nodiscard]] juce::String playingPresetName() const;
@@ -246,8 +272,9 @@ namespace coolsynth::ui
         std::map<juce::String, int> pageOfSlot;
         Browser browser;
         TypeList typeList;
-        std::array<bool, 4> faderCaught {};
-        std::array<float, 4> faderLast { -1.0f, -1.0f, -1.0f, -1.0f };
+        bool hold = false;     // the screen's Hold (D184)
+        int octave = 0;        // the screen's keys, octaves from C3
+        bool hardware = false; // a MiniLab connected
         Popup lastPopup;
         int changeCount = 0;
         bool hardwareShift = false;

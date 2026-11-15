@@ -544,6 +544,16 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         }
     };
 
+    // The screen's Hold (D184): with the arp off it is a sustain pedal held down, sent when it changes.
+    {
+        const bool sustain = screenHold.load(std::memory_order_relaxed) && ! settings.parts[0].arp.enabled;
+        if (sustain != screenSustainSent)
+        {
+            screenSustainSent = sustain;
+            take(juce::MidiMessage::controllerEvent(1, 64, sustain ? 127 : 0), 0, true);
+        }
+    }
+
     // Keys clicked on the screen, at the block's start (D159).
     {
         const auto clicks = clickedKeys.read(clickedKeys.getNumReady());
@@ -962,6 +972,12 @@ bool SynthAudioProcessor::loadMySound(const juce::File& file)
     if (! result.succeeded() || result.parameterStateXml == nullptr)
         return false;
     const auto root = juce::parseXML(file);
+    // The faders stay where the player has them (D184): a saved sound brings its own levels, not the player's volumes.
+    std::vector<std::pair<juce::RangedAudioParameter*, float>> faders;
+    for (const char* id : { coolsynth::parameters::ids::volumeA, coolsynth::parameters::ids::volumeB,
+                            coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster })
+        if (auto* p = parameters.getParameter(id))
+            faders.emplace_back(p, p->getValue());
 
     const AtomicFlagScope applying(applyingPatch, true);
     const BulkEdit whole(*this);
@@ -972,6 +988,8 @@ bool SynthAudioProcessor::loadMySound(const juce::File& file)
     suppressGestureSnapshots = false;
     if (! applied)
         return false;
+    for (const auto& [p, value] : faders)
+        p->setValueNotifyingHost(value);
 
     playingMySoundFile = file;
     mySoundMacroNames = { splitNames(root != nullptr ? root->getStringAttribute("macrosA") : juce::String()),
@@ -1566,7 +1584,7 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
     arp.euclideanPulses = index(v.arpEuclideanPulses);
     arp.euclideanSteps = index(v.arpEuclideanSteps);
     arp.euclideanRotation = index(v.arpEuclideanRotation);
-    arp.latch = decodeBool(v.arpLatch->load());
+    arp.latch = decodeBool(v.arpLatch->load()) || screenHold.load(std::memory_order_relaxed); // the screen's Hold latches a running arp (D184)
     settings.parts[1].arp = arp; // one arpeggiator setting; each part's mix says whether it follows
 
     coolsynth::parameters::v3::readMasterEffects(masterEffectValues, settings.master);
@@ -1578,6 +1596,18 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
                 userSoundHandles[static_cast<std::size_t>(part * coolsynth::parameters::v3::partGeneratorSlots + slot)].load(std::memory_order_relaxed);
 
     settings.masterGainLinear = juce::Decibels::decibelsToGain(v.masterGainDb->load());
+    // The four faders (D184), volumes over the sound as designed: a part's level, the share through the effects and
+    // the master, each times its fader's taper. At the top, the sound as designed, bit for bit.
+    const auto partVolume = [](float levelDb, float position)
+    {
+        const float gain = coolsynth::synth::faderGain(position);
+        return gain >= 1.0f ? levelDb : (gain <= 1.0e-6f ? -1000.0f : levelDb + juce::Decibels::gainToDecibels(gain));
+    };
+    settings.mix[0].levelDb = partVolume(settings.mix[0].levelDb, v.volumeA->load());
+    settings.mix[1].levelDb = partVolume(settings.mix[1].levelDb, v.volumeB->load());
+    for (auto& mix : settings.mix)
+        mix.fx *= coolsynth::synth::faderGain(v.volumeFx->load());
+    settings.masterGainLinear *= coolsynth::synth::faderGain(v.volumeMaster->load());
     // Knobs 7 and 8 (D176): Brightness moves every filter's cutoff by up to 1.5 octaves either way (0.15 of the
     // cutoff's 20 Hz - 20 kHz range, ten octaves); Space makes every reverb, delay and room up to twice or half as wet.
     for (auto& part : settings.parts)

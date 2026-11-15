@@ -239,6 +239,20 @@ namespace
                                                                     juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f, centred));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(space), "Space",
                                                                     juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f, centred));
+
+        // The four faders (D184): volumes over the sound as designed, the top (1) as designed; shown in dB.
+        const auto volume = juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int)
+        {
+            const float gain = coolsynth::synth::faderGain(value);
+            if (gain <= 1.0e-6f)
+                return juce::String("off");
+            const float db = juce::Decibels::gainToDecibels(gain);
+            return db > -0.05f ? juce::String("0.0 dB") : juce::String(db, 1) + " dB";
+        });
+        for (const auto& [id, name] : { std::pair { volumeA, "Part A Volume" }, std::pair { volumeB, "Part B Volume" },
+                                        std::pair { volumeFx, "Effects Volume" }, std::pair { volumeMaster, "Master Volume" } })
+            group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(id), name,
+                                                                        juce::NormalisableRange<float>(0.0f, 1.0f), 1.0f, volume));
         return group;
     }
 }

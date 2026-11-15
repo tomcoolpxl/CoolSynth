@@ -1,5 +1,7 @@
 #include "FactoryPresets.h"
 
+#include "parameters/ParameterIDs.h"
+
 #include <algorithm>
 #include <optional>
 #include <utility>
@@ -131,8 +133,12 @@ namespace coolsynth::presets
     {
         juce::StringArray problems;
 
+        // The four faders are the player's volumes over whatever plays (D184): a sound never moves them.
+        static const juce::StringArray keptAcrossSounds { coolsynth::parameters::ids::volumeA, coolsynth::parameters::ids::volumeB,
+                                                          coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster };
         for (auto* base : apvts.processor.getParameters())
-            if (auto* parameter = dynamic_cast<juce::RangedAudioParameter*>(base))
+            if (auto* parameter = dynamic_cast<juce::RangedAudioParameter*>(base); parameter != nullptr
+                && ! keptAcrossSounds.contains(parameter->getParameterID()))
                 set(*parameter, parameter->getDefaultValue());
 
         // The user's own files a preset names (decision D137) are not parameters: they go into the state's own child.

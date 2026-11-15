@@ -50,6 +50,21 @@ namespace coolsynth::ui
         }
     }
 
+    juce::Colour miniLabColour(Tint tint) noexcept
+    {
+        // What the MiniLab 3's pad LEDs need to show each colour, by the user's eye on the device (D184): its LEDs
+        // are bluer and pinker than a screen. Home is what Play was sent before (it lit teal); Play a plain green,
+        // Stop a warm white (white lit blue), Sound a redder orange (orange lit light pink).
+        switch (tint)
+        {
+            case Tint::sound:  return juce::Colour(0xffff5000);
+            case Tint::home:   return juce::Colour(0xff3ccf73);
+            case Tint::stop:   return juce::Colour(0xffffc890);
+            case Tint::play:   return juce::Colour(0xff10ff00);
+            default:           return tintColour(tint); // Shape, Motion, Effects and Record light as they should
+        }
+    }
+
     juce::Colour tintColour(Tint tint) noexcept
     {
         switch (tint)
@@ -224,8 +239,33 @@ namespace coolsynth::ui
         }
         else
             synth.setCurrentProgram(preset);
-        faderCaught = {};          // the faders take over again only when they meet the new values
-        faderLast = { -1.0f, -1.0f, -1.0f, -1.0f };
+    }
+
+    // ---- Hold and the octave, for the screen's keys when no MiniLab is connected (D184) -----------------------
+
+    void InterfaceModel::toggleHold()
+    {
+        hold = ! hold;
+        synth.setScreenHold(hold);
+        touched();
+    }
+
+    void InterfaceModel::shiftOctave(int steps)
+    {
+        octave = clampInt(octave + steps, -maxOctaveShift, maxOctaveShift);
+        touched();
+    }
+
+    void InterfaceModel::setHardwareConnected(bool connected)
+    {
+        if (connected == hardware)
+            return;
+        hardware = connected;
+        // The MiniLab has its own Hold and octave: the screen's let go of theirs.
+        if (hardware && hold)
+            toggleHold();
+        octave = 0;
+        touched();
     }
 
     // ---- Sections and slots -------------------------------------------------------------------
@@ -567,10 +607,11 @@ namespace coolsynth::ui
     {
         switch (fader)
         {
-            case 0: return { pv::mixParameterId(pv::Part::a, "level") };
-            case 1: return { pv::mixParameterId(pv::Part::b, "level") };
-            case 2: return { pv::mixParameterId(pv::Part::a, "fx"), pv::mixParameterId(pv::Part::b, "fx") };
-            default: return { coolsynth::parameters::ids::masterGainDb };
+            // Volumes over the sound as designed (D184), not the sound's own levels.
+            case 0: return { coolsynth::parameters::ids::volumeA };
+            case 1: return { coolsynth::parameters::ids::volumeB };
+            case 2: return { coolsynth::parameters::ids::volumeFx };
+            default: return { coolsynth::parameters::ids::volumeMaster };
         }
     }
 
@@ -591,20 +632,9 @@ namespace coolsynth::ui
     {
         fader = clampInt(fader, 0, 3);
         const auto f = static_cast<std::size_t>(fader);
-        const float stored = faderValue(fader);
-        if (pickup && ! faderCaught[f])
-        {
-            const float last = faderLast[f];
-            const bool crossed = last >= 0.0f && (last - stored) * (value01 - stored) <= 0.0f;
-            faderLast[f] = value01;
-            if (! crossed && std::abs(value01 - stored) > 0.02f)
-            {
-                raisePopup(faderName(fader), "move to " + juce::String(juce::roundToInt(stored * 100.0f)) + "%", value01, true, fader);
-                touched();
-                return;
-            }
-            faderCaught[f] = true;
-        }
+        // The faders are volumes the player keeps across sounds (D184): a position means the same whatever plays,
+        // so the MiniLab's faders are taken as they are, with no catching up.
+        juce::ignoreUnused(pickup, f);
         for (const auto& id : faderParameterIds(fader))
             if (auto* p = parameter(id))
                 setNormalised(*p, value01);
@@ -762,18 +792,31 @@ namespace coolsynth::ui
         touched();
     }
 
+    int InterfaceModel::sectionOfPad(int pad) noexcept
+    {
+        // The pads, left to right (D184): Home, Sound, Shape, Motion, the recorder's three, Effects.
+        if (pad >= 1 && pad <= 3)
+            return pad - 1;
+        return pad == 7 ? 3 : -1;
+    }
+
+    int InterfaceModel::padOfSection(int section) noexcept
+    {
+        return section >= 0 && section < 3 ? section + 1 : 7;
+    }
+
     void InterfaceModel::pressPad(int pad, bool shift)
     {
-        if (pad >= 0 && pad < sectionCount)
-            openSection(pad);
-        else if (pad == 7)
+        if (const int section = sectionOfPad(pad); section >= 0)
+            openSection(section);
+        else if (pad == homePad)
         {
             if (shift)
                 currentPart = 1 - currentPart;
             else
                 openHome();
         }
-        // pads 4-6 are kept for the recorder
+        // pads 5-7 (4-6 from 0) are kept for the recorder
         touched();
     }
 
@@ -1029,7 +1072,7 @@ namespace coolsynth::ui
             if (browser.row == 0)
                 return "Press to go back to the categories";
             return mainPressRole() == "Load" ? juce::String("Press to load")
-                                             : juce::String(juce::CharPointer_UTF8("Playing now \xc2\xb7 pads 1-4 open its sections"));
+                                             : juce::String(juce::CharPointer_UTF8("Playing now \xc2\xb7 pads 2-4 and 8 open its sections"));
         }
         return currentSlot().empty ? "Empty slot: press for a type" : juce::String();
     }
@@ -1068,9 +1111,10 @@ namespace coolsynth::ui
 
     juce::String InterfaceModel::padLabel(int pad, bool shift) const
     {
+        if (const int section = sectionOfPad(pad); section >= 0)
+            return sectionName(section);
         switch (pad)
         {
-            case 0: case 1: case 2: case 3: return sectionName(pad);
             case 4: return "Stop";
             case 5: return "Play";
             case 6: return "Record";
@@ -1078,22 +1122,28 @@ namespace coolsynth::ui
         }
     }
 
-    juce::Colour InterfaceModel::padColour(int pad, bool shift) const
+    PadLight InterfaceModel::padLight(int pad, bool shift) const
     {
         juce::ignoreUnused(shift);
-        if (pad >= 0 && pad < sectionCount)
+        if (const int section = sectionOfPad(pad); section >= 0)
         {
-            const bool lit = currentView == View::section && currentSection == pad;
-            return tintColour(sectionTint(pad)).withMultipliedBrightness(lit ? 1.0f : 0.3f);
+            const bool lit = currentView == View::section && currentSection == section;
+            return { sectionTint(section), lit ? 1.0f : 0.3f };
         }
         if (pad >= 4 && pad <= 6)
         {
             static constexpr std::array<Tint, 3> tints { Tint::stop, Tint::play, Tint::record };
             // the user's choice on the device: clearly white, green and red, though the recorder comes later
-            return tintColour(tints[static_cast<std::size_t>(pad - 4)]);
+            return { tints[static_cast<std::size_t>(pad - 4)], 1.0f };
         }
         if (loadingInstrument()) // Home glows until the instrument is ready (D154, D156)
-            return tintColour(Tint::home).withMultipliedBrightness(0.1f + 0.9f * loadingGlow());
-        return tintColour(Tint::home).withMultipliedBrightness(currentView == View::home ? 1.0f : 0.3f);
+            return { Tint::home, 0.1f + 0.9f * loadingGlow() };
+        return { Tint::home, currentView == View::home ? 1.0f : 0.3f };
+    }
+
+    juce::Colour InterfaceModel::padColour(int pad, bool shift) const
+    {
+        const auto light = padLight(pad, shift);
+        return tintColour(light.tint).withMultipliedBrightness(light.brightness);
     }
 }

@@ -175,7 +175,9 @@ namespace coolsynth::standalone
 
         for (int pad = 0; pad < 8; ++pad)
         {
-            const auto colour = model.padColour(pad, shiftHeld);
+            // The LEDs' own colours, so each pad lights as the screen shows it (D184).
+            const auto light = model.padLight(pad, shiftHeld);
+            const auto colour = coolsynth::ui::miniLabColour(light.tint).withMultipliedBrightness(light.brightness);
             auto& sent = sentPadColours[static_cast<std::size_t>(pad)];
             if (force || colour.getARGB() != sent)
             {
@@ -216,10 +218,13 @@ namespace coolsynth::standalone
                     input = nullptr;
                     output = nullptr;
                     inputIdentifier = {};
+                    model.setHardwareConnected(false);
                     return;
                 }
             }
             refreshDevice(false);
         }
+        // The screen greys its own Hold and octave out while the MiniLab is there (D184).
+        model.setHardwareConnected(isConnected());
     }
 }

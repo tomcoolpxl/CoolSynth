@@ -37,6 +37,12 @@ namespace coolsynth::parameters::ids
     inline constexpr char masterGainDb[] = "masterGainDb";
     inline constexpr char brightness[] = "brightness"; // knob 7: every filter of the sound, -1..1 (D176)
     inline constexpr char space[] = "space";           // knob 8: every reverb, delay and room, -1..1 (D176)
+    // The four faders (D184): volumes over the sound as designed, 0..1, 1 at the top (as designed). Kept when the
+    // sound changes: a preset never sets them.
+    inline constexpr char volumeA[] = "volumeA";
+    inline constexpr char volumeB[] = "volumeB";
+    inline constexpr char volumeFx[] = "volumeFx";
+    inline constexpr char volumeMaster[] = "volumeMaster";
 
 }
 
@@ -110,6 +116,10 @@ namespace coolsynth::parameters
         ids::masterGainDb,
         ids::brightness,
         ids::space,
+        ids::volumeA,
+        ids::volumeB,
+        ids::volumeFx,
+        ids::volumeMaster,
     });
 
     /** The fixed parameters MIDI learn accepts; part parameters are accepted by their slot-path prefix. */
