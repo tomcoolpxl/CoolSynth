@@ -43,7 +43,11 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
   **full screen** (`1F 07`, always shown) for a second, then the app sends the scroll screen again
   (D191; confirmed on the device).
 - **Knobs 1-8** send absolute CCs on channel 1: 86, 87, 89, 90, 110, 111, 116, 117 (knob 1
-  checked). In the DAW program the device draws nothing by itself.
+  checked). In the DAW program the device draws nothing by itself. The knobs turn endlessly, but
+  each sends a count, 0-127, that stops at its ends; turning on past an end sends the end again
+  (127, 127...). The device ignores a count sent back to it. CoolSynth reads the knobs as scroll
+  wheels: a change of the count is that many clicks, the end sent again one more (D200). About 40
+  counts make a quarter turn.
 - **Main knob:** turning sends CC 28 on channel 1: one click right is 65 (faster 66), one click
   left is **62** (faster 61); 63 never comes, so below 64 a step is value - 63. Pressing sends
   CC 118, 127 on press and 0 on release.

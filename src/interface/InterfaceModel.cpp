@@ -684,6 +684,55 @@ namespace coolsynth::ui
         touched();
     }
 
+    void InterfaceModel::turnKnobFromDevice(int knobNumber, int counts, bool fine)
+    {
+        if (counts == 0 || knobNumber < 1 || knobNumber > 8)
+            return;
+        // What the knob moves, and how many counts make a step of it.
+        juce::String target;
+        int perStep = 1;
+        if (knobNumber == 5)
+        {
+            target = "pages";
+            perStep = countsPerListStep;
+        }
+        else
+        {
+            juce::RangedAudioParameter* p = nullptr;
+            if (knobNumber <= 4 && ! typeList.open)
+                p = parameter(currentPage().ids[static_cast<std::size_t>(knobNumber - 1)]);
+            else if (knobNumber == 6)
+                p = parameter(pv::voiceParameterId(currentPart == 0 ? pv::Part::a : pv::Part::b, "glide"));
+            else if (knobNumber == 7 || knobNumber == 8)
+                p = parameter(knobNumber == 7 ? coolsynth::parameters::ids::brightness : coolsynth::parameters::ids::space);
+            if (p != nullptr)
+            {
+                target = p->getParameterID();
+                const int options = optionCount(*p);
+                perStep = options == 2 ? countsPerSwitchStep : (options > 2 ? countsPerListStep : 1);
+            }
+        }
+        if (perStep == 1)
+        {
+            turnKnob(knobNumber, counts, fine);
+            return;
+        }
+        auto& held = deviceCounts[static_cast<std::size_t>(knobNumber)];
+        auto& last = deviceTargets[static_cast<std::size_t>(knobNumber)];
+        if (target != last || (held != 0 && (held > 0) != (counts > 0)))
+            held = 0; // another setting, or the other way: start afresh
+        last = target;
+        held += counts;
+        const int steps = held / perStep;
+        held -= steps * perStep;
+        if (steps == 0)
+            return;
+        if (knobNumber == 5)
+            turnPageKnob(steps);
+        else
+            turnKnob(knobNumber, steps, fine);
+    }
+
     void InterfaceModel::pressKnob(int knobNumber)
     {
         if (pendingChoice.has_value() && pendingChoice->knob == knobNumber)

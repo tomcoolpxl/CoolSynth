@@ -115,17 +115,18 @@ namespace coolsynth::standalone
         {
             case Kind::knob:
             {
-                // The knobs turn endlessly but report 0-127: each change is a step count.
+                // The knobs turn endlessly, like a scroll wheel, but report a count, 0-127: each change is that many
+                // clicks. The count stops at its ends, and turning on past one sends the end again (seen on the
+                // device, D200): that is one more click, so a knob never runs out.
                 auto& last = lastKnobValue[static_cast<std::size_t>(control.index)];
-                const int steps = last < 0 ? 0 : control.value - last;
+                int steps = last < 0 ? 0 : control.value - last;
+                if (steps == 0 && last >= 0 && (control.value == 127 || control.value == 0))
+                    steps = control.value == 127 ? 1 : -1;
                 last = control.value;
                 if (steps == 0)
                     break;
-                const int knob = control.index + 1;
-                if (knob == 5)
-                    model.turnPageKnob(steps);
-                else
-                    model.turnKnob(knob, steps, shiftHeld);
+                // A switch or a list moves a step per few counts, a number per count (D200).
+                model.turnKnobFromDevice(control.index + 1, steps, shiftHeld);
                 break;
             }
             case Kind::fader:

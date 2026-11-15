@@ -1967,18 +1967,22 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
     settings.velocitySplit = static_cast<int>(std::lround(velocitySplitValue->load()));
     settings.velocityFade = static_cast<int>(std::lround(velocityFadeValue->load()));
     // The Layers page (D196): balance, detune and spread between the layers; at 0 they leave the mix as it is.
-    if (const float balance = layerBalanceValue->load(); balance != 0.0f)
+    // They act only while both layers sound: a layer soloed, or alone beside an empty one, plays as it is (D200).
+    const int soloed = soloLayerValue.load(std::memory_order_relaxed);
+    const bool bothSound = soloed < 0 && ! coolsynth::synth::v3::layerEmpty(settings.parts[0])
+                           && ! coolsynth::synth::v3::layerEmpty(settings.parts[1]);
+    if (const float balance = layerBalanceValue->load(); bothSound && balance != 0.0f)
     {
         // toward B, layer A goes quieter along a quarter cosine (and the other way round); at the end it is off
         const float gain = std::cos(std::abs(balance) * juce::MathConstants<float>::halfPi);
         settings.mix[balance > 0.0f ? 0u : 1u].levelDb += juce::Decibels::gainToDecibels(gain, -100.0f);
     }
-    if (const float detune = layerDetuneValue->load(); detune != 0.0f)
+    if (const float detune = layerDetuneValue->load(); bothSound && detune != 0.0f)
     {
         settings.mix[0].fineCents -= 0.5f * detune;
         settings.mix[1].fineCents += 0.5f * detune;
     }
-    if (const float spread = layerSpreadValue->load(); spread != 0.0f)
+    if (const float spread = layerSpreadValue->load(); bothSound && spread != 0.0f)
     {
         settings.mix[0].pan = juce::jlimit(-1.0f, 1.0f, settings.mix[0].pan - spread);
         settings.mix[1].pan = juce::jlimit(-1.0f, 1.0f, settings.mix[1].pan + spread);

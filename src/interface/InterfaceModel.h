@@ -132,6 +132,11 @@ namespace coolsynth::ui
         void pressMain();
         void turnPageKnob(int steps);                         // knob 5
         void turnKnob(int knob, int steps, bool fine);        // knobs 1-4 and 6-8
+        /** A MiniLab knob turned `counts` (D200): about 40 to a quarter turn. A number moves a step per count; a
+            switch a step per 10 counts and a list (or knob 5's pages) an option per 6, so they do not race. */
+        void turnKnobFromDevice(int knob, int counts, bool fine);
+        static constexpr int countsPerSwitchStep = 10;
+        static constexpr int countsPerListStep = 6;
         /** A click on knob 1-4 (the panel's knob or its card): loads the instrument it shows, if one is waiting. */
         void pressKnob(int knob);
         void pressPad(int pad, bool shift);                   // pads 0-7
@@ -306,6 +311,8 @@ namespace coolsynth::ui
         bool hardware = false; // a MiniLab connected
         int miniLabOctave = 0; // the MiniLab's octave shift, as its notes tell (D192)
         int layerAction = 0;   // the Layers page's action under the main knob (D196)
+        std::array<int, 9> deviceCounts {};            // counts not yet a step, per MiniLab knob (D200)
+        std::array<juce::String, 9> deviceTargets {};  // what each knob moved last: another target starts afresh
         void doLayerAction(int action);
         std::int64_t mainTurns = 0, pageTurns = 0; // steps turned, for the screen's knobs (D193)
         Popup lastPopup;

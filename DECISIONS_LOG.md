@@ -4001,3 +4001,27 @@ recommended; the sound only; Preferences only), the user chose **the sound only*
 A, layer B empty, the faders at the top, the Layers page and knobs 7-8 centred, solo off; the
 Preferences choices and MIDI learn stay. It asks first, inside the card (Reset / Cancel), and takes the
 panel back to Home on layer A.
+
+## D200. MiniLab knobs reach both ends; solo plays a layer as it is (2026-11-15)
+
+Two faults the user found:
+
+- **A MiniLab knob stopped short** of a setting's end (knob 2, Detune). The knobs turn endlessly, like
+  a scroll wheel (the user: "they keep on turning forever"), but in the DAW program each sends a count,
+  0-127, that stops at its ends; CoolSynth took each change as clicks and ignored a count that did not
+  change, so a knob whose count sat near an end ran out. A first fix scaled what was left of the count's
+  travel over what was left of the setting's range (Ableton Live's takeover "Value Scaling", Live manual
+  "MIDI and Key Remote Control"; an Arturia forum post on the MiniLab 3's absolute knobs in DAW mode);
+  it worked (the user confirmed Detune 0.0 to 50.0 ct) but left a knob whose count sits at an end on a
+  new page stuck. A guided test on the device (the count set from the computer, three small turns)
+  showed two things: the MiniLab ignores a count sent back to it (it went on from 58 after 0 was sent),
+  and turning on past an end sends that end again (127, 127, 127). So, as the user put it, the knob is a
+  scroll wheel: every change of the count is that many clicks, and the end sent again is one more click;
+  the Value Scaling is gone. Then the user found switches and short lists far too quick (on/off, the
+  chord): about 40 counts make a quarter turn, so from the MiniLab a switch now moves a step per 10
+  counts, a list (and knob 5's pages) an option per 6, a number a step per count; turning the other way,
+  or another setting, starts afresh. The mouse wheel on screen keeps one notch per option. Confirmed on
+  the device by the user ("good now").
+- **Solo A played in the left speaker only**: Spread (set by Double) pushes A left and B right, and
+  stayed on with A alone. Balance, Detune and Spread now act only while both layers sound: a soloed
+  layer, or one beside an empty layer, plays as it is. Confirmed by the user (both speakers).

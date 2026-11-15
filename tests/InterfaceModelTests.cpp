@@ -396,6 +396,28 @@ public:
             expectEquals(value(*synth, "pB.g1.type"), 0.0f);
         }
 
+        beginTest("A MiniLab knob moves a switch or a list a step per few counts, a number per count (D200)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            model->turnPageKnob(1); // Arp: knob 1 switches the layer's arp on and off
+            auto* arp = synth->getValueTreeState().getParameter(model->currentPage().ids[0]);
+            expectEquals(arp->getValue(), 0.0f);
+            model->turnKnobFromDevice(1, InterfaceModel::countsPerSwitchStep - 1, false);
+            expectEquals(arp->getValue(), 0.0f, "not yet");
+            model->turnKnobFromDevice(1, 1, false);
+            expectEquals(arp->getValue(), 1.0f, "a switch takes ten counts");
+            model->turnKnobFromDevice(1, -3, false);
+            model->turnKnobFromDevice(1, 3, false); // the other way and back: no step, no lingering count
+            expectEquals(arp->getValue(), 1.0f);
+
+            model->turnPageKnob(1); // Groove: knob 3, Chance, a number: a step per count
+            auto* chance = synth->getValueTreeState().getParameter(model->currentPage().ids[2]);
+            const float before = chance->getValue();
+            model->turnKnobFromDevice(3, -1, false);
+            expect(chance->getValue() < before, "a number moves at once");
+        }
+
         beginTest("An empty layer's Home says so; the MiniLab's keys follow the notes it plays (D192)");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
