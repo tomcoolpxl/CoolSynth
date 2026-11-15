@@ -1097,6 +1097,19 @@ void SynthAudioProcessor::octaveLayer(int from, int semitones)
     });
 }
 
+void SynthAudioProcessor::resetSound()
+{
+    setSoloLayer(-1);
+    if (const int start = startSoundIndex(); start >= 0)
+        setCurrentProgram(start); // every parameter to its default first, then the sound: layer B empty, all centred
+    const BulkEdit whole(*this);
+    for (const char* id : { coolsynth::parameters::ids::volumeA, coolsynth::parameters::ids::volumeB,
+                            coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster })
+        if (auto* fader = parameters.getParameter(id); fader != nullptr && fader->getValue() != 1.0f)
+            fader->setValueNotifyingHost(1.0f); // at the top: the sound as designed (D184)
+    undoHistory.clear();
+}
+
 void SynthAudioProcessor::emptyLayer(int layer)
 {
     layer = juce::jlimit(0, 1, layer);
@@ -1214,6 +1227,10 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                     layerSounds[static_cast<std::size_t>(layer)] = sound;
                 }
             undoHistory.clear();
+            // Never "Init" (D198): the untouched default an older version saved gives way to the start sound.
+            if (wrapperType != wrapperType_Undefined && isUntouchedDefault(getPatchName(), isPatchDirty()))
+                if (const int start = startSoundIndex(); start >= 0)
+                    setCurrentProgram(start);
         }
     }
 }

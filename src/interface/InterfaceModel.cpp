@@ -254,6 +254,14 @@ namespace coolsynth::ui
 
     // ---- Hold and the octave, for the screen's keys when no MiniLab is connected (D184) -----------------------
 
+    void InterfaceModel::resetView()
+    {
+        currentPart = 0;
+        currentLivePage = 0;
+        openHome();
+        touched();
+    }
+
     void InterfaceModel::togglePart()
     {
         currentPart = 1 - currentPart;

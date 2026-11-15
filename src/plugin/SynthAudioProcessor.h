@@ -48,6 +48,9 @@ public:
     /** The sound a new CoolSynth starts with, the user's choice (D193), and its program number (-1 if gone). */
     static constexpr char startSoundName[] = "Contact";
     [[nodiscard]] static int startSoundIndex();
+    /** A state that is the built-in default untouched, "Init" (what CoolSynth started on before D193): nobody chose
+        it, so the app and a host start on the start sound instead (D198). */
+    [[nodiscard]] static bool isUntouchedDefault(const juce::String& name, bool dirty) { return name == "Init" && ! dirty; }
     int getCurrentProgram() override { return currentProgram; }
     void setCurrentProgram(int index) override;
     const juce::String getProgramName(int index) override;
@@ -209,6 +212,9 @@ public:
     bool loadMySoundIntoLayer(const juce::File& file, int layer);
     /** Every generator and processor slot of `layer` Off: the layer is left out (D190). */
     void emptyLayer(int layer);
+    /** Preferences' Reset (D199): the sound only. The start sound on layer A, layer B empty, the faders at the top,
+        the Layers page and knobs 7-8 centred, solo off. The Preferences choices and MIDI learn stay. */
+    void resetSound();
 
     /** The Layers page's actions (D196), each one undo step: the whole layer, its effects and arp included. */
     void copyLayer(int from, int to);

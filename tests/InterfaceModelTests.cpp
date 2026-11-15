@@ -229,6 +229,26 @@ public:
                 basic = basic || coolsynth::presets::getFactoryPreset(i).name == "Basic Saw";
             }
             expect(! init && basic);
+            // An untouched "Init" state an older version saved gives way to the start sound (D198); an edited one stays.
+            expect(SynthAudioProcessor::isUntouchedDefault("Init", false));
+            expect(! SynthAudioProcessor::isUntouchedDefault("Init", true));
+            expect(! SynthAudioProcessor::isUntouchedDefault("Contact", false));
+
+            // Reset the sound (D199): the start sound on A, B empty, faders at the top, the Layers page centred.
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->loadSoundIntoLayer(start >= 0 ? (start == 0 ? 1 : 0) : 0, 0);
+            synth->loadSoundIntoLayer(start >= 0 ? (start == 0 ? 1 : 0) : 0, 1);
+            auto set = [&](const char* id, float normalised) { synth->getValueTreeState().getParameter(id)->setValueNotifyingHost(normalised); };
+            set(coolsynth::parameters::ids::volumeA, 0.3f);
+            set("part.balance", 0.9f);
+            synth->setSoloLayer(1);
+            synth->resetSound();
+            auto raw = [&](const char* id) { return synth->getValueTreeState().getRawParameterValue(id)->load(); };
+            expect(synth->layerSound(0).name == "Contact");
+            expectEquals(raw("pB.g1.type"), 0.0f, "layer B empty");
+            expectEquals(synth->getValueTreeState().getParameter(coolsynth::parameters::ids::volumeA)->getValue(), 1.0f, "faders at the top");
+            expectEquals(raw("part.balance"), 0.0f);
+            expectEquals(synth->soloLayer(), -1);
         }
 
         beginTest("A saved state brings back the sound it holds, under its new name if renamed (D193)");

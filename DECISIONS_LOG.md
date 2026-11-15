@@ -3981,3 +3981,23 @@ choice does), VELOCITY CURVE (Soft, Normal, Hard, likewise) and THIS COMPUTER, T
 CPU's work in detail, the machine and its helpers, live). The x, Escape or a click beside the card
 closes it; the Prefs button and the CPU reading open it. The card lays itself out each time it opens,
 since the app hands the panel its audio settings only after the panel is built.
+
+## D198. Never "Init" (2026-11-15)
+
+The user asked where "Init" came from and not to start in it. "Init" is the name CoolSynth gave its
+built-in default settings before D193, when a new instance played no sound from the list; the app
+saved that state and, reopening on it, saved it again, so it lived on until a sound was picked. Now a
+state that is that untouched default ("Init", not edited) gives way to the start sound, Contact, when
+the app or a host opens it; an edited one stays. (Found the same hour, at the user's question about
+notes repeating like an arp: the flight log showed them arriving that way, the same velocity every
+0.1-0.2 s, before CoolSynth touched them; the user found the MiniLab's own arpeggiator on.)
+
+## D199. Preferences: a Reset, the title, Audio and MIDI (2026-11-15)
+
+At the user's word: the dialog's title is "Preferences"; Audio and MIDI settings open in their own
+window with Preferences still open behind them (it closed before, and was gone when the user came
+back); and a **Reset** section. Asked what it resets (options: everything but My Sounds,
+recommended; the sound only; Preferences only), the user chose **the sound only**: Contact on layer
+A, layer B empty, the faders at the top, the Layers page and knobs 7-8 centred, solo off; the
+Preferences choices and MIDI learn stay. It asks first, inside the card (Reset / Cancel), and takes the
+panel back to Home on layer A.

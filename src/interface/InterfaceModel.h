@@ -223,6 +223,8 @@ namespace coolsynth::ui
         static constexpr int homePad = 0;
         /** Layer A or B for the sections to edit (D185, D189): Home pressed again while Home is open, or the screen's "Layer A". */
         void togglePart();
+        /** After a reset: Home, layer A, its first live page (D199). */
+        void resetView();
         [[nodiscard]] static int sectionOfPad(int pad) noexcept;   // -1 for Home and the recorder's pads
         [[nodiscard]] static int padOfSection(int section) noexcept;
         [[nodiscard]] juce::String padLabel(int pad, bool shift) const;

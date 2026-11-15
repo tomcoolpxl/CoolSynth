@@ -773,10 +773,25 @@ namespace
             audio.setButtonText(juce::String(juce::CharPointer_UTF8("Audio and MIDI settings\xe2\x80\xa6")));
             audio.onClick = [this]
             {
-                hide();
+                // the settings open in a window of their own; Preferences stays open behind them (D199)
                 if (synth.showAudioSettings)
                     synth.showAudioSettings();
             };
+            for (auto* b : { &reset, &resetYes, &resetNo })
+                style(*b, false);
+            reset.setButtonText(juce::String(juce::CharPointer_UTF8("Reset the sound\xe2\x80\xa6")));
+            reset.onClick = [this] { confirming = true; layOutReset(); repaint(); };
+            resetYes.setButtonText("Reset");
+            resetYes.onClick = [this]
+            {
+                confirming = false;
+                synth.resetSound();
+                if (onReset)
+                    onReset();
+                hide();
+            };
+            resetNo.setButtonText("Cancel");
+            resetNo.onClick = [this] { confirming = false; layOutReset(); repaint(); };
             const char* multiNames[] { "Auto", "Off" };
             for (int i = 0; i < 2; ++i)
             {
@@ -796,13 +811,16 @@ namespace
                 b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight
                                            : (i == 2 ? juce::Button::ConnectedOnLeft : juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight));
             }
-            for (auto* c : std::initializer_list<juce::Component*> { &close, &save, &audio, &multi[0], &multi[1], &curve[0], &curve[1], &curve[2] })
+            for (auto* c : std::initializer_list<juce::Component*> { &close, &save, &audio, &multi[0], &multi[1], &curve[0], &curve[1], &curve[2],
+                                                                     &reset, &resetYes, &resetNo })
                 addAndMakeVisible(*c);
         }
 
         void show()
         {
             audio.setVisible(static_cast<bool>(synth.showAudioSettings)); // the app sets its hook after the panel is built
+            confirming = false;
+            layOutReset();
             resized();
             refresh();
             setVisible(true);
@@ -810,7 +828,20 @@ namespace
             grabKeyboardFocus();
         }
 
-        void hide() { setVisible(false); }
+        void hide()
+        {
+            setVisible(false);
+            confirming = false;
+        }
+
+        std::function<void()> onReset; // the panel goes back to Home, layer A
+
+        void layOutReset()
+        {
+            reset.setVisible(! confirming);
+            resetYes.setVisible(confirming);
+            resetNo.setVisible(confirming);
+        }
 
         /** The choices as they are, and the computer's last second (the panel calls this 30 times a second). */
         void refresh()
@@ -842,7 +873,7 @@ namespace
 
         void resized() override
         {
-            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 424 : 364).withCentre(getLocalBounds().getCentre());
+            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 484 : 424).withCentre(getLocalBounds().getCentre());
             auto r = cardArea.reduced(28, 22);
             auto head = r.removeFromTop(30);
             close.setBounds(head.removeFromRight(30));
@@ -868,6 +899,12 @@ namespace
             for (auto& b : curve)
                 b.setBounds(buttons.removeFromLeft(90));
             curveText = curveRow;
+            auto resetRow = section(resetLabel, 30);
+            reset.setBounds(resetRow.withWidth(170));
+            resetYes.setBounds(resetRow.removeFromLeft(90));
+            resetRow.removeFromLeft(8);
+            resetNo.setBounds(resetRow.removeFromLeft(90));
+            resetText = resetRow.withTrimmedLeft(12);
             computerLabel = r.removeFromTop(16);
             computerText = r.removeFromTop(40);
         }
@@ -883,7 +920,7 @@ namespace
 
             g.setColour(colours::ink);
             g.setFont(sans(20.0f, true));
-            g.drawText("Prefs", titleArea, juce::Justification::centredLeft);
+            g.drawText("Preferences", titleArea, juce::Justification::centredLeft);
 
             auto label = [&](juce::Rectangle<int> area, const juce::String& text)
             {
@@ -896,6 +933,14 @@ namespace
                 label(audioLabel, "AUDIO AND MIDI");
             label(multiLabel, "MULTI-CORE");
             label(curveLabel, "VELOCITY CURVE");
+            label(resetLabel, "RESET");
+            if (confirming)
+            {
+                g.setColour(colours::muted);
+                g.setFont(sans(12.0f));
+                g.drawFittedText("Contact on layer A, layer B empty, faders at the top. Sure?", resetText,
+                                 juce::Justification::centredLeft, 2);
+            }
             label(computerLabel, "THIS COMPUTER, THE LAST SECOND");
 
             g.setColour(colours::muted);
@@ -919,11 +964,12 @@ namespace
 
     private:
         SynthAudioProcessor& synth;
-        juce::TextButton close, save, audio;
+        juce::TextButton close, save, audio, reset, resetYes, resetNo;
+        bool confirming = false; // Reset asks first, in the card (D199)
         std::array<juce::TextButton, 2> multi;
         std::array<juce::TextButton, 3> curve;
-        juce::Rectangle<int> cardArea, titleArea, soundLabel, audioLabel, multiLabel, curveLabel, computerLabel,
-                             multiText, curveText, computerText;
+        juce::Rectangle<int> cardArea, titleArea, soundLabel, audioLabel, multiLabel, curveLabel, resetLabel, computerLabel,
+                             multiText, curveText, resetText, computerText;
     };
 }
 
@@ -1034,6 +1080,7 @@ public:
         keyboard.setKeyWidth(42.0f);
         addAndMakeVisible(keyboard);
         addChildComponent(prefs); // last, so it lies over everything when shown (D197)
+        prefs.onReset = [this] { model.resetView(); owner.timerCallback(); };
 
         setSize(designWidth, designHeight);
     }
