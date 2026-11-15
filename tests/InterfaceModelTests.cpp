@@ -160,8 +160,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             synth->setCurrentProgram(0);
-            auto model = std::make_unique<InterfaceModel>(*synth);
-            model->pressPad(coolsynth::ui::InterfaceModel::homePad, false);
+            auto model = std::make_unique<InterfaceModel>(*synth); // it opens in Home (D186); Home again would switch the layer
             expect(model->view() == InterfaceModel::View::home);
             expect(model->inCategory());
             auto list = model->list();
@@ -256,6 +255,8 @@ public:
             {
                 auto root = juce::AudioProcessor::getXmlFromBinary(state.getData(), static_cast<int>(state.getSize()));
                 root->setAttribute("patchName", name);
+                for (const char* key : { "layerA", "layerAFile", "layerAMacros", "layerB", "layerBFile", "layerBMacros" })
+                    root->removeAttribute(key); // a state from before D194 names only the whole sound
                 juce::MemoryBlock changed;
                 juce::AudioProcessor::copyXmlToBinary(*root, changed);
                 target->setStateInformation(changed.getData(), static_cast<int>(changed.getSize()));
@@ -268,6 +269,58 @@ public:
             withName("A sound the bank lacks");
             expectEquals(target->playingFactoryProgram(), -1, "no factory sound, rather than the wrong one");
             expect(target->macroNames(0)[0].isEmpty());
+        }
+
+        beginTest("Each layer holds a sound: a pick fills the layer Home is on; a combination loads whole (D194)");
+        {
+            auto indexOf = [](const juce::String& name)
+            {
+                for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                    if (coolsynth::presets::getFactoryPreset(i).name == name)
+                        return i;
+                return -1;
+            };
+            auto value = [](SynthAudioProcessor& p, const juce::String& id) { return p.getValueTreeState().getRawParameterValue(id)->load(); };
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            const int keys = indexOf("Cassette Keys"), bass = indexOf("Moog Bass"), juno = indexOf("Juno Pad");
+            expect(keys >= 0 && bass >= 0 && juno >= 0);
+            expect(SynthAudioProcessor::isCombination(juno) && ! SynthAudioProcessor::isCombination(keys));
+
+            synth->loadSoundIntoLayer(keys, 0);
+            const float keysLevel = value(*synth, "pA.mix.level");
+            const float keysType = value(*synth, "pA.g1.type");
+            synth->loadSoundIntoLayer(bass, 1);
+            expectEquals(value(*synth, "pA.mix.level"), keysLevel, "layer A keeps its sound");
+            expectEquals(value(*synth, "pA.g1.type"), keysType);
+            expect(value(*synth, "pB.g1.type") != 0.0f, "layer B plays the bass");
+            expect(synth->layerSound(0).name == "Cassette Keys" && synth->layerSound(1).name == "Moog Bass");
+            expect(synth->macroNames(1) == coolsynth::presets::getFactoryPreset(bass).macroNames[0], "B shows the bass's macros");
+            expectEquals(synth->getPatchName(), juce::String("Cassette Keys + Moog Bass"));
+
+            // The state keeps both layers' sounds.
+            juce::MemoryBlock state;
+            synth->getStateInformation(state);
+            auto restored = std::make_unique<SynthAudioProcessor>();
+            restored->setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+            expect(restored->layerSound(0).program == keys && restored->layerSound(1).program == bass);
+
+            // A combination loads whole, from either layer; a single pick then takes it apart.
+            synth->loadSoundIntoLayer(juno, 1);
+            expect(synth->layerSound(0).program == juno && synth->layerSound(1).program == juno);
+            synth->loadSoundIntoLayer(bass, 0);
+            expectEquals(value(*synth, "pB.g1.type"), 0.0f, "the combination's other layer empties");
+            expect(synth->layerSound(1).name.isEmpty());
+
+            // Home: the first row of the categories empties the layer it is on.
+            synth->loadSoundIntoLayer(keys, 1);
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            model->togglePart(); // layer B
+            model->back();       // up to the categories
+            expectEquals(model->list().rows[0], juce::String("Empty layer B"));
+            model->turnMain(-1000);
+            model->pressMain();
+            expectEquals(value(*synth, "pB.g1.type"), 0.0f, "layer B emptied");
+            expect(value(*synth, "pA.g1.type") != 0.0f, "layer A plays on");
         }
 
         beginTest("An empty layer's Home says so; the MiniLab's keys follow the notes it plays (D192)");
@@ -809,11 +862,13 @@ public:
         beginTest("My Sounds is the first room in Home, its sounds load from there");
         auto& model = synth->getInterfaceModel();
         synth->setCurrentProgram(named("Basic Saw"));
-        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false); // Home: refreshes the rooms
+        model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(0), false);
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false); // Home from a section: refreshes the rooms
         expectEquals(model.categories().front().name, juce::String("My Sounds"));
         model.turnMain(-100);
         model.pressMain(); // back to the rooms
-        model.turnMain(-100); // the first: My Sounds
+        model.turnMain(-100); // the top: "Empty layer A" (D194)
+        model.turnMain(1);    // the first room: My Sounds
         model.pressMain();
         auto view = model.list();
         expectEquals(view.title, juce::String("MY SOUNDS"));

@@ -421,7 +421,8 @@ public:
         const bool typeList = model.typeListOpen();
         const bool home = model.view() == InterfaceModel::View::home && ! typeList;
         const auto list = model.list();
-        const auto tint = coolsynth::ui::tintColour(home ? Tint::home : InterfaceModel::sectionTint(model.section()));
+        // Home in the colour of the layer it is on (D194: Home picks that layer's sound), a section in its own
+        const auto tint = coolsynth::ui::tintColour(home ? (model.part() == 0 ? Tint::home : Tint::partB) : InterfaceModel::sectionTint(model.section()));
         auto area = getLocalBounds().reduced(9, 7);
 
         // header: a chip in the section's colour, the part on the right

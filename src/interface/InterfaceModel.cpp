@@ -188,7 +188,7 @@ namespace coolsynth::ui
                 bank.push_back({ preset.category, {} });
             bank.back().presets.push_back(i);
         }
-        browser.category = clampInt(browser.category, 0, static_cast<int>(bank.size()) - 1);
+        browser.category = clampInt(browser.category, -1, static_cast<int>(bank.size()) - 1);
         touched();
     }
 
@@ -203,15 +203,16 @@ namespace coolsynth::ui
 
     int InterfaceModel::playingPreset() const
     {
-        // A saved sound playing has its own id past the factory's (D180).
-        if (const auto mine = synth.playingMySound(); mine != juce::File())
+        // The sound the edited layer plays (D194). A saved sound has its own id past the factory's (D180).
+        const auto& sound = synth.layerSound(currentPart);
+        if (const auto mine = sound.mySound; mine != juce::File())
         {
             for (std::size_t k = 0; k < mySoundFiles.size(); ++k)
                 if (mySoundFiles[k] == mine)
                     return mySoundBase + static_cast<int>(k);
             return -1;
         }
-        return synth.playingFactoryProgram(); // -1: a sound the bank does not have (D193)
+        return sound.program; // -1: none, or a sound the bank does not have (D193)
     }
 
     juce::String InterfaceModel::soundName(int sound) const
@@ -231,7 +232,10 @@ namespace coolsynth::ui
             const auto k = static_cast<std::size_t>(sound - mySoundBase);
             return k < mySoundFiles.size() ? SynthAudioProcessor::mySoundPills(mySoundFiles[k]) : juce::StringArray();
         }
-        return enginePills(sound);
+        auto pills = enginePills(sound);
+        if (SynthAudioProcessor::isCombination(sound))
+            pills.insert(0, "A+B"); // a combination of both layers: it loads whole (D194)
+        return pills;
     }
 
     juce::String InterfaceModel::playingPresetName() const { return synth.getPatchName(); }
@@ -242,10 +246,10 @@ namespace coolsynth::ui
         {
             const auto k = static_cast<std::size_t>(preset - mySoundBase);
             if (k < mySoundFiles.size())
-                synth.loadMySound(mySoundFiles[k]);
+                synth.loadMySoundIntoLayer(mySoundFiles[k], currentPart);
         }
         else
-            synth.setCurrentProgram(preset);
+            synth.loadSoundIntoLayer(preset, currentPart); // into the layer Home is on; a combination whole (D194)
     }
 
     // ---- Hold and the octave, for the screen's keys when no MiniLab is connected (D184) -----------------------
@@ -325,10 +329,10 @@ namespace coolsynth::ui
 
     bool InterfaceModel::currentLayerEmpty() const { return layerEmpty(currentPart); }
 
-    juce::String InterfaceModel::layerSoundName(int /*layer*/) const
+    juce::String InterfaceModel::layerSoundName(int layer) const
     {
-        // One sound fills both layers until each layer holds its own (D194); then each names its own.
-        return synth.getPatchName();
+        const auto& name = synth.layerSound(layer).name; // each layer's own sound (D194)
+        return name.isNotEmpty() ? name : synth.getPatchName();
     }
 
     juce::String InterfaceModel::layerModeText() const
@@ -517,8 +521,8 @@ namespace coolsynth::ui
 
     Tint InterfaceModel::pageTint() const noexcept
     {
-        if (currentView == View::home)
-            return currentLivePage == 0 ? Tint::home : Tint::perform;
+        if (currentView == View::home) // Home belongs to the layer it is on: teal for A, yellow for B (D194)
+            return currentLivePage == 0 ? (currentPart == 0 ? Tint::home : Tint::partB) : Tint::perform;
         return sectionTint(currentSection);
     }
 
@@ -794,8 +798,8 @@ namespace coolsynth::ui
             typeList.row = clampInt(typeList.row + steps, 0, typeNames().size());
         else if (currentView == View::home)
         {
-            if (! browser.inCategory)
-                browser.category = clampInt(browser.category + steps, 0, static_cast<int>(bank.size()) - 1);
+            if (! browser.inCategory) // -1: the "Empty layer" row (D194)
+                browser.category = clampInt(browser.category + steps, -1, static_cast<int>(bank.size()) - 1);
             else
                 browser.row = clampInt(browser.row + steps, 0,
                                        static_cast<int>(bank[static_cast<std::size_t>(browser.category)].presets.size()));
@@ -821,7 +825,9 @@ namespace coolsynth::ui
             commitPendingChoice(); // the instrument a knob shows is read in now (D156)
         else if (currentView == View::home)
         {
-            if (! browser.inCategory)
+            if (! browser.inCategory && browser.category < 0)
+                synth.emptyLayer(currentPart); // "Empty layer A/B" (D194)
+            else if (! browser.inCategory)
             {
                 browser.inCategory = true;
                 const auto& presets = bank[static_cast<std::size_t>(browser.category)].presets;
@@ -920,7 +926,7 @@ namespace coolsynth::ui
             if (browser.inCategory)
                 browser.row = row;
             else
-                browser.category = row;
+                browser.category = row - 1; // row 0 is "Empty layer" (D194)
         }
         else
             return;
@@ -1050,10 +1056,11 @@ namespace coolsynth::ui
         if (! browser.inCategory)
         {
             view.title = "CATEGORIES";
+            view.rows.add("Empty layer " + juce::String(currentPart == 0 ? "A" : "B")); // first, to clear the layer (D194)
             for (const auto& category : bank)
                 view.rows.add(category.name);
-            view.cursor = browser.category;
-            view.used = categoryOfPreset(playingPreset());
+            view.cursor = browser.category + 1;
+            view.used = layerEmpty(currentPart) ? 0 : categoryOfPreset(playingPreset()) + 1;
             return view;
         }
         const auto& category = bank[static_cast<std::size_t>(browser.category)];
@@ -1111,7 +1118,7 @@ namespace coolsynth::ui
         if (currentView == View::home)
         {
             if (! browser.inCategory)
-                return "Open";
+                return browser.category < 0 ? (layerEmpty(currentPart) ? none : juce::String("Empty")) : juce::String("Open");
             if (browser.row == 0)
                 return "Back";
             const int preset = bank[static_cast<std::size_t>(browser.category)].presets[static_cast<std::size_t>(browser.row - 1)];

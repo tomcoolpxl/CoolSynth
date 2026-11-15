@@ -183,10 +183,34 @@ public:
     /** Loads a saved sound whole, as a host's saved state is (D157); notes ringing keep the sound before (D158). */
     bool loadMySound(const juce::File& file);
     /** The saved sound playing, or no file when a factory sound plays. */
-    [[nodiscard]] juce::File playingMySound() const { return playingMySoundFile; }
+    [[nodiscard]] juce::File playingMySound() const { return layerSounds[0].mySound; }
+
+    /** What a layer plays since D194: a factory program, a saved sound, or nothing; its name and macro names. */
+    struct LayerSound
+    {
+        int program = -1;
+        juce::File mySound;
+        juce::String name;
+        std::array<juce::String, 4> macros {};
+        [[nodiscard]] bool combinedWith(const LayerSound& other) const
+        {
+            return (program >= 0 && program == other.program) || (mySound != juce::File() && mySound == other.mySound);
+        }
+    };
+    [[nodiscard]] const LayerSound& layerSound(int layer) const noexcept { return layerSounds[layer == 1 ? 1u : 0u]; }
+    /** A preset that fills both layers: it loads whole, wherever it is picked (D194). */
+    [[nodiscard]] static bool isCombination(int program);
+    /** Picks a factory sound for one layer (D194). A combination loads whole. A single sound fills `layer` and leaves
+        the other layer, the chain at the end and the master as they are; if a combination was playing, the pick takes
+        it apart: the other layer empties and the global settings become the sound's. One undo step. */
+    void loadSoundIntoLayer(int program, int layer);
+    /** The same for a saved sound: one that fills both layers loads whole. */
+    bool loadMySoundIntoLayer(const juce::File& file, int layer);
+    /** Every generator and processor slot of `layer` Off: the layer is left out (D190). */
+    void emptyLayer(int layer);
     /** The factory sound playing, or -1 when the state holds one the bank does not have (D193). The host's program
         number (getCurrentProgram) stays a valid one either way. */
-    [[nodiscard]] int playingFactoryProgram() const noexcept { return playingFactorySound ? currentProgram : -1; }
+    [[nodiscard]] int playingFactoryProgram() const noexcept { return layerSounds[0].program; }
     /** A part's four macro names: the playing saved sound's, else the factory sound's; empty where it has none. */
     [[nodiscard]] std::array<juce::String, 4> macroNames(int part) const;
     /** The engine pills a saved sound's file carries. */
@@ -385,6 +409,11 @@ private:
     int currentProgram = 0;
     juce::File playingMySoundFile;                                  // D180: a saved sound playing, else none
     bool playingFactorySound = true;                                // D193: currentProgram is the sound playing
+    std::array<LayerSound, 2> layerSounds {};                       // D194: what each layer plays
+    /** Loads a whole sound with `applyWhole`, then keeps only its layer A, in `layer` (D194). */
+    bool loadIntoLayer(int layer, const std::function<bool()>& applyWhole, LayerSound sound);
+    [[nodiscard]] bool layerHasSound(int layer) const;
+    void updatePatchName();
     /** After a state is loaded: which sound it holds, by its My Sounds file or its name (D193). */
     void restorePlayingSound(const juce::String& name, const juce::String& mySoundPath);
     std::array<std::array<juce::String, 4>, 2> mySoundMacroNames {}; // its macro names, part A and B

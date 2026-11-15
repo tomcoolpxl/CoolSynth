@@ -3913,6 +3913,16 @@ effect and arp, stacked or split). The user's choices:
   24-bit step (its level before the reverb now comes after it: rounding, -127 dB), the four
   random-arp presets random as ever. Saved states and sounds from before keep their effects in the
   chain at the end, which plays them exactly as before.
+- **Stage 3 (Home) done**: Home picks a sound for the layer it is on. A single sound fills that layer
+  and leaves the other layer, the chain at the end and the master as they are; beside an empty layer
+  a pick is a whole new sound, so its global settings come too (the master's default is -6 dB, the
+  sounds now set 0). A combination loads whole, from either layer, and is marked "A+B" in the list.
+  Derived rule: a single sound picked for one layer of a combination playing takes the combination
+  apart (the other layer empties, the global settings become the sound's), since the pair shared its
+  effects. The categories list starts with "Empty layer A/B". Each layer keeps its own sound's name
+  and macro names; the state keeps both. Home takes the layer's colour: teal for A, yellow for B
+  (the chip, the selected row, the Macros page), answering the user's review that the screen stayed
+  teal while the pad was yellow.
 
 ## D195. The layer screen above knobs 1-4; rings on knobs 6-8 (2026-11-15)
 
