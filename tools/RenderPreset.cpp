@@ -289,11 +289,21 @@ int main(int argc, char* argv[])
     std::size_t next = 0;
     double blockMillisSum = 0.0, blockMillisMax = 0.0;
     int blockCount = 0;
-    if (backgroundInstrument >= 0)
-        (void) coolsynth::synth::v3::SampleLibrary::instance().request(backgroundInstrument, 0); // read in from now on
+    // --background-load: a sound names the instrument from now on (asked every block, as a loaded sound does), and the
+    // blocks come in real time, as from an audio device, so the reading and the playing overlap.
+    const double renderStarted = juce::Time::getMillisecondCounterHiRes();
+    double loadedAt = 0.0;
     for (int start = 0; start < total; start += kBlockSize)
     {
         const int n = std::min(kBlockSize, total - start);
+        if (backgroundInstrument >= 0)
+        {
+            if (coolsynth::synth::v3::SampleLibrary::instance().request(backgroundInstrument, 0) != nullptr && loadedAt == 0.0)
+                loadedAt = juce::Time::getMillisecondCounterHiRes() - renderStarted;
+            const double due = renderStarted + 1000.0 * start / kSampleRate;
+            if (const double wait = due - juce::Time::getMillisecondCounterHiRes(); wait > 1.0)
+                juce::Thread::sleep(static_cast<int>(wait));
+        }
         juce::MidiBuffer midi;
         if (start == 0 && bend != 8192)
             midi.addEvent(juce::MidiMessage::pitchWheel(1, bend), 0);
@@ -327,6 +337,12 @@ int main(int argc, char* argv[])
     const double budget = 1000.0 * kBlockSize / kSampleRate;
     std::cout << "blocks: mean " << blockMillisSum / std::max(1, blockCount) << " ms, worst " << blockMillisMax
               << " ms, of " << budget << " ms each\n";
+    if (backgroundInstrument >= 0)
+    {
+        if (loadedAt == 0.0 && coolsynth::synth::v3::SampleLibrary::instance().loadNow(backgroundInstrument, 0) != nullptr)
+            loadedAt = juce::Time::getMillisecondCounterHiRes() - renderStarted;
+        std::cout << "background instrument in memory after " << loadedAt / 1000.0 << " s (sample memory taken first)\n";
+    }
 
     const juce::File outFile(juce::File::getCurrentWorkingDirectory().getChildFile(outPath));
     outFile.getParentDirectory().createDirectory();

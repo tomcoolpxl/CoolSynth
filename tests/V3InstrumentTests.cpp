@@ -204,8 +204,8 @@ public:
             expectEquals(style->pick(72.0f, 0.5f, 2)->take, 0);
             // A mono file fills both channels.
             const auto* zone = style->pick(60.0f, 0.9f, 0);
-            expectEquals(zone->data[2 * 100], zone->data[2 * 100 + 1]);
-            expectWithinAbsoluteError(zone->data[2 * 42], 0.5f * std::sin(2.0f * juce::MathConstants<float>::pi * 261.6256f * 42.0f / 44100.0f), 1.0e-3f);
+            expectEquals(zone->at(100, 0), zone->at(100, 1));
+            expectWithinAbsoluteError(zone->at(42, 0), 0.5f * std::sin(2.0f * juce::MathConstants<float>::pi * 261.6256f * 42.0f / 44100.0f), 1.0e-3f);
 
             expect(SampleLibrary::readStyle(libraryFolder.getChildFile("no/such/style")) == nullptr);
         }
@@ -226,8 +226,8 @@ public:
                 int crossings = 0;
                 for (int i = 1; i < zone.frames; ++i)
                 {
-                    peak = std::max(peak, std::abs(zone.data[2 * i]));
-                    crossings += zone.data[2 * (i - 1)] < 0.0f && zone.data[2 * i] >= 0.0f ? 1 : 0;
+                    peak = std::max(peak, std::abs(zone.at(i, 0)));
+                    crossings += zone.at(i - 1, 0) < 0.0f && zone.at(i, 0) >= 0.0f ? 1 : 0;
                 }
                 expectWithinAbsoluteError(peak, 0.125f, 0.003f);
                 expectWithinAbsoluteError(crossings, 44, 1);

@@ -5,6 +5,7 @@
 #include "parameters/v3/SlotParameters.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
+#include "synth/v3/SampleLibrary.h"
 
 namespace coolsynth::ui
 {
@@ -798,10 +799,15 @@ namespace coolsynth::ui
 
     juce::String InterfaceModel::hint() const
     {
+        // The computer too small for the instruments, or one that does not fit: said, never a silent sound (D162).
+        const auto warning = coolsynth::synth::v3::SampleLibrary::instance().memoryWarning();
         if (loadingInstrument())
-            return juce::String(juce::CharPointer_UTF8("Loading the instrument \xc2\xb7 the keys play once Home stops glowing"));
+            return warning.isNotEmpty() ? warning
+                                        : juce::String(juce::CharPointer_UTF8("Loading the instrument \xc2\xb7 the keys play once Home stops glowing"));
         if (pendingChoice.has_value())
             return juce::String(juce::CharPointer_UTF8("Press \xe2\x97\x8e or click the knob to load it \xc2\xb7 turn on to keep browsing"));
+        if (warning.isNotEmpty())
+            return warning;
         if (typeList.open)
             return juce::String(juce::CharPointer_UTF8("Turn \xe2\x97\x8e to pick \xc2\xb7 press to set \xc2\xb7 \xe2\x80\xb9 Back on top keeps the type"));
         if (currentView == View::home)

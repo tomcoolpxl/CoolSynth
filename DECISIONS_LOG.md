@@ -3275,3 +3275,22 @@ it got to. An emptied slot drops its tail over the same 10 ms. A slot whose last
 whole. The old effect's tail is not kept: keeping it would need a second set of effect memory per
 slot. Test: a steady 220 Hz tone through a delay that becomes a chorus shows no step larger than
 the tone's own (0.0149 against 0.0159, `V3InsertTypeChangeTests`).
+
+## D166. The memory banks built (2026-11-15)
+
+Carries out D155, D162 and D163. `tools/PackLibrary.cpp` packs the library once: each style one
+`style.cspack` (its table, then every recording re-encoded as FLAC at level 8 with 4,096-frame
+blocks, at its own depth and channel count), and `library.index` with every style's exact size in
+memory. Each recording is decoded back and compared number for number before the pack is written.
+Measured on this PC: 76 styles in 28.6 s on 14 threads, 0 failed; 3.65 GB in memory (mono kept
+mono: 0.2 GB less than D155's 3.84 GB), 1,262 MB packed against 1,327 MB of today's FLAC files.
+`SampleMemory` takes the memory once (the app at start, else the first ask), touched and locked a
+16 MB slice at a time; `SampleLibrary` plans it from the index, reads a style with all cores but
+two (one recording per task, low priority), places it in runs of 1 MB pages, and reuses pages only
+from a style nothing asked for in two seconds and no note plays (each note counts itself a user;
+an epoch scope around every audio block keeps memory a block may hold). A note keeps the style it
+started with to its end. A style bigger than the memory, or one with no room next to what the
+loaded sounds use, is said on the screen, not left silent. Measured with a chord playing in real
+time at 44.1 kHz, 480 samples: the memory (3.8 GB, locked) in 2.0 s; the Steinway (734 MB) read in
+0.46 s, where it took 3.64 s; worst block 4.2 ms of 10.9. Unpacked styles (the tests' stand-in
+library) are still read from their manifests, also at their own depth.

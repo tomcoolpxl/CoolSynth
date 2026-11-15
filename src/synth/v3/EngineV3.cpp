@@ -315,6 +315,8 @@ namespace coolsynth::synth::v3
             buffer.clear();
             return;
         }
+        // Memory of an instrument this block may pick up is reused only after the block (D155).
+        const SampleLibrary::ReadScope readingSamples;
         const int maxBlock = sum.getNumSamples();
         if (n <= maxBlock)
         {

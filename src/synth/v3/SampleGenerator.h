@@ -97,12 +97,18 @@ namespace coolsynth::synth::v3
             reset();
         }
 
+        SampleGenerator() = default;
+        SampleGenerator(const SampleGenerator&) = default;
+        SampleGenerator& operator=(const SampleGenerator&) = default;
+        ~SampleGenerator() { hold(nullptr); }
+
         void reset() noexcept
         {
             std::fill(signalTrack.begin(), signalTrack.end(), 0.0f);
             position = 0.0;
             startPending = false;
             finished = true;
+            hold(nullptr);
             playingStyle = nullptr;
             zone = nullptr;
             ringLeft.fill(0.0f);
@@ -204,6 +210,7 @@ namespace coolsynth::synth::v3
                 finished = false;
                 startPending = false;
                 zone = nullptr;
+                hold(nullptr);
                 playingStyle = nullptr;
             }
 
@@ -258,18 +265,27 @@ namespace coolsynth::synth::v3
 
         void renderInstrument(float* left, float* right, int numSamples, const SlotParams& params, int instrument) noexcept
         {
-            const int styleIndex = juce::jlimit(0, maxInstrumentStyles - 1, static_cast<int>(std::lround(params.p[style])));
-            renderStyle(left, right, numSamples, params, SampleLibrary::instance().request(instrument, styleIndex));
+            // A note takes its style when it starts and keeps it to its end, whatever the slot is set to meanwhile; its
+            // count among the style's users keeps that memory from being reused (D155, D158).
+            const LoadedStyle* playing = playingStyle;
+            if (startPending)
+            {
+                const int styleIndex = juce::jlimit(0, maxInstrumentStyles - 1, static_cast<int>(std::lround(params.p[style])));
+                playing = SampleLibrary::instance().request(instrument, styleIndex);
+            }
+            renderStyle(left, right, numSamples, params, playing, true);
         }
 
-        /** A style in memory (an instrument's, or the user's one recording), or silence while there is none. */
-        void renderStyle(float* left, float* right, int numSamples, const SlotParams& params, const LoadedStyle* loaded) noexcept
+        /** A style in memory (an instrument's, or the user's one recording), or silence while there is none. An
+            instrument's (`held`) is the note's own until it ends; the user's file is the one the slot names now. */
+        void renderStyle(float* left, float* right, int numSamples, const SlotParams& params, const LoadedStyle* loaded, bool held = false) noexcept
         {
             const double hz = std::max(1.0, static_cast<double>(params.frequencyHz));
 
             if (startPending)
             {
                 startPending = false;
+                hold(held ? loaded : nullptr);
                 playingStyle = loaded;
                 finished = true;
                 zone = nullptr;
@@ -286,7 +302,7 @@ namespace coolsynth::synth::v3
                     }
                 }
             }
-            // The library dropped or replaced what this note was playing: it stops rather than read freed memory.
+            // The user's file was replaced or let go under this note: it stops rather than read freed memory.
             if (loaded != playingStyle)
             {
                 zone = nullptr;
@@ -300,11 +316,67 @@ namespace coolsynth::synth::v3
 
             if (finished || zone == nullptr)
             {
+                hold(nullptr);
                 for (int s = 0; s < numSamples; ++s)
                     emit(left, right, s, 0.0f, 0.0f, 0.0f, params);
                 return;
             }
 
+            // The recording as it is held (D155): 16-bit, packed 24-bit or float numbers, mono or stereo.
+            switch (zone->format)
+            {
+                case SampleFormat::int16:
+                    renderZone(left, right, numSamples, params, hz, gainLeft, gainRight, Int16Numbers { static_cast<const std::int16_t*>(zone->data) });
+                    break;
+                case SampleFormat::int24:
+                    renderZone(left, right, numSamples, params, hz, gainLeft, gainRight, Int24Numbers { static_cast<const std::uint8_t*>(zone->data) });
+                    break;
+                case SampleFormat::float32:
+                default:
+                    renderZone(left, right, numSamples, params, hz, gainLeft, gainRight, FloatNumbers { static_cast<const float*>(zone->data) });
+                    break;
+            }
+            if (finished)
+                hold(nullptr); // the note has ended: its instrument's memory may be reused
+        }
+
+        struct FloatNumbers
+        {
+            const float* d;
+            float operator()(std::ptrdiff_t i) const noexcept { return d[i]; }
+        };
+        struct Int16Numbers
+        {
+            const std::int16_t* d;
+            float operator()(std::ptrdiff_t i) const noexcept { return static_cast<float>(d[i]); }
+        };
+        struct Int24Numbers
+        {
+            const std::uint8_t* d;
+            float operator()(std::ptrdiff_t i) const noexcept
+            {
+                const std::uint8_t* p = d + i * 3;
+                return static_cast<float>(static_cast<std::int32_t>((static_cast<std::uint32_t>(p[0]) << 8) | (static_cast<std::uint32_t>(p[1]) << 16)
+                                                                    | (static_cast<std::uint32_t>(p[2]) << 24)) >> 8);
+            }
+        };
+
+        /** Counts this note among its style's users while it plays (D155): memory with users is never reused. */
+        void hold(const LoadedStyle* style) noexcept
+        {
+            if (heldStyle.style == style)
+                return;
+            if (heldStyle.style != nullptr)
+                heldStyle.style->users.fetch_sub(1, std::memory_order_acq_rel);
+            heldStyle.style = style;
+            if (style != nullptr)
+                style->users.fetch_add(1, std::memory_order_acq_rel);
+        }
+
+        template <typename Numbers>
+        void renderZone(float* left, float* right, int numSamples, const SlotParams& params, double hz,
+                        float gainLeft, float gainRight, const Numbers& numbers) noexcept
+        {
             // The pitch the recording sounds at: its note, and the cents the manifest says it is off it.
             const double rootHz = 440.0 * std::exp2((static_cast<double>(zone->root) - 69.0 + 0.01 * static_cast<double>(zone->tuneCents)) / 12.0);
             const double step = juce::jlimit(1.0 / 64.0, 32.0, hz / rootHz) * zone->rate / sampleRate;
@@ -313,22 +385,30 @@ namespace coolsynth::synth::v3
             const double loopFrames = static_cast<double>(zone->loopEnd - zone->loopStart);
             const double fadeFrames = static_cast<double>(zone->loopFade);
             const double frames = static_cast<double>(zone->frames);
-            const float* data = zone->data;
+            const int channels = zone->channels;
+            const float scale = zone->scale;
 
             std::array<float, SincKernels::points> w {};
             auto read = [&](double at, float& outLeft, float& outRight) noexcept
             {
                 const int index = static_cast<int>(at);
                 kernels->weights(cutoff, static_cast<float>(at - index), w.data());
-                const float* frame = data + 2 * (index - (SincKernels::points / 2 - 1));
+                const std::ptrdiff_t first = static_cast<std::ptrdiff_t>(index - (SincKernels::points / 2 - 1)) * channels;
                 float sumLeft = 0.0f, sumRight = 0.0f;
-                for (int k = 0; k < SincKernels::points; ++k)
+                if (channels == 2)
+                    for (int k = 0; k < SincKernels::points; ++k)
+                    {
+                        sumLeft += numbers(first + 2 * k) * w[static_cast<std::size_t>(k)];
+                        sumRight += numbers(first + 2 * k + 1) * w[static_cast<std::size_t>(k)];
+                    }
+                else
                 {
-                    sumLeft += frame[2 * k] * w[static_cast<std::size_t>(k)];
-                    sumRight += frame[2 * k + 1] * w[static_cast<std::size_t>(k)];
+                    for (int k = 0; k < SincKernels::points; ++k)
+                        sumLeft += numbers(first + k) * w[static_cast<std::size_t>(k)];
+                    sumRight = sumLeft;
                 }
-                outLeft = sumLeft;
-                outRight = sumRight;
+                outLeft = sumLeft * scale;
+                outRight = sumRight * scale;
             };
 
             for (int s = 0; s < numSamples; ++s)
@@ -372,6 +452,15 @@ namespace coolsynth::synth::v3
         float noteVelocity = 1.0f;
         float velocityLevel = 1.0f; // the level this note's velocity gives it on a sampled instrument
         const LoadedStyle* playingStyle = nullptr; // the style in memory this note started on
+        /** The style this note counts itself a user of. A copy of the generator holds nothing of its own. */
+        struct Held
+        {
+            const LoadedStyle* style = nullptr;
+            Held() = default;
+            Held(const Held&) noexcept {}
+            Held& operator=(const Held&) noexcept { return *this; }
+        };
+        Held heldStyle;
         const SampleZone* zone = nullptr;
         std::array<float, 4> ringLeft {}, ringRight {}, ringMono {};
         unsigned int cursor = 0;

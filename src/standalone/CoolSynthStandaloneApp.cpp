@@ -4,6 +4,7 @@
 #include "SettingsStore.h"
 #include "MiniLab3Driver.h"
 #include "plugin/SynthAudioProcessor.h"
+#include "synth/v3/SampleLibrary.h"
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_audio_utils/juce_audio_utils.h>
@@ -38,6 +39,9 @@ public:
         customOptionsButton.setButtonText("Options");
         customOptionsButton.onClick = [this] { openCustomSettings(); };
         addAndMakeVisible(&customOptionsButton);
+
+        // The sample memory is taken as the app starts, in the background (D155).
+        coolsynth::synth::v3::SampleLibrary::instance().prepareMemory();
 
         // A connected MiniLab 3 becomes the panel's hardware twin (docs/interface-v3.md section 5).
         if (auto* host = getPluginHolder())

@@ -108,6 +108,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/UserLibrary.cpp
     src/synth/v3/EngineV3.cpp
     src/synth/v3/SoundUnit.cpp
+    src/synth/v3/SampleMemory.cpp
+    src/synth/v3/SamplePack.cpp
     src/interface/InterfaceModel.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/PanelEditor.cpp
@@ -310,6 +312,30 @@ target_compile_definitions(CoolSynthPresetNormalizer
 add_dependencies(CoolSynthPresetNormalizer UpdateBuildInfo)
 
 target_link_libraries(CoolSynthPresetNormalizer
+    PRIVATE
+        juce::juce_core
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_gui_basics
+        juce::juce_dsp
+        CoolSynthControllerProfiles
+        CoolSynthFactoryBank
+        CoolSynthInstrumentData
+        coolsynth_config_flags
+        juce::juce_recommended_warning_flags)
+
+# Packs the sampled-instrument library once (decision D163). Not part of ALL: build it on demand with
+#   cmake --build <build-dir> --config <Config> --target CoolSynthPackLibrary
+juce_add_console_app(CoolSynthPackLibrary)
+set_target_properties(CoolSynthPackLibrary PROPERTIES EXCLUDE_FROM_ALL TRUE)
+target_sources(CoolSynthPackLibrary PRIVATE tools/PackLibrary.cpp ${COOLSYNTH_SHARED_SOURCES})
+target_include_directories(CoolSynthPackLibrary PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
+target_compile_features(CoolSynthPackLibrary PUBLIC cxx_std_20)
+target_compile_definitions(CoolSynthPackLibrary PRIVATE COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}")
+add_dependencies(CoolSynthPackLibrary UpdateBuildInfo)
+target_link_libraries(CoolSynthPackLibrary
     PRIVATE
         juce::juce_core
         juce::juce_audio_basics
