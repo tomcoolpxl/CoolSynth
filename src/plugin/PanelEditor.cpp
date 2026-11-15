@@ -21,7 +21,6 @@ namespace
         const juce::Colour ink { 0xffe4e8ec };
         const juce::Colour muted { 0xff9aa3ac };
         const juce::Colour print { 0xff8d959e };
-        const juce::Colour shiftEdge { 0xff6b747d };
         const juce::Colour screen { 0xff0b0d10 };
         const juce::Colour screenInk { 0xffe6ebf0 };
         const juce::Colour screenDim { 0xff79828c };
@@ -242,7 +241,7 @@ public:
         g.setColour(ink);
         if (symbol < 0)
         {
-            g.setFont(sans(12.5f, true));
+            g.setFont(sans(16.0f, true)); // larger, to read from a distance (D185; was 12.5)
             g.drawText(face, r, juce::Justification::centred);
             return;
         }
@@ -395,10 +394,10 @@ public:
         g.setFont(mono(11.0f));
         const auto partText = "Part " + juce::String(model.part() == 0 ? "A" : "B");
         g.drawText(partText, header, juce::Justification::centredRight);
-        // The chip goes back one level; "Part A" switches the part, as Shift + Home does (D181, D184).
+        // The chip goes back one level; "Part A" switches the part, as Home pressed again does (D181, D185).
         hits.push_back({ chip, [this] { model.back(); } });
         const int partWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), partText) + 6;
-        hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.pressPad(InterfaceModel::homePad, true); } });
+        hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.togglePart(); } });
 
         // trail: where you are, with what each knob moves
         area.removeFromTop(4);
@@ -741,17 +740,17 @@ public:
             pad.onPress = [this, p]
             {
                 model.pressPad(p, owner.shiftHeld());
-                if (p == InterfaceModel::homePad && owner.shiftLatched)
-                    owner.shiftLatched = false;
                 owner.timerCallback();
             };
             addAndMakeVisible(pad);
         }
 
-        shift.setButtonText("Shift");
-        shift.setClickingTogglesState(true);
-        shift.onClick = [this] { owner.shiftLatched = shift.getToggleState(); owner.timerCallback(); };
-        for (auto* button : { &shift, &hold, &octDown, &octUp })
+        // Options where Shift was (D185): the screen no longer keeps a Shift of its own; the computer's Shift key and
+        // the MiniLab's still turn the knobs finely.
+        options.setButtonText("Prefs"); // "Options" had to be squeezed to fit Shift's width
+        options.onClick = [this] { PanelEditor::showOptions(owner.synth, options); };
+        options.setTooltip("Save sound, multi-core, velocity curve, the CPU's work; audio and MIDI in the app");
+        for (auto* button : { &options, &hold, &octDown, &octUp })
         {
             button->setColour(juce::TextButton::buttonColourId, colours::knob);
             button->setColour(juce::TextButton::buttonOnColourId, colours::ink);
@@ -771,13 +770,6 @@ public:
         octDown.onClick = [this] { model.shiftOctave(-1); owner.timerCallback(); };
         octUp.onClick = [this] { model.shiftOctave(1); owner.timerCallback(); };
 
-        // CoolSynth's own Options (D174), so the plugin has them too; the last second's CPU work beside it.
-        options.setButtonText("Options");
-        options.onClick = [this] { PanelEditor::showOptions(owner.synth, options); };
-        options.setColour(juce::TextButton::buttonColourId, colours::knob);
-        options.setColour(juce::TextButton::textColourOffId, colours::ink);
-        options.setTooltip("Multi-core, the CPU's work, and audio and MIDI in the app");
-        addAndMakeVisible(options);
         for (auto* button : { &hold, &octDown, &octUp })
             button->setTooltip("Works inside the keyboard itself");
 
@@ -829,7 +821,6 @@ public:
             keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
         }
         const bool shiftOn = owner.shiftHeld();
-        shift.setToggleState(shiftOn, juce::dontSendNotification);
         const auto pageTint = coolsynth::ui::tintColour(model.pageTint());
         for (int k = 0; k < 8; ++k)
         {
@@ -905,9 +896,6 @@ public:
             g.drawText(PanelEditor::cpuSummary(owner.synth), cpuArea, juce::Justification::centredRight);
         }
 
-        // Shift's light grey border
-        g.setColour(colours::shiftEdge);
-        g.drawRoundedRectangle(shift.getBounds().toFloat().reduced(0.5f), 7.0f, 2.0f);
 
         // main knob roles
         g.setFont(sans(11.0f));
@@ -954,7 +942,7 @@ public:
             if (p >= 4 && p <= 6)
                 text = juce::StringArray { "Stop", "Play", "Record" }[p - 4] + " (later)";
             else if (p == InterfaceModel::homePad)
-                text = owner.shiftHeld() ? juce::String() : juce::String("Shift: Part A/B");
+                text = "Again: Part A/B";
             g.drawText(text, b.getX() - 8, b.getBottom() + 4, b.getWidth() + 16, 16, juce::Justification::centred);
         }
     }
@@ -962,13 +950,13 @@ public:
     void resized() override
     {
         // the MiniLab 3's layout: left column, screen, knobs, faders; pads under them; keys at the bottom
-        const int top = 36, left = 38;
+        const int top = 26, left = 38; // the top strip gave way when Options moved to the left column (D185)
         const int leftWidth = 118, screenWidth = 360, knobsWidth = 308, gap = 26;
         const int screenX = left + leftWidth + gap, knobsX = screenX + screenWidth + gap, fadersX = knobsX + knobsWidth + gap;
         const int faderWidth = designWidth - 38 - fadersX;
 
         // left column
-        shift.setBounds(left, top, 54, 30);
+        options.setBounds(left, top, 54, 30);
         hold.setBounds(left + 64, top, 54, 30);
         chordPrint = { left + 64, top + 32, 54, 14 };
         octDown.setBounds(left, top + 50, 54, 30);
@@ -1013,9 +1001,8 @@ public:
         keyboard.setBounds(left, padBottom + 30, designWidth - 2 * left, designHeight - padBottom - 30 - 32);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
 
-        // Options in the top right corner, above the faders; the CPU line to its left, over the knobs
-        options.setBounds(designWidth - 38 - 70, 14, 70, 19);
-        cpuArea = { knobsX, 14, options.getX() - 10 - knobsX, 19 };
+        // the last second's CPU work in the strip under the keys, right-aligned
+        cpuArea = { left, keyboard.getBottom() + 3, designWidth - 2 * left, 16 };
     }
 
     void mouseDown(const juce::MouseEvent& e) override
@@ -1033,7 +1020,7 @@ private:
     std::array<juce::String, 8> knobLabels;
     std::array<juce::Slider, 4> faders;
     std::array<Pad, 8> pads;
-    juce::TextButton shift, hold, octDown, octUp, options;
+    juce::TextButton options, hold, octDown, octUp;
     FlatKeyboard keyboard;
     juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea;
     std::array<juce::Rectangle<int>, 2> strips;
@@ -1066,7 +1053,7 @@ PanelEditor::~PanelEditor() = default;
 bool PanelEditor::shiftHeld() const noexcept
 {
     // the on-screen Shift (clicked or the computer's Shift key) or the MiniLab's own
-    return shiftLatched || shiftKeyDown || model.hardwareShiftHeld();
+    return shiftKeyDown || model.hardwareShiftHeld();
 }
 
 void PanelEditor::paint(juce::Graphics& g) { g.fillAll(juce::Colour(0xff131619)); }

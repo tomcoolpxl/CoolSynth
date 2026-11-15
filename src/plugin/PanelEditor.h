@@ -47,7 +47,7 @@ public:
     static void askToSaveSound(SynthAudioProcessor& synth, juce::Component& near);
 
     static constexpr int designWidth = 1100;
-    static constexpr int designHeight = 690;
+    static constexpr int designHeight = 680;
 
 private:
     class Knob;
@@ -61,7 +61,6 @@ private:
     SynthAudioProcessor& synth;
     coolsynth::ui::InterfaceModel& model;
     std::unique_ptr<Content> content;
-    bool shiftLatched = false;
     bool shiftKeyDown = false;
     int shownRevision = -1;
 

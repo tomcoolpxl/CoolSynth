@@ -18,7 +18,7 @@ class SynthAudioProcessor;
 */
 namespace coolsynth::ui
 {
-    enum class Tint { sound, shape, motion, effects, perform, home, stop, play, record };
+    enum class Tint { sound, shape, motion, effects, perform, home, stop, play, record, partB }; // partB: Home while part B is on (D185)
 
     /** The colour of a tint, as on the panel and the mock-up. */
     [[nodiscard]] juce::Colour tintColour(Tint tint) noexcept;
@@ -196,6 +196,8 @@ namespace coolsynth::ui
         [[nodiscard]] PadLight padLight(int pad, bool shift) const;       // for the MiniLab: its own colours
         /** The pads, left to right (D184): Home, Sound, Shape, Motion, Stop, Play, Record, Effects. */
         static constexpr int homePad = 0;
+        /** Part A or B for the sections to edit (D185): Home pressed again while Home is open, or the screen's "Part A". */
+        void togglePart();
         [[nodiscard]] static int sectionOfPad(int pad) noexcept;   // -1 for Home and the recorder's pads
         [[nodiscard]] static int padOfSection(int section) noexcept;
         [[nodiscard]] juce::String padLabel(int pad, bool shift) const;

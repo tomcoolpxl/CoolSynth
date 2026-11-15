@@ -191,14 +191,21 @@ public:
             expect(model->pageTint() == coolsynth::ui::Tint::perform);
         }
 
-        beginTest("Shift + Home switches the part the sections edit");
+        beginTest("Home pressed again switches the part the sections edit, and lights in its colour (D185)");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
             expect(model->currentPage().ids[0].startsWith("pA."));
-            model->pressPad(coolsynth::ui::InterfaceModel::homePad, true);
+            model->pressPad(InterfaceModel::homePad, false); // opens Home
+            expectEquals(model->part(), 0);
+            expect(model->padLight(InterfaceModel::homePad, false).tint == coolsynth::ui::Tint::home);
+            model->pressPad(InterfaceModel::homePad, false); // again: part B
             expectEquals(model->part(), 1);
+            expect(model->padLight(InterfaceModel::homePad, false).tint == coolsynth::ui::Tint::partB, "yellow for B");
+            model->pressPad(InterfaceModel::padOfSection(1), false);
             expect(model->currentPage().ids[0].startsWith("pB."));
+            model->pressPad(InterfaceModel::homePad, true); // from a section, Home opens Home: Shift does nothing on the pads
+            expectEquals(model->part(), 1);
         }
 
         beginTest("The faders are volumes over the sound: at the top, taken as they are, kept across sounds (D184)");
@@ -243,7 +250,8 @@ public:
             const juce::StringArray expected { "Home", "Sound", "Shape", "Motion", "Stop", "Play", "Record", "Effects" };
             for (int p = 0; p < 8; ++p)
                 expectEquals(model->padLabel(p, false), expected[p]);
-            expectEquals(model->padLabel(0, true), juce::String("Part A/B"));
+            expectEquals(model->padLabel(7, true), juce::String("Effects"), "no Shift on the pads: Shift + pads 1-3 are the MiniLab's own");
+            expectEquals(model->padLabel(0, true), juce::String("Home"));
             model->pressPad(7, false);
             expectEquals(model->section(), 3, "the last pad opens Effects");
             model->pressPad(0, false);

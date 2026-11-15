@@ -3715,3 +3715,20 @@ The user, after trying the panel and the MiniLab. Asked (pick lists): the pink p
   ("the colors on the pad are perfect"): Home a bright teal (#4aff8e sent), Shape a clear blue
   (#1060ff sent), Stop a white with full green (#d7ffbe sent), Play green, Sound orange. On the
   screen Shape is now a clear, not dark, blue #3b8bff (was cyan #35b8e0), at the user's word.
+
+## D185. No Shift on the pads; Home switches the part; Prefs where Shift was (2026-11-15)
+
+With the user, on the MiniLab. Found (Arturia's DAW integration guides, a manual mirror, the
+community message list by Janiczek): while Shift is held the MiniLab lights pads 1-3 blue as its own
+functions (pad 2 the pad bank, pad 3 the program, which would take it out of the DAW program
+CoolSynth uses) and 4-7 in transport colours; our colours sent again under Shift do not show.
+- **The user's choice**: drop Shift on the pads. **Home pressed again** while Home is open switches
+  part A/B (options: Home pressed again, recommended and chosen; pad 5 Stop as a toggle; a tap on
+  Shift), as a lit section pad pressed again moves to the next slot. Home lights **teal for part A,
+  yellow for part B**, on the screen (#f2c94c) and the MiniLab (#ffc000 sent; "yellow", checked on
+  the device). The screen's "Part A" in the header switches it too. Shift keeps one job: fine turns.
+- **Stop dimmed** for now (the recorder comes later), at the user's word; checked on the device.
+- **Prefs where Shift was** on screen, the same size ("Options" had to be squeezed): the screen no
+  longer keeps a Shift of its own. The top-right Options button and its strip are gone: the controls
+  moved up 10 pixels and the panel is 1100 x 680 (was 690). The CPU line sits under the keys.
+- **The pads' labels** are 16 px bold (were 12.5), at the user's word.

@@ -17,7 +17,7 @@ press) and knob 5.
 
 | Control | Job |
 |---|---|
-| Shift | Held: knobs turn ten times finer; Shift + Home (pad 1) switches part A/B. Lit while held. Light grey border. |
+| Shift | On the MiniLab (or the computer's Shift key): held, knobs turn ten times finer; nothing else, since Shift + pads 1-3 are the MiniLab's own (program, pad bank). On screen its place holds **Prefs**, CoolSynth's options (D185). |
 | Hold, Oct -, Oct + | With a MiniLab: its own, greyed out on screen. Without one (D184): Hold holds the notes like a sustain pedal, or latches a running arp; Oct -/+ shift the screen's keys up to three octaves. |
 | Two touch strips (Pitch, Mod) | Pitch bend and mod wheel, as the keyboard sends them. |
 | Screen | The software screen (section 4). Larger in software, in the same place. |
@@ -26,7 +26,7 @@ press) and knob 5.
 | Knob 5 | Pages: of the focused slot in a section, of the live pages in Home. Blue navigation ring. |
 | Knobs 6-8 | Glide, Brightness, Space, the same everywhere. Brightness moves every Ladder and SVF cutoff of the sound together, up to 1.5 octaves either way; Space makes every reverb, delay and room up to twice or half as wet; in the middle the sound is as designed (D176). |
 | Faders 1-4 | Part A, Part B, Effects, Master: volumes over the sound as designed (D184), at the top as designed, half way about -18 dB, the bottom off; they start at the top and keep their place across sounds. The MiniLab's faders are taken as they are; while it is connected the screen's follow them and do not take the mouse. |
-| Pad 1 | **Home**, teal: the sound browser from anywhere. Shift + Home: part A/B. First since D184. |
+| Pad 1 | **Home**: the sound browser from anywhere; pressed again while Home is open, it switches part A/B (D185), teal for part A, yellow for B. First since D184. |
 | Pads 2-4 | Sound, Shape, Motion: open the section; the lit pad pressed again moves to the next slot. |
 | Pads 5-7 | ■ ▶ ●: kept for the recorder (later), dim. |
 | Pad 8 | Effects: opens the section, as pads 2-4 (last since D184). |
@@ -121,7 +121,7 @@ The recorder (pads 5-7, tracks, its windows), a wizard for other controllers, th
 editor; the user's review of the drafted macros (D177).
 
 Planned for the real interface (D169):
-- **An Options button** in CoolSynth's own interface (built, D174): top right on the panel, so the
+- **An Options button** in CoolSynth's own interface (built, D174; since D185 "Prefs", where the screen's Shift was, and the CPU line under the keys): so the
   plugin has one too; the standalone window's own Options button opens the same menu (Audio and
   MIDI in the app, Multi-core Auto/Off, the CPU's work, this computer). Beside it the last second's
   CPU line: the audio thread's share, the slowest block against its time, each helper's share.

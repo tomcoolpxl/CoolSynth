@@ -63,6 +63,7 @@ namespace coolsynth::ui
             case Tint::shape:  return juce::Colour(0xff1060ff); // a clear blue, apart from Home's teal and Motion's purple
             case Tint::stop:   return juce::Colour(0xffd7ffbe); // white lit blue, a warm white pink: green full
             case Tint::play:   return juce::Colour(0xff10ff00);
+            case Tint::partB:  return juce::Colour(0xffffc000); // Home while part B is on: yellow (D185)
             default:           return tintColour(tint); // Motion, Effects and Record light as they should
         }
     }
@@ -80,6 +81,7 @@ namespace coolsynth::ui
             case Tint::stop:    return juce::Colour(0xffffffff);
             case Tint::play:    return juce::Colour(0xff3ccf73);
             case Tint::record:  return juce::Colour(0xffff0000); // pure red: the pad's LED shows #f0524f as pink
+            case Tint::partB:   return juce::Colour(0xfff2c94c); // Home while part B is on: a warm yellow (D185)
         }
         return juce::Colours::grey;
     }
@@ -244,6 +246,12 @@ namespace coolsynth::ui
     }
 
     // ---- Hold and the octave, for the screen's keys when no MiniLab is connected (D184) -----------------------
+
+    void InterfaceModel::togglePart()
+    {
+        currentPart = 1 - currentPart;
+        touched();
+    }
 
     void InterfaceModel::toggleHold()
     {
@@ -809,12 +817,15 @@ namespace coolsynth::ui
 
     void InterfaceModel::pressPad(int pad, bool shift)
     {
+        // No Shift on the pads (D185): Shift + pads 1-3 are the MiniLab's own (program, pad bank). Home pressed again
+        // while Home is open switches the part, as a lit section pad pressed again moves to the next slot.
+        juce::ignoreUnused(shift);
         if (const int section = sectionOfPad(pad); section >= 0)
             openSection(section);
         else if (pad == homePad)
         {
-            if (shift)
-                currentPart = 1 - currentPart;
+            if (currentView == View::home && ! typeList.open)
+                togglePart();
             else
                 openHome();
         }
@@ -1113,6 +1124,7 @@ namespace coolsynth::ui
 
     juce::String InterfaceModel::padLabel(int pad, bool shift) const
     {
+        juce::ignoreUnused(shift);
         if (const int section = sectionOfPad(pad); section >= 0)
             return sectionName(section);
         switch (pad)
@@ -1120,7 +1132,7 @@ namespace coolsynth::ui
             case 4: return "Stop";
             case 5: return "Play";
             case 6: return "Record";
-            default: return shift ? "Part A/B" : "Home";
+            default: return "Home";
         }
     }
 
@@ -1135,12 +1147,15 @@ namespace coolsynth::ui
         if (pad >= 4 && pad <= 6)
         {
             static constexpr std::array<Tint, 3> tints { Tint::stop, Tint::play, Tint::record };
-            // the user's choice on the device: clearly white, green and red, though the recorder comes later
-            return { tints[static_cast<std::size_t>(pad - 4)], 1.0f };
+            // the user's choice on the device: clearly white, green and red, though the recorder comes later; Stop
+            // dimmed for now (D185)
+            return { tints[static_cast<std::size_t>(pad - 4)], pad == 4 ? 0.3f : 1.0f };
         }
+        // Home in the part's colour (D185): teal for A, yellow for B.
+        const auto homeTint = currentPart == 0 ? Tint::home : Tint::partB;
         if (loadingInstrument()) // Home glows until the instrument is ready (D154, D156)
-            return { Tint::home, 0.1f + 0.9f * loadingGlow() };
-        return { Tint::home, currentView == View::home ? 1.0f : 0.3f };
+            return { homeTint, 0.1f + 0.9f * loadingGlow() };
+        return { homeTint, currentView == View::home ? 1.0f : 0.3f };
     }
 
     juce::Colour InterfaceModel::padColour(int pad, bool shift) const
