@@ -42,16 +42,16 @@ namespace coolsynth::synth::v3
             clear();
         }
 
-        /** Silence: a fresh note records from nothing. */
+        /** Silence: a fresh note records from nothing. It touches no memory (every note start calls it, and wiping the
+            whole second took 0.6 MB per voice, D160): what was not recorded since reads as silence. */
         void clear() noexcept
         {
-            for (auto& level : data)
-                std::fill(level.begin(), level.end(), 0.0f);
             for (auto& pair : stages)
                 for (auto& stage : pair)
                     stage.z1 = stage.z2 = 0.0f;
             decimator.reset();
             write = 0;
+            recorded = 0;
             havePending = false;
         }
 
@@ -76,6 +76,7 @@ namespace coolsynth::synth::v3
                 data[2][at] = stages[1][1].process(stages[1][0].process(x));
                 if (++write >= length)
                     write = 0;
+                recorded = std::min(length, recorded + 1);
             }
         }
 
@@ -93,6 +94,10 @@ namespace coolsynth::synth::v3
                     j += length;
                 else if (j >= length)
                     j -= length;
+                // Frames not recorded since the last clear are silence, as if wiped: the newest is one behind write.
+                const int age = write - j > 0 ? write - j : write - j + length;
+                if (age > recorded)
+                    return 0.0f;
                 return d[static_cast<std::size_t>(j)];
             };
             const float xm1 = at(-1), x0 = at(0), x1 = at(1), x2 = at(2);
@@ -142,6 +147,7 @@ namespace coolsynth::synth::v3
         double rate = 48000.0;
         int length = 0;
         int write = 0;
+        int recorded = 0; // frames recorded since the last clear, up to length
         float pendingFirst = 0.0f;
         bool havePending = false;
     };

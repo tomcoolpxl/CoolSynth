@@ -8,6 +8,7 @@
 #include <juce_events/juce_events.h>
 
 namespace coolsynth::ui { class InterfaceModel; }
+class SynthAudioProcessor;
 
 /*
     Drives a connected Arturia MiniLab 3 from the standalone app (docs/interface-v3.md section 5):
@@ -22,10 +23,10 @@ namespace coolsynth::standalone
                                  private juce::Timer
     {
     public:
-        /** keys: where note and performance messages go (the standalone player's collector). */
+        /** synth: where note and performance messages go, through its lock-free live queue (D159). */
         MiniLab3Driver(coolsynth::ui::InterfaceModel& model,
                        juce::AudioDeviceManager& deviceManager,
-                       juce::MidiMessageCollector& keys);
+                       SynthAudioProcessor& synth);
         ~MiniLab3Driver() override;
 
         [[nodiscard]] bool isConnected() const noexcept { return output != nullptr && input != nullptr; }
@@ -42,7 +43,7 @@ namespace coolsynth::standalone
 
         coolsynth::ui::InterfaceModel& model;
         juce::AudioDeviceManager& devices;
-        juce::MidiMessageCollector& keyCollector;
+        SynthAudioProcessor& synth;
 
         std::unique_ptr<juce::MidiInput> input;
         std::unique_ptr<juce::MidiOutput> output;

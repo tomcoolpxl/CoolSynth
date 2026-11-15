@@ -146,6 +146,10 @@ namespace coolsynth::synth::v3
         };
 
         [[nodiscard]] static MixGains gainsFor(const PartMix& mix) noexcept;
+        /** One block no longer than the prepared size. */
+        void renderBlock(juce::AudioBuffer<float>& buffer, std::span<const EngineMidiEvent> events,
+                         const EngineSettings& settings, const EngineTransportInfo& transport) noexcept;
+        std::vector<EngineMidiEvent> pieceEvents; // a longer host block's events, one piece at a time
         void routeEvents(std::span<const EngineMidiEvent> events, const EngineSettings& settings,
                          const std::array<bool, partCount>& active) noexcept;
         void pushEvent(int partIndex, const EngineMidiEvent& event) noexcept;

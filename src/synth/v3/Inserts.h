@@ -207,14 +207,20 @@ namespace coolsynth::synth::v3
             grain.prepare(sampleRate);
             room.prepare(sampleRate);
             lastType = insertType::off;
+            rackUsed = grainUsed = roomUsed = false; // prepared silent
         }
 
-        /** Silence: every tail gone. */
+        /** Silence: every tail gone. Only what played since the last clear is wiped: All Sound Off cleared every
+            effect of all 18 slots, about 38 MB at 48 kHz, inside one audio block (D160). */
         void clear() noexcept
         {
-            rack.clear();
-            grain.clear();
-            room.clear();
+            if (rackUsed)
+                rack.clear();
+            if (grainUsed)
+                grain.clear();
+            if (roomUsed)
+                room.clear();
+            rackUsed = grainUsed = roomUsed = false;
         }
 
         [[nodiscard]] const GrainInsert& grainForTesting() const noexcept { return grain; }
@@ -249,11 +255,15 @@ namespace coolsynth::synth::v3
                 g.freeze = choice(6) == 1;
                 g.mix = units(7);
                 grain.process(stereo, g);
+                grainUsed = true;
                 lastType = type;
                 return;
             }
             if (lastType == insertType::grain)
+            {
                 grain.clear();
+                grainUsed = false;
+            }
 
             // So is the room.
             if (type == insertType::room)
@@ -266,11 +276,15 @@ namespace coolsynth::synth::v3
                 r.width = units(2);
                 r.mix = units(3);
                 room.process(stereo, r);
+                roomUsed = true;
                 lastType = type;
                 return;
             }
             if (lastType == insertType::room)
+            {
                 room.clear();
+                roomUsed = false;
+            }
 
             coolsynth::synth::DriveParametersV2 drive;
             coolsynth::synth::PhaserParametersV2 phaser;
@@ -366,8 +380,12 @@ namespace coolsynth::synth::v3
             }
 
             rack.process(stereo, drive, phaser, chorus, delay, reverb, compressor, extra);
+            rackUsed = true;
             if (type == insertType::off)
+            {
                 rack.clear(); // the effect that was here has had its last block
+                rackUsed = false;
+            }
             lastType = type;
         }
 
@@ -376,5 +394,6 @@ namespace coolsynth::synth::v3
         GrainInsert grain;
         RoomInsert room;
         int lastType = insertType::off;
+        bool rackUsed = false, grainUsed = false, roomUsed = false; // played since its last clear (D160)
     };
 }

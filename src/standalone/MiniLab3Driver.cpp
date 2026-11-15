@@ -3,6 +3,7 @@
 #include "diagnostics/FlightRecorder.h"
 #include "interface/InterfaceModel.h"
 #include "midi/MiniLab3Protocol.h"
+#include "plugin/SynthAudioProcessor.h"
 
 namespace coolsynth::standalone
 {
@@ -10,8 +11,8 @@ namespace coolsynth::standalone
 
     MiniLab3Driver::MiniLab3Driver(coolsynth::ui::InterfaceModel& m,
                                    juce::AudioDeviceManager& deviceManager,
-                                   juce::MidiMessageCollector& keys)
-        : model(m), devices(deviceManager), keyCollector(keys)
+                                   SynthAudioProcessor& processor)
+        : model(m), devices(deviceManager), synth(processor)
     {
         tryOpen();
         startTimerHz(30);
@@ -92,12 +93,12 @@ namespace coolsynth::standalone
                     auto fixed = juce::MidiMessage::noteOn(message.getChannel(), message.getNoteNumber(),
                                                            static_cast<juce::uint8>(lastGoodVelocity));
                     fixed.setTimeStamp(message.getTimeStamp());
-                    keyCollector.addMessageToQueue(fixed);
+                    synth.pushLiveMidi(fixed);
                     return;
                 }
                 lastGoodVelocity = velocity;
             }
-            keyCollector.addMessageToQueue(message);
+            synth.pushLiveMidi(message);
             return;
         }
         const juce::ScopedLock lock(queueLock);

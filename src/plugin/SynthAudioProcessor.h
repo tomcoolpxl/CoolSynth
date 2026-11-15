@@ -18,7 +18,8 @@ namespace coolsynth::ui { class InterfaceModel; }
 
 class SynthAudioProcessor final : public juce::AudioProcessor,
                                   private juce::AudioProcessorParameter::Listener,
-                                  private juce::ValueTree::Listener
+                                  private juce::ValueTree::Listener,
+                                  private juce::MidiKeyboardState::Listener
 {
 public:
     using APVTS = juce::AudioProcessorValueTreeState;
@@ -132,6 +133,9 @@ public:
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+    /** One MIDI thread only (the standalone app's MiniLab driver): a note, controller, bend or pressure message for
+        the sound, lock-free; it plays one block later at its own time (D159). False when the queue is full. */
+    bool pushLiveMidi(const juce::MidiMessage& message) noexcept;
 
     /** The interface's state (docs/interface-v3.md), shared by the panel and the MiniLab driver. Message thread. */
     coolsynth::ui::InterfaceModel& getInterfaceModel();
@@ -151,17 +155,26 @@ public:
     }
 
 private:
-    class PluginMappedActionAsyncBridge : public juce::AsyncUpdater
+    /** Mapped controller moves and learned chords reach the message thread through a flag that a 100 Hz timer
+        reads: JUCE's AsyncUpdater takes a lock and may allocate when the audio thread triggers it (D159). */
+    class PluginMappedActionAsyncBridge final : private juce::Timer
     {
     public:
-        explicit PluginMappedActionAsyncBridge(SynthAudioProcessor& o) : owner(o) {}
-        void handleAsyncUpdate() override
+        explicit PluginMappedActionAsyncBridge(SynthAudioProcessor& o) : owner(o) { startTimerHz(100); }
+        ~PluginMappedActionAsyncBridge() override { stopTimer(); }
+        /** Audio thread: one store, nothing else. */
+        void triggerAsyncUpdate() noexcept { pending.store(true, std::memory_order_release); }
+    private:
+        void timerCallback() override
         {
+            owner.showHeardKeys();
+            if (! pending.exchange(false, std::memory_order_acq_rel))
+                return;
             owner.dispatchPendingMappedControllerEvents();
             owner.applyPendingLearnedChord();
         }
-    private:
         SynthAudioProcessor& owner;
+        std::atomic<bool> pending { false };
     };
 
     bool buildSanitizedParameterStateTree(const juce::ValueTree& incomingState,
@@ -201,7 +214,39 @@ private:
 
 
     APVTS parameters;
+    // The on-screen keyboard (D159): the audio thread never touches its state, which takes a lock that a mouse click
+    // holds. Clicked keys reach the audio through one lock-free queue; keys the audio heard come back through another
+    // and a message-thread timer shows them on the keyboard.
     juce::MidiKeyboardState keyboardState;
+    struct KeyEvent
+    {
+        std::uint8_t note = 0;
+        std::uint8_t velocity = 0; // 0: key up
+    };
+    static constexpr int keyQueueSize = 512;
+    std::atomic<bool> keyboardDisplayCleared { false }; // panic or reset: the keyboard shows every key up
+    juce::AbstractFifo clickedKeys { keyQueueSize };
+    std::array<KeyEvent, keyQueueSize> clickedKeyEvents {};
+    juce::AbstractFifo heardKeys { keyQueueSize };
+    std::array<KeyEvent, keyQueueSize> heardKeyEvents {};
+    bool showingHeardKeys = false; // message thread: the keyboard is being told what was heard, not clicked
+    static void pushKey(juce::AbstractFifo& fifo, std::array<KeyEvent, keyQueueSize>& events, KeyEvent event) noexcept;
+    void handleNoteOn(juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
+    void handleNoteOff(juce::MidiKeyboardState*, int midiChannel, int midiNoteNumber, float velocity) override;
+    /** Message thread: shows on the keyboard the keys the audio heard. */
+    void showHeardKeys();
+
+    // Keys from the MiniLab's own port, timestamped by the MIDI thread (D159): placed one block late at their exact
+    // distance apart, where JUCE's MidiMessageCollector takes a lock and squeezes a late batch into the block's end.
+    struct LiveMessage
+    {
+        std::array<std::uint8_t, 3> bytes {};
+        std::uint8_t size = 0;
+        double milliseconds = 0.0; // juce::Time::getMillisecondCounterHiRes() when it arrived
+    };
+    static constexpr int liveQueueSize = 1024;
+    juce::AbstractFifo liveMidi { liveQueueSize };
+    std::array<LiveMessage, liveQueueSize> liveMessages {};
     coolsynth::midi::MidiMappingEngine midiMappingEngine;
     std::vector<coolsynth::midi::LearnedCcBinding> learnedMidiBindings;
     coolsynth::synth::GlobalParameterPointers parameterValues;
@@ -225,6 +270,7 @@ private:
     bool settingsPrimed = false;
     std::atomic<std::uint32_t> settingsSequence { 0 }; // odd while a bulk edit runs
     std::atomic<int> bulkEditDepth { 0 };
+    std::atomic<std::uint32_t> soundGeneration { 0 }; // counts presets and states loaded (D158)
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
     int currentProgram = 0;

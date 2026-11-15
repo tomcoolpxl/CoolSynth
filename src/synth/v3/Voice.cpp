@@ -39,6 +39,8 @@ namespace coolsynth::synth::v3
             applied.attack = -1.0f; // forces the first apply
 
         stealTotal = std::max(1, static_cast<int>(std::lround(stealFadeSeconds * newSampleRate)));
+        fadeOutTotal = std::max(1, static_cast<int>(std::lround(fadeOutSeconds * newSampleRate)));
+        fadeTotal = stealTotal;
         rng = seed * 2654435761u + 0x9E3779B9u;
         if (rng == 0)
             rng = 1;
@@ -58,6 +60,7 @@ namespace coolsynth::synth::v3
         pendingReleased = false;
         released = false;
         stealRemaining = 0;
+        fadingOut = false;
         envelopeHold = 0;
         polyPressure = 0.0f;
         pressurePrimed = false;
@@ -91,10 +94,32 @@ namespace coolsynth::synth::v3
         // voice first fades its old note out; a start during that fade replaces the waiting note.
         const bool sounding = stealRemaining > 0 || (envelopes[0].isActive() && envelopes[0].getValue() > kSilentLevel);
         if (sounding && stealRemaining == 0)
+        {
             stealRemaining = stealTotal;
+            fadeTotal = stealTotal;
+        }
+        fadingOut = false; // a fade-out under way now leads into this note
         pendingNote = start;
         pending = true;
         pendingReleased = false;
+    }
+
+    void Voice::fadeOut() noexcept
+    {
+        pending = false;
+        pendingReleased = false;
+        const bool sounding = stealRemaining > 0 || (envelopes[0].isActive() && envelopes[0].getValue() > kSilentLevel);
+        if (! sounding)
+        {
+            reset();
+            return;
+        }
+        fadingOut = true;
+        if (stealRemaining == 0)
+        {
+            stealRemaining = fadeOutTotal;
+            fadeTotal = fadeOutTotal;
+        }
     }
 
     void Voice::startPendingNote(const VoiceGlobals& globals) noexcept
@@ -340,7 +365,12 @@ namespace coolsynth::synth::v3
             {
                 stealRemaining -= n;
                 if (stealRemaining == 0)
-                    startPendingNote(globals); // the old note is silent now: start the waiting one from a clean slate
+                {
+                    if (fadingOut)
+                        reset(); // faded out: idle
+                    else
+                        startPendingNote(globals); // the old note is silent now: start the waiting one from a clean slate
+                }
             }
         }
     }
@@ -486,7 +516,7 @@ namespace coolsynth::synth::v3
         vcaGain = vcaTarget;
         const float vcaStep = (vcaTarget - vcaFrom) / static_cast<float>(n);
 
-        const float fadeScale = 1.0f / static_cast<float>(stealTotal);
+        const float fadeScale = 1.0f / static_cast<float>(fadeTotal);
         for (int s = 0; s < n; ++s)
         {
             float gain = amp[s] * (vcaFrom + vcaStep * static_cast<float>(s + 1));

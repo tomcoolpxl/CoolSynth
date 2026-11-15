@@ -44,7 +44,7 @@ public:
             if (auto* synth = dynamic_cast<SynthAudioProcessor*>(host->processor.get()))
                 miniLab = std::make_unique<coolsynth::standalone::MiniLab3Driver>(synth->getInterfaceModel(),
                                                                                   host->deviceManager,
-                                                                                  host->player.getMidiMessageCollector());
+                                                                                  *synth);
     }
 
     void resized() override

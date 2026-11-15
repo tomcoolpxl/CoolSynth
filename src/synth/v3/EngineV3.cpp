@@ -65,6 +65,7 @@ namespace coolsynth::synth::v3
         // A key struck again under a new transpose is a note-off and a note-on; a mode change adds one event.
         for (auto& events : partEvents)
             events.assign(static_cast<std::size_t>(2 * coolsynth::synth::maxEngineEventsPerBlock + 2), {});
+        pieceEvents.assign(static_cast<std::size_t>(coolsynth::synth::maxEngineEventsPerBlock), {});
         partEventCount.fill(0);
         for (auto& sent : sentNote)
             sent.fill(-1);
@@ -227,16 +228,40 @@ namespace coolsynth::synth::v3
             buffer.clear();
             return;
         }
-
-        // Rare: a host block longer than prepared. The buffers grow once; the parts split on their own.
-        if (work.getNumSamples() < n)
+        const int maxBlock = work.getNumSamples();
+        if (n <= maxBlock)
         {
-            work.setSize(2, n, false, false, true);
-            for (auto& partBuffer : partBuffers)
-                partBuffer.setSize(2, n, false, false, true);
-            dryBus.setSize(2, n, false, false, true);
+            renderBlock(buffer, events, settings, transport);
+            return;
         }
 
+        // Rare: a host block longer than prepared. Rendered in prepared-size pieces, so nothing grows on the audio
+        // thread (D159); each piece gets its own events, offsets from its start, and the beat it starts on.
+        std::size_t first = 0;
+        for (int start = 0; start < n; start += maxBlock)
+        {
+            const int length = std::min(maxBlock, n - start);
+            std::size_t count = 0;
+            while (first < events.size() && events[first].sampleOffset < start + length && count < pieceEvents.size())
+            {
+                auto event = events[first++];
+                event.sampleOffset = std::max(0, event.sampleOffset - start);
+                pieceEvents[count++] = event;
+            }
+            juce::AudioBuffer<float> piece(buffer.getArrayOfWritePointers(), buffer.getNumChannels(), start, length);
+            auto pieceTransport = transport;
+            if (pieceTransport.hostHasTempo && pieceTransport.hostBpm > 0.0)
+                pieceTransport.hostPpqAtBlockStart += pieceTransport.hostBpm / 60.0 / hostRate * static_cast<double>(start);
+            renderBlock(piece, std::span<const EngineMidiEvent>(pieceEvents.data(), count), settings, pieceTransport);
+        }
+    }
+
+    void EngineV3::renderBlock(juce::AudioBuffer<float>& buffer,
+                               std::span<const EngineMidiEvent> events,
+                               const EngineSettings& settings,
+                               const EngineTransportInfo& transport) noexcept
+    {
+        const int n = buffer.getNumSamples();
         const std::array<bool, partCount> active { settings.partMode != PartMode::bOnly, settings.partMode != PartMode::aOnly };
         slowest = {};
         routeEvents(events, settings, active);

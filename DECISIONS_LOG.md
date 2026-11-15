@@ -3090,3 +3090,36 @@ buffer only while the number is even, and keeps what it read only if the number 
 meanwhile (a seqlock); otherwise the last whole settings play one more block. A preset therefore
 lands at most a block later (10.9 ms at 480 samples), and never mixed. The offline helpers that
 read the patch's instruments now use their own copy of the settings, not the audio thread's.
+
+## D159. JUCE's locks kept off the audio thread (2026-11-15)
+
+The real-time review found five places where JUCE takes a lock, allocates or posts a message from
+the audio thread; the user asked for them to be dealt with. JUCE stays: each has a workaround.
+- **A message posted from processBlock** (AsyncUpdater for mapped controllers and learned chords:
+  a lock, a possible allocation and PostMessage). Now one atomic flag that a 100 Hz message-thread
+  timer reads. A mapped controller move reaches its parameter up to 10 ms later.
+- **The on-screen keyboard's state** (MidiKeyboardState::processNextMidiBuffer on the audio thread
+  shares a lock with mouse clicks, and may grow the host's MIDI buffer). The audio thread no longer
+  touches it: clicked keys reach the audio through a lock-free queue, straight into the engine's
+  own event array; keys the audio heard come back through another queue and the timer shows them.
+- **The standalone player's MidiMessageCollector** (a lock shared with the MIDI thread; late
+  messages squeezed into the end of the block). The MiniLab's keys, bend and pressure now go into
+  the processor's own lock-free queue, timestamped on arrival, and play one block later at their
+  exact distance apart. Other MIDI devices still go through JUCE's collector.
+- **Host blocks longer than prepared**: the engine grew its buffers on the audio thread. Now it
+  renders such a block in prepared-size pieces, each with its own events and beat position.
+- **The parameter listener lock** (JUCE's VST3 wrapper takes it per parameter during automation):
+  inherent to JUCE. CoolSynth's listener only stores atomics, and the panel polls instead of
+  adding listeners, so the message thread rarely takes that lock while audio runs. No change.
+
+## D160. No big memory wipes inside an audio block (2026-11-15)
+
+From the real-time review, chosen by the user ("No big wipes in the audio"):
+- Every note start wiped its voice's one-second live recording (three levels, about 0.6 MB at
+  48 kHz, 1.2 MB at 96 kHz), though only a Grain slot set to Live reads it: a 32-note chord with
+  unison wiped up to 37 MB in one block. The recording now counts the frames it has written since
+  the note began, and anything older reads as silence: the same sound, no memory touched.
+- All Sound Off and panic wiped every effect of all 18 effect slots (delay lines of 4 s, the grain
+  buffer, the room: about 38 MB at 48 kHz) in one block; many hosts send All Sound Off when the
+  transport stops. Each slot now remembers which of its effects played since its last wipe and
+  wipes only those; a slot that stayed off costs nothing.

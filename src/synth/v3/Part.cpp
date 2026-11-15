@@ -177,6 +177,8 @@ namespace coolsynth::synth::v3
             }
         }
 
+        keepRingingNotes(settings);
+
         if (settings.playMode != currentMode)
         {
             // A different play mode owns the voices differently: let everything ring out and start clean.
@@ -194,6 +196,48 @@ namespace coolsynth::synth::v3
             renderChunk(left + chunkStart, right + chunkStart, n, events.subspan(first, last - first), chunkStart, settings, transport);
             first = last;
         }
+        lastVoiceSettings = settings.voice;
+    }
+
+    void Part::keepRingingNotes(const PartSettings& settings) noexcept
+    {
+        if (! generationPrimed)
+        {
+            soundGeneration = settings.soundGeneration;
+            generationPrimed = true;
+            return;
+        }
+        if (settings.soundGeneration == soundGeneration)
+            return;
+
+        // Another preset: the notes still ringing go on with the sound they started with, as on a hardware synth;
+        // the next notes play the new one (D158). The last block's voice settings are that sound.
+        bool ringing = false;
+        for (std::size_t i = 0; i < voices.size(); ++i)
+            ringing = ringing || (voices[i].isActive() && state[i].generation == soundGeneration);
+        if (ringing)
+        {
+            auto& kept = earlierSounds[static_cast<std::size_t>(nextEarlierSound)];
+            if (kept.used) // three changes while notes ring: the oldest of them fade out
+                for (std::size_t i = 0; i < voices.size(); ++i)
+                    if (voices[i].isActive() && state[i].generation == kept.generation)
+                        voices[i].fadeOut();
+            kept.used = true;
+            kept.generation = soundGeneration;
+            kept.voice = lastVoiceSettings;
+            nextEarlierSound = (nextEarlierSound + 1) % earlierSoundCount;
+        }
+        soundGeneration = settings.soundGeneration;
+    }
+
+    const VoiceSettings& Part::voiceSettingsFor(std::size_t voiceIndex, const PartSettings& settings) const noexcept
+    {
+        const auto generation = state[voiceIndex].generation;
+        if (generation != soundGeneration)
+            for (const auto& kept : earlierSounds)
+                if (kept.used && kept.generation == generation)
+                    return kept.voice;
+        return settings.voice;
     }
 
     void Part::renderChunk(float* left, float* right, int n, std::span<const EngineMidiEvent> events, int offsetBase,
@@ -391,7 +435,7 @@ namespace coolsynth::synth::v3
             auto& v = voices[i];
             if (! v.isActive())
                 continue;
-            v.render(busLeft.data() + offset, busRight.data() + offset, length, settings.voice, globals);
+            v.render(busLeft.data() + offset, busRight.data() + offset, length, voiceSettingsFor(i, settings), globals);
             if (! v.isActive())
             {
                 state[i].keyDown = false;
@@ -542,7 +586,7 @@ namespace coolsynth::synth::v3
             {
                 start.pan = settings.voiceSpread * voicePlace(static_cast<int>(i));
                 voices[i].retrigger(start);
-                state[i] = { note, true, false, order };
+                state[i] = { note, true, false, order, soundGeneration };
                 lastNote = note;
                 return;
             }
@@ -551,7 +595,7 @@ namespace coolsynth::synth::v3
         const int index = pickVoice(std::clamp(settings.polyphony, 1, maxVoices));
         start.pan = settings.voiceSpread * voicePlace(index);
         voices[static_cast<std::size_t>(index)].start(start);
-        state[static_cast<std::size_t>(index)] = { note, true, false, order };
+        state[static_cast<std::size_t>(index)] = { note, true, false, order, soundGeneration };
         lastNote = note;
     }
 
@@ -688,7 +732,7 @@ namespace coolsynth::synth::v3
                 v.legato(start);
             else
                 v.retrigger(start);
-            state[static_cast<std::size_t>(i)] = { note, true, false, order };
+            state[static_cast<std::size_t>(i)] = { note, true, false, order, soundGeneration };
         }
         monoNote = note;
         lastNote = note;

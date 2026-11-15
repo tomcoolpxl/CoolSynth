@@ -192,6 +192,7 @@ namespace coolsynth::synth::v3
     public:
         static constexpr int maxSubBlock = 32;
         static constexpr double stealFadeSeconds = 0.0015;
+        static constexpr double fadeOutSeconds = 0.01; // fadeOut(): long enough not to click
         static constexpr float minAmpAttackSeconds = 0.0005f;
         static constexpr float minAmpReleaseSeconds = 0.002f;
 
@@ -212,6 +213,8 @@ namespace coolsynth::synth::v3
         void legato(const NoteStart& note) noexcept;
         void release(float releaseVelocity = 0.5f) noexcept;
         void kill() noexcept { reset(); }
+        /** Fades whatever sounds out over 10 ms and then falls idle; a waiting note is dropped. */
+        void fadeOut() noexcept;
         /** The pressure on this voice's own key (polyphonic aftertouch), 0..1. A new key starts at 0. */
         void setPolyPressure(float value) noexcept { polyPressure = std::clamp(value, 0.0f, 1.0f); }
 
@@ -289,6 +292,9 @@ namespace coolsynth::synth::v3
         int stealRemaining = 0;
         int envelopeHold = 0; // samples the envelopes wait at a fresh note, matching the generators' latency
         int stealTotal = 1;
+        int fadeOutTotal = 1;
+        int fadeTotal = 1;       // the length of the fade under way: a steal's or a fade-out's
+        bool fadingOut = false;  // the fade ends in silence, not in a waiting note
 
         float currentPitch = 60.0f;
         float targetPitch = 60.0f;

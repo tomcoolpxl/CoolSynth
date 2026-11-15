@@ -181,10 +181,12 @@ SynthAudioProcessor::SynthAudioProcessor()
     for (auto& handle : userSoundHandles)
         handle.store(-1);
     parameters.state.addListener(this);
+    keyboardState.addListener(this);
 }
 
 SynthAudioProcessor::~SynthAudioProcessor()
 {
+    keyboardState.removeListener(this);
     parameters.state.removeListener(this);
     for (auto& handle : userSoundHandles)
         if (const int held = handle.exchange(-1); held >= 0)
@@ -285,9 +287,6 @@ void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     setLatencySamples(synthEngine.getLatencySamples());
     scopeFifo.clear();
     monoMixScratch.resize(static_cast<size_t>(samplesPerBlock));
-    // Prime the AsyncUpdater's lazy first-call allocation before the audio thread touches it.
-    mappedActionBridge.triggerAsyncUpdate();
-    mappedActionBridge.cancelPendingUpdate();
 }
 
 void SynthAudioProcessor::releaseResources()
@@ -299,8 +298,64 @@ void SynthAudioProcessor::reset()
 {
     panicRequested.store(false, std::memory_order_release);
     synthEngine.panic();
-    keyboardState.reset();
+    keyboardDisplayCleared.store(true, std::memory_order_release); // hosts may call this on the audio thread: no lock here
     scopeFifo.clear();
+}
+
+void SynthAudioProcessor::pushKey(juce::AbstractFifo& fifo, std::array<KeyEvent, keyQueueSize>& events, KeyEvent event) noexcept
+{
+    const auto scope = fifo.write(1);
+    if (scope.blockSize1 > 0)
+        events[static_cast<std::size_t>(scope.startIndex1)] = event;
+    else if (scope.blockSize2 > 0)
+        events[static_cast<std::size_t>(scope.startIndex2)] = event;
+}
+
+void SynthAudioProcessor::handleNoteOn(juce::MidiKeyboardState*, int, int midiNoteNumber, float velocity)
+{
+    if (showingHeardKeys)
+        return; // the keyboard only shows what was played elsewhere
+    pushKey(clickedKeys, clickedKeyEvents,
+            { static_cast<std::uint8_t>(juce::jlimit(0, 127, midiNoteNumber)), static_cast<std::uint8_t>(juce::jlimit(1, 127, juce::roundToInt(velocity * 127.0f))) });
+}
+
+void SynthAudioProcessor::handleNoteOff(juce::MidiKeyboardState*, int, int midiNoteNumber, float)
+{
+    if (showingHeardKeys)
+        return;
+    pushKey(clickedKeys, clickedKeyEvents, { static_cast<std::uint8_t>(juce::jlimit(0, 127, midiNoteNumber)), 0 });
+}
+
+void SynthAudioProcessor::showHeardKeys()
+{
+    const juce::ScopedValueSetter<bool> showing(showingHeardKeys, true);
+    if (keyboardDisplayCleared.exchange(false, std::memory_order_acq_rel))
+        keyboardState.allNotesOff(0);
+    const auto scope = heardKeys.read(heardKeys.getNumReady());
+    scope.forEach([&](int index)
+    {
+        const auto event = heardKeyEvents[static_cast<std::size_t>(index)];
+        if (event.velocity > 0)
+            keyboardState.noteOn(1, event.note, static_cast<float>(event.velocity) / 127.0f);
+        else
+            keyboardState.noteOff(1, event.note, 0.0f);
+    });
+}
+
+bool SynthAudioProcessor::pushLiveMidi(const juce::MidiMessage& message) noexcept
+{
+    const int size = message.getRawDataSize();
+    if (size <= 0 || size > 3)
+        return false; // notes, controllers, bend and pressure only
+    const auto scope = liveMidi.write(1);
+    LiveMessage* slot = scope.blockSize1 > 0 ? &liveMessages[static_cast<std::size_t>(scope.startIndex1)]
+                      : scope.blockSize2 > 0 ? &liveMessages[static_cast<std::size_t>(scope.startIndex2)] : nullptr;
+    if (slot == nullptr)
+        return false;
+    std::copy_n(message.getRawData(), size, slot->bytes.begin());
+    slot->size = static_cast<std::uint8_t>(size);
+    slot->milliseconds = juce::Time::getMillisecondCounterHiRes();
+    return true;
 }
 
 bool SynthAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const
@@ -328,11 +383,9 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     if (panicRequested.exchange(false, std::memory_order_acq_rel))
     {
         synthEngine.panic();
-        keyboardState.allNotesOff(0);
+        keyboardDisplayCleared.store(true, std::memory_order_release);
         midiMessages.clear();
     }
-
-    keyboardState.processNextMidiBuffer(midiMessages, 0, buffer.getNumSamples(), true);
 
     std::array<coolsynth::synth::EngineMidiEvent, coolsynth::synth::maxEngineEventsPerBlock> engineEvents {};
     int engineEventCount = 0;
@@ -350,33 +403,83 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         notesHeldBack = 0;
     }
 
-    for (const auto metadata : midiMessages)
+    // One path for every message: the loading gate, the engine's events, the flight recorder, the keyboard's display.
+    const bool standalone = juce::JUCEApplicationBase::isStandaloneApp();
+    auto take = [&](const juce::MidiMessage& message, int samplePosition, bool clicked)
     {
-        if (loading && metadata.getMessage().isNoteOn())
+        if (loading && message.isNoteOn())
         {
             ++notesHeldBack;
-            continue;
+            return;
         }
         if (engineEventCount < static_cast<int> (engineEvents.size()))
         {
-            if (const auto event = makeEngineMidiEvent(metadata.getMessage(), metadata.samplePosition))
+            if (const auto event = makeEngineMidiEvent(message, samplePosition))
                 engineEvents[static_cast<size_t> (engineEventCount++)] = *event;
         }
-        if (const auto message = metadata.getMessage(); message.isNoteOn())
+        if (message.isNoteOn())
+        {
             coolsynth::diag::record(coolsynth::diag::Event::noteOn, message.getNoteNumber(), message.getVelocity());
+            if (! clicked)
+                pushKey(heardKeys, heardKeyEvents, { static_cast<std::uint8_t>(message.getNoteNumber()), message.getVelocity() });
+        }
         else if (message.isNoteOff())
+        {
             coolsynth::diag::record(coolsynth::diag::Event::noteOff, message.getNoteNumber());
+            if (! clicked)
+                pushKey(heardKeys, heardKeyEvents, { static_cast<std::uint8_t>(message.getNoteNumber()), 0 });
+        }
 
-        if (juce::JUCEApplicationBase::isStandaloneApp())
-            continue;
+        if (standalone || clicked)
+            return;
 
-        if (const auto event = coolsynth::midi::toControllerMidiEvent(metadata.getMessage()))
+        if (const auto event = coolsynth::midi::toControllerMidiEvent(message))
         {
             enqueuePluginControllerEvent(*event);
 
             if (! isReservedSynthController(*event))
                 enqueuePluginMappedControllerEvent(*event);
         }
+    };
+
+    // Keys clicked on the screen, at the block's start (D159).
+    {
+        const auto clicks = clickedKeys.read(clickedKeys.getNumReady());
+        clicks.forEach([&](int index)
+        {
+            const auto key = clickedKeyEvents[static_cast<std::size_t>(index)];
+            take(key.velocity > 0 ? juce::MidiMessage::noteOn(1, key.note, key.velocity) : juce::MidiMessage::noteOff(1, key.note), 0, true);
+        });
+    }
+
+    for (const auto metadata : midiMessages)
+        take(metadata.getMessage(), metadata.samplePosition, false);
+
+    // The MiniLab's own messages, one block late, each at its distance from the block before (D159).
+    {
+        const int blockLength = buffer.getNumSamples();
+        const double rate = getSampleRate() > 0.0 ? getSampleRate() : 48000.0;
+        const double windowStartMs = blockStartMs - 1000.0 * blockLength / rate;
+        const auto live = liveMidi.read(liveMidi.getNumReady());
+        live.forEach([&](int index)
+        {
+            const auto& m = liveMessages[static_cast<std::size_t>(index)];
+            const int offset = juce::jlimit(0, blockLength - 1, static_cast<int>(std::lround((m.milliseconds - windowStartMs) * rate / 1000.0)));
+            take(juce::MidiMessage(m.bytes.data(), m.size, 0.0), offset, false);
+        });
+    }
+
+    // The three sources in time order; already nearly so, and an insertion sort neither allocates nor reorders ties.
+    for (int i = 1; i < engineEventCount; ++i)
+    {
+        const auto event = engineEvents[static_cast<std::size_t>(i)];
+        int j = i - 1;
+        while (j >= 0 && engineEvents[static_cast<std::size_t>(j)].sampleOffset > event.sampleOffset)
+        {
+            engineEvents[static_cast<std::size_t>(j + 1)] = engineEvents[static_cast<std::size_t>(j)];
+            --j;
+        }
+        engineEvents[static_cast<std::size_t>(j + 1)] = event;
     }
 
     coolsynth::synth::EngineTransportInfo transportInfo;
@@ -554,6 +657,7 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     coolsynth::diag::record(coolsynth::diag::Event::presetLoaded, index, 0, 0.0f, 0.0f, preset.name.toRawUTF8());
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
     const BulkEdit whole(*this); // the audio thread sees the old preset or the new one, never a mix (D157)
+    soundGeneration.fetch_add(1, std::memory_order_relaxed); // notes ringing now keep the old sound (D158)
     coolsynth::presets::applyFactoryPreset(parameters, preset);
     setPatchIdentity(preset.name, false);
 }
@@ -619,6 +723,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 
         const AtomicFlagScope applying(applyingPatch, true);
         const BulkEdit whole(*this);
+        soundGeneration.fetch_add(1, std::memory_order_relaxed); // a whole new sound (D158)
         suppressGestureSnapshots = true;
         const bool applied = applyParameterStateXml(parameterStateXml);
         suppressGestureSnapshots = false;
@@ -1221,6 +1326,9 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
                 userSoundHandles[static_cast<std::size_t>(part * coolsynth::parameters::v3::partGeneratorSlots + slot)].load(std::memory_order_relaxed);
 
     settings.masterGainLinear = juce::Decibels::decibelsToGain(v.masterGainDb->load());
+    const auto generation = soundGeneration.load(std::memory_order_relaxed);
+    for (auto& part : settings.parts)
+        part.soundGeneration = generation;
 }
 
 coolsynth::synth::GlobalParameterPointers SynthAudioProcessor::bindParameterPointers(APVTS& state)
