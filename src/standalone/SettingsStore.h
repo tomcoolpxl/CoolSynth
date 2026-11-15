@@ -108,6 +108,18 @@ namespace coolsynth::standalone
             propertySet.setValue("showCcLabels", show);
         }
 
+        // Multi-core (D164, D167): true is Auto, sounds that overlap render on several cores; false keeps all on the
+        // audio thread. Auto when never set.
+        bool getMultiCore() const
+        {
+            return propertySet.getBoolValue("multiCore", true);
+        }
+
+        void setMultiCore(bool on)
+        {
+            propertySet.setValue("multiCore", on);
+        }
+
         void savePersistedControllerProfileSelection(PersistedControllerProfileSelection selection);
         void clearPersistedControllerProfileSelection()
         {

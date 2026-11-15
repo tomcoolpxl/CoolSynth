@@ -3310,7 +3310,9 @@ own thread while the first uses the helpers. Off while a host renders offline; A
 app and the plugin (the user's choice); COOLSYNTH_MULTICORE=0 switches it off. Measured: 32 note-ons in
 one block on every preset after a switch, worst block 3.3 ms instead of 6.9 ms; 120 switches 1.7 ms
 instead of 2.0 ms (256-sample blocks, 5.3 ms each). The allocation alarm watches the helpers too.
-Still to do: an Auto/Off setting in Options (the switch exists in the processor), and the load per
+The app's Options button opens a menu: Audio and MIDI settings, then Multi-core Auto or Off (kept in the
+app's settings, Auto when never chosen; COOLSYNTH_MULTICORE=0 still wins), and the CPU it found. The plugin
+stays on Auto until the real interface has a place for it. Still to do: the load per
 core on the screen.
 
 ## D168. The same sound in every program: no stray randomness, no global counts (2026-11-15)
