@@ -11,8 +11,9 @@ env1 = attack=1 decay=200 sustain=0.6 release=60
 env2 = attack=1 decay=200 sustain=0 release=80 decayCurve=-0.7
 voice = env2ToP1=0.55 velToP1=0.3 glide=40
 play = mode=legato glideLegato=on
-f1 = Drive amount=0.3 mix=0.7
-master = -10.5
+i1 = Drive amount=0.3 mix=0.7
+mix = level=-10.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Cutoff, Squelch, Decay, Wobble
 macros = names=Cutoff,Squelch,Decay,Wobble
 mod = src=macro1 dst=p1.cutoff amount=0.15
@@ -37,8 +38,9 @@ mod = src=env3 dst=p1.drive amount=0.45
 mod = src=velocity dst=p1.drive amount=0.15
 voice = env2ToP1=0
 play = mode=mono
-f1 = Drive amount=0.15 mix=0.5
-master = -13
+i1 = Drive amount=0.15 mix=0.5
+mix = level=-13
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Fizz, Fold, Decay, Churn
 macros = names=Fizz,Fold,Decay,Churn
 mod = src=macro1 dst=p2.cutoff amount=0.15
@@ -59,8 +61,9 @@ p1 = Drive curve=hard drive=14 tone=0.8 mix=1
 p2 = Ladder cutoff=4500 res=0.2 key=0.5
 env1 = attack=0.5 decay=250 sustain=0 release=200 velocity=0.5
 voice = env2ToP1=0
-f1 = Reverb size=0.3 damping=0.4 mix=0.2
-master = 0.5
+i1 = Reverb size=0.3 damping=0.4 mix=0.2
+mix = level=0.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Sizzle, Crunch, Length, Shudder
 macros = names=Sizzle,Crunch,Length,Shudder
 mod = src=macro1 dst=p2.cutoff amount=0.12
@@ -85,8 +88,9 @@ env1 = attack=2000 decay=2000 sustain=1 release=3000
 glfo1 = shape=sine sync=off rate=0.05 retrigger=off
 mod = src=glfo1 dst=p1.tune amount=0.15
 voice = env2ToP1=0 drift=5
-f1 = Reverb size=0.7 damping=0.6 mix=0.2
-master = -11
+i1 = Reverb size=0.7 damping=0.6 mix=0.2
+mix = level=-11
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Glow, Roar, Swell, Sweep
 macros = names=Glow,Roar,Swell,Sweep
 mod = src=macro1 dst=p3.cutoff amount=0.15
@@ -95,7 +99,7 @@ mod = src=macro2 dst=p1.fb amount=0.06
 mod = src=macro3 dst=env1.time amount=0.25
 mod = src=glfo1 dst=p1.tune amount=0.1 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.1
+fx = src=macro3 dst=i1.size amount=0.1
 
 [Concrete Pad]
 room = Basement
@@ -108,10 +112,11 @@ p2 = Ladder cutoff=1000 res=0.15 key=0.3
 p3 = Crusher bits=12 rate=22000 mix=1
 env1 = attack=600 decay=1500 sustain=1 release=1500
 voice = env2ToP1=0 drift=4
-f1 = Drive amount=0.15 mix=0.5
-f2 = LoFi wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7 flutter=0
-f3 = Reverb size=0.6 damping=0.6 mix=0.2
-master = -13.5
+i1 = Drive amount=0.15 mix=0.5
+i2 = LoFi wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7 flutter=0
+i3 = Reverb size=0.6 damping=0.6 mix=0.2
+mix = level=-13.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Daylight, Crush, Swell, Sway
 macros = names=Daylight,Crush,Swell,Sway
 mod = src=macro1 dst=p2.cutoff amount=0.15
@@ -121,9 +126,9 @@ mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=p2.cutoff amount=0.08 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.5
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro2 dst=f2.crackle amount=0.15
-fx = src=macro3 dst=f3.size amount=0.1
-fx = src=macro4 dst=f2.wow amount=0.3
+fx = src=macro2 dst=i2.crackle amount=0.15
+fx = src=macro3 dst=i3.size amount=0.1
+fx = src=macro4 dst=i2.wow amount=0.3
 
 [Siren]
 room = Basement
@@ -136,9 +141,10 @@ glfo1 = shape=sawUp sync=off rate=0.1 retrigger=on
 mod = src=glfo1 dst=p1.cutoff amount=0.3
 voice = env2ToP1=0
 play = mode=mono
-f1 = Drive amount=0.2 mix=0.6
-f2 = Delay time=375 feedback=0.8 mix=0.3
-master = -4.5
+i1 = Drive amount=0.2 mix=0.6
+i2 = Delay time=375 feedback=0.8 mix=0.3
+mix = level=-4.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Scream, Snarl, Fade, Wail
 macros = names=Scream,Snarl,Fade,Wail
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -147,4 +153,4 @@ mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=p1.cutoff amount=0.04 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.35
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f2.feedback amount=0.05
+fx = src=macro3 dst=i2.feedback amount=0.05

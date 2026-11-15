@@ -3905,6 +3905,14 @@ effect and arp, stacked or split). The user's choices:
   padding included, so a change of stack layout made a preset loaded twice count as new; a load now
   counts as a new sound only if a parameter value changed. All 468 tests pass; every factory preset
   renders bit for bit the same (the four random-arp presets differ, as on every run).
+- **Stage 2 done**: the 117 one-layer presets carry their sound in layer A: their master effects
+  became layer slots after their own inserts (in order), their effect routes followed, and their
+  master level joined the layer level (the master at 0 dB); the 3 combinations keep their shared
+  effects in the chain at the end. Checked by rendering every preset from the bank before and after
+  with the same program (a chord, 3 s, 24-bit): 115 identical bit for bit, Frozen Pluck within one
+  24-bit step (its level before the reverb now comes after it: rounding, -127 dB), the four
+  random-arp presets random as ever. Saved states and sounds from before keep their effects in the
+  chain at the end, which plays them exactly as before.
 
 ## D195. The layer screen above knobs 1-4; rings on knobs 6-8 (2026-11-15)
 

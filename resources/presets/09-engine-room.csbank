@@ -7,7 +7,8 @@ p1 = Off
 env1 = attack=2 decay=80 sustain=1 release=60 velocity=0.3
 voice = env2ToP1=0
 play = mode=legato
-master = -8.5
+mix = level=-8.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Edge, (none), Release, Vibrato
 macros = names=Edge,-,Release,Vibrato
 mod = src=macro1 dst=g1.shape amount=0.12
@@ -27,8 +28,9 @@ env3 = attack=0.5 decay=60 sustain=0 release=60 decayCurve=-0.7 oneShot=on
 mod = src=env3 dst=pitch amount=0.5
 voice = env2ToP1=0 glide=70
 play = mode=legato glideLegato=on
-f1 = Drive amount=0.3 mix=0.5
-master = -10.5
+i1 = Drive amount=0.3 mix=0.5
+mix = level=-10.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Edge, Punch, Decay, Vibrato
 macros = names=Edge,Punch,Decay,Vibrato
 mod = src=macro1 dst=g1.shape amount=0.1
@@ -37,7 +39,7 @@ mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro1 dst=f1.mix amount=0.2
+fx = src=macro1 dst=i1.mix amount=0.2
 
 [Wobble]
 room = Engine Room
@@ -53,8 +55,9 @@ mod = src=lfo1 dst=p1.cutoff amount=0.5 curve=unipolar
 mod = src=wheel dst=lfo1.rate amount=0.25
 voice = env2ToP1=0 glide=25
 play = mode=legato glideLegato=on
-f1 = Drive amount=0.25 mix=0.6
-master = -15.5
+i1 = Drive amount=0.25 mix=0.6
+mix = level=-15.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Grit, Release, Speed
 macros = names=Bright,Grit,Release,Speed
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -63,7 +66,7 @@ mod = src=macro2 dst=p1.drive amount=0.25
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=macro4 dst=lfo1.rate amount=0.25
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro2 dst=f1.amount amount=0.1
+fx = src=macro2 dst=i1.amount amount=0.1
 
 [FM Knock]
 room = Engine Room
@@ -77,7 +80,8 @@ mod = src=env3 dst=g1.index amount=0.6
 mod = src=velocity dst=g1.index amount=0.15
 voice = env2ToP1=0
 play = mode=mono
-master = -3.5
+mix = level=-3.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Growl, Length, Wah
 macros = names=Bright,Growl,Length,Wah
 mod = src=macro1 dst=p1.cutoff amount=0.12
@@ -96,7 +100,8 @@ env1 = attack=0.5 decay=260 sustain=0.55 release=80 velocity=0.5
 env2 = attack=0.5 decay=130 sustain=0 release=90 decayCurve=-0.8
 voice = env2ToP1=0.52 velToP1=0.12
 play = mode=mono
-master = -3.5
+mix = level=-3.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Ring, Decay, Wobble
 macros = names=Bright,Ring,Decay,Wobble
 mod = src=macro1 dst=p1.cutoff amount=0.08
@@ -114,7 +119,8 @@ env1 = attack=2 decay=320 sustain=1 release=90 velocity=0.4
 env2 = attack=2 decay=360 sustain=0.3 release=150
 voice = env2ToP1=0.3 glide=20 drift=2
 play = mode=legato priority=low glideLegato=on
-master = -5.5
+mix = level=-5.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Thickness, Decay, Vibrato
 macros = names=Bright,Thickness,Decay,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.12

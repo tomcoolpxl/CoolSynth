@@ -13,8 +13,9 @@ glfo2 = shape=sine sync=off rate=0.045 phase=120 retrigger=off
 mod = src=glfo1 dst=g1.pitch amount=0.5
 mod = src=glfo2 dst=g2.pitch amount=0.35
 voice = env2ToP1=0
-f1 = Reverb size=0.9 damping=0.35 mix=0.4
-master = -9.5
+i1 = Reverb size=0.9 damping=0.35 mix=0.4
+mix = level=-9.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Height, Whistle, Swell, Gusts
 macros = names=Height,Whistle,Swell,Gusts
 mod = src=macro1 dst=g1.pitch amount=0.25
@@ -26,7 +27,7 @@ mod = src=lfo1 dst=g1.pitch amount=0.08 via=macro4
 mod = src=lfo1 dst=g2.pitch amount=-0.06 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.5
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.05
+fx = src=macro3 dst=i1.size amount=0.05
 
 [Nebula Pad]
 room = Observatory
@@ -42,9 +43,10 @@ lfo2 = shape=sine rate=0.037 retrigger=off
 mod = src=lfo1 dst=g1.pos amount=0.5
 mod = src=lfo2 dst=g2.pos amount=0.25
 voice = env2ToP1=0 drift=3
-f1 = Chorus rate=0.3 depth=0.35 mix=0.25
-f2 = Reverb size=0.9 damping=0.4 mix=0.38 predelay=80 lowcut=80
-master = -8
+i1 = Chorus rate=0.3 depth=0.35 mix=0.25
+i2 = Reverb size=0.9 damping=0.4 mix=0.38 predelay=80 lowcut=80
+mix = level=-8
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Shine, Thickness, Swell, Drift
 macros = names=Shine,Thickness,Swell,Drift
 mod = src=macro1 dst=p1.cutoff amount=0.15
@@ -54,8 +56,8 @@ mod = src=macro3 dst=env1.time amount=0.25
 mod = src=macro4 dst=lfo1.rate amount=0.5
 mod = src=macro4 dst=lfo2.rate amount=0.5
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro2 dst=f1.depth amount=0.25
-fx = src=macro3 dst=f2.size amount=0.05
+fx = src=macro2 dst=i1.depth amount=0.25
+fx = src=macro3 dst=i2.size amount=0.05
 
 [Deep Field]
 room = Observatory
@@ -104,8 +106,9 @@ g2 = VA shape=sine rand=0 level=0.6
 p1 = SVF mode=lp cutoff=1800 res=0.1 key=0.3
 env1 = attack=1500 decay=2000 sustain=1 release=5000
 voice = env2ToP1=0 drift=3
-f1 = Reverb size=0.85 damping=0.35 mix=0.45 predelay=40 lowcut=120 shimmer=0.6
-master = -19
+i1 = Reverb size=0.85 damping=0.35 mix=0.45 predelay=40 lowcut=120 shimmer=0.6
+mix = level=-19
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Glow, Grit, Swell, Waver
 macros = names=Glow,Grit,Swell,Waver
 mod = src=macro1 dst=p1.cutoff amount=0.15
@@ -115,9 +118,9 @@ mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.6
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro1 dst=f1.shimmer amount=0.15
-fx = src=macro3 dst=f1.size amount=0.05
-fx = src=macro4 dst=f1.modulation amount=0.3
+fx = src=macro1 dst=i1.shimmer amount=0.15
+fx = src=macro3 dst=i1.size amount=0.05
+fx = src=macro4 dst=i1.modulation amount=0.3
 
 [Satellite Ping]
 room = Observatory
@@ -128,9 +131,10 @@ p1 = Off
 env1 = attack=1 decay=150 sustain=0 release=150 velocity=0.4
 voice = env2ToP1=0
 arp = on rate=1/8 pattern=random octaves=2 gate=0.5 chance=0.35
-f1 = Delay sync=on division=1/4. mode=pingpong feedback=0.7 mix=0.35
-f2 = Reverb size=0.8 damping=0.4 mix=0.35 predelay=60
-master = 5.5
+i1 = Delay sync=on division=1/4. mode=pingpong feedback=0.7 mix=0.35
+i2 = Reverb size=0.8 damping=0.4 mix=0.35 predelay=60
+mix = level=5.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Glint, Body, Ring, Warble
 macros = names=Glint,Body,Ring,Warble
 mod = src=macro1 dst=g1.shape amount=0.4
@@ -139,7 +143,7 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=pitch amount=0.012 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.feedback amount=0.1
+fx = src=macro3 dst=i1.feedback amount=0.1
 
 [Granular Sky]
 room = Observatory
@@ -153,8 +157,9 @@ g3 = Sample sample=glass loop=on level=0.2
 p1 = SVF mode=lp cutoff=6000 res=0.05 key=0.3
 env1 = attack=2000 decay=2000 sustain=1 release=4000
 voice = env2ToP1=0
-f1 = Reverb size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
-master = -4
+i1 = Reverb size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
+mix = level=-4
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Air, Scatter, Swell, Wander
 macros = names=Air,Scatter,Swell,Wander
 mod = src=macro1 dst=p1.cutoff amount=0.12
@@ -166,7 +171,7 @@ mod = src=lfo1 dst=g1.pos amount=0.1 via=macro4
 mod = src=lfo1 dst=g2.pos amount=-0.1 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.75
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.05
+fx = src=macro3 dst=i1.size amount=0.05
 
 [Live Shimmer]
 room = Observatory
@@ -179,9 +184,10 @@ g2 = Grain combine=live pos=0.25 scan=1 size=200 density=30 spray=0.4 pitch=0.06
 p1 = Ladder cutoff=2400 res=0.1 key=0.3
 env1 = attack=600 decay=1500 sustain=0.9 release=2500
 voice = env2ToP1=0
-f1 = Chorus rate=0.3 depth=0.4 mix=0.3
-f2 = Reverb size=0.85 damping=0.45 mix=0.38 predelay=30 lowcut=150
-master = -5.5
+i1 = Chorus rate=0.3 depth=0.4 mix=0.3
+i2 = Reverb size=0.85 damping=0.45 mix=0.38 predelay=30 lowcut=150
+mix = level=-5.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Sparkle, Shimmer, Swell, Breathe
 macros = names=Sparkle,Shimmer,Swell,Breathe
 mod = src=macro1 dst=p1.cutoff amount=0.15
@@ -191,8 +197,8 @@ mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=p1.cutoff amount=0.08 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.5
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro2 dst=f1.depth amount=0.2
-fx = src=macro3 dst=f2.size amount=0.05
+fx = src=macro2 dst=i1.depth amount=0.2
+fx = src=macro3 dst=i2.size amount=0.05
 
 [Frozen Pluck]
 room = Observatory
@@ -209,9 +215,9 @@ env1 = attack=2 decay=3000 sustain=0.8 release=1800
 env3 = attack=1 decay=900 sustain=0 release=10
 mod = src=env3 dst=g2.scan amount=0.125
 voice = env2ToP1=0
-mix = level=6
-f1 = Reverb size=0.8 damping=0.4 mix=0.3 predelay=20 lowcut=120
-master = -3
+mix = level=3
+i1 = Reverb size=0.8 damping=0.4 mix=0.3 predelay=20 lowcut=120
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Brilliance, Blur, Tail, Drift
 macros = names=Brilliance,Blur,Tail,Drift
 mod = src=macro1 dst=g1.pick amount=0.3
@@ -224,4 +230,4 @@ mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=g2.pos amount=0.15 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.75
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.08
+fx = src=macro3 dst=i1.size amount=0.08

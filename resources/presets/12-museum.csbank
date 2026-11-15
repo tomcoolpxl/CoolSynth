@@ -32,7 +32,8 @@ mod = src=env3 dst=g2.index amount=-0.0189 curve=logarithmic
 mod = src=key dst=g1.ratio3 amount=0.000806
 mod = src=key dst=g1.ratio4 amount=-0.000806
 voice = env2ToP1=0
-master = -11
+mix = level=-11
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Tine, Bark, Ring, Tremolo
 macros = names=Tine,Bark,Ring,Tremolo
 mod = src=env2 dst=g2.index amount=0.15 via=macro1 curve=logarithmic
@@ -71,7 +72,8 @@ mod = src=env3 dst=g1.index amount=0.7767 via=velocity curve=logarithmic
 mod = src=env3 dst=g1.index amount=-0.1252 curve=logarithmic
 mod = src=key dst=g2.amount amount=0.8
 voice = env2ToP1=0
-master = -12.5
+mix = level=-12.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Bark, Length, Wah
 macros = names=Bright,Bark,Length,Wah
 mod = src=env1 dst=g2.level2 amount=0.12 via=macro1 curve=logarithmic
@@ -107,7 +109,8 @@ mod = src=env2 dst=g2.pitch amount=0.51
 mod = src=lfo1 dst=g1.pitch amount=0.008 via=wheel
 voice = env2ToP1=0.41 velToP1=0 drift=1
 play = mode=poly voices=5
-master = -14.5
+mix = level=-14.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Sync, Sweep, Vibrato
 macros = names=Bright,Sync,Sweep,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -137,7 +140,8 @@ lfo1 = shape=triangle rate=5 retrigger=off
 mod = src=lfo1 dst=pitch amount=0.008 via=wheel
 voice = env2ToP1=0.56 velToP1=0 drift=1
 play = mode=poly voices=5
-master = -9
+mix = level=-9
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Blare, Bite, Swell, Vibrato
 macros = names=Blare,Bite,Swell,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -181,7 +185,8 @@ env1 = attack=1 decay=624 sustain=0.75 release=624 decayCurve=-1 releaseCurve=-1
 env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.285 velToP1=0 drift=1
 play = mode=legato priority=low
-master = -3.5
+mix = level=-3.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Growl, Decay, Vibrato
 macros = names=Bright,Growl,Decay,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -228,7 +233,8 @@ lfo1 = shape=triangle rate=3.5 retrigger=off
 mod = src=lfo1 dst=pitch amount=0.00115
 voice = env2ToP1=0 velToP1=0
 play = mode=poly voices=8
-master = -11
+mix = level=-11
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Bark, Length, Wah
 macros = names=Bright,Bark,Length,Wah
 mod = src=env1 dst=g1.level2 amount=0.1 via=macro1 curve=logarithmic
@@ -259,7 +265,8 @@ env1 = attack=30 decay=1000 sustain=1 release=250 velocity=0
 env2 = attack=15 decay=4410 sustain=0.3 release=4410 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.2 velToP1=0 drift=1
 play = mode=poly voices=8
-master = -11.5
+mix = level=-11.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Detune, Swell, Vibrato
 macros = names=Bright,Detune,Swell,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -292,7 +299,8 @@ env1 = attack=87.5 decay=1000 sustain=1 release=300 velocity=1
 env2 = attack=10 decay=2940 sustain=0.65 release=2940 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.15 velToP1=0 drift=1
 play = mode=poly voices=16 voiceSpread=1
-master = -8.5
+mix = level=-8.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Detune, Swell, Vibrato
 macros = names=Bright,Detune,Swell,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -336,7 +344,8 @@ env1 = attack=2 decay=1140 sustain=1 release=600 decayCurve=-1 releaseCurve=-1 v
 env2 = attack=10 hold=15 decay=3000 sustain=0 release=3000 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.075 velToP1=0 drift=1 glide=59 glideMode=rate glideDown=2.4
 play = mode=legato priority=low
-master = -3.5
+mix = level=-3.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Emphasis, Decay, Vibrato
 macros = names=Bright,Emphasis,Decay,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.08
@@ -368,7 +377,8 @@ play = mode=poly voices=16 voiceSpread=1
 lfo2 = shape=s&h rate=50 retrigger=off
 mod = src=lfo2 dst=vca amount=0.2
 i1 = Drive amount=0.05 mix=1
-master = -13
+mix = level=-13
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Grit, Swell, Vibrato
 macros = names=Bright,Grit,Swell,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.1

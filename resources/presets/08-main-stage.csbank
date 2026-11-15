@@ -8,8 +8,9 @@ p1 = Ladder cutoff=850 res=0.2 key=0.3 bass=0.6
 env1 = attack=4 decay=200 sustain=1 release=140 velocity=0.3
 voice = env2ToP1=0.06 glide=20
 play = mode=legato glideLegato=on
-f1 = Drive amount=0.18 mix=0.75
-master = -15
+i1 = Drive amount=0.18 mix=0.75
+mix = level=-15
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bite, Detune, Release, Sweep
 macros = names=Bite,Detune,Release,Sweep
 mod = src=macro1 dst=p1.cutoff amount=0.15
@@ -19,7 +20,7 @@ mod = src=macro3 dst=env1.time amount=0.5
 mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro1 dst=f1.amount amount=0.08
+fx = src=macro1 dst=i1.amount amount=0.08
 
 [Supersaw]
 room = Main Stage
@@ -75,8 +76,9 @@ mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=genv
 mod = src=genv dst=g2.tone amount=0.6
 mod = src=genv dst=g2.level amount=0.2
 voice = env2ToP1=0
-f1 = Reverb size=0.85 damping=0.4 mix=0.3
-master = -7.5
+i1 = Reverb size=0.85 damping=0.4 mix=0.3
+mix = level=-7.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Noise, Tail, Chop
 macros = names=Bright,Noise,Tail,Chop
 mod = src=macro1 dst=p1.cutoff amount=0.12
@@ -97,9 +99,10 @@ env2 = attack=1 decay=260 sustain=0 release=200
 env3 = attack=0.5 decay=40 sustain=0 release=40 decayCurve=-0.6
 mod = src=env3 dst=pitch amount=0.25
 voice = env2ToP1=0.45 velToP1=0.15
-f1 = Delay sync=on division=1/8 feedback=0.3 mix=0.18
-f2 = Reverb size=0.6 damping=0.4 mix=0.2
-master = -1
+i1 = Delay sync=on division=1/8 feedback=0.3 mix=0.18
+i2 = Reverb size=0.6 damping=0.4 mix=0.2
+mix = level=-1
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Squelch, Length, Shimmer
 macros = names=Bright,Squelch,Length,Shimmer
 mod = src=macro1 dst=p1.cutoff amount=0.12
@@ -110,8 +113,8 @@ mod = src=macro3 dst=env3.time amount=0.3
 mod = src=lfo1 dst=g2.pw amount=0.2 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.25
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.feedback amount=0.2
-fx = src=macro3 dst=f2.size amount=0.1
+fx = src=macro3 dst=i1.feedback amount=0.2
+fx = src=macro3 dst=i2.size amount=0.1
 
 [Hyper Lead]
 room = Main Stage
@@ -125,8 +128,9 @@ lfo1 = shape=s&h sync=on division=1/16 retrigger=on
 mod = src=lfo1 dst=pitch amount=0.25 curve=quantized
 voice = env2ToP1=0 glide=12
 play = mode=legato
-f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
-master = -0
+i1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+mix = level=0
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Crush, Release, Leaps
 macros = names=Bright,Crush,Release,Leaps
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -135,7 +139,7 @@ mod = src=macro2 dst=p2.bits amount=-0.13
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=lfo1 dst=pitch amount=0.125 curve=quantized via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.feedback amount=0.2
+fx = src=macro3 dst=i1.feedback amount=0.2
 
 [Neuro Growl]
 room = Main Stage
@@ -154,6 +158,7 @@ mod = src=lfo1 dst=g1.pos amount=0.2
 mod = src=wheel dst=lfo1.rate amount=0.25
 voice = env2ToP1=0 glide=30
 play = mode=legato glideLegato=on
+mix = level=0
 master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Grit, Release, Talk
 macros = names=Bright,Grit,Release,Talk
@@ -176,11 +181,12 @@ env2 = attack=5 decay=500 sustain=0.3 release=400
 mod = src=env2 dst=p1.cutoff amount=0.15
 voice = env2ToP1=0 drift=2
 chord = type=minor7
-f1 = Chorus rate=0.35 depth=0.45 mix=0.35
-f2 = Reverb size=0.6 damping=0.45 mix=0.22 predelay=20 lowcut=150
-f3 = EQ low=-1 tilt=0 high=2.5
-f4 = Pump depth=0.6 division=1/4 release=0.55
-master = -7
+i1 = Chorus rate=0.35 depth=0.45 mix=0.35
+i2 = Reverb size=0.6 damping=0.45 mix=0.22 predelay=20 lowcut=150
+i3 = EQ low=-1 tilt=0 high=2.5
+i4 = Pump depth=0.6 division=1/4 release=0.55
+mix = level=-7
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Detune, Tail, Wobble
 macros = names=Bright,Detune,Tail,Wobble
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -189,7 +195,7 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro1 dst=f3.high amount=0.08
-fx = src=macro2 dst=f1.depth amount=0.2
-fx = src=macro3 dst=f2.size amount=0.1
-fx = src=macro4 dst=f4.depth amount=0.15
+fx = src=macro1 dst=i3.high amount=0.08
+fx = src=macro2 dst=i1.depth amount=0.2
+fx = src=macro3 dst=i2.size amount=0.1
+fx = src=macro4 dst=i4.depth amount=0.15

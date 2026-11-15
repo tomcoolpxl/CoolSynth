@@ -14,8 +14,9 @@ mod = src=env3 dst=g1.index amount=0.45
 mod = src=velocity dst=g1.index amount=0.15
 mod = src=env3 dst=g2.index amount=0.3
 voice = env2ToP1=0
-f1 = Reverb size=0.75 damping=0.4 mix=0.3
-master = -12
+i1 = Reverb size=0.75 damping=0.4 mix=0.3
+mix = level=-12
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Shine, Metal, Ring, Tremolo
 macros = names=Shine,Metal,Ring,Tremolo
 mod = src=macro1 dst=g1.index amount=0.15
@@ -27,7 +28,7 @@ mod = src=macro3 dst=env3.time amount=0.3
 mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.1
+fx = src=macro3 dst=i1.size amount=0.1
 
 [Rain Chime]
 room = Greenhouse
@@ -39,9 +40,10 @@ p1 = Off
 env1 = attack=1 decay=300 sustain=0 release=250 velocity=0.5
 voice = env2ToP1=0
 arp = on rate=1/16 pattern=random octaves=3 gate=0.6 chance=0.5
-f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.25
-f2 = Reverb size=0.7 damping=0.35 mix=0.3
-master = -1.5
+i1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.25
+i2 = Reverb size=0.7 damping=0.35 mix=0.3
+mix = level=-1.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Glint, Shimmer, Ring, Warble
 macros = names=Glint,Shimmer,Ring,Warble
 mod = src=macro1 dst=g1.shape amount=0.3
@@ -51,8 +53,8 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=pitch amount=0.008 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro2 dst=f2.shimmer amount=0.2
-fx = src=macro3 dst=f1.feedback amount=0.2
+fx = src=macro2 dst=i2.shimmer amount=0.2
+fx = src=macro3 dst=i1.feedback amount=0.2
 
 [Crystal Pluck]
 room = Greenhouse
@@ -64,8 +66,9 @@ p1 = Ladder cutoff=600 res=0.3 key=1
 env1 = attack=1 decay=700 sustain=0 release=400 velocity=0.5
 env2 = attack=0.5 decay=180 sustain=0 release=150
 voice = env2ToP1=0.5 velToP1=0.12
-f1 = Reverb size=0.6 damping=0.45 mix=0.22
-master = -1.5
+i1 = Reverb size=0.6 damping=0.45 mix=0.22
+mix = level=-1.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Glassy, Ring, Vibrato
 macros = names=Bright,Glassy,Ring,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=0.12
@@ -76,7 +79,7 @@ mod = src=macro3 dst=env2.time amount=0.3
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.35
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.1
+fx = src=macro3 dst=i1.size amount=0.1
 
 [Kalimba]
 room = Greenhouse
@@ -92,8 +95,9 @@ mod = src=env3 dst=g2.level amount=0.35
 mod = src=velocity dst=g1.hard amount=0.2
 mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.2 predelay=10
-master = -6.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.2 predelay=10
+mix = level=-6.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Sparkle, Thumb, Ring, Flutter
 macros = names=Sparkle,Thumb,Ring,Flutter
 mod = src=macro1 dst=g1.hard amount=0.35
@@ -104,7 +108,7 @@ mod = src=macro3 dst=env1.time amount=0.2
 mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.35
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.1
+fx = src=macro3 dst=i1.size amount=0.1
 
 [Harp String]
 room = Greenhouse
@@ -134,7 +138,8 @@ mod = src=key dst=g3.level amount=-0.25
 mod = src=velocity dst=g3.level amount=0.05
 voice = env2ToP1=0 drift=1
 i1 = Room size=0.55 damping=0.3 width=1 mix=0.42
-master = -7.5
+mix = level=-7.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Brilliance, Twang, Ring, Vibrato
 macros = names=Brilliance,Twang,Ring,Vibrato
 mod = src=macro1 dst=g1.pick amount=0.2
@@ -162,8 +167,9 @@ mod = src=velocity dst=g1.hard amount=0.45
 mod = src=key dst=g1.decay amount=-0.7
 mod = src=env3 dst=g2.level amount=0.25
 voice = env2ToP1=0
-f1 = Reverb size=0.4 damping=0.55 mix=0.16 predelay=8
-master = -7
+i1 = Reverb size=0.4 damping=0.55 mix=0.16 predelay=8
+mix = level=-7
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Mallet, Knock, Ring, Roll
 macros = names=Mallet,Knock,Ring,Roll
 mod = src=macro1 dst=g1.hard amount=0.35
@@ -173,4 +179,4 @@ mod = src=macro3 dst=env1.time amount=0.15
 mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.5
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.1
+fx = src=macro3 dst=i1.size amount=0.1

@@ -7,7 +7,8 @@ g1 = VA shape=saw level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -11
+mix = level=-11
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Warmth, Grit, Tail, Vibrato
 macros = names=Warmth,Grit,Tail,Vibrato
 mod = src=macro1 dst=p1.cutoff amount=-0.45
@@ -22,7 +23,8 @@ g1 = VA shape=pulse pw=0.5 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -16
+mix = level=-16
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Warmth, Nasal, Tail, Swirl
 macros = names=Warmth,Nasal,Tail,Swirl
 mod = src=macro1 dst=p1.cutoff amount=-0.45
@@ -36,7 +38,8 @@ g1 = VA shape=sine level=0.8
 p1 = Off
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -12.5
+mix = level=-12.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Sub, Tail, Vibrato
 macros = names=Bright,Sub,Tail,Vibrato
 mod = src=macro1 dst=g1.shape amount=0.667
@@ -53,7 +56,8 @@ env1 = attack=1 decay=180 sustain=0 release=120
 env2 = attack=1 decay=160 sustain=0 release=120
 voice = env2ToP1=0.25
 arp = on rate=1/16 pattern=up octaves=2 gate=0.5
-master = 5
+mix = level=5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Squelch, Decay, Wobble
 macros = names=Bright,Squelch,Decay,Wobble
 mod = src=macro1 dst=p1.cutoff amount=0.15
@@ -68,7 +72,8 @@ g1 = Noise type=white width=0.5 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -7
+mix = level=-7
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Darken, Whistle, Tail, Surf
 macros = names=Darken,Whistle,Tail,Surf
 mod = src=macro1 dst=p1.cutoff amount=-0.45
@@ -85,7 +90,8 @@ g1 = FM2 ratio=1 index=1 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -11.5
+mix = level=-11.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Rasp, Tail, Vibrato
 macros = names=Bright,Rasp,Tail,Vibrato
 mod = src=macro1 dst=g1.index amount=0.3
@@ -100,7 +106,8 @@ g1 = Wavetable table=classic pos=0.667 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
-master = -10
+mix = level=-10
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Mellow, Grit, Tail, Scan
 macros = names=Mellow,Grit,Tail,Scan
 mod = src=macro1 dst=g1.pos amount=-0.35

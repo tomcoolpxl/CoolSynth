@@ -10,9 +10,10 @@ env1 = attack=1 decay=200 sustain=0 release=150 velocity=0.4
 env2 = attack=1 decay=150 sustain=0 release=100
 voice = env2ToP1=0.36
 arp = on rate=1/16 pattern=up octaves=1 gate=0.5 rhythm=euclidean pulses=5 steps=8
-f1 = Delay sync=on division=1/8. feedback=0.3 mix=0.15
-f2 = Reverb size=0.4 damping=0.5 mix=0.1
-master = 2.5
+i1 = Delay sync=on division=1/8. feedback=0.3 mix=0.15
+i2 = Reverb size=0.4 damping=0.5 mix=0.1
+mix = level=2.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Nasal, Length, Sweep
 macros = names=Bright,Nasal,Length,Sweep
 mod = src=macro1 dst=p1.cutoff amount=0.12
@@ -21,7 +22,7 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.feedback amount=0.2
+fx = src=macro3 dst=i1.feedback amount=0.2
 
 [Ratchet Run]
 room = Clock Tower
@@ -32,8 +33,9 @@ env1 = attack=1 decay=160 sustain=0 release=100 velocity=0.5
 env2 = attack=1 decay=130 sustain=0 release=90
 voice = env2ToP1=0.3 velToP1=0.15
 arp = on rate=1/16 pattern=up octaves=2 gate=0.5 ratchet=x2 ratchetChance=0.3 accentEvery=/4 accent=0.5
-f1 = Delay sync=on division=1/8 mode=pingpong feedback=0.25 mix=0.12
-master = 3
+i1 = Delay sync=on division=1/8 mode=pingpong feedback=0.25 mix=0.12
+mix = level=3
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Squelch, Length, Sweep
 macros = names=Bright,Squelch,Length,Sweep
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -42,7 +44,7 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.feedback amount=0.2
+fx = src=macro3 dst=i1.feedback amount=0.2
 
 [Step Filter]
 room = Clock Tower
@@ -55,9 +57,10 @@ env1 = attack=8 decay=600 sustain=1 release=350
 step = values=1,0.15,0.6,0.1,0.85,0.3,0.5,0,1,0.4,0.7,0.2,0.9,0.1,0.6,0.35 slides=0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1 division=1/16 glide=0.4
 mod = src=step dst=p1.cutoff amount=0.5
 voice = env2ToP1=0
-f1 = Delay sync=on division=1/8. feedback=0.25 mix=0.12
-f2 = Reverb size=0.45 damping=0.5 mix=0.12
-master = -8.5
+i1 = Delay sync=on division=1/8. feedback=0.25 mix=0.12
+i2 = Reverb size=0.45 damping=0.5 mix=0.12
+mix = level=-8.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Squelch, Release, Pattern
 macros = names=Bright,Squelch,Release,Pattern
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -65,7 +68,7 @@ mod = src=macro2 dst=p1.res amount=0.2
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=step dst=p1.cutoff amount=0.1 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f2.size amount=0.15
+fx = src=macro3 dst=i2.size amount=0.15
 
 [Random Walk]
 room = Clock Tower
@@ -77,8 +80,9 @@ env1 = attack=2 decay=280 sustain=0.3 release=200 velocity=0.4
 env2 = attack=2 decay=200 sustain=0.2 release=150
 voice = env2ToP1=0.2
 arp = on rate=1/16 pattern=randomWalk octaves=2 gate=0.6 chance=0.8
-f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
-f2 = Reverb size=0.5 damping=0.5 mix=0.15
+i1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+i2 = Reverb size=0.5 damping=0.5 mix=0.15
+mix = level=0
 master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Buzz, Length, Vibrato
 macros = names=Bright,Buzz,Length,Vibrato
@@ -89,7 +93,7 @@ mod = src=macro3 dst=env2.time amount=0.4
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.feedback amount=0.2
+fx = src=macro3 dst=i1.feedback amount=0.2
 
 [Polyrhythm Pad]
 room = Clock Tower
@@ -103,9 +107,10 @@ glfo1 = shape=sine sync=on division=1/4T retrigger=on
 mod = src=lfo1 dst=g1.pw amount=0.3
 mod = src=glfo1 dst=p1.cutoff amount=0.18
 voice = env2ToP1=0 drift=3
-f1 = Chorus rate=0.4 depth=0.4 mix=0.3
-f2 = Reverb size=0.7 damping=0.45 mix=0.25
-master = -7
+i1 = Chorus rate=0.4 depth=0.4 mix=0.3
+i2 = Reverb size=0.7 damping=0.45 mix=0.25
+mix = level=-7
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Resonance, Swell, Sway
 macros = names=Bright,Resonance,Swell,Sway
 mod = src=macro1 dst=p1.cutoff amount=0.12
@@ -114,8 +119,8 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=g1.pw amount=0.2 via=macro4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f2.size amount=0.1
-fx = src=macro4 dst=f1.depth amount=0.25
+fx = src=macro3 dst=i2.size amount=0.1
+fx = src=macro4 dst=i1.depth amount=0.25
 
 [Chord Trigger]
 room = Clock Tower
@@ -130,9 +135,10 @@ env2 = attack=1 decay=320 sustain=0 release=200
 voice = env2ToP1=0.45
 chord = type=sus2
 arp = on rate=1/8 pattern=updown octaves=2 gate=0.6
-f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
-f2 = Reverb size=0.5 damping=0.5 mix=0.15
-master = -2.5
+i1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
+i2 = Reverb size=0.5 damping=0.5 mix=0.15
+mix = level=-2.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): Bright, Bite, Length, Sweep
 macros = names=Bright,Bite,Length,Sweep
 mod = src=macro1 dst=p1.cutoff amount=0.1
@@ -141,4 +147,4 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.1 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.feedback amount=0.2
+fx = src=macro3 dst=i1.feedback amount=0.2

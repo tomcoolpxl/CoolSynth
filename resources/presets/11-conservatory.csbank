@@ -10,15 +10,16 @@ g1 = Sample sample=steinway-grand style=grand loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.4 damping=0.5 mix=0.12
-master = -2.5
+i1 = Reverb size=0.4 damping=0.5 mix=0.12
+mix = level=-2.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Pedal, Sway
 macros = names=-,Detune,Pedal,Sway
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Yamaha Upright]
 room = Conservatory
@@ -28,15 +29,16 @@ g1 = Sample sample=yamaha-upright style=upright loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.4 damping=0.5 mix=0.12
-master = -2
+i1 = Reverb size=0.4 damping=0.5 mix=0.12
+mix = level=-2
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Honky, Pedal, Sway
 macros = names=-,Honky,Pedal,Sway
 mod = src=random dst=pitch amount=0.004 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Old Upright]
 room = Conservatory
@@ -46,15 +48,16 @@ g1 = Sample sample=old-upright style=upright loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.4 damping=0.5 mix=0.12
-master = -4
+i1 = Reverb size=0.4 damping=0.5 mix=0.12
+mix = level=-4
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Honky, Pedal, Sway
 macros = names=-,Honky,Pedal,Sway
 mod = src=random dst=pitch amount=0.006 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Flemish Harpsichord]
 room = Conservatory
@@ -64,15 +67,16 @@ g1 = Sample sample=flemish-harpsichord style=8 loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.4 damping=0.5 mix=0.12
-master = -8
+i1 = Reverb size=0.4 damping=0.5 mix=0.12
+mix = level=-8
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Sway
 macros = names=-,Detune,Ring,Sway
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.1
+fx = src=macro3 dst=i1.size amount=0.1
 
 [Italian Harpsichord]
 room = Conservatory
@@ -82,15 +86,16 @@ g1 = Sample sample=italian-harpsichord style=8 loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.4 damping=0.5 mix=0.12
-master = -6
+i1 = Reverb size=0.4 damping=0.5 mix=0.12
+mix = level=-6
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Sway
 macros = names=-,Detune,Ring,Sway
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.1
+fx = src=macro3 dst=i1.size amount=0.1
 
 [FM Keys]
 room = Conservatory
@@ -100,15 +105,16 @@ g1 = Sample sample=fm-keys style=piano loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=100 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.4 damping=0.5 mix=0.12
-master = -7
+i1 = Reverb size=0.4 damping=0.5 mix=0.12
+mix = level=-7
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Autopan
 macros = names=-,Detune,Ring,Autopan
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.5 via=macro4
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Violins]
 room = Conservatory
@@ -118,8 +124,9 @@ g1 = Sample sample=violins style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.55 damping=0.5 mix=0.2
-master = -4.5
+i1 = Reverb size=0.55 damping=0.5 mix=0.2
+mix = level=-4.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -127,7 +134,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Violas]
 room = Conservatory
@@ -137,8 +144,9 @@ g1 = Sample sample=violas style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.55 damping=0.5 mix=0.2
-master = -5
+i1 = Reverb size=0.55 damping=0.5 mix=0.2
+mix = level=-5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -146,7 +154,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Cellos]
 room = Conservatory
@@ -156,8 +164,9 @@ g1 = Sample sample=cellos style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.55 damping=0.5 mix=0.2
-master = -3
+i1 = Reverb size=0.55 damping=0.5 mix=0.2
+mix = level=-3
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -165,7 +174,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Double Bass]
 room = Conservatory
@@ -175,8 +184,9 @@ g1 = Sample sample=double-bass style=vibrato loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.55 damping=0.5 mix=0.2
-master = -8
+i1 = Reverb size=0.55 damping=0.5 mix=0.2
+mix = level=-8
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -184,7 +194,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Solo Violin]
 room = Conservatory
@@ -194,8 +204,9 @@ g1 = Sample sample=solo-violin style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.55 damping=0.5 mix=0.2
-master = -5.5
+i1 = Reverb size=0.55 damping=0.5 mix=0.2
+mix = level=-5.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -203,7 +214,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Folk Harp]
 room = Conservatory
@@ -213,8 +224,9 @@ g1 = Sample sample=folk-harp style=plucked loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.15
-master = -2
+i1 = Reverb size=0.45 damping=0.5 mix=0.15
+mix = level=-2
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Sway
 macros = names=-,Detune,Damp,Sway
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -229,8 +241,9 @@ g1 = Sample sample=dan-tranh style=normal loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.15
-master = 1
+i1 = Reverb size=0.45 damping=0.5 mix=0.15
+mix = level=1
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Vibrato
 macros = names=-,Detune,Ring,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -238,7 +251,7 @@ mod = src=macro3 dst=env1.time amount=0.6
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.3
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Kalimba]
 room = Conservatory
@@ -248,8 +261,9 @@ g1 = Sample sample=kalimba style=plucked loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.15
-master = -2.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.15
+mix = level=-2.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Flutter
 macros = names=-,Detune,Damp,Flutter
 mod = src=random dst=pitch amount=0.004 via=macro2
@@ -265,8 +279,9 @@ g1 = Sample sample=horn style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -6.5
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-6.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -274,7 +289,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Trumpet]
 room = Conservatory
@@ -284,8 +299,9 @@ g1 = Sample sample=trumpet style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -6
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-6
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -293,7 +309,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Tuba]
 room = Conservatory
@@ -303,8 +319,9 @@ g1 = Sample sample=tuba style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -3.5
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-3.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -312,7 +329,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Trombone]
 room = Conservatory
@@ -322,8 +339,9 @@ g1 = Sample sample=trombone style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -4.5
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-4.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -331,7 +349,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Old Trombone]
 room = Conservatory
@@ -341,7 +359,8 @@ g1 = Sample sample=old-trombone style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=0
 master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
@@ -350,7 +369,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Flute]
 room = Conservatory
@@ -360,8 +379,9 @@ g1 = Sample sample=flute style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -6.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-6.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -369,7 +389,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Clarinet]
 room = Conservatory
@@ -379,8 +399,9 @@ g1 = Sample sample=clarinet style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -7.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-7.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -388,7 +409,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Bassoon]
 room = Conservatory
@@ -398,8 +419,9 @@ g1 = Sample sample=bassoon style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -8.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-8.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -407,7 +429,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Saxello]
 room = Conservatory
@@ -417,8 +439,9 @@ g1 = Sample sample=saxello style=vibrato loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -5.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-5.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -426,7 +449,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Tenor Sax]
 room = Conservatory
@@ -436,8 +459,9 @@ g1 = Sample sample=tenor-sax style=straight loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -4.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-4.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -445,7 +469,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Recorders]
 room = Conservatory
@@ -455,8 +479,9 @@ g1 = Sample sample=recorders style=soprano loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -9
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-9
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -464,7 +489,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Ocarina]
 room = Conservatory
@@ -474,8 +499,9 @@ g1 = Sample sample=ocarina style=small loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -8
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-8
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
 macros = names=-,Loose,Linger,Vibrato
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -483,7 +509,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Harmonica]
 room = Conservatory
@@ -493,8 +519,9 @@ g1 = Sample sample=harmonica style=sustain loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=100 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = -7.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=-7.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Flutter
 macros = names=-,Loose,Linger,Flutter
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -502,7 +529,7 @@ mod = src=macro3 dst=env1.time amount=1
 mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.3
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Didgeridoo]
 room = Conservatory
@@ -512,8 +539,9 @@ g1 = Sample sample=didgeridoo style=drone loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.45 damping=0.5 mix=0.16
-master = 1.5
+i1 = Reverb size=0.45 damping=0.5 mix=0.16
+mix = level=1.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Pulse
 macros = names=-,Detune,Linger,Pulse
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -521,7 +549,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.25
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Pipe Organ]
 room = Conservatory
@@ -531,8 +559,9 @@ g1 = Sample sample=pipe-organ style=loud loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.7 damping=0.5 mix=0.25
-master = -8
+i1 = Reverb size=0.7 damping=0.5 mix=0.25
+mix = level=-8
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Tremulant
 macros = names=-,Detune,Linger,Tremulant
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -541,7 +570,7 @@ mod = src=lfo1 dst=vca amount=-0.3 curve=unipolar via=macro4
 mod = src=lfo1 dst=pitch amount=0.001 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.42
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.12
+fx = src=macro3 dst=i1.size amount=0.12
 
 [Renaissance Organ]
 room = Conservatory
@@ -551,8 +580,9 @@ g1 = Sample sample=renaissance-organ style=8 loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.7 damping=0.5 mix=0.25
-master = -13
+i1 = Reverb size=0.7 damping=0.5 mix=0.25
+mix = level=-13
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Tremulant
 macros = names=-,Detune,Linger,Tremulant
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -561,7 +591,7 @@ mod = src=lfo1 dst=vca amount=-0.3 curve=unipolar via=macro4
 mod = src=lfo1 dst=pitch amount=0.001 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.42
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.12
+fx = src=macro3 dst=i1.size amount=0.12
 
 [Marimba]
 room = Conservatory
@@ -571,8 +601,9 @@ g1 = Sample sample=marimba style=mallets loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -1
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-1
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
 macros = names=-,Detune,Damp,Roll
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -588,8 +619,9 @@ g1 = Sample sample=vibraphone style=soft loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -6
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-6
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Motor
 macros = names=-,Detune,Damp,Motor
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -605,7 +637,8 @@ g1 = Sample sample=xylophone style=medium loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=0
 master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
 macros = names=-,Detune,Damp,Roll
@@ -622,8 +655,9 @@ g1 = Sample sample=balafon style=hard loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -2
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-2
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
 macros = names=-,Detune,Damp,Roll
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -639,8 +673,9 @@ g1 = Sample sample=glockenspiel style=a loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -2.5
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-2.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
 macros = names=-,Detune,Damp,Shimmer
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -648,7 +683,7 @@ mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro4 dst=f1.shimmer amount=0.2
+fx = src=macro4 dst=i1.shimmer amount=0.2
 
 [Tubular Bells]
 room = Conservatory
@@ -658,8 +693,9 @@ g1 = Sample sample=tubular-bells style=a loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -3
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-3
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
 macros = names=-,Detune,Damp,Shimmer
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -667,7 +703,7 @@ mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro4 dst=f1.shimmer amount=0.2
+fx = src=macro4 dst=i1.shimmer amount=0.2
 
 [Tubular Glock]
 room = Conservatory
@@ -677,8 +713,9 @@ g1 = Sample sample=tubular-glock style=mallets loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -2
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-2
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
 macros = names=-,Detune,Damp,Shimmer
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -686,7 +723,7 @@ mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro4 dst=f1.shimmer amount=0.2
+fx = src=macro4 dst=i1.shimmer amount=0.2
 
 [Hand Chimes]
 room = Conservatory
@@ -696,8 +733,9 @@ g1 = Sample sample=hand-chimes style=mallets loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -2.5
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-2.5
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
 macros = names=-,Detune,Damp,Shimmer
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -705,7 +743,7 @@ mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro4 dst=f1.shimmer amount=0.2
+fx = src=macro4 dst=i1.shimmer amount=0.2
 
 [Wine Glasses]
 room = Conservatory
@@ -715,8 +753,9 @@ g1 = Sample sample=wine-glasses style=slow loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -2
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-2
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Waver
 macros = names=-,Detune,Linger,Waver
 mod = src=random dst=pitch amount=0.003 via=macro2
@@ -724,7 +763,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro3 dst=f1.size amount=0.15
+fx = src=macro3 dst=i1.size amount=0.15
 
 [Timpani]
 room = Conservatory
@@ -734,8 +773,9 @@ g1 = Sample sample=timpani style=a loop=on level=0.9
 p1 = Off
 env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
-f1 = Reverb size=0.5 damping=0.5 mix=0.18
-master = -2
+i1 = Reverb size=0.5 damping=0.5 mix=0.18
+mix = level=-2
+master = 0
 # Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
 macros = names=-,Detune,Damp,Roll
 mod = src=random dst=pitch amount=0.003 via=macro2
