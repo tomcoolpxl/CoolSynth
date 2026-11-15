@@ -3312,3 +3312,25 @@ one block on every preset after a switch, worst block 3.3 ms instead of 6.9 ms; 
 instead of 2.0 ms (256-sample blocks, 5.3 ms each). The allocation alarm watches the helpers too.
 Still to do: an Auto/Off setting in Options (the switch exists in the processor), and the load per
 core on the screen.
+
+## D168. The same sound in every program: no stray randomness, no global counts (2026-11-15)
+
+Found by running the levelling tool in parallel (D167): some presets measured differently than at
+the re-level (D153). Bisected against the re-level build, rendering note for note:
+- **Vinyl Choir differed from its 7th sample** (peak 2.6 dB lower): since the sound units (D158) a
+  unit's prepare ended in a panic, whose voice reset draws the free-running random values again (LFO
+  phases, drift, note randoms), so every preset started from other random values than it was
+  auditioned and levelled with. Prepare now leaves freshly prepared voices alone; Vinyl Choir is the
+  re-level's again, bit for bit, with and without its effects. Frozen Pluck matched bit for bit;
+  Old Trombone within -138 dB (the native-depth playback of D166 rounds once, at the end).
+- **Results that changed from run to run**, only with several processors in one program: the noise,
+  grain, string and wavetable generators each took their random seed from a count shared by the
+  whole program, and the sampled instruments' takes came round on one shared count. Against D162
+  rule 3 (no globals besides the sample memory): two CoolSynths, or two tracks, would change each
+  other's noise and take order. Now each voice and slot has its own seed, from the voice's (SlotMemory),
+  and each part counts its own takes. A side effect: those generators' noise is another random
+  sequence than before, the same kind of noise. The arpeggiator's random patterns are still seeded
+  from the clock, on purpose: an arp plays differently each time.
+- Checked on the way: no value is read before it is written (rendered after filling and freeing
+  memory with a pattern: the same output).
+Tools: the render tool takes --dirty-heap and --no-fx; the levelling tool --only and --threads.

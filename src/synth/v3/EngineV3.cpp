@@ -56,8 +56,16 @@ namespace coolsynth::synth::v3
         for (auto& out : unitOut)
             out.setSize(2, block, false, true, true);
         AudioWorkers::instance().prepare(); // the helpers exist before the first block (D164)
-        for (int u = 0; u < unitCount; ++u)
-            endUnit(u);
+        // Every unit idle; none is reset, as each was just prepared (a reset would draw new random phases).
+        for (auto& s : state)
+        {
+            s.phase = Phase::idle;
+            s.keysHeld = 0;
+            s.pedalDown = false;
+            s.releasedSeconds = 0.0;
+            s.quietSeconds = 0.0;
+            s.fade = 1.0f;
+        }
         current = 0;
         state[0].phase = Phase::playing;
         keyOwner.fill(-1);

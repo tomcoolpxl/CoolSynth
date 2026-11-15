@@ -72,8 +72,8 @@ namespace coolsynth::synth::v3
             line = memory.take(static_cast<std::size_t>(length));
             signalTrack = memory.take(static_cast<std::size_t>(std::max(1, maxSubBlock)));
             dcCoefficient = static_cast<float>(1.0 - 2.0 * juce::MathConstants<double>::pi * 15.0 / sampleRate);
-            static std::atomic<std::uint32_t> instances { 0 };
-            rng = (instances.fetch_add(1, std::memory_order_relaxed) + 1u) * 2654435761u ^ 0x7F4A7C15u;
+            // Its own sequence from the slot's seed (no global count: D162 rule 3).
+            rng = (memory.seed() + 1u) * 2654435761u ^ 0x7F4A7C15u;
             if (rng == 0)
                 rng = 1;
             reset();

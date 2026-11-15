@@ -49,7 +49,17 @@ namespace coolsynth::synth::v3
             buffer.setSize(2, block, false, true, true);
         dryBus.setSize(2, block, false, true, true);
         masterGain.reset(sampleRate, masterGainRampSeconds);
-        panic();
+        // Freshly prepared voices are left as they are: a reset would draw their random phases and drifts again, and
+        // every preset would start from other random values than it was levelled and auditioned with.
+        for (auto& sent : sentNote)
+            sent.fill(-1);
+        partEventCount.fill(0);
+        wasActive = { true, false };
+        mixPrimed = false;
+        masterGain.setCurrentAndTargetValue(1.0f);
+        masterPrimed = false;
+        peak = 0.0f;
+        freeBeats = 0.0;
     }
 
     void SoundUnit::panic() noexcept

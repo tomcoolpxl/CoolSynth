@@ -292,8 +292,9 @@ namespace coolsynth::synth::v3
                 if (loaded != nullptr)
                 {
                     const float midi = static_cast<float>(69.0 + 12.0 * std::log2(hz / 440.0));
-                    static std::atomic<unsigned> turns { 0 };
-                    zone = loaded->pick(midi, noteVelocity, turns.fetch_add(1, std::memory_order_relaxed));
+                    // The next take: the part's own count (no global, D162 rule 3); a generator alone counts for itself.
+                    std::uint32_t& turn = params.takeTurn != nullptr ? *params.takeTurn : ownTurn;
+                    zone = loaded->pick(midi, noteVelocity, turn++);
                     velocityLevel = loaded->velocityGain(noteVelocity);
                     if (zone != nullptr && zone->frames > 0)
                     {
@@ -461,6 +462,7 @@ namespace coolsynth::synth::v3
             Held& operator=(const Held&) noexcept { return *this; }
         };
         Held heldStyle;
+        std::uint32_t ownTurn = 0; // the take count when no part gives one (a generator tested on its own)
         const SampleZone* zone = nullptr;
         std::array<float, 4> ringLeft {}, ringRight {}, ringMono {};
         unsigned int cursor = 0;

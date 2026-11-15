@@ -77,8 +77,8 @@ namespace coolsynth::synth::v3
             signalTrack = memory.take(n);
             sumLeft = memory.take(n);
             sumRight = memory.take(n);
-            static std::atomic<std::uint32_t> instances { 0 };
-            rng = (instances.fetch_add(1, std::memory_order_relaxed) + 1u) * 2654435761u ^ 0x6A09E667u;
+            // Its own sequence from the slot's seed (no global count: D162 rule 3).
+            rng = (memory.seed() + 1u) * 2654435761u ^ 0x6A09E667u;
             if (rng == 0)
                 rng = 1;
             reset();

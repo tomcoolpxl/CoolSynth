@@ -32,7 +32,7 @@ mod = src=lfo2 dst=g2.pos amount=0.25
 voice = env2ToP1=0 drift=3
 f1 = Chorus rate=0.3 depth=0.35 mix=0.25
 f2 = Reverb size=0.9 damping=0.4 mix=0.38 predelay=80 lowcut=80
-master = -7.5
+master = -8
 
 [Deep Field]
 room = Observatory
@@ -96,7 +96,7 @@ p1 = SVF mode=lp cutoff=6000 res=0.05 key=0.3
 env1 = attack=2000 decay=2000 sustain=1 release=4000
 voice = env2ToP1=0
 f1 = Reverb size=0.9 damping=0.4 mix=0.4 predelay=20 lowcut=150
-master = -4.5
+master = -4
 
 [Live Shimmer]
 room = Observatory

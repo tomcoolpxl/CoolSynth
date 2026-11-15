@@ -120,4 +120,4 @@ f1 = Chorus rate=0.35 depth=0.45 mix=0.35
 f2 = Reverb size=0.6 damping=0.45 mix=0.22 predelay=20 lowcut=150
 f3 = EQ low=-1 tilt=0 high=2.5
 f4 = Pump depth=0.6 division=1/4 release=0.55
-master = -6.5
+master = -7

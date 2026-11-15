@@ -29,6 +29,8 @@ namespace
     {
         auto w = std::make_unique<Wt>();
         w->memory.allocate(WavetableGenerator::memoryFloats(kVoiceRate, kSubBlock));
+        static std::uint32_t rigs = 0;
+        w->memory.setSeed(++rigs); // each its own seed, as each voice and slot has (D168)
         w->generator.prepare(kVoiceRate, kSubBlock, w->memory);
         w->generator.noteOn(NoteContext {});
         return w;

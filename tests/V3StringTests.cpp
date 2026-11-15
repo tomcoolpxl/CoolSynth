@@ -26,6 +26,8 @@ namespace
     {
         auto s = std::make_unique<String>();
         s->memory.allocate(StringGenerator::memoryFloats(kRate, kSubBlock));
+        static std::uint32_t rigs = 0;
+        s->memory.setSeed(++rigs); // each its own seed, as each voice and slot has (D168)
         s->generator.prepare(kRate, kSubBlock, s->memory);
         s->generator.noteOn(NoteContext {});
         return s;

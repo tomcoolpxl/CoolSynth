@@ -173,6 +173,7 @@ namespace coolsynth::synth::v3
         double ppqPerSample = 0.0;           // song position per voice sample
         const GlobalFrame* frames = nullptr; // one per sub-block of the render call, or none
         int frameCount = 0;
+        std::uint32_t* takeTurn = nullptr;   // the part's count of takes played: each part its own, no global (D162)
     };
 
     struct NoteStart

@@ -96,6 +96,7 @@ namespace coolsynth::synth::v3
                                           // its level and pan), for a filter shaken at audio rate; null is silence
         int userSound = -1;               // generators: a handle of the user's own sound (UserLibrary), or -1
         LiveBuffer* live = nullptr;       // a Grain slot with combine Live: the voice's recording to write and read
+        std::uint32_t* takeTurn = nullptr; // a sampled instrument's takes come round in turn: the part's own count (D162 rule 3)
     };
 
     /** Arena of floats, sized once off the audio thread; modules take spans from it in prepare(). */
@@ -128,9 +129,15 @@ namespace coolsynth::synth::v3
         [[nodiscard]] std::size_t capacity() const noexcept { return storage.size(); }
         [[nodiscard]] std::size_t usedFloats() const noexcept { return used; }
 
+        /** The slot's own random seed, from its voice and its place: a module that makes noise starts from it, so every
+            voice and slot has its own sequence and the same one in every program (no global count, D162 rule 3). */
+        void setSeed(std::uint32_t value) noexcept { seedValue = value; }
+        [[nodiscard]] std::uint32_t seed() const noexcept { return seedValue; }
+
     private:
         std::vector<float> storage;
         std::size_t used = 0;
+        std::uint32_t seedValue = 0;
     };
 
     template <typename T>
@@ -216,14 +223,17 @@ namespace coolsynth::synth::v3
         static SlotTypeTable typeTable() noexcept { return { typeCount, &Types::descriptor }; }
 
         /** Message thread. Sizes both arenas and the scratch, applies a pending type at once, prepares the active module. */
-        void prepare(double newSampleRate, int newMaxSubBlock)
+        void prepare(double newSampleRate, int newMaxSubBlock, std::uint32_t seed = 0)
         {
             sampleRate = newSampleRate;
             maxSubBlock = std::max(1, newMaxSubBlock);
 
             const auto floats = Types::maxMemoryFloats(sampleRate, maxSubBlock);
             for (auto& instance : instances)
+            {
                 instance.memory.allocate(floats);
+                instance.memory.setSeed(seed);
+            }
 
             scratchLeft.assign(static_cast<std::size_t>(maxSubBlock), 0.0f);
             scratchRight.assign(static_cast<std::size_t>(maxSubBlock), 0.0f);

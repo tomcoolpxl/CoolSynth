@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <cstring>
+#include <memory>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -178,6 +180,20 @@ int main(int argc, char* argv[])
             std::cerr << "--background-load: no instrument named '" << loadName << "'\n";
         else
             backgroundInstrument = instrument;
+    }
+
+    // --dirty-heap: memory filled with a pattern and given back before the processor is made, so whatever the engine
+    // reads before it writes shows up as a different render (an uninitialised value).
+    if (args.contains("--dirty-heap"))
+    {
+        std::vector<std::unique_ptr<std::uint8_t[]>> blocks;
+        for (std::size_t size = 16; size <= (std::size_t { 8 } << 20); size = size * 3 / 2 + 8)
+            for (int copies = 0; copies < 6; ++copies)
+            {
+                blocks.push_back(std::make_unique<std::uint8_t[]>(size));
+                std::memset(blocks.back().get(), 0x5A + copies, size);
+            }
+        blocks.clear();
     }
 
     SynthAudioProcessor processor;

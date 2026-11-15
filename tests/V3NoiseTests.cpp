@@ -31,6 +31,8 @@ namespace
     {
         auto n = std::make_unique<Noise>();
         n->memory.allocate(NoiseGenerator::memoryFloats(kVoiceRate, kSubBlock));
+        static std::uint32_t rigs = 0;
+        n->memory.setSeed(++rigs); // each its own seed, as each voice and slot has (D168)
         n->generator.prepare(kVoiceRate, kSubBlock, n->memory);
         n->generator.noteOn(NoteContext {});
         return n;

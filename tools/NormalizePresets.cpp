@@ -37,6 +37,8 @@ namespace
     constexpr int    kBlockSize          = 256;
     constexpr double kRenderSeconds      = 4.0;
     double           kTargetLufs         = -20.0; // the one loudness: the test chord's loudest 400 ms (--target); D153
+    int              kThreads            = 0;     // --threads: 0 is all cores but two
+    juce::String     kOnly;                   // --only: measure only the presets whose names contain this
 
     // The output's soft clipper bends from 0.8 (-1.9 dBFS). The test chord, four notes at velocity 100, peaks
     // 6 dB under that (room for more notes and harder playing); a four-note chord at full velocity anywhere
@@ -508,6 +510,10 @@ int main(int argc, char* argv[])
         const juce::String arg(argv[a]);
         if (arg == "--apply")
             apply = true;
+        else if (arg == "--only" && a + 1 < argc)
+            kOnly = juce::String(argv[++a]);
+        else if (arg == "--threads" && a + 1 < argc)
+            kThreads = juce::String(argv[++a]).getIntValue();
         else if (arg == "--target" && a + 1 < argc)
             kTargetLufs = juce::String(argv[++a]).getDoubleValue();
         else
@@ -542,8 +548,9 @@ int main(int argc, char* argv[])
     };
     std::vector<Measured> measured(static_cast<std::size_t>(presetCount));
     {
-        juce::ThreadPool pool(juce::ThreadPoolOptions {}.withNumberOfThreads(std::max(1, juce::SystemStats::getNumCpus() - 2)));
+        juce::ThreadPool pool(juce::ThreadPoolOptions {}.withNumberOfThreads(kThreads > 0 ? kThreads : std::max(1, juce::SystemStats::getNumCpus() - 2)));
         for (int i = 0; i < presetCount; ++i)
+            if (kOnly.isEmpty() || coolsynth::presets::getFactoryPreset(i).name.containsIgnoreCase(kOnly))
             pool.addJob([i, &measured]
             {
                 const auto& preset = coolsynth::presets::getFactoryPreset(i);
@@ -566,6 +573,8 @@ int main(int argc, char* argv[])
     for (int i = 0; i < presetCount; ++i)
     {
         const auto& preset = coolsynth::presets::getFactoryPreset(i);
+        if (kOnly.isNotEmpty() && ! preset.name.containsIgnoreCase(kOnly))
+            continue; // not measured this run: nothing printed, nothing written
         const float oldMasterDb = lookupMasterGainDb(preset);
         const auto& loudness = measured[static_cast<std::size_t>(i)].loudness;
         const int worstRoot = measured[static_cast<std::size_t>(i)].worstRoot;

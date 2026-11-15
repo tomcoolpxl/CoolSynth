@@ -21,14 +21,18 @@ namespace coolsynth::synth::v3
         if (liveBuffer == nullptr)
             liveBuffer = std::make_unique<LiveBuffer>();
         liveBuffer->prepare(newSampleRate);
+        // Each slot its own random seed from the voice's (D162 rule 3: no global count).
+        std::uint32_t slotSeed = seed * 0x9E3779B1u + 0x7F4A7C15u;
         for (auto& g : generators)
         {
-            g.slot.prepare(newSampleRate, maxSubBlock);
+            slotSeed = slotSeed * 1664525u + 1013904223u;
+            g.slot.prepare(newSampleRate, maxSubBlock, slotSeed);
             g.base.prepare(newSampleRate, maxSubBlock);
         }
         for (auto& p : processors)
         {
-            p.slot.prepare(newSampleRate, maxSubBlock);
+            slotSeed = slotSeed * 1664525u + 1013904223u;
+            p.slot.prepare(newSampleRate, maxSubBlock, slotSeed);
             p.base.prepare(newSampleRate, maxSubBlock);
         }
         for (auto& e : envelopes)
@@ -443,6 +447,7 @@ namespace coolsynth::synth::v3
             params.combine = i == 0 ? Combine::off : gs.combine;
             params.userSound = gs.userSound;
             params.live = i == liveSlot ? liveBuffer.get() : nullptr;
+            params.takeTurn = globals.takeTurn;
 
             g.slot.setLink(params.combine != Combine::off ? previous : GeneratorLink {});
             g.slot.process(g.left.data(), g.right.data(), n, params);

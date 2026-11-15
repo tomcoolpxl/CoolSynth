@@ -69,8 +69,8 @@ namespace coolsynth::synth::v3
             designPink();
 
             // Each instance its own noise: voices that share a sequence would sum coherently.
-            static std::atomic<std::uint32_t> instances { 0 };
-            const std::uint32_t n = instances.fetch_add(1, std::memory_order_relaxed) + 1u;
+            // Its own sequence from the slot's seed (no global count: D162 rule 3).
+            const std::uint32_t n = memory.seed() + 1u;
             rngLeft = n * 2654435761u ^ 0xA341316Cu;
             rngRight = n * 2246822519u ^ 0xC8013EA4u;
             if (rngLeft == 0)

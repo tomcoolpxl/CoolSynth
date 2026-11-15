@@ -229,6 +229,7 @@ namespace coolsynth::synth::v3
         std::vector<std::uint16_t> chordInputsBefore; // per chord event: the played events read by then
         Arpeggiator arpeggiator;
         VoiceGlobals globals;
+        std::uint32_t takeTurn = 0; // the takes of a sampled instrument come round in turn, counted per part (D162 rule 3)
         std::array<Lfo, globalLfoCount> globalLfos;
         std::vector<GlobalFrame> frames;
         LfoClock chunkClock {};
