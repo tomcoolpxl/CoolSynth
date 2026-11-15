@@ -7,6 +7,7 @@
 
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
+#include "synth/v3/AudioWorkers.h"
 
 namespace
 {
@@ -162,3 +163,61 @@ public:
 };
 
 static EarlierSoundTests earlierSoundTests;
+
+// ---- Several cores, the same sound (D164) ------------------------------------------------------------------
+
+class MultiCoreTests final : public juce::UnitTest
+{
+public:
+    MultiCoreTests() : juce::UnitTest("Overlapping sounds on several cores", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("Three sounds ringing together render the same, bit for bit, on one core and on several");
+        {
+            auto render = [](bool multiCore)
+            {
+                auto p = std::make_unique<Player>();
+                p->synth->setMultiCore(multiCore);
+                juce::AudioBuffer<float> all(2, static_cast<int>(rate * 2.0));
+                all.clear();
+                int at = 0;
+                auto playInto = [&](double seconds)
+                {
+                    for (int i = 0; i < static_cast<int>(std::ceil(seconds * rate / blockSize)); ++i)
+                    {
+                        p->buffer.clear();
+                        p->synth->processBlock(p->buffer, p->midi);
+                        p->midi.clear();
+                        if (at + blockSize <= all.getNumSamples())
+                            for (int ch = 0; ch < 2; ++ch)
+                                all.copyFrom(ch, at, p->buffer, ch, 0, blockSize);
+                        at += blockSize;
+                    }
+                };
+                p->synth->setCurrentProgram(presetNamed("Init Saw"));
+                p->keys({ 48, 52 }, true);
+                playInto(0.3);
+                p->synth->setCurrentProgram(presetNamed("Init FM"));
+                p->keys({ 55, 59 }, true);
+                playInto(0.3);
+                p->synth->setCurrentProgram(presetNamed("Juno Pad"));
+                p->keys({ 62, 65 }, true);
+                playInto(1.0);
+                return all;
+            };
+            const auto serial = render(false);
+            const auto parallel = render(true);
+            int different = 0;
+            for (int ch = 0; ch < 2; ++ch)
+                for (int i = 0; i < serial.getNumSamples(); ++i)
+                    different += serial.getSample(ch, i) != parallel.getSample(ch, i) ? 1 : 0;
+            expectEquals(different, 0, "samples that differ");
+            expectGreaterThan(serial.getMagnitude(0, 0, serial.getNumSamples()), 0.01f, "it played");
+            logMessage("audio workers: " + juce::String(coolsynth::synth::v3::AudioWorkers::instance().workerCount()) + "; "
+                       + coolsynth::synth::v3::AudioWorkers::instance().cpu().describe());
+        }
+    }
+};
+
+static MultiCoreTests multiCoreTests;

@@ -96,11 +96,17 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D153) Every preset levelled to one loudness, -20 LUFS (loudest 400 ms), with chords kept
     clean: the test chord 6 dB under the clipper, a full-velocity chord anywhere in the range under
     it. (D154) Home blinks while an instrument loads; the keys wait until it is ready.
-    Next: the user's ear on the new levels and the blinking Home; the findings of the real-time
-    review (preset changes cut ringing notes, effect changes cut tails, big clears on the audio
-    thread, loads while scrolling, half-applied presets, freeing memory); a keyboard velocity
-    curve; ASIO; streaming from disk; the recorder. Later: whether Rust would serve the engine
-    better.
+    The real-time review's findings, done (D156 to D161, D165): the instrument knob loads only on a
+    click and Home glows; presets reach the audio whole; JUCE's locks kept off the audio thread;
+    no big wipes in a block; the allocation alarm and audio scenario tests; effect type changes
+    fade. (D158) Earlier sounds ring on after a preset change, Kronos-style, two kept, 5 s hold.
+    (D162 to D166) Memory banks: the library packed once (tools/PackLibrary.cpp; run it again after
+    the library changes), one sample memory taken at start, styles read on all cores but two
+    (Steinway 0.46 s). (D167) Multi-core: overlapping sounds on separate cores, bit for bit the same.
+    Next: the user's ear and hands on all of this (levels, glow, click-to-load, ringing sounds, on
+    the MiniLab); a Multi-core Auto/Off setting in Options and the load per core on the screen; a
+    keyboard velocity curve; ASIO; streaming from disk for libraries bigger than the memory; the
+    recorder. Later: whether Rust would serve the engine better (answered for now: not yet, D164).
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;
     - measure the physical-model presets against real recordings, and classic synth references;

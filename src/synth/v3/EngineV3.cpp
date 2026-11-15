@@ -6,6 +6,7 @@
 
 #include "SampleGenerator.h"
 #include "SampleLibrary.h"
+#include "AudioWorkers.h"
 
 namespace coolsynth::synth::v3
 {
@@ -52,6 +53,9 @@ namespace coolsynth::synth::v3
             events.assign(static_cast<std::size_t>(2 * coolsynth::synth::maxEngineEventsPerBlock + 16), {});
         pieceEvents.assign(static_cast<std::size_t>(coolsynth::synth::maxEngineEventsPerBlock), {});
         sum.setSize(2, block, false, true, true);
+        for (auto& out : unitOut)
+            out.setSize(2, block, false, true, true);
+        AudioWorkers::instance().prepare(); // the helpers exist before the first block (D164)
         for (int u = 0; u < unitCount; ++u)
             endUnit(u);
         current = 0;
@@ -173,6 +177,22 @@ namespace coolsynth::synth::v3
         state[static_cast<std::size_t>(current)].phase = Phase::playing;
         state[static_cast<std::size_t>(current)].generation = incoming;
         controllersToCurrent = true; // it starts with the pedal, the bend and the wheels where they are
+    }
+
+    void EngineV3::renderUnitTask(void* engine, int index) noexcept
+    {
+        auto& e = *static_cast<EngineV3*>(engine);
+        auto& task = e.tasks[static_cast<std::size_t>(index)];
+        auto& out = e.unitOut[static_cast<std::size_t>(task.unit)];
+        float* l = out.getWritePointer(0);
+        float* r = out.getWritePointer(1);
+        std::fill_n(l, e.taskBlock, 0.0f);
+        std::fill_n(r, e.taskBlock, 0.0f);
+        task.timing = {};
+        const auto u = static_cast<std::size_t>(task.unit);
+        e.units[u]->render(l, r, e.taskBlock,
+                           std::span<const EngineMidiEvent>(e.unitEvents[u].data(), static_cast<std::size_t>(e.unitEventCount[u])),
+                           *task.settings, *e.taskTransport, task.fadeFrom, task.fadeTo, task.timing);
     }
 
     std::uint32_t EngineV3::oldestSoundingGeneration() const noexcept
@@ -360,11 +380,9 @@ namespace coolsynth::synth::v3
             startFading(oldestRinging());
         load = 0.0f;
 
-        float* sl = sum.getWritePointer(0);
-        float* sr = sum.getWritePointer(1);
-        std::fill_n(sl, n, 0.0f);
-        std::fill_n(sr, n, 0.0f);
+        // First the bookkeeping, here: holds, fades and what each sounding unit is to render.
         const double seconds = static_cast<double>(n) / hostRate;
+        taskTotal = 0;
         for (int u = 0; u < unitCount; ++u)
         {
             auto& s = state[static_cast<std::size_t>(u)];
@@ -385,14 +403,40 @@ namespace coolsynth::synth::v3
             const float fadeFrom = s.fade;
             if (s.phase == Phase::fading)
                 s.fade = std::max(0.0f, s.fade - static_cast<float>(seconds / fadeSeconds));
-            const auto& unitSettings = u == current ? settings : *s.settings;
-            units[static_cast<std::size_t>(u)]->render(sl, sr, n,
-                                                       std::span<const EngineMidiEvent>(unitEvents[static_cast<std::size_t>(u)].data(),
-                                                                                        static_cast<std::size_t>(unitEventCount[static_cast<std::size_t>(u)])),
-                                                       unitSettings, transport, fadeFrom, s.fade, slowest);
+            tasks[static_cast<std::size_t>(taskTotal++)] = { u, u == current ? &settings : s.settings.get(), fadeFrom, s.fade, {} };
+        }
+
+        // Then the units: on several cores when more than one sounds (D164), each into its own buffer.
+        taskBlock = n;
+        taskTransport = &transport;
+        if (multiCore && taskTotal > 1)
+            AudioWorkers::instance().run(&EngineV3::renderUnitTask, this, taskTotal);
+        else
+            for (int i = 0; i < taskTotal; ++i)
+                renderUnitTask(this, i);
+
+        // Added up in unit order, so the sum is the same whichever core rendered what.
+        float* sl = sum.getWritePointer(0);
+        float* sr = sum.getWritePointer(1);
+        std::fill_n(sl, n, 0.0f);
+        std::fill_n(sr, n, 0.0f);
+        for (int i = 0; i < taskTotal; ++i)
+        {
+            const auto& task = tasks[static_cast<std::size_t>(i)];
+            const float* ul = unitOut[static_cast<std::size_t>(task.unit)].getReadPointer(0);
+            const float* ur = unitOut[static_cast<std::size_t>(task.unit)].getReadPointer(1);
+            for (int k = 0; k < n; ++k)
+            {
+                sl[k] += ul[k];
+                sr[k] += ur[k];
+            }
+            if (task.timing.milliseconds > slowest.milliseconds)
+                slowest = task.timing;
+            const int u = task.unit;
             if (u == current)
                 continue;
             // An earlier sound ends once faded out, or silent a quarter of a second (its tails gone).
+            auto& s = state[static_cast<std::size_t>(u)];
             const bool silent = ! units[static_cast<std::size_t>(u)]->isSounding() && units[static_cast<std::size_t>(u)]->lastPeak() < quietLevel;
             s.quietSeconds = silent ? s.quietSeconds + seconds : 0.0;
             if (s.fade <= 0.0f || s.quietSeconds >= quietSeconds)

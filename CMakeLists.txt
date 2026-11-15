@@ -110,6 +110,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/SoundUnit.cpp
     src/synth/v3/SampleMemory.cpp
     src/synth/v3/SamplePack.cpp
+    src/synth/v3/AudioWorkers.cpp
     src/interface/InterfaceModel.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/PanelEditor.cpp

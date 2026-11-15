@@ -3294,3 +3294,21 @@ loaded sounds use, is said on the screen, not left silent. Measured with a chord
 time at 44.1 kHz, 480 samples: the memory (3.8 GB, locked) in 2.0 s; the Steinway (734 MB) read in
 0.46 s, where it took 3.64 s; worst block 4.2 ms of 10.9. Unpacked styles (the tests' stand-in
 library) are still read from their manifests, also at their own depth.
+
+## D167. Multi-core built (2026-11-15)
+
+Carries out D164. Aware: `CpuLayout` reads the processor (here 8 cores, 16 threads, 2 cache groups,
+one efficiency class) and logs it at start. Background: a style is read on all cores but two (D166);
+the packer and the levelling tool work on all cores but two. Audio: `AudioWorkers`, one pool for the
+whole program, three helpers (never more than the physical cores less two), each registered with
+MMCSS "Pro Audio" like the audio thread, with flush-to-zero, asleep on an address until a block wakes
+them. When more than one sound unit sounds (D158), each renders on its own core into its own buffer
+and the buffers are added in unit order, so the output is the same bit for bit (tested). The audio
+thread takes tasks too; the block's number and its next task are claimed together, so a worker that
+wakes late cannot take a task of another block. A second CoolSynth in the same program renders on its
+own thread while the first uses the helpers. Off while a host renders offline; Auto by default in the
+app and the plugin (the user's choice); COOLSYNTH_MULTICORE=0 switches it off. Measured: 32 note-ons in
+one block on every preset after a switch, worst block 3.3 ms instead of 6.9 ms; 120 switches 1.7 ms
+instead of 2.0 ms (256-sample blocks, 5.3 ms each). The allocation alarm watches the helpers too.
+Still to do: an Auto/Off setting in Options (the switch exists in the processor), and the load per
+core on the screen.

@@ -134,6 +134,10 @@ public:
 
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
     [[nodiscard]] coolsynth::synth::v3::EngineV3& engineForTesting() noexcept { return synthEngine; }
+    /** Multi-core (D164): Auto, the default, renders sounds that overlap on several cores; off keeps them all on the
+        audio thread. Serial anyway while a host renders offline. COOLSYNTH_MULTICORE=0 switches it off. */
+    void setMultiCore(bool on) noexcept { multiCoreWanted.store(on, std::memory_order_relaxed); }
+    [[nodiscard]] bool multiCore() const noexcept { return multiCoreWanted.load(std::memory_order_relaxed); }
     /** One MIDI thread only (the standalone app's MiniLab driver): a note, controller, bend or pressure message for
         the sound, lock-free; it plays one block later at its own time (D159). False when the queue is full. */
     bool pushLiveMidi(const juce::MidiMessage& message) noexcept;
@@ -273,6 +277,7 @@ private:
     std::atomic<std::uint32_t> settingsSequence { 0 }; // odd while a bulk edit runs
     std::atomic<int> bulkEditDepth { 0 };
     std::atomic<std::uint32_t> soundGeneration { 0 }; // counts presets and states loaded (D158)
+    std::atomic<bool> multiCoreWanted { juce::SystemStats::getEnvironmentVariable("COOLSYNTH_MULTICORE", "1") != "0" };
     std::atomic<std::uint32_t> oldestSoundingGeneration { 0 }; // the audio's oldest sound still ringing
     bool loadingSound = false; // message thread: a preset or a state is being applied
     struct RetiredUserSound

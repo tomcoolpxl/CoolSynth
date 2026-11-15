@@ -532,22 +532,44 @@ int main(int argc, char* argv[])
 
     int adjusted = 0;
     std::vector<std::pair<double, juce::String>> loudestPossible; // how loud each preset can be under both limits
+    // Every preset measured at once, on all cores but two (D164): each its own processor; only the sample memory is
+    // shared (D162). The results are printed and written in bank order afterwards.
+    struct Measured
+    {
+        LoudnessResult loudness;
+        double worstPeakDb = 0.0;
+        int worstRoot = 0;
+    };
+    std::vector<Measured> measured(static_cast<std::size_t>(presetCount));
+    {
+        juce::ThreadPool pool(juce::ThreadPoolOptions {}.withNumberOfThreads(std::max(1, juce::SystemStats::getNumCpus() - 2)));
+        for (int i = 0; i < presetCount; ++i)
+            pool.addJob([i, &measured]
+            {
+                const auto& preset = coolsynth::presets::getFactoryPreset(i);
+                // Five takes: a preset that plays random notes (a random arp, chance, a random walk) measured up to 5 dB
+                // apart from one 4-second take to the next. The median loudness, the highest chord peak.
+                std::vector<LoudnessResult> takes;
+                for (int take = 0; take < 5; ++take)
+                    takes.push_back(renderAndMeasure(preset));
+                std::sort(takes.begin(), takes.end(), [](const auto& x, const auto& y) { return x.momentaryMaxLufs < y.momentaryMaxLufs; });
+                auto& m = measured[static_cast<std::size_t>(i)];
+                m.loudness = takes[2];
+                for (const auto& t : takes)
+                    m.loudness.peakDb = std::max(m.loudness.peakDb, t.peakDb);
+                m.worstPeakDb = worstPeakOverRange(preset, m.worstRoot);
+            });
+        while (pool.getNumJobs() > 0)
+            juce::Thread::sleep(20);
+    }
+
     for (int i = 0; i < presetCount; ++i)
     {
         const auto& preset = coolsynth::presets::getFactoryPreset(i);
         const float oldMasterDb = lookupMasterGainDb(preset);
-
-        // Five takes: a preset that plays random notes (a random arp, chance, a random walk) measured up to 5 dB
-        // apart from one 4-second take to the next. The median loudness, the highest chord peak.
-        std::vector<LoudnessResult> takes;
-        for (int take = 0; take < 5; ++take)
-            takes.push_back(renderAndMeasure(preset));
-        std::sort(takes.begin(), takes.end(), [](const auto& x, const auto& y) { return x.momentaryMaxLufs < y.momentaryMaxLufs; });
-        auto loudness = takes[2];
-        for (const auto& t : takes)
-            loudness.peakDb = std::max(loudness.peakDb, t.peakDb);
-        int worstRoot = 0;
-        const double worstPeakDb = worstPeakOverRange(preset, worstRoot);
+        const auto& loudness = measured[static_cast<std::size_t>(i)].loudness;
+        const int worstRoot = measured[static_cast<std::size_t>(i)].worstRoot;
+        const double worstPeakDb = measured[static_cast<std::size_t>(i)].worstPeakDb;
 
         std::string limitedBy;
         const double correction = correctionFor(loudness, worstPeakDb, limitedBy);

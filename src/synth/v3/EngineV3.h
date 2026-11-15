@@ -59,6 +59,9 @@ namespace coolsynth::synth::v3
 
         /** The share of its time the last block took, 0 to 1 or more: an earlier sound gives way when it is high. */
         void setLoad(float shareOfBlockTime) noexcept { load = shareOfBlockTime; }
+        /** Several sounding units render on several cores (D164: Auto, the default); false: all on the audio thread.
+            The output is the same either way, bit for bit. */
+        void setMultiCore(bool on) noexcept { multiCore = on; }
 
         [[nodiscard]] int getLatencySamples() const noexcept { return units[0]->latencySamples(); }
 
@@ -163,6 +166,21 @@ namespace coolsynth::synth::v3
 
         std::vector<EngineMidiEvent> pieceEvents; // a longer host block's events, one piece at a time
         juce::AudioBuffer<float> sum;             // every unit added, before the soft clipper
+
+        // One block's units, rendered as tasks (D164): each into its own buffer, then added up in unit order.
+        struct UnitTask
+        {
+            int unit = 0;
+            const EngineSettings* settings = nullptr;
+            float fadeFrom = 1.0f, fadeTo = 1.0f;
+            StageTiming timing {};
+        };
+        static void renderUnitTask(void* engine, int index) noexcept;
+        std::array<juce::AudioBuffer<float>, unitCount> unitOut;
+        std::array<UnitTask, unitCount> tasks {};
+        int taskTotal = 0, taskBlock = 0;
+        const EngineTransportInfo* taskTransport = nullptr;
+        bool multiCore = true;
         bool prepared = false;
         float load = 0.0f;
         StageTiming slowest;      // flight recorder: the last block's slowest stage

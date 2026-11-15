@@ -530,6 +530,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         }
     }
 
+    synthEngine.setMultiCore(multiCoreWanted.load(std::memory_order_relaxed) && ! isNonRealtime());
     synthEngine.render(buffer,
                        std::span<const coolsynth::synth::EngineMidiEvent>(engineEvents.data(),
                                                                           static_cast<size_t> (engineEventCount)),
