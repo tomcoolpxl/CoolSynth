@@ -3076,3 +3076,17 @@ every instrument it passes: "dont load instruments while just browsing with the 
 click it and then the blinking starts. can you make it glowing at least in the s/w UI?" So turning
 the instrument or style knob of a sampled slot only shows the choice; pressing the main knob, or
 clicking the knob on the panel, loads it. Home now glows (a smooth pulse) instead of blinking.
+
+## D157. A preset reaches the audio whole (2026-11-15)
+
+From the real-time review, chosen by the user ("Presets arrive whole"). A preset load set every
+parameter to its default and then to the preset's value, hundreds of separate changes, while the
+audio thread read the parameters one by one each block: a block could play half the old sound
+and half the new, switch a slot's type twice, or read the previous type's first value as an
+instrument number and load an instrument no preset uses. Now every bulk edit (a preset, a saved
+state, an undo step, the interface's type change) runs inside a `BulkEdit` scope that makes a
+sequence number odd while it lasts. The audio thread reads the parameters into a second settings
+buffer only while the number is even, and keeps what it read only if the number did not change
+meanwhile (a seqlock); otherwise the last whole settings play one more block. A preset therefore
+lands at most a block later (10.9 ms at 480 samples), and never mixed. The offline helpers that
+read the patch's instruments now use their own copy of the settings, not the audio thread's.

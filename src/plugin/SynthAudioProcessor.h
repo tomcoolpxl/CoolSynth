@@ -89,6 +89,28 @@ public:
         is all in memory, and Home blinks. Set by the audio thread each block; read from anywhere. */
     [[nodiscard]] bool isLoadingInstrument() const noexcept { return instrumentLoading.load(std::memory_order_relaxed); }
 
+    /** While one lives, the audio thread goes on with the settings it had: a preset, a saved state, an undo step or
+        a type change reaches it whole, never half applied (D157). Scopes may nest and come from any thread. */
+    class BulkEdit final
+    {
+    public:
+        explicit BulkEdit(SynthAudioProcessor& p) noexcept : owner(p)
+        {
+            if (owner.bulkEditDepth.fetch_add(1, std::memory_order_acq_rel) == 0)
+                owner.settingsSequence.fetch_add(1, std::memory_order_seq_cst); // odd: under way
+        }
+        ~BulkEdit()
+        {
+            if (owner.bulkEditDepth.fetch_sub(1, std::memory_order_acq_rel) == 1)
+                owner.settingsSequence.fetch_add(1, std::memory_order_release); // even: whole again
+        }
+        BulkEdit(const BulkEdit&) = delete;
+        BulkEdit& operator=(const BulkEdit&) = delete;
+
+    private:
+        SynthAudioProcessor& owner;
+    };
+
     // ---- Undo and patch identity (message thread) ----------------------------
     // Every UI gesture becomes one undo step automatically. Bulk edits (preset,
     // init, load) are wrapped in performUndoableEdit() so they become one step too.
@@ -161,7 +183,11 @@ private:
     void applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept;
 
     /** Reads every parameter into the engine settings once per block; lock-free. */
+    /** Audio thread: the settings for this block, rebuilt from the parameters unless a bulk edit is under way or
+        changed them while they were read; then the last whole settings (D157). */
     const coolsynth::synth::v3::EngineSettings& makeEngineSettings() noexcept;
+    /** Reads every parameter into `settings`. Any thread. */
+    void fillEngineSettings(coolsynth::synth::v3::EngineSettings& settings) const noexcept;
     /** Reads in every sampled-instrument style the patch names and hands each to `visit` (null if not installed). */
     template <typename Visit>
     void forEachSampledStyle(Visit&& visit);
@@ -193,7 +219,12 @@ private:
     void valueTreeChildAdded(juce::ValueTree&, juce::ValueTree& child) override;
     void valueTreeChildRemoved(juce::ValueTree&, juce::ValueTree& child, int) override;
     void valueTreeRedirected(juce::ValueTree&) override;
-    coolsynth::synth::v3::EngineSettings engineSettings;
+    // Two settings, the block's and the one being read; which is whole: audio thread (D157).
+    std::array<coolsynth::synth::v3::EngineSettings, 2> settingsBuffers;
+    int liveSettings = 0;
+    bool settingsPrimed = false;
+    std::atomic<std::uint32_t> settingsSequence { 0 }; // odd while a bulk edit runs
+    std::atomic<int> bulkEditDepth { 0 };
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
     int currentProgram = 0;

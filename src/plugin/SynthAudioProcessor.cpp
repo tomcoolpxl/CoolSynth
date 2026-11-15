@@ -527,7 +527,10 @@ template <typename Visit>
 void SynthAudioProcessor::forEachSampledStyle(Visit&& visit)
 {
     namespace sv3 = coolsynth::synth::v3;
-    const auto& settings = makeEngineSettings();
+    // Its own copy: the audio thread's settings are the audio thread's alone.
+    const auto own = std::make_unique<sv3::EngineSettings>();
+    fillEngineSettings(*own);
+    const auto& settings = *own;
     const auto& d = sv3::SampleGenerator::descriptor();
     for (const auto& part : settings.parts)
         for (const auto& generator : part.voice.generators)
@@ -550,6 +553,7 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     const auto& preset = coolsynth::presets::getFactoryPreset(index);
     coolsynth::diag::record(coolsynth::diag::Event::presetLoaded, index, 0, 0.0f, 0.0f, preset.name.toRawUTF8());
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
+    const BulkEdit whole(*this); // the audio thread sees the old preset or the new one, never a mix (D157)
     coolsynth::presets::applyFactoryPreset(parameters, preset);
     setPatchIdentity(preset.name, false);
 }
@@ -614,6 +618,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
             renamed = coolsynth::presets::migrateFixedMasterEffects(parameterStateXml);
 
         const AtomicFlagScope applying(applyingPatch, true);
+        const BulkEdit whole(*this);
         suppressGestureSnapshots = true;
         const bool applied = applyParameterStateXml(parameterStateXml);
         suppressGestureSnapshots = false;
@@ -664,6 +669,7 @@ bool SynthAudioProcessor::applyParameterStateXml(const juce::XmlElement& stateXm
     juce::ValueTree sanitizedTree;
     if (!buildSanitizedParameterStateTree(tree, sanitizedTree))
         return false;
+    const BulkEdit whole(*this); // the state arrives whole (D157)
 
     parameters.replaceState(sanitizedTree);
     return true;
@@ -808,6 +814,7 @@ void SynthAudioProcessor::restoreSnapshot(const coolsynth::plugin::ParameterUndo
 {
     const AtomicFlagScope applying(applyingPatch, true);
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
+    const BulkEdit whole(*this);
 
     const auto& allParameters = getParameters();
     for (int i = 0; i < allParameters.size() && i < static_cast<int>(snapshot.normalisedValues.size()); ++i)
@@ -837,6 +844,7 @@ void SynthAudioProcessor::performUndoableEdit(const juce::String& label, const s
     undoHistory.beginEdit(captureSnapshot(label));
     {
         const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
+        const BulkEdit whole(*this);
         edit();
     }
     undoHistory.commitEdit(captureNormalisedValues());
@@ -1155,7 +1163,23 @@ namespace
 
 const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSettings() noexcept
 {
-    auto& settings = engineSettings;
+    // A seqlock over the bulk edits: read only when none is under way, and keep what was read only if none began
+    // meanwhile. Otherwise the last whole settings play on, one more block (D157).
+    const auto before = settingsSequence.load(std::memory_order_acquire);
+    if ((before & 1u) != 0u && settingsPrimed)
+        return settingsBuffers[static_cast<std::size_t>(liveSettings)];
+    auto& next = settingsBuffers[static_cast<std::size_t>(1 - liveSettings)];
+    fillEngineSettings(next);
+    std::atomic_thread_fence(std::memory_order_acquire);
+    if (settingsSequence.load(std::memory_order_relaxed) != before && settingsPrimed)
+        return settingsBuffers[static_cast<std::size_t>(liveSettings)];
+    liveSettings = 1 - liveSettings;
+    settingsPrimed = true;
+    return next;
+}
+
+void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSettings& settings) const noexcept
+{
     for (std::size_t part = 0; part < partParameterValues.size(); ++part)
     {
         coolsynth::parameters::v3::readPartSettings(partParameterValues[part], settings.parts[part]);
@@ -1197,7 +1221,6 @@ const coolsynth::synth::v3::EngineSettings& SynthAudioProcessor::makeEngineSetti
                 userSoundHandles[static_cast<std::size_t>(part * coolsynth::parameters::v3::partGeneratorSlots + slot)].load(std::memory_order_relaxed);
 
     settings.masterGainLinear = juce::Decibels::decibelsToGain(v.masterGainDb->load());
-    return settings;
 }
 
 coolsynth::synth::GlobalParameterPointers SynthAudioProcessor::bindParameterPointers(APVTS& state)

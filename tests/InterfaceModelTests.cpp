@@ -318,3 +318,52 @@ public:
 };
 
 static PanelSnapshotTests panelSnapshotTests;
+
+// ---- A bulk edit reaches the audio whole (D157) -------------------------------------------------------------
+
+class BulkEditTests final : public juce::UnitTest
+{
+public:
+    BulkEditTests() : juce::UnitTest("Bulk edits reach the audio whole", "Interface") {}
+
+    void runTest() override
+    {
+        beginTest("While a bulk edit runs the audio keeps the settings it had; after it, the new ones");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+            synth->prepareToPlay(48000.0, 256);
+            juce::AudioBuffer<float> buffer(2, 256);
+            juce::MidiBuffer midi;
+            auto play = [&](int blocks)
+            {
+                float level = 0.0f;
+                for (int i = 0; i < blocks; ++i)
+                {
+                    buffer.clear();
+                    synth->processBlock(buffer, midi);
+                    midi.clear();
+                    level = std::max(level, buffer.getMagnitude(0, 0, 256));
+                }
+                return level;
+            };
+            midi.addEvent(juce::MidiMessage::noteOn(1, 60, static_cast<juce::uint8>(100)), 0);
+            play(40);
+            const float before = play(10);
+            expectGreaterThan(before, 0.01f);
+
+            auto* master = synth->getValueTreeState().getParameter(coolsynth::parameters::ids::masterGainDb);
+            {
+                const SynthAudioProcessor::BulkEdit whole(*synth);
+                master->setValueNotifyingHost(master->convertTo0to1(-50.0f));
+                const float during = play(10);
+                expectGreaterThan(during, before * 0.7f, "the master gain is held while the edit is under way");
+            }
+            play(10); // the gain glides down over 20 ms
+            const float after = play(10);
+            expectLessThan(after, before * 0.05f, "and taken once it is whole");
+        }
+    }
+};
+
+static BulkEditTests bulkEditTests;
