@@ -76,7 +76,7 @@ namespace coolsynth::presets
 
         const juce::StringArray& partModeWords()
         {
-            static const juce::StringArray words { "a", "layer", "split", "b" };
+            static const juce::StringArray words { "a", "stack", "split", "b" }; // "layer" read as stack too (D189)
             return words;
         }
 
@@ -369,7 +369,7 @@ namespace coolsynth::presets
 
             if (key == "parts")
             {
-                if (const int mode = partModeWords().indexOf(value.toLowerCase()); mode >= 0)
+                if (const int mode = value.equalsIgnoreCase("layer") ? 1 : partModeWords().indexOf(value.toLowerCase()); mode >= 0)
                     add(pv3::partModeParameterId, pv3::partModeNames()[mode]);
                 else
                     error("parts is a, layer, split or b");

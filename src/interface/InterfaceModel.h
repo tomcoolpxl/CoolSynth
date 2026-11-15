@@ -197,7 +197,7 @@ namespace coolsynth::ui
         [[nodiscard]] PadLight padLight(int pad, bool shift) const;       // for the MiniLab: its own colours
         /** The pads, left to right (D184): Home, Sound, Shape, Motion, Stop, Play, Record, Effects. */
         static constexpr int homePad = 0;
-        /** Part A or B for the sections to edit (D185): Home pressed again while Home is open, or the screen's "Part A". */
+        /** Layer A or B for the sections to edit (D185, D189): Home pressed again while Home is open, or the screen's "Layer A". */
         void togglePart();
         [[nodiscard]] static int sectionOfPad(int pad) noexcept;   // -1 for Home and the recorder's pads
         [[nodiscard]] static int padOfSection(int section) noexcept;

@@ -92,7 +92,7 @@ namespace coolsynth::ui
         juce::StringArray parts;
         if (mode != "B")
             parts.add("pA");
-        if (mode == "B" || mode == "Layer" || mode == "Split")
+        if (mode == "B" || mode == "Stack" || mode == "Split")
             parts.add("pB");
 
         juce::StringArray pills;
@@ -629,7 +629,7 @@ namespace coolsynth::ui
 
     juce::String InterfaceModel::faderName(int fader) const
     {
-        static const juce::StringArray names { "Part A", "Part B", "Effects", "Master" };
+        static const juce::StringArray names { "Layer A", "Layer B", "Effects", "Master" };
         return names[clampInt(fader, 0, 3)];
     }
 
@@ -836,7 +836,7 @@ namespace coolsynth::ui
         if (pad >= 0 && pad < 8)
         {
             lastPopup.name = pad == homePad ? juce::String("Home") : padLabel(pad, false); // the part goes on line 2
-            lastPopup.value = pad >= 4 && pad <= 6 ? juce::String("comes later") : "Part " + juce::String(currentPart == 0 ? "A" : "B");
+            lastPopup.value = pad >= 4 && pad <= 6 ? juce::String("comes later") : "Layer " + juce::String(currentPart == 0 ? "A" : "B");
             lastPopup.normalised = 1.0f;
             lastPopup.fader = false;
             lastPopup.pad = true;

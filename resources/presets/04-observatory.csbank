@@ -63,7 +63,7 @@ room = Observatory
 # on a 20-second global LFO; it swells in over two and a half seconds into a long plate. Part B
 # is the light above it: three triangles an octave up through a band-pass that drifts on its
 # own 33-second LFO, arriving six seconds into the note and leaving last.
-parts = layer
+parts = stack
 g1 = VA shape=saw oct=-2 level=0.55
 g2 = VA shape=sine oct=-1 rand=0 level=0.7
 p1 = Ladder cutoff=400 res=0.2 key=0.3 bass=0.7

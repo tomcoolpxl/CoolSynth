@@ -19,7 +19,7 @@ namespace coolsynth::ui { class InterfaceModel; }
     main knob; Escape or Backspace go back; 1-8 are the pads; Shift is Shift.
 
     The mouse, without a MiniLab (D181): every row, slot, page tab, card and trail item is clicked; the
-    header's chip goes back and "Part A" switches the part; a right click goes back; the wheel scrolls
+    header's chip goes back and "Layer A" switches the layer; a right click goes back; the wheel scrolls
     the list it is over, turns a card's knob or the page tabs; a slot clicked again opens its type list.
 */
 class PanelEditor final : public juce::AudioProcessorEditor,

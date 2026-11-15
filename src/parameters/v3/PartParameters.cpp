@@ -274,14 +274,14 @@ namespace coolsynth::parameters::v3
 
     const juce::StringArray& partModeNames()
     {
-        static const juce::StringArray names { "A", "Layer", "Split", "B" };
+        static const juce::StringArray names { "A", "Stack", "Split", "B" }; // was Layer (D189)
         return names;
     }
 
     std::unique_ptr<juce::AudioProcessorParameterGroup> makePartsGroup()
     {
         auto group = std::make_unique<juce::AudioProcessorParameterGroup>("parts", "Parts", "|");
-        group->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(partModeParameterId), "Part Mode", partModeNames(), 0));
+        group->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(partModeParameterId), "Layer Mode", partModeNames(), 0));
         return group;
     }
 
@@ -413,7 +413,7 @@ namespace coolsynth::parameters::v3
 
     std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part)
     {
-        auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part), part == Part::a ? "Part A" : "Part B", "|");
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part), part == Part::a ? "Layer A" : "Layer B", "|");
 
         for (int i = 1; i <= partGeneratorSlots; ++i)
             group->addChild(makeSlotGroup({ part, SlotKind::generator, i }, sv3::GeneratorSlot::typeTable(),
@@ -474,21 +474,21 @@ namespace coolsynth::parameters::v3
 
         // Split by default at middle C: part A below it, part B from it upwards. Layer ignores the key range.
         const bool lower = part == Part::a;
-        auto mix = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".mix", "Part Mix", "|");
-        mix->addChild(floatParameter(mixParameterId(part, "level"), "Part Level", { -60.0f, 6.0f }, 0.0f,
+        auto mix = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".mix", "Layer Mix", "|");
+        mix->addChild(floatParameter(mixParameterId(part, "level"), "Layer Level", { -60.0f, 6.0f }, 0.0f,
                                      juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int)
                                      {
                                          return v <= -60.0f ? juce::String("off") : juce::String(v, 1) + " dB";
                                      })));
-        mix->addChild(floatParameter(mixParameterId(part, "pan"), "Part Pan", { -1.0f, 1.0f }, 0.0f, amountAttributes()));
-        mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "transpose")), "Part Transpose", -36, 36, 0));
-        mix->addChild(floatParameter(mixParameterId(part, "fine"), "Part Fine", { -100.0f, 100.0f }, 0.0f, centsAttributes()));
+        mix->addChild(floatParameter(mixParameterId(part, "pan"), "Layer Pan", { -1.0f, 1.0f }, 0.0f, amountAttributes()));
+        mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "transpose")), "Layer Transpose", -36, 36, 0));
+        mix->addChild(floatParameter(mixParameterId(part, "fine"), "Layer Fine", { -100.0f, 100.0f }, 0.0f, centsAttributes()));
         mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "keyLow")), "Key Low", 0, 127, lower ? 0 : 60));
         mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "keyHigh")), "Key High", 0, 127, lower ? 59 : 127));
         mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "velLow")), "Velocity Low", 1, 127, 1));
         mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "velHigh")), "Velocity High", 1, 127, 127));
-        mix->addChild(floatParameter(mixParameterId(part, "fx"), "Part Effects", { 0.0f, 1.0f }, 1.0f, percentAttributes()));
-        mix->addChild(std::make_unique<juce::AudioParameterBool>(makeId(mixParameterId(part, "arp")), "Part Arp", true));
+        mix->addChild(floatParameter(mixParameterId(part, "fx"), "Layer Effects", { 0.0f, 1.0f }, 1.0f, percentAttributes()));
+        mix->addChild(std::make_unique<juce::AudioParameterBool>(makeId(mixParameterId(part, "arp")), "Layer Arp", true));
         group->addChild(std::move(mix));
 
         for (int i = 1; i <= partInsertSlots; ++i)

@@ -380,7 +380,7 @@ master = -3
             if (parsed.presets.size() == 1)
             {
                 const auto& preset = parsed.presets.front();
-                expect(entryText(preset, "part.mode") == "Layer");
+                expect(entryText(preset, "part.mode") == "Stack"); // Layer A and B stacked (D189)
                 expect(entryText(preset, "pA.g1.type") == "VA");
                 expect(entryText(preset, "pA.mix.level") == "-2");
                 expect(entryText(preset, "pB.g1.type") == "Wavetable");

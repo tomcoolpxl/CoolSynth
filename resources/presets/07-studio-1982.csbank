@@ -8,7 +8,7 @@ room = Studio 1982
 # single LFO. Two of them are stacked the way a Jupiter's Dual mode stacks two patches: part A
 # to the left, part B to the right, seven cents sharp with more saw and its own slower LFO.
 # Chorus I-style slow chorus over both.
-parts = layer
+parts = stack
 g1 = VA shape=pulse pw=0.5 rand=0 level=0.7
 g2 = VA shape=saw rand=0 level=0.4
 p1 = Ladder cutoff=1500 res=0.12 key=0.4 bass=0.5

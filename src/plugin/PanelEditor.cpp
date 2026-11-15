@@ -392,9 +392,9 @@ public:
         g.drawText(chipText, header.withX(area.getX()).withWidth(chipWidth), juce::Justification::centred);
         g.setColour(colours::screenDim);
         g.setFont(mono(11.0f));
-        const auto partText = "Part " + juce::String(model.part() == 0 ? "A" : "B");
+        const auto partText = "Layer " + juce::String(model.part() == 0 ? "A" : "B");
         g.drawText(partText, header, juce::Justification::centredRight);
-        // The chip goes back one level; "Part A" switches the part, as Home pressed again does (D181, D185).
+        // The chip goes back one level; "Layer A" switches the layer, as Home pressed again does (D181, D185, D189).
         hits.push_back({ chip, [this] { model.back(); } });
         const int partWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), partText) + 6;
         hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.togglePart(); } });
@@ -940,7 +940,7 @@ public:
             const auto b = pads[static_cast<std::size_t>(p)].getBounds();
             juce::String text;
             if (p == InterfaceModel::homePad) // nothing under the recorder's pads (D187)
-                text = "Again: Part A/B";
+                text = "Again: Layer A/B";
             g.drawText(text, b.getX() - 8, b.getBottom() + 4, b.getWidth() + 16, 16, juce::Justification::centred);
         }
     }

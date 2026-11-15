@@ -249,7 +249,7 @@ namespace
             const float db = juce::Decibels::gainToDecibels(gain);
             return db > -0.05f ? juce::String("0.0 dB") : juce::String(db, 1) + " dB";
         });
-        for (const auto& [id, name] : { std::pair { volumeA, "Part A Volume" }, std::pair { volumeB, "Part B Volume" },
+        for (const auto& [id, name] : { std::pair { volumeA, "Layer A Volume" }, std::pair { volumeB, "Layer B Volume" },
                                         std::pair { volumeFx, "Effects Volume" }, std::pair { volumeMaster, "Master Volume" } })
             group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(id), name,
                                                                         juce::NormalisableRange<float>(0.0f, 1.0f), 1.0f, volume));

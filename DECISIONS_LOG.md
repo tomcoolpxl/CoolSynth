@@ -3766,3 +3766,12 @@ CoolSynth uses) and 4-7 in transport colours; our colours sent again under Shift
 At the user's word ("Home: A and Home: B, or alternatives"): the Home pad reads **Home: A** or
 **Home: B** (teal or yellow, D185). The MiniLab's pad pop-up keeps "Home" with the part on line 2.
 Options for the words: **Home: A / Home: B (chosen, the user's)**; "Home A"; "A · Home".
+
+## D189. Layer A and Layer B; the stacked mode is Stack (2026-11-15)
+
+Asked what A and B are (two complete synths inside one sound, D70-D75), the user chose the name
+**Layer A / Layer B** (options: Layer, recommended and chosen, as Sequential's Prophet Rev2 and
+Prophet-12 name them; keep Part; Upper/Lower as the Jupiter-8). The mode that plays both on every
+key is now **Stack** (was Layer; "Stack A+B" on the Rev2): modes A, Stack, Split, B. Bank files say
+"parts = stack" ("layer" still reads as stack); host parameter names say Layer. How many modes (two
+split directions, a velocity split) is part of the parked A/B question, to be talked through.
