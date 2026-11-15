@@ -3648,3 +3648,26 @@ unused (only a reverb there, no EQ). No wet mix is raised; feedback stays at mos
 - For the user's ear: the layer presets (Deep Field, Juno Pad) route the same master slot from both
   parts, so their amounts add when both parts' knobs are up; the shimmer on four Conservatory bells;
   +0.15 reverb size on strings and organs at full Linger.
+
+## D182. Browsing with a mouse and a computer keyboard, without a MiniLab (2026-11-15)
+
+The user: "make the software UI easier to browse... don't change the visuals... if I click the back
+button, it should go back; if I click the upper menu labels it should work... from the point of
+view of a user that doesn't have a MiniLab 3"; "make sure the mouse wheel works at least for
+scrolling". Nothing drawn changed.
+- Found: in a long room (the Conservatory, 40 sounds) the list scrolls with the cursor and its
+  ‹ Back row leaves the screen, and the wheel did nothing on the screen: a mouse could not get back.
+- **The wheel** scrolls the list it is over (rooms, sounds, type lists, a section's slots), turns a
+  card's knob over a card, and the pages over the page tabs. Tested with a real wheel event on the
+  drawn screen.
+- **Back** from anywhere: the chip in the header, a right click, Escape or Backspace, besides the
+  ‹ Back row: a type list closes, a sound list goes to the rooms, a section goes Home.
+- **The trail** is clickable: Categories and the room go there, the sound's name goes Home, the ◎
+  item presses the main knob, the page item turns to the next page (round again after the last).
+- **"Part A"** in the header switches the part (Shift + pad 8). A slot clicked again opens its type
+  list. The pointer becomes a hand over all of these, as it already did over rows and cards.
+- **Keys**: up/down now move through a list where one is shown (they turned knob 5's pages, which
+  surprised in a vertical list; in a section's map they still do); Page Up/Down five rows; Home/End
+  the ends. Options for up/down: **move the list where there is one (chosen)**; keep them on knob 5
+  everywhere (as documented before); swap left/right and up/down everywhere (breaks the habit of
+  left/right as the main knob).

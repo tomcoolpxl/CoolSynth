@@ -14,8 +14,13 @@ namespace coolsynth::ui { class InterfaceModel; }
     The V3 panel (docs/interface-v3.md): the Arturia MiniLab 3's layout on screen, driving the shared
     InterfaceModel. Shift and its strips on the left, the screen with the main knob under it, knobs
     1-8, four faders, eight pads, a short row of keys. Drawn at a design size of 1100 x 690 and scaled
-    to the window. Keys: arrows turn the main knob (left/right) and knob 5 (up/down), Enter presses
-    it, 1-8 are the pads, Shift is Shift.
+    to the window. Keys: left/right turn the main knob; up/down move through a list (Home, a type list)
+    or turn knob 5's pages in a section; Page Up/Down five rows, Home/End the ends; Enter presses the
+    main knob; Escape or Backspace go back; 1-8 are the pads; Shift is Shift.
+
+    The mouse, without a MiniLab (D181): every row, slot, page tab, card and trail item is clicked; the
+    header's chip goes back and "Part A" switches the part; a right click goes back; the wheel scrolls
+    the list it is over, turns a card's knob or the page tabs; a slot clicked again opens its type list.
 */
 class PanelEditor final : public juce::AudioProcessorEditor,
                           private juce::Timer

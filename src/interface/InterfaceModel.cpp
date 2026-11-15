@@ -803,8 +803,80 @@ namespace coolsynth::ui
         if (currentView != View::section)
             return;
         cancelPendingChoice();
+        const int target = clampInt(slot, 0, static_cast<int>(slotsOf(currentSection).size()) - 1);
+        auto& cursor = slotCursor[static_cast<std::size_t>(currentSection)];
+        // The slot already chosen, clicked again: its type list, as a press of the main knob (D181).
+        if (target == cursor && ! typeList.open)
+        {
+            openTypeList();
+            touched();
+            return;
+        }
         typeList.open = false;
-        slotCursor[static_cast<std::size_t>(currentSection)] = clampInt(slot, 0, static_cast<int>(slotsOf(currentSection).size()) - 1);
+        cursor = target;
+        touched();
+    }
+
+    void InterfaceModel::back()
+    {
+        // One level up, for a mouse or a computer keyboard (D181): the type list closes, a sound list goes back to
+        // the rooms, a section goes Home.
+        if (pendingChoice.has_value())
+            cancelPendingChoice();
+        else if (typeList.open)
+            typeList.open = false;
+        else if (currentView == View::home)
+        {
+            if (browser.inCategory)
+                browser.inCategory = false;
+        }
+        else
+            openHome();
+        touched();
+    }
+
+    void InterfaceModel::clickTrail(int item)
+    {
+        // Each part of the trail does what it names (D181).
+        const auto items = trail();
+        if (item < 0 || item >= static_cast<int>(items.size()))
+            return;
+        const auto& clicked = items[static_cast<std::size_t>(item)];
+        const bool cursor = clicked.mark == juce::String(juce::CharPointer_UTF8("\xe2\x97\x8e"));
+        const bool page = clicked.mark == "5";
+        if (cursor)
+        {
+            pressMain(); // the row or slot the main knob is on: open, load, choose
+            return;
+        }
+        if (page)
+        {
+            // the next page, round again after the last
+            const int count = currentView == View::home && ! typeList.open ? livePageCount : static_cast<int>(currentSlot().pages.size());
+            const int now = currentView == View::home && ! typeList.open ? currentLivePage
+                                                                          : pageIndexOf(currentSection, slotIndex(currentSection));
+            if (count > 1)
+                clickPage((now + 1) % count);
+            return;
+        }
+        if (currentView == View::home && ! typeList.open)
+        {
+            cancelPendingChoice();
+            if (item == 0)
+                browser.inCategory = false; // Categories
+            else
+                browser.inCategory = true;  // the room the list is in
+            touched();
+            return;
+        }
+        // In a section: the sound's name goes Home, the section's name closes the type list.
+        if (item == 0)
+            openHome();
+        else
+        {
+            cancelPendingChoice();
+            typeList.open = false;
+        }
         touched();
     }
 

@@ -126,6 +126,11 @@ namespace coolsynth::ui
         void clickSlot(int slot);
         /** A click on a page tab: the live page in Home, the focused slot's page in a section. */
         void clickPage(int page);
+        /** One level up (D181): closes the type list, leaves a sound list for the rooms, a section for Home. */
+        void back();
+        /** A click on an item of the trail (D181): Categories, the room, the sound go there; the item on the main
+            knob presses it; the page item turns to the next page. */
+        void clickTrail(int item);
 
         // ---- State ------------------------------------------------------------------------
         [[nodiscard]] View view() const noexcept { return currentView; }

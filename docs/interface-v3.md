@@ -81,7 +81,15 @@ A trail under the screen title says where you are, with marks for what each knob
 ## 4. The software screen
 
 Header: a chip in the section's colour (or SOUNDS/CATEGORIES/the room in teal) and Part A/B or
-the position. Under it the trail. Then the list or the section map, a hint line, and four cards
+the position. Under it the trail.
+
+With a mouse and a computer keyboard, without a MiniLab (D181), the look unchanged: rows, slots,
+page tabs and cards are clicked (a slot clicked again opens its type list); each trail item goes
+where it names (Categories, the room, the sound's name to Home; the ◎ item presses the main knob;
+the 5 item turns to the next page); the chip goes back one level and "Part A" switches the part;
+a right click goes back; the wheel scrolls the list it is over (or turns a card's knob, or the
+page tabs). Keys: up/down move through a list, Page Up/Down and Home/End jump, Enter presses,
+Escape or Backspace go back, left/right turn the main knob, 1-8 are the pads. Then the list or the section map, a hint line, and four cards
 for knobs 1-4 (role or "knob n", name, value, a bar) in the page's colour. In Home the live-page
 tabs sit between the list and the cards.
 

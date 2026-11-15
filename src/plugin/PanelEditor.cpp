@@ -233,6 +233,14 @@ public:
     void mouseDown(const juce::MouseEvent& e) override
     {
         const auto p = e.getPosition();
+        // A right click goes back one level, as the ‹ Back row does (D181).
+        if (e.mods.isPopupMenu())
+        {
+            model.back();
+            if (onChanged)
+                onChanged();
+            return;
+        }
         for (int k = 0; k < 4; ++k)
             if (cardAreas[static_cast<std::size_t>(k)].contains(p))
             {
@@ -277,6 +285,34 @@ public:
         dragKnob = -1;
     }
 
+    // The wheel turns what it is over (D181): a card its knob, the page tabs knob 5, anything else the main knob,
+    // so a long list scrolls, its ‹ Back row included.
+    void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override
+    {
+        wheelSum += wheel.deltaY * 8.5f;
+        const int steps = static_cast<int>(wheelSum);
+        if (steps == 0)
+            return;
+        wheelSum -= static_cast<float>(steps);
+        const auto p = e.getPosition();
+        bool done = false;
+        for (int k = 0; k < 4 && ! done; ++k)
+            if (cardAreas[static_cast<std::size_t>(k)].contains(p))
+            {
+                model.turnKnob(k + 1, steps, fine && fine());
+                done = true;
+            }
+        if (! done && tabsArea.contains(p))
+        {
+            model.turnPageKnob(steps > 0 ? -1 : 1);
+            done = true;
+        }
+        if (! done)
+            model.turnMain(-steps); // the wheel down goes down the list
+        if (onChanged)
+            onChanged();
+    }
+
     void mouseMove(const juce::MouseEvent& e) override
     {
         bool over = false;
@@ -290,6 +326,7 @@ public:
     void paint(juce::Graphics& g) override
     {
         hits.clear();
+        tabsArea = {}; // set again below when there are tabs
         const auto bounds = getLocalBounds().toFloat();
         g.setColour(colours::screen);
         g.fillRoundedRectangle(bounds, 6.0f);
@@ -308,19 +345,28 @@ public:
         g.setFont(mono(11.0f, true));
         const int chipWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), chipText) + 14;
         g.setColour(tint.withMultipliedBrightness(0.85f));
-        g.fillRoundedRectangle(header.removeFromLeft(chipWidth).toFloat(), 4.0f);
+        const auto chip = header.removeFromLeft(chipWidth);
+        g.fillRoundedRectangle(chip.toFloat(), 4.0f);
         g.setColour(colours::screen);
         g.drawText(chipText, header.withX(area.getX()).withWidth(chipWidth), juce::Justification::centred);
         g.setColour(colours::screenDim);
         g.setFont(mono(11.0f));
-        g.drawText("Part " + juce::String(model.part() == 0 ? "A" : "B"), header, juce::Justification::centredRight);
+        const auto partText = "Part " + juce::String(model.part() == 0 ? "A" : "B");
+        g.drawText(partText, header, juce::Justification::centredRight);
+        // The chip goes back one level; "Part A" switches the part, as Shift + pad 8 does (D181).
+        hits.push_back({ chip, [this] { model.back(); } });
+        const int partWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), partText) + 6;
+        hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.pressPad(7, true); } });
 
         // trail: where you are, with what each knob moves
         area.removeFromTop(4);
         auto trail = area.removeFromTop(16);
         float x = static_cast<float>(trail.getX());
-        for (const auto& item : model.trail())
+        const auto trailItems = model.trail();
+        for (std::size_t index = 0; index < trailItems.size(); ++index)
         {
+            const auto& item = trailItems[index];
+            const float itemStart = x;
             if (x > static_cast<float>(trail.getX()))
             {
                 g.setColour(colours::screenLine.brighter(0.4f));
@@ -341,6 +387,9 @@ public:
             const float w = static_cast<float>(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), item.text));
             g.drawText(item.text, juce::Rectangle<float>(x, static_cast<float>(trail.getY()), w + 2.0f, 16.0f), juce::Justification::centredLeft);
             x += w + 4.0f;
+            // Each item is clickable: it goes where it names (D181).
+            hits.push_back({ juce::Rectangle<float>(itemStart, static_cast<float>(trail.getY()), x - itemStart, 16.0f).toNearestInt(),
+                             [this, index] { model.clickTrail(static_cast<int>(index)); } });
         }
         area.removeFromTop(3);
         g.setColour(colours::screenLine);
@@ -395,6 +444,7 @@ public:
                 current = model.pageIndexOf(model.section(), model.slotIndex(model.section()));
             }
             auto tabs = area.removeFromBottom(22);
+            tabsArea = tabs;
             float tx = static_cast<float>(tabs.getX());
             g.setFont(mono(10.5f));
             for (int i = 0; i < names.size(); ++i)
@@ -579,6 +629,8 @@ private:
     InterfaceModel& model;
     std::vector<Hit> hits;
     std::array<juce::Rectangle<int>, 4> cardAreas;
+    juce::Rectangle<int> tabsArea; // the page tabs: the wheel turns knob 5 there (D181)
+    float wheelSum = 0.0f;
     int dragKnob = -1;
     float dragY = 0.0f;
     bool dragMoved = false;
@@ -953,10 +1005,19 @@ void PanelEditor::timerCallback()
 bool PanelEditor::keyPressed(const juce::KeyPress& key)
 {
     const int code = key.getKeyCode();
+    // In a list (Home's rooms and sounds, a type list) up and down move through it; in a section's map they turn
+    // knob 5's pages. Escape and Backspace go back one level; Page Up and Down move five rows, Home and End to the
+    // ends (D181).
+    const bool listOnScreen = model.typeListOpen() || model.view() == InterfaceModel::View::home;
     if (code == juce::KeyPress::rightKey) model.turnMain(1);
     else if (code == juce::KeyPress::leftKey) model.turnMain(-1);
-    else if (code == juce::KeyPress::upKey) model.turnPageKnob(1);
-    else if (code == juce::KeyPress::downKey) model.turnPageKnob(-1);
+    else if (code == juce::KeyPress::upKey) listOnScreen ? model.turnMain(-1) : model.turnPageKnob(1);
+    else if (code == juce::KeyPress::downKey) listOnScreen ? model.turnMain(1) : model.turnPageKnob(-1);
+    else if (code == juce::KeyPress::pageUpKey) model.turnMain(-5);
+    else if (code == juce::KeyPress::pageDownKey) model.turnMain(5);
+    else if (code == juce::KeyPress::homeKey) model.turnMain(-10000);
+    else if (code == juce::KeyPress::endKey) model.turnMain(10000);
+    else if (code == juce::KeyPress::escapeKey || code == juce::KeyPress::backspaceKey) model.back();
     else if (code == juce::KeyPress::returnKey) model.pressMain();
     else if (code >= '1' && code <= '8') model.pressPad(code - '1', shiftHeld());
     else

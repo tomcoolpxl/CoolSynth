@@ -692,3 +692,100 @@ public:
 };
 
 static MySoundsTests mySoundsTests;
+
+// ---- Browsing with a mouse and a computer keyboard, without a MiniLab (D181) -------------------------
+
+class MouseBrowsingTests final : public juce::UnitTest
+{
+public:
+    MouseBrowsingTests() : juce::UnitTest("Browsing with the mouse and keys", "Interface") {}
+
+    void runTest() override
+    {
+        const juce::ScopedJuceInitialiser_GUI gui;
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        auto& model = synth->getInterfaceModel();
+
+        beginTest("Back goes up one level from a sound list, a type list and a section");
+        model.pressPad(7, false); // Home, in the playing sound's room
+        expect(model.list().title != "CATEGORIES");
+        model.back();
+        expectEquals(model.list().title, juce::String("CATEGORIES"));
+        model.back(); // already at the top: stays
+        expectEquals(model.list().title, juce::String("CATEGORIES"));
+        model.pressPad(1, false); // Shape
+        model.pressMain();        // its type list
+        expect(model.typeListOpen());
+        model.back();
+        expect(! model.typeListOpen(), "the type list closed");
+        expect(model.view() == coolsynth::ui::InterfaceModel::View::section);
+        model.back();
+        expect(model.view() == coolsynth::ui::InterfaceModel::View::home, "a section goes Home");
+
+        beginTest("The trail's items go where they name");
+        model.pressPad(7, false);
+        const auto room = model.list().title;
+        model.clickTrail(0); // Categories
+        expectEquals(model.list().title, juce::String("CATEGORIES"));
+        model.pressMain(); // into the room the cursor is on
+        model.clickTrail(0);
+        expectEquals(model.list().title, juce::String("CATEGORIES"));
+        const int page = model.livePage();
+        model.clickTrail(static_cast<int>(model.trail().size()) - 1); // the page item: the next page
+        expectEquals(model.livePage(), (page + 1) % 5);
+        model.pressPad(2, false); // Motion
+        model.clickTrail(0); // the sound's name: Home
+        expect(model.view() == coolsynth::ui::InterfaceModel::View::home);
+        juce::ignoreUnused(room);
+
+        beginTest("A slot clicked again opens its type list");
+        model.pressPad(1, false); // Shape
+        model.clickSlot(1);
+        expect(! model.typeListOpen(), "the first click chooses the slot");
+        model.clickSlot(1);
+        expect(model.typeListOpen(), "the second opens its types");
+        model.back();
+
+        beginTest("The wheel scrolls the screen's list, and a right click goes back, on the panel itself");
+        std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditor());
+        auto* panel = dynamic_cast<PanelEditor*>(editor.get());
+        expect(panel != nullptr);
+        model.pressPad(7, false);
+        model.back(); // the rooms: a list of thirteen
+        panel->refresh();
+        (void) editor->createComponentSnapshot(editor->getLocalBounds()); // draws once: the screen knows its areas
+        juce::Component* screen = editor->getChildComponent(0)->getChildComponent(0); // the screen is the panel's first
+        const auto centre = screen->getLocalBounds().getCentre().toFloat();
+        auto source = juce::Desktop::getInstance().getMainMouseSource();
+        const auto event = [&](juce::ModifierKeys mods)
+        {
+            return juce::MouseEvent(source, centre, mods, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, screen, screen, juce::Time::getCurrentTime(),
+                                    centre, juce::Time::getCurrentTime(), 1, false);
+        };
+        const int before = model.list().cursor;
+        juce::MouseWheelDetails down {};
+        down.deltaY = -0.35f; // three notches toward the user
+        screen->mouseWheelMove(event({}), down);
+        const int after = model.list().cursor;
+        logMessage("wheel: cursor " + juce::String(before) + " -> " + juce::String(after));
+        expectGreaterThan(after, before, "the wheel moved down the list");
+        juce::MouseWheelDetails up {};
+        up.deltaY = 0.35f;
+        screen->mouseWheelMove(event({}), up);
+        expectEquals(model.list().cursor, before, "and back up");
+        model.pressMain(); // into a room
+        expect(model.list().title != "CATEGORIES");
+        screen->mouseDown(event(juce::ModifierKeys(juce::ModifierKeys::rightButtonModifier)));
+        expectEquals(model.list().title, juce::String("CATEGORIES"), "a right click went back");
+
+        beginTest("Keys: up and down move through a list, Escape goes back");
+        const int top = model.list().cursor;
+        expect(editor->keyPressed(juce::KeyPress(juce::KeyPress::downKey)));
+        expectEquals(model.list().cursor, top + 1);
+        model.pressMain();
+        expect(editor->keyPressed(juce::KeyPress(juce::KeyPress::escapeKey)));
+        expectEquals(model.list().title, juce::String("CATEGORIES"));
+    }
+};
+
+static MouseBrowsingTests mouseBrowsingTests;
