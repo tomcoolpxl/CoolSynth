@@ -3790,3 +3790,9 @@ split directions, a velocity split) is part of the parked A/B question, to be ta
   helpers stay in Prefs). Options shown: a ten-segment LED meter with the number (built first), a
   bigger meter, **the number alone (chosen, the user's)**. Amber from 60%, red from 90%; a click
   opens Prefs.
+- **Panel tweaks at the user's word**, the same day: the CPU number dimmer (the screen's dim grey,
+  not bold; "CPU" darker still); the names under knobs 1-8 at 14 px (were 12) and their numbers at
+  12; the faders spread slightly, 44 px apart (were 40; the knob block 8 px narrower), so their names
+  have room; the Home pad's "Again: Layer A/B" under it became **"Layer switch"**, small, inside the
+  pad at its bottom; the gaps between the white keys 2 px (JUCE draws 1) and a shade darker
+  (#a9b1ba, was #c9d0d7).

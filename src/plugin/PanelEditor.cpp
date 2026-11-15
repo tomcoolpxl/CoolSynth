@@ -182,6 +182,17 @@ namespace
 
         juce::String getWhiteNoteText(int) override { return {}; }
 
+        // The gap between white keys: 2 px (JUCE draws 1), in the separator colour (D191).
+        void drawWhiteNote(int note, juce::Graphics& g, juce::Rectangle<float> area, bool isDown, bool isOver,
+                           juce::Colour lineColour, juce::Colour textColour) override
+        {
+            juce::MidiKeyboardComponent::drawWhiteNote(note, g, area, isDown, isOver, juce::Colours::transparentBlack, textColour);
+            g.setColour(lineColour);
+            g.fillRect(area.withWidth(2.0f));
+            if (note == getRangeEnd())
+                g.fillRect(area.withTrimmedLeft(area.getWidth() - 2.0f));
+        }
+
         void drawBlackNote(int, juce::Graphics& g, juce::Rectangle<float> area, bool isDown, bool isOver,
                            juce::Colour noteFillColour) override
         {
@@ -204,6 +215,7 @@ public:
     std::function<void()> onPress;
     juce::Colour colour { colours::print };
     juce::String face;
+    juce::String sub; // small, inside at the bottom: what pressing it again does (D191)
     int symbol = -1; // 0 stop, 1 play, 2 record
     bool lit = false;
     float glow = -1.0f; // 0..1 while Home glows for a loading instrument (D156); below 0, no glow
@@ -241,8 +253,18 @@ public:
         g.setColour(ink);
         if (symbol < 0)
         {
+            auto faceArea = r;
+            if (sub.isNotEmpty())
+            {
+                auto line = faceArea.removeFromBottom(22.0f);
+                g.setFont(sans(10.5f));
+                g.setColour(ink.withAlpha(0.7f));
+                g.drawText(sub, line.withTrimmedBottom(4.0f), juce::Justification::centred);
+                faceArea.removeFromTop(6.0f);
+                g.setColour(ink);
+            }
             g.setFont(sans(16.0f, true)); // larger, to read from a distance (D185; was 12.5)
-            g.drawText(face, r, juce::Justification::centred);
+            g.drawText(face, faceArea, juce::Justification::centred);
             return;
         }
         const float s = 12.0f;
@@ -776,7 +798,7 @@ public:
         keyboard.setAvailableRange(48, 72); // 25 keys, C3 to C5
         keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xfff6f7f8));
         keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, juce::Colour(0xff1c1f23));
-        keyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, juce::Colour(0xffc9d0d7));
+        keyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, juce::Colour(0xffa9b1ba)); // a shade darker (D191)
         keyboard.setColour(juce::MidiKeyboardComponent::keyDownOverlayColourId, coolsynth::ui::tintColour(Tint::home).withAlpha(0.6f));
         keyboard.setColour(juce::MidiKeyboardComponent::mouseOverKeyOverlayColourId, coolsynth::ui::tintColour(Tint::home).withAlpha(0.25f));
         keyboard.setBlackNoteWidthProportion(0.5f);
@@ -856,6 +878,7 @@ public:
                       || (p == InterfaceModel::homePad && model.view() == InterfaceModel::View::home);
             pad.glow = p == InterfaceModel::homePad && model.loadingInstrument() ? InterfaceModel::loadingGlow() : -1.0f; // glows while loading (D156)
             pad.face = model.padLabel(p, shiftOn);
+            pad.sub = p == InterfaceModel::homePad ? juce::String("Layer switch") : juce::String();
             pad.repaint();
         }
         repaint();
@@ -893,15 +916,15 @@ public:
         {
             const float percent = juce::jlimit(0.0f, 100.0f, owner.synth.cpuLoad().percent[0]);
             auto r = cpuArea.toFloat();
-            g.setFont(mono(11.0f, true));
+            g.setFont(mono(11.0f));
             g.setColour(percent >= 90.0f ? coolsynth::ui::tintColour(Tint::record)
-                                         : (percent >= 60.0f ? coolsynth::ui::tintColour(Tint::sound) : colours::screenInk));
+                                         : (percent >= 60.0f ? coolsynth::ui::tintColour(Tint::sound) : colours::screenDim));
             const auto number = juce::String(juce::roundToInt(percent)) + "%";
             const auto numberWidth = static_cast<float>(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), number));
             g.drawText(number, r.removeFromRight(numberWidth + 2.0f), juce::Justification::centredRight);
             r.removeFromRight(5.0f);
             g.setFont(mono(9.0f));
-            g.setColour(colours::screenDim);
+            g.setColour(colours::screenDim.darker(0.4f));
             g.drawText("CPU", r, juce::Justification::centredRight);
         }
 
@@ -920,12 +943,12 @@ public:
         for (int k = 0; k < 8; ++k)
         {
             const auto b = knobs[static_cast<std::size_t>(k)].getBounds();
-            g.setFont(sans(11.0f, true));
+            g.setFont(sans(12.0f, true));
             g.setColour(colours::print);
-            g.drawText(juce::String(k + 1), b.getX() - 10, b.getBottom(), b.getWidth() + 20, 15, juce::Justification::centred);
-            g.setFont(sans(12.0f));
+            g.drawText(juce::String(k + 1), b.getX() - 10, b.getBottom() + 1, b.getWidth() + 20, 16, juce::Justification::centred);
+            g.setFont(sans(14.0f)); // larger (D191; was 12)
             g.setColour(knobLabels[static_cast<std::size_t>(k)] == emDash ? colours::muted : colours::ink);
-            g.drawFittedText(knobLabels[static_cast<std::size_t>(k)], b.getX() - 16, b.getBottom() + 15, b.getWidth() + 32, 30,
+            g.drawFittedText(knobLabels[static_cast<std::size_t>(k)], b.getX() - 16, b.getBottom() + 17, b.getWidth() + 32, 36,
                              juce::Justification::centredTop, 2);
         }
 
@@ -941,25 +964,15 @@ public:
             g.drawText(model.faderName(f), b.getX() - 18, b.getBottom() + 17, b.getWidth() + 36, 16, juce::Justification::centred);
         }
 
-        // what the pads also do
-        g.setFont(sans(11.5f));
-        g.setColour(colours::ink.withAlpha(0.85f));
-        for (int p = 0; p < 8; ++p)
-        {
-            const auto b = pads[static_cast<std::size_t>(p)].getBounds();
-            juce::String text;
-            if (p == InterfaceModel::homePad) // nothing under the recorder's pads (D187)
-                text = "Again: Layer A/B";
-            g.drawText(text, b.getX() - 8, b.getBottom() + 4, b.getWidth() + 16, 16, juce::Justification::centred);
-        }
     }
 
     void resized() override
     {
         // the MiniLab 3's layout: left column, screen, knobs, faders; pads under them; keys at the bottom
         const int top = 26, left = 38; // the top strip gave way when Options moved to the left column (D185)
-        const int leftWidth = 118, screenWidth = 360, knobsWidth = 308, gap = 26;
-        const int screenX = left + leftWidth + gap, knobsX = screenX + screenWidth + gap, fadersX = knobsX + knobsWidth + gap;
+        const int leftWidth = 118, screenWidth = 360, knobsWidth = 300, gap = 26;
+        // the faders a little further apart than the knobs' gap would leave them (D191): 44 px each, was 40
+        const int screenX = left + leftWidth + gap, knobsX = screenX + screenWidth + gap, fadersX = knobsX + knobsWidth + gap - 8;
         const int faderWidth = designWidth - 38 - fadersX;
 
         // left column
