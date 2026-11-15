@@ -3138,3 +3138,51 @@ allocation or any NaN or infinity, and reports its worst block. First run: no al
 broken value; worst block 1.6 ms over the switches, 5.9 ms with 32 note-ons on the heaviest preset
 (a 256-sample block lasts 5.3 ms; the user's 480-sample block 10.9 ms); All Sound Off 0.05 ms.
 Still to add: a click detector for the switches, once effect changes fade (the next step).
+
+## D162. The sample memory keeps the memory check; a track mode kept possible (2026-11-15)
+
+The user wondered whether a fixed 1 GB beats D155's memory check, given a possible 4-track
+recorder inside CoolSynth, and asked how DAWs and workstations play several tracks, whether four
+tracks need four memories, and whether the computer has the power. Found (details and sources in
+`docs/sample-memory-and-tracks.md`):
+- One sample memory per program: `SampleLibrary::instance()` is a static, so tracks in the app
+  and plugin copies in one host process share it, an instrument on two tracks held once (the
+  Digitakt II's 16 tracks share 400 MB the same way). A host that runs each copy in its own
+  process (Bitwig's "Individually") gives each its own.
+- DAWs compute every instrument track live and add them; Freeze renders a track to audio;
+  ASIO-Guard and REAPER compute the tracks not armed ahead in a large buffer. Workstations
+  (Kronos, Montage M, Digitakt) load everything with the song, so choosing a track only moves
+  the keys: switching is instant.
+- Measured here (Ryzen 7 3700X, 8 cores): one CoolSynth at 16 to 17 voices, worst block 2.64 ms
+  of 10.88 ms, a quarter of a core; the heaviest preset with 32 note-ons 5.9 ms (D161). Four
+  tracks on one core would drop out; on four cores they use about an eighth of the machine.
+- A song holds every track's instruments at once, up to eight: Steinway 0.73 GB, Old Trombone
+  about 0.3 GB, Cellos and Tenor Sax about 0.22 GB each, the library 3.84 GB.
+
+Chosen by the user, three pick lists:
+- **Size: the memory check (chosen, recommended)**, as D155: half the free memory at start, at
+  most the whole library, a warning when the computer is too small; here 3.84 GB, everything in.
+  Or a fixed 1 GB: the same on every computer, but Steinway and Trombone do not fit together,
+  sound changes reload more often, and a 4-track song mostly would not fit unless the tracks not
+  played become audio. Or the memory check with a setting to lower it.
+- **Track mode: the door kept open (chosen, recommended).** Nothing built; decided after the
+  engine, presets, arp and interface. Three rules hold from now on:
+  1. One sample memory per program, shared by every engine in it.
+  2. An instrument a loaded sound names is never reused while that sound is loaded, however long
+     it has not played. When full, only instruments no loaded sound names are reused, played
+     longest ago first; a sound (later a song) that needs more than the memory says which
+     instrument does not fit, never a silent stall. This sharpens D155's "when full".
+  3. The engine keeps no globals besides the sample memory, so engines can run side by side.
+  Or never (CoolSynth stays one instrument; a DAW does tracks), or design it now (against "UI
+  last").
+- **The tracks not played, if it comes: all live, frozen on demand (chosen, recommended).** Each
+  track its own engine on its own core; switching only moves the keys; a track can be frozen to
+  audio to free its processor time. Needs parallel rendering in the app. Or only the played track
+  live and the rest as audio (least processor, 1 GB would do, but leaving a track renders it,
+  about 45 s per 3 minutes, and going back reloads its instruments); or no leaning yet.
+
+The user noted that tiny boxes do four tracks: community firmwares for the M-VAVE FM-1 (12 voices,
+a small dual-core chip), such as KARMA. Their tracks hold notes and their engines compute sound
+from small tables, so tracks cost them nothing; what costs is each voice's sound, and CoolSynth's
+costs more by choice. Kept for the track mode's design: one voice budget shared by all tracks, as
+the FM-1 and the Kronos have, instead of sixteen per track.
