@@ -192,7 +192,7 @@ namespace coolsynth::synth::v3
     {
     public:
         static constexpr int maxSubBlock = 32;
-        static constexpr double stealFadeSeconds = 0.0015;
+        static constexpr double stealFadeSeconds = 0.005; // the 2-5 ms floor for a fast kill without a click (D170)
         static constexpr float minAmpAttackSeconds = 0.0005f;
         static constexpr float minAmpReleaseSeconds = 0.002f;
 

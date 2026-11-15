@@ -50,7 +50,7 @@ namespace coolsynth::diag
         startThread(juce::Thread::Priority::low);
     }
 
-    void FlightRecorder::record(Event event, std::int32_t a, std::int32_t b, float x, float y, const char* text) noexcept
+    void FlightRecorder::record(Event event, std::int32_t a, std::int32_t b, float x, float y, const char* text, float z) noexcept
     {
         if (! started.load(std::memory_order_relaxed))
             return;
@@ -65,6 +65,7 @@ namespace coolsynth::diag
         r.b = b;
         r.x = x;
         r.y = y;
+        r.z = z;
         std::size_t length = 0;
         if (text != nullptr)
             for (; length < sizeof(r.text) - 1 && text[length] != 0; ++length)
@@ -96,9 +97,13 @@ namespace coolsynth::diag
             case Event::blockOverrun:
                 return "DROPOUT block took " + ms(r.x) + " of " + ms(r.y) + ", slowest stage " + stageName(r.a) + " " + ms(static_cast<float>(r.b) / 100.0f);
             case Event::secondSummary:
-                return "second: worst block " + ms(r.x) + " of " + ms(r.y) + ", voices " + juce::String(r.a) + ", peak " + juce::String(r.text) + " dB"
+                return "second: worst block " + ms(r.x) + " of " + ms(r.y) + ", voices " + juce::String(r.a) + ", peak " + juce::String(r.z, 1) + " dB"
                        + (r.b > 0 ? ", CLIPPED " + juce::String(r.b) + " samples" : juce::String());
             case Event::nonFinite: return "NON-FINITE OUTPUT: " + juce::String(r.a) + " samples (NaN or infinity), silenced";
+            case Event::stageBroken:
+                return "BROKEN VALUES in " + stageName(r.a) + ": " + juce::String(r.b) + " samples (NaN or infinity), that stage was reset";
+            case Event::eventsDropped:
+                return "MIDI FLOOD: " + juce::String(r.a) + " events found no room in a block (" + juce::String(r.b) + " kept, releases never dropped)";
             case Event::presetLoaded: return "preset " + juce::String(r.a) + " loaded: " + r.text;
             case Event::slotType:
                 return juce::String(r.a == 0 ? "generator" : "processor") + " slot type " + juce::String((r.b >> 8) & 0xff) + " -> " + juce::String(r.b & 0xff);
@@ -149,6 +154,7 @@ namespace coolsynth::diag
             copy.b = r.b;
             copy.x = r.x;
             copy.y = r.y;
+            copy.z = r.z;
             std::memcpy(copy.text, r.text, sizeof(copy.text));
             copy.text[sizeof(copy.text) - 1] = 0;
             if (r.sequence.load(std::memory_order_acquire) != readIndex + 1)

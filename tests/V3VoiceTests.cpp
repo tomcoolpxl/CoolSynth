@@ -329,16 +329,17 @@ public:
             voice->start(noteAt(57));
             std::vector<float> out;
             append(out, renderVoice(*voice, settings, 9600).left);
+            const int stealSamples = static_cast<int>(std::lround(Voice::stealFadeSeconds * 48000.0)); // 5 ms (D170)
             voice->start(noteAt(69));
             expect(voice->isStealing());
-            append(out, renderVoice(*voice, settings, 72).left);
+            append(out, renderVoice(*voice, settings, stealSamples).left);
             expect(! voice->isStealing());
             expectEquals(voice->currentNote(), 69);
             append(out, renderVoice(*voice, settings, 9600).left);
 
             const float oldSteady = maxStep(out, 4800, 9600);
-            const float newSteady = maxStep(out, 9600 + 72 + 4800, out.size());
-            const float handover = maxStep(out, 9599, 9600 + 72 + 960);
+            const float newSteady = maxStep(out, 9600 + stealSamples + 4800, out.size());
+            const float handover = maxStep(out, 9599, 9600 + stealSamples + 960);
             logMessage("steal: steady steps " + juce::String(oldSteady, 4) + " and " + juce::String(newSteady, 4)
                        + ", handover " + juce::String(handover, 4));
             expect(handover <= 1.1f * std::max(oldSteady, newSteady));

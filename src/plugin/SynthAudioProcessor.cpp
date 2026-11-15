@@ -437,10 +437,19 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             ++notesHeldBack;
             return;
         }
-        if (engineEventCount < static_cast<int> (engineEvents.size()))
+        if (const auto event = makeEngineMidiEvent(message, samplePosition))
         {
-            if (const auto event = makeEngineMidiEvent(message, samplePosition))
+            // The last slots are kept for what ends sound: a flood of controller moves may lose a move, never a
+            // key's release, a pedal's lift or All Notes Off, which would leave a note hanging (D170).
+            using Type = coolsynth::synth::EngineMidiEventType;
+            const bool ending = event->type == Type::noteOff || event->type == Type::allNotesOff
+                             || event->type == Type::allSoundOff || event->type == Type::resetControllers
+                             || (event->type == Type::sustainPedal && event->value < 0.5f);
+            const int limit = static_cast<int>(engineEvents.size()) - (ending ? 0 : reservedEndingEvents);
+            if (engineEventCount < limit)
                 engineEvents[static_cast<size_t> (engineEventCount++)] = *event;
+            else
+                ++eventsDropped;
         }
         if (message.isNoteOn())
         {
@@ -492,6 +501,12 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             const int offset = juce::jlimit(0, blockLength - 1, static_cast<int>(std::lround((m.milliseconds - windowStartMs) * rate / 1000.0)));
             take(juce::MidiMessage(m.bytes.data(), m.size, 0.0), offset, false);
         });
+    }
+
+    if (eventsDropped > 0)
+    {
+        coolsynth::diag::record(coolsynth::diag::Event::eventsDropped, eventsDropped, engineEventCount);
+        eventsDropped = 0;
     }
 
     // The three sources in time order; already nearly so, and an insertion sort neither allocates nor reorders ties.
@@ -608,9 +623,9 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     tripwireSamples += n;
     if (tripwireSamples >= static_cast<int>(rate))
     {
-        char peakText[16];
-        std::snprintf(peakText, sizeof(peakText), "%.1f", juce::Decibels::gainToDecibels(tripwirePeak, -120.0f));
-        diag::record(diag::Event::secondSummary, tripwireVoices, tripwireClipped, tripwireWorstMs, budget, peakText);
+        // The peak travels as a number; the writer thread formats it (no snprintf on the audio thread, D170).
+        diag::record(diag::Event::secondSummary, tripwireVoices, tripwireClipped, tripwireWorstMs, budget, nullptr,
+                     juce::Decibels::gainToDecibels(tripwirePeak, -120.0f));
         tripwireWorstMs = 0.0f;
         tripwirePeak = 0.0f;
         tripwireVoices = 0;

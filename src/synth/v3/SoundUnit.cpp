@@ -1,5 +1,7 @@
 #include "SoundUnit.h"
 
+#include "diagnostics/FlightRecorder.h"
+
 #include <algorithm>
 #include <cmath>
 
@@ -7,6 +9,32 @@ namespace coolsynth::synth::v3
 {
     namespace
     {
+        /** Silences NaN and infinity in a stage's output; how many there were. A broken value in a filter's or a
+            reverb's state stays there and would silence the sound until a panic: the stage is reset instead (D170). */
+        int scrubBroken(float* left, float* right, int n) noexcept
+        {
+            int broken = 0;
+            for (int i = 0; i < n; ++i)
+            {
+                if (! std::isfinite(left[i]))
+                {
+                    left[i] = 0.0f;
+                    ++broken;
+                }
+                if (! std::isfinite(right[i]))
+                {
+                    right[i] = 0.0f;
+                    ++broken;
+                }
+            }
+            return broken;
+        }
+
+        void reportBroken(int stage, int samples) noexcept
+        {
+            diag::record(diag::Event::stageBroken, stage, samples);
+        }
+
         // The flight recorder's stage timing: two clock reads per stage, kept for the block's slowest one.
         struct StageClock
         {
@@ -228,6 +256,11 @@ namespace coolsynth::synth::v3
             const StageClock stageClock { slowest, p == 0 ? 1 : 2 };
             part.render(partBuffers[p].getWritePointer(0), partBuffers[p].getWritePointer(1), n,
                         std::span<const EngineMidiEvent>(partEvents[p].data(), static_cast<std::size_t>(partEventCount[p])), patch, transport);
+            if (const int broken = scrubBroken(partBuffers[p].getWritePointer(0), partBuffers[p].getWritePointer(1), n); broken > 0)
+            {
+                part.reset();
+                reportBroken(p == 0 ? 1 : 2, broken);
+            }
             soundOff = part.consumeSoundOff() || soundOff;
             phraseStart = part.consumePhraseStart() || phraseStart;
             rendered[p] = true;
@@ -281,7 +314,14 @@ namespace coolsynth::synth::v3
             juce::AudioBuffer<float> partAudio(partBuffers[p].getArrayOfWritePointers(), 2, n);
             const StageClock insertsClock { slowest, p == 0 ? 3 : 4 };
             for (std::size_t slot = 0; slot < inserts[p].size(); ++slot)
+            {
                 inserts[p][slot].process(partAudio, settings.inserts[p][slot], beat);
+                if (const int broken = scrubBroken(partAudio.getWritePointer(0), partAudio.getWritePointer(1), n); broken > 0)
+                {
+                    inserts[p][slot].clear();
+                    reportBroken(p == 0 ? 3 : 4, broken);
+                }
+            }
 
             const float* pl = partAudio.getReadPointer(0);
             const float* pr = partAudio.getReadPointer(1);
@@ -324,6 +364,11 @@ namespace coolsynth::synth::v3
         {
             const StageClock masterClock { slowest, 10 + static_cast<int>(slot) };
             (*masterSlots)[slot].process(stereo, settings.master[slot], beat);
+            if (const int broken = scrubBroken(l, r, n); broken > 0)
+            {
+                (*masterSlots)[slot].clear();
+                reportBroken(10 + static_cast<int>(slot), broken);
+            }
         }
 
         // What the parts kept out of the effects joins here.

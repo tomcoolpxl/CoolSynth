@@ -3352,3 +3352,38 @@ The user asked for two things in the plan (nothing built yet):
     (Virtual Analog, Sample, FM, Wavetable, Granular, Modal, Noise).
   - Noise: **only when it is the sound (chosen, recommended)**, when no other engine plays; or always.
   One pill per engine its slots use, in slot order, at most three. Spec: docs/interface-v3.md section 6.
+
+## D170. The review's leftovers: broken values per stage, no hanging notes, softer steals, gliding reverb (2026-11-15)
+
+Overnight, the user away (taken: the recommended option each time; the others listed). What the
+real-time review (D161) left open:
+- **NaN or infinity inside a stage.** Before: only the final output was checked and silenced, so a
+  broken value in a filter's or a reverb's state stayed there and kept that part silent until a
+  panic. Options: **check after every stage (each part's voices, each insert, each master slot),
+  silence the bad samples and reset only that stage (chosen)**; keep the output check alone; reset
+  the whole engine. Cost: one pass over the block per stage. The flight recorder writes "BROKEN
+  VALUES in part A inserts: n samples, that stage was reset". Not covered by a test: nothing in the
+  factory sounds makes a broken value to test with.
+- **A flood of MIDI in one block** (1024 events) dropped whatever came last, a key's release too:
+  a hanging note. Options: **keep the block's last 64 slots for what ends sound (note-off, All Notes
+  Off, All Sound Off, Reset Controllers, the pedal's lift) and count what is dropped (chosen)**; a
+  bigger list (still finite); dropping the oldest controller moves instead (more work per event).
+  Tested: 1100 wheel moves then four releases at the block's end; before, 4 notes hung, now none.
+  The recorder writes "MIDI FLOOD: n events found no room".
+- **Text formatting on the audio thread**: the once-a-second summary formatted its peak with
+  snprintf (locale, possible locks). Now the record carries a third number and the writer thread
+  formats it. Options: **a third number (chosen)**; pack it into an existing field (none was free);
+  leave it.
+- **The steal fade** (a voice taken for a new note) was 1.5 ms, short enough to tick on low notes.
+  Options: **5 ms (chosen)**, 3 ms, 10 ms. The SFZ format's default for the same job is 6 ms
+  (sfzformat.com, off_time); JUCE forum posts report a couple of ms to 10 ms. Side effect: the new
+  note on a stolen voice starts 3.5 ms later.
+- **Reverb settings stepped**: a change of size, damping or pre-delay jumped at once, a click in a
+  ringing tail. Now size and damping glide over about 20 ms and the pre-delay over about 50 ms,
+  read between two samples so it can move smoothly (the usual fix for a delay time, CCRMA's
+  delay-line interpolation pages; 20-50 ms smoothing as reported on the Renoise forum). Options:
+  **glide (chosen)**; step (before); crossfade two reverbs (twice the cost). A fresh or reset reverb
+  starts at its settings, so a preset sounds bit for bit as before.
+- **Old tails coming back**: a chorus or reverb whose mix faded to nothing kept its last state, and
+  the old tail played again when the mix came back. Now it is emptied when it falls silent.
+  Options: **empty it (chosen)**; keep it (before).

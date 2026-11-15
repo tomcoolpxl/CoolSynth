@@ -176,6 +176,29 @@ public:
             logMessage("worst block with 32 note-ons " + juce::String(rig->worstMs, 2) + " ms");
         }
 
+        beginTest("A flood of controller moves in one block still lets the keys go (D170)");
+        {
+            // 1100 wheel moves fill the block's 1024 event slots; the releases after them must still arrive.
+            const auto flood = [](bool release)
+            {
+                auto rig = std::make_unique<Rig>();
+                rig->loadPreset(0);
+                rig->play(0.1);
+                rig->chord(60, true);
+                rig->play(0.2);
+                for (int i = 0; i < 1100; ++i)
+                    rig->midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, i % 128), i % preparedBlock);
+                if (release) // at the block's end, behind all 1100 moves
+                    for (const int interval : { 0, 3, 7, 12 })
+                        rig->midi.addEvent(juce::MidiMessage::noteOff(1, 60 + interval), preparedBlock - 1);
+                rig->block(preparedBlock);
+                rig->play(12.0);
+                return rig->synth->engineForTesting().activeVoiceCount();
+            };
+            expectGreaterThan(flood(false), 0, "held keys still sound: the test can tell");
+            expectEquals(flood(true), 0, "every released key ended");
+        }
+
         beginTest("Blocks of 1, 37 and 129 samples, and blocks longer than prepared");
         {
             auto rig = std::make_unique<Rig>();

@@ -320,6 +320,8 @@ private:
 
     std::atomic<bool> instrumentLoading { false };
     int notesHeldBack = 0; // keys pressed while loading, ignored: audio thread
+    static constexpr int reservedEndingEvents = 64; // a block's last event slots, kept for releases (D170)
+    int eventsDropped = 0;                          // this block's events that found no slot: audio thread
 
     std::unique_ptr<coolsynth::ui::InterfaceModel> interfaceModel; // last: it refers to the parameters
 

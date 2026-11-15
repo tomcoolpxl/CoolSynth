@@ -276,6 +276,9 @@ namespace coolsynth::synth
         const bool audible = chorusMixSmoothed.getCurrentValue() > 0.0f || chorusMixSmoothed.isSmoothing();
         if (! audible)
         {
+            // Faded to nothing: what it held goes, or it would play again when the mix comes back (D170).
+            if (chorusWasAudible)
+                chorus.reset();
             chorusWasAudible = false;
             return;
         }
@@ -349,6 +352,9 @@ namespace coolsynth::synth
         const bool audible = reverbMixSmoothed.getCurrentValue() > 0.0f || reverbMixSmoothed.isSmoothing();
         if (! audible)
         {
+            // Faded to nothing: its tank empties, or the old tail would play again when the mix comes back (D170).
+            if (reverbWasAudible)
+                reverb.reset();
             reverbWasAudible = false;
             return;
         }

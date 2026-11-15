@@ -24,8 +24,10 @@ namespace coolsynth::diag
         sessionStart,     // text: build
         blockSlow,        // x: ms, y: budget ms, a: stage code of the slowest stage, b: that stage's ms * 100
         blockOverrun,     // as blockSlow, over the budget: an audible dropout on a live device
-        secondSummary,    // x: worst block ms, y: budget ms, a: peak voices, b: clipped samples, text: peak dB
+        secondSummary,    // x: worst block ms, y: budget ms, z: peak dB, a: peak voices, b: clipped samples
         nonFinite,        // a: samples that were NaN or infinite in the output
+        stageBroken,      // a: stage code, b: samples that were NaN or infinite there; the stage was reset (D170)
+        eventsDropped,    // a: events that found no slot in a block, b: events kept; releases are never dropped (D170)
         presetLoaded,     // a: program index, text: name
         slotType,         // a: kind (0 generator, 1 processor), b: (old << 8) | new type
         styleLoaded,      // a: instrument, b: style, x: MB, y: ms to read
@@ -48,7 +50,7 @@ namespace coolsynth::diag
         std::uint64_t thread = 0;
         Event event = Event::message;
         std::int32_t a = 0, b = 0;
-        float x = 0.0f, y = 0.0f;
+        float x = 0.0f, y = 0.0f, z = 0.0f;
         char text[48] {};
     };
 
@@ -64,7 +66,7 @@ namespace coolsynth::diag
 
         /** Any thread, wait-free. Records nothing until start(). */
         void record(Event event, std::int32_t a = 0, std::int32_t b = 0, float x = 0.0f, float y = 0.0f,
-                    const char* text = nullptr) noexcept;
+                    const char* text = nullptr, float z = 0.0f) noexcept;
 
         /** Writes what is waiting now (tests, shutdown). */
         void flush();
@@ -90,8 +92,9 @@ namespace coolsynth::diag
     };
 
     /** Shorthand: FlightRecorder::instance().record(...). */
-    inline void record(Event event, std::int32_t a = 0, std::int32_t b = 0, float x = 0.0f, float y = 0.0f, const char* text = nullptr) noexcept
+    inline void record(Event event, std::int32_t a = 0, std::int32_t b = 0, float x = 0.0f, float y = 0.0f, const char* text = nullptr,
+                       float z = 0.0f) noexcept
     {
-        FlightRecorder::instance().record(event, a, b, x, y, text);
+        FlightRecorder::instance().record(event, a, b, x, y, text, z);
     }
 }

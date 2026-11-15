@@ -60,18 +60,21 @@ namespace coolsynth::synth
             const auto onePole = [this](double hz) { return static_cast<float>(1.0 - std::exp(-2.0 * kPiDouble * hz / currentSampleRate)); };
             shimmerLowPassCoefficient = onePole(kShimmerLowPassHz);
             shimmerHighPassCoefficient = onePole(kShimmerHighPassHz);
+            glide = static_cast<float>(1.0 - std::exp(-1.0 / (0.02 * currentSampleRate)));         // about 20 ms
+            preDelayGlide = static_cast<float>(1.0 - std::exp(-1.0 / (0.05 * currentSampleRate))); // about 50 ms
             setLowCut(lowCutHz);
             setPreDelay(preDelayMs);
 
             reset();
         }
 
-        /** 0 .. 250 ms before the reverb starts. */
+        /** 0 .. 250 ms before the reverb starts; a change glides over about 50 ms. */
         void setPreDelay(float milliseconds) noexcept
         {
             preDelayMs = std::clamp(milliseconds, 0.0f, static_cast<float>(kMaxPreDelaySeconds * 1000.0));
             preDelaySamples = std::min(static_cast<int>(preDelayLine.size()) - 2,
                                        static_cast<int>(std::lround(preDelayMs * 0.001 * currentSampleRate)));
+            preDelayTarget = static_cast<float>(preDelaySamples);
         }
 
         /** Input high-pass, 20 Hz (open) to 1 kHz. */
@@ -109,35 +112,57 @@ namespace coolsynth::synth
             rightDampingState = 0.0f;
             rightTankOut = 0.0f;
             modulationPhase = 0.0f;
+            // Silent, so the next block takes its settings as they are.
+            snapNext = true;
         }
 
-        /** 0..1: short room to long plate. Decay is applied once per tank half, as in the paper. */
+        /** 0..1: short room to long plate. Decay is applied once per tank half, as in the paper. A change glides. */
         void setSize(float size) noexcept
         {
-            decay = 0.25f + 0.70f * std::clamp(size, 0.0f, 1.0f);
+            decayTarget = 0.25f + 0.70f * std::clamp(size, 0.0f, 1.0f);
         }
 
-        /** 0..1: bright to dark high-frequency decay. */
+        /** 0..1: bright to dark high-frequency decay. A change glides. */
         void setDamping(float dampingNormalized) noexcept
         {
-            damping = 0.05f + 0.80f * std::clamp(dampingNormalized, 0.0f, 1.0f);
+            dampingTarget = 0.05f + 0.80f * std::clamp(dampingNormalized, 0.0f, 1.0f);
         }
 
         void process(float* left, float* right, int numSamples) noexcept
         {
+            if (snapNext)
+            {
+                decay = decayTarget;
+                damping = dampingTarget;
+                preDelayCurrent = preDelayTarget;
+                snapNext = false;
+            }
             for (int i = 0; i < numSamples; ++i)
             {
                 float input = 0.5f * (left[i] + right[i]);
+                decay += (decayTarget - decay) * glide;
+                damping += (dampingTarget - damping) * glide;
 
-                // Pre-delay, then the input high-pass.
-                if (preDelaySamples > 0)
+                // Pre-delay, then the input high-pass. The line is always written and read between two samples, so the
+                // delay can glide and passes 0 without a jump.
+                if (! preDelayLine.empty())
                 {
                     const int size = static_cast<int>(preDelayLine.size());
                     preDelayLine[static_cast<size_t>(preDelayWrite)] = input;
-                    int read = preDelayWrite - preDelaySamples;
-                    if (read < 0)
-                        read += size;
-                    input = preDelayLine[static_cast<size_t>(read)];
+                    preDelayCurrent += (preDelayTarget - preDelayCurrent) * preDelayGlide;
+                    if (preDelayCurrent > 1.0e-3f || preDelayTarget > 0.0f)
+                    {
+                        const float back = std::min(preDelayCurrent, static_cast<float>(size - 2));
+                        const int whole = static_cast<int>(back);
+                        const float fraction = back - static_cast<float>(whole);
+                        int a = preDelayWrite - whole;
+                        if (a < 0)
+                            a += size;
+                        int b = a - 1;
+                        if (b < 0)
+                            b += size;
+                        input = preDelayLine[static_cast<size_t>(a)] + (preDelayLine[static_cast<size_t>(b)] - preDelayLine[static_cast<size_t>(a)]) * fraction;
+                    }
                     preDelayWrite = (preDelayWrite + 1) % size;
                 }
                 if (lowCutHz > 20.5f)
@@ -355,6 +380,12 @@ namespace coolsynth::synth
         float rightTankOut = 0.0f;
         float decay = 0.5f;
         float damping = 0.4f;
+        // Size, damping and pre-delay glide to a new setting instead of stepping (D170): a step in the tank's decay
+        // or a jump of the pre-delay's read point clicks.
+        float decayTarget = 0.5f, dampingTarget = 0.4f;
+        float preDelayCurrent = 0.0f, preDelayTarget = 0.0f; // in samples
+        float glide = 1.0f, preDelayGlide = 1.0f;            // per-sample one-pole coefficients
+        bool snapNext = true;                                // fresh or reset: the next block starts at its settings
         float maxExcursion = 16.0f;
         float modulation = 0.5f;
 
