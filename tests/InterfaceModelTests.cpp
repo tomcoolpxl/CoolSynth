@@ -318,6 +318,10 @@ public:
         model.pressPad(3, false);
         model.turnMain(3);
         shoot("effects");
+        model.pressPad(7, false);
+        model.turnKnob(1, 6, false); // a macro, and Brightness: their values show in the knobs (D183)
+        model.turnKnob(7, 4, false);
+        shoot("knobvalue");
     }
 };
 

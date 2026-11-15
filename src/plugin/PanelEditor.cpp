@@ -115,7 +115,43 @@ public:
         pointer.addRoundedRectangle(-1.5f, -r + 5.0f, 3.0f, r * 0.42f, 1.5f);
         g.setColour(isMain ? juce::Colour(0xff8a939c) : colours::ink);
         g.fillPath(pointer, juce::AffineTransform::rotation(angle).translated(centre));
+
+        // While it turns, its value in the middle on a dark disc, fading out once it stops (D183).
+        if (flashAlpha > 0.0f && flash.isNotEmpty())
+        {
+            const auto inner = circle.reduced(size * 0.13f);
+            g.setColour(colours::screen.withAlpha(0.92f * flashAlpha));
+            g.fillEllipse(inner);
+            g.setColour(colours::ink.withAlpha(flashAlpha));
+            g.setFont(mono(10.5f, true));
+            g.drawFittedText(flash, inner.reduced(3.0f, inner.getHeight() * 0.18f).toNearestInt(), juce::Justification::centred, 2, 0.7f);
+        }
     }
+
+    /** Shows `text` in the middle now (a turn); `nowMs` is when. */
+    void showValue(const juce::String& text, juce::uint32 nowMs)
+    {
+        flash = text;
+        flashAtMs = nowMs;
+        flashAlpha = 1.0f;
+        repaint();
+    }
+
+    /** The value stays while the knob turns and a moment after, then fades (called 30 times a second). */
+    void ageValue(juce::uint32 nowMs)
+    {
+        if (flashAlpha <= 0.0f)
+            return;
+        const auto since = static_cast<float>(nowMs - flashAtMs);
+        const float alpha = since < holdMs ? 1.0f : juce::jmax(0.0f, 1.0f - (since - holdMs) / fadeMs);
+        if (alpha != flashAlpha)
+        {
+            flashAlpha = alpha;
+            repaint();
+        }
+    }
+
+    static constexpr float holdMs = 700.0f, fadeMs = 400.0f;
 
 private:
     void turn(int steps)
@@ -128,6 +164,9 @@ private:
 
     float lastY = 0.0f, wheelSum = 0.0f, spin = 0.0f;
     bool moved = false;
+    juce::String flash;      // the value shown in the middle while turning
+    juce::uint32 flashAtMs = 0;
+    float flashAlpha = 0.0f;
 };
 
 // ---- The keys: flat black keys, half a white key wide, no note names ------------------------------------
@@ -748,6 +787,16 @@ public:
     void refresh()
     {
         screen.repaint();
+        // A knob turned (by the mouse, the wheel or the MiniLab) shows its value in its middle (D183).
+        const auto now = juce::Time::getMillisecondCounter();
+        if (const auto& popup = model.popup(); popup.serial != shownPopup)
+        {
+            shownPopup = popup.serial;
+            if (! popup.fader && popup.control >= 1 && popup.control <= 8)
+                knobs[static_cast<std::size_t>(popup.control - 1)].showValue(popup.value, now);
+        }
+        for (auto& knob : knobs)
+            knob.ageValue(now);
         const bool shiftOn = owner.shiftHeld();
         shift.setToggleState(shiftOn, juce::dontSendNotification);
         const auto pageTint = coolsynth::ui::tintColour(model.pageTint());
@@ -957,6 +1006,7 @@ private:
     juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea;
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
+    int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)
 };
 
 // ---- The editor ---------------------------------------------------------------------------------------

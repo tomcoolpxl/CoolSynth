@@ -3671,3 +3671,14 @@ scrolling". Nothing drawn changed.
   the ends. Options for up/down: **move the list where there is one (chosen)**; keep them on knob 5
   everywhere (as documented before); swap left/right and up/down everywhere (breaks the habit of
   left/right as the main knob).
+
+## D183. A turned knob shows its value in its middle, then fades (2026-11-15)
+
+The user: "when you're turning the knobs, show in a proper way in the middle of the knob the value,
+and when you stop turning, fade it out." On the software panel, knobs 1-8: the value as the model
+gives it ("3200 Hz", "+8 %"; knob 5 its page), on a dark disc over the knob's middle so the pointer
+does not cross the text, at most two lines, narrowed to fit. Shown while the knob turns and 0.7 s
+after the last turn, then faded out over 0.4 s; each turn brings it back. It follows the model's
+turn pop-up, so a turn by the mouse, the wheel or the MiniLab's own knobs all show. Options for the
+timing: **0.7 s hold, 0.4 s fade (chosen)**, long enough to read a value after letting go; no hold
+(gone before it is read); 2 s (lingers over the next turn of another knob). Drawn: build/panel-knobvalue.png.

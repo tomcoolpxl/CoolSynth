@@ -68,7 +68,9 @@ The screen draws only that section, wired as in the engine:
 
 - The main knob moves between the slots; the lit pad pressed again does the same.
 - Knob 5 turns the focused slot's pages; each slot remembers its page.
-- Knobs 1-4 edit the page at once; a turned knob shows a pop-up with its name and value.
+- Knobs 1-4 edit the page at once; a turned knob shows a pop-up with its name and value. On the
+  software panel a turned knob (1-8, by mouse, wheel or the MiniLab) also shows its value in its own
+  middle on a dark disc, held while it turns and 0.7 s after, then fading out over 0.4 s (D183).
 - A press opens the **type list** for the slot (Generators: Off, VA, Noise, FM2, FM4, Wavetable,
   String, Modal, Sample, Grain; Shapers: Off, Ladder, SVF, Crusher, Folder, Drive, Formant, Comb;
   effects: the twelve effect types). Its first row is `‹ Back` (keeps the type). Motion slots have
