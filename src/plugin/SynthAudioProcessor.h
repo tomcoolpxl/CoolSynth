@@ -58,6 +58,8 @@ public:
 
     std::unique_ptr<juce::XmlElement> createParameterStateXml();
     bool applyParameterStateXml(const juce::XmlElement& stateXml);
+    /** Adds every parameter `stateXml` lacks, at its default: for a state of an older version (D194). */
+    void addMissingParameters(juce::XmlElement& stateXml) const;
     void resetAutomatableParametersToDefaults();
     juce::String getParameterStateTypeName() const;
 
@@ -280,6 +282,26 @@ private:
     void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override;
     coolsynth::plugin::ParameterUndoHistory::Snapshot captureSnapshot(juce::String label) const;
     std::vector<float> captureNormalisedValues() const;
+
+    /** Lives while a sound loads (D194): at its end the sound counts as new, so notes ringing keep the one before
+        (D158), only if a parameter changed. The engine compared its settings byte for byte, padding and all, so the
+        same sound loaded twice could count as new; values compare without that. Declare it after the BulkEdit. */
+    class NewSoundScope final
+    {
+    public:
+        explicit NewSoundScope(SynthAudioProcessor& p) : owner(p), before(p.captureNormalisedValues()) {}
+        ~NewSoundScope()
+        {
+            if (owner.captureNormalisedValues() != before)
+                owner.soundGeneration.fetch_add(1, std::memory_order_relaxed);
+        }
+        NewSoundScope(const NewSoundScope&) = delete;
+        NewSoundScope& operator=(const NewSoundScope&) = delete;
+
+    private:
+        SynthAudioProcessor& owner;
+        std::vector<float> before;
+    };
     void restoreSnapshot(const coolsynth::plugin::ParameterUndoHistory::Snapshot& snapshot);
 
 

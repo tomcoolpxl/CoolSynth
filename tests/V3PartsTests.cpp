@@ -411,7 +411,7 @@ public:
             auto settings = twoSines(PartMode::stack);
             settings.parts[0].arp.enabled = true;
             settings.parts[1].arp = settings.parts[0].arp;
-            settings.mix[1].arp = false;
+            settings.parts[1].arp.enabled = false; // each layer's own arp (D194)
             render(*engine, settings, 9600, { on(60), on(64) });
             expectEquals(engine->partForTesting(0).arpHeldNoteCountForTesting(), 2);
             expectEquals(engine->partForTesting(1).arpHeldNoteCountForTesting(), 0);
@@ -433,7 +433,8 @@ b.lfo1 = shape=sine rate=2
 b.mod = src=lfo1 dst=g1.pos amount=0.2
 b.play = mode=mono priority=low
 b.chord = type=fifth
-b.mix = level=-3 transpose=-12 fx=0 keyLow=0 keyHigh=59 arp=off
+b.mix = level=-3 transpose=-12 fx=0 keyLow=0 keyHigh=59
+b.arp = off rate=1/8
 master = -3
 )", "test.csbank");
             expect(parsed.errors.isEmpty(), parsed.errors.joinIntoString("\n"));
@@ -456,7 +457,9 @@ master = -3
                 expect(entryText(preset, "pB.chord.type") == "fifth");
                 expect(entryText(preset, "pB.mix.transpose") == "-12");
                 expect(entryText(preset, "pB.mix.fx") == "0");
-                expect(entryText(preset, "pB.mix.arp") == "off");
+                expect(entryText(preset, "pB.arpEnabled") == "off", "b.arp is layer B's own arp (D194)");
+                expect(entryText(preset, "pB.arpRateDivision") == "1/8");
+                expect(entryText(preset, "pA.arpEnabled") == "<none>");
             }
 
             const auto wrong = coolsynth::presets::parseBankFile("[X]\nb.master = -3\nb.f1 = Reverb\nparts = both\nb.mix = wide=1\n", "bad.csbank");

@@ -318,7 +318,6 @@ namespace coolsynth::synth::v3
             patch = settings.parts[p];
             if (patch.playMode == PlayMode::poly)
                 patch.polyphony = voices[p];
-            patch.arp.enabled = patch.arp.enabled && settings.mix[p].arp;
             patch.tuneSemitones = settings.mix[p].fineCents * 0.01f;
 
             const StageClock stageClock { slowest, p == 0 ? 1 : 2 };

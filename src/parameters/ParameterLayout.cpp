@@ -128,27 +128,34 @@ namespace
             defaultValue);
     }
 
-    std::unique_ptr<juce::AudioProcessorParameterGroup> makeArpGroup()
+    /** A layer's arpeggiator (0 A, 1 B; D194): the same settings for each, named for the layer. */
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeArpGroup(int layer)
     {
         using namespace coolsynth::parameters;
         using namespace coolsynth::parameters::ids;
+        const auto L = [layer](const char* layerAId) { return juce::String(arpOfLayer(layer, layerAId)); };
+        const auto makeV2ParameterId = [](const juce::String& id) { return juce::ParameterID { id, parameterVersionHint }; };
+        const juce::String layerName = layer == 0 ? "Layer A" : "Layer B";
+        const auto makeBoolParameter = [](const juce::String& id, int hint, const juce::String& name, bool on)
+        {
+            return std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, hint }, name, on);
+        };
+        const auto makePercentParameter = [](const juce::String& id, int hint, const juce::String& name, float value)
+        {
+            return std::make_unique<juce::AudioParameterFloat>(juce::ParameterID { id, hint }, name,
+                                                               juce::NormalisableRange<float>(0.0f, 1.0f), value, percentAttributes());
+        };
 
-        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("arp", "Arpeggiator", " / ");
-        group->addChild(makeBoolParameter(arpEnabled, parameterVersionHint, "Enabled", false));
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
-            makeV2ParameterId(arpInternalTempoBpm),
-            "Internal BPM",
-            juce::NormalisableRange<float>(40.0f, 240.0f),
-            120.0f,
-            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int) { return formatBpm(value); })));
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>(layer == 0 ? "pA.arp" : "pB.arp", layerName + " Arpeggiator", " / ");
+        group->addChild(makeBoolParameter(L(arpEnabled), parameterVersionHint, layerName + " Arp", false));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
-            makeV2ParameterId(arpRateDivision),
-            "Rate",
+            makeV2ParameterId(L(arpRateDivision)),
+            layerName + " Arp Rate",
             juce::StringArray { "1/4", "1/8", "1/8T", "1/16", "1/16T", "1/32" },
             static_cast<int>(ArpRateChoice::sixteenth)));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
-            makeV2ParameterId(arpPattern),
-            "Pattern",
+            makeV2ParameterId(L(arpPattern)),
+            layerName + " Arp Pattern",
             juce::StringArray {
                 "Up",
                 "Down",
@@ -164,56 +171,70 @@ namespace
             },
             static_cast<int>(ArpPatternChoice::up)));
         group->addChild(std::make_unique<juce::AudioParameterInt>(
-            makeV2ParameterId(arpOctaveRange),
-            "Octaves",
+            makeV2ParameterId(L(arpOctaveRange)),
+            layerName + " Arp Octaves",
             1,
             3,
             1,
             juce::AudioParameterIntAttributes().withStringFromValueFunction([](int value, int) { return formatOctaveRange(value - 1); })));
-        group->addChild(makePercentParameter(arpGate, parameterVersionHint, "Gate", 0.5f));
+        group->addChild(makePercentParameter(L(arpGate), parameterVersionHint, layerName + " Arp Gate", 0.5f));
         group->addChild(std::make_unique<juce::AudioParameterFloat>(
-            juce::ParameterID { arpSwing, parameterVersionHintV4 },
-            "Swing",
+            juce::ParameterID { L(arpSwing), parameterVersionHintV4 },
+            layerName + " Arp Swing",
             juce::NormalisableRange<float>(0.0f, 0.75f),
             0.0f,
             percentAttributes()));
-        group->addChild(makePercentParameter(arpChance, parameterVersionHintV4, "Chance", 1.0f));
+        group->addChild(makePercentParameter(L(arpChance), parameterVersionHintV4, layerName + " Arp Chance", 1.0f));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
-            juce::ParameterID { arpRatchetCount, parameterVersionHintV5 },
-            "Ratchet",
+            juce::ParameterID { L(arpRatchetCount), parameterVersionHintV5 },
+            layerName + " Arp Ratchet",
             juce::StringArray { "Off", "x2", "x3", "x4" },
             static_cast<int>(ArpRatchetChoice::off)));
-        group->addChild(makePercentParameter(arpRatchetChance, parameterVersionHintV5, "Ratchet Chance", 0.0f));
+        group->addChild(makePercentParameter(L(arpRatchetChance), parameterVersionHintV5, layerName + " Arp Ratchet Chance", 0.0f));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
-            juce::ParameterID { arpAccentEvery, parameterVersionHintV5 },
-            "Accent Every",
+            juce::ParameterID { L(arpAccentEvery), parameterVersionHintV5 },
+            layerName + " Arp Accent Every",
             juce::StringArray { "Off", "/2", "/3", "/4" },
             static_cast<int>(ArpAccentEveryChoice::off)));
-        group->addChild(makePercentParameter(arpAccentAmount, parameterVersionHintV5, "Accent Amount", 0.0f));
+        group->addChild(makePercentParameter(L(arpAccentAmount), parameterVersionHintV5, layerName + " Arp Accent Amount", 0.0f));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
-            juce::ParameterID { arpRhythm, parameterVersionHintV6 },
-            "Rhythm",
+            juce::ParameterID { L(arpRhythm), parameterVersionHintV6 },
+            layerName + " Arp Rhythm",
             juce::StringArray { "Straight", "Euclidean" },
             static_cast<int>(ArpRhythmChoice::straight)));
         group->addChild(std::make_unique<juce::AudioParameterInt>(
-            juce::ParameterID { arpEuclideanPulses, parameterVersionHintV6 },
-            "Euclidean Pulses",
+            juce::ParameterID { L(arpEuclideanPulses), parameterVersionHintV6 },
+            layerName + " Arp Euclidean Pulses",
             1,
             16,
             4));
         group->addChild(std::make_unique<juce::AudioParameterInt>(
-            juce::ParameterID { arpEuclideanSteps, parameterVersionHintV6 },
-            "Euclidean Steps",
+            juce::ParameterID { L(arpEuclideanSteps), parameterVersionHintV6 },
+            layerName + " Arp Euclidean Steps",
             1,
             16,
             8));
         group->addChild(std::make_unique<juce::AudioParameterInt>(
-            juce::ParameterID { arpEuclideanRotation, parameterVersionHintV6 },
-            "Euclidean Rotation",
+            juce::ParameterID { L(arpEuclideanRotation), parameterVersionHintV6 },
+            layerName + " Arp Euclidean Rotation",
             0,
             15,
             0));
-        group->addChild(makeBoolParameter(arpLatch, parameterVersionHint, "Latch", false));
+        group->addChild(makeBoolParameter(L(arpLatch), parameterVersionHint, layerName + " Arp Latch", false));
+        return group;
+    }
+
+    /** The tempo while no host plays, one for the sound (D194: the arps became per layer, the tempo stayed one). */
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeTempoGroup()
+    {
+        using namespace coolsynth::parameters::ids;
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("tempo", "Tempo", " / ");
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            makeV2ParameterId(arpInternalTempoBpm),
+            "Internal BPM",
+            juce::NormalisableRange<float>(40.0f, 240.0f),
+            120.0f,
+            juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int) { return formatBpm(value); })));
         return group;
     }
 
@@ -262,9 +283,11 @@ juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::creat
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
     layout.add(coolsynth::parameters::v3::makePartsGroup(),
                coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::a),
-               makeArpGroup(),
+               makeArpGroup(0),
+               makeTempoGroup(),
                coolsynth::parameters::v3::makeMasterEffectsGroup(),
                makeOutputGroup(),
-               coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::b));
+               coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::b),
+               makeArpGroup(1));
     return layout;
 }

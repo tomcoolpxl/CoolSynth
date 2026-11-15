@@ -56,7 +56,7 @@ public:
             model->pressPad(coolsynth::ui::InterfaceModel::padOfSection(3), false);
             expectEquals(model->section(), 3);
             expectEquals(model->currentSlot().code, juce::String("I1"));
-            expectEquals(static_cast<int>(model->slotsOf(3).size()), 9);
+            expectEquals(static_cast<int>(model->slotsOf(3).size()), 12); // six layer slots (D194) and F1-F6
             expectEquals(static_cast<int>(model->slotsOf(2).size()), 5);
         }
 

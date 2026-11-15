@@ -33,8 +33,9 @@ namespace
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
     // 9: V3 parameter contract; 10: the master effect slots (a version 9 state is carried over, D135);
-    // 11: the layer modes Stack, Split, Velocity (a 10 or 9 is carried over, D190)
-    inline constexpr int processorStateFormatVersion = 11;
+    // 11: the layer modes Stack, Split, Velocity (a 10 or 9 is carried over, D190);
+    // 12: an arp and six effect slots per layer (an 11, 10 or 9 is carried over, D194)
+    inline constexpr int processorStateFormatVersion = 12;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
@@ -564,7 +565,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 
     // The screen's Hold (D184): with the arp off it is a sustain pedal held down, sent when it changes.
     {
-        const bool sustain = screenHold.load(std::memory_order_relaxed) && ! settings.parts[0].arp.enabled;
+        const bool sustain = screenHold.load(std::memory_order_relaxed) && ! settings.parts[0].arp.enabled && ! settings.parts[1].arp.enabled;
         if (sustain != screenSustainSent)
         {
             screenSustainSent = sustain;
@@ -839,7 +840,7 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     coolsynth::diag::record(coolsynth::diag::Event::presetLoaded, index, 0, 0.0f, 0.0f, preset.name.toRawUTF8());
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
     const BulkEdit whole(*this); // the audio thread sees the old preset or the new one, never a mix (D157)
-    soundGeneration.fetch_add(1, std::memory_order_relaxed); // notes ringing now keep the old sound (D158)
+    const NewSoundScope newSound(*this); // notes ringing now keep the old sound, if it changed (D158, D194)
     const juce::ScopedValueSetter<bool> loading(loadingSound, true);
     coolsynth::presets::applyFactoryPreset(parameters, preset);
     playingMySoundFile = juce::File(); // a factory sound again (D180)
@@ -889,7 +890,8 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         const int version = xml->getIntAttribute(processorStateVersionProperty, 0);
         const bool fixedEffects = version == coolsynth::presets::processorStateVersionWithFixedEffects;
         const bool oldLayerModes = version == coolsynth::presets::processorStateVersionWithOldLayerModes || fixedEffects;
-        if (version != processorStateFormatVersion && ! oldLayerModes)
+        const bool globalArp = version == coolsynth::presets::processorStateVersionWithGlobalArp || oldLayerModes;
+        if (version != processorStateFormatVersion && ! globalArp)
             return;
 
         const auto expectedStateType = getParameterStateTypeName();
@@ -907,12 +909,16 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
             renamed = coolsynth::presets::migrateFixedMasterEffects(parameterStateXml);
         if (oldLayerModes)
             coolsynth::presets::migrateLayerModes(parameterStateXml); // A, Layer, Split, B: now Stack, Split, Velocity
+        if (globalArp)
+            for (const auto& [from, to] : coolsynth::presets::migrateLayerArps(parameterStateXml)) // one arp per layer
+                renamed[from] = to;
+        if (version != processorStateFormatVersion)
+            addMissingParameters(parameterStateXml); // what the older version did not have, at its default
 
         const AtomicFlagScope applying(applyingPatch, true);
         const BulkEdit whole(*this);
-        // A whole new sound (D158). A state that changes nothing (rejected, or the same) keeps no earlier sound: the
-        // engine compares the settings.
-        soundGeneration.fetch_add(1, std::memory_order_relaxed);
+        // A whole new sound (D158), if it changes anything: a state rejected or the same keeps no earlier sound (D194).
+        const NewSoundScope newSound(*this);
         const juce::ScopedValueSetter<bool> loading(loadingSound, true);
         suppressGestureSnapshots = true;
         const bool applied = applyParameterStateXml(parameterStateXml);
@@ -1008,9 +1014,11 @@ bool SynthAudioProcessor::loadMySound(const juce::File& file)
 
     const AtomicFlagScope applying(applyingPatch, true);
     const BulkEdit whole(*this);
-    soundGeneration.fetch_add(1, std::memory_order_relaxed); // notes ringing keep the sound before (D158)
+    const NewSoundScope newSound(*this); // notes ringing keep the sound before, if it changed (D158, D194)
     const juce::ScopedValueSetter<bool> loading(loadingSound, true);
     suppressGestureSnapshots = true;
+    if (result.migrated)
+        addMissingParameters(*result.parameterStateXml); // a sound saved by an older version: new settings at their defaults
     const bool applied = applyParameterStateXml(*result.parameterStateXml);
     suppressGestureSnapshots = false;
     if (! applied)
@@ -1093,6 +1101,22 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
     root->addChildElement(coolsynth::midi::createLearnedBindingsXml(learnedMidiMappingsTag,
                                                                     learnedMidiBindings).release());
     return root;
+}
+
+void SynthAudioProcessor::addMissingParameters(juce::XmlElement& stateXml) const
+{
+    // A state of an older version lacks the parameters added since; the loader wants every one, so each missing one
+    // comes in at its default (D194; the layer modes' split and fade of D190 were missed so, and are now filled too).
+    std::set<juce::String> present;
+    for (auto* child : stateXml.getChildWithTagNameIterator(apvtsParameterChildType))
+        present.insert(child->getStringAttribute(apvtsParameterIdProperty));
+    for (auto* parameter : getParameters())
+        if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(parameter); ranged != nullptr && present.count(ranged->paramID) == 0)
+        {
+            auto* child = stateXml.createNewChildElement(apvtsParameterChildType);
+            child->setAttribute(apvtsParameterIdProperty, ranged->paramID);
+            child->setAttribute(apvtsParameterValueProperty, ranged->convertFrom0to1(ranged->getDefaultValue()));
+        }
 }
 
 bool SynthAudioProcessor::applyParameterStateXml(const juce::XmlElement& stateXml)
@@ -1632,25 +1656,29 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
     const auto& v = parameterValues;
     auto index = [](const std::atomic<float>* p) { return static_cast<int>(std::lround(p->load())); };
 
-    auto& arp = settings.parts[0].arp;
-    arp.enabled = decodeBool(v.arpEnabled->load());
-    arp.internalTempoBpm = v.arpInternalTempoBpm->load();
-    arp.rate = static_cast<coolsynth::parameters::ArpRateChoice>(index(v.arpRateDivision));
-    arp.pattern = static_cast<coolsynth::parameters::ArpPatternChoice>(index(v.arpPattern));
-    arp.octaveRange = index(v.arpOctaveRange);
-    arp.gateLength = v.arpGate->load();
-    arp.swingAmount = v.arpSwing->load();
-    arp.chance = v.arpChance->load();
-    arp.ratchetCount = static_cast<coolsynth::parameters::ArpRatchetChoice>(index(v.arpRatchetCount));
-    arp.ratchetChance = v.arpRatchetChance->load();
-    arp.accentEvery = static_cast<coolsynth::parameters::ArpAccentEveryChoice>(index(v.arpAccentEvery));
-    arp.accentAmount = v.arpAccentAmount->load();
-    arp.rhythm = static_cast<coolsynth::parameters::ArpRhythmChoice>(index(v.arpRhythm));
-    arp.euclideanPulses = index(v.arpEuclideanPulses);
-    arp.euclideanSteps = index(v.arpEuclideanSteps);
-    arp.euclideanRotation = index(v.arpEuclideanRotation);
-    arp.latch = decodeBool(v.arpLatch->load()) || screenHold.load(std::memory_order_relaxed); // the screen's Hold latches a running arp (D184)
-    settings.parts[1].arp = arp; // one arpeggiator setting; each part's mix says whether it follows
+    // Each layer's own arpeggiator (D194); the tempo while no host plays is the sound's.
+    for (int layer = 0; layer < coolsynth::synth::v3::partCount; ++layer)
+    {
+        const auto& a = v.arps[static_cast<std::size_t>(layer)];
+        auto& arp = settings.parts[static_cast<std::size_t>(layer)].arp;
+        arp.enabled = decodeBool(a.enabled->load());
+        arp.internalTempoBpm = v.arpInternalTempoBpm->load();
+        arp.rate = static_cast<coolsynth::parameters::ArpRateChoice>(index(a.rateDivision));
+        arp.pattern = static_cast<coolsynth::parameters::ArpPatternChoice>(index(a.pattern));
+        arp.octaveRange = index(a.octaveRange);
+        arp.gateLength = a.gate->load();
+        arp.swingAmount = a.swing->load();
+        arp.chance = a.chance->load();
+        arp.ratchetCount = static_cast<coolsynth::parameters::ArpRatchetChoice>(index(a.ratchetCount));
+        arp.ratchetChance = a.ratchetChance->load();
+        arp.accentEvery = static_cast<coolsynth::parameters::ArpAccentEveryChoice>(index(a.accentEvery));
+        arp.accentAmount = a.accentAmount->load();
+        arp.rhythm = static_cast<coolsynth::parameters::ArpRhythmChoice>(index(a.rhythm));
+        arp.euclideanPulses = index(a.euclideanPulses);
+        arp.euclideanSteps = index(a.euclideanSteps);
+        arp.euclideanRotation = index(a.euclideanRotation);
+        arp.latch = decodeBool(a.latch->load()) || screenHold.load(std::memory_order_relaxed); // the screen's Hold latches a running arp (D184)
+    }
 
     coolsynth::parameters::v3::readMasterEffects(masterEffectValues, settings.master);
 
@@ -1688,6 +1716,7 @@ coolsynth::synth::GlobalParameterPointers SynthAudioProcessor::bindParameterPoin
     coolsynth::synth::GlobalParameterPointers pointers;
     for (auto& [id, memberPtr] : coolsynth::synth::kGlobalParamPtrBindings)
         pointers.*memberPtr = state.getRawParameterValue(id);
+    pointers.arps = { coolsynth::synth::bindArpPointers(state, 0), coolsynth::synth::bindArpPointers(state, 1) }; // D194
     return pointers;
 }
 

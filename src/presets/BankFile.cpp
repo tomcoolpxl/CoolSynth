@@ -336,8 +336,7 @@ namespace coolsynth::presets
 
             // Room, master, the part mode, the arp and the master effect slots belong to the patch, not to a part.
             const int masterSlot = slotNumber(key, "f", pv3::masterEffectSlots);
-            if (onPart && (key == "room" || key == "family" || key == "master" || key == "parts" || masterSlot != 0
-                           || globalSections().count(key) != 0))
+            if (onPart && (key == "room" || key == "family" || key == "master" || key == "parts" || masterSlot != 0))
             {
                 error("'" + key + "' belongs to the patch, not to a part");
                 continue;
@@ -684,15 +683,20 @@ namespace coolsynth::presets
 
             if (const auto section = globalSections().find(key); section != globalSections().end())
             {
+                // The arp is each layer's own since D194 ("arp" layer A, "b.arp" layer B); its tempo is the sound's.
+                const int layer = part == pv3::Part::b ? 1 : 0;
                 readPairs(0, [&](const juce::String& k) -> juce::String
                 {
                     const auto found = section->second.keys.find(k);
-                    return found != section->second.keys.end() ? found->second : juce::String();
+                    if (found == section->second.keys.end())
+                        return {};
+                    return found->second == juce::String(ids::arpInternalTempoBpm) ? found->second
+                                                                                   : juce::String(ids::arpOfLayer(layer, found->second.toRawUTF8()));
                 }, [&](const juce::String& word)
                 {
                     if (section->second.enabledId == nullptr || (word != "on" && word != "off"))
                         return false;
-                    add(section->second.enabledId, word);
+                    add(ids::arpOfLayer(layer, section->second.enabledId), word);
                     return true;
                 });
                 continue;

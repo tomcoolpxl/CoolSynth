@@ -22,7 +22,8 @@ namespace coolsynth::presets
             return { PatchStateError::invalidRootTag, "Not a CoolSynth patch file.", nullptr };
 
         const int version = patchXml.getIntAttribute("formatVersion", 0);
-        if (version != patchFormatVersion && version != patchVersionWithOldLayerModes && version != patchVersionWithFixedEffects)
+        if (version != patchFormatVersion && version != patchVersionWithGlobalArp && version != patchVersionWithOldLayerModes
+            && version != patchVersionWithFixedEffects)
             return { PatchStateError::unsupportedFormatVersion, "Unsupported CoolSynth patch version.", nullptr };
 
         if (patchXml.getStringAttribute("stateType") != expectedStateType)
@@ -50,6 +51,9 @@ namespace coolsynth::presets
             migrateFixedMasterEffects(*result.parameterStateXml); // its fixed master effects move into the slots
         if (version <= patchVersionWithOldLayerModes)
             migrateLayerModes(*result.parameterStateXml); // the layer modes of before D190
+        if (version <= patchVersionWithGlobalArp)
+            migrateLayerArps(*result.parameterStateXml); // one arp and three slots per layer before D194
+        result.migrated = version != patchFormatVersion;
         return result;
     }
 

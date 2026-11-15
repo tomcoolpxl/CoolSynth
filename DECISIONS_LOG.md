@@ -3895,6 +3895,16 @@ effect and arp, stacked or split). The user's choices:
 - Stages: the engine (six slots, an arp per layer, old states carried over, every preset bit for
   bit the same); the presets' effects into their layers (checked by rendering each before and
   after); Home and the Effects section.
+- **Stage 1 done**: six slots per layer (I1-I6; effect routes aimed at a master slot moved past the
+  new ones), an arp per layer ("pA.arpEnabled", "pB.arpEnabled", ...; the follow flag mix.arp gone;
+  the tempo stays the sound's). State version 12, patch version 11; an older one is converted (each
+  layer's arp on only if it was on and that layer followed it; learned MIDI follows) and whatever it
+  lacks comes in at its default. That last step also mends a gap of D190: the split and fade it
+  added were missing from older states and saved sounds, which the loader then refused. Found on
+  the way: the engine judged "the same sound loaded again" by comparing its settings byte for byte,
+  padding included, so a change of stack layout made a preset loaded twice count as new; a load now
+  counts as a new sound only if a parameter value changed. All 468 tests pass; every factory preset
+  renders bit for bit the same (the four random-arp presets differ, as on every run).
 
 ## D195. The layer screen above knobs 1-4; rings on knobs 6-8 (2026-11-15)
 
@@ -3910,3 +3920,21 @@ effect and arp, stacked or split). The user's choices:
 - **Knobs 6-8 had no ring** and looked inactive (the user). Brightness and Space act on the whole
   sound: a light grey ring, as the user asked. Glide belongs to the edited layer: a ring in that
   layer's colour, teal or yellow, as the layer screen.
+
+## D196. Layer actions and a Layers page (2026-11-15, planned)
+
+The user asked what people do with two layers. Checked online: Sequential's Prophet Rev2 has a copy
+and swap page for its layers and, since OS 1.0.7.2, puts a sound from another program on a layer;
+Cherry Audio's Memorymode has a layer utility (swap, copy, paste, reset), a Balance knob and Solo
+Layer; layering tips (MusicRadar, Harmony Central, Craig Anderton, Sound On Sound) double a sound
+and detune the copies (about 5 cents for strings, 40-60 for leads), add an octave layer below for
+weight or above for sparkle, stack an attack on a pad, and switch or crossfade by velocity; Korg's
+multitimbral synths give each part a detune of +-50 cents.
+
+- **Actions, all four chosen**: copy A to B or B to A, swap, empty a layer; Double (copy the edited
+  layer to the other and pull them apart a few cents and a little left and right); Octave layer
+  (the copy an octave down or up, a little quieter); Solo layer while editing.
+- **Where**: a **Layers page in Home** (chosen, recommended; options: the Layers page, a right-click
+  menu on the layer screen, both): knob 5's sixth live page, knobs 1-4 Balance A/B, Detune spread,
+  the other layer's octave and Stereo spread; the actions in the main knob's list on that page, so
+  they work from the MiniLab too.

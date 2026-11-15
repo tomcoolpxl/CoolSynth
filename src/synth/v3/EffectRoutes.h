@@ -9,7 +9,7 @@
 
 /*
     Effect modulation (decision D179): a part's global sources move the settings of its own insert
-    effects (I1-I3) and of the master effects (F1-F6). Only what is the same for every voice of the
+    effects (I1-I6 since D194) and of the master effects (F1-F6). Only what is the same for every voice of the
     part can move an effect all its voices share: the macros, both global LFOs, the global
     envelope, the step modulator, chaos, the mod wheel, pitch bend, key pressure and the expression
     pedal. A route reads like a matrix slot: source, destination, amount, an optional via source
@@ -28,7 +28,7 @@ namespace coolsynth::synth::v3
     namespace effectDestination
     {
         inline constexpr int off = 0;
-        inline constexpr int insertSlots = 3;
+        inline constexpr int insertSlots = insertSlotCount; // six since D194: old states' F destinations move up
         inline constexpr int masterSlots = 6;
         inline constexpr int perSlot = maxSlotParameters;
         inline constexpr int insertBase = 1;

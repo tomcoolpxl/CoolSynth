@@ -1,9 +1,11 @@
 #pragma once
 
 #include <array>
+#include <string_view>
+#include <utility>
 
 /*
-    IDs of the parameters outside a V3 part: the arpeggiator and the output. A part's own
+    IDs of the parameters outside a V3 part's slot paths: the two layers' arpeggiators (D194), the tempo and the output. A part's own
     parameters (generator and processor slots, envelopes, voice and play settings) and the master
     effect slots F1..F6 ("f1.type", "f1.p1") are built from slot paths in parameters/v3 and are not
     listed here.
@@ -16,23 +18,75 @@ namespace coolsynth::parameters::ids
     inline constexpr int parameterVersionHintV5 = 5;
     inline constexpr int parameterVersionHintV6 = 6;
 
-    inline constexpr char arpEnabled[] = "arpEnabled";
+    // The arpeggiator: one per layer since D194, each layer's own, as Korg's wavestate gives each layer one. These
+    // name layer A's ("pA.arpEnabled"); arpOfLayer() gives layer B's. Before D194 one arp ("arpEnabled") served both.
+    inline constexpr char arpEnabled[] = "pA.arpEnabled";
+    inline constexpr char arpRateDivision[] = "pA.arpRateDivision";
+    inline constexpr char arpPattern[] = "pA.arpPattern";
+    inline constexpr char arpOctaveRange[] = "pA.arpOctaveRange";
+    inline constexpr char arpGate[] = "pA.arpGate";
+    inline constexpr char arpSwing[] = "pA.arpSwing";
+    inline constexpr char arpChance[] = "pA.arpChance";
+    inline constexpr char arpRatchetCount[] = "pA.arpRatchetCount";
+    inline constexpr char arpRatchetChance[] = "pA.arpRatchetChance";
+    inline constexpr char arpAccentEvery[] = "pA.arpAccentEvery";
+    inline constexpr char arpAccentAmount[] = "pA.arpAccentAmount";
+    inline constexpr char arpRhythm[] = "pA.arpRhythm";
+    inline constexpr char arpEuclideanPulses[] = "pA.arpEuclideanPulses";
+    inline constexpr char arpEuclideanSteps[] = "pA.arpEuclideanSteps";
+    inline constexpr char arpEuclideanRotation[] = "pA.arpEuclideanRotation";
+    inline constexpr char arpLatch[] = "pA.arpLatch";
+    namespace layerB
+    {
+        inline constexpr char arpEnabled[] = "pB.arpEnabled";
+        inline constexpr char arpRateDivision[] = "pB.arpRateDivision";
+        inline constexpr char arpPattern[] = "pB.arpPattern";
+        inline constexpr char arpOctaveRange[] = "pB.arpOctaveRange";
+        inline constexpr char arpGate[] = "pB.arpGate";
+        inline constexpr char arpSwing[] = "pB.arpSwing";
+        inline constexpr char arpChance[] = "pB.arpChance";
+        inline constexpr char arpRatchetCount[] = "pB.arpRatchetCount";
+        inline constexpr char arpRatchetChance[] = "pB.arpRatchetChance";
+        inline constexpr char arpAccentEvery[] = "pB.arpAccentEvery";
+        inline constexpr char arpAccentAmount[] = "pB.arpAccentAmount";
+        inline constexpr char arpRhythm[] = "pB.arpRhythm";
+        inline constexpr char arpEuclideanPulses[] = "pB.arpEuclideanPulses";
+        inline constexpr char arpEuclideanSteps[] = "pB.arpEuclideanSteps";
+        inline constexpr char arpEuclideanRotation[] = "pB.arpEuclideanRotation";
+        inline constexpr char arpLatch[] = "pB.arpLatch";
+    }
+    // The tempo while no host plays, one for the sound: the arps and the synced effects follow it.
     inline constexpr char arpInternalTempoBpm[] = "arpInternalTempoBpm";
-    inline constexpr char arpRateDivision[] = "arpRateDivision";
-    inline constexpr char arpPattern[] = "arpPattern";
-    inline constexpr char arpOctaveRange[] = "arpOctaveRange";
-    inline constexpr char arpGate[] = "arpGate";
-    inline constexpr char arpSwing[] = "arpSwing";
-    inline constexpr char arpChance[] = "arpChance";
-    inline constexpr char arpRatchetCount[] = "arpRatchetCount";
-    inline constexpr char arpRatchetChance[] = "arpRatchetChance";
-    inline constexpr char arpAccentEvery[] = "arpAccentEvery";
-    inline constexpr char arpAccentAmount[] = "arpAccentAmount";
-    inline constexpr char arpRhythm[] = "arpRhythm";
-    inline constexpr char arpEuclideanPulses[] = "arpEuclideanPulses";
-    inline constexpr char arpEuclideanSteps[] = "arpEuclideanSteps";
-    inline constexpr char arpEuclideanRotation[] = "arpEuclideanRotation";
-    inline constexpr char arpLatch[] = "arpLatch";
+
+    inline constexpr std::array<std::pair<const char*, const char*>, 16> arpLayerIds {{
+        { arpEnabled, layerB::arpEnabled },
+        { arpRateDivision, layerB::arpRateDivision },
+        { arpPattern, layerB::arpPattern },
+        { arpOctaveRange, layerB::arpOctaveRange },
+        { arpGate, layerB::arpGate },
+        { arpSwing, layerB::arpSwing },
+        { arpChance, layerB::arpChance },
+        { arpRatchetCount, layerB::arpRatchetCount },
+        { arpRatchetChance, layerB::arpRatchetChance },
+        { arpAccentEvery, layerB::arpAccentEvery },
+        { arpAccentAmount, layerB::arpAccentAmount },
+        { arpRhythm, layerB::arpRhythm },
+        { arpEuclideanPulses, layerB::arpEuclideanPulses },
+        { arpEuclideanSteps, layerB::arpEuclideanSteps },
+        { arpEuclideanRotation, layerB::arpEuclideanRotation },
+        { arpLatch, layerB::arpLatch }
+    }};
+
+    /** Layer `layer`'s (0 A, 1 B) arp parameter, given layer A's ID. */
+    [[nodiscard]] inline const char* arpOfLayer(int layer, const char* layerAId) noexcept
+    {
+        if (layer == 0)
+            return layerAId;
+        for (const auto& [a, b] : arpLayerIds)
+            if (std::string_view(a) == layerAId)
+                return b;
+        return layerAId;
+    }
 
     inline constexpr char masterGainDb[] = "masterGainDb";
     inline constexpr char brightness[] = "brightness"; // knob 7: every filter of the sound, -1..1 (D176)
@@ -97,7 +151,6 @@ namespace coolsynth::parameters
 
     inline constexpr auto allParameterIds = std::to_array<const char*>({
         ids::arpEnabled,
-        ids::arpInternalTempoBpm,
         ids::arpRateDivision,
         ids::arpPattern,
         ids::arpOctaveRange,
@@ -113,6 +166,23 @@ namespace coolsynth::parameters
         ids::arpEuclideanSteps,
         ids::arpEuclideanRotation,
         ids::arpLatch,
+        ids::layerB::arpEnabled,
+        ids::layerB::arpRateDivision,
+        ids::layerB::arpPattern,
+        ids::layerB::arpOctaveRange,
+        ids::layerB::arpGate,
+        ids::layerB::arpSwing,
+        ids::layerB::arpChance,
+        ids::layerB::arpRatchetCount,
+        ids::layerB::arpRatchetChance,
+        ids::layerB::arpAccentEvery,
+        ids::layerB::arpAccentAmount,
+        ids::layerB::arpRhythm,
+        ids::layerB::arpEuclideanPulses,
+        ids::layerB::arpEuclideanSteps,
+        ids::layerB::arpEuclideanRotation,
+        ids::layerB::arpLatch,
+        ids::arpInternalTempoBpm,
         ids::masterGainDb,
         ids::brightness,
         ids::space,

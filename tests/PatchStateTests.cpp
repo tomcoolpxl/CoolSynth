@@ -66,10 +66,10 @@ public:
             }
 
             // each part: 3 generators x 21, 3 processors x 13, 3 envelopes x 13, 4 LFOs x 9, 24 matrix slots x 5,
-            // global envelope 12, step 16 + 16 + 4, 4 macros, chaos 1, 7 voice, 9 play, 8 chord, 10 mix, 3 inserts x 13,
+            // global envelope 12, step 16 + 16 + 4, 4 macros, chaos 1, 7 voice, 9 play, 8 chord, 9 mix, 6 inserts x 13 (D194),
             // 8 effect routes x 5 (D179);
             // then the layer mode with its velocity split and fade (D190), and the six master effect slots x 13
-            constexpr int onePart = 3 * 21 + 3 * 13 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 7 + 9 + 8 + 10 + 3 * 13 + 8 * 5;
+            constexpr int onePart = 3 * 21 + 3 * 13 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 7 + 9 + 8 + 9 + 6 * 13 + 8 * 5;
             constexpr int partParameterCount = 2 * onePart + 3;
             constexpr int masterSlotParameterCount = 6 * 13;
             expectEquals(registeredIds.size(),
@@ -675,3 +675,85 @@ public:
 };
 
 static LayerModeMigrationTests layerModeMigrationTests;
+
+/** Before D194 one arp served both layers and each layer had three effect slots. Heap processors. */
+class LayerArpMigrationTests final : public juce::UnitTest
+{
+public:
+    LayerArpMigrationTests() : juce::UnitTest("Layer arp migration", "Presets") {}
+
+    void runTest() override
+    {
+        // A version 11 state as it was written: the global arp IDs, each layer's follow flag, three slots, routes.
+        auto oldState = [](SynthAudioProcessor& source, bool bFollows)
+        {
+            auto state = source.createParameterStateXml();
+            std::vector<juce::XmlElement*> drop;
+            for (auto* child : state->getChildWithTagNameIterator("PARAM"))
+            {
+                const auto id = child->getStringAttribute("id");
+                if (id.contains(".arp") || id.matchesWildcard("p?.i4.*", true) || id.matchesWildcard("p?.i5.*", true) || id.matchesWildcard("p?.i6.*", true))
+                    drop.push_back(child);
+            }
+            for (auto* child : drop)
+                state->removeChildElement(child, true);
+            auto add = [&](const juce::String& id, double value)
+            {
+                auto* child = state->createNewChildElement("PARAM");
+                child->setAttribute("id", id);
+                child->setAttribute("value", value);
+            };
+            add("arpEnabled", 1.0);
+            add("arpRateDivision", 1.0); // 1/8
+            add("arpGate", 0.8);
+            add("pA.mix.arp", 1.0);
+            add("pB.mix.arp", bFollows ? 1.0 : 0.0);
+            for (auto* child : state->getChildWithTagNameIterator("PARAM"))
+                if (child->getStringAttribute("id") == "pA.fx1.dst")
+                    child->setAttribute("value", 1 + 3 * 12 + 2); // F1's third setting, as numbered with three insert slots
+            return state;
+        };
+        auto value = [](SynthAudioProcessor& p, const juce::String& id) { return p.getValueTreeState().getRawParameterValue(id)->load(); };
+
+        beginTest("an_old_state_gives_each_layer_the_arp_it_followed");
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            for (const bool bFollows : { true, false })
+            {
+                juce::MemoryBlock saved;
+                source->getStateInformation(saved);
+                auto root = juce::AudioProcessor::getXmlFromBinary(saved.getData(), static_cast<int>(saved.getSize()));
+                root->setAttribute("formatVersion", 11);
+                auto* parameters = root->getChildByName(source->getParameterStateTypeName());
+                root->replaceChildElement(parameters, oldState(*source, bFollows).release());
+                juce::MemoryBlock old;
+                juce::AudioProcessor::copyXmlToBinary(*root, old);
+
+                auto target = std::make_unique<SynthAudioProcessor>();
+                target->setStateInformation(old.getData(), static_cast<int>(old.getSize()));
+                expectEquals(value(*target, "pA.arpEnabled"), 1.0f, "the state loaded, with layer A's arp on");
+                expectEquals(value(*target, "pB.arpEnabled"), bFollows ? 1.0f : 0.0f);
+                expectEquals(value(*target, "pA.arpRateDivision"), 1.0f);
+                expectWithinAbsoluteError(value(*target, "pB.arpGate"), 0.8f, 1.0e-6f);
+                expectEquals(value(*target, "pA.fx1.dst"), static_cast<float>(1 + 6 * 12 + 2), "the route still aims at F1's third setting");
+                expectEquals(value(*target, "pA.i6.type"), 0.0f, "a new slot, Off");
+            }
+        }
+
+        beginTest("an_old_saved_sound_loads_with_the_new_settings_at_their_defaults");
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            auto patchXml = coolsynth::presets::createWrappedPatchXml(*oldState(*source, false), source->getParameterStateTypeName());
+            patchXml->setAttribute("formatVersion", 10);
+            const auto file = juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile("coolsynth-d194-old.cspatch");
+            expect(coolsynth::presets::writePatchFile(file, *patchXml).succeeded());
+            auto target = std::make_unique<SynthAudioProcessor>();
+            expect(target->loadMySound(file), "an older saved sound loads");
+            expectEquals(value(*target, "pB.arpEnabled"), 0.0f);
+            expectEquals(value(*target, "pA.arpEnabled"), 1.0f);
+            file.deleteFile();
+        }
+    }
+};
+
+static LayerArpMigrationTests layerArpMigrationTests;

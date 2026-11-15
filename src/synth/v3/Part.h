@@ -71,7 +71,6 @@ namespace coolsynth::synth::v3
         int keyLow = 0, keyHigh = 127;           // Split only
         int velocityLow = 1, velocityHigh = 127; // whenever both parts play
         float fx = 1.0f;                         // the share that passes through the effects; the rest joins after them
-        bool arp = true;                         // follows the arpeggiator when it is on
     };
 
     struct PartSettings

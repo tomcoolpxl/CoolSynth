@@ -492,9 +492,12 @@ namespace coolsynth::ui
                                          pv::macroParameterId(part, 3), pv::macroParameterId(part, 4) },
                              labels };
                 }
-                case 1: return { "Arp", { ids::arpEnabled, ids::arpRateDivision, ids::arpPattern, ids::arpOctaveRange },
+                // the layer's own arp (D194)
+                case 1: return { "Arp", { ids::arpOfLayer(currentPart, ids::arpEnabled), ids::arpOfLayer(currentPart, ids::arpRateDivision),
+                                          ids::arpOfLayer(currentPart, ids::arpPattern), ids::arpOfLayer(currentPart, ids::arpOctaveRange) },
                                  { "Arp", "Rate", "Pattern", "Octaves" } };
-                case 2: return { "Groove", { ids::arpGate, ids::arpSwing, ids::arpChance, ids::arpLatch },
+                case 2: return { "Groove", { ids::arpOfLayer(currentPart, ids::arpGate), ids::arpOfLayer(currentPart, ids::arpSwing),
+                                             ids::arpOfLayer(currentPart, ids::arpChance), ids::arpOfLayer(currentPart, ids::arpLatch) },
                                  { "Gate", "Swing", "Chance", "Latch" } };
                 case 3: return { "Chord", { pv::chordParameterId(part, "type"), pv::chordParameterId(part, "strum"),
                                             pv::chordParameterId(part, "learn"), {} },

@@ -33,7 +33,7 @@
 */
 namespace coolsynth::synth::v3
 {
-    inline constexpr int insertSlotCount = 3;
+    inline constexpr int insertSlotCount = 6; // a layer's own effects: six since D194 (were three), a whole sound's
 
     /** The master effect slots F1..F6 (DESIGN_V3.md section 8, decision D135): the same slot and the same types as an
         insert, in a chain after the parts are mixed, before the master gain. */

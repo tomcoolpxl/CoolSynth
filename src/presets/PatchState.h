@@ -9,7 +9,8 @@ namespace coolsynth::presets
     inline constexpr char patchRootTag[] = "COOLSYNTH_PATCH";
     // 8: V3 parameter contract (older patches are rejected); 9: the master effect slots (an 8 is carried over, D135)
     // 10: the layer modes Stack, Split, Velocity (D190; a 9 or 8 is carried over)
-    inline constexpr int patchFormatVersion = 10;
+    // 11: an arp and six effect slots per layer (D194; a 10, 9 or 8 is carried over)
+    inline constexpr int patchFormatVersion = 11;
     inline constexpr char defaultPatchExtension[] = ".cspatch";
 
     enum class PatchStateError : uint8_t
@@ -40,6 +41,7 @@ namespace coolsynth::presets
     struct PatchLoadResult : PatchIoResult
     {
         std::unique_ptr<juce::XmlElement> parameterStateXml;
+        bool migrated = false; // an older version, converted: the processor fills what it still lacks with defaults
     };
 
     std::unique_ptr<juce::XmlElement> createWrappedPatchXml(const juce::XmlElement& parameterStateXml,

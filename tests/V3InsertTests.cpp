@@ -504,7 +504,7 @@ b.i3 = Grain size=200 density=30 pitch=12 freeze=on mix=0.6
                 expect(entryText(preset, "pB.i3.p7") == "on");
                 expect(entryText(preset, "pA.i2.type") == "<none>");
             }
-            const auto wrong = coolsynth::presets::parseBankFile("[X]\ni1 = Wah depth=1\ni2 = Delay speed=3\ni4 = Delay\n", "bad.csbank");
+            const auto wrong = coolsynth::presets::parseBankFile("[X]\ni1 = Wah depth=1\ni2 = Delay speed=3\ni7 = Delay\n", "bad.csbank"); // six slots since D194: i7 is none
             expectEquals(wrong.errors.size(), 3);
         }
     }

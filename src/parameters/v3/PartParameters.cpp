@@ -268,7 +268,7 @@ namespace coolsynth::parameters::v3
 
     const juce::StringArray& mixFields()
     {
-        static const juce::StringArray fields { "level", "pan", "transpose", "fine", "keyLow", "keyHigh", "velLow", "velHigh", "fx", "arp" };
+        static const juce::StringArray fields { "level", "pan", "transpose", "fine", "keyLow", "keyHigh", "velLow", "velHigh", "fx" };
         return fields;
     }
 
@@ -493,7 +493,6 @@ namespace coolsynth::parameters::v3
         mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "velLow")), "Velocity Low", 1, 127, 1));
         mix->addChild(std::make_unique<juce::AudioParameterInt>(makeId(mixParameterId(part, "velHigh")), "Velocity High", 1, 127, 127));
         mix->addChild(floatParameter(mixParameterId(part, "fx"), "Layer Effects", { 0.0f, 1.0f }, 1.0f, percentAttributes()));
-        mix->addChild(std::make_unique<juce::AudioParameterBool>(makeId(mixParameterId(part, "arp")), "Layer Arp", true));
         group->addChild(std::move(mix));
 
         for (int i = 1; i <= partInsertSlots; ++i)
@@ -617,7 +616,6 @@ namespace coolsynth::parameters::v3
         p.mix.velLow = state.getRawParameterValue(mixParameterId(part, "velLow"));
         p.mix.velHigh = state.getRawParameterValue(mixParameterId(part, "velHigh"));
         p.mix.fx = state.getRawParameterValue(mixParameterId(part, "fx"));
-        p.mix.arp = state.getRawParameterValue(mixParameterId(part, "arp"));
         return p;
     }
 
@@ -775,7 +773,6 @@ namespace coolsynth::parameters::v3
         mix.velocityLow = juce::jlimit(1, 127, whole(m.velLow, 1));
         mix.velocityHigh = juce::jlimit(1, 127, whole(m.velHigh, 127));
         mix.fx = juce::jlimit(0.0f, 1.0f, value(m.fx, 1.0f));
-        mix.arp = value(m.arp, 1.0f) >= 0.5f;
     }
 
     void readPartInserts(const PartParameterPointers& pointers,

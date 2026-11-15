@@ -149,26 +149,32 @@ namespace coolsynth::synth
         return x * x * x;
     }
 
+    /** One layer's arpeggiator (D194: each layer has its own). */
+    struct ArpParameterPointers
+    {
+        std::atomic<float>* enabled = nullptr;
+        std::atomic<float>* rateDivision = nullptr;
+        std::atomic<float>* pattern = nullptr;
+        std::atomic<float>* octaveRange = nullptr;
+        std::atomic<float>* gate = nullptr;
+        std::atomic<float>* swing = nullptr;
+        std::atomic<float>* chance = nullptr;
+        std::atomic<float>* ratchetCount = nullptr;
+        std::atomic<float>* ratchetChance = nullptr;
+        std::atomic<float>* accentEvery = nullptr;
+        std::atomic<float>* accentAmount = nullptr;
+        std::atomic<float>* rhythm = nullptr;
+        std::atomic<float>* euclideanPulses = nullptr;
+        std::atomic<float>* euclideanSteps = nullptr;
+        std::atomic<float>* euclideanRotation = nullptr;
+        std::atomic<float>* latch = nullptr;
+    };
+
     /** Raw values of the parameters outside a part, resolved by ID once. */
     struct GlobalParameterPointers
     {
-        std::atomic<float>* arpEnabled = nullptr;
+        std::array<ArpParameterPointers, 2> arps {}; // layer A, layer B
         std::atomic<float>* arpInternalTempoBpm = nullptr;
-        std::atomic<float>* arpRateDivision = nullptr;
-        std::atomic<float>* arpPattern = nullptr;
-        std::atomic<float>* arpOctaveRange = nullptr;
-        std::atomic<float>* arpGate = nullptr;
-        std::atomic<float>* arpSwing = nullptr;
-        std::atomic<float>* arpChance = nullptr;
-        std::atomic<float>* arpRatchetCount = nullptr;
-        std::atomic<float>* arpRatchetChance = nullptr;
-        std::atomic<float>* arpAccentEvery = nullptr;
-        std::atomic<float>* arpAccentAmount = nullptr;
-        std::atomic<float>* arpRhythm = nullptr;
-        std::atomic<float>* arpEuclideanPulses = nullptr;
-        std::atomic<float>* arpEuclideanSteps = nullptr;
-        std::atomic<float>* arpEuclideanRotation = nullptr;
-        std::atomic<float>* arpLatch = nullptr;
         std::atomic<float>* masterGainDb = nullptr;
         std::atomic<float>* brightness = nullptr;
         std::atomic<float>* space = nullptr;
@@ -181,24 +187,8 @@ namespace coolsynth::synth
     using GlobalParamMemberPtr = std::atomic<float>* GlobalParameterPointers::*;
 
     inline const std::array<std::pair<const char*, GlobalParamMemberPtr>,
-                            coolsynth::parameters::allParameterIds.size()> kGlobalParamPtrBindings = {{
-        { coolsynth::parameters::ids::arpEnabled,           &GlobalParameterPointers::arpEnabled           },
+                            8> kGlobalParamPtrBindings = {{
         { coolsynth::parameters::ids::arpInternalTempoBpm,  &GlobalParameterPointers::arpInternalTempoBpm  },
-        { coolsynth::parameters::ids::arpRateDivision,      &GlobalParameterPointers::arpRateDivision      },
-        { coolsynth::parameters::ids::arpPattern,           &GlobalParameterPointers::arpPattern           },
-        { coolsynth::parameters::ids::arpOctaveRange,       &GlobalParameterPointers::arpOctaveRange       },
-        { coolsynth::parameters::ids::arpGate,              &GlobalParameterPointers::arpGate              },
-        { coolsynth::parameters::ids::arpSwing,             &GlobalParameterPointers::arpSwing             },
-        { coolsynth::parameters::ids::arpChance,            &GlobalParameterPointers::arpChance            },
-        { coolsynth::parameters::ids::arpRatchetCount,      &GlobalParameterPointers::arpRatchetCount      },
-        { coolsynth::parameters::ids::arpRatchetChance,     &GlobalParameterPointers::arpRatchetChance     },
-        { coolsynth::parameters::ids::arpAccentEvery,       &GlobalParameterPointers::arpAccentEvery       },
-        { coolsynth::parameters::ids::arpAccentAmount,      &GlobalParameterPointers::arpAccentAmount      },
-        { coolsynth::parameters::ids::arpRhythm,            &GlobalParameterPointers::arpRhythm            },
-        { coolsynth::parameters::ids::arpEuclideanPulses,   &GlobalParameterPointers::arpEuclideanPulses   },
-        { coolsynth::parameters::ids::arpEuclideanSteps,    &GlobalParameterPointers::arpEuclideanSteps    },
-        { coolsynth::parameters::ids::arpEuclideanRotation, &GlobalParameterPointers::arpEuclideanRotation },
-        { coolsynth::parameters::ids::arpLatch,             &GlobalParameterPointers::arpLatch             },
         { coolsynth::parameters::ids::masterGainDb,         &GlobalParameterPointers::masterGainDb         },
         { coolsynth::parameters::ids::brightness,           &GlobalParameterPointers::brightness           },
         { coolsynth::parameters::ids::space,                &GlobalParameterPointers::space                },
@@ -207,4 +197,29 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::volumeFx,             &GlobalParameterPointers::volumeFx             },
         { coolsynth::parameters::ids::volumeMaster,         &GlobalParameterPointers::volumeMaster         },
     }};
+    /** Binds layer `layer`'s arp pointers (0 A, 1 B), by the IDs of ParameterIDs.h. */
+    template <typename State>
+    inline ArpParameterPointers bindArpPointers(State& state, int layer)
+    {
+        namespace ids = coolsynth::parameters::ids;
+        const auto get = [&](const char* layerAId) { return state.getRawParameterValue(ids::arpOfLayer(layer, layerAId)); };
+        ArpParameterPointers p;
+        p.enabled = get(ids::arpEnabled);
+        p.rateDivision = get(ids::arpRateDivision);
+        p.pattern = get(ids::arpPattern);
+        p.octaveRange = get(ids::arpOctaveRange);
+        p.gate = get(ids::arpGate);
+        p.swing = get(ids::arpSwing);
+        p.chance = get(ids::arpChance);
+        p.ratchetCount = get(ids::arpRatchetCount);
+        p.ratchetChance = get(ids::arpRatchetChance);
+        p.accentEvery = get(ids::arpAccentEvery);
+        p.accentAmount = get(ids::arpAccentAmount);
+        p.rhythm = get(ids::arpRhythm);
+        p.euclideanPulses = get(ids::arpEuclideanPulses);
+        p.euclideanSteps = get(ids::arpEuclideanSteps);
+        p.euclideanRotation = get(ids::arpEuclideanRotation);
+        p.latch = get(ids::arpLatch);
+        return p;
+    }
 }

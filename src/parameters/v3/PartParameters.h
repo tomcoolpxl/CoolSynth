@@ -176,7 +176,6 @@ namespace coolsynth::parameters::v3
         std::atomic<float>* velLow = nullptr;
         std::atomic<float>* velHigh = nullptr;
         std::atomic<float>* fx = nullptr;
-        std::atomic<float>* arp = nullptr;
     };
 
     struct PartParameterPointers

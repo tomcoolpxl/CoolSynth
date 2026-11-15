@@ -34,6 +34,19 @@ namespace coolsynth::presets
     inline constexpr int processorStateVersionWithOldLayerModes = 10;
     inline constexpr int patchVersionWithOldLayerModes = 9;
 
+    /** The format versions with one arpeggiator for both layers and three effect slots per layer (before D194). */
+    inline constexpr int processorStateVersionWithGlobalArp = 11;
+    inline constexpr int patchVersionWithGlobalArp = 10;
+
+    /**
+        Rewrites a parameter state from before D194 in place: the one arp ("arpEnabled", ...) becomes each layer's
+        own ("pA.arpEnabled", "pB.arpEnabled", ...), on for a layer only if it was on and that layer followed it
+        (its "mix.arp", gone); effect routes aimed at a master slot aim at it still, past the three new insert
+        slots. The new slots and anything else the state lacks are filled with defaults by the processor. Returns
+        the old arp IDs and their layer A IDs, so MIDI learn follows.
+    */
+    std::map<juce::String, juce::String> migrateLayerArps(juce::XmlElement& parameterState);
+
     /**
         Rewrites a parameter state from before D190 in place: the modes were A, Layer, Split, B and are Stack,
         Split, Velocity. A and B become a stack with the layer they left out emptied (its slot types Off, so it is

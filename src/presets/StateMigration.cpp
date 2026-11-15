@@ -3,7 +3,9 @@
 #include <array>
 #include <set>
 
+#include "parameters/ParameterIDs.h"
 #include "parameters/v3/PartParameters.h"
+#include "synth/v3/EffectRoutes.h"
 #include "synth/v3/Inserts.h"
 
 namespace coolsynth::presets
@@ -42,6 +44,62 @@ namespace coolsynth::presets
         constexpr char parameterTag[] = "PARAM";
         constexpr char idAttribute[] = "id";
         constexpr char valueAttribute[] = "value";
+    }
+
+    std::map<juce::String, juce::String> migrateLayerArps(juce::XmlElement& parameterState)
+    {
+        std::map<juce::String, juce::String> renamed;
+        auto find = [&](const juce::String& id) -> juce::XmlElement*
+        {
+            for (auto* child : parameterState.getChildWithTagNameIterator(parameterTag))
+                if (child->getStringAttribute(idAttribute) == id)
+                    return child;
+            return nullptr;
+        };
+        auto setValue = [&](const juce::String& id, double value)
+        {
+            auto* child = find(id);
+            if (child == nullptr)
+            {
+                child = parameterState.createNewChildElement(parameterTag);
+                child->setAttribute(idAttribute, id);
+            }
+            child->setAttribute(valueAttribute, value);
+        };
+        auto follows = [&](const char* layer)
+        {
+            const auto* follow = find(juce::String(layer) + ".mix.arp");
+            return follow == nullptr || follow->getDoubleAttribute(valueAttribute) >= 0.5;
+        };
+        const bool followsA = follows("pA"), followsB = follows("pB");
+
+        namespace ids = coolsynth::parameters::ids;
+        for (const auto& [a, b] : ids::arpLayerIds)
+        {
+            const auto oldId = juce::String(a).fromFirstOccurrenceOf(".", false, false); // "pA.arpEnabled": "arpEnabled"
+            auto* old = find(oldId);
+            if (old == nullptr)
+                continue;
+            const double value = old->getDoubleAttribute(valueAttribute);
+            const bool enabledFlag = oldId == juce::String(ids::arpEnabled).fromFirstOccurrenceOf(".", false, false);
+            setValue(a, enabledFlag ? (value >= 0.5 && followsA ? 1.0 : 0.0) : value);
+            setValue(b, enabledFlag ? (value >= 0.5 && followsB ? 1.0 : 0.0) : value);
+            parameterState.removeChildElement(old, true);
+            renamed[oldId] = a;
+        }
+        for (const char* layer : { "pA", "pB" })
+            if (auto* follow = find(juce::String(layer) + ".mix.arp"))
+                parameterState.removeChildElement(follow, true);
+
+        // Effect routes: a master slot's destinations come after the insert slots', which grew from three to six.
+        namespace d = coolsynth::synth::v3::effectDestination;
+        constexpr int oldMasterBase = d::insertBase + 3 * d::perSlot;
+        constexpr int added = (d::insertSlots - 3) * d::perSlot;
+        for (auto* child : parameterState.getChildWithTagNameIterator(parameterTag))
+            if (const auto id = child->getStringAttribute(idAttribute); id.matchesWildcard("p?.fx*.dst", true))
+                if (const int v = juce::roundToInt(child->getDoubleAttribute(valueAttribute)); v >= oldMasterBase)
+                    child->setAttribute(valueAttribute, v + added);
+        return renamed;
     }
 
     void migrateLayerModes(juce::XmlElement& parameterState)

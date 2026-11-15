@@ -68,8 +68,8 @@ master = -6
             expect(entryText(preset, "pA.env1.loop") == "off");
             expect(entryText(preset, "pA.voice.glide") == "15");
             expect(entryText(preset, "pA.play.priority") == "low");
-            expect(entryText(preset, "arpEnabled") == "on");
-            expect(entryText(preset, "arpPattern") == "up/down");
+            expect(entryText(preset, "pA.arpEnabled") == "on");
+            expect(entryText(preset, "pA.arpPattern") == "up/down");
             expect(entryText(preset, "f1.type") == "Drive");
             expect(entryText(preset, "f1.p1") == "0.15");      // amount is the drive's first value
             expect(entryText(preset, "f2.type") == "Reverb");
@@ -165,8 +165,8 @@ master = -7.5
             expectWithinAbsoluteError(rawValue(*processor, "pA.p1.p1"), std::log(140.0f / 20.0f) / std::log(1000.0f), 1.0e-4f);
             expectEquals(static_cast<int>(rawValue(*processor, "pA.play.mode")), 2);            // Legato
             expectEquals(static_cast<int>(rawValue(*processor, "pA.play.voices")), 6);
-            expectEquals(static_cast<int>(rawValue(*processor, "arpEnabled")), 1);
-            expectEquals(static_cast<int>(rawValue(*processor, "arpRateDivision")), 2);         // 1/8T
+            expectEquals(static_cast<int>(rawValue(*processor, "pA.arpEnabled")), 1);
+            expectEquals(static_cast<int>(rawValue(*processor, "pA.arpRateDivision")), 2);         // 1/8T
             expectWithinAbsoluteError(rawValue(*processor, "masterGainDb"), -7.5f, 1.0e-3f);
             expectEquals(static_cast<int>(rawValue(*processor, "pA.g1.type")), 1);              // untouched: back to its default
         }
@@ -229,7 +229,7 @@ env1 = loop=maybe attack=abc
                 // An arp that skips steps at random could stay silent for a second; give it four.
                 bool randomArp = false;
                 for (const auto& e : preset.entries)
-                    randomArp = randomArp || (e.parameterId == "arpChance" && e.text.getFloatValue() < 1.0f);
+                    randomArp = randomArp || (e.parameterId == "pA.arpChance" && e.text.getFloatValue() < 1.0f);
                 const int blocks = randomArp ? 750 : 188;
 
                 juce::AudioBuffer<float> buffer(2, 256);
@@ -299,7 +299,7 @@ public:
             bool arp = false, chord = false;
             for (const auto& e : coolsynth::presets::getFactoryPreset(i).entries)
             {
-                arp = arp || (e.parameterId == "arpEnabled" && e.text == "on");
+                arp = arp || (e.parameterId == "pA.arpEnabled" && e.text == "on");
                 chord = chord || (e.parameterId == "pA.chord.type" && e.text != "off");
             }
             if (! arp && ! chord)
