@@ -3775,3 +3775,18 @@ Prophet-12 name them; keep Part; Upper/Lower as the Jupiter-8). The mode that pl
 key is now **Stack** (was Layer; "Stack A+B" on the Rev2): modes A, Stack, Split, B. Bank files say
 "parts = stack" ("layer" still reads as stack); host parameter names say Layer. How many modes (two
 split directions, a velocity split) is part of the parked A/B question, to be talked through.
+
+## D191. A pad flashes its name on the MiniLab; the CPU beside the main knob (2026-11-15)
+
+- **The pad pop-up (D186) did not show** unless keys were being played (the user). Checked online:
+  Arturia's firmware 1.2.0 notes say automated controls show on the screen only while adjusted, and
+  a forum user reports a pop-up sent on a pad press that worked on 1.1.1 and fails on 1.2.0
+  (forum.arturia.com, "MiniLab 3 Firmware v1.2.0"). The device here runs 1.2.0. So a pad now writes
+  its name on the **full screen** (`1F 07`, which the firmware always shows): the name big, the layer
+  small, for one second, then the app sends the scroll screen again; a knob, a fader or any other
+  change of the screen ends it at once. Confirmed on the device by the user ("shows, then returns").
+- **The CPU reading** moved from the top right into the screen surround's bottom right corner,
+  beside the main knob, at the user's word, with only the CPU's share (the slowest block and the
+  helpers stay in Prefs). Options shown: a ten-segment LED meter with the number (built first), a
+  bigger meter, **the number alone (chosen, the user's)**. Amber from 60%, red from 90%; a click
+  opens Prefs.

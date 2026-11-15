@@ -109,6 +109,11 @@ Bytes and tests: `docs/minilab3-screen.md`. The standalone app owns the MiniLab'
   with the fader pop-up. The device draws the graphic only while the control moves.
 - **Pads** take the screen's colours: the open section bright, others dim, Home teal (bright in
   Home), recorder pads dim.
+- **A pad press flashes** what it put you in on the full screen for a second (D186, D191): the pad's
+  name big (`Sound`, `Home`), `Layer A` or `Layer B` small under it (`comes later` for the
+  recorder pads); then the scroll screen comes back. A knob, a fader or any other screen change ends
+  the flash at once. (Firmware 1.2.0 shows a pop-up only while a control moves, so the pad pop-up
+  came through only while keys were played; the full screen always shows.)
 - **Input**: knobs 1-8 are CCs 86, 87, 89, 90, 110, 111, 116, 117 (absolute; the app treats changes
   as relative steps and resets the stored value on page changes so nothing jumps); main knob CC 28
   (offset from 64), press CC 118; pads notes 36-43 on channel 10; faders CCs 14, 15, 30, 31.
@@ -121,10 +126,11 @@ The recorder (pads 5-7, tracks, its windows), a wizard for other controllers, th
 editor; the user's review of the drafted macros (D177).
 
 Planned for the real interface (D169):
-- **An Options button** in CoolSynth's own interface (built, D174; since D185 "Prefs", where the screen's Shift was, and the CPU line under the keys): so the
-  plugin has one too; the standalone window's own Options button opens the same menu (Audio and
-  MIDI in the app, Multi-core Auto/Off, the CPU's work, this computer). Beside it the last second's
-  CPU line: the audio thread's share, the slowest block against its time, each helper's share.
+- **An Options button** in CoolSynth's own interface (built, D174; since D185 "Prefs", where the
+  screen's Shift was; since D187 the window bar has none): Save sound, Audio and MIDI in the app,
+  Multi-core Auto/Off, the CPU's work in detail, this computer. **The CPU reading** sits in the
+  screen surround's bottom right corner, beside the main knob (D191): `CPU 7%`, the audio thread's
+  share of the last second, amber from 60%, red from 90%; a click opens Prefs.
 - **Engine pills in the sound browser** (built, D173; software screen only, not the MiniLab): each
   sound's row shows, right-aligned, small transparent pills with rounded corners naming what makes
   its sound, one pill per engine its generator slots use, in slot order (part A, then part B where

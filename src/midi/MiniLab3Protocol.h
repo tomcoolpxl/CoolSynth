@@ -97,10 +97,11 @@ namespace coolsynth::midi::minilab3
         return detail::screen({ 0x1F, static_cast<juce::uint8>(fader ? 0x04 : 0x03), 0x02, v, 0x00, 0x00 }, name, 16, value, 18);
     }
 
-    /** The pad pop-up (checked on the device): a pad's name and a line under it, for about a second (D186). */
-    inline juce::MidiMessage padPopup(const juce::String& name, const juce::String& value)
+    /** The full screen: top line big (16 characters), bottom line small (18), no arrows, no marker. Stays until
+        replaced. Firmware 1.2.0 shows pop-ups only while a control moves; this it always shows (D191). */
+    inline juce::MidiMessage fullScreen(const juce::String& bigLine, const juce::String& smallLine)
     {
-        return detail::screen({ 0x1F, 0x05, 0x02, 0x7F, 0x00, 0x00 }, name, 16, value, 18);
+        return detail::screen({ 0x1F, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00 }, bigLine, 16, smallLine, 18);
     }
 
     // ---- What the controls send (channel 1 unless noted) -------------------------------------------

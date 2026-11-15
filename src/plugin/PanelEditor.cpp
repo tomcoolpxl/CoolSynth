@@ -887,13 +887,22 @@ public:
             g.setColour(colours::print);
             g.drawText(s == 0 ? "Pitch" : "Mod", strip.removeFromBottom(22.0f), juce::Justification::centred);
         }
-        // the last second's CPU work (D174): amber from 60% of a block's time, red from 90%
+        // The CPU in the screen's surround, beside the main knob (D191): the last second's share of the audio
+        // thread's time, the number alone (the user's choice over a meter), amber from 60%, red from 90%.
+        // A click opens Prefs.
         {
-            const float worst = owner.synth.cpuLoad().worstBlock;
-            g.setFont(sans(10.5f));
-            g.setColour(worst >= 0.9f ? coolsynth::ui::tintColour(Tint::record)
-                                      : (worst >= 0.6f ? coolsynth::ui::tintColour(Tint::sound) : colours::print));
-            g.drawText(PanelEditor::cpuSummary(owner.synth), cpuArea, juce::Justification::centredRight);
+            const float percent = juce::jlimit(0.0f, 100.0f, owner.synth.cpuLoad().percent[0]);
+            auto r = cpuArea.toFloat();
+            g.setFont(mono(11.0f, true));
+            g.setColour(percent >= 90.0f ? coolsynth::ui::tintColour(Tint::record)
+                                         : (percent >= 60.0f ? coolsynth::ui::tintColour(Tint::sound) : colours::screenInk));
+            const auto number = juce::String(juce::roundToInt(percent)) + "%";
+            const auto numberWidth = static_cast<float>(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), number));
+            g.drawText(number, r.removeFromRight(numberWidth + 2.0f), juce::Justification::centredRight);
+            r.removeFromRight(5.0f);
+            g.setFont(mono(9.0f));
+            g.setColour(colours::screenDim);
+            g.drawText("CPU", r, juce::Justification::centredRight);
         }
 
 
@@ -999,8 +1008,8 @@ public:
         keyboard.setBounds(left, padBottom + 30, designWidth - 2 * left, designHeight - padBottom - 30 - 32);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
 
-        // the last second's CPU work at the top right, over the faders, where it was (D187)
-        cpuArea = { knobsX, 11, designWidth - 38 - knobsX, 15 };
+        // the CPU: the surround's bottom right corner, beside the main knob (D191)
+        cpuArea = { screenBox.getRight() - 14 - 62, screenBox.getBottom() - 6 - 14, 62, 14 };
     }
 
     void mouseDown(const juce::MouseEvent& e) override

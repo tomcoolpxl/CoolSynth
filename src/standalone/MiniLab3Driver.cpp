@@ -154,10 +154,35 @@ namespace coolsynth::standalone
         if (output == nullptr)
             return;
 
+        const auto screen = model.deviceScreen();
+        const auto& popup = model.popup();
+        const bool newPopup = popup.serial != sentPopupSerial;
+        const auto now = juce::Time::getMillisecondCounter();
+        bool resend = force;
+
+        // A pad flashes what it put you in on the full screen for a second (D186, D191): firmware 1.2.0 shows a
+        // pop-up only while a control moves, so a pad's pop-up came through only while keys were played. Meanwhile
+        // the scroll screen waits; a knob or fader, or any other change of the screen, ends the flash at once.
+        if (newPopup && popup.pad && ! force)
+        {
+            sentPopupSerial = popup.serial;
+            flashing = true;
+            flashUntil = now + padFlashMilliseconds;
+            flashLine1 = screen.line1;
+            flashLine2 = screen.line2;
+            flashPosition = screen.position;
+            send(ml::fullScreen(popup.name, popup.value));
+        }
+        else if (flashing && (force || (newPopup && ! popup.pad) || static_cast<juce::int32>(now - flashUntil) >= 0
+                              || screen.line1 != flashLine1 || screen.line2 != flashLine2 || screen.position != flashPosition))
+        {
+            flashing = false;
+            resend = true; // the scroll screen comes back
+        }
+
         // The screen first, then any new pop-up on top of it: the device shows the pop-up for a moment and
         // falls back to the screen by itself, so a screen sent after a pop-up would cut it short.
-        const auto screen = model.deviceScreen();
-        if (force || screen.line1 != sentLine1 || screen.line2 != sentLine2 || screen.position != sentPosition)
+        if (! flashing && (resend || screen.line1 != sentLine1 || screen.line2 != sentLine2 || screen.position != sentPosition))
         {
             sentLine1 = screen.line1;
             sentLine2 = screen.line2;
@@ -165,13 +190,10 @@ namespace coolsynth::standalone
             send(ml::scrollScreen(screen.line1, screen.line2, screen.position));
         }
 
-        const auto& popup = model.popup();
         if (popup.serial != sentPopupSerial)
         {
             sentPopupSerial = popup.serial;
-            if (! force && popup.pad)
-                send(ml::padPopup(popup.name, popup.value)); // what the pad put you in (D186)
-            else if (! force && (popup.fader || popup.control != 5)) // a page change shows on line 1 already
+            if (! force && ! popup.pad && (popup.fader || popup.control != 5)) // a page change shows on line 1 already
                 send(ml::popup(popup.fader, popup.name, popup.value, popup.normalised));
         }
 

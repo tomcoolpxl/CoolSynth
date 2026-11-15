@@ -20,7 +20,7 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
 | Full screen | `04 02 60 1F 07 01 <icon top> <icon bottom> 00 00 01 <top line> 00 02 <bottom line> 00` | stays until replaced |
 | Knob pop-up | `04 02 60 1F 03 02 <value 0..127> 00 00 01 <name> 00 02 <value text> 00` | name, value and a knob graphic |
 | Fader pop-up | as the knob pop-up with `1F 04 02` | bar graphic |
-| Pad pop-up | as the knob pop-up with `1F 05 02` | pad graphic |
+| Pad pop-up | as the knob pop-up with `1F 05 02` | pad graphic; firmware 1.2.0 shows it only while something moves (D191) |
 | Parameter pop-up | `04 02 60 1F 08 02 <knob CC> 00 01 <name> 00 02 <value text> 00` | the device draws from its own knob value |
 | Scroll screen | `04 02 60 1F 06 00 <position> 00 <length> 00 00 01 <line 1> 00 02 <line 2> 00` | stays; line 1 small, **line 2 big** between `<` and `>` arrows, a small marker (about 1.5 characters wide) at position/length |
 
@@ -36,6 +36,12 @@ Every message: `F0 00 20 6B 7F 42 <body> F7`.
 - **Pop-ups are transient**, about a second, and **draw their graphic only while a control is
   physically moving**. A pop-up sent while nothing moves shows at most its text, briefly. So the
   app sends a pop-up in answer to each knob or fader message, never on its own.
+- **A pad press is not "moving"** for firmware 1.2.0: the pad pop-up showed only while keys were
+  played (the user, 2026-11-15). Arturia's 1.2.0 notes say automated controls show only while
+  adjusted, and a user reports a pad-held pop-up that worked on 1.1.1 and fails on 1.2.0
+  (https://forum.arturia.com/t/minilab-3-firmware-v1-2-0/6064). So a pad flashes its name on the
+  **full screen** (`1F 07`, always shown) for a second, then the app sends the scroll screen again
+  (D191; confirmed on the device).
 - **Knobs 1-8** send absolute CCs on channel 1: 86, 87, 89, 90, 110, 111, 116, 117 (knob 1
   checked). In the DAW program the device draws nothing by itself.
 - **Main knob:** turning sends CC 28 on channel 1: one click right is 65 (faster 66), one click

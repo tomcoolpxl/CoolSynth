@@ -62,6 +62,12 @@ namespace coolsynth::standalone
         int sentPosition = -1;
         std::array<juce::uint32, 8> sentPadColours {};
         int sentPopupSerial = 0;
+        // A pad's flash (D191): its name on the full screen for a moment, the scroll screen held back meanwhile.
+        static constexpr juce::uint32 padFlashMilliseconds = 1000;
+        juce::uint32 flashUntil = 0;
+        bool flashing = false;
+        juce::String flashLine1, flashLine2; // the scroll screen the pad left: another change ends the flash
+        int flashPosition = -1;
         int ticksSinceProbe = 0;
     };
 }
