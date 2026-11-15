@@ -163,6 +163,7 @@ public:
     juce::String face;
     int symbol = -1; // 0 stop, 1 play, 2 record
     bool lit = false;
+    float glow = -1.0f; // 0..1 while Home glows for a loading instrument (D156); below 0, no glow
 
     void mouseDown(const juce::MouseEvent&) override
     {
@@ -173,7 +174,17 @@ public:
     void paint(juce::Graphics& g) override
     {
         const auto r = getLocalBounds().toFloat().reduced(2.0f);
-        if (lit)
+        if (glow >= 0.0f)
+        {
+            // a soft halo that swells and fades, in rings so its edge blurs
+            const auto base = colour.withMultipliedBrightness(1.0f / juce::jmax(0.1f, colour.getBrightness()));
+            for (int ring = 3; ring >= 0; --ring)
+            {
+                g.setColour(base.withAlpha((0.10f + 0.22f * glow) * (1.0f - 0.2f * static_cast<float>(ring))));
+                g.fillRoundedRectangle(r.expanded(1.0f + static_cast<float>(ring) * 1.5f * (0.5f + glow)), 11.0f + static_cast<float>(ring));
+            }
+        }
+        else if (lit)
         {
             g.setColour(colour.withAlpha(0.35f));
             g.fillRoundedRectangle(r.expanded(2.0f), 11.0f);
@@ -225,6 +236,7 @@ public:
             {
                 dragKnob = k + 1;
                 dragY = e.position.y;
+                dragMoved = false;
                 return;
             }
         for (const auto& hit : hits)
@@ -245,13 +257,23 @@ public:
         if (steps != 0)
         {
             dragY -= static_cast<float>(steps) * 6.0f;
+            dragMoved = true;
             model.turnKnob(dragKnob, steps, fine && fine());
             if (onChanged)
                 onChanged();
         }
     }
 
-    void mouseUp(const juce::MouseEvent&) override { dragKnob = -1; }
+    void mouseUp(const juce::MouseEvent&) override
+    {
+        if (dragKnob > 0 && ! dragMoved)
+        {
+            model.pressKnob(dragKnob); // a click on a card loads the instrument it shows (D156)
+            if (onChanged)
+                onChanged();
+        }
+        dragKnob = -1;
+    }
 
     void mouseMove(const juce::MouseEvent& e) override
     {
@@ -335,8 +357,9 @@ public:
             auto card = cards.removeFromLeft(cardWidth).reduced(3, 0);
             cardAreas[static_cast<std::size_t>(k - 1)] = view.active ? card : juce::Rectangle<int>();
             g.setFont(mono(9.0f));
-            g.setColour(colours::screenDim);
-            g.drawText(view.role.toUpperCase(), card.removeFromTop(12), juce::Justification::centredLeft);
+            g.setColour(view.pending ? pageTint : colours::screenDim);
+            g.drawText(view.pending ? juce::String("CLICK TO LOAD") : view.role.toUpperCase(), card.removeFromTop(12),
+                       juce::Justification::centredLeft);
             g.setFont(mono(11.0f));
             g.setColour(view.active ? colours::screenInk : colours::screenLine.brighter(0.3f));
             g.drawText(view.name, card.removeFromTop(15), juce::Justification::centredLeft);
@@ -534,6 +557,7 @@ private:
     std::array<juce::Rectangle<int>, 4> cardAreas;
     int dragKnob = -1;
     float dragY = 0.0f;
+    bool dragMoved = false;
 };
 
 // ---- The panel --------------------------------------------------------------------------------------
@@ -565,6 +589,11 @@ public:
                     model.turnPageKnob(s);
                 else
                     model.turnKnob(number, s, owner.shiftHeld());
+                owner.timerCallback();
+            };
+            knob.onPress = [this, number]
+            {
+                model.pressKnob(number); // loads an instrument the knob shows (D156)
                 owner.timerCallback();
             };
             addAndMakeVisible(knob);
@@ -667,9 +696,9 @@ public:
         {
             auto& pad = pads[static_cast<std::size_t>(p)];
             pad.colour = model.padColour(p, shiftOn);
-            const bool homeLit = model.loadingInstrument() ? InterfaceModel::loadingBlinkOn() // blinks while loading (D154)
-                                                           : model.view() == InterfaceModel::View::home;
-            pad.lit = (p < 4 && model.view() == InterfaceModel::View::section && model.section() == p) || (p == 7 && homeLit);
+            pad.lit = (p < 4 && model.view() == InterfaceModel::View::section && model.section() == p)
+                      || (p == 7 && model.view() == InterfaceModel::View::home);
+            pad.glow = p == 7 && model.loadingInstrument() ? InterfaceModel::loadingGlow() : -1.0f; // glows while loading (D156)
             pad.face = model.padLabel(p, shiftOn);
             pad.repaint();
         }

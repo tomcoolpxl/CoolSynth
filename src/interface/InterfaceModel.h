@@ -2,6 +2,7 @@
 
 #include <array>
 #include <map>
+#include <optional>
 #include <vector>
 
 #include <juce_audio_processors/juce_audio_processors.h>
@@ -53,6 +54,7 @@ namespace coolsynth::ui
         juce::String value; // its value as text
         float normalised = 0.0f;
         bool active = false;
+        bool pending = false; // an instrument chosen but not loaded yet: press or click to load (D156)
     };
 
     struct ListView
@@ -102,6 +104,8 @@ namespace coolsynth::ui
         void pressMain();
         void turnPageKnob(int steps);                         // knob 5
         void turnKnob(int knob, int steps, bool fine);        // knobs 1-4 and 6-8
+        /** A click on knob 1-4 (the panel's knob or its card): loads the instrument it shows, if one is waiting. */
+        void pressKnob(int knob);
         void pressPad(int pad, bool shift);                   // pads 0-7
         /** Faders 0-3; with pickup the value takes over only once it meets the stored one. */
         void moveFader(int fader, float value01, bool pickup);
@@ -145,11 +149,13 @@ namespace coolsynth::ui
         [[nodiscard]] juce::String mainPressRole() const;
         [[nodiscard]] juce::String pageKnobRole() const;
         [[nodiscard]] juce::String hint() const;
-        /** True while the sound's sampled instrument is still being read in: Home blinks, the screen says
-            "Loading..." and the keys wait (D154). */
+        /** True while the sound's sampled instrument is still being read in: Home glows, the screen says
+            "Loading..." and the keys wait (D154, D156). */
         [[nodiscard]] bool loadingInstrument() const;
-        /** The blink's phase now: Home lit or dark. */
-        [[nodiscard]] static bool loadingBlinkOn();
+        /** The glow's brightness now, 0 to 1: a smooth pulse a little under once a second. */
+        [[nodiscard]] static float loadingGlow();
+        /** True while knob 1-4 shows an instrument that is chosen but not loaded (D156). */
+        [[nodiscard]] bool choicePending() const noexcept { return pendingChoice.has_value(); }
         [[nodiscard]] DeviceScreen deviceScreen() const;
         [[nodiscard]] juce::Colour padColour(int pad, bool shift) const; // colour times brightness
         [[nodiscard]] juce::String padLabel(int pad, bool shift) const;
@@ -179,6 +185,18 @@ namespace coolsynth::ui
             bool open = false;
             int row = 0; // 0 is ‹ Back, 1.. the types
         };
+
+        /** A sampled slot's instrument or style: choosing one reads an instrument into memory, so turning only
+            shows the choice and a press loads it (D156). */
+        struct PendingChoice
+        {
+            juce::String id;
+            int knob = 0;
+            float value = 0.0f; // normalised
+        };
+        [[nodiscard]] bool loadsInstrument(const juce::String& parameterId) const;
+        void commitPendingChoice();
+        void cancelPendingChoice() noexcept { pendingChoice.reset(); }
 
         juce::RangedAudioParameter* parameter(const juce::String& id) const;
         void stepParameter(juce::RangedAudioParameter& parameter, int steps, bool fine);
@@ -212,5 +230,6 @@ namespace coolsynth::ui
         Popup lastPopup;
         int changeCount = 0;
         bool hardwareShift = false;
+        std::optional<PendingChoice> pendingChoice;
     };
 }

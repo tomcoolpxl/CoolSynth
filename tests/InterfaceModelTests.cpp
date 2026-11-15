@@ -82,6 +82,37 @@ public:
             expectEquals(model->popup().name, model->knob(1).name);
         }
 
+        beginTest("A sampled slot's instrument knob only shows the choice; a press loads it (D156)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            auto* type = synth->getValueTreeState().getParameter("pA.g1.type");
+            expect(type != nullptr);
+            type->setValueNotifyingHost(type->getValueForText("Sample"));
+            const auto id = model->currentPage().ids[0];
+            expect(id.endsWith(".p1"));
+            auto* instrument = synth->getValueTreeState().getParameter(id);
+            const float before = instrument->getValue();
+            model->turnKnob(1, 3, false);
+            expectWithinAbsoluteError(instrument->getValue(), before, 1.0e-6f); // nothing read in while browsing
+            expect(model->knob(1).pending);
+            expect(model->choicePending());
+            expectEquals(model->deviceScreen().line1, juce::String("Press to load"));
+            expectEquals(model->mainPressRole(), juce::String("Load"));
+            model->pressMain();
+            expect(! model->choicePending());
+            expect(std::abs(instrument->getValue() - before) > 1.0e-4f);
+            expect(! model->typeListOpen()); // the press loaded; it did not open the type list
+
+            model->turnKnob(1, 2, false);
+            model->pressPad(1, false); // leaving drops the choice
+            expect(! model->choicePending());
+            model->pressPad(0, false);
+            model->turnKnob(1, 1, false);
+            model->pressKnob(1); // a click on the knob loads too
+            expect(! model->choicePending());
+        }
+
         beginTest("The type list opens on the current type; its ‹ Back row keeps the type");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();

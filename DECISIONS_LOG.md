@@ -3046,3 +3046,33 @@ in wave instruments. We'll figure out later how to optimize." Built:
 - The flight recorder logs when loading starts and ends, and how many keys were ignored.
 - Taken from the real-time review on the way: the sample library is built when the part is
   prepared, no longer on the audio thread at its first use.
+
+## D155. Sample memory as memory banks (2026-11-15)
+
+The user asked how hardware instruments hold their samples. Kurzweil K2600: factory samples in
+ROM, the user's in a sample RAM (up to 128 MB) loaded from disk at power-up; a program using RAM
+samples does not play until they are loaded. Nord Stage: samples in fast flash (1 GB on the
+Stage 4), a program only names a sample's place, so switching is instant. Yamaha Montage: 1.75 GB
+of user flash for waveforms (3.8 GB on the Montage M). Korg Kronos: an instrument in RAM, or
+streamed from the SSD when it does not fit. The pattern: one sample memory of a fixed size, filled
+ahead of playing; presets point into it. Chosen with the user, four pick lists:
+- **How a recording is held: at its own depth, lossless (chosen, recommended)**; or as floats, as
+  now. 16-bit recordings stay 16-bit, 24-bit ones packed 24-bit: the whole library is 3.84 GB
+  instead of 6.0 GB, bit for bit the same sound. The voice converts as it reads.
+- **Size: half the free memory at start, at most the whole library (chosen, recommended), with a
+  warning when the computer is too small** (the user's addition); or always 4 GB; or a setting.
+  Taken once at start and never given back while playing. The user: "assume more sampled stuff
+  will follow later, so not everything might fit into the RAM".
+- **What fills it: what you choose (chosen, recommended)**: an instrument is read in when a sound
+  that needs it is loaded, and stays; the last sound's instruments are read in at start. Or: a
+  room's instruments when entering it; or everything at start.
+- **When full: reuse the instrument played longest ago (chosen, recommended)**; or say "Memory
+  full" and let the user unload one.
+
+## D156. The instrument knob loads only when clicked (2026-11-15)
+
+The user, on the real-time review's finding that turning a Sound slot's instrument knob loads
+every instrument it passes: "dont load instruments while just browsing with the knob. only when i
+click it and then the blinking starts. can you make it glowing at least in the s/w UI?" So turning
+the instrument or style knob of a sampled slot only shows the choice; pressing the main knob, or
+clicking the knob on the panel, loads it. Home now glows (a smooth pulse) instead of blinking.

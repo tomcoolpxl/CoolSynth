@@ -320,6 +320,12 @@ namespace coolsynth::ui
         view.value = p->getCurrentValueAsText();
         view.normalised = p->getValue();
         view.active = true;
+        if (pendingChoice.has_value() && pendingChoice->id == p->getParameterID())
+        {
+            view.value = p->getText(pendingChoice->value, 64);
+            view.normalised = pendingChoice->value;
+            view.pending = true;
+        }
         return view;
     }
 
@@ -361,10 +367,50 @@ namespace coolsynth::ui
             return;
         if (auto* generic = dynamic_cast<pv::GenericSlotParameter*>(p); generic != nullptr && ! generic->isUsedByCurrentType())
             return;
-        stepParameter(*p, steps, fine);
+        if (knobNumber <= 4 && loadsInstrument(p->getParameterID()))
+        {
+            // Browsing instruments reads nothing in: the knob shows the choice, a press loads it (D156).
+            const int options = std::max(2, optionCount(*p));
+            const float from = pendingChoice.has_value() && pendingChoice->id == p->getParameterID() ? pendingChoice->value : p->getValue();
+            const int index = clampInt(juce::roundToInt(from * static_cast<float>(options - 1)) + steps, 0, options - 1);
+            const float value = static_cast<float>(index) / static_cast<float>(options - 1);
+            if (juce::roundToInt(p->getValue() * static_cast<float>(options - 1)) == index)
+                pendingChoice.reset(); // back on what is loaded
+            else
+                pendingChoice = PendingChoice { p->getParameterID(), knobNumber, value };
+        }
+        else
+            stepParameter(*p, steps, fine);
         const auto view = knob(knobNumber);
         raisePopup(view.name, view.value, view.normalised, false, knobNumber);
         touched();
+    }
+
+    void InterfaceModel::pressKnob(int knobNumber)
+    {
+        if (pendingChoice.has_value() && pendingChoice->knob == knobNumber)
+        {
+            commitPendingChoice();
+            touched();
+        }
+    }
+
+    bool InterfaceModel::loadsInstrument(const juce::String& parameterId) const
+    {
+        // a Sample slot's instrument (p1) and style (p8)
+        if (! (parameterId.endsWith(".p1") || parameterId.endsWith(".p8")))
+            return false;
+        auto* type = parameter(parameterId.upToLastOccurrenceOf(".p", false, false) + ".type");
+        return type != nullptr && type->getCurrentValueAsText().equalsIgnoreCase("Sample");
+    }
+
+    void InterfaceModel::commitPendingChoice()
+    {
+        if (! pendingChoice.has_value())
+            return;
+        if (auto* p = parameter(pendingChoice->id))
+            setNormalised(*p, pendingChoice->value);
+        pendingChoice.reset();
     }
 
     void InterfaceModel::raisePopup(const juce::String& name, const juce::String& value, float normalised, bool fader, int control)
@@ -435,6 +481,7 @@ namespace coolsynth::ui
 
     void InterfaceModel::openHome()
     {
+        cancelPendingChoice();
         currentView = View::home;
         typeList.open = false;
         browser.inCategory = true;
@@ -446,6 +493,7 @@ namespace coolsynth::ui
 
     void InterfaceModel::openSection(int section)
     {
+        cancelPendingChoice();
         typeList.open = false;
         if (currentView == View::section && currentSection == section)
         {
@@ -473,6 +521,7 @@ namespace coolsynth::ui
         auto* type = dynamic_cast<juce::AudioParameterChoice*>(parameter(slot.typeId));
         if (type == nullptr)
             return; // Motion's slots have one type
+        cancelPendingChoice();
         typeList.open = true;
         typeList.row = type->getIndex() + 1;
     }
@@ -501,6 +550,7 @@ namespace coolsynth::ui
     {
         if (steps == 0)
             return;
+        cancelPendingChoice();
         if (typeList.open)
             typeList.row = clampInt(typeList.row + steps, 0, typeNames().size());
         else if (currentView == View::home)
@@ -528,6 +578,8 @@ namespace coolsynth::ui
                 chooseType(typeList.row - 1);
             typeList.open = false; // ‹ Back keeps the type
         }
+        else if (pendingChoice.has_value())
+            commitPendingChoice(); // the instrument a knob shows is read in now (D156)
         else if (currentView == View::home)
         {
             if (! browser.inCategory)
@@ -555,6 +607,7 @@ namespace coolsynth::ui
     {
         if (steps == 0 || typeList.open)
             return;
+        cancelPendingChoice();
         if (currentView == View::home)
             currentLivePage = clampInt(currentLivePage + steps, 0, livePageCount - 1);
         else
@@ -610,6 +663,7 @@ namespace coolsynth::ui
     {
         if (currentView != View::section)
             return;
+        cancelPendingChoice();
         typeList.open = false;
         slotCursor[static_cast<std::size_t>(currentSection)] = clampInt(slot, 0, static_cast<int>(slotsOf(currentSection).size()) - 1);
         touched();
@@ -619,6 +673,7 @@ namespace coolsynth::ui
     {
         if (typeList.open)
             return;
+        cancelPendingChoice();
         if (currentView == View::home)
             currentLivePage = clampInt(page, 0, livePageCount - 1);
         else
@@ -720,6 +775,8 @@ namespace coolsynth::ui
             const int preset = bank[static_cast<std::size_t>(browser.category)].presets[static_cast<std::size_t>(browser.row - 1)];
             return preset == playingPreset() ? none : juce::String("Load");
         }
+        if (pendingChoice.has_value())
+            return "Load";
         return currentSlot().typeId.isEmpty() ? none : juce::String("Type");
     }
 
@@ -732,15 +789,19 @@ namespace coolsynth::ui
 
     bool InterfaceModel::loadingInstrument() const { return synth.isLoadingInstrument(); }
 
-    bool InterfaceModel::loadingBlinkOn()
+    float InterfaceModel::loadingGlow()
     {
-        return (juce::Time::getMillisecondCounter() / 300u) % 2u == 0u; // about 1.7 blinks a second
+        constexpr double periodSeconds = 1.2;
+        const double t = static_cast<double>(juce::Time::getMillisecondCounter() % 1200000u) / 1000.0;
+        return static_cast<float>(0.5 - 0.5 * std::cos(juce::MathConstants<double>::twoPi * t / periodSeconds));
     }
 
     juce::String InterfaceModel::hint() const
     {
         if (loadingInstrument())
-            return juce::String(juce::CharPointer_UTF8("Loading the instrument \xc2\xb7 the keys play once Home stops blinking"));
+            return juce::String(juce::CharPointer_UTF8("Loading the instrument \xc2\xb7 the keys play once Home stops glowing"));
+        if (pendingChoice.has_value())
+            return juce::String(juce::CharPointer_UTF8("Press \xe2\x97\x8e or click the knob to load it \xc2\xb7 turn on to keep browsing"));
         if (typeList.open)
             return juce::String(juce::CharPointer_UTF8("Turn \xe2\x97\x8e to pick \xc2\xb7 press to set \xc2\xb7 \xe2\x80\xb9 Back on top keeps the type"));
         if (currentView == View::home)
@@ -780,7 +841,8 @@ namespace coolsynth::ui
         const auto slots = slotsOf(currentSection);
         const auto slot = currentSlot();
         screen.line1 = loadingInstrument() ? juce::String("Loading...")
-                                           : sectionName(currentSection) + " - " + (slot.empty ? juce::String("empty") : currentPage().name);
+                     : pendingChoice.has_value() ? juce::String("Press to load")
+                                                 : sectionName(currentSection) + " - " + (slot.empty ? juce::String("empty") : currentPage().name);
         screen.line2 = slot.code + " " + (slot.empty ? juce::String("empty") : slot.typeName);
         screen.position = position(slotCursor[static_cast<std::size_t>(currentSection)], static_cast<int>(slots.size()));
         return screen;
@@ -812,8 +874,8 @@ namespace coolsynth::ui
             // the user's choice on the device: clearly white, green and red, though the recorder comes later
             return tintColour(tints[static_cast<std::size_t>(pad - 4)]);
         }
-        if (loadingInstrument()) // Home blinks until the instrument is ready (D154)
-            return tintColour(Tint::home).withMultipliedBrightness(loadingBlinkOn() ? 1.0f : 0.08f);
+        if (loadingInstrument()) // Home glows until the instrument is ready (D154, D156)
+            return tintColour(Tint::home).withMultipliedBrightness(0.1f + 0.9f * loadingGlow());
         return tintColour(Tint::home).withMultipliedBrightness(currentView == View::home ? 1.0f : 0.3f);
     }
 }
