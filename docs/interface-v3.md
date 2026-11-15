@@ -99,6 +99,11 @@ Escape or Backspace go back, left/right turn the main knob, 1-8 are the pads. Th
 for knobs 1-4 (role or "knob n", name, value, a bar) in the page's colour. In Home the live-page
 tabs sit between the list and the cards.
 
+Under the mouse (D204), whatever can be clicked or turned lights up softly (a knob's halo, a pad's
+glow, a white fader thumb, a brighter button, an outlined row, tab, slot, card, layer panel or CPU
+reading), the hand cursor shows, and the hint line names it and how to work it ("Knob 2: Grit ·
+turn, drag or scroll"); a list whose rows go on above or below fades out at that edge.
+
 ## 5. The MiniLab's own screen and pads (D146, D147)
 
 Bytes and tests: `docs/minilab3-screen.md`. The standalone app owns the MiniLab's port

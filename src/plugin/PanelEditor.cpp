@@ -64,6 +64,19 @@ namespace
     const juce::String mainMark = juce::String(juce::CharPointer_UTF8("\xe2\x97\x8e"));
 }
 
+// ---- Hover (D204): what the mouse is over lights softly and the screen's hint line says what it does ------
+
+namespace
+{
+    /** Tells when the mouse comes onto a component and leaves it, for components that have no hover of their own. */
+    struct HoverWatcher final : juce::MouseListener
+    {
+        std::function<void(bool)> onHover;
+        void mouseEnter(const juce::MouseEvent&) override { if (onHover) onHover(true); }
+        void mouseExit(const juce::MouseEvent&) override { if (onHover) onHover(false); }
+    };
+}
+
 // ---- A knob that turns in detents --------------------------------------------------------------------
 
 class PanelEditor::Knob final : public juce::Component
@@ -71,6 +84,25 @@ class PanelEditor::Knob final : public juce::Component
 public:
     std::function<void(int)> onSteps;
     std::function<void()> onPress;
+    std::function<void(bool)> onHover; // the mouse came onto it or left it (D204)
+    bool hovered = false;
+
+    void mouseEnter(const juce::MouseEvent&) override
+    {
+        hovered = true;
+        setMouseCursor(juce::MouseCursor::PointingHandCursor);
+        if (onHover)
+            onHover(true);
+        repaint();
+    }
+
+    void mouseExit(const juce::MouseEvent&) override
+    {
+        hovered = false;
+        if (onHover)
+            onHover(false);
+        repaint();
+    }
     float value = 0.0f;
     bool showsValue = false; // the pointer shows the value; otherwise it spins with the turns
     juce::Colour ring;       // transparent: the plain edge
@@ -125,6 +157,12 @@ public:
         {
             g.setColour(juce::Colour(0xfff2f5f8));
             g.drawEllipse(circle.expanded(2.0f), 3.0f);
+        }
+        if (hovered) // a soft halo while the mouse is on it (D204)
+        {
+            const auto glow = ! ring.isTransparent() ? ring.withAlpha(1.0f) : (isMain ? juce::Colour(0xff8a939c) : colours::ink);
+            g.setColour(glow.withAlpha(0.18f));
+            g.drawEllipse(circle.expanded(3.0f), 3.0f);
         }
         g.setColour(isMain ? colours::mainKnob : colours::knob);
         g.fillEllipse(circle);
@@ -245,6 +283,25 @@ public:
     int symbol = -1; // 0 stop, 1 play, 2 record
     bool lit = false;
     float glow = -1.0f; // 0..1 while Home glows for a loading instrument (D156); below 0, no glow
+    std::function<void(bool)> onHover; // (D204)
+    bool hovered = false;
+
+    void mouseEnter(const juce::MouseEvent&) override
+    {
+        hovered = true;
+        setMouseCursor(juce::MouseCursor::PointingHandCursor);
+        if (onHover)
+            onHover(true);
+        repaint();
+    }
+
+    void mouseExit(const juce::MouseEvent&) override
+    {
+        hovered = false;
+        if (onHover)
+            onHover(false);
+        repaint();
+    }
 
     void mouseDown(const juce::MouseEvent&) override
     {
@@ -267,7 +324,12 @@ public:
         }
         else if (lit)
         {
-            g.setColour(colour.withAlpha(0.35f));
+            g.setColour(colour.withAlpha(hovered ? 0.5f : 0.35f));
+            g.fillRoundedRectangle(r.expanded(2.0f), 11.0f);
+        }
+        else if (hovered) // a soft glow while the mouse is on it (D204)
+        {
+            g.setColour(colour.withAlpha(0.2f));
             g.fillRoundedRectangle(r.expanded(2.0f), 11.0f);
         }
         g.setColour(colours::padOff);
@@ -400,13 +462,29 @@ public:
 
     void mouseMove(const juce::MouseEvent& e) override
     {
-        bool over = false;
-        for (const auto& area : cardAreas)
-            over = over || area.contains(e.getPosition());
+        // What the mouse is over: the hand cursor, a soft highlight and, in the hint line, what it does (D204).
+        mouse = e.getPosition();
+        mouseInside = true;
+        juce::String text;
+        for (int k = 0; k < 4 && text.isEmpty(); ++k)
+            if (cardAreas[static_cast<std::size_t>(k)].contains(mouse))
+                text = "Knob " + juce::String(k + 1) + ": " + model.knob(k + 1).name + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 drag or scroll"));
         for (const auto& hit : hits)
-            over = over || hit.area.contains(e.getPosition());
-        setMouseCursor(over ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+            if (text.isEmpty() && hit.area.contains(mouse))
+                text = hit.hint.isNotEmpty() ? hit.hint : juce::String("Click");
+        setMouseCursor(text.isNotEmpty() ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+        hoverText = text;
+        repaint();
     }
+
+    void mouseExit(const juce::MouseEvent&) override
+    {
+        mouseInside = false;
+        hoverText.clear();
+        repaint();
+    }
+
+    juce::String externalHint; // what the panel's hovered knob, pad, fader or button does (D204)
 
     void paint(juce::Graphics& g) override
     {
@@ -440,9 +518,10 @@ public:
         const auto partText = "Layer " + juce::String(model.part() == 0 ? "A" : "B");
         g.drawText(partText, header, juce::Justification::centredRight);
         // The chip goes back one level; "Layer A" switches the layer, as Home pressed again does (D181, D185, D189).
-        hits.push_back({ chip, [this] { model.back(); } });
+        hits.push_back({ chip, [this] { model.back(); }, "Back one level" + clickWord() });
         const int partWidth = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), partText) + 6;
-        hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.togglePart(); } });
+        hits.push_back({ header.withTrimmedLeft(header.getWidth() - partWidth), [this] { model.togglePart(); },
+                         "Switch to layer " + juce::String(model.part() == 0 ? "B" : "A") + clickWord() });
 
         // trail: where you are, with what each knob moves
         area.removeFromTop(4);
@@ -475,7 +554,7 @@ public:
             x += w + 4.0f;
             // Each item is clickable: it goes where it names (D181).
             hits.push_back({ juce::Rectangle<float>(itemStart, static_cast<float>(trail.getY()), x - itemStart, 16.0f).toNearestInt(),
-                             [this, index] { model.clickTrail(static_cast<int>(index)); } });
+                             [this, index] { model.clickTrail(static_cast<int>(index)); }, "Go to " + item.text + clickWord() });
         }
         area.removeFromTop(3);
         g.setColour(colours::screenLine);
@@ -560,17 +639,17 @@ public:
                 g.drawRoundedRectangle(tab, 3.0f, on ? 1.3f : 1.0f);
                 g.setColour(on ? colours::screenInk : colours::screenDim);
                 g.drawText(names[i], tab, juce::Justification::centred);
-                hits.push_back({ tab.toNearestInt(), [this, i] { model.clickPage(i); } });
+                hits.push_back({ tab.toNearestInt(), [this, i] { model.clickPage(i); }, "Page " + names[i] + clickWord() });
                 tx += w + 4.0f;
             }
         }
 
-        // the hint line
-        const auto hint = model.hint();
-        if (hint.isNotEmpty())
+        // the hint line: what the mouse is over (D204), else the model's hint; its row is always kept, so nothing moves
         {
+            const bool hovering = hoverText.isNotEmpty() || externalHint.isNotEmpty();
+            const auto hint = hoverText.isNotEmpty() ? hoverText : (externalHint.isNotEmpty() ? externalHint : model.hint());
             g.setFont(mono(10.0f));
-            g.setColour(colours::screenDim);
+            g.setColour(hovering ? colours::screenInk.withAlpha(0.85f) : colours::screenDim);
             g.drawText(hint, area.removeFromBottom(16), juce::Justification::centredLeft);
         }
         area.removeFromTop(6);
@@ -579,6 +658,31 @@ public:
             paintList(g, area, list, home ? tint : tint);
         else
             paintSection(g, area, tint);
+
+        // the clickable part the mouse is over, softly lit (D204)
+        if (mouseInside)
+        {
+            auto light = [&g](juce::Rectangle<int> r)
+            {
+                g.setColour(colours::screenInk.withAlpha(0.06f));
+                g.fillRoundedRectangle(r.toFloat().expanded(1.0f), 3.0f);
+                g.setColour(colours::screenInk.withAlpha(0.22f));
+                g.drawRoundedRectangle(r.toFloat().expanded(1.0f), 3.0f, 1.0f);
+            };
+            bool lit = false;
+            for (const auto& card : cardAreas)
+                if (! lit && card.contains(mouse))
+                {
+                    light(card);
+                    lit = true;
+                }
+            for (const auto& hit : hits)
+                if (! lit && hit.area.contains(mouse))
+                {
+                    light(hit.area);
+                    lit = true;
+                }
+        }
     }
 
 private:
@@ -587,11 +691,12 @@ private:
         const int rowHeight = 19;
         const int visible = juce::jmax(1, area.getHeight() / rowHeight);
         const int first = juce::jlimit(0, juce::jmax(0, list.rows.size() - visible), list.cursor - visible / 2);
+        const auto whole = area.withHeight(juce::jmin(area.getHeight(), visible * rowHeight));
         g.setFont(mono(12.0f));
         for (int i = first; i < juce::jmin(list.rows.size(), first + visible); ++i)
         {
             auto row = area.removeFromTop(rowHeight);
-            hits.push_back({ row, [this, i] { model.clickListRow(i); } });
+            hits.push_back({ row, [this, i] { model.clickListRow(i); }, list.rows[i] + clickWord() });
             const bool on = i == list.cursor;
             if (on)
             {
@@ -645,6 +750,20 @@ private:
                            text.withTrimmedLeft(w + 8), juce::Justification::centredLeft);
             }
         }
+
+        // More rows above or below: that edge fades out (D204), the common sign that a list scrolls.
+        const auto fade = [&g, &whole](bool top)
+        {
+            const float depth = 22.0f;
+            const auto band = top ? whole.toFloat().withHeight(depth) : whole.toFloat().withTrimmedTop(static_cast<float>(whole.getHeight()) - depth);
+            g.setGradientFill(juce::ColourGradient(colours::screen, band.getX(), top ? band.getY() : band.getBottom(),
+                                                   colours::screen.withAlpha(0.0f), band.getX(), top ? band.getBottom() : band.getY(), false));
+            g.fillRect(band);
+        };
+        if (first > 0)
+            fade(true);
+        if (first + visible < list.rows.size())
+            fade(false);
     }
 
     void paintSection(juce::Graphics& g, juce::Rectangle<int> area, juce::Colour tint)
@@ -674,7 +793,8 @@ private:
                 const auto& slot = slots[static_cast<std::size_t>(index)];
                 const bool on = index == focused;
                 auto box = line.removeFromLeft(58).reduced(0, 2).toFloat();
-                hits.push_back({ box.toNearestInt(), [this, index] { model.clickSlot(index); } });
+                hits.push_back({ box.toNearestInt(), [this, index] { model.clickSlot(index); },
+                                 slot.code + " " + (slot.empty ? juce::String("empty") : slot.typeName) + clickWord() });
                 if (on)
                 {
                     g.setColour(tint.withAlpha(0.3f));
@@ -725,7 +845,14 @@ private:
     {
         juce::Rectangle<int> area;
         std::function<void()> action;
+        juce::String hint; // what a click does, for the hint line (D204)
     };
+
+    static juce::String clickWord() { return juce::String(juce::CharPointer_UTF8(" \xc2\xb7 click")); }
+
+    juce::String hoverText;    // the screen's own hovered part (D204)
+    juce::Point<int> mouse;
+    bool mouseInside = false;
 
     InterfaceModel& model;
     std::vector<Hit> hits;
@@ -988,6 +1115,10 @@ public:
         addAndMakeVisible(screen);
 
         mainKnob.isMain = true;
+        mainKnob.onHover = [this](bool on)
+        {
+            setHoverHint(on ? "Main knob: turn for " + model.mainTurnRole() + ", press: " + model.mainPressRole() : juce::String());
+        };
         mainKnob.spinsItself = false; // it follows every main-knob turn, the wheel's and the MiniLab's too (D193)
         mainKnob.onSteps = [this](int s) { model.turnMain(s); owner.timerCallback(); };
         mainKnob.onPress = [this] { model.pressMain(); owner.timerCallback(); };
@@ -998,6 +1129,12 @@ public:
             auto& knob = knobs[static_cast<std::size_t>(k)];
             const int number = k + 1;
             knob.navigation = number == 5;
+            knob.onHover = [this, k](bool on)
+            {
+                const auto label = k == 4 ? juce::String("pages") : knobLabels[static_cast<std::size_t>(k)];
+                setHoverHint(on ? "Knob " + juce::String(k + 1) + ": " + label + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 turn, drag or scroll"))
+                                : juce::String());
+            };
             knob.spinsItself = number != 5; // knob 5 follows every page turn, as the main knob (D193)
             knob.onSteps = [this, number](int s)
             {
@@ -1029,6 +1166,17 @@ public:
                 if (! updatingFaders)
                     model.moveFader(f, static_cast<float>(faders[static_cast<std::size_t>(f)].getValue()), false);
             };
+            // a fader lights its thumb and names itself while the mouse is on it (D204)
+            auto& watcher = faderWatchers[static_cast<std::size_t>(f)];
+            watcher.onHover = [this, f](bool on)
+            {
+                auto& fd = faders[static_cast<std::size_t>(f)];
+                fd.setColour(juce::Slider::thumbColourId, on && fd.isEnabled() ? juce::Colours::white : colours::ink);
+                setHoverHint(on ? "Fader " + juce::String(f + 1) + ": " + model.faderName(f)
+                                      + (fd.isEnabled() ? juce::String(juce::CharPointer_UTF8(" \xc2\xb7 drag")) : juce::String(" (the MiniLab's)"))
+                                : juce::String());
+            };
+            fader.addMouseListener(&watcher, false);
             addAndMakeVisible(fader);
         }
 
@@ -1040,6 +1188,13 @@ public:
             {
                 model.pressPad(p, owner.shiftHeld());
                 owner.timerCallback();
+            };
+            pad.onHover = [this, p](bool on) // (D204)
+            {
+                const auto face = pads[static_cast<std::size_t>(p)].face;
+                const juce::String what = p == InterfaceModel::homePad ? face + ", again: layer switch"
+                                        : (p >= 4 && p <= 6 ? juce::String("the recorder, later") : face);
+                setHoverHint(on ? "Pad " + juce::String(p + 1) + ": " + what + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 click")) : juce::String());
             };
             addAndMakeVisible(pad);
         }
@@ -1058,6 +1213,22 @@ public:
             addAndMakeVisible(*button);
         }
         hold.setButtonText("Hold");
+        // buttons light a little and say what they do while the mouse is on them (D204)
+        const std::array<std::pair<juce::TextButton*, juce::String>, 4> buttonHints { {
+            { &options, "Preferences" }, { &hold, "Hold the notes, or latch the arp" },
+            { &octDown, "The screen's keys an octave down" }, { &octUp, "The screen's keys an octave up" } } };
+        for (std::size_t i = 0; i < buttonHints.size(); ++i)
+        {
+            auto* button = buttonHints[i].first;
+            const auto text = buttonHints[i].second;
+            buttonWatchers[i].onHover = [this, button, text](bool on)
+            {
+                button->setColour(juce::TextButton::buttonColourId, on && button->isEnabled() ? colours::knob.brighter(0.25f) : colours::knob);
+                setHoverHint(on ? text + (button->isEnabled() ? juce::String(juce::CharPointer_UTF8(" \xc2\xb7 click")) : juce::String(" (the MiniLab's own)"))
+                                : juce::String());
+            };
+            button->addMouseListener(&buttonWatchers[i], false);
+        }
         octDown.setButtonText("Oct -");
         octUp.setButtonText("Oct +");
         // Without a MiniLab these work on screen (D184): Hold holds the notes (or latches a running arp), the octave
@@ -1086,6 +1257,45 @@ public:
         prefs.onReset = [this] { model.resetView(); owner.timerCallback(); };
 
         setSize(designWidth, designHeight);
+    }
+
+    /** What the panel's hovered control does, for the screen's hint line (D204). */
+    void setHoverHint(const juce::String& text)
+    {
+        if (screen.externalHint == text)
+            return;
+        screen.externalHint = text;
+        screen.repaint();
+    }
+
+    void mouseMove(const juce::MouseEvent& e) override
+    {
+        // the layer panels and the CPU reading: lit and named while the mouse is on them (D204)
+        int over = -1;
+        for (int layer = 0; layer < 2; ++layer)
+            if (layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()))
+                over = layer;
+        const bool onCpu = cpuArea.contains(e.getPosition());
+        setMouseCursor(over >= 0 || onCpu ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
+        if (over != hoveredPanel || onCpu != hoveredCpu)
+        {
+            hoveredPanel = over;
+            hoveredCpu = onCpu;
+            setHoverHint(over >= 0 ? "Layer " + juce::String(over == 0 ? "A" : "B") + juce::String(juce::CharPointer_UTF8(": edit it \xc2\xb7 click"))
+                                   : (onCpu ? juce::String(juce::CharPointer_UTF8("CPU \xc2\xb7 click: Preferences")) : juce::String()));
+            repaint(layerScreen);
+        }
+    }
+
+    void mouseExit(const juce::MouseEvent&) override
+    {
+        if (hoveredPanel >= 0 || hoveredCpu)
+        {
+            hoveredPanel = -1;
+            hoveredCpu = false;
+            setHoverHint({});
+            repaint(layerScreen);
+        }
     }
 
     /** Escape closes Prefs first (D197). */
@@ -1395,8 +1605,9 @@ public:
                 g.setColour(tint.withAlpha(0.16f));
                 g.fillRoundedRectangle(r, 5.0f);
             }
-            g.setColour(lit ? tint : colours::screenLine.brighter(0.25f));
-            g.drawRoundedRectangle(r.reduced(0.75f), 5.0f, lit ? 1.5f : 1.0f);
+            const bool hover = hoveredPanel == layer; // (D204)
+            g.setColour(lit ? tint : (hover ? tint.withAlpha(0.6f) : colours::screenLine.brighter(0.25f)));
+            g.drawRoundedRectangle(r.reduced(0.75f), 5.0f, lit || hover ? 1.5f : 1.0f);
 
             auto text = panel.reduced(8, 4);
             g.setFont(mono(10.0f, true));
@@ -1447,6 +1658,10 @@ private:
     std::array<Knob, 8> knobs;
     std::array<juce::String, 8> knobLabels;
     std::array<bool, 8> knobIdle {}; // knobs that do nothing now, drawn dimmed (D201)
+    std::array<HoverWatcher, 4> faderWatchers;  // (D204)
+    std::array<HoverWatcher, 4> buttonWatchers; // Prefs, Hold, Oct -, Oct +
+    int hoveredPanel = -1;
+    bool hoveredCpu = false;
     std::array<juce::Slider, 4> faders;
     std::array<Pad, 8> pads;
     juce::TextButton options, hold, octDown, octUp;

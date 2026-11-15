@@ -4049,3 +4049,20 @@ outlined in the same white.
 The user did not know what "MiniLab keys" over the screen's keyboard was, had it taken away, then asked it back
 in the line's colour, since it moves with the line, and named for what it is, not the device. It reads
 "Your keyboard" in the line's teal: the range the physical keyboard plays, as its notes tell (D192).
+
+## D204. What can be clicked or turned lights up under the mouse (2026-11-15)
+
+"If you have a clickable or scrollable thing, it should glow up" when the mouse is over it (the
+user). Asked, after looking at how others do it (options: glow and a hint line, recommended and
+chosen; glow only; the hand cursor only, as before): a knob under the mouse gets a soft halo in its
+ring colour, a pad a soft glow, a fader thumb turns white, the Prefs, Hold and Oct buttons brighten;
+on the screen a list row, tab, slot or card gets a soft outline, and so do the two layer panels and
+the CPU reading. The hand cursor shows over all of them, and the screen's hint line says what the
+thing is and how to work it ("Knob 2: Grit · turn, drag or scroll", "Minimoog Fat Bass · click"),
+falling back to the usual hint when the mouse leaves; the hint line now always keeps its row. Asked
+too (edge fade, recommended and chosen; leave the lists as they are): when more rows wait above or
+below, that edge of a list fades out over 22 px; the fade goes at the end of the list. Sources: a
+status line naming the hovered control in DecentSampler (decentsamples.com Q&A 414); clickability
+cues (design-to-dev.netlify.app, clickability affordance); fading edges as the scroll cue
+(medium.com/headstorm, "In search of a better scroll UX pattern"; ux.stackexchange.com 90524).
+The user confirmed the knob hover in the app ("it works").

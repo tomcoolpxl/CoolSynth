@@ -174,6 +174,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
 Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
 review them.
 
+36. Later, at the user's word (2026-11-15): profiles for other MIDI controller keyboards and a guided
+   tutorial to connect any one; the "Your keyboard" line over the screen's keys (D203) then takes each
+   keyboard's own key count. Today it shows only while the MiniLab is connected.
+
 ## Carried over from the V2 backlog
 
 Still valid independently of the engine shape:
