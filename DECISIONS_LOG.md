@@ -3336,3 +3336,19 @@ the re-level (D153). Bisected against the re-level build, rendering note for not
 - Checked on the way: no value is read before it is written (rendered after filling and freeing
   memory with a pattern: the same output).
 Tools: the render tool takes --dirty-heap and --no-fx; the levelling tool --only and --threads.
+
+## D169. Planned: an Options button of CoolSynth's own, and engine pills in the sound browser (2026-11-15)
+
+The user asked for two things in the plan (nothing built yet):
+- **An Options button** in CoolSynth's own interface: today only the standalone app's window has one
+  (Audio and MIDI, Multi-core, D167), so the plugin has none.
+- **Engine pills**: in the software sound browser only, each sound's row shows, right-aligned, small
+  transparent pills with rounded corners naming what makes its sound, one per engine ("more than one
+  label, of course"). What the 120 presets use, counted by generator slot: VA 96, Sample 41, Noise 11,
+  FM2 and FM4 11, Wavetable 6, Grain 4, String and Modal 6. Arturia's Pigments names its engines
+  Virtual Analog, Wavetable, Sample, Harmonic, Granular and Modal. Two pick lists:
+  - Words: **technical short (chosen): VA, Sample, FM, WT, Grain, Physical, Noise**; or plain names
+    (Analog, Sampled, FM, Wavetable, Granular, Modelled, Noise), recommended; or like Pigments
+    (Virtual Analog, Sample, FM, Wavetable, Granular, Modal, Noise).
+  - Noise: **only when it is the sound (chosen, recommended)**, when no other engine plays; or always.
+  One pill per engine its slots use, in slot order, at most three. Spec: docs/interface-v3.md section 6.
