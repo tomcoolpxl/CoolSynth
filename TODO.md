@@ -110,8 +110,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D172) The flight log has each thread's share of every second, late helpers, and the memory.
     (D173) Engine pills in the software sound browser (Siren, with no generator, shows Filter).
     (D174) An Options button on the panel (the plugin has Options now) and the CPU line beside it.
+    (D175) A velocity curve in Options: Soft, Normal (as before), Hard, for every keyboard.
     Next: the user's ear and hands on all of this (levels, glow, click-to-load, ringing sounds, the
-    pills and Options, on the MiniLab); a keyboard velocity curve; ASIO; streaming from disk for libraries bigger than the memory; the
+    pills and Options, the velocity curves, on the MiniLab); ASIO; streaming from disk for libraries bigger than the memory; the
     recorder. Later: whether Rust would serve the engine better (answered for now: not yet, D164).
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;

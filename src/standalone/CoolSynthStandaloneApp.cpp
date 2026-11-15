@@ -59,6 +59,13 @@ public:
                     if (auto* store = coolsynth::standalone::getStandaloneSettingsStore())
                         store->setMultiCore(on);
                 };
+                if (auto* store = coolsynth::standalone::getStandaloneSettingsStore())
+                    synth->setVelocityCurve(store->getVelocityCurve()); // D175
+                synth->rememberVelocityCurve = [](int curve)
+                {
+                    if (auto* store = coolsynth::standalone::getStandaloneSettingsStore())
+                        store->setVelocityCurve(curve);
+                };
                 synth->showAudioSettings = [this]
                 {
                     if (auto* h = getPluginHolder())

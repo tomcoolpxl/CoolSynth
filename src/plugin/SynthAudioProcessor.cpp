@@ -190,6 +190,34 @@ SynthAudioProcessor::SynthAudioProcessor()
         && juce::SystemStats::getEnvironmentVariable("COOLSYNTH_MULTICORE", "1") != "0")
         if (auto& options = pluginOptions(); options.containsKey("multiCore"))
             setMultiCore(options.getBoolValue("multiCore", true));
+    // So is its velocity curve (D175): the player's keyboard is the computer's.
+    if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined)
+        setVelocityCurve(pluginOptions().getIntValue("velocityCurve", normalCurve));
+}
+
+float SynthAudioProcessor::shapeVelocity(float velocity, int curve) noexcept
+{
+    // Power curves: Soft lifts the light touches (velocity 32 of 127 plays as 56), Hard holds them back (32 as 14);
+    // both leave the softest and the hardest where they are.
+    const float v = std::clamp(velocity, 0.0f, 1.0f);
+    float shaped = v;
+    if (curve == softCurve)
+        shaped = std::pow(v, 0.6f);
+    else if (curve == hardCurve)
+        shaped = std::pow(v, 1.6f);
+    return v > 0.0f ? std::max(shaped, 1.0f / 127.0f) : 0.0f;
+}
+
+void SynthAudioProcessor::chooseVelocityCurve(int curve)
+{
+    setVelocityCurve(curve);
+    if (rememberVelocityCurve)
+        rememberVelocityCurve(velocityCurve());
+    else
+    {
+        pluginOptions().setValue("velocityCurve", velocityCurve());
+        pluginOptions().saveIfNeeded();
+    }
 }
 
 juce::PropertiesFile& SynthAudioProcessor::pluginOptions()
@@ -464,6 +492,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 
     // One path for every message: the loading gate, the engine's events, the flight recorder, the keyboard's display.
     const bool standalone = juce::JUCEApplicationBase::isStandaloneApp();
+    const int curve = velocityCurve(); // one curve for the whole block
     auto take = [&](const juce::MidiMessage& message, int samplePosition, bool clicked)
     {
         if (loading && message.isNoteOn())
@@ -471,8 +500,11 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             ++notesHeldBack;
             return;
         }
-        if (const auto event = makeEngineMidiEvent(message, samplePosition))
+        if (auto event = makeEngineMidiEvent(message, samplePosition))
         {
+            // Every key, from the host, the MiniLab or the screen, through the chosen velocity curve (D175).
+            if (event->type == coolsynth::synth::EngineMidiEventType::noteOn && curve != normalCurve)
+                event->value = shapeVelocity(event->value, curve);
             // The last slots are kept for what ends sound: a flood of controller moves may lose a move, never a
             // key's release, a pedal's lift or All Notes Off, which would leave a note hanging (D170).
             using Type = coolsynth::synth::EngineMidiEventType;

@@ -120,6 +120,17 @@ namespace coolsynth::standalone
             propertySet.setValue("multiCore", on);
         }
 
+        /** The keyboard's velocity curve (D175): 0 Soft, 1 Normal, 2 Hard. */
+        int getVelocityCurve() const
+        {
+            return juce::jlimit(0, 2, propertySet.getIntValue("velocityCurve", 1));
+        }
+
+        void setVelocityCurve(int curve)
+        {
+            propertySet.setValue("velocityCurve", juce::jlimit(0, 2, curve));
+        }
+
         void savePersistedControllerProfileSelection(PersistedControllerProfileSelection selection);
         void clearPersistedControllerProfileSelection()
         {

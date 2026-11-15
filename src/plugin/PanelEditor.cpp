@@ -1003,6 +1003,12 @@ void PanelEditor::showOptions(SynthAudioProcessor& synth, juce::Component& targe
     menu.addItem(2, "Auto: sounds that overlap play on several cores", true, multiCore);
     menu.addItem(3, "Off: everything on the audio thread", true, ! multiCore);
     menu.addSeparator();
+    menu.addSectionHeader("Velocity curve");
+    const int curve = synth.velocityCurve();
+    menu.addItem(6, "Soft: a light touch plays loud", true, curve == SynthAudioProcessor::softCurve);
+    menu.addItem(7, "Normal: as played", true, curve == SynthAudioProcessor::normalCurve);
+    menu.addItem(8, "Hard: loud takes a firm touch", true, curve == SynthAudioProcessor::hardCurve);
+    menu.addSeparator();
     menu.addSectionHeader("The last second");
     menu.addItem(4, cpuSummary(synth) + " of the time", false, false);
     menu.addItem(5, "This computer: " + workers.cpu().describe() + "; " + juce::String(workers.workerCount())
@@ -1017,5 +1023,7 @@ void PanelEditor::showOptions(SynthAudioProcessor& synth, juce::Component& targe
                                synth.showAudioSettings();
                            else if (chosen == 2 || chosen == 3)
                                synth.chooseMultiCore(chosen == 2);
+                           else if (chosen >= 6 && chosen <= 8)
+                               synth.chooseVelocityCurve(chosen - 6);
                        });
 }

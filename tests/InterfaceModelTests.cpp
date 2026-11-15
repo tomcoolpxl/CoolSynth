@@ -473,6 +473,35 @@ public:
         logMessage(line);
         expect(line.startsWith("CPU ") && line.contains("slowest block"), line);
         expectGreaterThan(synth->cpuLoad().percent[0], 0.0f);
+
+        beginTest("The velocity curve: Soft lifts light touches, Hard holds them back, both keep the ends (D175)");
+        {
+            using P = SynthAudioProcessor;
+            const float light = 32.0f / 127.0f;
+            expectWithinAbsoluteError(P::shapeVelocity(light, P::normalCurve), light, 1.0e-6f);
+            expectGreaterThan(P::shapeVelocity(light, P::softCurve), light);
+            expectLessThan(P::shapeVelocity(light, P::hardCurve), light);
+            for (const int curve : { 0, 1, 2 })
+            {
+                expectWithinAbsoluteError(P::shapeVelocity(1.0f, curve), 1.0f, 1.0e-6f);
+                expectGreaterOrEqual(P::shapeVelocity(1.0f / 127.0f, curve), 1.0f / 127.0f, "never 0: that would end the note");
+                float previous = 0.0f;
+                for (int v = 1; v <= 127; ++v)
+                {
+                    const float shaped = P::shapeVelocity(static_cast<float>(v) / 127.0f, curve);
+                    expect(shaped >= previous, "rises with the touch");
+                    previous = shaped;
+                }
+            }
+            auto keyboard = std::make_unique<SynthAudioProcessor>();
+            juce::Array<int> curves;
+            keyboard->rememberVelocityCurve = [&](int curve) { curves.add(curve); };
+            keyboard->chooseVelocityCurve(P::hardCurve);
+            expectEquals(keyboard->velocityCurve(), static_cast<int>(P::hardCurve));
+            expectEquals(curves.size(), 1);
+            logMessage("velocity 32 plays as " + juce::String(juce::roundToInt(127.0f * P::shapeVelocity(light, P::softCurve))) + " (Soft), "
+                       + juce::String(juce::roundToInt(127.0f * P::shapeVelocity(light, P::hardCurve))) + " (Hard)");
+        }
     }
 };
 

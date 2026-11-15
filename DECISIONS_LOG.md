@@ -3485,3 +3485,21 @@ Overnight, the user away (recommended options taken, the others listed). Planned
 Tested: a choice is applied and handed to where the app keeps it; the CPU line after a second of
 sound. Drawn: build/panel-home.png. Still for the user's eye: the menu itself in the app and in a
 host.
+
+## D175. A velocity curve for the keyboard (2026-11-15)
+
+Overnight, the user away (recommended options taken, the others listed), as assumed before the
+night: in Options, for every key that reaches the sound (the host's MIDI, the MiniLab, the screen),
+Normal the default (as before). Soft: a light touch plays loud; Normal: as played; Hard: loud takes
+a firm touch - the words and meaning makers use (Kawai's Light and Heavy, Yamaha's Soft, Roland;
+Sound On Sound, "Which MIDI velocity curve should I use"). The shapes are power curves, v^0.6 and
+v^1.6, that keep the softest and the hardest touch where they are: velocity 32 plays as 56 (Soft)
+or 14 (Hard); never 0, which would end the note. Remembered like Multi-core: in the app's settings,
+per computer for the plugin (D174).
+- Options for the curves: **three, Soft, Normal, Hard (chosen)**; five (Light+ to Heavy+, as Kawai);
+  a free amount (a knob, for the advanced editor later); Fixed (every note the same, for organs:
+  left for later, a sound's own velocity amount does that per preset).
+- Options for where: **all keyboards (chosen)**; the MiniLab alone (a host's keyboard has its own
+  curve in the host, but many hosts have none).
+- Options for the shape: **power curves (chosen)**, smooth, ends kept; a fixed table per curve (no
+  gain); an S curve (keeps both ends less steep, for few keyboards).
