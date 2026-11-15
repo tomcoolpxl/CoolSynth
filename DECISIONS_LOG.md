@@ -3503,3 +3503,28 @@ per computer for the plugin (D174).
   curve in the host, but many hosts have none).
 - Options for the shape: **power curves (chosen)**, smooth, ends kept; a fixed table per curve (no
   gain); an S curve (keeps both ends less steep, for few keyboards).
+
+## D176. Brightness and Space, knobs 7 and 8 (2026-11-15)
+
+Overnight, the user away (recommended options taken, the others listed; ranges kept conservative,
+as said before the night). Two global parameters, -100 % to +100 %, the middle "as the sound": a
+preset sounds as designed, and every preset loads with both in the middle.
+- **Brightness** moves the cutoff of every Ladder and SVF filter of the sound together, up to 1.5
+  octaves either way (0.15 of the cutoff's ten-octave range), added like a modulation, so the
+  filters ramp it per sample. Options for the range: **1.5 octaves (chosen)**; 1 (too little on a
+  dark pad); 2.5 (a bass turns into a lead). Options for what it moves: **the filters (chosen)**;
+  a tilt EQ on the output (works on sounds without a filter, but colours rather than opens);
+  both. A sound without a Ladder or SVF (most recorded instruments) does not change: an EQ for
+  those is for later, if the user wants it.
+- **Space** makes every reverb, delay and room of the sound (part inserts and master slots) up
+  to twice as wet or half as wet (their mix times 2^value, at most 100 %); the effects smooth
+  their mix themselves. Options: **scale the wet share (chosen)**; add a reverb of its own when a
+  sound has none (changes the sound's character); also lengthen the tails (size and feedback,
+  risks a delay running away). A sound without any of the three does not change.
+- In the middle the output is the same as before, bit for bit. The knobs reset with each preset,
+  as every parameter does. Options: **reset (chosen)**, a preset is heard as designed; keep them
+  across presets (a "performance" setting the user would have to remember).
+Tested: brightness -1, 0, +1 on a ladder at 1 kHz (first-difference ratio 0.019, 0.027, 0.043);
+a reverb's tail at space -1, 0, +1 (-46.9, -40.9, -34.8 dB); knobs 7 and 8 on every page; and the
+click detector sweeping either knob end to end at once while a chord rings, every third preset
+(worst 1.10x, Cellos with Space).

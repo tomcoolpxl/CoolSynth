@@ -24,7 +24,7 @@ press) and knob 5.
 | Main knob | Turn: moves through the list in view. Press: opens, loads or chooses a type. Its current job is printed beside it ("turn Sound", "press Load"). |
 | Knobs 1-4 | The page in view. Ringed in the colour of the open section (teal in Home, lime on Perform pages). |
 | Knob 5 | Pages: of the focused slot in a section, of the live pages in Home. Blue navigation ring. |
-| Knobs 6-8 | Glide, Brightness, Space, the same everywhere. |
+| Knobs 6-8 | Glide, Brightness, Space, the same everywhere. Brightness moves every Ladder and SVF cutoff of the sound together, up to 1.5 octaves either way; Space makes every reverb, delay and room up to twice or half as wet; in the middle the sound is as designed (D176). |
 | Faders 1-4 | Part A, Part B, Effects, Master; pickup in the software (the hardware has none). |
 | Pads 1-4 | Sound, Shape, Motion, Effects: open the section; the lit pad pressed again moves to the next slot. |
 | Pads 5-7 | ■ ▶ ●: kept for the recorder (later), dim. |
@@ -106,8 +106,7 @@ Bytes and tests: `docs/minilab3-screen.md`. The standalone app owns the MiniLab'
 ## 6. Not yet
 
 The recorder (pads 5-7, tracks, its windows), a wizard for other controllers, the advanced
-editor, per-preset macro names for all 120 presets (none are written yet), Brightness and Space
-engine hooks (D140).
+editor, per-preset macro names for all 120 presets (none are written yet).
 
 Planned for the real interface (D169):
 - **An Options button** in CoolSynth's own interface (built, D174): top right on the panel, so the

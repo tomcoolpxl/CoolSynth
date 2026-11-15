@@ -86,8 +86,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D147) Lists and sections use the scroll screen; every screen type is now tested.
     (D148) Built: the panel (src/plugin/PanelEditor), the logic (src/interface/InterfaceModel), the
     MiniLab driver in the standalone app (src/standalone/MiniLab3Driver). Still to try by hand and on
-    the MiniLab; unverified on the device: Shift's CC 27, pads on channel 10. Open: Brightness and
-    Space hooks (knobs 7-8), per-preset macro names, the own-files buttons the old editor had.
+    the MiniLab; unverified on the device: Shift's CC 27, pads on channel 10. Open then: Brightness
+    and Space hooks (knobs 7-8, done in D176), per-preset macro names, the own-files buttons the old
+    editor had.
     (D149) First use on the MiniLab: main-knob step, Shift CC 27 (verified), pads on channel 10
     (verified), mouse on the screen, the firmware's velocity-1 notes guarded.
     (D150) The flight recorder logs tripwires and events to `%LOCALAPPDATA%\CoolSynth\logs`.
@@ -111,8 +112,9 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D173) Engine pills in the software sound browser (Siren, with no generator, shows Filter).
     (D174) An Options button on the panel (the plugin has Options now) and the CPU line beside it.
     (D175) A velocity curve in Options: Soft, Normal (as before), Hard, for every keyboard.
+    (D176) Knobs 7 and 8 work: Brightness (every filter, 1.5 octaves) and Space (every reverb, delay, room).
     Next: the user's ear and hands on all of this (levels, glow, click-to-load, ringing sounds, the
-    pills and Options, the velocity curves, on the MiniLab); ASIO; streaming from disk for libraries bigger than the memory; the
+    pills and Options, the velocity curves, Brightness and Space, on the MiniLab); ASIO; streaming from disk for libraries bigger than the memory; the
     recorder. Later: whether Rust would serve the engine better (answered for now: not yet, D164).
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;

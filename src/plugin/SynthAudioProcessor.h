@@ -316,6 +316,7 @@ private:
     std::atomic<std::uint32_t> soundGeneration { 0 }; // counts presets and states loaded (D158)
     std::atomic<bool> multiCoreWanted { juce::SystemStats::getEnvironmentVariable("COOLSYNTH_MULTICORE", "1") != "0" };
     std::atomic<int> velocityCurveWanted { normalCurve }; // D175
+    static constexpr float brightnessRangeNormalised = 0.15f; // knob 7 at its ends: 1.5 octaves of cutoff (D176)
     std::atomic<std::uint32_t> oldestSoundingGeneration { 0 }; // the audio's oldest sound still ringing
     bool loadingSound = false; // message thread: a preset or a state is being applied
     struct RetiredUserSound

@@ -261,6 +261,40 @@ public:
             expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
         }
 
+        beginTest("Brightness and Space swept end to end at once while a chord rings do not click (D176)");
+        {
+            Tally tally;
+            for (int i = 0; i < presets; i += 3)
+                for (const char* knob : { coolsynth::parameters::ids::brightness, coolsynth::parameters::ids::space })
+                {
+                    if (! wanted(i))
+                        continue;
+                    const auto render = [&](bool sweep)
+                    {
+                        auto r = std::make_unique<Recorder>();
+                        r->loadPreset(i);
+                        r->set(knob, -1.0f);
+                        r->play(0.05);
+                        r->chord(true);
+                        r->play(0.7);
+                        const auto at = r->now();
+                        if (sweep)
+                            r->set(knob, 1.0f);
+                        r->play(0.6);
+                        return std::make_pair(std::move(r), at);
+                    };
+                    const auto [swept, at] = render(true);
+                    const auto [kept, keptAt] = render(false);
+                    juce::ignoreUnused(keptAt);
+                    const auto window = samplesFor(0.03);
+                    const Finding f { swept->roughness(at, at + window),
+                                      std::max(ownRoughness(*swept, at, window), kept->roughness(at, at + window)) };
+                    tally.add(f, presetName(i) + " " + knob + (clicks(f) ? profile(*swept, at, *kept, at) : juce::String()));
+                }
+            logMessage("worst " + juce::String(tally.worst, 2) + "x at " + tally.worstName);
+            expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
+        }
+
         beginTest("An instrument read in the background while an earlier sound rings does not click");
         {
             // Sampled presets in pairs: the first rings a chord, the second is chosen without waiting for its

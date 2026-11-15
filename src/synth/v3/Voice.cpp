@@ -478,6 +478,10 @@ namespace coolsynth::synth::v3
             SlotOffsets offsets = matrixOffsets.processors[j];
             if (j == 0)
                 offsets.p[0] += settings.env2ToP1 * env2 + settings.velocityToP1 * note.velocity;
+            // Brightness opens or closes every filter of the sound together (D176); both filters' cutoff is their
+            // first parameter, and they ramp it per sample.
+            if (const int type = settings.processors[j].type; type == processorType::ladder || type == processorType::svf)
+                offsets.p[0] += settings.brightness;
             SlotParams params = buildSlotParams(p.slot.descriptor(), p.base, offsets);
             params.frequencyHz = noteHz;
             params.modulator = generators.back().slot.link().signal; // generator 3, for a filter that it shakes

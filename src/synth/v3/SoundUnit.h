@@ -52,6 +52,7 @@ namespace coolsynth::synth::v3
         PartMode partMode = PartMode::aOnly;
         std::array<InsertSettings, masterSlotCount> master {}; // F1..F6, in chain order
         float masterGainLinear = 1.0f;
+        float space = 0.0f; // -1..1, knob 8 (D176): every reverb, delay and room, wetter (to twice) or drier (to half)
     };
 
     /** For the flight recorder's tripwires: the slowest stage of a block. */

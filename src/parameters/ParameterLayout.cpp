@@ -228,6 +228,17 @@ namespace
             juce::NormalisableRange<float>(-60.0f, 6.0f),
             -6.0f,
             dbAttributes()));
+
+        // Knobs 7 and 8, the same on every page (D176): the sound as designed in the middle.
+        const auto centred = juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int)
+        {
+            const int percent = juce::roundToInt(100.0f * value);
+            return percent == 0 ? juce::String("as the sound") : (percent > 0 ? "+" : "") + juce::String(percent) + " %";
+        });
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(brightness), "Brightness",
+                                                                    juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f, centred));
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(space), "Space",
+                                                                    juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f, centred));
         return group;
     }
 }

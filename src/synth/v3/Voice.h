@@ -153,6 +153,7 @@ namespace coolsynth::synth::v3
         std::array<Envelope::Parameters, envelopeCount> envelopes {}; // 1 drives the amplifier
         float env2ToP1 = 0.0f;     // -1..1, normalised offset on the first parameter of P1 (a filter's cutoff)
         float velocityToP1 = 0.0f; // -1..1, same destination, times the note velocity
+        float brightness = 0.0f;   // normalised offset on every Ladder and SVF cutoff: knob 7, Brightness (D176)
         float glideSeconds = 0.0f; // constant time, whatever the interval (or the time for an octave: glideByRate)
         bool glideByRate = false;      // the glide runs at a constant rate: an octave takes glideSeconds, a fifth 7/12 of it
         float glideDownFactor = 1.0f;  // a downward glide takes this many times as long as an upward one

@@ -161,6 +161,8 @@ namespace coolsynth::synth
         std::atomic<float>* arpEuclideanRotation = nullptr;
         std::atomic<float>* arpLatch = nullptr;
         std::atomic<float>* masterGainDb = nullptr;
+        std::atomic<float>* brightness = nullptr;
+        std::atomic<float>* space = nullptr;
     };
 
     using GlobalParamMemberPtr = std::atomic<float>* GlobalParameterPointers::*;
@@ -185,5 +187,7 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::arpEuclideanRotation, &GlobalParameterPointers::arpEuclideanRotation },
         { coolsynth::parameters::ids::arpLatch,             &GlobalParameterPointers::arpLatch             },
         { coolsynth::parameters::ids::masterGainDb,         &GlobalParameterPointers::masterGainDb         },
+        { coolsynth::parameters::ids::brightness,           &GlobalParameterPointers::brightness           },
+        { coolsynth::parameters::ids::space,                &GlobalParameterPointers::space                },
     }};
 }

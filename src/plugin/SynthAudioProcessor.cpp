@@ -1477,6 +1477,11 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
                 userSoundHandles[static_cast<std::size_t>(part * coolsynth::parameters::v3::partGeneratorSlots + slot)].load(std::memory_order_relaxed);
 
     settings.masterGainLinear = juce::Decibels::decibelsToGain(v.masterGainDb->load());
+    // Knobs 7 and 8 (D176): Brightness moves every filter's cutoff by up to 1.5 octaves either way (0.15 of the
+    // cutoff's 20 Hz - 20 kHz range, ten octaves); Space makes every reverb, delay and room up to twice or half as wet.
+    for (auto& part : settings.parts)
+        part.voice.brightness = brightnessRangeNormalised * juce::jlimit(-1.0f, 1.0f, v.brightness->load());
+    settings.space = juce::jlimit(-1.0f, 1.0f, v.space->load());
     const auto generation = soundGeneration.load(std::memory_order_relaxed);
     for (auto& part : settings.parts)
         part.soundGeneration = generation;

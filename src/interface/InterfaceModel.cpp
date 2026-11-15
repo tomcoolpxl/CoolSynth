@@ -371,10 +371,10 @@ namespace coolsynth::ui
         }
         else if (knobNumber == 7 || knobNumber == 8)
         {
+            // Every filter of the sound together; every reverb, delay and room (D176).
+            p = parameter(knobNumber == 7 ? coolsynth::parameters::ids::brightness : coolsynth::parameters::ids::space);
+            label = knobNumber == 7 ? "Brightness" : "Space";
             view.role = "always";
-            view.name = knobNumber == 7 ? "Brightness" : "Space";
-            view.value = "later"; // needs an engine hook (D140)
-            return view;
         }
 
         if (p == nullptr)
@@ -429,6 +429,8 @@ namespace coolsynth::ui
         }
         else if (knobNumber == 6)
             p = parameter(pv::voiceParameterId(currentPart == 0 ? pv::Part::a : pv::Part::b, "glide"));
+        else if (knobNumber == 7 || knobNumber == 8)
+            p = parameter(knobNumber == 7 ? coolsynth::parameters::ids::brightness : coolsynth::parameters::ids::space);
         if (p == nullptr)
             return;
         if (auto* generic = dynamic_cast<pv::GenericSlotParameter*>(p); generic != nullptr && ! generic->isUsedByCurrentType())

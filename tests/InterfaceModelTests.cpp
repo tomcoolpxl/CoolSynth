@@ -10,6 +10,7 @@
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
+#include "synth/v3/Inserts.h"
 
 /*
     The V3 interface's logic (docs/interface-v3.md): navigation E, Home as browser and live page,
@@ -506,3 +507,113 @@ public:
 };
 
 static OptionsTests optionsTests;
+
+// ---- Knobs 7 and 8: Brightness and Space (D176) ----------------------------------------------------------
+
+class BrightnessSpaceTests final : public juce::UnitTest
+{
+public:
+    BrightnessSpaceTests() : juce::UnitTest("Brightness and Space", "Interface") {}
+
+    void runTest() override
+    {
+        // Renders a held note (then its release), with knob 7 or 8 at a value, and returns the left channel.
+        const auto render = [](const char* knob, float value, bool withReverb)
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+            synth->prepareToPlay(48000.0, 256);
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                if (coolsynth::presets::getFactoryPreset(i).name == "Init Saw")
+                    synth->setCurrentProgram(i);
+            auto& state = synth->getValueTreeState();
+            const auto set = [&](const char* id, float plain)
+            {
+                auto* p = state.getParameter(id);
+                p->setValueNotifyingHost(p->convertTo0to1(plain));
+            };
+            state.getParameter("pA.p1.p1")->setValueNotifyingHost(0.566f); // the ladder at 1 kHz, so Brightness can go either way
+            if (withReverb)
+            {
+                set("f1.type", static_cast<float>(coolsynth::synth::v3::insertType::reverb));
+                state.getParameter("f1.p1")->setValueNotifyingHost(0.6f); // size
+                state.getParameter("f1.p3")->setValueNotifyingHost(0.3f); // mix
+            }
+            set(knob, value);
+            std::vector<float> out;
+            juce::AudioBuffer<float> buffer(2, 256);
+            juce::MidiBuffer midi;
+            midi.addEvent(juce::MidiMessage::noteOn(1, 48, static_cast<juce::uint8>(100)), 0);
+            for (int b = 0; b < 375; ++b) // 2 s; the key let go after 0.5 s
+            {
+                if (b == 94)
+                    midi.addEvent(juce::MidiMessage::noteOff(1, 48), 0);
+                buffer.clear();
+                synth->processBlock(buffer, midi);
+                midi.clear();
+                out.insert(out.end(), buffer.getReadPointer(0), buffer.getReadPointer(0) + 256);
+            }
+            return out;
+        };
+        const auto rms = [](const std::vector<float>& x, std::size_t from, std::size_t to)
+        {
+            double sum = 0.0;
+            for (auto i = from; i < to; ++i)
+                sum += static_cast<double>(x[i]) * x[i];
+            return std::sqrt(sum / static_cast<double>(to - from));
+        };
+        // How bright: the first difference's level against the signal's, while the note is held.
+        const auto bright = [&](const std::vector<float>& x)
+        {
+            std::vector<float> d(x.size());
+            for (std::size_t i = 1; i < x.size(); ++i)
+                d[i] = x[i] - x[i - 1];
+            return rms(d, 4800, 24000) / std::max(1.0e-9, rms(x, 4800, 24000));
+        };
+
+        beginTest("Brightness opens and closes the filter; in the middle the sound is as designed");
+        {
+            const double dark = bright(render(coolsynth::parameters::ids::brightness, -1.0f, false));
+            const double asDesigned = bright(render(coolsynth::parameters::ids::brightness, 0.0f, false));
+            const double open = bright(render(coolsynth::parameters::ids::brightness, 1.0f, false));
+            logMessage("brightness -1, 0, +1: " + juce::String(dark, 4) + ", " + juce::String(asDesigned, 4) + ", " + juce::String(open, 4));
+            expectLessThan(dark, asDesigned);
+            expectGreaterThan(open, asDesigned);
+        }
+
+        beginTest("Space makes the reverb's tail louder or softer");
+        {
+            const auto tail = [&](float value)
+            {
+                const auto x = render(coolsynth::parameters::ids::space, value, true);
+                return rms(x, 24000 + 14400, 24000 + 38400); // 0.3 to 0.8 s after the key was let go
+            };
+            const double dry = tail(-1.0f), asDesigned = tail(0.0f), wet = tail(1.0f);
+            logMessage("tail at space -1, 0, +1: " + juce::String(juce::Decibels::gainToDecibels(dry), 1) + ", "
+                       + juce::String(juce::Decibels::gainToDecibels(asDesigned), 1) + ", " + juce::String(juce::Decibels::gainToDecibels(wet), 1) + " dB");
+            expectLessThan(dry, asDesigned);
+            expectGreaterThan(wet, asDesigned);
+        }
+
+        beginTest("Knobs 7 and 8 turn Brightness and Space, on every page");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto& model = synth->getInterfaceModel();
+            auto& state = synth->getValueTreeState();
+            for (const int knob : { 7, 8 })
+            {
+                const char* id = knob == 7 ? coolsynth::parameters::ids::brightness : coolsynth::parameters::ids::space;
+                const float before = state.getRawParameterValue(id)->load();
+                expectWithinAbsoluteError(before, 0.0f, 1.0e-6f, "the middle: the sound as designed");
+                expect(model.knob(knob).active);
+                expectEquals(model.knob(knob).value, juce::String("as the sound"));
+                model.turnKnob(knob, 5, false);
+                expectGreaterThan(state.getRawParameterValue(id)->load(), before);
+                model.pressPad(1, false); // another page: the same knob
+                expectEquals(model.knob(knob).name, juce::String(knob == 7 ? "Brightness" : "Space"));
+            }
+        }
+    }
+};
+
+static BrightnessSpaceTests brightnessSpaceTests;

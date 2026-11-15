@@ -9,6 +9,24 @@ namespace coolsynth::synth::v3
 {
     namespace
     {
+        /** Knob 8, Space (D176): a reverb's, delay's or room's wet share times 2^space, so twice at the top and half
+            at the bottom; other effects as they are. The effects smooth their mix themselves. */
+        InsertSettings withSpace(const InsertSettings& settings, float space) noexcept
+        {
+            if (space == 0.0f)
+                return settings;
+            std::size_t mix = 0;
+            if (settings.type == insertType::delay || settings.type == insertType::reverb)
+                mix = 2;
+            else if (settings.type == insertType::room)
+                mix = 3;
+            else
+                return settings;
+            auto spaced = settings;
+            spaced.p[mix] = std::clamp(settings.p[mix] * std::exp2(std::clamp(space, -1.0f, 1.0f)), 0.0f, 1.0f);
+            return spaced;
+        }
+
         /** Silences NaN and infinity in a stage's output; how many there were. A broken value in a filter's or a
             reverb's state stays there and would silence the sound until a panic: the stage is reset instead (D170). */
         int scrubBroken(float* left, float* right, int n) noexcept
@@ -315,7 +333,7 @@ namespace coolsynth::synth::v3
             const StageClock insertsClock { slowest, p == 0 ? 3 : 4 };
             for (std::size_t slot = 0; slot < inserts[p].size(); ++slot)
             {
-                inserts[p][slot].process(partAudio, settings.inserts[p][slot], beat);
+                inserts[p][slot].process(partAudio, withSpace(settings.inserts[p][slot], settings.space), beat);
                 if (const int broken = scrubBroken(partAudio.getWritePointer(0), partAudio.getWritePointer(1), n); broken > 0)
                 {
                     inserts[p][slot].clear();
@@ -363,7 +381,7 @@ namespace coolsynth::synth::v3
         for (std::size_t slot = 0; slot < masterSlots->size(); ++slot)
         {
             const StageClock masterClock { slowest, 10 + static_cast<int>(slot) };
-            (*masterSlots)[slot].process(stereo, settings.master[slot], beat);
+            (*masterSlots)[slot].process(stereo, withSpace(settings.master[slot], settings.space), beat);
             if (const int broken = scrubBroken(l, r, n); broken > 0)
             {
                 (*masterSlots)[slot].clear();
