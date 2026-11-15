@@ -939,9 +939,7 @@ public:
         {
             const auto b = pads[static_cast<std::size_t>(p)].getBounds();
             juce::String text;
-            if (p >= 4 && p <= 6)
-                text = juce::StringArray { "Stop", "Play", "Record" }[p - 4] + " (later)";
-            else if (p == InterfaceModel::homePad)
+            if (p == InterfaceModel::homePad) // nothing under the recorder's pads (D187)
                 text = "Again: Part A/B";
             g.drawText(text, b.getX() - 8, b.getBottom() + 4, b.getWidth() + 16, 16, juce::Justification::centred);
         }
@@ -1001,8 +999,8 @@ public:
         keyboard.setBounds(left, padBottom + 30, designWidth - 2 * left, designHeight - padBottom - 30 - 32);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
 
-        // the last second's CPU work in the strip under the keys, right-aligned
-        cpuArea = { left, keyboard.getBottom() + 3, designWidth - 2 * left, 16 };
+        // the last second's CPU work at the top right, over the faders, where it was (D187)
+        cpuArea = { knobsX, 11, designWidth - 38 - knobsX, 15 };
     }
 
     void mouseDown(const juce::MouseEvent& e) override

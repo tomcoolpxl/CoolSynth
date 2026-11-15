@@ -3744,3 +3744,19 @@ CoolSynth uses) and 4-7 in transport colours; our colours sent again under Shift
   its DAW port through the driver (118 messages for one move, none as plain MIDI) and the screen's
   faders follow ("It follows", on the device). The MiniLab does not report where its faders stand
   until one moves, so at start the screen shows them at the top until each is touched.
+
+## D187. The faders remembered; one Options; the CPU line back at the top (2026-11-15)
+
+- **Can the MiniLab say where its faders stand?** Checked online at the user's word: no. Arturia's
+  MIDI Control Center manual says the faders only send controller messages; the community's list
+  of the MiniLab 3's sysex (Arturia forum, "SYSEX protocol documentation"; Janiczek's gist) has no
+  query for a fader or knob; a ReasonTalk user reports the same jump at a first move. The user's
+  choice, **remember them** (options: remember, recommended and chosen; leave them at the top): JUCE's
+  standalone already saves the whole state when its window closes and loads it at start; the app now
+  also saves it once a fader has moved (checked once a second), so a crash or a forced close keeps
+  the faders where they stand.
+- Found on the way (same forum list): the Shift layer's lights for pads 4-8 can be set (57-5B).
+  The user's choice: leave the device's own colours there.
+- **One Options**: the window bar's Options button is gone; Prefs on the panel is CoolSynth's Options
+  (with Audio and MIDI in the app). The CPU line is back at the top right (D185 had moved it under
+  the keys, where the user did not find it). No text under Stop, Play and Record.

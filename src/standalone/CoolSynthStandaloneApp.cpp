@@ -3,6 +3,7 @@
 #include "StandaloneAudioSupport.h"
 #include "SettingsStore.h"
 #include "MiniLab3Driver.h"
+#include "parameters/ParameterIDs.h"
 #include "plugin/PanelEditor.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "synth/v3/AudioWorkers.h"
@@ -18,29 +19,18 @@
 namespace
 {
 
-class CoolSynthStandaloneWindow final : public juce::StandaloneFilterWindow
+class CoolSynthStandaloneWindow final : public juce::StandaloneFilterWindow,
+                                        private juce::Timer
 {
 public:
     CoolSynthStandaloneWindow(const juce::String& title, juce::Colour bgColour, std::unique_ptr<juce::StandalonePluginHolder> holder)
         : juce::StandaloneFilterWindow(title, bgColour, std::move(holder))
     {
-        // Intercept the default JUCE StandaloneFilterWindow "Options" button
-        // by hiding it and overlaying our own
+        // No Options in the window's bar (D187): the panel's Prefs is CoolSynth's one Options, with Audio and MIDI too.
         for (auto* child : getChildren())
-        {
             if (auto* button = dynamic_cast<juce::Button*>(child))
-            {
                 if (button->getName() == "Options" || button->getButtonText() == "Options")
-                {
                     button->setVisible(false);
-                    originalOptionsButton = button;
-                }
-            }
-        }
-
-        customOptionsButton.setButtonText("Options");
-        customOptionsButton.onClick = [this] { openCustomSettings(); };
-        addAndMakeVisible(&customOptionsButton);
 
         // The sample memory is taken as the app starts, in the background (D155).
         coolsynth::synth::v3::SampleLibrary::instance().prepareMemory();
@@ -75,32 +65,38 @@ public:
                                                                                   host->deviceManager,
                                                                                   *synth);
             }
+        startTimer(1000);
     }
 
-    void resized() override
+    ~CoolSynthStandaloneWindow() override { stopTimer(); }
+
+    // The MiniLab cannot be asked where its faders stand (its faders only send their moves; D187): so the app keeps
+    // where they were. JUCE saves the whole state when the window closes; this also saves it once a fader has moved,
+    // so a crash or a forced close keeps them too, and the next start matches the faders where they stand.
+    void timerCallback() override
     {
-        juce::StandaloneFilterWindow::resized();
-
-        if (originalOptionsButton != nullptr)
-        {
-            customOptionsButton.setBounds(originalOptionsButton->getBounds());
-        }
+        auto* holder = getPluginHolder();
+        auto* synth = holder != nullptr ? dynamic_cast<SynthAudioProcessor*>(holder->processor.get()) : nullptr;
+        if (synth == nullptr)
+            return;
+        std::array<float, 4> now {};
+        std::size_t i = 0;
+        for (const char* id : { coolsynth::parameters::ids::volumeA, coolsynth::parameters::ids::volumeB,
+                                coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster })
+            if (auto* p = synth->getValueTreeState().getParameter(id))
+                now[i++] = p->getValue();
+        if (now == savedVolumes)
+            return;
+        savedVolumes = now;
+        holder->savePluginState();
+        if (auto* file = dynamic_cast<juce::PropertiesFile*>(holder->settings.get()))
+            file->saveIfNeeded();
     }
+
 
 private:
     std::unique_ptr<coolsynth::standalone::MiniLab3Driver> miniLab; // destroyed before the holder
-    juce::TextButton customOptionsButton;
-    juce::Button* originalOptionsButton = nullptr;
-    void openCustomSettings()
-    {
-        // The same Options as the panel's own button (D174): audio and MIDI, Multi-core (kept in the app's settings,
-        // D167), the CPU's work.
-        auto* holder = getPluginHolder();
-        if (auto* synth = holder != nullptr ? dynamic_cast<SynthAudioProcessor*>(holder->processor.get()) : nullptr)
-            PanelEditor::showOptions(*synth, customOptionsButton);
-        else if (holder != nullptr)
-            holder->showAudioSettingsDialog();
-    }
+    std::array<float, 4> savedVolumes { -1.0f, -1.0f, -1.0f, -1.0f }; // the faders as last saved (D187)
 };
 
 class CoolSynthStandaloneApp final : public juce::JUCEApplication
