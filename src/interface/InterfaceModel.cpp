@@ -5,6 +5,7 @@
 #include "parameters/v3/SlotParameters.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
+#include "presets/MySounds.h"
 #include "synth/v3/SampleLibrary.h"
 
 namespace coolsynth::ui
@@ -66,6 +67,50 @@ namespace coolsynth::ui
         return juce::Colours::grey;
     }
 
+    juce::StringArray enginePillsOf(const std::function<juce::String(const juce::String& id, const juce::String& otherwise)>& entry)
+    {
+        const auto mode = entry(pv::partModeParameterId, "A");
+        juce::StringArray parts;
+        if (mode != "B")
+            parts.add("pA");
+        if (mode == "B" || mode == "Layer" || mode == "Split")
+            parts.add("pB");
+
+        juce::StringArray pills;
+        bool noise = false;
+        for (const auto& part : parts)
+            for (int g = 1; g <= 3; ++g)
+            {
+                const auto type = entry(part + ".g" + juce::String(g) + ".type", g == 1 ? "VA" : "Off");
+                juce::String pill;
+                if (type == "VA")
+                    pill = "VA";
+                else if (type == "Sample")
+                    pill = "Sample";
+                else if (type == "FM2" || type == "FM4")
+                    pill = "FM";
+                else if (type == "Wavetable")
+                    pill = "WT";
+                else if (type == "Grain")
+                    pill = "Grain";
+                else if (type == "String" || type == "Modal")
+                    pill = "Physical";
+                else if (type == "Noise")
+                    noise = true;
+                if (pill.isNotEmpty() && pills.size() < 3)
+                    pills.addIfNotAlreadyThere(pill);
+            }
+        if (pills.isEmpty() && noise)
+            pills.add("Noise");
+        // No generator at all: the sound is a filter ringing on its own (Siren's ladder at full resonance).
+        if (pills.isEmpty())
+            for (const auto& part : parts)
+                for (int p = 1; p <= 3 && pills.isEmpty(); ++p)
+                    if (entry(part + ".p" + juce::String(p) + ".type", p == 1 ? "Ladder" : "Off") != "Off")
+                        pills.add("Filter");
+        return pills;
+    }
+
     juce::StringArray enginePills(int factoryPreset)
     {
         // Read from the preset's own entries; what a preset leaves out is the parameter's default: g1 VA, g2 and g3
@@ -76,54 +121,14 @@ namespace coolsynth::ui
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
             {
                 const auto& preset = coolsynth::presets::getFactoryPreset(i);
-                const auto entry = [&](const juce::String& id, const juce::String& otherwise)
+                all.push_back(enginePillsOf([&](const juce::String& id, const juce::String& otherwise)
                 {
                     juce::String text = otherwise;
                     for (const auto& e : preset.entries)
                         if (e.parameterId == id)
                             text = e.text; // the last one counts, as when it is applied
                     return text;
-                };
-                const auto mode = entry(pv::partModeParameterId, "A");
-                juce::StringArray parts;
-                if (mode != "B")
-                    parts.add("pA");
-                if (mode == "B" || mode == "Layer" || mode == "Split")
-                    parts.add("pB");
-
-                juce::StringArray pills;
-                bool noise = false;
-                for (const auto& part : parts)
-                    for (int g = 1; g <= 3; ++g)
-                    {
-                        const auto type = entry(part + ".g" + juce::String(g) + ".type", g == 1 ? "VA" : "Off");
-                        juce::String pill;
-                        if (type == "VA")
-                            pill = "VA";
-                        else if (type == "Sample")
-                            pill = "Sample";
-                        else if (type == "FM2" || type == "FM4")
-                            pill = "FM";
-                        else if (type == "Wavetable")
-                            pill = "WT";
-                        else if (type == "Grain")
-                            pill = "Grain";
-                        else if (type == "String" || type == "Modal")
-                            pill = "Physical";
-                        else if (type == "Noise")
-                            noise = true;
-                        if (pill.isNotEmpty() && pills.size() < 3)
-                            pills.addIfNotAlreadyThere(pill);
-                    }
-                if (pills.isEmpty() && noise)
-                    pills.add("Noise");
-                // No generator at all: the sound is a filter ringing on its own (Siren's ladder at full resonance).
-                if (pills.isEmpty())
-                    for (const auto& part : parts)
-                        for (int p = 1; p <= 3 && pills.isEmpty(); ++p)
-                            if (entry(part + ".p" + juce::String(p) + ".type", p == 1 ? "Ladder" : "Off") != "Off")
-                                pills.add("Filter");
-                all.push_back(pills);
+                }));
             }
             return all;
         }();
@@ -134,6 +139,26 @@ namespace coolsynth::ui
     InterfaceModel::InterfaceModel(SynthAudioProcessor& processor)
         : synth(processor), state(processor.getValueTreeState())
     {
+        refreshMySounds();
+        browser.category = categoryOfPreset(playingPreset());
+        browser.row = 1;
+    }
+
+    // ---- The bank ---------------------------------------------------------------------------
+
+    void InterfaceModel::refreshMySounds()
+    {
+        // The rooms: My Sounds first when it holds anything (D180), then the factory's in bank order.
+        mySoundFiles.clear();
+        for (const auto& file : coolsynth::presets::MySounds::list())
+            mySoundFiles.push_back(file);
+        bank.clear();
+        if (! mySoundFiles.empty())
+        {
+            bank.push_back({ "My Sounds", {} });
+            for (int k = 0; k < static_cast<int>(mySoundFiles.size()); ++k)
+                bank.back().presets.push_back(mySoundBase + k);
+        }
         for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
         {
             const auto& preset = coolsynth::presets::getFactoryPreset(i);
@@ -141,11 +166,9 @@ namespace coolsynth::ui
                 bank.push_back({ preset.category, {} });
             bank.back().presets.push_back(i);
         }
-        browser.category = categoryOfPreset(playingPreset());
-        browser.row = 1;
+        browser.category = clampInt(browser.category, 0, static_cast<int>(bank.size()) - 1);
+        touched();
     }
-
-    // ---- The bank ---------------------------------------------------------------------------
 
     int InterfaceModel::categoryOfPreset(int preset) const noexcept
     {
@@ -156,13 +179,51 @@ namespace coolsynth::ui
         return 0;
     }
 
-    int InterfaceModel::playingPreset() const { return synth.getCurrentProgram(); }
+    int InterfaceModel::playingPreset() const
+    {
+        // A saved sound playing has its own id past the factory's (D180).
+        if (const auto mine = synth.playingMySound(); mine != juce::File())
+        {
+            for (std::size_t k = 0; k < mySoundFiles.size(); ++k)
+                if (mySoundFiles[k] == mine)
+                    return mySoundBase + static_cast<int>(k);
+            return -1;
+        }
+        return synth.getCurrentProgram();
+    }
+
+    juce::String InterfaceModel::soundName(int sound) const
+    {
+        if (sound >= mySoundBase)
+        {
+            const auto k = static_cast<std::size_t>(sound - mySoundBase);
+            return k < mySoundFiles.size() ? mySoundFiles[k].getFileNameWithoutExtension() : juce::String();
+        }
+        return coolsynth::presets::getFactoryPreset(sound).name;
+    }
+
+    juce::StringArray InterfaceModel::soundPills(int sound) const
+    {
+        if (sound >= mySoundBase)
+        {
+            const auto k = static_cast<std::size_t>(sound - mySoundBase);
+            return k < mySoundFiles.size() ? SynthAudioProcessor::mySoundPills(mySoundFiles[k]) : juce::StringArray();
+        }
+        return enginePills(sound);
+    }
 
     juce::String InterfaceModel::playingPresetName() const { return synth.getPatchName(); }
 
     void InterfaceModel::loadPreset(int preset)
     {
-        synth.setCurrentProgram(preset);
+        if (preset >= mySoundBase)
+        {
+            const auto k = static_cast<std::size_t>(preset - mySoundBase);
+            if (k < mySoundFiles.size())
+                synth.loadMySound(mySoundFiles[k]);
+        }
+        else
+            synth.setCurrentProgram(preset);
         faderCaught = {};          // the faders take over again only when they meet the new values
         faderLast = { -1.0f, -1.0f, -1.0f, -1.0f };
     }
@@ -317,15 +378,12 @@ namespace coolsynth::ui
             {
                 case 0:
                 {
-                    // The playing sound's own names where it has them (D177), else the roles.
+                    // The playing sound's own names where it has them (D177; a saved sound keeps them, D180), else the roles.
                     std::array<juce::String, 4> labels { macroRoles[0], macroRoles[1], macroRoles[2], macroRoles[3] };
-                    if (const int playing = playingPreset(); playing >= 0 && playing < coolsynth::presets::getFactoryPresetCount())
-                    {
-                        const auto& names = coolsynth::presets::getFactoryPreset(playing).macroNames[static_cast<std::size_t>(currentPart)];
-                        for (std::size_t m = 0; m < labels.size(); ++m)
-                            if (names[m].isNotEmpty())
-                                labels[m] = names[m];
-                    }
+                    const auto names = synth.macroNames(currentPart);
+                    for (std::size_t m = 0; m < labels.size(); ++m)
+                        if (names[m].isNotEmpty())
+                            labels[m] = names[m];
                     return { "Macros", { pv::macroParameterId(part, 1), pv::macroParameterId(part, 2),
                                          pv::macroParameterId(part, 3), pv::macroParameterId(part, 4) },
                              labels };
@@ -562,6 +620,7 @@ namespace coolsynth::ui
     void InterfaceModel::openHome()
     {
         cancelPendingChoice();
+        refreshMySounds(); // sounds saved, or copied into the folder, since
         currentView = View::home;
         typeList.open = false;
         browser.inCategory = true;
@@ -802,8 +861,8 @@ namespace coolsynth::ui
         view.pills.emplace_back();
         for (int preset : category.presets)
         {
-            view.rows.add(coolsynth::presets::getFactoryPreset(preset).name);
-            view.pills.push_back(enginePills(preset));
+            view.rows.add(soundName(preset));
+            view.pills.push_back(soundPills(preset));
             if (preset == playingPreset())
                 view.used = view.rows.size() - 1;
         }

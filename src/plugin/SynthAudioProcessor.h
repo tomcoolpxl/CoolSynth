@@ -165,6 +165,20 @@ public:
     /** Set by the standalone app: opens its audio and MIDI settings; the panel's Options offers it when set. */
     std::function<void()> showAudioSettings;
 
+    // ---- My Sounds (D180): the player's own saved sounds, message thread ------------------------
+    enum class SaveResult { saved, exists, failed };
+    /** Saves the sound as it is now under `name` in My Sounds (presets/MySounds.h); `exists` when a sound has that
+        name and replace is false. The saved sound is then the one playing. */
+    SaveResult saveMySound(const juce::String& name, bool replace);
+    /** Loads a saved sound whole, as a host's saved state is (D157); notes ringing keep the sound before (D158). */
+    bool loadMySound(const juce::File& file);
+    /** The saved sound playing, or no file when a factory sound plays. */
+    [[nodiscard]] juce::File playingMySound() const { return playingMySoundFile; }
+    /** A part's four macro names: the playing saved sound's, else the factory sound's; empty where it has none. */
+    [[nodiscard]] std::array<juce::String, 4> macroNames(int part) const;
+    /** The engine pills a saved sound's file carries. */
+    [[nodiscard]] static juce::StringArray mySoundPills(const juce::File& file);
+
     /** The keyboard's velocity curve (D175), for every key that reaches the sound: Soft, a light touch plays loud;
         Normal, as played; Hard, loud takes a firm touch. Power curves, the same at the softest and the hardest. */
     enum VelocityCurve { softCurve = 0, normalCurve = 1, hardCurve = 2 };
@@ -330,6 +344,8 @@ private:
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
     int currentProgram = 0;
+    juce::File playingMySoundFile;                                  // D180: a saved sound playing, else none
+    std::array<std::array<juce::String, 4>, 2> mySoundMacroNames {}; // its macro names, part A and B
     mutable juce::CriticalSection midiMappingStateLock;
     std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};
     juce::AbstractFifo pendingPluginControllerEventQueue { static_cast<int> (pendingPluginControllerEvents.size()) };

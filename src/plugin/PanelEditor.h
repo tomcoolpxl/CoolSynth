@@ -38,6 +38,8 @@ public:
     static void showOptions(SynthAudioProcessor& synth, juce::Component& target);
     /** The last second's work in one line: "CPU 7%, slowest block 9%, helpers 1 3 2%". */
     [[nodiscard]] static juce::String cpuSummary(const SynthAudioProcessor& synth);
+    /** Asks for a name and saves the sound as it is now in My Sounds (D180); asks before replacing one. */
+    static void askToSaveSound(SynthAudioProcessor& synth, juce::Component& near);
 
     static constexpr int designWidth = 1100;
     static constexpr int designHeight = 690;

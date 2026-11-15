@@ -3609,3 +3609,22 @@ matter"; Vital forum), Kontakt instruments give a macro up to 12 assignments.
   a macro on the master reverb's mix makes the tail 7.8 dB louder; turning it at once does not step.
   The parameters grow by 80 (eight routes of five, per part); older states load with every route Off.
 Next: the presets' macros get effect routes where an effect fits their role, drafted as in D177.
+
+## D180. My Sounds: saving one's own sounds (2026-11-15)
+
+The user's choices: **a My Sounds room** (options: a My Sounds room in Home, recommended; file
+save and open only; only the host saves), kept in **Documents\CoolSynth\My Sounds** (options:
+Documents, recommended; hidden app data; next to the sample library). Pigments and Vital save a
+copy of a factory sound into a user bank the same way (Arturia and Vital forums).
+- **Save**: Options, "Save sound...", asks for a name (the sound's own offered); a name already in
+  My Sounds is replaced only after asking. A name loses what Windows forbids in a file name. One
+  .cspatch file per sound (the existing format): every parameter, one's own sample files, and the
+  sound's macro names and engine pills, so the room shows them without reading the whole sound.
+- **Browse**: "My Sounds" is the first room in Home as soon as it holds a sound, A to Z, with pills
+  and the playing mark, on the panel and the MiniLab alike; the folder is read again each time Home
+  opens, so a file copied in shows up.
+- **Load**: as a host's saved state: the sound arrives whole (D157), notes ringing keep the sound
+  before (D158), its macro names on the Macros page.
+- Later: renaming and deleting from the panel (today: in the folder), and saving from the MiniLab.
+Tested in a temporary folder: a clean name, save, the refusal and the replace, loading back (the
+macro as saved, the names, the pills), the room first in Home, loading from it, the playing mark.

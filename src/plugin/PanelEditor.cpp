@@ -2,6 +2,7 @@
 
 #include "SynthAudioProcessor.h"
 #include "interface/InterfaceModel.h"
+#include "presets/MySounds.h"
 #include "synth/v3/AudioWorkers.h"
 
 namespace
@@ -994,6 +995,8 @@ void PanelEditor::showOptions(SynthAudioProcessor& synth, juce::Component& targe
     const bool multiCore = synth.multiCore();
     const auto& workers = coolsynth::synth::v3::AudioWorkers::instance();
     juce::PopupMenu menu;
+    menu.addItem(9, "Save sound...");
+    menu.addSeparator();
     if (synth.showAudioSettings)
     {
         menu.addItem(1, "Audio and MIDI settings...");
@@ -1025,5 +1028,46 @@ void PanelEditor::showOptions(SynthAudioProcessor& synth, juce::Component& targe
                                synth.chooseMultiCore(chosen == 2);
                            else if (chosen >= 6 && chosen <= 8)
                                synth.chooseVelocityCurve(chosen - 6);
+                           else if (chosen == 9)
+                               askToSaveSound(synth, *safeTarget);
                        });
+}
+
+void PanelEditor::askToSaveSound(SynthAudioProcessor& synth, juce::Component& near)
+{
+    // A name for the sound as it is now (D180); the name it has is offered. Async: nothing waits on the window.
+    auto* window = new juce::AlertWindow("Save sound", "A name for this sound in My Sounds:", juce::MessageBoxIconType::NoIcon, &near);
+    window->addTextEditor("name", synth.getPatchName());
+    window->addButton("Save", 1, juce::KeyPress(juce::KeyPress::returnKey));
+    window->addButton("Cancel", 0, juce::KeyPress(juce::KeyPress::escapeKey));
+    juce::Component::SafePointer<juce::Component> safeNear(&near);
+    window->enterModalState(true, juce::ModalCallbackFunction::create([&synth, window, safeNear](int result)
+    {
+        if (result != 1 || safeNear == nullptr)
+            return;
+        const auto name = window->getTextEditorContents("name");
+        const auto saved = [&synth, safeNear](SynthAudioProcessor::SaveResult r, const juce::String& what)
+        {
+            if (r == SynthAudioProcessor::SaveResult::failed && safeNear != nullptr)
+                juce::AlertWindow::showMessageBoxAsync(juce::MessageBoxIconType::WarningIcon, "Save sound",
+                                                       "\"" + what + "\" could not be saved in " + coolsynth::presets::MySounds::folder().getFullPathName() + ".");
+            else if (r == SynthAudioProcessor::SaveResult::saved)
+                synth.getInterfaceModel().refreshMySounds();
+        };
+        const auto result1 = synth.saveMySound(name, false);
+        if (result1 != SynthAudioProcessor::SaveResult::exists)
+        {
+            saved(result1, name);
+            return;
+        }
+        // That name is taken: replace it, or not.
+        juce::AlertWindow::showOkCancelBox(juce::MessageBoxIconType::QuestionIcon, "Save sound",
+                                           "My Sounds already has \"" + coolsynth::presets::MySounds::cleanName(name) + "\". Replace it?",
+                                           "Replace", "Cancel", safeNear.getComponent(),
+                                           juce::ModalCallbackFunction::create([&synth, name, saved](int replace)
+                                           {
+                                               if (replace == 1)
+                                                   saved(synth.saveMySound(name, true), name);
+                                           }));
+    }), true);
 }

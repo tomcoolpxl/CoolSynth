@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <functional>
 #include <map>
 #include <optional>
 #include <vector>
@@ -26,6 +27,8 @@ namespace coolsynth::ui
         one label per engine its generator slots use, in slot order (part A, then part B where the preset plays
         it), at most three: VA, Sample, FM, WT, Grain, Physical; Noise only when no other engine plays. */
     [[nodiscard]] juce::StringArray enginePills(int factoryPreset);
+    /** The same rules on any sound: `entry(parameter id, default)` gives a slot type's or the part mode's name. */
+    [[nodiscard]] juce::StringArray enginePillsOf(const std::function<juce::String(const juce::String& id, const juce::String& otherwise)>& entry);
 
     struct Page
     {
@@ -178,6 +181,10 @@ namespace coolsynth::ui
         };
         [[nodiscard]] const std::vector<Category>& categories() const noexcept { return bank; }
         [[nodiscard]] int categoryOfPreset(int preset) const noexcept;
+        /** Reads the My Sounds folder again and rebuilds the rooms, My Sounds first when it holds anything (D180). */
+        void refreshMySounds();
+        /** Saved sounds have ids from here on in the rooms' lists; factory sounds are their bank index. */
+        static constexpr int mySoundBase = 1000000;
 
     private:
         struct Browser
@@ -216,12 +223,15 @@ namespace coolsynth::ui
         juce::String slotKey(int section, int slot) const;
         [[nodiscard]] int playingPreset() const;
         void loadPreset(int preset);
+        [[nodiscard]] juce::String soundName(int sound) const;
+        [[nodiscard]] juce::StringArray soundPills(int sound) const;
         [[nodiscard]] std::vector<juce::String> faderParameterIds(int fader) const;
         void touched() noexcept { ++changeCount; }
 
         SynthAudioProcessor& synth;
         juce::AudioProcessorValueTreeState& state;
         std::vector<Category> bank;
+        std::vector<juce::File> mySoundFiles; // the My Sounds room, A to Z
 
         View currentView = View::section;
         int currentSection = 0;

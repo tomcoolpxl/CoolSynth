@@ -10,6 +10,7 @@
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
+#include "presets/MySounds.h"
 #include "synth/v3/Inserts.h"
 
 /*
@@ -617,3 +618,77 @@ public:
 };
 
 static BrightnessSpaceTests brightnessSpaceTests;
+
+// ---- My Sounds (D180) -------------------------------------------------------------------------------------
+
+class MySoundsTests final : public juce::UnitTest
+{
+public:
+    MySoundsTests() : juce::UnitTest("My Sounds: save, browse, load", "Interface") {}
+
+    void runTest() override
+    {
+        using coolsynth::presets::MySounds;
+        const auto folder = juce::File::getSpecialLocation(juce::File::tempDirectory).getChildFile("CoolSynth My Sounds test");
+        folder.deleteRecursively();
+        MySounds::setFolderForTesting(folder);
+        const auto named = [](const juce::String& wanted)
+        {
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                if (coolsynth::presets::getFactoryPreset(i).name == wanted)
+                    return i;
+            return 0;
+        };
+
+        beginTest("A name a file may have");
+        expectEquals(MySounds::cleanName("  Brass: big/bright?  "), juce::String("Brass bigbright"));
+        expect(MySounds::cleanName("///").isEmpty());
+
+        beginTest("Saving the sound as it is, refusing to overwrite unless asked, and loading it back");
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        synth->setCurrentProgram(named("Neon Brass"));
+        auto* macro = synth->getValueTreeState().getParameter("pA.macro1");
+        macro->setValueNotifyingHost(0.5f);
+        expect(synth->saveMySound("My Brass", false) == SynthAudioProcessor::SaveResult::saved);
+        const auto file = MySounds::fileFor("My Brass");
+        expect(file.existsAsFile(), file.getFullPathName());
+        expect(synth->saveMySound("My Brass", false) == SynthAudioProcessor::SaveResult::exists);
+        expect(synth->saveMySound("My Brass", true) == SynthAudioProcessor::SaveResult::saved);
+        expect(synth->playingMySound() == file);
+        expectEquals(synth->getPatchName(), juce::String("My Brass"));
+        const auto factoryNames = coolsynth::presets::getFactoryPreset(named("Neon Brass")).macroNames[0];
+
+        synth->setCurrentProgram(named("Init Saw"));
+        expect(synth->playingMySound() == juce::File(), "a factory sound again");
+        expectWithinAbsoluteError(macro->getValue(), 0.0f, 1.0e-6f);
+        expect(synth->loadMySound(file));
+        expectWithinAbsoluteError(macro->getValue(), 0.5f, 1.0e-3f, "the macro as it was saved");
+        expect(synth->playingMySound() == file);
+        expectEquals(synth->getPatchName(), juce::String("My Brass"));
+        expectEquals(synth->macroNames(0)[0], factoryNames[0], "the macro names travel with the sound");
+        expect(! SynthAudioProcessor::mySoundPills(file).isEmpty(), "and its pills");
+
+        beginTest("My Sounds is the first room in Home, its sounds load from there");
+        auto& model = synth->getInterfaceModel();
+        synth->setCurrentProgram(named("Init Saw"));
+        model.pressPad(7, false); // Home: refreshes the rooms
+        expectEquals(model.categories().front().name, juce::String("My Sounds"));
+        model.turnMain(-100);
+        model.pressMain(); // back to the rooms
+        model.turnMain(-100); // the first: My Sounds
+        model.pressMain();
+        auto view = model.list();
+        expectEquals(view.title, juce::String("MY SOUNDS"));
+        expectEquals(view.rows[1], juce::String("My Brass"));
+        expect(! view.pills[1].isEmpty());
+        model.turnMain(1);
+        model.pressMain(); // loads it
+        expect(synth->playingMySound() == file);
+        expectEquals(model.list().used, 1, "marked as playing");
+
+        MySounds::setFolderForTesting({});
+        folder.deleteRecursively();
+    }
+};
+
+static MySoundsTests mySoundsTests;

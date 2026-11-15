@@ -19,6 +19,8 @@
 #include "plugin/PanelEditor.h"
 #include "interface/InterfaceModel.h"
 #include "presets/FactoryPresets.h"
+#include "presets/MySounds.h"
+#include "presets/PatchState.h"
 #include "presets/StateMigration.h"
 #include "synth/v3/AudioWorkers.h"
 #include "synth/v3/UserLibrary.h"
@@ -807,6 +809,7 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     soundGeneration.fetch_add(1, std::memory_order_relaxed); // notes ringing now keep the old sound (D158)
     const juce::ScopedValueSetter<bool> loading(loadingSound, true);
     coolsynth::presets::applyFactoryPreset(parameters, preset);
+    playingMySoundFile = juce::File(); // a factory sound again (D180)
     setPatchIdentity(preset.name, false);
 }
 
@@ -887,6 +890,104 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
             undoHistory.clear();
         }
     }
+}
+
+// ---- My Sounds (D180) ------------------------------------------------------------------------------------
+
+namespace
+{
+    juce::String joinNames(const std::array<juce::String, 4>& names)
+    {
+        juce::StringArray all;
+        for (const auto& n : names)
+            all.add(n.replaceCharacter(',', ' '));
+        return all.joinIntoString(",");
+    }
+
+    std::array<juce::String, 4> splitNames(const juce::String& text)
+    {
+        std::array<juce::String, 4> names {};
+        const auto parts = juce::StringArray::fromTokens(text, ",", "");
+        for (int i = 0; i < std::min(4, parts.size()); ++i)
+            names[static_cast<std::size_t>(i)] = parts[i];
+        return names;
+    }
+}
+
+std::array<juce::String, 4> SynthAudioProcessor::macroNames(int part) const
+{
+    const auto p = static_cast<std::size_t>(juce::jlimit(0, 1, part));
+    if (playingMySoundFile != juce::File())
+        return mySoundMacroNames[p];
+    if (currentProgram >= 0 && currentProgram < coolsynth::presets::getFactoryPresetCount())
+        return coolsynth::presets::getFactoryPreset(currentProgram).macroNames[p];
+    return {};
+}
+
+SynthAudioProcessor::SaveResult SynthAudioProcessor::saveMySound(const juce::String& rawName, bool replace)
+{
+    using coolsynth::presets::MySounds;
+    const auto name = MySounds::cleanName(rawName);
+    if (name.isEmpty())
+        return SaveResult::failed;
+    const auto file = MySounds::fileFor(name);
+    if (file.existsAsFile() && ! replace)
+        return SaveResult::exists;
+    auto stateXml = createParameterStateXml();
+    if (stateXml == nullptr)
+        return SaveResult::failed;
+    auto patch = coolsynth::presets::createWrappedPatchXml(*stateXml, getParameterStateTypeName());
+    const auto macrosA = macroNames(0), macrosB = macroNames(1);
+    patch->setAttribute("name", name);
+    patch->setAttribute("macrosA", joinNames(macrosA));
+    patch->setAttribute("macrosB", joinNames(macrosB));
+    // The pills as the browser shows them, worked out by the same rules from the sound as it is now.
+    const auto pills = coolsynth::ui::enginePillsOf([this](const juce::String& id, const juce::String& otherwise)
+    {
+        auto* p = parameters.getParameter(id);
+        return p != nullptr ? p->getCurrentValueAsText() : otherwise;
+    });
+    patch->setAttribute("pills", pills.joinIntoString(","));
+    if (! file.getParentDirectory().createDirectory() || ! coolsynth::presets::writePatchFile(file, *patch).succeeded())
+        return SaveResult::failed;
+    playingMySoundFile = file;
+    mySoundMacroNames = { macrosA, macrosB };
+    setPatchIdentity(name, false);
+    return SaveResult::saved;
+}
+
+bool SynthAudioProcessor::loadMySound(const juce::File& file)
+{
+    auto result = coolsynth::presets::readPatchFile(file, getParameterStateTypeName());
+    if (! result.succeeded() || result.parameterStateXml == nullptr)
+        return false;
+    const auto root = juce::parseXML(file);
+
+    const AtomicFlagScope applying(applyingPatch, true);
+    const BulkEdit whole(*this);
+    soundGeneration.fetch_add(1, std::memory_order_relaxed); // notes ringing keep the sound before (D158)
+    const juce::ScopedValueSetter<bool> loading(loadingSound, true);
+    suppressGestureSnapshots = true;
+    const bool applied = applyParameterStateXml(*result.parameterStateXml);
+    suppressGestureSnapshots = false;
+    if (! applied)
+        return false;
+
+    playingMySoundFile = file;
+    mySoundMacroNames = { splitNames(root != nullptr ? root->getStringAttribute("macrosA") : juce::String()),
+                          splitNames(root != nullptr ? root->getStringAttribute("macrosB") : juce::String()) };
+    const auto name = root != nullptr ? root->getStringAttribute("name", file.getFileNameWithoutExtension()) : file.getFileNameWithoutExtension();
+    coolsynth::diag::record(coolsynth::diag::Event::presetLoaded, -1, 0, 0.0f, 0.0f, ("my sound: " + name).toRawUTF8());
+    setPatchIdentity(name, false);
+    undoHistory.clear();
+    return true;
+}
+
+juce::StringArray SynthAudioProcessor::mySoundPills(const juce::File& file)
+{
+    if (const auto root = juce::parseXML(file))
+        return juce::StringArray::fromTokens(root->getStringAttribute("pills"), ",", "");
+    return {};
 }
 
 std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createParameterStateXml()
