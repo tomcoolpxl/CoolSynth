@@ -4043,3 +4043,9 @@ EMPTY"); the Arp page's Rate, Pattern and Octaves and the Groove page while the 
 every section's colour (options: bright white, recommended and chosen; a strong blue, close to
 Shape's; the page's own colour, which would look like knobs 1-4); the screen's current page tab is
 outlined in the same white.
+
+## D203. "Your keyboard" over the screen's keys (2026-11-15)
+
+The user did not know what "MiniLab keys" over the screen's keyboard was, had it taken away, then asked it back
+in the line's colour, since it moves with the line, and named for what it is, not the device. It reads
+"Your keyboard" in the line's teal: the range the physical keyboard plays, as its notes tell (D192).

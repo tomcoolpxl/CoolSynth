@@ -1232,7 +1232,8 @@ public:
             g.setColour(colours::print);
             g.drawText(s == 0 ? "Pitch" : "Mod", strip.removeFromBottom(22.0f), juce::Justification::centred);
         }
-        // A thin line over the MiniLab's 25 keys, as far as its notes tell (D192), named in small print.
+        // A thin line over the MiniLab's 25 keys, as far as its notes tell (D192), named in small print in the
+        // line's own teal, which moves with it (D203).
         if (model.hardwareConnected())
         {
             const int low = model.miniLabLowKey(), high = low + InterfaceModel::miniLabKeySpan;
@@ -1241,11 +1242,11 @@ public:
             const float x0 = static_cast<float>(keyboard.getX()) + first.getX();
             const float x1 = static_cast<float>(keyboard.getX()) + last.getRight();
             const float y = static_cast<float>(keyboard.getY()) - 8.0f;
-            g.setColour(coolsynth::ui::tintColour(Tint::home).withAlpha(0.85f));
+            const auto teal = coolsynth::ui::tintColour(Tint::home).withAlpha(0.85f);
+            g.setColour(teal);
             g.fillRoundedRectangle(juce::Rectangle<float>(x0 + 1.0f, y, x1 - x0 - 2.0f, 3.0f), 1.5f);
             g.setFont(sans(10.5f));
-            g.setColour(colours::print);
-            g.drawText("MiniLab keys", juce::Rectangle<float>(x0, y - 16.0f, x1 - x0, 14.0f), juce::Justification::centred);
+            g.drawText("Your keyboard", juce::Rectangle<float>(x0, y - 16.0f, x1 - x0, 14.0f), juce::Justification::centred);
         }
 
         paintLayerScreen(g);
