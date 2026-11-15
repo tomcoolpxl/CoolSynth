@@ -33,7 +33,7 @@ press) and knob 5.
 | Keys | A short row of keys. White keys white, black keys black in both themes. |
 
 All knobs are flat. Pads print their job (Sound, Shape, Motion, Effects, ■ ▶ ●, Home), centred.
-Colours: Sound #f2a33a, Shape #35b8e0, Motion #9b7bff, Effects #ec5fa6, Perform #a4d23f,
+Colours: Sound #f2a33a, Shape #3b8bff (was #35b8e0, D184), Motion #9b7bff, Effects #ec5fa6, Perform #a4d23f,
 Home #23c4b5, Stop #c8d0d8, Play #3ccf73, Record #f0524f.
 
 There is **no Back button** (D144). Going back is a `‹ Back` row at the top of each list; the

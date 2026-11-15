@@ -54,14 +54,16 @@ namespace coolsynth::ui
     {
         // What the MiniLab 3's pad LEDs need to show each colour, by the user's eye on the device (D184): its LEDs
         // are bluer and pinker than a screen. Home is what Play was sent before (it lit teal); Play a plain green,
-        // Stop a warm white (white lit blue), Sound a redder orange (orange lit light pink).
+        // Stop a white with its green full and less red and blue (white lit blue, a warm white pink), Sound a redder
+        // orange (orange lit light pink).
         switch (tint)
         {
             case Tint::sound:  return juce::Colour(0xffff5000);
-            case Tint::home:   return juce::Colour(0xff3ccf73);
-            case Tint::stop:   return juce::Colour(0xffffc890);
+            case Tint::home:   return juce::Colour(0xff4aff8e); // the teal Play was sent, at the LEDs' full brightness
+            case Tint::shape:  return juce::Colour(0xff1060ff); // a clear blue, apart from Home's teal and Motion's purple
+            case Tint::stop:   return juce::Colour(0xffd7ffbe); // white lit blue, a warm white pink: green full
             case Tint::play:   return juce::Colour(0xff10ff00);
-            default:           return tintColour(tint); // Shape, Motion, Effects and Record light as they should
+            default:           return tintColour(tint); // Motion, Effects and Record light as they should
         }
     }
 
@@ -70,7 +72,7 @@ namespace coolsynth::ui
         switch (tint)
         {
             case Tint::sound:   return juce::Colour(0xfff2a33a);
-            case Tint::shape:   return juce::Colour(0xff35b8e0);
+            case Tint::shape:   return juce::Colour(0xff3b8bff); // a clear blue, not dark (D184; was cyan #35b8e0)
             case Tint::motion:  return juce::Colour(0xff9b7bff);
             case Tint::effects: return juce::Colour(0xffec5fa6);
             case Tint::perform: return juce::Colour(0xffa4d23f);

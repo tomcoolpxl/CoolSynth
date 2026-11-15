@@ -248,8 +248,9 @@ public:
             expectEquals(model->section(), 3, "the last pad opens Effects");
             model->pressPad(0, false);
             expect(model->view() == InterfaceModel::View::home, "the first pad is Home");
-            // The MiniLab's LEDs get their own colours: Home what Play had before, Play a plain green.
-            expect(coolsynth::ui::miniLabColour(coolsynth::ui::Tint::home) == coolsynth::ui::tintColour(coolsynth::ui::Tint::play));
+            // The MiniLab's LEDs get their own colours, set by eye on the device: Home a bright teal, Shape a clear blue.
+            expectEquals(coolsynth::ui::miniLabColour(coolsynth::ui::Tint::home).getBrightness(), 1.0f);
+            expect(coolsynth::ui::miniLabColour(coolsynth::ui::Tint::shape).getBlue() > coolsynth::ui::miniLabColour(coolsynth::ui::Tint::shape).getGreen() * 2);
             expect(coolsynth::ui::miniLabColour(coolsynth::ui::Tint::record) == coolsynth::ui::tintColour(coolsynth::ui::Tint::record));
         }
 
@@ -351,6 +352,7 @@ public:
         model.pressPad(coolsynth::ui::InterfaceModel::homePad, false);
         shoot("home");
         model.pressPad(coolsynth::ui::InterfaceModel::padOfSection(1), false);
+        shoot("shape"); // the Shape section in its colour (D184)
         model.pressMain();
         shoot("typelist");
         model.pressMain();

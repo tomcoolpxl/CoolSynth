@@ -3710,3 +3710,8 @@ The user, after trying the panel and the MiniLab. Asked (pick lists): the pink p
   MiniLab's faders are now taken as they are (no catching up); while it is connected the screen's
   faders follow them and do not take the mouse. Options: **volumes over the sound (chosen)**; keep
   writing the sound's levels, rescaled. At the top every preset renders bit for bit as before.
+
+- **Colours settled on the device and the screen** (same day): the MiniLab's pads by the user's eye
+  ("the colors on the pad are perfect"): Home a bright teal (#4aff8e sent), Shape a clear blue
+  (#1060ff sent), Stop a white with full green (#d7ffbe sent), Play green, Sound orange. On the
+  screen Shape is now a clear, not dark, blue #3b8bff (was cyan #35b8e0), at the user's word.
