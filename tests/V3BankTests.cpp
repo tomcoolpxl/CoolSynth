@@ -78,6 +78,29 @@ master = -6
             expect(preset.entries.front().parameterId == "pA.g1.type"); // the type comes before its parameters
         }
 
+        beginTest("effect_routes_by_key_or_number_from_part_wide_sources_only");
+        {
+            const auto parsed = parseBankFile(R"([Routed]
+i1 = Delay time=300 feedback=0.4 mix=0.2
+f1 = Reverb size=0.5 mix=0.2
+fx = src=macro2 dst=f1.mix amount=0.3
+fx = src=glfo1 dst=i1.p2 amount=0.1 via=macro4 curve=unipolar
+fx = src=lfo1 dst=f1.mix amount=0.2
+fx = src=macro1 dst=f2.mix amount=0.2
+b.fx = src=macro1 dst=f1.size amount=0.1
+)", "fx.csbank");
+            for (const auto& e : parsed.errors)
+                logMessage(e);
+            expectEquals(parsed.errors.size(), 2, "a voice's LFO, and a slot that is Off");
+            juce::StringArray entries;
+            for (const auto& e : parsed.presets.front().entries)
+                entries.add(e.parameterId + "=" + e.text);
+            for (const auto* wanted : { "pA.fx1.src=Macro 2", "pA.fx1.dst=F1 Param 3", "pA.fx1.amount=0.3",
+                                        "pA.fx2.src=GLFO 1", "pA.fx2.dst=I1 Param 2", "pA.fx2.via=Macro 4", "pA.fx2.curve=unipolar",
+                                        "pB.fx1.src=Macro 1", "pB.fx1.dst=F1 Param 1" })
+                expect(entries.contains(wanted), juce::String("missing ") + wanted + " in " + entries.joinIntoString(", "));
+        }
+
         beginTest("macro_names_per_part_and_a_wrong_count_reported");
         {
             const auto parsed = parseBankFile(R"([Named]

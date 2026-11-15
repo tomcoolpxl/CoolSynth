@@ -3580,3 +3580,32 @@ Pad and Deep Field play a part B. What follows is built for the two parts as the
   tenth (would fail on harmless changes); only "longer with size" (a halved tail would pass).
   Worth knowing: the plate's smallest size is still a 2.4 s space; short rooms are the Room
   effect's.
+
+## D179. Effect modulation: the part's global sources move the effects (2026-11-15)
+
+The user's choice: "full effect modulation + effect routes" (options: effect routes from the macros
+only, recommended; leave the macros voice-only, as knob 8 already moves every reverb and delay;
+full effect modulation; the user took the full one, which holds the macro routes). Sources: Serum
+and Vital macros reach effect mix and size (MusicRadar, "How to make macro assignments that
+matter"; Vital forum), Kontakt instruments give a macro up to 12 assignments.
+- **Routes**: eight per part (pA.fx1 .. pA.fx8: source, destination, amount, via, curve, as the
+  matrix). Destinations: every setting of the part's inserts I1-I3 and of the master F1-F6 that
+  the slot's type lets move (the descriptor's modulatable flag; a choice such as a delay's sync is
+  left alone). Added to the setting's normalised value and held in 0..1, as the voice matrix does.
+  Both parts' routes may move the master slots.
+- **Sources**: only what is the same for every voice of a part: the four macros, both global LFOs,
+  the global envelope, the step modulator, chaos, the mod wheel, pitch bend, key pressure and the
+  expression pedal. A voice's envelope or LFO cannot drive an effect all voices share; the bank
+  refuses one with a sentence saying so.
+- **Smooth**: the sources are read at a block's start and end and the effects run in steps of 32
+  samples between them; with the macros' own 10 ms glide and the effects' own smoothing a macro
+  turned at once does not step. A block where no route adds anything runs the effects in one piece,
+  as before: every preset renders bit for bit as it did. Options for the step: **32 samples
+  (chosen)**, the voices' own sub-block; 64 (half the calls, coarser for a fast LFO); per sample
+  (an effect is not built to change every sample, and costs most).
+- **Bank**: "fx = src=macro2 dst=f1.mix amount=0.3", "b.fx = ..." for part B; a destination by
+  the effect's own key in this preset ("i1.feedback", "f2.size") or by number ("f2.p3").
+- Tested: the bank lines (and both refusals); a route adding nothing leaves the output bit for bit;
+  a macro on the master reverb's mix makes the tail 7.8 dB louder; turning it at once does not step.
+  The parameters grow by 80 (eight routes of five, per part); older states load with every route Off.
+Next: the presets' macros get effect routes where an effect fits their role, drafted as in D177.

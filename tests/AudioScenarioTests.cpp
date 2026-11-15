@@ -14,6 +14,7 @@
 #include "diagnostics/AudioThreadAlarm.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
+#include "synth/v3/EffectRoutes.h"
 
 namespace
 {
@@ -314,3 +315,94 @@ public:
 };
 
 static AudioScenarioTests audioScenarioTests;
+
+// ---- Effect routes (D179): the part's global sources move its effects ---------------------------------
+
+class EffectRouteTests final : public juce::UnitTest
+{
+public:
+    EffectRouteTests() : juce::UnitTest("Effect routes: macros and global sources move the effects", "Audio") {}
+
+    void runTest() override
+    {
+        // Init Saw with a master reverb at 20 % mix; a key held half a second, then the tail. Returns the left channel.
+        const auto render = [](bool routed, float macro, bool sweep)
+        {
+            auto rig = std::make_unique<Rig>();
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                if (coolsynth::presets::getFactoryPreset(i).name == "Init Saw")
+                    rig->loadPreset(i);
+            auto& state = rig->synth->getValueTreeState();
+            const auto set = [&](const juce::String& id, float plain)
+            {
+                auto* p = state.getParameter(id);
+                p->setValueNotifyingHost(p->convertTo0to1(plain));
+            };
+            set("f1.type", static_cast<float>(coolsynth::synth::v3::insertType::reverb));
+            state.getParameter("f1.p1")->setValueNotifyingHost(0.6f); // size
+            state.getParameter("f1.p3")->setValueNotifyingHost(0.2f); // mix
+            if (routed)
+            {
+                set("pA.fx1.src", static_cast<float>(coolsynth::synth::v3::ModSource::macro1));
+                set("pA.fx1.dst", static_cast<float>(coolsynth::synth::v3::effectDestination::master(0, 2))); // F1 mix
+                set("pA.fx1.amount", 0.6f);
+            }
+            set("pA.macro1", sweep ? 0.0f : macro);
+            std::vector<float> out;
+            rig->chord(57, true);
+            for (int b = 0; b < 375; ++b) // 2 s
+            {
+                if (b == 94)
+                    rig->chord(57, false);
+                if (sweep && b == 60)
+                    set("pA.macro1", 1.0f);
+                rig->block(preparedBlock);
+                out.insert(out.end(), rig->buffer.getReadPointer(0), rig->buffer.getReadPointer(0) + preparedBlock);
+            }
+            return out;
+        };
+        const auto rms = [](const std::vector<float>& x, std::size_t from, std::size_t to)
+        {
+            double sum = 0.0;
+            for (auto i = from; i < to; ++i)
+                sum += static_cast<double>(x[i]) * x[i];
+            return std::sqrt(sum / static_cast<double>(to - from));
+        };
+
+        beginTest("A route that adds nothing leaves the sound bit for bit as without it");
+        {
+            const auto without = render(false, 0.0f, false);
+            const auto idle = render(true, 0.0f, false);
+            int different = 0;
+            for (std::size_t i = 0; i < without.size(); ++i)
+                different += without[i] != idle[i] ? 1 : 0;
+            expectEquals(different, 0, "samples that differ with the macro at 0");
+        }
+
+        beginTest("A macro on the master reverb's mix makes the tail louder");
+        {
+            const auto rest = render(true, 0.0f, false);
+            const auto full = render(true, 1.0f, false);
+            const std::size_t tailFrom = 94 * preparedBlock + 24000, tailTo = tailFrom + 24000; // 0.5 to 1 s after the keys
+            const double gain = juce::Decibels::gainToDecibels(rms(full, tailFrom, tailTo) / std::max(1.0e-9, rms(rest, tailFrom, tailTo)));
+            logMessage("tail with the macro full up: " + juce::String(gain, 1) + " dB");
+            expectGreaterThan(gain, 6.0);
+        }
+
+        beginTest("Turning that macro at once while the chord sounds does not step");
+        {
+            // The macro's own 10 ms glide, the 32-sample steps and the effect's mix smoothing together.
+            const auto x = render(true, 0.0f, true);
+            const std::size_t at = 60 * preparedBlock;
+            float steady = 0.0f, change = 0.0f;
+            for (std::size_t i = at - 9600; i < at; ++i)
+                steady = std::max(steady, std::abs(x[i] - 2.0f * x[i - 1] + x[i - 2]));
+            for (std::size_t i = at; i < at + 1440; ++i)
+                change = std::max(change, std::abs(x[i] - 2.0f * x[i - 1] + x[i - 2]));
+            logMessage("roughness before " + juce::String(steady, 5) + ", at the turn " + juce::String(change, 5));
+            expectLessThan(change, 1.5f * steady + 1.0e-3f);
+        }
+    }
+};
+
+static EffectRouteTests effectRouteTests;

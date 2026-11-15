@@ -72,6 +72,10 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] const juce::StringArray& modDestinationNames();
     [[nodiscard]] const juce::StringArray& modCurveNames();
 
+    /** The effect routes (D179): "pA.fx1.src" and so on; their destinations, "Off", "I1 Param 1" .. "F6 Param 12". */
+    [[nodiscard]] juce::String effectRouteParameterId(Part part, int oneBasedRoute, const char* field);
+    [[nodiscard]] const juce::StringArray& effectDestinationNames();
+
     /** The global envelope's fields, the step modulator's fixed fields, in parameter order. */
     [[nodiscard]] const juce::StringArray& globalEnvelopeFields();
     [[nodiscard]] const juce::StringArray& stepFields();
@@ -182,6 +186,7 @@ namespace coolsynth::parameters::v3
         std::array<LfoPointers, partLocalLfos> lfos {};
         std::array<LfoPointers, partGlobalLfos> globalLfos {};
         std::array<MatrixSlotPointers, coolsynth::synth::v3::matrixSlotCount> matrix {};
+        std::array<MatrixSlotPointers, coolsynth::synth::v3::effectRouteCount> effectRoutes {}; // D179
         GlobalModulatorPointers global {};
         std::atomic<float>* wheelToLfo1 = nullptr;
         std::atomic<float>* env2ToP1 = nullptr;

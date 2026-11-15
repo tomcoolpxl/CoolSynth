@@ -133,7 +133,43 @@ namespace coolsynth::presets
             std::array<int, pv3::partGeneratorSlots> generatorTypes { sv3::generatorType::va, sv3::generatorType::off, sv3::generatorType::off };
             std::array<int, pv3::partProcessorSlots> processorTypes { sv3::processorType::ladder, sv3::processorType::off, sv3::processorType::off };
             int nextMod = 1;
+            std::array<int, pv3::partInsertSlots> insertTypes {};    // the part's inserts, Off until named (D179)
+            std::array<int, pv3::masterEffectSlots> masterTypes {};  // the master slots, kept in part A's context
+            int nextFx = 1;
         };
+
+        /**
+            An effect route's destination as the bank writes it (D179), to its choice name, or empty: a setting of
+            an insert or master slot by the key of the slot's type in this preset ("i1.mix", "f2.feedback") or by
+            number ("f2.p3"). The setting must be one the type lets move.
+        */
+        juce::String effectDestinationText(const juce::String& token, const PresetContext& context, const PresetContext& patch)
+        {
+            namespace d = sv3::effectDestination;
+            const auto t = token.toLowerCase();
+            const int dot = t.indexOfChar('.');
+            if (dot <= 0)
+                return {};
+            const auto slotName = t.substring(0, dot);
+            const auto field = t.substring(dot + 1);
+            const int insert = slotNumber(slotName, "i", d::insertSlots);
+            const int master = insert == 0 ? slotNumber(slotName, "f", d::masterSlots) : 0;
+            if (insert == 0 && master == 0)
+                return {};
+            const int type = insert != 0 ? context.insertTypes[static_cast<std::size_t>(insert - 1)]
+                                         : patch.masterTypes[static_cast<std::size_t>(master - 1)];
+            const auto& descriptor = sv3::insertDescriptor(type);
+            int index = -1;
+            if (field.length() >= 2 && field.length() <= 3 && field[0] == 'p' && field.substring(1).containsOnly("0123456789"))
+                index = field.substring(1).getIntValue() - 1;
+            else
+                for (int i = 0; i < descriptor.usedParams; ++i)
+                    if (pv3::normaliseOptionName(descriptor.params[static_cast<std::size_t>(i)].id) == pv3::normaliseOptionName(field))
+                        index = i;
+            if (index < 0 || index >= descriptor.usedParams || ! descriptor.params[static_cast<std::size_t>(index)].modulatable)
+                return {};
+            return pv3::effectDestinationNames()[insert != 0 ? d::insert(insert - 1, index) : d::master(master - 1, index)];
+        }
 
         /** A source as the bank writes it ("lfo1", "env2", "wheel") to its choice name, or empty. */
         juce::String sourceText(const juce::String& token)
@@ -392,6 +428,10 @@ namespace coolsynth::presets
                     context.generatorTypes[static_cast<std::size_t>(generator - 1)] = typeIndex;
                 else if (processor != 0)
                     context.processorTypes[static_cast<std::size_t>(processor - 1)] = typeIndex;
+                else if (insert != 0)
+                    context.insertTypes[static_cast<std::size_t>(insert - 1)] = typeIndex;
+                else
+                    contexts[0].masterTypes[static_cast<std::size_t>(masterSlot - 1)] = typeIndex;
                 add(pv3::typeParameterId(path), descriptor.name);
                 readPairs(1, [&](const juce::String& k) -> juce::String
                 {
@@ -452,6 +492,55 @@ namespace coolsynth::presets
                         error("'" + v + "' is not a " + (k == "dst" ? "destination of this preset" : "modulation source"));
                     else
                         add(pv3::matrixParameterId(part, slot, k.toRawUTF8()), resolved);
+                }
+                continue;
+            }
+
+            // An effect route (D179): "fx = src=macro2 dst=f2.mix amount=0.3", like a matrix slot, from a part-wide source.
+            if (key == "fx" || (key.startsWith("fx") && key.length() > 2 && key.substring(2).containsOnly("0123456789")))
+            {
+                const int slot = key == "fx" ? context.nextFx : key.substring(2).getIntValue();
+                if (slot < 1 || slot > sv3::effectRouteCount)
+                {
+                    error(key == "fx" ? juce::String("more than 8 effect routes") : "'" + key + "' is not a route from fx1 to fx8");
+                    continue;
+                }
+                context.nextFx = std::max(context.nextFx, slot + 1);
+                for (const auto& token : tokens)
+                {
+                    const int split = token.indexOfChar('=');
+                    const auto k = split > 0 ? token.substring(0, split) : token;
+                    const auto v = split > 0 ? token.substring(split + 1) : juce::String();
+                    if (split <= 0 || v.isEmpty())
+                    {
+                        error("'" + token + "' needs a key=value form");
+                        continue;
+                    }
+                    juce::String resolved;
+                    if (k == "src" || k == "via")
+                    {
+                        resolved = sourceText(v);
+                        const int source = pv3::modSourceNames().indexOf(resolved);
+                        if (resolved.isNotEmpty() && resolved != "Off" && ! sv3::isPartWideSource(static_cast<sv3::ModSource>(source)))
+                        {
+                            error("'" + v + "' belongs to a voice; an effect follows the part: a macro, glfo1, glfo2, genv, step, "
+                                  "chaos, wheel, bend, at or expression");
+                            continue;
+                        }
+                    }
+                    else if (k == "dst")
+                        resolved = effectDestinationText(v, context, contexts[0]);
+                    else if (k == "amount" || k == "curve")
+                        resolved = v;
+                    else
+                    {
+                        error("'" + key + "' has no setting '" + k + "'");
+                        continue;
+                    }
+                    if (resolved.isEmpty())
+                        error("'" + v + "' is not a " + (k == "dst" ? "setting an effect route can move in this preset" : "modulation source"));
+                    else
+                        add(pv3::effectRouteParameterId(part, slot, k.toRawUTF8()), resolved);
                 }
                 continue;
             }

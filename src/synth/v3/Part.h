@@ -8,6 +8,7 @@
 #include "synth/Arpeggiator.h"
 #include "synth/HalfBand2x.h"
 #include "ChordMemory.h"
+#include "EffectRoutes.h"
 #include "GlobalModulators.h"
 #include "Voice.h"
 
@@ -86,6 +87,7 @@ namespace coolsynth::synth::v3
         GenvTrigger globalEnvelopeTrigger = GenvTrigger::firstNote;
         StepSettings step {};
         std::array<float, macroCount> macros {};
+        EffectRoutes effectRoutes {}; // the part's global sources on its own inserts and the master effects (D179)
         float chaosRateHz = 0.5f;
         float tuneSemitones = 0.0f; // the part's fine detune, on every voice
         ChordSettings chord {};
@@ -156,6 +158,8 @@ namespace coolsynth::synth::v3
         [[nodiscard]] double tempoForTesting() const noexcept { return chunkClock.bpm; }
         [[nodiscard]] const Envelope& globalEnvelopeForTesting() const noexcept { return globalEnvelope; }
         [[nodiscard]] const StepModulator& stepForTesting() const noexcept { return stepModulator; }
+        /** The part-wide sources as they stood at the end of the last render, for the effect routes (D179). */
+        [[nodiscard]] const ModSources& effectSources() const noexcept { return effectSourceValues; }
         [[nodiscard]] const GlobalFrame& lastFrameForTesting() const noexcept { return frames[static_cast<std::size_t>(std::max(0, globals.frameCount - 1))]; }
 
     private:
@@ -240,6 +244,7 @@ namespace coolsynth::synth::v3
         ChaosSource chaos;
         std::array<float, macroCount> macroValues {};
         bool macrosPrimed = false;
+        ModSources effectSourceValues {}; // the part-wide sources at the end of the last render (D179)
         std::array<bool, 128> keyIsDown {};
         int keysDown = 0;
 

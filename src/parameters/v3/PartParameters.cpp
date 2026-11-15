@@ -160,6 +160,27 @@ namespace coolsynth::parameters::v3
             return group;
         }
 
+        /** The part's eight effect routes (D179), as the matrix's slots: source, destination, amount, via, curve. */
+        std::unique_ptr<juce::AudioProcessorParameterGroup> makeEffectRouteGroup(Part part)
+        {
+            auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".fxroutes", "Effect Routes", "|");
+            for (int i = 1; i <= sv3::effectRouteCount; ++i)
+            {
+                auto id = [&](const char* field) { return makeId(effectRouteParameterId(part, i, field)); };
+                const juce::String n = "FX Route " + juce::String(i) + " ";
+                auto route = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".fx" + juce::String(i),
+                                                                                  "FX Route " + juce::String(i), "|");
+                route->addChild(std::make_unique<juce::AudioParameterChoice>(id("src"), n + "Source", modSourceNames(), 0));
+                route->addChild(std::make_unique<juce::AudioParameterChoice>(id("dst"), n + "Destination", effectDestinationNames(), 0));
+                route->addChild(std::make_unique<juce::AudioParameterFloat>(id("amount"), n + "Amount", juce::NormalisableRange<float> { -1.0f, 1.0f },
+                                                                            0.0f, amountAttributes()));
+                route->addChild(std::make_unique<juce::AudioParameterChoice>(id("via"), n + "Via", modSourceNames(), 0));
+                route->addChild(std::make_unique<juce::AudioParameterChoice>(id("curve"), n + "Curve", modCurveNames(), 0));
+                group->addChild(std::move(route));
+            }
+            return group;
+        }
+
         std::unique_ptr<juce::AudioProcessorParameterGroup> makeGlobalModulatorGroups(Part part)
         {
             auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".global", "Global Modulators", "|");
@@ -286,6 +307,29 @@ namespace coolsynth::parameters::v3
         return partPrefix(part) + ".mod" + juce::String(oneBasedSlot) + "." + field;
     }
 
+    juce::String effectRouteParameterId(Part part, int oneBasedRoute, const char* field)
+    {
+        return partPrefix(part) + ".fx" + juce::String(oneBasedRoute) + "." + field;
+    }
+
+    const juce::StringArray& effectDestinationNames()
+    {
+        static const juce::StringArray names = []
+        {
+            namespace d = sv3::effectDestination;
+            juce::StringArray n { "Off" };
+            for (int s = 1; s <= d::insertSlots; ++s)
+                for (int k = 1; k <= d::perSlot; ++k)
+                    n.add("I" + juce::String(s) + " Param " + juce::String(k));
+            for (int s = 1; s <= d::masterSlots; ++s)
+                for (int k = 1; k <= d::perSlot; ++k)
+                    n.add("F" + juce::String(s) + " Param " + juce::String(k));
+            jassert(n.size() == d::count);
+            return n;
+        }();
+        return names;
+    }
+
     const juce::StringArray& modSourceNames()
     {
         static const juce::StringArray names = []
@@ -384,6 +428,7 @@ namespace coolsynth::parameters::v3
         for (int i = 1; i <= partGlobalLfos; ++i)
             group->addChild(makeLfoGroup(part, "glfo" + juce::String(i), "Global LFO " + juce::String(i), true));
         group->addChild(makeMatrixGroup(part));
+        group->addChild(makeEffectRouteGroup(part));
         group->addChild(makeGlobalModulatorGroups(part));
 
         auto voice = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".voice", "Voice", "|");
@@ -527,6 +572,17 @@ namespace coolsynth::parameters::v3
             m.curve = get("curve");
         }
 
+        for (int i = 0; i < sv3::effectRouteCount; ++i)
+        {
+            auto& m = p.effectRoutes[static_cast<std::size_t>(i)];
+            auto get = [&](const char* field) { return state.getRawParameterValue(effectRouteParameterId(part, i + 1, field)); };
+            m.source = get("src");
+            m.destination = get("dst");
+            m.amount = get("amount");
+            m.via = get("via");
+            m.curve = get("curve");
+        }
+
         p.env2ToP1 = state.getRawParameterValue(voiceParameterId(part, "env2ToP1"));
         p.velToP1 = state.getRawParameterValue(voiceParameterId(part, "velToP1"));
         p.glide = state.getRawParameterValue(voiceParameterId(part, "glide"));
@@ -663,6 +719,17 @@ namespace coolsynth::parameters::v3
             slot.via = static_cast<sv3::ModSource>(juce::jlimit(0, sv3::ModSources::count - 1, loadInt(m.via, 0)));
             slot.curve = static_cast<sv3::ModCurve>(juce::jlimit(0, sv3::modCurveCount - 1, loadInt(m.curve, 0)));
             settings.voice.matrix.add(slot);
+        }
+
+        for (std::size_t i = 0; i < settings.effectRoutes.size(); ++i)
+        {
+            const auto& m = pointers.effectRoutes[i];
+            auto& route = settings.effectRoutes[i];
+            route.source = static_cast<sv3::ModSource>(juce::jlimit(0, sv3::ModSources::count - 1, loadInt(m.source, 0)));
+            route.destination = juce::jlimit(0, sv3::effectDestination::count - 1, loadInt(m.destination, 0));
+            route.amount = load(m.amount, 0.0f);
+            route.via = static_cast<sv3::ModSource>(juce::jlimit(0, sv3::ModSources::count - 1, loadInt(m.via, 0)));
+            route.curve = static_cast<sv3::ModCurve>(juce::jlimit(0, sv3::modCurveCount - 1, loadInt(m.curve, 0)));
         }
 
         settings.voice.env2ToP1 = load(pointers.env2ToP1, 0.0f);

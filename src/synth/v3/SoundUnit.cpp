@@ -9,6 +9,31 @@ namespace coolsynth::synth::v3
 {
     namespace
     {
+        /** The sources a fraction t of the way from the block's start to its end (D179). */
+        ModSources between(const ModSources& before, const ModSources& after, float t) noexcept
+        {
+            ModSources mixed;
+            for (std::size_t i = 0; i < mixed.values.size(); ++i)
+                mixed.values[i] = before.values[i] + (after.values[i] - before.values[i]) * t;
+            return mixed;
+        }
+
+        /** Runs `step(piece, t, beat)` over the block in pieces of effectRouteStep samples, t the fraction of the
+            block done at each piece's end, so a slot's settings move with the routes as the block goes (D179). */
+        template <typename Step>
+        void runInSteps(juce::AudioBuffer<float>& audio, int n, const InsertContext& beat, Step&& step) noexcept
+        {
+            for (int offset = 0; offset < n; offset += effectRouteStep)
+            {
+                const int length = std::min(effectRouteStep, n - offset);
+                float* channels[2] = { audio.getWritePointer(0) + offset, audio.getWritePointer(1) + offset };
+                juce::AudioBuffer<float> piece(channels, 2, length);
+                InsertContext at = beat;
+                at.beatsAtStart += beat.beatsPerSample * offset;
+                step(piece, static_cast<float>(offset + length) / static_cast<float>(n), at);
+            }
+        }
+
         /** Knob 8, Space (D176): a reverb's, delay's or room's wet share times 2^space, so twice at the top and half
             at the bottom; other effects as they are. The effects smooth their mix themselves. */
         InsertSettings withSpace(const InsertSettings& settings, float space) noexcept
@@ -253,6 +278,11 @@ namespace coolsynth::synth::v3
         if (active[0] && active[1])
             voices = voiceLimits(voices);
 
+        // Where each part's part-wide sources stood before this block: the effect routes ramp from there (D179).
+        std::array<ModSources, partCount> sourcesBefore {};
+        for (std::size_t p = 0; p < parts.size(); ++p)
+            sourcesBefore[p] = parts[p]->effectSources();
+
         // The voices first: both parts, each into its own buffer.
         std::array<bool, partCount> rendered {};
         bool soundOff = false;
@@ -331,9 +361,20 @@ namespace coolsynth::synth::v3
 
             juce::AudioBuffer<float> partAudio(partBuffers[p].getArrayOfWritePointers(), 2, n);
             const StageClock insertsClock { slowest, p == 0 ? 3 : 4 };
+            const auto& routes = settings.parts[p].effectRoutes;
+            const auto& after = parts[p]->effectSources();
+            const bool routesMove = effectRoutesMove(routes, sourcesBefore[p], after);
             for (std::size_t slot = 0; slot < inserts[p].size(); ++slot)
             {
-                inserts[p][slot].process(partAudio, withSpace(settings.inserts[p][slot], settings.space), beat);
+                if (! routesMove)
+                    inserts[p][slot].process(partAudio, withSpace(settings.inserts[p][slot], settings.space), beat);
+                else
+                    runInSteps(partAudio, n, beat, [&](juce::AudioBuffer<float>& piece, float t, const InsertContext& at)
+                    {
+                        auto moved = settings.inserts[p][slot];
+                        applyEffectRoutes(moved, false, static_cast<int>(slot), routes, between(sourcesBefore[p], after, t));
+                        inserts[p][slot].process(piece, withSpace(moved, settings.space), at);
+                    });
                 if (const int broken = scrubBroken(partAudio.getWritePointer(0), partAudio.getWritePointer(1), n); broken > 0)
                 {
                     inserts[p][slot].clear();
@@ -377,11 +418,24 @@ namespace coolsynth::synth::v3
         }
         mixPrimed = true;
 
-        // The master slots, F1 to F6 in turn.
+        // The master slots, F1 to F6 in turn; both parts' routes may move them.
+        bool masterRoutesMove = false;
+        for (std::size_t p = 0; p < parts.size(); ++p)
+            masterRoutesMove = masterRoutesMove || effectRoutesMove(settings.parts[p].effectRoutes, sourcesBefore[p], parts[p]->effectSources());
         for (std::size_t slot = 0; slot < masterSlots->size(); ++slot)
         {
             const StageClock masterClock { slowest, 10 + static_cast<int>(slot) };
-            (*masterSlots)[slot].process(stereo, withSpace(settings.master[slot], settings.space), beat);
+            if (! masterRoutesMove)
+                (*masterSlots)[slot].process(stereo, withSpace(settings.master[slot], settings.space), beat);
+            else
+                runInSteps(stereo, n, beat, [&](juce::AudioBuffer<float>& piece, float t, const InsertContext& at)
+                {
+                    auto moved = settings.master[slot];
+                    for (std::size_t p = 0; p < parts.size(); ++p)
+                        applyEffectRoutes(moved, true, static_cast<int>(slot), settings.parts[p].effectRoutes,
+                                          between(sourcesBefore[p], parts[p]->effectSources(), t));
+                    (*masterSlots)[slot].process(piece, withSpace(moved, settings.space), at);
+                });
             if (const int broken = scrubBroken(l, r, n); broken > 0)
             {
                 (*masterSlots)[slot].clear();

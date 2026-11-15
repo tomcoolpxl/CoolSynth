@@ -381,6 +381,18 @@ namespace coolsynth::synth::v3
                 frame.values[static_cast<std::size_t>(5 + k)] = value;
             }
         }
+        // Where the part-wide sources stand at the end of this chunk: the effect routes read them (D179).
+        if (frameCount > 0)
+        {
+            const auto& last = frames[static_cast<std::size_t>(frameCount - 1)];
+            for (std::size_t k = 0; k < trackedGlobalSources.size(); ++k)
+                effectSourceValues.set(trackedGlobalSources[k], last.values[k]);
+        }
+        effectSourceValues.set(ModSource::wheel, wheel);
+        effectSourceValues.set(ModSource::bend, bendNormalised);
+        effectSourceValues.set(ModSource::aftertouch, channelPressure);
+        effectSourceValues.set(ModSource::expression, expressionPedal);
+
         globals.clock = clock;
         globals.ppqPerSample = ppqPerVoiceSample;
         globals.frames = frames.data();
