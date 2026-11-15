@@ -736,6 +736,197 @@ private:
 
 // ---- The panel --------------------------------------------------------------------------------------
 
+// ---- Prefs: a dialog card over the panel (D197) -------------------------------------------------------
+
+namespace
+{
+    /** Prefs as a dialog in the panel's own style: what was a menu (D174) laid out in sections, each choice a row of
+        buttons with a line saying what it does. Over the dimmed panel; x, Escape or a click beside it closes it. */
+    class PrefsCard final : public juce::Component
+    {
+    public:
+        explicit PrefsCard(SynthAudioProcessor& s) : synth(s)
+        {
+            setVisible(false);
+            setWantsKeyboardFocus(true);
+            auto style = [](juce::TextButton& b, bool toggle)
+            {
+                b.setColour(juce::TextButton::buttonColourId, colours::knob);
+                b.setColour(juce::TextButton::buttonOnColourId, colours::ink);
+                b.setColour(juce::TextButton::textColourOffId, colours::ink);
+                b.setColour(juce::TextButton::textColourOnId, colours::background);
+                b.setClickingTogglesState(false);
+                if (toggle)
+                    b.setConnectedEdges(0);
+            };
+            for (auto* b : { &close, &save, &audio })
+                style(*b, false);
+            close.setButtonText(juce::String(juce::CharPointer_UTF8("\xc3\x97")));
+            close.onClick = [this] { hide(); };
+            save.setButtonText(juce::String(juce::CharPointer_UTF8("Save sound\xe2\x80\xa6")));
+            save.onClick = [this]
+            {
+                hide();
+                if (auto* parent = getParentComponent())
+                    PanelEditor::askToSaveSound(synth, *parent);
+            };
+            audio.setButtonText(juce::String(juce::CharPointer_UTF8("Audio and MIDI settings\xe2\x80\xa6")));
+            audio.onClick = [this]
+            {
+                hide();
+                if (synth.showAudioSettings)
+                    synth.showAudioSettings();
+            };
+            const char* multiNames[] { "Auto", "Off" };
+            for (int i = 0; i < 2; ++i)
+            {
+                auto& b = multi[static_cast<std::size_t>(i)];
+                style(b, true);
+                b.setButtonText(multiNames[i]);
+                b.onClick = [this, i] { synth.chooseMultiCore(i == 0); refresh(); };
+                b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight : juce::Button::ConnectedOnLeft);
+            }
+            const char* curveNames[] { "Soft", "Normal", "Hard" };
+            for (int i = 0; i < 3; ++i)
+            {
+                auto& b = curve[static_cast<std::size_t>(i)];
+                style(b, true);
+                b.setButtonText(curveNames[i]);
+                b.onClick = [this, i] { synth.chooseVelocityCurve(i); refresh(); };
+                b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight
+                                           : (i == 2 ? juce::Button::ConnectedOnLeft : juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight));
+            }
+            for (auto* c : std::initializer_list<juce::Component*> { &close, &save, &audio, &multi[0], &multi[1], &curve[0], &curve[1], &curve[2] })
+                addAndMakeVisible(*c);
+        }
+
+        void show()
+        {
+            audio.setVisible(static_cast<bool>(synth.showAudioSettings)); // the app sets its hook after the panel is built
+            resized();
+            refresh();
+            setVisible(true);
+            toFront(true);
+            grabKeyboardFocus();
+        }
+
+        void hide() { setVisible(false); }
+
+        /** The choices as they are, and the computer's last second (the panel calls this 30 times a second). */
+        void refresh()
+        {
+            if (! isVisible())
+                return;
+            multi[0].setToggleState(synth.multiCore(), juce::dontSendNotification);
+            multi[1].setToggleState(! synth.multiCore(), juce::dontSendNotification);
+            for (int i = 0; i < 3; ++i)
+                curve[static_cast<std::size_t>(i)].setToggleState(synth.velocityCurve() == i, juce::dontSendNotification);
+            repaint();
+        }
+
+        bool keyPressed(const juce::KeyPress& key) override
+        {
+            if (key == juce::KeyPress::escapeKey)
+            {
+                hide();
+                return true;
+            }
+            return false;
+        }
+
+        void mouseDown(const juce::MouseEvent& e) override
+        {
+            if (! cardArea.contains(e.getPosition()))
+                hide(); // a click beside the card
+        }
+
+        void resized() override
+        {
+            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 424 : 364).withCentre(getLocalBounds().getCentre());
+            auto r = cardArea.reduced(28, 22);
+            auto head = r.removeFromTop(30);
+            close.setBounds(head.removeFromRight(30));
+            titleArea = head;
+            r.removeFromTop(14);
+            auto section = [&](juce::Rectangle<int>& label, int height)
+            {
+                label = r.removeFromTop(16);
+                auto row = r.removeFromTop(height);
+                r.removeFromTop(14);
+                return row;
+            };
+            save.setBounds(section(soundLabel, 30).withWidth(170));
+            if (synth.showAudioSettings)
+                audio.setBounds(section(audioLabel, 30).withWidth(250));
+            auto multiRow = section(multiLabel, 48);
+            auto buttons = multiRow.removeFromTop(30);
+            for (auto& b : multi)
+                b.setBounds(buttons.removeFromLeft(90));
+            multiText = multiRow;
+            auto curveRow = section(curveLabel, 48);
+            buttons = curveRow.removeFromTop(30);
+            for (auto& b : curve)
+                b.setBounds(buttons.removeFromLeft(90));
+            curveText = curveRow;
+            computerLabel = r.removeFromTop(16);
+            computerText = r.removeFromTop(40);
+        }
+
+        void paint(juce::Graphics& g) override
+        {
+            g.fillAll(juce::Colours::black.withAlpha(0.55f)); // the panel behind, dimmed
+            const auto card = cardArea.toFloat();
+            g.setColour(colours::panel);
+            g.fillRoundedRectangle(card, 14.0f);
+            g.setColour(colours::panelEdge.brighter(0.2f));
+            g.drawRoundedRectangle(card.reduced(0.5f), 14.0f, 1.0f);
+
+            g.setColour(colours::ink);
+            g.setFont(sans(20.0f, true));
+            g.drawText("Prefs", titleArea, juce::Justification::centredLeft);
+
+            auto label = [&](juce::Rectangle<int> area, const juce::String& text)
+            {
+                g.setColour(colours::print);
+                g.setFont(mono(10.0f, true));
+                g.drawText(text, area, juce::Justification::centredLeft);
+            };
+            label(soundLabel, "SOUND");
+            if (synth.showAudioSettings)
+                label(audioLabel, "AUDIO AND MIDI");
+            label(multiLabel, "MULTI-CORE");
+            label(curveLabel, "VELOCITY CURVE");
+            label(computerLabel, "THIS COMPUTER, THE LAST SECOND");
+
+            g.setColour(colours::muted);
+            g.setFont(sans(12.5f));
+            g.drawText(synth.multiCore() ? "Sounds that overlap play on several cores."
+                                         : "Everything on the audio thread.", multiText, juce::Justification::centredLeft);
+            const int c = synth.velocityCurve();
+            g.drawText(c == SynthAudioProcessor::softCurve ? "A light touch plays loud."
+                           : (c == SynthAudioProcessor::hardCurve ? "Loud takes a firm touch." : "As played."),
+                       curveText, juce::Justification::centredLeft);
+
+            const auto& workers = coolsynth::synth::v3::AudioWorkers::instance();
+            g.setColour(colours::muted);
+            g.setFont(mono(11.0f));
+            auto lines = computerText;
+            g.drawText(PanelEditor::cpuSummary(synth), lines.removeFromTop(18), juce::Justification::centredLeft);
+            g.drawText(workers.cpu().describe() + ", " + juce::String(workers.workerCount())
+                           + (workers.workerCount() == 1 ? " helper" : " helpers"),
+                       lines.removeFromTop(18), juce::Justification::centredLeft);
+        }
+
+    private:
+        SynthAudioProcessor& synth;
+        juce::TextButton close, save, audio;
+        std::array<juce::TextButton, 2> multi;
+        std::array<juce::TextButton, 3> curve;
+        juce::Rectangle<int> cardArea, titleArea, soundLabel, audioLabel, multiLabel, curveLabel, computerLabel,
+                             multiText, curveText, computerText;
+    };
+}
+
 class PanelEditor::Content final : public juce::Component
 {
 public:
@@ -807,7 +998,7 @@ public:
         // Options where Shift was (D185): the screen no longer keeps a Shift of its own; the computer's Shift key and
         // the MiniLab's still turn the knobs finely.
         options.setButtonText("Prefs"); // "Options" had to be squeezed to fit Shift's width
-        options.onClick = [this] { PanelEditor::showOptions(owner.synth, options); };
+        options.onClick = [this] { prefs.show(); }; // a dialog card since D197 (was a menu)
         options.setTooltip("Save sound, multi-core, velocity curve, the CPU's work; audio and MIDI in the app");
         for (auto* button : { &options, &hold, &octDown, &octUp })
         {
@@ -842,13 +1033,24 @@ public:
         keyboard.setWantsKeyboardFocus(false);
         keyboard.setKeyWidth(42.0f);
         addAndMakeVisible(keyboard);
+        addChildComponent(prefs); // last, so it lies over everything when shown (D197)
 
         setSize(designWidth, designHeight);
+    }
+
+    /** Escape closes Prefs first (D197). */
+    bool closePrefs()
+    {
+        if (! prefs.isVisible())
+            return false;
+        prefs.hide();
+        return true;
     }
 
     void refresh()
     {
         screen.repaint();
+        prefs.refresh();
         // The main knob and knob 5 turn with every step the model took, at most five detents at once (End, Home).
         if (const auto turns = model.mainTurnCount(); turns != shownMainTurns)
         {
@@ -1089,6 +1291,7 @@ public:
         keyboard.setBounds(left, padBottom + 30, designWidth - 2 * left, designHeight - padBottom - 30 - 32);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / static_cast<float>(whiteKeys));
 
+        prefs.setBounds(getLocalBounds()); // the dialog covers the panel; its card sits in the middle (D197)
         // the CPU: the layer screen's bottom right corner (D195; beside the main knob from D191)
         cpuArea = layerScreen.reduced(12, 8).removeFromBottom(14).removeFromRight(70);
     }
@@ -1096,7 +1299,7 @@ public:
     void mouseDown(const juce::MouseEvent& e) override
     {
         if (cpuArea.contains(e.getPosition()))
-            PanelEditor::showOptions(owner.synth, options);
+            prefs.show();
         // A layer panel picks the layer the sections edit, as Home pressed again does (D195).
         for (int layer = 0; layer < 2; ++layer)
             if (layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()) && model.part() != layer)
@@ -1195,6 +1398,7 @@ private:
     FlatKeyboard keyboard;
     juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea, layerScreen;
     std::array<juce::Rectangle<int>, 2> layerPanels; // the layer screen's two panels, clickable (D195)
+    PrefsCard prefs { owner.synth };                 // over everything, hidden until Prefs is pressed (D197)
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
     int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)
@@ -1252,6 +1456,8 @@ bool PanelEditor::keyPressed(const juce::KeyPress& key)
     // In a list (Home's rooms and sounds, a type list) up and down move through it; in a section's map they turn
     // knob 5's pages. Escape and Backspace go back one level; Page Up and Down move five rows, Home and End to the
     // ends (D181).
+    if (key == juce::KeyPress::escapeKey && content->closePrefs())
+        return true;
     const bool listOnScreen = model.typeListOpen() || model.view() == InterfaceModel::View::home;
     if (code == juce::KeyPress::rightKey) model.turnMain(1);
     else if (code == juce::KeyPress::leftKey) model.turnMain(-1);

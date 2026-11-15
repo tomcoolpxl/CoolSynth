@@ -129,8 +129,8 @@ editor; the user's review of the drafted macros (D177).
 
 Planned for the real interface (D169):
 - **An Options button** in CoolSynth's own interface (built, D174; since D185 "Prefs", where the
-  screen's Shift was; since D187 the window bar has none): Save sound, Audio and MIDI in the app,
-  Multi-core Auto/Off, the CPU's work in detail, this computer. **The CPU reading** sits in the
+  screen's Shift was; since D187 the window bar has none; a dialog card since D197): Save sound, Audio
+  and MIDI in the app, Multi-core Auto/Off, the velocity curve, the CPU's work in detail, this computer. **The CPU reading** sits in the
   screen surround's bottom right corner, beside the main knob (D191): `CPU 7%`, the audio thread's
   share of the last second, amber from 60%, red from 90%; a click opens Prefs.
 - **Engine pills in the sound browser** (built, D173; software screen only, not the MiniLab): each

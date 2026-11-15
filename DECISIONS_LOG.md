@@ -3971,3 +3971,13 @@ multitimbral synths give each part a detune of +-50 cents.
   rows, LAYER) and the chain at the end (F1-F6, two rows, MASTER); before, it still drew three layer slots
   and cut F4-F6 off. With the cursor on an F slot both panels of the layer screen go dark and MASTER lights in
   its info row (D195).
+
+## D197. Prefs as a dialog (2026-11-15)
+
+At the user's word ("the options menu should be a dialog box, properly designed"), Prefs is a card
+in the panel's own style over the dimmed panel, where the menu of D174 was: SOUND (Save sound...),
+AUDIO AND MIDI (in the app), MULTI-CORE (Auto or Off as a row of buttons, a line saying what the
+choice does), VELOCITY CURVE (Soft, Normal, Hard, likewise) and THIS COMPUTER, THE LAST SECOND (the
+CPU's work in detail, the machine and its helpers, live). The x, Escape or a click beside the card
+closes it; the Prefs button and the CPU reading open it. The card lays itself out each time it opens,
+since the app hands the panel its audio settings only after the panel is built.
