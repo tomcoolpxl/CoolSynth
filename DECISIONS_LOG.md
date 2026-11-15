@@ -3123,3 +3123,18 @@ From the real-time review, chosen by the user ("No big wipes in the audio"):
   buffer, the room: about 38 MB at 48 kHz) in one block; many hosts send All Sound Off when the
   transport stops. Each slot now remembers which of its effects played since its last wipe and
   wipes only those; a slot that stayed off costs nothing.
+
+## D161. The allocation alarm and the audio scenario tests (2026-11-15)
+
+From the real-time review, chosen by the user ("Allocation alarm in tests", "Scenario tests").
+processBlock marks its thread for the block (`diag::AudioBlockScope`, one thread-local store); the
+test program replaces operator new and counts every allocation made on a marked thread
+(`tests/AudioThreadAlarm.cpp`; a self-test proves the replacement is the one in use). The plugin
+and the app replace nothing. `tests/AudioScenarioTests.cpp` plays, through the whole processor:
+every preset with a chord and a switch to the next preset while it still rings (120 switches);
+All Sound Off and panic while chords and effects ring; 32 note-ons in one block on every preset;
+blocks of 1, 37 and 129 samples and blocks longer than prepared (1024, 4096). Each fails on any
+allocation or any NaN or infinity, and reports its worst block. First run: no allocation, no
+broken value; worst block 1.6 ms over the switches, 5.9 ms with 32 note-ons on the heaviest preset
+(a 256-sample block lasts 5.3 ms; the user's 480-sample block 10.9 ms); All Sound Off 0.05 ms.
+Still to add: a click detector for the switches, once effect changes fade (the next step).

@@ -171,6 +171,8 @@ if(BUILD_TESTING)
     target_sources(CoolSynthMidiLearnTests
         PRIVATE
             tests/MidiLearnTests.cpp
+            tests/AudioThreadAlarm.cpp
+            tests/AudioScenarioTests.cpp
             tests/InterfaceModelTests.cpp
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp

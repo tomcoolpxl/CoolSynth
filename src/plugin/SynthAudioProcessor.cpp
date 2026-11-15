@@ -13,6 +13,7 @@
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 #include "BuildInfo.h"
+#include "diagnostics/AudioThreadAlarm.h"
 #include "diagnostics/FlightRecorder.h"
 #include "plugin/AuditionEditor.h"
 #include "plugin/PanelEditor.h"
@@ -369,6 +370,7 @@ bool SynthAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) con
 
 void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
+    const coolsynth::diag::AudioBlockScope audioBlock; // the allocation alarm watches this thread now (D161)
     juce::ScopedNoDenormals noDenormals;
     const double blockStartMs = juce::Time::getMillisecondCounterHiRes();
     struct BlockTripwires
