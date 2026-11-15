@@ -53,4 +53,15 @@ namespace coolsynth::presets
         left out as before), Layer a stack, Split stays split. The sound is the same.
     */
     void migrateLayerModes(juce::XmlElement& parameterState);
+
+    /** The format versions before a Sample slot used its ninth to twelfth values (slices, D207). */
+    inline constexpr int processorStateVersionBeforeSlices = 13;
+    inline constexpr int patchVersionBeforeSlices = 12;
+
+    /**
+        Rewrites a parameter state from before D207 in place: a Sample slot's Count, Sensitivity and First Key were
+        unused and saved as 0 (2 slices, nothing kept, C-1); they take the type's defaults (16, 50 %, C3), so turning
+        Slices on later starts where a new slot does. Slices itself, 0, is Off: the sound is the same.
+    */
+    void migrateSampleSlices(juce::XmlElement& parameterState);
 }

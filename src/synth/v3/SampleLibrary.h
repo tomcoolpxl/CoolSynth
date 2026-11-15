@@ -83,6 +83,16 @@ namespace coolsynth::synth::v3
         float velocityTrack = 1.0f;  // 0: every note at full level (an organ); 1: level follows velocity squared
         float releaseSeconds = 0.5f; // the release the author gave the instrument: for presets, not used in playing
 
+        /** The user's own sound (UserLibrary.h, D207): where its attacks are, for slices cut at them. */
+        struct Attack
+        {
+            int frame = 0;         // where the sound rises, in the recording's frames
+            float strength = 0.0f; // 1 for the file's strongest attack
+        };
+        std::vector<Attack> attacks; // in time order
+        /** A folder of the user's files played as a kit: one zone per file, in name order, one per key (D207). */
+        bool kit = false;
+
         /** The recording for a note (fractional MIDI) at a velocity 0..1; `turn` picks among takes. Null when empty.
             A zone whose keys and velocities hold the note wins; outside every zone the nearest recorded note plays. */
         [[nodiscard]] const SampleZone* pick(float midiNote, float velocity, unsigned turn) const noexcept;

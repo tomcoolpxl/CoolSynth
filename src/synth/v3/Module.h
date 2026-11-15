@@ -312,6 +312,29 @@ namespace coolsynth::synth::v3
             }, instances[active].module);
         }
 
+        /** The voice plays another key without a restart (a retrigger): for the types that pick by key (a slice, D207). */
+        void noteChanged(int noteNumber) noexcept
+        {
+            lastNote.noteNumber = noteNumber;
+            std::visit([noteNumber](auto& module)
+            {
+                if constexpr (requires { module.noteChanged(noteNumber); })
+                    module.noteChanged(noteNumber);
+            }, instances[active].module);
+        }
+
+        /** True while the module plays something that outlasts the key (a slice, D207): the voice releases after it. */
+        [[nodiscard]] bool holdsRelease() const noexcept
+        {
+            return std::visit([](const auto& module)
+            {
+                if constexpr (requires { module.holdsRelease(); })
+                    return module.holdsRelease();
+                else
+                    return false;
+            }, instances[active].module);
+        }
+
         /** The same voice plays again without a restart, for the types that are struck (a string). */
         void strike() noexcept
         {

@@ -61,6 +61,7 @@ namespace coolsynth::synth::v3
         pending = false;
         pendingReleased = false;
         released = false;
+        releaseWaiting = false;
         stealRemaining = 0;
         envelopeHold = 0;
         polyPressure = 0.0f;
@@ -132,10 +133,14 @@ namespace coolsynth::synth::v3
         }
         note = start;
         released = false;
+        releaseWaiting = false;
         lfoRestartPending = true;
         polyPressure = 0.0f; // a key struck again starts without pressure of its own; the smoothed value follows
         for (auto& g : generators)
-            g.slot.strike(); // a string is plucked again; oscillators run on
+        {
+            g.slot.noteChanged(start.note); // a slice picks this key's piece (D207)
+            g.slot.strike();                // a string is plucked again; oscillators run on
+        }
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
         startEnvelopes(envelopeTimeFactors(sources, start, noteRandom)); // this voice's sources are current
     }
@@ -204,6 +209,19 @@ namespace coolsynth::synth::v3
             return;
         released = true;
         releaseVelocity = velocity;
+        // A slice plays to its end even after the key is let go (D207): the envelopes release once it has.
+        for (const auto& g : generators)
+            if (g.slot.holdsRelease())
+            {
+                releaseWaiting = true;
+                return;
+            }
+        releaseNow();
+    }
+
+    void Voice::releaseNow() noexcept
+    {
+        releaseWaiting = false;
         for (auto& e : envelopes)
             e.noteOff();
         for (auto& g : generators)
@@ -214,6 +232,7 @@ namespace coolsynth::synth::v3
     {
         note = start;
         released = false;
+        releaseWaiting = false;
         releaseVelocity = 0.0f;
         targetPitch = static_cast<float>(start.note) + start.detuneCents * 0.01f;
         currentPitch = start.glideFrom >= 0 ? static_cast<float>(start.glideFrom) + start.detuneCents * 0.01f : targetPitch;
@@ -339,6 +358,9 @@ namespace coolsynth::synth::v3
 
             renderSubBlock(left + done, right + done, done, n, settings, globals);
             done += n;
+
+            if (releaseWaiting && std::none_of(generators.begin(), generators.end(), [](const auto& g) { return g.slot.holdsRelease(); }))
+                releaseNow(); // the slice has played to its end (D207)
 
             if (stealRemaining > 0)
             {

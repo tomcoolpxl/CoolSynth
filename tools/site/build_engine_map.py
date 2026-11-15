@@ -492,7 +492,8 @@ GEN_ROWS = [
                "release. Stays in tune however dark the damping."),
     ("Modal", "12 struck partials. Material morphs from wood (a marimba bar, 1 : 4 : 10.1 : 19.1, measured on "
               "a recording) through metal and glass to a tine. Mallet hardness, strike position."),
-    ("Sample", "Plays the Conservatory’s recorded instruments (16-point sinc read), or 5 factory loops."),
+    ("Sample", "Plays the Conservatory’s recorded instruments (16-point sinc read), 5 factory loops, or your file "
+               "cut into slices (equal, or at its attacks) or a folder as a kit, one per key."),
     ("Grain", "A cloud of up to 12 grains per voice from a sample, or live from the generator before it: "
               "position, scan (0 freezes it), size, density, spray, pitch spray."),
 ]

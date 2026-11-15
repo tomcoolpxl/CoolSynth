@@ -7,6 +7,7 @@
 #include "presets/PatchState.h"
 #include "midi/LearnedBindingsXml.h"
 #include "synth/v3/Inserts.h"
+#include "synth/v3/SampleGenerator.h"
 
 class AudioProcessorXmlHarness final : public juce::AudioProcessor
 {
@@ -757,3 +758,76 @@ public:
 };
 
 static LayerArpMigrationTests layerArpMigrationTests;
+
+
+class SampleSliceMigrationTests final : public juce::UnitTest
+{
+public:
+    SampleSliceMigrationTests() : juce::UnitTest("Sample slice migration", "Presets") {}
+
+    void runTest() override
+    {
+        namespace sv3 = coolsynth::synth::v3;
+        const auto& d = sv3::SampleGenerator::descriptor();
+        auto defaultOf = [&](int index) { return sv3::unitsToNormalised(d.params[static_cast<std::size_t>(index)], d.params[static_cast<std::size_t>(index)].def); };
+        auto value = [](SynthAudioProcessor& p, const juce::String& id) { return p.getValueTreeState().getRawParameterValue(id)->load(); };
+
+        // A state with a Sample slot whose ninth to twelfth values were unused, saved as 0 (before D207).
+        auto saved = [&](int version)
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            auto& state = source->getValueTreeState();
+            auto* type = state.getParameter("pA.g2.type");
+            type->setValueNotifyingHost(type->getValueForText("Sample"));
+            for (int n = 9; n <= 12; ++n)
+                state.getParameter("pA.g2.p" + juce::String(n))->setValueNotifyingHost(0.0f);
+            juce::MemoryBlock block;
+            source->getStateInformation(block);
+            auto root = juce::AudioProcessor::getXmlFromBinary(block.getData(), static_cast<int>(block.getSize()));
+            root->setAttribute("formatVersion", version);
+            juce::MemoryBlock old;
+            juce::AudioProcessor::copyXmlToBinary(*root, old);
+            return old;
+        };
+
+        beginTest("an_old_sample_slot_gets_the_slice_defaults_and_stays_unsliced");
+        {
+            const auto old = saved(13);
+            auto target = std::make_unique<SynthAudioProcessor>();
+            target->setStateInformation(old.getData(), static_cast<int>(old.getSize()));
+            expectEquals(value(*target, "pA.g2.p9"), 0.0f, "Slices stays Off");
+            expectWithinAbsoluteError(value(*target, "pA.g2.p10"), defaultOf(sv3::SampleGenerator::count), 1.0e-6f, "Count 16");
+            expectWithinAbsoluteError(value(*target, "pA.g2.p11"), defaultOf(sv3::SampleGenerator::sense), 1.0e-6f, "Sensitivity 50 %");
+            expectWithinAbsoluteError(value(*target, "pA.g2.p12"), defaultOf(sv3::SampleGenerator::firstKey), 1.0e-6f, "First Key C3");
+        }
+
+        beginTest("a_current_state_keeps_its_values");
+        {
+            const auto current = saved(14);
+            auto target = std::make_unique<SynthAudioProcessor>();
+            target->setStateInformation(current.getData(), static_cast<int>(current.getSize()));
+            expectEquals(value(*target, "pA.g2.p12"), 0.0f, "First Key C-1, as saved");
+        }
+
+        beginTest("an_old_saved_sound_is_migrated_too");
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            auto& state = source->getValueTreeState();
+            auto* type = state.getParameter("pA.g1.type");
+            type->setValueNotifyingHost(type->getValueForText("Sample"));
+            for (int n = 9; n <= 12; ++n)
+                state.getParameter("pA.g1.p" + juce::String(n))->setValueNotifyingHost(0.0f);
+            auto patchXml = coolsynth::presets::createWrappedPatchXml(*source->createParameterStateXml(), source->getParameterStateTypeName());
+            patchXml->setAttribute("formatVersion", 12);
+            const auto result = coolsynth::presets::parseWrappedPatchXml(*patchXml, source->getParameterStateTypeName());
+            expect(result.parameterStateXml != nullptr);
+            if (result.parameterStateXml != nullptr)
+                for (auto* child : result.parameterStateXml->getChildWithTagNameIterator("PARAM"))
+                    if (child->getStringAttribute("id") == "pA.g1.p12")
+                        expectWithinAbsoluteError(static_cast<float>(child->getDoubleAttribute("value")), defaultOf(sv3::SampleGenerator::firstKey), 1.0e-6f);
+            expect(result.migrated, "an older patch says it was migrated");
+        }
+    }
+};
+
+static SampleSliceMigrationTests sampleSliceMigrationTests;

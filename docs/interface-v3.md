@@ -99,6 +99,11 @@ Escape or Backspace go back, left/right turn the main knob, 1-8 are the pads. Th
 for knobs 1-4 (role or "knob n", name, value, a bar) in the page's colour. In Home the live-page
 tabs sit between the list and the cards.
 
+A Sample slot's first knob turns through the instruments and, past them, the user's own files and
+folders in the User folder of the sample library (D207): a press loads one, as it loads an
+instrument; a folder plays as a kit, one file per key. Its fourth page, Slices, cuts a file into
+pieces, one per key from First Key. With no files yet, the list's last line says where to put them.
+
 Under the mouse (D204), whatever can be clicked or turned lights up softly (a knob's halo, a pad's
 glow, a white fader thumb, a brighter button, an outlined row, tab, slot, card, layer panel or CPU
 reading), the hand cursor shows, and the hint line names it and how to work it ("Knob 2: Grit ·

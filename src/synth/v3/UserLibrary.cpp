@@ -241,9 +241,199 @@ namespace coolsynth::synth::v3
         }
     }
 
+    juce::Array<juce::File> UserLibrary::kitFiles(const juce::File& folder)
+    {
+        auto files = folder.findChildFiles(juce::File::findFiles, false, "*.wav;*.aif;*.aiff;*.flac");
+        // As Windows Explorer orders them: runs of digits by their value ("1 low", "02 mid", "10 high"), the rest
+        // letter by letter without case.
+        auto before = [](const juce::String& a, const juce::String& b)
+        {
+            auto p = a.getCharPointer(), q = b.getCharPointer();
+            while (! p.isEmpty() && ! q.isEmpty())
+            {
+                if (p.isDigit() && q.isDigit())
+                {
+                    juce::uint64 x = 0, y = 0;
+                    while (p.isDigit())
+                        x = x * 10 + static_cast<juce::uint64>(p.getAndAdvance() - '0');
+                    while (q.isDigit())
+                        y = y * 10 + static_cast<juce::uint64>(q.getAndAdvance() - '0');
+                    if (x != y)
+                        return x < y;
+                    continue;
+                }
+                const auto c = juce::CharacterFunctions::toLowerCase(p.getAndAdvance());
+                const auto d = juce::CharacterFunctions::toLowerCase(q.getAndAdvance());
+                if (c != d)
+                    return c < d;
+            }
+            return p.isEmpty() && ! q.isEmpty() ? true : (q.isEmpty() ? false : a < b);
+        };
+        std::sort(files.begin(), files.end(), [&](const juce::File& a, const juce::File& b)
+        {
+            return before(a.getFileName(), b.getFileName());
+        });
+        if (files.size() > maxKitFiles)
+            files.removeRange(maxKitFiles, files.size() - maxKitFiles);
+        return files;
+    }
+
+    std::vector<LoadedStyle::Attack> UserLibrary::findAttacks(const float* mono, int length, double rate)
+    {
+        std::vector<LoadedStyle::Attack> attacks;
+        if (mono == nullptr || length <= 0 || rate <= 0.0)
+            return attacks;
+
+        // Hops of about 5 ms; frames of four hops or more (1024 at 48 kHz), centred on the hop.
+        const int hop = std::max(32, static_cast<int>(std::lround(rate * 0.0053)));
+        int order = 6;
+        while ((1 << order) < 4 * hop)
+            ++order;
+        const int size = 1 << order;
+        const int bins = size / 2 + 1;
+        juce::dsp::FFT fft(order);
+        std::vector<float> window(static_cast<std::size_t>(size)), buffer(static_cast<std::size_t>(2 * size));
+        for (int i = 0; i < size; ++i)
+            window[static_cast<std::size_t>(i)] = static_cast<float>(0.5 - 0.5 * std::cos(2.0 * juce::MathConstants<double>::pi * i / size));
+        std::vector<float> previous(static_cast<std::size_t>(bins), 0.0f);
+        const int frames = length / hop + 1;
+        std::vector<float> novelty(static_cast<std::size_t>(frames), 0.0f);
+
+        // Spectral flux on compressed magnitudes: how much louder each band got since the last hop, summed.
+        for (int f = 0; f < frames; ++f)
+        {
+            const int start = f * hop - size / 2;
+            for (int i = 0; i < size; ++i)
+            {
+                const int at = start + i;
+                buffer[static_cast<std::size_t>(i)] = at >= 0 && at < length ? mono[at] * window[static_cast<std::size_t>(i)] : 0.0f;
+            }
+            std::fill(buffer.begin() + size, buffer.end(), 0.0f);
+            fft.performRealOnlyForwardTransform(buffer.data(), true);
+            float flux = 0.0f;
+            for (int k = 0; k < bins; ++k)
+            {
+                const auto ku = static_cast<std::size_t>(k);
+                const float magnitude = std::log1p(100.0f * std::hypot(buffer[2 * ku], buffer[2 * ku + 1]));
+                flux += std::max(0.0f, magnitude - previous[ku]);
+                previous[ku] = magnitude;
+            }
+            novelty[static_cast<std::size_t>(f)] = flux;
+        }
+
+        // What rises above its neighbourhood: the flux less its median over about 90 ms around.
+        constexpr int around = 8;
+        std::vector<float> excess(static_cast<std::size_t>(frames), 0.0f), neighbourhood;
+        neighbourhood.reserve(2 * around + 1);
+        float strongest = 0.0f;
+        for (int f = 0; f < frames; ++f)
+        {
+            neighbourhood.clear();
+            for (int g = std::max(0, f - around); g <= std::min(frames - 1, f + around); ++g)
+                neighbourhood.push_back(novelty[static_cast<std::size_t>(g)]);
+            std::nth_element(neighbourhood.begin(), neighbourhood.begin() + static_cast<std::ptrdiff_t>(neighbourhood.size() / 2), neighbourhood.end());
+            const float e = std::max(0.0f, novelty[static_cast<std::size_t>(f)] - neighbourhood[neighbourhood.size() / 2]);
+            excess[static_cast<std::size_t>(f)] = e;
+            strongest = std::max(strongest, e);
+        }
+        if (strongest <= 1.0e-6f)
+            return attacks;
+
+        // Peaks: the largest within 15 ms either side, above 5 % of the strongest, kept 40 ms apart (the stronger stays).
+        const int reach = std::max(1, static_cast<int>(std::lround(0.015 * rate / hop)));
+        const int apart = static_cast<int>(std::lround(0.040 * rate));
+        const int riseWindow = std::max(8, static_cast<int>(std::lround(0.002 * rate)));
+        for (int f = 0; f < frames; ++f)
+        {
+            const float e = excess[static_cast<std::size_t>(f)];
+            if (e < 0.05f * strongest)
+                continue;
+            bool highest = true;
+            for (int g = std::max(0, f - reach); g <= std::min(frames - 1, f + reach) && highest; ++g)
+                if (g != f && (excess[static_cast<std::size_t>(g)] > e || (excess[static_cast<std::size_t>(g)] == e && g < f)))
+                    highest = false;
+            if (! highest)
+                continue;
+
+            // Where in the frame the sound rises: two windows of 2 ms side by side slide over it; where the later one holds
+            // the most more energy than the earlier, the later one starts at the attack.
+            const int from = std::max(2 * riseWindow, f * hop - size / 2);
+            const int to = std::min(length - 1, f * hop + size / 2);
+            double later = 0.0, earlier = 0.0;
+            for (int i = from - riseWindow; i < from; ++i)
+                later += static_cast<double>(mono[i]) * mono[i];
+            for (int i = from - 2 * riseWindow; i < from - riseWindow; ++i)
+                earlier += static_cast<double>(mono[i]) * mono[i];
+            double steepest = -1.0;
+            int at = f * hop;
+            for (int i = from; i <= to; ++i)
+            {
+                if (later - earlier > steepest)
+                {
+                    steepest = later - earlier;
+                    at = i - riseWindow;
+                }
+                const double entering = static_cast<double>(mono[i]) * mono[i];
+                const double moving = static_cast<double>(mono[i - riseWindow]) * mono[i - riseWindow];
+                const double leaving = static_cast<double>(mono[i - 2 * riseWindow]) * mono[i - 2 * riseWindow];
+                later += entering - moving;
+                earlier += moving - leaving;
+            }
+            at = std::clamp(at, 0, length - 1);
+            if (length - at < apart)
+                continue; // the file's own end, cut short, reads as a new sound: no slice could start there anyway
+
+            if (! attacks.empty() && at - attacks.back().frame < apart)
+            {
+                if (e / strongest > attacks.back().strength)
+                    attacks.back() = { at, e / strongest };
+                continue;
+            }
+            attacks.push_back({ at, e / strongest });
+        }
+        return attacks;
+    }
+
     UserLibrary::Loaded UserLibrary::load(const juce::File& file)
     {
         Loaded result;
+        if (file.isDirectory())
+        {
+            // A kit: every audio file in the folder, in name order, one recording each.
+            const auto files = kitFiles(file);
+            auto style = std::make_unique<LoadedStyle>();
+            style->kit = true;
+            juce::AudioFormatManager formats;
+            formats.registerBasicFormats();
+            for (const auto& member : files)
+            {
+                std::unique_ptr<juce::AudioFormatReader> reader(formats.createReaderFor(member));
+                if (reader == nullptr || reader->lengthInSamples <= 0
+                    || static_cast<double>(reader->lengthInSamples) > maxSampleSeconds * reader->sampleRate)
+                    continue;
+                const int frames = static_cast<int>(reader->lengthInSamples);
+                juce::AudioBuffer<float> audio(2, frames);
+                reader->read(&audio, 0, frames, 0, true, true);
+                const float* left = audio.getReadPointer(0);
+                const float* right = audio.getReadPointer(reader->numChannels > 1 ? 1 : 0);
+                float* out = style->addRecording(frames);
+                for (int i = 0; i < frames; ++i)
+                {
+                    out[2 * i] = left[i];
+                    out[2 * i + 1] = right[i];
+                }
+                SampleZone zone;
+                zone.frames = frames;
+                zone.rate = reader->sampleRate;
+                zone.data = out;
+                style->zones.push_back(zone);
+            }
+            if (style->zones.empty())
+                result.problem = "no audio files CoolSynth can read in the folder " + file.getFileName();
+            else
+                result.sample = std::move(style);
+            return result;
+        }
         if (! file.existsAsFile())
         {
             result.problem = "not found: " + file.getFullPathName();
@@ -306,13 +496,16 @@ namespace coolsynth::synth::v3
             }
         }
         style->zones.push_back(zone);
+
+        std::vector<float> mono(static_cast<std::size_t>(frames));
+        for (int i = 0; i < frames; ++i)
+            mono[static_cast<std::size_t>(i)] = 0.5f * (left[i] + right[i]);
+        // Where its attacks are, for slices cut at them (D207).
+        style->attacks = findAttacks(mono.data(), frames, reader->sampleRate);
         result.sample = std::move(style);
 
         // The grains' source: mono, at the pitch the sampler chunk gives.
         {
-            std::vector<float> mono(static_cast<std::size_t>(frames));
-            for (int i = 0; i < frames; ++i)
-                mono[static_cast<std::size_t>(i)] = 0.5f * (left[i] + right[i]);
             const double rootHz = 440.0 * std::exp2((zone.root - 69.0 + 0.01 * zone.tuneCents) / 12.0);
             result.grains = buildGrainSource(mono.data(), frames, reader->sampleRate, rootHz);
         }

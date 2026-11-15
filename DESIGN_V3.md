@@ -133,6 +133,21 @@ checked bit for bit against the recordings by `verify_library.py`. Bank files na
 (`g1 = Sample sample=cellos style=tremolo`) and a preset may carry `family = Strings`, which
 the preset menu uses as a submenu under its room.
 
+Slices and kits (2026-11-15, decision D207): the Sample slot's fourth page cuts the user's own
+file into pieces, one per key from First Key (C3 by default): Slices Off, Equal (Count, 2 to 64)
+or Attacks (Sensitivity). `UserLibrary::findAttacks` finds the attacks once, when the file loads
+(a spectral flux on log magnitudes over 5 ms hops, peaks above their local median 40 ms apart,
+each placed by the steepest 2 ms rise of energy) and keeps them with the sound
+(`LoadedStyle::attacks`); `SampleGenerator::sliceRange` cuts 2 ms before each attack strong
+enough for the Sensitivity, 20 ms apart. A slot that names a folder plays it as a kit
+(`LoadedStyle::kit`): its files in Explorer's order, one per key. A slice or kit file plays at its
+own speed (only the slot's tuning, bend, glide and pitch modulation move it), fades in over 1 ms
+and out over 4 ms, may play reversed, and plays to its end after its key is let go: the voice asks
+its generators `holdsRelease()` and releases its envelopes once none holds; in Mono a new key cuts
+it (`noteChanged` tells the slot the key). The interface lists the User folder's files and folders
+after the instruments on the Sample knob. States and patches from before (state 13, patch 12) take
+the new values' defaults (`migrateSampleSlices`).
+
 Shipped (phase 4.2, 2026-11-13): `CrusherProcessor` and `FolderProcessor` in
 `src/synth/v3/ShaperProcessors.h`, processor types 3 and 4. Crusher: sample-and-hold at Rate,
 rounding to 2^bits levels (bits continuous), Mix. Folder: a sine folder with first-order

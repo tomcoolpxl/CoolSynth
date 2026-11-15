@@ -48,6 +48,16 @@
     loop when the file has one and Loop is on, its level following velocity squared. Silent while
     the file loads.
 
+    Slices (D207): with Slices at Equal or Attacks the user's file is cut into pieces, one per key
+    from First Key up: Count equal pieces, or a cut at every attack the loader found (Sensitivity
+    1 keeps them all, 0 only the strongest), each cut 2 ms before its attack and at least 20 ms
+    after the last. A slot that names a folder is a kit: one file per key, in name order. A slice
+    or a kit's file plays at its own speed on every key (the slot's octave, fine tuning, bend and
+    pitch modulation still move it), once, to its end, even after the key is let go: the voice
+    waits for it before it releases (holdsRelease). Reverse plays it from its end; Start skips
+    into it. It fades in over 1 ms and out over its last 4 ms, so no cut clicks. A key outside the
+    pieces is silent.
+
     Output is two samples late like every generator; a retriggered voice starts again.
 */
 namespace coolsynth::synth::v3
@@ -55,7 +65,9 @@ namespace coolsynth::synth::v3
     class SampleGenerator final
     {
     public:
-        enum Param : int { sample = 0, start, loop, loopStart, loopEnd, fade, reverse, style, paramCount };
+        enum Param : int { sample = 0, start, loop, loopStart, loopEnd, fade, reverse, style, slices, count, sense, firstKey, paramCount };
+        static constexpr int fewestSlices = 2, mostSlices = 64;  // Equal
+        static constexpr int mostAttackSlices = 128;              // Attacks
         static constexpr int latencySamples = generatorLatencySamples;
         static constexpr double endFadeFrames = 480.0; // 10 ms of a generated sample
         static constexpr double shortestLoopFrames = 64.0;
@@ -66,6 +78,33 @@ namespace coolsynth::synth::v3
         {
             static const std::string names = std::string(SampleBank::optionNames) + (InstrumentCatalogue::instance().count() > 0 ? "|" : "")
                                              + InstrumentCatalogue::instance().joinedNames();
+            return names;
+        }
+
+        /** "2|3|..|64": the equal slice counts. */
+        static const std::string& countNames()
+        {
+            static const std::string names = []
+            {
+                std::string s;
+                for (int n = fewestSlices; n <= mostSlices; ++n)
+                    s += (s.empty() ? "" : "|") + std::to_string(n);
+                return s;
+            }();
+            return names;
+        }
+
+        /** "C-1|C#-1|..|G9": every key by name, middle C as C4. */
+        static const std::string& keyNames()
+        {
+            static const std::string names = []
+            {
+                static constexpr const char* letters[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+                std::string s;
+                for (int key = 0; key < 128; ++key)
+                    s += (key == 0 ? "" : "|") + std::string(letters[key % 12]) + std::to_string(key / 12 - 1);
+                return s;
+            }();
             return names;
         }
 
@@ -81,9 +120,64 @@ namespace coolsynth::synth::v3
                    { "lend",    "Loop End",   0.0f, 1.0f, 1.0f, Skew::linear, Unit::percent, true },
                    { "xfade",   "Loop Fade",  0.0f, 1.0f, 0.2f, Skew::linear, Unit::percent, true },
                    { "reverse", "Reverse",    0.0f, 1.0f, 0.0f, Skew::linear, Unit::choice,  false, "Off|On" },
-                   { "style",   "Style",      0.0f, static_cast<float>(maxInstrumentStyles - 1), 0.0f, Skew::linear, Unit::choice, false, "1|2|3|4" } }},
+                   { "style",   "Style",      0.0f, static_cast<float>(maxInstrumentStyles - 1), 0.0f, Skew::linear, Unit::choice, false, "1|2|3|4" },
+                   // The user's file cut into slices, one per key (D207): the fourth page.
+                   { "slices",   "Slices",      0.0f, 2.0f,  0.0f,  Skew::linear, Unit::choice,  false, "Off|Equal|Attacks" },
+                   { "count",    "Count",       0.0f, static_cast<float>(mostSlices - fewestSlices), static_cast<float>(16 - fewestSlices),
+                     Skew::linear, Unit::choice, false, countNames().c_str() },
+                   { "sense",    "Sensitivity", 0.0f, 1.0f,  0.5f,  Skew::linear, Unit::percent, false },
+                   { "firstkey", "First Key",   0.0f, 127.0f, 48.0f, Skew::linear, Unit::choice,  false, keyNames().c_str() } }},
                 paramCount };
             return d;
+        }
+
+        /**
+            Where slice `index` of the user's sound lies (D207), in the recording's frames: Equal cuts it into `count`
+            pieces; Attacks (mode 2) cuts 2 ms before each attack at least `sensitivity`'s threshold strong
+            ((1 - sensitivity) squared of the strongest), at least 20 ms after the last cut. False when there is no
+            such slice.
+        */
+        static bool sliceRange(const LoadedStyle& style, const SampleZone& zone, int mode, int count, float sensitivity,
+                               int index, int& from, int& to) noexcept
+        {
+            const int frames = zone.frames;
+            if (index < 0 || frames <= 1)
+                return false;
+            if (mode == 1)
+            {
+                const int pieces = juce::jlimit(fewestSlices, mostSlices, count);
+                if (index >= pieces)
+                    return false;
+                from = static_cast<int>(static_cast<long long>(frames) * index / pieces);
+                to = static_cast<int>(static_cast<long long>(frames) * (index + 1) / pieces);
+                return to > from;
+            }
+            const float threshold = (1.0f - juce::jlimit(0.0f, 1.0f, sensitivity)) * (1.0f - juce::jlimit(0.0f, 1.0f, sensitivity));
+            const int preRoll = static_cast<int>(std::lround(0.002 * zone.rate));
+            const int apart = static_cast<int>(std::lround(0.020 * zone.rate));
+            int start = 0, n = 0;
+            for (const auto& attack : style.attacks)
+            {
+                if (attack.strength < threshold)
+                    continue;
+                const int cut = std::max(0, attack.frame - preRoll);
+                if (cut - start < apart || frames - cut < apart)
+                    continue;
+                if (n == index)
+                {
+                    from = start;
+                    to = cut;
+                    return true;
+                }
+                start = cut;
+                if (++n >= mostAttackSlices - 1)
+                    break;
+            }
+            if (n != index)
+                return false;
+            from = start;
+            to = frames;
+            return to > from;
         }
 
         static std::size_t memoryFloats(double, int maxSubBlock) { return static_cast<std::size_t>(std::max(1, maxSubBlock)); }
@@ -116,13 +210,21 @@ namespace coolsynth::synth::v3
             ringMono.fill(0.0f);
             cursor = 0;
             input = {};
+            slicing = false;
         }
 
         void noteOn(const NoteContext& context) noexcept
         {
             startPending = true;
             noteVelocity = context.velocity;
+            noteNumber = context.noteNumber;
         }
+
+        /** Another key on the same voice (a retrigger): the next start picks that key's slice (D207). */
+        void noteChanged(int newNote) noexcept { noteNumber = newNote; }
+
+        /** A slice or a kit's file plays to its end after the key is let go (D207): the voice waits while this is true. */
+        [[nodiscard]] bool holdsRelease() const noexcept { return (slicing && ! finished) || (startPending && armed); }
 
         /** The same voice again: the sample starts over. */
         void strike() noexcept { startPending = true; }
@@ -137,11 +239,19 @@ namespace coolsynth::synth::v3
         {
             const int which = std::max(0, static_cast<int>(std::lround(params.p[sample])));
             if (params.userSound >= 0)
-                renderStyle(left, right, numSamples, params, UserLibrary::instance().sample(params.userSound));
-            else if (which >= firstInstrument)
-                renderInstrument(left, right, numSamples, params, which - firstInstrument);
+            {
+                const LoadedStyle* user = UserLibrary::instance().sample(params.userSound);
+                armed = std::lround(params.p[slices]) > 0 || (user != nullptr && user->kit);
+                renderStyle(left, right, numSamples, params, user);
+            }
             else
-                renderGenerated(left, right, numSamples, params, std::min(which, SampleBank::sampleCount - 1));
+            {
+                armed = false;
+                if (which >= firstInstrument)
+                    renderInstrument(left, right, numSamples, params, which - firstInstrument);
+                else
+                    renderGenerated(left, right, numSamples, params, std::min(which, SampleBank::sampleCount - 1));
+            }
         }
 
         /** 4-point, 3rd-order Hermite read between frame[0] and frame[1]; frame[-1] and frame[2] must exist. */
@@ -289,7 +399,41 @@ namespace coolsynth::synth::v3
                 playingStyle = loaded;
                 finished = true;
                 zone = nullptr;
-                if (loaded != nullptr)
+                slicing = false;
+                const int sliceMode = held ? 0 : juce::jlimit(0, 2, static_cast<int>(std::lround(params.p[slices])));
+                if (loaded != nullptr && ! held && (loaded->kit || sliceMode > 0))
+                {
+                    // A slice of the user's file, or a kit's file, for this key (D207).
+                    velocityLevel = loaded->velocityGain(noteVelocity);
+                    const int index = noteNumber - juce::jlimit(0, 127, static_cast<int>(std::lround(params.p[firstKey])));
+                    int from = 0, to = 0;
+                    const SampleZone* chosen = nullptr;
+                    if (loaded->kit)
+                    {
+                        if (index >= 0 && index < static_cast<int>(loaded->zones.size()))
+                        {
+                            chosen = &loaded->zones[static_cast<std::size_t>(index)];
+                            to = chosen->frames;
+                        }
+                    }
+                    else if (! loaded->zones.empty()
+                             && sliceRange(*loaded, loaded->zones.front(), sliceMode,
+                                           static_cast<int>(std::lround(params.p[count])) + fewestSlices, params.p[sense], index, from, to))
+                        chosen = &loaded->zones.front();
+                    if (chosen != nullptr && to - from > 1)
+                    {
+                        zone = chosen;
+                        slicing = true;
+                        backwards = params.p[reverse] >= 0.5f;
+                        sliceFrom = static_cast<double>(from);
+                        sliceTo = static_cast<double>(to);
+                        const double skip = juce::jlimit(0.0, 1.0, static_cast<double>(params.p[start])) * (sliceTo - sliceFrom - 1.0);
+                        position = backwards ? sliceTo - 1.0 - skip : sliceFrom + skip;
+                        played = 0.0;
+                        finished = false;
+                    }
+                }
+                else if (loaded != nullptr)
                 {
                     const float midi = static_cast<float>(69.0 + 12.0 * std::log2(hz / 440.0));
                     // The next take: the part's own count (no global, D162 rule 3); a generator alone counts for itself.
@@ -378,8 +522,10 @@ namespace coolsynth::synth::v3
         void renderZone(float* left, float* right, int numSamples, const SlotParams& params, double hz,
                         float gainLeft, float gainRight, const Numbers& numbers) noexcept
         {
-            // The pitch the recording sounds at: its note, and the cents the manifest says it is off it.
-            const double rootHz = 440.0 * std::exp2((static_cast<double>(zone->root) - 69.0 + 0.01 * static_cast<double>(zone->tuneCents)) / 12.0);
+            // The pitch the recording sounds at: its note, and the cents the manifest says it is off it. A slice sounds at
+            // its own speed on every key: only what moves the note's pitch (octave, fine, bend, glide, modulation) moves it.
+            const double rootHz = slicing ? 440.0 * std::exp2((static_cast<double>(noteNumber) - 69.0) / 12.0)
+                                          : 440.0 * std::exp2((static_cast<double>(zone->root) - 69.0 + 0.01 * static_cast<double>(zone->tuneCents)) / 12.0);
             const double step = juce::jlimit(1.0 / 64.0, 32.0, hz / rootHz) * zone->rate / sampleRate;
             const int cutoff = SincKernels::cutoffFor(step);
             const bool looping = params.p[loop] >= 0.5f && zone->loopEnd > 0;
@@ -412,10 +558,26 @@ namespace coolsynth::synth::v3
                 outRight = sumRight * scale;
             };
 
+            // A slice's fades: in over 1 ms, out over its last 4 ms (at most a third of it), in the recording's frames.
+            const double fadeIn = std::max(1.0, 0.001 * zone->rate);
+            const double fadeOut = std::max(1.0, std::min(0.004 * zone->rate, (sliceTo - sliceFrom) / 3.0));
+
             for (int s = 0; s < numSamples; ++s)
             {
                 float valueLeft = 0.0f, valueRight = 0.0f;
-                if (! finished)
+                if (! finished && slicing)
+                {
+                    read(position, valueLeft, valueRight);
+                    const double remaining = backwards ? position - sliceFrom : sliceTo - position;
+                    const float gain = static_cast<float>(std::min(1.0, played / fadeIn) * std::clamp(remaining / fadeOut, 0.0, 1.0));
+                    valueLeft *= gain;
+                    valueRight *= gain;
+                    played += step;
+                    position += backwards ? -step : step;
+                    if (backwards ? position < sliceFrom : position >= sliceTo)
+                        finished = true;
+                }
+                else if (! finished)
                 {
                     read(position, valueLeft, valueRight);
                     if (looping)
@@ -451,7 +613,12 @@ namespace coolsynth::synth::v3
         bool startPending = false;
         bool finished = true;
         float noteVelocity = 1.0f;
+        int noteNumber = 60;
         float velocityLevel = 1.0f; // the level this note's velocity gives it on a sampled instrument
+        // A slice or a kit's file playing (D207): its frames, which way, how far it has come.
+        bool slicing = false, backwards = false;
+        bool armed = false; // the slot is set to slices or names a kit: a note about to start will be a slice
+        double sliceFrom = 0.0, sliceTo = 0.0, played = 0.0;
         const LoadedStyle* playingStyle = nullptr; // the style in memory this note started on
         /** The style this note counts itself a user of. A copy of the generator holds nothing of its own. */
         struct Held

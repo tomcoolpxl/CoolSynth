@@ -4114,3 +4114,39 @@ the three combinations (Tine Clav, Fizz Melody, Sea Pad) take it as master. Chec
 measurement before the user's ear: the patterns land (Spiral FM's seven notes, the stutter's gates,
 Sea Pad's eighth-note bass, Stepped Lead's semitone trill), and no clip clicks except Pirate
 Radio's deliberate crackle. The user's verdicts are on the audition page.
+
+## D207. Slices and kits in the Sample generator (2026-11-15)
+
+Second of the builds the research on the user's reference artists asked for (sample slices; the
+user's order after the Pitch effect, D205). Asked, after looking at how Ableton's Simpler and Logic's
+Quick Sampler slice: how to cut (options: equal parts and attacks, recommended and chosen; equal
+parts only; equal, attacks and beats), a kit of several files (options: a folder is a kit,
+recommended and chosen; later), how to choose a file (options: in the Sample list, recommended and
+chosen; a file dialog button; both) and how a slice plays (options: to its end, overlapping,
+recommended and chosen; to its end, one at a time; only while held).
+- **The Sample slot's fourth page**: Slices (Off, Equal, Attacks), Count (2 to 64 equal pieces),
+  Sensitivity (which attacks cut: (1 - sensitivity) squared of the strongest and up), First Key (C3,
+  the MiniLab's lowest key, by default). One piece per key from First Key up; a key outside them is
+  silent. A slice plays at the file's own speed on every key; the slot's octave and fine tuning,
+  bend, glide and pitch modulation still move it. Reverse plays it from its end, Start skips into it;
+  it fades in over 1 ms and out over its last 4 ms, so no cut clicks.
+- **Attacks** are found once per file when it loads (UserLibrary::findAttacks): a spectral flux on
+  log magnitudes over 5 ms hops, its peaks above their local median, 40 ms apart, each placed by the
+  steepest rise of the sound's energy over 2 ms; a cut lies 2 ms before its attack, at least 20 ms
+  after the last. Measured: five struck tones found within 1.5 ms. The file's own abrupt end, which
+  also reads as an attack, is left out.
+- **A folder is a kit**: its audio files in the order Windows Explorer shows them (numbers by their
+  value), one per key from First Key, up to 64.
+- **One-shot**: a slice or a kit's file plays to its end after the key is let go; the voice waits
+  for it before releasing (holdsRelease). Slices overlap; with the layer in Mono a new key cuts the
+  playing slice and plays its own (a choke, as Ableton's Mono does). Every other sound releases as
+  before, sample for sample.
+- **Choosing**: turning the Sample knob past the 40 instruments goes on into Your files: every
+  file and every folder of audio inside the User folder of the sample library (made if missing),
+  chosen with a press as an instrument is (D156); an instrument again lets the file go. With none,
+  the list says where to put them.
+- Saved states and sounds from before (processor state 13, patch 12) get the new values' defaults
+  (they were saved as 0: C-1, two slices); Slices stays Off, so they sound the same.
+Sources: Ableton Simpler's slicing (Sound On Sound, "Keep It Simple"; MusicRadar, "How to chop
+beats with Ableton Simpler's Slice mode"); Logic Pro Quick Sampler's Slice mode and Sampler's
+chromatic mapping of several files from C2 (support.apple.com, Logic Pro and MainStage guides).

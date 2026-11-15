@@ -12,6 +12,7 @@
 #include "presets/FactoryPresets.h"
 #include "presets/MySounds.h"
 #include "synth/v3/Inserts.h"
+#include "synth/v3/UserLibrary.h"
 
 /*
     The V3 interface's logic (docs/interface-v3.md): navigation E, Home as browser and live page,
@@ -114,6 +115,46 @@ public:
             expectWithinAbsoluteError(semitones(), 8.0f, 1.0e-4f); // back on a whole semitone
             model->turnKnob(1, 40, false);
             expectWithinAbsoluteError(semitones(), 24.0f, 1.0e-4f);
+        }
+
+        beginTest("Past the instruments the Sample knob lists your files and kits; a press loads one (D207)");
+        {
+            const auto folder = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                    .getChildFile("CoolSynthBrowseTests_" + juce::String::toHexString(juce::Random::getSystemRandom().nextInt()));
+            auto& library = coolsynth::synth::v3::UserLibrary::instance();
+            library.setFolder(folder);
+            {
+                auto synth = std::make_unique<SynthAudioProcessor>();
+                auto model = std::make_unique<InterfaceModel>(*synth);
+                model->pressPad(InterfaceModel::padOfSection(0), false); // Sound: G1
+                auto* type = synth->getValueTreeState().getParameter("pA.g1.type");
+                type->setValueNotifyingHost(type->getValueForText("Sample"));
+                model->turnKnob(1, 500, false); // to the end of the list
+                expect(model->knob(1).value.startsWith("No files yet: put WAV files in "), model->knob(1).value);
+                expect(folder.isDirectory(), "the User folder is made, so there is a place for files");
+                model->pressKnob(1);
+                expect(synth->getUserFile(0, 1).isEmpty(), "the hint line loads nothing");
+
+                folder.getChildFile("Breaks").createDirectory();
+                folder.getChildFile("Breaks/amen.wav").replaceWithText("not audio, but a name");
+                folder.getChildFile("vox.wav").replaceWithText("not audio, but a name");
+                model->turnKnob(1, 500, false);
+                expectEquals(model->knob(1).value, juce::String("vox.wav"), "the last of the user's entries");
+                model->turnKnob(1, -1, false);
+                expectEquals(model->knob(1).value, juce::String("Breaks/amen.wav"));
+                model->turnKnob(1, -1, false);
+                expectEquals(model->knob(1).value, juce::String("Breaks/ (kit)"), "a folder plays as a kit");
+                model->pressKnob(1);
+                expectEquals(synth->getUserFile(0, 1), juce::String("Breaks"));
+                expectEquals(model->knob(1).value, juce::String("Breaks/ (kit)"), "the knob names what plays");
+
+                model->turnKnob(1, -1, false); // back onto the last instrument
+                expect(! model->knob(1).value.contains("/"), model->knob(1).value);
+                model->pressKnob(1);
+                expect(synth->getUserFile(0, 1).isEmpty(), "an instrument again lets the file go");
+            }
+            library.setFolder(juce::File());
+            folder.deleteRecursively();
         }
 
         beginTest("A sampled slot's instrument knob only shows the choice; a press loads it (D156)");

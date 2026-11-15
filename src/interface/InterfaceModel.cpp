@@ -1,5 +1,6 @@
 #include "InterfaceModel.h"
 
+#include <algorithm>
 #include <cmath>
 
 #include "parameters/ParameterIDs.h"
@@ -9,6 +10,7 @@
 #include "presets/FactoryPresets.h"
 #include "presets/MySounds.h"
 #include "synth/v3/SampleLibrary.h"
+#include "synth/v3/UserLibrary.h"
 
 namespace coolsynth::ui
 {
@@ -664,11 +666,23 @@ namespace coolsynth::ui
         if (knobNumber == 6 && layerEmpty(currentPart))
             idle("layer empty");
 
+        int part = 0, slot = 0;
+        const bool source = sampleSourceOf(p->getParameterID(), part, slot);
+        const int instruments = std::max(2, optionCount(*p));
         if (pendingChoice.has_value() && pendingChoice->id == p->getParameterID())
         {
-            view.value = p->getText(pendingChoice->value, 64);
+            view.value = source && pendingChoice->index >= instruments ? userEntryText(pendingChoice->index - instruments)
+                                                                      : p->getText(pendingChoice->value, 64);
             view.normalised = pendingChoice->value;
             view.pending = true;
+        }
+        else if (source && synth.getUserFile(part, slot).isNotEmpty())
+        {
+            // The user's own file or kit (D207), by its name.
+            const auto file = synth.getUserFile(part, slot);
+            const bool kit = coolsynth::synth::v3::UserLibrary::instance().folder().getChildFile(file).isDirectory();
+            view.value = kit ? file + "/ (kit)" : file;
+            view.normalised = 1.0f;
         }
         return view;
     }
@@ -723,15 +737,22 @@ namespace coolsynth::ui
             return;
         if (knobNumber <= 4 && loadsInstrument(p->getParameterID()))
         {
-            // Browsing instruments reads nothing in: the knob shows the choice, a press loads it (D156).
-            const int options = std::max(2, optionCount(*p));
-            const float from = pendingChoice.has_value() && pendingChoice->id == p->getParameterID() ? pendingChoice->value : p->getValue();
-            const int index = clampInt(juce::roundToInt(from * static_cast<float>(options - 1)) + steps, 0, options - 1);
-            const float value = static_cast<float>(index) / static_cast<float>(options - 1);
-            if (juce::roundToInt(p->getValue() * static_cast<float>(options - 1)) == index)
+            // Browsing instruments reads nothing in: the knob shows the choice, a press loads it (D156). A Sample slot's
+            // source goes on past the instruments into the user's own files and kits (D207).
+            const int instruments = std::max(2, optionCount(*p));
+            int part = 0, slot = 0;
+            const bool source = sampleSourceOf(p->getParameterID(), part, slot);
+            const bool browsing = pendingChoice.has_value() && pendingChoice->id == p->getParameterID();
+            if (source && ! browsing)
+                refreshUserEntries();
+            const int total = instruments + (source ? static_cast<int>(userEntries.size()) : 0);
+            const int loaded = source ? loadedSourceIndex(*p, part, slot) : juce::roundToInt(p->getValue() * static_cast<float>(instruments - 1));
+            const int index = clampInt((browsing ? pendingChoice->index : loaded) + steps, 0, total - 1);
+            const float value = index < instruments ? static_cast<float>(index) / static_cast<float>(instruments - 1) : p->getValue();
+            if (index == loaded)
                 pendingChoice.reset(); // back on what is loaded
             else
-                pendingChoice = PendingChoice { p->getParameterID(), knobNumber, value };
+                pendingChoice = PendingChoice { p->getParameterID(), knobNumber, value, index };
         }
         else
             stepParameter(*p, steps, fine);
@@ -814,8 +835,85 @@ namespace coolsynth::ui
         if (! pendingChoice.has_value())
             return;
         if (auto* p = parameter(pendingChoice->id))
-            setNormalised(*p, pendingChoice->value);
+        {
+            int part = 0, slot = 0;
+            const bool source = sampleSourceOf(pendingChoice->id, part, slot);
+            const int instruments = std::max(2, optionCount(*p));
+            if (source && pendingChoice->index >= instruments)
+            {
+                // One of the user's files or kits (D207); the "none yet" line chooses nothing.
+                const int entry = pendingChoice->index - instruments;
+                if (entry < static_cast<int>(userEntries.size()) && userEntries[static_cast<std::size_t>(entry)].name.isNotEmpty())
+                    synth.setUserFile(part, slot, userEntries[static_cast<std::size_t>(entry)].name);
+            }
+            else
+            {
+                setNormalised(*p, pendingChoice->value);
+                if (source && synth.getUserFile(part, slot).isNotEmpty())
+                    synth.setUserFile(part, slot, {}); // an instrument again: the file is let go
+            }
+        }
         pendingChoice.reset();
+    }
+
+    bool InterfaceModel::sampleSourceOf(const juce::String& parameterId, int& part, int& slot) const
+    {
+        // "pA.g1.p1": layer A's first generator, its source
+        if (! parameterId.endsWith(".p1") || ! loadsInstrument(parameterId))
+            return false;
+        part = parameterId.startsWith("pB.") ? 1 : 0;
+        slot = parameterId.fromFirstOccurrenceOf(".g", false, false).getIntValue();
+        return slot >= 1 && slot <= pv::partGeneratorSlots;
+    }
+
+    void InterfaceModel::refreshUserEntries()
+    {
+        userEntries.clear();
+        auto folder = coolsynth::synth::v3::UserLibrary::instance().folder();
+        folder.createDirectory(); // there is always a place to put one's files (D207)
+        userFolderPath = folder.getFullPathName();
+        const auto files = folder.findChildFiles(juce::File::findFiles, true, "*.wav;*.aif;*.aiff;*.flac");
+        juce::StringArray kits;
+        for (const auto& file : files)
+        {
+            userEntries.push_back({ file.getRelativePathFrom(folder).replaceCharacter('\\', '/'), false });
+            const auto parent = file.getParentDirectory();
+            if (parent != folder)
+                kits.addIfNotAlreadyThere(parent.getRelativePathFrom(folder).replaceCharacter('\\', '/'));
+        }
+        for (const auto& kit : kits)
+            userEntries.push_back({ kit, true });
+        std::sort(userEntries.begin(), userEntries.end(), [](const UserEntry& a, const UserEntry& b)
+        {
+            const int order = a.name.compareNatural(b.name);
+            return order != 0 ? order < 0 : a.kit && ! b.kit; // a folder before the files in it
+        });
+        constexpr std::size_t most = 2000;
+        if (userEntries.size() > most)
+            userEntries.resize(most);
+        if (userEntries.empty())
+            userEntries.push_back({ {}, false });
+    }
+
+    int InterfaceModel::loadedSourceIndex(const juce::RangedAudioParameter& source, int part, int slot) const
+    {
+        const int instruments = std::max(2, optionCount(source));
+        const auto file = synth.getUserFile(part, slot);
+        if (file.isNotEmpty())
+            for (std::size_t i = 0; i < userEntries.size(); ++i)
+                if (userEntries[i].name == file)
+                    return instruments + static_cast<int>(i);
+        return juce::roundToInt(source.getValue() * static_cast<float>(instruments - 1));
+    }
+
+    juce::String InterfaceModel::userEntryText(int entry) const
+    {
+        if (entry < 0 || entry >= static_cast<int>(userEntries.size()))
+            return {};
+        const auto& e = userEntries[static_cast<std::size_t>(entry)];
+        if (e.name.isEmpty())
+            return "No files yet: put WAV files in " + userFolderPath;
+        return e.kit ? e.name + "/ (kit)" : e.name;
     }
 
     void InterfaceModel::raisePopup(const juce::String& name, const juce::String& value, float normalised, bool fader, int control)

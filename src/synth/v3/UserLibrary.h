@@ -19,7 +19,8 @@
     once however many slots use it, into both forms a slot can play:
 
         a sample    the whole file as one recording over every key: its root note and loop from
-                    the file's own sampler chunk ("smpl"), else C4 and no loop; stereo as it is
+                    the file's own sampler chunk ("smpl"), else C4 and no loop; stereo as it is;
+                    with where its attacks are, for slices (D207)
         a wavetable the common WAV kind (Serum, Vital and most packs): frames of 2048 samples,
                     or the frame size its "clm " chunk names, up to 256 frames, the first channel;
                     a shorter file is one single cycle, stretched to 2048. Every frame exists at
@@ -27,6 +28,9 @@
                     scaled so its loudest frame peaks at 1, so frames keep their levels against
                     each other. Only files of at most 256 frames get a wavetable form.
         grains      the first minute in mono, at three band limits, for the grain generator
+
+    A slot may name a folder instead: its audio files load as a kit, one recording per file in
+    name order, played one per key by the Sample generator (D207); a kit has no wavetable or grains.
 
     The audio thread asks with the handle and gets what is in memory or nothing: it never waits.
     A sound no slot has held for five seconds is dropped, and its memory is freed two seconds
@@ -109,7 +113,14 @@ namespace coolsynth::synth::v3
         };
         /** Mono audio at a rate, sounding rootHz at its own speed, as the grain generator reads it. */
         [[nodiscard]] static std::unique_ptr<UserGrainSource> buildGrainSource(const float* mono, int length, double rate, double rootHz);
+        /** A file, or a folder as a kit: its audio files in name order, one zone each (D207). */
         [[nodiscard]] static Loaded load(const juce::File& file);
+        /** Where the sound rises (D207): a spectral flux over 5 ms hops, its peaks above their local median at least
+            40 ms apart, each placed by the steepest rise of the sound's energy around it. Strength 1 is the strongest. */
+        [[nodiscard]] static std::vector<LoadedStyle::Attack> findAttacks(const float* mono, int length, double rate);
+        /** A kit's files: the audio files directly in the folder, in natural name order, at most maxKitFiles. */
+        [[nodiscard]] static juce::Array<juce::File> kitFiles(const juce::File& folder);
+        static constexpr int maxKitFiles = 64;
         /** A table from mono audio cut into frames of frameSize samples (each resampled to 2048), at most
             maxWavetableFrames; a file shorter than one frame is one cycle. Null for no audio. */
         [[nodiscard]] static std::unique_ptr<UserWavetable> buildWavetable(const float* mono, int length, int frameSize);

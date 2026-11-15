@@ -45,7 +45,7 @@ namespace
     // 11: the layer modes Stack, Split, Velocity (a 10 or 9 is carried over, D190);
     // 12: an arp and six effect slots per layer (an 11, 10 or 9 is carried over, D194);
     // 13: the Layers page's balance, detune and spread (D196; a 12 gets them at their defaults)
-    inline constexpr int processorStateFormatVersion = 13;
+    inline constexpr int processorStateFormatVersion = 14;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
@@ -1191,6 +1191,8 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         if (globalArp)
             for (const auto& [from, to] : coolsynth::presets::migrateLayerArps(parameterStateXml)) // one arp per layer
                 renamed[from] = to;
+        if (version <= coolsynth::presets::processorStateVersionBeforeSlices)
+            coolsynth::presets::migrateSampleSlices(parameterStateXml); // a Sample slot's slice values at their defaults (D207)
         if (version != processorStateFormatVersion)
             addMissingParameters(parameterStateXml); // what the older version did not have, at its default
 

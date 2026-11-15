@@ -179,8 +179,8 @@ review them.
    keyboard's own key count. Today it shows only while the MiniLab is connected.
 
 37. Next from the research on the user's reference artists (`docs/research/sound-references.md`, the
-   user's order of 2026-11-15): the Pitch effect and the Night Bus room are done (D205, D206); then
-   sample slices for the Sample generator, then the stutter effect; the Pitch effect's Tune mode and
+   user's order of 2026-11-15): the Pitch effect and the Night Bus room are done (D205, D206), sample
+   slices and kits too (D207); next the stutter effect; the Pitch effect's Tune mode and
    formant control come after the plain shift. The Night Bus presets wait for the user's verdicts on
    the audition page (`tools/audition/make_nightbus.py` renders them).
 

@@ -52,6 +52,8 @@ namespace coolsynth::presets
             migrateLayerModes(*result.parameterStateXml); // the layer modes of before D190
         if (version <= patchVersionWithGlobalArp)
             migrateLayerArps(*result.parameterStateXml); // one arp and three slots per layer before D194
+        if (version <= patchVersionBeforeSlices)
+            migrateSampleSlices(*result.parameterStateXml); // a Sample slot's slice values at their defaults (D207)
         result.migrated = version != patchFormatVersion;
         return result;
     }

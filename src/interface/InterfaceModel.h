@@ -273,9 +273,26 @@ namespace coolsynth::ui
             juce::String id;
             int knob = 0;
             float value = 0.0f; // normalised
+            int index = 0;      // in the list as browsed: the instruments, then the user's files (D207)
         };
         [[nodiscard]] bool loadsInstrument(const juce::String& parameterId) const;
         void commitPendingChoice();
+
+        /** The user's files and folders (kits) a Sample slot can play after the instruments (D207), read from the User
+            folder when browsing starts. With none, one line says where to put them. */
+        struct UserEntry
+        {
+            juce::String name; // the path inside the User folder, forward slashes; empty for the "none yet" line
+            bool kit = false;
+        };
+        std::vector<UserEntry> userEntries;
+        juce::String userFolderPath;
+        void refreshUserEntries();
+        /** The layer (0, 1) and generator slot (1..3) of a Sample slot's source (".p1"), or false. */
+        [[nodiscard]] bool sampleSourceOf(const juce::String& parameterId, int& part, int& slot) const;
+        /** Where the slot's source sits in the browsed list: its instrument, or the user's file after them. */
+        [[nodiscard]] int loadedSourceIndex(const juce::RangedAudioParameter& source, int part, int slot) const;
+        [[nodiscard]] juce::String userEntryText(int entry) const;
         void cancelPendingChoice() noexcept { pendingChoice.reset(); }
 
         juce::RangedAudioParameter* parameter(const juce::String& id) const;

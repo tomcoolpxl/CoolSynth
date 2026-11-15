@@ -7,6 +7,7 @@
 #include "parameters/v3/PartParameters.h"
 #include "synth/v3/EffectRoutes.h"
 #include "synth/v3/Inserts.h"
+#include "synth/v3/Voice.h"
 
 namespace coolsynth::presets
 {
@@ -200,5 +201,44 @@ namespace coolsynth::presets
             }
         }
         return renamed;
+    }
+
+    void migrateSampleSlices(juce::XmlElement& parameterState)
+    {
+        namespace sv3 = coolsynth::synth::v3;
+        auto find = [&](const juce::String& id) -> juce::XmlElement*
+        {
+            for (auto* child : parameterState.getChildWithTagNameIterator(parameterTag))
+                if (child->getStringAttribute(idAttribute) == id)
+                    return child;
+            return nullptr;
+        };
+        const auto& d = sv3::SampleGenerator::descriptor();
+        for (const char* layer : { "pA", "pB" })
+            for (int slot = 1; slot <= 3; ++slot)
+            {
+                const juce::String path = juce::String(layer) + ".g" + juce::String(slot) + ".";
+                const auto* type = find(path + "type");
+                if (type == nullptr || juce::roundToInt(type->getDoubleAttribute(valueAttribute)) != sv3::generatorType::sample)
+                    continue;
+                constexpr std::array<int, 3> unused { sv3::SampleGenerator::count, sv3::SampleGenerator::sense, sv3::SampleGenerator::firstKey };
+                bool allZero = true;
+                for (const int index : unused)
+                    if (const auto* value = find(path + "p" + juce::String(index + 1)); value != nullptr && value->getDoubleAttribute(valueAttribute) != 0.0)
+                        allZero = false;
+                if (! allZero)
+                    continue;
+                for (const int index : unused)
+                {
+                    auto* value = find(path + "p" + juce::String(index + 1));
+                    if (value == nullptr)
+                    {
+                        value = parameterState.createNewChildElement(parameterTag);
+                        value->setAttribute(idAttribute, path + "p" + juce::String(index + 1));
+                    }
+                    const auto& parameter = d.params[static_cast<std::size_t>(index)];
+                    value->setAttribute(valueAttribute, static_cast<double>(sv3::unitsToNormalised(parameter, parameter.def)));
+                }
+            }
     }
 }

@@ -433,6 +433,8 @@ Tune mode to the Pitch effect.
 - **Room plan: one new room** for the whole space, with its variety inside it (sections 5, 9.5
   and 9.7 list the proposed presets). **Built** the same day (D206): Night Bus, all sixteen
   presets, the Pitch effect in each; Vocal Mask and High Voice play from factory sound.
+- **Slices** built the same day (D207): Equal or at attacks, one per key, played to their end, and a
+  folder of files as a kit.
 - **Corners to research:** all four, now in section 9.6.
 
 The options as they were put:

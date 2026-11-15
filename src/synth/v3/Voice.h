@@ -215,6 +215,8 @@ namespace coolsynth::synth::v3
         void legato(const NoteStart& note) noexcept;
         void release(float releaseVelocity = 0.5f) noexcept;
         void kill() noexcept { reset(); }
+        /** Let go and waiting for a slice to end before releasing (D207). */
+        [[nodiscard]] bool isReleaseWaiting() const noexcept { return releaseWaiting; }
         /** The pressure on this voice's own key (polyphonic aftertouch), 0..1. A new key starts at 0. */
         void setPolyPressure(float value) noexcept { polyPressure = std::clamp(value, 0.0f, 1.0f); }
 
@@ -258,6 +260,7 @@ namespace coolsynth::synth::v3
         void applySettings(const VoiceSettings& settings) noexcept;
         void snapToSettings() noexcept;
         void restartModules() noexcept;
+        void releaseNow() noexcept;
         void beginNote(const NoteStart& start, const ModSources& base) noexcept;
         void startPendingNote(const VoiceGlobals& globals) noexcept;
         /** Each envelope's time factor for a note, from the matrix's envelope-time slots. */
@@ -288,6 +291,7 @@ namespace coolsynth::synth::v3
         bool pending = false;
         bool pendingReleased = false;
         bool released = false;
+        bool releaseWaiting = false; // let go, but a slice still plays to its end first (D207)
         bool prepared = false;
         int stealRemaining = 0;
         int envelopeHold = 0; // samples the envelopes wait at a fresh note, matching the generators' latency
