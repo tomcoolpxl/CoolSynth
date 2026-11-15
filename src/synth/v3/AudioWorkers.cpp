@@ -71,7 +71,8 @@ namespace coolsynth::synth::v3
     class AudioWorkers::Worker final : public juce::Thread
     {
     public:
-        Worker(AudioWorkers& o, int index) : juce::Thread("CoolSynth audio worker " + juce::String(index)), owner(o) {}
+        Worker(AudioWorkers& o, int threadIndex)
+            : juce::Thread("CoolSynth audio worker " + juce::String(threadIndex)), owner(o), index(threadIndex) {}
 
         void run() override
         {
@@ -96,7 +97,14 @@ namespace coolsynth::synth::v3
                     continue;
                 }
                 seen = now;
-                owner.work();
+                // How late this helper woke for the block (D172): the flight recorder's "late workers".
+                const auto woke = juce::Time::getHighResolutionTicks() - owner.blockStartTicks.load(std::memory_order_acquire);
+                auto& mine = owner.counters[static_cast<std::size_t>(index)];
+                if (woke > mine.worstWakeTicks.load(std::memory_order_relaxed))
+                    mine.worstWakeTicks.store(woke, std::memory_order_relaxed);
+                if (static_cast<double>(woke) > lateTicks)
+                    mine.lateWakes.fetch_add(1, std::memory_order_relaxed);
+                owner.work(index);
             }
 #if JUCE_WINDOWS
             if (mmcss != nullptr)
@@ -106,6 +114,8 @@ namespace coolsynth::synth::v3
 
     private:
         AudioWorkers& owner;
+        const int index; // 1.. : thread 0 is the audio thread
+        const double lateTicks = AudioWorkers::lateWakeMs * 0.001 * static_cast<double>(juce::Time::getHighResolutionTicksPerSecond());
     };
 
     // ---- The pool ----------------------------------------------------------------------------------------------
@@ -149,8 +159,9 @@ namespace coolsynth::synth::v3
                      ("CPU: " + layout.describe() + "; audio workers (cores, threads)").toRawUTF8());
     }
 
-    void AudioWorkers::work() noexcept
+    void AudioWorkers::work(int thread) noexcept
     {
+        auto& mine = counters[static_cast<std::size_t>(thread)];
         for (;;)
         {
             // The claim holds the block and the next task together: a worker late from an earlier block cannot take
@@ -164,10 +175,12 @@ namespace coolsynth::synth::v3
                 continue;
             const Task task = currentTask.load(std::memory_order_acquire);
             void* context = currentContext.load(std::memory_order_acquire);
+            const auto started = juce::Time::getHighResolutionTicks();
             {
                 const diag::AudioBlockScope block; // the allocation alarm watches workers too (D161)
                 task(context, index);
             }
+            mine.taskTicks.fetch_add(juce::Time::getHighResolutionTicks() - started, std::memory_order_relaxed);
             pending.fetch_sub(1, std::memory_order_acq_rel);
         }
     }
@@ -189,17 +202,40 @@ namespace coolsynth::synth::v3
         pending.store(std::min(count, maxTasks), std::memory_order_release);
         const auto block = ++blockNumber;
         claim.store(static_cast<std::uint64_t>(block) << 32, std::memory_order_release);
+        blockStartTicks.store(juce::Time::getHighResolutionTicks(), std::memory_order_release);
         generation.store(block, std::memory_order_release);
 #if JUCE_WINDOWS
         WakeByAddressAll(&generation);
 #endif
-        work(); // the audio thread takes tasks too
+        work(0); // the audio thread takes tasks too
+        const auto waitStarted = juce::Time::getHighResolutionTicks();
         while (pending.load(std::memory_order_acquire) != 0)
         {
 #if JUCE_WINDOWS
             _mm_pause(); // only for a task a worker has begun
 #endif
         }
+        if (const auto waited = juce::Time::getHighResolutionTicks() - waitStarted; waited > worstWaitTicks.load(std::memory_order_relaxed))
+            worstWaitTicks.store(waited, std::memory_order_relaxed);
+        sharedBlocks.fetch_add(1, std::memory_order_relaxed);
         busy.store(false, std::memory_order_release);
+    }
+
+    AudioWorkers::Activity AudioWorkers::takeActivity() noexcept
+    {
+        Activity a;
+        a.threads = std::min(maxThreads, 1 + workerCount());
+        const double msPerTick = 1000.0 / static_cast<double>(juce::Time::getHighResolutionTicksPerSecond());
+        for (int i = 0; i < a.threads; ++i)
+        {
+            const auto n = static_cast<std::size_t>(i);
+            auto& c = counters[n];
+            a.taskMs[n] = static_cast<double>(c.taskTicks.exchange(0, std::memory_order_relaxed)) * msPerTick;
+            a.worstWakeMs[n] = static_cast<double>(c.worstWakeTicks.exchange(0, std::memory_order_relaxed)) * msPerTick;
+            a.lateWakes[n] = c.lateWakes.exchange(0, std::memory_order_relaxed);
+        }
+        a.worstWaitMs = static_cast<double>(worstWaitTicks.exchange(0, std::memory_order_relaxed)) * msPerTick;
+        a.sharedBlocks = sharedBlocks.exchange(0, std::memory_order_relaxed);
+        return a;
     }
 }

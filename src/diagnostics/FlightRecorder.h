@@ -28,6 +28,11 @@ namespace coolsynth::diag
         nonFinite,        // a: samples that were NaN or infinite in the output
         stageBroken,      // a: stage code, b: samples that were NaN or infinite there; the stage was reset (D170)
         eventsDropped,    // a: events that found no slot in a block, b: events kept; releases are never dropped (D170)
+        threadLoad,       // a second's work of one thread (D172). a: 0 the audio thread, 1.. a helper; x: busy % of
+                          // the second; y: audio thread: worst wait for a helper ms, helper: worst wake ms; z: blocks
+                          // shared (audio thread) or late wakes (helper)
+        memoryUse,        // the program's memory, from the writer thread (D172). a: page faults in the last second,
+                          // x: working set MB, y: committed (private) MB, z: peak working set MB
         presetLoaded,     // a: program index, text: name
         slotType,         // a: kind (0 generator, 1 processor), b: (old << 8) | new type
         styleLoaded,      // a: instrument, b: style, x: MB, y: ms to read

@@ -3420,3 +3420,28 @@ Sources: the SFZ format's 6 ms default fade for stolen voices (sfzformat.com, of
 interpolation and smoothing (CCRMA, J. O. Smith, Physical Audio Signal Processing); the raised cosine
 over a straight ramp, for a slope without a jump (linux-audio-dev, "Noiseless volume changes", 2013;
 the Audacity manual, Fade and Crossfade).
+
+## D172. The flight recorder: each thread's second, late helpers, memory (2026-11-15)
+
+Overnight, the user away (recommended options taken, the others listed). The log now says, once a
+second:
+- **Each thread's share of the second**: the audio thread's blocks, and each helper's tasks (the
+  pool times every task it gives out, D164). "audio thread 6.7% of the second, helpers shared 150
+  blocks, worst wait for one 0.30 ms"; "helper 2 3.5% of the second, worst wake 0.01 ms". A helper
+  line only in a second where helpers were used or one woke late. The same numbers are kept for
+  the screen (SynthAudioProcessor::cpuLoad, step 6 of the night).
+- **Late helpers**: a helper waking more than 1 ms after its block began counts as late ("LATE n
+  times"). Options for the line: **1 ms (chosen)**, about a fifth of a 256-sample block; 0.5 ms
+  (noisy on a loaded system); half the block (too late to warn).
+- **Memory**: the working set, its peak, the committed memory and the page faults since the last
+  line, read by the writer thread (GetProcessMemoryInfo; never the audio thread). A line when pages
+  were faulted in or the working set moved by a megabyte, else every ten seconds. Page faults count
+  soft ones too: Windows' PROCESS_MEMORY_COUNTERS does not tell hard from soft (Microsoft's psapi
+  documentation); a split would need the performance counters. Options: **the process counters
+  (chosen)**, one call, no setup; performance counters (hard faults apart, a query to set up and
+  keep); nothing.
+- Options for where the per-thread numbers come from: **timing inside the pool (chosen)**, exact and
+  allocation-free; the system's thread times (GetThreadTimes, coarse at 15.6 ms ticks); none.
+With two CoolSynths in one host the helpers are shared, so each sees the part of their work that
+falls in its own seconds. Tested: a second of two overlapping sounds counts work on the audio thread
+and on the helpers (here 6.66%, 0.47%, 3.48%, 1.70%).

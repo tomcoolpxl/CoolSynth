@@ -217,6 +217,46 @@ public:
             logMessage("audio workers: " + juce::String(coolsynth::synth::v3::AudioWorkers::instance().workerCount()) + "; "
                        + coolsynth::synth::v3::AudioWorkers::instance().cpu().describe());
         }
+
+        beginTest("Each second, every thread's work is counted: the audio thread's blocks and each helper's tasks (D172)");
+        {
+            auto& pool = coolsynth::synth::v3::AudioWorkers::instance();
+            auto p = std::make_unique<Player>();
+            p->synth->setMultiCore(true);
+            juce::ignoreUnused(pool.takeActivity()); // from here on
+            const auto play = [&](double seconds)
+            {
+                for (int i = 0; i < static_cast<int>(std::ceil(seconds * rate / blockSize)); ++i)
+                {
+                    p->buffer.clear();
+                    p->synth->processBlock(p->buffer, p->midi);
+                    p->midi.clear();
+                }
+            };
+            // Two sounds ringing together for over a second: their units are shared out.
+            p->synth->setCurrentProgram(presetNamed("Init Saw"));
+            p->keys({ 48, 52 }, true);
+            play(0.2);
+            p->synth->setCurrentProgram(presetNamed("Juno Pad"));
+            p->keys({ 62, 65 }, true);
+            play(1.2);
+            const auto load = p->synth->cpuLoad();
+            expectEquals(load.threads, 1 + pool.workerCount());
+            expectGreaterThan(load.percent[0], 0.0f, "the audio thread worked");
+            expectLessThan(load.percent[0], 1000.0f);
+            expectGreaterThan(load.worstBlock, 0.0f);
+            juce::String shares;
+            for (int t = 0; t < load.threads; ++t)
+                shares << juce::String(load.percent[static_cast<std::size_t>(t)], 2) << "% ";
+            logMessage("last second, per thread (audio thread first): " + shares + "; worst block " + juce::String(100.0f * load.worstBlock, 1) + "%");
+            if (pool.workerCount() > 0)
+            {
+                float helpers = 0.0f;
+                for (int t = 1; t < load.threads; ++t)
+                    helpers += load.percent[static_cast<std::size_t>(t)];
+                expectGreaterThan(helpers, 0.0f, "a helper rendered a sound");
+            }
+        }
     }
 };
 

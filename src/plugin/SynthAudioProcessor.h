@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <functional>
@@ -89,6 +90,24 @@ public:
     /** True while a sampled instrument the sound plays is still being read in (D154): the keys wait until it
         is all in memory, and Home blinks. Set by the audio thread each block; read from anywhere. */
     [[nodiscard]] bool isLoadingInstrument() const noexcept { return instrumentLoading.load(std::memory_order_relaxed); }
+
+    /** The last second's work (D172), for the screen: each thread's busy share of the second in percent (0 the
+        audio thread, then the helpers), and the slowest block against its time. Any thread. */
+    struct CpuLoad
+    {
+        int threads = 1;
+        std::array<float, 8> percent {};
+        float worstBlock = 0.0f; // 1 = the slowest block took all of its time
+    };
+    [[nodiscard]] CpuLoad cpuLoad() const noexcept
+    {
+        CpuLoad load;
+        load.threads = std::clamp(threadLoadCount.load(std::memory_order_relaxed), 1, static_cast<int>(load.percent.size()));
+        for (int t = 0; t < load.threads; ++t)
+            load.percent[static_cast<std::size_t>(t)] = threadLoad[static_cast<std::size_t>(t)].load(std::memory_order_relaxed);
+        load.worstBlock = worstBlockShare.load(std::memory_order_relaxed);
+        return load;
+    }
 
     /** While one lives, the audio thread goes on with the settings it had: a preset, a saved state, an undo step or
         a type change reaches it whole, never half applied (D157). Scopes may nest and come from any thread. */
@@ -315,6 +334,12 @@ private:
     // The flight recorder's tripwires (diagnostics/FlightRecorder.h): audio thread only.
     void checkBlockTripwires(juce::AudioBuffer<float>& buffer, double startMs) noexcept;
     void startFlightRecorderIfWanted();
+    std::array<std::atomic<float>, 8> threadLoad {}; // the last second, percent per thread (D172)
+    std::atomic<int> threadLoadCount { 1 };
+    std::atomic<float> worstBlockShare { 0.0f };
+    double secondBusyMs = 0.0; // audio thread: this second's block time (D172)
+    float secondWorstMs = 0.0f;
+    int secondSamples = 0;
     float tripwireWorstMs = 0.0f, tripwirePeak = 0.0f;
     int tripwireVoices = 0, tripwireClipped = 0, tripwireSamples = 0;
 

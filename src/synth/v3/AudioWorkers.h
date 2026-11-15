@@ -57,10 +57,36 @@ namespace coolsynth::synth::v3
         */
         void run(Task task, void* context, int count) noexcept;
 
+        /** What each thread did since the last call (D172): thread 0 is the audio thread, 1.. the helpers. */
+        static constexpr int maxThreads = 8;
+        static constexpr double lateWakeMs = 1.0; // a helper waking later than this after a block began is late
+        struct Activity
+        {
+            int threads = 1;                          // the audio thread and the helpers
+            std::array<double, maxThreads> taskMs {}; // time spent on tasks given out by run()
+            std::array<double, maxThreads> worstWakeMs {}; // helpers: from a block's start to waking for it
+            std::array<int, maxThreads> lateWakes {};      // helpers: wakes later than lateWakeMs
+            double worstWaitMs = 0.0; // the audio thread, waiting for a task a helper had begun
+            int sharedBlocks = 0;     // blocks whose tasks were shared out
+        };
+        /** Audio thread, wait-free: reads and restarts the counts. */
+        [[nodiscard]] Activity takeActivity() noexcept;
+
     private:
         class Worker;
         AudioWorkers();
-        void work() noexcept; // claims tasks until none is left
+        void work(int thread) noexcept; // claims tasks until none is left
+
+        struct Counters
+        {
+            std::atomic<std::int64_t> taskTicks { 0 };
+            std::atomic<std::int64_t> worstWakeTicks { 0 }; // written by its own thread only
+            std::atomic<int> lateWakes { 0 };
+        };
+        std::array<Counters, maxThreads> counters;
+        std::atomic<std::int64_t> blockStartTicks { 0 };
+        std::atomic<std::int64_t> worstWaitTicks { 0 }; // audio thread
+        std::atomic<int> sharedBlocks { 0 };            // audio thread
 
         CpuLayout layout;
         std::vector<std::unique_ptr<Worker>> workers;

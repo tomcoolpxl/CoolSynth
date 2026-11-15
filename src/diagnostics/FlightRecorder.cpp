@@ -2,8 +2,42 @@
 
 #include <cstring>
 
+#if JUCE_WINDOWS
+ #ifndef WIN32_LEAN_AND_MEAN
+  #define WIN32_LEAN_AND_MEAN
+ #endif
+ #ifndef NOMINMAX
+  #define NOMINMAX
+ #endif
+ #include <windows.h>
+ #include <psapi.h>
+#endif
+
 namespace coolsynth::diag
 {
+    namespace
+    {
+        /** The program's memory, read by the writer thread (D172). False where it cannot be read. */
+        bool readMemory(std::uint64_t& pageFaults, double& workingSetMb, double& committedMb, double& peakMb) noexcept
+        {
+#if JUCE_WINDOWS
+            PROCESS_MEMORY_COUNTERS_EX counters {};
+            counters.cb = sizeof(counters);
+            if (! K32GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof(counters)))
+                return false;
+            constexpr double mb = 1024.0 * 1024.0;
+            pageFaults = counters.PageFaultCount;
+            workingSetMb = static_cast<double>(counters.WorkingSetSize) / mb;
+            committedMb = static_cast<double>(counters.PrivateUsage) / mb;
+            peakMb = static_cast<double>(counters.PeakWorkingSetSize) / mb;
+            return true;
+#else
+            juce::ignoreUnused(pageFaults, workingSetMb, committedMb, peakMb);
+            return false;
+#endif
+        }
+    }
+
     FlightRecorder& FlightRecorder::instance()
     {
         static FlightRecorder recorder;
@@ -102,6 +136,16 @@ namespace coolsynth::diag
             case Event::nonFinite: return "NON-FINITE OUTPUT: " + juce::String(r.a) + " samples (NaN or infinity), silenced";
             case Event::stageBroken:
                 return "BROKEN VALUES in " + stageName(r.a) + ": " + juce::String(r.b) + " samples (NaN or infinity), that stage was reset";
+            case Event::threadLoad:
+                if (r.a == 0)
+                    return "audio thread " + juce::String(r.x, 1) + "% of the second"
+                           + (r.z > 0.0f ? ", helpers shared " + juce::String(static_cast<int>(r.z)) + " blocks, worst wait for one " + ms(r.y)
+                                         : juce::String(", no helpers needed"));
+                return "helper " + juce::String(r.a) + " " + juce::String(r.x, 1) + "% of the second, worst wake " + ms(r.y)
+                       + (r.z > 0.0f ? ", LATE " + juce::String(static_cast<int>(r.z)) + " times (over 1 ms)" : juce::String());
+            case Event::memoryUse:
+                return "memory: working set " + juce::String(juce::roundToInt(r.x)) + " MB (peak " + juce::String(juce::roundToInt(r.z)) + "), committed "
+                       + juce::String(juce::roundToInt(r.y)) + " MB, " + juce::String(r.a) + " page faults in the last second";
             case Event::eventsDropped:
                 return "MIDI FLOOD: " + juce::String(r.a) + " events found no room in a block (" + juce::String(r.b) + " kept, releases never dropped)";
             case Event::presetLoaded: return "preset " + juce::String(r.a) + " loaded: " + r.text;
@@ -183,9 +227,32 @@ namespace coolsynth::diag
 
     void FlightRecorder::run()
     {
-        while (! threadShouldExit())
+        // Once a second, the program's memory: a line when pages were faulted in or the working set moved by a
+        // megabyte, else every ten seconds (D172). Page faults count soft ones too (memory touched for the first
+        // time); the sample memory is locked, so steady playing should fault little.
+        std::uint64_t lastFaults = 0;
+        double lastLoggedMb = -1.0;
+        int quietSeconds = 0;
+        for (int tick = 0; ! threadShouldExit(); ++tick)
         {
             wait(250);
+            if (tick % 4 == 0)
+            {
+                std::uint64_t faults = 0;
+                double workingSet = 0.0, committed = 0.0, peak = 0.0;
+                if (readMemory(faults, workingSet, committed, peak))
+                {
+                    const auto newFaults = lastFaults == 0 ? 0 : faults - lastFaults;
+                    lastFaults = faults;
+                    if (newFaults > 0 || std::abs(workingSet - lastLoggedMb) >= 1.0 || ++quietSeconds >= 10)
+                    {
+                        record(Event::memoryUse, static_cast<std::int32_t>(std::min<std::uint64_t>(newFaults, 0x7fffffff)), 0,
+                               static_cast<float>(workingSet), static_cast<float>(committed), nullptr, static_cast<float>(peak));
+                        lastLoggedMb = workingSet;
+                        quietSeconds = 0;
+                    }
+                }
+            }
             drain();
         }
     }

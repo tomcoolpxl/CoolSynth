@@ -107,6 +107,7 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     release, 5 ms steal fades, the reverb's settings glide, faded effects forget their tails.
     (D171) The tests listen for clicks: preset changes, effect changes, steals and loads on the factory
     presets; effect fades are raised cosines now, without a corner.
+    (D172) The flight log has each thread's share of every second, late helpers, and the memory.
     Next: the user's ear and hands on all of this (levels, glow, click-to-load, ringing sounds, on
     the MiniLab); the load per core on the screen (Multi-core Auto/Off is in the app's Options);
     for the real interface (D169): an Options button of its own, so the plugin has one too, and engine

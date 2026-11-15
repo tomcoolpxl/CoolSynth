@@ -20,6 +20,7 @@
 #include "interface/InterfaceModel.h"
 #include "presets/FactoryPresets.h"
 #include "presets/StateMigration.h"
+#include "synth/v3/AudioWorkers.h"
 #include "synth/v3/UserLibrary.h"
 
 namespace
@@ -587,6 +588,43 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     const float took = static_cast<float>(juce::Time::getMillisecondCounterHiRes() - startMs);
     // The engine lets an earlier sound go when the blocks run short of time (D158).
     synthEngine.setLoad(budget > 0.0f ? took / budget : 0.0f);
+
+    // Each second of audio, the work of every thread: the audio thread's blocks and each helper's tasks (D172). The
+    // screen shows it (cpuLoad); the flight recorder logs it. The helpers are the program's, so with two CoolSynths
+    // in one host each sees the part of their work that falls in its own seconds.
+    secondBusyMs += took;
+    secondWorstMs = std::max(secondWorstMs, took);
+    secondSamples += n;
+    const bool secondOver = secondSamples >= static_cast<int>(rate);
+    coolsynth::synth::v3::AudioWorkers::Activity activity;
+    if (secondOver)
+    {
+        const double secondMs = 1000.0 * secondSamples / rate;
+        activity = coolsynth::synth::v3::AudioWorkers::instance().takeActivity();
+        const int threads = std::min(activity.threads, static_cast<int>(threadLoad.size()));
+        threadLoad[0].store(static_cast<float>(100.0 * secondBusyMs / secondMs), std::memory_order_relaxed);
+        for (int t = 1; t < threads; ++t)
+            threadLoad[static_cast<std::size_t>(t)].store(static_cast<float>(100.0 * activity.taskMs[static_cast<std::size_t>(t)] / secondMs),
+                                                          std::memory_order_relaxed);
+        threadLoadCount.store(threads, std::memory_order_relaxed);
+        worstBlockShare.store(budget > 0.0f ? secondWorstMs / budget : 0.0f, std::memory_order_relaxed);
+        if (diag::FlightRecorder::instance().running())
+        {
+            diag::record(diag::Event::threadLoad, 0, 0, threadLoad[0].load(std::memory_order_relaxed), static_cast<float>(activity.worstWaitMs),
+                         nullptr, static_cast<float>(activity.sharedBlocks));
+            for (int t = 1; t < threads; ++t)
+            {
+                const auto i = static_cast<std::size_t>(t);
+                if (activity.sharedBlocks > 0 || activity.lateWakes[i] > 0)
+                    diag::record(diag::Event::threadLoad, t, 0, threadLoad[i].load(std::memory_order_relaxed),
+                                 static_cast<float>(activity.worstWakeMs[i]), nullptr, static_cast<float>(activity.lateWakes[i]));
+            }
+        }
+        secondBusyMs = 0.0;
+        secondWorstMs = 0.0f;
+        secondSamples = 0;
+    }
+
     if (! diag::FlightRecorder::instance().running())
         return;
 
