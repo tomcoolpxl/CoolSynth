@@ -50,6 +50,23 @@ namespace coolsynth::ui
             }
             return 0;
         }
+
+        /** The slot value's descriptor when a parameter is a generic slot value in semitones, else null. */
+        const coolsynth::synth::v3::ParameterDescriptor* semitoneDescriptor(const juce::RangedAudioParameter& parameter)
+        {
+            if (auto* generic = dynamic_cast<const pv::GenericSlotParameter*>(&parameter))
+            {
+                const int n = parameter.getParameterID().fromLastOccurrenceOf(".p", false, false).getIntValue();
+                const auto& descriptor = generic->currentDescriptor();
+                if (n >= 1 && n <= descriptor.usedParams)
+                {
+                    const auto& d = descriptor.params[static_cast<std::size_t>(n - 1)];
+                    if (d.unit == coolsynth::synth::v3::Unit::semitones && d.skew == coolsynth::synth::v3::Skew::linear)
+                        return &d;
+                }
+            }
+            return nullptr;
+        }
     }
 
     juce::Colour miniLabColour(Tint tint) noexcept
@@ -671,6 +688,14 @@ namespace coolsynth::ui
         float value = p.getValue();
         if (options >= 2)
             value += static_cast<float>(steps) / static_cast<float>(options - 1);
+        else if (const auto* semitone = semitoneDescriptor(p))
+        {
+            // A shift in semitones steps by whole semitones, a tenth with Shift (D205): +7 and +12 are a turn away.
+            const float step = fine ? 0.1f : 1.0f;
+            const float units = semitone->min + value * (semitone->max - semitone->min);
+            const float moved = (std::round(units / step) + static_cast<float>(steps)) * step;
+            value = (std::clamp(moved, semitone->min, semitone->max) - semitone->min) / (semitone->max - semitone->min);
+        }
         else
             value += static_cast<float>(steps) * (fine ? 0.001f : 0.01f);
         setNormalised(p, value);
@@ -741,6 +766,8 @@ namespace coolsynth::ui
                 target = p->getParameterID();
                 const int options = optionCount(*p);
                 perStep = options == 2 ? countsPerSwitchStep : (options > 2 ? countsPerListStep : 1);
+                if (options == 0 && ! fine && semitoneDescriptor(*p) != nullptr)
+                    perStep = countsPerListStep; // whole semitones step as a list does (D205)
             }
         }
         if (perStep == 1)

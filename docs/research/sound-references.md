@@ -428,9 +428,11 @@ Tune mode to the Pitch effect.
 
 **Decided by you on 2026-11-15:**
 - **Build first: the Pitch effect** (then sample slices, then the stutter effect; its Tune mode
-  follows the plain shift, section 9.7).
+  follows the plain shift, section 9.7). **Built** the same day (D205): Heads and Spectral modes,
+  with a Delay and Feedback for the stepped echoes.
 - **Room plan: one new room** for the whole space, with its variety inside it (sections 5, 9.5
-  and 9.7 list the proposed presets; the room's name is still open).
+  and 9.7 list the proposed presets). **Built** the same day (D206): Night Bus, all sixteen
+  presets, the Pitch effect in each; Vocal Mask and High Voice play from factory sound.
 - **Corners to research:** all four, now in section 9.6.
 
 The options as they were put:

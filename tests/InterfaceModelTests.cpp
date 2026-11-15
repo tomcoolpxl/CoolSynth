@@ -89,6 +89,33 @@ public:
             expectEquals(model->popup().name, model->knob(1).name);
         }
 
+        beginTest("A shift in semitones steps by whole semitones, a tenth with Shift (D205)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            model->pressPad(InterfaceModel::padOfSection(3), false); // Effects: I1
+            auto* type = synth->getValueTreeState().getParameter("pA.i1.type");
+            type->setValueNotifyingHost(type->getValueForText("Pitch"));
+            const auto id = model->currentPage().ids[0];
+            expect(id.endsWith("i1.p1"));
+            auto* shift = synth->getValueTreeState().getParameter(id);
+            const auto semitones = [&] { return shift->getValue() * 48.0f - 24.0f; };
+            shift->setValueNotifyingHost(0.75f); // an octave up
+            expectWithinAbsoluteError(semitones(), 12.0f, 1.0e-4f);
+            model->turnKnob(1, 1, false);
+            expectWithinAbsoluteError(semitones(), 13.0f, 1.0e-4f);
+            model->turnKnob(1, -6, false);
+            expectWithinAbsoluteError(semitones(), 7.0f, 1.0e-4f);
+            model->turnKnob(1, 1, true);
+            expectWithinAbsoluteError(semitones(), 7.1f, 1.0e-4f);
+            model->turnKnobFromDevice(1, 5, false); // a step every six counts, as a list
+            expectWithinAbsoluteError(semitones(), 7.1f, 1.0e-4f);
+            model->turnKnobFromDevice(1, 1, false);
+            expectWithinAbsoluteError(semitones(), 8.0f, 1.0e-4f); // back on a whole semitone
+            model->turnKnob(1, 40, false);
+            expectWithinAbsoluteError(semitones(), 24.0f, 1.0e-4f);
+        }
+
         beginTest("A sampled slot's instrument knob only shows the choice; a press loads it (D156)");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();

@@ -12,6 +12,7 @@
 #include "GrainInsert.h"
 #include "Modulation.h"
 #include "Module.h"
+#include "PitchInsert.h"
 #include "RoomInsert.h"
 
 /*
@@ -19,9 +20,10 @@
     voices and its place in the mix. A slot holds one effect at a time, any of the ten the master
     rack has. It runs that effect's own code (a rack of its own with only that stage switched
     on), so an insert sounds exactly as the same effect does in the master section, with the
-    same smoothing when a value moves or the effect is switched. Two more types exist only as
-    inserts: Grain, the granular effect on a part (GrainInsert.h, decision D82), and Room, a small
-    room around an instrument (RoomInsert.h, decision D108).
+    same smoothing when a value moves or the effect is switched. Three more types have code of
+    their own: Grain, the granular effect on a part (GrainInsert.h, decision D82), Room, a small
+    room around an instrument (RoomInsert.h, decision D108), and Pitch, a pitch shifter with a
+    delay (PitchInsert.h, decision D205).
 
     A slot has a type and twelve generic values, named and ranged by the type's descriptor, like a
     generator or processor slot. Values arrive normalised 0..1. A synced delay and the pump take
@@ -54,7 +56,8 @@ namespace coolsynth::synth::v3
         inline constexpr int pump = 10;
         inline constexpr int grain = 11;
         inline constexpr int room = 12;
-        inline constexpr int count = 13; // new types only at the end: the index is saved in patches
+        inline constexpr int pitch = 13;
+        inline constexpr int count = 14; // new types only at the end: the index is saved in patches
     }
 
     /** Name and parameters of an insert type. The ranges are the master rack's. */
@@ -127,6 +130,19 @@ namespace coolsynth::synth::v3
                  { "damping", "Damping", 0.0f, 1.0f, 0.5f, Skew::linear, Unit::percent, true },
                  { "width",   "Width",   0.0f, 1.0f, 1.0f, Skew::linear, Unit::percent, true },
                  { "mix",     "Mix",     0.0f, 1.0f, 0.3f, Skew::linear, Unit::percent, true } }}, 4 },
+            // Pages of four: Pitch, Delay, Mode (D205).
+            { "Pitch", 2,
+              {{ { "pitch",     "Pitch",     -24.0f,  24.0f,   12.0f, Skew::linear,      Unit::semitones,    true },
+                 { "fine",      "Fine",      -100.0f, 100.0f,  0.0f,  Skew::linear,      Unit::cents,        true },
+                 { "spread",    "Spread",    0.0f,    50.0f,   0.0f,  Skew::linear,      Unit::cents,        true },
+                 { "mix",       "Mix",       0.0f,    1.0f,    0.5f,  Skew::linear,      Unit::percent,      true },
+                 { "delay",     "Delay",     0.0f,    1000.0f, 0.0f,  Skew::squared,     Unit::milliseconds, true },
+                 { "sync",      "Sync",      0.0f,    1.0f,    0.0f,  Skew::linear,      Unit::choice,       false, "Off|On" },
+                 { "division",  "Division",  0.0f,    13.0f,   6.0f,  Skew::linear,      Unit::choice,       false, divisions },
+                 { "feedback",  "Feedback",  0.0f,    0.9f,    0.0f,  Skew::linear,      Unit::percent,      true },
+                 { "mode",      "Mode",      0.0f,    1.0f,    0.0f,  Skew::linear,      Unit::choice,       false, "Heads|Spectral" },
+                 { "window",    "Window",    10.0f,   200.0f,  50.0f, Skew::logarithmic, Unit::milliseconds, true },
+                 { "character", "Character", 0.0f,    1.0f,    0.25f, Skew::linear,      Unit::percent,      true } }}, 11 },
         }};
         return table[static_cast<std::size_t>(std::clamp(typeIndex, 0, insertType::count - 1))];
     }
@@ -153,6 +169,28 @@ namespace coolsynth::synth::v3
             return s;
         }
     };
+
+    /** A Pitch slot's values in the effect's own terms; a synced delay takes its time from the tempo. */
+    [[nodiscard]] inline PitchInsert::Settings pitchSettings(const InsertSettings& settings, double bpm) noexcept
+    {
+        const auto& d = insertDescriptor(insertType::pitch);
+        auto units = [&](int index)
+        {
+            return descriptorToUnits(d.params[static_cast<std::size_t>(index)], settings.p[static_cast<std::size_t>(index)]);
+        };
+        auto choice = [&](int index) { return static_cast<int>(std::lround(units(index))); };
+        PitchInsert::Settings p;
+        p.semitones = units(0);
+        p.cents = units(1);
+        p.spreadCents = units(2);
+        p.mix = units(3);
+        p.delayMs = choice(5) == 1 ? static_cast<float>(coolsynth::synth::delayDivisionMs(choice(6), bpm)) : units(4);
+        p.feedback = units(7);
+        p.mode = choice(8);
+        p.windowMs = units(9);
+        p.character = units(10);
+        return p;
+    }
 
     /** How long a slot keeps sounding once its input is silent: what the plugin reports to a host as its tail. */
     [[nodiscard]] inline double insertTailSeconds(const InsertSettings& settings, double bpm = 120.0) noexcept
@@ -185,6 +223,8 @@ namespace coolsynth::synth::v3
                 return units(3) > 0.0f ? RoomInsert::reverbSeconds(units(0)) + 0.25 : 0.0;
             case insertType::grain:
                 return units(7) > 0.0f ? GrainInsert::bufferSeconds + 0.5 : 0.0;
+            case insertType::pitch:
+                return PitchInsert::tailSeconds(pitchSettings(settings, bpm));
             default:
                 return 0.0;
         }
@@ -208,12 +248,13 @@ namespace coolsynth::synth::v3
             rack.prepare(sampleRate, std::max(1, maxBlockSize), 2);
             grain.prepare(sampleRate);
             room.prepare(sampleRate);
+            pitch.prepare(sampleRate);
             dry.setSize(2, std::max(1, maxBlockSize), false, true, true);
             fadeSamples = std::max(1, static_cast<int>(std::lround(typeFadeSeconds * sampleRate)));
             lastType = insertType::off;
             change = Change::none;
             quiet = true;
-            rackUsed = grainUsed = roomUsed = false; // prepared silent
+            rackUsed = grainUsed = roomUsed = pitchUsed = false; // prepared silent
         }
 
         /**
@@ -326,7 +367,9 @@ namespace coolsynth::synth::v3
                 grain.clear();
             if (roomUsed)
                 room.clear();
-            rackUsed = grainUsed = roomUsed = false;
+            if (pitchUsed)
+                pitch.clear();
+            rackUsed = grainUsed = roomUsed = pitchUsed = false;
             quiet = true;
         }
 
@@ -402,6 +445,22 @@ namespace coolsynth::synth::v3
             {
                 room.clear();
                 roomUsed = false;
+            }
+
+            // And the pitch shifter.
+            if (type == insertType::pitch)
+            {
+                if (lastType != insertType::pitch)
+                    clear();
+                pitch.process(stereo, pitchSettings(settings, context.bpm));
+                pitchUsed = true;
+                lastType = type;
+                return;
+            }
+            if (lastType == insertType::pitch)
+            {
+                pitch.clear();
+                pitchUsed = false;
             }
 
             coolsynth::synth::DriveParametersV2 drive;
@@ -510,6 +569,7 @@ namespace coolsynth::synth::v3
         coolsynth::synth::GlobalFxRack rack;
         GrainInsert grain;
         RoomInsert room;
+        PitchInsert pitch;
         int lastType = insertType::off;
         Change change = Change::none;
         static constexpr float quietLevel = 1.0e-6f; // -120 dB
@@ -518,6 +578,6 @@ namespace coolsynth::synth::v3
         int fadeSamples = 480, fadeDone = 0;
         InsertSettings heldSettings {};     // what the type playing was last given: it fades out with these
         juce::AudioBuffer<float> dry;       // the block as it came in, during a change
-        bool rackUsed = false, grainUsed = false, roomUsed = false; // played since its last clear (D160)
+        bool rackUsed = false, grainUsed = false, roomUsed = false, pitchUsed = false; // played since its last clear (D160)
     };
 }

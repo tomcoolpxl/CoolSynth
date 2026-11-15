@@ -179,7 +179,7 @@ c.text(24, 50, [R("CoolSynth V3", w=700, f="ink", s=30), R("engine architecture"
 c.text(24, 76, "Signal flow of one patch, left to right. Every slot takes any module of its kind; "
                "the choices are listed underneath.", size=13, fill="ink2")
 c.text(1576, 44, "2 parts · 16 voices · 3 generator + 3 processor slots per voice · "
-                 "24 modulation routings per part · 120 factory presets",
+                 "24 modulation routings per part · 136 factory presets",
        size=12.5, weight=600, fill="ink", anchor="end")
 
 legend = [("note", "notes"), ("audio", "audio"), ("mod", "modulation"), ("planned", "planned, not built yet")]
@@ -311,8 +311,8 @@ c.text(SX, MIDY + 27, "2× → 1×", size=10, fill="ink2", anchor="middle")
 
 IXS, IW = [1262, 1315, 1368], 42
 c.arrow([(SX + 11, MIDY), (IXS[0], MIDY)], head=7)
-c.text(IXS[0], 212, "3 INSERT SLOTS", size=10.5, weight=700, fill="fx", ls=0.7, maxw=150)
-for x, name, ex in zip(IXS, ["I1", "I2", "I3"], ["Chorus", "Room", "Delay"]):
+c.text(IXS[0], 212, "6 INSERT SLOTS", size=10.5, weight=700, fill="fx", ls=0.7, maxw=150)
+for x, name, ex in zip(IXS, ["I1", "…", "I6"], ["Chorus", "Pitch", "Delay"]):
     c.rect(x, PYT, IW, PHT, "fx-bg", "fx-line")
     c.text(x + IW / 2, PYT + 23, name, size=12.5, weight=700, fill="fx", anchor="middle")
     c.text(x + IW / 2, PYT + 42, ex, size=10.5, fill="ink", anchor="middle", maxw=IW - 4)
@@ -517,6 +517,8 @@ FX_ROWS = [
     ("Room", "24 early reflections of a box-shaped room into a 16-line feedback delay network; decay 0.1 to "
              "1.2 s."),
     ("Grain", "replays the last 4 seconds as a cloud of up to 32 grains; freeze."),
+    ("Pitch", "up to two octaves either way: delay-line heads with correlation-matched splices, or a "
+              "peak-shifting phase vocoder; spread, and a delay whose feedback steps each repeat."),
 ]
 panels = [
     dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 9 types · any type in any of the 3 slots",
@@ -527,7 +529,7 @@ panels = [
          note=[R("Three in series, per voice: a chord is filtered, folded and driven note by note, before the "
                  "notes are summed.")],
          italic=False),
-    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 12 effects · 3 slots per part · 6 master slots",
+    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 14 effects · 6 slots per layer · 6 master slots",
          rows=FX_ROWS, namew=100,
          note=[R("Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper. "
                  "Each part sets what share of it passes through them.")],
@@ -611,9 +613,9 @@ for cd in cards:
 
 # =============================================================== the rooms
 ROOM_Y = CARD_Y + card_h + 30
-c.text(24, ROOM_Y, [R("120 FACTORY PRESETS IN 13 ROOMS", w=700, f="ink", ls=0.8),
+c.text(24, ROOM_Y, [R("136 FACTORY PRESETS IN 14 ROOMS", w=700, f="ink", ls=0.8),
                     R("Workshop · Bedroom · Arcade · Outrun · Observatory · Greenhouse · Basement · Studio 1982 · "
-                      "Main Stage · Engine Room · Clock Tower · Conservatory · Museum", f="ink2", dx=12)],
+                      "Main Stage · Engine Room · Clock Tower · Conservatory · Museum · Night Bus", f="ink2", dx=12)],
        size=11.5, maxw=1552)
 H = int(ROOM_Y + 24)
 
@@ -851,12 +853,12 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
       <h2>Notes in</h2>
       <p>Chord memory (twelve chord shapes, or one learned from the keys), strum, and an arpeggiator with eleven
       patterns, swing, ratchets, accents and Euclidean rhythms, all before the parts.</p>
-      <p>Effects: three slots on each part, then six master slots, each holding any of twelve effects in any order.
+      <p>Effects: six slots on each layer, then six master slots, each holding any of fourteen effects in any order.
       What each slot can hold, generator, processor or effect, is listed under the map.</p>
     </section>
     <section class="wide">
       <h2>Sounds, and how they are checked</h2>
-      <p>120 factory presets in 13 rooms. The Conservatory holds 40 recorded acoustic instruments from free (CC0)
+      <p>136 factory presets in 14 rooms. The Conservatory holds 40 recorded acoustic instruments from free (CC0)
       sample libraries, played through the Sample generator. The Museum holds classic synth sounds rebuilt from the
       instruments' own patch data, or from a record when no data exists, and each is admitted only after a
       side-by-side listening test against a recording of the real thing.</p>

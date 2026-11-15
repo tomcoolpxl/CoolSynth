@@ -263,6 +263,33 @@ not sounds.
 | 6 | Basic FM | FM2 | PH |
 | 7 | Basic Wavetable | WT | PH |
 
+### Night Bus (laptop collage; 2026-11-15, decision D206)
+
+The ride between the club and the bedroom, headphones on: laptop music made out of pieces of other
+things, after Caribou, Loukeman, Vegyn, ear and meat computer (`docs/research/sound-references.md`).
+Signature: a voice turned into texture, everything a little worn, warm underneath. Room rule: the
+Pitch effect (D205) is in every preset, as a shadow an octave away, a wide doubling or a staircase
+of echoes; its warble is this room's glue, where the Bedroom's is tape (rule 2).
+
+| # | Name | What you hear | After | Pitch effect |
+| --- | --- | --- | --- | --- |
+| 1 | Washed Poly | Warm two-saw poly washed wide, plate overloaded into a drive | Loukeman | no shift, Spread 14 ct |
+| 2 | Tine Clav | FM tine plus pulse clav (two layers), wobbling tape echo | Caribou, "Can't Do Without You" | master, Spread 8 ct |
+| 3 | Buzz Drop | Gliding saw and pulse bass through a tube drive; a Rip macro | Caribou | rough octave up on Rip |
+| 4 | Square Grit | Hard-saturated square bass, wheel to drive | ear, "Nerves" | octave down |
+| 5 | Whisper Air | Band noise through a wandering formant | ear, meat computer | Spectral, octave up, scattered |
+| 6 | Fizz Melody | Fuzzy 12-bit lead, pump, dotted echo, violins on layer B | Vegyn, "Debold" | octave-up glint |
+| 7 | Pirate Radio | Keys on a transistor radio | Mk.gee remix of "Debold" | drifting fine pitch, rough |
+| 8 | Stutter Chords | One key plays a major ninth that stutters on 1/16 | ear, "Real Life" | staircase, an octave per 1/16 |
+| 9 | Vocal Mask | Vocal wavetable cut into live grains, flanged, overloaded plate | Loukeman | Spectral, octave down |
+| 10 | High Voice | Factory choir an octave up, with breath | meat computer | Spectral, a fifth down |
+| 11 | Four-Track House | Minor seventh chords off a worn four-track, pumping | rough house | rough wobble |
+| 12 | Spiral FM | One held key: an arpeggiated FM pluck on a 7-step pentatonic | Daphni | staircase, a fourth down per 1/8. |
+| 13 | Trance Glass | Seven saws with an FM bell, chorus, shimmer plate | digicore | Spectral staircase up |
+| 14 | Bowed Haze | Recorded violas, slow, driven, small room | Astrid Sonne | Spectral, octave down |
+| 15 | Stepped Lead | Lead whose wheel vibrato jumps by semitones | digicore | Spectral octave, rough |
+| 16 | Sea Pad | Worn saw pad over an arpeggiated sine bass (two layers) | Huerco S. | octave-down dub shadow |
+
 ## 4. What "modern synth sounds" means in this bank
 
 The Main Stage room is the answer to "add modern synth sounds". Modern here is the vocabulary of
@@ -352,5 +379,6 @@ loudness-normalised):
 | Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field (two layers), Granular Sky | none |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad, Chord Trigger | none |
 | Main Stage | Reese, Supersaw (with its sub part), Future Chord, Neuro Growl, Riser, Pluck Drop, Hyper Lead | none |
+| Night Bus | Washed Poly, Tine Clav, Buzz Drop, Square Grit, Whisper Air, Fizz Melody, Pirate Radio, Stutter Chords, Vocal Mask, High Voice, Four-Track House, Spiral FM, Trance Glass, Bowed Haze, Stepped Lead, Sea Pad (D206) | the user's ear (the audition page) |
 | Conservatory | 40 recorded instruments in seven families, one plain preset each, playing styles as a switch (decisions D96 to D100). Keys: Steinway Grand, Yamaha Upright, Old Upright, Flemish Harpsichord, Italian Harpsichord, FM Keys. Strings: Violins, Violas, Cellos, Double Bass, Solo Violin. Plucked: Folk Harp, Dan Tranh, Kalimba. Brass: Horn, Trumpet, Tuba, Trombone, Old Trombone. Winds: Flute, Clarinet, Bassoon, Saxello, Tenor Sax, Recorders, Ocarina, Harmonica, Didgeridoo. Organs: Pipe Organ, Renaissance Organ. Mallets and Bells: Marimba, Vibraphone, Xylophone, Balafon, Glockenspiel, Tubular Bells, Tubular Glock, Hand Chimes, Wine Glasses, Timpani | the user's ear (demonstrations on the audition page) |
 | Museum | DX7 E.PIANO 1, rebuilt from the voice's published data and admitted by the user in a side-by-side against a reference recording (decisions D104, D107) | the other sounds chosen in D103: DX7 BASS 1, Prophet-5 sync lead and brass, Minimoog bass and lead, hoover, LatelyBass, Juno-106 |

@@ -1,0 +1,434 @@
+# Night Bus: the ride between the club and the bedroom, headphones on (D206). Laptop music made
+# out of pieces of other things: a voice turned into texture, everything a little worn, warm
+# underneath. After Caribou, Loukeman, Vegyn, ear and meat computer (docs/research/sound-references.md).
+# Room rule: the Pitch effect is in every preset (a shadow an octave away, a wide doubling, a
+# staircase of echoes): its warble is this room's glue, where the Bedroom's is tape.
+
+[Washed Poly]
+room = Night Bus
+# Loukeman's way: a warm poly of two saws twelve cents apart, drifting, run through a pitch
+# shifter that shifts nothing and only washes it wide (left a little flat, right a little sharp,
+# the splices smeared), a light flanger, a plate overloaded into a drive, and a compressor. A
+# little crackle under it all.
+g1 = VA shape=saw fine=-6 level=0.65
+g2 = VA shape=saw fine=6 level=0.65
+p1 = Ladder cutoff=1500 res=0.15 key=0.45
+env1 = attack=40 decay=900 sustain=0.85 release=900 velocity=0.3
+voice = env2ToP1=0 drift=5
+i1 = LoFi wow=0.15 flutter=0.05 crackle=0.2 hiss=0.05 bandwidth=0.85
+i2 = Pitch pitch=0 spread=14 mix=0.55 window=90 character=0.45
+i3 = Flanger rate=0.11 depth=0.3 feedback=0.2 mix=0.2
+i4 = Reverb size=0.6 damping=0.55 mix=0.3
+i5 = Drive amount=0.35 mix=0.5
+i6 = Compressor amount=0.35
+mix = level=-13
+master = 0
+macros = names=Wash,Warmth,Mush,Crackle
+mod = src=macro2 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=p1.drive amount=0.2
+fx = src=macro1 dst=i2.mix amount=0.35
+fx = src=macro1 dst=i2.spread amount=0.4
+fx = src=macro1 dst=i3.mix amount=0.2
+fx = src=macro3 dst=i4.mix amount=0.25
+fx = src=macro3 dst=i5.amount amount=0.35
+fx = src=macro4 dst=i1.crackle amount=0.5
+
+[Tine Clav]
+room = Night Bus
+# Caribou's keys, half Rhodes and half clav: an FM tine on layer A and a pulse clav on layer B,
+# both under a low filter that the first macro opens. A tape delay of a dotted eighth at 128 BPM
+# whose time a slow wave keeps moving, so the repeats wobble in pitch; a slight wide doubling.
+parts = stack
+g1 = FM4 algo=twoPairs ratio2=1 ratio3=1 ratio4=14 level2=0.08 level3=0.6 level4=0.05 level=0.8
+p1 = Ladder cutoff=1100 res=0.1 key=0.5
+env1 = attack=1 decay=2200 sustain=0.3 release=600 decayCurve=-0.6 velocity=0.5
+env2 = attack=1 decay=250 sustain=0 release=200
+env3 = attack=1 decay=900 sustain=0.1 release=400
+mod = src=env3 dst=g1.level2 amount=0.3
+mod = src=velocity dst=g1.level2 amount=0.15
+mod = src=env2 dst=g1.level4 amount=0.35
+voice = env2ToP1=0 drift=2
+glfo1 = shape=sine sync=off rate=0.3 retrigger=off
+mix = level=-6
+b.g1 = VA shape=pulse pw=0.28 level=0.6
+b.p1 = Ladder cutoff=1000 res=0.3 key=1
+b.p2 = Ladder mode=hp12 cutoff=160 res=0
+b.env1 = attack=0.5 decay=320 sustain=0.2 release=70 velocity=0.8 decayCurve=-0.8
+b.env2 = attack=0.5 decay=110 sustain=0 release=80 decayCurve=-0.8
+b.voice = env2ToP1=0.32 velToP1=0.2
+b.mix = level=-10
+f1 = Pitch pitch=0 spread=8 mix=0.35 window=40 character=0.2
+f2 = Delay time=352 feedback=0.35 mix=0.22
+f3 = Reverb size=0.3 damping=0.5 mix=0.12
+master = 4.5
+macros = names=Open,Bark,Decay,Wobble
+b.macros = names=Open,Bark,Decay,Wobble
+mod = src=macro1 dst=p1.cutoff amount=0.3
+mod = src=macro2 dst=g1.level2 amount=0.12
+mod = src=macro3 dst=env1.time amount=0.3
+b.mod = src=macro1 dst=p1.cutoff amount=0.3
+b.mod = src=macro2 dst=p1.res amount=0.2
+b.mod = src=macro3 dst=env1.time amount=0.3
+fx = src=glfo1 dst=f2.time amount=0.012
+fx = src=glfo1 dst=f2.time amount=0.03 via=macro4
+
+[Buzz Drop]
+room = Night Bus
+# The bass after Caribou's drop: a saw and a pulse an octave down through a tube drive, gliding
+# from note to note. The second macro is the "rip": more drive, a brighter tone and a rough
+# octave above coming in through the pitch shifter, as the record ends its drop with two rips.
+g1 = VA shape=saw oct=-1 level=0.7
+g2 = VA shape=pulse pw=0.35 oct=-1 fine=5 level=0.5
+p1 = Drive drive=14 curve=tube tone=0.45 mix=1
+p2 = Ladder cutoff=650 res=0.25 key=0.3 bass=0.6
+env1 = attack=2 decay=500 sustain=0.8 release=150 velocity=0.3
+env2 = attack=1 decay=260 sustain=0.2 release=150
+voice = env2ToP1=0 glide=40
+play = mode=legato
+mod = src=env2 dst=p2.cutoff amount=0.18
+i1 = Pitch pitch=12 mix=0 window=25 character=0.7
+i2 = Compressor amount=0.35
+mix = level=-4.5
+master = 0
+macros = names=Bright,Rip,Glide,Growl
+mod = src=macro1 dst=p2.cutoff amount=0.15
+mod = src=macro2 dst=p1.drive amount=0.35
+mod = src=macro2 dst=p1.tone amount=0.3
+mod = src=macro2 dst=p2.cutoff amount=0.1
+mod = src=macro4 dst=p2.res amount=0.3
+fx = src=macro2 dst=i1.mix amount=0.45
+
+[Square Grit]
+room = Night Bus
+# ear's bass in "Nerves": just a square wave, saturated hard, an octave down, mono, under a
+# closing filter. The pitch shifter adds a second octave below it, a little behind. The mod wheel
+# pushes the drive further.
+g1 = VA shape=pulse pw=0.5 oct=-1 rand=0 level=0.8
+p1 = Drive drive=26 curve=hard tone=0.6 mix=1
+p2 = Ladder cutoff=950 res=0.2 key=0.3 bass=0.7
+env1 = attack=1 decay=420 sustain=0.6 release=110 velocity=0.4
+env2 = attack=1 decay=180 sustain=0.1 release=100
+voice = env2ToP1=0 glide=12
+play = mode=mono
+mod = src=env2 dst=p2.cutoff amount=0.15
+mod = src=wheel dst=p1.drive amount=0.3
+i1 = Pitch pitch=-12 mix=0.3 window=60 character=0.2
+i2 = Compressor amount=0.4
+i3 = EQ low=2 tilt=0 high=-1
+mix = level=-8
+master = 0
+macros = names=Bright,Grit,Length,Under
+mod = src=macro1 dst=p2.cutoff amount=0.15
+mod = src=macro2 dst=p1.drive amount=0.3
+mod = src=macro3 dst=env1.time amount=0.4
+fx = src=macro4 dst=i1.mix amount=0.35
+
+[Whisper Air]
+room = Night Bus
+# Whispers, after ear and meat computer: band noise through a formant filter whose vowel wanders
+# on its own, high-passed, with a copy an octave up whose phases are scattered (the airy, phasey
+# half of the shifter) and a soft plate.
+g1 = Noise type=band res=0.35 tone=0.8 width=0.4 level=0.9
+p1 = Formant vowel=1 size=1.1 res=0.6 mix=1
+p2 = SVF mode=hp cutoff=500 res=0.1 key=0.3
+env1 = attack=90 decay=900 sustain=0.8 release=700 velocity=0.4
+lfo1 = shape=smoothRandom rate=0.4 retrigger=off
+mod = src=lfo1 dst=p1.vowel amount=0.4
+voice = env2ToP1=0 drift=3
+i1 = Pitch pitch=12 spread=10 mix=0.3 mode=spectral window=40 character=0.75
+i2 = Reverb size=0.55 damping=0.5 mix=0.35 predelay=20
+mix = level=4
+master = 0
+macros = names=Breath,Vowel,Air,Wander
+mod = src=macro1 dst=g1.res amount=-0.3
+mod = src=macro1 dst=p2.cutoff amount=0.15
+mod = src=macro2 dst=p1.vowel amount=0.5
+mod = src=macro4 dst=lfo1.rate amount=0.4
+fx = src=macro3 dst=i1.mix amount=0.4
+fx = src=macro3 dst=i2.mix amount=0.2
+
+[Fizz Melody]
+room = Night Bus
+# Vegyn's "Debold": a bright saw and pulse lead with a little fuzz and twelve-bit grit, ducking
+# on each beat, into a dotted-eighth echo, with an octave-up glint from the shifter. Violins on
+# layer B, quiet, as the strings under it.
+parts = stack
+g1 = VA shape=saw level=0.6
+g2 = VA shape=pulse pw=0.4 fine=6 level=0.45
+p1 = Ladder cutoff=3800 res=0.15 key=0.6
+env1 = attack=3 decay=600 sustain=0.7 release=350 velocity=0.4
+voice = env2ToP1=0 drift=2
+i1 = Drive amount=0.2 mix=0.6
+i2 = LoFi wow=0 flutter=0 bits=12 rate=32000 bandwidth=0.9 mix=0.6
+i3 = Pitch pitch=12 mix=0.18 window=30 character=0.3
+mix = level=-8
+b.g1 = Sample sample=violins style=sustain loop=on level=0.9
+b.p1 = Off
+b.env1 = attack=80 decay=1 sustain=1 release=900 velocity=0
+b.voice = env2ToP1=0
+b.mix = level=-17
+f1 = Pump depth=0.35 division=1/4 release=0.5
+f2 = Delay sync=on division=1/8. feedback=0.3 mix=0.18
+f3 = Reverb size=0.5 damping=0.5 mix=0.16
+master = -3.5
+macros = names=Bright,Fizz,Glint,Strings
+b.macros = names=Bright,Fizz,Glint,Strings
+mod = src=macro1 dst=p1.cutoff amount=0.15
+fx = src=macro2 dst=i1.amount amount=0.3
+fx = src=macro2 dst=i2.mix amount=0.3
+fx = src=macro3 dst=i3.mix amount=0.35
+b.mod = src=macro4 dst=g1.level amount=0.5
+
+[Pirate Radio]
+room = Night Bus
+# The Mk.gee remix of "Debold" on a transistor radio: warm keys squeezed through a narrow,
+# hissing band, a drive, and a tuning that drifts as if the dial were never quite on the station
+# (the shifter's fine pitch wanders on a slow random wave, its splices left rough).
+g1 = VA shape=triangle rand=0 level=0.8
+g2 = VA shape=saw fine=4 level=0.3
+p1 = Ladder cutoff=2400 res=0.1 key=0.5
+env1 = attack=4 decay=700 sustain=0.5 release=500 velocity=0.4
+glfo1 = shape=smoothRandom sync=off rate=0.35 retrigger=off
+voice = env2ToP1=0 drift=3
+i1 = Pitch pitch=0 mix=1 window=20 character=0.8
+i2 = LoFi wow=0.4 flutter=0.25 hiss=0.25 crackle=0.05 bandwidth=0.35
+i3 = EQ low=-12 tilt=1 high=-6
+i4 = Drive amount=0.3 mix=0.7
+i5 = Room size=0.2 damping=0.6 width=0.4 mix=0.15
+mix = level=-14.5
+master = 0
+macros = names=Band,Static,Drift,Push
+mod = src=macro1 dst=p1.cutoff amount=0.1
+fx = src=glfo1 dst=i1.fine amount=0.05
+fx = src=glfo1 dst=i1.fine amount=0.15 via=macro3
+fx = src=macro1 dst=i2.bandwidth amount=0.3
+fx = src=macro2 dst=i2.hiss amount=0.4
+fx = src=macro2 dst=i2.crackle amount=0.3
+fx = src=macro4 dst=i4.amount amount=0.4
+
+[Stutter Chords]
+room = Night Bus
+# ear's "Real Life": one key plays a major ninth chord of pulse and saw that stutters on an
+# uneven sixteenth pattern, never quite dissonant, each stutter echoed an octave higher than the
+# last by the shifter's staircase.
+g1 = VA shape=pulse pw=0.42 level=0.55
+g2 = VA shape=saw fine=-5 level=0.4
+p1 = Ladder cutoff=2600 res=0.12 key=0.5
+env1 = attack=5 decay=900 sustain=0.8 release=500 velocity=0.4
+voice = env2ToP1=0 drift=2
+chord = type=major9
+step = values=0,1,0,0,1,0,1,0,0,1,1,0,1,0,0,1 length=16 division=1/16
+mod = src=step dst=vca amount=-1 curve=unipolar
+i1 = Pitch pitch=12 mix=0.18 sync=on division=1/16 feedback=0.35 window=30 character=0.3
+i2 = Chorus rate=0.4 depth=0.3 mix=0.25
+i3 = Reverb size=0.45 damping=0.5 mix=0.18
+mix = level=-1
+master = 0
+macros = names=Bright,Climb,Tail,Steady
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=step dst=vca amount=0.5 curve=unipolar via=macro4
+fx = src=macro2 dst=i1.mix amount=0.3
+fx = src=macro2 dst=i1.feedback amount=0.3
+fx = src=macro3 dst=i3.size amount=0.2
+
+[Vocal Mask]
+room = Night Bus
+# A voice disguised as a synth, as Loukeman hides his samples: a sung "ah" from the vocal
+# wavetable, cut into grains as it plays and pitched by the key, band-passed, flanged, put in a
+# plate that a drive overloads, and doubled an octave down. To mask a voice of your own: set G2's
+# Combine to Off and name your file in G2.
+g1 = Wavetable table=vocal pos=0.35 unison=2 detune=8 level=0.7
+g2 = Grain combine=live pos=0.25 scan=1 size=160 density=28 spray=0.35 pitch=0.06 spread=0.9 level=0.8
+p1 = SVF mode=bp cutoff=1200 res=0.35 key=0.6
+env1 = attack=60 decay=900 sustain=0.85 release=800 velocity=0.3
+lfo1 = shape=triangle rate=0.2 retrigger=off
+mod = src=lfo1 dst=g1.pos amount=0.15
+voice = env2ToP1=0 drift=3
+i1 = Flanger rate=0.15 depth=0.5 feedback=0.4 mix=0.35
+i2 = Pitch pitch=-12 mix=0.3 mode=spectral window=60 character=0.2
+i3 = Reverb size=0.6 damping=0.55 mix=0.3
+i4 = Drive amount=0.4 mix=0.4
+mix = level=-10.5
+master = 0
+macros = names=Vowel,Grains,Under,Mush
+mod = src=macro1 dst=g1.pos amount=0.3
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=g2.spray amount=0.3
+mod = src=macro2 dst=g2.density amount=-0.2
+fx = src=macro3 dst=i2.mix amount=0.4
+fx = src=macro4 dst=i4.amount amount=0.35
+fx = src=macro4 dst=i3.mix amount=0.15
+
+[High Voice]
+room = Night Bus
+# meat computer's high, soft voice: the factory choir played an octave above itself, thin and
+# young, with breath on top, a little echo and a drive. The shifter's Spectral mode brings it down
+# a fifth as a quieter second voice, so the pair sings in harmony.
+g1 = Sample sample=choir loop=on oct=1 level=0.85
+g2 = Sample sample=air loop=on oct=1 level=0.25
+p1 = SVF mode=hp cutoff=350 res=0.1 key=0.2
+env1 = attack=40 decay=800 sustain=0.9 release=600 velocity=0.4
+voice = env2ToP1=0 drift=2
+i1 = Pitch pitch=-7 mix=0.35 mode=spectral window=40 character=0.15
+i2 = Delay sync=on division=1/8. feedback=0.25 mix=0.15
+i3 = Drive amount=0.15 mix=0.5
+i4 = Reverb size=0.5 damping=0.5 mix=0.25
+mix = level=-6
+master = 0
+macros = names=Breath,Harmony,Echo,Grit
+mod = src=macro1 dst=g2.level amount=0.3
+fx = src=macro2 dst=i1.mix amount=0.4
+fx = src=macro3 dst=i2.mix amount=0.25
+fx = src=macro3 dst=i2.feedback amount=0.2
+fx = src=macro4 dst=i3.amount amount=0.2
+
+[Four-Track House]
+room = Night Bus
+# Rough house off a worn four-track: one key plays a minor seventh chord of saw and pulse under
+# a low filter, the tape's top gone and its hiss up, a drive, and a pump on each beat. The
+# shifter's rough splices wobble it like a stretched tape.
+g1 = VA shape=saw level=0.6
+g2 = VA shape=pulse pw=0.45 fine=-6 level=0.45
+p1 = Ladder cutoff=900 res=0.25 key=0.4
+env1 = attack=3 decay=500 sustain=0.6 release=250 velocity=0.4
+env2 = attack=2 decay=300 sustain=0.1 release=200
+mod = src=env2 dst=p1.cutoff amount=0.15
+voice = env2ToP1=0 drift=3
+chord = type=minor7
+i1 = Pitch pitch=0 spread=6 mix=0.3 window=15 character=0.85
+i2 = LoFi wow=0.3 flutter=0.15 hiss=0.3 bandwidth=0.5
+i3 = Drive amount=0.3 mix=0.6
+i4 = Pump depth=0.5 division=1/4 release=0.5
+i5 = Reverb size=0.35 damping=0.6 mix=0.12
+mix = level=-13.5
+master = 0
+macros = names=Open,Tape,Drive,Pump
+mod = src=macro1 dst=p1.cutoff amount=0.2
+fx = src=macro2 dst=i2.wow amount=0.3
+fx = src=macro2 dst=i2.hiss amount=0.2
+fx = src=macro2 dst=i1.mix amount=0.3
+fx = src=macro3 dst=i3.amount amount=0.35
+fx = src=macro4 dst=i4.depth amount=0.35
+
+[Spiral FM]
+room = Night Bus
+# Warm club music after Daphni: hold one key and the arpeggiator plucks it every sixteenth, an FM
+# pluck whose pitch the step modulator moves over seven steps of a minor pentatonic, so the
+# pattern turns against the bar as it repeats; a warm drive, and echoes that each fall a fourth,
+# spiralling down.
+g1 = FM2 ratio=2 index=1.6 feedback=0.1 level=0.8
+p1 = Ladder cutoff=2200 res=0.15 key=0.6
+env1 = attack=1 decay=380 sustain=0 release=250 velocity=0.5
+env2 = attack=1 decay=200 sustain=0 release=150
+mod = src=env2 dst=g1.index amount=0.25
+step = values=0,0.5833,0.25,0.8333,0.4167,1,0.5833 length=7 division=1/16
+mod = src=step dst=pitch amount=0.25 curve=quantized
+voice = env2ToP1=0 drift=2
+arp = on rate=1/16 pattern=up octaves=1 gate=0.5
+i1 = Drive amount=0.25 mix=0.5
+i2 = Pitch pitch=-5 mix=0.3 sync=on division=1/8. feedback=0.45 window=40 character=0.2
+i3 = Reverb size=0.45 damping=0.5 mix=0.15
+mix = level=-6.5
+master = 0
+macros = names=Bright,Spiral,Decay,Space
+mod = src=macro1 dst=g1.index amount=0.2
+mod = src=macro3 dst=env1.time amount=0.4
+fx = src=macro2 dst=i2.mix amount=0.3
+fx = src=macro2 dst=i2.feedback amount=0.25
+fx = src=macro4 dst=i3.mix amount=0.25
+
+[Trance Glass]
+room = Night Bus
+# The bright side of digicore: seven saws stacked wide with an FM bell on top, chorused, into a
+# plate with shimmer, and crystal echoes that each climb an octave.
+g1 = VA shape=saw unison=7 detune=35 spread=1 mix=0.7 rand=1 level=0.75
+g2 = FM2 ratio=3.5 index=0.6 level=0.25
+p1 = Ladder cutoff=6000 res=0.1 key=0.4
+env1 = attack=6 decay=900 sustain=0.75 release=700 velocity=0.4
+env3 = attack=1 decay=600 sustain=0 release=500
+mod = src=env3 dst=g2.level amount=0.3
+voice = env2ToP1=0 drift=2
+i1 = Chorus rate=0.4 depth=0.4 mix=0.3
+i2 = Pitch pitch=12 mix=0.2 mode=spectral sync=on division=1/8 feedback=0.45 window=40 character=0.1
+i3 = Reverb size=0.75 damping=0.35 mix=0.25 shimmer=0.25 predelay=20
+mix = level=-4
+master = 0
+macros = names=Bright,Bell,Crystal,Shimmer
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=g2.level amount=0.3
+fx = src=macro3 dst=i2.mix amount=0.3
+fx = src=macro3 dst=i2.feedback amount=0.25
+fx = src=macro4 dst=i3.shimmer amount=0.4
+
+[Bowed Haze]
+room = Night Bus
+# After Astrid Sonne: recorded violas, slow to swell, a little driven, in a small room, with an
+# octave-down shadow from the shifter that turns them half into cellos.
+g1 = Sample sample=violas style=sustain loop=on level=0.9
+p1 = Off
+env1 = attack=350 decay=1 sustain=1 release=1100 velocity=0.2
+voice = env2ToP1=0
+i1 = Pitch pitch=-12 mix=0.3 mode=spectral window=100 character=0.15
+i2 = Drive amount=0.25 mix=0.5
+i3 = Room size=0.35 damping=0.5 width=0.9 mix=0.3
+mix = level=-10.5
+master = 0
+macros = names=-,Under,Swell,Grit
+mod = src=macro3 dst=env1.time amount=0.5
+fx = src=macro2 dst=i1.mix amount=0.4
+fx = src=macro4 dst=i2.amount amount=0.4
+
+[Stepped Lead]
+room = Night Bus
+# The hard-tuned sound of digicore, for a synth: a lead whose vibrato jumps between whole
+# semitones (the wheel brings it in), no glide, and a glassy octave from the shifter's Spectral
+# mode, a little rough so it sounds machine-made.
+g1 = VA shape=saw level=0.6
+g2 = VA shape=pulse pw=0.3 fine=5 level=0.4
+p1 = Ladder cutoff=4200 res=0.15 key=0.6
+env1 = attack=3 decay=500 sustain=0.8 release=250 velocity=0.3
+lfo1 = shape=sine rate=5.5 retrigger=on
+mod = src=lfo1 dst=pitch amount=0.0225 curve=quantized via=wheel
+voice = env2ToP1=0 drift=1
+play = mode=mono
+i1 = Pitch pitch=12 mix=0.3 mode=spectral window=20 character=0.6
+i2 = Delay sync=on division=1/8. feedback=0.25 mix=0.15
+i3 = Reverb size=0.5 damping=0.45 mix=0.18
+mix = level=-2
+master = 0
+macros = names=Bright,Glass,Echo,Steps
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=lfo1 dst=pitch amount=0.0225 curve=quantized via=macro4
+fx = src=macro2 dst=i1.mix amount=0.4
+fx = src=macro3 dst=i2.mix amount=0.25
+
+[Sea Pad]
+room = Night Bus
+# After Huerco S.: a wide, detuned saw pad under a low filter, slow to come in, worn by tape wow
+# and twelve-bit grit, with a long tape echo and a big plate. Under it, layer B repeats the held
+# notes as a soft sine bass on the arpeggiator. A dub shadow an octave down drifts behind.
+parts = stack
+g1 = VA shape=saw unison=5 detune=30 spread=1 mix=0.7 level=0.75
+p1 = Ladder cutoff=800 res=0.15 key=0.35
+env1 = attack=1200 decay=2000 sustain=1 release=2200
+voice = env2ToP1=0 drift=4
+i1 = LoFi wow=0.35 flutter=0.1 bits=12 rate=24000 bandwidth=0.75 hiss=0.08
+i2 = Pitch pitch=-12 mix=0.25 window=200 character=0.15
+mix = level=-9
+b.g1 = VA shape=sine oct=-1 rand=0 level=0.9
+b.p1 = Off
+b.env1 = attack=8 decay=600 sustain=0.3 release=300 velocity=0.4
+b.voice = env2ToP1=0
+b.arp = on rate=1/8 pattern=up octaves=1 gate=0.4
+b.mix = level=-9
+f1 = Delay time=420 feedback=0.5 mix=0.25
+f2 = Reverb size=0.85 damping=0.6 mix=0.3 predelay=30 lowcut=120
+master = 2.5
+macros = names=Glow,Wear,Swell,Bass
+b.macros = names=Glow,Wear,Swell,Bass
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro3 dst=env1.time amount=0.4
+fx = src=macro2 dst=i1.wow amount=0.3
+fx = src=macro2 dst=i2.mix amount=0.25
+b.mod = src=macro4 dst=g1.level amount=-0.5

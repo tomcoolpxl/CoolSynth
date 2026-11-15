@@ -208,6 +208,7 @@ if(BUILD_TESTING)
             tests/V3SampleTests.cpp
             tests/V3InsertTests.cpp
             tests/V3RoomTests.cpp
+            tests/V3PitchTests.cpp
             tests/V3InstrumentTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp

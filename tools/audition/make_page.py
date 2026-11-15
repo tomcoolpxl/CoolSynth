@@ -215,6 +215,33 @@ for m in admitted:
         waiting.append(m["title"] + " (its clip changed)")
         now_cards.append(museum_card(m, ["fine now", "still not right"]))
 
+# The Pitch effect (D205) and the Night Bus room (D206), rendered by make_nightbus.py. Judged ones drop off once
+# their ids are listed here.
+NIGHT_BUS_JUDGED = set()
+PITCH_JUDGED = False
+night_bus = load("nightbus", "index.json")
+if night_bus:
+    if not PITCH_JUDGED:
+        audio = "".join(player(c["title"], "nightbus/" + c["file"]) for c in night_bus["pitch"])
+        now_cards.append('<article class="card"><h3>Pitch effect</h3>'
+                         '<p class="todo">The new effect alone: the same keys dry, then through the Pitch effect five ways. '
+                         'Heads is the classic, instant shifter; Spectral is cleaner on chords and a little late.</p>'
+                         f'<div class="players">{audio}</div>'
+                         + verdict("Pitch effect", "Pitch effect", ["good", "Heads glitches or warbles too much",
+                                                                    "Spectral sounds wrong or smeared", "too quiet or too loud",
+                                                                    "something else is wrong"])
+                         + "</article>")
+        waiting.append("the Pitch effect")
+    for p in night_bus["presets"]:
+        if p["id"] in NIGHT_BUS_JUDGED:
+            continue
+        waiting.append(p["title"] + " for Night Bus")
+        now_cards.append(f'<article class="card"><h3>Night Bus: {esc(p["title"])}</h3><p class="todo">{esc(p["listen"])}</p>'
+                         f'<div class="players">{player("The preset as it ships", "nightbus/" + p["file"])}</div>'
+                         + verdict("Night Bus", p["title"], ["keep it", "keep it, but change something (say what in the note)",
+                                                             "does not belong in this room", "drop it"])
+                         + "</article>")
+
 checks = load("modelcheck", "index.json") or []
 open_checks = [c for c in checks if c["id"] not in JUDGED_CHECKS]
 if open_checks:

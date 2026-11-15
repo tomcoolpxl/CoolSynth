@@ -495,6 +495,26 @@ lines through a Hadamard matrix with one decay time on all of them and a faster 
 treble. Size (decay 0.1 to 1.2 s, the room's dimensions and its walls' loss with it),
 Damping, Width, Mix. A change of Size rebuilds the room inside a 30 ms fade.
 
+Pitch insert (2026-11-15, decision D205): a fourteenth type, Pitch, in any layer or master slot:
+the sound moved up to two octaves either way, with a delay and feedback. `PitchInsert.h`, two
+modes. Heads: the H910/H949 delay-line shifter, a head reading the recent sound faster or slower
+than it was written and a second head taking over a window away; where the new head starts is
+found by normalised correlation over the last 10 ms (coarse, then to the sample; both sides
+together when they shift alike), and the crossfade's gains follow that correlation so its power
+stays even. A shift up is low-passed first (sixth-order Butterworth at 0.45 of the band over the
+ratio) so nothing folds back; reads go through the 16-point sinc. Spectral: the Laroche-Dolson
+peak-shifting phase vocoder (Hann frames at 75 % overlap; each peak region moved by a fractional
+number of bins and turned by the frequency change times the hop, cumulated; a new partial keeps
+its phase), one of three frame sizes by Window (1024, 2048, 4096 at 48 kHz). Values in pages of
+four: Pitch, Fine, Spread (left down, right up), Mix; Delay (0 to 1 s or a synced Division),
+Sync, Division, Feedback (through a 60 Hz to 9 kHz band and a soft clip, so each repeat climbs or
+falls another step); Mode, Window, Character (clean: the search and long correlated crossfades,
+or locked phases and kept attacks; rough: no search and short plain crossfades, or whole-bin
+moves and scattered phases). A delay shorter than a mode's own lateness is that lateness. Mode
+and frame-size changes crossfade over 20 ms; a Spectral engine starts on three frames of the
+sound already written. Cost per stereo slot at 48 kHz: about 0.9 % of a core in Heads, 2.9 % in
+Spectral. Memory: a 1.45 s line per side and the three frame sizes, about 1.1 MB per slot.
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs

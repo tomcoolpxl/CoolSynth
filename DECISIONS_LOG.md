@@ -4066,3 +4066,51 @@ status line naming the hovered control in DecentSampler (decentsamples.com Q&A 4
 cues (design-to-dev.netlify.app, clickability affordance); fading edges as the scroll cue
 (medium.com/headstorm, "In search of a better scroll UX pattern"; ux.stackexchange.com 90524).
 The user confirmed the knob hover in the app ("it works").
+
+## D205. The Pitch effect: Heads and Spectral, with a delay (2026-11-15)
+
+The research on the user's reference artists (docs/research/sound-references.md) put a pitch effect first,
+and the user chose to build it first. Asked how it should shift (options: both, as a Mode, recommended
+and chosen; Heads only, as the research specified; Spectral only) and whether it gets a Delay so
+Feedback steps each repeat (options: add Delay, recommended and chosen; no, as researched). A
+fourteenth effect type, Pitch, for any layer or master slot (PitchInsert.h; DESIGN_V3.md section 8):
+Pitch -24 to +24 semitones, Fine, Spread (left down, right up), Mix; Delay 0 to 1 s or a synced
+Division, Feedback; Mode (Heads or Spectral), Window, Character (clean to rough).
+- **Heads** is the Eventide H910/H949 delay-line shifter, de-glitched as the H949 was: the new head
+  starts where its recent sound best matches the old head's (normalised correlation), and the
+  crossfade's gains follow that correlation, so the level holds. Rough drops the search and
+  shortens the crossfades: the H910 glitch. A shift up is low-passed first so nothing folds back.
+- **Spectral** is the Laroche-Dolson peak-shifting phase vocoder (75 % overlap, fractional bin
+  moves, phases turned per peak and so locked within its region); a new partial keeps its phase.
+  Window picks its frame (21, 43 or 85 ms at 48 kHz), which is also how late it is. Rough rounds
+  the moves to whole bins and, at the top, scatters phases: the phasey wash Loukeman likes.
+- Measured (tests/V3PitchTests.cpp): intervals to 0.002 %, level within 1.5 dB; clean splices swing
+  0.1 dB against 3.1 dB rough; no shift is transparent to -140 dB; mode and frame changes no rougher
+  than steady playing. About 0.9 % of a core per slot in Heads and 2.9 % in Spectral.
+- A shift in semitones (this and every other semitone value of a slot) now steps by whole semitones
+  on a knob or the wheel, a tenth with Shift; a MiniLab knob takes six counts per semitone, as a list.
+Sources: Eventide on the H949's de-glitching ("Ding Dong! The Glitch is Dead", eventideaudio.com);
+Valhalla DSP, "Pitch Shifting: the H949, and de-glitching" (2010); Haghparast, Penttinen and
+Valimaki, "Real-time pitch-shifting of musical signals by a time-varying factor using NFC-TSM",
+DAFx-07; Laroche and Dolson, "New phase-vocoder techniques for pitch-shifting, harmonizing and other
+exotic effects", IEEE WASPAA 1999 (ee.columbia.edu/~dpwe/papers/LaroD99-pvoc.pdf); AUTimePitch's
+Tightness and Smoothness (lists.apple.com coreaudio-api, May 2005).
+
+## D206. Night Bus, a room for the laptop-collage sound (2026-11-15)
+
+The research proposed one new room for the space the user's references share; the user chose one
+room. Asked its name (options: Night Bus, recommended and chosen; Afterparty; Box Room, closest to
+the Bedroom) and its size (options: eight across the map, recommended; all sixteen, chosen; six,
+as most rooms). resources/presets/13-night-bus.csbank, SOUND_BANK_V3.md section 3: Washed Poly, Tine
+Clav, Buzz Drop, Square Grit, Whisper Air, Fizz Melody, Pirate Radio, Stutter Chords, Vocal Mask,
+High Voice, Four-Track House, Spiral FM, Trance Glass, Bowed Haze, Stepped Lead, Sea Pad. Room rule:
+the Pitch effect is in every preset, which keeps it apart from the Bedroom (tape) and the Basement
+(drive). Two research proposals needed the user's own voice file; both play from factory sound
+instead, so no preset is silent: Vocal Mask cuts the vocal wavetable into live grains (its comment
+says how to put a file there), High Voice plays the factory choir. Spiral FM got the arpeggiator,
+so one held key retriggers the pluck each sixteenth and the seven-step pattern is heard. Levels
+from the loudness tool (D153), kept in each layer's level with master 0 for one-layer sounds (D194);
+the three combinations (Tine Clav, Fizz Melody, Sea Pad) take it as master. Checked by
+measurement before the user's ear: the patterns land (Spiral FM's seven notes, the stutter's gates,
+Sea Pad's eighth-note bass, Stepped Lead's semitone trill), and no clip clicks except Pirate
+Radio's deliberate crackle. The user's verdicts are on the audition page.
