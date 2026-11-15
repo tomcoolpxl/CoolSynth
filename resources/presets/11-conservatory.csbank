@@ -17,6 +17,8 @@ macros = names=-,Detune,Pedal,Sway
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Yamaha Upright]
 room = Conservatory
@@ -33,6 +35,8 @@ macros = names=-,Honky,Pedal,Sway
 mod = src=random dst=pitch amount=0.004 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Old Upright]
 room = Conservatory
@@ -49,6 +53,8 @@ macros = names=-,Honky,Pedal,Sway
 mod = src=random dst=pitch amount=0.006 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Flemish Harpsichord]
 room = Conservatory
@@ -65,6 +71,8 @@ macros = names=-,Detune,Ring,Sway
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.1
 
 [Italian Harpsichord]
 room = Conservatory
@@ -81,6 +89,8 @@ macros = names=-,Detune,Ring,Sway
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=glfo1 dst=pan amount=0.3 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.1
 
 [FM Keys]
 room = Conservatory
@@ -97,6 +107,8 @@ macros = names=-,Detune,Ring,Autopan
 mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=glfo1 dst=pan amount=0.5 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Violins]
 room = Conservatory
@@ -114,6 +126,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Violas]
 room = Conservatory
@@ -131,6 +145,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Cellos]
 room = Conservatory
@@ -148,6 +164,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Double Bass]
 room = Conservatory
@@ -165,6 +183,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Solo Violin]
 room = Conservatory
@@ -182,6 +202,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Folk Harp]
 room = Conservatory
@@ -215,6 +237,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.6
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.3
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Kalimba]
 room = Conservatory
@@ -249,6 +273,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Trumpet]
 room = Conservatory
@@ -266,6 +292,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Tuba]
 room = Conservatory
@@ -283,6 +311,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Trombone]
 room = Conservatory
@@ -300,6 +330,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Old Trombone]
 room = Conservatory
@@ -317,6 +349,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Flute]
 room = Conservatory
@@ -334,6 +368,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Clarinet]
 room = Conservatory
@@ -351,6 +387,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Bassoon]
 room = Conservatory
@@ -368,6 +406,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Saxello]
 room = Conservatory
@@ -385,6 +425,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Tenor Sax]
 room = Conservatory
@@ -402,6 +444,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Recorders]
 room = Conservatory
@@ -419,6 +463,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Ocarina]
 room = Conservatory
@@ -436,6 +482,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Harmonica]
 room = Conservatory
@@ -453,6 +501,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=1
 mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.3
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Didgeridoo]
 room = Conservatory
@@ -470,6 +520,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.25
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Pipe Organ]
 room = Conservatory
@@ -488,6 +540,8 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=vca amount=-0.3 curve=unipolar via=macro4
 mod = src=lfo1 dst=pitch amount=0.001 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.42
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.12
 
 [Renaissance Organ]
 room = Conservatory
@@ -506,6 +560,8 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=vca amount=-0.3 curve=unipolar via=macro4
 mod = src=lfo1 dst=pitch amount=0.001 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.42
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.12
 
 [Marimba]
 room = Conservatory
@@ -591,6 +647,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro4 dst=f1.shimmer amount=0.2
 
 [Tubular Bells]
 room = Conservatory
@@ -608,6 +666,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro4 dst=f1.shimmer amount=0.2
 
 [Tubular Glock]
 room = Conservatory
@@ -625,6 +685,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro4 dst=f1.shimmer amount=0.2
 
 [Hand Chimes]
 room = Conservatory
@@ -642,6 +704,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=-0.9
 mod = src=lfo1 dst=pitch amount=0.002 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro4 dst=f1.shimmer amount=0.2
 
 [Wine Glasses]
 room = Conservatory
@@ -659,6 +723,8 @@ mod = src=random dst=pitch amount=0.003 via=macro2
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.003 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Timpani]
 room = Conservatory

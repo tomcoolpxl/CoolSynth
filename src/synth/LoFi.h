@@ -51,6 +51,7 @@ namespace coolsynth::synth
             followerRelease = static_cast<float>(1.0 - std::exp(-1.0 / (0.4 * sampleRate)));
             hissLowPass = static_cast<float>(1.0 - std::exp(-2.0 * juce::MathConstants<double>::pi * 6000.0 / sampleRate));
             clickDecay = static_cast<float>(std::exp(-1.0 / (0.0004 * sampleRate)));
+            depthGlide = 1.0 - std::exp(-1.0 / (0.05 * sampleRate)); // about 50 ms
             reset();
         }
 
@@ -66,6 +67,7 @@ namespace coolsynth::synth
             wowDrift = wowDriftTarget = 0.0f;
             follower = 0.0f;
             holdPhase = 1.0;
+            depthsPrimed = false; // the next block starts at its own depths
         }
 
         void process(juce::AudioBuffer<float>& buffer, const LoFiParameters& p) noexcept
@@ -75,8 +77,16 @@ namespace coolsynth::synth
             const int numChannels = std::min(buffer.getNumChannels(), static_cast<int>(channels.size()));
             const int numSamples = buffer.getNumSamples();
 
-            const double wowDepth = 0.0025 * juce::jlimit(0.0, 1.0, static_cast<double>(p.wow)) * sampleRate;       // samples
-            const double flutterDepth = 0.00015 * juce::jlimit(0.0, 1.0, static_cast<double>(p.flutter)) * sampleRate;
+            // Wow and flutter move the delay line's read point: their depths glide (D179), or a change would jump
+            // it, a click, at every block (an effect route changes them every 32 samples).
+            const double wowTarget = 0.0025 * juce::jlimit(0.0, 1.0, static_cast<double>(p.wow)) * sampleRate;       // samples
+            const double flutterTarget = 0.00015 * juce::jlimit(0.0, 1.0, static_cast<double>(p.flutter)) * sampleRate;
+            if (! depthsPrimed)
+            {
+                wowDepth = wowTarget;
+                flutterDepth = flutterTarget;
+                depthsPrimed = true;
+            }
             const double baseDelay = baseDelaySeconds * sampleRate;
             const double wowStep = 0.45 / sampleRate, flutterStep = 6.5 / sampleRate;
 
@@ -118,6 +128,8 @@ namespace coolsynth::synth
                 flutterPhase += flutterStep;
                 if (flutterPhase >= 1.0)
                     flutterPhase -= 1.0;
+                wowDepth += (wowTarget - wowDepth) * depthGlide;
+                flutterDepth += (flutterTarget - flutterDepth) * depthGlide;
                 const double delay = baseDelay
                                      + wowDepth * (std::sin(2.0 * juce::MathConstants<double>::pi * wowPhase) + static_cast<double>(wowDrift))
                                      + flutterDepth * std::sin(2.0 * juce::MathConstants<double>::pi * flutterPhase);
@@ -222,6 +234,8 @@ namespace coolsynth::synth
         std::vector<Channel> channels;
         double wowPhase = 0.0, flutterPhase = 0.0, holdPhase = 1.0;
         float wowDrift = 0.0f, wowDriftTarget = 0.0f;
+        double wowDepth = 0.0, flutterDepth = 0.0, depthGlide = 1.0; // in samples; the glide per sample
+        bool depthsPrimed = false;
         float follower = 0.0f, followerAttack = 0.1f, followerRelease = 0.001f;
         float hissLowPass = 0.5f, clickDecay = 0.9f;
         std::uint32_t rng = 0x2545F491u;

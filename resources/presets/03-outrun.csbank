@@ -25,6 +25,9 @@ mod = src=macro3 dst=env1.time amount=0.6
 mod = src=macro3 dst=env2.time amount=0.6
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f2.feedback amount=0.25
+fx = src=macro4 dst=f1.depth amount=0.25
 
 [Gated Pad]
 room = Outrun
@@ -47,6 +50,9 @@ mod = src=macro2 dst=g1.detune amount=0.15
 mod = src=macro2 dst=g1.spread amount=0.3
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=glfo2 dst=p1.cutoff amount=0.12 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro2 dst=f1.depth amount=0.2
+fx = src=macro3 dst=f2.size amount=0.1
 
 [Night Drive]
 room = Outrun
@@ -95,6 +101,8 @@ mod = src=macro3 dst=env2.time amount=0.3
 mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f2.feedback amount=0.2
 
 [Sunset Strings]
 room = Outrun
@@ -140,3 +148,5 @@ mod = src=macro2 dst=g1.level2 amount=0.12
 mod = src=macro3 dst=env1.time amount=0.3
 mod = src=macro3 dst=env3.time amount=0.3
 mod = src=glfo1 dst=pan amount=0.6 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f2.feedback amount=0.2

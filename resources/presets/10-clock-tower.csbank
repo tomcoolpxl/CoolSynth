@@ -20,6 +20,8 @@ mod = src=macro2 dst=g1.pw amount=-0.2
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.feedback amount=0.2
 
 [Ratchet Run]
 room = Clock Tower
@@ -39,6 +41,8 @@ mod = src=macro2 dst=p1.res amount=0.25
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.feedback amount=0.2
 
 [Step Filter]
 room = Clock Tower
@@ -60,6 +64,8 @@ mod = src=macro1 dst=p1.cutoff amount=0.1
 mod = src=macro2 dst=p1.res amount=0.2
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=step dst=p1.cutoff amount=0.1 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f2.size amount=0.15
 
 [Random Walk]
 room = Clock Tower
@@ -82,6 +88,8 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.feedback amount=0.2
 
 [Polyrhythm Pad]
 room = Clock Tower
@@ -105,6 +113,9 @@ mod = src=macro2 dst=p1.res amount=0.2
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=g1.pw amount=0.2 via=macro4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f2.size amount=0.1
+fx = src=macro4 dst=f1.depth amount=0.25
 
 [Chord Trigger]
 room = Clock Tower
@@ -129,3 +140,5 @@ mod = src=macro2 dst=p1.res amount=0.15
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.1 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.feedback amount=0.2

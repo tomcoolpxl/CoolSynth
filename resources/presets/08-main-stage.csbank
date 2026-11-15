@@ -18,6 +18,8 @@ mod = src=macro2 dst=g2.pitch amount=-0.0017
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro1 dst=f1.amount amount=0.08
 
 [Supersaw]
 room = Main Stage
@@ -49,6 +51,10 @@ mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 b.mod = src=macro2 dst=g1.shape amount=0.1
 b.mod = src=macro3 dst=env1.time amount=0.5
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro1 dst=f2.damping amount=0.2
+fx = src=macro3 dst=f2.size amount=0.1
+fx = src=macro3 dst=f1.feedback amount=0.2
 
 [Riser]
 room = Main Stage
@@ -103,6 +109,9 @@ mod = src=macro3 dst=env2.time amount=0.4
 mod = src=macro3 dst=env3.time amount=0.3
 mod = src=lfo1 dst=g2.pw amount=0.2 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.25
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.feedback amount=0.2
+fx = src=macro3 dst=f2.size amount=0.1
 
 [Hyper Lead]
 room = Main Stage
@@ -125,6 +134,8 @@ mod = src=macro2 dst=p2.mix amount=0.4
 mod = src=macro2 dst=p2.bits amount=-0.13
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=lfo1 dst=pitch amount=0.125 curve=quantized via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.feedback amount=0.2
 
 [Neuro Growl]
 room = Main Stage
@@ -177,3 +188,8 @@ mod = src=macro2 dst=g1.detune amount=0.15
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=macro3 dst=env2.time amount=0.4
 mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro1 dst=f3.high amount=0.08
+fx = src=macro2 dst=f1.depth amount=0.2
+fx = src=macro3 dst=f2.size amount=0.1
+fx = src=macro4 dst=f4.depth amount=0.15

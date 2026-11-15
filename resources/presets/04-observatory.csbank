@@ -25,6 +25,8 @@ mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=g1.pitch amount=0.08 via=macro4
 mod = src=lfo1 dst=g2.pitch amount=-0.06 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.5
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.05
 
 [Nebula Pad]
 room = Observatory
@@ -51,6 +53,9 @@ mod = src=macro2 dst=g2.detune amount=0.2
 mod = src=macro3 dst=env1.time amount=0.25
 mod = src=macro4 dst=lfo1.rate amount=0.5
 mod = src=macro4 dst=lfo2.rate amount=0.5
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro2 dst=f1.depth amount=0.25
+fx = src=macro3 dst=f2.size amount=0.05
 
 [Deep Field]
 room = Observatory
@@ -86,6 +91,9 @@ b.mod = src=macro1 dst=p1.cutoff amount=0.15
 b.mod = src=macro2 dst=p1.res amount=0.3
 b.mod = src=macro3 dst=env1.time amount=0.2
 b.mod = src=glfo1 dst=p1.cutoff amount=0.1 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.05
+b.fx = src=macro3 dst=f1.size amount=0.05
 
 [Shimmer Drone]
 room = Observatory
@@ -106,6 +114,10 @@ mod = src=macro2 dst=p1.res amount=0.2
 mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.6
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro1 dst=f1.shimmer amount=0.15
+fx = src=macro3 dst=f1.size amount=0.05
+fx = src=macro4 dst=f1.modulation amount=0.3
 
 [Satellite Ping]
 room = Observatory
@@ -126,6 +138,8 @@ mod = src=macro2 dst=g1.sub amount=0.4
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=pitch amount=0.012 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.feedback amount=0.1
 
 [Granular Sky]
 room = Observatory
@@ -151,6 +165,8 @@ mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=g1.pos amount=0.1 via=macro4
 mod = src=lfo1 dst=g2.pos amount=-0.1 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.75
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.05
 
 [Live Shimmer]
 room = Observatory
@@ -174,6 +190,9 @@ mod = src=macro2 dst=g2.p7 amount=0.15
 mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=p1.cutoff amount=0.08 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.5
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro2 dst=f1.depth amount=0.2
+fx = src=macro3 dst=f2.size amount=0.05
 
 [Frozen Pluck]
 room = Observatory
@@ -204,3 +223,5 @@ mod = src=macro3 dst=g1.decay amount=0.15
 mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=g2.pos amount=0.15 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.75
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.08

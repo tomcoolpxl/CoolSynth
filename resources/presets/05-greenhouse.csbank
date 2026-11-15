@@ -26,6 +26,8 @@ mod = src=macro3 dst=env1.time amount=0.3
 mod = src=macro3 dst=env3.time amount=0.3
 mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.1
 
 [Rain Chime]
 room = Greenhouse
@@ -48,6 +50,9 @@ mod = src=macro2 dst=g2.pitch amount=0.002
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=pitch amount=0.008 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro2 dst=f2.shimmer amount=0.2
+fx = src=macro3 dst=f1.feedback amount=0.2
 
 [Crystal Pluck]
 room = Greenhouse
@@ -70,6 +75,8 @@ mod = src=macro3 dst=env1.time amount=0.3
 mod = src=macro3 dst=env2.time amount=0.3
 mod = src=lfo1 dst=pitch amount=0.005 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.35
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.1
 
 [Kalimba]
 room = Greenhouse
@@ -96,6 +103,8 @@ mod = src=macro3 dst=g1.decay amount=0.15
 mod = src=macro3 dst=env1.time amount=0.2
 mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.35
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.1
 
 [Harp String]
 room = Greenhouse
@@ -163,3 +172,5 @@ mod = src=macro3 dst=g1.decay amount=0.12
 mod = src=macro3 dst=env1.time amount=0.15
 mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.5
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.1

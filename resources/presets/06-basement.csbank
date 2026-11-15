@@ -94,6 +94,8 @@ mod = src=macro2 dst=p2.drive amount=0.25
 mod = src=macro2 dst=p1.fb amount=0.06
 mod = src=macro3 dst=env1.time amount=0.25
 mod = src=glfo1 dst=p1.tune amount=0.1 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.1
 
 [Concrete Pad]
 room = Basement
@@ -118,6 +120,10 @@ mod = src=macro2 dst=p3.rate amount=-0.15
 mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=p2.cutoff amount=0.08 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.5
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro2 dst=f2.crackle amount=0.15
+fx = src=macro3 dst=f3.size amount=0.1
+fx = src=macro4 dst=f2.wow amount=0.3
 
 [Siren]
 room = Basement
@@ -140,3 +146,5 @@ mod = src=macro2 dst=p1.drive amount=0.35
 mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=p1.cutoff amount=0.04 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.35
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f2.feedback amount=0.05

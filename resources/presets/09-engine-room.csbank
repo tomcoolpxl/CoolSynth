@@ -36,6 +36,8 @@ mod = src=env3 dst=pitch amount=0.125 via=macro2
 mod = src=macro3 dst=env1.time amount=0.3
 mod = src=lfo1 dst=pitch amount=0.004 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro1 dst=f1.mix amount=0.2
 
 [Wobble]
 room = Engine Room
@@ -60,6 +62,8 @@ mod = src=macro2 dst=p1.res amount=0.2
 mod = src=macro2 dst=p1.drive amount=0.25
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=macro4 dst=lfo1.rate amount=0.25
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro2 dst=f1.amount amount=0.1
 
 [FM Knock]
 room = Engine Room

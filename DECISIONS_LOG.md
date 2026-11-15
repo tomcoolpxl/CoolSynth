@@ -3628,3 +3628,23 @@ copy of a factory sound into a user bank the same way (Arturia and Vital forums)
 - Later: renaming and deleting from the panel (today: in the folder), and saving from the MiniLab.
 Tested in a temporary folder: a clean name, save, the refusal and the replace, loading back (the
 macro as saved, the names, the pills), the room first in Home, loading from it, the playing mark.
+
+## D181. The presets' macros move their effects; LoFi's wow glides (2026-11-15)
+
+With D179 built, four drafting agents (Opus, high effort; brief docs/macro-drafts/BRIEF-fx.md)
+gave the macros effect routes where an effect makes the macro's role better: 101 routes on 76
+presets (drafts with a line per route on what it does: docs/macro-drafts/fx-*.md). Mostly Time
+growing a reverb's size or a delay's feedback, Movement deepening a chorus or adding shimmer, a few
+Character routes to a drive or tape wear. No macro name changed; the Conservatory's Tone stays
+unused (only a reverb there, no EQ). No wet mix is raised; feedback stays at most 0.52.
+- Checked as in D177: every line parses; at rest every preset renders bit for bit as before; all
+  macros full up stays at most +3.7 dB (Riser, unchanged); turning all four at once does not click.
+- **Found and fixed**: Bedroom Bass clicked (6.65x) when its Wobble moved the LoFi's wow. Wow and
+  flutter move a delay line's read point, and their depth was taken once per block, so every change
+  jumped it (a knob turned by hand did it too, at block edges). The depths now glide over about
+  50 ms, starting at their setting after a reset, so a sound at rest is unchanged. Options: **glide
+  the depths (chosen)**; interpolate the depth across each block (a corner at every block edge);
+  keep wow out of the routes (the fault stays for the knob).
+- For the user's ear: the layer presets (Deep Field, Juno Pad) route the same master slot from both
+  parts, so their amounts add when both parts' knobs are up; the shimmer on four Conservatory bells;
+  +0.15 reverb size on strings and organs at full Linger.

@@ -23,6 +23,8 @@ mod = src=macro2 dst=g2.level amount=0.25
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=glfo1 dst=pitch amount=0.005 via=macro4
 mod = src=glfo1 dst=vca amount=-0.15 curve=unipolar via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f1.size amount=0.15
 
 [Vinyl Choir]
 room = Bedroom
@@ -52,6 +54,8 @@ mod = src=macro2 dst=p1.res amount=0.3
 mod = src=macro3 dst=env1.time amount=0.35
 mod = src=macro4 dst=lfo2.rate amount=0.5
 mod = src=lfo2 dst=p1.vowel amount=0.3 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f3.size amount=0.15
 
 [Cassette Keys]
 room = Bedroom
@@ -74,6 +78,9 @@ mod = src=macro2 dst=p1.drive amount=0.45
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=vca amount=-0.35 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.3
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro2 dst=f1.hiss amount=0.2
+fx = src=macro3 dst=f3.size amount=0.1
 
 [Blanket Pad]
 room = Bedroom
@@ -96,6 +103,8 @@ mod = src=macro2 dst=g1.pitch amount=-0.001
 mod = src=macro2 dst=g2.pitch amount=0.001
 mod = src=macro3 dst=env1.time amount=0.3
 mod = src=glfo1 dst=p1.cutoff amount=0.08 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro3 dst=f2.size amount=0.15
 
 [Bedroom Bass]
 room = Bedroom
@@ -114,6 +123,8 @@ mod = src=macro1 dst=p1.cutoff amount=0.15
 mod = src=macro2 dst=p1.drive amount=0.4
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro4 dst=f1.wow amount=0.25
 
 [Dusty Mallet]
 room = Bedroom
@@ -137,3 +148,6 @@ mod = src=macro3 dst=env1.time amount=0.25
 mod = src=macro3 dst=g1.decay amount=0.15
 mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.33
+# Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
+fx = src=macro1 dst=f1.bandwidth amount=0.2
+fx = src=macro3 dst=f2.size amount=0.15
