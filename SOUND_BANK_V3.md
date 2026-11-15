@@ -250,18 +250,18 @@ note moves. Room rule: every preset is tempo-locked.
 
 ### Workshop (templates)
 
-Init patches: one generator, filter open, short envelopes, no effects. These are starting points,
+Basic patches (named Init until D193): one generator, filter open, short envelopes, no effects. These are starting points,
 not sounds.
 
 | # | Name | Needs | Status |
 | --- | --- | --- | --- |
-| 1 | Init Saw | none | Now |
-| 2 | Init Pulse | none | Now |
-| 3 | Init Sine | none | Now |
-| 4 | Init Noise | none | Now |
-| 5 | Init Arp | none | Now |
-| 6 | Init FM | FM2 | PH |
-| 7 | Init Wavetable | WT | PH |
+| 1 | Basic Saw | none | Now |
+| 2 | Basic Pulse | none | Now |
+| 3 | Basic Sine | none | Now |
+| 4 | Basic Noise | none | Now |
+| 5 | Basic Arp | none | Now |
+| 6 | Basic FM | FM2 | PH |
+| 7 | Basic Wavetable | WT | PH |
 
 ## 4. What "modern synth sounds" means in this bank
 
@@ -341,7 +341,7 @@ loudness-normalised):
 
 | Room | Shipped | Waiting for |
 | --- | --- | --- |
-| Workshop | Init Saw, Init Pulse, Init Sine, Init Arp, Init Noise, Init FM, Init Wavetable | none |
+| Workshop | Basic Saw, Basic Pulse, Basic Sine, Basic Arp, Basic Noise, Basic FM, Basic Wavetable | none |
 | Basement | Acid, Rust Bass, Metal Hit, Furnace Drone, Concrete Pad, Siren | none |
 | Studio 1982 | Juno Pad (two layers), Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |

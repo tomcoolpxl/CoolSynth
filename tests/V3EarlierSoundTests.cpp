@@ -60,8 +60,8 @@ public:
 
     void runTest() override
     {
-        const int saw = presetNamed("Init Saw"), fm = presetNamed("Init FM"), sine = presetNamed("Init Sine"),
-                  pulse = presetNamed("Init Pulse"), bass = presetNamed("Bedroom Bass");
+        const int saw = presetNamed("Basic Saw"), fm = presetNamed("Basic FM"), sine = presetNamed("Basic Sine"),
+                  pulse = presetNamed("Basic Pulse"), bass = presetNamed("Bedroom Bass");
 
         beginTest("A chord held through a preset change keeps its sound; a new note takes the new one; key-up ends it");
         {
@@ -195,10 +195,10 @@ public:
                         at += blockSize;
                     }
                 };
-                p->synth->setCurrentProgram(presetNamed("Init Saw"));
+                p->synth->setCurrentProgram(presetNamed("Basic Saw"));
                 p->keys({ 48, 52 }, true);
                 playInto(0.3);
-                p->synth->setCurrentProgram(presetNamed("Init FM"));
+                p->synth->setCurrentProgram(presetNamed("Basic FM"));
                 p->keys({ 55, 59 }, true);
                 playInto(0.3);
                 p->synth->setCurrentProgram(presetNamed("Juno Pad"));
@@ -234,7 +234,7 @@ public:
                 }
             };
             // Two sounds ringing together for over a second: their units are shared out.
-            p->synth->setCurrentProgram(presetNamed("Init Saw"));
+            p->synth->setCurrentProgram(presetNamed("Basic Saw"));
             p->keys({ 48, 52 }, true);
             play(0.2);
             p->synth->setCurrentProgram(presetNamed("Juno Pad"));

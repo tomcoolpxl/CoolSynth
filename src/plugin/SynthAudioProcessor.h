@@ -45,6 +45,9 @@ public:
 
     // The factory bank as host programs, named "Room: Preset".
     int getNumPrograms() override;
+    /** The sound a new CoolSynth starts with, the user's choice (D193), and its program number (-1 if gone). */
+    static constexpr char startSoundName[] = "Contact";
+    [[nodiscard]] static int startSoundIndex();
     int getCurrentProgram() override { return currentProgram; }
     void setCurrentProgram(int index) override;
     const juce::String getProgramName(int index) override;
@@ -174,6 +177,9 @@ public:
     bool loadMySound(const juce::File& file);
     /** The saved sound playing, or no file when a factory sound plays. */
     [[nodiscard]] juce::File playingMySound() const { return playingMySoundFile; }
+    /** The factory sound playing, or -1 when the state holds one the bank does not have (D193). The host's program
+        number (getCurrentProgram) stays a valid one either way. */
+    [[nodiscard]] int playingFactoryProgram() const noexcept { return playingFactorySound ? currentProgram : -1; }
     /** A part's four macro names: the playing saved sound's, else the factory sound's; empty where it has none. */
     [[nodiscard]] std::array<juce::String, 4> macroNames(int part) const;
     /** The engine pills a saved sound's file carries. */
@@ -351,6 +357,9 @@ private:
     std::atomic<bool> panicRequested { false };
     int currentProgram = 0;
     juce::File playingMySoundFile;                                  // D180: a saved sound playing, else none
+    bool playingFactorySound = true;                                // D193: currentProgram is the sound playing
+    /** After a state is loaded: which sound it holds, by its My Sounds file or its name (D193). */
+    void restorePlayingSound(const juce::String& name, const juce::String& mySoundPath);
     std::array<std::array<juce::String, 4>, 2> mySoundMacroNames {}; // its macro names, part A and B
     mutable juce::CriticalSection midiMappingStateLock;
     std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};

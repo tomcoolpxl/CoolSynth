@@ -211,7 +211,7 @@ namespace coolsynth::ui
                     return mySoundBase + static_cast<int>(k);
             return -1;
         }
-        return synth.getCurrentProgram();
+        return synth.playingFactoryProgram(); // -1: a sound the bank does not have (D193)
     }
 
     juce::String InterfaceModel::soundName(int sound) const
@@ -764,6 +764,7 @@ namespace coolsynth::ui
     {
         if (steps == 0)
             return;
+        mainTurns += steps;
         cancelPendingChoice();
         if (typeList.open)
             typeList.row = clampInt(typeList.row + steps, 0, typeNames().size());
@@ -821,6 +822,7 @@ namespace coolsynth::ui
     {
         if (steps == 0 || typeList.open)
             return;
+        pageTurns += steps;
         cancelPendingChoice();
         if (currentView == View::home)
             currentLivePage = clampInt(currentLivePage + steps, 0, livePageCount - 1);

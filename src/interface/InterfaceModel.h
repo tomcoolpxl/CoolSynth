@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include <array>
 #include <functional>
 #include <map>
@@ -120,6 +122,10 @@ namespace coolsynth::ui
 
         // ---- Input ------------------------------------------------------------------------
         void turnMain(int steps);
+        /** Every step the main knob was turned, from anywhere (the screen, the wheel, the keys, the MiniLab): the
+            screen's knob turns with them (D193). Knob 5's page turns likewise. */
+        [[nodiscard]] std::int64_t mainTurnCount() const noexcept { return mainTurns; }
+        [[nodiscard]] std::int64_t pageTurnCount() const noexcept { return pageTurns; }
         void pressMain();
         void turnPageKnob(int steps);                         // knob 5
         void turnKnob(int knob, int steps, bool fine);        // knobs 1-4 and 6-8
@@ -288,6 +294,7 @@ namespace coolsynth::ui
         int octave = 0;        // the screen's keys, octaves from C3
         bool hardware = false; // a MiniLab connected
         int miniLabOctave = 0; // the MiniLab's octave shift, as its notes tell (D192)
+        std::int64_t mainTurns = 0, pageTurns = 0; // steps turned, for the screen's knobs (D193)
         Popup lastPopup;
         int changeCount = 0;
         bool hardwareShift = false;

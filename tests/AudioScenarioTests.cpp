@@ -325,12 +325,12 @@ public:
 
     void runTest() override
     {
-        // Init Saw with a master reverb at 20 % mix; a key held half a second, then the tail. Returns the left channel.
+        // Basic Saw with a master reverb at 20 % mix; a key held half a second, then the tail. Returns the left channel.
         const auto render = [](bool routed, float macro, bool sweep)
         {
             auto rig = std::make_unique<Rig>();
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
-                if (coolsynth::presets::getFactoryPreset(i).name == "Init Saw")
+                if (coolsynth::presets::getFactoryPreset(i).name == "Basic Saw")
                     rig->loadPreset(i);
             auto& state = rig->synth->getValueTreeState();
             const auto set = [&](const juce::String& id, float plain)

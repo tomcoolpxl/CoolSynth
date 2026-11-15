@@ -38,6 +38,7 @@ namespace
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
+    inline constexpr char processorStateMySoundProperty[] = "mySound"; // the My Sounds file playing, if one (D193)
     inline constexpr char processorStatePatchDirtyProperty[] = "patchDirty";
 
     // Sets an atomic flag for the current scope and restores the previous value after.
@@ -198,6 +199,20 @@ SynthAudioProcessor::SynthAudioProcessor()
     // So is its velocity curve (D175): the player's keyboard is the computer's.
     if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined)
         setVelocityCurve(pluginOptions().getIntValue("velocityCurve", normalCurve));
+
+    // A new CoolSynth, in the app or a host, starts on Contact (D193). Tests and tools (no wrapper) keep the
+    // parameters' own defaults. A host's saved project, and the app's state from last time, are loaded after this.
+    if (wrapperType != wrapperType_Undefined)
+        if (const int start = startSoundIndex(); start >= 0)
+            setCurrentProgram(start);
+}
+
+int SynthAudioProcessor::startSoundIndex()
+{
+    for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+        if (coolsynth::presets::getFactoryPreset(i).name == startSoundName)
+            return i;
+    return -1;
 }
 
 float SynthAudioProcessor::shapeVelocity(float velocity, int curve) noexcept
@@ -815,6 +830,7 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     if (index < 0 || index >= getNumPrograms())
         return;
     currentProgram = index;
+    playingFactorySound = true;
     const auto& preset = coolsynth::presets::getFactoryPreset(index);
     coolsynth::diag::record(coolsynth::diag::Event::presetLoaded, index, 0, 0.0f, 0.0f, preset.name.toRawUTF8());
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
@@ -903,6 +919,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
             setLearnedMidiBindings(parseLearnedMidiBindingsXml(*xml, renamed));
             setPatchIdentity(xml->getStringAttribute(processorStatePatchNameProperty, "Init"),
                              xml->getBoolAttribute(processorStatePatchDirtyProperty, false));
+            restorePlayingSound(getPatchName(), xml->getStringAttribute(processorStateMySoundProperty));
             undoHistory.clear();
         }
     }
@@ -935,8 +952,8 @@ std::array<juce::String, 4> SynthAudioProcessor::macroNames(int part) const
     const auto p = static_cast<std::size_t>(juce::jlimit(0, 1, part));
     if (playingMySoundFile != juce::File())
         return mySoundMacroNames[p];
-    if (currentProgram >= 0 && currentProgram < coolsynth::presets::getFactoryPresetCount())
-        return coolsynth::presets::getFactoryPreset(currentProgram).macroNames[p];
+    if (const int program = playingFactoryProgram(); program >= 0 && program < coolsynth::presets::getFactoryPresetCount())
+        return coolsynth::presets::getFactoryPreset(program).macroNames[p];
     return {};
 }
 
@@ -1020,6 +1037,40 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createParameterStateXml()
     return state.createXml();
 }
 
+void SynthAudioProcessor::restorePlayingSound(const juce::String& name, const juce::String& mySoundPath)
+{
+    // The state keeps the parameters, the sound's name and, for a saved sound, its file; the browser's "playing"
+    // mark and the macro names come from the program number, which a state did not keep: after a restart the screen
+    // named program 0 whatever played (D193). Now the sound is found again, by its file or its name; old names are
+    // read as renamed. A sound the bank does not have is no factory sound, rather than the wrong one.
+    playingMySoundFile = juce::File();
+    mySoundMacroNames = {};
+    if (mySoundPath.isNotEmpty() && juce::File::isAbsolutePath(mySoundPath))
+        if (const juce::File file(mySoundPath); file.existsAsFile())
+        {
+            playingMySoundFile = file;
+            if (const auto root = juce::parseXML(file))
+                mySoundMacroNames = { splitNames(root->getStringAttribute("macrosA")), splitNames(root->getStringAttribute("macrosB")) };
+            return;
+        }
+
+    auto wanted = name;
+    if (wanted.startsWith("Init ")) // the Workshop's plain sounds were Init until D193
+        wanted = "Basic " + wanted.fromFirstOccurrenceOf("Init ", false, false);
+    else if (wanted == "Contact Opening II Grit")
+        wanted = "Contact";
+    playingFactorySound = false;
+    for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+        if (coolsynth::presets::getFactoryPreset(i).name == wanted)
+        {
+            currentProgram = i;
+            playingFactorySound = true;
+            if (wanted != name)
+                setPatchIdentity(wanted, isPatchDirty());
+            return;
+        }
+}
+
 std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml() const
 {
     auto root = std::make_unique<juce::XmlElement>(processorStateRootTag);
@@ -1028,6 +1079,8 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
     root->setAttribute(processorStateStateTypeProperty, parameters.state.getType().toString());
     root->setAttribute(processorStatePatchNameProperty, getPatchName());
     root->setAttribute(processorStatePatchDirtyProperty, isPatchDirty());
+    if (playingMySoundFile != juce::File())
+        root->setAttribute(processorStateMySoundProperty, playingMySoundFile.getFullPathName()); // D193
 
     auto parameterState = const_cast<SynthAudioProcessor*> (this)->parameters.copyState();
     root->addChildElement(parameterState.createXml().release());

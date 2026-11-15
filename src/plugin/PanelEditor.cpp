@@ -41,6 +41,26 @@ namespace
     }
 
     const juce::String emDash = juce::String(juce::CharPointer_UTF8("\xe2\x80\x94"));
+
+    /** A mouse wheel's steps (D193): one notch is one step. JUCE gives a Windows notch as 0.234375 (120 / 2 / 256),
+        which times the old 8.5 made 1.99 and so moved one row, then two. A high-resolution wheel's part-notches add
+        up; a smooth wheel (a trackpad) scrolls as before. `sum` keeps what has not made a whole step yet. */
+    int wheelSteps(const juce::MouseWheelDetails& wheel, float& sum)
+    {
+        if (wheel.isSmooth)
+            sum += wheel.deltaY * 8.5f;
+        else
+        {
+           #if JUCE_WINDOWS
+            sum += wheel.deltaY / 0.234375f;
+           #else
+            sum += wheel.deltaY > 0.0f ? 1.0f : (wheel.deltaY < 0.0f ? -1.0f : 0.0f);
+           #endif
+        }
+        const int steps = static_cast<int>(sum);
+        sum -= static_cast<float>(steps);
+        return steps;
+    }
     const juce::String mainMark = juce::String(juce::CharPointer_UTF8("\xe2\x97\x8e"));
 }
 
@@ -82,14 +102,19 @@ public:
 
     void mouseWheelMove(const juce::MouseEvent&, const juce::MouseWheelDetails& wheel) override
     {
-        wheelSum += wheel.deltaY * 8.5f;
-        const int steps = static_cast<int>(wheelSum);
-        if (steps != 0)
-        {
-            wheelSum -= static_cast<float>(steps);
+        if (const int steps = wheelSteps(wheel, wheelSum); steps != 0)
             turn(steps);
-        }
     }
+
+    /** Turns the pointer by `steps` detents without acting: the main knob and knob 5 follow the model's count of
+        their turns, whatever turned them (D193). */
+    void spinBy(int steps)
+    {
+        spin += static_cast<float>(steps) * 0.42f;
+        repaint();
+    }
+
+    bool spinsItself = true; // false: spinBy() turns it, from the model's count
 
     void paint(juce::Graphics& g) override
     {
@@ -158,7 +183,8 @@ public:
 private:
     void turn(int steps)
     {
-        spin += static_cast<float>(steps) * 0.42f;
+        if (spinsItself)
+            spin += static_cast<float>(steps) * 0.42f;
         if (onSteps)
             onSteps(steps);
         repaint();
@@ -350,11 +376,9 @@ public:
     // so a long list scrolls, its ‹ Back row included.
     void mouseWheelMove(const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel) override
     {
-        wheelSum += wheel.deltaY * 8.5f;
-        const int steps = static_cast<int>(wheelSum);
+        const int steps = wheelSteps(wheel, wheelSum);
         if (steps == 0)
             return;
-        wheelSum -= static_cast<float>(steps);
         const auto p = e.getPosition();
         bool done = false;
         for (int k = 0; k < 4 && ! done; ++k)
@@ -721,6 +745,7 @@ public:
         addAndMakeVisible(screen);
 
         mainKnob.isMain = true;
+        mainKnob.spinsItself = false; // it follows every main-knob turn, the wheel's and the MiniLab's too (D193)
         mainKnob.onSteps = [this](int s) { model.turnMain(s); owner.timerCallback(); };
         mainKnob.onPress = [this] { model.pressMain(); owner.timerCallback(); };
         addAndMakeVisible(mainKnob);
@@ -730,6 +755,7 @@ public:
             auto& knob = knobs[static_cast<std::size_t>(k)];
             const int number = k + 1;
             knob.navigation = number == 5;
+            knob.spinsItself = number != 5; // knob 5 follows every page turn, as the main knob (D193)
             knob.onSteps = [this, number](int s)
             {
                 if (number == 5)
@@ -820,6 +846,17 @@ public:
     void refresh()
     {
         screen.repaint();
+        // The main knob and knob 5 turn with every step the model took, at most five detents at once (End, Home).
+        if (const auto turns = model.mainTurnCount(); turns != shownMainTurns)
+        {
+            mainKnob.spinBy(static_cast<int>(juce::jlimit<std::int64_t>(-5, 5, turns - shownMainTurns)));
+            shownMainTurns = turns;
+        }
+        if (const auto turns = model.pageTurnCount(); turns != shownPageTurns)
+        {
+            knobs[4].spinBy(static_cast<int>(juce::jlimit<std::int64_t>(-5, 5, turns - shownPageTurns)));
+            shownPageTurns = turns;
+        }
         // A knob turned (by the mouse, the wheel or the MiniLab) shows its value in its middle (D183).
         const auto now = juce::Time::getMillisecondCounter();
         if (const auto& popup = model.popup(); popup.serial != shownPopup)
@@ -1084,6 +1121,7 @@ private:
     int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)
     static constexpr int firstKey = 36, shownKeySpan = 60, whiteKeys = 36; // C2 to C7, five octaves (D192)
     int shownStart = firstKey; // the lowest key the screen shows
+    std::int64_t shownMainTurns = 0, shownPageTurns = 0; // the model's turn counts the knobs show (D193)
 };
 
 // ---- The editor ---------------------------------------------------------------------------------------

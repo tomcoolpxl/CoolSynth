@@ -1,7 +1,7 @@
 # Workshop: starting points. One generator, the filter wide open, short envelopes, no effects.
-# Init Noise (noise generator, phase 3.1), Init FM (FM generator, 3.2) and Init Wavetable (3.4) follow.
+# Basic Noise (noise generator, phase 3.1), Basic FM (FM generator, 3.2) and Basic Wavetable (3.4) follow.
 
-[Init Saw]
+[Basic Saw]
 room = Workshop
 g1 = VA shape=saw level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
@@ -16,7 +16,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.33
 
-[Init Pulse]
+[Basic Pulse]
 room = Workshop
 g1 = VA shape=pulse pw=0.5 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
@@ -30,7 +30,7 @@ mod = src=macro2 dst=g1.pw amount=-0.4
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=g1.pw amount=0.25 via=macro4
 
-[Init Sine]
+[Basic Sine]
 room = Workshop
 g1 = VA shape=sine level=0.8
 p1 = Off
@@ -45,7 +45,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.33
 
-[Init Arp]
+[Basic Arp]
 room = Workshop
 g1 = VA shape=saw level=0.8
 p1 = Ladder cutoff=2400 res=0.2 key=0.5
@@ -62,7 +62,7 @@ mod = src=macro3 dst=env1.time amount=0.5
 mod = src=macro3 dst=env2.time amount=0.5
 mod = src=glfo1 dst=p1.cutoff amount=0.1 via=macro4
 
-[Init Noise]
+[Basic Noise]
 room = Workshop
 g1 = Noise type=white width=0.5 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
@@ -79,7 +79,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=p1.cutoff amount=-0.2 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=-0.25
 
-[Init FM]
+[Basic FM]
 room = Workshop
 g1 = FM2 ratio=1 index=1 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0
@@ -94,7 +94,7 @@ mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.33
 
-[Init Wavetable]
+[Basic Wavetable]
 room = Workshop
 g1 = Wavetable table=classic pos=0.667 level=0.8
 p1 = Ladder cutoff=20000 res=0 key=0 bass=0

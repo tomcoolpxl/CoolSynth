@@ -217,6 +217,59 @@ public:
             expectEquals(model->part(), 1);
         }
 
+        beginTest("A new CoolSynth starts on Contact; the Workshop's plain sounds are Basic (D193)");
+        {
+            const int start = SynthAudioProcessor::startSoundIndex();
+            expect(start >= 0, "the start sound is in the bank");
+            if (start >= 0)
+                expectEquals(coolsynth::presets::getFactoryPreset(start).name, juce::String("Contact"));
+            bool init = false, basic = false;
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+            {
+                init = init || coolsynth::presets::getFactoryPreset(i).name.startsWith("Init ");
+                basic = basic || coolsynth::presets::getFactoryPreset(i).name == "Basic Saw";
+            }
+            expect(! init && basic);
+        }
+
+        beginTest("A saved state brings back the sound it holds, under its new name if renamed (D193)");
+        {
+            auto indexOf = [](const juce::String& name)
+            {
+                for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                    if (coolsynth::presets::getFactoryPreset(i).name == name)
+                        return i;
+                return -1;
+            };
+            auto source = std::make_unique<SynthAudioProcessor>();
+            const int juno = indexOf("Juno Pad");
+            source->setCurrentProgram(juno);
+            juce::MemoryBlock state;
+            source->getStateInformation(state);
+
+            auto target = std::make_unique<SynthAudioProcessor>();
+            target->setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+            expectEquals(target->playingFactoryProgram(), juno, "the screen names what plays, not program 0");
+            expect(target->macroNames(0) == source->macroNames(0), "with its macro names");
+
+            auto withName = [&](const juce::String& name)
+            {
+                auto root = juce::AudioProcessor::getXmlFromBinary(state.getData(), static_cast<int>(state.getSize()));
+                root->setAttribute("patchName", name);
+                juce::MemoryBlock changed;
+                juce::AudioProcessor::copyXmlToBinary(*root, changed);
+                target->setStateInformation(changed.getData(), static_cast<int>(changed.getSize()));
+            };
+            withName("Init Saw");
+            expectEquals(target->playingFactoryProgram(), indexOf("Basic Saw"));
+            expectEquals(target->getPatchName(), juce::String("Basic Saw"));
+            withName("Contact Opening II Grit");
+            expectEquals(target->playingFactoryProgram(), indexOf("Contact"));
+            withName("A sound the bank lacks");
+            expectEquals(target->playingFactoryProgram(), -1, "no factory sound, rather than the wrong one");
+            expect(target->macroNames(0)[0].isEmpty());
+        }
+
         beginTest("An empty layer's Home says so; the MiniLab's keys follow the notes it plays (D192)");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
@@ -428,9 +481,9 @@ public:
         beginTest("The examples of the specification, and one of each engine");
         expectEquals(named("Frozen Pluck"), juce::String("Physical Grain"));
         expectEquals(named("Steinway Grand"), juce::String("Sample"));
-        expectEquals(named("Init Saw"), juce::String("VA"));
-        expectEquals(named("Init FM"), juce::String("FM"));
-        expectEquals(named("Init Wavetable"), juce::String("WT"));
+        expectEquals(named("Basic Saw"), juce::String("VA"));
+        expectEquals(named("Basic FM"), juce::String("FM"));
+        expectEquals(named("Basic Wavetable"), juce::String("WT"));
         expectEquals(named("Future Chord"), juce::String("WT"));
         expectEquals(named("Siren"), juce::String("Filter")); // no generator: the ladder rings on its own
 
@@ -610,7 +663,7 @@ public:
             synth->setPlayConfigDetails(0, 2, 48000.0, 256);
             synth->prepareToPlay(48000.0, 256);
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
-                if (coolsynth::presets::getFactoryPreset(i).name == "Init Saw")
+                if (coolsynth::presets::getFactoryPreset(i).name == "Basic Saw")
                     synth->setCurrentProgram(i);
             auto& state = synth->getValueTreeState();
             const auto set = [&](const char* id, float plain)
@@ -743,7 +796,7 @@ public:
         expectEquals(synth->getPatchName(), juce::String("My Brass"));
         const auto factoryNames = coolsynth::presets::getFactoryPreset(named("Neon Brass")).macroNames[0];
 
-        synth->setCurrentProgram(named("Init Saw"));
+        synth->setCurrentProgram(named("Basic Saw"));
         expect(synth->playingMySound() == juce::File(), "a factory sound again");
         expectWithinAbsoluteError(macro->getValue(), 0.0f, 1.0e-6f);
         expect(synth->loadMySound(file));
@@ -755,7 +808,7 @@ public:
 
         beginTest("My Sounds is the first room in Home, its sounds load from there");
         auto& model = synth->getInterfaceModel();
-        synth->setCurrentProgram(named("Init Saw"));
+        synth->setCurrentProgram(named("Basic Saw"));
         model.pressPad(coolsynth::ui::InterfaceModel::homePad, false); // Home: refreshes the rooms
         expectEquals(model.categories().front().name, juce::String("My Sounds"));
         model.turnMain(-100);

@@ -3843,3 +3843,27 @@ The defaults should suit a beginner (the user), so:
   warns that a badly signalled mode causes errors. Options: Home is the sound and layers live only in
   the sections (recommended); keep the switch but make the mode loud; **layer B holds a second sound,
   as Analog Lab's Multi (chosen, the user's)**. That is the next piece of work.
+
+## D193. Basic sounds; CoolSynth starts on Contact; the wheel steps one row; the knobs turn along (2026-11-15)
+
+- **Init became Basic** (the user's choice; options: **Basic, recommended and chosen**; Base, which reads
+  as Bass; Plain): Basic Saw, Pulse, Sine, Arp, Noise, FM, Wavetable. "Init" is synth jargon for a
+  blank patch.
+- **The start sound**: a bare saw is dull, said the user. Offered Cassette Keys (recommended), Juno
+  Pad, Grid Keys, Neon Brass; the user chose **Contact Opening II Grit** and renamed it **Contact**. A
+  new CoolSynth, in the app or a host, starts on it; tests and tools (no plugin wrapper) keep the
+  parameters' own defaults. A host's project and the app's last state load after it, so the app
+  reopens on the sound it had.
+- **Found on the way, a bug older than today**: a saved state kept the sound's name but not its
+  program number, and the browser's "playing" mark and the macro names come from the number. After
+  every restart the screen named program 0 (then Init Saw, with its macro names) whatever played.
+  The state now keeps the My Sounds file too, and a restore finds the sound again by its file or
+  its name (old names read as renamed); a sound the bank lacks is shown as no factory sound, not
+  the wrong one.
+- **The mouse wheel**: JUCE gives a Windows notch as 0.234 (120 / 2 / 256); times the old 8.5 that
+  made 1.99, so a notch moved one row, then two. One notch is now one row (part-notches of a
+  high-resolution wheel add up; a trackpad scrolls as before), in the screen and on the knobs.
+- **The black knob turns along**: the model counts every turn of the main knob, from the screen's
+  wheel, the arrow keys, the mouse or the MiniLab's own knob, and the screen's knob follows that
+  count; knob 5 follows the page turns the same way.
+- Checked: the wheel moved three rows for three notches and the knob turned with them, in the app.

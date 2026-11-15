@@ -21,7 +21,7 @@ press) and knob 5.
 | Hold, Oct -, Oct + | With a MiniLab: its own, greyed out on screen. Without one (D184): Hold holds the notes like a sustain pedal, or latches a running arp; Oct -/+ move the screen's five octaves up or down (D192). |
 | Two touch strips (Pitch, Mod) | Pitch bend and mod wheel, as the keyboard sends them. |
 | Screen | The software screen (section 4). Larger in software, in the same place. |
-| Main knob | Turn: moves through the list in view. Press: opens, loads or chooses a type. Its current job is printed beside it ("turn Sound", "press Load"). |
+| Main knob | Turn: moves through the list in view. Press: opens, loads or chooses a type. Its current job is printed beside it ("turn Sound", "press Load"). The screen's knob turns with every step, whatever made it: the mouse, the wheel (one notch, one row), the arrow keys or the MiniLab (D193). |
 | Knobs 1-4 | The page in view. Ringed in the colour of the open section (teal in Home, lime on Perform pages). |
 | Knob 5 | Pages: of the focused slot in a section, of the live pages in Home. Blue navigation ring. |
 | Knobs 6-8 | Glide, Brightness, Space, the same everywhere. Brightness moves every Ladder and SVF cutoff of the sound together, up to 1.5 octaves either way; Space makes every reverb, delay and room up to twice or half as wet; in the middle the sound is as designed (D176). |

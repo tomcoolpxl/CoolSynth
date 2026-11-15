@@ -346,8 +346,9 @@ mod = src=macro3 dst=env1.time amount=0.25
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
 
-[Contact Opening II Grit]
+[Contact]
 room = Museum
+# Named "Contact Opening II Grit" until D193, when the user made it the sound CoolSynth starts with.
 # The gritty twin of "Contact Opening II", the user's pick from five candidates (D133, D134): "7 is
 # closest", then "contact synth ii is approved". The record's roughness comes only with the sound
 # (the recording before the first note is 50 dB quieter) and lies as strong between the spectral
