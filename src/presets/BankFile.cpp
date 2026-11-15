@@ -511,6 +511,23 @@ namespace coolsynth::presets
                             error("'step' has no setting '" + k + "'");
                         }
                     }
+                    else if (key == "macros" && k == "names")
+                    {
+                        // The four macros' names on the Macros page (D177): "names=Blare,Thickness,Swell,Shimmer".
+                        const auto names = juce::StringArray::fromTokens(v, ",", "");
+                        if (names.size() != sv3::macroCount)
+                        {
+                            error("'names' takes the four macros' names, comma-separated, without spaces");
+                            continue;
+                        }
+                        // "-" marks a macro the sound does not use: the knob shows a dash, as an empty one does.
+                        auto& target = preset.macroNames[part == pv3::Part::a ? 0u : 1u];
+                        for (int m = 0; m < sv3::macroCount; ++m)
+                        {
+                            const auto name = names[m].trim().replaceCharacter('_', ' ');
+                            target[static_cast<std::size_t>(m)] = name == "-" ? juce::String(juce::CharPointer_UTF8("\xe2\x80\x94")) : name;
+                        }
+                    }
                     else if (key == "macros")
                     {
                         const int macro = k.startsWith("macro") && k.length() == 6 ? k.getLastCharacters(1).getIntValue() : 0;

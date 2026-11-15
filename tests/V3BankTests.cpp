@@ -78,6 +78,25 @@ master = -6
             expect(preset.entries.front().parameterId == "pA.g1.type"); // the type comes before its parameters
         }
 
+        beginTest("macro_names_per_part_and_a_wrong_count_reported");
+        {
+            const auto parsed = parseBankFile(R"([Named]
+parts = layer
+macros = names=Blare,Thickness,Swell,Shimmer
+b.macros = names=Air,Grit,Bloom,Drift
+mod = src=macro1 dst=p1.cutoff amount=0.2
+[Short]
+macros = names=One,Two
+)", "names.csbank");
+            expectEquals(parsed.errors.size(), 1, parsed.errors.joinIntoString("; "));
+            expect(parsed.errors[0].contains("names.csbank:7"), parsed.errors[0]);
+            const auto& named = parsed.presets[0];
+            expectEquals(named.macroNames[0][0], juce::String("Blare"));
+            expectEquals(named.macroNames[0][3], juce::String("Shimmer"));
+            expectEquals(named.macroNames[1][1], juce::String("Grit"));
+            expect(parsed.presets[1].macroNames[0][0].isEmpty(), "a wrong count names nothing");
+        }
+
         beginTest("parse_reports_unknown_settings_with_file_and_line");
         {
             const auto parsed = parseBankFile(R"(room = Nowhere

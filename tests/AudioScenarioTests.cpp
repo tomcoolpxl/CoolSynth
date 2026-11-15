@@ -2,6 +2,8 @@
 // block watched by the allocation alarm (tests/AudioThreadAlarm.cpp), checked for broken values, and timed.
 
 #include <algorithm>
+#include <cstdint>
+#include <cstring>
 #include <cmath>
 #include <memory>
 
@@ -197,6 +199,72 @@ public:
             };
             expectGreaterThan(flood(false), 0, "held keys still sound: the test can tell");
             expectEquals(flood(true), 0, "every released key ended");
+        }
+
+        beginTest("Every preset with all four macros full up stays sound, and not much louder (D177)");
+        {
+            // A chord, then all macros of both parts to full; the level against the same chord with them at 0.
+            // COOLSYNTH_RENDER_HASHES=file writes a hash of each preset's render at rest, to compare two builds.
+            const auto hashFile = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_RENDER_HASHES", {});
+            juce::StringArray hashes;
+            float worstRise = -100.0f;
+            juce::String worstName;
+            juce::StringArray tooLoud;
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+            {
+                const auto play = [&](float macro, std::uint64_t* hash)
+                {
+                    auto rig = std::make_unique<Rig>();
+                    rig->loadPreset(i);
+                    auto& state = rig->synth->getValueTreeState();
+                    for (const char* part : { "pA", "pB" })
+                        for (int m = 1; m <= 4; ++m)
+                            if (auto* p = state.getParameter(juce::String(part) + ".macro" + juce::String(m)))
+                                p->setValueNotifyingHost(macro);
+                    rig->play(0.05);
+                    rig->chord(57, true);
+                    std::uint64_t h = 1469598103934665603ull;
+                    double sum = 0.0;
+                    int count = 0;
+                    for (int b = 0; b < 188; ++b) // a second
+                    {
+                        rig->block(preparedBlock);
+                        for (int s = 0; s < preparedBlock; ++s)
+                        {
+                            const float v = rig->buffer.getSample(0, s);
+                            std::uint32_t bits = 0;
+                            std::memcpy(&bits, &v, sizeof(bits));
+                            h = (h ^ bits) * 1099511628211ull;
+                            if (b >= 38)
+                            {
+                                sum += static_cast<double>(v) * v;
+                                ++count;
+                            }
+                        }
+                    }
+                    if (hash != nullptr)
+                        *hash = h;
+                    expectEquals(rig->brokenSamples, 0, coolsynth::presets::getFactoryPreset(i).name);
+                    return std::sqrt(sum / std::max(1, count));
+                };
+                std::uint64_t restHash = 0;
+                const double rest = play(0.0f, &restHash);
+                const double full = play(1.0f, nullptr);
+                const auto& title = coolsynth::presets::getFactoryPreset(i).name;
+                hashes.add(title + " " + juce::String::toHexString(static_cast<juce::int64>(restHash)));
+                const float rise = static_cast<float>(juce::Decibels::gainToDecibels(full, -120.0) - juce::Decibels::gainToDecibels(rest, -120.0));
+                if (rise > worstRise)
+                {
+                    worstRise = rise;
+                    worstName = title;
+                }
+                if (rise > 4.0f)
+                    tooLoud.add(title + " +" + juce::String(rise, 1) + " dB");
+            }
+            if (hashFile.isNotEmpty())
+                juce::File(hashFile).replaceWithText(hashes.joinIntoString("\n"));
+            logMessage("loudest rise with all macros up: " + juce::String(worstRise, 1) + " dB, " + worstName);
+            expect(tooLoud.isEmpty(), "more than 4 dB louder: " + tooLoud.joinIntoString(", "));
         }
 
         beginTest("Blocks of 1, 37 and 129 samples, and blocks longer than prepared");

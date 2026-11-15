@@ -315,9 +315,21 @@ namespace coolsynth::ui
         {
             switch (currentLivePage)
             {
-                case 0: return { "Macros", { pv::macroParameterId(part, 1), pv::macroParameterId(part, 2),
-                                             pv::macroParameterId(part, 3), pv::macroParameterId(part, 4) },
-                                 { macroRoles[0], macroRoles[1], macroRoles[2], macroRoles[3] } };
+                case 0:
+                {
+                    // The playing sound's own names where it has them (D177), else the roles.
+                    std::array<juce::String, 4> labels { macroRoles[0], macroRoles[1], macroRoles[2], macroRoles[3] };
+                    if (const int playing = playingPreset(); playing >= 0 && playing < coolsynth::presets::getFactoryPresetCount())
+                    {
+                        const auto& names = coolsynth::presets::getFactoryPreset(playing).macroNames[static_cast<std::size_t>(currentPart)];
+                        for (std::size_t m = 0; m < labels.size(); ++m)
+                            if (names[m].isNotEmpty())
+                                labels[m] = names[m];
+                    }
+                    return { "Macros", { pv::macroParameterId(part, 1), pv::macroParameterId(part, 2),
+                                         pv::macroParameterId(part, 3), pv::macroParameterId(part, 4) },
+                             labels };
+                }
                 case 1: return { "Arp", { ids::arpEnabled, ids::arpRateDivision, ids::arpPattern, ids::arpOctaveRange },
                                  { "Arp", "Rate", "Pattern", "Octaves" } };
                 case 2: return { "Groove", { ids::arpGate, ids::arpSwing, ids::arpChance, ids::arpLatch },

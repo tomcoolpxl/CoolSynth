@@ -1,5 +1,6 @@
 #pragma once
 
+#include <array>
 #include <vector>
 
 #include <juce_core/juce_core.h>
@@ -47,6 +48,8 @@ namespace coolsynth::presets
         juce::String sourceFile; // bank file name, for the loudness tool
         std::vector<PresetEntry> entries;
         juce::String section;    // a family inside the room ("family = Strings"), or empty
+        // Each part's four macro names ("macros = names=Blare,Thickness,Swell,Shimmer"), or empty: the roles (D177).
+        std::array<std::array<juce::String, 4>, 2> macroNames {};
     };
 
     struct BankParseResult
