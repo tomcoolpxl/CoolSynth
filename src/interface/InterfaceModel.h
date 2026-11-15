@@ -104,6 +104,7 @@ namespace coolsynth::ui
         juce::String value;
         float normalised = 0.0f;
         bool fader = false;
+        bool pad = false;  // a pad pressed: the MiniLab shows its pad pop-up (D186)
         int serial = 0;    // grows with every new pop-up
         int control = -1;  // knob 1-8 or fader 0-3 that raised it
     };

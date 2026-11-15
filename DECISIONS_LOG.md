@@ -3732,3 +3732,15 @@ CoolSynth uses) and 4-7 in transport colours; our colours sent again under Shift
   longer keeps a Shift of its own. The top-right Options button and its strip are gone: the controls
   moved up 10 pixels and the panel is 1100 x 680 (was 690). The CPU line sits under the keys.
 - **The pads' labels** are 16 px bold (were 12.5), at the user's word.
+
+## D186. A pad shows what it put you in; CoolSynth opens in Home (2026-11-15)
+
+- **Pad pop-ups** on the MiniLab, at the user's word ("when you press a button... it should briefly
+  flash on the screen what mode it is in"): each pad press shows the device's pad pop-up for about a
+  second, the pad's name and "Part A" or "Part B" (the recorder's pads: "comes later"). Checked on
+  the device: "Name and part".
+- **CoolSynth opens in Home**, on the sound playing, at the user's word (was the Sound section).
+- **The faders**: reported not to follow; checked with the flight log, the MiniLab's faders arrive on
+  its DAW port through the driver (118 messages for one move, none as plain MIDI) and the screen's
+  faders follow ("It follows", on the device). The MiniLab does not report where its faders stand
+  until one moves, so at start the screen shows them at the top until each is touched.

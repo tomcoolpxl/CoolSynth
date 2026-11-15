@@ -27,10 +27,12 @@ public:
     {
         using coolsynth::ui::InterfaceModel;
 
-        beginTest("Starts in the Sound section on G1, with knobs on its first page");
+        beginTest("Starts in Home on the sound playing; the Sound section opens on G1, with knobs on its first page");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
+            expect(model->view() == InterfaceModel::View::home, "CoolSynth opens in Home (D186)");
+            model->pressPad(InterfaceModel::padOfSection(0), false);
             expect(model->view() == InterfaceModel::View::section);
             expectEquals(model->section(), 0);
             expectEquals(model->currentSlot().code, juce::String("G1"));
@@ -44,6 +46,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
+            model->pressPad(InterfaceModel::padOfSection(0), false); // the Sound section (CoolSynth opens in Home, D186)
             model->turnMain(1);
             expectEquals(model->currentSlot().code, juce::String("G2"));
             model->turnMain(10);
@@ -90,6 +93,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
+            model->pressPad(InterfaceModel::padOfSection(0), false); // the Sound section (CoolSynth opens in Home, D186)
             auto* type = synth->getValueTreeState().getParameter("pA.g1.type");
             expect(type != nullptr);
             type->setValueNotifyingHost(type->getValueForText("Sample"));
@@ -121,6 +125,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
+            model->pressPad(InterfaceModel::padOfSection(0), false); // the Sound section (CoolSynth opens in Home, D186)
             model->pressMain();
             expect(model->typeListOpen());
             auto list = model->list();
@@ -138,6 +143,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
+            model->pressPad(InterfaceModel::padOfSection(0), false); // the Sound section (CoolSynth opens in Home, D186)
             model->turnMain(2); // G3, empty by default
             expect(model->currentSlot().empty);
             expect(! model->knob(1).active);
@@ -196,6 +202,7 @@ public:
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
             expect(model->currentPage().ids[0].startsWith("pA."));
+            model->pressPad(InterfaceModel::padOfSection(0), false); // a section first: CoolSynth opens in Home (D186)
             model->pressPad(InterfaceModel::homePad, false); // opens Home
             expectEquals(model->part(), 0);
             expect(model->padLight(InterfaceModel::homePad, false).tint == coolsynth::ui::Tint::home);
@@ -266,6 +273,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
+            model->pressPad(InterfaceModel::padOfSection(0), false); // the Sound section (CoolSynth opens in Home, D186)
             const auto screen = model->deviceScreen();
             expect(screen.line1.startsWith("Sound - "));
             expectEquals(screen.line2, juce::String("G1 VA"));

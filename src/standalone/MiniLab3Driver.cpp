@@ -169,7 +169,9 @@ namespace coolsynth::standalone
         if (popup.serial != sentPopupSerial)
         {
             sentPopupSerial = popup.serial;
-            if (! force && (popup.fader || popup.control != 5)) // a page change shows on line 1 already
+            if (! force && popup.pad)
+                send(ml::padPopup(popup.name, popup.value)); // what the pad put you in (D186)
+            else if (! force && (popup.fader || popup.control != 5)) // a page change shows on line 1 already
                 send(ml::popup(popup.fader, popup.name, popup.value, popup.normalised));
         }
 

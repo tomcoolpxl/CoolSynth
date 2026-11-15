@@ -161,6 +161,7 @@ namespace coolsynth::ui
         refreshMySounds();
         browser.category = categoryOfPreset(playingPreset());
         browser.row = 1;
+        openHome(); // CoolSynth opens in Home, on the sound playing (D186)
     }
 
     // ---- The bank ---------------------------------------------------------------------------
@@ -607,6 +608,7 @@ namespace coolsynth::ui
         lastPopup.value = value;
         lastPopup.normalised = normalised;
         lastPopup.fader = fader;
+        lastPopup.pad = false;
         lastPopup.control = control;
         ++lastPopup.serial;
     }
@@ -828,6 +830,18 @@ namespace coolsynth::ui
                 togglePart();
             else
                 openHome();
+        }
+        // What the pad put you in, briefly on the MiniLab's screen (D186): the pad's name and the part you edit; the
+        // recorder's pads, that they come later.
+        if (pad >= 0 && pad < 8)
+        {
+            lastPopup.name = padLabel(pad, false);
+            lastPopup.value = pad >= 4 && pad <= 6 ? juce::String("comes later") : "Part " + juce::String(currentPart == 0 ? "A" : "B");
+            lastPopup.normalised = 1.0f;
+            lastPopup.fader = false;
+            lastPopup.pad = true;
+            lastPopup.control = 100 + pad; // not a knob: the screen's knobs leave it alone
+            ++lastPopup.serial;
         }
         // pads 5-7 (4-6 from 0) are kept for the recorder
         touched();

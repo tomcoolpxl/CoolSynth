@@ -97,6 +97,12 @@ namespace coolsynth::midi::minilab3
         return detail::screen({ 0x1F, static_cast<juce::uint8>(fader ? 0x04 : 0x03), 0x02, v, 0x00, 0x00 }, name, 16, value, 18);
     }
 
+    /** The pad pop-up (checked on the device): a pad's name and a line under it, for about a second (D186). */
+    inline juce::MidiMessage padPopup(const juce::String& name, const juce::String& value)
+    {
+        return detail::screen({ 0x1F, 0x05, 0x02, 0x7F, 0x00, 0x00 }, name, 16, value, 18);
+    }
+
     // ---- What the controls send (channel 1 unless noted) -------------------------------------------
 
     inline constexpr std::array<int, 8> knobControllers { 86, 87, 89, 90, 110, 111, 116, 117 };
