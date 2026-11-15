@@ -138,6 +138,7 @@ namespace coolsynth::synth
         uint8_t noteNumber = 0;
         float value = 0.0f;
         bool fromArp = false;
+        float gain = 1.0f; // a note-on's share in a velocity split between the layers (D190)
     };
 
     /** A fader's position (0 bottom, 1 top) as a gain (D184): the cube, an audio taper: the top as designed (0 dB),

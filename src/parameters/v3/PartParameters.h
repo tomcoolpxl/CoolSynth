@@ -60,6 +60,8 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] juce::String mixParameterId(Part part, const juce::String& field);
     [[nodiscard]] const juce::StringArray& mixFields();
     inline constexpr char partModeParameterId[] = "part.mode";
+    inline constexpr char velocitySplitParameterId[] = "part.velSplit"; // D190
+    inline constexpr char velocityFadeParameterId[] = "part.velFade";
     [[nodiscard]] const juce::StringArray& partModeNames();
     /** lfo is "lfo1", "lfo2", "glfo1" or "glfo2". */
     [[nodiscard]] juce::String lfoParameterId(Part part, const juce::String& lfo, const char* field);

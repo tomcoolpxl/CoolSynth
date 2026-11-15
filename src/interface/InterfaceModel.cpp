@@ -1,5 +1,7 @@
 #include "InterfaceModel.h"
 
+#include <cmath>
+
 #include "parameters/ParameterIDs.h"
 #include "parameters/v3/PartParameters.h"
 #include "parameters/v3/SlotParameters.h"
@@ -267,6 +269,22 @@ namespace coolsynth::ui
         touched();
     }
 
+    void InterfaceModel::keyPlayedOnMiniLab(int note) noexcept
+    {
+        const int low = miniLabLowKey();
+        int octaveNow = miniLabOctave;
+        if (note < low)
+            octaveNow = static_cast<int>(std::floor(static_cast<double>(note - miniLabHomeLowKey) / 12.0));
+        else if (note > low + miniLabKeySpan)
+            octaveNow = static_cast<int>(std::ceil(static_cast<double>(note - miniLabHomeLowKey - miniLabKeySpan) / 12.0));
+        octaveNow = clampInt(octaveNow, -4, 4); // the MiniLab shifts four octaves each way
+        if (octaveNow != miniLabOctave)
+        {
+            miniLabOctave = octaveNow;
+            touched();
+        }
+    }
+
     void InterfaceModel::setHardwareConnected(bool connected)
     {
         if (connected == hardware)
@@ -303,6 +321,17 @@ namespace coolsynth::ui
             case 2: return { { "envelopes", { 0, 1, 2 }, "", "" }, { "LFOs", { 3, 4 }, "", "" } };
             default: return { { "part", { 0, 1, 2 }, arrow, "" }, { "master", { 3, 4, 5 }, arrow, "" }, { "", { 6, 7, 8 }, arrow, "" } };
         }
+    }
+
+    bool InterfaceModel::currentLayerEmpty() const
+    {
+        const juce::String prefix = currentPart == 0 ? "pA" : "pB";
+        for (int s = 1; s <= 3; ++s)
+            for (const char* kind : { ".g", ".p" })
+                if (auto* type = synth.getValueTreeState().getRawParameterValue(prefix + kind + juce::String(s) + ".type");
+                    type != nullptr && juce::roundToInt(type->load()) != 0)
+                    return false;
+        return true;
     }
 
     juce::RangedAudioParameter* InterfaceModel::parameter(const juce::String& id) const
@@ -429,6 +458,9 @@ namespace coolsynth::ui
             {
                 case 0:
                 {
+                    // An empty layer's macros do nothing: Home says so and the knobs show a dash, no names (D192).
+                    if (currentLayerEmpty())
+                        return { "Layer " + juce::String(currentPart == 0 ? "A" : "B") + " is empty", {}, {} };
                     // The playing sound's own names where it has them (D177; a saved sound keeps them, D180), else the roles.
                     std::array<juce::String, 4> labels { macroRoles[0], macroRoles[1], macroRoles[2], macroRoles[3] };
                     const auto names = synth.macroNames(currentPart);
@@ -479,8 +511,9 @@ namespace coolsynth::ui
             const auto k = static_cast<std::size_t>(knobNumber - 1);
             p = parameter(page.ids[k]);
             label = page.labels[k];
-            view.role = currentView == View::home && currentLivePage == 0 ? juce::String(macroRoles[k])
-                                                                         : "knob " + juce::String(knobNumber);
+            view.role = currentView == View::home && currentLivePage == 0
+                            ? (page.ids[k].isNotEmpty() ? juce::String(macroRoles[k]) : juce::String())
+                            : "knob " + juce::String(knobNumber);
             if (auto* generic = dynamic_cast<pv::GenericSlotParameter*>(p); generic != nullptr && ! generic->isUsedByCurrentType())
                 p = nullptr;
         }

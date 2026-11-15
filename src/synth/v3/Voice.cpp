@@ -498,7 +498,7 @@ namespace coolsynth::synth::v3
         const float fadeScale = 1.0f / static_cast<float>(stealTotal);
         for (int s = 0; s < n; ++s)
         {
-            float gain = amp[s] * (vcaFrom + vcaStep * static_cast<float>(s + 1));
+            float gain = amp[s] * note.gain * (vcaFrom + vcaStep * static_cast<float>(s + 1));
             if (stealRemaining > 0)
                 gain *= static_cast<float>(stealRemaining - 1 - s) * fadeScale;
             left[s] += mixL[s] * gain;

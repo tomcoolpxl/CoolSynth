@@ -172,7 +172,7 @@ namespace coolsynth::synth::v3
                 switch (event.type)
                 {
                     case EngineMidiEventType::noteOn:
-                        keyDown(key, event.value, offset, inputs, settings, writer);
+                        keyDown(key, event.value, event.gain, offset, inputs, settings, writer);
                         break;
                     case EngineMidiEventType::noteOff:
                         keyUp(key, event.value, offset, inputs, writer);
@@ -238,13 +238,14 @@ namespace coolsynth::synth::v3
                 ++count;
             }
 
-            void note(EngineMidiEventType type, int note, float value, int offset, int inputs) noexcept
+            void note(EngineMidiEventType type, int note, float value, int offset, int inputs, float gain = 1.0f) noexcept
             {
                 EngineMidiEvent event;
                 event.type = type;
                 event.sampleOffset = offset;
                 event.noteNumber = static_cast<std::uint8_t>(note);
                 event.value = value;
+                event.gain = gain; // a key's share in a velocity split reaches every note of its chord (D190)
                 write(event, inputs);
             }
         };
@@ -263,9 +264,10 @@ namespace coolsynth::synth::v3
             std::uint8_t key = 0;
             std::uint8_t slot = 0;
             std::uint8_t note = 0;
+            float gain = 1.0f;
         };
 
-        void keyDown(int k, float velocity, int offset, int inputs, const ChordSettings& settings, Writer& writer) noexcept
+        void keyDown(int k, float velocity, float gain, int offset, int inputs, const ChordSettings& settings, Writer& writer) noexcept
         {
             auto& key = keys[static_cast<std::size_t>(k)];
 
@@ -327,12 +329,12 @@ namespace coolsynth::synth::v3
                         key.started = static_cast<std::uint8_t>(key.started | (1u << m));
                         ++sounding[note];
                     }
-                    writer.note(EngineMidiEventType::noteOn, note, velocity, offset, inputs);
+                    writer.note(EngineMidiEventType::noteOn, note, velocity, offset, inputs, gain);
                 }
                 else
                 {
                     pending[static_cast<std::size_t>(pendingCount++)] = { offset + delay, velocity, static_cast<std::uint8_t>(k),
-                                                                         static_cast<std::uint8_t>(m), note };
+                                                                         static_cast<std::uint8_t>(m), note, gain };
                 }
             }
         }
@@ -394,7 +396,7 @@ namespace coolsynth::synth::v3
                     key.started = static_cast<std::uint8_t>(key.started | (1u << p.slot));
                     ++sounding[p.note];
                 }
-                writer.note(EngineMidiEventType::noteOn, p.note, p.velocity, std::max(0, p.due), inputs);
+                writer.note(EngineMidiEventType::noteOn, p.note, p.velocity, std::max(0, p.due), inputs, p.gain);
             }
         }
 

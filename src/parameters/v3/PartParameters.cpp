@@ -274,7 +274,7 @@ namespace coolsynth::parameters::v3
 
     const juce::StringArray& partModeNames()
     {
-        static const juce::StringArray names { "A", "Stack", "Split", "B" }; // was Layer (D189)
+        static const juce::StringArray names { "Stack", "Split", "Velocity" }; // D190 (was A, Layer, Split, B)
         return names;
     }
 
@@ -282,6 +282,9 @@ namespace coolsynth::parameters::v3
     {
         auto group = std::make_unique<juce::AudioProcessorParameterGroup>("parts", "Parts", "|");
         group->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(partModeParameterId), "Layer Mode", partModeNames(), 0));
+        // Velocity mode (D190): from this velocity up, layer B; over the fade's width A gives way to B.
+        group->addChild(std::make_unique<juce::AudioParameterInt>(makeId(velocitySplitParameterId), "Velocity Split", 2, 127, 64));
+        group->addChild(std::make_unique<juce::AudioParameterInt>(makeId(velocityFadeParameterId), "Velocity Fade", 0, 64, 16));
         return group;
     }
 
@@ -417,10 +420,12 @@ namespace coolsynth::parameters::v3
 
         for (int i = 1; i <= partGeneratorSlots; ++i)
             group->addChild(makeSlotGroup({ part, SlotKind::generator, i }, sv3::GeneratorSlot::typeTable(),
-                                          "Generator " + juce::String(i), i == 1 ? sv3::generatorType::va : sv3::generatorType::off));
+                                          "Generator " + juce::String(i),
+                                          i == 1 && part == Part::a ? sv3::generatorType::va : sv3::generatorType::off)); // layer B starts empty (D190)
         for (int i = 1; i <= partProcessorSlots; ++i)
             group->addChild(makeSlotGroup({ part, SlotKind::processor, i }, sv3::ProcessorSlot::typeTable(),
-                                          "Processor " + juce::String(i), i == 1 ? sv3::processorType::ladder : sv3::processorType::off));
+                                          "Processor " + juce::String(i),
+                                          i == 1 && part == Part::a ? sv3::processorType::ladder : sv3::processorType::off));
         for (int i = 1; i <= partEnvelopes; ++i)
             group->addChild(makeEnvelopeGroup(part, i));
         for (int i = 1; i <= partLocalLfos; ++i)

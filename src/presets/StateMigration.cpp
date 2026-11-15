@@ -44,6 +44,45 @@ namespace coolsynth::presets
         constexpr char valueAttribute[] = "value";
     }
 
+    void migrateLayerModes(juce::XmlElement& parameterState)
+    {
+        auto find = [&](const juce::String& id) -> juce::XmlElement*
+        {
+            for (auto* child : parameterState.getChildWithTagNameIterator(parameterTag))
+                if (child->getStringAttribute(idAttribute) == id)
+                    return child;
+            return nullptr;
+        };
+        auto setValue = [&](const juce::String& id, double value)
+        {
+            auto* child = find(id);
+            if (child == nullptr)
+            {
+                child = parameterState.createNewChildElement(parameterTag);
+                child->setAttribute(idAttribute, id);
+            }
+            child->setAttribute(valueAttribute, value);
+        };
+        auto empty = [&](const juce::String& layer)
+        {
+            for (int s = 1; s <= 3; ++s)
+            {
+                setValue(layer + ".g" + juce::String(s) + ".type", 0.0); // Off
+                setValue(layer + ".p" + juce::String(s) + ".type", 0.0);
+            }
+        };
+
+        auto* mode = find(pv3::partModeParameterId);
+        const int old = mode != nullptr ? juce::roundToInt(mode->getDoubleAttribute(valueAttribute)) : 0; // absent: A
+        switch (old)
+        {
+            case 1: setValue(pv3::partModeParameterId, 0.0); break;              // Layer: Stack
+            case 2: setValue(pv3::partModeParameterId, 1.0); break;              // Split
+            case 3: setValue(pv3::partModeParameterId, 0.0); empty("pA"); break; // B alone
+            default: setValue(pv3::partModeParameterId, 0.0); empty("pB"); break; // A alone
+        }
+    }
+
     std::map<juce::String, juce::String> migrateFixedMasterEffects(juce::XmlElement& parameterState)
     {
         // The stored values are in each parameter's own units (a bool or a choice as its index).

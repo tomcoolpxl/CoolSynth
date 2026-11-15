@@ -49,7 +49,9 @@ namespace coolsynth::synth::v3
         std::array<PartSettings, partCount> parts {};
         std::array<PartMix, partCount> mix {};
         std::array<std::array<InsertSettings, insertSlotCount>, partCount> inserts {};
-        PartMode partMode = PartMode::aOnly;
+        PartMode partMode = PartMode::stack;
+        int velocitySplit = 64; // Velocity mode: from this velocity up, layer B (D190)
+        int velocityFade = 16;  // the velocities over which A gives way to B
         std::array<InsertSettings, masterSlotCount> master {}; // F1..F6, in chain order
         float masterGainLinear = 1.0f;
         float space = 0.0f; // -1..1, knob 8 (D176): every reverb, delay and room, wetter (to twice) or drier (to half)
@@ -138,7 +140,11 @@ namespace coolsynth::synth::v3
         void routeEvents(std::span<const EngineMidiEvent> events, const EngineSettings& settings,
                          const std::array<bool, partCount>& active) noexcept;
         void pushEvent(int partIndex, const EngineMidiEvent& event) noexcept;
-        void pushNote(int partIndex, EngineMidiEventType type, int note, float value, int offset) noexcept;
+        void pushNote(int partIndex, EngineMidiEventType type, int note, float value, int offset, float gain = 1.0f) noexcept;
+    public:
+        /** A note-on's share for a layer (0 A, 1 B) in Velocity mode (D190): soft A, hard B, an equal-power crossfade. */
+        [[nodiscard]] static float velocityShare(int layer, int velocity, int split, int fade) noexcept;
+    private:
 
         std::array<std::unique_ptr<Part>, partCount> parts; // large: each a pool of voices with their slot arenas
         std::array<PartSettings, partCount> resolved {};   // the patch as this block plays it: voices, arp, tuning

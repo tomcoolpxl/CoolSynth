@@ -171,14 +171,27 @@ namespace coolsynth::synth::v3
             events[static_cast<std::size_t>(count++)] = event;
     }
 
-    void SoundUnit::pushNote(int partIndex, EngineMidiEventType type, int note, float value, int offset) noexcept
+    void SoundUnit::pushNote(int partIndex, EngineMidiEventType type, int note, float value, int offset, float gain) noexcept
     {
         EngineMidiEvent event;
         event.type = type;
         event.sampleOffset = offset;
         event.noteNumber = static_cast<std::uint8_t>(note);
         event.value = value;
+        event.gain = gain;
         pushEvent(partIndex, event);
+    }
+
+    float SoundUnit::velocityShare(int layer, int velocity, int split, int fade) noexcept
+    {
+        // Soft keys to layer A, hard keys to layer B (D190). Inside the fade the two cross at equal power, so the
+        // pair is as loud as either alone.
+        if (fade <= 0)
+            return (layer == 0) == (velocity < split) ? 1.0f : 0.0f;
+        const float x = std::clamp((static_cast<float>(velocity) - (static_cast<float>(split) - 0.5f * static_cast<float>(fade)))
+                                       / static_cast<float>(fade), 0.0f, 1.0f);
+        const float quarter = 0.5f * juce::MathConstants<float>::pi * x;
+        return layer == 0 ? std::cos(quarter) : std::sin(quarter);
     }
 
     void SoundUnit::routeEvents(std::span<const EngineMidiEvent> events, const EngineSettings& settings,
@@ -213,11 +226,17 @@ namespace coolsynth::synth::v3
                         auto& sent = sentNote[index][static_cast<std::size_t>(key)];
 
                         bool plays = active[index];
+                        float gain = 1.0f;
                         if (plays && both)
                         {
                             const int velocity = std::clamp(static_cast<int>(std::lround(event.value * 127.0f)), 1, 127);
                             plays = velocity >= mix.velocityLow && velocity <= mix.velocityHigh
                                     && (settings.partMode != PartMode::split || (key >= mix.keyLow && key <= mix.keyHigh));
+                            if (settings.partMode == PartMode::velocity)
+                            {
+                                gain = velocityShare(p, velocity, settings.velocitySplit, settings.velocityFade);
+                                plays = plays && gain > 1.0e-4f;
+                            }
                         }
                         const int note = key + mix.transpose;
                         plays = plays && note >= 0 && note <= 127;
@@ -229,7 +248,7 @@ namespace coolsynth::synth::v3
                         }
                         if (plays)
                         {
-                            pushNote(p, EngineMidiEventType::noteOn, note, event.value, event.sampleOffset);
+                            pushNote(p, EngineMidiEventType::noteOn, note, event.value, event.sampleOffset, gain);
                             sent = static_cast<std::int8_t>(note);
                         }
                     }
@@ -271,7 +290,8 @@ namespace coolsynth::synth::v3
                            const EngineSettings& settings, const EngineTransportInfo& transport,
                            float fadeFrom, float fadeTo, StageTiming& slowest) noexcept
     {
-        const std::array<bool, partCount> active { settings.partMode != PartMode::bOnly, settings.partMode != PartMode::aOnly };
+        // A layer with every slot Off is left out (D190): it costs nothing, and the other has every key.
+        const std::array<bool, partCount> active { ! layerEmpty(settings.parts[0]), ! layerEmpty(settings.parts[1]) };
         routeEvents(events, settings, active);
 
         std::array<int, partCount> voices { voicesWanted(settings.parts[0]), voicesWanted(settings.parts[1]) };

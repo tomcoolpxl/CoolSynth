@@ -53,8 +53,13 @@ namespace coolsynth::synth::v3
     enum class GenvTrigger : int { firstNote = 0, everyNote };
     inline constexpr int macroCount = 4;
 
-    /** Which of a patch's two parts the keys reach. */
-    enum class PartMode : int { aOnly = 0, layer, split, bOnly };
+    /** How the two layers share the keys (D190): both on every key, by key (A low, B high, by each layer's key
+        range), or by velocity (soft A, hard B, with a crossfade). A layer with every slot Off is left out. */
+    enum class PartMode : int { stack = 0, split, velocity };
+
+    struct PartSettings;
+    /** True when every generator and processor slot of a layer is Off: it makes no sound and is left out (D190). */
+    [[nodiscard]] bool layerEmpty(const PartSettings& settings) noexcept;
 
     /** A part's place in the patch: where it sits in the mix and which keys reach it (see EngineV3.h). */
     struct PartMix
@@ -176,6 +181,7 @@ namespace coolsynth::synth::v3
             int note = -1;
             float velocity = 0.0f;
             std::uint64_t order = 0;
+            float gain = 1.0f; // its share in a velocity split (D190), for when it sounds again
         };
 
         static constexpr int maxHeldNotes = 32;
@@ -193,7 +199,7 @@ namespace coolsynth::synth::v3
         void polyNoteOff(int note, float releaseVelocity) noexcept;
         void monoNoteOn(int note, float velocity, bool fromArp, const PartSettings& settings) noexcept;
         void monoNoteOff(int note, float releaseVelocity, const PartSettings& settings) noexcept;
-        void playMono(int note, float velocity, bool overlapping, bool fromArp, const PartSettings& settings) noexcept;
+        void playMono(int note, float velocity, float gain, bool overlapping, bool fromArp, const PartSettings& settings) noexcept;
         [[nodiscard]] int pickVoice(int limit) const noexcept;
 
     public:
@@ -216,6 +222,7 @@ namespace coolsynth::synth::v3
         void removeHeld(int note) noexcept;
         [[nodiscard]] int priorityNote(KeyPriority priority) const noexcept;
         [[nodiscard]] float heldVelocity(int note) const noexcept;
+        [[nodiscard]] float heldGain(int note) const noexcept;
 
         void releaseVoice(int index, float releaseVelocity) noexcept;
         void releaseAll() noexcept;
@@ -244,6 +251,8 @@ namespace coolsynth::synth::v3
         ChaosSource chaos;
         std::array<float, macroCount> macroValues {};
         bool macrosPrimed = false;
+        float startGain = 1.0f; // the note-on being started: its share in a velocity split (D190)
+        float arpGain = 1.0f;   // the share of the last key given to the arp, for its steps
         ModSources effectSourceValues {}; // the part-wide sources at the end of the last render (D179)
         std::array<bool, 128> keyIsDown {};
         int keysDown = 0;

@@ -237,7 +237,10 @@ namespace coolsynth::synth::v3
         {
             // Keys already down when the arp switches on now belong to it; the voices they started let go.
             for (int i = 0; i < heldCount; ++i)
+            {
                 arpeggiator.onNoteOn(held[static_cast<std::size_t>(i)].note, held[static_cast<std::size_t>(i)].velocity);
+                arpGain = held[static_cast<std::size_t>(i)].gain;
+            }
             heldCount = 0;
             for (std::size_t i = 0; i < voices.size(); ++i)
                 if (state[i].keyDown)
@@ -254,10 +257,16 @@ namespace coolsynth::synth::v3
         if (arpEnabled)
             for (const auto& event : played)
                 if (event.type == EngineMidiEventType::noteOn)
+                {
                     arpeggiator.onNoteOn(static_cast<int>(event.noteNumber), std::clamp(event.value, 0.0f, 1.0f));
+                    arpGain = event.gain;
+                }
 
         std::array<EngineMidiEvent, coolsynth::synth::maxArpEventsPerBlock> arpEvents {};
         const int arpCount = arpeggiator.generateEventsForBlock(n, hostRate, arpEvents.data(), static_cast<int>(arpEvents.size()));
+        // The arp's steps play at the share of the last key it was given in a velocity split (D190); 1 otherwise.
+        for (int i = 0; i < arpCount; ++i)
+            arpEvents[static_cast<std::size_t>(i)].gain = arpGain;
 
         if (arpEnabled)
         {
@@ -440,10 +449,12 @@ namespace coolsynth::synth::v3
                         stepModulator.restart();
                     phraseStartPending = true;
                 }
+                startGain = event.gain; // its share in a velocity split (D190); 1 otherwise
                 if (settings.playMode == PlayMode::poly)
                     polyNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp, settings);
                 else
                     monoNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp, settings);
+                startGain = 1.0f; // a note the part starts on its own (a held key coming back) plays whole
                 break;
 
             case EngineMidiEventType::noteOff:
@@ -544,6 +555,7 @@ namespace coolsynth::synth::v3
         NoteStart start;
         start.note = note;
         start.velocity = velocity;
+        start.gain = startGain;
         start.glideFrom = glideSource(settings, overlapping);
         start.fromArp = fromArp;
         const auto order = ++counter;
@@ -642,7 +654,7 @@ namespace coolsynth::synth::v3
         const int target = priorityNote(settings.keyPriority);
         if (overlapping && target == monoNote)
             return; // a key of lower priority: the sounding note stays
-        playMono(target, heldVelocity(target), overlapping, fromArp, settings);
+        playMono(target, heldVelocity(target), heldGain(target), overlapping, fromArp, settings);
     }
 
     void Part::monoNoteOff(int note, float releaseVelocity, const PartSettings& settings) noexcept
@@ -655,7 +667,7 @@ namespace coolsynth::synth::v3
         {
             // Back to the key that now has priority.
             const int target = priorityNote(settings.keyPriority);
-            playMono(target, heldVelocity(target), true, false, settings);
+            playMono(target, heldVelocity(target), heldGain(target), true, false, settings);
             return;
         }
 
@@ -672,7 +684,7 @@ namespace coolsynth::synth::v3
         }
     }
 
-    void Part::playMono(int note, float velocity, bool overlapping, bool fromArp, const PartSettings& settings) noexcept
+    void Part::playMono(int note, float velocity, float gain, bool overlapping, bool fromArp, const PartSettings& settings) noexcept
     {
         const int count = settings.playMode == PlayMode::unison ? std::clamp(settings.unisonVoices, 2, maxUnisonVoices) : 1;
         for (int i = count; i < monoVoiceCount; ++i)
@@ -687,6 +699,7 @@ namespace coolsynth::synth::v3
             NoteStart start;
             start.note = note;
             start.velocity = velocity;
+            start.gain = gain; // the key's own share: a key coming back plays as it was struck
             start.glideFrom = glide ? monoNote : -1;
             start.detuneCents = settings.unisonDetuneCents * u * (count > 1 ? 1.0f : 0.0f);
             start.pan = std::clamp(settings.unisonSpread * u, -1.0f, 1.0f);
@@ -707,6 +720,17 @@ namespace coolsynth::synth::v3
         lastNote = note;
     }
 
+    bool layerEmpty(const PartSettings& settings) noexcept
+    {
+        for (const auto& g : settings.voice.generators)
+            if (g.type != generatorType::off)
+                return false;
+        for (const auto& p : settings.voice.processors)
+            if (p.type != processorType::off)
+                return false;
+        return true;
+    }
+
     void Part::addHeld(int note, float velocity) noexcept
     {
         for (int i = 0; i < heldCount; ++i)
@@ -716,11 +740,12 @@ namespace coolsynth::synth::v3
             {
                 h.velocity = velocity;
                 h.order = ++counter;
+                h.gain = startGain;
                 return;
             }
         }
         if (heldCount < maxHeldNotes)
-            held[static_cast<std::size_t>(heldCount++)] = { note, velocity, ++counter };
+            held[static_cast<std::size_t>(heldCount++)] = { note, velocity, ++counter, startGain };
     }
 
     void Part::removeHeld(int note) noexcept
@@ -770,6 +795,14 @@ namespace coolsynth::synth::v3
         for (int i = 0; i < heldCount; ++i)
             if (held[static_cast<std::size_t>(i)].note == note)
                 return held[static_cast<std::size_t>(i)].velocity;
+        return 1.0f;
+    }
+
+    float Part::heldGain(int note) const noexcept
+    {
+        for (int i = 0; i < heldCount; ++i)
+            if (held[static_cast<std::size_t>(i)].note == note)
+                return held[static_cast<std::size_t>(i)].gain;
         return 1.0f;
     }
 

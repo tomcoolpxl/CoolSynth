@@ -60,6 +60,23 @@ namespace
         return s;
     }
 
+    /** Empties a layer: every generator and processor slot Off, so it is left out (D190). */
+    void empty(PartSettings& layer)
+    {
+        for (auto& g : layer.voice.generators)
+            g.type = generatorType::off;
+        for (auto& p : layer.voice.processors)
+            p.type = processorType::off;
+    }
+
+    /** One layer playing, the other empty: what the modes A and B were before D190. */
+    EngineSettings onlyLayer(int layer)
+    {
+        auto s = twoSines(PartMode::stack);
+        empty(s.parts[static_cast<std::size_t>(1 - layer)]);
+        return s;
+    }
+
     std::unique_ptr<EngineV3> makeEngine()
     {
         auto engine = std::make_unique<EngineV3>();
@@ -134,19 +151,63 @@ public:
 
     void runTest() override
     {
-        beginTest("the_part_mode_says_which_parts_the_keys_reach");
+        beginTest("stack_plays_both_layers_and_an_empty_layer_is_left_out");
         {
-            for (const auto mode : { PartMode::aOnly, PartMode::layer, PartMode::bOnly })
+            for (const int alone : { -1, 0, 1 }) // both, A alone, B alone
             {
                 auto engine = makeEngine();
-                const auto settings = twoSines(mode);
+                const auto settings = alone < 0 ? twoSines(PartMode::stack) : onlyLayer(alone);
                 render(*engine, settings, 2400, { on(60), on(64) });
                 const std::set<int> both { 60, 64 }, none;
-                expect(heldNotes(*engine, 0) == (mode == PartMode::bOnly ? none : both), "part A");
-                expect(heldNotes(*engine, 1) == (mode == PartMode::aOnly ? none : both), "part B");
+                expect(heldNotes(*engine, 0) == (alone == 1 ? none : both), "layer A");
+                expect(heldNotes(*engine, 1) == (alone == 0 ? none : both), "layer B");
                 render(*engine, settings, 2400, { off(60), off(64) });
                 expect(heldNotes(*engine, 0).empty() && heldNotes(*engine, 1).empty());
             }
+
+            PartSettings layer;
+            expect(coolsynth::synth::v3::layerEmpty(layer), "a layer with every slot Off is empty");
+            layer.voice.processors[2].type = processorType::svf;
+            expect(! coolsynth::synth::v3::layerEmpty(layer), "one slot in use is enough");
+        }
+
+        beginTest("velocity_mode_gives_soft_notes_to_a_and_hard_ones_to_b");
+        {
+            auto engine = makeEngine();
+            auto settings = twoSines(PartMode::velocity);
+            settings.velocitySplit = 64;
+            settings.velocityFade = 0;
+            render(*engine, settings, 2400, { on(60, 25.0f / 127.0f), on(72, 120.0f / 127.0f) });
+            expect(heldNotes(*engine, 0) == std::set<int> { 60 });
+            expect(heldNotes(*engine, 1) == std::set<int> { 72 });
+
+            // The crossfade: equal power, soft A, hard B, each alone outside the fade.
+            for (int velocity = 1; velocity <= 127; ++velocity)
+            {
+                const float a = SoundUnit::velocityShare(0, velocity, 64, 16), b = SoundUnit::velocityShare(1, velocity, 64, 16);
+                expectWithinAbsoluteError(a * a + b * b, 1.0f, 1.0e-5f);
+            }
+            expectEquals(SoundUnit::velocityShare(0, 50, 64, 16), 1.0f);
+            expectEquals(SoundUnit::velocityShare(1, 50, 64, 16), 0.0f);
+            expectEquals(SoundUnit::velocityShare(1, 80, 64, 16), 1.0f);
+            expectWithinAbsoluteError(SoundUnit::velocityShare(0, 64, 64, 16), 0.7071f, 1.0e-4f);
+
+            // In the fade both layers play, each at its share: A hard left, B hard right, so each channel is one layer.
+            auto levels = [](PartMode mode)
+            {
+                auto e = makeEngine();
+                auto s = twoSines(mode);
+                s.velocitySplit = 64;
+                s.velocityFade = 16;
+                s.mix[0].pan = -1.0f;
+                s.mix[1].pan = 1.0f;
+                const auto out = render(*e, s, 9600, { on(69, 64.0f / 127.0f) });
+                return std::pair<double, double> { rms(out.left, 4800, 9600), rms(out.right, 4800, 9600) };
+            };
+            const auto stacked = levels(PartMode::stack), faded = levels(PartMode::velocity);
+            expectGreaterThan(stacked.first, 0.01);
+            expectWithinAbsoluteError(faded.first / stacked.first, 0.7071, 0.002);
+            expectWithinAbsoluteError(faded.second / stacked.second, 0.7071, 0.002);
         }
 
         beginTest("split_sends_each_key_to_the_parts_whose_range_holds_it");
@@ -161,9 +222,9 @@ public:
             expect(heldNotes(*engine, 0) == std::set<int> { 48, 62 });
             expect(heldNotes(*engine, 1) == std::set<int> { 62, 72 });
 
-            // Layer plays every key on both, whatever the key ranges say.
+            // Stack plays every key on both, whatever the key ranges say.
             auto layered = makeEngine();
-            settings.partMode = PartMode::layer;
+            settings.partMode = PartMode::stack;
             render(*layered, settings, 2400, { on(48), on(72) });
             expect(heldNotes(*layered, 0) == std::set<int> { 48, 72 });
             expect(heldNotes(*layered, 1) == std::set<int> { 48, 72 });
@@ -172,16 +233,16 @@ public:
         beginTest("velocity_ranges_choose_the_part_when_both_play");
         {
             auto engine = makeEngine();
-            auto settings = twoSines(PartMode::layer);
+            auto settings = twoSines(PartMode::stack);
             settings.mix[0].velocityHigh = 80;
             settings.mix[1].velocityLow = 81;
             render(*engine, settings, 2400, { on(60, 0.5f), on(72, 1.0f) });
             expect(heldNotes(*engine, 0) == std::set<int> { 60 });
             expect(heldNotes(*engine, 1) == std::set<int> { 72 });
 
-            // One part alone plays everything.
+            // One layer alone plays everything.
             auto alone = makeEngine();
-            settings.partMode = PartMode::aOnly;
+            empty(settings.parts[1]);
             render(*alone, settings, 2400, { on(60, 0.5f), on(72, 1.0f) });
             expect(heldNotes(*alone, 0) == std::set<int> { 60, 72 });
         }
@@ -189,7 +250,7 @@ public:
         beginTest("transpose_moves_the_keys_a_part_is_sent_and_a_release_still_finds_its_note");
         {
             auto engine = makeEngine();
-            auto settings = twoSines(PartMode::layer);
+            auto settings = twoSines(PartMode::stack);
             settings.mix[1].transpose = -12;
             render(*engine, settings, 2400, { on(60), on(5) });
             expect(heldNotes(*engine, 0) == std::set<int> { 60, 5 });
@@ -204,26 +265,26 @@ public:
         beginTest("fine_detunes_the_whole_part");
         {
             auto engine = makeEngine();
-            auto settings = twoSines(PartMode::bOnly);
+            auto settings = onlyLayer(1);
             settings.mix[1].fineCents = 50.0f;
             const auto out = render(*engine, settings, 48000, { on(69) });
             expectWithinAbsoluteError(frequencyOf(out.left, 4800), 440.0 * std::exp2(50.0 / 1200.0), 0.2);
         }
 
-        beginTest("a_part_the_mode_switches_off_lets_go_and_does_not_come_back_on_held_keys");
+        beginTest("a_layer_emptied_lets_go_and_does_not_come_back_on_held_keys");
         {
             auto engine = makeEngine();
-            auto settings = twoSines(PartMode::layer);
+            auto settings = twoSines(PartMode::stack);
             render(*engine, settings, 2400, { on(60) });
             expect(heldNotes(*engine, 1) == std::set<int> { 60 });
 
-            settings.partMode = PartMode::aOnly;
+            empty(settings.parts[1]);
             render(*engine, settings, 4800);
             expect(heldNotes(*engine, 0) == std::set<int> { 60 });
             expect(heldNotes(*engine, 1).empty());
-            expect(! engine->partForTesting(1).isSounding(), "part B rang out");
+            expect(! engine->partForTesting(1).isSounding(), "layer B rang out");
 
-            settings.partMode = PartMode::layer;
+            settings.parts[1] = sinePatch();
             render(*engine, settings, 2400);
             expect(heldNotes(*engine, 1).empty(), "a key held across the change does not start part B");
             render(*engine, settings, 2400, { on(67) });
@@ -264,20 +325,20 @@ public:
                 twelve.push_back(on(48 + i));
 
             auto layered = makeEngine();
-            render(*layered, twoSines(PartMode::layer), 9600, twelve);
+            render(*layered, twoSines(PartMode::stack), 9600, twelve);
             expectEquals(count(*layered, 0), 8);
             expectEquals(count(*layered, 1), 8);
 
             // A mono part under a poly one leaves the poly part fifteen voices.
             auto under = makeEngine();
-            auto settings = twoSines(PartMode::layer);
+            auto settings = twoSines(PartMode::stack);
             settings.parts[1].playMode = PlayMode::mono;
             render(*under, settings, 9600, twelve);
             expectEquals(count(*under, 0), 12);
             expectEquals(count(*under, 1), 1);
 
             auto alone = makeEngine();
-            render(*alone, twoSines(PartMode::aOnly), 9600, twelve);
+            render(*alone, onlyLayer(0), 9600, twelve);
             expectEquals(count(*alone, 0), 12);
             expectEquals(count(*alone, 1), 0);
         }
@@ -287,7 +348,7 @@ public:
             auto level = [](float db, float pan)
             {
                 auto engine = makeEngine();
-                auto settings = twoSines(PartMode::bOnly);
+                auto settings = onlyLayer(1);
                 settings.mix[1].levelDb = db;
                 settings.mix[1].pan = pan;
                 const auto out = render(*engine, settings, 9600, { on(69, 0.5f) });
@@ -306,7 +367,7 @@ public:
 
             // A level change moves across the block instead of stepping.
             auto engine = makeEngine();
-            auto settings = twoSines(PartMode::aOnly);
+            auto settings = onlyLayer(0);
             render(*engine, settings, 9600, { on(69, 0.5f) });
             settings.mix[0].levelDb = -60.0f;
             const auto fading = render(*engine, settings, kBlock);
@@ -319,7 +380,7 @@ public:
             auto echo = [](float fx, bool delayOn)
             {
                 auto engine = makeEngine();
-                auto settings = twoSines(PartMode::aOnly);
+                auto settings = onlyLayer(0);
                 settings.mix[0].fx = fx;
                 if (delayOn)
                     settings.master[2] = coolsynth::synth::v3::InsertSettings::of(coolsynth::synth::v3::insertType::delay,
@@ -347,7 +408,7 @@ public:
         beginTest("the_arp_drives_only_the_parts_that_follow_it");
         {
             auto engine = makeEngine();
-            auto settings = twoSines(PartMode::layer);
+            auto settings = twoSines(PartMode::stack);
             settings.parts[0].arp.enabled = true;
             settings.parts[1].arp = settings.parts[0].arp;
             settings.mix[1].arp = false;
@@ -437,7 +498,7 @@ b.mix = transpose=-12 fx=0 level=-4
             expect(problems.isEmpty(), problems.joinIntoString("\n"));
 
             auto plain = [](SynthAudioProcessor& p, const juce::String& id) { return p.getValueTreeState().getRawParameterValue(id)->load(); };
-            expectEquals(static_cast<int>(plain(*processor, pv3::partModeParameterId)), 1);
+            expectEquals(static_cast<int>(plain(*processor, pv3::partModeParameterId)), 0); // "layer" reads as Stack (D190)
             expectEquals(plain(*processor, "pB.mix.transpose"), -12.0f);
             expectEquals(plain(*processor, "pB.mix.fx"), 0.0f);
             expectEquals(plain(*processor, "pB.mix.level"), -4.0f);
@@ -460,7 +521,7 @@ b.mix = transpose=-12 fx=0 level=-4
             processor->getStateInformation(state);
             auto restored = std::make_unique<SynthAudioProcessor>();
             restored->setStateInformation(state.getData(), static_cast<int>(state.getSize()));
-            expectEquals(static_cast<int>(plain(*restored, pv3::partModeParameterId)), 1);
+            expectEquals(static_cast<int>(plain(*restored, pv3::partModeParameterId)), 0);
             expectEquals(plain(*restored, "pB.mix.transpose"), -12.0f);
             expectEquals(plain(*restored, "pB.mix.fx"), 0.0f);
             expectEquals(static_cast<int>(plain(*restored, "pB.play.mode")), 1);

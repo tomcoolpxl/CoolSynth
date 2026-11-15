@@ -32,8 +32,9 @@ namespace
     inline constexpr char apvtsParameterValueProperty[] = "value";
     inline constexpr char processorStateRootTag[] = "COOLSYNTH_PROCESSOR_STATE";
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
-    // 9: V3 parameter contract; 10: the master effect slots (a version 9 state is carried over, D135)
-    inline constexpr int processorStateFormatVersion = 10;
+    // 9: V3 parameter contract; 10: the master effect slots (a version 9 state is carried over, D135);
+    // 11: the layer modes Stack, Split, Velocity (a 10 or 9 is carried over, D190)
+    inline constexpr int processorStateFormatVersion = 11;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
@@ -173,6 +174,8 @@ SynthAudioProcessor::SynthAudioProcessor()
     , partParameterValues { coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::a),
                             coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::b) }
     , partModeValue(parameters.getRawParameterValue(coolsynth::parameters::v3::partModeParameterId))
+    , velocitySplitValue(parameters.getRawParameterValue(coolsynth::parameters::v3::velocitySplitParameterId))
+    , velocityFadeValue(parameters.getRawParameterValue(coolsynth::parameters::v3::velocityFadeParameterId))
     , masterEffectValues(coolsynth::parameters::v3::bindMasterEffectPointers(parameters))
     , mappedActionBridge(*this)
 {
@@ -865,7 +868,8 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 
         const int version = xml->getIntAttribute(processorStateVersionProperty, 0);
         const bool fixedEffects = version == coolsynth::presets::processorStateVersionWithFixedEffects;
-        if (version != processorStateFormatVersion && ! fixedEffects)
+        const bool oldLayerModes = version == coolsynth::presets::processorStateVersionWithOldLayerModes || fixedEffects;
+        if (version != processorStateFormatVersion && ! oldLayerModes)
             return;
 
         const auto expectedStateType = getParameterStateTypeName();
@@ -881,6 +885,8 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         std::map<juce::String, juce::String> renamed;
         if (fixedEffects)
             renamed = coolsynth::presets::migrateFixedMasterEffects(parameterStateXml);
+        if (oldLayerModes)
+            coolsynth::presets::migrateLayerModes(parameterStateXml); // A, Layer, Split, B: now Stack, Split, Velocity
 
         const AtomicFlagScope applying(applyingPatch, true);
         const BulkEdit whole(*this);
@@ -1562,7 +1568,9 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
         coolsynth::parameters::v3::readPartInserts(partParameterValues[part], settings.inserts[part]);
     }
     settings.partMode = static_cast<coolsynth::synth::v3::PartMode>(
-        juce::jlimit(0, 3, static_cast<int>(std::lround(partModeValue != nullptr ? partModeValue->load() : 0.0f))));
+        juce::jlimit(0, 2, static_cast<int>(std::lround(partModeValue != nullptr ? partModeValue->load() : 0.0f))));
+    settings.velocitySplit = static_cast<int>(std::lround(velocitySplitValue->load()));
+    settings.velocityFade = static_cast<int>(std::lround(velocityFadeValue->load()));
 
     const auto& v = parameterValues;
     auto index = [](const std::atomic<float>* p) { return static_cast<int>(std::lround(p->load())); };

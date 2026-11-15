@@ -98,6 +98,8 @@ namespace coolsynth::standalone
                 }
                 lastGoodVelocity = velocity;
             }
+            if (message.isNoteOn())
+                lastKeyNote.store(message.getNoteNumber(), std::memory_order_relaxed);
             synth.pushLiveMidi(message);
             return;
         }
@@ -220,6 +222,8 @@ namespace coolsynth::standalone
         }
         for (const auto& message : pending)
             apply(message);
+        if (const int note = lastKeyNote.exchange(-1, std::memory_order_relaxed); note >= 0)
+            model.keyPlayedOnMiniLab(note);
 
         if (! isConnected() && ++ticksSinceProbe >= 60) // look for the device every two seconds
         {

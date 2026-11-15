@@ -76,7 +76,7 @@ namespace coolsynth::presets
 
         const juce::StringArray& partModeWords()
         {
-            static const juce::StringArray words { "a", "stack", "split", "b" }; // "layer" read as stack too (D189)
+            static const juce::StringArray words { "stack", "split", "velocity" }; // D190; older words below
             return words;
         }
 
@@ -369,10 +369,31 @@ namespace coolsynth::presets
 
             if (key == "parts")
             {
-                if (const int mode = value.equalsIgnoreCase("layer") ? 1 : partModeWords().indexOf(value.toLowerCase()); mode >= 0)
-                    add(pv3::partModeParameterId, pv3::partModeNames()[mode]);
-                else
-                    error("parts is a, layer, split or b");
+                // "parts = stack | split | velocity [split=<velocity>] [fade=<velocities>]" (D190). Two older words read as
+                // before: a (layer B starts empty, so it is left out) and layer are a stack. The old b would need layer A
+                // emptied: the file says so instead.
+                const auto word = tokens.isEmpty() ? juce::String() : tokens[0].toLowerCase();
+                int mode = partModeWords().indexOf(word);
+                if (word == "a" || word == "layer")
+                    mode = 0;
+                if (mode < 0)
+                {
+                    error(word == "b" ? "parts = b is gone: write stack and leave layer A's slots off"
+                                      : "parts is stack, split or velocity");
+                    continue;
+                }
+                add(pv3::partModeParameterId, pv3::partModeNames()[mode]);
+                for (int t = 1; t < tokens.size(); ++t)
+                {
+                    const auto k = tokens[t].upToFirstOccurrenceOf("=", false, false);
+                    const auto v = tokens[t].fromFirstOccurrenceOf("=", false, false);
+                    if (k == "split" && v.isNotEmpty())
+                        add(pv3::velocitySplitParameterId, v);
+                    else if (k == "fade" && v.isNotEmpty())
+                        add(pv3::velocityFadeParameterId, v);
+                    else
+                        error("'parts' has no setting '" + tokens[t] + "'");
+                }
                 continue;
             }
 

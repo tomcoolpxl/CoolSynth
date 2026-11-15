@@ -29,4 +29,15 @@ namespace coolsynth::presets
         have none.
     */
     std::map<juce::String, juce::String> migrateFixedMasterEffects(juce::XmlElement& parameterState);
+
+    /** The format versions with the old layer modes (D190): A, Layer, Split, B. */
+    inline constexpr int processorStateVersionWithOldLayerModes = 10;
+    inline constexpr int patchVersionWithOldLayerModes = 9;
+
+    /**
+        Rewrites a parameter state from before D190 in place: the modes were A, Layer, Split, B and are Stack,
+        Split, Velocity. A and B become a stack with the layer they left out emptied (its slot types Off, so it is
+        left out as before), Layer a stack, Split stays split. The sound is the same.
+    */
+    void migrateLayerModes(juce::XmlElement& parameterState);
 }

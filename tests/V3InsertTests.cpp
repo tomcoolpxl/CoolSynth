@@ -45,11 +45,17 @@ namespace
         return s;
     }
 
-    EngineSettings onePart(PartMode mode = PartMode::aOnly)
+    /** Two sine layers stacked, one of them empty and so left out (D190): layer A plays unless `layer` says B. */
+    EngineSettings onePart(int layer = 0)
     {
         EngineSettings s;
         s.parts = { sinePatch(), sinePatch() };
-        s.partMode = mode;
+        s.partMode = PartMode::stack;
+        auto& other = s.parts[static_cast<std::size_t>(1 - layer)];
+        for (auto& g : other.voice.generators)
+            g.type = coolsynth::synth::v3::generatorType::off;
+        for (auto& proc : other.voice.processors)
+            proc.type = coolsynth::synth::v3::processorType::off;
         return s;
     }
 
@@ -262,7 +268,9 @@ public:
             const auto throughA = render(*a, settings, 14400, blip());
             expectGreaterThan(rms(throughA, 4800 + 240, 4800 + 960), 0.01, "part A has its echo");
 
-            settings.partMode = PartMode::bOnly;
+            const auto inserts = settings.inserts;
+            settings = onePart(1);
+            settings.inserts = inserts;
             auto b = makeEngine();
             const auto throughB = render(*b, settings, 14400, blip());
             expectGreaterThan(rms(throughB, 0, 960), 0.01);

@@ -189,7 +189,7 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
-            model->pressPad(coolsynth::ui::InterfaceModel::homePad, false);
+            // CoolSynth opens in Home (D186); pressing Home there would switch to layer B, empty (D185, D190)
             expectEquals(model->knob(1).role, juce::String("Tone"));
             expect(model->pageTint() == coolsynth::ui::Tint::home);
             model->turnPageKnob(1);
@@ -210,9 +210,33 @@ public:
             expectEquals(model->part(), 1);
             expect(model->padLight(InterfaceModel::homePad, false).tint == coolsynth::ui::Tint::partB, "yellow for B");
             model->pressPad(InterfaceModel::padOfSection(1), false);
-            expect(model->currentPage().ids[0].startsWith("pB."));
+            expectEquals(model->currentPage().name, juce::String("empty"), "layer B starts empty: Shape has no slot in use (D190)");
+            model->pressPad(InterfaceModel::padOfSection(2), false); // Motion: an empty layer still has its envelopes
+            expect(model->currentPage().ids[0].startsWith("pB."), model->currentPage().ids[0]);
             model->pressPad(InterfaceModel::homePad, true); // from a section, Home opens Home: Shift does nothing on the pads
             expectEquals(model->part(), 1);
+        }
+
+        beginTest("An empty layer's Home says so; the MiniLab's keys follow the notes it plays (D192)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            expect(! model->currentLayerEmpty(), "layer A plays");
+            model->togglePart();
+            expect(model->currentLayerEmpty(), "layer B starts empty (D190)");
+            expectEquals(model->currentPage().name, juce::String("Layer B is empty"));
+            expectEquals(model->knob(1).name, juce::String(juce::CharPointer_UTF8("\xe2\x80\x94")), "a dash, no fake name");
+            expect(! model->knob(1).active);
+
+            expectEquals(model->miniLabLowKey(), 48, "C3 to C5 until a key says otherwise");
+            model->keyPlayedOnMiniLab(60);
+            expectEquals(model->miniLabLowKey(), 48, "inside: nothing moves");
+            model->keyPlayedOnMiniLab(80);
+            expectEquals(model->miniLabLowKey(), 60, "one octave up holds it");
+            model->keyPlayedOnMiniLab(40);
+            expectEquals(model->miniLabLowKey(), 36, "down as little as holds it");
+            model->keyPlayedOnMiniLab(0);
+            expectEquals(model->miniLabLowKey(), 0, "four octaves down at most");
         }
 
         beginTest("The faders are volumes over the sound: at the top, taken as they are, kept across sounds (D184)");

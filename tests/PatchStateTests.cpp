@@ -68,9 +68,9 @@ public:
             // each part: 3 generators x 21, 3 processors x 13, 3 envelopes x 13, 4 LFOs x 9, 24 matrix slots x 5,
             // global envelope 12, step 16 + 16 + 4, 4 macros, chaos 1, 7 voice, 9 play, 8 chord, 10 mix, 3 inserts x 13,
             // 8 effect routes x 5 (D179);
-            // then the part mode, and the six master effect slots x 13
+            // then the layer mode with its velocity split and fade (D190), and the six master effect slots x 13
             constexpr int onePart = 3 * 21 + 3 * 13 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 7 + 9 + 8 + 10 + 3 * 13 + 8 * 5;
-            constexpr int partParameterCount = 2 * onePart + 1;
+            constexpr int partParameterCount = 2 * onePart + 3;
             constexpr int masterSlotParameterCount = 6 * 13;
             expectEquals(registeredIds.size(),
                          static_cast<int>(coolsynth::parameters::allParameterIds.size()) + partParameterCount + masterSlotParameterCount);
@@ -576,3 +576,102 @@ public:
 };
 
 static MasterEffectMigrationTests masterEffectMigrationTests;
+
+/** The layer modes before D190 (A, Layer, Split, B) carried into Stack, Split, Velocity. Heap processors. */
+class LayerModeMigrationTests final : public juce::UnitTest
+{
+public:
+    LayerModeMigrationTests() : juce::UnitTest("Layer mode migration", "Presets") {}
+
+    void runTest() override
+    {
+        // A parameter state as an old version wrote it: both layers with a generator and a processor, the old mode.
+        auto oldState = [](SynthAudioProcessor& source, int oldMode)
+        {
+            auto state = source.createParameterStateXml();
+            auto set = [&](const juce::String& id, double value)
+            {
+                for (auto* child : state->getChildWithTagNameIterator("PARAM"))
+                    if (child->getStringAttribute("id") == id)
+                    {
+                        child->setAttribute("value", value);
+                        return;
+                    }
+                auto* child = state->createNewChildElement("PARAM");
+                child->setAttribute("id", id);
+                child->setAttribute("value", value);
+            };
+            const double va = source.getValueTreeState().getRawParameterValue("pA.g1.type")->load();
+            const double filter = source.getValueTreeState().getRawParameterValue("pA.p1.type")->load();
+            set("pB.g1.type", va);
+            set("pB.p1.type", filter);
+            set("part.mode", oldMode);
+            return state;
+        };
+        auto value = [](SynthAudioProcessor& p, const juce::String& id) { return p.getValueTreeState().getRawParameterValue(id)->load(); };
+
+        struct Case { int oldMode; int newMode; bool aPlays; bool bPlays; const char* name; };
+        const Case cases[] { { 0, 0, true, false, "A: a stack with B emptied" },
+                             { 1, 0, true, true, "Layer: a stack" },
+                             { 2, 1, true, true, "Split stays split" },
+                             { 3, 0, false, true, "B: a stack with A emptied" } };
+
+        beginTest("a_state_with_the_old_layer_modes_plays_as_before");
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            for (const auto& c : cases)
+            {
+                juce::MemoryBlock saved;
+                source->getStateInformation(saved);
+                auto root = juce::AudioProcessor::getXmlFromBinary(saved.getData(), static_cast<int>(saved.getSize()));
+                expect(root != nullptr);
+                root->setAttribute("formatVersion", 10);
+                auto* parameters = root->getChildByName(source->getParameterStateTypeName());
+                expect(parameters != nullptr);
+                root->replaceChildElement(parameters, oldState(*source, c.oldMode).release());
+                juce::MemoryBlock old;
+                juce::AudioProcessor::copyXmlToBinary(*root, old);
+
+                auto target = std::make_unique<SynthAudioProcessor>();
+                target->setStateInformation(old.getData(), static_cast<int>(old.getSize()));
+                expectEquals(static_cast<int>(value(*target, "part.mode")), c.newMode, c.name);
+                expect((value(*target, "pA.g1.type") != 0.0f) == c.aPlays, c.name);
+                expect((value(*target, "pA.p1.type") != 0.0f) == c.aPlays, c.name);
+                expect((value(*target, "pB.g1.type") != 0.0f) == c.bPlays, c.name);
+                expect((value(*target, "pB.p1.type") != 0.0f) == c.bPlays, c.name);
+            }
+        }
+
+        beginTest("a_saved_sound_with_the_old_layer_modes_plays_as_before");
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            for (const auto& c : cases)
+            {
+                auto patchXml = coolsynth::presets::createWrappedPatchXml(*oldState(*source, c.oldMode), source->getParameterStateTypeName());
+                patchXml->setAttribute("formatVersion", 9);
+                auto parsed = coolsynth::presets::parseWrappedPatchXml(*patchXml, source->getParameterStateTypeName());
+                expect(parsed.succeeded(), parsed.message);
+                auto target = std::make_unique<SynthAudioProcessor>();
+                expect(target->applyParameterStateXml(*parsed.parameterStateXml));
+                expectEquals(static_cast<int>(value(*target, "part.mode")), c.newMode, c.name);
+                expect((value(*target, "pA.g1.type") != 0.0f) == c.aPlays, c.name);
+                expect((value(*target, "pB.g1.type") != 0.0f) == c.bPlays, c.name);
+            }
+        }
+
+        beginTest("a_state_of_this_version_is_left_as_it_is");
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            auto state = oldState(*source, 2); // Velocity now, not the old Split
+            auto patchXml = coolsynth::presets::createWrappedPatchXml(*state, source->getParameterStateTypeName());
+            auto parsed = coolsynth::presets::parseWrappedPatchXml(*patchXml, source->getParameterStateTypeName());
+            expect(parsed.succeeded(), parsed.message);
+            auto target = std::make_unique<SynthAudioProcessor>();
+            expect(target->applyParameterStateXml(*parsed.parameterStateXml));
+            expectEquals(static_cast<int>(value(*target, "part.mode")), 2);
+            expect(value(*target, "pB.g1.type") != 0.0f);
+        }
+    }
+};
+
+static LayerModeMigrationTests layerModeMigrationTests;

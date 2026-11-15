@@ -146,6 +146,8 @@ namespace coolsynth::ui
         [[nodiscard]] View view() const noexcept { return currentView; }
         [[nodiscard]] int section() const noexcept { return currentSection; }
         [[nodiscard]] int part() const noexcept { return currentPart; }
+        /** The layer the sections edit has every generator and processor slot Off: it is left out (D190). */
+        [[nodiscard]] bool currentLayerEmpty() const;
         [[nodiscard]] bool typeListOpen() const noexcept { return typeList.open; }
         [[nodiscard]] bool inCategory() const noexcept { return browser.inCategory; }
         [[nodiscard]] int livePage() const noexcept { return currentLivePage; }
@@ -166,6 +168,13 @@ namespace coolsynth::ui
         /** The standalone app's MiniLab driver says whether the MiniLab is there; the plugin never does. */
         void setHardwareConnected(bool connected);
         [[nodiscard]] bool hardwareConnected() const noexcept { return hardware; }
+
+        /** The MiniLab's 25 keys, as far as its notes tell (D192): its Oct buttons send nothing, so a key played
+            outside the keys it was thought to have moves them, by whole octaves, as little as holds that key. */
+        void keyPlayedOnMiniLab(int note) noexcept;
+        static constexpr int miniLabHomeLowKey = 48; // C3, the MiniLab's lowest key without an octave shift
+        static constexpr int miniLabKeySpan = 24;   // 25 keys, C to C
+        [[nodiscard]] int miniLabLowKey() const noexcept { return miniLabHomeLowKey + 12 * miniLabOctave; }
 
         // ---- What to show -----------------------------------------------------------------
         [[nodiscard]] static juce::String sectionName(int section);
@@ -278,6 +287,7 @@ namespace coolsynth::ui
         bool hold = false;     // the screen's Hold (D184)
         int octave = 0;        // the screen's keys, octaves from C3
         bool hardware = false; // a MiniLab connected
+        int miniLabOctave = 0; // the MiniLab's octave shift, as its notes tell (D192)
         Popup lastPopup;
         int changeCount = 0;
         bool hardwareShift = false;

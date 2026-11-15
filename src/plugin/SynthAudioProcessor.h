@@ -312,6 +312,8 @@ private:
     juce::StringArray knownParameterIds; // every parameter, for patch and state validation
     std::array<coolsynth::parameters::v3::PartParameterPointers, coolsynth::synth::v3::partCount> partParameterValues;
     std::atomic<float>* partModeValue = nullptr;
+    std::atomic<float>* velocitySplitValue = nullptr; // D190
+    std::atomic<float>* velocityFadeValue = nullptr;
     coolsynth::parameters::v3::MasterEffectPointers masterEffectValues;
 
     // The user's own sounds: one name and one UserLibrary handle per generator slot (part A's three, then B's).

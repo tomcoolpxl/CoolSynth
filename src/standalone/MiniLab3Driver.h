@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -55,6 +56,8 @@ namespace coolsynth::standalone
         // The MiniLab 3 firmware now and then sends a key's note-on with velocity 1 (Arturia forum, "Random
         // Velocity=1 bug"): such a note takes the previous note's velocity instead. MIDI thread only.
         int lastGoodVelocity = 100;
+        // The last key the MiniLab sent, for the screen's line over its keys (D192): MIDI thread writes, timer reads.
+        std::atomic<int> lastKeyNote { -1 };
 
         bool shiftHeld = false;
         std::array<int, 8> lastKnobValue { -1, -1, -1, -1, -1, -1, -1, -1 };

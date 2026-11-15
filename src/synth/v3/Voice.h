@@ -187,6 +187,7 @@ namespace coolsynth::synth::v3
         int unisonIndex = 0;
         int unisonCount = 1;
         bool fromArp = false;
+        float gain = 1.0f;         // the note's share in a velocity split between the layers (D190)
     };
 
     class Voice final

@@ -18,7 +18,7 @@ press) and knob 5.
 | Control | Job |
 |---|---|
 | Shift | On the MiniLab (or the computer's Shift key): held, knobs turn ten times finer; nothing else, since Shift + pads 1-3 are the MiniLab's own (program, pad bank). On screen its place holds **Prefs**, CoolSynth's options (D185). |
-| Hold, Oct -, Oct + | With a MiniLab: its own, greyed out on screen. Without one (D184): Hold holds the notes like a sustain pedal, or latches a running arp; Oct -/+ shift the screen's keys up to three octaves. |
+| Hold, Oct -, Oct + | With a MiniLab: its own, greyed out on screen. Without one (D184): Hold holds the notes like a sustain pedal, or latches a running arp; Oct -/+ move the screen's five octaves up or down (D192). |
 | Two touch strips (Pitch, Mod) | Pitch bend and mod wheel, as the keyboard sends them. |
 | Screen | The software screen (section 4). Larger in software, in the same place. |
 | Main knob | Turn: moves through the list in view. Press: opens, loads or chooses a type. Its current job is printed beside it ("turn Sound", "press Load"). |
@@ -26,11 +26,11 @@ press) and knob 5.
 | Knob 5 | Pages: of the focused slot in a section, of the live pages in Home. Blue navigation ring. |
 | Knobs 6-8 | Glide, Brightness, Space, the same everywhere. Brightness moves every Ladder and SVF cutoff of the sound together, up to 1.5 octaves either way; Space makes every reverb, delay and room up to twice or half as wet; in the middle the sound is as designed (D176). |
 | Faders 1-4 | Part A, Part B, Effects, Master: volumes over the sound as designed (D184), at the top as designed, half way about -18 dB, the bottom off; they start at the top and keep their place across sounds. The MiniLab's faders are taken as they are; while it is connected the screen's follow them and do not take the mouse. |
-| Pad 1 | **Home**: the sound browser from anywhere; pressed again while Home is open, it switches part A/B (D185), teal for part A, yellow for B. First since D184. |
+| Pad 1 | **Home**: the sound browser from anywhere; pressed again while Home is open, it switches layer A/B (D185, D189), teal for A, yellow for B; "Layer switch" in small print inside the pad (D191). First since D184. An empty layer's Home says "Layer B is empty" and knobs 1-4 show a dash (D192). |
 | Pads 2-4 | Sound, Shape, Motion: open the section; the lit pad pressed again moves to the next slot. |
 | Pads 5-7 | ■ ▶ ●: kept for the recorder (later), dim. |
 | Pad 8 | Effects: opens the section, as pads 2-4 (last since D184). |
-| Keys | A short row of keys. White keys white, black keys black in both themes. |
+| Keys | Five octaves, C2 to C7 (D192): white keys about 2.5 times as long as wide instead of square. With a MiniLab, a thin teal line marked "MiniLab keys" lies over its 25 keys; its Oct buttons send nothing, so the line moves, by whole octaves, when a key is played outside it. White keys white, black keys black in both themes; 2 px gaps (D191). |
 
 All knobs are flat. Pads print their job (Sound, Shape, Motion, Effects, ■ ▶ ●, Home), centred.
 Colours: Sound #f2a33a, Shape #3b8bff (was #35b8e0, D184), Motion #9b7bff, Effects #ec5fa6, Perform #a4d23f,

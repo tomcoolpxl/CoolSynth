@@ -3796,3 +3796,50 @@ split directions, a velocity split) is part of the parked A/B question, to be ta
   have room; the Home pad's "Again: Layer A/B" under it became **"Layer switch"**, small, inside the
   pad at its bottom; the gaps between the white keys 2 px (JUCE draws 1) and a shade darker
   (#a9b1ba, was #c9d0d7).
+
+## D190. Layer modes: Stack, Split, Velocity (2026-11-15)
+
+The user's choice after talking it through (options: **Stack, Split, Velocity, recommended and chosen**;
+Stack and Split only; keep A, Stack, Split, B), checked online: Sequential's Prophet Rev2 offers Stack
+and Split, Roland's Jupiter-X adds a velocity switch, Korg's wavestate crossfades layers by velocity.
+The defaults should suit a beginner (the user), so:
+
+- **The modes** are Stack (both layers on every key), Split (each layer inside its key range) and
+  Velocity (soft notes to layer A, hard ones to B). The old A-only and B-only are gone: a layer with
+  every generator and processor slot Off is **empty and left out**, so one layer alone is a Stack with
+  the other empty. Layer B starts empty; Stack is the default.
+- **Velocity** has a split velocity (part.velSplit, 2-127, default 64) and a fade (part.velFade, 0-64
+  velocities, default 16) over which A gives way to B with an equal-power crossfade, so a note in the
+  middle is as loud as one outside it. A note's share rides with it through chord memory, the arp
+  (the share of the last key given to it) and a mono part's held keys.
+- **Old states and saved sounds** are carried over: A becomes Stack with layer B emptied, Layer
+  becomes Stack, Split stays Split, B becomes Stack with layer A emptied (state version 11, patch
+  version 10; the versions before are read and converted). Bank files say "parts = stack | split |
+  velocity [split=] [fade=]"; "a" and "layer" still read as stack, the old "b" is an error that says
+  what to write instead.
+- Checked: every factory preset renders bit for bit the same as before (only the four random-arp
+  presets differ, as on every run); the parts, insert, migration, patch and interface tests pass.
+- Not yet: choosing the mode, the split point and the velocity split on the panel.
+
+## D192. Five octaves on the screen; an empty layer's Home says so (2026-11-15)
+
+- **The screen's keys**: 25 keys across the whole panel made each white key as wide as it was long.
+  Checked online: a real white key is about 6.4 times longer than wide (23.5 x 150 mm; Wikipedia,
+  "Musical keyboard"), drawing libraries default to about 4:1 (xpiano), many DAWs simply stretch
+  (Cantabile forum), Reason lets the window's width decide how many octaves show. Options: **five
+  octaves with the MiniLab's keys marked (chosen, the user's)**; 25 keys at real proportions, small and
+  centred; 25 keys in a taller window. The keys are C2 to C7; without a MiniLab the screen's Oct
+  buttons move them. The MiniLab's Oct buttons send nothing (tested on the device), so the line over
+  its keys follows the notes it plays (the user's choice; options: follow the notes, no line, a fixed
+  line): a key outside the line moves it by whole octaves, as little as holds that key.
+- **Home on an empty layer** showed fallback macro names (Tone, Character...) for macros that do
+  nothing. Asked, the user chose **per layer, empty shown empty** (options: one set of macros for the
+  whole sound, recommended; per layer with the empty state; as it was): Home says "Layer B is empty"
+  and knobs 1-4 show a dash.
+- Then the user's UX review question (the list says "Init Saw playing" while the panel says "Layer B
+  is empty"; the screen stays teal while the pad is yellow). Checked online: Korg's wavestate keeps a
+  Performance over its Layers (Sound On Sound's review), Arturia users report that Analog Lab's Multi
+  macros act on both parts by default and a Part button picks one to edit, and Nielsen Norman Group
+  warns that a badly signalled mode causes errors. Options: Home is the sound and layers live only in
+  the sections (recommended); keep the switch but make the mode loud; **layer B holds a second sound,
+  as Analog Lab's Multi (chosen, the user's)**. That is the next piece of work.

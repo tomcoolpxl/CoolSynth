@@ -13,7 +13,7 @@ namespace coolsynth::synth::v3
     bool EngineV3::sampledInstrumentPending(const EngineSettings& settings) noexcept
     {
         const auto& d = SampleGenerator::descriptor();
-        const std::array<bool, partCount> playing { settings.partMode != PartMode::bOnly, settings.partMode != PartMode::aOnly };
+        const std::array<bool, partCount> playing { ! layerEmpty(settings.parts[0]), ! layerEmpty(settings.parts[1]) };
         for (int p = 0; p < partCount; ++p)
         {
             if (! playing[static_cast<std::size_t>(p)])

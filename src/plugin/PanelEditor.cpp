@@ -253,18 +253,16 @@ public:
         g.setColour(ink);
         if (symbol < 0)
         {
-            auto faceArea = r;
+            // The name stays in the pad's centre, as on every pad; the small line sits below it, at the bottom.
             if (sub.isNotEmpty())
             {
-                auto line = faceArea.removeFromBottom(22.0f);
                 g.setFont(sans(10.5f));
                 g.setColour(ink.withAlpha(0.7f));
-                g.drawText(sub, line.withTrimmedBottom(4.0f), juce::Justification::centred);
-                faceArea.removeFromTop(6.0f);
+                g.drawText(sub, r.withTrimmedTop(r.getHeight() - 22.0f).withTrimmedBottom(4.0f), juce::Justification::centred);
                 g.setColour(ink);
             }
             g.setFont(sans(16.0f, true)); // larger, to read from a distance (D185; was 12.5)
-            g.drawText(face, faceArea, juce::Justification::centred);
+            g.drawText(face, r, juce::Justification::centred);
             return;
         }
         const float s = 12.0f;
@@ -463,9 +461,19 @@ public:
         auto cards = area.removeFromBottom(58);
         g.setColour(colours::screenLine);
         g.fillRect(cards.removeFromTop(1).expanded(9, 0));
+        // An empty layer's macros: the cards say so instead of naming knobs that do nothing (D192).
+        const bool emptyMacros = home && model.livePage() == 0 && model.currentLayerEmpty();
+        if (emptyMacros)
+        {
+            g.setFont(mono(11.0f));
+            g.setColour(colours::screenDim);
+            g.drawText(model.currentPage().name, cards, juce::Justification::centred);
+            for (auto& cardArea : cardAreas)
+                cardArea = {};
+        }
         cards.removeFromTop(6);
         const int cardWidth = cards.getWidth() / 4;
-        for (int k = 1; k <= 4; ++k)
+        for (int k = 1; k <= 4 && ! emptyMacros; ++k)
         {
             const auto view = model.knob(k);
             auto card = cards.removeFromLeft(cardWidth).reduced(3, 0);
@@ -795,7 +803,7 @@ public:
         for (auto* button : { &hold, &octDown, &octUp })
             button->setTooltip("Works inside the keyboard itself");
 
-        keyboard.setAvailableRange(48, 72); // 25 keys, C3 to C5
+        keyboard.setAvailableRange(firstKey, firstKey + shownKeySpan); // five octaves (D192)
         keyboard.setColour(juce::MidiKeyboardComponent::whiteNoteColourId, juce::Colour(0xfff6f7f8));
         keyboard.setColour(juce::MidiKeyboardComponent::blackNoteColourId, juce::Colour(0xff1c1f23));
         keyboard.setColour(juce::MidiKeyboardComponent::keySeparatorLineColourId, juce::Colour(0xffa9b1ba)); // a shade darker (D191)
@@ -836,11 +844,23 @@ public:
             if (fader.isEnabled() == hardware)
                 fader.setEnabled(! hardware);
         hold.setToggleState(model.holdOn(), juce::dontSendNotification);
-        if (const int octave = model.octaveShift(); octave != shownOctave)
+        // Five octaves (D192). Without a MiniLab the screen's Oct buttons move them; with one they move, by whole
+        // octaves, only as far as needed to keep its 25 keys in sight.
+        int start = juce::jlimit(0, 127 - shownKeySpan, firstKey + 12 * model.octaveShift());
+        if (model.hardwareConnected())
         {
-            shownOctave = octave;
-            keyboard.setAvailableRange(48 + 12 * octave, 72 + 12 * octave);
-            keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
+            const int low = model.miniLabLowKey(), high = low + InterfaceModel::miniLabKeySpan;
+            start = firstKey;
+            while (high > start + shownKeySpan && start + 12 <= 127 - shownKeySpan)
+                start += 12;
+            while (low < start && start >= 12)
+                start -= 12;
+        }
+        if (start != shownStart)
+        {
+            shownStart = start;
+            keyboard.setAvailableRange(start, start + shownKeySpan);
+            keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / static_cast<float>(whiteKeys));
         }
         const bool shiftOn = owner.shiftHeld();
         const auto pageTint = coolsynth::ui::tintColour(model.pageTint());
@@ -910,6 +930,22 @@ public:
             g.setColour(colours::print);
             g.drawText(s == 0 ? "Pitch" : "Mod", strip.removeFromBottom(22.0f), juce::Justification::centred);
         }
+        // A thin line over the MiniLab's 25 keys, as far as its notes tell (D192), named in small print.
+        if (model.hardwareConnected())
+        {
+            const int low = model.miniLabLowKey(), high = low + InterfaceModel::miniLabKeySpan;
+            const auto first = keyboard.getRectangleForKey(juce::jmax(low, shownStart));
+            const auto last = keyboard.getRectangleForKey(juce::jmin(high, shownStart + shownKeySpan));
+            const float x0 = static_cast<float>(keyboard.getX()) + first.getX();
+            const float x1 = static_cast<float>(keyboard.getX()) + last.getRight();
+            const float y = static_cast<float>(keyboard.getY()) - 8.0f;
+            g.setColour(coolsynth::ui::tintColour(Tint::home).withAlpha(0.85f));
+            g.fillRoundedRectangle(juce::Rectangle<float>(x0 + 1.0f, y, x1 - x0 - 2.0f, 3.0f), 1.5f);
+            g.setFont(sans(10.5f));
+            g.setColour(colours::print);
+            g.drawText("MiniLab keys", juce::Rectangle<float>(x0, y - 16.0f, x1 - x0, 14.0f), juce::Justification::centred);
+        }
+
         // The CPU in the screen's surround, beside the main knob (D191): the last second's share of the audio
         // thread's time, the number alone (the user's choice over a meter), amber from 60%, red from 90%.
         // A click opens Prefs.
@@ -1019,7 +1055,7 @@ public:
 
         // keys
         keyboard.setBounds(left, padBottom + 30, designWidth - 2 * left, designHeight - padBottom - 30 - 32);
-        keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
+        keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / static_cast<float>(whiteKeys));
 
         // the CPU: the surround's bottom right corner, beside the main knob (D191)
         cpuArea = { screenBox.getRight() - 14 - 62, screenBox.getBottom() - 6 - 14, 62, 14 };
@@ -1046,7 +1082,8 @@ private:
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
     int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)
-    int shownOctave = 0; // the octave the screen's keys show (D184)
+    static constexpr int firstKey = 36, shownKeySpan = 60, whiteKeys = 36; // C2 to C7, five octaves (D192)
+    int shownStart = firstKey; // the lowest key the screen shows
 };
 
 // ---- The editor ---------------------------------------------------------------------------------------
