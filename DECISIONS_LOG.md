@@ -3445,3 +3445,20 @@ second:
 With two CoolSynths in one host the helpers are shared, so each sees the part of their work that
 falls in its own seconds. Tested: a second of two overlapping sounds counts work on the audio thread
 and on the helpers (here 6.66%, 0.47%, 3.48%, 1.70%).
+
+## D173. Engine pills built in the sound browser (2026-11-15)
+
+Overnight, the user away (recommended options taken, the others listed). Built as planned in D169:
+each sound's row in the software screen's list shows, right-aligned, small transparent pills with
+rounded corners (the screen's tint, faint, with a thin outline) naming its engines, in slot order,
+at most three; not on the MiniLab's screen. They come from the preset's own entries (what it leaves
+out is the default: g1 VA, g2 and g3 Off, part A alone; part B counts when the preset plays it,
+parts = layer, split or b), worked out once. Over the 120 presets: VA 58, Sample 41, FM 8, Physical
+5, WT 5, Grain 3, Noise 3, Filter 1.
+- **One preset has no generator at all**: Siren, a ladder filter at full resonance ringing on its
+  own. The agreed words had nothing for it. Options: **Filter (chosen)**, it names what makes the
+  sound, as the user asked for; no pill (the row looks unfinished, the only one); Ladder (the type
+  name, more technical than the rest). For the user to confirm.
+Tested: the examples of the specification (Frozen Pluck: Physical Grain; Steinway Grand: Sample),
+one to three per preset, no repeats, Noise and Filter only alone, the list carrying them row for
+row and the categories none. Drawn: build/panel-home.png.

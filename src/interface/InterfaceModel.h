@@ -22,6 +22,11 @@ namespace coolsynth::ui
     /** The colour of a tint, as on the panel and the mock-up. */
     [[nodiscard]] juce::Colour tintColour(Tint tint) noexcept;
 
+    /** What makes a preset's sound, for the pills in the software sound browser (D169, docs/interface-v3.md 6):
+        one label per engine its generator slots use, in slot order (part A, then part B where the preset plays
+        it), at most three: VA, Sample, FM, WT, Grain, Physical; Noise only when no other engine plays. */
+    [[nodiscard]] juce::StringArray enginePills(int factoryPreset);
+
     struct Page
     {
         juce::String name;
@@ -61,6 +66,7 @@ namespace coolsynth::ui
     {
         juce::String title;               // "CATEGORIES", "OUTRUN", "TYPE G1"
         juce::StringArray rows;
+        std::vector<juce::StringArray> pills; // per row, the sound's engines (sound lists only; the panel's own screen)
         int cursor = 0;
         int used = -1;                    // the row playing or in use, -1 none
         bool firstRowIsBack = false;

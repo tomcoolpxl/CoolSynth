@@ -66,6 +66,71 @@ namespace coolsynth::ui
         return juce::Colours::grey;
     }
 
+    juce::StringArray enginePills(int factoryPreset)
+    {
+        // Read from the preset's own entries; what a preset leaves out is the parameter's default: g1 VA, g2 and g3
+        // Off, part A alone.
+        static const std::vector<juce::StringArray> cache = []
+        {
+            std::vector<juce::StringArray> all;
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+            {
+                const auto& preset = coolsynth::presets::getFactoryPreset(i);
+                const auto entry = [&](const juce::String& id, const juce::String& otherwise)
+                {
+                    juce::String text = otherwise;
+                    for (const auto& e : preset.entries)
+                        if (e.parameterId == id)
+                            text = e.text; // the last one counts, as when it is applied
+                    return text;
+                };
+                const auto mode = entry(pv::partModeParameterId, "A");
+                juce::StringArray parts;
+                if (mode != "B")
+                    parts.add("pA");
+                if (mode == "B" || mode == "Layer" || mode == "Split")
+                    parts.add("pB");
+
+                juce::StringArray pills;
+                bool noise = false;
+                for (const auto& part : parts)
+                    for (int g = 1; g <= 3; ++g)
+                    {
+                        const auto type = entry(part + ".g" + juce::String(g) + ".type", g == 1 ? "VA" : "Off");
+                        juce::String pill;
+                        if (type == "VA")
+                            pill = "VA";
+                        else if (type == "Sample")
+                            pill = "Sample";
+                        else if (type == "FM2" || type == "FM4")
+                            pill = "FM";
+                        else if (type == "Wavetable")
+                            pill = "WT";
+                        else if (type == "Grain")
+                            pill = "Grain";
+                        else if (type == "String" || type == "Modal")
+                            pill = "Physical";
+                        else if (type == "Noise")
+                            noise = true;
+                        if (pill.isNotEmpty() && pills.size() < 3)
+                            pills.addIfNotAlreadyThere(pill);
+                    }
+                if (pills.isEmpty() && noise)
+                    pills.add("Noise");
+                // No generator at all: the sound is a filter ringing on its own (Siren's ladder at full resonance).
+                if (pills.isEmpty())
+                    for (const auto& part : parts)
+                        for (int p = 1; p <= 3 && pills.isEmpty(); ++p)
+                            if (entry(part + ".p" + juce::String(p) + ".type", p == 1 ? "Ladder" : "Off") != "Off")
+                                pills.add("Filter");
+                all.push_back(pills);
+            }
+            return all;
+        }();
+        return factoryPreset >= 0 && factoryPreset < static_cast<int>(cache.size()) ? cache[static_cast<std::size_t>(factoryPreset)]
+                                                                                    : juce::StringArray();
+    }
+
     InterfaceModel::InterfaceModel(SynthAudioProcessor& processor)
         : synth(processor), state(processor.getValueTreeState())
     {
@@ -720,9 +785,11 @@ namespace coolsynth::ui
         const auto& category = bank[static_cast<std::size_t>(browser.category)];
         view.title = category.name.toUpperCase();
         view.rows.add(juce::String(juce::CharPointer_UTF8("\xe2\x80\xb9 Back to categories")));
+        view.pills.emplace_back();
         for (int preset : category.presets)
         {
             view.rows.add(coolsynth::presets::getFactoryPreset(preset).name);
+            view.pills.push_back(enginePills(preset));
             if (preset == playingPreset())
                 view.used = view.rows.size() - 1;
         }

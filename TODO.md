@@ -108,11 +108,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D171) The tests listen for clicks: preset changes, effect changes, steals and loads on the factory
     presets; effect fades are raised cosines now, without a corner.
     (D172) The flight log has each thread's share of every second, late helpers, and the memory.
+    (D173) Engine pills in the software sound browser (Siren, with no generator, shows Filter).
     Next: the user's ear and hands on all of this (levels, glow, click-to-load, ringing sounds, on
     the MiniLab); the load per core on the screen (Multi-core Auto/Off is in the app's Options);
-    for the real interface (D169): an Options button of its own, so the plugin has one too, and engine
-    pills in the software sound browser (VA, Sample, FM, WT, Grain, Physical, Noise; docs/interface-v3.md
-    section 6); a
+    for the real interface (D169): an Options button of its own, so the plugin has one too; a
     keyboard velocity curve; ASIO; streaming from disk for libraries bigger than the memory; the
     recorder. Later: whether Rust would serve the engine better (answered for now: not yet, D164).
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:

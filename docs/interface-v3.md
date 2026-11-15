@@ -112,9 +112,11 @@ engine hooks (D140).
 Planned for the real interface (D169):
 - **An Options button** in CoolSynth's own interface, so the plugin has one too (today only the
   standalone app's window has Options, with Audio and MIDI and Multi-core Auto/Off, D167).
-- **Engine pills in the sound browser** (software screen only, not the MiniLab): each sound's row
-  shows, right-aligned, small transparent pills with rounded corners naming what makes its sound,
-  one pill per engine its generator slots use, in slot order, at most three: **VA** (virtual
-  analog), **Sample** (a recorded instrument), **FM** (FM2, FM4), **WT** (wavetable), **Grain**
-  (granular), **Physical** (the String and Modal models), **Noise** only when noise is the sound
-  itself (no other engine plays). Frozen Pluck: Physical, Grain; a Conservatory sound: Sample.
+- **Engine pills in the sound browser** (built, D173; software screen only, not the MiniLab): each
+  sound's row shows, right-aligned, small transparent pills with rounded corners naming what makes
+  its sound, one pill per engine its generator slots use, in slot order (part A, then part B where
+  the preset plays it), at most three: **VA** (virtual analog), **Sample** (a recorded instrument),
+  **FM** (FM2, FM4), **WT** (wavetable), **Grain** (granular), **Physical** (the String and Modal
+  models), **Noise** only when noise is the sound itself (no other engine plays), **Filter** when no
+  generator plays at all and a filter rings on its own (Siren). Frozen Pluck: Physical, Grain; a
+  Conservatory sound: Sample.

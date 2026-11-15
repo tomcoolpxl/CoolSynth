@@ -1,3 +1,4 @@
+#include <map>
 #include <memory>
 
 #include <juce_core/juce_core.h>
@@ -8,6 +9,7 @@
 #include "plugin/PanelEditor.h"
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
+#include "presets/FactoryPresets.h"
 
 /*
     The V3 interface's logic (docs/interface-v3.md): navigation E, Home as browser and live page,
@@ -318,6 +320,73 @@ public:
 };
 
 static PanelSnapshotTests panelSnapshotTests;
+
+// ---- Engine pills in the sound browser (D169) ---------------------------------------------------------------
+
+class EnginePillTests final : public juce::UnitTest
+{
+public:
+    EnginePillTests() : juce::UnitTest("Engine pills name what makes each sound", "Interface") {}
+
+    void runTest() override
+    {
+        const auto named = [](const juce::String& name)
+        {
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                if (coolsynth::presets::getFactoryPreset(i).name == name)
+                    return coolsynth::ui::enginePills(i).joinIntoString(" ");
+            return juce::String("(no such preset)");
+        };
+
+        beginTest("The examples of the specification, and one of each engine");
+        expectEquals(named("Frozen Pluck"), juce::String("Physical Grain"));
+        expectEquals(named("Steinway Grand"), juce::String("Sample"));
+        expectEquals(named("Init Saw"), juce::String("VA"));
+        expectEquals(named("Init FM"), juce::String("FM"));
+        expectEquals(named("Init Wavetable"), juce::String("WT"));
+        expectEquals(named("Future Chord"), juce::String("WT"));
+        expectEquals(named("Siren"), juce::String("Filter")); // no generator: the ladder rings on its own
+
+        beginTest("Every preset has one to three, no repeats, and Noise only alone");
+        std::map<juce::String, int> counts;
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+        {
+            const auto pills = coolsynth::ui::enginePills(i);
+            const auto& name = coolsynth::presets::getFactoryPreset(i).name;
+            expect(pills.size() >= 1 && pills.size() <= 3, name + ": " + pills.joinIntoString(" "));
+            juce::StringArray unique(pills);
+            unique.removeDuplicates(false);
+            expectEquals(unique.size(), pills.size(), name);
+            expect(! pills.contains("Noise") || pills.size() == 1, name + ": Noise only when it is the sound");
+            expect(! pills.contains("Filter") || pills.size() == 1, name + ": Filter only when no generator plays");
+            for (const auto& pill : pills)
+                ++counts[pill];
+        }
+        juce::String summary;
+        for (const auto& [pill, count] : counts)
+            summary << pill << " " << count << ", ";
+        logMessage("presets per pill: " + summary.dropLastCharacters(2));
+        expectGreaterThan(counts["Sample"], 39, "the Conservatory and more");
+
+        beginTest("The sound list carries them, row for row; the categories have none");
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        auto& model = synth->getInterfaceModel();
+        model.pressPad(7, false); // Home: the playing sound's category
+        auto view = model.list();
+        expectEquals(static_cast<int>(view.pills.size()), view.rows.size());
+        expect(view.pills.front().isEmpty(), "the Back row has none");
+        for (std::size_t r = 1; r < view.pills.size(); ++r)
+            expect(! view.pills[r].isEmpty(), view.rows[static_cast<int>(r)]);
+        model.turnMain(-100); // up to "Back to categories"
+        model.pressMain();
+        view = model.list();
+        expectEquals(view.title, juce::String("CATEGORIES"));
+        for (const auto& row : view.pills)
+            expect(row.isEmpty(), "a category row");
+    }
+};
+
+static EnginePillTests enginePillTests;
 
 // ---- A bulk edit reaches the audio whole (D157) -------------------------------------------------------------
 

@@ -448,6 +448,28 @@ private:
                 g.fillRoundedRectangle(row.toFloat(), 3.0f);
             }
             auto text = row.reduced(6, 0);
+            // What makes the sound, right-aligned: small transparent pills with rounded corners (D169), here only,
+            // not on the MiniLab's own screen.
+            if (static_cast<std::size_t>(i) < list.pills.size() && ! list.pills[static_cast<std::size_t>(i)].isEmpty())
+            {
+                const auto& pills = list.pills[static_cast<std::size_t>(i)];
+                const auto pillFont = mono(9.0f);
+                g.setFont(pillFont);
+                for (int p = pills.size() - 1; p >= 0; --p)
+                {
+                    const int width = juce::GlyphArrangement::getStringWidthInt(pillFont, pills[p]) + 10;
+                    auto pill = text.removeFromRight(width).toFloat().reduced(0.0f, 3.5f);
+                    text.removeFromRight(3);
+                    g.setColour(tint.withAlpha(on ? 0.16f : 0.08f));
+                    g.fillRoundedRectangle(pill, pill.getHeight() / 2.0f);
+                    g.setColour((on ? colours::screenInk : colours::screenDim).withAlpha(0.55f));
+                    g.drawRoundedRectangle(pill, pill.getHeight() / 2.0f, 0.8f);
+                    g.setColour(on ? colours::screenInk : colours::screenDim);
+                    g.drawText(pills[p], pill, juce::Justification::centred);
+                }
+                text.removeFromRight(4);
+                g.setFont(mono(12.0f));
+            }
             if (on)
             {
                 g.setColour(colours::screenInk);
