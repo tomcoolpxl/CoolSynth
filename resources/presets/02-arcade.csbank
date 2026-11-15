@@ -13,6 +13,12 @@ voice = env2ToP1=0
 play = mode=mono
 f1 = Delay time=90 feedback=0 mix=0.2
 master = -6
+# Macros (drafted 2026-11-15 for the user's review, D177): Round, Buzz, Tail, Vibrato
+macros = names=Round,Buzz,Tail,Vibrato
+mod = src=macro1 dst=g1.pw amount=0.2778
+mod = src=macro2 dst=g1.shape amount=-0.3333
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.008 via=macro4
 
 [Boss Bass]
 room = Arcade
@@ -25,6 +31,13 @@ mod = src=glfo1 dst=pitch amount=0.25 curve=unipolar
 voice = env2ToP1=0
 play = mode=mono
 master = -6
+# Macros (drafted 2026-11-15 for the user's review, D177): Round, Buzz, Tail, Vibrato
+macros = names=Round,Buzz,Tail,Vibrato
+mod = src=macro1 dst=g1.pw amount=0.2
+mod = src=macro2 dst=g1.shape amount=-0.3333
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.4
 
 [Power-Up]
 room = Arcade
@@ -36,6 +49,14 @@ env2 = attack=120 attackCurve=0 decay=1 sustain=1 release=30
 mod = src=env2 dst=pitch amount=0.25
 voice = env2ToP1=0
 master = -6
+# Macros (drafted 2026-11-15 for the user's review, D177): Thin, Buzz, Length, Warble
+macros = names=Thin,Buzz,Length,Warble
+mod = src=macro1 dst=g1.pw amount=-0.4167
+mod = src=macro2 dst=g1.shape amount=-0.3333
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=macro3 dst=env2.time amount=0.5
+mod = src=lfo1 dst=pitch amount=0.01 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.5
 
 [Static Hit]
 room = Arcade
@@ -45,6 +66,12 @@ p1 = Off
 env1 = attack=0.5 decay=80 sustain=0 release=60 velocity=0.4
 voice = env2ToP1=0
 master = -3.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Muffle, Crunch, Decay, Vary
+macros = names=Muffle,Crunch,Decay,Vary
+mod = src=macro1 dst=g1.tone amount=-0.5
+mod = src=macro2 dst=g1.clock amount=-0.125
+mod = src=macro3 dst=env1.time amount=0.35
+mod = src=random dst=g1.clock amount=0.04 via=macro4
 
 [SCC Lead]
 room = Arcade
@@ -61,6 +88,12 @@ voice = env2ToP1=0 glide=30
 play = mode=legato
 f1 = Delay time=120 feedback=0 mix=0.18
 master = -5.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Smooth, Grit, Tail, Vibrato
+macros = names=Smooth,Grit,Tail,Vibrato
+mod = src=macro1 dst=p1.bits amount=0.4
+mod = src=macro2 dst=p1.rate amount=-0.35
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 
 [Chip Chord]
 room = Arcade
@@ -74,3 +107,9 @@ play = mode=mono
 chord = type=major
 arp = on rate=1/32 pattern=up octaves=1 gate=1
 master = -9
+# Macros (drafted 2026-11-15 for the user's review, D177): Thin, Buzz, Blur, Sweep
+macros = names=Thin,Buzz,Blur,Sweep
+mod = src=macro1 dst=g1.pw amount=-0.4167
+mod = src=macro2 dst=g1.shape amount=-0.3333
+mod = src=macro3 dst=env1.time amount=1
+mod = src=glfo1 dst=g1.pw amount=0.3 via=macro4

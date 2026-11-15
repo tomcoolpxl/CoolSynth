@@ -8,6 +8,12 @@ env1 = attack=2 decay=80 sustain=1 release=60 velocity=0.3
 voice = env2ToP1=0
 play = mode=legato
 master = -8.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Edge, (none), Release, Vibrato
+macros = names=Edge,-,Release,Vibrato
+mod = src=macro1 dst=g1.shape amount=0.12
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [808 Boom]
 room = Engine Room
@@ -23,6 +29,13 @@ voice = env2ToP1=0 glide=70
 play = mode=legato glideLegato=on
 f1 = Drive amount=0.3 mix=0.5
 master = -10.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Edge, Punch, Decay, Vibrato
+macros = names=Edge,Punch,Decay,Vibrato
+mod = src=macro1 dst=g1.shape amount=0.1
+mod = src=env3 dst=pitch amount=0.125 via=macro2
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Wobble]
 room = Engine Room
@@ -40,6 +53,13 @@ voice = env2ToP1=0 glide=25
 play = mode=legato glideLegato=on
 f1 = Drive amount=0.25 mix=0.6
 master = -15.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Grit, Release, Speed
+macros = names=Bright,Grit,Release,Speed
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=p1.res amount=0.2
+mod = src=macro2 dst=p1.drive amount=0.25
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [FM Knock]
 room = Engine Room
@@ -54,6 +74,15 @@ mod = src=velocity dst=g1.index amount=0.15
 voice = env2ToP1=0
 play = mode=mono
 master = -3.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Growl, Length, Wah
+macros = names=Bright,Growl,Length,Wah
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=g1.index amount=0.1
+mod = src=macro2 dst=g1.feedback amount=0.2
+mod = src=macro3 dst=env3.time amount=0.4
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=lfo1 dst=g1.index amount=0.1 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Donk]
 room = Engine Room
@@ -64,6 +93,14 @@ env2 = attack=0.5 decay=130 sustain=0 release=90 decayCurve=-0.8
 voice = env2ToP1=0.52 velToP1=0.12
 play = mode=mono
 master = -3.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Ring, Decay, Wobble
+macros = names=Bright,Ring,Decay,Wobble
+mod = src=macro1 dst=p1.cutoff amount=0.08
+mod = src=macro2 dst=p1.res amount=0.1
+mod = src=macro3 dst=env2.time amount=0.4
+mod = src=macro3 dst=env1.time amount=0.2
+mod = src=lfo1 dst=p1.cutoff amount=0.06 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Fat Analog]
 room = Engine Room
@@ -74,3 +111,12 @@ env2 = attack=2 decay=360 sustain=0.3 release=150
 voice = env2ToP1=0.3 glide=20 drift=2
 play = mode=legato priority=low glideLegato=on
 master = -5.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Thickness, Decay, Vibrato
+macros = names=Bright,Thickness,Decay,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=g1.detune amount=0.12
+mod = src=macro2 dst=p1.drive amount=0.25
+mod = src=macro3 dst=env2.time amount=0.4
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36

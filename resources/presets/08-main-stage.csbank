@@ -10,6 +10,14 @@ voice = env2ToP1=0.06 glide=20
 play = mode=legato glideLegato=on
 f1 = Drive amount=0.18 mix=0.75
 master = -15
+# Macros (drafted 2026-11-15 for the user's review, D177): Bite, Detune, Release, Sweep
+macros = names=Bite,Detune,Release,Sweep
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=g1.pitch amount=0.0017
+mod = src=macro2 dst=g2.pitch amount=-0.0017
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=-0.4
 
 [Supersaw]
 room = Main Stage
@@ -31,6 +39,16 @@ b.mix = level=-5 fx=0
 f1 = Delay time=375 feedback=0.25 mix=0.12
 f2 = Reverb size=0.75 damping=0.45 mix=0.24
 master = -9
+# Macros (drafted 2026-11-15 for the user's review, D177): Warmth, Thickness, Tail, Vibrato
+macros = names=Warmth,Thickness,Tail,Vibrato
+b.macros = names=Warmth,Thickness,Tail,Vibrato
+mod = src=macro1 dst=p2.cutoff amount=-0.35
+mod = src=macro2 dst=g1.detune amount=0.15
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
+b.mod = src=macro2 dst=g1.shape amount=0.1
+b.mod = src=macro3 dst=env1.time amount=0.5
 
 [Riser]
 room = Main Stage
@@ -53,6 +71,13 @@ mod = src=genv dst=g2.level amount=0.2
 voice = env2ToP1=0
 f1 = Reverb size=0.85 damping=0.4 mix=0.3
 master = -7.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Noise, Tail, Chop
+macros = names=Bright,Noise,Tail,Chop
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=g2.level amount=0.15
+mod = src=macro2 dst=g1.detune amount=0.1
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
 
 [Pluck Drop]
 room = Main Stage
@@ -69,6 +94,15 @@ voice = env2ToP1=0.45 velToP1=0.15
 f1 = Delay sync=on division=1/8 feedback=0.3 mix=0.18
 f2 = Reverb size=0.6 damping=0.4 mix=0.2
 master = -1
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Squelch, Length, Shimmer
+macros = names=Bright,Squelch,Length,Shimmer
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=p1.res amount=0.2
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=macro3 dst=env2.time amount=0.4
+mod = src=macro3 dst=env3.time amount=0.3
+mod = src=lfo1 dst=g2.pw amount=0.2 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Hyper Lead]
 room = Main Stage
@@ -84,6 +118,13 @@ voice = env2ToP1=0 glide=12
 play = mode=legato
 f1 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
 master = -0
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Crush, Release, Leaps
+macros = names=Bright,Crush,Release,Leaps
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=p2.mix amount=0.4
+mod = src=macro2 dst=p2.bits amount=-0.13
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=lfo1 dst=pitch amount=0.125 curve=quantized via=macro4
 
 [Neuro Growl]
 room = Main Stage
@@ -103,6 +144,14 @@ mod = src=wheel dst=lfo1.rate amount=0.25
 voice = env2ToP1=0 glide=30
 play = mode=legato glideLegato=on
 master = 0
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Grit, Release, Talk
+macros = names=Bright,Grit,Release,Talk
+mod = src=macro1 dst=p3.cutoff amount=0.15
+mod = src=macro2 dst=g2.index amount=0.1
+mod = src=macro2 dst=p2.drive amount=0.07
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=lfo1 dst=p1.vowel amount=0.25 curve=unipolar via=macro4
+mod = src=lfo1 dst=g1.pos amount=0.1 via=macro4
 
 [Future Chord]
 room = Main Stage
@@ -121,3 +170,10 @@ f2 = Reverb size=0.6 damping=0.45 mix=0.22 predelay=20 lowcut=150
 f3 = EQ low=-1 tilt=0 high=2.5
 f4 = Pump depth=0.6 division=1/4 release=0.55
 master = -7
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Detune, Tail, Wobble
+macros = names=Bright,Detune,Tail,Wobble
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g1.detune amount=0.15
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=macro3 dst=env2.time amount=0.4
+mod = src=glfo1 dst=p1.cutoff amount=0.12 via=macro4

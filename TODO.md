@@ -113,8 +113,10 @@ proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed
     (D174) An Options button on the panel (the plugin has Options now) and the CPU line beside it.
     (D175) A velocity curve in Options: Soft, Normal (as before), Hard, for every keyboard.
     (D176) Knobs 7 and 8 work: Brightness (every filter, 1.5 octaves) and Space (every reverb, delay, room).
+    (D177) Every preset's four macros routed and named, drafted for the user to review by ear.
     Next: the user's ear and hands on all of this (levels, glow, click-to-load, ringing sounds, the
-    pills and Options, the velocity curves, Brightness and Space, on the MiniLab); ASIO; streaming from disk for libraries bigger than the memory; the
+    pills and Options, the velocity curves, Brightness and Space, the macros of every preset, on the
+    MiniLab); ASIO; streaming from disk for libraries bigger than the memory; the
     recorder. Later: whether Rust would serve the engine better (answered for now: not yet, D164).
 34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
     - download the CC0 libraries, build an audition page, and let the user pick instruments;

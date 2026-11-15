@@ -8,6 +8,13 @@ p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
 master = -11
+# Macros (drafted 2026-11-15 for the user's review, D177): Warmth, Grit, Tail, Vibrato
+macros = names=Warmth,Grit,Tail,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=-0.45
+mod = src=macro2 dst=p1.drive amount=0.6
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.33
 
 [Init Pulse]
 room = Workshop
@@ -16,6 +23,12 @@ p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
 master = -16
+# Macros (drafted 2026-11-15 for the user's review, D177): Warmth, Nasal, Tail, Swirl
+macros = names=Warmth,Nasal,Tail,Swirl
+mod = src=macro1 dst=p1.cutoff amount=-0.45
+mod = src=macro2 dst=g1.pw amount=-0.4
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=g1.pw amount=0.25 via=macro4
 
 [Init Sine]
 room = Workshop
@@ -24,6 +37,13 @@ p1 = Off
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
 master = -12.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Sub, Tail, Vibrato
+macros = names=Bright,Sub,Tail,Vibrato
+mod = src=macro1 dst=g1.shape amount=0.667
+mod = src=macro2 dst=g1.sub amount=0.6
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.33
 
 [Init Arp]
 room = Workshop
@@ -34,6 +54,13 @@ env2 = attack=1 decay=160 sustain=0 release=120
 voice = env2ToP1=0.25
 arp = on rate=1/16 pattern=up octaves=2 gate=0.5
 master = 5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Squelch, Decay, Wobble
+macros = names=Bright,Squelch,Decay,Wobble
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=p1.res amount=0.4
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=macro3 dst=env2.time amount=0.5
+mod = src=glfo1 dst=p1.cutoff amount=0.1 via=macro4
 
 [Init Noise]
 room = Workshop
@@ -42,6 +69,15 @@ p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
 master = -7
+# Macros (drafted 2026-11-15 for the user's review, D177): Darken, Whistle, Tail, Surf
+macros = names=Darken,Whistle,Tail,Surf
+mod = src=macro1 dst=p1.cutoff amount=-0.45
+mod = src=macro2 dst=p1.cutoff amount=-0.2
+mod = src=macro2 dst=p1.res amount=0.6
+mod = src=macro2 dst=p1.bass amount=1
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=p1.cutoff amount=-0.2 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=-0.25
 
 [Init FM]
 room = Workshop
@@ -50,6 +86,13 @@ p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
 master = -11.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Rasp, Tail, Vibrato
+macros = names=Bright,Rasp,Tail,Vibrato
+mod = src=macro1 dst=g1.index amount=0.3
+mod = src=macro2 dst=g1.feedback amount=0.5
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.33
 
 [Init Wavetable]
 room = Workshop
@@ -58,3 +101,10 @@ p1 = Ladder cutoff=20000 res=0 key=0 bass=0
 env1 = attack=2 decay=300 sustain=1 release=150
 voice = env2ToP1=0
 master = -10
+# Macros (drafted 2026-11-15 for the user's review, D177): Mellow, Grit, Tail, Scan
+macros = names=Mellow,Grit,Tail,Scan
+mod = src=macro1 dst=g1.pos amount=-0.35
+mod = src=macro2 dst=p1.drive amount=0.35
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=g1.pos amount=0.08 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=-0.25

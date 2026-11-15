@@ -49,8 +49,9 @@ Two levels: **Home** (the sound browser) and **a section**.
   pressing loads; the sound playing is marked. Pressing the playing sound does nothing.
 - Home is also the **live page** (D145): knob 5 turns the live pages, knobs 1-4 play the open one.
   - Macros: the playing sound's four, in fixed roles (1 tone, 2 character, 3 time, 4 movement),
-    named per preset (Neon Brass: Blare, Thickness, Swell, Shimmer); role names when a preset has
-    none yet.
+    named per preset in the bank file ("macros = names=Blare,Thickness,Swell,Shimmer"; "-" for one
+    the sound does not use, shown as a dash); role names when a preset has none. All 120 presets
+    are routed and named, drafted for the user's review (D177, docs/macro-drafts).
   - Perform: Arp (on, rate, pattern, octaves), Groove (gate, swing, chance, latch), Chord (chord,
     strum, learn), Voice (mode, polyphony, glide, bend range).
 
@@ -106,7 +107,7 @@ Bytes and tests: `docs/minilab3-screen.md`. The standalone app owns the MiniLab'
 ## 6. Not yet
 
 The recorder (pads 5-7, tracks, its windows), a wizard for other controllers, the advanced
-editor, per-preset macro names for all 120 presets (none are written yet).
+editor; the user's review of the drafted macros (D177).
 
 Planned for the real interface (D169):
 - **An Options button** in CoolSynth's own interface (built, D174): top right on the panel, so the

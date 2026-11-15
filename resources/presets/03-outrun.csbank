@@ -16,6 +16,15 @@ f1 = Chorus rate=0.45 depth=0.5 mix=0.4
 f2 = Delay sync=on division=1/8. feedback=0.3 mix=0.16
 f3 = Reverb size=0.7 damping=0.45 mix=0.22
 master = -3
+# Macros (drafted 2026-11-15 for the user's review, D177): Blare, Thickness, Swell, Shimmer
+macros = names=Blare,Thickness,Swell,Shimmer
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=g1.detune amount=0.15
+mod = src=macro2 dst=g2.detune amount=0.15
+mod = src=macro3 dst=env1.time amount=0.6
+mod = src=macro3 dst=env2.time amount=0.6
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.4
 
 [Gated Pad]
 room = Outrun
@@ -31,6 +40,13 @@ voice = env2ToP1=0 drift=3
 f1 = Chorus rate=0.4 depth=0.45 mix=0.35
 f2 = Reverb size=0.75 damping=0.4 mix=0.28
 master = -2.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Lush, Fade, Wah
+macros = names=Bright,Lush,Fade,Wah
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=g1.detune amount=0.15
+mod = src=macro2 dst=g1.spread amount=0.3
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=glfo2 dst=p1.cutoff amount=0.12 via=macro4
 
 [Night Drive]
 room = Outrun
@@ -46,6 +62,13 @@ f1 = Drive amount=0.12 mix=0.5
 f2 = Delay sync=on division=1/8 feedback=0.2 mix=0.1
 f3 = Reverb size=0.45 damping=0.5 mix=0.1
 master = -7.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Squelch, Decay, Pump
+macros = names=Bright,Squelch,Decay,Pump
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=p1.res amount=0.3
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=macro3 dst=env2.time amount=0.4
+mod = src=glfo1 dst=p1.cutoff amount=0.1 via=macro4
 
 [Laser Lead]
 room = Outrun
@@ -64,6 +87,14 @@ f1 = Chorus rate=0.5 depth=0.3 mix=0.25
 f2 = Delay sync=on division=1/8. mode=pingpong feedback=0.35 mix=0.2
 f3 = Reverb size=0.6 damping=0.45 mix=0.15
 master = 1
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Bite, Sweep, Vibrato
+macros = names=Bright,Bite,Sweep,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g2.pitch amount=0.1
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=lfo1 dst=pitch amount=0.005 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.4
 
 [Sunset Strings]
 room = Outrun
@@ -76,6 +107,14 @@ voice = env2ToP1=0 drift=4
 f1 = Phaser rate=0.3 depth=0.5
 f2 = Reverb size=0.8 damping=0.45 mix=0.3
 master = -9.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Ensemble, Swell, Vibrato
+macros = names=Bright,Ensemble,Swell,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g1.detune amount=0.12
+mod = src=macro2 dst=g2.detune amount=0.12
+mod = src=macro3 dst=env1.time amount=0.35
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.4
 
 [Grid Keys]
 room = Outrun
@@ -94,3 +133,10 @@ f1 = Chorus rate=0.5 depth=0.45 mix=0.4
 f2 = Delay sync=on division=1/8. feedback=0.25 mix=0.12
 f3 = Reverb size=0.6 damping=0.45 mix=0.2
 master = -3.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bell, Bark, Decay, Autopan
+macros = names=Bell,Bark,Decay,Autopan
+mod = src=macro1 dst=g1.level3 amount=0.2
+mod = src=macro2 dst=g1.level2 amount=0.12
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env3.time amount=0.3
+mod = src=glfo1 dst=pan amount=0.6 via=macro4

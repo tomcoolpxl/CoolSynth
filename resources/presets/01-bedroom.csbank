@@ -15,6 +15,14 @@ mod = src=env3 dst=g2.level amount=0.35
 voice = env2ToP1=0 drift=2
 f1 = Reverb size=0.55 damping=0.55 mix=0.25
 master = -12.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Reedy, Breath, Swell, Vibrato
+macros = names=Reedy,Breath,Swell,Vibrato
+mod = src=macro1 dst=g1.shape amount=0.25
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g2.level amount=0.25
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=glfo1 dst=pitch amount=0.005 via=macro4
+mod = src=glfo1 dst=vca amount=-0.15 curve=unipolar via=macro4
 
 [Vinyl Choir]
 room = Bedroom
@@ -36,6 +44,14 @@ f1 = LoFi wow=0.2 crackle=0.35 hiss=0.15 bandwidth=0.75 flutter=0
 f2 = Chorus rate=0.25 depth=0.4 mix=0.3
 f3 = Reverb size=0.6 damping=0.55 mix=0.3
 master = -10.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Soprano, Vocal, Bloom, Wander
+macros = names=Soprano,Vocal,Bloom,Wander
+mod = src=macro1 dst=p1.size amount=-0.25
+mod = src=macro1 dst=p2.cutoff amount=0.1
+mod = src=macro2 dst=p1.res amount=0.3
+mod = src=macro3 dst=env1.time amount=0.35
+mod = src=macro4 dst=lfo2.rate amount=0.5
+mod = src=lfo2 dst=p1.vowel amount=0.3 via=macro4
 
 [Cassette Keys]
 room = Bedroom
@@ -50,6 +66,14 @@ f1 = LoFi wow=0.45 flutter=0.35 hiss=0.3 bandwidth=0.7
 f2 = Chorus rate=0.3 depth=0.35 mix=0.3
 f3 = Reverb size=0.35 damping=0.5 mix=0.18
 master = -1.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Grit, Decay, Tremolo
+macros = names=Bright,Grit,Decay,Tremolo
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro1 dst=g1.shape amount=0.1
+mod = src=macro2 dst=p1.drive amount=0.45
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=lfo1 dst=vca amount=-0.35 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.3
 
 [Blanket Pad]
 room = Bedroom
@@ -65,6 +89,13 @@ voice = env2ToP1=0 drift=3
 f1 = LoFi wow=0.2 bandwidth=0.8 hiss=0.08 flutter=0
 f2 = Reverb size=0.65 damping=0.6 mix=0.25
 master = -8.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Glow, Thick, Swell, Breathe
+macros = names=Glow,Thick,Swell,Breathe
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=g1.pitch amount=-0.001
+mod = src=macro2 dst=g2.pitch amount=0.001
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=glfo1 dst=p1.cutoff amount=0.08 via=macro4
 
 [Bedroom Bass]
 room = Bedroom
@@ -77,6 +108,12 @@ voice = env2ToP1=0
 play = mode=mono
 f1 = LoFi wow=0.3 flutter=0.2 bandwidth=0.85
 master = -4
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Growl, Length, Wobble
+macros = names=Bright,Growl,Length,Wobble
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=p1.drive amount=0.4
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
 
 [Dusty Mallet]
 room = Bedroom
@@ -92,3 +129,11 @@ voice = env2ToP1=0 drift=3
 f1 = LoFi wow=0.3 flutter=0.15 crackle=0.45 hiss=0.12 bandwidth=0.6
 f2 = Reverb size=0.35 damping=0.6 mix=0.2
 master = -2.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Hardness, Woody, Ring, Tremolo
+macros = names=Hardness,Woody,Ring,Tremolo
+mod = src=macro1 dst=g1.hard amount=0.3
+mod = src=macro2 dst=g1.material amount=-0.333
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=macro3 dst=g1.decay amount=0.15
+mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.33

@@ -3528,3 +3528,37 @@ Tested: brightness -1, 0, +1 on a ladder at 1 kHz (first-difference ratio 0.019,
 a reverb's tail at space -1, 0, +1 (-46.9, -40.9, -34.8 dB); knobs 7 and 8 on every page; and the
 click detector sweeping either knob end to end at once while a chord rings, every third preset
 (worst 1.10x, Cellos with Space).
+
+## D177. The four macros of all 120 presets, drafted for the user's review (2026-11-15)
+
+Overnight, the user away (recommended options taken, the others listed). Planned as "macro names
+drafted for all 120 presets, from their macro routings" - but no preset routed its macros: the
+Macros page's four knobs did nothing anywhere. So each preset got four routings and four names.
+- **How**: four drafting agents (Opus, high effort), one per group of bank files, from one brief
+  (docs/macro-drafts/BRIEF.md): the roles of the spec (1 tone, 2 character, 3 time, 4 movement),
+  one-word names of at most ten letters, only new lines that add nothing at macro 0, at most about
+  +3 dB at full. Their drafts, with a line per macro on what the player hears and what they were
+  unsure of: docs/macro-drafts/00-03.md, 04-07.md, 08-12.md, 11-conservatory.md. Applied to the
+  bank files as they are (870 lines), each preset's block ending in "macros = names=..." and its
+  new mod lines.
+- **Checked**: every line parses; with all macros at 0 every preset renders bit for bit as before
+  (a hash of each render, the build before against after; the four random arpeggios - Satellite
+  Ping, Rain Chime, Ratchet Run, Random Walk - differ between any two runs, by design, D168, and
+  are not comparable); all four macros full up stays finite and at most +3.7 dB (Riser) in the
+  loudest 53 ms; turning all four full up at once while a chord rings does not click (worst
+  1.26x); a note's start with the Time macro full up does not click (worst 1.10x).
+- **Changed from the drafts**, louder than +4 dB at full: Init Wavetable (Grit 0.6 to 0.35, Mellow
+  -0.5 to -0.35), Static Hit (Decay 0.5 to 0.35), Metal Hit (Crunch drive 0.25 to 0.06, resonance
+  0.2 to 0.1, Length 0.4 to 0.2), Riser (Bright 0.15 to 0.12), Neuro Growl (Grit drive 0.15 to
+  0.07, index 0.15 to 0.1).
+- **Unused macros**: Tone on all 40 Conservatory instruments (no filter, and the recording's start
+  point is not a tone control), Character on Pure Sub (a single sine already shaped by Tone): the
+  knob shows a dash. Names may repeat across presets (Swell, Ring, Vibrato, Bright).
+- Options: **routings and names in the bank, reviewable by ear (chosen)**, the macros at 0 change
+  nothing; a document only (nothing to hear until reviewed); names only (knobs that do nothing).
+  The bank syntax is new: "macros = names=A,B,C,D", "-" for an unused macro, "b.macros" for part B.
+- **For the user**: listen to the four knobs on the Macros page, preset by preset, and rename or
+  re-aim any. Known limits the agents raised: a macro cannot reach the effects (f1-f6, i1-i3) or a
+  global LFO's rate; where an LFO was unused, Movement also raises its rate, so depth and speed
+  grow together; the Time macro scales an envelope's attack with its decay and release.
+The test run now takes about five minutes (the macro and click checks over all presets).

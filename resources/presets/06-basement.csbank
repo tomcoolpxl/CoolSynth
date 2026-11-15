@@ -13,6 +13,15 @@ voice = env2ToP1=0.55 velToP1=0.3 glide=40
 play = mode=legato glideLegato=on
 f1 = Drive amount=0.3 mix=0.7
 master = -10.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Cutoff, Squelch, Decay, Wobble
+macros = names=Cutoff,Squelch,Decay,Wobble
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=p1.res amount=0.12
+mod = src=macro2 dst=p1.drive amount=0.25
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Rust Bass]
 room = Basement
@@ -30,6 +39,15 @@ voice = env2ToP1=0
 play = mode=mono
 f1 = Drive amount=0.15 mix=0.5
 master = -13
+# Macros (drafted 2026-11-15 for the user's review, D177): Fizz, Fold, Decay, Churn
+macros = names=Fizz,Fold,Decay,Churn
+mod = src=macro1 dst=p2.cutoff amount=0.15
+mod = src=macro2 dst=p1.drive amount=0.25
+mod = src=macro2 dst=p1.sym amount=0.1
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env3.time amount=0.3
+mod = src=lfo1 dst=p1.sym amount=0.2 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Metal Hit]
 room = Basement
@@ -43,6 +61,15 @@ env1 = attack=0.5 decay=250 sustain=0 release=200 velocity=0.5
 voice = env2ToP1=0
 f1 = Reverb size=0.3 damping=0.4 mix=0.2
 master = 0.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Sizzle, Crunch, Length, Shudder
+macros = names=Sizzle,Crunch,Length,Shudder
+mod = src=macro1 dst=p2.cutoff amount=0.12
+mod = src=macro1 dst=p1.tone amount=0.2
+mod = src=macro2 dst=p1.drive amount=0.06
+mod = src=macro2 dst=p2.res amount=0.1
+mod = src=macro3 dst=env1.time amount=0.2
+mod = src=lfo1 dst=g2.pitch amount=0.03 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.5
 
 [Furnace Drone]
 room = Basement
@@ -60,6 +87,13 @@ mod = src=glfo1 dst=p1.tune amount=0.15
 voice = env2ToP1=0 drift=5
 f1 = Reverb size=0.7 damping=0.6 mix=0.2
 master = -11
+# Macros (drafted 2026-11-15 for the user's review, D177): Glow, Roar, Swell, Sweep
+macros = names=Glow,Roar,Swell,Sweep
+mod = src=macro1 dst=p3.cutoff amount=0.15
+mod = src=macro2 dst=p2.drive amount=0.25
+mod = src=macro2 dst=p1.fb amount=0.06
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=glfo1 dst=p1.tune amount=0.1 via=macro4
 
 [Concrete Pad]
 room = Basement
@@ -76,6 +110,14 @@ f1 = Drive amount=0.15 mix=0.5
 f2 = LoFi wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7 flutter=0
 f3 = Reverb size=0.6 damping=0.6 mix=0.2
 master = -13.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Daylight, Crush, Swell, Sway
+macros = names=Daylight,Crush,Swell,Sway
+mod = src=macro1 dst=p2.cutoff amount=0.15
+mod = src=macro2 dst=p3.bits amount=-0.25
+mod = src=macro2 dst=p3.rate amount=-0.15
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=lfo1 dst=p2.cutoff amount=0.08 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=-0.5
 
 [Siren]
 room = Basement
@@ -91,3 +133,10 @@ play = mode=mono
 f1 = Drive amount=0.2 mix=0.6
 f2 = Delay time=375 feedback=0.8 mix=0.3
 master = -4.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Scream, Snarl, Fade, Wail
+macros = names=Scream,Snarl,Fade,Wail
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=p1.drive amount=0.35
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=lfo1 dst=p1.cutoff amount=0.04 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.35

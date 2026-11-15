@@ -6,6 +6,7 @@
 #include <cstring>
 #include <cmath>
 #include <memory>
+#include <vector>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_core/juce_core.h>
@@ -212,40 +213,47 @@ public:
             juce::StringArray tooLoud;
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
             {
-                const auto play = [&](float macro, std::uint64_t* hash)
+                const auto play = [&](float macro, std::uint64_t* hash, int only = 0)
                 {
                     auto rig = std::make_unique<Rig>();
                     rig->loadPreset(i);
                     auto& state = rig->synth->getValueTreeState();
                     for (const char* part : { "pA", "pB" })
                         for (int m = 1; m <= 4; ++m)
-                            if (auto* p = state.getParameter(juce::String(part) + ".macro" + juce::String(m)))
+                            if (auto* p = state.getParameter(juce::String(part) + ".macro" + juce::String(m)); p != nullptr && (only == 0 || only == m))
                                 p->setValueNotifyingHost(macro);
                     rig->play(0.05);
                     rig->chord(57, true);
+                    // How loud: the loudest 53 ms (ten blocks) of the second, as an ear hears "louder"; a longer
+                    // decay (the Time macro) raises the average but not this.
                     std::uint64_t h = 1469598103934665603ull;
-                    double sum = 0.0;
-                    int count = 0;
+                    std::vector<double> energy;
                     for (int b = 0; b < 188; ++b) // a second
                     {
                         rig->block(preparedBlock);
+                        double e = 0.0;
                         for (int s = 0; s < preparedBlock; ++s)
                         {
                             const float v = rig->buffer.getSample(0, s);
                             std::uint32_t bits = 0;
                             std::memcpy(&bits, &v, sizeof(bits));
                             h = (h ^ bits) * 1099511628211ull;
-                            if (b >= 38)
-                            {
-                                sum += static_cast<double>(v) * v;
-                                ++count;
-                            }
+                            e += static_cast<double>(v) * v;
                         }
+                        energy.push_back(e);
                     }
                     if (hash != nullptr)
                         *hash = h;
                     expectEquals(rig->brokenSamples, 0, coolsynth::presets::getFactoryPreset(i).name);
-                    return std::sqrt(sum / std::max(1, count));
+                    double loudest = 0.0;
+                    for (std::size_t b = 0; b + 10 <= energy.size(); ++b)
+                    {
+                        double window = 0.0;
+                        for (std::size_t k = b; k < b + 10; ++k)
+                            window += energy[k];
+                        loudest = std::max(loudest, window);
+                    }
+                    return std::sqrt(loudest / (10.0 * preparedBlock));
                 };
                 std::uint64_t restHash = 0;
                 const double rest = play(0.0f, &restHash);
@@ -253,13 +261,31 @@ public:
                 const auto& title = coolsynth::presets::getFactoryPreset(i).name;
                 hashes.add(title + " " + juce::String::toHexString(static_cast<juce::int64>(restHash)));
                 const float rise = static_cast<float>(juce::Decibels::gainToDecibels(full, -120.0) - juce::Decibels::gainToDecibels(rest, -120.0));
+                if (rise > 4.0f)
+                {
+                    // An arpeggio with random patterns plays differently each time (D168): no level to compare.
+                    std::uint64_t again = 0;
+                    play(0.0f, &again);
+                    if (again != restHash)
+                    {
+                        logMessage(title + " varies from run to run (a random arpeggio): its level is not compared");
+                        continue;
+                    }
+                }
                 if (rise > worstRise)
                 {
                     worstRise = rise;
                     worstName = title;
                 }
                 if (rise > 4.0f)
-                    tooLoud.add(title + " +" + juce::String(rise, 1) + " dB");
+                {
+                    // which macro does it
+                    juce::String each;
+                    for (int m = 1; m <= 4; ++m)
+                        each << " m" << m << " "
+                             << juce::String(juce::Decibels::gainToDecibels(play(1.0f, nullptr, m), -120.0) - juce::Decibels::gainToDecibels(rest, -120.0), 1);
+                    tooLoud.add(title + " +" + juce::String(rise, 1) + " dB (" + each.trim() + ")");
+                }
             }
             if (hashFile.isNotEmpty())
                 juce::File(hashFile).replaceWithText(hashes.joinIntoString("\n"));

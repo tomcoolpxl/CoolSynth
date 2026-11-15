@@ -12,6 +12,11 @@ env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = -2.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Pedal, Sway
+macros = names=-,Detune,Pedal,Sway
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.6
+mod = src=glfo1 dst=pan amount=0.3 via=macro4
 
 [Yamaha Upright]
 room = Conservatory
@@ -23,6 +28,11 @@ env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = -2
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Honky, Pedal, Sway
+macros = names=-,Honky,Pedal,Sway
+mod = src=random dst=pitch amount=0.004 via=macro2
+mod = src=macro3 dst=env1.time amount=0.6
+mod = src=glfo1 dst=pan amount=0.3 via=macro4
 
 [Old Upright]
 room = Conservatory
@@ -34,6 +44,11 @@ env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = -4
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Honky, Pedal, Sway
+macros = names=-,Honky,Pedal,Sway
+mod = src=random dst=pitch amount=0.006 via=macro2
+mod = src=macro3 dst=env1.time amount=0.6
+mod = src=glfo1 dst=pan amount=0.3 via=macro4
 
 [Flemish Harpsichord]
 room = Conservatory
@@ -45,6 +60,11 @@ env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = -8
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Sway
+macros = names=-,Detune,Ring,Sway
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=glfo1 dst=pan amount=0.3 via=macro4
 
 [Italian Harpsichord]
 room = Conservatory
@@ -56,6 +76,11 @@ env1 = attack=2 decay=1 sustain=1 release=400 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = -6
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Sway
+macros = names=-,Detune,Ring,Sway
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.5
+mod = src=glfo1 dst=pan amount=0.3 via=macro4
 
 [FM Keys]
 room = Conservatory
@@ -67,6 +92,11 @@ env1 = attack=2 decay=1 sustain=1 release=100 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.4 damping=0.5 mix=0.12
 master = -7
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Autopan
+macros = names=-,Detune,Ring,Autopan
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.6
+mod = src=glfo1 dst=pan amount=0.5 via=macro4
 
 [Violins]
 room = Conservatory
@@ -78,6 +108,12 @@ env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = -4.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Violas]
 room = Conservatory
@@ -89,6 +125,12 @@ env1 = attack=2 decay=1 sustain=1 release=1000 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = -5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Cellos]
 room = Conservatory
@@ -100,6 +142,12 @@ env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = -3
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Double Bass]
 room = Conservatory
@@ -111,6 +159,12 @@ env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = -8
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Solo Violin]
 room = Conservatory
@@ -122,6 +176,12 @@ env1 = attack=2 decay=1 sustain=1 release=800 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.55 damping=0.5 mix=0.2
 master = -5.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Folk Harp]
 room = Conservatory
@@ -133,6 +193,11 @@ env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.15
 master = -2
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Sway
+macros = names=-,Detune,Damp,Sway
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=glfo1 dst=pan amount=0.3 via=macro4
 
 [Dan Tranh]
 room = Conservatory
@@ -144,6 +209,12 @@ env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.15
 master = 1
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Ring, Vibrato
+macros = names=-,Detune,Ring,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.6
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.3
 
 [Kalimba]
 room = Conservatory
@@ -155,6 +226,12 @@ env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.15
 master = -2.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Flutter
+macros = names=-,Detune,Damp,Flutter
+mod = src=random dst=pitch amount=0.004 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.3
 
 [Horn]
 room = Conservatory
@@ -166,6 +243,12 @@ env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -6.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Trumpet]
 room = Conservatory
@@ -177,6 +260,12 @@ env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -6
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.005 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Tuba]
 room = Conservatory
@@ -188,6 +277,12 @@ env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -3.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Trombone]
 room = Conservatory
@@ -199,6 +294,12 @@ env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -4.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.005 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Old Trombone]
 room = Conservatory
@@ -210,6 +311,12 @@ env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 0
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.005 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Flute]
 room = Conservatory
@@ -221,6 +328,12 @@ env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -6.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Clarinet]
 room = Conservatory
@@ -232,6 +345,12 @@ env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -7.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Bassoon]
 room = Conservatory
@@ -243,6 +362,12 @@ env1 = attack=2 decay=1 sustain=1 release=700 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -8.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Saxello]
 room = Conservatory
@@ -254,6 +379,12 @@ env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -5.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Tenor Sax]
 room = Conservatory
@@ -265,6 +396,12 @@ env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -4.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Recorders]
 room = Conservatory
@@ -276,6 +413,12 @@ env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -9
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Ocarina]
 room = Conservatory
@@ -287,6 +430,12 @@ env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -8
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Vibrato
+macros = names=-,Loose,Linger,Vibrato
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Harmonica]
 room = Conservatory
@@ -298,6 +447,12 @@ env1 = attack=2 decay=1 sustain=1 release=100 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = -7.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Loose, Linger, Flutter
+macros = names=-,Loose,Linger,Flutter
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=1
+mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.3
 
 [Didgeridoo]
 room = Conservatory
@@ -309,6 +464,12 @@ env1 = attack=2 decay=1 sustain=1 release=600 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.45 damping=0.5 mix=0.16
 master = 1.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Pulse
+macros = names=-,Detune,Linger,Pulse
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Pipe Organ]
 room = Conservatory
@@ -320,6 +481,13 @@ env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.7 damping=0.5 mix=0.25
 master = -8
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Tremulant
+macros = names=-,Detune,Linger,Tremulant
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=vca amount=-0.3 curve=unipolar via=macro4
+mod = src=lfo1 dst=pitch amount=0.001 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.42
 
 [Renaissance Organ]
 room = Conservatory
@@ -331,6 +499,13 @@ env1 = attack=2 decay=1 sustain=1 release=300 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.7 damping=0.5 mix=0.25
 master = -13
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Tremulant
+macros = names=-,Detune,Linger,Tremulant
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=vca amount=-0.3 curve=unipolar via=macro4
+mod = src=lfo1 dst=pitch amount=0.001 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.42
 
 [Marimba]
 room = Conservatory
@@ -342,6 +517,12 @@ env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -1
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
+macros = names=-,Detune,Damp,Roll
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.5
 
 [Vibraphone]
 room = Conservatory
@@ -353,6 +534,12 @@ env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -6
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Motor
+macros = names=-,Detune,Damp,Motor
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=vca amount=-0.5 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.3
 
 [Xylophone]
 room = Conservatory
@@ -364,6 +551,12 @@ env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = 0
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
+macros = names=-,Detune,Damp,Roll
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.5
 
 [Balafon]
 room = Conservatory
@@ -375,6 +568,12 @@ env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -2
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
+macros = names=-,Detune,Damp,Roll
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.5
 
 [Glockenspiel]
 room = Conservatory
@@ -386,6 +585,12 @@ env1 = attack=2 decay=1 sustain=1 release=15000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -2.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
+macros = names=-,Detune,Damp,Shimmer
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=pitch amount=0.002 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Tubular Bells]
 room = Conservatory
@@ -397,6 +602,12 @@ env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -3
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
+macros = names=-,Detune,Damp,Shimmer
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=pitch amount=0.002 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Tubular Glock]
 room = Conservatory
@@ -408,6 +619,12 @@ env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -2
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
+macros = names=-,Detune,Damp,Shimmer
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=pitch amount=0.002 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Hand Chimes]
 room = Conservatory
@@ -419,6 +636,12 @@ env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -2.5
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Shimmer
+macros = names=-,Detune,Damp,Shimmer
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=pitch amount=0.002 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Wine Glasses]
 room = Conservatory
@@ -430,6 +653,12 @@ env1 = attack=2 decay=1 sustain=1 release=500 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -2
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Linger, Waver
+macros = names=-,Detune,Linger,Waver
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=0.75
+mod = src=lfo1 dst=pitch amount=0.003 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Timpani]
 room = Conservatory
@@ -441,3 +670,9 @@ env1 = attack=2 decay=1 sustain=1 release=20000 releaseCurve=0.5 velocity=0
 voice = env2ToP1=0
 f1 = Reverb size=0.5 damping=0.5 mix=0.18
 master = -2
+# Macros (drafted 2026-11-15 for the user's review, D177): (none), Detune, Damp, Roll
+macros = names=-,Detune,Damp,Roll
+mod = src=random dst=pitch amount=0.003 via=macro2
+mod = src=macro3 dst=env1.time amount=-0.9
+mod = src=lfo1 dst=vca amount=-0.6 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.5

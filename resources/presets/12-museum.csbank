@@ -33,6 +33,15 @@ mod = src=key dst=g1.ratio3 amount=0.000806
 mod = src=key dst=g1.ratio4 amount=-0.000806
 voice = env2ToP1=0
 master = -11
+# Macros (drafted 2026-11-15 for the user's review, D177): Tine, Bark, Ring, Tremolo
+macros = names=Tine,Bark,Ring,Tremolo
+mod = src=env2 dst=g2.index amount=0.15 via=macro1 curve=logarithmic
+mod = src=env1 dst=g1.level2 amount=0.15 via=macro2 curve=logarithmic
+mod = src=env1 dst=g1.level4 amount=0.12 via=macro2 curve=logarithmic
+mod = src=macro3 dst=env1.time amount=0.4
+mod = src=macro3 dst=env3.time amount=0.25
+mod = src=lfo1 dst=vca amount=-0.4 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.3
 
 [DX7 BASS 1]
 room = Museum
@@ -63,6 +72,14 @@ mod = src=env3 dst=g1.index amount=-0.1252 curve=logarithmic
 mod = src=key dst=g2.amount amount=0.8
 voice = env2ToP1=0
 master = -12.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Bark, Length, Wah
+macros = names=Bright,Bark,Length,Wah
+mod = src=env1 dst=g2.level2 amount=0.12 via=macro1 curve=logarithmic
+mod = src=env2 dst=g2.level3 amount=0.1 via=macro2 curve=logarithmic
+mod = src=env2 dst=g2.level4 amount=0.1 via=macro2
+mod = src=macro3 dst=env1.time amount=0.35
+mod = src=lfo1 dst=g2.level2 amount=0.1 curve=unipolar via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Prophet-5 Sync II]
 room = Museum
@@ -91,6 +108,12 @@ mod = src=lfo1 dst=g1.pitch amount=0.008 via=wheel
 voice = env2ToP1=0.41 velToP1=0 drift=1
 play = mode=poly voices=5
 master = -14.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Sync, Sweep, Vibrato
+macros = names=Bright,Sync,Sweep,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g2.pitch amount=0.125
+mod = src=macro3 dst=env2.time amount=0.25
+mod = src=lfo1 dst=g1.pitch amount=0.008 via=macro4
 
 [Prophet-5 Brass]
 room = Museum
@@ -115,6 +138,13 @@ mod = src=lfo1 dst=pitch amount=0.008 via=wheel
 voice = env2ToP1=0.56 velToP1=0 drift=1
 play = mode=poly voices=5
 master = -9
+# Macros (drafted 2026-11-15 for the user's review, D177): Blare, Bite, Swell, Vibrato
+macros = names=Blare,Bite,Swell,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=p1.drive amount=0.375
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=macro3 dst=env2.time amount=0.25
+mod = src=lfo1 dst=pitch amount=0.008 via=macro4
 
 [Minimoog Fat Bass]
 room = Museum
@@ -152,6 +182,14 @@ env2 = attack=1 decay=450 sustain=0 release=450 decayCurve=-1 releaseCurve=-1
 voice = env2ToP1=0.285 velToP1=0 drift=1
 play = mode=legato priority=low
 master = -3.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Growl, Decay, Vibrato
+macros = names=Bright,Growl,Decay,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=p1.fm amount=0.15
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=macro3 dst=env2.time amount=0.25
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [TX81Z LatelyBass]
 room = Museum
@@ -191,6 +229,13 @@ mod = src=lfo1 dst=pitch amount=0.00115
 voice = env2ToP1=0 velToP1=0
 play = mode=poly voices=8
 master = -11
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Bark, Length, Wah
+macros = names=Bright,Bark,Length,Wah
+mod = src=env1 dst=g1.level2 amount=0.1 via=macro1 curve=logarithmic
+mod = src=env3 dst=g1.level4 amount=0.15 via=macro2 curve=logarithmic
+mod = src=env2 dst=g1.level3 amount=0.1 via=macro2 curve=logarithmic
+mod = src=macro3 dst=env1.time amount=0.35
+mod = src=lfo1 dst=g1.level2 amount=0.08 curve=unipolar via=macro4
 
 [Contact Opening I]
 room = Museum
@@ -215,6 +260,14 @@ env2 = attack=15 decay=4410 sustain=0.3 release=4410 decayCurve=-1 releaseCurve=
 voice = env2ToP1=0.2 velToP1=0 drift=1
 play = mode=poly voices=8
 master = -11.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Detune, Swell, Vibrato
+macros = names=Bright,Detune,Swell,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g2.pitch amount=-0.0015
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Contact Opening II]
 room = Museum
@@ -240,6 +293,14 @@ env2 = attack=10 decay=2940 sustain=0.65 release=2940 decayCurve=-1 releaseCurve
 voice = env2ToP1=0.15 velToP1=0 drift=1
 play = mode=poly voices=16 voiceSpread=1
 master = -8.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Detune, Swell, Vibrato
+macros = names=Bright,Detune,Swell,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g2.pitch amount=0.0015
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Minimoog Trilogy Lead]
 room = Museum
@@ -276,6 +337,14 @@ env2 = attack=10 hold=15 decay=3000 sustain=0 release=3000 decayCurve=-1 release
 voice = env2ToP1=0.075 velToP1=0 drift=1 glide=59 glideMode=rate glideDown=2.4
 play = mode=legato priority=low
 master = -3.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Emphasis, Decay, Vibrato
+macros = names=Bright,Emphasis,Decay,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.08
+mod = src=macro2 dst=p1.res amount=0.15
+mod = src=macro3 dst=env2.time amount=0.25
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36
 
 [Contact Opening II Grit]
 room = Museum
@@ -299,3 +368,12 @@ lfo2 = shape=s&h rate=50 retrigger=off
 mod = src=lfo2 dst=vca amount=0.2
 i1 = Drive amount=0.05 mix=1
 master = -13
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Grit, Swell, Vibrato
+macros = names=Bright,Grit,Swell,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.1
+mod = src=macro2 dst=g3.level amount=0.15
+mod = src=lfo2 dst=vca amount=0.15 via=macro2
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.36

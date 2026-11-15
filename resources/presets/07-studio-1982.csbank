@@ -30,6 +30,19 @@ b.mix = pan=0.4 fine=7 level=-1.5
 f1 = Chorus rate=0.5 depth=0.55 mix=0.5
 f2 = Reverb size=0.55 damping=0.5 mix=0.15
 master = -11
+# Macros (drafted 2026-11-15 for the user's review, D177): Bright, Resonance, Swell, Swirl
+macros = names=Bright,Resonance,Swell,Swirl
+b.macros = names=Bright,Resonance,Swell,Swirl
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=p1.res amount=0.3
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=macro3 dst=env2.time amount=0.25
+mod = src=glfo1 dst=g1.pw amount=0.1 via=macro4
+b.mod = src=macro1 dst=p1.cutoff amount=0.15
+b.mod = src=macro2 dst=p1.res amount=0.3
+b.mod = src=macro3 dst=env1.time amount=0.25
+b.mod = src=macro3 dst=env2.time amount=0.25
+b.mod = src=glfo1 dst=g1.pw amount=0.1 via=macro4
 
 [Prophet Brass]
 room = Studio 1982
@@ -42,6 +55,14 @@ voice = env2ToP1=0.36 velToP1=0.1 drift=3
 play = voices=8
 f1 = Reverb size=0.45 damping=0.55 mix=0.12
 master = -11
+# Macros (drafted 2026-11-15 for the user's review, D177): Blare, Bite, Swell, Vibrato
+macros = names=Blare,Bite,Swell,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=env2 dst=p1.cutoff amount=0.15 via=macro2
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=lfo1 dst=pitch amount=0.005 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.35
 
 [OB Strings]
 room = Studio 1982
@@ -54,6 +75,15 @@ voice = env2ToP1=0.08 drift=4
 f1 = Phaser rate=0.25 depth=0.6
 f2 = Reverb size=0.65 damping=0.5 mix=0.22
 master = -9.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Sheen, Ensemble, Swell, Vibrato
+macros = names=Sheen,Ensemble,Swell,Vibrato
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=g1.pitch amount=-0.0008
+mod = src=macro2 dst=g2.pitch amount=0.0008
+mod = src=macro3 dst=env1.time amount=0.25
+mod = src=macro3 dst=env2.time amount=0.25
+mod = src=lfo1 dst=pitch amount=0.004 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.3
 
 [Moog Bass]
 room = Studio 1982
@@ -65,6 +95,15 @@ env2 = attack=1 decay=280 sustain=0.15 release=120
 voice = env2ToP1=0.36 velToP1=0.15 glide=30
 play = mode=legato priority=low glideLegato=on
 master = -6.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Open, Growl, Decay, Wobble
+macros = names=Open,Growl,Decay,Wobble
+mod = src=macro1 dst=p1.cutoff amount=0.15
+mod = src=macro2 dst=p1.drive amount=0.3
+mod = src=macro2 dst=p1.res amount=0.15
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=lfo1 dst=p1.cutoff amount=0.06 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Clav Keys]
 room = Studio 1982
@@ -76,6 +115,15 @@ env2 = attack=0.5 decay=110 sustain=0 release=80 decayCurve=-0.8
 voice = env2ToP1=0.32 velToP1=0.2
 f1 = Drive amount=0.12 mix=0.6
 master = -7
+# Macros (drafted 2026-11-15 for the user's review, D177): Treble, Quack, Decay, Wah
+macros = names=Treble,Quack,Decay,Wah
+mod = src=macro1 dst=p1.cutoff amount=0.12
+mod = src=macro2 dst=p1.res amount=0.2
+mod = src=macro2 dst=g1.pw amount=-0.12
+mod = src=macro3 dst=env1.time amount=0.3
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Sync Lead]
 room = Studio 1982
@@ -93,3 +141,12 @@ play = mode=mono
 f1 = Delay time=330 feedback=0.3 mix=0.18
 f2 = Reverb size=0.4 damping=0.5 mix=0.1
 master = -1.5
+# Macros (drafted 2026-11-15 for the user's review, D177): Edge, Zap, Sweep, Vibrato
+macros = names=Edge,Zap,Sweep,Vibrato
+mod = src=macro1 dst=g2.pitch amount=0.125
+mod = src=macro1 dst=p1.cutoff amount=0.06
+mod = src=env2 dst=g2.pitch amount=0.2 via=macro2
+mod = src=macro3 dst=env2.time amount=0.3
+mod = src=macro3 dst=env1.time amount=0.2
+mod = src=lfo1 dst=pitch amount=0.006 via=macro4
+mod = src=macro4 dst=lfo1.rate amount=0.4

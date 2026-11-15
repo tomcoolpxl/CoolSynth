@@ -164,6 +164,27 @@ namespace
             if (clicks(f))
                 clicked.add(name + " (" + juce::String(f.ratio(), 2) + "x)");
         }
+
+        /** As add, if the reference is the same render up to the event; a random arpeggio plays differently each
+            time (D168), so its reference cannot tell its own notes from a click: it is named, not judged. */
+        void add(const Finding& f, const juce::String& name, const Recorder& event, const Recorder& reference, std::size_t at)
+        {
+            for (std::size_t i = 0; i < std::min({ at, event.left.size(), reference.left.size() }); ++i)
+                if (event.left[i] != reference.left[i])
+                {
+                    varies.add(name.upToFirstOccurrenceOf("\n", false, false));
+                    return;
+                }
+            add(f, name);
+        }
+
+        [[nodiscard]] juce::String note() const
+        {
+            return "worst " + juce::String(worst, 2) + "x at " + worstName
+                   + (varies.isEmpty() ? juce::String() : "; varies from run to run, not judged: " + varies.joinIntoString(", "));
+        }
+
+        juce::StringArray varies;
     };
 }
 
@@ -218,9 +239,9 @@ public:
                 const auto window = samplesFor(0.03);
                 const Finding f { changed->roughness(at, at + window),
                                   std::max(ownRoughness(*changed, at, window), kept->roughness(at, at + window)) };
-                tally.add(f, presetName(i) + " -> " + presetName((i + 1) % presets));
+                tally.add(f, presetName(i) + " -> " + presetName((i + 1) % presets), *changed, *kept, at);
             }
-            logMessage("worst " + juce::String(tally.worst, 2) + "x at " + tally.worstName);
+            logMessage(tally.note());
             expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
         }
 
@@ -255,9 +276,9 @@ public:
                     const Finding f { changed->roughness(at, at + window),
                                       std::max(ownRoughness(*changed, at, window), kept->roughness(at, at + window)) };
                     tally.add(f, presetName(i) + " " + slot + " -> " + coolsynth::synth::v3::insertDescriptor(type).name
-                                     + (clicks(f) ? profile(*changed, at, *kept, at) : juce::String()));
+                                     + (clicks(f) ? profile(*changed, at, *kept, at) : juce::String()), *changed, *kept, at);
                 }
-            logMessage("worst " + juce::String(tally.worst, 2) + "x at " + tally.worstName);
+            logMessage(tally.note());
             expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
         }
 
@@ -289,9 +310,76 @@ public:
                     const auto window = samplesFor(0.03);
                     const Finding f { swept->roughness(at, at + window),
                                       std::max(ownRoughness(*swept, at, window), kept->roughness(at, at + window)) };
-                    tally.add(f, presetName(i) + " " + knob + (clicks(f) ? profile(*swept, at, *kept, at) : juce::String()));
+                    tally.add(f, presetName(i) + " " + knob + (clicks(f) ? profile(*swept, at, *kept, at) : juce::String()), *swept, *kept, at);
                 }
-            logMessage("worst " + juce::String(tally.worst, 2) + "x at " + tally.worstName);
+            logMessage(tally.note());
+            expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
+        }
+
+        beginTest("All four macros turned full up at once while a chord rings do not click, on every preset (D177)");
+        {
+            Tally tally;
+            for (int i = 0; i < presets; ++i)
+            {
+                if (! wanted(i))
+                    continue;
+                const auto render = [&](bool turn)
+                {
+                    auto r = std::make_unique<Recorder>();
+                    r->loadPreset(i);
+                    r->play(0.05);
+                    r->chord(true);
+                    r->play(0.7);
+                    const auto at = r->now();
+                    if (turn)
+                        for (const char* part : { "pA", "pB" })
+                            for (int m = 1; m <= 4; ++m)
+                                r->set((juce::String(part) + ".macro" + juce::String(m)).toRawUTF8(), 1.0f);
+                    r->play(0.6);
+                    return std::make_pair(std::move(r), at);
+                };
+                const auto [turned, at] = render(true);
+                const auto [kept, keptAt] = render(false);
+                juce::ignoreUnused(keptAt);
+                const auto window = samplesFor(0.03);
+                const Finding f { turned->roughness(at, at + window),
+                                  std::max(ownRoughness(*turned, at, window), kept->roughness(at, at + window)) };
+                tally.add(f, presetName(i) + (clicks(f) ? profile(*turned, at, *kept, at) : juce::String()), *turned, *kept, at);
+            }
+            logMessage(tally.note());
+            expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
+        }
+
+        beginTest("A note's start with the Time macro full up is no rougher than the sound's own, on every preset (D177)");
+        {
+            // The Time macro scales an envelope's times, its attack too: a very short attack must not click.
+            Tally tally;
+            for (int i = 0; i < presets; ++i)
+            {
+                if (! wanted(i))
+                    continue;
+                const auto render = [&](float time)
+                {
+                    auto r = std::make_unique<Recorder>();
+                    r->loadPreset(i);
+                    for (const char* part : { "pA.macro3", "pB.macro3" })
+                        r->set(part, time);
+                    r->play(0.05);
+                    const auto at = r->now();
+                    r->note(60, true);
+                    r->play(0.4);
+                    return std::make_pair(std::move(r), at);
+                };
+                const auto [quick, at] = render(1.0f);
+                const auto [asDesigned, restAt] = render(0.0f);
+                juce::ignoreUnused(restAt);
+                const auto window = samplesFor(0.01);
+                const Finding f { quick->roughness(at, at + window),
+                                  std::max(asDesigned->roughness(at, at + window),
+                                           quick->roughness(at + samplesFor(0.06), at + samplesFor(0.26))) };
+                tally.add(f, presetName(i) + (clicks(f) ? profile(*quick, at, *asDesigned, at) : juce::String()), *quick, *asDesigned, at);
+            }
+            logMessage(tally.note());
             expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
         }
 
@@ -393,9 +481,9 @@ public:
                 const auto window = samplesFor(0.02); // the 5 ms fade, the new note's start, and some
                 const Finding f { stolen->roughness(at, at + window),
                                   std::max(ownRoughness(*stolen, at, window), both->roughness(at, at + window)) };
-                tally.add(f, presetName(i) + (clicks(f) ? profile(*stolen, at, *both, at) : juce::String()));
+                tally.add(f, presetName(i) + (clicks(f) ? profile(*stolen, at, *both, at) : juce::String()), *stolen, *both, at);
             }
-            logMessage("worst " + juce::String(tally.worst, 2) + "x at " + tally.worstName);
+            logMessage(tally.note());
             expect(tally.clicked.isEmpty(), "clicked: " + tally.clicked.joinIntoString(", "));
         }
     }
