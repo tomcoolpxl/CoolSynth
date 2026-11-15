@@ -102,6 +102,11 @@ public:
         std::array<float, 8> percent {};
         float worstBlock = 0.0f; // 1 = the slowest block took all of its time
     };
+    /** For the layer screen (D195): the voices sounding at the last block, and the tempo the arps and synced effects
+        follow (the host's while it plays, else the internal one). */
+    [[nodiscard]] int voicesPlaying() const noexcept { return voicesNow.load(std::memory_order_relaxed); }
+    [[nodiscard]] float tempoBpm() const noexcept { return tempoNow.load(std::memory_order_relaxed); }
+
     [[nodiscard]] CpuLoad cpuLoad() const noexcept
     {
         CpuLoad load;
@@ -389,6 +394,8 @@ private:
     std::array<std::atomic<float>, 8> threadLoad {}; // the last second, percent per thread (D172)
     std::atomic<int> threadLoadCount { 1 };
     std::atomic<float> worstBlockShare { 0.0f };
+    std::atomic<int> voicesNow { 0 };       // D195: the layer screen's voice count
+    std::atomic<float> tempoNow { 120.0f }; // D195: the tempo followed
     double secondBusyMs = 0.0; // audio thread: this second's block time (D172)
     float secondWorstMs = 0.0f;
     int secondSamples = 0;

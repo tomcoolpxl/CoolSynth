@@ -323,9 +323,30 @@ namespace coolsynth::ui
         }
     }
 
-    bool InterfaceModel::currentLayerEmpty() const
+    bool InterfaceModel::currentLayerEmpty() const { return layerEmpty(currentPart); }
+
+    juce::String InterfaceModel::layerSoundName(int /*layer*/) const
     {
-        const juce::String prefix = currentPart == 0 ? "pA" : "pB";
+        // One sound fills both layers until each layer holds its own (D194); then each names its own.
+        return synth.getPatchName();
+    }
+
+    juce::String InterfaceModel::layerModeText() const
+    {
+        namespace pv3 = coolsynth::parameters::v3;
+        auto* mode = parameter(pv3::partModeParameterId);
+        if (mode == nullptr)
+            return {};
+        auto text = mode->getCurrentValueAsText().toUpperCase();
+        if (text == "VELOCITY")
+            if (auto* split = parameter(pv3::velocitySplitParameterId))
+                text << " " << split->getCurrentValueAsText();
+        return text;
+    }
+
+    bool InterfaceModel::layerEmpty(int layer) const
+    {
+        const juce::String prefix = layer == 0 ? "pA" : "pB";
         for (int s = 1; s <= 3; ++s)
             for (const char* kind : { ".g", ".p" })
                 if (auto* type = synth.getValueTreeState().getRawParameterValue(prefix + kind + juce::String(s) + ".type");

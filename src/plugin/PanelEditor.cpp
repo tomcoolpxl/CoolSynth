@@ -914,7 +914,14 @@ public:
             const auto view = model.knob(number);
             knob.showsValue = view.active;
             knob.value = view.normalised;
-            knob.ring = number <= 4 ? (view.active ? pageTint : juce::Colours::transparentBlack) : juce::Colours::transparentBlack;
+            // Knobs 1-4 in the page's colour; Glide (6) the edited layer's, as the layer screen; Brightness and Space
+            // (7, 8), the whole sound's, light grey (D195): every knob that acts shows a ring.
+            if (number <= 4)
+                knob.ring = view.active ? pageTint : juce::Colours::transparentBlack;
+            else if (number == 6)
+                knob.ring = coolsynth::ui::tintColour(model.part() == 0 ? Tint::home : Tint::partB);
+            else
+                knob.ring = juce::Colour(0xffc4cad1);
             knobLabels[static_cast<std::size_t>(k)] = view.name;
             knob.repaint();
         }
@@ -983,24 +990,7 @@ public:
             g.drawText("MiniLab keys", juce::Rectangle<float>(x0, y - 16.0f, x1 - x0, 14.0f), juce::Justification::centred);
         }
 
-        // The CPU in the screen's surround, beside the main knob (D191): the last second's share of the audio
-        // thread's time, the number alone (the user's choice over a meter), amber from 60%, red from 90%.
-        // A click opens Prefs.
-        {
-            const float percent = juce::jlimit(0.0f, 100.0f, owner.synth.cpuLoad().percent[0]);
-            auto r = cpuArea.toFloat();
-            g.setFont(mono(11.0f));
-            g.setColour(percent >= 90.0f ? coolsynth::ui::tintColour(Tint::record)
-                                         : (percent >= 60.0f ? coolsynth::ui::tintColour(Tint::sound) : colours::screenDim));
-            const auto number = juce::String(juce::roundToInt(percent)) + "%";
-            const auto numberWidth = static_cast<float>(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), number));
-            g.drawText(number, r.removeFromRight(numberWidth + 2.0f), juce::Justification::centredRight);
-            r.removeFromRight(5.0f);
-            g.setFont(mono(9.0f));
-            g.setColour(colours::screenDim.darker(0.4f));
-            g.drawText("CPU", r, juce::Justification::centredRight);
-        }
-
+        paintLayerScreen(g);
 
         // main knob roles
         g.setFont(sans(11.0f));
@@ -1069,8 +1059,10 @@ public:
         for (int k = 0; k < 8; ++k)
         {
             const int row = k / 4, col = k % 4;
-            knobs[static_cast<std::size_t>(k)].setBounds(knobsX + col * cell + (cell - 62) / 2, top + 30 + row * 190, 62, 62);
+            knobs[static_cast<std::size_t>(k)].setBounds(knobsX + col * cell + (cell - 62) / 2, top + (row == 0 ? 104 : 236), 62, 62);
         }
+        // The layer screen above knobs 1-4, as wide as from knob 1 to knob 4 (D195); the rows moved down for it.
+        layerScreen = juce::Rectangle<int>(knobs[0].getX(), top, knobs[3].getRight() - knobs[0].getX(), 82);
 
         // faders
         const int faderCell = faderWidth / 4;
@@ -1094,14 +1086,86 @@ public:
         keyboard.setBounds(left, padBottom + 30, designWidth - 2 * left, designHeight - padBottom - 30 - 32);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / static_cast<float>(whiteKeys));
 
-        // the CPU: the surround's bottom right corner, beside the main knob (D191)
-        cpuArea = { screenBox.getRight() - 14 - 62, screenBox.getBottom() - 6 - 14, 62, 14 };
+        // the CPU: the layer screen's bottom right corner (D195; beside the main knob from D191)
+        cpuArea = layerScreen.reduced(12, 8).removeFromBottom(14).removeFromRight(70);
     }
 
     void mouseDown(const juce::MouseEvent& e) override
     {
         if (cpuArea.contains(e.getPosition()))
             PanelEditor::showOptions(owner.synth, options);
+        // A layer panel picks the layer the sections edit, as Home pressed again does (D195).
+        for (int layer = 0; layer < 2; ++layer)
+            if (layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()) && model.part() != layer)
+            {
+                model.togglePart();
+                owner.timerCallback();
+            }
+    }
+
+    /** The layer screen (D195): two lit panels, layer A teal and B yellow, each with what it plays; the layer the
+        sections edit lit, the other dim; an empty layer says so. Under them the layer mode, the tempo, the voices
+        sounding and, in the bottom right corner, the CPU. */
+    void paintLayerScreen(juce::Graphics& g)
+    {
+        const auto box = layerScreen.toFloat();
+        g.setColour(juce::Colour(0xff0b0d10)); // the main screen's black surround
+        g.fillRoundedRectangle(box, 10.0f);
+        const auto glass = box.reduced(5.0f);
+        g.setColour(colours::screen);
+        g.fillRoundedRectangle(glass, 6.0f);
+        g.setColour(colours::screenLine);
+        g.drawRoundedRectangle(glass.reduced(0.5f), 6.0f, 1.0f);
+
+        auto inner = layerScreen.reduced(12, 9);
+        auto infoRow = inner.removeFromBottom(14);
+        inner.removeFromBottom(5);
+        const int gap = 8;
+        const int panelWidth = (inner.getWidth() - gap) / 2;
+        for (int layer = 0; layer < 2; ++layer)
+        {
+            auto panel = (layer == 0 ? inner.withWidth(panelWidth) : inner.withTrimmedLeft(panelWidth + gap));
+            layerPanels[static_cast<std::size_t>(layer)] = panel;
+            const bool lit = model.part() == layer;
+            const bool empty = model.layerEmpty(layer);
+            const auto tint = coolsynth::ui::tintColour(layer == 0 ? Tint::home : Tint::partB);
+            const auto r = panel.toFloat();
+            if (lit)
+            {
+                g.setColour(tint.withAlpha(0.16f));
+                g.fillRoundedRectangle(r, 5.0f);
+            }
+            g.setColour(lit ? tint : colours::screenLine.brighter(0.25f));
+            g.drawRoundedRectangle(r.reduced(0.75f), 5.0f, lit ? 1.5f : 1.0f);
+
+            auto text = panel.reduced(8, 4);
+            g.setFont(mono(10.0f, true));
+            g.setColour(lit ? tint : tint.withMultipliedBrightness(0.55f).withMultipliedSaturation(0.6f));
+            g.drawText(layer == 0 ? "LAYER A" : "LAYER B", text.removeFromTop(13), juce::Justification::centredLeft);
+            g.setFont(sans(13.5f, ! empty));
+            g.setColour(empty ? colours::screenDim.withAlpha(lit ? 0.9f : 0.6f) : (lit ? colours::screenInk : colours::screenDim));
+            g.drawFittedText(empty ? juce::String("empty") : model.layerSoundName(layer), text, juce::Justification::centredLeft, 1, 0.8f);
+        }
+
+        // the info row: mode, tempo, voices; the CPU at the right, amber from 60%, red from 90%
+        const float percent = juce::jlimit(0.0f, 100.0f, owner.synth.cpuLoad().percent[0]);
+        const juce::String dot(juce::CharPointer_UTF8(" \xc2\xb7 "));
+        g.setFont(mono(10.0f));
+        g.setColour(colours::screenDim);
+        g.drawText(model.layerModeText() + dot + juce::String(juce::roundToInt(owner.synth.tempoBpm())) + " BPM" + dot
+                       + juce::String(owner.synth.voicesPlaying()) + " voices",
+                   infoRow.withTrimmedRight(cpuArea.getWidth()), juce::Justification::centredLeft);
+        auto cpu = infoRow.removeFromRight(cpuArea.getWidth()).toFloat();
+        g.setFont(mono(11.0f));
+        g.setColour(percent >= 90.0f ? coolsynth::ui::tintColour(Tint::record)
+                                     : (percent >= 60.0f ? coolsynth::ui::tintColour(Tint::sound) : colours::screenDim));
+        const auto number = juce::String(juce::roundToInt(percent)) + "%";
+        const auto numberWidth = static_cast<float>(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), number));
+        g.drawText(number, cpu.removeFromRight(numberWidth + 2.0f), juce::Justification::centredRight);
+        cpu.removeFromRight(5.0f);
+        g.setFont(mono(9.0f));
+        g.setColour(colours::screenDim.darker(0.4f));
+        g.drawText("CPU", cpu, juce::Justification::centredRight);
     }
 
 private:
@@ -1115,7 +1179,8 @@ private:
     std::array<Pad, 8> pads;
     juce::TextButton options, hold, octDown, octUp;
     FlatKeyboard keyboard;
-    juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea;
+    juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea, layerScreen;
+    std::array<juce::Rectangle<int>, 2> layerPanels; // the layer screen's two panels, clickable (D195)
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
     int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)

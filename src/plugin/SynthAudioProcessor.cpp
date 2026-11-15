@@ -641,6 +641,9 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         }
     }
 
+    tempoNow.store(transportInfo.hostHasTempo && transportInfo.hostIsPlaying ? static_cast<float>(transportInfo.hostBpm)
+                                                                             : parameterValues.arpInternalTempoBpm->load(),
+                   std::memory_order_relaxed);
     synthEngine.setMultiCore(multiCoreWanted.load(std::memory_order_relaxed) && ! isNonRealtime());
     synthEngine.render(buffer,
                        std::span<const coolsynth::synth::EngineMidiEvent>(engineEvents.data(),
@@ -751,6 +754,7 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     // once per second of audio: a summary line
     tripwireWorstMs = std::max(tripwireWorstMs, took);
     tripwirePeak = std::max(tripwirePeak, peak);
+    voicesNow.store(synthEngine.activeVoiceCount(), std::memory_order_relaxed);
     tripwireVoices = std::max(tripwireVoices, synthEngine.activeVoiceCount());
     tripwireClipped += synthEngine.consumeClippedSamples();
     tripwireSamples += n;

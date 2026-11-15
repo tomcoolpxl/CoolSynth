@@ -3867,3 +3867,46 @@ The defaults should suit a beginner (the user), so:
   wheel, the arrow keys, the mouse or the MiniLab's own knob, and the screen's knob follows that
   count; knob 5 follows the page turns the same way.
 - Checked: the wheel moved three rows for three notches and the knob turned with them, in the app.
+
+## D194. Each layer holds a whole sound: CoolSynth becomes bi-timbral (2026-11-15, under way)
+
+The user's UX review of Home on layer B (D192) led to the question what A and B are. Talked through
+and checked online: a sound filled in its layer and the global parts (the effects chain at the end,
+the arp), so two stacked sounds collided and A and B differed. Korg's wavestate gives each layer a
+whole program with its own effects and arp, global only reverb and EQ; Yamaha's Montage has insert
+effects per part and shared system effects; Roland's Fantom effects per part and shared chorus and
+reverb. Such a synth is bi-timbral (Sequential's Prophet Rev2: Layers A and B, each with its own
+effect and arp, stacked or split). The user's choices:
+
+- **A layer is a whole sound** (options: layer = whole sound, recommended and chosen; shared reverb
+  and delay sends; keep as is): each layer gets six effect slots (was three) and its own arp; A and
+  B are alike and either may be empty. Global keeps the layer mode, a chain at the end (empty by
+  default, for the combination), the master level, Brightness and Space, the faders and the tempo.
+  Measured: no preset uses more than four effect slots in all, so every sound fits its layer; 118
+  presets use one layer and move their effects into it (Frozen Pluck alone sets a level of its own,
+  before a reverb, which does not mind the order); the 3 that use both (Deep Field, Juno Pad,
+  Supersaw) keep their shared effects in the chain at the end. Memory: about 2.5 MB more per slot
+  (a grain buffer and a delay line), some 60 MB in all.
+- **Home picks a sound for the layer you are on**; picking on A replaces layer A only (options:
+  replace A only, recommended and chosen; replace the whole sound). Each list starts with "Empty
+  layer A/B" (options: an Empty row, recommended and chosen; a long press on Home).
+  **Combinations load whole** (options: whole, recommended and chosen; only their layer A), marked
+  "A+B" in the list.
+- Stages: the engine (six slots, an arp per layer, old states carried over, every preset bit for
+  bit the same); the presets' effects into their layers (checked by rendering each before and
+  after); Home and the Effects section.
+
+## D195. The layer screen above knobs 1-4; rings on knobs 6-8 (2026-11-15)
+
+- **The layer screen**, the user's request and choice from three designs (two lit panels with an
+  info row, recommended and chosen; one wide second screen; small panels without a new strip),
+  placed where the user said: above knobs 1-4, as wide as from knob 1 to knob 4; the top row of
+  knobs moved down under it, the bottom row a little. Two panels, LAYER A teal and LAYER B yellow,
+  each with what it plays (bold) or "empty"; the layer the sections edit is lit, the other dim; a
+  click on a panel picks its layer. Under them the layer mode, the tempo followed (the host's while
+  it plays) and the voices sounding; the CPU sits in its bottom right corner (moved from beside the
+  main knob, D191). When the chain at the end gets its own page (D194), both panels go dark and
+  a MASTER mark lights.
+- **Knobs 6-8 had no ring** and looked inactive (the user). Brightness and Space act on the whole
+  sound: a light grey ring, as the user asked. Glide belongs to the edited layer: a ring in that
+  layer's colour, teal or yellow, as the layer screen.

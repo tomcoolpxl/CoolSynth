@@ -154,6 +154,10 @@ namespace coolsynth::ui
         [[nodiscard]] int part() const noexcept { return currentPart; }
         /** The layer the sections edit has every generator and processor slot Off: it is left out (D190). */
         [[nodiscard]] bool currentLayerEmpty() const;
+        /** For the layer screen (D195): a layer is empty, what it plays, and the layer mode in words. */
+        [[nodiscard]] bool layerEmpty(int layer) const;
+        [[nodiscard]] juce::String layerSoundName(int layer) const;
+        [[nodiscard]] juce::String layerModeText() const;
         [[nodiscard]] bool typeListOpen() const noexcept { return typeList.open; }
         [[nodiscard]] bool inCategory() const noexcept { return browser.inCategory; }
         [[nodiscard]] int livePage() const noexcept { return currentLivePage; }
