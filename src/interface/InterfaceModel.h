@@ -116,7 +116,10 @@ namespace coolsynth::ui
     public:
         enum class View { home, section };
         static constexpr int sectionCount = 4;   // Sound, Shape, Motion, Effects
-        static constexpr int livePageCount = 5;  // Macros, Arp, Groove, Chord, Voice
+        static constexpr int livePageCount = 6;  // Macros, Arp, Groove, Chord, Voice, Layers (D196)
+        static constexpr int layersPage = 5;
+        /** The Layers page's actions, for the layer Home is on (D196). */
+        [[nodiscard]] juce::StringArray layerActionNames() const;
 
         explicit InterfaceModel(SynthAudioProcessor& processor);
 
@@ -194,6 +197,8 @@ namespace coolsynth::ui
         [[nodiscard]] int slotIndex(int section) const noexcept { return slotCursor[static_cast<std::size_t>(section)]; }
         [[nodiscard]] int pageIndexOf(int section, int slot) const;
         [[nodiscard]] Slot currentSlot() const;
+        /** The Effects section is on a slot of the chain at the end (F1-F6), which belongs to neither layer (D195). */
+        [[nodiscard]] bool editingMaster() const;
         [[nodiscard]] Page currentPage() const;               // section page, or the live page in Home
         [[nodiscard]] juce::StringArray livePageNames() const;
         [[nodiscard]] Tint pageTint() const noexcept;         // the colour of knobs 1-4
@@ -298,6 +303,8 @@ namespace coolsynth::ui
         int octave = 0;        // the screen's keys, octaves from C3
         bool hardware = false; // a MiniLab connected
         int miniLabOctave = 0; // the MiniLab's octave shift, as its notes tell (D192)
+        int layerAction = 0;   // the Layers page's action under the main knob (D196)
+        void doLayerAction(int action);
         std::int64_t mainTurns = 0, pageTurns = 0; // steps turned, for the screen's knobs (D193)
         Popup lastPopup;
         int changeCount = 0;

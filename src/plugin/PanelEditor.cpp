@@ -648,10 +648,12 @@ private:
     {
         const auto slots = model.slotsOf(model.section());
         const int focused = model.slotIndex(model.section());
-        for (const auto& row : InterfaceModel::rowsOf(model.section()))
+        const auto rows = InterfaceModel::rowsOf(model.section());
+        const bool fourRows = rows.size() > 3; // the Effects section: six layer slots and six at the end (D194)
+        for (const auto& row : rows)
         {
-            auto line = area.removeFromTop(36);
-            area.removeFromTop(6);
+            auto line = area.removeFromTop(fourRows ? 32 : 36);
+            area.removeFromTop(fourRows ? 4 : 6);
             g.setFont(mono(9.5f));
             g.setColour(colours::screenDim);
             g.drawText(row.label.toUpperCase(), line.removeFromLeft(54), juce::Justification::centredLeft);
@@ -1127,7 +1129,7 @@ public:
         {
             auto panel = (layer == 0 ? inner.withWidth(panelWidth) : inner.withTrimmedLeft(panelWidth + gap));
             layerPanels[static_cast<std::size_t>(layer)] = panel;
-            const bool lit = model.part() == layer;
+            const bool lit = model.part() == layer && ! model.editingMaster(); // the end chain is neither layer's (D195)
             const bool empty = model.layerEmpty(layer);
             const auto tint = coolsynth::ui::tintColour(layer == 0 ? Tint::home : Tint::partB);
             const auto r = panel.toFloat();
@@ -1142,7 +1144,10 @@ public:
             auto text = panel.reduced(8, 4);
             g.setFont(mono(10.0f, true));
             g.setColour(lit ? tint : tint.withMultipliedBrightness(0.55f).withMultipliedSaturation(0.6f));
-            g.drawText(layer == 0 ? "LAYER A" : "LAYER B", text.removeFromTop(13), juce::Justification::centredLeft);
+            auto head = text.removeFromTop(13);
+            g.drawText(layer == 0 ? "LAYER A" : "LAYER B", head, juce::Justification::centredLeft);
+            if (const int solo = owner.synth.soloLayer(); solo >= 0) // a layer heard alone (D196)
+                g.drawText(solo == layer ? "SOLO" : "MUTED", head, juce::Justification::centredRight);
             g.setFont(sans(13.5f, ! empty));
             g.setColour(empty ? colours::screenDim.withAlpha(lit ? 0.9f : 0.6f) : (lit ? colours::screenInk : colours::screenDim));
             g.drawFittedText(empty ? juce::String("empty") : model.layerSoundName(layer), text, juce::Justification::centredLeft, 1, 0.8f);
@@ -1151,6 +1156,14 @@ public:
         // the info row: mode, tempo, voices; the CPU at the right, amber from 60%, red from 90%
         const float percent = juce::jlimit(0.0f, 100.0f, owner.synth.cpuLoad().percent[0]);
         const juce::String dot(juce::CharPointer_UTF8(" \xc2\xb7 "));
+        if (model.editingMaster()) // both layers dark: the chain at the end is the whole sound's
+        {
+            g.setFont(mono(10.0f, true));
+            g.setColour(colours::screenInk);
+            const juce::String master = "MASTER";
+            const int w = juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), master) + 8;
+            g.drawText(master, infoRow.removeFromLeft(w), juce::Justification::centredLeft);
+        }
         g.setFont(mono(10.0f));
         g.setColour(colours::screenDim);
         g.drawText(model.layerModeText() + dot + juce::String(juce::roundToInt(owner.synth.tempoBpm())) + " BPM" + dot

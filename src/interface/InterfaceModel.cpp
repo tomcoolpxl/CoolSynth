@@ -323,7 +323,9 @@ namespace coolsynth::ui
             case 0: return { { "mixed", { 0, 1, 2 }, "+", arrow + " Shape" } };
             case 1: return { { "in a row", { 0, 1, 2 }, arrow, arrow + " Effects" } };
             case 2: return { { "envelopes", { 0, 1, 2 }, "", "" }, { "LFOs", { 3, 4 }, "", "" } };
-            default: return { { "part", { 0, 1, 2 }, arrow, "" }, { "master", { 3, 4, 5 }, arrow, "" }, { "", { 6, 7, 8 }, arrow, "" } };
+            // the layer's six slots, then the chain at the end, the whole sound's (D194)
+            default: return { { "layer", { 0, 1, 2 }, arrow, "" }, { "", { 3, 4, 5 }, arrow, "" },
+                              { "master", { 6, 7, 8 }, arrow, "" }, { "", { 9, 10, 11 }, arrow, "" } };
         }
     }
 
@@ -464,6 +466,11 @@ namespace coolsynth::ui
         return found == pageOfSlot.end() ? 0 : found->second;
     }
 
+    bool InterfaceModel::editingMaster() const
+    {
+        return currentView == View::section && currentSlot().code.startsWith("F");
+    }
+
     Slot InterfaceModel::currentSlot() const
     {
         const auto slots = slotsOf(currentSection);
@@ -471,7 +478,33 @@ namespace coolsynth::ui
                                                        static_cast<int>(slots.size()) - 1))];
     }
 
-    juce::StringArray InterfaceModel::livePageNames() const { return { "Macros", "Arp", "Groove", "Chord", "Voice" }; }
+    juce::StringArray InterfaceModel::livePageNames() const { return { "Macros", "Arp", "Groove", "Chord", "Voice", "Layers" }; }
+
+    juce::StringArray InterfaceModel::layerActionNames() const
+    {
+        const juce::String x = currentPart == 0 ? "A" : "B", y = currentPart == 0 ? "B" : "A";
+        const bool solo = synth.soloLayer() == currentPart;
+        return { "Copy " + x + " to " + y, "Copy " + y + " to " + x, "Swap A and B", "Double " + x + " onto " + y,
+                 x + " an octave lower on " + y, x + " an octave higher on " + y,
+                 solo ? "Solo " + x + ": on" : "Solo " + x, "Empty layer " + y };
+    }
+
+    void InterfaceModel::doLayerAction(int action)
+    {
+        const int x = currentPart, y = 1 - currentPart;
+        switch (action)
+        {
+            case 0: synth.copyLayer(x, y); break;
+            case 1: synth.copyLayer(y, x); break;
+            case 2: synth.swapLayers(); break;
+            case 3: synth.doubleLayer(x); break;
+            case 4: synth.octaveLayer(x, -12); break;
+            case 5: synth.octaveLayer(x, 12); break;
+            case 6: synth.setSoloLayer(synth.soloLayer() == x ? -1 : x); break;
+            case 7: synth.emptyLayer(y); break;
+            default: break;
+        }
+    }
 
     Page InterfaceModel::currentPage() const
     {
@@ -506,9 +539,16 @@ namespace coolsynth::ui
                 case 3: return { "Chord", { pv::chordParameterId(part, "type"), pv::chordParameterId(part, "strum"),
                                             pv::chordParameterId(part, "learn"), {} },
                                  { "Chord", "Strum", "Learn", {} } };
-                default: return { "Voice", { pv::playParameterId(part, "mode"), pv::playParameterId(part, "voices"),
-                                             pv::voiceParameterId(part, "glide"), pv::playParameterId(part, "bendRange") },
-                                  { "Mode", "Voices", "Glide", "Bend range" } };
+                case 4: return { "Voice", { pv::playParameterId(part, "mode"), pv::playParameterId(part, "voices"),
+                                            pv::voiceParameterId(part, "glide"), pv::playParameterId(part, "bendRange") },
+                                 { "Mode", "Voices", "Glide", "Bend range" } };
+                default: // the Layers page (D196): between the layers, and the other layer's transposition
+                {
+                    const auto other = currentPart == 0 ? pv::Part::b : pv::Part::a;
+                    return { "Layers", { pv::layerBalanceParameterId, pv::layerDetuneParameterId, pv::mixParameterId(other, "transpose"),
+                                         pv::layerSpreadParameterId },
+                             { "Balance", "Detune", currentPart == 0 ? "B Transpose" : "A Transpose", "Spread" } };
+                }
             }
         }
         const auto slot = currentSlot();
@@ -798,7 +838,9 @@ namespace coolsynth::ui
             typeList.row = clampInt(typeList.row + steps, 0, typeNames().size());
         else if (currentView == View::home)
         {
-            if (! browser.inCategory) // -1: the "Empty layer" row (D194)
+            if (currentLivePage == layersPage)
+                layerAction = clampInt(layerAction + steps, 0, layerActionNames().size() - 1);
+            else if (! browser.inCategory) // -1: the "Empty layer" row (D194)
                 browser.category = clampInt(browser.category + steps, -1, static_cast<int>(bank.size()) - 1);
             else
                 browser.row = clampInt(browser.row + steps, 0,
@@ -825,7 +867,9 @@ namespace coolsynth::ui
             commitPendingChoice(); // the instrument a knob shows is read in now (D156)
         else if (currentView == View::home)
         {
-            if (! browser.inCategory && browser.category < 0)
+            if (currentLivePage == layersPage)
+                doLayerAction(layerAction); // (D196)
+            else if (! browser.inCategory && browser.category < 0)
                 synth.emptyLayer(currentPart); // "Empty layer A/B" (D194)
             else if (! browser.inCategory)
             {
@@ -923,7 +967,9 @@ namespace coolsynth::ui
             typeList.row = row;
         else if (currentView == View::home)
         {
-            if (browser.inCategory)
+            if (currentLivePage == layersPage)
+                layerAction = row;
+            else if (browser.inCategory)
                 browser.row = row;
             else
                 browser.category = row - 1; // row 0 is "Empty layer" (D194)
@@ -1053,6 +1099,13 @@ namespace coolsynth::ui
         }
         if (currentView != View::home)
             return view;
+        if (currentLivePage == layersPage) // the main knob picks a layer action (D196)
+        {
+            view.title = "LAYERS";
+            view.rows = layerActionNames();
+            view.cursor = clampInt(layerAction, 0, view.rows.size() - 1);
+            return view;
+        }
         if (! browser.inCategory)
         {
             view.title = "CATEGORIES";
@@ -1085,6 +1138,12 @@ namespace coolsynth::ui
         if (currentView == View::home && ! typeList.open)
         {
             const auto l = list();
+            if (currentLivePage == layersPage)
+            {
+                items.push_back({ "Layers", {}, false });
+                items.push_back({ l.rows[l.cursor], juce::String(juce::CharPointer_UTF8("\xe2\x97\x8e")), true });
+                return items;
+            }
             items.push_back({ "Categories", {}, false });
             if (browser.inCategory)
                 items.push_back({ bank[static_cast<std::size_t>(browser.category)].name, {}, false });
@@ -1106,7 +1165,7 @@ namespace coolsynth::ui
         if (typeList.open)
             return "Type";
         if (currentView == View::home)
-            return browser.inCategory ? "Sound" : "Category";
+            return currentLivePage == layersPage ? "Action" : (browser.inCategory ? "Sound" : "Category");
         return "Slot";
     }
 
@@ -1117,6 +1176,8 @@ namespace coolsynth::ui
             return typeList.row == 0 ? "Back" : "Set";
         if (currentView == View::home)
         {
+            if (currentLivePage == layersPage)
+                return "Do";
             if (! browser.inCategory)
                 return browser.category < 0 ? (layerEmpty(currentPart) ? none : juce::String("Empty")) : juce::String("Open");
             if (browser.row == 0)
@@ -1160,6 +1221,8 @@ namespace coolsynth::ui
             return juce::String(juce::CharPointer_UTF8("Turn \xe2\x97\x8e to pick \xc2\xb7 press to set \xc2\xb7 \xe2\x80\xb9 Back on top keeps the type"));
         if (currentView == View::home)
         {
+            if (currentLivePage == layersPage)
+                return juce::String(juce::CharPointer_UTF8("Turn \xe2\x97\x8e to pick \xc2\xb7 press to do it"));
             if (! browser.inCategory)
                 return juce::String(juce::CharPointer_UTF8("Turn \xe2\x97\x8e to pick a category \xc2\xb7 press to open it"));
             if (browser.row == 0)
@@ -1180,7 +1243,8 @@ namespace coolsynth::ui
             if (typeList.open)
                 screen.line1 = "Type " + currentSlot().code;
             else
-                screen.line1 = browser.inCategory ? bank[static_cast<std::size_t>(browser.category)].name : juce::String("Categories");
+                screen.line1 = currentLivePage == layersPage ? juce::String("Layers")
+                             : (browser.inCategory ? bank[static_cast<std::size_t>(browser.category)].name : juce::String("Categories"));
             auto row = l.rows[l.cursor];
             if (l.firstRowIsBack && l.cursor == 0)
                 row = "< Back";

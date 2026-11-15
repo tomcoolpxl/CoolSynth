@@ -43,8 +43,9 @@ namespace
     inline constexpr char processorStateVersionProperty[] = "formatVersion";
     // 9: V3 parameter contract; 10: the master effect slots (a version 9 state is carried over, D135);
     // 11: the layer modes Stack, Split, Velocity (a 10 or 9 is carried over, D190);
-    // 12: an arp and six effect slots per layer (an 11, 10 or 9 is carried over, D194)
-    inline constexpr int processorStateFormatVersion = 12;
+    // 12: an arp and six effect slots per layer (an 11, 10 or 9 is carried over, D194);
+    // 13: the Layers page's balance, detune and spread (D196; a 12 gets them at their defaults)
+    inline constexpr int processorStateFormatVersion = 13;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
@@ -187,6 +188,9 @@ SynthAudioProcessor::SynthAudioProcessor()
     , partModeValue(parameters.getRawParameterValue(coolsynth::parameters::v3::partModeParameterId))
     , velocitySplitValue(parameters.getRawParameterValue(coolsynth::parameters::v3::velocitySplitParameterId))
     , velocityFadeValue(parameters.getRawParameterValue(coolsynth::parameters::v3::velocityFadeParameterId))
+    , layerBalanceValue(parameters.getRawParameterValue(coolsynth::parameters::v3::layerBalanceParameterId))
+    , layerDetuneValue(parameters.getRawParameterValue(coolsynth::parameters::v3::layerDetuneParameterId))
+    , layerSpreadValue(parameters.getRawParameterValue(coolsynth::parameters::v3::layerSpreadParameterId))
     , masterEffectValues(coolsynth::parameters::v3::bindMasterEffectPointers(parameters))
     , mappedActionBridge(*this)
 {
@@ -855,8 +859,9 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     playingMySoundFile = juce::File(); // a factory sound again (D180)
     setPatchIdentity(preset.name, false);
     // Each layer's sound (D194): a combination fills both, a single sound layer A.
-    layerSounds[0] = { index, {}, preset.name, preset.macroNames[0] };
-    layerSounds[1] = isCombination(index) ? LayerSound { index, {}, preset.name, preset.macroNames[1] } : LayerSound {};
+    const bool combination = isCombination(index);
+    layerSounds[0] = { index, {}, preset.name, preset.macroNames[0], combination };
+    layerSounds[1] = combination ? LayerSound { index, {}, preset.name, preset.macroNames[1], true } : LayerSound {};
 }
 
 bool SynthAudioProcessor::isCombination(int program)
@@ -898,7 +903,8 @@ bool SynthAudioProcessor::loadIntoLayer(int layer, const std::function<bool()>& 
 {
     layer = juce::jlimit(0, 1, layer);
     // A combination playing is one sound: a single sound picked for one of its layers takes it apart (D194).
-    const bool dissolve = layerSounds[0].combinedWith(layerSounds[1]) && layerHasSound(0) && layerHasSound(1);
+    const bool dissolve = layerSounds[0].combination && layerSounds[1].combination && layerSounds[0].combinedWith(layerSounds[1])
+                          && layerHasSound(0) && layerHasSound(1);
     // Beside an empty layer the pick is a whole new sound: its global settings (master, the chain at the end) come too.
     const bool takeGlobals = dissolve || ! layerHasSound(1 - layer);
     const auto& all = getParameters();
@@ -998,6 +1004,99 @@ bool SynthAudioProcessor::loadMySoundIntoLayer(const juce::File& file, int layer
     return loadIntoLayer(layer, [&] { return applyParameterStateXml(*state); }, { -1, file, name, macros });
 }
 
+void SynthAudioProcessor::copyLayerValues(int from, int to)
+{
+    const juce::String source = from == 1 ? "pB." : "pA.", target = to == 1 ? "pB." : "pA.";
+    std::map<juce::String, juce::RangedAudioParameter*> byId;
+    for (auto* base : getParameters())
+        if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(base))
+            byId.emplace(ranged->paramID, ranged);
+    for (const auto& [id, p] : byId)
+        if (id.startsWith(source))
+            if (const auto other = byId.find(target + id.substring(3)); other != byId.end() && other->second->getValue() != p->getValue())
+                other->second->setValueNotifyingHost(p->getValue());
+}
+
+void SynthAudioProcessor::copyLayer(int from, int to)
+{
+    from = juce::jlimit(0, 1, from);
+    to = juce::jlimit(0, 1, to);
+    if (from == to)
+        return;
+    performUndoableEdit("Copy layer", [&]
+    {
+        const BulkEdit whole(*this);
+        copyLayerValues(from, to);
+        layerSounds[static_cast<std::size_t>(to)] = layerSounds[static_cast<std::size_t>(from)];
+        layerSounds[0].combination = layerSounds[1].combination = false; // a copy, not a combination
+        updatePatchName();
+    });
+}
+
+void SynthAudioProcessor::swapLayers()
+{
+    performUndoableEdit("Swap layers", [&]
+    {
+        const BulkEdit whole(*this);
+        std::vector<std::pair<juce::RangedAudioParameter*, float>> keepA;
+        for (auto* base : getParameters())
+            if (auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(base); ranged != nullptr && ranged->paramID.startsWith("pA."))
+                keepA.emplace_back(ranged, ranged->getValue());
+        copyLayerValues(1, 0);
+        for (const auto& [a, value] : keepA)
+            if (auto* b = parameters.getParameter("pB." + a->paramID.substring(3)); b != nullptr && b->getValue() != value)
+                b->setValueNotifyingHost(value);
+        std::swap(layerSounds[0], layerSounds[1]);
+        layerSounds[0].combination = layerSounds[1].combination = false;
+        updatePatchName();
+    });
+}
+
+void SynthAudioProcessor::doubleLayer(int from)
+{
+    from = juce::jlimit(0, 1, from);
+    const int to = 1 - from;
+    performUndoableEdit("Double layer", [&]
+    {
+        const BulkEdit whole(*this);
+        copyLayerValues(from, to);
+        layerSounds[static_cast<std::size_t>(to)] = layerSounds[static_cast<std::size_t>(from)];
+        layerSounds[0].combination = layerSounds[1].combination = false; // a copy, not a combination
+        auto set = [&](const juce::String& id, float value)
+        {
+            if (auto* p = parameters.getParameter(id))
+                p->setValueNotifyingHost(p->convertTo0to1(value));
+        };
+        const juce::String a = from == 1 ? "pB." : "pA.", b = to == 1 ? "pB." : "pA.";
+        const float level = parameters.getRawParameterValue(a + "mix.level")->load() - 3.0f;
+        set(a + "mix.level", level);
+        set(b + "mix.level", level);
+        set(coolsynth::parameters::v3::layerDetuneParameterId, 14.0f);
+        set(coolsynth::parameters::v3::layerSpreadParameterId, 0.5f);
+        updatePatchName();
+    });
+}
+
+void SynthAudioProcessor::octaveLayer(int from, int semitones)
+{
+    from = juce::jlimit(0, 1, from);
+    const int to = 1 - from;
+    performUndoableEdit("Octave layer", [&]
+    {
+        const BulkEdit whole(*this);
+        copyLayerValues(from, to);
+        layerSounds[static_cast<std::size_t>(to)] = layerSounds[static_cast<std::size_t>(from)];
+        layerSounds[0].combination = layerSounds[1].combination = false; // a copy, not a combination
+        const juce::String a = from == 1 ? "pB." : "pA.", b = to == 1 ? "pB." : "pA.";
+        if (auto* transpose = parameters.getParameter(b + "mix.transpose"))
+            transpose->setValueNotifyingHost(transpose->convertTo0to1(parameters.getRawParameterValue(a + "mix.transpose")->load()
+                                                                      + static_cast<float>(semitones)));
+        if (auto* level = parameters.getParameter(b + "mix.level"))
+            level->setValueNotifyingHost(level->convertTo0to1(parameters.getRawParameterValue(a + "mix.level")->load() - 6.0f));
+        updatePatchName();
+    });
+}
+
 void SynthAudioProcessor::emptyLayer(int layer)
 {
     layer = juce::jlimit(0, 1, layer);
@@ -1057,7 +1156,8 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
         const bool fixedEffects = version == coolsynth::presets::processorStateVersionWithFixedEffects;
         const bool oldLayerModes = version == coolsynth::presets::processorStateVersionWithOldLayerModes || fixedEffects;
         const bool globalArp = version == coolsynth::presets::processorStateVersionWithGlobalArp || oldLayerModes;
-        if (version != processorStateFormatVersion && ! globalArp)
+        const bool older = version >= coolsynth::presets::processorStateVersionWithFixedEffects && version < processorStateFormatVersion;
+        if (version != processorStateFormatVersion && ! older)
             return;
 
         const auto expectedStateType = getParameterStateTypeName();
@@ -1110,6 +1210,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                             if (coolsynth::presets::getFactoryPreset(i).name == sound.name)
                                 sound.program = i;
                     sound.macros = splitNames(xml->getStringAttribute(key + "Macros"));
+                    sound.combination = xml->getBoolAttribute(key + "Combination", false);
                     layerSounds[static_cast<std::size_t>(layer)] = sound;
                 }
             undoHistory.clear();
@@ -1163,8 +1264,9 @@ SynthAudioProcessor::SaveResult SynthAudioProcessor::saveMySound(const juce::Str
         return SaveResult::failed;
     playingMySoundFile = file;
     mySoundMacroNames = { macrosA, macrosB };
-    layerSounds[0] = { -1, file, name, macrosA }; // the saved sound plays now, in its layers (D194)
-    layerSounds[1] = layerHasSound(1) ? LayerSound { -1, file, name, macrosB } : LayerSound {};
+    const bool both = layerHasSound(0) && layerHasSound(1);
+    layerSounds[0] = { -1, file, name, macrosA, both }; // the saved sound plays now, in its layers (D194)
+    layerSounds[1] = layerHasSound(1) ? LayerSound { -1, file, name, macrosB, both } : LayerSound {};
     setPatchIdentity(name, false);
     return SaveResult::saved;
 }
@@ -1200,8 +1302,9 @@ bool SynthAudioProcessor::loadMySound(const juce::File& file)
     mySoundMacroNames = { splitNames(root != nullptr ? root->getStringAttribute("macrosA") : juce::String()),
                           splitNames(root != nullptr ? root->getStringAttribute("macrosB") : juce::String()) };
     const auto name = root != nullptr ? root->getStringAttribute("name", file.getFileNameWithoutExtension()) : file.getFileNameWithoutExtension();
-    layerSounds[0] = { -1, file, name, mySoundMacroNames[0] };
-    layerSounds[1] = layerHasSound(1) ? LayerSound { -1, file, name, mySoundMacroNames[1] } : LayerSound {};
+    const bool both = layerHasSound(0) && layerHasSound(1);
+    layerSounds[0] = { -1, file, name, mySoundMacroNames[0], both };
+    layerSounds[1] = layerHasSound(1) ? LayerSound { -1, file, name, mySoundMacroNames[1], both } : LayerSound {};
     coolsynth::diag::record(coolsynth::diag::Event::presetLoaded, -1, 0, 0.0f, 0.0f, ("my sound: " + name).toRawUTF8());
     setPatchIdentity(name, false);
     undoHistory.clear();
@@ -1237,9 +1340,9 @@ void SynthAudioProcessor::restorePlayingSound(const juce::String& name, const ju
             playingMySoundFile = file;
             if (const auto root = juce::parseXML(file))
                 mySoundMacroNames = { splitNames(root->getStringAttribute("macrosA")), splitNames(root->getStringAttribute("macrosB")) };
-            layerSounds[0] = { -1, file, name, mySoundMacroNames[0] };
+            layerSounds[0] = { -1, file, name, mySoundMacroNames[0], bPlays };
             if (bPlays)
-                layerSounds[1] = { -1, file, name, mySoundMacroNames[1] };
+                layerSounds[1] = { -1, file, name, mySoundMacroNames[1], true };
             return;
         }
 
@@ -1257,9 +1360,9 @@ void SynthAudioProcessor::restorePlayingSound(const juce::String& name, const ju
             if (wanted != name)
                 setPatchIdentity(wanted, isPatchDirty());
             const auto& preset = coolsynth::presets::getFactoryPreset(i);
-            layerSounds[0] = { i, {}, wanted, preset.macroNames[0] };
+            layerSounds[0] = { i, {}, wanted, preset.macroNames[0], bPlays };
             if (bPlays)
-                layerSounds[1] = { i, {}, wanted, preset.macroNames[1] };
+                layerSounds[1] = { i, {}, wanted, preset.macroNames[1], true };
             return;
         }
 }
@@ -1285,6 +1388,7 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
         for (const auto& m : sound.macros)
             macros.add(m);
         root->setAttribute(key + "Macros", macros.joinIntoString(","));
+        root->setAttribute(key + "Combination", sound.combination);
     }
 
     auto parameterState = const_cast<SynthAudioProcessor*> (this)->parameters.copyState();
@@ -1845,6 +1949,25 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
         juce::jlimit(0, 2, static_cast<int>(std::lround(partModeValue != nullptr ? partModeValue->load() : 0.0f))));
     settings.velocitySplit = static_cast<int>(std::lround(velocitySplitValue->load()));
     settings.velocityFade = static_cast<int>(std::lround(velocityFadeValue->load()));
+    // The Layers page (D196): balance, detune and spread between the layers; at 0 they leave the mix as it is.
+    if (const float balance = layerBalanceValue->load(); balance != 0.0f)
+    {
+        // toward B, layer A goes quieter along a quarter cosine (and the other way round); at the end it is off
+        const float gain = std::cos(std::abs(balance) * juce::MathConstants<float>::halfPi);
+        settings.mix[balance > 0.0f ? 0u : 1u].levelDb += juce::Decibels::gainToDecibels(gain, -100.0f);
+    }
+    if (const float detune = layerDetuneValue->load(); detune != 0.0f)
+    {
+        settings.mix[0].fineCents -= 0.5f * detune;
+        settings.mix[1].fineCents += 0.5f * detune;
+    }
+    if (const float spread = layerSpreadValue->load(); spread != 0.0f)
+    {
+        settings.mix[0].pan = juce::jlimit(-1.0f, 1.0f, settings.mix[0].pan - spread);
+        settings.mix[1].pan = juce::jlimit(-1.0f, 1.0f, settings.mix[1].pan + spread);
+    }
+    if (const int solo = soloLayerValue.load(std::memory_order_relaxed); solo == 0 || solo == 1)
+        settings.mix[static_cast<std::size_t>(1 - solo)].levelDb = -100.0f; // the other layer silent while one is soloed
 
     const auto& v = parameterValues;
     auto index = [](const std::atomic<float>* p) { return static_cast<int>(std::lround(p->load())); };

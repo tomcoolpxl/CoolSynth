@@ -22,8 +22,7 @@ namespace coolsynth::presets
             return { PatchStateError::invalidRootTag, "Not a CoolSynth patch file.", nullptr };
 
         const int version = patchXml.getIntAttribute("formatVersion", 0);
-        if (version != patchFormatVersion && version != patchVersionWithGlobalArp && version != patchVersionWithOldLayerModes
-            && version != patchVersionWithFixedEffects)
+        if (version < patchVersionWithFixedEffects || version > patchFormatVersion)
             return { PatchStateError::unsupportedFormatVersion, "Unsupported CoolSynth patch version.", nullptr };
 
         if (patchXml.getStringAttribute("stateType") != expectedStateType)

@@ -62,6 +62,10 @@ namespace coolsynth::parameters::v3
     inline constexpr char partModeParameterId[] = "part.mode";
     inline constexpr char velocitySplitParameterId[] = "part.velSplit"; // D190
     inline constexpr char velocityFadeParameterId[] = "part.velFade";
+    // The Layers page (D196): between the layers; at 0 each changes nothing.
+    inline constexpr char layerBalanceParameterId[] = "part.balance"; // -1 layer A alone .. 0 both .. 1 layer B alone
+    inline constexpr char layerDetuneParameterId[] = "part.detune";   // cents between the layers, half each way
+    inline constexpr char layerSpreadParameterId[] = "part.spread";   // A to the left, B to the right
     [[nodiscard]] const juce::StringArray& partModeNames();
     /** lfo is "lfo1", "lfo2", "glfo1" or "glfo2". */
     [[nodiscard]] juce::String lfoParameterId(Part part, const juce::String& lfo, const char* field);

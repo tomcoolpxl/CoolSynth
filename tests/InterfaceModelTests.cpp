@@ -323,6 +323,59 @@ public:
             expect(value(*synth, "pA.g1.type") != 0.0f, "layer A plays on");
         }
 
+        beginTest("The Layers page: balance, detune, transpose, spread; copy, swap, double, octave, solo, empty (D196)");
+        {
+            auto indexOf = [](const juce::String& name)
+            {
+                for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                    if (coolsynth::presets::getFactoryPreset(i).name == name)
+                        return i;
+                return -1;
+            };
+            auto value = [](SynthAudioProcessor& p, const juce::String& id) { return p.getValueTreeState().getRawParameterValue(id)->load(); };
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->loadSoundIntoLayer(indexOf("Cassette Keys"), 0);
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            model->turnPageKnob(InterfaceModel::layersPage); // knob 5 to the last live page
+            expectEquals(model->currentPage().name, juce::String("Layers"));
+            expectEquals(model->currentPage().ids[0], juce::String("part.balance"));
+            expectEquals(model->currentPage().ids[2], juce::String("pB.mix.transpose"), "the other layer's transposition");
+            expectEquals(model->list().title, juce::String("LAYERS"));
+            expectEquals(model->list().rows[0], juce::String("Copy A to B"));
+
+            auto doAction = [&](int row)
+            {
+                model->turnMain(-100);
+                model->turnMain(row);
+                model->pressMain();
+            };
+            doAction(0); // copy A to B
+            expectEquals(value(*synth, "pB.g1.type"), value(*synth, "pA.g1.type"));
+            expect(synth->layerSound(1).name == "Cassette Keys");
+
+            const float levelA = value(*synth, "pA.mix.level");
+            doAction(3); // double A onto B
+            expectWithinAbsoluteError(value(*synth, "pA.mix.level"), levelA - 3.0f, 0.01f, "each copy 3 dB down");
+            expectWithinAbsoluteError(value(*synth, "part.detune"), 14.0f, 0.01f);
+            expectWithinAbsoluteError(value(*synth, "part.spread"), 0.5f, 0.01f);
+
+            doAction(4); // an octave lower on B
+            expectEquals(value(*synth, "pB.mix.transpose"), value(*synth, "pA.mix.transpose") - 12.0f);
+
+            synth->loadSoundIntoLayer(indexOf("Moog Bass"), 1);
+            doAction(2); // swap
+            expect(synth->layerSound(0).name == "Moog Bass" && synth->layerSound(1).name == "Cassette Keys");
+
+            doAction(6); // solo A
+            expectEquals(synth->soloLayer(), 0);
+            expectEquals(model->list().rows[6], juce::String("Solo A: on"));
+            doAction(6);
+            expectEquals(synth->soloLayer(), -1);
+
+            doAction(7); // empty B
+            expectEquals(value(*synth, "pB.g1.type"), 0.0f);
+        }
+
         beginTest("An empty layer's Home says so; the MiniLab's keys follow the notes it plays (D192)");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();

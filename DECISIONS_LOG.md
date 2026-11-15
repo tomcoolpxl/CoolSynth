@@ -3939,7 +3939,7 @@ effect and arp, stacked or split). The user's choices:
   sound: a light grey ring, as the user asked. Glide belongs to the edited layer: a ring in that
   layer's colour, teal or yellow, as the layer screen.
 
-## D196. Layer actions and a Layers page (2026-11-15, planned)
+## D196. Layer actions and a Layers page (2026-11-15)
 
 The user asked what people do with two layers. Checked online: Sequential's Prophet Rev2 has a copy
 and swap page for its layers and, since OS 1.0.7.2, puts a sound from another program on a layer;
@@ -3956,3 +3956,18 @@ multitimbral synths give each part a detune of +-50 cents.
   menu on the layer screen, both): knob 5's sixth live page, knobs 1-4 Balance A/B, Detune spread,
   the other layer's octave and Stereo spread; the actions in the main knob's list on that page, so
   they work from the MiniLab too.
+- **Built**: three parameters between the layers, part.balance (-1..1; toward one layer the other
+  goes quieter along a quarter cosine, off at the end), part.detune (0-50 cents, half each way) and
+  part.spread (A to the left, B to the right); at 0 they leave the mix untouched, so every preset
+  sounds as before. Knob 3 is the other layer's Transpose (semitones, so an octave is 12 detents).
+  The actions, for the layer Home is on (X) and the other (Y): Copy X to Y, Copy Y to X, Swap A and B,
+  Double X onto Y (14 cents apart, half spread, each 3 dB down so the pair is as loud as one), X an
+  octave lower or higher on Y (6 dB under), Solo X (not saved; the layer screen says SOLO and MUTED),
+  Empty layer Y. Each is one undo step. A copy is no combination: loading a sound into one of two
+  copied layers keeps the other (a bug the tests caught: copies share a program, and were taken for a
+  combination to take apart). State version 13, patch version 12; older ones get the new settings at
+  their defaults.
+- **The Effects section and MASTER** (same day): the section's map shows the layer's six slots (I1-I6, two
+  rows, LAYER) and the chain at the end (F1-F6, two rows, MASTER); before, it still drew three layer slots
+  and cut F4-F6 off. With the cursor on an F slot both panels of the layer screen go dark and MASTER lights in
+  its info row (D195).

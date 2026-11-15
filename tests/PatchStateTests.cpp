@@ -70,7 +70,7 @@ public:
             // 8 effect routes x 5 (D179);
             // then the layer mode with its velocity split and fade (D190), and the six master effect slots x 13
             constexpr int onePart = 3 * 21 + 3 * 13 + 3 * 13 + 4 * 9 + 24 * 5 + 12 + 36 + 4 + 1 + 7 + 9 + 8 + 9 + 6 * 13 + 8 * 5;
-            constexpr int partParameterCount = 2 * onePart + 3;
+            constexpr int partParameterCount = 2 * onePart + 6; // mode, velocity split and fade; balance, detune, spread (D196)
             constexpr int masterSlotParameterCount = 6 * 13;
             expectEquals(registeredIds.size(),
                          static_cast<int>(coolsynth::parameters::allParameterIds.size()) + partParameterCount + masterSlotParameterCount);

@@ -192,6 +192,7 @@ public:
         juce::File mySound;
         juce::String name;
         std::array<juce::String, 4> macros {};
+        bool combination = false; // loaded whole as one of a combination's two layers; a copy is not
         [[nodiscard]] bool combinedWith(const LayerSound& other) const
         {
             return (program >= 0 && program == other.program) || (mySound != juce::File() && mySound == other.mySound);
@@ -208,6 +209,18 @@ public:
     bool loadMySoundIntoLayer(const juce::File& file, int layer);
     /** Every generator and processor slot of `layer` Off: the layer is left out (D190). */
     void emptyLayer(int layer);
+
+    /** The Layers page's actions (D196), each one undo step: the whole layer, its effects and arp included. */
+    void copyLayer(int from, int to);
+    void swapLayers();
+    /** Copies `from` onto the other layer and pulls the two apart: 14 cents of detune, half the stereo spread, each
+        layer 3 dB down so the pair is as loud as one. */
+    void doubleLayer(int from);
+    /** Copies `from` onto the other layer `semitones` away (an octave below or above), 6 dB under it. */
+    void octaveLayer(int from, int semitones);
+    /** Hears one layer alone while it is edited, or both again (-1). Not saved: a working aid. */
+    void setSoloLayer(int layer) noexcept { soloLayerValue.store(layer == 0 || layer == 1 ? layer : -1, std::memory_order_relaxed); }
+    [[nodiscard]] int soloLayer() const noexcept { return soloLayerValue.load(std::memory_order_relaxed); }
     /** The factory sound playing, or -1 when the state holds one the bank does not have (D193). The host's program
         number (getCurrentProgram) stays a valid one either way. */
     [[nodiscard]] int playingFactoryProgram() const noexcept { return layerSounds[0].program; }
@@ -371,6 +384,11 @@ private:
     std::atomic<float>* partModeValue = nullptr;
     std::atomic<float>* velocitySplitValue = nullptr; // D190
     std::atomic<float>* velocityFadeValue = nullptr;
+    std::atomic<float>* layerBalanceValue = nullptr; // D196
+    std::atomic<float>* layerDetuneValue = nullptr;
+    std::atomic<float>* layerSpreadValue = nullptr;
+    std::atomic<int> soloLayerValue { -1 };          // D196: the layer heard alone, or -1
+    void copyLayerValues(int from, int to);
     coolsynth::parameters::v3::MasterEffectPointers masterEffectValues;
 
     // The user's own sounds: one name and one UserLibrary handle per generator slot (part A's three, then B's).
