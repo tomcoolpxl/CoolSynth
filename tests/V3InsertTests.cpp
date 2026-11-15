@@ -277,7 +277,8 @@ public:
             render(*engine, settings, 4800, blip());
             expectEquals(engine->insertForTesting(0, 2).currentType(), static_cast<int>(insertType::delay));
             settings.inserts[0][2] = {};
-            render(*engine, settings, kBlock, {}); // the block in which the effect goes
+            render(*engine, settings, kBlock, {}); // the block in which the effect starts to go
+            render(*engine, settings, 960, {});    // it fades out over 10 ms, without a click (D165)
             const auto after = render(*engine, settings, 48000, {});
             expectLessThan(rms(after, 0, after.size()), 1.0e-9);
             expectEquals(engine->insertForTesting(0, 2).currentType(), static_cast<int>(insertType::off));
@@ -561,3 +562,56 @@ i2 = Pump depth=0.5 division=1/4
 };
 
 static V3InsertProcessorTests v3InsertProcessorTests;
+
+// ---- An effect type change fades (D165) ------------------------------------------------------------------
+
+class V3InsertTypeChangeTests final : public juce::UnitTest
+{
+public:
+    V3InsertTypeChangeTests() : juce::UnitTest("V3 insert type changes fade", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("a slot changing from a delay to a chorus under a steady tone makes no step");
+        {
+            auto slot = std::make_unique<InsertSlot>();
+            slot->prepare(48000.0, 256);
+            const auto delay = insertOf(insertType::delay, { { 0, 150.0f }, { 1, 0.6f }, { 2, 0.5f } });
+            const auto chorus = insertOf(insertType::chorus);
+            juce::AudioBuffer<float> block(2, 256);
+            double phase = 0.0;
+            float previous = 0.0f, steadiest = 0.0f, worstAtChange = 0.0f;
+            int worstAt = -1;
+            for (int b = 0; b < 200; ++b)
+            {
+                for (int i = 0; i < 256; ++i)
+                {
+                    const float v = 0.4f * static_cast<float>(std::sin(phase));
+                    phase += 2.0 * juce::MathConstants<double>::pi * 220.0 / 48000.0;
+                    block.setSample(0, i, v);
+                    block.setSample(1, i, v);
+                }
+                slot->process(block, b < 150 ? delay : chorus, InsertContext {});
+                for (int i = 0; i < 256; ++i)
+                {
+                    const float step = std::abs(block.getSample(0, i) - previous);
+                    previous = block.getSample(0, i);
+                    if (b >= 120 && b < 150)
+                        steadiest = std::max(steadiest, step);
+                    else if (b >= 150 && b < 160 && step > worstAtChange)
+                    {
+                        worstAtChange = step;
+                        worstAt = b * 256 + i;
+                    }
+                }
+            }
+            logMessage("steadiest step " + juce::String(steadiest, 4) + ", worst at the change " + juce::String(worstAtChange, 4)
+                       + " at sample " + juce::String(worstAt - 150 * 256) + " after the change");
+            expectEquals(slot->currentType(), static_cast<int>(insertType::chorus), "the chorus is in once the fade is over");
+            expectGreaterThan(steadiest, 0.0f);
+            expectLessThan(worstAtChange, steadiest * 2.0f + 0.01f, "the change is as smooth as the tone itself");
+        }
+    }
+};
+
+static V3InsertTypeChangeTests v3InsertTypeChangeTests;

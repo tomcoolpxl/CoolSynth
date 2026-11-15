@@ -3259,3 +3259,19 @@ Chosen, two pick lists:
 - **The plugin: Auto, like the standalone (chosen; Off with a setting was recommended, as Kontakt,
   Diva and Steinberg advise)**. Kept in mind: one pool for every CoolSynth in a host process, small
   (2 to 3 workers, the 32-thread MMCSS limit), serial when the host renders offline.
+
+## D165. An effect type change fades (2026-11-15)
+
+From the real-time review, chosen by the user ("Effect changes fade"). A preset change no longer
+touches the old sound's effects (D158: its own sound unit keeps them). What was left: changing an
+effect slot's type while playing switched at once, cutting the old effect's output and clearing
+its memory in one block, a click. Now a slot (an insert or a master slot) fades: the old effect,
+with the settings it last had, gives way to the dry signal over 10 ms, its memory is cleared, and
+the new one comes in over 10 ms. The effect hears its input faded with it, so its delay lines fill
+and empty gradually: fading only its output left a step where a chorus's delayed copy began 5 ms
+in (measured 0.071 against the tone's own 0.016). Changed again mid-way, it turns back from where
+it got to. An emptied slot drops its tail over the same 10 ms. A slot whose last block was silent
+(a fresh sound's first block) switches at once, so a new sound's first note gets its effects
+whole. The old effect's tail is not kept: keeping it would need a second set of effect memory per
+slot. Test: a steady 220 Hz tone through a delay that becomes a chorus shows no step larger than
+the tone's own (0.0149 against 0.0159, `V3InsertTypeChangeTests`).

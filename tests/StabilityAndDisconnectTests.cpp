@@ -469,6 +469,12 @@ public:
 
             parameters.delay.enabled = false;
             parameters.reverb.enabled = false;
+            // The effects fade out over 10 ms instead of cutting (D165): two blocks of 256, then silence.
+            for (int block = 0; block < 2; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
+            }
             buffer.clear();
             engine.render(buffer, std::span<const coolsynth::synth::EngineMidiEvent>(), parameters);
 

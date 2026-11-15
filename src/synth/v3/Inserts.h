@@ -201,13 +201,112 @@ namespace coolsynth::synth::v3
     class InsertSlot final
     {
     public:
+        static constexpr double typeFadeSeconds = 0.01; // the old effect out, then the new one in (D165)
+
         void prepare(double sampleRate, int maxBlockSize)
         {
             rack.prepare(sampleRate, std::max(1, maxBlockSize), 2);
             grain.prepare(sampleRate);
             room.prepare(sampleRate);
+            dry.setSize(2, std::max(1, maxBlockSize), false, true, true);
+            fadeSamples = std::max(1, static_cast<int>(std::lround(typeFadeSeconds * sampleRate)));
             lastType = insertType::off;
+            change = Change::none;
+            quiet = true;
             rackUsed = grainUsed = roomUsed = false; // prepared silent
+        }
+
+        /**
+            A type change fades instead of switching at once (D165): the old effect, with the settings it had, gives way
+            to the dry signal over 10 ms, then the new one comes in over 10 ms. Its tail is gone; nothing clicks.
+        */
+        void process(juce::AudioBuffer<float>& stereo, const InsertSettings& settings, const InsertContext& context) noexcept
+        {
+            const int requested = std::clamp(settings.type, 0, insertType::count - 1);
+            if (change == Change::none)
+            {
+                if (requested == lastType || quiet)
+                {
+                    // Steady, or nothing sounds through the slot: a new type starts at once (a fresh sound's first
+                    // block, a slot silent since its last use), as there is nothing to click.
+                    if (requested != lastType)
+                        clear();
+                    processType(stereo, settings, context);
+                    heldSettings = settings;
+                    quiet = stereo.getMagnitude(0, 0, stereo.getNumSamples()) < quietLevel
+                            && stereo.getMagnitude(1, 0, stereo.getNumSamples()) < quietLevel;
+                    return;
+                }
+                if (lastType == insertType::off)
+                    beginFadeIn(requested); // nothing to fade out
+                else
+                {
+                    change = Change::fadingOut;
+                    fadeDone = 0;
+                }
+            }
+            else if (change == Change::fadingIn && requested != fadingInType)
+            {
+                // Changed again while the new one came in: it goes out from where it got to.
+                change = Change::fadingOut;
+                fadeDone = fadeSamples - fadeDone;
+            }
+
+            const int n = stereo.getNumSamples();
+            quiet = false;
+            const auto& playing = change == Change::fadingOut ? heldSettings : settings;
+            const float from = static_cast<float>(fadeDone) / static_cast<float>(fadeSamples);
+            fadeDone = std::min(fadeSamples, fadeDone + n);
+            const float to = static_cast<float>(fadeDone) / static_cast<float>(fadeSamples);
+            // How much of the effect is heard: falling while the old goes out, rising while the new comes in.
+            const float gainFrom = change == Change::fadingOut ? 1.0f - from : from;
+            const float gainTo = change == Change::fadingOut ? 1.0f - to : to;
+
+            // The effect hears the signal faded with it, so its delay lines fill (or empty) gradually and nothing it
+            // delays starts or stops mid-waveform; the dry signal takes up the rest. Going out, its output fades too,
+            // so its memory is silent when it is cleared.
+            const float step = (gainTo - gainFrom) / static_cast<float>(n);
+            for (int ch = 0; ch < 2; ++ch)
+            {
+                dry.copyFrom(ch, 0, stereo, ch, 0, n);
+                float* in = stereo.getWritePointer(ch);
+                float g = gainFrom;
+                for (int i = 0; i < n; ++i)
+                {
+                    g += step;
+                    in[i] *= g;
+                }
+            }
+            processType(stereo, playing, context);
+            const bool goingOut = change == Change::fadingOut;
+            for (int ch = 0; ch < 2; ++ch)
+            {
+                float* wet = stereo.getWritePointer(ch);
+                const float* clean = dry.getReadPointer(ch);
+                float g = gainFrom;
+                for (int i = 0; i < n; ++i)
+                {
+                    g += step;
+                    wet[i] = clean[i] * (1.0f - g) + wet[i] * (goingOut ? g : 1.0f);
+                }
+            }
+
+            if (fadeDone < fadeSamples)
+                return;
+            if (change == Change::fadingOut)
+            {
+                clear(); // the old effect is out: its memory silent for the next
+                lastType = insertType::off;
+                if (requested == insertType::off)
+                    change = Change::none;
+                else
+                    beginFadeIn(requested);
+            }
+            else
+            {
+                change = Change::none;
+                heldSettings = settings;
+            }
         }
 
         /** Silence: every tail gone. Only what played since the last clear is wiped: All Sound Off cleared every
@@ -221,13 +320,25 @@ namespace coolsynth::synth::v3
             if (roomUsed)
                 room.clear();
             rackUsed = grainUsed = roomUsed = false;
+            quiet = true;
         }
 
         [[nodiscard]] const GrainInsert& grainForTesting() const noexcept { return grain; }
 
         [[nodiscard]] int currentType() const noexcept { return lastType; }
 
-        void process(juce::AudioBuffer<float>& stereo, const InsertSettings& settings, const InsertContext& context) noexcept
+    private:
+        enum class Change : std::uint8_t { none, fadingOut, fadingIn };
+
+        void beginFadeIn(int type) noexcept
+        {
+            change = Change::fadingIn;
+            fadingInType = type;
+            fadeDone = 0;
+        }
+
+        /** The slot as one type, at once: what every block did before type changes faded. */
+        void processType(juce::AudioBuffer<float>& stereo, const InsertSettings& settings, const InsertContext& context) noexcept
         {
             const int type = std::clamp(settings.type, 0, insertType::count - 1);
             if (type == insertType::off && lastType == insertType::off)
@@ -389,11 +500,17 @@ namespace coolsynth::synth::v3
             lastType = type;
         }
 
-    private:
         coolsynth::synth::GlobalFxRack rack;
         GrainInsert grain;
         RoomInsert room;
         int lastType = insertType::off;
+        Change change = Change::none;
+        static constexpr float quietLevel = 1.0e-6f; // -120 dB
+        bool quiet = true;                 // the slot's last block was silent: a type may switch at once
+        int fadingInType = insertType::off;
+        int fadeSamples = 480, fadeDone = 0;
+        InsertSettings heldSettings {};     // what the type playing was last given: it fades out with these
+        juce::AudioBuffer<float> dry;       // the block as it came in, during a change
         bool rackUsed = false, grainUsed = false, roomUsed = false; // played since its last clear (D160)
     };
 }
