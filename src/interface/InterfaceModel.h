@@ -74,6 +74,8 @@ namespace coolsynth::ui
         float normalised = 0.0f;
         bool active = false;
         bool pending = false; // an instrument chosen but not loaded yet: press or click to load (D156)
+        bool idle = false;    // it can be set, but does nothing now (D201): shown dimmed, `why` says when it acts
+        juce::String why;     // "both layers", "arp off", "B empty", "layer empty"
     };
 
     struct ListView

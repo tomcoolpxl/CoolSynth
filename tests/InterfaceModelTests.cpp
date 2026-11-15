@@ -418,6 +418,25 @@ public:
             expect(chance->getValue() < before, "a number moves at once");
         }
 
+        beginTest("A knob that does nothing now shows dimmed, with the reason, and still turns (D201)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth); // layer B empty
+            model->turnPageKnob(InterfaceModel::layersPage);
+            expect(model->knob(2).idle, "Detune does nothing beside an empty layer");
+            expectEquals(model->knob(3).why, juce::String("B empty"));
+            const float before = synth->getValueTreeState().getParameter("part.detune")->getValue();
+            model->turnKnob(2, 5, false);
+            expect(synth->getValueTreeState().getParameter("part.detune")->getValue() > before, "but it still turns");
+
+            model->turnPageKnob(-(InterfaceModel::layersPage - 1)); // the Arp page
+            expect(! model->knob(1).idle, "the arp switch itself always acts");
+            expectEquals(model->knob(2).why, juce::String("arp off"));
+            model->turnKnob(1, 1, false); // the arp on
+            expect(! model->knob(2).idle);
+            expect(model->knob(6).why.isEmpty(), "Glide acts on a layer that plays");
+        }
+
         beginTest("An empty layer's Home says so; the MiniLab's keys follow the notes it plays (D192)");
         {
             auto synth = std::make_unique<SynthAudioProcessor>();

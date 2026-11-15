@@ -616,6 +616,37 @@ namespace coolsynth::ui
         view.value = p->getCurrentValueAsText();
         view.normalised = p->getValue();
         view.active = true;
+
+        // A setting that does nothing at the moment shows dimmed, still turnable, with the reason (D201).
+        auto idle = [&view](const char* why)
+        {
+            view.idle = true;
+            view.why = why;
+        };
+        if (currentView == View::home && ! typeList.open && knobNumber <= 4)
+        {
+            const bool arpOn = [this]
+            {
+                auto* on = parameter(coolsynth::parameters::ids::arpOfLayer(currentPart, coolsynth::parameters::ids::arpEnabled));
+                return on != nullptr && on->getValue() >= 0.5f;
+            }();
+            if (currentLivePage == layersPage)
+            {
+                const bool bothSound = synth.soloLayer() < 0 && ! layerEmpty(0) && ! layerEmpty(1);
+                if (knobNumber == 3 && layerEmpty(1 - currentPart))
+                    idle(currentPart == 0 ? "B empty" : "A empty");
+                else if (knobNumber != 3 && ! bothSound)
+                    idle(synth.soloLayer() >= 0 ? "solo" : "both layers");
+            }
+            else if ((currentLivePage == 1 && knobNumber >= 2) || currentLivePage == 2)
+            {
+                if (! arpOn)
+                    idle("arp off");
+            }
+        }
+        if (knobNumber == 6 && layerEmpty(currentPart))
+            idle("layer empty");
+
         if (pendingChoice.has_value() && pendingChoice->id == p->getParameterID())
         {
             view.value = p->getText(pendingChoice->value, 64);

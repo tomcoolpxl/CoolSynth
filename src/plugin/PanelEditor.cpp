@@ -121,9 +121,9 @@ public:
         const auto bounds = getLocalBounds().toFloat().reduced(4.0f);
         const float size = juce::jmin(bounds.getWidth(), bounds.getHeight());
         const auto circle = juce::Rectangle<float>(size, size).withCentre(bounds.getCentre());
-        if (navigation)
+        if (navigation) // knob 5, the pages: a bright white ring, unlike every section's colour (D202)
         {
-            g.setColour(colours::link.withAlpha(0.45f));
+            g.setColour(juce::Colour(0xfff2f5f8));
             g.drawEllipse(circle.expanded(2.0f), 3.0f);
         }
         g.setColour(isMain ? colours::mainKnob : colours::knob);
@@ -504,20 +504,22 @@ public:
             auto card = cards.removeFromLeft(cardWidth).reduced(3, 0);
             cardAreas[static_cast<std::size_t>(k - 1)] = view.active ? card : juce::Rectangle<int>();
             g.setFont(mono(9.0f));
+            // a setting that does nothing now: dimmed, its role line saying when it acts (D201)
+            const auto accent = view.idle ? colours::screenDim.darker(0.3f) : pageTint;
             g.setColour(view.pending ? pageTint : colours::screenDim);
-            g.drawText(view.pending ? juce::String("CLICK TO LOAD") : view.role.toUpperCase(), card.removeFromTop(12),
-                       juce::Justification::centredLeft);
+            g.drawText(view.pending ? juce::String("CLICK TO LOAD") : (view.idle ? view.why.toUpperCase() : view.role.toUpperCase()),
+                       card.removeFromTop(12), juce::Justification::centredLeft);
             g.setFont(mono(11.0f));
-            g.setColour(view.active ? colours::screenInk : colours::screenLine.brighter(0.3f));
+            g.setColour(view.active && ! view.idle ? colours::screenInk : (view.active ? colours::screenDim : colours::screenLine.brighter(0.3f)));
             g.drawText(view.name, card.removeFromTop(15), juce::Justification::centredLeft);
-            g.setColour(view.active ? pageTint : colours::screenLine);
+            g.setColour(view.active ? accent : colours::screenLine);
             g.drawText(view.active ? view.value : juce::String(), card.removeFromTop(15), juce::Justification::centredLeft);
             auto bar = card.removeFromTop(3).toFloat();
             g.setColour(colours::screenLine);
             g.fillRoundedRectangle(bar, 1.5f);
             if (view.active)
             {
-                g.setColour(pageTint);
+                g.setColour(accent);
                 g.fillRoundedRectangle(bar.withWidth(bar.getWidth() * juce::jlimit(0.0f, 1.0f, view.normalised)), 1.5f);
             }
         }
@@ -553,8 +555,9 @@ public:
                     g.setColour(pageTint.withAlpha(0.22f));
                     g.fillRoundedRectangle(tab, 3.0f);
                 }
-                g.setColour(on ? pageTint : colours::screenLine.brighter(0.2f));
-                g.drawRoundedRectangle(tab, 3.0f, 1.0f);
+                // the page knob 5 is on: outlined in its white (D202)
+                g.setColour(on ? juce::Colour(0xfff2f5f8) : colours::screenLine.brighter(0.2f));
+                g.drawRoundedRectangle(tab, 3.0f, on ? 1.3f : 1.0f);
                 g.setColour(on ? colours::screenInk : colours::screenDim);
                 g.drawText(names[i], tab, juce::Justification::centred);
                 hits.push_back({ tab.toNearestInt(), [this, i] { model.clickPage(i); } });
@@ -1174,6 +1177,9 @@ public:
                 knob.ring = coolsynth::ui::tintColour(model.part() == 0 ? Tint::home : Tint::partB);
             else
                 knob.ring = juce::Colour(0xffc4cad1);
+            if (view.idle) // does nothing now: a faint ring, still turnable (D201)
+                knob.ring = knob.ring.withAlpha(0.28f);
+            knobIdle[static_cast<std::size_t>(k)] = view.idle;
             knobLabels[static_cast<std::size_t>(k)] = view.name;
             knob.repaint();
         }
@@ -1262,7 +1268,7 @@ public:
             g.setColour(colours::print);
             g.drawText(juce::String(k + 1), b.getX() - 10, b.getBottom() + 1, b.getWidth() + 20, 16, juce::Justification::centred);
             g.setFont(sans(14.0f)); // larger (D191; was 12)
-            g.setColour(knobLabels[static_cast<std::size_t>(k)] == emDash ? colours::muted : colours::ink);
+            g.setColour(knobLabels[static_cast<std::size_t>(k)] == emDash || knobIdle[static_cast<std::size_t>(k)] ? colours::muted : colours::ink);
             g.drawFittedText(knobLabels[static_cast<std::size_t>(k)], b.getX() - 16, b.getBottom() + 17, b.getWidth() + 32, 36,
                              juce::Justification::centredTop, 2);
         }
@@ -1439,6 +1445,7 @@ private:
     Knob mainKnob;
     std::array<Knob, 8> knobs;
     std::array<juce::String, 8> knobLabels;
+    std::array<bool, 8> knobIdle {}; // knobs that do nothing now, drawn dimmed (D201)
     std::array<juce::Slider, 4> faders;
     std::array<Pad, 8> pads;
     juce::TextButton options, hold, octDown, octUp;

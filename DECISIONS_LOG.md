@@ -4025,3 +4025,21 @@ Two faults the user found:
 - **Solo A played in the left speaker only**: Spread (set by Double) pushes A left and B right, and
   stayed on with A alone. Balance, Detune and Spread now act only while both layers sound: a soloed
   layer, or one beside an empty layer, plays as it is. Confirmed by the user (both speakers).
+
+## D201. A knob that does nothing now shows dimmed (2026-11-15)
+
+The user, on Spread having no effect in solo: shouldn't it be greyed out, "maybe on others as
+well?" Asked (options: dimmed and still turnable, recommended and chosen; disabled; and where:
+everywhere it happens, recommended and chosen; the Layers page only): a setting that does nothing at
+the moment shows a faint ring, a grey name and value, and its screen card says when it acts; it still
+turns, so it can be set ahead. Where: Balance, Detune and Spread while a layer is soloed or the other
+layer is empty ("SOLO", "BOTH LAYERS"); the other layer's Transpose when that layer is empty ("B
+EMPTY"); the Arp page's Rate, Pattern and Octaves and the Groove page while the layer's arp is off
+("ARP OFF"); Glide on an empty layer ("LAYER EMPTY").
+
+## D202. Knob 5 in white (2026-11-15)
+
+"Live Page is a very important knob" (the user). Its faint blue ring became bright white, unlike
+every section's colour (options: bright white, recommended and chosen; a strong blue, close to
+Shape's; the page's own colour, which would look like knobs 1-4); the screen's current page tab is
+outlined in the same white.
