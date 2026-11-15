@@ -157,6 +157,13 @@ public:
         audio thread. Serial anyway while a host renders offline. COOLSYNTH_MULTICORE=0 switches it off. */
     void setMultiCore(bool on) noexcept { multiCoreWanted.store(on, std::memory_order_relaxed); }
     [[nodiscard]] bool multiCore() const noexcept { return multiCoreWanted.load(std::memory_order_relaxed); }
+    /** Multi-core as chosen in Options (D174): applied now and remembered, by the standalone app in its own settings
+        (rememberMultiCore), else for the plugin on this computer, read again by every CoolSynth plugin it opens. */
+    void chooseMultiCore(bool on);
+    /** Set by the standalone app: where it keeps the Multi-core choice. Message thread. */
+    std::function<void(bool)> rememberMultiCore;
+    /** Set by the standalone app: opens its audio and MIDI settings; the panel's Options offers it when set. */
+    std::function<void()> showAudioSettings;
     /** One MIDI thread only (the standalone app's MiniLab driver): a note, controller, bend or pressure message for
         the sound, lock-free; it plays one block later at its own time (D159). False when the queue is full. */
     bool pushLiveMidi(const juce::MidiMessage& message) noexcept;
@@ -330,6 +337,7 @@ private:
     std::atomic<bool> patchDirty { false };
     juce::String patchName { "Init" };
     mutable juce::CriticalSection patchIdentityLock;
+    static juce::PropertiesFile& pluginOptions(); // the plugin's per-computer choices (D174)
 
     // The flight recorder's tripwires (diagnostics/FlightRecorder.h): audio thread only.
     void checkBlockTripwires(juce::AudioBuffer<float>& buffer, double startMs) noexcept;

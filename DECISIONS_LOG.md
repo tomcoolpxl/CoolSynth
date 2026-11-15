@@ -3462,3 +3462,26 @@ parts = layer, split or b), worked out once. Over the 120 presets: VA 58, Sample
 Tested: the examples of the specification (Frozen Pluck: Physical Grain; Steinway Grand: Sample),
 one to three per preset, no repeats, Noise and Filter only alone, the list carrying them row for
 row and the categories none. Drawn: build/panel-home.png.
+
+## D174. Options on the panel, and the CPU's work on it (2026-11-15)
+
+Overnight, the user away (recommended options taken, the others listed). Planned in D169:
+- **An Options button of CoolSynth's own**, top right on the panel, above the faders, so the
+  plugin has Options too. It and the standalone window's own Options button open one menu: Audio
+  and MIDI settings (in the app only), Multi-core Auto or Off, the last second's CPU work, this
+  computer. Options for the place: **the top right corner (chosen)**, free on the panel; under the
+  screen beside the main knob (crowds its two labels); inside the screen (it belongs to the
+  sound, Options do not).
+- **The plugin remembers Multi-core per computer**, in %APPDATA%\CoolSynth\plugin.options, read by
+  every CoolSynth plugin it opens; the app keeps its own choice in its settings as before (D167).
+  Options: **per computer (chosen)**, it is about the machine; in each project's state (a project
+  moved to a weaker computer would carry it); not at all (always Auto). COOLSYNTH_MULTICORE=0
+  still wins.
+- **The CPU line**, left of the button: "CPU 7%, slowest block 9%, helpers 1 3 2%" - the audio
+  thread's share of the last second, the slowest block against its time, each helper's share
+  (D172's numbers). Amber from 60% of a block's time, red from 90%. A click on it opens Options.
+  Options for the number: **both the average and the slowest block (chosen)**, the slowest is what
+  drops out; only the average (hides spikes); only the slowest (jumpy).
+Tested: a choice is applied and handed to where the app keeps it; the CPU line after a second of
+sound. Drawn: build/panel-home.png. Still for the user's eye: the menu itself in the app and in a
+host.

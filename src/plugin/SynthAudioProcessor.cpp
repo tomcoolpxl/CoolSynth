@@ -184,6 +184,39 @@ SynthAudioProcessor::SynthAudioProcessor()
         handle.store(-1);
     parameters.state.addListener(this);
     keyboardState.addListener(this);
+
+    // The plugin's Multi-core choice is the computer's, not the project's (D174); the standalone app applies its own.
+    if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined
+        && juce::SystemStats::getEnvironmentVariable("COOLSYNTH_MULTICORE", "1") != "0")
+        if (auto& options = pluginOptions(); options.containsKey("multiCore"))
+            setMultiCore(options.getBoolValue("multiCore", true));
+}
+
+juce::PropertiesFile& SynthAudioProcessor::pluginOptions()
+{
+    // %APPDATA%\CoolSynth\plugin.options: what the plugin remembers on this computer. Message thread.
+    static juce::PropertiesFile file = []
+    {
+        juce::PropertiesFile::Options options;
+        options.applicationName = "plugin";
+        options.filenameSuffix = ".options";
+        options.folderName = "CoolSynth";
+        options.storageFormat = juce::PropertiesFile::storeAsXML;
+        return juce::PropertiesFile(options);
+    }();
+    return file;
+}
+
+void SynthAudioProcessor::chooseMultiCore(bool on)
+{
+    setMultiCore(on);
+    if (rememberMultiCore)
+        rememberMultiCore(on);
+    else
+    {
+        pluginOptions().setValue("multiCore", on);
+        pluginOptions().saveIfNeeded();
+    }
 }
 
 SynthAudioProcessor::~SynthAudioProcessor()

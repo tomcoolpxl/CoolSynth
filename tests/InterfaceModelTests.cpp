@@ -330,10 +330,10 @@ public:
 
     void runTest() override
     {
-        const auto named = [](const juce::String& name)
+        const auto named = [](const juce::String& wanted)
         {
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
-                if (coolsynth::presets::getFactoryPreset(i).name == name)
+                if (coolsynth::presets::getFactoryPreset(i).name == wanted)
                     return coolsynth::ui::enginePills(i).joinIntoString(" ");
             return juce::String("(no such preset)");
         };
@@ -352,13 +352,13 @@ public:
         for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
         {
             const auto pills = coolsynth::ui::enginePills(i);
-            const auto& name = coolsynth::presets::getFactoryPreset(i).name;
-            expect(pills.size() >= 1 && pills.size() <= 3, name + ": " + pills.joinIntoString(" "));
+            const auto& preset = coolsynth::presets::getFactoryPreset(i).name;
+            expect(pills.size() >= 1 && pills.size() <= 3, preset + ": " + pills.joinIntoString(" "));
             juce::StringArray unique(pills);
             unique.removeDuplicates(false);
-            expectEquals(unique.size(), pills.size(), name);
-            expect(! pills.contains("Noise") || pills.size() == 1, name + ": Noise only when it is the sound");
-            expect(! pills.contains("Filter") || pills.size() == 1, name + ": Filter only when no generator plays");
+            expectEquals(unique.size(), pills.size(), preset);
+            expect(! pills.contains("Noise") || pills.size() == 1, preset + ": Noise only when it is the sound");
+            expect(! pills.contains("Filter") || pills.size() == 1, preset + ": Filter only when no generator plays");
             for (const auto& pill : pills)
                 ++counts[pill];
         }
@@ -436,3 +436,44 @@ public:
 };
 
 static BulkEditTests bulkEditTests;
+
+// ---- Options (D174) -----------------------------------------------------------------------------------------
+
+class OptionsTests final : public juce::UnitTest
+{
+public:
+    OptionsTests() : juce::UnitTest("Options: Multi-core and the CPU line", "Interface") {}
+
+    void runTest() override
+    {
+        beginTest("Multi-core chosen in Options is applied and handed to where the app keeps it");
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        juce::Array<bool> remembered;
+        synth->rememberMultiCore = [&](bool on) { remembered.add(on); };
+        synth->chooseMultiCore(false);
+        expect(! synth->multiCore());
+        synth->chooseMultiCore(true);
+        expect(synth->multiCore());
+        expectEquals(remembered.size(), 2);
+        expect(! remembered[0] && remembered[1]);
+
+        beginTest("The CPU line says the audio thread's share and the slowest block, after a second of sound");
+        synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+        synth->prepareToPlay(48000.0, 256);
+        juce::AudioBuffer<float> buffer(2, 256);
+        juce::MidiBuffer midi;
+        midi.addEvent(juce::MidiMessage::noteOn(1, 60, static_cast<juce::uint8>(100)), 0);
+        for (int b = 0; b < 200; ++b)
+        {
+            buffer.clear();
+            synth->processBlock(buffer, midi);
+            midi.clear();
+        }
+        const auto line = PanelEditor::cpuSummary(*synth);
+        logMessage(line);
+        expect(line.startsWith("CPU ") && line.contains("slowest block"), line);
+        expectGreaterThan(synth->cpuLoad().percent[0], 0.0f);
+    }
+};
+
+static OptionsTests optionsTests;

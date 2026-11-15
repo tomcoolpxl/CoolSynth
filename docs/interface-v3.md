@@ -110,8 +110,10 @@ editor, per-preset macro names for all 120 presets (none are written yet), Brigh
 engine hooks (D140).
 
 Planned for the real interface (D169):
-- **An Options button** in CoolSynth's own interface, so the plugin has one too (today only the
-  standalone app's window has Options, with Audio and MIDI and Multi-core Auto/Off, D167).
+- **An Options button** in CoolSynth's own interface (built, D174): top right on the panel, so the
+  plugin has one too; the standalone window's own Options button opens the same menu (Audio and
+  MIDI in the app, Multi-core Auto/Off, the CPU's work, this computer). Beside it the last second's
+  CPU line: the audio thread's share, the slowest block against its time, each helper's share.
 - **Engine pills in the sound browser** (built, D173; software screen only, not the MiniLab): each
   sound's row shows, right-aligned, small transparent pills with rounded corners naming what makes
   its sound, one pill per engine its generator slots use, in slot order (part A, then part B where

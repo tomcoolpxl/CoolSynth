@@ -2,6 +2,7 @@
 
 #include "SynthAudioProcessor.h"
 #include "interface/InterfaceModel.h"
+#include "synth/v3/AudioWorkers.h"
 
 namespace
 {
@@ -666,6 +667,14 @@ public:
         hold.setButtonText("Hold");
         octDown.setButtonText("Oct -");
         octUp.setButtonText("Oct +");
+
+        // CoolSynth's own Options (D174), so the plugin has them too; the last second's CPU work beside it.
+        options.setButtonText("Options");
+        options.onClick = [this] { PanelEditor::showOptions(owner.synth, options); };
+        options.setColour(juce::TextButton::buttonColourId, colours::knob);
+        options.setColour(juce::TextButton::textColourOffId, colours::ink);
+        options.setTooltip("Multi-core, the CPU's work, and audio and MIDI in the app");
+        addAndMakeVisible(options);
         for (auto* button : { &hold, &octDown, &octUp })
             button->setTooltip("Works inside the keyboard itself");
 
@@ -753,6 +762,15 @@ public:
             g.setColour(colours::print);
             g.drawText(s == 0 ? "Pitch" : "Mod", strip.removeFromBottom(22.0f), juce::Justification::centred);
         }
+        // the last second's CPU work (D174): amber from 60% of a block's time, red from 90%
+        {
+            const float worst = owner.synth.cpuLoad().worstBlock;
+            g.setFont(sans(10.5f));
+            g.setColour(worst >= 0.9f ? coolsynth::ui::tintColour(Tint::record)
+                                      : (worst >= 0.6f ? coolsynth::ui::tintColour(Tint::sound) : colours::print));
+            g.drawText(PanelEditor::cpuSummary(owner.synth), cpuArea, juce::Justification::centredRight);
+        }
+
         // Shift's light grey border
         g.setColour(colours::shiftEdge);
         g.drawRoundedRectangle(shift.getBounds().toFloat().reduced(0.5f), 7.0f, 2.0f);
@@ -860,6 +878,16 @@ public:
         // keys
         keyboard.setBounds(left, padBottom + 30, designWidth - 2 * left, designHeight - padBottom - 30 - 32);
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / 15.0f);
+
+        // Options in the top right corner, above the faders; the CPU line to its left, over the knobs
+        options.setBounds(designWidth - 38 - 70, 14, 70, 19);
+        cpuArea = { knobsX, 14, options.getX() - 10 - knobsX, 19 };
+    }
+
+    void mouseDown(const juce::MouseEvent& e) override
+    {
+        if (cpuArea.contains(e.getPosition()))
+            PanelEditor::showOptions(owner.synth, options);
     }
 
 private:
@@ -871,9 +899,9 @@ private:
     std::array<juce::String, 8> knobLabels;
     std::array<juce::Slider, 4> faders;
     std::array<Pad, 8> pads;
-    juce::TextButton shift, hold, octDown, octUp;
+    juce::TextButton shift, hold, octDown, octUp, options;
     FlatKeyboard keyboard;
-    juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea;
+    juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea;
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
 };
@@ -942,4 +970,52 @@ void PanelEditor::modifierKeysChanged(const juce::ModifierKeys& modifiers)
 {
     shiftKeyDown = modifiers.isShiftDown();
     content->refresh();
+}
+
+// ---- Options (D174) ------------------------------------------------------------------------------------
+
+juce::String PanelEditor::cpuSummary(const SynthAudioProcessor& synth)
+{
+    const auto load = synth.cpuLoad();
+    juce::String text = "CPU " + juce::String(juce::roundToInt(load.percent[0])) + "%, slowest block "
+                        + juce::String(juce::roundToInt(100.0f * load.worstBlock)) + "%";
+    if (load.threads > 1)
+    {
+        text << ", helpers";
+        for (int t = 1; t < load.threads; ++t)
+            text << " " << juce::roundToInt(load.percent[static_cast<std::size_t>(t)]);
+        text << "%";
+    }
+    return text;
+}
+
+void PanelEditor::showOptions(SynthAudioProcessor& synth, juce::Component& target)
+{
+    const bool multiCore = synth.multiCore();
+    const auto& workers = coolsynth::synth::v3::AudioWorkers::instance();
+    juce::PopupMenu menu;
+    if (synth.showAudioSettings)
+    {
+        menu.addItem(1, "Audio and MIDI settings...");
+        menu.addSeparator();
+    }
+    menu.addSectionHeader("Multi-core");
+    menu.addItem(2, "Auto: sounds that overlap play on several cores", true, multiCore);
+    menu.addItem(3, "Off: everything on the audio thread", true, ! multiCore);
+    menu.addSeparator();
+    menu.addSectionHeader("The last second");
+    menu.addItem(4, cpuSummary(synth) + " of the time", false, false);
+    menu.addItem(5, "This computer: " + workers.cpu().describe() + "; " + juce::String(workers.workerCount())
+                        + (workers.workerCount() == 1 ? " helper" : " helpers"), false, false);
+    juce::Component::SafePointer<juce::Component> safeTarget(&target);
+    menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&target),
+                       [&synth, safeTarget](int chosen)
+                       {
+                           if (safeTarget == nullptr)
+                               return; // the window closed meanwhile
+                           if (chosen == 1 && synth.showAudioSettings)
+                               synth.showAudioSettings();
+                           else if (chosen == 2 || chosen == 3)
+                               synth.chooseMultiCore(chosen == 2);
+                       });
 }

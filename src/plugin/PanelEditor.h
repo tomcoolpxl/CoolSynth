@@ -33,6 +33,12 @@ public:
     /** Draws everything again from the model now (the timer does it 30 times a second). */
     void refresh() { timerCallback(); }
 
+    /** CoolSynth's Options (D174), from the panel's button and the standalone window's: Audio and MIDI (where the
+        app offers it), Multi-core Auto or Off, the last second's CPU work, this computer. Message thread. */
+    static void showOptions(SynthAudioProcessor& synth, juce::Component& target);
+    /** The last second's work in one line: "CPU 7%, slowest block 9%, helpers 1 3 2%". */
+    [[nodiscard]] static juce::String cpuSummary(const SynthAudioProcessor& synth);
+
     static constexpr int designWidth = 1100;
     static constexpr int designHeight = 690;
 

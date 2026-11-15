@@ -3,6 +3,7 @@
 #include "StandaloneAudioSupport.h"
 #include "SettingsStore.h"
 #include "MiniLab3Driver.h"
+#include "plugin/PanelEditor.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "synth/v3/AudioWorkers.h"
 #include "synth/v3/SampleLibrary.h"
@@ -52,6 +53,17 @@ public:
                 if (auto* store = coolsynth::standalone::getStandaloneSettingsStore();
                     store != nullptr && juce::SystemStats::getEnvironmentVariable("COOLSYNTH_MULTICORE", "1") != "0")
                     synth->setMultiCore(store->getMultiCore());
+                // The panel's Options (D174) keep the choice where this window's do, and offer the devices.
+                synth->rememberMultiCore = [](bool on)
+                {
+                    if (auto* store = coolsynth::standalone::getStandaloneSettingsStore())
+                        store->setMultiCore(on);
+                };
+                synth->showAudioSettings = [this]
+                {
+                    if (auto* h = getPluginHolder())
+                        h->showAudioSettingsDialog();
+                };
                 miniLab = std::make_unique<coolsynth::standalone::MiniLab3Driver>(synth->getInterfaceModel(),
                                                                                   host->deviceManager,
                                                                                   *synth);
@@ -74,36 +86,13 @@ private:
     juce::Button* originalOptionsButton = nullptr;
     void openCustomSettings()
     {
-        // Until the real interface: JUCE's own audio and MIDI settings choose the devices, and multi-core is a choice
-        // of two (D167). The choice is kept in the app's settings.
+        // The same Options as the panel's own button (D174): audio and MIDI, Multi-core (kept in the app's settings,
+        // D167), the CPU's work.
         auto* holder = getPluginHolder();
-        auto* synth = holder != nullptr ? dynamic_cast<SynthAudioProcessor*>(holder->processor.get()) : nullptr;
-        const bool multiCore = synth != nullptr && synth->multiCore();
-        const auto& workers = coolsynth::synth::v3::AudioWorkers::instance();
-
-        juce::PopupMenu menu;
-        menu.addItem(1, "Audio and MIDI settings...");
-        menu.addSeparator();
-        menu.addSectionHeader("Multi-core");
-        menu.addItem(2, "Auto: sounds that overlap play on several cores", synth != nullptr, multiCore);
-        menu.addItem(3, "Off: everything on the audio thread", synth != nullptr, ! multiCore);
-        menu.addItem(4, "This computer: " + workers.cpu().describe() + "; " + juce::String(workers.workerCount())
-                            + (workers.workerCount() == 1 ? " helper" : " helpers"), false, false);
-
-        menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&customOptionsButton),
-                           [this](int chosen)
-                           {
-                               auto* h = getPluginHolder();
-                               auto* s = h != nullptr ? dynamic_cast<SynthAudioProcessor*>(h->processor.get()) : nullptr;
-                               if (chosen == 1 && h != nullptr)
-                                   h->showAudioSettingsDialog();
-                               else if ((chosen == 2 || chosen == 3) && s != nullptr)
-                               {
-                                   s->setMultiCore(chosen == 2);
-                                   if (auto* store = coolsynth::standalone::getStandaloneSettingsStore())
-                                       store->setMultiCore(chosen == 2);
-                               }
-                           });
+        if (auto* synth = holder != nullptr ? dynamic_cast<SynthAudioProcessor*>(holder->processor.get()) : nullptr)
+            PanelEditor::showOptions(*synth, customOptionsButton);
+        else if (holder != nullptr)
+            holder->showAudioSettingsDialog();
     }
 };
 
