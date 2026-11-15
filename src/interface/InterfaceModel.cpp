@@ -835,7 +835,7 @@ namespace coolsynth::ui
         // recorder's pads, that they come later.
         if (pad >= 0 && pad < 8)
         {
-            lastPopup.name = padLabel(pad, false);
+            lastPopup.name = pad == homePad ? juce::String("Home") : padLabel(pad, false); // the part goes on line 2
             lastPopup.value = pad >= 4 && pad <= 6 ? juce::String("comes later") : "Part " + juce::String(currentPart == 0 ? "A" : "B");
             lastPopup.normalised = 1.0f;
             lastPopup.fader = false;
@@ -1146,7 +1146,7 @@ namespace coolsynth::ui
             case 4: return "Stop";
             case 5: return "Play";
             case 6: return "Record";
-            default: return "Home";
+            default: return currentPart == 0 ? "Home: A" : "Home: B"; // the part it switches (D188)
         }
     }
 

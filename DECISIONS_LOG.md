@@ -3760,3 +3760,9 @@ CoolSynth uses) and 4-7 in transport colours; our colours sent again under Shift
 - **One Options**: the window bar's Options button is gone; Prefs on the panel is CoolSynth's Options
   (with Audio and MIDI in the app). The CPU line is back at the top right (D185 had moved it under
   the keys, where the user did not find it). No text under Stop, Play and Record.
+
+## D188. The Home pad says the part (2026-11-15)
+
+At the user's word ("Home: A and Home: B, or alternatives"): the Home pad reads **Home: A** or
+**Home: B** (teal or yellow, D185). The MiniLab's pad pop-up keeps "Home" with the part on line 2.
+Options for the words: **Home: A / Home: B (chosen, the user's)**; "Home A"; "A · Home".

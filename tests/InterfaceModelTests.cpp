@@ -254,11 +254,11 @@ public:
         {
             auto synth = std::make_unique<SynthAudioProcessor>();
             auto model = std::make_unique<InterfaceModel>(*synth);
-            const juce::StringArray expected { "Home", "Sound", "Shape", "Motion", "Stop", "Play", "Record", "Effects" };
+            const juce::StringArray expected { "Home: A", "Sound", "Shape", "Motion", "Stop", "Play", "Record", "Effects" };
             for (int p = 0; p < 8; ++p)
                 expectEquals(model->padLabel(p, false), expected[p]);
             expectEquals(model->padLabel(7, true), juce::String("Effects"), "no Shift on the pads: Shift + pads 1-3 are the MiniLab's own");
-            expectEquals(model->padLabel(0, true), juce::String("Home"));
+            expectEquals(model->padLabel(0, true), juce::String("Home: A"));
             model->pressPad(7, false);
             expectEquals(model->section(), 3, "the last pad opens Effects");
             model->pressPad(0, false);
