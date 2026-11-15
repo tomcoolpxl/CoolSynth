@@ -177,6 +177,7 @@ if(BUILD_TESTING)
             tests/MidiLearnTests.cpp
             tests/AudioThreadAlarm.cpp
             tests/AudioScenarioTests.cpp
+            tests/ClickDetectorTests.cpp
             tests/V3EarlierSoundTests.cpp
             tests/InterfaceModelTests.cpp
             tests/PatchStateTests.cpp

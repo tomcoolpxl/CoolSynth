@@ -3387,3 +3387,36 @@ real-time review (D161) left open:
 - **Old tails coming back**: a chorus or reverb whose mix faded to nothing kept its last state, and
   the old tail played again when the mix came back. Now it is emptied when it falls silent.
   Options: **empty it (chosen)**; keep it (before).
+
+## D171. The click detector, and effect fades without corners (2026-11-15)
+
+Overnight, the user away (recommended options taken, the others listed). The tests now listen for
+clicks (tests/ClickDetectorTests.cpp), through the whole processor, on the factory presets:
+- **How a click is told**: roughness, the largest second difference (|x[n] - 2x[n-1] + x[n-2]|), in
+  the 20-30 ms after an event, against the sound's own: in the 200 ms before, once settled after,
+  and in the same render without the event (or with a second voice free, for a steal). A click is
+  half again as rough (1.5x) and above -60 dB. Options: **second difference (chosen)**, it hears a
+  step and a corner and little of a low tone; first difference (hears bass as roughness); a
+  spectral flux measure (more code, no clearer). The test checks itself on a sine with a -34 dB step.
+- **What it plays**: a preset change while a chord rings, on all 120 (worst 1.00x: the earlier sound
+  is untouched, D158); an effect type change in a part insert and a master slot on every sixth
+  preset, every type in turn (worst 0.99x); a stolen voice on all 120, one voice and a second key
+  (worst 1.31x, Harp String); an instrument read in the background while an earlier sampled sound
+  rings (1.00x; the stand-in recordings are short, so one of eight pairs overlaps). About 90 s of
+  the test run. COOLSYNTH_CLICK_ONLY=name runs one preset, COOLSYNTH_CLICK_PROFILE=1 prints a
+  finding in 2 ms frames.
+- **Found and fixed**: an effect type change bent the waveform where the old effect's fade-out met
+  the new one's fade-in (Wine Glasses, master reverb to LoFi, 1.90x). The straight-line gains rose
+  into that point and fell after it, a corner. Now the gain is a raised cosine, flat where it
+  starts and ends (1.00x). Options: **raised cosine (chosen)**; a longer straight fade (the corner
+  smaller, not gone); a square root of the gain (tried: worse, 10.8x, it starts infinitely steep).
+  On the way, a fade-in now fades the effect's output too, so what an effect makes of its own
+  (LoFi's hiss and crackle) rises instead of starting at full level, and the dry signal takes
+  1 - s*s, so a fade no longer dips by up to 2.5 dB halfway.
+- **Not a click after all**: a steal on Future Chord looked rougher than the same note played
+  fresh (1.81x), but the fresh note had empty chorus and reverb. Against the same render with a
+  second voice free it is 0.85x; the test uses that reference.
+Sources: the SFZ format's 6 ms default fade for stolen voices (sfzformat.com, off_time); delay-line
+interpolation and smoothing (CCRMA, J. O. Smith, Physical Audio Signal Processing); the raised cosine
+over a straight ramp, for a slope without a jump (linux-audio-dev, "Noiseless volume changes", 2013;
+the Audacity manual, Fade and Crossfade).

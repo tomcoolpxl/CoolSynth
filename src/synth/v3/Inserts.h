@@ -263,9 +263,16 @@ namespace coolsynth::synth::v3
             const float gainTo = change == Change::fadingOut ? 1.0f - to : to;
 
             // The effect hears the signal faded with it, so its delay lines fill (or empty) gradually and nothing it
-            // delays starts or stops mid-waveform; the dry signal takes up the rest. Going out, its output fades too,
-            // so its memory is silent when it is cleared.
+            // delays starts or stops mid-waveform. Its output fades too, both ways: going out, so its memory is silent
+            // when it is cleared; coming in, so what it makes of its own (LoFi's hiss and crackle) rises instead of
+            // starting at full level. The dry signal takes the rest, 1 - s * s, so what the effect does to the signal
+            // crossfades without a dip. The gain s is a raised cosine (D171): it starts and ends flat, so the fade has
+            // no corner where it begins, ends, or where the old effect's fade meets the new one's.
             const float step = (gainTo - gainFrom) / static_cast<float>(n);
+            const auto smooth = [](float g) noexcept
+            {
+                return 0.5f - 0.5f * std::cos(juce::MathConstants<float>::pi * std::clamp(g, 0.0f, 1.0f));
+            };
             for (int ch = 0; ch < 2; ++ch)
             {
                 dry.copyFrom(ch, 0, stereo, ch, 0, n);
@@ -274,11 +281,10 @@ namespace coolsynth::synth::v3
                 for (int i = 0; i < n; ++i)
                 {
                     g += step;
-                    in[i] *= g;
+                    in[i] *= smooth(g);
                 }
             }
             processType(stereo, playing, context);
-            const bool goingOut = change == Change::fadingOut;
             for (int ch = 0; ch < 2; ++ch)
             {
                 float* wet = stereo.getWritePointer(ch);
@@ -287,7 +293,8 @@ namespace coolsynth::synth::v3
                 for (int i = 0; i < n; ++i)
                 {
                     g += step;
-                    wet[i] = clean[i] * (1.0f - g) + wet[i] * (goingOut ? g : 1.0f);
+                    const float s = smooth(g);
+                    wet[i] = clean[i] * (1.0f - s * s) + wet[i] * s;
                 }
             }
 
