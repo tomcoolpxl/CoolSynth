@@ -182,9 +182,8 @@ Still valid independently of the engine shape:
   self-oscillation level (rms 0.15 at full resonance) wants an output lift.
 - If the saw's -79 dB alias floor at A7 ever shows in a mix, go to a 6-point (quintic B-spline)
   BLEP: about another 25 dB for two more samples of latency.
-- Measurement-style regressions still missing: THD of a sine through the ladder at low resonance
-  below a stated bound; attack reaching full level within the programmed time; reverb RT60 within
-  a range for a given size.
+- Measurement-style regressions still missing (reverb RT60 done, D178): THD of a sine through the ladder at low resonance
+  below a stated bound; attack reaching full level within the programmed time.
 
 Absorbed into V3 (do not do them on V2):
 

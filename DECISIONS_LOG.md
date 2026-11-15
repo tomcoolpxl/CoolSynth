@@ -3562,3 +3562,21 @@ Macros page's four knobs did nothing anywhere. So each preset got four routings 
   global LFO's rate; where an LFO was unused, Movement also raises its rate, so depth and speed
   grow together; the Time macro scales an envelope's attack with its decay and release.
 The test run now takes about five minutes (the macro and click checks over all presets).
+
+## D178. Reverb length measured; parts A/B parked (2026-11-15)
+
+With the user. The open items around effects were taken up (macros reaching the effects, saving
+one's own sounds, a reverb-length test); asked whether the two parts of a sound (A and B, D70-D75)
+are still a good idea, the user **parked** that question to talk it through later. Options laid
+out: two sounds stacked from the browser (Hydrasynth Multi, Montage, Kronos Combinations; the
+recommendation), keep as it is, drop part B, talk it through first (chosen). Only Supersaw, Juno
+Pad and Deep Field play a part B. What follows is built for the two parts as they are.
+
+- **The reverb-length test** (tests/V3ReverbTests.cpp): RT60 as T30, the Schroeder backward
+  integral from -5 to -35 dB, doubled (ISO 3382). The plate at damping 0.3 rings 2.41, 4.36 and
+  10.49 s at sizes 0.2, 0.5 and 0.8; the room at damping 0.5 rings 0.15, 0.32 and 0.66 s. The
+  test holds each within a fifth of that and longer with size. Options for the band: **a fifth
+  (chosen)**, tight enough to show a change to the tank, loose enough for a retuned allpass; a
+  tenth (would fail on harmless changes); only "longer with size" (a halved tail would pass).
+  Worth knowing: the plate's smallest size is still a 2.4 s space; short rooms are the Room
+  effect's.

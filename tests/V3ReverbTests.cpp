@@ -7,12 +7,16 @@
 
 #include "presets/BankFile.h"
 #include "synth/PlateReverb.h"
+#include "synth/v3/RoomInsert.h"
 
 namespace
 {
     using coolsynth::synth::PlateReverb;
 
     constexpr double kRate = 48000.0;
+    // The decay times measured when the test was written (D178), at sizes 0.2, 0.5 and 0.8.
+    constexpr double kPlateT60[3] = { 2.41, 4.36, 10.49 }; // damping 0.3
+    constexpr double kRoomT60[3] = { 0.15, 0.32, 0.66 };   // damping 0.5
 
     std::unique_ptr<PlateReverb> makeReverb(float preDelayMs = 0.0f, float lowCut = 20.0f, float shimmer = 0.0f, float size = 0.6f)
     {
@@ -130,6 +134,71 @@ public:
             expect(finite);
             expectLessThan(fifth, 0.7f * second, "falling by the fifth second");
             expectLessThan(eighth, 0.7f * fifth, "and still falling by the eighth");
+        }
+
+        beginTest("decay_time_rises_with_size_and_stays_in_its_range");
+        {
+            // RT60 from the Schroeder backward integral: the time from -5 to -35 dB, doubled (T30), as rooms are
+            // measured (ISO 3382). The ranges hold what the plate and the room do now, give or take a fifth: a
+            // change to either that moves their length shows here.
+            const auto t60 = [](const std::vector<float>& y)
+            {
+                std::vector<double> tail(y.size() + 1, 0.0);
+                for (std::size_t i = y.size(); i-- > 0;)
+                    tail[i] = tail[i + 1] + static_cast<double>(y[i]) * y[i];
+                const auto at = [&](double db)
+                {
+                    for (std::size_t i = 0; i < y.size(); ++i)
+                        if (10.0 * std::log10(std::max(tail[i], 1.0e-30) / tail[0]) <= db)
+                            return static_cast<double>(i) / kRate;
+                    return static_cast<double>(y.size()) / kRate;
+                };
+                return 2.0 * (at(-35.0) - at(-5.0));
+            };
+            std::vector<float> impulse(static_cast<std::size_t>(kRate * 12.0), 0.0f);
+            impulse[10] = 1.0f;
+
+            double previous = 0.0;
+            juce::String plateTimes;
+            for (const float size : { 0.2f, 0.5f, 0.8f })
+            {
+                auto plate = makeReverb(0.0f, 20.0f, 0.0f, size);
+                const double seconds = t60(run(*plate, impulse));
+                plateTimes << "size " << juce::String(size, 1) << ": " << juce::String(seconds, 2) << " s  ";
+                expectGreaterThan(seconds, previous, "longer with size");
+                previous = seconds;
+                const double expected = size < 0.3f ? kPlateT60[0] : (size < 0.6f ? kPlateT60[1] : kPlateT60[2]);
+                expectWithinAbsoluteError(seconds, expected, 0.2 * expected, "plate size " + juce::String(size, 1));
+            }
+            logMessage("plate RT60, damping 0.3: " + plateTimes);
+
+            juce::String roomTimes;
+            previous = 0.0;
+            for (const float size : { 0.2f, 0.5f, 0.8f })
+            {
+                coolsynth::synth::v3::RoomInsert room;
+                room.prepare(kRate);
+                coolsynth::synth::v3::RoomInsert::Settings settings;
+                settings.size = size;
+                settings.mix = 1.0f;
+                juce::AudioBuffer<float> block(2, 256);
+                std::vector<float> out;
+                for (std::size_t s = 0; s < impulse.size(); s += 256)
+                {
+                    block.clear();
+                    for (int i = 0; i < 256 && s + static_cast<std::size_t>(i) < impulse.size(); ++i)
+                        block.setSample(0, i, impulse[s + static_cast<std::size_t>(i)]), block.setSample(1, i, impulse[s + static_cast<std::size_t>(i)]);
+                    room.process(block, settings);
+                    out.insert(out.end(), block.getReadPointer(0), block.getReadPointer(0) + 256);
+                }
+                const double seconds = t60(out);
+                roomTimes << "size " << juce::String(size, 1) << ": " << juce::String(seconds, 2) << " s  ";
+                expectGreaterThan(seconds, previous, "longer with size");
+                previous = seconds;
+                const double expected = size < 0.3f ? kRoomT60[0] : (size < 0.6f ? kRoomT60[1] : kRoomT60[2]);
+                expectWithinAbsoluteError(seconds, expected, 0.2 * expected, "room size " + juce::String(size, 1));
+            }
+            logMessage("room RT60, damping 0.5: " + roomTimes);
         }
 
         beginTest("bank_reverb_slot_takes_the_new_keys");
