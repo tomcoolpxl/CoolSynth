@@ -189,6 +189,9 @@ SynthAudioProcessor::~SynthAudioProcessor()
 {
     keyboardState.removeListener(this);
     parameters.state.removeListener(this);
+    for (const auto& retired : retiredUserSounds)
+        coolsynth::synth::v3::UserLibrary::instance().release(retired.handle);
+    retiredUserSounds.clear();
     for (auto& handle : userSoundHandles)
         if (const int held = handle.exchange(-1); held >= 0)
             coolsynth::synth::v3::UserLibrary::instance().release(held);
@@ -253,7 +256,12 @@ void SynthAudioProcessor::refreshUserSounds()
             // loader thread start only once a patch names a file.)
             auto& library = coolsynth::synth::v3::UserLibrary::instance();
             const int handle = library.acquire(name);
-            library.release(userSoundHandles[index].exchange(handle));
+            const int previous = userSoundHandles[index].exchange(handle);
+            // A sound being replaced may ring on (D158): its files are let go only once it has ended.
+            if (loadingSound && previous >= 0)
+                retiredUserSounds.push_back({ previous, soundGeneration.load(std::memory_order_relaxed) - 1u });
+            else
+                library.release(previous);
             userSoundNames[index] = name;
         }
 }
@@ -325,6 +333,21 @@ void SynthAudioProcessor::handleNoteOff(juce::MidiKeyboardState*, int, int midiN
     if (showingHeardKeys)
         return;
     pushKey(clickedKeys, clickedKeyEvents, { static_cast<std::uint8_t>(juce::jlimit(0, 127, midiNoteNumber)), 0 });
+}
+
+void SynthAudioProcessor::releaseRetiredUserSounds()
+{
+    const auto oldest = oldestSoundingGeneration.load(std::memory_order_acquire);
+    for (auto it = retiredUserSounds.begin(); it != retiredUserSounds.end();)
+    {
+        if (static_cast<std::int32_t>(it->generation - oldest) < 0) // that sound has ended
+        {
+            coolsynth::synth::v3::UserLibrary::instance().release(it->handle);
+            it = retiredUserSounds.erase(it);
+        }
+        else
+            ++it;
+    }
 }
 
 void SynthAudioProcessor::showHeardKeys()
@@ -512,6 +535,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                                                                           static_cast<size_t> (engineEventCount)),
                        settings,
                        transportInfo);
+    oldestSoundingGeneration.store(synthEngine.oldestSoundingGeneration(), std::memory_order_release);
 
     // A chord learned from the keys becomes parameter values on the message thread.
     for (int part = 0; part < coolsynth::synth::v3::partCount; ++part)
@@ -541,12 +565,14 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
 void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, double startMs) noexcept
 {
     namespace diag = coolsynth::diag;
-    if (! diag::FlightRecorder::instance().running())
-        return;
     const int n = buffer.getNumSamples();
     const double rate = getSampleRate() > 0.0 ? getSampleRate() : 48000.0;
     const float budget = static_cast<float>(1000.0 * n / rate);
     const float took = static_cast<float>(juce::Time::getMillisecondCounterHiRes() - startMs);
+    // The engine lets an earlier sound go when the blocks run short of time (D158).
+    synthEngine.setLoad(budget > 0.0f ? took / budget : 0.0f);
+    if (! diag::FlightRecorder::instance().running())
+        return;
 
     // broken values make clicks: count and silence them
     int nonFinite = 0;
@@ -660,6 +686,7 @@ void SynthAudioProcessor::setCurrentProgram(int index)
     const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true); // one bulk edit, not a gesture per parameter
     const BulkEdit whole(*this); // the audio thread sees the old preset or the new one, never a mix (D157)
     soundGeneration.fetch_add(1, std::memory_order_relaxed); // notes ringing now keep the old sound (D158)
+    const juce::ScopedValueSetter<bool> loading(loadingSound, true);
     coolsynth::presets::applyFactoryPreset(parameters, preset);
     setPatchIdentity(preset.name, false);
 }
@@ -725,7 +752,10 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 
         const AtomicFlagScope applying(applyingPatch, true);
         const BulkEdit whole(*this);
-        soundGeneration.fetch_add(1, std::memory_order_relaxed); // a whole new sound (D158)
+        // A whole new sound (D158). A state that changes nothing (rejected, or the same) keeps no earlier sound: the
+        // engine compares the settings.
+        soundGeneration.fetch_add(1, std::memory_order_relaxed);
+        const juce::ScopedValueSetter<bool> loading(loadingSound, true);
         suppressGestureSnapshots = true;
         const bool applied = applyParameterStateXml(parameterStateXml);
         suppressGestureSnapshots = false;

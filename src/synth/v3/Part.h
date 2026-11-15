@@ -90,7 +90,7 @@ namespace coolsynth::synth::v3
         float tuneSemitones = 0.0f; // the part's fine detune, on every voice
         ChordSettings chord {};
         ArpParametersV2 arp {};
-        /** Counts up at every preset or state loaded: a note started before keeps the sound it started with (D158). */
+        /** Counts up at every preset or state loaded: the engine keeps the sound before ringing for its notes (D158). */
         std::uint32_t soundGeneration = 0;
     };
 
@@ -165,19 +165,7 @@ namespace coolsynth::synth::v3
             bool keyDown = false;
             bool sustained = false;  // key up, held by the pedal
             std::uint64_t order = 0; // when it last started a note
-            std::uint32_t generation = 0; // the sound it started under (D158)
         };
-
-        /** A sound that was replaced while notes of it still rang: they play on with it (D158). */
-        struct EarlierSound
-        {
-            bool used = false;
-            std::uint32_t generation = 0;
-            VoiceSettings voice {};
-        };
-        static constexpr int earlierSoundCount = 3; // more changes while notes ring: the oldest notes fade out
-        void keepRingingNotes(const PartSettings& settings) noexcept;
-        [[nodiscard]] const VoiceSettings& voiceSettingsFor(std::size_t voiceIndex, const PartSettings& settings) const noexcept;
 
         struct HeldNote
         {
@@ -253,12 +241,6 @@ namespace coolsynth::synth::v3
         bool macrosPrimed = false;
         std::array<bool, 128> keyIsDown {};
         int keysDown = 0;
-
-        std::array<EarlierSound, earlierSoundCount> earlierSounds {};
-        int nextEarlierSound = 0;
-        VoiceSettings lastVoiceSettings {}; // the voice settings of the last block
-        std::uint32_t soundGeneration = 0;  // the sound new notes start under
-        bool generationPrimed = false;
 
         std::uint64_t counter = 0;
         int lastNote = -1;

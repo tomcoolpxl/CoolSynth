@@ -133,6 +133,7 @@ public:
     const APVTS& getValueTreeState() const noexcept { return parameters; }
 
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
+    [[nodiscard]] coolsynth::synth::v3::EngineV3& engineForTesting() noexcept { return synthEngine; }
     /** One MIDI thread only (the standalone app's MiniLab driver): a note, controller, bend or pressure message for
         the sound, lock-free; it plays one block later at its own time (D159). False when the queue is full. */
     bool pushLiveMidi(const juce::MidiMessage& message) noexcept;
@@ -168,6 +169,7 @@ private:
         void timerCallback() override
         {
             owner.showHeardKeys();
+            owner.releaseRetiredUserSounds();
             if (! pending.exchange(false, std::memory_order_acq_rel))
                 return;
             owner.dispatchPendingMappedControllerEvents();
@@ -271,6 +273,16 @@ private:
     std::atomic<std::uint32_t> settingsSequence { 0 }; // odd while a bulk edit runs
     std::atomic<int> bulkEditDepth { 0 };
     std::atomic<std::uint32_t> soundGeneration { 0 }; // counts presets and states loaded (D158)
+    std::atomic<std::uint32_t> oldestSoundingGeneration { 0 }; // the audio's oldest sound still ringing
+    bool loadingSound = false; // message thread: a preset or a state is being applied
+    struct RetiredUserSound
+    {
+        int handle = -1;
+        std::uint32_t generation = 0; // the sound that used it
+    };
+    std::vector<RetiredUserSound> retiredUserSounds; // message thread: kept while that sound still rings
+    /** Message thread: lets go of the user's files that only sounds which have ended still used. */
+    void releaseRetiredUserSounds();
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
     int currentProgram = 0;

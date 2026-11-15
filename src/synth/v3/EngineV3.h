@@ -9,58 +9,43 @@
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
-#include "synth/GlobalFxRack.h"
-#include "Inserts.h"
-#include "Part.h"
+#include "SoundUnit.h"
 
 /*
-    V3 engine (DESIGN_V3.md sections 2, 7 and 8): two parts, then the master effect slots F1..F6,
-    then the master gain and a soft clipper. A master slot holds any of the twelve effects, as an
-    insert slot does, and the chain runs in slot order (decision D135).
+    V3 engine (DESIGN_V3.md sections 2, 7 and 8; decision D158): sound units, summed, then a soft
+    clipper. A sound unit (SoundUnit.h) is a whole sound: two parts, their insert slots, the master
+    effect slots F1..F6, the mix and the master gain.
 
-    Parts. Each part is a whole patch with its own note layer and voices. The part mode says
-    which of them the keys reach: A only, Layer (both on every key), Split (each inside its key
-    range) or B only; with both playing, each also has a velocity range. A part's Transpose moves
-    the keys it is sent, and the engine remembers what it sent for every key, so a release always
-    ends the note that key started, whatever changed meanwhile. A part that the mode switches off
-    lets go of its notes and rings out. Everything that is not a note reaches both parts.
-
-    Voices. With both parts playing they share sixteen voices: each may use what its patch asks
-    for (its polyphony, one voice for mono and legato, its unison count), is sure of eight, and
-    gets more when the other asks for fewer.
-
-    Inserts. Each part runs through three insert slots of its own before the mix (Inserts.h):
-    any of the twelve effects, one per slot, so two parts can be treated differently.
-
-    Mix. Each part has a level, a balance and an effects share: that share of the part passes
-    through the master slots, the rest joins after them, before the master gain. A sub layer set
-    to 0 stays out of the chorus and the plate.
-
-    Tempo. Synced delays and pumps, in the master slots and in the inserts, follow the host's tempo and
-    song position while it plays; otherwise the arp's tempo and a beat count that starts again
-    with the first note after silence.
+    A preset change while notes still sound works as on a Korg Kronos or a Yamaha Montage: the notes
+    held, on the keys or the pedal, go on with the sound they started with, its effects, modulators
+    and mix included, and only new notes take the new preset. The engine keeps four units: the one
+    being played, up to two earlier sounds still ringing, and one fading out. An earlier sound
+    hears only what ends or bends its notes: the release of a key it took, the sustain pedal, the
+    pitch bend, All Notes Off; the mod wheel, pressure and expression reach only the sound being
+    played. Five seconds after its last key and the pedal are up, an earlier sound fades out over
+    half a second; so does the oldest when a third earlier sound would ring, or when the processor
+    is short of time. A sound silent for a quarter of a second ends at once. All Sound Off ends
+    every earlier sound.
 */
 namespace coolsynth::synth::v3
 {
-    inline constexpr int partCount = 2;
-
-    struct EngineSettings
-    {
-        std::array<PartSettings, partCount> parts {};
-        std::array<PartMix, partCount> mix {};
-        std::array<std::array<InsertSettings, insertSlotCount>, partCount> inserts {};
-        PartMode partMode = PartMode::aOnly;
-        std::array<InsertSettings, masterSlotCount> master {}; // F1..F6, in chain order
-        float masterGainLinear = 1.0f;
-    };
-
     class EngineV3 final
     {
     public:
-        static constexpr double masterGainRampSeconds = 0.02;
-        static constexpr int sharedVoices = Part::maxVoices;
-        static constexpr int guaranteedVoices = sharedVoices / partCount;
-        static constexpr float silentLevelDb = -60.0f; // a part level at or below this is off
+        static constexpr double masterGainRampSeconds = SoundUnit::masterGainRampSeconds;
+        static constexpr int sharedVoices = SoundUnit::sharedVoices;
+        static constexpr int guaranteedVoices = SoundUnit::guaranteedVoices;
+        static constexpr float silentLevelDb = SoundUnit::silentLevelDb;
+
+        static constexpr int unitCount = 4;            // the sound played, two earlier ones, one fading out
+        static constexpr int earlierSoundsKept = 2;    // like the Montage (the user's choice, D158)
+        static constexpr double holdSeconds = 5.0;     // after an earlier sound's keys and pedal are up (the Kronos default)
+        static constexpr double fadeSeconds = 0.5;     // its fade, and the oldest's when room or time runs out
+        static constexpr double quietSeconds = 0.25;   // silent this long: it ends at once
+        static constexpr float quietLevel = 1.0e-5f;   // -100 dB
+        static constexpr float overloadShare = 0.75f;  // of the block's time: the oldest earlier sound gives way
+
+        using StageTiming = v3::StageTiming;
 
         EngineV3();
 
@@ -72,59 +57,48 @@ namespace coolsynth::synth::v3
                     const EngineTransportInfo& transport = {}) noexcept;
         void panic() noexcept;
 
-        [[nodiscard]] int getLatencySamples() const noexcept { return parts[0]->latencySamples(); }
+        /** The share of its time the last block took, 0 to 1 or more: an earlier sound gives way when it is high. */
+        void setLoad(float shareOfBlockTime) noexcept { load = shareOfBlockTime; }
+
+        [[nodiscard]] int getLatencySamples() const noexcept { return units[0]->latencySamples(); }
 
         // ---- For the flight recorder's tripwires (diagnostics/FlightRecorder.h), audio thread ----------------
-        struct StageTiming
-        {
-            int code = 0;              // diag::Stage: part A/B voices, inserts, master F1..F6
-            float milliseconds = 0.0f;
-        };
         /** The slowest stage of the last block. */
         [[nodiscard]] const StageTiming& slowestStage() const noexcept { return slowest; }
         [[nodiscard]] int activeVoiceCount() const noexcept
         {
-            return parts[0]->activeVoiceCountForTesting() + parts[1]->activeVoiceCountForTesting();
+            int voices = 0;
+            for (const auto& unit : units)
+                voices += unit->activeVoiceCount();
+            return voices;
         }
         /** Samples since the last call that went into the output's soft clipper (above its knee), then zero. */
         [[nodiscard]] int consumeClippedSamples() noexcept { return std::exchange(clippedSamples, 0); }
-        /** The chord a part just learned, packed (see packLearnedChord), or 0. Audio thread; reading clears it. */
-        [[nodiscard]] std::uint32_t consumeLearnedChord(int partIndex) noexcept
-        {
-            return parts[static_cast<std::size_t>(std::clamp(partIndex, 0, partCount - 1))]->consumeLearnedChord();
-        }
-        [[nodiscard]] Part& partForTesting(int index = 0) noexcept { return *parts[static_cast<std::size_t>(index)]; }
-        [[nodiscard]] const InsertSlot& insertForTesting(int part, int slot) const noexcept
-        {
-            return inserts[static_cast<std::size_t>(part)][static_cast<std::size_t>(slot)];
-        }
-        [[nodiscard]] const InsertSlot& masterSlotForTesting(int slot) const noexcept
-        {
-            return (*masterSlots)[static_cast<std::size_t>(slot)];
-        }
+        /** The chord a part of the sound being played just learned, packed (see packLearnedChord), or 0. Reading clears it. */
+        [[nodiscard]] std::uint32_t consumeLearnedChord(int partIndex) noexcept { return units[static_cast<std::size_t>(current)]->consumeLearnedChord(partIndex); }
+
+        /** Earlier sounds ringing now (0 to earlierSoundsKept, plus one fading). */
+        [[nodiscard]] int earlierSoundsRinging() const noexcept;
+        /** The sound count (PartSettings::soundGeneration) of the oldest sound still sounding: what an older sound
+            used, such as the user's files, may be let go. */
+        [[nodiscard]] std::uint32_t oldestSoundingGeneration() const noexcept;
+
+        // The sound being played.
+        [[nodiscard]] Part& partForTesting(int index = 0) noexcept { return units[static_cast<std::size_t>(current)]->part(index); }
+        [[nodiscard]] const InsertSlot& insertForTesting(int part, int slot) const noexcept { return units[static_cast<std::size_t>(current)]->insert(part, slot); }
+        [[nodiscard]] const InsertSlot& masterSlotForTesting(int slot) const noexcept { return units[static_cast<std::size_t>(current)]->masterSlot(slot); }
+        /** Any unit, 0 to unitCount - 1. */
+        [[nodiscard]] SoundUnit& unitForTesting(int index) noexcept { return *units[static_cast<std::size_t>(index)]; }
+        [[nodiscard]] int currentUnitForTesting() const noexcept { return current; }
 
         /** True while a sampled instrument that a playing part names is still being read into memory (one that is
             not installed does not count). Asking is what starts the read. Audio thread, never waits. */
         [[nodiscard]] static bool sampledInstrumentPending(const EngineSettings& settings) noexcept;
 
-        /** The voices a part's patch asks for: its polyphony, one for mono and legato, its unison count. */
-        [[nodiscard]] static int voicesWanted(const PartSettings& settings) noexcept
-        {
-            switch (settings.playMode)
-            {
-                case PlayMode::mono:
-                case PlayMode::legato: return 1;
-                case PlayMode::unison: return std::clamp(settings.unisonVoices, 2, Part::maxUnisonVoices);
-                case PlayMode::poly:
-                default:               return std::clamp(settings.polyphony, 1, Part::maxVoices);
-            }
-        }
-
-        /** With both parts playing: what each may use of the sixteen. Each is sure of eight. */
+        [[nodiscard]] static int voicesWanted(const PartSettings& settings) noexcept { return SoundUnit::voicesWanted(settings); }
         [[nodiscard]] static std::array<int, partCount> voiceLimits(const std::array<int, partCount>& wanted) noexcept
         {
-            return { std::min(wanted[0], std::max(guaranteedVoices, sharedVoices - wanted[1])),
-                     std::min(wanted[1], std::max(guaranteedVoices, sharedVoices - wanted[0])) };
+            return SoundUnit::voiceLimits(wanted);
         }
 
         /** Above 0.8 the output bends into a tanh knee and never passes 1. */
@@ -138,44 +112,61 @@ namespace coolsynth::synth::v3
         }
 
     private:
-        /** One part's gains for a block: into the effects and past them, left and right. */
-        struct MixGains
+        enum class Phase : std::uint8_t { idle, playing, ringing, fading };
+
+        struct UnitState
         {
-            float wetLeft = 0.0f, wetRight = 0.0f, dryLeft = 0.0f, dryRight = 0.0f;
-            [[nodiscard]] bool anyDry() const noexcept { return dryLeft != 0.0f || dryRight != 0.0f; }
+            Phase phase = Phase::idle;
+            std::uint32_t generation = 0; // the sound count it plays
+            std::uint64_t order = 0;      // when it became an earlier sound: the oldest gives way first
+            int keysHeld = 0;             // keys it took that are still down
+            bool pedalDown = false;
+            double releasedSeconds = 0.0; // since its keys and pedal came up
+            double quietSeconds = 0.0;    // since it last made a sound
+            float fade = 1.0f;
+            // an earlier sound's settings, as they were when the preset changed (on the heap: tests keep engines on the stack)
+            std::unique_ptr<EngineSettings> settings = std::make_unique<EngineSettings>();
         };
 
-        [[nodiscard]] static MixGains gainsFor(const PartMix& mix) noexcept;
         /** One block no longer than the prepared size. */
         void renderBlock(juce::AudioBuffer<float>& buffer, std::span<const EngineMidiEvent> events,
                          const EngineSettings& settings, const EngineTransportInfo& transport) noexcept;
+        void followSoundChange(const EngineSettings& settings) noexcept;
+        void routeEvents(std::span<const EngineMidiEvent> events) noexcept;
+        void pushEvent(int unit, const EngineMidiEvent& event) noexcept;
+        void startFading(int unit) noexcept;
+        void endUnit(int unit) noexcept;
+        [[nodiscard]] int oldestRinging() const noexcept;
+
+        std::array<std::unique_ptr<SoundUnit>, unitCount> units;
+        std::array<UnitState, unitCount> state {};
+        std::array<std::vector<EngineMidiEvent>, unitCount> unitEvents;
+        std::array<int, unitCount> unitEventCount {};
+        std::array<std::int8_t, 128> keyOwner {}; // per key: the unit that took its note-on, or -1
+        int current = 0;
+        std::uint64_t changes = 0;
+        std::uint32_t generation = 0;
+        bool generationPrimed = false;
+        std::unique_ptr<EngineSettings> lastSettings = std::make_unique<EngineSettings>();   // the last block's
+        std::unique_ptr<EngineSettings> compareScratch = std::make_unique<EngineSettings>(); // a change compared with it
+
+        // Where the pedal, the bend and the wheels are: a unit that starts playing a new sound is told.
+        struct HeldController
+        {
+            EngineMidiEvent event {};
+            bool seen = false;
+        };
+        static constexpr std::size_t controllerSustain = 0, controllerBend = 1, controllerWheel = 2,
+                                     controllerPressure = 3, controllerExpression = 4;
+        std::array<HeldController, 5> controllers {};
+        bool controllersToCurrent = false;
+
         std::vector<EngineMidiEvent> pieceEvents; // a longer host block's events, one piece at a time
-        void routeEvents(std::span<const EngineMidiEvent> events, const EngineSettings& settings,
-                         const std::array<bool, partCount>& active) noexcept;
-        void pushEvent(int partIndex, const EngineMidiEvent& event) noexcept;
-        void pushNote(int partIndex, EngineMidiEventType type, int note, float value, int offset) noexcept;
-
-        std::array<std::unique_ptr<Part>, partCount> parts; // large: each a pool of voices with their slot arenas
-        std::array<PartSettings, partCount> resolved {};   // the patch as this block plays it: voices, arp, tuning
-        std::array<std::array<std::int8_t, 128>, partCount> sentNote {}; // per played key: the note the part was sent, or -1
-        std::array<bool, partCount> wasActive { true, false };
-        std::array<std::vector<EngineMidiEvent>, partCount> partEvents;
-        std::array<int, partCount> partEventCount {};
-        std::array<MixGains, partCount> lastGains {};
-        bool mixPrimed = false;
-
-        // F1..F6, on the heap: each slot carries a rack, a grain buffer and a room, too much for a processor kept on a stack
-        std::unique_ptr<std::array<InsertSlot, masterSlotCount>> masterSlots = std::make_unique<std::array<InsertSlot, masterSlotCount>>();
-        juce::AudioBuffer<float> work;       // the stereo bus the master slots run on
-        std::array<juce::AudioBuffer<float>, partCount> partBuffers; // each part's voices, then through its inserts
-        std::array<std::array<InsertSlot, insertSlotCount>, partCount> inserts;
-        juce::AudioBuffer<float> dryBus;     // what goes past the master slots
-        juce::SmoothedValue<float, juce::ValueSmoothingTypes::Linear> masterGain;
+        juce::AudioBuffer<float> sum;             // every unit added, before the soft clipper
         bool prepared = false;
-        bool masterPrimed = false;
+        float load = 0.0f;
         StageTiming slowest;      // flight recorder: the last block's slowest stage
         int clippedSamples = 0;   // flight recorder: samples into the soft clipper's knee since last asked
         double hostRate = 48000.0;
-        double freeBeats = 0.0; // the beat count while no host position drives it
     };
 }

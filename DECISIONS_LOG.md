@@ -3091,6 +3091,43 @@ meanwhile (a seqlock); otherwise the last whole settings play one more block. A 
 lands at most a block later (10.9 ms at 480 samples), and never mixed. The offline helpers that
 read the patch's instruments now use their own copy of the settings, not the audio thread's.
 
+## D158. Earlier sounds ring on after a preset change, Kronos-style (2026-11-15)
+
+From the real-time review ("Ringing notes survive"): a preset change re-applied the new preset to
+every sounding voice, so ringing notes morphed (type crossfades, new envelopes and filters) and a
+sampled note stopped dead with a click. A first version kept each voice's own settings; the user
+asked for "a proper investigation into side effects, edge cases, potential problems, bugs and
+mitigations". The independent review found it short: the same key or a mono/legato note played
+again morphed the old voice; a preset with fewer voices stole the old notes; the old notes went
+through the new preset's effects and part modulators (global LFOs, global envelope, step, macros,
+bend range); an evicted note faded with the new settings; eviction ignored sounds already silent; a
+load that changed nothing used up a slot; a play- or part-mode change released held notes; user
+files were dropped under a ringing note. The references: Korg Kronos "Smooth Sound Transitions"
+keeps the current and the previous sound with their effects, a third stops the oldest, a Hold Time
+(default 5 s, at least about half a second) after release, and only sustain, sostenuto, bend and note
+gate reach the old sound; Yamaha Montage "Seamless Sound Switching" (a FIFO of two), Nord Stage,
+Roland Fantom "Scene Remain" and Omnisphere's Live Mode keep the old sound's effect tails too.
+Chosen with the user, four pick lists:
+- **A previous sound as a whole, Kronos-style (chosen, recommended)**; or patch the per-voice version.
+  A sound unit (`src/synth/v3/SoundUnit.*`) is everything a preset sets: both parts, their inserts,
+  the master effects F1..F6, the mix and the master gain. The engine keeps four.
+- **Two earlier sounds, like the Montage (chosen)**; one like the Kronos and Nord was recommended.
+- **Five seconds of hold, the Kronos default (chosen)**; half a second was recommended, or 10 ms.
+  After its keys and the pedal are up an earlier sound rings five seconds more, then fades over half
+  a second; so does the oldest when a third earlier sound would ring or when a block takes over 75 %
+  of its time; silent a quarter of a second, it ends at once.
+- **Its own master effects, kept (chosen, recommended)**; or the new ones, faded.
+Routing: a note-on goes to the sound played; its release to the sound that took the key; the
+sustain pedal, pitch bend, All Notes Off and Reset Controllers to every sound; the mod wheel,
+pressure and expression only to the sound played; All Sound Off ends every earlier sound. A unit
+that starts playing a new sound is told where the pedal, bend and wheels are. A load whose settings
+equal the last block's (a host restoring the state, the same preset again) keeps no earlier sound.
+The user's own files a replaced sound used are let go only once that sound has ended. Memory: four
+units of everything, about 38 MB of effect buffers each at 48 kHz, taken at start; an idle unit costs
+no time. Tests: `tests/V3EarlierSoundTests.cpp` (held chord keeps its VA generator while the new
+preset is FM, a new note plays the new sound, releases reach the old sound, the pedal holds it,
+a third earlier sound fades the oldest, All Sound Off, a mono preset leaves a poly chord held).
+
 ## D159. JUCE's locks kept off the audio thread (2026-11-15)
 
 The real-time review found five places where JUCE takes a lock, allocates or posts a message from
@@ -3186,3 +3223,39 @@ a small dual-core chip), such as KARMA. Their tracks hold notes and their engine
 from small tables, so tracks cost them nothing; what costs is each voice's sound, and CoolSynth's
 costs more by choice. Kept for the track mode's design: one voice budget shared by all tracks, as
 the FM-1 and the Kronos have, instead of sixteen per track.
+
+## D163. The sample library pre-processed: FLAC decoded in parallel, in a container of our own (2026-11-15)
+
+The user wanted the library pre-processed once, compressed with a fast lossless codec, with
+pre-computed metadata, reusing what exists online if its quality holds ("otherwise we write it
+ourselves"). Researched and measured on this PC (Ryzen 7 3700X): the library is 2,211 recordings,
+3,913 MB at its own depth, 1,390 MB as today's FLAC (written by ffmpeg, some with odd block sizes).
+libFLAC 1.4.3, which JUCE bundles (BSD, fuzzed by OSS-Fuzz), decodes 294 MB/s of 24-bit sound on
+one core without JUCE's reader; one recording per task, the Steinway takes 2.62 s on one thread and
+0.30 s on 16, the whole library 1.7 s (today: 3.5 s for the Steinway). Nothing permissive is both
+smaller and faster: WavPack, ALAC, Monkey's Audio and TTA are slower or bigger, HISE's HLAC is GPL,
+OptimFROG and TAK closed; a codec of our own would only pay as bit-packing (NCW, HLAC), 6 to 25 % bigger.
+Chosen: **libFLAC, decoded in parallel, in a container of our own (recommended)**: one packed file
+per style, a header and index (zones, loops, levels, each recording's offset and exact size in
+memory), then its recordings re-encoded as FLAC with standard 4,096-frame blocks (the marimba
+33 % smaller, the library 2.5 %), decoded straight into the sample memory on (cores minus two)
+low-priority threads. Also offered: measuring dr_flac first (one download; under 50 ms to gain), or
+our own bit-packing codec. Six 24-bit styles hold 16-bit sound; they stay 24-bit (lossless).
+
+## D164. Multi-core (2026-11-15)
+
+The user: "make sure this software is multi-core able and aware". Everything audible ran on the
+audio thread. Researched: u-he Diva, Kontakt, Pianoteq and Pigments offer multi-core as an option,
+most off by default in a DAW, where the host already spreads tracks over the cores; the standalone
+is its own host with cores to spare. The natural parallel unit here is the sound unit (D158): the
+sound played and the earlier ones are independent; summed in a fixed order the output stays bit
+for bit the same. Windows: workers registered with MMCSS "Pro Audio" like JUCE's audio thread,
+woken per block, the audio thread taking tasks too, so a late worker costs no more than one core.
+Chosen, two pick lists:
+- **Background now, sound units in parallel next (chosen, recommended)**: sample loading on (cores
+  minus two) low-priority threads, the levelling and render tools run presets in parallel, the CPU
+  detected (cores, threads, cache groups) and logged; then the sound units on separate cores with
+  a setting Auto/Off. Or the parallel sound units first; or background only.
+- **The plugin: Auto, like the standalone (chosen; Off with a setting was recommended, as Kontakt,
+  Diva and Steinberg advise)**. Kept in mind: one pool for every CoolSynth in a host process, small
+  (2 to 3 workers, the 32-thread MMCSS limit), serial when the host renders offline.

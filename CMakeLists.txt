@@ -107,6 +107,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/SampleLibrary.cpp
     src/synth/v3/UserLibrary.cpp
     src/synth/v3/EngineV3.cpp
+    src/synth/v3/SoundUnit.cpp
     src/interface/InterfaceModel.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/PanelEditor.cpp
@@ -173,6 +174,7 @@ if(BUILD_TESTING)
             tests/MidiLearnTests.cpp
             tests/AudioThreadAlarm.cpp
             tests/AudioScenarioTests.cpp
+            tests/V3EarlierSoundTests.cpp
             tests/InterfaceModelTests.cpp
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp

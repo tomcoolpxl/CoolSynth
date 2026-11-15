@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstring>
 
 #include "SampleGenerator.h"
 #include "SampleLibrary.h"
@@ -33,185 +34,271 @@ namespace coolsynth::synth::v3
         return false;
     }
 
-    // The flight recorder's stage timing: two clock reads per stage, kept for the block's slowest one.
-    struct StageClock
-    {
-        EngineV3::StageTiming& slowest;
-        int code;
-        double start = juce::Time::getMillisecondCounterHiRes();
-        ~StageClock()
-        {
-            const float took = static_cast<float>(juce::Time::getMillisecondCounterHiRes() - start);
-            if (took > slowest.milliseconds)
-                slowest = { code, took };
-        }
-    };
-
     EngineV3::EngineV3()
     {
-        for (auto& part : parts)
-            part = std::make_unique<Part>();
-        for (auto& sent : sentNote)
-            sent.fill(-1);
+        for (auto& unit : units)
+            unit = std::make_unique<SoundUnit>();
+        keyOwner.fill(-1);
     }
 
     void EngineV3::prepare(double sampleRate, int maxBlockSize, int)
     {
         const int block = std::max(1, maxBlockSize);
         hostRate = std::max(1000.0, sampleRate);
-        freeBeats = 0.0;
-        parts[0]->prepare(sampleRate, block, 0x5EEDu);
-        parts[1]->prepare(sampleRate, block, 0xB5EEDu);
-        // A key struck again under a new transpose is a note-off and a note-on; a mode change adds one event.
-        for (auto& events : partEvents)
-            events.assign(static_cast<std::size_t>(2 * coolsynth::synth::maxEngineEventsPerBlock + 2), {});
+        // Unit 0 keeps the seeds the parts always had (0x5EED and 0xB5EED), so rendered presets stay as they were.
+        for (int u = 0; u < unitCount; ++u)
+            units[static_cast<std::size_t>(u)]->prepare(sampleRate, block, 0x5EEDu + 0x10001u * static_cast<std::uint32_t>(u));
+        for (auto& events : unitEvents)
+            events.assign(static_cast<std::size_t>(2 * coolsynth::synth::maxEngineEventsPerBlock + 16), {});
         pieceEvents.assign(static_cast<std::size_t>(coolsynth::synth::maxEngineEventsPerBlock), {});
-        partEventCount.fill(0);
-        for (auto& sent : sentNote)
-            sent.fill(-1);
-        wasActive = { true, false };
-        mixPrimed = false;
-        for (auto& slots : inserts)
-            for (auto& slot : slots)
-                slot.prepare(sampleRate, block);
-        for (auto& slot : *masterSlots)
-            slot.prepare(sampleRate, block);
-        work.setSize(2, block, false, true, true);
-        for (auto& buffer : partBuffers)
-            buffer.setSize(2, block, false, true, true);
-        dryBus.setSize(2, block, false, true, true);
-        masterGain.reset(sampleRate, masterGainRampSeconds);
-        masterGain.setCurrentAndTargetValue(1.0f);
-        masterPrimed = false;
+        sum.setSize(2, block, false, true, true);
+        for (int u = 0; u < unitCount; ++u)
+            endUnit(u);
+        current = 0;
+        state[0].phase = Phase::playing;
+        keyOwner.fill(-1);
+        controllers = {};
+        generationPrimed = false;
         prepared = true;
     }
 
     void EngineV3::panic() noexcept
     {
-        for (auto& part : parts)
-            part->reset();
-        for (auto& sent : sentNote)
-            sent.fill(-1);
-        for (auto& slots : inserts)
-            for (auto& slot : slots)
-                slot.clear();
-        for (auto& slot : *masterSlots)
-            slot.clear();
-        work.clear();
-        for (auto& buffer : partBuffers)
-            buffer.clear();
-        dryBus.clear();
+        for (int u = 0; u < unitCount; ++u)
+            endUnit(u);
+        state[static_cast<std::size_t>(current)].phase = Phase::playing;
+        keyOwner.fill(-1);
+        controllers = {};
+        sum.clear();
     }
 
-    EngineV3::MixGains EngineV3::gainsFor(const PartMix& mix) noexcept
+    void EngineV3::endUnit(int u) noexcept
     {
-        const float level = mix.levelDb <= silentLevelDb ? 0.0f : juce::Decibels::decibelsToGain(std::min(mix.levelDb, 12.0f));
-        const float pan = std::clamp(mix.pan, -1.0f, 1.0f);
-        const float left = level * (pan > 0.0f ? 1.0f - pan : 1.0f);
-        const float right = level * (pan < 0.0f ? 1.0f + pan : 1.0f);
-        const float fx = std::clamp(mix.fx, 0.0f, 1.0f);
-        return { left * fx, right * fx, left * (1.0f - fx), right * (1.0f - fx) };
+        units[static_cast<std::size_t>(u)]->panic();
+        auto& s = state[static_cast<std::size_t>(u)];
+        s.phase = Phase::idle;
+        s.keysHeld = 0;
+        s.pedalDown = false;
+        s.releasedSeconds = 0.0;
+        s.quietSeconds = 0.0;
+        s.fade = 1.0f;
+        for (auto& owner : keyOwner)
+            if (owner == u)
+                owner = -1;
     }
 
-    void EngineV3::pushEvent(int partIndex, const EngineMidiEvent& event) noexcept
+    void EngineV3::startFading(int u) noexcept
     {
-        auto& events = partEvents[static_cast<std::size_t>(partIndex)];
-        auto& count = partEventCount[static_cast<std::size_t>(partIndex)];
+        if (u >= 0 && state[static_cast<std::size_t>(u)].phase == Phase::ringing)
+            state[static_cast<std::size_t>(u)].phase = Phase::fading;
+    }
+
+    int EngineV3::oldestRinging() const noexcept
+    {
+        int oldest = -1;
+        for (int u = 0; u < unitCount; ++u)
+            if (state[static_cast<std::size_t>(u)].phase == Phase::ringing
+                && (oldest < 0 || state[static_cast<std::size_t>(u)].order < state[static_cast<std::size_t>(oldest)].order))
+                oldest = u;
+        return oldest;
+    }
+
+    int EngineV3::earlierSoundsRinging() const noexcept
+    {
+        int count = 0;
+        for (const auto& s : state)
+            count += s.phase == Phase::ringing || s.phase == Phase::fading ? 1 : 0;
+        return count;
+    }
+
+    void EngineV3::followSoundChange(const EngineSettings& settings) noexcept
+    {
+        const auto incoming = settings.parts[0].soundGeneration;
+        if (! generationPrimed)
+        {
+            generation = incoming;
+            state[static_cast<std::size_t>(current)].generation = incoming;
+            generationPrimed = true;
+            return;
+        }
+        if (incoming == generation)
+            return;
+        generation = incoming;
+
+        // The same settings loaded again change nothing: a host restoring the state, a preset chosen twice.
+        *compareScratch = settings;
+        for (auto& part : compareScratch->parts)
+            part.soundGeneration = lastSettings->parts[0].soundGeneration;
+        auto& playing = state[static_cast<std::size_t>(current)];
+        if (std::memcmp(compareScratch.get(), lastSettings.get(), sizeof(EngineSettings)) == 0
+            || (! units[static_cast<std::size_t>(current)]->isSounding() && playing.keysHeld == 0))
+        {
+            playing.generation = incoming; // nothing rings, or nothing changed: the same unit plays on
+            return;
+        }
+
+        // The sound being played becomes an earlier sound, with the settings it had (D158).
+        playing.phase = Phase::ringing;
+        playing.order = ++changes;
+        *playing.settings = *lastSettings;
+        playing.releasedSeconds = 0.0;
+        playing.quietSeconds = 0.0;
+        playing.fade = 1.0f;
+
+        int ringing = 0;
+        for (const auto& s : state)
+            ringing += s.phase == Phase::ringing ? 1 : 0;
+        while (ringing > earlierSoundsKept)
+        {
+            startFading(oldestRinging());
+            --ringing;
+        }
+
+        // A unit for the new sound: an idle one, else the fading one furthest down is cut.
+        int next = -1;
+        for (int u = 0; u < unitCount && next < 0; ++u)
+            if (state[static_cast<std::size_t>(u)].phase == Phase::idle)
+                next = u;
+        if (next < 0)
+        {
+            for (int u = 0; u < unitCount; ++u)
+                if (state[static_cast<std::size_t>(u)].phase == Phase::fading
+                    && (next < 0 || state[static_cast<std::size_t>(u)].fade < state[static_cast<std::size_t>(next)].fade))
+                    next = u;
+            if (next < 0)
+                next = oldestRinging();
+            endUnit(next);
+        }
+        current = next;
+        state[static_cast<std::size_t>(current)].phase = Phase::playing;
+        state[static_cast<std::size_t>(current)].generation = incoming;
+        controllersToCurrent = true; // it starts with the pedal, the bend and the wheels where they are
+    }
+
+    std::uint32_t EngineV3::oldestSoundingGeneration() const noexcept
+    {
+        std::uint32_t oldest = generation;
+        for (const auto& s : state)
+            if (s.phase != Phase::idle && static_cast<std::int32_t>(s.generation - oldest) < 0)
+                oldest = s.generation;
+        return oldest;
+    }
+
+    void EngineV3::pushEvent(int u, const EngineMidiEvent& event) noexcept
+    {
+        auto& events = unitEvents[static_cast<std::size_t>(u)];
+        auto& count = unitEventCount[static_cast<std::size_t>(u)];
         if (count < static_cast<int>(events.size()))
             events[static_cast<std::size_t>(count++)] = event;
     }
 
-    void EngineV3::pushNote(int partIndex, EngineMidiEventType type, int note, float value, int offset) noexcept
+    void EngineV3::routeEvents(std::span<const EngineMidiEvent> events) noexcept
     {
-        EngineMidiEvent event;
-        event.type = type;
-        event.sampleOffset = offset;
-        event.noteNumber = static_cast<std::uint8_t>(note);
-        event.value = value;
-        pushEvent(partIndex, event);
-    }
-
-    void EngineV3::routeEvents(std::span<const EngineMidiEvent> events, const EngineSettings& settings,
-                               const std::array<bool, partCount>& active) noexcept
-    {
-        for (int p = 0; p < partCount; ++p)
+        unitEventCount.fill(0);
+        if (controllersToCurrent)
         {
-            const auto index = static_cast<std::size_t>(p);
-            partEventCount[index] = 0;
-            if (wasActive[index] && ! active[index])
-            {
-                // The mode took this part off the keys: it lets go of what it holds and rings out.
-                EngineMidiEvent release;
-                release.type = EngineMidiEventType::allNotesOff;
-                pushEvent(p, release);
-                sentNote[index].fill(-1);
-            }
-            wasActive[index] = active[index];
+            for (const auto& held : controllers)
+                if (held.seen)
+                    pushEvent(current, held.event);
+            state[static_cast<std::size_t>(current)].pedalDown = controllers[controllerSustain].seen && controllers[controllerSustain].event.value >= 0.5f;
+            controllersToCurrent = false;
         }
 
-        const bool both = active[0] && active[1];
+        auto toEverySound = [&](const EngineMidiEvent& event)
+        {
+            for (int u = 0; u < unitCount; ++u)
+                if (state[static_cast<std::size_t>(u)].phase != Phase::idle)
+                    pushEvent(u, event);
+        };
+        auto remember = [&](int which, const EngineMidiEvent& event)
+        {
+            auto held = event;
+            held.sampleOffset = 0;
+            controllers[static_cast<std::size_t>(which)] = { held, true };
+        };
+
         for (const auto& event : events)
         {
-            const int key = std::min(127, static_cast<int>(event.noteNumber));
+            const auto key = static_cast<std::size_t>(std::min(127, static_cast<int>(event.noteNumber)));
             switch (event.type)
             {
                 case EngineMidiEventType::noteOn:
-                    for (int p = 0; p < partCount; ++p)
+                {
+                    const int owner = keyOwner[key];
+                    if (owner >= 0 && owner != current)
                     {
-                        const auto index = static_cast<std::size_t>(p);
-                        const auto& mix = settings.mix[index];
-                        auto& sent = sentNote[index][static_cast<std::size_t>(key)];
-
-                        bool plays = active[index];
-                        if (plays && both)
-                        {
-                            const int velocity = std::clamp(static_cast<int>(std::lround(event.value * 127.0f)), 1, 127);
-                            plays = velocity >= mix.velocityLow && velocity <= mix.velocityHigh
-                                    && (settings.partMode != PartMode::split || (key >= mix.keyLow && key <= mix.keyHigh));
-                        }
-                        const int note = key + mix.transpose;
-                        plays = plays && note >= 0 && note <= 127;
-
-                        if (sent >= 0 && (! plays || sent != note))
-                        {
-                            pushNote(p, EngineMidiEventType::noteOff, sent, 0.0f, event.sampleOffset);
-                            sent = -1;
-                        }
-                        if (plays)
-                        {
-                            pushNote(p, EngineMidiEventType::noteOn, note, event.value, event.sampleOffset);
-                            sent = static_cast<std::int8_t>(note);
-                        }
+                        // The key again before its release reached the sound it started: that note lets go now.
+                        auto release = event;
+                        release.type = EngineMidiEventType::noteOff;
+                        release.value = 0.0f;
+                        pushEvent(owner, release);
+                        auto& held = state[static_cast<std::size_t>(owner)].keysHeld;
+                        held = std::max(0, held - 1);
                     }
+                    pushEvent(current, event);
+                    if (owner != current)
+                        ++state[static_cast<std::size_t>(current)].keysHeld;
+                    keyOwner[key] = static_cast<std::int8_t>(current);
                     break;
-
+                }
                 case EngineMidiEventType::noteOff:
-                    for (int p = 0; p < partCount; ++p)
+                {
+                    const int owner = keyOwner[key];
+                    pushEvent(owner >= 0 ? owner : current, event);
+                    if (owner >= 0)
                     {
-                        auto& sent = sentNote[static_cast<std::size_t>(p)][static_cast<std::size_t>(key)];
-                        if (sent >= 0)
-                        {
-                            pushNote(p, EngineMidiEventType::noteOff, sent, event.value, event.sampleOffset);
-                            sent = -1;
-                        }
+                        auto& held = state[static_cast<std::size_t>(owner)].keysHeld;
+                        held = std::max(0, held - 1);
+                        keyOwner[key] = -1;
                     }
                     break;
-
+                }
                 case EngineMidiEventType::polyPressure:
-                    // A key's pressure goes to the note that key sent each part (its transpose applied).
-                    for (int p = 0; p < partCount; ++p)
-                        if (const int sent = sentNote[static_cast<std::size_t>(p)][static_cast<std::size_t>(key)]; sent >= 0)
-                            pushNote(p, EngineMidiEventType::polyPressure, sent, event.value, event.sampleOffset);
+                    pushEvent(keyOwner[key] >= 0 ? keyOwner[key] : current, event);
                     break;
-
+                case EngineMidiEventType::sustainPedal:
+                    toEverySound(event);
+                    for (auto& s : state)
+                        if (s.phase != Phase::idle)
+                            s.pedalDown = event.value >= 0.5f;
+                    remember(controllerSustain, event);
+                    break;
+                case EngineMidiEventType::pitchBend:
+                    toEverySound(event);
+                    remember(controllerBend, event);
+                    break;
                 case EngineMidiEventType::allNotesOff:
+                case EngineMidiEventType::resetControllers:
+                    toEverySound(event);
+                    keyOwner.fill(-1);
+                    for (auto& s : state)
+                        s.keysHeld = 0;
+                    if (event.type == EngineMidiEventType::resetControllers)
+                        controllers = {};
+                    break;
                 case EngineMidiEventType::allSoundOff:
-                    for (auto& sent : sentNote)
-                        sent.fill(-1);
-                    [[fallthrough]];
+                    // Silence now: every earlier sound ends, the one played hears it.
+                    for (int u = 0; u < unitCount; ++u)
+                        if (u != current && state[static_cast<std::size_t>(u)].phase != Phase::idle)
+                            endUnit(u);
+                    pushEvent(current, event);
+                    keyOwner.fill(-1);
+                    state[static_cast<std::size_t>(current)].keysHeld = 0;
+                    break;
+                case EngineMidiEventType::modWheel:
+                    pushEvent(current, event);
+                    remember(controllerWheel, event);
+                    break;
+                case EngineMidiEventType::channelPressure:
+                    pushEvent(current, event);
+                    remember(controllerPressure, event);
+                    break;
+                case EngineMidiEventType::expression:
+                    pushEvent(current, event);
+                    remember(controllerExpression, event);
+                    break;
                 default:
-                    for (int p = 0; p < partCount; ++p)
-                        pushEvent(p, event);
+                    pushEvent(current, event);
                     break;
             }
         }
@@ -228,7 +315,7 @@ namespace coolsynth::synth::v3
             buffer.clear();
             return;
         }
-        const int maxBlock = work.getNumSamples();
+        const int maxBlock = sum.getNumSamples();
         if (n <= maxBlock)
         {
             renderBlock(buffer, events, settings, transport);
@@ -262,160 +349,59 @@ namespace coolsynth::synth::v3
                                const EngineTransportInfo& transport) noexcept
     {
         const int n = buffer.getNumSamples();
-        const std::array<bool, partCount> active { settings.partMode != PartMode::bOnly, settings.partMode != PartMode::aOnly };
         slowest = {};
-        routeEvents(events, settings, active);
+        followSoundChange(settings);
+        routeEvents(events);
 
-        std::array<int, partCount> voices { voicesWanted(settings.parts[0]), voicesWanted(settings.parts[1]) };
-        if (active[0] && active[1])
-            voices = voiceLimits(voices);
+        // Short of time: the oldest earlier sound gives way, as on the Kronos.
+        if (load > overloadShare)
+            startFading(oldestRinging());
+        load = 0.0f;
 
-        // The voices first: both parts, each into its own buffer.
-        std::array<bool, partCount> rendered {};
-        bool soundOff = false;
-        bool phraseStart = false;
-        for (std::size_t p = 0; p < parts.size(); ++p)
+        float* sl = sum.getWritePointer(0);
+        float* sr = sum.getWritePointer(1);
+        std::fill_n(sl, n, 0.0f);
+        std::fill_n(sr, n, 0.0f);
+        const double seconds = static_cast<double>(n) / hostRate;
+        for (int u = 0; u < unitCount; ++u)
         {
-            auto& part = *parts[p];
-            // A part the mode leaves out costs nothing once it has rung out.
-            if (! active[p] && partEventCount[p] == 0 && ! part.isSounding())
+            auto& s = state[static_cast<std::size_t>(u)];
+            if (s.phase == Phase::idle)
                 continue;
-
-            auto& patch = resolved[p];
-            patch = settings.parts[p];
-            if (patch.playMode == PlayMode::poly)
-                patch.polyphony = voices[p];
-            patch.arp.enabled = patch.arp.enabled && settings.mix[p].arp;
-            patch.tuneSemitones = settings.mix[p].fineCents * 0.01f;
-
-            const StageClock stageClock { slowest, p == 0 ? 1 : 2 };
-            part.render(partBuffers[p].getWritePointer(0), partBuffers[p].getWritePointer(1), n,
-                        std::span<const EngineMidiEvent>(partEvents[p].data(), static_cast<std::size_t>(partEventCount[p])), patch, transport);
-            soundOff = part.consumeSoundOff() || soundOff;
-            phraseStart = part.consumePhraseStart() || phraseStart;
-            rendered[p] = true;
-        }
-
-        if (soundOff)
-        {
-            for (auto& slots : inserts)
-                for (auto& slot : slots)
-                    slot.clear();
-            for (auto& slot : *masterSlots)
-                slot.clear();
-        }
-
-        // Tempo and beat: the host's while it plays, otherwise the arp's tempo and a count that
-        // starts again with the first note after silence. Synced delays and pumps follow them.
-        const bool hostTempo = transport.hostHasTempo && transport.hostBpm > 0.0;
-        const double bpm = hostTempo ? transport.hostBpm : std::clamp(static_cast<double>(settings.parts[0].arp.internalTempoBpm), 20.0, 400.0);
-        InsertContext beat;
-        beat.bpm = bpm;
-        beat.beatsPerSample = bpm / 60.0 / hostRate;
-        if (hostTempo && transport.hostHasPpq && transport.hostIsPlaying)
-        {
-            beat.beatsAtStart = transport.hostPpqAtBlockStart;
-            freeBeats = transport.hostPpqAtBlockStart + beat.beatsPerSample * n;
-        }
-        else
-        {
-            if (phraseStart)
-                freeBeats = 0.0;
-            beat.beatsAtStart = freeBeats;
-            freeBeats += beat.beatsPerSample * n;
-        }
-
-        // Then each part through its inserts and into the mix.
-        juce::AudioBuffer<float> stereo(work.getArrayOfWritePointers(), 2, n);
-        stereo.clear();
-        float* l = stereo.getWritePointer(0);
-        float* r = stereo.getWritePointer(1);
-        float* dryLeft = dryBus.getWritePointer(0);
-        float* dryRight = dryBus.getWritePointer(1);
-        bool dryUsed = false;
-        for (std::size_t p = 0; p < parts.size(); ++p)
-        {
-            const auto target = gainsFor(settings.mix[p]);
-            const auto from = mixPrimed ? lastGains[p] : target;
-            lastGains[p] = target;
-            if (! rendered[p])
-                continue;
-
-            juce::AudioBuffer<float> partAudio(partBuffers[p].getArrayOfWritePointers(), 2, n);
-            const StageClock insertsClock { slowest, p == 0 ? 3 : 4 };
-            for (std::size_t slot = 0; slot < inserts[p].size(); ++slot)
+            if (s.phase == Phase::ringing)
             {
-                inserts[p][slot].process(partAudio, settings.inserts[p][slot], beat);
-            }
-
-            const float* pl = partAudio.getReadPointer(0);
-            const float* pr = partAudio.getReadPointer(1);
-            const bool dry = from.anyDry() || target.anyDry();
-            if (dry && ! dryUsed)
-            {
-                std::fill_n(dryLeft, n, 0.0f);
-                std::fill_n(dryRight, n, 0.0f);
-                dryUsed = true;
-            }
-
-            // The part's gains move across the block, so a level or pan change never steps.
-            const float step = 1.0f / static_cast<float>(n);
-            const float wetLeftStep = (target.wetLeft - from.wetLeft) * step, wetRightStep = (target.wetRight - from.wetRight) * step;
-            float wetLeft = from.wetLeft, wetRight = from.wetRight;
-            for (int i = 0; i < n; ++i)
-            {
-                wetLeft += wetLeftStep;
-                wetRight += wetRightStep;
-                l[i] += pl[i] * wetLeft;
-                r[i] += pr[i] * wetRight;
-            }
-            if (dry)
-            {
-                const float dryLeftStep = (target.dryLeft - from.dryLeft) * step, dryRightStep = (target.dryRight - from.dryRight) * step;
-                float gainLeft = from.dryLeft, gainRight = from.dryRight;
-                for (int i = 0; i < n; ++i)
+                // Its keys and the pedal up: five seconds more, then it fades.
+                if (s.keysHeld == 0 && ! s.pedalDown)
                 {
-                    gainLeft += dryLeftStep;
-                    gainRight += dryRightStep;
-                    dryLeft[i] += pl[i] * gainLeft;
-                    dryRight[i] += pr[i] * gainRight;
+                    s.releasedSeconds += seconds;
+                    if (s.releasedSeconds >= holdSeconds)
+                        startFading(u);
                 }
+                else
+                    s.releasedSeconds = 0.0;
             }
-        }
-        mixPrimed = true;
-
-        // The master slots, F1 to F6 in turn.
-        for (std::size_t slot = 0; slot < masterSlots->size(); ++slot)
-        {
-            const StageClock masterClock { slowest, 10 + static_cast<int>(slot) };
-            (*masterSlots)[slot].process(stereo, settings.master[slot], beat);
-        }
-
-        // What the parts kept out of the effects joins here.
-        if (dryUsed)
-        {
-            for (int i = 0; i < n; ++i)
-            {
-                l[i] += dryLeft[i];
-                r[i] += dryRight[i];
-            }
+            const float fadeFrom = s.fade;
+            if (s.phase == Phase::fading)
+                s.fade = std::max(0.0f, s.fade - static_cast<float>(seconds / fadeSeconds));
+            const auto& unitSettings = u == current ? settings : *s.settings;
+            units[static_cast<std::size_t>(u)]->render(sl, sr, n,
+                                                       std::span<const EngineMidiEvent>(unitEvents[static_cast<std::size_t>(u)].data(),
+                                                                                        static_cast<std::size_t>(unitEventCount[static_cast<std::size_t>(u)])),
+                                                       unitSettings, transport, fadeFrom, s.fade, slowest);
+            if (u == current)
+                continue;
+            // An earlier sound ends once faded out, or silent a quarter of a second (its tails gone).
+            const bool silent = ! units[static_cast<std::size_t>(u)]->isSounding() && units[static_cast<std::size_t>(u)]->lastPeak() < quietLevel;
+            s.quietSeconds = silent ? s.quietSeconds + seconds : 0.0;
+            if (s.fade <= 0.0f || s.quietSeconds >= quietSeconds)
+                endUnit(u);
         }
 
-        // The first block after prepare starts at the setting; ramping from unity would make the
-        // first notes after loading louder than the patch.
-        if (! masterPrimed)
-        {
-            masterGain.setCurrentAndTargetValue(std::max(0.0f, settings.masterGainLinear));
-            masterPrimed = true;
-        }
-        masterGain.setTargetValue(std::max(0.0f, settings.masterGainLinear));
         for (int i = 0; i < n; ++i)
         {
-            const float g = masterGain.getNextValue();
-            const float a = l[i] * g, b = r[i] * g;
-            clippedSamples += (std::abs(a) > 0.8f ? 1 : 0) + (std::abs(b) > 0.8f ? 1 : 0);
-            l[i] = softClip(a);
-            r[i] = softClip(b);
+            clippedSamples += (std::abs(sl[i]) > 0.8f ? 1 : 0) + (std::abs(sr[i]) > 0.8f ? 1 : 0);
+            sl[i] = softClip(sl[i]);
+            sr[i] = softClip(sr[i]);
         }
 
         const int channels = buffer.getNumChannels();
@@ -423,10 +409,12 @@ namespace coolsynth::synth::v3
         {
             float* out = buffer.getWritePointer(0);
             for (int i = 0; i < n; ++i)
-                out[i] = 0.5f * (l[i] + r[i]);
-            return;
+                out[i] = 0.5f * (sl[i] + sr[i]);
         }
-        for (int ch = 0; ch < channels; ++ch)
-            buffer.copyFrom(ch, 0, stereo, std::min(ch, 1), 0, n);
+        else
+            for (int ch = 0; ch < channels; ++ch)
+                buffer.copyFrom(ch, 0, sum, std::min(ch, 1), 0, n);
+
+        *lastSettings = settings;
     }
 }
