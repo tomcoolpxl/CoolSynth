@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1367" width="1600" height="1367" font-family="sans-serif" role="img" aria-label="CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation sources and a 24-routing matrix feed the voice from below. Both parts are mixed into six master effect slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1367" width="1600" height="1367" font-family="sans-serif" role="img" aria-label="CoolSynth V3 engine architecture. Keys and MIDI feed two layers, each a whole sound: a note layer of chord memory, its own arpeggiator and play mode; per voice three generator slots that can sync, ring, FM or AM one another, three processor slots in series and an amplifier; then six insert effects. Modulation sources and a 24-routing matrix feed the voice from below. Both layers are mixed into six master effect slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types and 13 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.">
 <title>CoolSynth V3 engine architecture</title>
 <rect x="0" y="0" width="1600" height="1367" fill="#10151B"/>
 <text x="24" y="50" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" font-size="30" fill="#E8EDF2">CoolSynth V3</tspan><tspan font-weight="400" font-size="20" dx="14" fill="#B4C0CB">engine architecture</tspan></text>
 <text x="24" y="76" font-size="13" fill="#B4C0CB">Signal flow of one patch, left to right. Every slot takes any module of its kind; the choices are listed underneath.</text>
-<text x="1576" y="44" font-size="12.5" font-weight="600" text-anchor="end" fill="#E8EDF2">2 parts · 16 voices · 3 generator + 3 processor slots per voice · 24 modulation routings per part · 136 factory presets</text>
+<text x="1576" y="44" font-size="12.5" font-weight="600" text-anchor="end" fill="#E8EDF2">2 layers · 16 voices · 3 generator + 3 processor slots per voice · 24 modulation routings per layer · 136 factory presets</text>
 <polyline points="1143.33,68 1167.38,68" fill="none" stroke="#B4C0CB" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
 <polygon points="1173.33,68 1166.33,71.22 1166.33,64.78" fill="#B4C0CB"/>
 <text x="1180.33" y="72" font-size="11.5" fill="#B4C0CB">notes</text>
@@ -36,13 +36,16 @@
 <text x="36" y="263" font-size="11" fill="#B4C0CB">notes, velocity,</text>
 <text x="36" y="277.5" font-size="11" fill="#B4C0CB">release velocity,</text>
 <text x="36" y="292" font-size="11" fill="#B4C0CB">wheel, bend, pedal</text>
-<text x="24" y="334" font-size="10.5" font-weight="700" letter-spacing="0.8" fill="#B4C0CB">PART MODE</text>
-<text x="24" y="352" font-size="12" font-weight="600" fill="#E8EDF2">A · Layer · Split · B</text>
-<text x="24" y="369" font-size="11" fill="#B4C0CB">Split by key range. Each</text>
-<text x="24" y="383.5" font-size="11" fill="#B4C0CB">part has its own velocity</text>
-<text x="24" y="398" font-size="11" fill="#B4C0CB">range and transpose.</text>
+<text x="24" y="334" font-size="10.5" font-weight="700" letter-spacing="0.8" fill="#B4C0CB">LAYER MODE</text>
+<text x="24" y="352" font-size="12" font-weight="600" fill="#E8EDF2">Stack · Split · Velocity</text>
+<text x="24" y="370" font-size="11" fill="#B4C0CB">Stack plays both layers;</text>
+<text x="24" y="384.5" font-size="11" fill="#B4C0CB">Split gives each layer its</text>
+<text x="24" y="399" font-size="11" fill="#B4C0CB">own keys; Velocity</text>
+<text x="24" y="413.5" font-size="11" fill="#B4C0CB">chooses by how hard a</text>
+<text x="24" y="428" font-size="11" fill="#B4C0CB">key is struck. An empty</text>
+<text x="24" y="442.5" font-size="11" fill="#B4C0CB">layer is left out.</text>
 <rect x="172" y="104" width="1246" height="464" rx="10" fill="#151C24" stroke="#3B4753" stroke-width="1.2"/>
-<text x="188" y="123" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.8" fill="#E8EDF2">PART A</tspan><tspan dx="10" fill="#B4C0CB">one complete synth: its own patch, note layer, voices, modulation and insert effects</tspan></text>
+<text x="188" y="123" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.8" fill="#E8EDF2">LAYER A</tspan><tspan dx="10" fill="#B4C0CB">one whole sound: its own patch, note layer and arpeggiator, voices, modulation and six insert effects</tspan></text>
 <text x="188" y="184" font-size="10.5" font-weight="700" letter-spacing="0.8" fill="#B4C0CB">NOTE LAYER</text>
 <rect x="188" y="193" width="118" height="112" rx="6" fill="#232D38" stroke="#5E6C7A" stroke-width="1.2"/>
 <text x="198" y="215" font-size="12.5" font-weight="600" fill="#E8EDF2">Chord memory</text>
@@ -169,7 +172,7 @@
 <text x="1087" y="381" font-size="10.5" fill="#FF93BC">also LFO rates and envelope times</text>
 <rect x="188" y="392" width="742" height="164" rx="6" fill="#1B232D" stroke="#B5507E" stroke-width="1.2"/>
 <text x="204" y="413" font-size="10.5" font-weight="700" letter-spacing="0.7" fill="#FF93BC">MODULATION SOURCES · PER VOICE</text>
-<text x="572" y="413" font-size="10.5" font-weight="700" letter-spacing="0.7" fill="#FF93BC">PER PART, SHARED BY ITS VOICES</text>
+<text x="572" y="413" font-size="10.5" font-weight="700" letter-spacing="0.7" fill="#FF93BC">PER LAYER, SHARED BY ITS VOICES</text>
 <polyline points="556,402 556,546" fill="none" stroke="#3B4753" stroke-width="1" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="204" y="434" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">3 envelopes </tspan><tspan fill="#B4C0CB">delay, attack, hold, decay, sustain, release; a curve</tspan></text>
 <text x="204" y="449" font-size="11.5" fill="#B4C0CB"><tspan fill="#B4C0CB">per stage; times that shorten up the keyboard; loop; one-shot</tspan></text>
@@ -188,7 +191,7 @@
 <polygon points="952,472 945,475.22 945,468.78" fill="#FF93BC"/>
 <rect x="952" y="392" width="246" height="164" rx="6" fill="#3A1627" stroke="#B5507E" stroke-width="1.2"/>
 <text x="968" y="415" font-size="13" font-weight="700" letter-spacing="0.5" fill="#FF93BC">MOD MATRIX</text>
-<text x="968" y="433" font-size="12" font-weight="600" fill="#E8EDF2">24 routings per part</text>
+<text x="968" y="433" font-size="12" font-weight="600" fill="#E8EDF2">24 routings per layer</text>
 <text x="968" y="453" font-size="11.5" fill="#E8EDF2">Each routing: a source, a destination, an</text>
 <text x="968" y="468" font-size="11.5" fill="#E8EDF2">amount, a second source that scales it</text>
 <text x="968" y="483" font-size="11.5" fill="#E8EDF2">(via) and one of 6 curves. One curve</text>
@@ -202,9 +205,9 @@
 <text x="1214" y="494" font-size="11.5" fill="#B4C0CB">bend → pitch</text>
 <text x="1214" y="509" font-size="11.5" fill="#B4C0CB">key tracking per slot</text>
 <rect x="172" y="582" width="1246" height="70" rx="10" fill="#151C24" stroke="#3B4753" stroke-width="1.2"/>
-<text x="188" y="602" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.8" fill="#E8EDF2">PART B</tspan><tspan dx="10" fill="#B4C0CB">the same chain again with its own patch · the two parts share the 16 voices, each sure of 8</tspan></text>
+<text x="188" y="602" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.8" fill="#E8EDF2">LAYER B</tspan><tspan dx="10" fill="#B4C0CB">a second whole sound: the same chain with its own patch · the two layers share the 16 voices, each sure of 8</tspan></text>
 <rect x="188" y="614" width="398" height="26" rx="5" fill="#232D38" stroke="#5E6C7A" stroke-width="1.2"/>
-<text x="387" y="631" font-size="10.5" text-anchor="middle" fill="#B4C0CB">chord memory → arpeggiator (shared settings, on or off per part) → play mode</text>
+<text x="387" y="631" font-size="10.5" text-anchor="middle" fill="#B4C0CB">chord memory → its own arpeggiator → play mode</text>
 <polyline points="586,627 620.05,627" fill="none" stroke="#B4C0CB" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>
 <polygon points="626,627 619,630.22 619,623.78" fill="#B4C0CB"/>
 <rect x="626" y="614" width="38" height="26" rx="5" fill="#34290F" stroke="#94702A" stroke-width="1.2"/>
@@ -234,9 +237,9 @@
 <rect x="1262" y="614" width="42" height="26" rx="5" fill="#27214A" stroke="#685CB8" stroke-width="1.2"/>
 <text x="1283" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle" fill="#B7ACFF">I1</text>
 <rect x="1315" y="614" width="42" height="26" rx="5" fill="#27214A" stroke="#685CB8" stroke-width="1.2"/>
-<text x="1336" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle" fill="#B7ACFF">I2</text>
+<text x="1336" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle" fill="#B7ACFF">…</text>
 <rect x="1368" y="614" width="42" height="26" rx="5" fill="#27214A" stroke="#685CB8" stroke-width="1.2"/>
-<text x="1389" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle" fill="#B7ACFF">I3</text>
+<text x="1389" y="631.5" font-size="11.5" font-weight="700" text-anchor="middle" fill="#B7ACFF">I6</text>
 <rect x="1446" y="104" width="130" height="548" rx="10" fill="#151C24" stroke="#3B4753" stroke-width="1.2"/>
 <polyline points="1410,249 1432,249" fill="none" stroke="#E8EDF2" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
 <polyline points="1410,627 1432,627 1432,156 1453.2,156" fill="none" stroke="#E8EDF2" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
@@ -282,7 +285,7 @@
 <polygon points="1511,540 1507.78,533 1514.22,533" fill="#E8EDF2"/>
 <rect x="1460" y="540" width="102" height="30" rx="15" fill="#E8EDF2"/>
 <text x="1511" y="560" font-size="10.5" font-weight="700" text-anchor="middle" letter-spacing="0.6" fill="#10151B">STEREO OUT</text>
-<text x="1511" y="594" font-size="10.5" text-anchor="middle" fill="#B4C0CB">Any of the 12 effects</text>
+<text x="1511" y="594" font-size="10.5" text-anchor="middle" fill="#B4C0CB">Any of the 13 effects</text>
 <text x="1511" y="608" font-size="10.5" text-anchor="middle" fill="#B4C0CB">in any master slot,</text>
 <text x="1511" y="622" font-size="10.5" text-anchor="middle" fill="#B4C0CB">in slot order.</text>
 <rect x="24" y="674" width="594" height="32" rx="8" fill="#34290F"/>
@@ -398,7 +401,7 @@
 <text x="1228" y="1000.5" font-size="11.5" fill="#E8EDF2">spread, and a delay whose feedback steps each repeat.</text>
 <polyline points="1124,1023 1564,1023" fill="none" stroke="#3B4753" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="1128" y="1039" font-size="11" fill="#B4C0CB">Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper.</text>
-<text x="1128" y="1053" font-size="11" fill="#B4C0CB">Each part sets what share of it passes through them.</text>
+<text x="1128" y="1053" font-size="11" fill="#B4C0CB">Each layer sets what share of it passes through them.</text>
 <rect x="24" y="1085" width="700" height="228" rx="8" fill="#1B232D" stroke="#E8EDF2" stroke-width="1.3"/>
 <text x="40" y="1109" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.8" fill="#E8EDF2">THE MUSEUM</tspan><tspan dx="10" fill="#B4C0CB">classic sounds rebuilt from the instruments’ own numbers</tspan></text>
 <text x="40" y="1131" font-size="12" fill="#B4C0CB"><tspan font-weight="700" fill="#E8EDF2">Ten so far: </tspan><tspan >DX7 E.PIANO 1 and BASS 1 · Prophet-5 Sync II and Brass · Minimoog Fat Bass and the Trilogy lead · TX81Z</tspan></text>
@@ -424,7 +427,7 @@
 <rect x="1196" y="1085" width="380" height="228" rx="8" fill="#1B232D" stroke="#E8EDF2" stroke-width="1.3"/>
 <text x="1212" y="1109" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.8" fill="#E8EDF2">2× VOICES</tspan><tspan dx="10" fill="#B4C0CB">and FM that does not fold back</tspan></text>
 <text x="1212" y="1131" font-size="12" fill="#B4C0CB">Every voice is computed at twice the sample rate and brought</text>
-<text x="1212" y="1147" font-size="12" fill="#B4C0CB">down once per part.</text>
+<text x="1212" y="1147" font-size="12" fill="#B4C0CB">down once per layer.</text>
 <text x="1212" y="1169" font-size="12" fill="#B4C0CB">FM2 and FM4 also hold the index, note by note, where the first</text>
 <text x="1212" y="1185" font-size="12" fill="#B4C0CB">sideband that would fold back into the audible band stays under</text>
 <text x="1212" y="1201" font-size="12" fill="#B4C0CB">−80 dB. Low and middle notes never reach the limit.</text>

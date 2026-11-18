@@ -1,25 +1,27 @@
 # -*- coding: utf-8 -*-
-"""Builds the CoolSynth V3 engine page for GitHub Pages: the engine map and a few words around it.
+"""Builds the CoolSynth V3 engine map shown on the architecture page (docs/architecture.md, D210).
 
-Writes into site/ at the repository root (published by .github/workflows/pages.yml):
-  index.html        the page (inline SVG, always dark: the user finds the map most readable on it)
-  engine-map.svg    the diagram alone (fixed dark colours, generic font family)
-With --png it also writes engine-map.png, a raster of the drawing in Arial, 3200 px wide (not a browser
-rendering), and with --check check-light.png and check-dark.png for looking the layout over; neither is published
-unless copied in by hand.
+Writes into docs/architecture/:
+  engine-map.svg    the diagram (fixed dark colours, generic font family; always dark: the user finds the map
+                    most readable on it)
+With --png it also writes engine-map.png there, a raster of the drawing in Arial on a light ground, 3200 px wide
+(not a browser rendering), and with --check check-light.png and check-dark.png in the system's temporary folder,
+for looking the layout over.
 
 Text is measured with the Windows Arial fonts (Pillow), so the layout is computed on Windows:
-    python tools/site/build_engine_map.py
-Edit the facts here when the engine changes, run it, and commit site/.
+    python tools/site/build_engine_map.py --png
+Edit the facts here when the engine changes, run it, and commit docs/architecture/. (Until D210 this also wrote a
+GitHub Pages site into site/; that site is no longer published.)
 """
 import math
 import os
 import sys
+import tempfile
 from xml.sax.saxutils import escape
 
 from PIL import Image, ImageDraw, ImageFont
 
-OUT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "site"))
+OUT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "docs", "architecture"))
 os.makedirs(OUT, exist_ok=True)
 W = 1600
 FONT_DIR = r"C:\Windows\Fonts"
@@ -178,8 +180,8 @@ c.text(24, 50, [R("CoolSynth V3", w=700, f="ink", s=30), R("engine architecture"
        disp=True)
 c.text(24, 76, "Signal flow of one patch, left to right. Every slot takes any module of its kind; "
                "the choices are listed underneath.", size=13, fill="ink2")
-c.text(1576, 44, "2 parts · 16 voices · 3 generator + 3 processor slots per voice · "
-                 "24 modulation routings per part · 136 factory presets",
+c.text(1576, 44, "2 layers · 16 voices · 3 generator + 3 processor slots per voice · "
+                 "24 modulation routings per layer · 136 factory presets",
        size=12.5, weight=600, fill="ink", anchor="end")
 
 legend = [("note", "notes"), ("audio", "audio"), ("mod", "modulation"), ("planned", "planned, not built yet")]
@@ -218,16 +220,16 @@ for i in (0, 1, 3, 4, 5, 7):
 for j, s in enumerate(["notes, velocity,", "release velocity,", "wheel, bend, pedal"]):
     c.text(KX + 12, KY + 70 + j * 14.5, s, size=11, fill="ink2", maxw=KW - 18)
 
-c.text(24, 334, "PART MODE", size=10.5, weight=700, fill="ink2", ls=0.8)
-c.text(24, 352, "A · Layer · Split · B", size=12, weight=600, fill="ink", maxw=130)
-c.para(24, 369, 128, "Split by key range. Each part has its own velocity range and transpose.", size=11,
-       leading=14.5)
+c.text(24, 334, "LAYER MODE", size=10.5, weight=700, fill="ink2", ls=0.8)
+mode_end = c.para(24, 352, 128, "Stack · Split · Velocity", size=12, weight=600, fill="ink", leading=15)
+c.para(24, mode_end + 3, 128, "Stack plays both layers; Split gives each layer its own keys; Velocity chooses "
+                              "by how hard a key is struck. An empty layer is left out.", size=11, leading=14.5)
 
 # ---- part A panel
 c.rect(PX, PA_TOP, PW, PA_BOTTOM - PA_TOP, "panel", "line", rx=10)
-c.text(PX + 16, 123, [R("PART A", w=700, f="ink", ls=0.8),
-                      R("one complete synth: its own patch, note layer, voices, modulation and insert effects",
-                        f="ink2", dx=10)], size=11.5)
+c.text(PX + 16, 123, [R("LAYER A", w=700, f="ink", ls=0.8),
+                      R("one whole sound: its own patch, note layer and arpeggiator, voices, modulation and six "
+                        "insert effects", f="ink2", dx=10)], size=11.5)
 
 # ---- note layer
 NY, NH = 193, 112
@@ -338,7 +340,7 @@ c.text(1087, 381, "also LFO rates and envelope times", size=10.5, fill="mod", ma
 
 c.rect(188, MBY, 742, MBH, "surface", "mod-line")
 c.text(204, MBY + 21, "MODULATION SOURCES · PER VOICE", size=10.5, weight=700, fill="mod", ls=0.7, maxw=340)
-c.text(572, MBY + 21, "PER PART, SHARED BY ITS VOICES", size=10.5, weight=700, fill="mod", ls=0.7, maxw=340)
+c.text(572, MBY + 21, "PER LAYER, SHARED BY ITS VOICES", size=10.5, weight=700, fill="mod", ls=0.7, maxw=340)
 c.line([(556, MBY + 10), (556, MBY + MBH - 10)], stroke="line", sw=1)
 
 
@@ -371,7 +373,7 @@ if y + 6 > MBY + MBH - 6:
 c.arrow([(930, 472), (952, 472)], head=7, **MODW)
 c.rect(952, MBY, 246, MBH, "mod-bg", "mod-line")
 c.text(968, MBY + 23, "MOD MATRIX", size=13, weight=700, fill="mod", ls=0.5)
-c.text(968, MBY + 41, "24 routings per part", size=12, weight=600, fill="ink")
+c.text(968, MBY + 41, "24 routings per layer", size=12, weight=600, fill="ink")
 c.para(968, MBY + 61, 216, "Each routing: a source, a destination, an amount, a second source that scales it "
                            "(via) and one of 6 curves. One curve snaps pitch to semitones.", size=11.5,
        leading=15, fill="ink")
@@ -384,12 +386,12 @@ for j, s in enumerate(["ENV1 → amp", "ENV2 → P1 cutoff", "velocity → amp a
 
 # ---- part B lane
 c.rect(PX, BLY, PW, BLH, "panel", "line", rx=10)
-c.text(PX + 16, BLY + 20, [R("PART B", w=700, f="ink", ls=0.8),
-                           R("the same chain again with its own patch · the two parts share the 16 voices, "
-                             "each sure of 8", f="ink2", dx=10)], size=11.5)
+c.text(PX + 16, BLY + 20, [R("LAYER B", w=700, f="ink", ls=0.8),
+                           R("a second whole sound: the same chain with its own patch · the two layers share the "
+                             "16 voices, each sure of 8", f="ink2", dx=10)], size=11.5)
 my, mh = BY - 13, 26
 c.rect(188, my, 398, mh, "note-bg", "note-line", rx=5)
-c.text(387, my + 17, "chord memory → arpeggiator (shared settings, on or off per part) → play mode", size=10.5,
+c.text(387, my + 17, "chord memory → its own arpeggiator → play mode", size=10.5,
        fill="ink2", anchor="middle", maxw=390)
 c.arrow([(586, BY), (626, BY)], **NW)
 for i, x in enumerate((626, 672, 718)):
@@ -406,9 +408,9 @@ c.arrow([(1026, BY), (SX - 9, BY)], head=7)
 c.circle(SX, BY, 9)
 c.text(SX, BY + 4, "Σ", size=11.5, weight=700, fill="ink", anchor="middle")
 c.arrow([(SX + 9, BY), (IXS[0], BY)], head=7)
-for i, x in enumerate(IXS):
+for x, name in zip(IXS, ["I1", "…", "I6"]):
     c.rect(x, my, IW, mh, "fx-bg", "fx-line", rx=5)
-    c.text(x + IW / 2, my + 17.5, "I%d" % (i + 1), size=11.5, weight=700, fill="fx", anchor="middle")
+    c.text(x + IW / 2, my + 17.5, name, size=11.5, weight=700, fill="fx", anchor="middle")
 
 # ---- mix bus and master column
 BUSX = 1432
@@ -437,7 +439,7 @@ c.text(CMID, 504, "SOFT CLIPPER", size=10.5, weight=700, fill="ink", anchor="mid
 c.arrow([(CMID, 514), (CMID, 540)], head=7)
 c.rect(1460, 540, 102, 30, "ink", None, rx=15, sw=0)
 c.text(CMID, 560, "STEREO OUT", size=10.5, weight=700, fill="bg", anchor="middle", ls=0.6)
-for j, s in enumerate(["Any of the 12 effects", "in any master slot,", "in slot order."]):
+for j, s in enumerate(["Any of the 13 effects", "in any master slot,", "in slot order."]):
     c.text(CMID, 594 + j * 14, s, size=10.5, fill="ink2", anchor="middle", maxw=CW - 8)
 
 # =============================================================== the three type lists
@@ -533,7 +535,7 @@ panels = [
     dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 13 effects · 6 slots per layer · 6 master slots",
          rows=FX_ROWS, namew=100,
          note=[R("Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper. "
-                 "Each part sets what share of it passes through them.")],
+                 "Each layer sets what share of it passes through them.")],
          italic=False),
 ]
 need = 0.0
@@ -597,7 +599,7 @@ cards = [
         [R("Instruments load in the background; a note never waits for the disk.")],
     ]),
     dict(x=1196, w=380, title="2× VOICES", sub="and FM that does not fold back", paras=[
-        [R("Every voice is computed at twice the sample rate and brought down once per part.")],
+        [R("Every voice is computed at twice the sample rate and brought down once per layer.")],
         [R("FM2 and FM4 also hold the index, note by note, where the first sideband that would fold back into "
            "the audible band stays under −80 dB. Low and middle notes never reach the limit.")],
         [R("Measured: with index 10 asked for on a 2 kHz carrier, the largest alias below 20 kHz sits at "
@@ -717,12 +719,12 @@ def render_svg(mode):
     return "\n".join(out)
 
 
-ARIA = ("CoolSynth V3 engine architecture. Keys and MIDI feed a note layer of chord memory, arpeggiator and play "
-        "mode. Each of two parts is a complete synth: per voice three generator slots that can sync, ring, FM or "
-        "AM one another, three processor slots in series and an amplifier, then three insert effects. Modulation "
-        "sources and a 24-routing matrix feed the voice from below. Both parts are mixed into six master effect "
+ARIA = ("CoolSynth V3 engine architecture. Keys and MIDI feed two layers, each a whole sound: a note layer of "
+        "chord memory, its own arpeggiator and play mode; per voice three generator slots that can sync, ring, FM "
+        "or AM one another, three processor slots in series and an amplifier; then six insert effects. Modulation "
+        "sources and a 24-routing matrix feed the voice from below. Both layers are mixed into six master effect "
         "slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types "
-        "and 12 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.")
+        "and 13 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.")
 
 svg_open_standalone = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" '
                        'font-family="sans-serif" role="img" aria-label="%s">' % (W, H, W, H, escape(ARIA)))
@@ -733,158 +735,6 @@ standalone = ('<?xml version="1.0" encoding="UTF-8"?>\n' + svg_open_standalone +
 with open(os.path.join(OUT, "engine-map.svg"), "w", encoding="utf-8", newline="\n") as fh:
     fh.write(standalone)
 
-
-def tokens_css(pal, indent="  "):
-    return "\n".join("%s--%s: %s;" % (indent, k, v) for k, v in pal.items())
-
-
-util = "\n".join(".f-%s{fill:var(--%s)} .s-%s{stroke:var(--%s)}" % (k, k, k, k) for k in LIGHT)
-
-CAPTION = ("The signal path of one CoolSynth V3 patch. Keys pass through the note layer into two parts; each part "
-           "is a complete synth whose voices chain three generator slots, three processor slots and an amplifier, "
-           "followed by three insert effects, the mix and the master section. Modulation enters the voice from "
-           "below. Dashed outlines mark what is designed but not built yet; the user interface comes last and is "
-           "not drawn.")
-
-UPDATED = "14 November 2026"
-REPO_URL = "https://github.com/tomcoolpxl/CoolSynth"
-
-
-page ="""<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CoolSynth V3 Engine</title>
-<meta name="description" content="The engine of CoolSynth, a slot-based software synthesizer: its architecture, what each slot can hold, and where the project stands.">
-<link rel="icon" href="data:image/svg+xml,%%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%%3E%%3Crect width='32' height='32' rx='7' fill='%%235042B5'/%%3E%%3Cpath d='M5 20c3-9 5-9 7 0s4 9 7 0 4-9 8 0' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%%3E%%3C/svg%%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,600;0,700;1,400&family=Barlow+Semi+Condensed:wght@400;700&display=swap">
-<style>
-/* Layout: one wide figure first. The signal flow is a left-to-right spine; the type lists and notes hang beneath
-   it. A few short sections follow in a reading column. Always dark: the map reads best on it (the user's choice). */
-:root {
-%(dark)s
-  --font-text: "Barlow", "Helvetica Neue", Arial, sans-serif;
-  --font-display: "Barlow Semi Condensed", "Barlow", "Arial Narrow", Arial, sans-serif;
-  color-scheme: dark;
-}
-*, *::before, *::after { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-text); font-size: 16px; line-height: 1.55; }
-.wrap {
-  max-width: 1680px; margin: 0 auto; padding-block: 28px 40px;
-  padding-left: max(16px, env(safe-area-inset-left, 0px));
-  padding-right: max(16px, env(safe-area-inset-right, 0px));
-}
-header { max-width: 80ch; margin-bottom: 22px; }
-.kicker { margin: 0 0 6px; font-family: var(--font-display); font-weight: 700; font-size: 13px; letter-spacing: 1.4px;
-          text-transform: uppercase; color: var(--fx); }
-h1 { margin: 0 0 10px; font-family: var(--font-display); font-weight: 700; font-size: clamp(30px, 4.2vw, 44px);
-     line-height: 1.05; letter-spacing: 0.2px; }
-.lead { margin: 0; font-size: 18px; color: var(--ink2); text-wrap: pretty; }
-.flux { display: inline-block; margin-top: 14px; padding: 4px 10px; border: 1px dashed var(--note-line);
-        border-radius: 999px; font-size: 13.5px; color: var(--ink2); background: var(--surface); }
-figure { margin: 0; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
-.scroller { overflow-x: auto; max-width: 100%%; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); }
-.scroller:focus-visible { outline: 2px solid var(--fx); outline-offset: 2px; }
-.map { display: block; width: 100%%; min-width: 1180px; height: auto; }
-.map text { font-family: var(--font-text); font-variant-numeric: tabular-nums; }
-.map text.disp { font-family: var(--font-display); }
-.hint { display: none; margin: 0; font-size: 13px; color: var(--ink3); }
-@media (max-width: 1210px) { .hint { display: block; } }
-figcaption { max-width: 80ch; color: var(--ink2); font-size: 14.5px; text-wrap: pretty; }
-figcaption a { color: inherit; }
-.columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%%, 340px), 1fr)); gap: 18px; margin-top: 34px; }
-section { min-width: 0; padding: 18px 20px 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
-section.wide { grid-column: 1 / -1; }
-h2 { margin: 0 0 10px; font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: 1.2px;
-     text-transform: uppercase; }
-.s-gen h2 { color: var(--gen); } .s-proc h2 { color: var(--proc); } .s-fx h2 { color: var(--fx); } .s-mod h2 { color: var(--mod); }
-section p { margin: 0 0 10px; color: var(--ink2); text-wrap: pretty; }
-section p:last-child { margin-bottom: 0; }
-ul { margin: 0; padding-left: 18px; color: var(--ink2); }
-li { margin: 5px 0; text-wrap: pretty; }
-li b { color: var(--ink); font-weight: 600; }
-a { color: var(--fx); text-underline-offset: 2px; }
-footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink3); font-size: 13.5px; }
-%(util)s
-</style>
-</head>
-<body>
-<div class="wrap">
-  <header>
-    <p class="kicker">CoolSynth · V3 engine</p>
-    <h1>A synthesizer built from slots</h1>
-    <p class="lead">CoolSynth is a polyphonic software synthesizer, a VST3 plugin and a standalone app, written in C++
-    with JUCE. Its engine is made of slots: any sound source in any of three generator slots, any filter or shaper in
-    any of three processor slots, any effect in any effect slot, all of it modulated from one matrix.</p>
-    <p class="flux">Work in progress: the engine still changes week to week, and the instrument's own interface comes last.</p>
-  </header>
-
-  <figure>
-    <p class="hint">The map is wider than this screen: scroll it sideways to follow the signal.</p>
-    <div class="scroller" tabindex="0" role="group" aria-label="Engine map; scrolls sideways on narrow screens">
-<svg class="map" viewBox="0 0 %(w)d %(h)d" role="img" aria-label="%(aria)s">
-<rect x="0" y="0" width="%(w)d" height="%(h)d" class="f-bg"/>
-%(svg)s
-</svg>
-    </div>
-    <figcaption>%(caption)s <a href="engine-map.svg">The map alone, as SVG.</a></figcaption>
-  </figure>
-
-  <div class="columns">
-    <section>
-      <h2>A patch</h2>
-      <p>Two parts, each a complete synth with its own voices, modulation and effects, played alone, layered or split
-      across the keyboard. They share sixteen voices: each is sure of eight and gets more when the other needs fewer.</p>
-      <p>Each voice runs three generator slots into three processor slots in series and an amplifier, at twice the
-      host's sample rate. Play modes: poly, mono, legato and unison, with glide by time or by rate.</p>
-    </section>
-    <section class="s-mod">
-      <h2>Modulation</h2>
-      <p>Per voice: three envelopes with hold, curves and key-scaled times, two LFOs, velocity, key, note random,
-      drift and key pressure (the whole keyboard's or the key's own, whichever is larger). Per part: the expression
-      pedal, two global LFOs, a looping global envelope, a 16-step sequencer with slides, four macros and a
-      chaos source.</p>
-      <p>A 24-slot matrix routes any of them to pitch, level, pan, any slot's values and the envelope times; each
-      routing can be scaled by a second source and bent by a curve.</p>
-    </section>
-    <section>
-      <h2>Notes in</h2>
-      <p>Chord memory (twelve chord shapes, or one learned from the keys), strum, and an arpeggiator with eleven
-      patterns, swing, ratchets, accents and Euclidean rhythms, all before the parts.</p>
-      <p>Effects: six slots on each layer, then six master slots, each holding any of thirteen effects in any order.
-      What each slot can hold, generator, processor or effect, is listed under the map.</p>
-    </section>
-    <section class="wide">
-      <h2>Sounds, and how they are checked</h2>
-      <p>136 factory presets in 14 rooms. The Conservatory holds 40 recorded acoustic instruments from free (CC0)
-      sample libraries, played through the Sample generator. The Museum holds classic synth sounds rebuilt from the
-      instruments' own patch data, or from a record when no data exists, and each is admitted only after a
-      side-by-side listening test against a recording of the real thing.</p>
-      <p>Every module has unit tests, and sounds are measured against recordings (harmonic levels, band levels,
-      envelopes, pitch) before they are judged by ear.</p>
-    </section>
-    <section class="wide">
-      <h2>Next</h2>
-      <ul>
-        <li><b>The interface,</b> now that the engine parts it depends on are in.</li>
-        <li><b>Later: MPE,</b> each note with its own bend, pressure and slide, for MPE controllers.</li>
-      </ul>
-    </section>
-  </div>
-
-  <footer>Updated %(updated)s · <a href="%(repo)s">Source on GitHub</a> · This page and its map are generated by
-  <code>tools/site/build_engine_map.py</code>.</footer>
-</div>
-</body>
-</html>
-""" % dict(dark=tokens_css(DARK), util=util, w=W, h=H,
-           aria=escape(ARIA, {'"': "&quot;"}), svg=render_svg("html"), caption=escape(CAPTION),
-           updated=UPDATED, repo=REPO_URL)
-with open(os.path.join(OUT, "index.html"), "w", encoding="utf-8", newline="\n") as fh:
-    fh.write(page)
 
 
 # =============================================================== rough raster, for checking the layout
@@ -964,9 +814,9 @@ if "--png" in sys.argv or "--check" in sys.argv:
 if "--png" in sys.argv:
     big.resize((W * 2, H * 2), Image.LANCZOS).save(os.path.join(OUT, "engine-map.png"), optimize=True)
 if "--check" in sys.argv:
-    big.resize((int(W * 1.5), int(H * 1.5)), Image.LANCZOS).save(os.path.join(OUT, "check-light.png"))
+    big.resize((int(W * 1.5), int(H * 1.5)), Image.LANCZOS).save(os.path.join(tempfile.gettempdir(), "check-light.png"))
     preview(None, scale=3.0, pal=DARK).resize((int(W * 1.5), int(H * 1.5)), Image.LANCZOS).save(
-        os.path.join(OUT, "check-dark.png"))
+        os.path.join(tempfile.gettempdir(), "check-dark.png"))
 print("canvas %d x %d, menu height %d, card height %d" % (W, H, MENU_H, card_h))
 for p in panels:
     print("  panel %-5s needs %.0f" % (p["kind"], p["need"]))

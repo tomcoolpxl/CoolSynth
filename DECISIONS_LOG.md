@@ -4180,3 +4180,22 @@ DLLs (MSVCP140D, VCRUNTIME140D, ucrtbased), present only with Visual Studio and 
   style; destroying that render later wrote into the freed style. Debug's heap tolerated it. A test
   bug: the app and the plugin never empty the library while playing (setRoot is for tests and tools),
   now asserted in dropAll. The test finishes with each render before emptying the library.
+
+## D210. An architecture page in the repository; GitHub Pages stopped (2026-11-18)
+
+The user asked for an architecture page in the repository with an updated engine map "and other stuff",
+linked from the README, and for the GitHub Pages site to stop: "disable the actions for publishing the
+page, not other actions".
+- **`docs/architecture.md`**, linked from the README, shows the engine map and describes the two layers
+  and the master chain, the signal flow, modulation, the note layer, the effects, the sounds and how they
+  are checked, the threads, the interface, state and presets, a source map, the tests and tools, and the
+  build. Each statement was checked against the code.
+- **The map** is still drawn by `tools/site/build_engine_map.py`, now into `docs/architecture/`
+  (`engine-map.svg`, and `engine-map.png` with `--png`; the `--check` images go to the temporary folder).
+  It no longer writes a web page; the page's text moved into the markdown. Its facts were brought up to
+  date: layers instead of parts, the layer modes Stack, Split and Velocity (D190), each layer with its own
+  arpeggiator and six insert slots (D194), 13 effects with Pitch (D205).
+- **GitHub Pages:** the workflow "Engine page" (`.github/workflows/pages.yml`) is disabled with
+  `gh workflow disable`; Windows Release and Windows Manual Validation stay enabled. `site/` is removed.
+  The last published version of https://tomcoolpxl.github.io/CoolSynth/ stays online until the user
+  decides whether to take it down.

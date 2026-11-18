@@ -6,7 +6,7 @@ CoolSynth is a two-layer software synthesizer for Windows, as a standalone app a
 It is built around the Arturia MiniLab 3: the app drives the MiniLab's screen, pads and knobs. Any
 MIDI keyboard plays it, and the mouse reaches everything on screen.
 
-How the engine fits together: [the engine page](https://tomcoolpxl.github.io/CoolSynth/).
+How it is built, with a map of the engine: [the architecture page](docs/architecture.md).
 
 ## What is in it
 
@@ -84,6 +84,7 @@ Releases are built by `.github/workflows/windows-release.yml` when a tag such as
 ## Licence
 
 CoolSynth's own code is under the MIT licence (`LICENSE`). It is built with
-[JUCE](https://juce.com), which is licensed separately (AGPLv3 or the JUCE licence). The recorded
+[JUCE](https://juce.com) 8, used under the free Starter tier of the
+[JUCE 8 licence](https://juce.com/legal/juce-8-licence/). The recorded
 instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community
 Sample Library, both released into the public domain (CC0).
