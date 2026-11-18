@@ -94,6 +94,7 @@ namespace coolsynth::synth
         euclideanPosition = 0;
         updateEuclideanCycle();
         previousHostIsPlaying = false;
+        quietAfterHostStop = false;
         previousEnabled = false;
     }
 
@@ -145,6 +146,7 @@ namespace coolsynth::synth
         const bool clampedNote = noteNumber >= 0 && noteNumber <= 127;
         if (! clampedNote)
             return;
+        quietAfterHostStop = false; // a key played while the host is stopped runs the arp at the host's tempo
 
         if (currentParameters.latch && heldNoteCount == 0)
             clearLatched();
@@ -210,29 +212,35 @@ namespace coolsynth::synth
             return outEventCount;
         }
 
-        const bool hostSync = useHostSync(currentTransport);
-        const bool hostStopped = hostSync && ! currentTransport.hostIsPlaying;
+        // A host with a tempo and a position: while it plays the steps sit on its grid; while it is stopped the arp
+        // runs from the keys at its tempo, as in the app (D211: a DAW that is not playing left arp sounds silent).
+        const bool hostClock = useHostSync(currentTransport);
+        const bool hostSync = hostClock && currentTransport.hostIsPlaying;
         const bool hostTransportTransitionedOff =
-            hostSync && previousHostIsPlaying && ! currentTransport.hostIsPlaying;
+            hostClock && previousHostIsPlaying && ! currentTransport.hostIsPlaying;
 
         if (hostTransportTransitionedOff)
         {
             emitNoteOffsForAllRinging(outEvents, outEventCount, 0, maxEvents);
+            quietAfterHostStop = true; // the host's stop stops the arp; a key starts it again
+            internalClockArmed = false;
         }
+        if (hostSync)
+            quietAfterHostStop = false;
 
-        previousHostIsPlaying = hostSync ? currentTransport.hostIsPlaying : false;
+        previousHostIsPlaying = hostClock ? currentTransport.hostIsPlaying : false;
 
         // Always drain pending gate-offs for the block first.
         popRingingForBlock(outEvents, outEventCount, blockSamples, maxEvents);
 
-        if (hostStopped)
+        if (hostClock && ! hostSync && quietAfterHostStop)
             return outEventCount;
 
         const int stepsPerBeat = computeStepsPerBeat();
         if (stepsPerBeat <= 0)
             return outEventCount;
 
-        const double bpm = hostSync ? currentTransport.hostBpm : juce::jlimit(20.0, 400.0, static_cast<double>(currentParameters.internalTempoBpm));
+        const double bpm = hostClock ? currentTransport.hostBpm : juce::jlimit(20.0, 400.0, static_cast<double>(currentParameters.internalTempoBpm));
         if (bpm <= 0.0)
             return outEventCount;
 

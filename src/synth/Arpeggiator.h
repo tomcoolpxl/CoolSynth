@@ -129,6 +129,9 @@ namespace coolsynth::synth
 
         // Host-sync state from previous block, used to detect transitions.
         bool previousHostIsPlaying = false;
+        // The host stopped while the arp played: it stays quiet until a key is played (D211). With the host stopped
+        // from the start, a key starts it at once, at the host's tempo.
+        bool quietAfterHostStop = false;
         bool previousEnabled = false;
 
         // Pattern walker state.

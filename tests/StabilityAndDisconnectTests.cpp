@@ -2018,6 +2018,36 @@ public:
             expectEquals(keyDownCount, 0);
         }
 
+        beginTest("a_stopped_host_lets_the_arp_run_from_the_keys_at_its_tempo");
+        {
+            // D211: in a DAW that is not playing, a key starts the arp at the DAW's tempo (it was silent before).
+            constexpr int blockSamples = 3000;
+            coolsynth::testing::TestEngine engine;
+            engine.prepare(48000.0, blockSamples, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.arp.enabled = true;
+            parameters.arp.rate = coolsynth::parameters::ArpRateChoice::sixteenth;
+            parameters.arp.octaveRange = 1;
+            parameters.arp.gateLength = 0.95f;
+
+            coolsynth::synth::EngineTransportInfo transport;
+            transport.hostHasTempo = true;
+            transport.hostHasPpq = true;
+            transport.hostIsPlaying = false;
+            transport.hostBpm = 120.0;
+            transport.hostPpqAtBlockStart = 0.0;
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> noteOn {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f, false }
+            }};
+            juce::AudioBuffer<float> buffer(2, blockSamples);
+            buffer.clear();
+            engine.render(buffer, noteOn, parameters, transport);
+            expect(engine.getArpRingingNoteCountForTesting() >= 1, "the key started the arp while the host is stopped");
+            expect(buffer.getMagnitude(0, blockSamples) > 1.0e-4f, "and it sounds");
+        }
+
         beginTest("arp_disable_mid_play_releases_ringing_note");
         {
             constexpr int blockSamples = 3000; // shorter than the long gate so the note is still held

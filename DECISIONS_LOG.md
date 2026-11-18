@@ -4264,3 +4264,9 @@ others do and chose (pick lists, with research): **all of it, plus ready setups 
   driver switch, recommended and chosen; test with keys only; test the MiniLab driver only). Preferences >
   Controller setup > MiniLab 3 driver On / Off, kept in controller.json. Off, the driver lets the MiniLab go back to
   its own program (in the app its port becomes one of the app's MIDI inputs again), and its ready setup applies.
+- **Found in the user's Ableton test** (2026-11-19): Ableton gives an instrument every note on channel 1 (Ableton
+  forum, several threads), so the MiniLab's pads (channel 10) played notes: the driver now marks each pad it hears
+  on the MiniLab's own port, and the host's copy of that note, arriving a moment later, is kept from the sound
+  (`MiniLab3Driver::isPadEcho`). And the arpeggiator was silent while a DAW knew its tempo but was not playing:
+  now a key starts it at the DAW's tempo; while the DAW plays it locks to the bar as before, and the DAW's stop
+  stops it until the next key.

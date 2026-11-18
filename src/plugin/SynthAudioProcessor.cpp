@@ -534,7 +534,8 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             // The MiniLab's knobs, pads and buttons the host passes on while a CoolSynth here drives it (D211): the
             // driver has them already, and a pad must not play a note.
             namespace ml = coolsynth::midi::minilab3;
-            if (coolsynth::ui::MiniLab3Driver::drivenInPlugin() && ml::decode(message).kind != ml::Control::Kind::other)
+            if (coolsynth::ui::MiniLab3Driver::drivenInPlugin()
+                && (ml::decode(message).kind != ml::Control::Kind::other || coolsynth::ui::MiniLab3Driver::isPadEcho(message)))
                 return;
             using coolsynth::midi::ControllerSetup;
             if (ControllerSetup::wanted(message))

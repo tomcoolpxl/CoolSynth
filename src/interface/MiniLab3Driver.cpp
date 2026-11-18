@@ -152,6 +152,19 @@ namespace coolsynth::ui
             setup.announce("MiniLab 3 connected. In your DAW, set its MiniLab control surface to None.");
     }
 
+    bool MiniLab3Driver::isPadEcho(const juce::MidiMessage& message) noexcept
+    {
+        if (! message.isNoteOn())
+            return false; // a release is harmless, and a key's must never be lost
+        const int note = message.getNoteNumber();
+        if (note < ml::firstPadNote || note >= ml::firstPadNote + 8)
+            return false;
+        const double pad = padPressedAt[static_cast<std::size_t>(note)].load(std::memory_order_relaxed);
+        const double key = keyPressedAt[static_cast<std::size_t>(note)].load(std::memory_order_relaxed);
+        // The host's copy comes a block or two after the driver heard it; a key of that pitch since is a key.
+        return pad > key && juce::Time::getMillisecondCounterHiRes() - pad < 250.0;
+    }
+
     void MiniLab3Driver::send(const juce::MidiMessage& message)
     {
         if (output != nullptr)
@@ -162,7 +175,14 @@ namespace coolsynth::ui
     {
         // MIDI thread: in the app keys and performance go straight to the sound; in a plugin the host brings them.
         // Controls go to the message thread.
-        if (ml::decode(message).kind == ml::Control::Kind::other)
+        const auto kind = ml::decode(message).kind;
+        if (message.isNoteOn())
+        {
+            // when each pitch last came as a pad or as a key, for telling a pad's echo from the host (D211)
+            auto& at = kind == ml::Control::Kind::pad ? padPressedAt : keyPressedAt;
+            at[static_cast<std::size_t>(message.getNoteNumber())].store(juce::Time::getMillisecondCounterHiRes(), std::memory_order_relaxed);
+        }
+        if (kind == ml::Control::Kind::other)
         {
             if (message.isSysEx())
                 return;

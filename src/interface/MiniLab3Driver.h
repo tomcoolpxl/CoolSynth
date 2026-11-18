@@ -43,6 +43,11 @@ namespace coolsynth::ui
             the host passes on are not the sound's (D211). */
         [[nodiscard]] static bool drivenInPlugin() noexcept { return pluginDriving.load(std::memory_order_relaxed); }
 
+        /** Audio thread: a note-on the host passes on that is the echo of a MiniLab pad the driver just heard (D211).
+            Ableton gives an instrument every note on channel 1, so a pad (channel 10) and a key of the same pitch look
+            alike there; the driver hears both on the MiniLab's own port, with their channels, a moment earlier. */
+        [[nodiscard]] static bool isPadEcho(const juce::MidiMessage& message) noexcept;
+
     private:
         void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
         void timerCallback() override;
@@ -94,6 +99,9 @@ namespace coolsynth::ui
         // Who drives the MiniLab (D211): one driver in this program, and this program among others.
         static inline MiniLab3Driver* owner = nullptr;
         static inline std::atomic<bool> pluginDriving { false };
+        // When the MiniLab's port last brought each note as a pad and as a key (milliseconds): MIDI thread writes.
+        static inline std::array<std::atomic<double>, 128> padPressedAt {};
+        static inline std::array<std::atomic<double>, 128> keyPressedAt {};
         static juce::InterProcessLock& programLock();
         static inline bool programHoldsLock = false;
     };
