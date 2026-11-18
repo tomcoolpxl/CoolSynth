@@ -62,21 +62,39 @@ namespace coolsynth::midi
         current = std::move(map);
         currentOrigin = current.empty() ? Origin::none : Origin::saved;
         foundProfile = {};
-        if (! testing)
-        {
-            const auto f = file();
-            if (current.empty())
-                f.deleteFile();
-            else
-            {
-                f.getParentDirectory().createDirectory();
-                f.replaceWithText(juce::JSON::toString(current.toVar()));
-            }
-            fileTime = f.getLastModificationTime();
-        }
+        save();
         publish();
         if (current.empty() && ! testing)
             lookForKnownController();
+    }
+
+    void ControllerSetup::setMiniLabDriverOn(bool on)
+    {
+        if (on == driverOn)
+            return;
+        driverOn = on;
+        // A found setup stays found; a saved one stays saved: only the switch is written with it.
+        save();
+        ++changes;
+    }
+
+    void ControllerSetup::save()
+    {
+        if (testing)
+            return;
+        const auto f = file();
+        const bool saved = currentOrigin == Origin::saved;
+        if (! saved && driverOn)
+            f.deleteFile(); // nothing of the player's own to keep
+        else
+        {
+            auto value = saved ? current.toVar() : ControllerMap {}.toVar();
+            if (auto* object = value.getDynamicObject())
+                object->setProperty("miniLabDriver", driverOn);
+            f.getParentDirectory().createDirectory();
+            f.replaceWithText(juce::JSON::toString(value));
+        }
+        fileTime = f.getLastModificationTime();
     }
 
     void ControllerSetup::readFile()
@@ -85,6 +103,11 @@ namespace coolsynth::midi
         fileTime = f.getLastModificationTime();
         if (! f.existsAsFile())
         {
+            if (! driverOn)
+            {
+                driverOn = true;
+                ++changes;
+            }
             if (currentOrigin == Origin::saved)
             {
                 current = {};
@@ -93,7 +116,16 @@ namespace coolsynth::midi
             }
             return;
         }
-        current = ControllerMap::fromVar(juce::JSON::parse(f));
+        const auto value = juce::JSON::parse(f);
+        if (auto* object = value.getDynamicObject())
+            driverOn = ! object->hasProperty("miniLabDriver") || static_cast<bool>(object->getProperty("miniLabDriver"));
+        auto map = ControllerMap::fromVar(value);
+        if (map.empty() && currentOrigin == Origin::found)
+        {
+            ++changes; // only the switch changed: a found setup stays in use
+            return;
+        }
+        current = std::move(map);
         currentOrigin = current.empty() ? Origin::none : Origin::saved;
         foundProfile = {};
         publish();

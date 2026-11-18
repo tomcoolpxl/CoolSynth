@@ -28,22 +28,32 @@ namespace coolsynth::ui
     MiniLab3Driver::~MiniLab3Driver()
     {
         stopTimer();
-        if (owner == this)
+        giveUp();
+    }
+
+    void MiniLab3Driver::giveUp()
+    {
+        // Gone, or switched off in Preferences (D211): the MiniLab goes back to its own program, and in the app its
+        // port to the app's MIDI inputs, so it plays as any controller does.
+        if (owner != this)
+            return;
+        const auto identifier = inputIdentifier;
+        close(true);
+        owner = nullptr;
+        setConnected(false);
+        if (devices != nullptr && identifier.isNotEmpty())
+            devices->setMidiInputDeviceEnabled(identifier, true);
+        if (programHoldsLock)
         {
-            close(true);
-            owner = nullptr;
-            pluginDriving.store(false, std::memory_order_relaxed);
-            coolsynth::midi::ControllerSetup::instance().setMiniLabDriven(false);
-            if (programHoldsLock)
-            {
-                programLock().exit();
-                programHoldsLock = false;
-            }
+            programLock().exit();
+            programHoldsLock = false;
         }
     }
 
     bool MiniLab3Driver::takeDevice()
     {
+        if (! coolsynth::midi::ControllerSetup::instance().miniLabDriverOn())
+            return false;
         // Between programs: whoever took it first keeps it until it closes. In this program the lock stays taken
         // while any driver here owns the MiniLab.
         if (! programHoldsLock)
@@ -296,6 +306,21 @@ namespace coolsynth::ui
             const juce::ScopedLock lock(queueLock);
             pending.swap(queue);
         }
+        if (! coolsynth::midi::ControllerSetup::instance().miniLabDriverOn())
+        {
+            giveUp(); // switched off in Preferences (D211)
+            // In the app the MiniLab is then one of its MIDI inputs, as any controller is (an earlier run of the
+            // driver left it switched off there).
+            if (devices != nullptr && ! portGivenToApp)
+                for (const auto& info : juce::MidiInput::getAvailableDevices())
+                    if (ml::isDawPort(info.name))
+                    {
+                        devices->setMidiInputDeviceEnabled(info.identifier, true);
+                        portGivenToApp = true;
+                    }
+            return;
+        }
+        portGivenToApp = false;
         if (owner != this)
         {
             // Another CoolSynth drives it, or nobody: the first one to look takes it, every two seconds (D211).

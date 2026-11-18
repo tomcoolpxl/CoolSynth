@@ -1194,14 +1194,23 @@ namespace
         {
             setVisible(false);
             setWantsKeyboardFocus(true);
-            for (auto* b : { &close, &use, &start, &forgetAll, &forgetYes, &forgetNo, &previous, &skip, &done })
+            for (auto* b : { &close, &use, &start, &forgetAll, &forgetYes, &forgetNo, &previous, &skip, &done, &driverOn, &driverOff })
             {
                 b->setColour(juce::TextButton::buttonColourId, colours::knob);
+                b->setColour(juce::TextButton::buttonOnColourId, colours::ink);
                 b->setColour(juce::TextButton::textColourOffId, colours::ink);
+                b->setColour(juce::TextButton::textColourOnId, colours::background);
                 addAndMakeVisible(*b);
             }
             close.setButtonText(juce::String(juce::CharPointer_UTF8("\xc3\x97")));
             close.onClick = [this] { hide(); };
+            // The MiniLab driver on or off (D211): off, the MiniLab is a controller like any other.
+            driverOn.setButtonText("On");
+            driverOff.setButtonText("Off");
+            driverOn.setConnectedEdges(juce::Button::ConnectedOnRight);
+            driverOff.setConnectedEdges(juce::Button::ConnectedOnLeft);
+            driverOn.onClick = [this] { cm::ControllerSetup::instance().setMiniLabDriverOn(true); layOut(); };
+            driverOff.onClick = [this] { cm::ControllerSetup::instance().setMiniLabDriverOn(false); layOut(); };
             int id = 0;
             for (const auto& p : cm::readyProfiles())
                 profiles.addItem(p.name, ++id);
@@ -1326,6 +1335,11 @@ namespace
 
             label(statusLabel, "IN USE");
             words(statusText, status(), colours::ink, 13.0f, 3);
+            label(driverLabel, "MINILAB 3 DRIVER");
+            words(driverText, cm::ControllerSetup::instance().miniLabDriverOn()
+                                  ? "CoolSynth drives a MiniLab 3's screen, pads and knobs."
+                                  : "A MiniLab 3 is a controller like any other: its own program, a ready setup.",
+                  colours::muted);
             label(readyLabel, "READY SETUPS");
             if (const auto* p = chosenProfile())
                 words(readyText, p->note, colours::muted);
@@ -1344,7 +1358,8 @@ namespace
 
     private:
         SynthAudioProcessor& synth;
-        juce::TextButton close, use, start, forgetAll, forgetYes, forgetNo, previous, skip, done;
+        juce::TextButton close, use, start, forgetAll, forgetYes, forgetNo, previous, skip, done, driverOn, driverOff;
+        juce::Rectangle<int> driverLabel, driverText;
         juce::ComboBox profiles;
         bool confirming = false;
         bool stepping = false;
@@ -1524,20 +1539,24 @@ namespace
                 goToStep(step + 1);
             }
             if (! stepping)
-                repaint(); // a controller plugged in or out, another program's save
+                layOut(); // a controller plugged in or out, another program's save
         }
 
         void layOut()
         {
-            cardArea = juce::Rectangle<int>(520, 500).withCentre(getLocalBounds().getCentre());
+            cardArea = juce::Rectangle<int>(520, 570).withCentre(getLocalBounds().getCentre());
             auto r = cardArea.reduced(28, 22);
             auto head = r.removeFromTop(30);
             close.setBounds(head.removeFromRight(30));
             titleArea = head;
             r.removeFromTop(12);
 
-            for (auto* c : std::initializer_list<juce::Component*> { &profiles, &use, &start, &forgetAll, &forgetYes, &forgetNo })
+            for (auto* c : std::initializer_list<juce::Component*> { &profiles, &use, &start, &forgetAll, &forgetYes, &forgetNo,
+                                                                     &driverOn, &driverOff })
                 c->setVisible(! stepping);
+            const bool on = cm::ControllerSetup::instance().miniLabDriverOn();
+            driverOn.setToggleState(on, juce::dontSendNotification);
+            driverOff.setToggleState(! on, juce::dontSendNotification);
             for (auto* c : std::initializer_list<juce::Component*> { &previous, &skip, &done })
                 c->setVisible(stepping);
 
@@ -1570,6 +1589,10 @@ namespace
                 return row;
             };
             statusText = section(statusLabel, 52);
+            auto driverRow = section(driverLabel, 30);
+            driverOn.setBounds(driverRow.removeFromLeft(70));
+            driverOff.setBounds(driverRow.removeFromLeft(70));
+            driverText = driverRow.withTrimmedLeft(12);
             auto ready = section(readyLabel, 70);
             auto row = ready.removeFromTop(30);
             profiles.setBounds(row.removeFromLeft(330));

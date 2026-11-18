@@ -50,6 +50,7 @@ namespace coolsynth::ui
         void tryOpen();
         void close(bool sayGoodbye);
         void letGo();
+        void giveUp();
         [[nodiscard]] bool takeDevice();
         void apply(const juce::MidiMessage& message);
         void refreshDevice(bool force);
@@ -88,6 +89,7 @@ namespace coolsynth::ui
         int flashPosition = -1;
         int ticksSinceProbe = 0;
         bool wasConnected = false;
+        bool portGivenToApp = false; // switched off: the MiniLab's port is the app's MIDI input again (D211)
 
         // Who drives the MiniLab (D211): one driver in this program, and this program among others.
         static inline MiniLab3Driver* owner = nullptr;

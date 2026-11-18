@@ -4260,3 +4260,7 @@ others do and chose (pick lists, with research): **all of it, plus ready setups 
   named lock). The driver starts a second after the plugin is made, so a host's plugin scan never wakes the
   MiniLab. The DAW's own MiniLab control surface must be set to None, or both talk to it; the screen says so.
   Without Windows MIDI Services the port cannot be shared and the driver keeps trying.
+- **A switch for the MiniLab driver**, the user's choice, so the user can try what the friend will see (options: a
+  driver switch, recommended and chosen; test with keys only; test the MiniLab driver only). Preferences >
+  Controller setup > MiniLab 3 driver On / Off, kept in controller.json. Off, the driver lets the MiniLab go back to
+  its own program (in the app its port becomes one of the app's MIDI inputs again), and its ready setup applies.

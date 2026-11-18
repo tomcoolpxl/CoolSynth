@@ -65,6 +65,10 @@ namespace coolsynth::midi
 
         /** The MiniLab 3 has CoolSynth's own driver (D184): its ready profile is not offered for it then (D211). */
         void setMiniLabDriven(bool driven) noexcept { miniLabDriven.store(driven, std::memory_order_relaxed); }
+        /** The MiniLab driver may take the MiniLab (D211): off, the MiniLab is a controller like any other. Kept with
+            the setup, for this computer. */
+        [[nodiscard]] bool miniLabDriverOn() const noexcept { return driverOn; }
+        void setMiniLabDriverOn(bool on);
 
         // ---- Learning -------------------------------------------------------------------------------------------
         struct Heard
@@ -98,6 +102,7 @@ namespace coolsynth::midi
         void timerCallback() override;
         void publish();
         void readFile();
+        void save();
         void lookForKnownController();
         void finishLearning(bool rested = false);
 
@@ -112,6 +117,7 @@ namespace coolsynth::midi
         int notices = 0;
         juce::String notice;
         std::atomic<bool> miniLabDriven { false };
+        bool driverOn = true;
 
         std::atomic<bool> learning { false };
         Expect expecting = Expect::turn;
