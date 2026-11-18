@@ -4195,7 +4195,12 @@ page, not other actions".
   It no longer writes a web page; the page's text moved into the markdown. Its facts were brought up to
   date: layers instead of parts, the layer modes Stack, Split and Velocity (D190), each layer with its own
   arpeggiator and six insert slots (D194), 13 effects with Pitch (D205).
-- **GitHub Pages:** the workflow "Engine page" (`.github/workflows/pages.yml`) is disabled with
-  `gh workflow disable`; Windows Release and Windows Manual Validation stay enabled. `site/` is removed.
-  The last published version of https://tomcoolpxl.github.io/CoolSynth/ stays online until the user
-  decides whether to take it down.
+- **GitHub Pages:** the workflow "Engine page" was disabled with `gh workflow disable`, then, the
+  user's choice, `.github/workflows/pages.yml` removed (options: remove it, recommended and chosen; keep
+  it disabled). Windows Release and Windows Manual Validation stay. `site/` is removed.
+- **The live site** https://tomcoolpxl.github.io/CoolSynth/ is deleted with
+  `gh api -X DELETE repos/tomcoolpxl/CoolSynth/pages`, the user's choice (options: delete it through the
+  API, recommended and chosen; unpublish it from the repository's Pages settings, which keeps the
+  settings; leave the last version up). It can be set up again with `POST /repos/{owner}/{repo}/pages`
+  (build type "workflow") and a workflow run. Sources: GitHub Docs, "Unpublishing a GitHub Pages site";
+  GitHub REST API, "Delete a GitHub Pages site".
