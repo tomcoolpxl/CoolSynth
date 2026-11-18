@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 3.22)
 
 project(CoolSynth VERSION 0.1.0 LANGUAGES CXX)
 
+# A Release build carries Microsoft's C++ runtime inside it (/MT): the app and the VST3 run on a computer with
+# nothing installed (the debug runtime may not be passed on, so a Debug build never leaves this machine). Debug
+# keeps the runtime DLLs, as before. Set before any target exists, so JUCE's modules link the same way.
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
+
 add_subdirectory(external/JUCE)
 
 # Debug is the everyday build, and the plugin it installs must play in real time: compile it
@@ -26,8 +31,12 @@ if(MSVC)
         string(REPLACE "/INCREMENTAL" "" ${linkerVariable} "${${linkerVariable}}")
         string(APPEND ${linkerVariable} " /INCREMENTAL:NO")
     endforeach()
+    # Release keeps its symbols in a .pdb beside the binary (not inside it), so a crash in a shipped build can be
+    # traced; /OPT:REF and /OPT:ICF keep the binary as lean as without them.
     target_compile_options(coolsynth_config_flags INTERFACE
-        $<IF:$<CONFIG:Debug>,/O2 /Ob2 /Zi,/Ox> /MP /EHsc)
+        $<IF:$<CONFIG:Debug>,/O2 /Ob2 /Zi,/Ox /Zi> /MP /EHsc)
+    target_link_options(coolsynth_config_flags INTERFACE
+        $<$<NOT:$<CONFIG:Debug>>:/DEBUG /OPT:REF /OPT:ICF>)
 else()
     target_compile_options(coolsynth_config_flags INTERFACE
         $<IF:$<CONFIG:Debug>,-O2 -g,-O3>)

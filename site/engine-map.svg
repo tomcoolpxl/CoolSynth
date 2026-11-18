@@ -364,7 +364,7 @@
 <rect x="1112" y="706" width="464" height="359" rx="8" fill="#1B232D"/>
 <rect x="1112" y="706" width="464" height="12" fill="#1B232D"/>
 <rect x="1112" y="674" width="464" height="391" rx="8" fill="none" stroke="#685CB8" stroke-width="1.3"/>
-<text x="1128" y="695" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.7" fill="#B7ACFF">EFFECT SLOT</tspan><tspan dx="10" fill="#E8EDF2">one of 14 effects · 6 slots per layer · 6 master slots</tspan></text>
+<text x="1128" y="695" font-size="11.5" fill="#B4C0CB"><tspan font-weight="700" letter-spacing="0.7" fill="#B7ACFF">EFFECT SLOT</tspan><tspan dx="10" fill="#E8EDF2">one of 13 effects · 6 slots per layer · 6 master slots</tspan></text>
 <text x="1128" y="724" font-size="12.5" font-weight="700" fill="#B7ACFF">Drive</text>
 <text x="1228" y="724" font-size="11.5" fill="#E8EDF2">saturation, shaped at 2× oversampling</text>
 <polyline points="1124,731.5 1564,731.5" fill="none" stroke="#3B4753" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>

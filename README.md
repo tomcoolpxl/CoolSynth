@@ -1,117 +1,89 @@
 # CoolSynth
 
-![alt text](screenshot.png)
+![CoolSynth playing Sea Pad, a two-layer sound from the Night Bus room](screenshot.png)
 
-CoolSynth is a JUCE-based software synthesizer for Windows 11. It is built as both a standalone desktop instrument and a VST3 plugin, with the same synth engine and parameter set in both modes.
+CoolSynth is a two-layer software synthesizer for Windows, as a standalone app and a VST3 plugin.
+It is built around the Arturia MiniLab 3: the app drives the MiniLab's screen, pads and knobs. Any
+MIDI keyboard plays it, and the mouse reaches everything on screen.
 
-The current codebase is in the V2 transition: a Prophet-inspired, Stranger Things / S U R V I V E-adjacent subtractive polysynth with a one-page instrument panel, shared standalone/VST3 behavior, and an intentionally explicit patch/state compatibility break from older builds.
+How the engine fits together: [the engine page](https://tomcoolpxl.github.io/CoolSynth/).
 
-## Features
+## What is in it
 
-- Dual-oscillator plus noise subtractive voice architecture.
-- Dedicated filter and amp ADSR envelopes with a resonant low-pass filter.
-- Global LFO, constrained Poly Mod, pitch bend, glide, mono/unison play modes, vintage drift, and pan spread.
-- Host-aware arpeggiator with standalone tempo fallback.
-- Global drive, chorus, delay, reverb, and master output stages.
-- Shared standalone and VST3 patch workflow with MIDI learn and panic support.
+- **Two layers**, each a whole sound, played stacked, split across the keyboard, or by velocity.
+- **Nine sound sources**, three per layer at once: virtual analogue, noise, two- and four-operator
+  FM, wavetables, a plucked string, struck bars and bells, recorded instruments, and grains.
+- **Seven filters and shapers**, three per voice: a ladder and a state-variable filter, a bit
+  crusher, a wavefolder, drive, a vowel filter and a comb.
+- **Movement**: three envelopes, two LFOs per voice and two for the whole sound, a 16-step
+  modulator, a 24-slot modulation matrix, four macros per sound, chord memory and an arpeggiator
+  with Euclidean rhythms, ratchets and chance.
+- **Thirteen effects** in six slots per layer and six on the master: drive, lo-fi, phaser, flanger,
+  chorus, tape and ping-pong delay, plate reverb with shimmer, room, compressor, EQ, pump, grains,
+  and a pitch shifter with a pitch-stepping delay.
+- **136 presets in 14 rooms**, from synthwave and techno to the Night Bus room of laptop-made sounds,
+  the Museum's rebuilt classic synths and the Conservatory's 40 recorded acoustic instruments.
+- **Your own sounds**: a WAV file played across the keys, cut into slices (in equal pieces or at
+  its hits, one per key), or a folder of files played as a kit.
 
-The same core sound engine drives both targets, so the standalone app and the VST3 plugin expose the same main synth controls.
+## Install
 
-## Standalone and VST3
+1. Download the latest release from [Releases](https://github.com/tomcoolpxl/CoolSynth/releases):
+   the VST3 zip, the app zip, or both. Neither needs anything else installed.
+2. **VST3**: copy `CoolSynth.vst3` into `C:\Program Files\Common Files\VST3`, then let your DAW
+   rescan its plugins. CoolSynth is listed as an instrument.
+3. **App**: unzip anywhere and run `CoolSynth.exe`. Windows may warn that the app is from an
+   unknown publisher (it is not code-signed): choose **More info**, then **Run anyway**.
+4. **Recorded instruments** (optional, 2.6 GB): the Conservatory's 40 instruments, and the presets
+   that use them, need the instrument library, linked from the release notes. Put its folders in
+   `C:\ProgramData\CoolSynth\Library`. Without it everything else plays; those sounds stay silent.
 
-The standalone application is the self-contained instrument. It handles audio device setup, MIDI input selection, and the extra runtime tools that make the synth easier to play and inspect outside a DAW.
+Requires 64-bit Windows. Made and tested on Windows 11.
 
-In standalone mode, CoolSynth provides:
+## Your own sounds
 
-- audio backend, output device, sample rate, and buffer-size configuration
-- one active MIDI input device at a time
-- bundled factory controller profiles, including MiniLab 3 Arturia-mode auto-detect
-- a MIDI monitor for incoming events
-- remembered standalone settings for audio configuration, selected MIDI input, controller-profile selection, and learned MIDI CC mappings
-- clear unavailable-state reporting if a remembered audio or MIDI device is missing when the app starts
+CoolSynth reads your files from the `User` folder inside the library folder
+(`C:\ProgramData\CoolSynth\Library\User`; CoolSynth makes it the first time you look). In the
+Sound section, set a slot to **Sample**: turning its first knob past the instruments lists your
+files and folders, and a press loads one.
 
-![alt text](screenshot-vst3.png)
+- **Slices**: on the Sample slot's fourth page set **Slices** to **Equal** (with a **Count**) or
+  **Attacks** (with a **Sensitivity**). Each piece gets its own key from **First Key** up, plays at
+  its own speed and plays to its end. With the layer in Mono, a new key cuts the last piece.
+- **Kits**: choose a folder instead of a file: each file in it gets a key, in name order.
 
-The VST3 build uses the same synth engine and parameters inside a DAW. Audio routing, MIDI routing, and session management are handled by the host instead of the standalone UI. In plugin mode, the editor also exposes host-provided parameter context menus and parameter-under-mouse lookup when the host format supports them.
+## MiniLab 3
 
-## MIDI Learn
+The app takes over the MiniLab 3's DAW mode: its screen shows the sound and the knob you turn, its
+pads open the sections, and its knobs turn the four settings on screen. In a DAW, the host owns
+the MiniLab: its keys, wheels and pressure play CoolSynth, and its knobs can be tied to
+CoolSynth's settings with the host's own MIDI mapping.
 
-In standalone mode, CoolSynth ships with a bundled MiniLab 3 / Arturia Mode factory profile and allows any exposed V2 panel control to override that profile with MIDI learn from a right-click context menu.
+## Build from source
 
-In plugin mode, the same learnable controls can capture DAW-routed live MIDI CC input from the plugin editor. Plugin learned bindings are stored in plugin state, so they restore with the host session. Plugin mode does not auto-load a hardware-specific factory profile.
-
-- `Learn MIDI CC` arms the control and waits for an incoming CC message.
-- `Cancel MIDI Learn` exits the armed state without changing the mapping.
-- `Clear MIDI CC Mapping` removes the learned assignment for that control.
-- Standalone `Options -> MIDI -> Reset MIDI Settings` clears remembered MIDI input, learned MIDI CC mappings, controller-profile selection, and CC-label preference while keeping audio settings intact.
-
-Learned mappings are stored with standalone settings in standalone mode, and in plugin state in plugin mode. In both cases they override the active mapping for the mapped parameter.
-
-## Patch Workflow
-
-CoolSynth keeps the `.cspatch` extension, but the current V2 builds use an explicit V2-only patch/state boundary.
-
-- `Init Patch` resets synth parameters to their defaults.
-- `Save Patch` writes a `.cspatch` XML file containing only the current V2 synth parameter state.
-- `Load Patch` restores that V2 parameter state without changing standalone audio settings, MIDI device selection, or learned MIDI mappings.
-- Incompatible older patch/state payloads are rejected explicitly rather than partially loaded.
-
-## Build
-
-### Prerequisites
-
-- Windows 11
-- Git
-- CMake 3.22 or newer
-- Visual Studio 2022 Build Tools or Visual Studio 2022
-
-### Configure and Build
+Prerequisites: Windows 11, Git, CMake 3.22 or newer, and Visual Studio 2022 (or its Build Tools).
 
 ```powershell
-git submodule update --init --recursive
-cmake -S . -B build -G "Visual Studio 17 2022" -A x64
-cmake --build build --config Debug
-```
-
-To build a release configuration instead, change `Debug` to `Release` in the last command.
-
-### Run Tests
-
-```powershell
+git clone --recurse-submodules https://github.com/tomcoolpxl/CoolSynth.git
+cd CoolSynth
+cmake --preset vs2022-debug
+cmake --build --preset build-debug --config Debug
 ctest --test-dir build -C Debug --output-on-failure
 ```
 
-### Build Outputs
+The Debug build is compiled optimised, so it plays in real time. Configure with
+`-DCOOLSYNTH_ENABLE_VST3_USER_INSTALL=ON` to have each build copy the VST3 into your own VST3
+folder (`%LOCALAPPDATA%\Programs\Common\VST3`). For a build to share, use `--config Release`: it
+carries Microsoft's C++ runtime inside it, so it runs on a computer with nothing installed.
 
-- `build/CoolSynth_artefacts/<Config>/Standalone/CoolSynth.exe`
-- `build/CoolSynth_artefacts/<Config>/VST3/CoolSynth.vst3`
+Outputs: `build/CoolSynth_artefacts/<Config>/Standalone/CoolSynth.exe` and
+`build/CoolSynth_artefacts/<Config>/VST3/CoolSynth.vst3`.
 
-## CI/CD
+Releases are built by `.github/workflows/windows-release.yml` when a tag such as `v0.3.0` is pushed.
 
-GitHub automation is intentionally limited to manual validation and release tags.
+## Licence
 
-- Manual validation workflow: `Windows Manual Validation`
-- Workflow file: `.github/workflows/windows-manual-validation.yml`
-- Trigger: `workflow_dispatch` only
-- Branch pushes do not run CI automatically
-- Release workflow file: `.github/workflows/windows-release.yml`
-- Release trigger tags: `v*.*.*` and `v*.*.*-*`
-- Public Windows release assets:
-  - `CoolSynth-windows-x64-standalone-<tag>.zip`
-  - `CoolSynth-windows-x64-vst3-<tag>.zip`
-  - `CoolSynth-windows-x64-sha256-<tag>.txt`
-
-Manual validation can be started from the GitHub Actions UI or with:
-
-```powershell
-gh workflow run windows-manual-validation.yml --ref <branch> -f configuration=Release -f run_tests=true -f package_assets=true
-```
-
-Publishing a Windows release is tag-driven:
-
-```powershell
-git tag v0.1.0-rc.1
-git push origin v0.1.0-rc.1
-```
-
-Both workflows reuse the checked-in JUCE submodule path under `external/JUCE`; they do not download JUCE separately.
+CoolSynth's own code is under the MIT licence (`LICENSE`). It is built with
+[JUCE](https://juce.com), which is licensed separately (AGPLv3 or the JUCE licence). The recorded
+instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community
+Sample Library, both released into the public domain (CC0).

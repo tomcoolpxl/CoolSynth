@@ -1,6 +1,7 @@
 #include <array>
 #include <memory>
 #include <cmath>
+#include <cstdio>
 #include <juce_core/juce_core.h>
 #include "midi/MidiLearn.h"
 #include "midi/ControllerProfile.h"
@@ -673,6 +674,12 @@ int main()
     juce::Logger::setCurrentLogger(&logger);
 
     juce::ScopedJuceInitialiser_GUI initialiser;
+    // A crash prints where it happened (the thread's stack, with names when the .pdb is beside the runner).
+    juce::SystemStats::setApplicationCrashHandler([](void*)
+    {
+        std::fputs(("\nCRASH\n" + juce::SystemStats::getStackBacktrace() + "\n").toRawUTF8(), stderr);
+        std::fflush(stderr);
+    });
     // No test reads the real sampled-instrument library: a small stand-in is written and used instead.
     coolsynth::testing::installTestSampleLibrary();
     juce::UnitTestRunner runner;

@@ -530,7 +530,7 @@ panels = [
          note=[R("Three in series, per voice: a chord is filtered, folded and driven note by note, before the "
                  "notes are summed.")],
          italic=False),
-    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 14 effects · 6 slots per layer · 6 master slots",
+    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 13 effects · 6 slots per layer · 6 master slots",
          rows=FX_ROWS, namew=100,
          note=[R("Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper. "
                  "Each part sets what share of it passes through them.")],
@@ -854,7 +854,7 @@ footer { margin-top: 32px; padding-top: 14px; border-top: 1px solid var(--line);
       <h2>Notes in</h2>
       <p>Chord memory (twelve chord shapes, or one learned from the keys), strum, and an arpeggiator with eleven
       patterns, swing, ratchets, accents and Euclidean rhythms, all before the parts.</p>
-      <p>Effects: six slots on each layer, then six master slots, each holding any of fourteen effects in any order.
+      <p>Effects: six slots on each layer, then six master slots, each holding any of thirteen effects in any order.
       What each slot can hold, generator, processor or effect, is listed under the map.</p>
     </section>
     <section class="wide">

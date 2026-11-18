@@ -4150,3 +4150,33 @@ recommended and chosen; to its end, one at a time; only while held).
 Sources: Ableton Simpler's slicing (Sound On Sound, "Keep It Simple"; MusicRadar, "How to chop
 beats with Ableton Simpler's Slice mode"); Logic Pro Quick Sampler's Slice mode and Sampler's
 chromatic mapping of several files from C2 (support.apple.com, Logic Pro and MainStage guides).
+
+## D208. A release to share: Release builds carry the runtime, the instruments go to Hugging Face (2026-11-18)
+
+The user tested Night Bus and the Pitch effect and wants both the app and the VST3 released, first to
+a friend (who will use the VST3), then on the website, with the README brought up to date; the user
+tests the VST3 in Ableton first. Checked: the builds were Debug, which need Microsoft's debug runtime
+DLLs (MSVCP140D, VCRUNTIME140D, ucrtbased), present only with Visual Studio and not to be passed on
+(Microsoft Learn, "Prepare a test machine to run a debug executable"; "CRT library features").
+- **Release builds link the C++ runtime statically (/MT)** (CMAKE_MSVC_RUNTIME_LIBRARY); Debug keeps
+  the DLLs as before. Checked with dumpbin: the Release app and VST3 need only Windows' own DLLs.
+- **The instrument library (2.6 GB, CC0)** is hosted as a Hugging Face dataset, the user's choice
+  (options: GitHub Releases, recommended; a Hugging Face dataset, chosen; Cloudflare R2 on an own
+  address; an itch.io page). tools/release/package_library.py packs one zip per family (each with
+  library.index; Keys, the largest, 941 MB) and writes the dataset card and checksums. The upload
+  needs the user's own account. Sources: Hugging Face "Storage limits" (free public storage, best
+  effort); GitHub "About releases" (2 GiB per file); Cloudflare R2 pricing; itch.io upload limits.
+- **The README** describes CoolSynth as it is now (V3: two layers, the engine, the rooms, installing
+  the VST3, the app and the library, one's own sounds, the MiniLab), with a current screenshot.
+- **To test slices**, tools/audition/make_demo_user_sounds.py puts a demo kit (eight hits rendered
+  from factory presets) and a two-bar demo loop in the User folder.
+- Open before a public release: JUCE's licence (AGPLv3 or the JUCE licence's free Starter tier, the
+  user's choice; forum.juce.com, the JUCE 8 EULA), and the version number.
+- **The first Release test run crashed** (intermittently, after 38 groups) in "An instrument read in
+  the background while an earlier sound rings does not click". Found with a crash handler that prints
+  a symbolised stack (the test runner) and Release symbols in a separate .pdb (/Zi, /DEBUG, /OPT:REF,
+  /OPT:ICF; the shipped binaries are unchanged): the test emptied the instrument library
+  (SampleLibrary::setRoot) while its first render's held chord still counted itself a user of a
+  style; destroying that render later wrote into the freed style. Debug's heap tolerated it. A test
+  bug: the app and the plugin never empty the library while playing (setRoot is for tests and tools),
+  now asserted in dropAll. The test finishes with each render before emptying the library.

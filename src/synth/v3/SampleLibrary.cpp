@@ -652,6 +652,9 @@ namespace coolsynth::synth::v3
     {
         for (auto& slot : slots)
         {
+            // setRoot is for tests and tools, between renders: a note still holding a style would count itself off
+            // freed memory when it ends (D208, the Release-only crash this caught).
+            jassert(slot.owner == nullptr || slot.owner->users.load(std::memory_order_acquire) == 0);
             slot.loaded.store(nullptr, std::memory_order_release);
             if (slot.owner != nullptr)
                 for (const auto& run : slot.owner->runs)

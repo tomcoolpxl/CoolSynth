@@ -429,15 +429,23 @@ public:
                         r->play(0.3);
                     return std::make_tuple(std::move(r), at, blocks, loadingBlocks);
                 };
-                const auto [changed, at, blocks, loadingBlocks] = render(true, 0);
-                const auto [kept, keptAt, keptBlocks, keptLoading] = render(false, blocks);
-                juce::ignoreUnused(keptAt, keptBlocks, keptLoading);
-                kept->play(0.3);
+                auto [changed, at, blocks, loadingBlocks] = render(true, 0);
+                // Everything wanted from the change's render is taken before the reference empties the library: its
+                // notes hold the instrument they read, and emptying the library under them freed it while they still
+                // counted on it (D208: an intermittent crash in Release builds).
                 const auto end = changed->now();
-                const Finding f { changed->roughness(at, end), std::max(kept->roughness(at, end), ownRoughness(*changed, at, 0)) };
+                const auto changedRoughness = changed->roughness(at, end);
+                const auto ownRoughnessThere = ownRoughness(*changed, at, 0);
                 // It counts only if the earlier sound was still sounding while the loader worked.
                 const auto loadEnd = at + static_cast<std::size_t>(loadingBlocks) * blockSize;
                 loadsSeen += loadingBlocks > 0 && changed->roughness(at, loadEnd) > audibleFloor ? 1 : 0;
+                changed.reset();
+
+                auto [kept, keptAt, keptBlocks, keptLoading] = render(false, blocks);
+                juce::ignoreUnused(keptAt, keptBlocks, keptLoading);
+                kept->play(0.3);
+                const Finding f { changedRoughness, std::max(kept->roughness(at, end), ownRoughnessThere) };
+                kept.reset();
                 tally.add(f, presetName(first) + " -> " + presetName(second) + " (read in over " + juce::String(loadingBlocks) + " blocks)");
             }
             library.setRoot(library.root());
