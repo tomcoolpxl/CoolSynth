@@ -2,7 +2,7 @@
 
 #include "StandaloneAudioSupport.h"
 #include "SettingsStore.h"
-#include "MiniLab3Driver.h"
+#include "interface/MiniLab3Driver.h"
 #include "parameters/ParameterIDs.h"
 #include "plugin/PanelEditor.h"
 #include "plugin/SynthAudioProcessor.h"
@@ -61,9 +61,8 @@ public:
                     if (auto* h = getPluginHolder())
                         h->showAudioSettingsDialog();
                 };
-                miniLab = std::make_unique<coolsynth::standalone::MiniLab3Driver>(synth->getInterfaceModel(),
-                                                                                  host->deviceManager,
-                                                                                  *synth);
+                miniLab = std::make_unique<coolsynth::ui::MiniLab3Driver>(synth->getInterfaceModel(), *synth,
+                                                                          &host->deviceManager);
             }
         startTimer(1000);
     }
@@ -95,7 +94,7 @@ public:
 
 
 private:
-    std::unique_ptr<coolsynth::standalone::MiniLab3Driver> miniLab; // destroyed before the holder
+    std::unique_ptr<coolsynth::ui::MiniLab3Driver> miniLab; // destroyed before the holder
     std::array<float, 4> savedVolumes { -1.0f, -1.0f, -1.0f, -1.0f }; // the faders as last saved (D187)
 };
 

@@ -38,6 +38,9 @@ public:
     /** Draws everything again from the model now (the timer does it 30 times a second). */
     void refresh() { timerCallback(); }
 
+    /** Opens the controller setup's card (D211), as Prefs' Controller button does; or at its first step. */
+    void showControllerSetup(bool stepByStep = false);
+
     /** CoolSynth's Options (D174), from the panel's button and the standalone window's: Audio and MIDI (where the
         app offers it), Multi-core Auto or Off, the last second's CPU work, this computer. Message thread. */
     static void showOptions(SynthAudioProcessor& synth, juce::Component& target);

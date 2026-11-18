@@ -971,6 +971,167 @@ namespace coolsynth::ui
         touched();
     }
 
+    // ---- Any controller (D211) ----------------------------------------------------------------------
+
+    float InterfaceModel::valueScaled(float position, float h0, float h1) noexcept
+    {
+        // Ableton's "Value Scaling": the knob's move, scaled by the room the value has left that way to the room the
+        // knob has. Where they agree it is the knob's move itself; at an end they agree from then on.
+        if (h1 > h0 && h0 < 1.0f)
+            return juce::jlimit(0.0f, 1.0f, position + (h1 - h0) * (1.0f - position) / (1.0f - h0));
+        if (h1 < h0 && h0 > 0.0f)
+            return juce::jlimit(0.0f, 1.0f, position - (h0 - h1) * position / h0);
+        return position;
+    }
+
+    void InterfaceModel::scaleList(ScaledPlace& place, const juce::String& target, int index, int count, float h0, float h1,
+                                   const std::function<void(int)>& turn)
+    {
+        if (count < 2)
+            return;
+        float position = static_cast<float>(index) / static_cast<float>(count - 1);
+        if (place.target == target && place.seenIndex == index)
+            position = place.position; // still where this knob left it: go on from its finer place
+        position = valueScaled(position, h0, h1);
+        const int wanted = clampInt(juce::roundToInt(position * static_cast<float>(count - 1)), 0, count - 1);
+        place.target = target;
+        place.position = position;
+        place.seenIndex = wanted;
+        place.seenValue = -1.0f;
+        if (wanted != index)
+            turn(wanted - index);
+    }
+
+    bool InterfaceModel::scaleNumber(ScaledPlace& place, juce::RangedAudioParameter& p, float h0, float h1)
+    {
+        const auto id = p.getParameterID();
+        float position = p.getValue();
+        if (place.target == id && std::abs(position - place.seenValue) < 1.0e-5f)
+            position = place.position;
+        position = valueScaled(position, h0, h1);
+        setNormalised(p, position);
+        place.target = id;
+        place.position = position;
+        place.seenValue = p.getValue();
+        place.seenIndex = -1;
+        return true;
+    }
+
+    juce::RangedAudioParameter* InterfaceModel::knobParameter(int knobNumber) const
+    {
+        juce::RangedAudioParameter* p = nullptr;
+        if (knobNumber >= 1 && knobNumber <= 4)
+        {
+            if (! typeList.open)
+                p = parameter(currentPage().ids[static_cast<std::size_t>(knobNumber - 1)]);
+        }
+        else if (knobNumber == 6)
+            p = parameter(pv::voiceParameterId(currentPart == 0 ? pv::Part::a : pv::Part::b, "glide"));
+        else if (knobNumber == 7 || knobNumber == 8)
+            p = parameter(knobNumber == 7 ? coolsynth::parameters::ids::brightness : coolsynth::parameters::ids::space);
+        if (auto* generic = dynamic_cast<pv::GenericSlotParameter*>(p); generic != nullptr && ! generic->isUsedByCurrentType())
+            return nullptr;
+        return p;
+    }
+
+    juce::String InterfaceModel::settingName(const juce::String& parameterId) const
+    {
+        for (int k : { 1, 2, 3, 4 })
+            if (auto* p = knobParameter(k); p != nullptr && p->getParameterID() == parameterId)
+                return knob(k).name; // the page's own label when it has one
+        if (auto* p = parameter(parameterId))
+            return withoutPrefix(p->getName(32));
+        return parameterId;
+    }
+
+    void InterfaceModel::moveKnobFromController(int knobNumber, int from, int to)
+    {
+        if (knobNumber < 1 || knobNumber > 8 || from == to || from < 0)
+            return;
+        const float h0 = static_cast<float>(from) / 127.0f, h1 = static_cast<float>(to) / 127.0f;
+        auto& place = scaledKnobs[static_cast<std::size_t>(knobNumber)];
+        if (knobNumber == 5)
+        {
+            if (typeList.open)
+                return;
+            const bool home = currentView == View::home;
+            const int count = home ? livePageCount : static_cast<int>(currentSlot().pages.size());
+            const int page = home ? currentLivePage : pageIndexOf(currentSection, slotCursor[static_cast<std::size_t>(currentSection)]);
+            scaleList(place, "pages", page, count, h0, h1, [this](int steps) { turnPageKnob(steps); });
+            return;
+        }
+        auto* p = knobParameter(knobNumber);
+        if (p == nullptr)
+            return;
+        const auto id = p->getParameterID();
+        auto turn = [this, knobNumber](int steps) { turnKnob(knobNumber, steps, false); };
+        if (knobNumber <= 4 && loadsInstrument(id))
+        {
+            // The instruments and the user's files, as the knob browses them (D156, D207): a press loads the choice.
+            const int instruments = std::max(2, optionCount(*p));
+            int part = 0, slot = 0;
+            const bool source = sampleSourceOf(id, part, slot);
+            const bool browsing = pendingChoice.has_value() && pendingChoice->id == id;
+            if (source && ! browsing)
+                refreshUserEntries();
+            const int total = instruments + (source ? static_cast<int>(userEntries.size()) : 0);
+            const int loaded = source ? loadedSourceIndex(*p, part, slot) : juce::roundToInt(p->getValue() * static_cast<float>(instruments - 1));
+            scaleList(place, id, browsing ? pendingChoice->index : loaded, total, h0, h1, turn);
+            return;
+        }
+        if (const int options = optionCount(*p); options >= 2)
+        {
+            scaleList(place, id, juce::roundToInt(p->getValue() * static_cast<float>(options - 1)), options, h0, h1, turn);
+            return;
+        }
+        if (const auto* semitone = semitoneDescriptor(*p))
+        {
+            // whole semitones, as the MiniLab's knobs step them (D205)
+            const float units = semitone->min + p->getValue() * (semitone->max - semitone->min);
+            const int count = juce::roundToInt(semitone->max - semitone->min) + 1;
+            scaleList(place, id, juce::roundToInt(units - semitone->min), count, h0, h1, turn);
+            return;
+        }
+        scaleNumber(place, *p, h0, h1);
+        const auto view = knob(knobNumber);
+        raisePopup(view.name, view.value, view.normalised, false, knobNumber);
+        touched();
+    }
+
+    void InterfaceModel::moveSettingFromController(const juce::String& parameterId, int from, int to)
+    {
+        auto* p = parameter(parameterId);
+        if (p == nullptr || from == to || from < 0)
+            return;
+        if (auto* generic = dynamic_cast<pv::GenericSlotParameter*>(p); generic != nullptr && ! generic->isUsedByCurrentType())
+            return;
+        const float h0 = static_cast<float>(from) / 127.0f, h1 = static_cast<float>(to) / 127.0f;
+        auto& place = scaledSettings[parameterId];
+        auto turn = [this, p](int steps) { stepParameter(*p, steps, false); };
+        if (const int options = optionCount(*p); options >= 2)
+            scaleList(place, parameterId, juce::roundToInt(p->getValue() * static_cast<float>(options - 1)), options, h0, h1, turn);
+        else if (const auto* semitone = semitoneDescriptor(*p))
+        {
+            const float units = semitone->min + p->getValue() * (semitone->max - semitone->min);
+            scaleList(place, parameterId, juce::roundToInt(units - semitone->min),
+                      juce::roundToInt(semitone->max - semitone->min) + 1, h0, h1, turn);
+        }
+        else
+            scaleNumber(place, *p, h0, h1);
+        raisePopup(settingName(parameterId), p->getCurrentValueAsText(), p->getValue(), false, 0);
+        touched();
+    }
+
+    void InterfaceModel::turnSettingFromController(const juce::String& parameterId, int steps, bool fine)
+    {
+        auto* p = parameter(parameterId);
+        if (p == nullptr || steps == 0)
+            return;
+        stepParameter(*p, steps, fine);
+        raisePopup(settingName(parameterId), p->getCurrentValueAsText(), p->getValue(), false, 0);
+        touched();
+    }
+
     // ---- Navigation -------------------------------------------------------------------------------
 
     void InterfaceModel::openHome()

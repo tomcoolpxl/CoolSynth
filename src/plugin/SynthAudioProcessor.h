@@ -8,14 +8,14 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
-#include "midi/MidiMappingEngine.h"
+#include "midi/ControllerSetup.h"
 #include "plugin/ParameterUndoHistory.h"
 #include "plugin/ProcessorScopeFifo.h"
 #include "parameters/v3/PartParameters.h"
 #include "synth/SynthParameters.h"
 #include "synth/v3/EngineV3.h"
 
-namespace coolsynth::ui { class InterfaceModel; }
+namespace coolsynth::ui { class InterfaceModel; class ControllerInput; class MiniLab3Driver; }
 
 class SynthAudioProcessor final : public juce::AudioProcessor,
                                   private juce::AudioProcessorParameter::Listener,
@@ -66,17 +66,10 @@ public:
     void resetAutomatableParametersToDefaults();
     juce::String getParameterStateTypeName() const;
 
-    bool setActiveControllerProfile(juce::StringRef profileId);
-    juce::String getActiveControllerProfileId() const;
-    juce::String getActiveControllerProfileDisplayName() const;
-
-    void setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
-    std::vector<coolsynth::midi::LearnedCcBinding> getLearnedMidiBindings() const;
-    void clearLearnedMidiBinding(juce::StringRef parameterId);
-    int drainPendingPluginControllerEvents(coolsynth::midi::ControllerMidiEvent* destination,
-                                           int maxEvents) noexcept;
-
-    void handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event);
+    /** This CoolSynth's controller (D211): plays what the computer's controller setup links on the panel. Message thread. */
+    coolsynth::ui::ControllerInput& getControllerInput();
+    /** A plugin's window opened (D211): its MiniLab driver takes the MiniLab from any other CoolSynth here. */
+    void claimMiniLab();
     void requestPanic() noexcept;
 
     /** Offline use (tools, tests): waits until the sampled instruments the current patch names are in memory.
@@ -259,18 +252,17 @@ public:
 
     uint64_t getDroppedControllerEventCount() const noexcept
         { return droppedControllerEventCount.load(std::memory_order_relaxed); }
-    uint64_t getDroppedMappedControllerEventCount() const noexcept
-        { return droppedMappedControllerEventCount.load(std::memory_order_relaxed); }
 
+    /** Tests: what the audio thread passed on for the panel and the chord parameters, now. */
     void flushMappedControllerEventsSync()
     {
-        dispatchPendingMappedControllerEvents();
+        dispatchPendingControllerEvents();
         applyPendingLearnedChord();
     }
 
 private:
-    /** Mapped controller moves and learned chords reach the message thread through a flag that a 100 Hz timer
-        reads: JUCE's AsyncUpdater takes a lock and may allocate when the audio thread triggers it (D159). */
+    /** Controller moves and learned chords reach the message thread through a flag that a 100 Hz timer reads:
+        JUCE's AsyncUpdater takes a lock and may allocate when the audio thread triggers it (D159). */
     class PluginMappedActionAsyncBridge final : private juce::Timer
     {
     public:
@@ -283,32 +275,32 @@ private:
         {
             owner.showHeardKeys();
             owner.releaseRetiredUserSounds();
+            // A second after the plugin is made: a host's plugin scan, which makes one and drops it, never wakes the
+            // MiniLab (D211).
+            if (ticks < 100 && ++ticks == 100)
+                owner.startMiniLabDriver();
             if (! pending.exchange(false, std::memory_order_acq_rel))
                 return;
-            owner.dispatchPendingMappedControllerEvents();
+            owner.dispatchPendingControllerEvents();
             owner.applyPendingLearnedChord();
         }
         SynthAudioProcessor& owner;
         std::atomic<bool> pending { false };
+        int ticks = 0;
     };
 
     bool buildSanitizedParameterStateTree(const juce::ValueTree& incomingState,
                                           juce::ValueTree& sanitizedState);
-    void enqueuePluginControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept;
-    void enqueuePluginMappedControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept;
-    int drainPendingMappedControllerEvents(coolsynth::midi::ControllerMidiEvent* destination, int maxEvents) noexcept;
-    void dispatchPendingMappedControllerEvents();
+    /** Audio thread: a controller's message for the panel, lock-free (D211). */
+    void enqueueControllerEvent(const coolsynth::midi::ControllerEvent& event) noexcept;
+    /** Message thread, once, in a plugin: the MiniLab driver (D211). The app makes its own, with its devices. */
+    void startMiniLabDriver();
+    void dispatchPendingControllerEvents();
     /** Message thread: writes a chord the engine learned into the chord parameters and ends learning. */
     void applyPendingLearnedChord();
     std::unique_ptr<juce::XmlElement> createProcessorStateXml() const;
-    /** The learned bindings saved under parent; renamed maps an old parameter ID to the one that took its place. */
-    std::vector<coolsynth::midi::LearnedCcBinding> parseLearnedMidiBindingsXml(const juce::XmlElement& parent,
-                                                                               const std::map<juce::String, juce::String>& renamed = {}) const;
-    void applyMappedAction(const coolsynth::midi::MappedAction& action);
     void applyNormalizedParameterValue(juce::RangedAudioParameter& parameter,
                                        float normalizedValue);
-    void applyParameterChange(const coolsynth::midi::MappedParameterChange& change);
-    void applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept;
 
     /** Reads every parameter into the engine settings once per block; lock-free. */
     /** Audio thread: the settings for this block, rebuilt from the parameters unless a bulk edit is under way or
@@ -382,8 +374,6 @@ private:
     static constexpr int liveQueueSize = 1024;
     juce::AbstractFifo liveMidi { liveQueueSize };
     std::array<LiveMessage, liveQueueSize> liveMessages {};
-    coolsynth::midi::MidiMappingEngine midiMappingEngine;
-    std::vector<coolsynth::midi::LearnedCcBinding> learnedMidiBindings;
     coolsynth::synth::GlobalParameterPointers parameterValues;
     juce::StringArray knownParameterIds; // every parameter, for patch and state validation
     std::array<coolsynth::parameters::v3::PartParameterPointers, coolsynth::synth::v3::partCount> partParameterValues;
@@ -441,13 +431,9 @@ private:
     /** After a state is loaded: which sound it holds, by its My Sounds file or its name (D193). */
     void restorePlayingSound(const juce::String& name, const juce::String& mySoundPath);
     std::array<std::array<juce::String, 4>, 2> mySoundMacroNames {}; // its macro names, part A and B
-    mutable juce::CriticalSection midiMappingStateLock;
-    std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginControllerEvents {};
-    juce::AbstractFifo pendingPluginControllerEventQueue { static_cast<int> (pendingPluginControllerEvents.size()) };
-    std::array<coolsynth::midi::ControllerMidiEvent, 128> pendingPluginMappedControllerEvents {};
-    juce::AbstractFifo pendingPluginMappedControllerEventQueue { static_cast<int> (pendingPluginMappedControllerEvents.size()) };
+    std::array<coolsynth::midi::ControllerEvent, 256> controllerEventSlots {};
+    juce::AbstractFifo controllerEvents { static_cast<int> (controllerEventSlots.size()) };
     std::atomic<uint64_t> droppedControllerEventCount { 0 };
-    std::atomic<uint64_t> droppedMappedControllerEventCount { 0 };
     // Per part: a learned chord packed by the audio thread, applied on the message thread.
     std::array<std::atomic<std::uint32_t>, coolsynth::synth::v3::partCount> pendingLearnedChord {};
     coolsynth::plugin::ProcessorScopeFifo scopeFifo;
@@ -483,6 +469,9 @@ private:
     int eventsDropped = 0;                          // this block's events that found no slot: audio thread
 
     std::unique_ptr<coolsynth::ui::InterfaceModel> interfaceModel; // last: it refers to the parameters
+    std::unique_ptr<coolsynth::ui::ControllerInput> controllerInput; // after it: it plays on the model (D211)
+    std::unique_ptr<coolsynth::ui::MiniLab3Driver> miniLab;          // a plugin's own (D211); last, gone first
+    bool miniLabStarted = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(SynthAudioProcessor)
 };

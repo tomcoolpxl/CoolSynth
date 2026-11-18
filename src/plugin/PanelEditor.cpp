@@ -2,6 +2,7 @@
 
 #include "SynthAudioProcessor.h"
 #include "interface/InterfaceModel.h"
+#include "midi/ControllerSetup.h"
 #include "presets/MySounds.h"
 #include "synth/v3/AudioWorkers.h"
 
@@ -75,6 +76,36 @@ namespace
         void mouseEnter(const juce::MouseEvent&) override { if (onHover) onHover(true); }
         void mouseExit(const juce::MouseEvent&) override { if (onHover) onHover(false); }
     };
+
+    /** A fader that a right click does not move: it opens the controller's Learn instead (D211). */
+    class PanelFader final : public juce::Slider
+    {
+    public:
+        std::function<void()> onMenu;
+
+        void mouseDown(const juce::MouseEvent& e) override
+        {
+            menuClick = e.mods.isPopupMenu();
+            if (! menuClick)
+                juce::Slider::mouseDown(e);
+            else if (onMenu)
+                onMenu();
+        }
+        void mouseDrag(const juce::MouseEvent& e) override
+        {
+            if (! menuClick)
+                juce::Slider::mouseDrag(e);
+        }
+        void mouseUp(const juce::MouseEvent& e) override
+        {
+            if (! menuClick)
+                juce::Slider::mouseUp(e);
+            menuClick = false;
+        }
+
+    private:
+        bool menuClick = false;
+    };
 }
 
 // ---- A knob that turns in detents --------------------------------------------------------------------
@@ -109,14 +140,25 @@ public:
     bool navigation = false; // knob 5's blue ring
     bool isMain = false;
 
+    std::function<void()> onMenu; // a right click: the controller's Learn (D211)
+
     void mouseDown(const juce::MouseEvent& e) override
     {
+        menuClick = e.mods.isPopupMenu();
+        if (menuClick)
+        {
+            if (onMenu)
+                onMenu();
+            return;
+        }
         lastY = e.position.y;
         moved = false;
     }
 
     void mouseDrag(const juce::MouseEvent& e) override
     {
+        if (menuClick)
+            return;
         const int steps = static_cast<int>((lastY - e.position.y) / 8.0f);
         if (steps != 0)
         {
@@ -128,7 +170,7 @@ public:
 
     void mouseUp(const juce::MouseEvent&) override
     {
-        if (! moved && onPress)
+        if (! moved && ! menuClick && onPress)
             onPress();
     }
 
@@ -137,6 +179,8 @@ public:
         if (const int steps = wheelSteps(wheel, wheelSum); steps != 0)
             turn(steps);
     }
+
+    bool menuClick = false;
 
     /** Turns the pointer by `steps` detents without acting: the main knob and knob 5 follow the model's count of
         their turns, whatever turned them (D193). */
@@ -303,8 +347,16 @@ public:
         repaint();
     }
 
-    void mouseDown(const juce::MouseEvent&) override
+    std::function<void()> onMenu; // a right click: the controller's Learn (D211)
+
+    void mouseDown(const juce::MouseEvent& e) override
     {
+        if (e.mods.isPopupMenu())
+        {
+            if (onMenu)
+                onMenu();
+            return;
+        }
         if (onPress)
             onPress();
     }
@@ -485,6 +537,7 @@ public:
     }
 
     juce::String externalHint; // what the panel's hovered knob, pad, fader or button does (D204)
+    juce::String notice;       // the controller's word (D211): learning, a control learned, a controller found
 
     void paint(juce::Graphics& g) override
     {
@@ -647,10 +700,12 @@ public:
         // the hint line: what the mouse is over (D204), else the model's hint; its row is always kept, so nothing moves
         {
             const bool hovering = hoverText.isNotEmpty() || externalHint.isNotEmpty();
-            const auto hint = hoverText.isNotEmpty() ? hoverText : (externalHint.isNotEmpty() ? externalHint : model.hint());
+            const auto hint = notice.isNotEmpty() ? notice
+                            : (hoverText.isNotEmpty() ? hoverText : (externalHint.isNotEmpty() ? externalHint : model.hint()));
             g.setFont(mono(10.0f));
-            g.setColour(hovering ? colours::screenInk.withAlpha(0.85f) : colours::screenDim);
-            g.drawText(hint, area.removeFromBottom(16), juce::Justification::centredLeft);
+            g.setColour(notice.isNotEmpty() ? coolsynth::ui::tintColour(Tint::home)
+                                            : (hovering ? colours::screenInk.withAlpha(0.85f) : colours::screenDim));
+            g.drawFittedText(hint, area.removeFromBottom(16), juce::Justification::centredLeft, 1, 0.8f);
         }
         area.removeFromTop(6);
 
@@ -889,8 +944,15 @@ namespace
                 if (toggle)
                     b.setConnectedEdges(0);
             };
-            for (auto* b : { &close, &save, &audio })
+            for (auto* b : { &close, &save, &audio, &controller })
                 style(*b, false);
+            controller.setButtonText(juce::String(juce::CharPointer_UTF8("Controller setup\xe2\x80\xa6")));
+            controller.onClick = [this]
+            {
+                hide();
+                if (onController)
+                    onController();
+            };
             close.setButtonText(juce::String(juce::CharPointer_UTF8("\xc3\x97")));
             close.onClick = [this] { hide(); };
             save.setButtonText(juce::String(juce::CharPointer_UTF8("Save sound\xe2\x80\xa6")));
@@ -941,8 +1003,8 @@ namespace
                 b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight
                                            : (i == 2 ? juce::Button::ConnectedOnLeft : juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight));
             }
-            for (auto* c : std::initializer_list<juce::Component*> { &close, &save, &audio, &multi[0], &multi[1], &curve[0], &curve[1], &curve[2],
-                                                                     &reset, &resetYes, &resetNo })
+            for (auto* c : std::initializer_list<juce::Component*> { &close, &save, &audio, &controller, &multi[0], &multi[1], &curve[0], &curve[1],
+                                                                     &curve[2], &reset, &resetYes, &resetNo })
                 addAndMakeVisible(*c);
         }
 
@@ -965,6 +1027,7 @@ namespace
         }
 
         std::function<void()> onReset; // the panel goes back to Home, layer A
+        std::function<void()> onController; // the controller setup's card (D211)
 
         void layOutReset()
         {
@@ -1003,7 +1066,7 @@ namespace
 
         void resized() override
         {
-            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 484 : 424).withCentre(getLocalBounds().getCentre());
+            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 544 : 484).withCentre(getLocalBounds().getCentre());
             auto r = cardArea.reduced(28, 22);
             auto head = r.removeFromTop(30);
             close.setBounds(head.removeFromRight(30));
@@ -1019,6 +1082,9 @@ namespace
             save.setBounds(section(soundLabel, 30).withWidth(170));
             if (synth.showAudioSettings)
                 audio.setBounds(section(audioLabel, 30).withWidth(250));
+            auto controllerRow = section(controllerLabel, 30);
+            controller.setBounds(controllerRow.removeFromLeft(190));
+            controllerText = controllerRow.withTrimmedLeft(12);
             auto multiRow = section(multiLabel, 48);
             auto buttons = multiRow.removeFromTop(30);
             for (auto& b : multi)
@@ -1061,6 +1127,16 @@ namespace
             label(soundLabel, "SOUND");
             if (synth.showAudioSettings)
                 label(audioLabel, "AUDIO AND MIDI");
+            label(controllerLabel, "CONTROLLER");
+            {
+                const auto& setup = coolsynth::midi::ControllerSetup::instance();
+                using Origin = coolsynth::midi::ControllerSetup::Origin;
+                g.setColour(colours::muted);
+                g.setFont(sans(12.0f));
+                g.drawFittedText(setup.origin() == Origin::none ? juce::String("Nothing set up yet.")
+                                     : (setup.origin() == Origin::found ? setup.map().name + ", ready setup." : juce::String("Your setup.")),
+                                 controllerText, juce::Justification::centredLeft, 2);
+            }
             label(multiLabel, "MULTI-CORE");
             label(curveLabel, "VELOCITY CURVE");
             label(resetLabel, "RESET");
@@ -1094,12 +1170,427 @@ namespace
 
     private:
         SynthAudioProcessor& synth;
-        juce::TextButton close, save, audio, reset, resetYes, resetNo;
+        juce::TextButton close, save, audio, controller, reset, resetYes, resetNo;
         bool confirming = false; // Reset asks first, in the card (D199)
         std::array<juce::TextButton, 2> multi;
         std::array<juce::TextButton, 3> curve;
-        juce::Rectangle<int> cardArea, titleArea, soundLabel, audioLabel, multiLabel, curveLabel, resetLabel, computerLabel,
-                             multiText, curveText, resetText, computerText;
+        juce::Rectangle<int> cardArea, titleArea, soundLabel, audioLabel, controllerLabel, multiLabel, curveLabel, resetLabel, computerLabel,
+                             controllerText, multiText, curveText, resetText, computerText;
+    };
+}
+// ---- Controller: the guided setup (D211) ----------------------------------------------------------------
+
+namespace
+{
+    namespace cm = coolsynth::midi;
+
+    /** The controller setup as a card over the dimmed panel, like Prefs (D211): which setup is in use, the ready
+        setups of the controllers CoolSynth knows, and the setup step by step, which asks for each of the panel's
+        places in turn and listens for the control moved. Every control heard is saved at once, for this computer. */
+    class ControllerCard final : public juce::Component, private juce::Timer
+    {
+    public:
+        explicit ControllerCard(SynthAudioProcessor& s) : synth(s)
+        {
+            setVisible(false);
+            setWantsKeyboardFocus(true);
+            for (auto* b : { &close, &use, &start, &forgetAll, &forgetYes, &forgetNo, &previous, &skip, &done })
+            {
+                b->setColour(juce::TextButton::buttonColourId, colours::knob);
+                b->setColour(juce::TextButton::textColourOffId, colours::ink);
+                addAndMakeVisible(*b);
+            }
+            close.setButtonText(juce::String(juce::CharPointer_UTF8("\xc3\x97")));
+            close.onClick = [this] { hide(); };
+            int id = 0;
+            for (const auto& p : cm::readyProfiles())
+                profiles.addItem(p.name, ++id);
+            profiles.setColour(juce::ComboBox::backgroundColourId, colours::knob);
+            profiles.setColour(juce::ComboBox::textColourId, colours::ink);
+            profiles.setColour(juce::ComboBox::outlineColourId, colours::knobEdge);
+            profiles.setColour(juce::ComboBox::arrowColourId, colours::muted);
+            profiles.setTextWhenNothingSelected("Choose a controller");
+            profiles.onChange = [this] { repaint(); };
+            addAndMakeVisible(profiles);
+            use.setButtonText("Use");
+            use.onClick = [this] { useProfile(); };
+            start.setButtonText(juce::String(juce::CharPointer_UTF8("Set up step by step\xe2\x80\xa6")));
+            start.onClick = [this] { beginSteps(); };
+            forgetAll.setButtonText(juce::String(juce::CharPointer_UTF8("Forget all\xe2\x80\xa6")));
+            forgetAll.onClick = [this] { confirming = true; layOut(); };
+            forgetYes.setButtonText("Forget");
+            forgetYes.onClick = [this]
+            {
+                confirming = false;
+                cm::ControllerSetup::instance().setMap({});
+                layOut();
+            };
+            forgetNo.setButtonText("Cancel");
+            forgetNo.onClick = [this] { confirming = false; layOut(); };
+            previous.setButtonText("Back");
+            previous.onClick = [this] { goToStep(step - 1); };
+            skip.setButtonText("Skip");
+            skip.onClick = [this] { goToStep(step + 1); };
+            done.setButtonText("Done");
+            done.onClick = [this] { endSteps(); };
+        }
+
+        ~ControllerCard() override { listenNoMore(); }
+
+        void show()
+        {
+            confirming = false;
+            stepping = false;
+            const auto& setup = cm::ControllerSetup::instance();
+            if (const auto* p = cm::readyProfile(setup.map().profileId))
+                profiles.setText(p->name, juce::dontSendNotification);
+            layOut();
+            setVisible(true);
+            toFront(true);
+            grabKeyboardFocus();
+            startTimerHz(10);
+        }
+
+        void hide()
+        {
+            listenNoMore();
+            stepping = false;
+            confirming = false;
+            stopTimer();
+            setVisible(false);
+        }
+
+        void startSteps() { beginSteps(); }
+
+        bool keyPressed(const juce::KeyPress& key) override
+        {
+            if (key == juce::KeyPress::escapeKey)
+            {
+                if (stepping)
+                    endSteps();
+                else
+                    hide();
+                return true;
+            }
+            return false;
+        }
+
+        void mouseDown(const juce::MouseEvent& e) override
+        {
+            if (! cardArea.contains(e.getPosition()) && ! stepping)
+                hide(); // a click beside the card (not while a step listens: a click is too easy then)
+        }
+
+        void resized() override { layOut(); }
+
+        void paint(juce::Graphics& g) override
+        {
+            g.fillAll(juce::Colours::black.withAlpha(0.55f));
+            const auto card = cardArea.toFloat();
+            g.setColour(colours::panel);
+            g.fillRoundedRectangle(card, 14.0f);
+            g.setColour(colours::panelEdge.brighter(0.2f));
+            g.drawRoundedRectangle(card.reduced(0.5f), 14.0f, 1.0f);
+            g.setColour(colours::ink);
+            g.setFont(sans(20.0f, true));
+            g.drawText("Controller", titleArea, juce::Justification::centredLeft);
+
+            auto label = [&g](juce::Rectangle<int> area, const juce::String& text)
+            {
+                g.setColour(colours::print);
+                g.setFont(mono(10.0f, true));
+                g.drawText(text, area, juce::Justification::centredLeft);
+            };
+            auto words = [&g](juce::Rectangle<int> area, const juce::String& text, juce::Colour colour, float size = 12.5f, int lines = 2)
+            {
+                g.setColour(colour);
+                g.setFont(sans(size));
+                g.drawFittedText(text, area, juce::Justification::topLeft, lines, 1.0f);
+            };
+
+            if (stepping)
+            {
+                const auto place = steps[static_cast<std::size_t>(step)];
+                label(stepLabel, "STEP " + juce::String(step + 1) + " OF " + juce::String(static_cast<int>(steps.size())));
+                g.setColour(colours::ink);
+                g.setFont(sans(24.0f, true));
+                g.drawText(cm::placeName(place), placeArea, juce::Justification::centredLeft);
+                words(instructionArea, instruction(place), colours::muted, 13.5f, 4);
+                const auto* link = cm::ControllerSetup::instance().map().linkOf(place);
+                words(nowArea, "Now: " + (link != nullptr ? link->control.describe() + ", " + cm::encodingName(link->encoding)
+                                                         : juce::String("nothing")), colours::muted);
+                words(heardArea, heard.isNotEmpty() ? heard : juce::String(juce::CharPointer_UTF8("Listening for your controller\xe2\x80\xa6")),
+                      coolsynth::ui::tintColour(Tint::home).withAlpha(heard.isNotEmpty() ? 1.0f : 0.6f), 13.5f, 2);
+                return;
+            }
+
+            label(statusLabel, "IN USE");
+            words(statusText, status(), colours::ink, 13.0f, 3);
+            label(readyLabel, "READY SETUPS");
+            if (const auto* p = chosenProfile())
+                words(readyText, p->note, colours::muted);
+            else
+                words(readyText, "For controllers CoolSynth knows, from their makers' manuals.", colours::muted);
+            label(stepsLabel, "STEP BY STEP");
+            words(stepsText, "Asks for the main knob, the knobs, faders and pads, and Shift, one at a time; skip any your "
+                             "keyboard lacks.", colours::muted);
+            label(learnLabel, "ONE AT A TIME");
+            words(learnText, "Right-click a knob, fader or pad on the panel to learn just that one, or to tie a knob to one "
+                             "setting on every page.", colours::muted);
+            label(forgetLabel, "FORGET");
+            if (confirming)
+                words(forgetText, "Every control linked, on this computer. Sure?", colours::muted);
+        }
+
+    private:
+        SynthAudioProcessor& synth;
+        juce::TextButton close, use, start, forgetAll, forgetYes, forgetNo, previous, skip, done;
+        juce::ComboBox profiles;
+        bool confirming = false;
+        bool stepping = false;
+        bool listening = false;
+        int step = 0;
+        std::vector<cm::Place> steps;
+        juce::String heard; // what the step heard, or how to go on
+        juce::uint32 advanceAt = 0;
+        juce::Rectangle<int> cardArea, titleArea, statusLabel, statusText, readyLabel, readyText, stepsLabel, stepsText,
+                             learnLabel, learnText, forgetLabel, forgetText, stepLabel, placeArea, instructionArea, nowArea, heardArea;
+
+        const cm::ReadyProfile* chosenProfile() const
+        {
+            const int index = profiles.getSelectedItemIndex();
+            const auto& all = cm::readyProfiles();
+            return index >= 0 && index < static_cast<int>(all.size()) ? &all[static_cast<std::size_t>(index)] : nullptr;
+        }
+
+        juce::String status() const
+        {
+            const auto& setup = cm::ControllerSetup::instance();
+            const auto& map = setup.map();
+            juce::String text;
+            const int controls = static_cast<int>(map.places.size() + map.settings.size());
+            const auto count = juce::String(controls) + (controls == 1 ? " control" : " controls");
+            switch (setup.origin())
+            {
+                case cm::ControllerSetup::Origin::found:
+                    text = map.name + ", a ready setup: the controller is plugged in. " + count + ".";
+                    break;
+                case cm::ControllerSetup::Origin::saved:
+                    text = "Your setup, " + count + (map.profileId.isNotEmpty() ? ", begun as " + map.name : juce::String()) + ".";
+                    break;
+                case cm::ControllerSetup::Origin::none:
+                default:
+                    text = "Nothing set up: your keyboard's keys play, its knobs and pads do nothing here.";
+                    break;
+            }
+            text += " Kept for this computer: the app and the plugin in every project.";
+            if (synth.getInterfaceModel().hardwareConnected())
+                text += " The MiniLab 3 has its own driver and needs none of this.";
+            return text;
+        }
+
+        static juce::String instruction(cm::Place place)
+        {
+            using cm::Place;
+            switch (place)
+            {
+                case Place::mainTurn:
+                    return "The knob that browses: sounds, lists, types. Turn the one you want a little right, then left, and "
+                           "let go. An endless knob is best. No knob to spare? Press a button: it becomes one step left, and "
+                           "the next step asks for right.";
+                case Place::mainRight: return "The button for one step right.";
+                case Place::mainPress: return "Press what opens, loads and chooses: the browsing knob's own press, a button or a pad.";
+                case Place::knob5:     return "The knob that turns the pages. Turn it a little right, then left, and let go.";
+                case Place::shift:     return "The button you hold for Shift: fine steps on the knobs, the pads' second meaning.";
+                case Place::back:      return "The button that goes back one level.";
+                default:
+                    break;
+            }
+            if (cm::isButtonPlace(place))
+                return "Press the pad or button you want for it.";
+            if (place >= Place::fader1 && place <= Place::fader4)
+                return "Move the fader (or knob) you want for it up and down.";
+            return "Turn the knob you want for it a little right, then left, and let go.";
+        }
+
+        void useProfile()
+        {
+            if (const auto* p = chosenProfile())
+                cm::ControllerSetup::instance().setMap(p->map);
+            repaint();
+        }
+
+        void beginSteps()
+        {
+            using cm::Place;
+            steps = { Place::mainTurn, Place::mainPress, Place::knob5, Place::knob1, Place::knob2, Place::knob3, Place::knob4,
+                      Place::knob6, Place::knob7, Place::knob8, Place::fader1, Place::fader2, Place::fader3, Place::fader4,
+                      Place::pad1, Place::pad2, Place::pad3, Place::pad4, Place::pad5, Place::pad6, Place::pad7, Place::pad8,
+                      Place::shift, Place::back };
+            stepping = true;
+            confirming = false;
+            goToStep(0);
+        }
+
+        void endSteps()
+        {
+            listenNoMore();
+            stepping = false;
+            layOut();
+        }
+
+        void goToStep(int next)
+        {
+            if (next < 0)
+                next = 0;
+            if (next >= static_cast<int>(steps.size()))
+            {
+                endSteps();
+                return;
+            }
+            step = next;
+            heard = {};
+            advanceAt = 0;
+            layOut();
+            listen();
+        }
+
+        void listen()
+        {
+            const auto place = steps[static_cast<std::size_t>(step)];
+            auto& setup = cm::ControllerSetup::instance();
+            juce::Component::SafePointer<ControllerCard> self(this);
+            listening = true;
+            setup.learn(cm::isButtonPlace(place) ? cm::ControllerSetup::Expect::press : cm::ControllerSetup::Expect::turn,
+                        [self, place](const cm::ControllerSetup::Heard& h)
+                        {
+                            if (self != nullptr)
+                                self->heardControl(place, h);
+                        },
+                        [self](const juce::String& progress)
+                        {
+                            if (self != nullptr)
+                            {
+                                self->heard = progress;
+                                self->repaint();
+                            }
+                        });
+        }
+
+        void listenNoMore()
+        {
+            if (listening)
+                cm::ControllerSetup::instance().stopLearning();
+            listening = false;
+        }
+
+        void heardControl(cm::Place place, const cm::ControllerSetup::Heard& h)
+        {
+            listening = false;
+            auto& setup = cm::ControllerSetup::instance();
+            auto map = setup.map();
+            using cm::Place;
+            if (h.button && ! cm::isButtonPlace(place))
+            {
+                if (place != Place::mainTurn)
+                {
+                    heard = "That was a button: " + cm::placeName(place).toLowerCase() + " wants a knob. Try another, or Skip.";
+                    repaint();
+                    listen();
+                    return;
+                }
+                // No knob for browsing: two buttons, left and right.
+                map.forget(Place::mainTurn);
+                map.link(Place::mainLeft, h.control, cm::Encoding::absolute);
+                if (step + 1 >= static_cast<int>(steps.size()) || steps[static_cast<std::size_t>(step + 1)] != Place::mainRight)
+                    steps.insert(steps.begin() + step + 1, Place::mainRight);
+                place = Place::mainLeft;
+            }
+            else
+                map.link(place, h.control, h.encoding);
+            if (map.name.isEmpty() || setup.origin() == cm::ControllerSetup::Origin::none)
+                map.name = "Your controller";
+            setup.setMap(std::move(map));
+            heard = "Got it: " + h.control.describe() + (h.button ? juce::String() : ", " + cm::encodingName(h.encoding)) + ".";
+            advanceAt = juce::Time::getMillisecondCounter() + 900; // a moment to read it, then the next step
+            repaint();
+        }
+
+        void timerCallback() override
+        {
+            if (advanceAt != 0 && static_cast<juce::int32>(juce::Time::getMillisecondCounter() - advanceAt) >= 0)
+            {
+                advanceAt = 0;
+                goToStep(step + 1);
+            }
+            if (! stepping)
+                repaint(); // a controller plugged in or out, another program's save
+        }
+
+        void layOut()
+        {
+            cardArea = juce::Rectangle<int>(520, 500).withCentre(getLocalBounds().getCentre());
+            auto r = cardArea.reduced(28, 22);
+            auto head = r.removeFromTop(30);
+            close.setBounds(head.removeFromRight(30));
+            titleArea = head;
+            r.removeFromTop(12);
+
+            for (auto* c : std::initializer_list<juce::Component*> { &profiles, &use, &start, &forgetAll, &forgetYes, &forgetNo })
+                c->setVisible(! stepping);
+            for (auto* c : std::initializer_list<juce::Component*> { &previous, &skip, &done })
+                c->setVisible(stepping);
+
+            if (stepping)
+            {
+                stepLabel = r.removeFromTop(16);
+                r.removeFromTop(6);
+                placeArea = r.removeFromTop(34);
+                r.removeFromTop(8);
+                instructionArea = r.removeFromTop(76);
+                r.removeFromTop(8);
+                nowArea = r.removeFromTop(20);
+                r.removeFromTop(10);
+                heardArea = r.removeFromTop(44);
+                auto buttons = r.removeFromBottom(30);
+                previous.setBounds(buttons.removeFromLeft(90));
+                buttons.removeFromLeft(8);
+                skip.setBounds(buttons.removeFromLeft(90));
+                done.setBounds(buttons.removeFromRight(90));
+                previous.setEnabled(step > 0);
+                repaint();
+                return;
+            }
+
+            auto section = [&r](juce::Rectangle<int>& label, int height)
+            {
+                label = r.removeFromTop(16);
+                auto row = r.removeFromTop(height);
+                r.removeFromTop(12);
+                return row;
+            };
+            statusText = section(statusLabel, 52);
+            auto ready = section(readyLabel, 70);
+            auto row = ready.removeFromTop(30);
+            profiles.setBounds(row.removeFromLeft(330));
+            row.removeFromLeft(8);
+            use.setBounds(row.removeFromLeft(80));
+            readyText = ready.withTrimmedTop(6);
+            auto stepsRow = section(stepsLabel, 70);
+            start.setBounds(stepsRow.removeFromTop(30).withWidth(200));
+            stepsText = stepsRow.withTrimmedTop(6);
+            learnText = section(learnLabel, 36);
+            auto forgetRow = section(forgetLabel, 30);
+            forgetAll.setBounds(forgetRow.withWidth(140));
+            forgetYes.setBounds(forgetRow.removeFromLeft(90));
+            forgetRow.removeFromLeft(8);
+            forgetNo.setBounds(forgetRow.removeFromLeft(90));
+            forgetText = forgetRow.withTrimmedLeft(12);
+            forgetAll.setVisible(! confirming);
+            forgetYes.setVisible(confirming);
+            forgetNo.setVisible(confirming);
+            repaint();
+        }
     };
 }
 
@@ -1122,6 +1613,7 @@ public:
         mainKnob.spinsItself = false; // it follows every main-knob turn, the wheel's and the MiniLab's too (D193)
         mainKnob.onSteps = [this](int s) { model.turnMain(s); owner.timerCallback(); };
         mainKnob.onPress = [this] { model.pressMain(); owner.timerCallback(); };
+        mainKnob.onMenu = [this] { showLearnMenu(coolsynth::midi::Place::mainTurn, mainKnob); };
         addAndMakeVisible(mainKnob);
 
         for (int k = 0; k < 8; ++k)
@@ -1132,7 +1624,7 @@ public:
             knob.onHover = [this, k](bool on)
             {
                 const auto label = k == 4 ? juce::String("pages") : knobLabels[static_cast<std::size_t>(k)];
-                setHoverHint(on ? "Knob " + juce::String(k + 1) + ": " + label + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 turn, drag or scroll"))
+                setHoverHint(on ? "Knob " + juce::String(k + 1) + ": " + label + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 turn, drag or scroll \xc2\xb7 right-click: learn"))
                                 : juce::String());
             };
             knob.spinsItself = number != 5; // knob 5 follows every page turn, as the main knob (D193)
@@ -1149,6 +1641,7 @@ public:
                 model.pressKnob(number); // loads an instrument the knob shows (D156)
                 owner.timerCallback();
             };
+            knob.onMenu = [this, k] { showLearnMenu(coolsynth::midi::knobPlace(k + 1), knobs[static_cast<std::size_t>(k)]); };
             addAndMakeVisible(knob);
         }
 
@@ -1173,10 +1666,15 @@ public:
                 auto& fd = faders[static_cast<std::size_t>(f)];
                 fd.setColour(juce::Slider::thumbColourId, on && fd.isEnabled() ? juce::Colours::white : colours::ink);
                 setHoverHint(on ? "Fader " + juce::String(f + 1) + ": " + model.faderName(f)
-                                      + (fd.isEnabled() ? juce::String(juce::CharPointer_UTF8(" \xc2\xb7 drag")) : juce::String(" (the MiniLab's)"))
+                                      + (fd.isEnabled() ? juce::String(juce::CharPointer_UTF8(" \xc2\xb7 drag \xc2\xb7 right-click: learn")) : juce::String(" (the MiniLab's)"))
                                 : juce::String());
             };
             fader.addMouseListener(&watcher, false);
+            fader.onMenu = [this, f]
+            {
+                showLearnMenu(static_cast<coolsynth::midi::Place>(static_cast<int>(coolsynth::midi::Place::fader1) + f),
+                              faders[static_cast<std::size_t>(f)]);
+            };
             addAndMakeVisible(fader);
         }
 
@@ -1189,12 +1687,17 @@ public:
                 model.pressPad(p, owner.shiftHeld());
                 owner.timerCallback();
             };
+            pad.onMenu = [this, p]
+            {
+                showLearnMenu(static_cast<coolsynth::midi::Place>(static_cast<int>(coolsynth::midi::Place::pad1) + p),
+                              pads[static_cast<std::size_t>(p)]);
+            };
             pad.onHover = [this, p](bool on) // (D204)
             {
                 const auto face = pads[static_cast<std::size_t>(p)].face;
                 const juce::String what = p == InterfaceModel::homePad ? face + ", again: layer switch"
                                         : (p >= 4 && p <= 6 ? juce::String("the recorder, later") : face);
-                setHoverHint(on ? "Pad " + juce::String(p + 1) + ": " + what + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 click")) : juce::String());
+                setHoverHint(on ? "Pad " + juce::String(p + 1) + ": " + what + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 click \xc2\xb7 right-click: learn")) : juce::String());
             };
             addAndMakeVisible(pad);
         }
@@ -1203,7 +1706,7 @@ public:
         // the MiniLab's still turn the knobs finely.
         options.setButtonText("Prefs"); // "Options" had to be squeezed to fit Shift's width
         options.onClick = [this] { prefs.show(); }; // a dialog card since D197 (was a menu)
-        options.setTooltip("Save sound, multi-core, velocity curve, the CPU's work; audio and MIDI in the app");
+        options.setTooltip("Save sound, multi-core, velocity curve, your controller, the CPU's work; audio and MIDI in the app");
         for (auto* button : { &options, &hold, &octDown, &octUp })
         {
             button->setColour(juce::TextButton::buttonColourId, colours::knob);
@@ -1255,9 +1758,13 @@ public:
         addAndMakeVisible(keyboard);
         addChildComponent(prefs); // last, so it lies over everything when shown (D197)
         prefs.onReset = [this] { model.resetView(); owner.timerCallback(); };
+        addChildComponent(controllerCard); // over everything too (D211)
+        prefs.onController = [this] { controllerCard.show(); };
 
         setSize(designWidth, designHeight);
     }
+
+    ~Content() override { cancelLearning(); }
 
     /** What the panel's hovered control does, for the screen's hint line (D204). */
     void setHoverHint(const juce::String& text)
@@ -1266,6 +1773,137 @@ public:
             return;
         screen.externalHint = text;
         screen.repaint();
+    }
+
+    // ---- The controller, one control at a time (D211) ----------------------------------------------------
+
+    /** The screen's hint line in the panel's teal, for a while (0: until replaced). */
+    void setNotice(const juce::String& text, int milliseconds)
+    {
+        screen.notice = text;
+        noticeUntil = milliseconds > 0 ? juce::Time::getMillisecondCounter() + static_cast<juce::uint32>(milliseconds) : 0;
+        screen.repaint();
+    }
+
+    /** True when a Learn was listening and stops now. */
+    bool cancelLearning()
+    {
+        if (! learningHere)
+            return false;
+        learningHere = false;
+        coolsynth::midi::ControllerSetup::instance().stopLearning();
+        setNotice({}, 1);
+        return true;
+    }
+
+    /** A right click on a knob, fader or pad: learn a control for its place, or (knobs) for the setting it shows. */
+    void showLearnMenu(coolsynth::midi::Place place, juce::Component& near)
+    {
+        namespace cm = coolsynth::midi;
+        const auto& map = cm::ControllerSetup::instance().map();
+        auto lower = [](const juce::String& name) { return name.substring(0, 1).toLowerCase() + name.substring(1); };
+        const auto placeLabel = lower(cm::placeName(place));
+        juce::PopupMenu menu;
+        const auto* link = map.linkOf(place);
+        menu.addSectionHeader(cm::placeName(place) + ": " + (link != nullptr ? link->control.describe() : juce::String("no control")));
+        const bool followsPage = place >= cm::Place::knob1 && place <= cm::Place::knob4;
+        menu.addItem(1, "Learn for " + placeLabel + (followsPage ? " (follows the page)" : juce::String()));
+        juce::String parameterId, settingLabel;
+        if (place >= cm::Place::knob1 && place <= cm::Place::knob8 && place != cm::Place::knob5)
+            if (auto* p = model.knobParameter(cm::knobOf(place)))
+            {
+                parameterId = p->getParameterID();
+                settingLabel = model.settingName(parameterId);
+                const auto* setting = map.linkOf(parameterId);
+                menu.addItem(2, "Learn for " + settingLabel + " (on every page)"
+                                    + (setting != nullptr ? ", now " + setting->control.describe() : juce::String()));
+            }
+        const auto* press = place == cm::Place::mainTurn ? map.linkOf(cm::Place::mainPress) : nullptr;
+        if (place == cm::Place::mainTurn)
+            menu.addItem(5, "Learn for the main knob's press" + (press != nullptr ? ", now " + press->control.describe() : juce::String()));
+        if (link != nullptr)
+            menu.addItem(3, "Forget " + placeLabel + "'s control");
+        if (parameterId.isNotEmpty() && map.linkOf(parameterId) != nullptr)
+            menu.addItem(4, "Forget " + settingLabel + "'s control");
+        if (press != nullptr)
+            menu.addItem(6, "Forget the main knob press's control");
+        menu.addSeparator();
+        menu.addItem(9, juce::String(juce::CharPointer_UTF8("Controller setup\xe2\x80\xa6")));
+
+        juce::Component::SafePointer<Content> self(this);
+        menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(&near),
+                           [self, place, parameterId, settingLabel](int chosen)
+                           {
+                               if (self == nullptr || chosen == 0)
+                                   return;
+                               auto& setup = cm::ControllerSetup::instance();
+                               auto changed = setup.map();
+                               switch (chosen)
+                               {
+                                   case 1: self->learn(place, {}, {}); return;
+                                   case 2: self->learn(place, parameterId, settingLabel); return;
+                                   case 5: self->learn(cm::Place::mainPress, {}, {}); return;
+                                   case 3: changed.forget(place); break;
+                                   case 4: changed.forget(parameterId); break;
+                                   case 6: changed.forget(cm::Place::mainPress); break;
+                                   case 9: self->controllerCard.show(); return;
+                                   default: return;
+                               }
+                               setup.setMap(std::move(changed));
+                               self->setNotice("Forgotten.", 2500);
+                           });
+    }
+
+    /** Listens for the next control moved, for a place or, with a parameter, for that setting. */
+    void learn(coolsynth::midi::Place place, const juce::String& parameterId, const juce::String& settingLabel)
+    {
+        namespace cm = coolsynth::midi;
+        cancelLearning();
+        const bool press = parameterId.isEmpty() && cm::isButtonPlace(place);
+        const auto what = parameterId.isNotEmpty() ? settingLabel : cm::placeName(place);
+        const auto escape = juce::String(juce::CharPointer_UTF8(" \xc2\xb7 Esc cancels"));
+        setNotice("Learning " + what + ": " + (press ? "press a pad or button on your keyboard" : "turn a knob a little right, then left")
+                      + escape, 0);
+        learningHere = true;
+        juce::Component::SafePointer<Content> self(this);
+        cm::ControllerSetup::instance().learn(
+            press ? cm::ControllerSetup::Expect::press : cm::ControllerSetup::Expect::turn,
+            [self, place, parameterId, what](const cm::ControllerSetup::Heard& h)
+            {
+                if (self == nullptr)
+                    return;
+                self->learningHere = false;
+                auto& setup = cm::ControllerSetup::instance();
+                auto changed = setup.map();
+                if (changed.name.isEmpty())
+                    changed.name = "Your controller";
+                if (h.button && ! cm::isButtonPlace(place) && parameterId.isEmpty() && place == cm::Place::mainTurn)
+                {
+                    // no knob for browsing: two buttons, left and right
+                    changed.forget(cm::Place::mainTurn);
+                    changed.link(cm::Place::mainLeft, h.control, cm::Encoding::absolute);
+                    setup.setMap(std::move(changed));
+                    self->learn(cm::Place::mainRight, {}, {});
+                    return;
+                }
+                if (h.button && (parameterId.isNotEmpty() || ! cm::isButtonPlace(place)))
+                {
+                    self->setNotice("That was a button: " + what + " wants a knob. Right-click to try again.", 6000);
+                    return;
+                }
+                if (parameterId.isNotEmpty())
+                    changed.link(parameterId, h.control, h.encoding);
+                else
+                    changed.link(place, h.control, h.encoding);
+                setup.setMap(std::move(changed));
+                self->setNotice(what + " is now " + h.control.describe()
+                                    + (h.button ? juce::String() : ", " + cm::encodingName(h.encoding)) + ".", 6000);
+            },
+            [self](const juce::String& progress)
+            {
+                if (self != nullptr)
+                    self->setNotice(progress + juce::String(juce::CharPointer_UTF8(" \xc2\xb7 Esc cancels")), 0);
+            });
     }
 
     void mouseMove(const juce::MouseEvent& e) override
@@ -1298,9 +1936,23 @@ public:
         }
     }
 
-    /** Escape closes Prefs first (D197). */
+    void showControllerCard(bool stepByStep)
+    {
+        controllerCard.show();
+        if (stepByStep)
+            controllerCard.startSteps();
+    }
+
+    /** Escape stops a Learn and closes Prefs or the controller card first (D197, D211). */
     bool closePrefs()
     {
+        if (cancelLearning())
+            return true;
+        if (controllerCard.isVisible())
+        {
+            controllerCard.hide();
+            return true;
+        }
         if (! prefs.isVisible())
             return false;
         prefs.hide();
@@ -1311,6 +1963,15 @@ public:
     {
         screen.repaint();
         prefs.refresh();
+        // The controller's word (D211): a ready setup found, said once in this program for a while; a notice's time over.
+        const auto& setup = coolsynth::midi::ControllerSetup::instance();
+        if (setup.noticeSerial() != shownSetupNotice)
+        {
+            shownSetupNotice = setup.noticeSerial();
+            setNotice(setup.noticeText(), 9000);
+        }
+        if (noticeUntil != 0 && static_cast<juce::int32>(juce::Time::getMillisecondCounter() - noticeUntil) >= 0)
+            setNotice({}, 0);
         // The main knob and knob 5 turn with every step the model took, at most five detents at once (End, Home).
         if (const auto turns = model.mainTurnCount(); turns != shownMainTurns)
         {
@@ -1556,6 +2217,7 @@ public:
         keyboard.setKeyWidth(static_cast<float>(keyboard.getWidth()) / static_cast<float>(whiteKeys));
 
         prefs.setBounds(getLocalBounds()); // the dialog covers the panel; its card sits in the middle (D197)
+        controllerCard.setBounds(getLocalBounds());
         // the CPU: the layer screen's bottom right corner (D195; beside the main knob from D191)
         cpuArea = layerScreen.reduced(12, 8).removeFromBottom(14).removeFromRight(70);
     }
@@ -1662,13 +2324,17 @@ private:
     std::array<HoverWatcher, 4> buttonWatchers; // Prefs, Hold, Oct -, Oct +
     int hoveredPanel = -1;
     bool hoveredCpu = false;
-    std::array<juce::Slider, 4> faders;
+    std::array<PanelFader, 4> faders;
     std::array<Pad, 8> pads;
     juce::TextButton options, hold, octDown, octUp;
     FlatKeyboard keyboard;
     juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea, layerScreen;
     std::array<juce::Rectangle<int>, 2> layerPanels; // the layer screen's two panels, clickable (D195)
     PrefsCard prefs { owner.synth };                 // over everything, hidden until Prefs is pressed (D197)
+    ControllerCard controllerCard { owner.synth };   // the controller setup, from Prefs or a right click (D211)
+    bool learningHere = false;                       // a right click's Learn is listening (D211)
+    juce::uint32 noticeUntil = 0;                    // when the screen's notice goes; 0: it stays
+    static inline int shownSetupNotice = 0;          // the setup's last notice shown, by any panel in this program
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
     int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)
@@ -1684,6 +2350,8 @@ PanelEditor::PanelEditor(SynthAudioProcessor& processor)
 {
     content = std::make_unique<Content>(*this);
     addAndMakeVisible(*content);
+    // In a DAW, the CoolSynth whose window opened last drives the MiniLab (D211).
+    synth.claimMiniLab();
     setWantsKeyboardFocus(true);
     setResizable(true, true);
     if (auto* sizeLimits = getConstrainer())
@@ -1697,6 +2365,8 @@ PanelEditor::PanelEditor(SynthAudioProcessor& processor)
 }
 
 PanelEditor::~PanelEditor() = default;
+
+void PanelEditor::showControllerSetup(bool stepByStep) { content->showControllerCard(stepByStep); }
 
 bool PanelEditor::shiftHeld() const noexcept
 {

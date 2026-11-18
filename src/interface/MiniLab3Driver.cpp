@@ -2,33 +2,87 @@
 
 #include "diagnostics/FlightRecorder.h"
 #include "interface/InterfaceModel.h"
+#include "midi/ControllerSetup.h"
 #include "midi/MiniLab3Protocol.h"
 #include "plugin/SynthAudioProcessor.h"
 
-namespace coolsynth::standalone
+namespace coolsynth::ui
 {
     namespace ml = coolsynth::midi::minilab3;
 
-    MiniLab3Driver::MiniLab3Driver(coolsynth::ui::InterfaceModel& m,
-                                   juce::AudioDeviceManager& deviceManager,
-                                   SynthAudioProcessor& processor)
-        : model(m), devices(deviceManager), synth(processor)
+    juce::InterProcessLock& MiniLab3Driver::programLock()
     {
-        tryOpen();
+        static juce::InterProcessLock lock("CoolSynth MiniLab 3");
+        return lock;
+    }
+
+    MiniLab3Driver::MiniLab3Driver(InterfaceModel& m, SynthAudioProcessor& processor, juce::AudioDeviceManager* deviceManager)
+        : model(m), synth(processor), devices(deviceManager), inPlugin(deviceManager == nullptr)
+    {
+        // The first CoolSynth in this program takes the MiniLab, if no other program has it (D211).
+        if (owner == nullptr && takeDevice())
+            tryOpen();
         startTimerHz(30);
     }
 
     MiniLab3Driver::~MiniLab3Driver()
     {
         stopTimer();
-        close();
+        if (owner == this)
+        {
+            close(true);
+            owner = nullptr;
+            pluginDriving.store(false, std::memory_order_relaxed);
+            coolsynth::midi::ControllerSetup::instance().setMiniLabDriven(false);
+            if (programHoldsLock)
+            {
+                programLock().exit();
+                programHoldsLock = false;
+            }
+        }
+    }
+
+    bool MiniLab3Driver::takeDevice()
+    {
+        // Between programs: whoever took it first keeps it until it closes. In this program the lock stays taken
+        // while any driver here owns the MiniLab.
+        if (! programHoldsLock)
+        {
+            if (! programLock().enter(0))
+                return false;
+            programHoldsLock = true;
+        }
+        owner = this;
+        return true;
+    }
+
+    void MiniLab3Driver::claim()
+    {
+        if (owner == this)
+            return;
+        if (owner != nullptr)
+            owner->letGo();
+        if (takeDevice())
+        {
+            ticksSinceProbe = 0;
+            tryOpen();
+        }
+    }
+
+    void MiniLab3Driver::letGo()
+    {
+        // Another CoolSynth here takes over: the MiniLab stays in its DAW program, the new owner talks to it at once.
+        close(false);
+        if (owner == this)
+            owner = nullptr;
+        setConnected(false);
     }
 
     void MiniLab3Driver::tryOpen()
     {
-        if (isConnected())
+        if (owner != this || isConnected())
             return;
-        close();
+        close(false);
 
         juce::MidiDeviceInfo inInfo, outInfo;
         for (const auto& info : juce::MidiInput::getAvailableDevices())
@@ -40,34 +94,52 @@ namespace coolsynth::standalone
         if (inInfo.identifier.isEmpty() || outInfo.identifier.isEmpty())
             return;
 
-        // The driver owns the port: the player must not also hear it (pads would play notes).
-        if (devices.isMidiInputDeviceEnabled(inInfo.identifier))
-            devices.setMidiInputDeviceEnabled(inInfo.identifier, false);
+        // In the app the driver owns the port: the player must not also hear it (pads would play notes).
+        if (devices != nullptr && devices->isMidiInputDeviceEnabled(inInfo.identifier))
+            devices->setMidiInputDeviceEnabled(inInfo.identifier, false);
 
         input = juce::MidiInput::openDevice(inInfo.identifier, this);
         output = juce::MidiOutput::openDevice(outInfo.identifier);
         if (input == nullptr || output == nullptr)
         {
-            close();
+            // Another program has the port and Windows does not share it (no Windows MIDI Services): try again later.
+            close(false);
             return;
         }
         inputIdentifier = inInfo.identifier;
         input->start();
         send(ml::connect());
-        coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, "connected, DAW program");
+        coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, inPlugin ? "connected in a plugin, DAW program"
+                                                                                           : "connected, DAW program");
         lastKnobValue.fill(-1);
         refreshDevice(true);
+        setConnected(true);
     }
 
-    void MiniLab3Driver::close()
+    void MiniLab3Driver::close(bool sayGoodbye)
     {
         if (input != nullptr)
             input->stop();
-        if (output != nullptr)
+        if (output != nullptr && sayGoodbye)
             output->sendMessageNow(ml::disconnect());
         input = nullptr;
         output = nullptr;
         inputIdentifier = {};
+    }
+
+    void MiniLab3Driver::setConnected(bool connected)
+    {
+        if (connected == wasConnected)
+            return;
+        wasConnected = connected;
+        model.setHardwareConnected(connected);
+        if (inPlugin)
+            pluginDriving.store(connected, std::memory_order_relaxed);
+        auto& setup = coolsynth::midi::ControllerSetup::instance();
+        setup.setMiniLabDriven(connected);
+        // A DAW's own MiniLab script would talk to it too, and the two screens would fight (D211).
+        if (connected && inPlugin)
+            setup.announce("MiniLab 3 connected. In your DAW, set its MiniLab control surface to None.");
     }
 
     void MiniLab3Driver::send(const juce::MidiMessage& message)
@@ -78,10 +150,15 @@ namespace coolsynth::standalone
 
     void MiniLab3Driver::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)
     {
-        // MIDI thread: keys and performance go straight to the sound, controls to the message thread.
+        // MIDI thread: in the app keys and performance go straight to the sound; in a plugin the host brings them.
+        // Controls go to the message thread.
         if (ml::decode(message).kind == ml::Control::Kind::other)
         {
             if (message.isSysEx())
+                return;
+            if (message.isNoteOn())
+                lastKeyNote.store(message.getNoteNumber(), std::memory_order_relaxed);
+            if (inPlugin)
                 return;
             if (message.isNoteOn())
             {
@@ -98,8 +175,6 @@ namespace coolsynth::standalone
                 }
                 lastGoodVelocity = velocity;
             }
-            if (message.isNoteOn())
-                lastKeyNote.store(message.getNoteNumber(), std::memory_order_relaxed);
             synth.pushLiveMidi(message);
             return;
         }
@@ -221,23 +296,37 @@ namespace coolsynth::standalone
             const juce::ScopedLock lock(queueLock);
             pending.swap(queue);
         }
+        if (owner != this)
+        {
+            // Another CoolSynth drives it, or nobody: the first one to look takes it, every two seconds (D211).
+            if (owner == nullptr && ++ticksSinceProbe >= 60)
+            {
+                ticksSinceProbe = 0;
+                if (takeDevice())
+                    tryOpen();
+            }
+            return;
+        }
         for (const auto& message : pending)
             apply(message);
         if (const int note = lastKeyNote.exchange(-1, std::memory_order_relaxed); note >= 0)
             model.keyPlayedOnMiniLab(note);
 
-        if (! isConnected() && ++ticksSinceProbe >= 60) // look for the device every two seconds
+        if (! isConnected())
         {
-            ticksSinceProbe = 0;
-            tryOpen();
+            if (++ticksSinceProbe >= 60) // look for the device every two seconds
+            {
+                ticksSinceProbe = 0;
+                tryOpen();
+            }
         }
-        else if (isConnected())
+        else
         {
             // unplugged: the port is gone from the list
-            bool present = false;
             if (++ticksSinceProbe >= 60)
             {
                 ticksSinceProbe = 0;
+                bool present = false;
                 for (const auto& info : juce::MidiInput::getAvailableDevices())
                     present = present || info.identifier == inputIdentifier;
                 if (! present)
@@ -247,13 +336,13 @@ namespace coolsynth::standalone
                     input = nullptr;
                     output = nullptr;
                     inputIdentifier = {};
-                    model.setHardwareConnected(false);
+                    setConnected(false);
                     return;
                 }
             }
             refreshDevice(false);
         }
         // The screen greys its own Hold and octave out while the MiniLab is there (D184).
-        model.setHardwareConnected(isConnected());
+        setConnected(isConnected());
     }
 }

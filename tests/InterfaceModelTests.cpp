@@ -691,6 +691,13 @@ public:
         model.turnKnob(1, 6, false); // a macro, and Brightness: their values show in the knobs (D183)
         model.turnKnob(7, 4, false);
         shoot("knobvalue");
+        if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))
+            panel->showControllerSetup(); // the controller setup's card (D211)
+        shoot("controller");
+        if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))
+            panel->showControllerSetup(true); // its first step
+        shoot("controller-step");
+        coolsynth::midi::ControllerSetup::instance().stopLearning();
     }
 };
 

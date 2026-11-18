@@ -8,8 +8,10 @@
 #include <set>
 #include <span>
 
-#include "midi/LearnedBindingsXml.h"
-#include "midi/MidiToControllerEvent.h"
+#include "interface/ControllerInput.h"
+#include "interface/MiniLab3Driver.h"
+#include "midi/ControllerSetup.h"
+#include "midi/MiniLab3Protocol.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 #include "BuildInfo.h"
@@ -61,7 +63,6 @@ namespace
         std::atomic<bool>& flag;
         bool previous;
     };
-    inline constexpr char learnedMidiMappingsTag[] = "LEARNED_MIDI_MAPPINGS";
 
     std::optional<coolsynth::synth::EngineMidiEvent> makeEngineMidiEvent(const juce::MidiMessage& message,
                                                                          int sampleOffset) noexcept
@@ -153,11 +154,6 @@ namespace
         return std::nullopt;
     }
 
-    bool isReservedSynthController(const coolsynth::midi::ControllerMidiEvent& event) noexcept
-    {
-        return coolsynth::midi::isReservedSynthControllerEvent(event);
-    }
-
     const juce::XmlElement* findSingleMatchingChild(const juce::XmlElement& parent,
                                                     juce::StringRef tagName) noexcept
     {
@@ -181,7 +177,6 @@ namespace
 SynthAudioProcessor::SynthAudioProcessor()
     : juce::AudioProcessor(BusesProperties().withOutput("Output", juce::AudioChannelSet::stereo(), true))
     , parameters(*this, nullptr, "CoolSynthState", coolsynth::parameters::createParameterLayout())
-    , midiMappingEngine(parameters)
     , parameterValues(bindParameterPointers(parameters))
     , partParameterValues { coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::a),
                             coolsynth::parameters::v3::bindPartPointers(parameters, coolsynth::parameters::v3::Part::b) }
@@ -213,6 +208,9 @@ SynthAudioProcessor::SynthAudioProcessor()
     // So is its velocity curve (D175): the player's keyboard is the computer's.
     if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined)
         setVelocityCurve(pluginOptions().getIntValue("velocityCurve", normalCurve));
+    // And so is the controller setup (D211): read once for the app and every plugin in this program.
+    if (wrapperType != wrapperType_Undefined)
+        coolsynth::midi::ControllerSetup::instance().start();
 
     // A new CoolSynth, in the app or a host, starts on Contact (D193). Tests and tools (no wrapper) keep the
     // parameters' own defaults. A host's saved project, and the app's state from last time, are loaded after this.
@@ -524,11 +522,27 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         notesHeldBack = 0;
     }
 
-    // One path for every message: the loading gate, the engine's events, the flight recorder, the keyboard's display.
-    const bool standalone = juce::JUCEApplicationBase::isStandaloneApp();
+    // One path for every message: the controller's, the loading gate, the engine's events, the flight recorder, the
+    // keyboard's display.
     const int curve = velocityCurve(); // one curve for the whole block
     auto take = [&](const juce::MidiMessage& message, int samplePosition, bool clicked)
     {
+        // A controller's knob, pad or button the setup links goes to the panel, not the sound (D211); while a control
+        // is being learned, all of them.
+        if (! clicked)
+        {
+            // The MiniLab's knobs, pads and buttons the host passes on while a CoolSynth here drives it (D211): the
+            // driver has them already, and a pad must not play a note.
+            namespace ml = coolsynth::midi::minilab3;
+            if (coolsynth::ui::MiniLab3Driver::drivenInPlugin() && ml::decode(message).kind != ml::Control::Kind::other)
+                return;
+            using coolsynth::midi::ControllerSetup;
+            if (ControllerSetup::wanted(message))
+                if (const auto event = coolsynth::midi::toControllerEvent(message))
+                    enqueueControllerEvent(*event);
+            if (ControllerSetup::takesFromSound(message))
+                return;
+        }
         if (loading && message.isNoteOn())
         {
             ++notesHeldBack;
@@ -562,17 +576,6 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
             coolsynth::diag::record(coolsynth::diag::Event::noteOff, message.getNoteNumber());
             if (! clicked)
                 pushKey(heardKeys, heardKeyEvents, { static_cast<std::uint8_t>(message.getNoteNumber()), 0 });
-        }
-
-        if (standalone || clicked)
-            return;
-
-        if (const auto event = coolsynth::midi::toControllerMidiEvent(message))
-        {
-            enqueuePluginControllerEvent(*event);
-
-            if (! isReservedSynthController(*event))
-                enqueuePluginMappedControllerEvent(*event);
         }
     };
 
@@ -1183,14 +1186,12 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 
         // A state saved before the master effect slots: its fixed effects move into the slots (D135).
         juce::XmlElement parameterStateXml(*found);
-        std::map<juce::String, juce::String> renamed;
         if (fixedEffects)
-            renamed = coolsynth::presets::migrateFixedMasterEffects(parameterStateXml);
+            coolsynth::presets::migrateFixedMasterEffects(parameterStateXml);
         if (oldLayerModes)
             coolsynth::presets::migrateLayerModes(parameterStateXml); // A, Layer, Split, B: now Stack, Split, Velocity
         if (globalArp)
-            for (const auto& [from, to] : coolsynth::presets::migrateLayerArps(parameterStateXml)) // one arp per layer
-                renamed[from] = to;
+            coolsynth::presets::migrateLayerArps(parameterStateXml); // one arp per layer
         if (version <= coolsynth::presets::processorStateVersionBeforeSlices)
             coolsynth::presets::migrateSampleSlices(parameterStateXml); // a Sample slot's slice values at their defaults (D207)
         if (version != processorStateFormatVersion)
@@ -1207,7 +1208,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 
         if (applied)
         {
-            setLearnedMidiBindings(parseLearnedMidiBindingsXml(*xml, renamed));
+            // A state's own learned controls (before D211) are not read: the controller setup is the computer's now.
             setPatchIdentity(xml->getStringAttribute(processorStatePatchNameProperty, "Init"),
                              xml->getBoolAttribute(processorStatePatchDirtyProperty, false));
             restorePlayingSound(getPatchName(), xml->getStringAttribute(processorStateMySoundProperty));
@@ -1412,10 +1413,6 @@ std::unique_ptr<juce::XmlElement> SynthAudioProcessor::createProcessorStateXml()
 
     auto parameterState = const_cast<SynthAudioProcessor*> (this)->parameters.copyState();
     root->addChildElement(parameterState.createXml().release());
-
-    const juce::ScopedLock lock(midiMappingStateLock);
-    root->addChildElement(coolsynth::midi::createLearnedBindingsXml(learnedMidiMappingsTag,
-                                                                    learnedMidiBindings).release());
     return root;
 }
 
@@ -1665,166 +1662,56 @@ juce::String SynthAudioProcessor::getPatchName() const
     return patchName;
 }
 
-bool SynthAudioProcessor::setActiveControllerProfile(juce::StringRef profileId)
+void SynthAudioProcessor::enqueueControllerEvent(const coolsynth::midi::ControllerEvent& event) noexcept
 {
-    const juce::ScopedLock lock(midiMappingStateLock);
-    return midiMappingEngine.setActiveProfile(profileId);
-}
-
-juce::String SynthAudioProcessor::getActiveControllerProfileId() const
-{
-    const juce::ScopedLock lock(midiMappingStateLock);
-    return midiMappingEngine.getActiveProfileId();
-}
-
-juce::String SynthAudioProcessor::getActiveControllerProfileDisplayName() const
-{
-    const juce::ScopedLock lock(midiMappingStateLock);
-    return midiMappingEngine.getActiveProfileDisplayName();
-}
-
-void SynthAudioProcessor::setLearnedMidiBindings(std::span<const coolsynth::midi::LearnedCcBinding> bindings)
-{
-    const juce::ScopedLock lock(midiMappingStateLock);
-    learnedMidiBindings.assign(bindings.begin(), bindings.end());
-    midiMappingEngine.setLearnedBindings(bindings);
-}
-
-std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::getLearnedMidiBindings() const
-{
-    const juce::ScopedLock lock(midiMappingStateLock);
-    return learnedMidiBindings;
-}
-
-void SynthAudioProcessor::clearLearnedMidiBinding(juce::StringRef parameterId)
-{
-    const juce::ScopedLock lock(midiMappingStateLock);
-    learnedMidiBindings.erase(std::remove_if(learnedMidiBindings.begin(),
-                                             learnedMidiBindings.end(),
-                                             [&](const auto& binding)
-                                             {
-                                                 return binding.parameterId == parameterId;
-                                             }),
-                              learnedMidiBindings.end());
-    midiMappingEngine.clearLearnedBinding(parameterId);
-}
-
-int SynthAudioProcessor::drainPendingPluginControllerEvents(coolsynth::midi::ControllerMidiEvent* destination,
-                                                            int maxEvents) noexcept
-{
-    int start1, size1, start2, size2;
-    pendingPluginControllerEventQueue.prepareToRead(maxEvents, start1, size1, start2, size2);
-
-    int totalRead = 0;
-    for (int i = 0; i < size1; ++i)
-        destination[totalRead++] = pendingPluginControllerEvents[static_cast<size_t> (start1 + i)];
-
-    for (int i = 0; i < size2; ++i)
-        destination[totalRead++] = pendingPluginControllerEvents[static_cast<size_t> (start2 + i)];
-
-    pendingPluginControllerEventQueue.finishedRead(totalRead);
-    return totalRead;
-}
-
-void SynthAudioProcessor::handleStandaloneControllerEvent(const coolsynth::midi::ControllerMidiEvent& event)
-{
-    if (isReservedSynthController(event))
-        return;
-
-    coolsynth::midi::MappedAction action;
+    const auto scope = controllerEvents.write(1);
+    if (scope.blockSize1 + scope.blockSize2 == 0)
     {
-        const juce::ScopedLock lock(midiMappingStateLock);
-        action = midiMappingEngine.translate(event);
-    }
-
-    applyMappedAction(action);
-}
-
-void SynthAudioProcessor::enqueuePluginControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept
-{
-    int start1, size1, start2, size2;
-    pendingPluginControllerEventQueue.prepareToWrite(1, start1, size1, start2, size2);
-
-    if (size1 > 0)
-    {
-        pendingPluginControllerEvents[static_cast<size_t> (start1)] = event;
-        pendingPluginControllerEventQueue.finishedWrite(1);
+        droppedControllerEventCount.fetch_add(1, std::memory_order_relaxed);
         return;
     }
-
-    if (size2 > 0)
-    {
-        pendingPluginControllerEvents[static_cast<size_t> (start2)] = event;
-        pendingPluginControllerEventQueue.finishedWrite(1);
-        return;
-    }
-
-    droppedControllerEventCount.fetch_add(1, std::memory_order_relaxed);
+    controllerEventSlots[static_cast<size_t>(scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2)] = event;
+    mappedActionBridge.triggerAsyncUpdate();
 }
 
-void SynthAudioProcessor::enqueuePluginMappedControllerEvent(const coolsynth::midi::ControllerMidiEvent& event) noexcept
+void SynthAudioProcessor::dispatchPendingControllerEvents()
 {
-    int start1, size1, start2, size2;
-    pendingPluginMappedControllerEventQueue.prepareToWrite(1, start1, size1, start2, size2);
-
-    if (size1 > 0)
+    // Read in turns so a controller sending on and on never holds the message thread for long.
+    for (int round = 0; round < 8; ++round)
     {
-        pendingPluginMappedControllerEvents[static_cast<size_t> (start1)] = event;
-        pendingPluginMappedControllerEventQueue.finishedWrite(1);
-        mappedActionBridge.triggerAsyncUpdate();
-        return;
-    }
-
-    if (size2 > 0)
-    {
-        pendingPluginMappedControllerEvents[static_cast<size_t> (start2)] = event;
-        pendingPluginMappedControllerEventQueue.finishedWrite(1);
-        mappedActionBridge.triggerAsyncUpdate();
-        return;
-    }
-
-    droppedMappedControllerEventCount.fetch_add(1, std::memory_order_relaxed);
-}
-
-int SynthAudioProcessor::drainPendingMappedControllerEvents(coolsynth::midi::ControllerMidiEvent* destination,
-                                                            int maxEvents) noexcept
-{
-    int start1, size1, start2, size2;
-    pendingPluginMappedControllerEventQueue.prepareToRead(maxEvents, start1, size1, start2, size2);
-
-    int totalRead = 0;
-    for (int i = 0; i < size1; ++i)
-        destination[totalRead++] = pendingPluginMappedControllerEvents[static_cast<size_t> (start1 + i)];
-
-    for (int i = 0; i < size2; ++i)
-        destination[totalRead++] = pendingPluginMappedControllerEvents[static_cast<size_t> (start2 + i)];
-
-    pendingPluginMappedControllerEventQueue.finishedRead(totalRead);
-    return totalRead;
-}
-
-void SynthAudioProcessor::dispatchPendingMappedControllerEvents()
-{
-    std::array<coolsynth::midi::ControllerMidiEvent, 32> localEvents {};
-
-    while (true)
-    {
-        const auto drained = drainPendingMappedControllerEvents(localEvents.data(),
-                                                                static_cast<int> (localEvents.size()));
-        if (drained == 0)
-            break;
-
-        for (int i = 0; i < drained; ++i)
+        const auto scope = controllerEvents.read(controllerEvents.getNumReady());
+        if (scope.blockSize1 + scope.blockSize2 == 0)
+            return;
+        scope.forEach([this](int index)
         {
-            coolsynth::midi::MappedAction action;
-            {
-                const juce::ScopedLock lock(midiMappingStateLock);
-                action = midiMappingEngine.translate(localEvents[static_cast<size_t> (i)]);
-            }
-
-            applyMappedAction(action);
-        }
+            getControllerInput().handle(controllerEventSlots[static_cast<size_t>(index)]);
+        });
     }
+}
+
+coolsynth::ui::ControllerInput& SynthAudioProcessor::getControllerInput()
+{
+    if (controllerInput == nullptr)
+        controllerInput = std::make_unique<coolsynth::ui::ControllerInput>(getInterfaceModel());
+    return *controllerInput;
+}
+
+void SynthAudioProcessor::startMiniLabDriver()
+{
+    // A plugin's own driver (D211), made on the message thread a moment after the plugin is: hosts may make plugins
+    // elsewhere. The app (wrapperType_Standalone) makes its own with its devices; tests and tools (Undefined) none.
+    if (miniLabStarted)
+        return;
+    miniLabStarted = true;
+    if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined)
+        miniLab = std::make_unique<coolsynth::ui::MiniLab3Driver>(getInterfaceModel(), *this, nullptr);
+}
+
+void SynthAudioProcessor::claimMiniLab()
+{
+    startMiniLabDriver();
+    if (miniLab != nullptr)
+        miniLab->claim();
 }
 
 void SynthAudioProcessor::applyPendingLearnedChord()
@@ -1857,42 +1744,6 @@ void SynthAudioProcessor::applyPendingLearnedChord()
     }
 }
 
-void SynthAudioProcessor::applyMappedAction(const coolsynth::midi::MappedAction& action)
-{
-    using Kind = coolsynth::midi::MappedAction::Kind;
-
-    switch (action.kind)
-    {
-        case Kind::parameterChange: applyParameterChange(action.parameterChange); break;
-        case Kind::command:         applyMappedCommand(action.command); break;
-        case Kind::none:
-        default: break;
-    }
-}
-
-void SynthAudioProcessor::applyParameterChange(const coolsynth::midi::MappedParameterChange& change)
-{
-    if (change.parameter == nullptr)
-        return;
-
-    const juce::ScopedValueSetter<bool> suppress(suppressGestureSnapshots, true);
-    change.parameter->beginChangeGesture();
-    change.parameter->setValueNotifyingHost(change.normalizedValue);
-    change.parameter->endChangeGesture();
-}
-
-void SynthAudioProcessor::applyMappedCommand(coolsynth::midi::MappedCommand command) noexcept
-{
-    using Command = coolsynth::midi::MappedCommand;
-
-    switch (command)
-    {
-        case Command::panic: requestPanic(); break;
-        case Command::none:
-        default: break;
-    }
-}
-
 void SynthAudioProcessor::requestPanic() noexcept
 {
     panicRequested.store(true, std::memory_order_release);
@@ -1908,26 +1759,6 @@ double SynthAudioProcessor::getTailLengthSeconds() const
     for (const auto& slot : slots)
         tail = std::max(tail, coolsynth::synth::v3::insertTailSeconds(slot, bpm));
     return tail;
-}
-
-std::vector<coolsynth::midi::LearnedCcBinding> SynthAudioProcessor::parseLearnedMidiBindingsXml(
-    const juce::XmlElement& parent, const std::map<juce::String, juce::String>& renamed) const
-{
-    std::vector<coolsynth::midi::LearnedCcBinding> bindings;
-
-    if (const auto* mappings = parent.getChildByName(learnedMidiMappingsTag))
-        bindings = coolsynth::midi::parseLearnedBindingsXml(*mappings);
-
-    // A knob learned on a parameter that moved (an old master effect's value into its slot, D135) follows it;
-    // the normaliser then drops what has no place any more.
-    for (auto& binding : bindings)
-        if (const auto moved = renamed.find(binding.parameterId); moved != renamed.end())
-            binding.parameterId = moved->second;
-
-    coolsynth::midi::MidiLearnManager normalizer;
-    normalizer.replaceBindings(std::move(bindings));
-    const auto normalized = normalizer.getBindings();
-    return { normalized.begin(), normalized.end() };
 }
 
 namespace

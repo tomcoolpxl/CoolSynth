@@ -198,17 +198,21 @@ renders. Work it cannot do in time, such as reading a file, is asked for and pic
 
 The interface's logic is `InterfaceModel` (`src/interface/InterfaceModel.h`), independent of drawing: the
 navigation, Home as the sound browser and live page, the type lists, the knobs, the faders with pickup, and
-what the MiniLab's own screen and pads show. It runs on the message thread. Two things drive the same model
+what the MiniLab's own screen and pads show. It runs on the message thread. Three things drive the same model
 and read it back:
 
 - **The on-screen panel**, `PanelEditor` (`src/plugin/PanelEditor.h`), which copies the Arturia MiniLab 3.
-- **The MiniLab driver**, `MiniLab3Driver` (`src/standalone/MiniLab3Driver.h`), in the standalone app only.
-  It opens the MiniLab's DAW port, turns its knobs, pads and faders into interface actions, passes its keys,
-  bend, wheel and pressure to the sound, and keeps its screen and pad colours in step with the model.
-
-The VST3 has no MiniLab driver, because the host owns the MIDI ports. In both the plugin and the app,
-incoming control changes go through `MidiMappingEngine` (`src/midi`): a controller profile
-(`resources/controller_profiles`) and learned bindings, which are saved with the plugin's state.
+- **The MiniLab driver**, `MiniLab3Driver` (`src/interface/MiniLab3Driver.h`), in the app and in the plugin
+  (D211). It opens the MiniLab's DAW port, turns its knobs, pads and faders into interface actions, and keeps
+  its screen and pad colours in step with the model. In the app it also passes the keys, bend, wheel and
+  pressure to the sound; in a plugin the host brings them. One CoolSynth drives it at a time: the one whose
+  window opened last. A plugin shares the port with the host through Windows MIDI Services.
+- **Any other controller**, through `ControllerInput` (`src/interface/ControllerInput.h`): the computer's
+  controller setup (`src/midi/ControllerSetup.h`, kept in `%APPDATA%\CoolSynth\controller.json`) ties a
+  controller's knobs, faders, pads and buttons to the panel's places (the main knob, knobs 1-8, faders, pads,
+  Shift) or to one sound setting. Known controllers have ready setups (`src/midi/ControllerMap.cpp`); a guided
+  setup and a right click's Learn make the rest. Linked messages reach the panel through a lock-free queue and
+  never the sound.
 
 The interface is specified in [interface-v3.md](interface-v3.md), and the MiniLab 3 protocol, as tested on the
 device, in [minilab3-screen.md](minilab3-screen.md). `AuditionEditor` is an older editor that is still in the
@@ -219,8 +223,8 @@ sources but no longer used.
 - **Parameters** are a JUCE `AudioProcessorValueTreeState`, laid out in `src/parameters`
   (`ParameterLayout`, and in `src/parameters/v3` the per-layer and per-slot parameters).
 - **The processor state**, which a host saves in its project, is XML with the root `COOLSYNTH_PROCESSOR_STATE`,
-  at format version 14. It holds the parameters, the sound's name and file, the learned MIDI bindings and the
-  player's files a slot uses.
+  at format version 14. It holds the parameters, the sound's name and file, and the player's files a slot uses.
+  The controller setup is not in it: it is the computer's (D211).
 - **A patch file** (`.cspatch`, `src/presets/PatchState.h`) holds one sound, at format version 13. The player's
   own sounds are patch files in `Documents\CoolSynth\My Sounds` (`src/presets/MySounds.h`).
 - **The factory presets** are text bank files, `resources/presets/*.csbank`, one per room, read by
@@ -237,8 +241,8 @@ sources but no longer used.
 | `src/synth` | Code from before V3 that V3 still uses: the arpeggiator, Euclidean rhythms, the effects of the master rack, the 2× half-band filter |
 | `src/parameters` | The parameter layout and IDs; `v3/` holds the per-layer and per-slot parameters |
 | `src/presets` | Bank files, the factory presets, patch files, My Sounds, state migration |
-| `src/interface` | `InterfaceModel`, the interface's logic |
-| `src/midi` | MIDI mapping and learn, controller profiles, the MiniLab 3 protocol, the MIDI monitor |
+| `src/interface` | `InterfaceModel`, the interface's logic; the MiniLab driver; `ControllerInput`, any controller on the panel |
+| `src/midi` | The controller map, ready setups and the computer's setup; the MiniLab 3 protocol; V2's mapping and the MIDI monitor, still used by the app's settings store |
 | `src/standalone` | The standalone app, its MIDI input and settings, the MiniLab driver |
 | `src/ui` | Drawing: knobs, faders, the piano bar, the palette, the status bar |
 | `src/diagnostics` | The flight recorder and the audio thread's allocation alarm |

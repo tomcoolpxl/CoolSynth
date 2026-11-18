@@ -145,6 +145,20 @@ namespace coolsynth::ui
         /** Faders 0-3; with pickup the value takes over only once it meets the stored one. */
         void moveFader(int fader, float value01, bool pickup);
 
+        // ---- Any controller (D211) ---------------------------------------------------------------
+        /** A controller's knob with end stops on knob 1-8, moved from `from` to `to` (0-127): value scaling. The value
+            moves the way the knob does, by the share of the room each has left that way, so the two meet at the ends
+            and the sound never jumps. A list, a switch, an instrument or knob 5's pages move an option each time the
+            scaled place passes the next one. */
+        void moveKnobFromController(int knob, int from, int to);
+        /** A controller's control tied to one sound setting: moved by value scaling, or turned by steps. */
+        void moveSettingFromController(const juce::String& parameterId, int from, int to);
+        void turnSettingFromController(const juce::String& parameterId, int steps, bool fine);
+        /** The sound setting knob 1-4 or 6-8 moves now, or null: what "Learn for Cutoff" ties a control to. */
+        [[nodiscard]] juce::RangedAudioParameter* knobParameter(int knob) const;
+        /** A setting's name as the panel shows it ("Cutoff"). */
+        [[nodiscard]] juce::String settingName(const juce::String& parameterId) const;
+
         // ---- The mouse on the screen ----------------------------------------------------------
         /** A click on a row of the list in view: moves there and presses (opens, loads, goes back, sets the type). */
         void clickListRow(int row);
@@ -332,6 +346,24 @@ namespace coolsynth::ui
         int layerAction = 0;   // the Layers page's action under the main knob (D196)
         std::array<int, 9> deviceCounts {};            // counts not yet a step, per MiniLab knob (D200)
         std::array<juce::String, 9> deviceTargets {};  // what each knob moved last: another target starts afresh
+        /** Where value scaling left a controller's knob (D211): its place, finer than the setting keeps it, while the
+            setting stays where it was put; anything else moving it starts afresh from where it is. */
+        struct ScaledPlace
+        {
+            juce::String target;
+            float position = 0.0f;
+            float seenValue = -1.0f; // a number's value as set
+            int seenIndex = -1;      // a list's option as set
+        };
+        std::array<ScaledPlace, 9> scaledKnobs {};
+        std::map<juce::String, ScaledPlace> scaledSettings;
+        /** Value scaling of `position` (0-1) for a knob moved from h0 to h1 (0-1). */
+        [[nodiscard]] static float valueScaled(float position, float h0, float h1) noexcept;
+        /** A list of `count` options at `index`, value-scaled: turns it by the options passed. */
+        void scaleList(ScaledPlace& place, const juce::String& target, int index, int count, float h0, float h1,
+                       const std::function<void(int)>& turn);
+        /** A number, value-scaled; true when it moved. */
+        bool scaleNumber(ScaledPlace& place, juce::RangedAudioParameter& p, float h0, float h1);
         void doLayerAction(int action);
         std::int64_t mainTurns = 0, pageTurns = 0; // steps turned, for the screen's knobs (D193)
         Popup lastPopup;

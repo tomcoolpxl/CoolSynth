@@ -4204,3 +4204,59 @@ page, not other actions".
   settings; leave the last version up). It can be set up again with `POST /repos/{owner}/{repo}/pages`
   (build type "workflow") and a workflow run. Sources: GitHub Docs, "Unpublishing a GitHub Pages site";
   GitHub REST API, "Delete a GitHub Pages site".
+
+## D211. Any controller plays the panel; the MiniLab driver in the VST3 too (2026-11-18)
+
+A friend gets the release and will use the VST3 with a MIDI controller nobody knows. The user asked what
+others do and chose (pick lists, with research): **all of it, plus ready setups for popular controllers**;
+**the full MiniLab driver inside the VST3 as well**; **controllers first, then the release**.
+- **The model.** A controller's control stands for one of the panel's *places* (the main knob, its press, one
+  step left and right, Back, Shift, knobs 1-8 with knob 5 the pages, faders 1-4, pads 1-8) or for one sound
+  *setting* on every page. A place follows the page, as the MiniLab's knobs do, so a controller works the
+  panel as the MiniLab does. `src/midi/ControllerMap.h` (the map, JSON, the ready setups),
+  `src/midi/ControllerSetup.h` (the computer's setup, learning, the audio thread's two questions),
+  `src/interface/ControllerInput.h` (one CoolSynth's controller, played on its model). The V2 path
+  (`MidiMappingEngine`, profiles mapping CCs to parameters, learned bindings in the processor's state) no longer
+  runs in the processor; its classes stay for the standalone settings store until V2 goes.
+- **Knobs with end stops: value scaling**, the user's choice (options: pick-up, recommended; value scaling,
+  chosen; turns, like the MiniLab; jump). Ableton's Live 12 manual describes the same three takeover modes. The
+  value moves the way the knob does, by the share of the room each has left, so the two meet at the ends and
+  never jump; a list, a switch, an instrument or the pages move an option when the scaled place passes the next
+  one (`InterfaceModel::moveKnobFromController`). Endless knobs turn as the MiniLab's do (D200); faders are
+  taken as they stand (D184). A control a ready setup calls a position that sends the same value twice, away
+  from its ends, is taken as turning from then on: a ready setup may not know how the keyboard was set.
+- **Learn: both, chosen in the menu**, the user's choice (options: both, recommended and chosen; the place
+  only; the setting only). A right click on a knob, fader or pad offers "Learn for knob 3 (follows the page)"
+  and, on knobs 1-4 and 6-8, "Learn for Cutoff (on every page)", and Forget for either.
+- **Kept on this computer**, the user's choice (options: this computer for everything, recommended and chosen;
+  the setup on the computer and setting learns in the project; everything in the project):
+  `%APPDATA%\CoolSynth\controller.json`, shared by the app and every plugin, re-read when another program saves
+  it. A state's own learned controls (before D211) are no longer read or written.
+- **A known controller is used at once, and the screen says so**, the user's choice (options: use it and say so,
+  recommended and chosen; ask first; only from the setup). With nothing saved, CoolSynth looks at the MIDI
+  inputs every few seconds; a plugin cannot tell which input feeds its track, so with two known controllers the
+  first wins.
+- **Ready setups** (from the makers' manuals and setup guides, checked 2026-11-18): Akai MPK mini mk3 (program 1:
+  knobs CC 70-77, pads notes 36-43 on channel 10), Novation Launchkey Mini MK3 and MK4 (knobs CC 21-28 as they
+  start), Arturia KeyLab Essential mk3 (User 1: knobs 74 71 76 77 93 18 19 16, faders 73 75 79 72, pads 36-43),
+  Arturia MiniLab 3 in its Arturia program (the V2 profile's CCs, tested on the device then; main knob CC 114),
+  NI Komplete Kontrol M32 and A series in MIDI mode (knobs CC 14-21). Where a maker states no channel, the setup
+  takes any. Several of these numbers come from a third party's setup guides (Spectrasonics) rather than the
+  maker; the MPK Mini IV, MPK mini Plus and Oxygen Pro Mini state no factory numbers and have none.
+- **The guided setup** (Preferences > Controller setup): asks for each place in turn and listens; a turn is
+  told from a position by repeats (a position never repeats a value away from its ends), and its encoding (64
+  +/- steps, two's complement, sign bit) from the values heard turning right, then left. A button heard for the
+  main knob makes it one step left, and the next step asks for right.
+- **What is linked is not the sound's**: a linked control's messages go to the panel and not to the sound (a
+  pad plays no note); a note's release always reaches the sound. Mod wheel, sustain, bank select, data entry and
+  the channel-mode messages can never be linked.
+- **The MiniLab driver in the VST3.** Windows MIDI Services (in-box since February 2026, Windows 11 24H2 and
+  later) routes the old WinMM calls through a service, so two programs can open the same port; checked on this
+  computer: two programs opened "Minilab3 MIDI" in and out at once. The driver moved to `src/interface/`; in a
+  plugin the host brings the keys and every CoolSynth there drops the MiniLab's control messages the host passes
+  on. **Who drives it**, the user's choice (options: the window opened last, recommended and chosen; the first
+  one loaded keeps it; a "MiniLab here" button): opening a CoolSynth's window takes it; until then the first
+  CoolSynth loaded has it; between programs (the app, a DAW) the first to take it keeps it until it closes (a
+  named lock). The driver starts a second after the plugin is made, so a host's plugin scan never wakes the
+  MiniLab. The DAW's own MiniLab control surface must be set to None, or both talk to it; the screen says so.
+  Without Windows MIDI Services the port cannot be shared and the driver keeps trying.

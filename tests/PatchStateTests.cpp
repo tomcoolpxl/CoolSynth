@@ -414,10 +414,6 @@ public:
 
             source.getValueTreeState().getParameter("f1.p3")->setValueNotifyingHost(0.61f);
             target.getValueTreeState().getParameter("f1.p3")->setValueNotifyingHost(0.12f);
-            const std::array<coolsynth::midi::LearnedCcBinding, 1> targetBindings {{
-                { "pA.g1.type", { 3, 70 } }
-            }};
-            target.setLearnedMidiBindings(targetBindings);
 
             auto bareStateXml = source.createParameterStateXml();
             expect(bareStateXml != nullptr);
@@ -431,7 +427,6 @@ public:
                 expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue("f1.p3")->load(),
                                           0.12f,
                                           0.0001f);
-                expectEquals(static_cast<int> (target.getLearnedMidiBindings().size()), 1);
 
                 juce::MemoryBlock wrappedStateData;
                 source.getStateInformation(wrappedStateData);
@@ -451,7 +446,6 @@ public:
                     expectWithinAbsoluteError(target.getValueTreeState().getRawParameterValue("f1.p3")->load(),
                                               0.12f,
                                               0.0001f);
-                    expectEquals(static_cast<int> (target.getLearnedMidiBindings().size()), 1);
                 }
             }
         }
@@ -462,8 +456,9 @@ static PatchStateTests patchStateTests;
 
 /**
     A state or a patch saved while the master section was the fixed chain of ten (decision D135): the effects that
-    were on move into the master slots in the old chain's order, with their values, and a knob learned on one of
-    their values follows it. Its own class and heap processors: the test runner's stack frame is small in Debug.
+    were on move into the master slots in the old chain's order, with their values. (A state's learned knobs are not
+    read since D211: the controller setup is the computer's.) Its own class and heap processors: the test runner's
+    stack frame is small in Debug.
 */
 class MasterEffectMigrationTests final : public juce::UnitTest
 {
@@ -532,25 +527,11 @@ public:
             const auto old = oldParameterState(*parameters);
             root->replaceChildElement(parameters, new juce::XmlElement(old));
 
-            std::vector<coolsynth::midi::LearnedCcBinding> bindings { { "reverbMix", { 1, 74 } }, { "driveAmount", { 1, 75 } },
-                                                                      { "pA.voice.glide", { 1, 5 } } };
-            if (auto* mappings = root->getChildByName("LEARNED_MIDI_MAPPINGS"))
-                root->removeChildElement(mappings, true);
-            root->addChildElement(coolsynth::midi::createLearnedBindingsXml("LEARNED_MIDI_MAPPINGS", bindings).release());
-
             juce::MemoryBlock oldState;
             juce::AudioProcessor::copyXmlToBinary(*root, oldState);
             auto target = std::make_unique<SynthAudioProcessor>();
             target->setStateInformation(oldState.getData(), static_cast<int>(oldState.getSize()));
             expectCarriedOver(*target);
-
-            const auto learned = target->getLearnedMidiBindings();
-            juce::StringArray learnedIds;
-            for (const auto& b : learned)
-                learnedIds.add(b.parameterId + "@" + juce::String(b.cc.controllerNumber));
-            expect(learnedIds.contains("f2.p3@74"), "the reverb mix knob follows the reverb into its slot: " + learnedIds.joinIntoString(", "));
-            expect(learnedIds.contains("pA.voice.glide@5"), "other knobs stay");
-            expectEquals(learnedIds.size(), 2, "the drive was off: its knob has no place");
         }
 
         beginTest("a_patch_saved_with_the_fixed_effects_is_carried_into_the_slots");

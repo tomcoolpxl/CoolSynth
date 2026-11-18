@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(CoolSynth VERSION 0.1.0 LANGUAGES CXX)
+project(CoolSynth VERSION 0.3.0 LANGUAGES CXX)
 
 # A Release build carries Microsoft's C++ runtime inside it (/MT): the app and the VST3 run on a computer with
 # nothing installed (the debug runtime may not be passed on, so a Debug build never leaves this machine). Debug
@@ -102,6 +102,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/presets/PatchState.cpp
     src/presets/MySounds.cpp
     src/presets/StateMigration.cpp
+    src/midi/ControllerMap.cpp
+    src/midi/ControllerSetup.cpp
     src/midi/ControllerProfile.cpp
     src/midi/MidiLearn.cpp
     src/midi/MidiMappingEngine.cpp
@@ -122,6 +124,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/SamplePack.cpp
     src/synth/v3/AudioWorkers.cpp
     src/interface/InterfaceModel.cpp
+    src/interface/ControllerInput.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/PanelEditor.cpp
     src/plugin/SynthAudioProcessor.cpp
@@ -129,7 +132,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/standalone/SettingsStore.cpp
     src/standalone/StandaloneAudioSupport.cpp
     src/standalone/StandaloneMidiInput.cpp
-    src/standalone/MiniLab3Driver.cpp
+    src/interface/MiniLab3Driver.cpp
     src/diagnostics/FlightRecorder.cpp
     src/synth/Arpeggiator.cpp
     src/synth/GlobalDelay.cpp
@@ -185,6 +188,7 @@ if(BUILD_TESTING)
     target_sources(CoolSynthMidiLearnTests
         PRIVATE
             tests/MidiLearnTests.cpp
+            tests/ControllerTests.cpp
             tests/AudioThreadAlarm.cpp
             tests/AudioScenarioTests.cpp
             tests/ClickDetectorTests.cpp
