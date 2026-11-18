@@ -13,25 +13,29 @@
 #include "Part.h"
 
 /*
-    One whole sound (decision D158): the two parts with their voices, their three insert slots each,
+    One whole sound (decision D158): the two parts with their voices, their six insert slots each,
     the six master effect slots F1..F6, the mix and the master gain, everything a preset sets. The
     engine (EngineV3.h) keeps four: the sound being played and, after a preset change, up to two
     earlier ones that ring on with everything they had, and one fading out. Each renders on its own
     and is added into the engine's sum before the soft clipper.
 
-    Parts. Each part is a whole patch with its own note layer and voices. The part mode says
-    which of them the keys reach: A only, Layer (both on every key), Split (each inside its key
-    range) or B only; with both playing, each also has a velocity range. A part's Transpose moves
-    the keys it is sent, and the unit remembers what it sent for every key, so a release always
-    ends the note that key started, whatever changed meanwhile. A part that the mode switches off
-    lets go of its notes and rings out. Everything that is not a note reaches both parts.
+    Parts. A part is what the player calls a layer: a whole patch with its own note layer,
+    arpeggiator and voices (D194). The part mode says which of them the keys reach (D190): Stack
+    (both on every key), Split (each inside its key range) or Velocity (soft keys to A, hard keys
+    to B, crossing at equal power over the fade); with both playing, each also has a velocity
+    range. A part with every slot Off is empty and left out, and the other has every key. A
+    part's Transpose moves the keys it is sent, and the unit remembers what it sent for every key,
+    so a release always ends the note that key started, whatever changed meanwhile. A part that
+    becomes empty lets go of its notes and rings out. Everything that is not a note reaches both
+    parts.
 
     Voices. With both parts playing they share sixteen voices: each may use what its patch asks
     for (its polyphony, one voice for mono and legato, its unison count), is sure of eight, and
     gets more when the other asks for fewer.
 
-    Inserts. Each part runs through three insert slots of its own before the mix (Inserts.h):
-    any of the twelve effects, one per slot, so two parts can be treated differently.
+    Inserts. Each part runs through six insert slots of its own, I1..I6, before the mix
+    (Inserts.h; three before D194): any of the thirteen effects, one per slot, so two parts can be
+    treated differently.
 
     Mix. Each part has a level, a balance and an effects share: that share of the part passes
     through the master slots, the rest joins after them, before the master gain.

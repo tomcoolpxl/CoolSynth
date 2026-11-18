@@ -16,7 +16,7 @@
 #include "RoomInsert.h"
 
 /*
-    V3 insert slots (DESIGN_V3.md section 8; decision D81): three per part, between the part's
+    V3 insert slots (DESIGN_V3.md section 8; decision D81): six per part since D194, between the part's
     voices and its place in the mix. A slot holds one effect at a time, any of the ten the master
     rack has. It runs that effect's own code (a rack of its own with only that stage switched
     on), so an insert sounds exactly as the same effect does in the master section, with the
