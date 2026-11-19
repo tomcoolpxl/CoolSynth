@@ -1,6 +1,7 @@
 param(
     [Parameter(Mandatory)][ValidateSet('Debug', 'Release')][string]$Configuration,
-    [string]$TagName = ''
+    [string]$TagName = '',
+    [switch]$Installer
 )
 
 . "$PSScriptRoot/Common.ps1"
@@ -9,6 +10,10 @@ $sourceRoot = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '../..')).Path
 $context = New-CoolSynthBuildContext -SourceRoot $sourceRoot -Configuration $Configuration -TagName $TagName
 $artifacts = Get-CoolSynthArtifactPaths -BuildContext $context
 $packages = New-CoolSynthReleasePackages -BuildContext $context -ArtifactPaths $artifacts
+# The installer (D209), when asked: it needs Inno Setup, which the release workflow installs.
+if ($Installer) {
+    $packages = @($packages) + @(New-CoolSynthInstaller -BuildContext $context)
+}
 
 $checksumPath = Join-Path $context.PackageDirectory "$($context.ProjectName)-windows-x64-sha256-$($context.TagName).txt"
 $manifestPath = Join-Path $context.PackageDirectory 'release-manifest.json'

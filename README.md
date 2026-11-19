@@ -3,8 +3,9 @@
 ![CoolSynth playing Sea Pad, a two-layer sound from the Night Bus room](screenshot.png)
 
 CoolSynth is a two-layer software synthesizer for Windows, as a standalone app and a VST3 plugin.
-It is built around the Arturia MiniLab 3: the app drives the MiniLab's screen, pads and knobs. Any
-MIDI keyboard plays it, and the mouse reaches everything on screen.
+It is built around the Arturia MiniLab 3: CoolSynth drives the MiniLab's screen, pads and knobs. Any
+MIDI keyboard plays it, any controller's knobs and pads can work its panel, and the mouse reaches
+everything on screen.
 
 How it is built, with a map of the engine: [the architecture page](docs/architecture.md).
 
@@ -28,17 +29,41 @@ How it is built, with a map of the engine: [the architecture page](docs/architec
 
 ## Install
 
-1. Download the latest release from [Releases](https://github.com/tomcoolpxl/CoolSynth/releases):
-   the VST3 zip, the app zip, or both. Neither needs anything else installed.
-2. **VST3**: copy `CoolSynth.vst3` into `C:\Program Files\Common Files\VST3`, then let your DAW
-   rescan its plugins. CoolSynth is listed as an instrument.
-3. **App**: unzip anywhere and run `CoolSynth.exe`. Windows may warn that the app is from an
-   unknown publisher (it is not code-signed): choose **More info**, then **Run anyway**.
-4. **Recorded instruments** (optional, 2.6 GB): the Conservatory's 40 instruments, and the presets
-   that use them, need the instrument library, linked from the release notes. Put its folders in
-   `C:\ProgramData\CoolSynth\Library`. Without it everything else plays; those sounds stay silent.
+Download `CoolSynth-Setup-<version>.exe` from [Releases](https://github.com/tomcoolpxl/CoolSynth/releases)
+and run it. Windows may warn that it is from an unknown publisher (it is not code-signed): choose
+**More info**, then **Run anyway**. The installer puts:
 
-Requires 64-bit Windows. Made and tested on Windows 11.
+- the **VST3** where every DAW looks (`C:\Program Files\Common Files\VST3`); let your DAW rescan its
+  plugins and CoolSynth is listed as an instrument;
+- the **app**, with a Start menu entry;
+- the **recorded instruments** you tick (2.6 GB for all seven families), downloaded from the
+  [instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments) and checked
+  before they are unpacked. Without them everything else plays; those sounds stay silent.
+
+Without the installer: the release also has the VST3 and the app as zips (copy `CoolSynth.vst3` into
+`C:\Program Files\Common Files\VST3`), and the instrument families as zips on the instrument library's
+page (their folders go in `C:\ProgramData\CoolSynth\Library`). Requires 64-bit Windows. Made and tested
+on Windows 11.
+
+## Your controller
+
+Any MIDI keyboard plays CoolSynth. Its knobs, faders, pads and buttons can work CoolSynth's panel as
+well: a knob turns knob 3 of whatever page is open, a pad opens a section.
+
+- **Known controllers** (Akai MPK mini mk3, Novation Launchkey Mini MK3 and MK4, Arturia KeyLab
+  Essential mk3, NI Komplete Kontrol M32 and A series) are set up by themselves when plugged in; the
+  screen says so.
+- **Any other**: **Prefs > Controller setup... > Set up step by step** asks for each knob, fader and
+  pad in turn: move the one you want.
+- **One at a time**: right-click a knob, fader or pad on the panel and choose **Learn**; on a knob you
+  can also tie a control to the setting it shows, on every page.
+
+The setup is kept for the computer: the app and the plugin in every project share it.
+
+**FL Studio** passes a controller's knobs to a plugin only on a MIDI port the two share:
+in **Options > MIDI settings** select your keyboard and set its **Port** to a number (say 1); then in
+CoolSynth's window open the plugin wrapper's settings, the **Settings** tab, and set **MIDI > Input
+port** to the same number. This is the same for every plugin in FL.
 
 ## Your own sounds
 
@@ -54,10 +79,16 @@ files and folders, and a press loads one.
 
 ## MiniLab 3
 
-The app takes over the MiniLab 3's DAW mode: its screen shows the sound and the knob you turn, its
-pads open the sections, and its knobs turn the four settings on screen. In a DAW, the host owns
-the MiniLab: its keys, wheels and pressure play CoolSynth, and its knobs can be tied to
-CoolSynth's settings with the host's own MIDI mapping.
+CoolSynth takes over the MiniLab 3's DAW mode, in the app and in a DAW: its screen shows the sound
+and the knob you turn, its pads open the sections, and its knobs turn the settings on screen. In a
+DAW the CoolSynth whose window you opened last drives it. Sharing the MiniLab with the DAW needs
+Windows MIDI Services (Windows 11 24H2 or later, through Windows Update).
+
+So that the pads do not also play notes in a DAW, the installer adds a small script for each:
+**FL Studio** links it to the MiniLab by itself; in **Ableton Live** choose **CoolSynth_MiniLab** once
+as a Control Surface (Settings > Link, Tempo & MIDI) with Input **Minilab3 MIDI** and Output **None**,
+and leave no other MiniLab control surface selected. To use the MiniLab as a plain controller
+instead, switch **Prefs > Controller setup... > MiniLab 3 driver** to **Off**.
 
 ## Build from source
 

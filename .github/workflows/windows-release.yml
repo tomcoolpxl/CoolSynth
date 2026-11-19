@@ -29,9 +29,15 @@ jobs:
         shell: pwsh
         run: ./scripts/ci/BuildAndTest.ps1 -Configuration Release -RunTests $true
 
+      # The runner images do not promise Inno Setup: a pinned version from Chocolatey (6.5 or newer is needed for the
+      # instrument downloads; D209).
+      - name: Install Inno Setup
+        shell: pwsh
+        run: choco install innosetup --version=6.7.1 -y --no-progress
+
       - name: Package release artefacts
         shell: pwsh
-        run: ./scripts/ci/PackageRelease.ps1 -Configuration Release -TagName "${{ github.ref_name }}"
+        run: ./scripts/ci/PackageRelease.ps1 -Configuration Release -TagName "${{ github.ref_name }}" -Installer
 
       - name: Upload diagnostics
         if: ${{ always() }}
@@ -73,6 +79,7 @@ jobs:
           overwrite_files: true
           fail_on_unmatched_files: true
           files: |
+            release-bundle/CoolSynth-Setup-${{ github.ref_name }}.exe
             release-bundle/CoolSynth-windows-x64-standalone-${{ github.ref_name }}.zip
             release-bundle/CoolSynth-windows-x64-vst3-${{ github.ref_name }}.zip
             release-bundle/CoolSynth-windows-x64-sha256-${{ github.ref_name }}.txt

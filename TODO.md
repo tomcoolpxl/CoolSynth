@@ -184,11 +184,12 @@ review them.
    formant control come after the plain shift. The Night Bus presets wait for the user's verdicts on
    the audition page (`tools/audition/make_nightbus.py` renders them).
 
-38. The first release (D208), in this order: the user tests the Release VST3 in Ableton; the user
-   chooses JUCE's licence (AGPLv3 or the free Starter tier) and the version number; the instrument
-   zips (`tools/release/package_library.py`) go up to a Hugging Face dataset from the user's account;
-   a version tag starts `.github/workflows/windows-release.yml` (not run since V2: check it builds V3)
-   and its release notes link the library; the engine page links the release.
+38. The first release (D208, D209, D211). Done: JUCE's Starter licence, version 0.3.0, the instrument
+   zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`, the installer
+   (`installer/CoolSynth.iss`) in both workflows, the controller work (D211). Left, in this order: the
+   user tests in Ableton (and the friend's flow with the MiniLab driver Off) and runs the installer once
+   here; a dry run of "Windows Manual Validation" on GitHub; then a `v0.3.0` tag starts
+   `.github/workflows/windows-release.yml`, whose release notes link the instrument library.
 
 ## Carried over from the V2 backlog
 

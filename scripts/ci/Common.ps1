@@ -226,6 +226,46 @@ function New-CoolSynthReleasePackages {
     )
 }
 
+function New-CoolSynthInstaller {
+    # The Windows installer (D209): installer/CoolSynth.iss compiled with Inno Setup 6.5 or newer (ISCC on the PATH,
+    # or in its usual folder). Its version is the project's (CMakeLists.txt); the file is named after the tag.
+    param(
+        [Parameter(Mandatory)][pscustomobject]$BuildContext
+    )
+
+    $iscc = (Get-Command ISCC -ErrorAction SilentlyContinue).Source
+    if (-not $iscc) {
+        $iscc = @("${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe", "$env:ProgramFiles\Inno Setup 6\ISCC.exe") |
+            Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    }
+    if (-not $iscc) {
+        throw 'Inno Setup (ISCC) not found: install Inno Setup 6.5 or newer.'
+    }
+
+    $cmake = Get-Content -LiteralPath (Join-Path $BuildContext.SourceRoot 'CMakeLists.txt') -Raw
+    if ($cmake -notmatch 'project\(\s*CoolSynth\s+VERSION\s+(\d+\.\d+\.\d+)') {
+        throw 'No project version in CMakeLists.txt.'
+    }
+    $version = $Matches[1]
+    $buildDir = Join-Path $BuildContext.BuildDirectory "$($BuildContext.ProjectName)_artefacts/$($BuildContext.Configuration)"
+    $baseName = "$($BuildContext.ProjectName)-Setup-$($BuildContext.TagName)"
+    $script = Join-Path $BuildContext.SourceRoot 'installer/CoolSynth.iss'
+
+    $packageDir = $BuildContext.PackageDirectory
+    Invoke-LoggedCommand -LogPath (Join-Path $BuildContext.LogsDirectory 'installer.log') -ScriptBlock {
+        & $iscc "/DAppVersion=$version" "/DBuildDir=$buildDir" "/O$packageDir" "/F$baseName" $script
+    }
+
+    $installer = Join-Path $BuildContext.PackageDirectory "$baseName.exe"
+    Assert-PathExists -Path $installer -Description 'Installer'
+    [pscustomobject]@{
+        LogicalName = 'installer'
+        FileName    = Split-Path -Path $installer -Leaf
+        FilePath    = $installer
+        Sha256      = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+    }
+}
+
 function Write-CoolSynthChecksumFile {
     param(
         [Parameter(Mandatory)][array]$PackagedAssets,
@@ -258,6 +298,7 @@ function Write-CoolSynthReleaseManifest {
         Configuration   = $BuildContext.Configuration
         StandaloneAsset = $standaloneAsset.FileName
         Vst3Asset       = $vst3Asset.FileName
+        InstallerAsset  = ($PackagedAssets | Where-Object { $_.LogicalName -eq 'installer' } | Select-Object -First 1).FileName
         ChecksumFile    = $checksumFileName
         GeneratedAtUtc  = (Get-Date).ToUniversalTime().ToString('o')
     }

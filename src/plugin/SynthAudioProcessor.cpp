@@ -763,10 +763,13 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     if (nonFinite > 0)
         diag::record(diag::Event::nonFinite, nonFinite);
 
+    // FL Studio cuts its buffer into slivers of a few samples at each event: a sliver's budget is far below a block's
+    // fixed cost, and its time counts in the second's summary anyway. Only real blocks raise the alarm (D211).
     const auto& stage = synthEngine.slowestStage();
-    if (took > budget)
+    constexpr int shortestCheckedBlock = 64;
+    if (n >= shortestCheckedBlock && took > budget)
         diag::record(diag::Event::blockOverrun, stage.code, static_cast<int>(stage.milliseconds * 100.0f), took, budget);
-    else if (took > 0.5f * budget)
+    else if (n >= shortestCheckedBlock && took > 0.5f * budget)
         diag::record(diag::Event::blockSlow, stage.code, static_cast<int>(stage.milliseconds * 100.0f), took, budget);
 
     // once per second of audio: a summary line
