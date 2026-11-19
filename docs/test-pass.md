@@ -121,7 +121,13 @@ Found on the way: Supersaw's undertone is its sub, by design (on the listening p
   once, the Master fader moved and came back to 0 dB.
 - Not working: the project saved with CoolSynth in it (the file holds its VST3 path and state: Reese, edited)
   opened twice without CoolSynth. FL showed only its Sampler, CoolSynth's log shows no start, and Windows logged no
-  crash. Cause unknown; to investigate before the release.
+  crash. Investigated:
+  - the saved project holds six channels (808 Kick, Clap, HiHat, Snare, FLEX Bass, CoolSynth), but FL showed one
+    Sampler: the project in FL was not that file, FL did not load it;
+  - CoolSynth takes the state from that file as a host gives it (the opt-in test `Host state blob`,
+    `COOLSYNTH_STATE_BLOB`): the edited Reese, playing at -14.8 dBFS;
+  - Image-Line's manual: in trial mode FL Studio saves projects but does not reopen them until it is unlocked. FL's
+    settings here have no registration entry where older versions keep one, so it may be the trial (not confirmed).
 - Two FL Studio crashes at 00:49 (combase.dll, fail-fast) were Claude's attempts to open the project from outside
   while FL ran, not the user's FL.
 - Not done yet: the CLAP in FL Studio; Ableton Live 12 Lite (VST3; Live loads no CLAP); Reaper is not installed.

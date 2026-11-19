@@ -966,3 +966,53 @@ public:
 };
 
 static NewerParametersMigrationTests newerParametersMigrationTests;
+
+/*
+    Opt-in (COOLSYNTH_STATE_BLOB=a file): a state as a host stored it (JUCE's "VC2!" block, e.g. taken out of an FL
+    Studio project), given to a new processor as a host does when it opens a project; says whether it was taken.
+    The DAW round of 2026-11-20: FL Studio reopened a project with an empty channel where CoolSynth was.
+*/
+class HostStateBlobTests final : public juce::UnitTest
+{
+public:
+    HostStateBlobTests() : juce::UnitTest("Host state blob", "Presets") {}
+
+    void runTest() override
+    {
+        const auto path = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_STATE_BLOB", {});
+        if (path.isEmpty())
+            return;
+        beginTest("a host's stored state, opened");
+        juce::MemoryBlock blob;
+        expect(juce::File(path).loadFileAsData(blob), "the file reads");
+        auto stored = juce::AudioProcessor::getXmlFromBinary(blob.getData(), static_cast<int>(blob.getSize()));
+        expect(stored != nullptr, "the block is JUCE's binary XML");
+        if (stored == nullptr)
+            return;
+        logMessage("stored: " + stored->getTagName() + " formatVersion " + stored->getStringAttribute("formatVersion")
+                   + ", sound '" + stored->getStringAttribute("patchName") + "', edited " + stored->getStringAttribute("patchDirty"));
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+        synth->prepareToPlay(48000.0, 256);
+        const bool dirtyBefore = synth->isPatchDirty();
+        synth->setStateInformation(blob.getData(), static_cast<int>(blob.getSize()));
+        logMessage("after opening: sound '" + synth->getPatchName() + "', edited " + juce::String(synth->isPatchDirty() ? "yes" : "no")
+                   + " (a new one: " + juce::String(dirtyBefore ? "yes" : "no") + ")");
+        expect(synth->isPatchDirty() == (stored->getStringAttribute("patchDirty") == "1"), "the stored state was taken, edited mark and all");
+        juce::AudioBuffer<float> buffer(2, 256);
+        juce::MidiBuffer midi;
+        midi.addEvent(juce::MidiMessage::noteOn(1, 60, 0.8f), 0);
+        float loudest = 0.0f;
+        for (int block = 0; block < 40; ++block)
+        {
+            buffer.clear();
+            synth->processBlock(buffer, midi);
+            midi.clear();
+            loudest = juce::jmax(loudest, buffer.getMagnitude(0, 256));
+        }
+        logMessage("middle C after opening: loudest " + juce::String(juce::Decibels::gainToDecibels(loudest), 1) + " dBFS");
+        expectGreaterThan(loudest, 0.001f, "it plays");
+    }
+};
+
+static HostStateBlobTests hostStateBlobTests;
