@@ -8,6 +8,7 @@
 #include <set>
 #include <span>
 
+#include "FullPath.h"
 #include "interface/ControllerInput.h"
 #include "interface/MiniLab3Driver.h"
 #include "midi/ControllerSetup.h"
@@ -204,20 +205,20 @@ SynthAudioProcessor::SynthAudioProcessor()
     keyboardState.addListener(this);
 
     // The plugin's Multi-core choice is the computer's, not the project's (D174); the standalone app applies its own.
-    if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined
+    if (inDaw()
         && juce::SystemStats::getEnvironmentVariable("COOLSYNTH_MULTICORE", "1") != "0")
         if (auto& options = pluginOptions(); options.containsKey("multiCore"))
             setMultiCore(options.getBoolValue("multiCore", true));
     // So is its velocity curve (D175): the player's keyboard is the computer's.
-    if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined)
+    if (inDaw())
         setVelocityCurve(pluginOptions().getIntValue("velocityCurve", normalCurve));
     // And so is the controller setup (D211): read once for the app and every plugin in this program.
-    if (wrapperType != wrapperType_Undefined)
+    if (madeByHostOrApp())
         coolsynth::midi::ControllerSetup::instance().start();
 
     // A new CoolSynth, in the app or a host, starts on the start sound (D193, D212). Tests and tools (no wrapper) keep the
     // parameters' own defaults. A host's saved project, and the app's state from last time, are loaded after this.
-    if (wrapperType != wrapperType_Undefined)
+    if (madeByHostOrApp())
         if (const int start = startSoundIndex(); start >= 0)
             setCurrentProgram(start);
 }
@@ -1176,7 +1177,7 @@ void SynthAudioProcessor::emptyLayer(int layer)
 void SynthAudioProcessor::startFlightRecorderIfWanted()
 {
     // The standalone app and the plugin record; tools and tests only when asked (COOLSYNTH_FLIGHT_LOG).
-    if (wrapperType != wrapperType_Undefined || juce::SystemStats::getEnvironmentVariable("COOLSYNTH_FLIGHT_LOG", {}).isNotEmpty())
+    if (madeByHostOrApp() || juce::SystemStats::getEnvironmentVariable("COOLSYNTH_FLIGHT_LOG", {}).isNotEmpty())
     {
         auto& recorder = coolsynth::diag::FlightRecorder::instance();
         const bool first = ! recorder.running();
@@ -1198,6 +1199,60 @@ juce::AudioProcessorEditor* SynthAudioProcessor::createEditor()
 {
     // The V3 panel (docs/interface-v3.md). The throwaway AuditionEditor stays in the sources for now.
     return new PanelEditor(*this);
+}
+
+// ---- CLAP remote control pages (D216) ---------------------------------------------------------------------------
+
+uint32_t SynthAudioProcessor::remoteControlsPageCount() noexcept
+{
+    if (remotePagesNow.empty())
+        remotePagesNow = coolsynth::plugin::remotePages(getInterfaceModel());
+    return static_cast<uint32_t>(remotePagesNow.size());
+}
+
+bool SynthAudioProcessor::remoteControlsPageFill(uint32_t pageIndex, juce::String& sectionName, uint32_t& pageID,
+                                                 juce::String& pageName,
+                                                 std::array<juce::AudioProcessorParameter*, CLAP_REMOTE_CONTROLS_COUNT>& params) noexcept
+{
+    if (remotePagesNow.empty())
+        remotePagesNow = coolsynth::plugin::remotePages(getInterfaceModel());
+    if (pageIndex >= remotePagesNow.size())
+        return false;
+    const auto& page = remotePagesNow[pageIndex];
+    sectionName = page.section;
+    pageID = page.id;
+    pageName = page.name;
+    for (std::size_t knob = 0; knob < params.size(); ++knob)
+    {
+        const auto& id = knob < page.parameterIds.size() ? page.parameterIds[knob] : juce::String();
+        params[knob] = id.isEmpty() ? nullptr : parameters.getParameter(id);
+    }
+    return true;
+}
+
+void SynthAudioProcessor::followRemoteControls()
+{
+    // Only a CLAP host reads the pages; and only when the panel changed (it counts its changes).
+    if (! is_clap)
+        return;
+    auto& model = getInterfaceModel();
+    if (model.revision() == remoteModelRevision)
+        return;
+    remoteModelRevision = model.revision();
+    auto pages = coolsynth::plugin::remotePages(model);
+    if (! coolsynth::plugin::samePages(pages, remotePagesNow))
+    {
+        // the other layer, or a slot of another type: other pages
+        remotePagesNow = std::move(pages);
+        remotePageShown = -1;
+        remoteControlsChanged();
+    }
+    const int open = coolsynth::plugin::openRemotePage(model, remotePagesNow);
+    if (open >= 0 && open != remotePageShown)
+    {
+        remotePageShown = open;
+        suggestRemoteControlsPage(remotePagesNow[static_cast<std::size_t>(open)].id);
+    }
 }
 
 void SynthAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
@@ -1263,7 +1318,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                     const juce::String key = layer == 0 ? "layerA" : "layerB";
                     LayerSound sound;
                     sound.name = xml->getStringAttribute(key);
-                    if (const auto path = xml->getStringAttribute(key + "File"); path.isNotEmpty() && juce::File::isAbsolutePath(path))
+                    if (const auto path = xml->getStringAttribute(key + "File"); path.isNotEmpty() && coolsynth::isFullPathHere(path))
                         if (const juce::File file(path); file.existsAsFile())
                             sound.mySound = file;
                     if (sound.mySound == juce::File())
@@ -1276,7 +1331,7 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
                 }
             undoHistory.clear();
             // Never "Init" (D198): the untouched default an older version saved gives way to the start sound.
-            if (wrapperType != wrapperType_Undefined && isUntouchedDefault(getPatchName(), isPatchDirty()))
+            if (madeByHostOrApp() && isUntouchedDefault(getPatchName(), isPatchDirty()))
                 if (const int start = startSoundIndex(); start >= 0)
                     setCurrentProgram(start);
         }
@@ -1399,7 +1454,7 @@ void SynthAudioProcessor::restorePlayingSound(const juce::String& name, const ju
     mySoundMacroNames = {};
     layerSounds = {};
     const bool bPlays = layerHasSound(1);
-    if (mySoundPath.isNotEmpty() && juce::File::isAbsolutePath(mySoundPath))
+    if (mySoundPath.isNotEmpty() && coolsynth::isFullPathHere(mySoundPath))
         if (const juce::File file(mySoundPath); file.existsAsFile())
         {
             playingMySoundFile = file;
@@ -1755,7 +1810,7 @@ void SynthAudioProcessor::startMiniLabDriver()
     if (miniLabStarted)
         return;
     miniLabStarted = true;
-    if (wrapperType != wrapperType_Standalone && wrapperType != wrapperType_Undefined)
+    if (inDaw())
         miniLab = std::make_unique<coolsynth::ui::MiniLab3Driver>(getInterfaceModel(), *this, nullptr);
 }
 

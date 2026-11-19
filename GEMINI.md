@@ -6,7 +6,9 @@ the current state.
 
 ## What CoolSynth is now
 
-- A two-layer synthesizer for Windows: a VST3 plugin and a standalone app, built with JUCE 8 (C++20, CMake).
+- A bi-timbral synthesizer for Windows: a VST3 plugin, a CLAP plugin and a standalone app, built with JUCE 9.0.5
+  (C++20, CMake). The CLAP comes from clap-juce-extensions (`external/clap-juce-extensions`, D216, D217) and
+  publishes remote control pages that follow the panel (`src/plugin/RemoteControlPages`). macOS is planned (J2).
 - Version 0.3.0 was released on 2026-11-19 (D208, D209, D213): installer, VST3 and app zips on GitHub Releases;
   the recorded instruments as zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`.
 - The V3 engine (`src/synth/v3/`): two layers, each with three generator slots, three processor slots, its own
@@ -17,6 +19,9 @@ the current state.
   (`src/interface/MiniLab3Driver`, in the app and in the VST3 through Windows MIDI Services).
 - Any MIDI controller plays the panel through the computer's controller setup (`src/midi/ControllerSetup`,
   `%APPDATA%\CoolSynth\controller.json`, D211). DAW scripts for the MiniLab's pads are in `resources/daw-scripts/`.
+- In a DAW (D216, `docs/design/CONTROLLERS.md`): the host's own mapping comes first. The first eight parameters are
+  the panel's Home knobs (layer A's macros, glide, Brightness, Space, master volume); the CLAP's remote control pages
+  follow the panel's page; a note reaching CoolSynth by two routes within 3 ms plays once (`src/midi/DuplicateNoteFilter.h`).
 - A new CoolSynth starts on Main Stage's Reese (D212). Stop ends every sound (All Sound Off, after a 3 ms fade).
 
 ## Where things are

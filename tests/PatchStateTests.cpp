@@ -1,6 +1,7 @@
 #include <cmath>
 #include <juce_core/juce_core.h>
 
+#include "FullPath.h"
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
@@ -811,3 +812,31 @@ public:
 };
 
 static SampleSliceMigrationTests sampleSliceMigrationTests;
+
+// A saved sound's path from a project made on another computer (JUCE 9.0.5 reads "/Users/..." as a full path on
+// Windows): only a path that names a place here is opened.
+class SavedPathTests final : public juce::UnitTest
+{
+public:
+    SavedPathTests() : juce::UnitTest("Saved paths", "CoolSynth") {}
+
+    void runTest() override
+    {
+        beginTest("a_path_from_a_mac_or_without_a_drive_is_not_opened_on_windows");
+       #if JUCE_WINDOWS
+        expect(coolsynth::isFullPathHere(R"(C:\Users\me\a.xml)"));
+        expect(coolsynth::isFullPathHere("d:/Sounds/a.xml"));
+        expect(coolsynth::isFullPathHere(R"(\\server\share\a.xml)"));
+        expect(! coolsynth::isFullPathHere("/Users/me/My Sounds/a.xml"), "a Mac path");
+        expect(! coolsynth::isFullPathHere(R"(\Sounds\a.xml)"), "no drive");
+        expect(! coolsynth::isFullPathHere("C:a.xml"), "relative to a drive");
+       #else
+        expect(coolsynth::isFullPathHere("/Users/me/My Sounds/a.xml"));
+        expect(! coolsynth::isFullPathHere(R"(C:\Users\me\a.xml)"), "a Windows path");
+       #endif
+        expect(! coolsynth::isFullPathHere("a.xml"));
+        expect(! coolsynth::isFullPathHere(""));
+    }
+};
+
+static SavedPathTests savedPathTests;

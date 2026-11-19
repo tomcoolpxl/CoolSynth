@@ -7,9 +7,11 @@
 #include <map>
 
 #include <juce_audio_processors/juce_audio_processors.h>
+#include <clap-juce-extensions/clap-juce-extensions.h>
 
 #include "midi/ControllerSetup.h"
 #include "midi/DuplicateNoteFilter.h"
+#include "plugin/RemoteControlPages.h"
 #include "plugin/ParameterUndoHistory.h"
 #include "plugin/ProcessorScopeFifo.h"
 #include "parameters/v3/PartParameters.h"
@@ -19,12 +21,20 @@
 namespace coolsynth::ui { class InterfaceModel; class ControllerInput; class MiniLab3Driver; }
 
 class SynthAudioProcessor final : public juce::AudioProcessor,
+                                  public clap_juce_extensions::clap_properties,                    // is_clap (D216)
+                                  public clap_juce_extensions::clap_juce_audio_processor_capabilities, // remote control pages
                                   private juce::AudioProcessorParameter::Listener,
                                   private juce::ValueTree::Listener,
                                   private juce::MidiKeyboardState::Listener
 {
 public:
     using APVTS = juce::AudioProcessorValueTreeState;
+
+    /** A CoolSynth a host or the app made, as against a test or a tool. Under CLAP JUCE reports the wrapper type as
+        Undefined, which tests and tools also have: the CLAP wrapper's own flag tells them apart (D216). */
+    [[nodiscard]] bool madeByHostOrApp() const noexcept { return wrapperType != wrapperType_Undefined || is_clap; }
+    /** In a DAW, as VST3 or CLAP: not the app, not a test. */
+    [[nodiscard]] bool inDaw() const noexcept { return wrapperType != wrapperType_Standalone && madeByHostOrApp(); }
 
     SynthAudioProcessor();
     ~SynthAudioProcessor() override;
@@ -37,6 +47,15 @@ public:
 
     juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
+
+    // ---- CLAP remote control pages (D216): a controller's eight knobs follow the panel's page ------------------
+    bool supportsRemoteControls() const noexcept override { return true; }
+    uint32_t remoteControlsPageCount() noexcept override;
+    bool remoteControlsPageFill(uint32_t pageIndex, juce::String& sectionName, uint32_t& pageID, juce::String& pageName,
+                                std::array<juce::AudioProcessorParameter*, CLAP_REMOTE_CONTROLS_COUNT>& params) noexcept override;
+    /** Message thread, CLAP only: rebuilds the pages when the panel's layer or a slot's type changed, and tells the
+        host which page the panel shows. */
+    void followRemoteControls();
 
     const juce::String getName() const override { return "CoolSynth"; }
     bool acceptsMidi() const override { return true; }
@@ -283,6 +302,7 @@ private:
             // MiniLab (D211).
             if (ticks < 100 && ++ticks == 100)
                 owner.startMiniLabDriver();
+            owner.followRemoteControls(); // CLAP: the pages follow the panel (D216)
             if (! pending.exchange(false, std::memory_order_acq_rel))
                 return;
             owner.dispatchPendingControllerEvents();
@@ -424,6 +444,9 @@ private:
     void releaseRetiredUserSounds();
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
+    std::vector<coolsynth::plugin::RemotePage> remotePagesNow; // message thread: the CLAP pages the host has (D216)
+    int remotePageShown = -1;
+    int remoteModelRevision = -1;
     coolsynth::midi::DuplicateNoteFilter duplicateNotes; // audio thread: one note by two routes plays once (D216)
     std::int64_t samplesSoFar = 0;                       // audio thread: the filter's clock
     int currentProgram = 0;

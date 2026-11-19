@@ -2623,14 +2623,19 @@ void PanelEditor::askToSaveSound(SynthAudioProcessor& synth, juce::Component& ne
             saved(result1, name);
             return;
         }
-        // That name is taken: replace it, or not.
-        juce::AlertWindow::showOkCancelBox(juce::MessageBoxIconType::QuestionIcon, "Save sound",
-                                           "My Sounds already has \"" + coolsynth::presets::MySounds::cleanName(name) + "\". Replace it?",
-                                           "Replace", "Cancel", safeNear.getComponent(),
-                                           juce::ModalCallbackFunction::create([&synth, name, saved](int replace)
-                                           {
-                                               if (replace == 1)
-                                                   saved(synth.saveMySound(name, true), name);
-                                           }));
+        // That name is taken: replace it, or not. Each button's result code is explicit (JUCE 9 deprecates the
+        // OK/Cancel shortcut that numbered them by position).
+        juce::AlertWindow::showAsync(juce::MessageBoxOptions {}
+                                         .withIconType(juce::MessageBoxIconType::QuestionIcon)
+                                         .withTitle("Save sound")
+                                         .withMessage("My Sounds already has \"" + coolsynth::presets::MySounds::cleanName(name) + "\". Replace it?")
+                                         .withButton(juce::MessageBoxButtonOptions("Replace", 1).withRole(juce::MessageBoxButtonRole::destroy))
+                                         .withButton(juce::MessageBoxButtonOptions("Cancel", 0).withRole(juce::MessageBoxButtonRole::cancel))
+                                         .withAssociatedComponent(safeNear.getComponent()),
+                                     [&synth, name, saved](int replace)
+                                     {
+                                         if (replace == 1)
+                                             saved(synth.saveMySound(name, true), name);
+                                     });
     }), true);
 }

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(CoolSynth VERSION 0.3.0 LANGUAGES CXX)
+project(CoolSynth VERSION 0.3.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
 
 # A Release build carries Microsoft's C++ runtime inside it (/MT): the app and the VST3 run on a computer with
 # nothing installed (the debug runtime may not be passed on, so a Debug build never leaves this machine). Debug
@@ -8,6 +8,8 @@ project(CoolSynth VERSION 0.3.0 LANGUAGES CXX)
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
 
 add_subdirectory(external/JUCE)
+# CLAP beside the VST3 (D216): free-audio/clap-juce-extensions, pinned in external/.
+add_subdirectory(external/clap-juce-extensions EXCLUDE_FROM_ALL)
 
 # Debug is the everyday build, and the plugin it installs must play in real time: compile it
 # optimised, with debug info and JUCE's assertions still on. CMake's /RTC1 cannot be combined
@@ -84,6 +86,15 @@ juce_add_plugin(CoolSynth
     COPY_PLUGIN_AFTER_BUILD ${COOLSYNTH_ENABLE_VST3_USER_INSTALL}
     VST3_COPY_DIR "${COOLSYNTH_VST3_USER_DIR}")
 
+# The CLAP version (D216): its remote control pages let a controller's knobs follow the panel's page in Bitwig,
+# Reaper, FL Studio and Studio One. Stepped parameters keep their steps (DISCRETE).
+clap_juce_extensions_plugin(TARGET CoolSynth
+    CLAP_ID "com.tomcoolpxl.coolsynth"
+    CLAP_FEATURES instrument synthesizer stereo
+    CLAP_MANUAL_URL "https://github.com/tomcoolpxl/CoolSynth#readme"
+    CLAP_SUPPORT_URL "https://github.com/tomcoolpxl/CoolSynth/issues"
+    CLAP_USE_JUCE_PARAMETER_RANGES DISCRETE)
+
 add_custom_target(UpdateBuildInfo ALL
     COMMAND ${CMAKE_COMMAND}
         -DSOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}
@@ -124,6 +135,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/interface/ControllerInput.cpp
     src/plugin/AuditionEditor.cpp
     src/plugin/PanelEditor.cpp
+    src/plugin/RemoteControlPages.cpp
     src/plugin/SynthAudioProcessor.cpp
     src/standalone/CoolSynthStandaloneApp.cpp
     src/standalone/SettingsStore.cpp
@@ -169,6 +181,7 @@ target_link_libraries(CoolSynth
         juce::juce_audio_utils
         juce::juce_dsp
         CoolSynthImages
+        clap_juce_extensions
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags
@@ -251,6 +264,7 @@ if(BUILD_TESTING)
             juce::juce_gui_basics
             juce::juce_dsp
             CoolSynthImages
+            clap_juce_extensions
             CoolSynthFactoryBank
             CoolSynthInstrumentData
         CoolSynthInstrumentData
@@ -294,6 +308,7 @@ target_link_libraries(CoolSynthRender
         juce::juce_gui_basics
         juce::juce_dsp
         CoolSynthImages
+        clap_juce_extensions
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags
@@ -332,6 +347,7 @@ target_link_libraries(CoolSynthPresetNormalizer
         juce::juce_gui_basics
         juce::juce_dsp
         CoolSynthImages
+        clap_juce_extensions
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags
@@ -356,6 +372,7 @@ target_link_libraries(CoolSynthPackLibrary
         juce::juce_gui_basics
         juce::juce_dsp
         CoolSynthImages
+        clap_juce_extensions
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags

@@ -225,6 +225,7 @@ namespace coolsynth::ui
         /** The Effects section is on a slot of the chain at the end (F1-F6), which belongs to neither layer (D195). */
         [[nodiscard]] bool editingMaster() const;
         [[nodiscard]] Page currentPage() const;               // section page, or the live page in Home
+        [[nodiscard]] Page livePageAt(int livePage) const;    // one of Home's live pages, for the CLAP pages (D216)
         [[nodiscard]] juce::StringArray livePageNames() const;
         [[nodiscard]] Tint pageTint() const noexcept;         // the colour of knobs 1-4
         [[nodiscard]] KnobView knob(int knob) const;          // 1-4 and 6-8

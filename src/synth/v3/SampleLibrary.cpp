@@ -8,6 +8,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_audio_formats/juce_audio_formats.h>
 
+#include "FullPath.h"
 #include "diagnostics/FlightRecorder.h"
 
 namespace coolsynth::synth::v3
@@ -241,7 +242,7 @@ namespace coolsynth::synth::v3
 
         const auto pointer = juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory).getChildFile("CoolSynth").getChildFile("library.path");
         if (pointer.existsAsFile())
-            if (const auto written = pointer.loadFileAsString().trim(); written.isNotEmpty() && juce::File::isAbsolutePath(written))
+            if (const auto written = pointer.loadFileAsString().trim(); written.isNotEmpty() && coolsynth::isFullPathHere(written))
                 return juce::File(written);
 
         return juce::File::getSpecialLocation(juce::File::commonApplicationDataDirectory).getChildFile("CoolSynth").getChildFile("Library");

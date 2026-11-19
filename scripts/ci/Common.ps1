@@ -156,9 +156,11 @@ function Get-CoolSynthArtifactPaths {
     $standaloneExe = Join-Path $standaloneDirectory "$($BuildContext.ProjectName).exe"
     $standalonePdb = Join-Path $standaloneDirectory "$($BuildContext.ProjectName).pdb"
     $vst3Bundle = Join-Path (Join-Path $artifactRoot 'VST3') "$($BuildContext.ProjectName).vst3"
+    $clapFile = Join-Path (Join-Path $artifactRoot 'CLAP') "$($BuildContext.ProjectName).clap"
 
     Assert-PathExists -Path $standaloneExe -Description 'Standalone executable'
     Assert-PathExists -Path $vst3Bundle -Description 'VST3 bundle'
+    Assert-PathExists -Path $clapFile -Description 'CLAP plugin'
     Assert-PathExists -Path $BuildContext.TestResults -Description 'CTest JUnit results'
 
     [pscustomobject]@{
@@ -166,7 +168,8 @@ function Get-CoolSynthArtifactPaths {
         StandaloneExe       = $standaloneExe
         StandalonePdb       = if (Test-Path -LiteralPath $standalonePdb) { $standalonePdb } else { $null }
         Vst3Bundle          = $vst3Bundle
-        TestResults         = $BuildContext.TestResults
+        ClapFile            = $clapFile
+        TestResults        = $BuildContext.TestResults
     }
 }
 
@@ -205,8 +208,13 @@ function New-CoolSynthReleasePackages {
     Compress-Archive -Path $standalonePayload -DestinationPath $standaloneZip -CompressionLevel Optimal -Force
     Compress-Archive -Path (Join-Path $vst3Stage "$($BuildContext.ProjectName).vst3") -DestinationPath $vst3Zip -CompressionLevel Optimal -Force
 
+    # The CLAP is one file (D216).
+    $clapZip = Join-Path $BuildContext.PackageDirectory "$($BuildContext.ProjectName)-windows-x64-clap-$($BuildContext.TagName).zip"
+    Compress-Archive -Path $ArtifactPaths.ClapFile -DestinationPath $clapZip -CompressionLevel Optimal -Force
+
     Assert-PathExists -Path $standaloneZip -Description 'Standalone zip'
     Assert-PathExists -Path $vst3Zip -Description 'VST3 zip'
+    Assert-PathExists -Path $clapZip -Description 'CLAP zip'
 
     Remove-Item -LiteralPath $stagingRoot -Recurse -Force
 
@@ -222,6 +230,12 @@ function New-CoolSynthReleasePackages {
             FileName    = Split-Path -Path $vst3Zip -Leaf
             FilePath    = $vst3Zip
             Sha256      = (Get-FileHash -LiteralPath $vst3Zip -Algorithm SHA256).Hash.ToLowerInvariant()
+        }
+        [pscustomobject]@{
+            LogicalName = 'clap'
+            FileName    = Split-Path -Path $clapZip -Leaf
+            FilePath    = $clapZip
+            Sha256      = (Get-FileHash -LiteralPath $clapZip -Algorithm SHA256).Hash.ToLowerInvariant()
         }
     )
 }
@@ -299,6 +313,7 @@ function Write-CoolSynthReleaseManifest {
         Configuration   = $BuildContext.Configuration
         StandaloneAsset = $standaloneAsset.FileName
         Vst3Asset       = $vst3Asset.FileName
+        ClapAsset       = ($PackagedAssets | Where-Object { $_.LogicalName -eq 'clap' } | Select-Object -First 1).FileName
         InstallerAsset  = ($PackagedAssets | Where-Object { $_.LogicalName -eq 'installer' } | Select-Object -First 1).FileName
         ChecksumFile    = $checksumFileName
         GeneratedAtUtc  = (Get-Date).ToUniversalTime().ToString('o')

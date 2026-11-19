@@ -1,6 +1,6 @@
 ; CoolSynth's Windows installer (D209), built with Inno Setup 6.5 or newer:
 ;   ISCC /DAppVersion=0.3.0 /DBuildDir=..\build\CoolSynth_artefacts\Release installer\CoolSynth.iss
-; It installs the VST3 where every host looks (Common Files\VST3), the app with a Start menu entry, and,
+; It installs the VST3 and the CLAP where hosts look (Common Files\VST3 and Common Files\CLAP), the app with a Start menu entry, and,
 ; for each instrument family ticked, downloads that family's zip from the Hugging Face dataset, checks
 ; its SHA-256 and unpacks it into C:\ProgramData\CoolSynth\Library, where CoolSynth reads it
 ; (SampleLibrary::defaultRoot). The User folder in it, the player's own sounds, is never touched.
@@ -46,17 +46,20 @@ VersionInfoVersion={#AppVersion}
 VersionInfoProductName=CoolSynth
 
 [Types]
-Name: "full"; Description: "Everything: the VST3, the app and all recorded instruments"
-Name: "compact"; Description: "The VST3 and the app, without the recorded instruments"
+Name: "full"; Description: "Everything: the plugins, the app and all recorded instruments"
+Name: "compact"; Description: "The plugins and the app, without the recorded instruments"
 Name: "custom"; Description: "Choose"; Flags: iscustom
 
 [Components]
 Name: "vst3"; Description: "VST3 plugin, to play CoolSynth in your music software (DAW)"; Types: full compact custom
+Name: "clap"; Description: "CLAP plugin, for DAWs that support it: Bitwig, Reaper, FL Studio, Studio One"; Types: full compact custom
 Name: "app"; Description: "Standalone app"; Types: full compact custom
 Name: "minilab"; Description: "Arturia MiniLab 3 support in FL Studio and Ableton Live"; Types: full compact custom
 
 [Files]
 Source: "{#BuildDir}\VST3\CoolSynth.vst3\*"; DestDir: "{commoncf64}\VST3\CoolSynth.vst3"; Components: vst3; Flags: ignoreversion recursesubdirs createallsubdirs
+; The CLAP version (D216): a controller's knobs follow the panel's page. Common Files\CLAP is where CLAP hosts look.
+Source: "{#BuildDir}\CLAP\CoolSynth.clap"; DestDir: "{commoncf64}\CLAP"; Components: clap; Flags: ignoreversion
 Source: "{#BuildDir}\Standalone\CoolSynth.exe"; DestDir: "{app}"; Components: app; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 ; The MiniLab 3 scripts (D211). They belong in the player's own Documents, where FL Studio and Ableton Live look for

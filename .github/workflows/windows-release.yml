@@ -95,11 +95,11 @@ jobs:
           body: |
             ## Install
 
-            Download **CoolSynth-Setup-${{ github.ref_name }}.exe** below and run it. It installs the VST3 for your music software, the standalone app, and the recorded instruments you tick, which it downloads from the [CoolSynth instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments) (2.6 GB for all of them).
+            Download **CoolSynth-Setup-${{ github.ref_name }}.exe** below and run it. It installs the VST3 and CLAP plugins for your music software, the standalone app, and the recorded instruments you tick, which it downloads from the [CoolSynth instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments) (2.6 GB for all of them).
 
             Windows may warn that the installer comes from an unknown publisher, because it is not code-signed: choose **More info**, then **Run anyway**.
 
-            Without the installer: the zips below hold the VST3 and the app, and the instruments are on the [instrument library's page](https://huggingface.co/datasets/tomccargo/coolsynth-instruments).
+            Without the installer: the zips below hold the VST3, the CLAP and the app, and the instruments are on the [instrument library's page](https://huggingface.co/datasets/tomccargo/coolsynth-instruments).
 
             Setting up your keyboard, an Arturia MiniLab 3, or FL Studio: see [the guide](https://github.com/tomcoolpxl/CoolSynth#readme).
           prerelease: ${{ contains(github.ref_name, '-') }}
@@ -109,4 +109,5 @@ jobs:
             release-bundle/CoolSynth-Setup-${{ github.ref_name }}.exe
             release-bundle/CoolSynth-windows-x64-standalone-${{ github.ref_name }}.zip
             release-bundle/CoolSynth-windows-x64-vst3-${{ github.ref_name }}.zip
+            release-bundle/CoolSynth-windows-x64-clap-${{ github.ref_name }}.zip
             release-bundle/CoolSynth-windows-x64-sha256-${{ github.ref_name }}.txt

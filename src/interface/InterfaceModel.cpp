@@ -534,13 +534,12 @@ namespace coolsynth::ui
         }
     }
 
-    Page InterfaceModel::currentPage() const
+    Page InterfaceModel::livePageAt(int livePage) const
     {
         const auto part = currentPart == 0 ? pv::Part::a : pv::Part::b;
         namespace ids = coolsynth::parameters::ids;
-        if (currentView == View::home)
         {
-            switch (currentLivePage)
+            switch (livePage)
             {
                 case 0:
                 {
@@ -579,6 +578,12 @@ namespace coolsynth::ui
                 }
             }
         }
+    }
+
+    Page InterfaceModel::currentPage() const
+    {
+        if (currentView == View::home)
+            return livePageAt(currentLivePage);
         const auto slot = currentSlot();
         if (slot.pages.empty())
             return { "empty", {}, {} };

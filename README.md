@@ -2,7 +2,7 @@
 
 ![CoolSynth playing Sea Pad from the Night Bus room](screenshot.png)
 
-CoolSynth is a synthesizer for Windows. It runs as a standalone app or as a VST3 plugin in your DAW.
+CoolSynth is a synthesizer for Windows. It runs as a standalone app or as a VST3 or CLAP plugin in your DAW.
 
 It was designed around the Arturia MiniLab 3 and uses its screen, pads and knobs, but any MIDI keyboard works.
 
@@ -12,7 +12,7 @@ Get the latest `CoolSynth-Setup` installer from the [Releases page](https://gith
 
 Windows may warn that the publisher is unknown, because the installer isn't code-signed. Click **More info**, then **Run anyway**.
 
-The installer puts the VST3 in `C:\Program Files\Common Files\VST3` and the app in the Start menu. It also downloads the sampled instruments you select from the [instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments), 2.6 GB for all of them.
+The installer puts the VST3 in `C:\Program Files\Common Files\VST3`, the CLAP in `C:\Program Files\Common Files\CLAP` and the app in the Start menu. It also downloads the sampled instruments you select from the [instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments), 2.6 GB for all of them.
 
 CoolSynth needs 64-bit Windows 10 or 11.
 

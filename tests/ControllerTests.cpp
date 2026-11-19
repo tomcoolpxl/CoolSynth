@@ -9,6 +9,7 @@
 #include "midi/ControllerSetup.h"
 #include "midi/DuplicateNoteFilter.h"
 #include "parameters/ParameterIDs.h"
+#include "plugin/RemoteControlPages.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
 
@@ -455,3 +456,77 @@ public:
 };
 
 static ControllerRouteTests controllerRouteTests;
+
+/*
+    D216, C5: the panel's pages as CLAP remote control pages, which a CLAP host puts on a controller's eight knobs.
+*/
+class RemoteControlPageTests final : public juce::UnitTest
+{
+public:
+    RemoteControlPageTests() : juce::UnitTest("CLAP remote control pages", "CoolSynth") {}
+
+    void runTest() override
+    {
+        using coolsynth::ui::InterfaceModel;
+        auto processor = std::make_unique<SynthAudioProcessor>();
+        auto& model = processor->getInterfaceModel();
+
+        beginTest("every panel page, eight knobs each, the last four the same everywhere");
+        {
+            const auto pages = coolsynth::plugin::remotePages(model);
+            expect(pages.size() > 6, "Home's six pages and the sections' pages: " + juce::String(static_cast<int>(pages.size())));
+            const auto live = model.livePageNames();
+            for (int i = 0; i < live.size() && i < static_cast<int>(pages.size()); ++i)
+                expect(pages[static_cast<std::size_t>(i)].section == "Home" && pages[static_cast<std::size_t>(i)].name == live[i]);
+            expectEquals(pages[0].parameterIds[0], juce::String("pA.macro1"), "Home's Macros page: layer A's macro 1 first");
+            juce::Array<std::uint32_t> ids;
+            for (const auto& page : pages)
+            {
+                expectEquals(page.parameterIds[4], juce::String("pA.voice.glide"));
+                expectEquals(page.parameterIds[5], juce::String(coolsynth::parameters::ids::brightness));
+                expectEquals(page.parameterIds[6], juce::String(coolsynth::parameters::ids::space));
+                expectEquals(page.parameterIds[7], juce::String(coolsynth::parameters::ids::volumeMaster));
+                for (const auto& id : page.parameterIds)
+                    expect(id.isEmpty() || processor->getValueTreeState().getParameter(id) != nullptr,
+                           page.section + " / " + page.name + ": " + id);
+                expect(! ids.contains(page.id), "a page id once: " + page.name);
+                ids.add(page.id);
+            }
+        }
+
+        beginTest("the page the panel shows is the one the host is told");
+        {
+            auto pages = coolsynth::plugin::remotePages(model);
+            // A new panel is on Home with layer A (pressing Home there would switch to layer B, which is empty).
+            expect(model.view() == InterfaceModel::View::home && model.part() == 0);
+            expectEquals(coolsynth::plugin::openRemotePage(model, pages), model.livePage(), "Home's live page");
+            model.pressPad(InterfaceModel::padOfSection(0), false); // Sound
+            const int open = coolsynth::plugin::openRemotePage(model, pages);
+            expect(open >= 0, "a Sound page: " + InterfaceModel::sectionName(model.section()) + " / " + model.currentSlot().label + " / " + model.currentPage().name
+                                  + ", view " + juce::String(static_cast<int>(model.view())));
+            if (open >= 0)
+            {
+                const auto page = model.currentPage();
+                for (std::size_t knob = 0; knob < 4; ++knob)
+                    expectEquals(pages[static_cast<std::size_t>(open)].parameterIds[knob], page.ids[knob]);
+            }
+        }
+
+        beginTest("the host's fill gives the parameters themselves");
+        {
+            juce::String section, name;
+            std::uint32_t id = 0;
+            std::array<juce::AudioProcessorParameter*, CLAP_REMOTE_CONTROLS_COUNT> knobs {};
+            expect(processor->remoteControlsPageCount() > 6);
+            expect(processor->remoteControlsPageFill(0, section, id, name, knobs));
+            expect(section == "Home" && name == "Macros");
+            auto* macro1 = dynamic_cast<juce::RangedAudioParameter*>(knobs[0]);
+            expect(macro1 != nullptr && macro1->getParameterID() == "pA.macro1",
+                   (knobs[0] == nullptr ? juce::String("no parameter") : knobs[0]->getName(100)) + ", layer " + juce::String(model.part()));
+            expect(! processor->remoteControlsPageFill(100000, section, id, name, knobs), "no such page");
+            expect(! processor->madeByHostOrApp(), "a test is a test, not a CLAP plugin");
+        }
+    }
+};
+
+static RemoteControlPageTests remoteControlPageTests;

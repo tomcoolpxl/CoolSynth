@@ -24,16 +24,13 @@ C4. Left of the MiniLab work: the FL script linking by itself. Arturia's own FL 
     hardware ID (`supportedHardwareIds=00 20 6B 02 00 04 04`), ours by port name, and FL had fallen back to its
     generic controller; FL documents no rule for which wins. Also to try: FL's own "Forward CCs to current plugin
     Port 10" script, which hands knobs to a plugin on port 10 without putting the controller on a port.
-C5. A CLAP build with remote control pages, in progress (paused for the JUCE 9 switch, J1):
-    - Done, not built: clap-juce-extensions as a submodule in `external/`, pinned at 6bde108 (2026-11-06); the
-      `clap_juce_extensions_plugin` CMake target with `CLAP_USE_JUCE_PARAMETER_RANGES DISCRETE` (stepped parameters
-      keep their steps); `madeByHostOrApp()` and `inDaw()` in the processor, so a CLAP CoolSynth is not taken for a
-      test (JUCE reports CLAP's wrapper type as undefined; the extension's `is_clap` tells them apart).
-    - To fix: commit 3dd4327 registered the submodule at 3837f4a (2026-11-17) instead of the pinned 6bde108.
-    - Left: the remote control pages (one per panel page: its four knobs, then Glide, Brightness, Space and the
-      master volume), `suggestRemoteControlsPage` when the panel changes page, `remoteControlsChanged` when a slot's
-      type changes the page; the installer installing `CoolSynth.clap` in `C:\Program Files\Common Files\CLAP`; the
-      CI building and packaging it; tests.
+C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, tested by the suite, not yet in a DAW.
+    - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
+      `build/CoolSynth_artefacts/<config>/CLAP/CoolSynth.clap`.
+    - The pages (`src/plugin/RemoteControlPages`): one per panel page, its four knobs, then Glide, Brightness, Space
+      and the master volume; the host is told the open page, and told again when a slot's type or the layer changes
+      the pages. An empty slot has no page.
+    - The installer puts it in `C:\Program Files\Common Files\CLAP` (its own tick box); the release has a CLAP zip.
 C6. Test per DAW (Ableton, FL Studio, Reaper, and Bitwig or Studio One if available): which hosts call `IMidiMapping`
     (a logging build), the duplicate filter, the channel-1 setting, the guided setup step by step (never tested by
     hand yet), the MiniLab in both programs, and the CLAP pages. To try a build in a DAW without a release, make a
@@ -42,16 +39,20 @@ C6. Test per DAW (Ableton, FL Studio, Reaper, and Bitwig or Studio One if availa
 
 ## JUCE, platforms and the next release
 
-J1. JUCE 9.0.5 instead of 8.0.12, the user's choice on 2026-11-19 (D217), in progress: work through
-    `external/JUCE/BREAKING_CHANGES.md` from 8.0.12 on, build, the full suite, then the CLAP build on JUCE 9 (the
-    extension is not confirmed on JUCE 9). It brings the security fixes for malformed WAV/AIFF files, XML,
-    ValueTree and JSON input (CoolSynth reads all four from outside) and WinMM MIDI fixes.
+J1. JUCE 9.0.5: done on 2026-11-19 (D217). Everything builds, the CLAP too, and the full suite passes (562 s).
+J1b. The JUCE 9 review round (D217): done, with two fixes (the Save dialog's replace question off the deprecated
+    `showOkCancelBox`; a saved sound's path from a Mac project no longer taken for a Windows path). Left for the
+    user to choose, as a pick list: noticing a MiniLab pulled out at once (`sendMessageNow` now says whether it got
+    there), Windows MIDI Services in JUCE (multi-client ports, no "in use by another program"), popup menus parented
+    to the plugin window, the test calls to `createEditorAndMakeActive`, a look at the panel at 125 % and 150 %.
 J2. macOS, for the user's Mac (the user comes back to it): AU, VST3 and CLAP on macOS; an installer package with
     signing and notarisation; the MiniLab driver on CoreMIDI; the FL Studio and Ableton script folders on macOS; the
     sample library's place; a macOS runner in the CI. In Logic an AU gets the controller's messages as sent.
+    From the JUCE 9 review: `CMAKE_OSX_DEPLOYMENT_TARGET` 12.0 or later (Xcode 27 drops older); CoreMIDI ports are
+    shared, so the MiniLab is never busy but its notes can arrive twice (the duplicate filter); the MiniLab's port
+    names on macOS must be checked against `ml::isDawPort`; the standalone app gains JUCE 9's lower CoreAudio latency.
 J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks the number), the release notes in
     `docs/releases/`, the tag. It carries the controller redesign, JUCE 9 and the CLAP build.
-J4. GEMINI.md's current state: add the controller design (D216), JUCE 9 (D217) and CLAP once they are in.
 
 ## The user's ear and hands
 
