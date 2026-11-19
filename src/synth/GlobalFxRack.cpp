@@ -78,13 +78,26 @@ namespace coolsynth::synth
         reverb.reset();
         phaser.reset();
         compressor.reset();
+        resetDrive();
         chorusWasAudible = false;
         delayWasAudible = false;
         reverbWasAudible = false;
     }
 
+    void GlobalFxRack::resetDrive() noexcept
+    {
+        // The drive's 2x filters and its tone filter hold the last samples: kept, they played one more block after
+        // Stop (D212, the user's test with Acid and Reese).
+        for (auto& upsampler : driveUpsamplers)
+            upsampler.reset();
+        for (auto& decimator : driveDecimators)
+            decimator.reset();
+        std::fill(driveToneStates.begin(), driveToneStates.end(), 0.0f);
+    }
+
     void GlobalFxRack::clear() noexcept
     {
+        resetDrive();
         lofi.reset();
         flanger.reset();
         eq.reset();

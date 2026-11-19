@@ -1259,6 +1259,54 @@ public:
             expect(model->popup().value == "All sound off", model->popup().value);
         }
 
+        beginTest("Stop with a legato sound on both layers and the key still held: silence, pressure or not");
+        {
+            // The user's test (2026-11-19): Acid copied to B, a MiniLab key held down through Stop. The MiniLab sends
+            // pressure (aftertouch) all the while a key is down.
+            constexpr int block = 256;
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->setMultiCore(true);
+            synth->prepareToPlay(48000.0, block);
+            const int acid = indexOf("Acid");
+            expect(acid >= 0);
+            synth->loadSoundIntoLayer(acid, 0);
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            model->doLayerAction(0, 0); // Copy A to B
+            juce::AudioBuffer<float> buffer(2, block);
+            auto render = [&](const juce::MidiBuffer& midi)
+            {
+                juce::MidiBuffer copy(midi);
+                buffer.clear();
+                synth->processBlock(buffer, copy);
+                return buffer.getMagnitude(0, block);
+            };
+            juce::MidiBuffer key;
+            key.addEvent(juce::MidiMessage::noteOn(1, 45, static_cast<juce::uint8>(100)), 0);
+            render(key);
+            float playing = 0.0f;
+            for (int i = 0; i < 20; ++i)
+            {
+                juce::MidiBuffer pressure;
+                pressure.addEvent(juce::MidiMessage::channelPressureChange(1, 40 + i), 0);
+                playing = render(pressure);
+            }
+            expect(playing > 1.0e-3f, "both layers sound: " + juce::String(playing));
+            model->pressPad(InterfaceModel::stopPad, false);
+            render({});
+            float after = 0.0f;
+            for (int i = 0; i < 60; ++i)
+            {
+                juce::MidiBuffer stillHeld;
+                stillHeld.addEvent(juce::MidiMessage::channelPressureChange(1, 60 + (i % 20)), 0);
+                stillHeld.addEvent(juce::MidiMessage::pitchWheel(1, 8192 + i), 10);
+                const float level = render(stillHeld);
+                if (level > after)
+                    logMessage("block " + juce::String(i) + " after Stop: " + juce::String(level));
+                after = std::max(after, level);
+            }
+            expectEquals(after, 0.0f, "no tone comes back while the key stays down");
+        }
+
         beginTest("Preferences shows the build's own version");
         {
             expectEquals(coolsynth::build::getVersion(), juce::String(COOLSYNTH_BUILD_VERSION), "CMakeLists.txt's version");

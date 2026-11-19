@@ -55,6 +55,8 @@ namespace coolsynth::synth
                           const CompressorParametersV2& compressor,
                           const ExtraFxParameters& extra) noexcept;
         void processDrive(juce::AudioBuffer<float>& buffer, const DriveParametersV2& parameters) noexcept;
+        /** The drive's filters back to silence (reset and clear). */
+        void resetDrive() noexcept;
         void processChorus(juce::AudioBuffer<float>& buffer, const ChorusParametersV2& parameters) noexcept;
         void processDelay(juce::AudioBuffer<float>& buffer, const DelayParametersV2& parameters) noexcept;
         void processReverb(juce::AudioBuffer<float>& buffer, const ReverbParametersV2& parameters) noexcept;

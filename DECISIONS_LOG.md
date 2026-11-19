@@ -4355,6 +4355,10 @@ The user asked for four things before the release.
   is expected to clear (MIDI 1.0's wording of All Sound Off; Nord user forum on panic and effects). The engine's
   panic already cleared all of it; nothing called it. It cut the sound in the middle of a wave, which clicks: Stop
   now lets the block it lands in fade to silence over 3 ms, then clears everything. The keys of that block are dropped.
+  The user's test found sound after Stop with Acid on both layers: the Drive effect's 2x filters and tone filter were
+  not cleared by the rack's clear or reset, and played their last samples one block later (Acid and Reese use Drive;
+  Basic Saw, Moog Bass and Supersaw did not show it). Both now reset them. A tone held on in the user's test was most
+  likely the CoolSynth in Ableton, open beside the app, playing the same held MiniLab key.
 - **The version in Preferences**, the user's choice of place (not beside the CPU reading): small and faint at the
   right of the title, "CoolSynth 0.3.0", with CoolSynth's icon left of the title. The version comes from
   CMakeLists.txt's project version through the generated build header (`coolsynth::build::getVersion`), so it is never
