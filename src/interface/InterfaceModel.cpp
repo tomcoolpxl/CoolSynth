@@ -407,33 +407,6 @@ namespace coolsynth::ui
         return text;
     }
 
-    std::pair<juce::String, juce::String> InterfaceModel::layerChain(int layer) const
-    {
-        const juce::String prefix = layer == 0 ? "pA" : "pB";
-        juce::StringArray sources, processors;
-        for (int s = 1; s <= 3; ++s)
-        {
-            if (auto* type = parameter(prefix + ".g" + juce::String(s) + ".type"); type != nullptr && type->getValue() > 0.0f)
-                sources.add(type->getCurrentValueAsText());
-            if (auto* type = parameter(prefix + ".p" + juce::String(s) + ".type"); type != nullptr && type->getValue() > 0.0f)
-                processors.add(type->getCurrentValueAsText());
-        }
-        // Mixed sources are counted ("VA ×2"), as their order says nothing; processors in a row keep theirs.
-        juce::StringArray counted, seen;
-        for (const auto& source : sources)
-        {
-            if (seen.contains(source))
-                continue;
-            seen.add(source);
-            int n = 0;
-            for (const auto& other : sources)
-                n += other == source ? 1 : 0;
-            counted.add(n > 1 ? source + juce::String(juce::CharPointer_UTF8(" \xc3\x97")) + juce::String(n) : source);
-        }
-        // the Sound section's slots are mixed, the Shape section's in a row (rowsOf)
-        return { counted.joinIntoString(" + "), processors.joinIntoString(juce::String(juce::CharPointer_UTF8(" \xe2\x86\x92 "))) };
-    }
-
     bool InterfaceModel::layerEmpty(int layer) const
     {
         const juce::String prefix = layer == 0 ? "pA" : "pB";
@@ -450,9 +423,16 @@ namespace coolsynth::ui
         return id.isEmpty() ? nullptr : state.getParameter(id);
     }
 
-    std::vector<Slot> InterfaceModel::slotsOf(int section) const
+    int InterfaceModel::openSlotOf(int layer, int section) const noexcept
     {
-        const auto part = currentPart == 0 ? pv::Part::a : pv::Part::b;
+        if (currentView != View::section || currentSection != section || currentPart != layer)
+            return -1;
+        return slotCursor[static_cast<std::size_t>(clampInt(section, 0, sectionCount - 1))];
+    }
+
+    std::vector<Slot> InterfaceModel::slotsOf(int section, int layer) const
+    {
+        const auto part = layer == 0 ? pv::Part::a : pv::Part::b;
         std::vector<Slot> slots;
 
         auto typedSlot = [&](pv::SlotPath path, const juce::String& code, const juce::String& label)
@@ -1488,6 +1468,24 @@ namespace coolsynth::ui
         }
         typeList.open = false;
         cursor = target;
+        touched();
+    }
+
+    void InterfaceModel::openSlot(int layer, int section, int slot)
+    {
+        layer = clampInt(layer, 0, 1);
+        section = clampInt(section, 0, sectionCount - 1);
+        if (currentView == View::section && currentSection == section && currentPart == layer)
+        {
+            clickSlot(slot); // already there: a slot clicked again opens its type list
+            return;
+        }
+        cancelPendingChoice();
+        typeList.open = false;
+        currentPart = layer;
+        currentView = View::section;
+        currentSection = section;
+        slotCursor[static_cast<std::size_t>(section)] = clampInt(slot, 0, static_cast<int>(slotsOf(section).size()) - 1);
         touched();
     }
 

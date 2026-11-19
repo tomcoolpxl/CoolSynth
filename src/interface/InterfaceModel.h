@@ -168,6 +168,9 @@ namespace coolsynth::ui
         void clickListRow(int row);
         /** A click on a slot of the section map: focuses it. */
         void clickSlot(int slot);
+        /** A block of the layer screen's chain clicked (D226): that layer's section, on that slot; the slot already
+            open there, clicked again: its type list, as clickSlot. */
+        void openSlot(int layer, int section, int slot);
         /** A click on a page tab: the live page in Home, the focused slot's page in a section. */
         void clickPage(int page);
         /** One level up (D181): closes the type list, leaves a sound list for the rooms, a section for Home. */
@@ -186,9 +189,6 @@ namespace coolsynth::ui
         [[nodiscard]] bool layerEmpty(int layer) const;
         [[nodiscard]] juce::String layerSoundName(int layer) const;
         [[nodiscard]] juce::String layerModeText() const;
-        /** A layer's chain for the layer screen (D226): its sound sources, mixed ("VA + Wavetable"), and its
-            processors in a row ("Ladder → Drive"); empty strings for what it has none of. */
-        [[nodiscard]] std::pair<juce::String, juce::String> layerChain(int layer) const;
         [[nodiscard]] bool typeListOpen() const noexcept { return typeList.open; }
         [[nodiscard]] bool inCategory() const noexcept { return browser.inCategory; }
         [[nodiscard]] int livePage() const noexcept { return currentLivePage; }
@@ -225,7 +225,10 @@ namespace coolsynth::ui
         // ---- What to show -----------------------------------------------------------------
         [[nodiscard]] static juce::String sectionName(int section);
         [[nodiscard]] static Tint sectionTint(int section) noexcept;
-        [[nodiscard]] std::vector<Slot> slotsOf(int section) const;
+        [[nodiscard]] std::vector<Slot> slotsOf(int section) const { return slotsOf(section, currentPart); }
+        [[nodiscard]] std::vector<Slot> slotsOf(int section, int layer) const; // either layer's, for the layer screen (D226)
+        /** The slot the knobs are on in a section; -1 while another section, Home or the other layer is open. */
+        [[nodiscard]] int openSlotOf(int layer, int section) const noexcept;
         [[nodiscard]] static std::vector<SectionRow> rowsOf(int section);
         [[nodiscard]] int slotIndex(int section) const noexcept { return slotCursor[static_cast<std::size_t>(section)]; }
         [[nodiscard]] int pageIndexOf(int section, int slot) const;

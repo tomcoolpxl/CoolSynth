@@ -1247,6 +1247,23 @@ public:
         expect(model.typeListOpen(), "the second opens its types");
         model.back();
 
+        beginTest("A block of the layer screen's chain opens that layer's slot, and its types when clicked again (D226)");
+        model.pressPad(coolsynth::ui::InterfaceModel::homePad, false); // from Home, on layer A
+        const int layerBefore = model.part();
+        model.openSlot(1 - layerBefore, 3, 2); // the other layer's I3
+        expectEquals(model.part(), 1 - layerBefore, "the other layer");
+        expect(model.view() == coolsynth::ui::InterfaceModel::View::section && model.section() == 3, "the Effects section");
+        expectEquals(model.slotIndex(3), 2, "on I3");
+        expectEquals(model.openSlotOf(1 - layerBefore, 3), 2);
+        expectEquals(model.openSlotOf(layerBefore, 3), -1, "not the layer left");
+        expect(! model.typeListOpen(), "the first click opens the slot");
+        model.openSlot(1 - layerBefore, 3, 2);
+        expect(model.typeListOpen(), "the second its types");
+        model.back();
+        model.openSlot(layerBefore, 0, 1); // back to the first layer's G2, in another section
+        expect(model.part() == layerBefore && model.section() == 0 && model.slotIndex(0) == 1 && ! model.typeListOpen());
+        expectEquals(static_cast<int>(model.slotsOf(3, 1 - layerBefore).size()), 12, "either layer's slots: six of its own, six at the end");
+
         beginTest("The wheel scrolls the screen's list, and a right click goes back, on the panel itself");
         std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditorAndMakeActive());
         auto* panel = dynamic_cast<PanelEditor*>(editor.get());

@@ -82,6 +82,18 @@ namespace
         return steps;
     }
     const juce::String mainMark = juce::String(juce::CharPointer_UTF8("\xe2\x97\x8e"));
+
+    /** An effect's type in four letters at most, for the layer screen's small blocks (D226). */
+    juce::String shortType(const juce::String& type)
+    {
+        static const char* const names[][2] { { "Chorus", "Chor" }, { "Compressor", "Comp" }, { "Delay", "Dly" }, { "Drive", "Drv" },
+                                              { "Flanger", "Flng" }, { "Grain", "Grn" }, { "Phaser", "Phsr" }, { "Pitch", "Ptch" },
+                                              { "Reverb", "Rvb" }, { "Stutter", "Stut" } };
+        for (const auto& name : names)
+            if (type == name[0])
+                return name[1];
+        return type.substring(0, 4); // EQ, LoFi, Pump, Room as they are
+    }
 }
 
 // ---- Hover (D204): what the mouse is over lights softly and the screen's hint line says what it does ------
@@ -2087,24 +2099,32 @@ public:
             if (layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()))
                 over = layer;
         const bool onCpu = cpuArea.contains(e.getPosition());
+        const ChainBlock* onBlock = nullptr; // a block of a layer's chain (D226)
+        for (const auto& block : chainBlocks)
+            if (block.area.contains(e.getPosition()))
+                onBlock = &block;
+        const int blockKey = onBlock != nullptr ? onBlock->key : -1;
         setMouseCursor(over >= 0 || onCpu ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
-        if (over != hoveredPanel || onCpu != hoveredCpu)
+        if (over != hoveredPanel || onCpu != hoveredCpu || blockKey != hoveredBlock)
         {
             hoveredPanel = over;
             hoveredCpu = onCpu;
-            setHoverHint(over >= 0 ? "Layer " + juce::String(over == 0 ? "A" : "B")
-                                         + juce::String(juce::CharPointer_UTF8(": edit it \xc2\xb7 click; copy, swap \xc2\xb7 right click"))
-                                   : (onCpu ? juce::String(juce::CharPointer_UTF8("CPU \xc2\xb7 click: Preferences")) : juce::String()));
+            hoveredBlock = blockKey;
+            setHoverHint(onBlock != nullptr ? onBlock->hint
+                         : over >= 0 ? "Layer " + juce::String(over == 0 ? "A" : "B")
+                                           + juce::String(juce::CharPointer_UTF8(": edit it \xc2\xb7 click; copy, swap \xc2\xb7 right click"))
+                                     : (onCpu ? juce::String(juce::CharPointer_UTF8("CPU \xc2\xb7 click: Preferences")) : juce::String()));
             repaint(layerScreen);
         }
     }
 
     void mouseExit(const juce::MouseEvent&) override
     {
-        if (hoveredPanel >= 0 || hoveredCpu)
+        if (hoveredPanel >= 0 || hoveredCpu || hoveredBlock >= 0)
         {
             hoveredPanel = -1;
             hoveredCpu = false;
+            hoveredBlock = -1;
             setHoverHint({});
             repaint(layerScreen);
         }
@@ -2441,6 +2461,15 @@ public:
     {
         if (cpuArea.contains(e.getPosition()))
             prefs.show();
+        // A block of a layer's chain: that layer's section, on that slot (D226). A right click keeps the layer's menu.
+        if (! e.mods.isPopupMenu())
+            for (const auto& block : chainBlocks)
+                if (block.area.contains(e.getPosition()))
+                {
+                    model.openSlot(block.layer, block.section, block.slot);
+                    owner.timerCallback();
+                    return;
+                }
         for (int layer = 0; layer < 2; ++layer)
         {
             if (! layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()))
@@ -2490,8 +2519,88 @@ public:
     /** The layer screen (D195): two lit panels, layer A teal and B yellow, each with what it plays; the layer the
         sections edit lit, the other dim; an empty layer says so. Under them the layer mode, the tempo, the voices
         sounding and, in the bottom right corner, the CPU. */
+    /** One section's row of a layer's chain (D226): Sound's sources joined by +, Shape's processors by arrows,
+        Motion's envelopes and LFOs, the layer's six effects and then M, the chain at the end, which is both layers'.
+        A block shows its type (an effect's in four letters), an empty one its slot, dashed; the slot the knobs are
+        on is outlined white. A click opens it (InterfaceModel::openSlot). */
+    void paintChainRow(juce::Graphics& g, juce::Rectangle<int> row, int layer, int section, bool lit)
+    {
+        const auto slots = model.slotsOf(section, layer);
+        const auto tint = coolsynth::ui::tintColour(InterfaceModel::sectionTint(section));
+        const bool effects = section == 3;
+        const int count = effects ? 6 : static_cast<int>(slots.size()); // the effects: the layer's six, then M
+        const int gap = section <= 1 ? 12 : 3;
+        const int endWidth = effects ? 30 : 0;
+        const int width = (row.getWidth() - endWidth - (count - 1) * gap) / count;
+        const int open = model.openSlotOf(layer, section);
+        const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x86\x92"));
+        const juce::String layerName = layer == 0 ? "Layer A" : "Layer B";
+        const juce::String dot = juce::String(juce::CharPointer_UTF8(" \xc2\xb7 "));
+        static const juce::StringArray motionNames { "Amp", "Filt", "Mod", "LFO1", "LFO2" };
+
+        auto block = [&](juce::Rectangle<int> box, int index, const juce::String& label, bool on, const juce::String& hint)
+        {
+            const int key = layer * 100 + section * 10 + index;
+            const bool isOpen = index == open || (index >= 6 && open >= 6);
+            const auto r = box.toFloat().reduced(0.5f);
+            if (on)
+            {
+                g.setColour(tint.withAlpha(lit ? 0.24f : 0.12f));
+                g.fillRoundedRectangle(r, 3.0f);
+                g.setColour(tint.withAlpha(lit ? 0.85f : 0.45f));
+                g.drawRoundedRectangle(r, 3.0f, 1.0f);
+            }
+            else
+            {
+                const float dashes[] { 2.5f, 2.0f };
+                juce::Path outline, dashed;
+                outline.addRoundedRectangle(r, 3.0f);
+                juce::PathStrokeType(1.0f).createDashedStroke(dashed, outline, dashes, 2);
+                g.setColour(colours::screenLine.brighter(0.35f));
+                g.fillPath(dashed);
+            }
+            if (isOpen || key == hoveredBlock)
+            {
+                g.setColour(isOpen ? colours::screenInk : tint.brighter(0.4f));
+                g.drawRoundedRectangle(r, 3.0f, 1.5f);
+            }
+            g.setFont(mono(9.0f));
+            g.setColour(on ? (lit ? colours::screenInk : colours::screenInk.withAlpha(0.6f)) : colours::screenDim.withAlpha(0.7f));
+            g.drawFittedText(label, box.reduced(2, 0), juce::Justification::centred, 1, 0.7f);
+            chainBlocks.push_back({ box, layer, section, index, key, hint });
+        };
+
+        for (int i = 0; i < count && i < static_cast<int>(slots.size()); ++i)
+        {
+            if (i > 0)
+            {
+                const auto joint = row.removeFromLeft(gap);
+                if (section <= 1)
+                {
+                    g.setFont(mono(10.0f));
+                    g.setColour(colours::screenDim);
+                    g.drawText(section == 0 ? juce::String("+") : arrow, joint, juce::Justification::centred);
+                }
+            }
+            const auto& slot = slots[static_cast<std::size_t>(i)];
+            const bool motion = section == 2; // envelopes and LFOs have one type each and are always there
+            const juce::String label = motion ? motionNames[i] : (slot.empty ? slot.code : (effects ? shortType(slot.typeName) : slot.typeName));
+            const juce::String what = slot.code + " " + (motion ? slot.label : (slot.empty ? juce::String("empty") : slot.typeName));
+            block(row.removeFromLeft(width), i, label, motion || ! slot.empty,
+                  layerName + dot + what + dot + (motion ? juce::String("click: edit it") : juce::String("click: edit it, again: its types")));
+        }
+        if (effects)
+        {
+            g.setFont(mono(10.0f));
+            g.setColour(colours::screenDim);
+            g.drawText(arrow, row.removeFromLeft(12), juce::Justification::centred);
+            block(row, 6, "M", true, "M: the chain at the end, F1-F6, both layers'" + dot + "click: edit it");
+        }
+    }
+
     void paintLayerScreen(juce::Graphics& g)
     {
+        chainBlocks.clear(); // drawn again below, with the places a click opens
         const auto box = layerScreen.toFloat();
         g.setColour(colours::bezel); // the main screen's bezel (D226)
         g.fillRoundedRectangle(box, 12.0f);
@@ -2525,33 +2634,30 @@ public:
             g.setColour(lit ? tint : (hover ? tint.withAlpha(0.6f) : colours::screenLine.brighter(0.25f)));
             g.drawRoundedRectangle(r.reduced(0.75f), 5.0f, lit || hover ? 1.5f : 1.0f);
 
-            auto text = panel.reduced(10, 7);
+            // the head: LAYER A, the sound's name; SOLO or MUTED at the right while a layer is heard alone (D196)
+            auto text = panel.reduced(8, 6);
+            auto head = text.removeFromTop(16);
             g.setFont(mono(10.0f, true));
             g.setColour(lit ? tint : tint.withMultipliedBrightness(0.55f).withMultipliedSaturation(0.6f));
-            auto head = text.removeFromTop(13);
-            g.drawText(layer == 0 ? "LAYER A" : "LAYER B", head, juce::Justification::centredLeft);
-            if (const int solo = owner.synth.soloLayer(); solo >= 0) // a layer heard alone (D196)
-                g.drawText(solo == layer ? "SOLO" : "MUTED", head, juce::Justification::centredRight);
-            text.removeFromTop(5);
-            g.setFont(sans(19.0f, ! empty));
-            g.setColour(empty ? colours::screenDim.withAlpha(lit ? 0.9f : 0.6f) : (lit ? colours::screenInk : colours::screenDim));
-            g.drawFittedText(empty ? juce::String("empty") : model.layerSoundName(layer), text.removeFromTop(24),
-                             juce::Justification::centredLeft, 1, 0.8f);
-
-            // What the layer is made of, at the panel's foot (D226): its sources mixed, then its processors in a row.
-            const auto [sources, processors] = model.layerChain(layer);
-            const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x86\x92 "));
-            g.setFont(sans(12.0f));
-            g.setColour(colours::screenDim.withAlpha(lit ? 1.0f : 0.7f));
-            auto foot = text.removeFromBottom(32);
-            if (empty)
-                g.drawText("Load a sound from Home", foot.removeFromTop(16), juce::Justification::centredLeft);
-            else
+            const juce::String title = layer == 0 ? "LAYER A" : "LAYER B";
+            g.drawText(title, head.removeFromLeft(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), title) + 8),
+                       juce::Justification::centredLeft);
+            if (const int solo = owner.synth.soloLayer(); solo >= 0)
             {
-                g.drawFittedText(sources.isNotEmpty() ? sources : juce::String("no source"), foot.removeFromTop(16),
-                                 juce::Justification::centredLeft, 1, 0.85f);
-                if (processors.isNotEmpty())
-                    g.drawFittedText(arrow + processors, foot, juce::Justification::centredLeft, 1, 0.85f);
+                const juce::String word = solo == layer ? "SOLO" : "MUTED";
+                g.drawText(word, head.removeFromRight(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), word) + 4),
+                           juce::Justification::centredRight);
+            }
+            g.setFont(sans(13.5f, ! empty));
+            g.setColour(empty ? colours::screenDim.withAlpha(lit ? 0.9f : 0.6f) : (lit ? colours::screenInk : colours::screenDim));
+            g.drawFittedText(empty ? juce::String("empty") : model.layerSoundName(layer), head, juce::Justification::centredLeft, 1, 0.8f);
+
+            // The layer's chain (D226, the user's choice): a row per section in its pad's colour, every slot a block.
+            text.removeFromTop(4);
+            for (int section = 0; section < InterfaceModel::sectionCount; ++section)
+            {
+                paintChainRow(g, text.removeFromTop(17), layer, section, lit);
+                text.removeFromTop(3);
             }
         }
 
@@ -2603,6 +2709,14 @@ private:
     FlatKeyboard keyboard;
     juce::Rectangle<int> screenBox, chordPrint, transposePrint, mainTurnArea, mainPressArea, cpuArea, layerScreen;
     std::array<juce::Rectangle<int>, 2> layerPanels; // the layer screen's two panels, clickable (D195)
+    struct ChainBlock
+    {
+        juce::Rectangle<int> area;
+        int layer = 0, section = 0, slot = 0, key = 0;
+        juce::String hint;
+    };
+    std::vector<ChainBlock> chainBlocks; // the layer screen's chain, each block clickable (D226)
+    int hoveredBlock = -1;               // its key (layer * 100 + section * 10 + slot) while the mouse is on it
     PrefsCard prefs { owner.synth };                 // over everything, hidden until Prefs is pressed (D197)
     ControllerCard controllerCard { owner.synth };   // the controller setup, from Prefs or a right click (D211)
     bool learningHere = false;                       // a right click's Learn is listening (D211)

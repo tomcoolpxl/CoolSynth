@@ -148,6 +148,11 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     the synced effects when no host plays, and a DAW's tempo when one does. Missing, perhaps: setting it on the
     panel, tap tempo, a metronome, MIDI clock in and out in the standalone app. Decide together with the recorder
     and a sequencer or editor (item 12); check online what other synths and plugins offer.
+29. Parked (the user, 2026-11-19): context menus. Many things on the panel can be clicked (the layer screen's
+    chain blocks, the slots, the list rows, the knobs, the pads); design right-click menus where they make sense,
+    with what each item can do (copy, paste, clear, swap, choose a type, learn, reset to default). Today only the
+    layer panels (copy, swap, solo) and the controls (Learn) have one. Check online how other plugins and synths do
+    it, then options to choose from. With the real interface (UI last).
 
 
 ## Standing notes

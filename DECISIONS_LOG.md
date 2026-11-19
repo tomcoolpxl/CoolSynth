@@ -4581,6 +4581,10 @@ The user asked for quick changes ahead of the interface redesign, laid out by th
 
 - The knob rows move down 75 px, still 132 px apart: a lower knob's name on two lines ends at the main screen's bezel.
 - The faders are as tall as the two knob rows (196 px, were 330): a thumb at the top is level with the upper knobs' top, the track ends by the lower knobs' bottom, and their numbers and names sit on the lower knobs' lines.
-- The layer screen takes the room freed above the knobs and the faders: from knob 1 to the Master, down to 26 px above the upper knobs (482 by 157 px, was 287 by 82). Each layer's panel shows its sound larger, and at its foot what it is made of: its sources mixed ("VA + Wavetable") and its processors in a row ("→ Ladder → Drive").
+- The layer screen takes the room freed above the knobs and the faders: from knob 1 to the Master, down to 26 px above the upper knobs (482 by 157 px, was 287 by 82).
+- The layer screen shows each layer's chain, a placeholder until the redesign that uses the room. Research: Phase Plant draws its generators, effects and modulators as lanes with the signal flow's arrows; the Montage M's Navigation screen is an overview where tapping a block jumps to its editing. The user's choice (options: four rows with every slot, recommended and chosen; the sound path only, larger; a grid of lights without names):
+  - a row per section in its pad's colour: Sound's G1-G3 joined by +, Shape's P1-P3 by arrows, Motion's envelopes and LFOs, the layer's six effects (four-letter names: Chor, Dly, Rvb) and M, the chain at the end;
+  - an empty slot dashed, the slot the knobs are on outlined white, the sound's name beside LAYER A;
+  - a click opens that layer's section on that slot, a second its type list (`InterfaceModel::openSlot`, tested); the mouse over a block names it on the hint line.
 - The screens' bezels, round the glass and the main knob, are a grey a shade lighter than the panel instead of black.
 - The Master Boost's reading moved above the Master fader, under the layer screen.
