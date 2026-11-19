@@ -110,11 +110,13 @@ namespace coolsynth::synth::v3
         // A key struck again under a new transpose is a note-off and a note-on; a mode change adds one event.
         for (auto& events : partEvents)
             events.assign(static_cast<std::size_t>(2 * coolsynth::synth::maxEngineEventsPerBlock + 2), {});
+        // Each effect slot its own random numbers (D221), from the sound's seed and the slot's place (D162).
+        std::uint32_t place = 0;
         for (auto& slots : inserts)
             for (auto& slot : slots)
-                slot.prepare(sampleRate, block);
+                slot.prepare(sampleRate, block, seed * 0x9E3779B1u + 0x51A70000u + ++place);
         for (auto& slot : *masterSlots)
-            slot.prepare(sampleRate, block);
+            slot.prepare(sampleRate, block, seed * 0x9E3779B1u + 0x4A570000u + ++place);
         work.setSize(2, block, false, true, true);
         for (auto& buffer : partBuffers)
             buffer.setSize(2, block, false, true, true);

@@ -7,6 +7,7 @@
 #include "presets/FactoryPresets.h"
 #include "presets/PatchState.h"
 #include "synth/v3/Inserts.h"
+#include "synth/v3/NoiseGenerator.h"
 #include "synth/v3/SampleGenerator.h"
 
 class AudioProcessorXmlHarness final : public juce::AudioProcessor
@@ -840,3 +841,66 @@ public:
 };
 
 static SavedPathTests savedPathTests;
+
+/** D221: the Noise generator's Type ran over four kinds and runs over five, Brown added last. Heap processors. */
+class NoiseTypeMigrationTests final : public juce::UnitTest
+{
+public:
+    NoiseTypeMigrationTests() : juce::UnitTest("Noise type migration", "Presets") {}
+
+    void runTest() override
+    {
+        namespace sv3 = coolsynth::synth::v3;
+        auto value = [](SynthAudioProcessor& p, const juce::String& id) { return p.getValueTreeState().getRawParameterValue(id)->load(); };
+        // A Noise slot set to Chip as an older version stored it: the top of a 0..3 range, 1.0.
+        auto saved = [&](int version)
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            auto& state = source->getValueTreeState();
+            auto* type = state.getParameter("pA.g2.type");
+            type->setValueNotifyingHost(type->getValueForText("Noise"));
+            state.getParameter("pA.g2.p1")->setValueNotifyingHost(1.0f);
+            juce::MemoryBlock block;
+            source->getStateInformation(block);
+            auto root = juce::AudioProcessor::getXmlFromBinary(block.getData(), static_cast<int>(block.getSize()));
+            root->setAttribute("formatVersion", version);
+            juce::MemoryBlock old;
+            juce::AudioProcessor::copyXmlToBinary(*root, old);
+            return old;
+        };
+        const auto& d = sv3::NoiseGenerator::descriptor();
+        auto kindOf = [&](float normalised) { return juce::roundToInt(sv3::descriptorToUnits(d.params[sv3::NoiseGenerator::type], normalised)); };
+
+        beginTest("an_older_state_keeps_its_noise_kind");
+        {
+            const auto old = saved(14);
+            auto target = std::make_unique<SynthAudioProcessor>();
+            target->setStateInformation(old.getData(), static_cast<int>(old.getSize()));
+            expectEquals(kindOf(value(*target, "pA.g2.p1")), static_cast<int>(sv3::NoiseGenerator::Kind::chip), "Chip stays Chip");
+
+            const auto current = saved(15);
+            auto now = std::make_unique<SynthAudioProcessor>();
+            now->setStateInformation(current.getData(), static_cast<int>(current.getSize()));
+            expectEquals(kindOf(value(*now, "pA.g2.p1")), static_cast<int>(sv3::NoiseGenerator::Kind::brown), "a current state's top value is Brown");
+        }
+
+        beginTest("an_older_saved_sound_keeps_its_noise_kind");
+        {
+            auto source = std::make_unique<SynthAudioProcessor>();
+            auto& state = source->getValueTreeState();
+            auto* type = state.getParameter("pA.g2.type");
+            type->setValueNotifyingHost(type->getValueForText("Noise"));
+            state.getParameter("pA.g2.p1")->setValueNotifyingHost(1.0f);
+            auto patchXml = coolsynth::presets::createWrappedPatchXml(*source->createParameterStateXml(), source->getParameterStateTypeName());
+            patchXml->setAttribute("formatVersion", 13);
+            const auto result = coolsynth::presets::parseWrappedPatchXml(*patchXml, source->getParameterStateTypeName());
+            expect(result.parameterStateXml != nullptr && result.migrated);
+            if (result.parameterStateXml != nullptr)
+                for (auto* child : result.parameterStateXml->getChildWithTagNameIterator("PARAM"))
+                    if (child->getStringAttribute("id") == "pA.g2.p1")
+                        expectEquals(kindOf(static_cast<float>(child->getDoubleAttribute("value"))), static_cast<int>(sv3::NoiseGenerator::Kind::chip));
+        }
+    }
+};
+
+static NoiseTypeMigrationTests noiseTypeMigrationTests;

@@ -50,8 +50,9 @@ Shipped (phase 3.1, 2026-11-13): `NoiseGenerator` in `src/synth/v3/NoiseGenerato
 type 2. Kinds White, Pink (seven shelves designed at the running rate), Band (state-variable
 band-pass on the note with level compensation) and Chip (NES 15-bit register, Long or Short,
 clocked at 93 times the note, Clock in semitones, steps band-limited with the VA's BLEP, which
-moved to `dsp::blepResidual`). Tone, Width, pan, ring and AM; output two samples late like the
-VA; every kind about 3 dB under a saw (decisions D25, D26).
+moved to `dsp::blepResidual`), and since D221 Brown (-6 dB an octave, a leaky integrator with its
+corner at 20 Hz). Tone, Width, pan, ring and AM; output two samples late like the VA; every kind
+about 3 dB under a saw (decisions D25, D26).
 
 Shipped (phase 3.2, 2026-11-13): `FmGenerator` ("FM2") in `src/synth/v3/FmGenerator.h`, generator
 type 3. A sine modulator at Ratio (0.25 to 16) with Fine in cents phase-modulates a sine carrier
@@ -478,7 +479,13 @@ output, band-limited, an octave up through a two-head delay-line shifter, fed ba
 
 Shipped (phase 5.2, 2026-11-13): `LoFi` in `src/synth/LoFi.h`, a global stage after the drive:
 wow and flutter on a short delay line, a bandwidth low-pass, bit and rate crushing, hiss and
-crackle that follow the signal, Mix with a matched dry delay (decision D52).
+crackle, Mix with a matched dry delay (decision D52). Since D221 the noise is as tape and records
+make it (`docs/research/noise-modelling.md`): a steady level while anything plays, fading out
+after a second of silence; hiss shaped as tape after playback EQ (-4 dB under 500 Hz, +8 dB above
+2.3 kHz, rolled off at 12 kHz), added before Bandwidth and the crush, with modulation noise riding
+on the signal; crackle as short filtered clicks of 20 us to 4 ms, often in one channel, many small
+and few large, a quiet bed swelling with a record's turn, two ticks a turn and rare pops with a
+falling thump; each slot its own seed.
 
 Shipped (phase 5.3, 2026-11-13): `Pump`, `MasterEq` and `Flanger` in `src/synth/ModernFx.h`. The
 rack's chain is drive, lo-fi, phaser, flanger, chorus, delay, reverb, compressor, EQ, pump; the

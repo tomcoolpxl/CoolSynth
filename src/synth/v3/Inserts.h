@@ -289,8 +289,10 @@ namespace coolsynth::synth::v3
     public:
         static constexpr double typeFadeSeconds = 0.01; // the old effect out, then the new one in (D165)
 
-        void prepare(double sampleRate, int maxBlockSize)
+        /** seed: the slot's own random numbers (D221), from its sound, layer and place. */
+        void prepare(double sampleRate, int maxBlockSize, std::uint32_t seed = 0)
         {
+            rack.setSeed(seed);
             rack.prepare(sampleRate, std::max(1, maxBlockSize), 2);
             grain.prepare(sampleRate);
             room.prepare(sampleRate);

@@ -1,5 +1,6 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_core/juce_core.h>
+#include <juce_dsp/juce_dsp.h>
 
 #include <algorithm>
 #include <cmath>
@@ -119,7 +120,49 @@ public:
             expectGreaterThan(20.0 * std::log10(low / high), 20.0);
         }
 
-        beginTest("hiss_and_crackle_follow_the_signal");
+        // The noise as tape and records make it (D221, docs/research/noise-modelling.md).
+        auto noiseOf = [](const LoFiParameters& p, const std::vector<float>& x, std::uint32_t seed = 1, double rate = kRate)
+        {
+            // What the noise adds: the output with it, less the output without it.
+            auto withNoise = std::make_unique<LoFi>();
+            auto without = std::make_unique<LoFi>();
+            withNoise->setSeed(seed);
+            withNoise->prepare(rate, 2);
+            without->prepare(rate, 2);
+            auto plain = p;
+            plain.hiss = plain.crackle = 0.0f;
+            std::vector<float> left(x.size()), right(x.size());
+            juce::AudioBuffer<float> a(2, 256), b(2, 256);
+            for (std::size_t s = 0; s < x.size(); s += 256)
+            {
+                const int n = static_cast<int>(std::min<std::size_t>(256, x.size() - s));
+                a.setSize(2, n, false, false, true);
+                b.setSize(2, n, false, false, true);
+                for (int ch = 0; ch < 2; ++ch)
+                    for (int i = 0; i < n; ++i)
+                    {
+                        a.setSample(ch, i, x[s + static_cast<std::size_t>(i)]);
+                        b.setSample(ch, i, x[s + static_cast<std::size_t>(i)]);
+                    }
+                withNoise->process(a, p);
+                without->process(b, plain);
+                for (int i = 0; i < n; ++i)
+                {
+                    left[s + static_cast<std::size_t>(i)] = a.getSample(0, i) - b.getSample(0, i);
+                    right[s + static_cast<std::size_t>(i)] = a.getSample(1, i) - b.getSample(1, i);
+                }
+            }
+            return std::make_pair(left, right);
+        };
+        auto rmsDb = [](const std::vector<float>& x, std::size_t from, std::size_t to)
+        {
+            double sum = 0.0;
+            for (std::size_t i = from; i < to; ++i)
+                sum += static_cast<double>(x[i]) * x[i];
+            return 10.0 * std::log10(std::max(1.0e-30, sum / static_cast<double>(to - from)));
+        };
+
+        beginTest("silence_stays_silent_and_the_noise_holds_its_level_while_anything_plays");
         {
             auto p = neutral();
             p.hiss = 1.0f;
@@ -130,23 +173,124 @@ public:
                 loudest = std::max(loudest, std::abs(v));
             expectLessThan(loudest, 1.0e-6f, "silence stays silent");
 
-            const auto x = sine(200.0, 0.3f, static_cast<int>(kRate * 2));
-            const auto clean = run(neutral(), x);
-            const auto dirty = run(p, x);
-            // A high-passed difference picks up the hiss and the clicks, not the 200 Hz tone.
-            double hissEnergy = 0.0, cleanEnergy = 0.0;
-            int clicks = 0;
-            for (std::size_t i = 4800; i + 1 < x.size(); ++i)
+            // Hiss alone under a tone at -10 dBFS and one at -60 dBFS: the same level, not the music's.
+            auto hissOnly = neutral();
+            hissOnly.hiss = 1.0f;
+            const double loud = rmsDb(noiseOf(hissOnly, sine(200.0, 0.3f, 96000)).first, 24000, 96000);
+            const double quiet = rmsDb(noiseOf(hissOnly, sine(200.0, 0.001f, 96000)).first, 24000, 96000);
+            logMessage("hiss at full Hiss: " + juce::String(loud, 1) + " dBFS under a loud tone, " + juce::String(quiet, 1) + " dBFS under a quiet one");
+            expectWithinAbsoluteError(loud, quiet, 1.0, "steady, whatever the music's level");
+            expectWithinAbsoluteError(loud, -33.0, 1.5, "as loud as before D221 at full Hiss");
+
+            // A second of tone, then silence: gone a second and a fraction after the music stops.
+            std::vector<float> toneThenSilence(static_cast<std::size_t>(kRate * 4), 0.0f);
+            const auto tone = sine(200.0, 0.3f, 48000);
+            std::copy(tone.begin(), tone.end(), toneThenSilence.begin());
+            const auto tail = noiseOf(p, toneThenSilence).first;
+            expectWithinAbsoluteError(rmsDb(tail, 48000 + 400, 48000 + 24000), loud, 1.0, "still there just after the music");
+            expectLessThan(rmsDb(tail, 48000 + 2 * 48000 + 9600, tail.size()), -120.0, "gone after the fade");
+        }
+
+        beginTest("hiss_has_tapes_tilt_and_bandwidth_dulls_it");
+        {
+            auto p = neutral();
+            p.hiss = 1.0f;
+            const auto x = sine(100.0, 0.3f, 48000 * 3);
+            const auto hiss = noiseOf(p, x).first;
+            // Power per hertz in a band: an averaged Hann-windowed spectrum.
+            auto bandDb = [&](const std::vector<float>& v, double lowHz, double highHz)
             {
-                const double d = (dirty[i] - dirty[i - 1]) - (clean[i] - clean[i - 1]);
-                hissEnergy += d * d;
-                const double c = clean[i] - clean[i - 1];
-                cleanEnergy += c * c;
-                if (std::abs(d) > 0.05)
-                    ++clicks;
+                constexpr int order = 12, size = 1 << order;
+                juce::dsp::FFT fft(order);
+                juce::dsp::WindowingFunction<float> window(static_cast<std::size_t>(size), juce::dsp::WindowingFunction<float>::hann);
+                std::vector<double> power(static_cast<std::size_t>(size / 2), 0.0);
+                std::vector<float> frame(static_cast<std::size_t>(2 * size));
+                int frames = 0;
+                for (std::size_t start = 9600; start + size <= v.size(); start += size / 2, ++frames)
+                {
+                    std::fill(frame.begin(), frame.end(), 0.0f);
+                    std::copy_n(v.begin() + static_cast<std::ptrdiff_t>(start), size, frame.begin());
+                    window.multiplyWithWindowingTable(frame.data(), static_cast<std::size_t>(size));
+                    fft.performFrequencyOnlyForwardTransform(frame.data());
+                    for (int b = 0; b < size / 2; ++b)
+                        power[static_cast<std::size_t>(b)] += static_cast<double>(frame[static_cast<std::size_t>(b)]) * frame[static_cast<std::size_t>(b)];
+                }
+                const int from = static_cast<int>(lowHz * size / kRate), to = static_cast<int>(highHz * size / kRate);
+                double sum = 0.0;
+                for (int b = from; b < to; ++b)
+                    sum += power[static_cast<std::size_t>(b)];
+                return 10.0 * std::log10(sum / static_cast<double>((to - from) * frames));
+            };
+            const double lows = bandDb(hiss, 150.0, 400.0), highs = bandDb(hiss, 4000.0, 8000.0);
+            logMessage("hiss per hertz: 150-400 Hz " + juce::String(lows, 1) + " dB, 4-8 kHz " + juce::String(highs, 1) + " dB");
+            expectGreaterThan(highs - lows, 6.0, "rising into the treble, as tape hiss after playback EQ");
+
+            auto dull = p;
+            dull.bandwidth = 0.0f;
+            const double open = bandDb(hiss, 6000.0, 12000.0);
+            const double closed = bandDb(noiseOf(dull, x).first, 6000.0, 12000.0);
+            expectGreaterThan(open - closed, 20.0, "Bandwidth dulls the hiss with the music");
+        }
+
+        beginTest("crackle_is_mostly_one_sided_and_independent_of_the_rate");
+        {
+            auto p = neutral();
+            p.crackle = 1.0f;
+            const auto x = sine(150.0, 0.3f, static_cast<int>(kRate * 6));
+            const auto [left, right] = noiseOf(p, x);
+            // Each click: where either side rises past 0.01 after 5 ms of quiet; one-sided if the other side stays
+            // under a tenth of it over the next 4 ms.
+            int oneSided = 0, both = 0, quiet = 0;
+            for (std::size_t i = 24000; i + 200 < left.size(); ++i)
+            {
+                const float level = std::max(std::abs(left[i]), std::abs(right[i]));
+                if (level < 0.01f)
+                {
+                    ++quiet;
+                    continue;
+                }
+                if (quiet >= 240)
+                {
+                    float peakLeft = 0.0f, peakRight = 0.0f;
+                    for (std::size_t k = i; k < i + 192; ++k)
+                    {
+                        peakLeft = std::max(peakLeft, std::abs(left[k]));
+                        peakRight = std::max(peakRight, std::abs(right[k]));
+                    }
+                    (std::min(peakLeft, peakRight) < 0.1f * std::max(peakLeft, peakRight) ? oneSided : both)++;
+                }
+                quiet = 0;
             }
-            expectGreaterThan(hissEnergy, 0.01 * cleanEnergy, "audible noise under the tone");
-            expectGreaterThan(clicks, 20, "crackle clicks");
+            logMessage("clicks: " + juce::String(oneSided) + " in one channel, " + juce::String(both) + " in both");
+            expectGreaterThan(oneSided, both / 2, "a groove wall at a time, as often as not");
+            expectGreaterThan(oneSided + both, 30, "it crackles");
+
+            // At 96 kHz the clicks last as long in time and sound as loud.
+            const auto x96 = [&]
+            {
+                std::vector<float> v(static_cast<std::size_t>(192000 * 6));
+                for (std::size_t i = 0; i < v.size(); ++i)
+                    v[i] = 0.3f * static_cast<float>(std::sin(2.0 * juce::MathConstants<double>::pi * 150.0 * static_cast<double>(i) / 192000.0));
+                return v;
+            }();
+            const double at48 = rmsDb(left, 24000, left.size());
+            const auto at96l = noiseOf(p, x96, 1, 192000.0).first;
+            const double at96 = rmsDb(at96l, 96000, at96l.size());
+            logMessage("crackle level: " + juce::String(at48, 1) + " dBFS at 48 kHz, " + juce::String(at96, 1) + " dBFS at 192 kHz");
+            expectWithinAbsoluteError(at96, at48, 3.0, "the same crackle at any sample rate");
+        }
+
+        beginTest("each_slot_its_own_noise_and_the_same_again_after_a_reset");
+        {
+            auto p = neutral();
+            p.hiss = 0.5f;
+            p.crackle = 0.5f;
+            const auto x = sine(300.0, 0.3f, 48000);
+            const auto one = noiseOf(p, x, 1).first;
+            const auto two = noiseOf(p, x, 2).first;
+            const auto again = noiseOf(p, x, 1).first;
+            expect(one != two, "two seeds, two noises");
+            expect(one == again, "one seed, the same noise every time");
         }
 
         beginTest("bank_lofi_slot");

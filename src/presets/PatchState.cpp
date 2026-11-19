@@ -54,6 +54,8 @@ namespace coolsynth::presets
             migrateLayerArps(*result.parameterStateXml); // one arp and three slots per layer before D194
         if (version <= patchVersionBeforeSlices)
             migrateSampleSlices(*result.parameterStateXml); // a Sample slot's slice values at their defaults (D207)
+        if (version <= patchVersionBeforeBrownNoise)
+            migrateNoiseTypes(*result.parameterStateXml); // a Noise slot's Type over five choices (D221)
         result.migrated = version != patchFormatVersion;
         return result;
     }

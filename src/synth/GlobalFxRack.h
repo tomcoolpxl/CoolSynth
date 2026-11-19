@@ -31,6 +31,8 @@ namespace coolsynth::synth
     {
     public:
         void prepare(double sampleRate, int samplesPerBlock, int outputChannelCount);
+        /** The slot's own random numbers for the effects that draw them (LoFi's noise, D221); before prepare. */
+        void setSeed(std::uint32_t seed) noexcept { lofi.setSeed(seed); }
         void reset() noexcept;
         void clear() noexcept;
         void process(juce::AudioBuffer<float>& buffer,

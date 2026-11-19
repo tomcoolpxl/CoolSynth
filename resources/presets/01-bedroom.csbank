@@ -43,7 +43,7 @@ mod = src=lfo1 dst=g1.pw amount=0.2
 mod = src=lfo1 dst=g2.pw amount=-0.2
 mod = src=lfo2 dst=p1.vowel amount=0.4
 voice = env2ToP1=0 drift=4
-i1 = LoFi wow=0.2 crackle=0.35 hiss=0.15 bandwidth=0.75 flutter=0
+i1 = LoFi wow=0.2 crackle=0.35 hiss=0.09 bandwidth=0.75 flutter=0
 i2 = Chorus rate=0.25 depth=0.4 mix=0.3
 i3 = Reverb size=0.6 damping=0.55 mix=0.3
 mix = level=-10.5
@@ -68,7 +68,7 @@ g2 = VA shape=sine oct=1 rand=0 level=0.3
 p1 = Ladder cutoff=1800 res=0.1 key=0.5
 env1 = attack=5 decay=600 sustain=0.3 release=400 velocity=0.5
 voice = env2ToP1=0 drift=3
-i1 = LoFi wow=0.45 flutter=0.35 hiss=0.3 bandwidth=0.7
+i1 = LoFi wow=0.45 flutter=0.35 hiss=0.18 bandwidth=0.7
 i2 = Chorus rate=0.3 depth=0.35 mix=0.3
 i3 = Reverb size=0.35 damping=0.5 mix=0.18
 mix = level=-1.5
@@ -82,7 +82,7 @@ mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=vca amount=-0.35 curve=unipolar via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.3
 # Effect routes of the macros (drafted 2026-11-15 for the user's review, D179)
-fx = src=macro2 dst=i1.hiss amount=0.2
+fx = src=macro2 dst=i1.hiss amount=0.12
 fx = src=macro3 dst=i3.size amount=0.1
 
 [Blanket Pad]
@@ -96,7 +96,7 @@ env1 = attack=900 decay=1500 sustain=1 release=1500
 glfo1 = shape=sine sync=off rate=0.2 retrigger=off
 mod = src=glfo1 dst=pitch amount=0.000625
 voice = env2ToP1=0 drift=3
-i1 = LoFi wow=0.2 bandwidth=0.8 hiss=0.08 flutter=0
+i1 = LoFi wow=0.2 bandwidth=0.8 hiss=0.048 flutter=0
 i2 = Reverb size=0.65 damping=0.6 mix=0.25
 mix = level=-8.5
 master = 0
@@ -142,7 +142,7 @@ env1 = attack=1 decay=3000 sustain=0 release=1200 velocity=0.5
 mod = src=velocity dst=g1.hard amount=0.25
 mod = src=key dst=g1.decay amount=-0.4
 voice = env2ToP1=0 drift=3
-i1 = LoFi wow=0.3 flutter=0.15 crackle=0.45 hiss=0.12 bandwidth=0.6
+i1 = LoFi wow=0.3 flutter=0.15 crackle=0.45 hiss=0.072 bandwidth=0.6
 i2 = Reverb size=0.35 damping=0.6 mix=0.2
 mix = level=-2.5
 master = 0

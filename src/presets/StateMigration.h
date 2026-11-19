@@ -64,4 +64,15 @@ namespace coolsynth::presets
         Slices on later starts where a new slot does. Slices itself, 0, is Off: the sound is the same.
     */
     void migrateSampleSlices(juce::XmlElement& parameterState);
+
+    /** The format versions before the Noise generator had a fifth type, Brown (D221). */
+    inline constexpr int processorStateVersionBeforeBrownNoise = 14;
+    inline constexpr int patchVersionBeforeBrownNoise = 13;
+
+    /**
+        Rewrites a parameter state from before D221 in place: a Noise slot's Type ran over four choices (White, Pink,
+        Band, Chip) and runs over five now, Brown added at the end; its stored value is rescaled, so each slot keeps
+        its kind. The sound is the same.
+    */
+    void migrateNoiseTypes(juce::XmlElement& parameterState);
 }

@@ -77,16 +77,10 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
    candidate, converted from these numbers (D104), then the user's side-by-side. The Juno-106 patches still have no
    free factory data (Roland sells its 128 for its own plugin; the dump format is documented, ST-Log, June 1989).
 7. The wine glasses as a source for the Grain generator.
-18. The added noise (D221, `docs/research/noise-modelling.md`): researched on 2026-11-19, the user chose, to build:
-    - LoFi's noise at a steady level while anything plays, fading out after about a second of silence (Satin's
-      Auto Mute), instead of following each note; the presets with hiss or crackle re-levelled (3 to 6 dB less Hiss).
-    - Crackle: clicks per channel or panned, random lengths of 20 µs to 4 ms with filtered timbres, many small and
-      few large, a quiet dense bed with a drifting rate, rare pops with a falling low thump, optionally a pattern
-      repeating at 33 1/3 rpm; independent of the sample rate.
-    - Hiss shaped as tape after playback EQ (rising above 1.3 to 2.3 kHz, rolled off at 10 to 14 kHz, a little
-      less below 500 Hz), added before the Bandwidth filter and the crush.
-    - Each LoFi slot its own seed; modulation (asperity) noise tied to Hiss; a Brown colour in the Noise generator.
-    - Then: the presets with hiss or crackle (Bedroom, Basement, Night Bus) for the user's ear.
+18. The added noise (D221, `docs/research/noise-modelling.md`): built on 2026-11-19 as the user chose (a steady level
+    with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
+    Brown). Left: the user's ear on the presets with hiss or crackle (Bedroom, Basement, Night Bus), with the
+    listening pass (item 3).
 
 ## Engine
 

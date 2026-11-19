@@ -40,7 +40,7 @@ namespace coolsynth::synth::v3
     {
     public:
         enum Param : int { type = 0, tone, resonance, chipMode, clock, width, paramCount };
-        enum class Kind : int { white = 0, pink, band, chip };
+        enum class Kind : int { white = 0, pink, band, chip, brown }; // brown last: older states are migrated (D221)
 
         static constexpr int latencySamples = generatorLatencySamples;
         static constexpr int pinkSections = 7;
@@ -50,7 +50,7 @@ namespace coolsynth::synth::v3
         {
             static const ModuleDescriptor d {
                 "Noise", 1,
-                {{ { "type",  "Type",      0.0f,  3.0f,  0.0f, Skew::linear, Unit::choice,    false, "White|Pink|Band|Chip" },
+                {{ { "type",  "Type",      0.0f,  4.0f,  0.0f, Skew::linear, Unit::choice,    false, "White|Pink|Band|Chip|Brown" },
                    { "tone",  "Tone",      0.0f,  1.0f,  1.0f, Skew::linear, Unit::percent,   true },
                    { "res",   "Resonance", 0.0f,  1.0f,  0.3f, Skew::linear, Unit::percent,   true },
                    { "chip",  "Chip Mode", 0.0f,  1.0f,  0.0f, Skew::linear, Unit::choice,    false, "Long|Short" },
@@ -67,6 +67,8 @@ namespace coolsynth::synth::v3
             sampleRate = std::max(1000.0, newSampleRate);
             signalTrack = memory.take(static_cast<std::size_t>(std::max(1, maxSubBlock)));
             designPink();
+            brownLeak = static_cast<float>(std::exp(-2.0 * juce::MathConstants<double>::pi * 20.0 / sampleRate));
+            brownGain = kWhiteLevel * std::sqrt(1.0f - brownLeak * brownLeak);
 
             // Each instance its own noise: voices that share a sequence would sum coherently.
             // Its own sequence from the slot's seed (no global count: D162 rule 3).
@@ -88,6 +90,7 @@ namespace coolsynth::synth::v3
             bandLeft = {};
             bandRight = {};
             toneLeft = toneRight = toneMono = 0.0f;
+            brownLeft = brownRight = 0.0f;
             accLeft.fill(0.0f);
             accRight.fill(0.0f);
             accMono.fill(0.0f);
@@ -105,7 +108,7 @@ namespace coolsynth::synth::v3
 
         void process(float* left, float* right, int numSamples, const SlotParams& params) noexcept
         {
-            const auto kind = static_cast<Kind>(juce::jlimit(0, 3, static_cast<int>(std::lround(params.p[type]))));
+            const auto kind = static_cast<Kind>(juce::jlimit(0, 4, static_cast<int>(std::lround(params.p[type]))));
             const float toneAmount = juce::jlimit(0.0f, 1.0f, params.p[tone]);
             const float widthAmount = juce::jlimit(0.0f, 1.0f, params.p[width]);
             const bool stereo = widthAmount > 0.0f && kind != Kind::chip;
@@ -156,6 +159,13 @@ namespace coolsynth::synth::v3
                         break;
                     case Kind::chip:
                         a = b = runChip(clockStep, shortMode, gainLeft, gainRight);
+                        break;
+                    case Kind::brown:
+                        // -6 dB an octave: white through a leaky integrator, its corner at 20 Hz, as loud as white.
+                        brownLeft = brownLeak * brownLeft + brownGain * nextUniform(rngLeft);
+                        brownRight = stereo ? brownLeak * brownRight + brownGain * nextUniform(rngRight) : brownLeft;
+                        a = brownLeft;
+                        b = brownRight;
                         break;
                 }
 
@@ -347,6 +357,7 @@ namespace coolsynth::synth::v3
         double sampleRate = 96000.0;
         std::array<ShelfCoefficients, pinkSections> pinkCoefficients {};
         float pinkGain = 1.0f;
+        float brownLeak = 0.99f, brownGain = 0.1f, brownLeft = 0.0f, brownRight = 0.0f;
         PinkState pinkLeft, pinkRight;
         BandState bandLeft, bandRight;
         float toneLeft = 0.0f, toneRight = 0.0f, toneMono = 0.0f;

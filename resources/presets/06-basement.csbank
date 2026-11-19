@@ -113,7 +113,7 @@ p3 = Crusher bits=12 rate=22000 mix=1
 env1 = attack=600 decay=1500 sustain=1 release=1500
 voice = env2ToP1=0 drift=4
 i1 = Drive amount=0.15 mix=0.5
-i2 = LoFi wow=0.25 hiss=0.25 crackle=0.15 bandwidth=0.7 flutter=0
+i2 = LoFi wow=0.25 hiss=0.15 crackle=0.15 bandwidth=0.7 flutter=0
 i3 = Reverb size=0.6 damping=0.6 mix=0.2
 mix = level=-13.5
 master = 0

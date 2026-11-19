@@ -135,12 +135,12 @@ public:
 
     void runTest() override
     {
-        beginTest("descriptor_lists_the_four_kinds");
+        beginTest("descriptor_lists_the_five_kinds");
         {
             const auto& d = NoiseGenerator::descriptor();
             expectEquals(juce::String(d.name), juce::String("Noise"));
             expectEquals(d.usedParams, static_cast<int>(NoiseGenerator::paramCount));
-            expectEquals(juce::String(d.params[NoiseGenerator::type].options), juce::String("White|Pink|Band|Chip"));
+            expectEquals(juce::String(d.params[NoiseGenerator::type].options), juce::String("White|Pink|Band|Chip|Brown")); // Brown last (D221)
         }
 
         beginTest("every_kind_sits_near_a_saw_after_decimation");
@@ -166,7 +166,7 @@ public:
             for (const auto c : { Case { Kind::white, 440.0f, 0.3f, 0.0f }, Case { Kind::pink, 440.0f, 0.3f, 0.0f },
                                   Case { Kind::band, 200.0f, 0.0f, 0.0f }, Case { Kind::band, 3000.0f, 1.0f, 0.0f },
                                   Case { Kind::band, 440.0f, 0.5f, 0.0f }, Case { Kind::chip, 440.0f, 0.3f, 0.0f },
-                                  Case { Kind::chip, 220.0f, 0.3f, 1.0f } })
+                                  Case { Kind::chip, 220.0f, 0.3f, 1.0f }, Case { Kind::brown, 440.0f, 0.3f, 0.0f } })
             {
                 auto noise = makeNoise();
                 auto p = noiseParams(c.kind, c.hz);
@@ -196,6 +196,19 @@ public:
             expectLessThan(*high - *low, 2.0, "pink: equal power per octave from 62 Hz to 16 kHz");
             const double whiteSlope = (whiteOctaves.back() - whiteOctaves.front()) / static_cast<double>(whiteOctaves.size() - 1);
             expectWithinAbsoluteError(whiteSlope, 3.01, 0.3, "white: +3 dB per octave");
+        }
+
+        beginTest("brown_falls_six_db_an_octave");
+        {
+            // D221: per octave its power falls 3 dB (6 dB per octave per hertz), from 125 Hz to 8 kHz.
+            auto noise = makeNoise();
+            const auto brown = spectrum(render(noise->generator, noiseParams(Kind::brown), 96000 * 8).left);
+            std::vector<double> octaves;
+            for (double f = 125.0; f < 8000.0; f *= 2.0)
+                octaves.push_back(bandPowerDb(brown, kVoiceRate, f, 2.0 * f));
+            const double slope = (octaves.back() - octaves.front()) / static_cast<double>(octaves.size() - 1);
+            logMessage("brown: " + juce::String(slope, 2) + " dB per octave of power");
+            expectWithinAbsoluteError(slope, -3.01, 0.4, "brown: -3 dB per octave of power");
         }
 
         beginTest("band_noise_centres_on_the_note");

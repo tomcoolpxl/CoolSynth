@@ -123,3 +123,20 @@ The clicks are one shape, mono and centred, narrow in size and sparse, with no b
 The hiss has a flat spectrum to 6 kHz (too much low-mid, too little sizzle) and is not dulled by Bandwidth.
 
 There is no modulation noise, and every LoFi slot shares one seed.
+
+## Built on 2026-11-19 (D221)
+
+The user's choices, in `src/synth/LoFi.h` and `src/synth/v3/NoiseGenerator.h`:
+- The noise holds a steady level while anything above -70 dBFS plays and fades out over a second after a
+  second of silence.
+- Hiss: -4 dB under 500 Hz, +8 dB above 2.3 kHz, a two-pole roll-off at 12 kHz, before Bandwidth and the crush;
+  the same level per hertz at any sample rate; full Hiss still about -33 dBFS. Modulation noise rides on the
+  signal, about 45 dB under it at full Hiss.
+- Crackle: clicks of 20 µs to 4 ms, their colour set in hertz and their level made up for it, half on one
+  channel and half panned; many small and few large; a bed of 100 to 500 a second at a fraction of their size,
+  drifting and swelling with a 1.8 s turn; two marks that tick each turn; pops with a thump that falls from about
+  90 to 140 Hz, on the click's side.
+- Each LoFi slot its own seed, from its sound and place; reset starts it again.
+- Brown in the Noise generator, older states migrated (format 15, patches 14).
+- The presets with hiss: Hiss and its macro routes at 0.6 of what they were, as a steady hiss is heard more.
+  The crackle presets keep their values. All of them wait for the user's ear.

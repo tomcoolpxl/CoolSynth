@@ -203,6 +203,29 @@ namespace coolsynth::presets
         return renamed;
     }
 
+    void migrateNoiseTypes(juce::XmlElement& parameterState)
+    {
+        namespace sv3 = coolsynth::synth::v3;
+        auto find = [&](const juce::String& id) -> juce::XmlElement*
+        {
+            for (auto* child : parameterState.getChildWithTagNameIterator(parameterTag))
+                if (child->getStringAttribute(idAttribute) == id)
+                    return child;
+            return nullptr;
+        };
+        for (const char* layer : { "pA", "pB" })
+            for (int slot = 1; slot <= 3; ++slot)
+            {
+                const juce::String path = juce::String(layer) + ".g" + juce::String(slot) + ".";
+                const auto* type = find(path + "type");
+                if (type == nullptr || juce::roundToInt(type->getDoubleAttribute(valueAttribute)) != sv3::generatorType::noise)
+                    continue;
+                // Type is the first value: 0..1 meant 0..3 and means 0..4 now.
+                if (auto* value = find(path + "p" + juce::String(sv3::NoiseGenerator::type + 1)); value != nullptr)
+                    value->setAttribute(valueAttribute, value->getDoubleAttribute(valueAttribute) * 3.0 / 4.0);
+            }
+    }
+
     void migrateSampleSlices(juce::XmlElement& parameterState)
     {
         namespace sv3 = coolsynth::synth::v3;
