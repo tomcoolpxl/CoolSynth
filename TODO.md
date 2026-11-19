@@ -5,11 +5,27 @@ user was away are there too, each with every option: review them.
 
 ## Before or right after the first release (0.3.0)
 
-1. The FL Studio knob test with the MiniLab driver Off (the friend's flow): FL's MIDI port, the wrapper's input
-   port, knob 7 moving Brightness (D211, D213).
-2. Run the released installer once on this computer (it needs an administrator's yes; D213). Then check that
-   Ableton finds the installed CoolSynth: its custom VST3 folder is empty since D213, so **Use VST3 Plug-In System
-   Folders** must be on.
+1. The FL Studio knob test failed on 2026-11-19 (D216): the MiniLab stayed in its DAW program with the driver Off,
+   and FL's MIDI port doubled every note. Replaced by the controller redesign below.
+2. The released installer ran here on 2026-11-19: the VST3 and the app match the release byte for byte. Left: check
+   that Ableton finds the installed CoolSynth (its custom VST3 folder is empty since D213, so **Use VST3 Plug-In
+   System Folders** must be on).
+
+## Controllers (D216, `docs/design/CONTROLLERS.md`)
+
+C1. README: the DAW's own mapping first (FL: Link to controller or Multilink, no port), CoolSynth's Learn second.
+C2. Parameter order and gestures: the eight most useful parameters first, stable IDs, every panel edit a proper
+    begin/change/end gesture.
+C3. An exact duplicate-note filter for FL's doubled delivery when a port is set.
+C4. The MiniLab: drop every driver-owned message from the DAW's input exactly (replaces the `isPadEcho` timing guess);
+    the channel-1 hint where the DAW merges channels; the FL script linking by itself again; a ready setup for the
+    DAW program; the disconnect in both forms after clearing the screen; device-change notifications instead of
+    polling; a fallback when the port cannot be opened.
+C5. A CLAP build with remote control pages (clap-juce-extensions), one page per panel page and `suggest_page`; the
+    installer installs it.
+C6. Test per DAW (Ableton, FL Studio, Reaper, and Bitwig or Studio One if available): which hosts call `IMidiMapping`
+    (a logging build), the duplicate filter, the channel-1 setting, the guided setup step by step (never tested by
+    hand yet), and the MiniLab in both programs.
 
 ## The user's ear and hands
 
