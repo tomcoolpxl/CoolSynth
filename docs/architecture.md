@@ -274,7 +274,8 @@ and sets the sound by the values the screen shows, loads presets and files, play
 pictures the window or one part of it enlarged and reads the flight log, which now also logs every knob change
 and file choice. It reads the panel as text and clicks its parts by name (D227): the panel describes itself from
 what it draws (`PanelEditor::describeForMcp`) and a click is a mouse event at that part. Its tools run on the
-message thread.
+message thread. The panel's knobs, faders, pads and buttons also have accessible names and values (JUCE's
+accessibility handlers), which Windows Narrator and UI Automation read (`tools/uia-check.ps1`).
 
 **Tests.** All tests are one program, `CoolSynthMidiLearnTests` (the name is older than what it tests), built
 from `tests/*.cpp` and run by `ctest`. Set `COOLSYNTH_TEST_ONLY` to part of a test's name to run only those

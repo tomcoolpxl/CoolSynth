@@ -156,6 +156,9 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 30. Parked (the user, 2026-11-19): the famous bass drum of the theme of the series Succession (Nicholas Britell's
     main title). Research how it is made (online: interviews, breakdowns, remakes), then whether CoolSynth can
     play it (a drum voice, a sample, a preset) and options to choose from.
+31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
+    page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
+    panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.
 
 
 ## Standing notes

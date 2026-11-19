@@ -224,6 +224,38 @@ public:
 
     bool spinsItself = true; // false: spinBy() turns it, from the model's count
 
+    /** Its name and value for screen readers and UI Automation (D227, the user's choice): "Knob 3: Sensitivity",
+        "25 %". A changed value is announced. */
+    void setAccessibleState(const juce::String& title, const juce::String& valueNow)
+    {
+        if (getTitle() != title)
+            setTitle(title);
+        if (valueNow != spokenValue)
+        {
+            spokenValue = valueNow;
+            if (auto* handler = getAccessibilityHandler())
+                handler->notifyAccessibilityEvent(juce::AccessibilityEvent::valueChanged);
+        }
+    }
+
+    std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override
+    {
+        struct Value final : juce::AccessibilityTextValueInterface
+        {
+            explicit Value(const Knob& k) : knob(k) {}
+            bool isReadOnly() const override { return true; }
+            juce::String getCurrentValueAsString() const override { return knob.spokenValue; }
+            void setValueAsString(const juce::String&) override {}
+            const Knob& knob;
+        };
+        return std::make_unique<juce::AccessibilityHandler>(
+            *this, juce::AccessibilityRole::slider,
+            juce::AccessibilityActions().addAction(juce::AccessibilityActionType::press, [this] { if (onPress) onPress(); }),
+            juce::AccessibilityHandler::Interfaces { std::make_unique<Value>(*this) });
+    }
+
+    juce::String spokenValue;
+
     void paint(juce::Graphics& g) override
     {
         const auto bounds = getLocalBounds().toFloat().reduced(4.0f);
@@ -391,6 +423,14 @@ public:
         }
         if (onPress)
             onPress();
+    }
+
+    /** A button for screen readers and UI Automation (D227): "Pad 2: Sound", lit or not, pressed by them too. */
+    std::unique_ptr<juce::AccessibilityHandler> createAccessibilityHandler() override
+    {
+        return std::make_unique<juce::AccessibilityHandler>(
+            *this, juce::AccessibilityRole::button,
+            juce::AccessibilityActions().addAction(juce::AccessibilityActionType::press, [this] { if (onPress) onPress(); }));
     }
 
     void paint(juce::Graphics& g) override
@@ -1955,6 +1995,19 @@ public:
                 showLearnMenu(static_cast<coolsynth::midi::Place>(static_cast<int>(coolsynth::midi::Place::fader1) + f),
                               faders[static_cast<std::size_t>(f)]);
             };
+            // its name and level for screen readers and UI Automation (D227), as the parameter reads it
+            fader.setTitle("Fader " + juce::String(f + 1) + ": " + model.faderName(f));
+            fader.textFromValueFunction = [this, f](double)
+            {
+                namespace ids = coolsynth::parameters::ids;
+                static constexpr std::array<const char*, 4> faderIds { ids::volumeA, ids::volumeB, ids::volumeFx, ids::volumeMaster };
+                juce::String text;
+                if (auto* p = owner.synth.getValueTreeState().getParameter(faderIds[static_cast<std::size_t>(f)]))
+                    text = p->getCurrentValueAsText();
+                if (f == 3 && model.masterBoostDb() > 0.0f)
+                    text << ", boost +" << juce::String(model.masterBoostDb(), 1) << " dB";
+                return text;
+            };
             addAndMakeVisible(fader);
         }
 
@@ -2576,6 +2629,7 @@ public:
             if (number == 5)
             {
                 knobLabels[static_cast<std::size_t>(k)] = model.pageKnobRole();
+                knob.setAccessibleState("Knob 5: " + model.pageKnobRole(), model.currentPage().name); // (D227)
                 knob.repaint();
                 continue;
             }
@@ -2594,8 +2648,14 @@ public:
                 knob.ring = knob.ring.withAlpha(0.28f);
             knobIdle[static_cast<std::size_t>(k)] = view.idle;
             knobLabels[static_cast<std::size_t>(k)] = view.name;
+            // its name and value for screen readers and UI Automation (D227)
+            knob.setAccessibleState("Knob " + juce::String(number) + ": " + view.name,
+                                    ! view.active ? juce::String("does nothing here")
+                                                  : view.value + (view.idle ? " (does nothing now: " + view.why + ")" : juce::String())
+                                                        + (view.pending ? juce::String(", press to load") : juce::String()));
             knob.repaint();
         }
+        mainKnob.setAccessibleState("Main knob", "turn: " + model.mainTurnRole() + ", press: " + model.mainPressRole());
         updatingFaders = true;
         for (int f = 0; f < 4; ++f)
         {
@@ -2615,6 +2675,13 @@ public:
             pad.glow = p == InterfaceModel::homePad && model.loadingInstrument() ? InterfaceModel::loadingGlow() : -1.0f; // glows while loading (D156)
             pad.face = model.padLabel(p, shiftOn);
             pad.sub = p == InterfaceModel::homePad ? juce::String("Layer switch") : juce::String();
+            // its name for screen readers and UI Automation (D227)
+            static const juce::StringArray symbols { "Stop", "Play", "Record" };
+            const auto title = "Pad " + juce::String(p + 1) + ": " + (pad.symbol >= 0 ? symbols[pad.symbol] : pad.face);
+            if (pad.getTitle() != title)
+                pad.setTitle(title);
+            if (const auto state = juce::String(pad.lit ? "lit" : ""); pad.getDescription() != state)
+                pad.setDescription(state);
             pad.repaint();
         }
         repaint();

@@ -34,6 +34,8 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
 ## Sound (TODO 3, 4, 13, 18)
 
 - [ ] The listening pass over the bank: levels, the glow, click-to-load, sounds ringing on after a change.
+  Supersaw's undertone (your test pass): its sub, layer B, a sine an octave under the lowest key at -5 dB, by design;
+  keep it, make it quieter (about -11 dB) or remove it.
 - [ ] The sampled instruments, on the audition page.
 - [ ] The new noise (D221): hiss and crackle in Bedroom, Basement and Night Bus, and that it mutes in silence.
 - [ ] The stutter's drafts (D220): Cut-Up Chords, Wheel Stutter, Glitch Pad.
