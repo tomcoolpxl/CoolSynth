@@ -72,7 +72,11 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 5. Next from the research on the user's reference artists (`docs/research/sound-references.md`): the Pitch effect's
    Tune mode and formant control. The stutter effect is built (D220); its three draft presets in Night Bus (Cut-Up
    Chords, Wheel Stutter, Glitch Pad) wait for the user's ear, with the listening pass (item 3).
-6. The Museum: the hoover and Juno-106 patches still have no published source.
+6. The Museum: the hoover and Juno-106 patches still have no published source. Leads found on 2026-11-19: the
+   Alpha Juno factory tone banks as .syx files and a reader that prints every parameter
+   (llamamusic.com/mks50/mks-50_patches.html), so the hoover can be decoded once the user allows the download; the
+   Juno-106's single-patch dump is documented (ST-Log, June 1989), but Roland now sells its 128 factory patches
+   only for its own plugin, and no free factory data was found.
 7. The wine glasses as a source for the Grain generator.
 18. In progress (2026-11-19, the online part with a research agent). The added noise sounds artificial at times (the
     user, 2026-11-19): LoFi's Hiss, white noise through a one-pole low-pass at 6 kHz that follows the signal's
