@@ -68,6 +68,48 @@ namespace
         return x;
     }
 
+    /** A bar of drums at 120 BPM, as the user's test loop CST1 (D225): kick on 0, 0.75 and 1.0 s, snare on 0.5 and 1.5 s,
+        hats on 0.25, 1.25 and 1.75 s. The kick a quarter note after the snare is the one the old detector missed. */
+    std::vector<float> drumBar(std::vector<double>& times)
+    {
+        std::vector<float> x(static_cast<std::size_t>(2.0 * kRate), 0.0f);
+        juce::Random random(7);
+        auto add = [&](double at, auto voice)
+        {
+            const auto start = static_cast<std::size_t>(at * kRate);
+            double phase = 0.0;
+            float last = 0.0f;
+            for (std::size_t i = 0; i < static_cast<std::size_t>(0.25 * kRate) && start + i < x.size(); ++i)
+                x[start + i] += voice(static_cast<double>(i) / kRate, phase, last, random);
+        };
+        const auto kick = [](double t, double& phase, float&, juce::Random&)
+        {
+            phase += 2.0 * kPi * (45.0 + 90.0 * std::exp(-t * 30.0)) / kRate;
+            return static_cast<float>(std::sin(phase) * std::exp(-t * 9.0));
+        };
+        const auto snare = [](double t, double&, float&, juce::Random& r)
+        {
+            return static_cast<float>(0.6 * (r.nextFloat() * 2.0 - 1.0) * std::exp(-t * 18.0) + 0.5 * std::sin(2.0 * kPi * 185.0 * t) * std::exp(-t * 25.0));
+        };
+        const auto hat = [](double t, double&, float& last, juce::Random& r)
+        {
+            const float n = r.nextFloat() * 2.0f - 1.0f;
+            const float out = 0.35f * (n - last) * static_cast<float>(std::exp(-t * 60.0));
+            last = n;
+            return out;
+        };
+        times = { 0.0, 0.25, 0.5, 0.75, 1.0, 1.25, 1.5, 1.75 };
+        add(0.0, kick);
+        add(0.25, hat);
+        add(0.5, snare);
+        add(0.75, kick);
+        add(1.0, kick);
+        add(1.25, hat);
+        add(1.5, snare);
+        add(1.75, hat);
+        return x;
+    }
+
     std::vector<float> sine(double hz, double seconds)
     {
         std::vector<float> x(static_cast<std::size_t>(seconds * kRate));
@@ -188,8 +230,8 @@ public:
 
     void runTest() override
     {
-        // Opt-in (COOLSYNTH_ATTACKS_OF=a WAV): the attacks the detector finds in a file, to study one, with the
-        // Sensitivity at which each comes in ((1 - sensitivity) squared of the strongest).
+        // Opt-in (COOLSYNTH_ATTACKS_OF=a WAV): the attacks the detector finds in a file, to study one, with each one's
+        // rank (Sensitivity keeps the strongest so many, D225).
         if (const auto path = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_ATTACKS_OF", {}); path.isNotEmpty())
         {
             beginTest("the_attacks_of_a_file");
@@ -201,8 +243,8 @@ public:
                 reader->read(&audio, 0, audio.getNumSamples(), 0, true, false);
                 const auto attacks = UserLibrary::findAttacks(audio.getReadPointer(0), audio.getNumSamples(), reader->sampleRate);
                 for (const auto& a : attacks)
-                    logMessage(juce::String(a.frame / reader->sampleRate, 3) + " s, strength " + juce::String(a.strength, 3)
-                               + ", in from Sensitivity " + juce::String(100.0f * (1.0f - std::sqrt(a.strength)), 0) + " %");
+                    logMessage(juce::String(a.frame / reader->sampleRate, 3) + " s, strength " + juce::String(a.strength, 3) + ", rank "
+                               + juce::String(a.rank + 1) + " of " + juce::String(static_cast<int>(attacks.size())));
             }
             return;
         }
@@ -294,7 +336,11 @@ public:
         {
             const auto audio = hits(times, { 1.0f, 0.3f, 0.8f, 0.15f, 0.6f }, 1.3);
             const auto attacks = UserLibrary::findAttacks(audio.data(), static_cast<int>(audio.size()), kRate);
-            expectEquals(static_cast<int>(attacks.size()), 5);
+            juce::String found;
+            for (const auto& a : attacks)
+                found << juce::String(a.frame / kRate, 3) << " s " << juce::String(a.strength, 2) << ", ";
+            logMessage("struck tones: " + found);
+            expectEquals(static_cast<int>(attacks.size()), 5, found);
             for (std::size_t a = 0; a < std::min(attacks.size(), times.size()); ++a)
                 expectWithinAbsoluteError(attacks[a].frame / kRate, times[a], 0.003, "attack " + juce::String(static_cast<int>(a)));
             float strongest = 0.0f;
@@ -302,6 +348,67 @@ public:
                 strongest = std::max(strongest, a.strength);
             expectWithinAbsoluteError(strongest, 1.0f, 1.0e-6f);
             expect(attacks.size() < 2 || attacks[1].strength < attacks[0].strength, "the quieter hit is the weaker attack");
+        }
+
+        beginTest("a_drum_bar_every_hit_found_kicks_not_ranked_below_hats");
+        {
+            // The user's test pass (D225): the plain-bin detector ranked the hats strongest and missed the kick after
+            // the snare; by bands, every hit is found and each kind counts.
+            std::vector<double> drumTimes;
+            const auto bar = drumBar(drumTimes);
+            const auto attacks = UserLibrary::findAttacks(bar.data(), static_cast<int>(bar.size()), kRate);
+            juce::String found;
+            for (const auto& a : attacks)
+                found << juce::String(a.frame / kRate, 3) << " s " << juce::String(a.strength, 2) << ", ";
+            logMessage("attacks: " + found);
+            expectEquals(static_cast<int>(attacks.size()), static_cast<int>(drumTimes.size()), found);
+            for (const double t : drumTimes)
+                expect(std::any_of(attacks.begin(), attacks.end(), [&](const LoadedStyle::Attack& a) { return std::abs(a.frame / kRate - t) < 0.006; }),
+                       "a hit at " + juce::String(t, 2) + " s");
+            float weakestKick = 1.0f, strongestHat = 0.0f;
+            for (const auto& a : attacks)
+            {
+                const double t = a.frame / kRate;
+                for (const double k : { 0.0, 0.75, 1.0 })
+                    if (std::abs(t - k) < 0.006)
+                        weakestKick = std::min(weakestKick, a.strength);
+                for (const double h : { 0.25, 1.25, 1.75 })
+                    if (std::abs(t - h) < 0.006)
+                        strongestHat = std::max(strongestHat, a.strength);
+            }
+            expectGreaterThan(weakestKick, 0.5f * strongestHat, "a kick counts at least half as much as the strongest hat");
+        }
+
+        beginTest("sensitivity_by_rank_adds_slices_step_by_step");
+        {
+            std::vector<double> drumTimes;
+            const auto bar = drumBar(drumTimes);
+            LoadedStyle style;
+            style.attacks = UserLibrary::findAttacks(bar.data(), static_cast<int>(bar.size()), kRate);
+            SampleZone zone;
+            zone.frames = static_cast<int>(bar.size());
+            zone.rate = kRate;
+            auto sliceCount = [&](float sensitivity)
+            {
+                int n = 0, from = 0, to = 0;
+                while (SampleGenerator::sliceRange(style, zone, 2, 0, sensitivity, n, from, to))
+                    ++n;
+                return n;
+            };
+            juce::String counts;
+            int previous = 0;
+            bool rising = true;
+            for (int s = 0; s <= 8; ++s)
+            {
+                const int c = sliceCount(static_cast<float>(s) / 8.0f);
+                counts << c << " ";
+                rising = rising && c >= previous;
+                previous = c;
+            }
+            logMessage("slices at Sensitivity 0, 1/8 ... 1: " + counts);
+            expect(rising, "never fewer slices for more Sensitivity: " + counts);
+            expectLessThan(sliceCount(0.25f), sliceCount(0.75f), "a quarter of the knob and three quarters differ: " + counts);
+            expectLessThan(sliceCount(0.5f), sliceCount(1.0f), "and the knob's top half still adds: " + counts);
         }
 
         beginTest("sensitivity_keeps_more_or_fewer_attack_slices");

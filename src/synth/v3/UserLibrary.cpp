@@ -1,6 +1,7 @@
 #include "UserLibrary.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstring>
 
@@ -295,11 +296,50 @@ namespace coolsynth::synth::v3
         std::vector<float> window(static_cast<std::size_t>(size)), buffer(static_cast<std::size_t>(2 * size));
         for (int i = 0; i < size; ++i)
             window[static_cast<std::size_t>(i)] = static_cast<float>(0.5 - 0.5 * std::cos(2.0 * juce::MathConstants<double>::pi * i / size));
-        std::vector<float> previous(static_cast<std::size_t>(bins), 0.0f);
         const int frames = length / hop + 1;
-        std::vector<float> novelty(static_cast<std::size_t>(frames), 0.0f);
 
-        // Spectral flux on compressed magnitudes: how much louder each band got since the last hop, summed.
+        // Bands a third of an octave wide from 30 Hz (each bin in the band of its centre), so a kick's few low bins
+        // count as much as a hi-hat's many high ones (D225; log-spaced bands, Boeck et al. 2012, SuperFlux): the plain
+        // bins had ranked the hats strongest and the kicks weakest. Three ranges, each judged on its own (a multi-band
+        // detector, Bello et al. 2005): below 150 Hz the kicks, to 2 kHz the snares and toms, above it the hats.
+        constexpr int rangeCount = 3;
+        const double binHz = rate / size;
+        std::vector<int> bandOf(static_cast<std::size_t>(bins), -1);
+        std::vector<int> bandRange;
+        std::vector<int> bandBins;
+        // Consecutive bins in the same third of an octave and range share a band.
+        {
+            int lastThird = -1000, lastRange = -1;
+            for (int k = 1; k < bins; ++k)
+            {
+                const double hz = k * binHz;
+                if (hz < 30.0 || hz > 17000.0)
+                    continue;
+                const int third = static_cast<int>(std::floor(3.0 * std::log2(hz / 30.0)));
+                const int range = hz < 150.0 ? 0 : (hz < 2000.0 ? 1 : 2);
+                if (third != lastThird || range != lastRange)
+                {
+                    bandRange.push_back(range);
+                    bandBins.push_back(0);
+                    lastThird = third;
+                    lastRange = range;
+                }
+                bandOf[static_cast<std::size_t>(k)] = static_cast<int>(bandRange.size()) - 1;
+                ++bandBins.back();
+            }
+        }
+        const auto bandCount = bandRange.size();
+        std::array<int, rangeCount> bandsInRange {};
+        for (const int r : bandRange)
+            ++bandsInRange[static_cast<std::size_t>(r)];
+
+        std::vector<float> level(bandCount, 0.0f), previous(bandCount, 0.0f);
+        std::array<std::vector<float>, rangeCount> novelty;
+        for (auto& n : novelty)
+            n.assign(static_cast<std::size_t>(frames), 0.0f);
+
+        // Spectral flux on compressed magnitudes, per band: how much louder each band got since the last hop, the
+        // mean over a range's bands.
         for (int f = 0; f < frames; ++f)
         {
             const int start = f * hop - size / 2;
@@ -310,43 +350,70 @@ namespace coolsynth::synth::v3
             }
             std::fill(buffer.begin() + size, buffer.end(), 0.0f);
             fft.performRealOnlyForwardTransform(buffer.data(), true);
-            float flux = 0.0f;
-            for (int k = 0; k < bins; ++k)
+            std::fill(level.begin(), level.end(), 0.0f);
+            for (int k = 1; k < bins; ++k)
+                if (const int b = bandOf[static_cast<std::size_t>(k)]; b >= 0)
+                {
+                    const auto ku = static_cast<std::size_t>(k);
+                    level[static_cast<std::size_t>(b)] += std::hypot(buffer[2 * ku], buffer[2 * ku + 1]);
+                }
+            std::array<float, rangeCount> flux {};
+            for (std::size_t b = 0; b < bandCount; ++b)
             {
-                const auto ku = static_cast<std::size_t>(k);
-                const float magnitude = std::log1p(100.0f * std::hypot(buffer[2 * ku], buffer[2 * ku + 1]));
-                flux += std::max(0.0f, magnitude - previous[ku]);
-                previous[ku] = magnitude;
+                const float magnitude = std::log1p(100.0f * level[b] / static_cast<float>(bandBins[b]));
+                flux[static_cast<std::size_t>(bandRange[b])] += std::max(0.0f, magnitude - previous[b]);
+                previous[b] = magnitude;
             }
-            novelty[static_cast<std::size_t>(f)] = flux;
+            for (int r = 0; r < rangeCount; ++r)
+                if (bandsInRange[static_cast<std::size_t>(r)] > 0)
+                    novelty[static_cast<std::size_t>(r)][static_cast<std::size_t>(f)] = flux[static_cast<std::size_t>(r)]
+                                                                                        / static_cast<float>(bandsInRange[static_cast<std::size_t>(r)]);
         }
 
-        // What rises above its neighbourhood: the flux less its median over about 90 ms around.
+        // What rises above its neighbourhood in each range: the flux less its median over about 90 ms around; combined,
+        // the strongest range at each hop. (Each range scaled by its own strongest made a near-empty range's noise
+        // read as attacks; the bands alone already rank kicks, snares and hats fairly.)
         constexpr int around = 8;
         std::vector<float> excess(static_cast<std::size_t>(frames), 0.0f), neighbourhood;
         neighbourhood.reserve(2 * around + 1);
+        std::array<std::vector<float>, rangeCount> rangeExcess;
+        for (int r = 0; r < rangeCount; ++r)
+        {
+            auto& out = rangeExcess[static_cast<std::size_t>(r)];
+            out.assign(static_cast<std::size_t>(frames), 0.0f);
+            const auto& in = novelty[static_cast<std::size_t>(r)];
+            for (int f = 0; f < frames; ++f)
+            {
+                neighbourhood.clear();
+                for (int g = std::max(0, f - around); g <= std::min(frames - 1, f + around); ++g)
+                    neighbourhood.push_back(in[static_cast<std::size_t>(g)]);
+                std::nth_element(neighbourhood.begin(), neighbourhood.begin() + static_cast<std::ptrdiff_t>(neighbourhood.size() / 2), neighbourhood.end());
+                const float e = std::max(0.0f, in[static_cast<std::size_t>(f)] - neighbourhood[neighbourhood.size() / 2]);
+                out[static_cast<std::size_t>(f)] = e;
+            }
+        }
         float strongest = 0.0f;
         for (int f = 0; f < frames; ++f)
         {
-            neighbourhood.clear();
-            for (int g = std::max(0, f - around); g <= std::min(frames - 1, f + around); ++g)
-                neighbourhood.push_back(novelty[static_cast<std::size_t>(g)]);
-            std::nth_element(neighbourhood.begin(), neighbourhood.begin() + static_cast<std::ptrdiff_t>(neighbourhood.size() / 2), neighbourhood.end());
-            const float e = std::max(0.0f, novelty[static_cast<std::size_t>(f)] - neighbourhood[neighbourhood.size() / 2]);
+            float e = 0.0f;
+            for (int r = 0; r < rangeCount; ++r)
+                e = std::max(e, rangeExcess[static_cast<std::size_t>(r)][static_cast<std::size_t>(f)]);
             excess[static_cast<std::size_t>(f)] = e;
             strongest = std::max(strongest, e);
         }
         if (strongest <= 1.0e-6f)
             return attacks;
 
-        // Peaks: the largest within 15 ms either side, above 5 % of the strongest, kept 40 ms apart (the stronger stays).
+        // Peaks: the largest within 15 ms either side, above 15 % of the strongest, kept 40 ms apart (the stronger stays).
+        // The narrow bands' flux flickers in a decaying tail (up to 9 % of the strongest in the tests), real hits score
+        // 23 % and up (D225).
         const int reach = std::max(1, static_cast<int>(std::lround(0.015 * rate / hop)));
         const int apart = static_cast<int>(std::lround(0.040 * rate));
         const int riseWindow = std::max(8, static_cast<int>(std::lround(0.002 * rate)));
         for (int f = 0; f < frames; ++f)
         {
             const float e = excess[static_cast<std::size_t>(f)];
-            if (e < 0.05f * strongest)
+            if (e < 0.15f * strongest)
                 continue;
             bool highest = true;
             for (int g = std::max(0, f - reach); g <= std::min(frames - 1, f + reach) && highest; ++g)
@@ -391,6 +458,14 @@ namespace coolsynth::synth::v3
             }
             attacks.push_back({ at, e / strongest });
         }
+        // Each attack's rank among them, the strongest 0: Sensitivity keeps so many of the strongest (D225), as
+        // Ableton's Simpler, Logic's Quick Sampler and Bitwig do, so every step of the knob adds or removes slices.
+        std::vector<std::size_t> byStrength(attacks.size());
+        for (std::size_t i = 0; i < byStrength.size(); ++i)
+            byStrength[i] = i;
+        std::stable_sort(byStrength.begin(), byStrength.end(), [&](std::size_t a, std::size_t b) { return attacks[a].strength > attacks[b].strength; });
+        for (std::size_t r = 0; r < byStrength.size(); ++r)
+            attacks[byStrength[r]].rank = static_cast<int>(r);
         return attacks;
     }
 

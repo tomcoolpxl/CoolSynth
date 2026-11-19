@@ -88,6 +88,7 @@ namespace coolsynth::synth::v3
         {
             int frame = 0;         // where the sound rises, in the recording's frames
             float strength = 0.0f; // 1 for the file's strongest attack
+            int rank = 0;          // 0 the strongest, 1 the next: Sensitivity keeps the strongest so many (D225)
         };
         std::vector<Attack> attacks; // in time order
         /** A folder of the user's files played as a kit: one zone per file, in name order, one per key (D207). */

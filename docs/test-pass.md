@@ -74,11 +74,10 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
   Fixed (D225): an unchanged copy of a ready setup from an older CoolSynth becomes today's, which takes both
   programs' numbers; a setup the player changed stays as it is.
 - After unplugging and plugging the MiniLab back in, the lights were all white: the colours are not sent again.
-- Slices by attacks: Sensitivity brings in every attack of the test loop within the knob's first 42 %, and above
-  that nothing changes; to the ear it is on or off. It should spread over the whole knob (by number of slices, or
-  in decibels).
-- The attack detector found 7 of the loop's 8 hits: it ranks the hats strongest (0.97, 1.0), the kicks weakest
-  (0.34, 0.50), and missed the kick at 0.75 s.
+- Slices by attacks: Sensitivity brought in every attack of the test loop within the knob's first 42 %. Fixed
+  (D225, the user's choice): it keeps the strongest so many, by rank, one more slice per step over the whole knob.
+- The attack detector found 7 of the loop's 8 hits, ranked the hats strongest and missed the kick at 0.75 s. Fixed
+  (D225, the user's choice): flux in third-octave bands, three ranges; all 8 found, kicks first, hats last.
 - Choosing a sample by turning one knob through the whole list is slow, and clicking the lit value should set it
   too (TODO 26).
 - The value display is too small for a file's name: "CoolSynth test kit" and "CoolSynth test kit/10 clap.wav"

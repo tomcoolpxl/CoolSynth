@@ -133,9 +133,9 @@ namespace coolsynth::synth::v3
 
         /**
             Where slice `index` of the user's sound lies (D207), in the recording's frames: Equal cuts it into `count`
-            pieces; Attacks (mode 2) cuts 2 ms before each attack at least `sensitivity`'s threshold strong
-            ((1 - sensitivity) squared of the strongest), at least 20 ms after the last cut. False when there is no
-            such slice.
+            pieces; Attacks (mode 2) cuts 2 ms before each of the strongest attacks, as many of them as `sensitivity`
+            says (at least one; D225, by rank, as Ableton's Simpler and Logic's Quick Sampler do), at least 20 ms after the
+            last cut. False when there is no such slice.
         */
         static bool sliceRange(const LoadedStyle& style, const SampleZone& zone, int mode, int count, float sensitivity,
                                int index, int& from, int& to) noexcept
@@ -152,13 +152,13 @@ namespace coolsynth::synth::v3
                 to = static_cast<int>(static_cast<long long>(frames) * (index + 1) / pieces);
                 return to > from;
             }
-            const float threshold = (1.0f - juce::jlimit(0.0f, 1.0f, sensitivity)) * (1.0f - juce::jlimit(0.0f, 1.0f, sensitivity));
+            const int keep = std::max(1, static_cast<int>(std::lround(juce::jlimit(0.0f, 1.0f, sensitivity) * static_cast<float>(style.attacks.size()))));
             const int preRoll = static_cast<int>(std::lround(0.002 * zone.rate));
             const int apart = static_cast<int>(std::lround(0.020 * zone.rate));
             int start = 0, n = 0;
             for (const auto& attack : style.attacks)
             {
-                if (attack.strength < threshold)
+                if (attack.rank >= keep)
                     continue;
                 const int cut = std::max(0, attack.frame - preRoll);
                 if (cut - start < apart || frames - cut < apart)
