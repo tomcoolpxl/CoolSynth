@@ -169,6 +169,22 @@ namespace coolsynth::midi
             keys = std::find(keyboardSizes.begin(), keyboardSizes.end(), read) != keyboardSizes.end() ? read : 0;
         }
         auto map = ControllerMap::fromVar(value);
+        // A saved copy of a ready setup from an older CoolSynth (0.3.0 kept only the MiniLab's Arturia program): when it
+        // holds nothing today's ready setup has not, the player never changed it, and today's replaces it, with the
+        // MiniLab's DAW program too (the user's test pass, D225). A setup the player changed stays as it is.
+        if (! map.empty() && map.settings.empty() && map.profileId.isNotEmpty())
+            if (const auto* profile = readyProfile(map.profileId); profile != nullptr)
+            {
+                const bool unchanged = std::all_of(map.places.begin(), map.places.end(), [&](const PlaceLink& link)
+                {
+                    return std::any_of(profile->map.places.begin(), profile->map.places.end(), [&](const PlaceLink& ready)
+                    {
+                        return ready.place == link.place && ready.control == link.control && ready.encoding == link.encoding;
+                    });
+                });
+                if (unchanged)
+                    map = profile->map;
+            }
         if (map.empty() && currentOrigin == Origin::found)
         {
             ++changes; // only the switch or the keyboard's size changed: a found setup stays in use

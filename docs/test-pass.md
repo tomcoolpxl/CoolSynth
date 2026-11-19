@@ -70,8 +70,9 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
   the user saw the colours come back.
 
 - With the MiniLab driver switched off (it was, since 12:16 in FL Studio) and the MiniLab left in its DAW program, the
-  Arturia-program setup does not fit: notes and pads work, knobs and faders do nothing. CoolSynth should notice
-  which program the MiniLab is in and take the matching setup, or say so.
+  knobs and faders did nothing: the setup in use was a copy saved by 0.3.0, with the Arturia program's numbers only.
+  Fixed (D225): an unchanged copy of a ready setup from an older CoolSynth becomes today's, which takes both
+  programs' numbers; a setup the player changed stays as it is.
 - After unplugging and plugging the MiniLab back in, the lights were all white: the colours are not sent again.
 - Slices by attacks: Sensitivity brings in every attack of the test loop within the knob's first 42 %, and above
   that nothing changes; to the ear it is on or off. It should spread over the whole knob (by number of slices, or

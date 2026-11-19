@@ -217,6 +217,39 @@ public:
             file.deleteFile();
         }
 
+        beginTest("an_old_unchanged_copy_of_a_ready_setup_becomes_todays_and_a_changed_one_stays");
+        {
+            // 0.3.0 saved the MiniLab's setup with its Arturia program only (the user's test pass, D225): with the
+            // driver off and the MiniLab in its DAW program, the knobs did nothing.
+            auto& setup = ControllerSetup::instance();
+            const auto file = juce::File::getSpecialLocation(juce::File::tempDirectory)
+                                  .getNonexistentChildFile("coolsynth-controller-old", ".json");
+            const auto* ready = readyProfile("arturia.minilab3");
+            expect(ready != nullptr);
+            ControllerMap old;
+            old.name = "Arturia MiniLab 3 (Arturia program)";
+            old.profileId = "arturia.minilab3";
+            int knob = 1;
+            const auto any = [](int number) { return ControlId { ControlId::Kind::cc, 0, number }; }; // any channel, as 0.3.0 saved it
+            for (const int n : { 74, 71, 76, 77, 93, 18, 19, 16 })
+                old.link(knobPlace(knob++), any(n), Encoding::absolute);
+            file.replaceWithText(juce::JSON::toString(old.toVar()));
+            setup.useFileForTesting(file);
+            const auto* knob7 = setup.map().placeFor(any(116));
+            expect(knob7 != nullptr && knob7->place == Place::knob7, "the DAW program's knob 7 (CC 116) works now");
+            expect(setup.map().placeFor(any(19)) != nullptr, "and the Arturia program's still");
+
+            // The player's own change (knob 1 on CC 21, channel 1) is the player's: kept as it is.
+            ControllerMap changed = old;
+            changed.link(Place::knob1, cc(21), Encoding::absolute);
+            file.replaceWithText(juce::JSON::toString(changed.toVar()));
+            setup.useFileForTesting(file);
+            expect(setup.map().placeFor(cc(21)) != nullptr, "the player's own link stays");
+            expect(setup.map().placeFor(any(116)) == nullptr, "and nothing is added to a setup the player changed");
+            setup.useForTesting({});
+            file.deleteFile();
+        }
+
         beginTest("value_scaling_moves_the_way_the_knob_does_and_meets_at_the_ends");
         {
             auto processor = std::make_unique<SynthAudioProcessor>();
