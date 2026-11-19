@@ -29,20 +29,20 @@ What the engine has:
   - noise
   - 2- and 4-operator FM
   - wavetables
-  - plucked string
-  - struck bars and bells
-  - samples
+  - Karplus-Strong string
+  - modal synthesis (bars, bells)
+  - multisampled instruments
   - granular
 - Filters and shapers
   - ladder and state-variable filters
   - bit crusher
   - wavefolder
   - drive
-  - vowel filter
+  - formant filter (vowels)
   - comb filter
 - Modulation
   - envelopes and LFOs
-  - a 16-step modulator
+  - a 16-step mod sequencer
   - a 24-slot modulation matrix
   - four macros per sound
 - Arpeggiator and chords
@@ -51,8 +51,8 @@ What the engine has:
 - Effects
   - drive, lo-fi, phaser, flanger and chorus
   - tape and ping-pong delay
-  - plate reverb with shimmer, and a room
-  - compressor, EQ and pump
+  - plate reverb with shimmer, and a room reverb
+  - compressor, EQ and tempo-synced ducking
   - granular and pitch shifter
 
 ## Your own samples
