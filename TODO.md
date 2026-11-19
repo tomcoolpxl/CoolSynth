@@ -77,9 +77,9 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 ## Engine
 
 9. Processing cost, measured on 2026-11-19 (optimised Debug, eight-note chords; `COOLSYNTH_CPU_REPORT=1`): Supersaw
-   17.7 % of real time on average, 27 % in its worst block. Its share per module, over the voices' own 2.7 %: the
-   ladder 4.8 % (5.8 % before D219), the seven saws 4.7 % (5.6 % before D219), the SVF 1.6 %, the rest its
-   second layer and effects. Elsewhere FM4 5.3 %, Drive 3.9 %. Chosen next (D219): the unison copies in SIMD lanes, then building for AVX2.
+   14.2 % of real time on average, 19 % in its worst block (18.4 % and 26 % before D219). Its share per module, over
+   the voices' own 2.7 %: the ladder 4.8 %, the seven saws 2.6 %, the SVF 1.6 %, the rest its second layer and
+   effects. Elsewhere FM4 5.3 %, Drive 3.9 %. Left of the user's choice (D219): building for AVX2.
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).

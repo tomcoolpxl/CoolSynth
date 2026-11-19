@@ -169,8 +169,16 @@ public:
             { "saw + sub", 2.0f, 3, Combine::off, 0.0f, 20.0f, 0.7f }, { "sync", 2.0f, 1, Combine::sync, 0.5f, 20.0f, 0.0f },
             { "fm", 2.0f, 2, Combine::fm, 0.8f, 20.0f, 0.0f },         { "ring", 3.0f, 1, Combine::ring, 0.6f, 20.0f, 0.0f },
             { "am", 1.0f, 1, Combine::am, 0.6f, 20.0f, 0.0f },
+            { "pulse unison 5", 3.0f, 5, Combine::off, 0.0f, 40.0f, 0.0f }, { "triangle unison 3", 1.0f, 3, Combine::off, 0.0f, 30.0f, 0.0f },
+            { "morph 2.6 unison 7", 2.6f, 7, Combine::off, 0.0f, 80.0f, 0.3f }, { "sine unison 7", 0.0f, 7, Combine::off, 0.0f, 30.0f, 0.0f },
+            { "supersaw ring", 2.0f, 7, Combine::ring, 0.5f, 50.0f, 0.0f },
         };
         constexpr int sub = 32;
+        // A step that changes the order of the sums (D219) cannot keep every bit: record the output to a folder
+        // before it (COOLSYNTH_VA_RECORD) and compare after (COOLSYNTH_VA_COMPARE), which prints the largest
+        // difference against the signal's peak.
+        const juce::File recordTo(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_VA_RECORD", {}));
+        const juce::File compareWith(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_VA_COMPARE", {}));
         for (const auto& c : cases)
         {
             // The previous generator: a plain VA a fifth under, for sync, FM, ring and AM.
@@ -199,7 +207,8 @@ public:
             p.combine = c.combine;
             p.combineAmount = c.amount;
             std::uint64_t hash = 1469598103934665603ull;
-            std::vector<float> ml(sub), mr(sub), l(sub), r(sub);
+            std::vector<float> ml(sub), mr(sub), l(sub), r(sub), all;
+            all.reserve(6000 * sub * 4);
             for (int block = 0; block < 6000; ++block) // two seconds at 96 kHz, a glide up an octave on the way
             {
                 p.frequencyHz = 440.0f * std::exp2(static_cast<float>(block) / 6000.0f);
@@ -212,9 +221,35 @@ public:
                         std::uint32_t bits;
                         std::memcpy(&bits, &v, sizeof(bits));
                         hash = (hash ^ bits) * 1099511628211ull;
+                        all.push_back(v);
                     }
             }
-            logMessage(juce::String("VA ") + c.name + ": " + juce::String::toHexString(static_cast<juce::int64>(hash)));
+            juce::String line = juce::String("VA ") + c.name + ": " + juce::String::toHexString(static_cast<juce::int64>(hash));
+            const auto fileName = juce::String("va-") + juce::String(c.name).replaceCharacter(' ', '-').replaceCharacter('+', 'p') + ".raw";
+            if (recordTo != juce::File())
+            {
+                recordTo.createDirectory();
+                recordTo.getChildFile(fileName).replaceWithData(all.data(), all.size() * sizeof(float));
+            }
+            if (compareWith != juce::File())
+            {
+                juce::MemoryBlock before;
+                if (compareWith.getChildFile(fileName).loadFileAsData(before) && before.getSize() == all.size() * sizeof(float))
+                {
+                    const auto* old = static_cast<const float*>(before.getData());
+                    float largest = 0.0f, peak = 0.0f;
+                    for (std::size_t i = 0; i < all.size(); ++i)
+                    {
+                        largest = std::max(largest, std::abs(all[i] - old[i]));
+                        peak = std::max(peak, std::abs(old[i]));
+                    }
+                    line << ", largest difference " << (largest == 0.0f ? juce::String("none") : juce::String(20.0f * std::log10(largest / peak), 1) + " dB under the peak");
+                    expect(largest <= peak * 1.0e-5f, juce::String(c.name) + ": a difference over -100 dB");
+                }
+                else
+                    line << ", nothing recorded to compare";
+            }
+            logMessage(line);
         }
 
         // The ladder the same way (TODO 9, D219): a detuned saw pair with a little noise, through each mode, at gentle,

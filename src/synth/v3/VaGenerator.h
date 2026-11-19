@@ -8,6 +8,11 @@
 
 #include <juce_core/juce_core.h>
 
+#if defined(_M_X64) || defined(__SSE2__)
+ #include <emmintrin.h>
+ #define COOLSYNTH_VA_SSE 1
+#endif
+
 #include "DspMath.h"
 #include "Module.h"
 
@@ -124,6 +129,16 @@ namespace coolsynth::synth::v3
             const bool useAm = params.combine == Combine::am;
             const float fmDepthCycles = kMaxFmCycles * amount * amount;
 
+#if COOLSYNTH_VA_SSE
+            // Unison without sync, FM or sine: the copies four at a time (D219). Every copy's own numbers are as in
+            // the loop below; only their sum is taken in another order, a difference near -140 dB. A sine, sync,
+            // FM or a single copy keep the loop.
+            const bool vectorCopies = ! useSync && ! useFm && waveform.sine == 0.0f && count > 1;
+            CopyLanes lanes {};
+            if (vectorCopies)
+                lanes = prepareLanes(count, increments, gains, waveform);
+#endif
+
             for (int s = 0; s < numSamples; ++s)
             {
                 const auto sample = static_cast<std::size_t>(s);
@@ -144,6 +159,11 @@ namespace coolsynth::synth::v3
                 // order as into the ring itself, without a store and a load between one copy and the next (TODO 9).
                 Sum here { accLeft[now], accRight[now], accMono[now] };
 
+#if COOLSYNTH_VA_SSE
+                if (vectorCopies)
+                    addCopiesSideBySide(lanes, waveform, count, increments, gains, here);
+                else
+#endif
                 for (int i = 0; i < count; ++i)
                 {
                     const auto index = static_cast<std::size_t>(i);
@@ -230,6 +250,17 @@ namespace coolsynth::synth::v3
                 signalTrack[sample] = outMono;
                 wrapTrack[sample] = outWrap;
             }
+
+#if COOLSYNTH_VA_SSE
+            if (vectorCopies)
+            {
+                alignas(16) float phase[8];
+                _mm_store_ps(phase, lanes.phase[0]);
+                _mm_store_ps(phase + 4, lanes.phase[1]);
+                for (int i = 0; i < count; ++i) // the copies not playing keep their phases, as in the loop
+                    phases[static_cast<std::size_t>(i)] = phase[i];
+            }
+#endif
         }
 
     private:
@@ -242,6 +273,7 @@ namespace coolsynth::synth::v3
             float right = 0.0f;
             float mono = 0.0f;
         };
+
 
         struct Sum
         {
@@ -327,6 +359,129 @@ namespace coolsynth::synth::v3
                 add(0.5f, -2.0f * s.saw, 0.0f);
             return s;
         }
+
+#if COOLSYNTH_VA_SSE
+        // ---- Unison copies four at a time (D219): copies 0-3 in the first register, 4-6 in the second, an eighth
+        // lane silent. Each copy's phase, crossing test, value and products are its loop's, operation for operation.
+        struct CopyLanes
+        {
+            std::array<__m128, 2> phase, increment, gainLeft, gainRight, gainMono;
+            __m128 triangle, saw, pulse, width, pulseHigh, pulseLow;
+        };
+
+        CopyLanes prepareLanes(int count, const std::array<float, maxUnison>& increments,
+                               const std::array<CopyGains, maxUnison>& gains, const Shape& w) const noexcept
+        {
+            alignas(16) float p[8] {}, d[8] {}, l[8] {}, r[8] {}, m[8] {};
+            for (int i = 0; i < count; ++i)
+            {
+                const auto index = static_cast<std::size_t>(i);
+                p[i] = phases[index];
+                d[i] = increments[index];
+                l[i] = gains[index].left;
+                r[i] = gains[index].right;
+                m[i] = gains[index].mono;
+            }
+            CopyLanes lanes {};
+            for (std::size_t h = 0; h < 2; ++h)
+            {
+                lanes.phase[h] = _mm_load_ps(p + 4 * h);
+                lanes.increment[h] = _mm_load_ps(d + 4 * h);
+                lanes.gainLeft[h] = _mm_load_ps(l + 4 * h);
+                lanes.gainRight[h] = _mm_load_ps(r + 4 * h);
+                lanes.gainMono[h] = _mm_load_ps(m + 4 * h);
+            }
+            lanes.triangle = _mm_set1_ps(w.triangle);
+            lanes.saw = _mm_set1_ps(w.saw);
+            lanes.pulse = _mm_set1_ps(w.pulse);
+            lanes.width = _mm_set1_ps(w.width);
+            lanes.pulseHigh = _mm_set1_ps(2.0f * (1.0f - w.width));
+            lanes.pulseLow = _mm_set1_ps(-2.0f * w.width);
+            return lanes;
+        }
+
+        static __m128 select(__m128 mask, __m128 whenTrue, __m128 whenFalse) noexcept
+        {
+            return _mm_or_ps(_mm_and_ps(mask, whenTrue), _mm_andnot_ps(mask, whenFalse));
+        }
+
+        /** Shape::value for four phases, without the sine: the same expressions, chosen per lane. */
+        static __m128 value4(const CopyLanes& lanes, const Shape& w, __m128 p) noexcept
+        {
+            __m128 v = _mm_setzero_ps();
+            if (w.triangle != 0.0f)
+            {
+                const __m128 fourP = _mm_mul_ps(_mm_set1_ps(4.0f), p);
+                const __m128 rising = fourP;
+                const __m128 falling = _mm_sub_ps(_mm_set1_ps(2.0f), fourP);
+                const __m128 risingAgain = _mm_sub_ps(fourP, _mm_set1_ps(4.0f));
+                const __m128 term = select(_mm_cmplt_ps(p, _mm_set1_ps(0.25f)), rising,
+                                           select(_mm_cmplt_ps(p, _mm_set1_ps(0.75f)), falling, risingAgain));
+                v = _mm_add_ps(v, _mm_mul_ps(lanes.triangle, term));
+            }
+            if (w.saw != 0.0f)
+            {
+                const __m128 twoP = _mm_mul_ps(_mm_set1_ps(2.0f), p);
+                const __m128 term = select(_mm_cmplt_ps(p, _mm_set1_ps(0.5f)), twoP, _mm_sub_ps(twoP, _mm_set1_ps(2.0f)));
+                v = _mm_add_ps(v, _mm_mul_ps(lanes.saw, term));
+            }
+            if (w.pulse != 0.0f)
+                v = _mm_add_ps(v, _mm_mul_ps(lanes.pulse, select(_mm_cmplt_ps(p, lanes.width), lanes.pulseHigh, lanes.pulseLow)));
+            return v;
+        }
+
+        static float sumOf(__m128 v) noexcept
+        {
+            const __m128 pairs = _mm_add_ps(v, _mm_movehl_ps(v, v));
+            return _mm_cvtss_f32(_mm_add_ss(pairs, _mm_shuffle_ps(pairs, pairs, 1)));
+        }
+
+        void addCopiesSideBySide(CopyLanes& lanes, const Shape& w, int count, const std::array<float, maxUnison>& increments,
+                                 const std::array<CopyGains, maxUnison>& gains, Sum& here) noexcept
+        {
+            const __m128 one = _mm_set1_ps(1.0f);
+            std::array<__m128, 2> end {};
+            int crossing = 0;
+            for (std::size_t h = 0; h < 2; ++h)
+            {
+                end[h] = _mm_add_ps(lanes.phase[h], lanes.increment[h]);
+                // crosses(): the point, a cycle on if it lies at or behind the phase, reached by the end. A silent lane
+                // (no increment) never reaches it.
+                for (int k = 0; k < w.pointCount; ++k)
+                {
+                    const __m128 point = _mm_set1_ps(w.points[static_cast<std::size_t>(k)].phase);
+                    const __m128 q = _mm_add_ps(point, _mm_and_ps(_mm_cmple_ps(point, lanes.phase[h]), one));
+                    crossing |= _mm_movemask_ps(_mm_cmple_ps(q, end[h])) << (4 * static_cast<int>(h));
+                }
+            }
+            if (crossing != 0)
+            {
+                // About once a cycle per copy: those copies' crossings by the loop's own code, in copy order.
+                alignas(16) float start[8];
+                _mm_store_ps(start, lanes.phase[0]);
+                _mm_store_ps(start + 4, lanes.phase[1]);
+                for (int i = 0; i < count; ++i)
+                {
+                    const auto index = static_cast<std::size_t>(i);
+                    if (((crossing >> i) & 1) != 0 && gains[index].mono != 0.0f)
+                        addCrossings(w, start[i], increments[index], 0.0f, 1.0f, gains[index], here);
+                }
+            }
+            __m128 sumLeft = _mm_setzero_ps(), sumRight = _mm_setzero_ps(), sumMono = _mm_setzero_ps();
+            for (std::size_t h = 0; h < 2; ++h)
+            {
+                // wrapForward(): one cycle off once the phase reaches 1.
+                lanes.phase[h] = _mm_sub_ps(end[h], _mm_and_ps(_mm_cmpge_ps(end[h], one), one));
+                const __m128 v = value4(lanes, w, lanes.phase[h]);
+                sumLeft = _mm_add_ps(sumLeft, _mm_mul_ps(v, lanes.gainLeft[h]));
+                sumRight = _mm_add_ps(sumRight, _mm_mul_ps(v, lanes.gainRight[h]));
+                sumMono = _mm_add_ps(sumMono, _mm_mul_ps(v, lanes.gainMono[h]));
+            }
+            here.left += sumOf(sumLeft);
+            here.right += sumOf(sumRight);
+            here.mono += sumOf(sumMono);
+        }
+#endif
 
         static float wrap(float x) noexcept { return x - std::floor(x); }
 
