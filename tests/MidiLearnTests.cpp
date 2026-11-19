@@ -3,9 +3,6 @@
 #include <cmath>
 #include <cstdio>
 #include <juce_core/juce_core.h>
-#include "midi/MidiLearn.h"
-#include "midi/ControllerProfile.h"
-#include "midi/MidiMappingEngine.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
 #include "standalone/SettingsStore.h"
@@ -42,229 +39,35 @@ protected:
     }
 };
 
-class MidiLearnTests final : public juce::UnitTest
+class ProcessorSilenceTests final : public juce::UnitTest
 {
 public:
-    MidiLearnTests() : juce::UnitTest("MidiLearn", "CoolSynth") {}
+    ProcessorSilenceTests() : juce::UnitTest("Processor silence and timing", "CoolSynth") {}
 
     void runTest() override
     {
-        beginTest("learn_manager_accepts_part_and_fixed_parameters_across_continuous_and_discrete_controls");
+        beginTest("the_apps_settings_forget_v2s_midi_keys_and_keep_the_audio_device");
         {
-            MidiLearnManager manager;
-            expect(manager.isLearnableParameter("pA.p1.p1"));
-            expect(manager.isLearnableParameter(coolsynth::parameters::ids::masterGainDb));
-            expect(manager.isLearnableParameter("pA.g1.type"));
-            expect(manager.isLearnableParameter(coolsynth::parameters::ids::arpEnabled));
-            expect(manager.isLearnableParameter("pA.play.mode"));
-            expect(!manager.isLearnableParameter("invalid_id"));
-        }
-
-        beginTest("learn_manager_rejects_note_events_without_mutating_bindings");
-        {
-            MidiLearnManager manager;
-            manager.beginLearning("pA.p1.p1", "Cutoff");
-            
-            ControllerMidiEvent noteOnEvent{ ControllerMidiEventType::noteOn, 1, 60, 100 };
-            auto outcome = manager.handleIncomingEvent(noteOnEvent);
-            
-            expectEquals((int)outcome.result, (int)MidiLearnCaptureResult::rejectedNonCc);
-            expect(manager.getSession().armed); // Stays armed
-            expectEquals((int)manager.getBindings().size(), 0);
-        }
-
-        beginTest("learn_manager_rejects_reserved_performance_ccs_without_mutating_bindings");
-        {
-            MidiLearnManager manager;
-            manager.beginLearning("pA.p1.p1", "Cutoff");
-
-            auto modWheelOutcome = manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 1, 100 });
-            expectEquals((int)modWheelOutcome.result, (int)MidiLearnCaptureResult::ignored);
-            expect(manager.getSession().armed);
-            expectEquals((int)manager.getBindings().size(), 0);
-
-            auto sustainOutcome = manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 64, 127 });
-            expectEquals((int)sustainOutcome.result, (int)MidiLearnCaptureResult::ignored);
-            expect(manager.getSession().armed);
-            expectEquals((int)manager.getBindings().size(), 0);
-
-            auto allNotesOffOutcome = manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 123, 0 });
-            expectEquals((int)allNotesOffOutcome.result, (int)MidiLearnCaptureResult::ignored);
-            expect(manager.getSession().armed);
-            expectEquals((int)manager.getBindings().size(), 0);
-        }
-
-        beginTest("learn_manager_replaces_existing_binding_by_parameter");
-        {
-            MidiLearnManager manager;
-            manager.beginLearning("pA.p1.p1", "Cutoff");
-            manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 74, 64 });
-            
-            expectEquals((int)manager.getBindings().size(), 1);
-            expect(manager.getBindings()[0].cc.controllerNumber == 74);
-
-            manager.beginLearning("pA.p1.p1", "Cutoff");
-            manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 75, 64 }); // Re-learn
-            
-            expectEquals((int)manager.getBindings().size(), 1);
-            expect(manager.getBindings()[0].cc.controllerNumber == 75);
-        }
-
-        beginTest("learn_manager_replaces_existing_binding_by_cc_signature");
-        {
-            MidiLearnManager manager;
-            manager.beginLearning("pA.p1.p1", "Cutoff");
-            manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 74, 64 });
-
-            manager.beginLearning("pA.p1.p2", "Resonance");
-            manager.handleIncomingEvent({ ControllerMidiEventType::controlChange, 1, 74, 64 }); // Same CC
-
-            expectEquals((int)manager.getBindings().size(), 1);
-            expect(manager.getBindings()[0].parameterId == "pA.p1.p2");
-        }
-
-        beginTest("settings_store_round_trips_learned_mapping_xml");
-        {
+            // D212: V2's MIDI input, MIDI learn and controller profiles are gone; what they kept goes with them.
             juce::PropertySet props;
-            coolsynth::standalone::StandaloneSettingsStore store(props);
-            
-            std::vector<LearnedCcBinding> bindings = {
-                { "pA.p1.p1", { 1, 74 } },
-                { "pA.g1.type", { 2, 83 } }
-            };
-            store.saveLearnedMidiMappings(bindings);
-            
-            auto loaded = store.loadLearnedMidiMappings();
-            expectEquals((int)loaded.size(), 2);
-            expect(loaded[0].parameterId == "pA.p1.p1");
-            expect(loaded[1].parameterId == "pA.g1.type");
-            expect(loaded[1].cc.channel == 2);
-            expect(loaded[1].cc.controllerNumber == 83);
-        }
-
-        beginTest("settings_store_drops_invalid_or_unknown_mapping_entries");
-        {
-            juce::PropertySet props;
-            auto xml = std::make_unique<juce::XmlElement>("MIDI_LEARN_MAPPINGS");
-            
-            auto* valid = xml->createNewChildElement("MAPPING");
-            valid->setAttribute("parameterId", "pA.p1.p1");
-            valid->setAttribute("channel", 1);
-            valid->setAttribute("controller", 74);
-
-            auto* invalidParam = xml->createNewChildElement("MAPPING");
-            invalidParam->setAttribute("parameterId", "unknownParam");
-            invalidParam->setAttribute("channel", 1);
-            invalidParam->setAttribute("controller", 75);
-
-            auto* invalidCC = xml->createNewChildElement("MAPPING");
-            invalidCC->setAttribute("parameterId", "pA.p1.p2");
-            invalidCC->setAttribute("channel", 1);
-            invalidCC->setAttribute("controller", 200); // Invalid CC
-
-            props.setValue("midiLearnMappings", xml.get());
-
-            coolsynth::standalone::StandaloneSettingsStore store(props);
-            auto loaded = store.loadLearnedMidiMappings();
-            
-            MidiLearnManager manager;
-            manager.replaceBindings(loaded);
-            auto normalized = manager.getBindings();
-            
-            // Should only keep the valid one
-            expectEquals((int)normalized.size(), 1);
-            expect(normalized[0].parameterId == "pA.p1.p1");
-        }
-
-        beginTest("controller_profile_registry_loads_builtin_minilab_profile");
-        {
-            const auto& registry = coolsynth::midi::ControllerProfileRegistry::get();
-            const auto* profile = registry.findProfileById("arturia.minilab3.arturia-mode.v1");
-
-            expect(profile != nullptr);
-            expect(profile != nullptr && profile->displayName == "MiniLab 3 / Arturia Mode");
-            expectEquals(registry.findBestProfileIdForDevice({ "MiniLab 3 MIDI", "test-id" }),
-                         juce::String("arturia.minilab3.arturia-mode.v1"));
-        }
-
-        beginTest("settings_store_round_trips_controller_profile_selection");
-        {
-            juce::PropertySet props;
-            coolsynth::standalone::StandaloneSettingsStore store(props);
-
-            store.savePersistedControllerProfileSelection({});
-            auto autoSelection = store.loadPersistedControllerProfileSelection();
-            expectEquals((int) autoSelection.mode,
-                         (int) coolsynth::standalone::ControllerProfileSelectionMode::autoDetect);
-            expect(autoSelection.profileId.isEmpty());
-
-            store.savePersistedControllerProfileSelection(
-                { coolsynth::standalone::ControllerProfileSelectionMode::explicitProfile,
-                  "arturia.minilab3.arturia-mode.v1" });
-            auto explicitSelection = store.loadPersistedControllerProfileSelection();
-            expectEquals((int) explicitSelection.mode,
-                         (int) coolsynth::standalone::ControllerProfileSelectionMode::explicitProfile);
-            expect(explicitSelection.profileId == "arturia.minilab3.arturia-mode.v1");
-
-            store.savePersistedControllerProfileSelection(
-                { coolsynth::standalone::ControllerProfileSelectionMode::none, {} });
-            auto noneSelection = store.loadPersistedControllerProfileSelection();
-            expectEquals((int) noneSelection.mode,
-                         (int) coolsynth::standalone::ControllerProfileSelectionMode::none);
-            expect(noneSelection.profileId.isEmpty());
-        }
-
-        beginTest("settings_store_clears_all_standalone_midi_state");
-        {
-            juce::PropertySet props;
-            coolsynth::standalone::StandaloneSettingsStore store(props);
-
-            juce::MidiDeviceInfo midiDevice;
-            midiDevice.identifier = "minilab3-id";
-            midiDevice.name = "MiniLab 3 MIDI";
-            store.savePersistedMidiInputSelection(midiDevice);
-            store.savePersistedControllerProfileSelection(
-                { coolsynth::standalone::ControllerProfileSelectionMode::explicitProfile,
-                  "arturia.minilab3.arturia-mode.v1" });
-            store.setShowCcLabels(false);
-
-            std::vector<LearnedCcBinding> bindings = {
-                { "pA.p1.p1", { 1, 74 } }
-            };
-            store.saveLearnedMidiMappings(bindings);
-
+            props.setValue("midiInputIdentifier", "minilab3-id");
+            props.setValue("midiLearnMappings", "<MIDI_LEARN_MAPPINGS/>");
+            props.setValue("controllerProfileId", "arturia.minilab3.arturia-mode.v1");
+            props.setValue("showCcLabels", false);
+            props.setValue("velocityCurve", 2);
             auto audioSetup = std::make_unique<juce::XmlElement>("DEVICESETUP");
-            audioSetup->setAttribute("deviceType", "Windows Audio");
-            audioSetup->setAttribute("audioOutputDeviceName", "Speakers");
-            audioSetup->setAttribute("audioDeviceRate", 48000.0);
-            audioSetup->setAttribute("audioDeviceBufferSize", 480);
-            auto* midiInput = audioSetup->createNewChildElement("MIDIINPUT");
-            midiInput->setAttribute("name", "MiniLab 3 MIDI");
-            midiInput->setAttribute("identifier", "minilab3-id");
+            audioSetup->setAttribute("deviceType", "ASIO");
+            audioSetup->setAttribute("audioOutputDeviceName", "UMC ASIO Driver");
+            audioSetup->setAttribute("audioDeviceRate", 44100.0);
+            audioSetup->setAttribute("audioDeviceBufferSize", 128);
             props.setValue("audioSetup", audioSetup.get());
 
-            store.clearStandaloneMidiState();
-
-            expect(!props.containsKey("midiInputIdentifier"));
-            expect(!props.containsKey("midiInputName"));
-            expect(!props.containsKey("midiLearnMappings"));
-            expect(!props.containsKey("controllerProfileSelectionMode"));
-            expect(!props.containsKey("controllerProfileId"));
-            expect(!props.containsKey("showCcLabels"));
-
-            expect(!store.loadPersistedMidiInputSelection().has_value());
-            expectEquals((int) store.loadLearnedMidiMappings().size(), 0);
-
-            const auto selection = store.loadPersistedControllerProfileSelection();
-            expectEquals((int) selection.mode,
-                         (int) coolsynth::standalone::ControllerProfileSelectionMode::autoDetect);
-            expect(selection.profileId.isEmpty());
-            expect(store.getShowCcLabels());
-
-            auto cleanedAudioSetup = props.getXmlValue("audioSetup");
-            expect(cleanedAudioSetup != nullptr);
-            expect(cleanedAudioSetup != nullptr && cleanedAudioSetup->hasTagName("DEVICESETUP"));
-            expect(cleanedAudioSetup != nullptr && cleanedAudioSetup->getChildByName("MIDIINPUT") == nullptr);
+            const coolsynth::standalone::StandaloneSettingsStore store(props);
+            for (const char* key : { "midiInputIdentifier", "midiLearnMappings", "controllerProfileId", "showCcLabels" })
+                expect(! props.containsKey(key), key);
+            expectEquals(store.getVelocityCurve(), 2, "the app's own choices stay");
+            const auto audio = store.loadPersistedAudioSelection();
+            expect(audio.has_value() && audio->outputDeviceName == "UMC ASIO Driver" && audio->bufferSizeSamples == 128);
         }
 
         beginTest("plugin_process_block_treats_all_sound_off_as_immediate_engine_silence");
@@ -385,7 +188,7 @@ public:
     }
 };
 
-static MidiLearnTests midiLearnTests;
+static ProcessorSilenceTests processorSilenceTests;
 
 // Editor UX regressions (resizing, keyboard focus, undo, patch identity). Kept in
 // their own runTest() frame: MSVC Debug reserves a stack slot for every

@@ -63,6 +63,13 @@ jobs:
     needs: build-release-assets
     runs-on: windows-2022
     steps:
+      # The release notes, written per version in docs/releases/<tag>.md. First: checking out clears the folder,
+      # so the package bundle comes after it.
+      - name: Check out the release notes
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          sparse-checkout: docs/releases
+
       - name: Download package bundle
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
@@ -75,7 +82,9 @@ jobs:
           tag_name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          # Shown above GitHub's generated notes (the action prepends a body to them).
+          # The version's own notes; the action reads body_path first and falls back on body when the file is
+          # missing. GitHub's generated notes (the changes since the last release) follow.
+          body_path: docs/releases/${{ github.ref_name }}.md
           body: |
             ## Install
 

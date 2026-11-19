@@ -1,13 +1,9 @@
 #pragma once
 
 #include <optional>
-#include <span>
-#include <vector>
 
 #include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_core/juce_core.h>
-
-#include "midi/MidiLearn.h"
 
 namespace coolsynth::standalone
 {
@@ -29,42 +25,12 @@ namespace coolsynth::standalone
         }
     };
 
-    struct PersistedMidiInputSelection
-    {
-        juce::String identifier;
-        juce::String name;
-
-        bool isValid() const noexcept
-        {
-            return identifier.isNotEmpty();
-        }
-    };
-
-    enum class ControllerProfileSelectionMode : uint8_t
-    {
-        autoDetect,
-        none,
-        explicitProfile,
-    };
-
-    struct PersistedControllerProfileSelection
-    {
-        ControllerProfileSelectionMode mode = ControllerProfileSelectionMode::autoDetect;
-        juce::String profileId;
-
-        bool isValid() const noexcept
-        {
-            return mode != ControllerProfileSelectionMode::explicitProfile || profileId.isNotEmpty();
-        }
-    };
-
+    /** The app's own settings: its audio device, multi-core, the velocity curve, the zoom. The controller setup is
+        the computer's, in its own file (D211). */
     class StandaloneSettingsStore final
     {
     public:
-        explicit StandaloneSettingsStore(juce::PropertySet& propertySet)
-            : propertySet(propertySet)
-        {
-        }
+        explicit StandaloneSettingsStore(juce::PropertySet& propertySet);
 
         bool hasPersistedAudioSetup() const
         {
@@ -72,25 +38,6 @@ namespace coolsynth::standalone
         }
 
         std::optional<PersistedAudioSelection> loadPersistedAudioSelection() const;
-        std::optional<PersistedMidiInputSelection> loadPersistedMidiInputSelection() const;
-        PersistedControllerProfileSelection loadPersistedControllerProfileSelection() const;
-
-        void savePersistedMidiInputSelection(const juce::MidiDeviceInfo& device)
-        {
-            propertySet.setValue("midiInputIdentifier", device.identifier);
-            propertySet.setValue("midiInputName", device.name);
-        }
-
-        void clearPersistedMidiInputSelection()
-        {
-            propertySet.removeValue("midiInputIdentifier");
-            propertySet.removeValue("midiInputName");
-        }
-
-        bool getShowCcLabels() const
-        {
-            return propertySet.getBoolValue("showCcLabels", true);
-        }
 
         // Editor zoom in percent; 0 means "not set yet" (fit to the display).
         int getUiScalePercent() const
@@ -101,11 +48,6 @@ namespace coolsynth::standalone
         void setUiScalePercent(int percent)
         {
             propertySet.setValue("uiScalePercent", percent);
-        }
-
-        void setShowCcLabels(bool show)
-        {
-            propertySet.setValue("showCcLabels", show);
         }
 
         // Multi-core (D164, D167): true is Auto, sounds that overlap render on several cores; false keeps all on the
@@ -130,18 +72,6 @@ namespace coolsynth::standalone
         {
             propertySet.setValue("velocityCurve", juce::jlimit(0, 2, curve));
         }
-
-        void savePersistedControllerProfileSelection(PersistedControllerProfileSelection selection);
-        void clearPersistedControllerProfileSelection()
-        {
-            propertySet.removeValue("controllerProfileSelectionMode");
-            propertySet.removeValue("controllerProfileId");
-        }
-
-        std::vector<coolsynth::midi::LearnedCcBinding> loadLearnedMidiMappings() const;
-        void saveLearnedMidiMappings(std::span<const coolsynth::midi::LearnedCcBinding> bindings);
-        void clearLearnedMidiMappings();
-        void clearStandaloneMidiState();
 
     private:
         juce::PropertySet& propertySet;

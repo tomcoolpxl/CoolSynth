@@ -4,8 +4,6 @@
 #include <juce_core/juce_core.h>
 
 #include "plugin/ProcessorScopeFifo.h"
-#include "standalone/StandaloneMidiInput.h"
-#include "standalone/SettingsStore.h"
 #include "EngineTestAdapter.h"
 #include "synth/HalfBand2x.h"
 
@@ -117,65 +115,6 @@ namespace
         return static_cast<float>(std::sqrt(sumSquares / static_cast<double>(count)));
     }
 }
-
-class StandaloneMidiInputTests final : public juce::UnitTest
-{
-public:
-    StandaloneMidiInputTests() : juce::UnitTest("StandaloneMidiInput", "CoolSynth") {}
-
-    void runTest() override
-    {
-        beginTest("selected_device_disconnect_reports_disconnected_and_clears_transient_input_state");
-        {
-            juce::AudioDeviceManager deviceManager;
-            juce::PropertySet props;
-            coolsynth::standalone::StandaloneSettingsStore store(props);
-
-            juce::Array<juce::MidiDeviceInfo> availableDevices;
-            availableDevices.add({ "Controller", "device-1" });
-
-            int disconnectCallbackCount = 0;
-
-            coolsynth::standalone::StandaloneMidiInputController controller(
-                deviceManager,
-                &store,
-                {},
-                [&disconnectCallbackCount]
-                {
-                    ++disconnectCallbackCount;
-                },
-                [&availableDevices]
-                {
-                    return availableDevices;
-                },
-                [](const juce::String&, bool)
-                {
-                });
-
-            controller.refreshDeviceListForTesting();
-            expectEquals(controller.getSnapshot().availableInputs.size(), 1);
-
-            const auto selectedIdentifier = controller.getSnapshot().availableInputs[0].identifier;
-            expect(selectedIdentifier == "device-1");
-            expect(controller.selectDeviceByIdentifier(selectedIdentifier));
-            expect(controller.getSnapshot().status == coolsynth::standalone::MidiInputStatus::connected);
-
-            controller.injectMidiMessageForTesting(juce::MidiMessage::noteOn(1, 60, (juce::uint8) 100));
-            expect(controller.getLastMidiEventSnapshot().hasEvent);
-            expect(controller.getPendingControllerEventCountForTesting() > 0);
-
-            availableDevices.clear();
-            controller.refreshDeviceListForTesting();
-
-            const auto& snapshot = controller.getSnapshot();
-            expect(snapshot.status == coolsynth::standalone::MidiInputStatus::disconnected);
-            expect(snapshot.statusMessage.contains("Disconnected"));
-            expectEquals(disconnectCallbackCount, 1);
-            expect(!controller.getLastMidiEventSnapshot().hasEvent);
-            expectEquals(controller.getPendingControllerEventCountForTesting(), 0);
-        }
-    }
-};
 
 class DspRegressionTests final : public juce::UnitTest
 {
@@ -2411,7 +2350,6 @@ public:
     }
 };
 
-static StandaloneMidiInputTests standaloneMidiInputTests;
 static DspRegressionTests dspRegressionTests;
 static V2ArpeggiatorTests v2ArpeggiatorTests;
 static V2ScopeFifoTests v2ScopeFifoTests;

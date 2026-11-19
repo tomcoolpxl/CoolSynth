@@ -12,6 +12,7 @@ How it is built, with a map of the engine: [the architecture page](docs/architec
 ## What is in it
 
 - **Two layers**, each a whole sound, played stacked, split across the keyboard, or by velocity.
+  Right-click a layer on the screen to copy, swap or double it.
 - **Nine sound sources**, three per layer at once: virtual analogue, noise, two- and four-operator
   FM, wavetables, a plucked string, struck bars and bells, recorded instruments, and grains.
 - **Seven filters and shapers**, three per voice: a ladder and a state-variable filter, a bit

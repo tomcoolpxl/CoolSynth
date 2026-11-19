@@ -1,5 +1,11 @@
 # MiniLab 3 Default Messages
 
+> **History.** This page records V2's factory profile, which mapped the MiniLab's controls straight to sound
+> parameters. It was removed with the rest of V2's MIDI mapping (D212). Today the MiniLab 3 has CoolSynth's own
+> driver (D184, D211); in its Arturia program, with the driver off, it uses the ready setup in
+> `src/midi/ControllerMap.cpp` (`readyProfiles`), which plays the panel's knobs, pads and faders. The control
+> numbers below are still the MiniLab's.
+
 Capture date: 2026-05-10
 Device assumption: MiniLab 3 Arturia Mode
 Capture surface: bundled factory controller profile `arturia.minilab3.arturia-mode.v1`
@@ -25,9 +31,9 @@ Capture surface: bundled factory controller profile `arturia.minilab3.arturia-mo
 
 ## Notes
 
-- The shipped profile is data-driven and loaded from `resources/controller_profiles/minilab3_arturia_mode.json`.
-- Standalone mode auto-detects this profile for matching MiniLab 3 device names, and the MIDI tab also allows forcing or disabling the factory profile.
-- Standalone and plugin MIDI learn override these shipped bindings on a per-parameter basis.
+- V2 loaded this profile from `resources/controller_profiles/minilab3_arturia_mode.json` (removed in D212).
+- V2's standalone mode auto-detected it for matching MiniLab 3 device names, and its MIDI tab allowed forcing or disabling it.
+- V2's MIDI learn overrode these bindings per parameter.
 
 ## Deferred Controls
 

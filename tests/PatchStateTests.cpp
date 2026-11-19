@@ -5,7 +5,6 @@
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
 #include "presets/PatchState.h"
-#include "midi/LearnedBindingsXml.h"
 #include "synth/v3/Inserts.h"
 #include "synth/v3/SampleGenerator.h"
 

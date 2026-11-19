@@ -186,11 +186,10 @@ review them.
 
 38. The first release (D208, D209, D211). Done: JUCE's Starter licence, version 0.3.0, the instrument
    zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`, the installer
-   (`installer/CoolSynth.iss`) in both workflows, the controller work (D211). Left, in this order: the
-   user tests in Ableton and FL Studio (and the friend's flow with the MiniLab driver Off) and runs the
-   installer once here; then a `v0.3.0` tag starts `.github/workflows/windows-release.yml`, whose release
-   notes link the instrument library. The dry run of "Windows Manual Validation" passed on 2026-11-19
-   (run 44432129054: build, tests, the installer and the zips).
+   (`installer/CoolSynth.iss`) in both workflows, the controller work (D211), the user's tests in Ableton
+   and FL Studio (MiniLab pads, the Behringer driver at 128 samples, Stop, the layer menu; D212), the
+   clean-ups (D213), and the `v0.3.0` tag on the night of 2026-11-19, the user's order. Left: the FL Studio
+   knob test with the MiniLab driver Off (the friend's flow), and running the released installer once here.
 
 ## Carried over from the V2 backlog
 

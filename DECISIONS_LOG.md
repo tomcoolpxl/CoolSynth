@@ -4366,3 +4366,35 @@ The user asked for four things before the release.
 - **A new CoolSynth starts on Reese** (Main Stage), the user's choice, instead of Contact (D193); first Supersaw, then
   "change my mind: make Reese the default, same category". Reset the sound comes back to it, and Preferences' Reset
   line names it from the same constant.
+
+## D213. V2's MIDI mapping removed, one VST3 on this computer, the release tagged overnight (2026-11-19)
+
+The clean-ups the user chose before the release (options: clean-ups first, recommended and chosen; the FL Studio
+knob test; tag v0.3.0 at once).
+- **V2's MIDI mapping is gone**: `MidiMappingEngine`, `ControllerProfile` and its registry, `MidiLearn`,
+  `LearnedBindingsXml`, `MidiMonitor`, `MidiToControllerEvent.h`, `StandaloneMidiInput` and its panels
+  (`StandaloneMidiInputPanel`, `StandaloneStatusBar`, `MidiMonitorPanel`), `resources/controller_profiles/` and their
+  tests. Nothing that runs used them since D211. The app's settings store keeps its audio device, multi-core, the
+  velocity curve and the zoom; the keys V2 kept there (its MIDI input, learned mappings, profile choice, CC labels) are
+  removed when the app starts. The images target is now `CoolSynthImages`. `docs/minilab3-default-messages.md` is
+  marked as V2's history. V2's other panels in `src/ui` (unused since V3's panel) are left for another day: not asked.
+- **The stray test pictures** (`panel-*.png` in the project folder) were already gone. The two unused pictures at the
+  top (`coolsynth-logo.png`, `screenshot-vst3.png`) were not part of it and stay.
+- **One CoolSynth VST3 on this computer**, the user's choice (options: only the installed one, recommended and
+  chosen; keep both; only the Debug copy). Ableton's help warns against overlapping plug-in folders and no source says
+  which of two copies a host loads. The copy I once put in the shared folder had been replaced by the installer's own,
+  so the Debug builds' copy in `%LOCALAPPDATA%\Programs\Common\VST3` was deleted and this build folder's
+  `COOLSYNTH_ENABLE_VST3_USER_INSTALL` set Off (it was only on here; the project's default is Off). Ableton's custom
+  VST3 folder now points at an empty folder: its system folders bring the installed CoolSynth.
+- **The release, tagged while the user slept**, the user's order ("you must end with a release on GitHub,
+  downloadable"). Untested before it: the FL Studio knob test with the MiniLab driver Off (the user chose it, there was
+  no time), and an install of this night's installer here (it needs an administrator's yes, and nobody was awake; the
+  installer compiled, and its new MiniLab-script step was run on its own). Both are in TODO item 38.
+- **Release notes written per version**, the user's ask ("make sure there are release notes"): GitHub's generated
+  notes list merged pull requests, and CoolSynth is committed straight to main, so they would be nearly empty.
+  `docs/releases/<tag>.md` holds the notes (what CoolSynth is, how to install, the controllers, the MiniLab, the
+  files); the release workflow checks it out first (checking out clears the folder, so the files are downloaded
+  after) and gives it to the release action as `body_path`, which falls back on the short install text when a
+  version has no file (softprops/action-gh-release's README). The installer's instrument downloads were checked
+  against the Hugging Face dataset: all seven files answer and their SHA-256 match; the installer's sizes are the
+  unpacked sizes, as Inno Setup asks for with `extractarchive`.

@@ -53,9 +53,8 @@ juce_add_binary_data(CoolSynthInstrumentData
     NAMESPACE InstrumentData
     SOURCES resources/instruments/catalogue.txt)
 
-juce_add_binary_data(CoolSynthControllerProfiles
+juce_add_binary_data(CoolSynthImages
     SOURCES
-        resources/controller_profiles/minilab3_arturia_mode.json
         resources/ui/coolsynth-logo-2.png
         resources/icon/coolsynth-icon-512.png) # the icon beside the version in Preferences
 
@@ -107,10 +106,6 @@ set(COOLSYNTH_SHARED_SOURCES
     src/presets/StateMigration.cpp
     src/midi/ControllerMap.cpp
     src/midi/ControllerSetup.cpp
-    src/midi/ControllerProfile.cpp
-    src/midi/MidiLearn.cpp
-    src/midi/MidiMappingEngine.cpp
-    src/midi/MidiMonitor.cpp
     src/parameters/ParameterLayout.cpp
     src/parameters/v3/SlotParameters.cpp
     src/parameters/v3/PartParameters.cpp
@@ -134,7 +129,6 @@ set(COOLSYNTH_SHARED_SOURCES
     src/standalone/CoolSynthStandaloneApp.cpp
     src/standalone/SettingsStore.cpp
     src/standalone/StandaloneAudioSupport.cpp
-    src/standalone/StandaloneMidiInput.cpp
     src/interface/MiniLab3Driver.cpp
     src/diagnostics/FlightRecorder.cpp
     src/synth/Arpeggiator.cpp
@@ -145,11 +139,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/ui/HardwareFader.cpp
     src/ui/HardwareKnob.cpp
     src/ui/LedToggleButton.cpp
-    src/ui/MidiMonitorPanel.cpp
     src/ui/PianoBarComponent.cpp
     src/ui/SegmentedChoiceGroup.cpp
-    src/ui/StandaloneMidiInputPanel.cpp
-    src/ui/StandaloneStatusBar.cpp
     src/ui/SynthSection.cpp)
 
 target_sources(CoolSynth PRIVATE ${COOLSYNTH_SHARED_SOURCES})
@@ -178,7 +169,7 @@ target_link_libraries(CoolSynth
     PRIVATE
         juce::juce_audio_utils
         juce::juce_dsp
-        CoolSynthControllerProfiles
+        CoolSynthImages
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags
@@ -260,7 +251,7 @@ if(BUILD_TESTING)
             juce::juce_audio_utils
             juce::juce_gui_basics
             juce::juce_dsp
-            CoolSynthControllerProfiles
+            CoolSynthImages
             CoolSynthFactoryBank
             CoolSynthInstrumentData
         CoolSynthInstrumentData
@@ -303,7 +294,7 @@ target_link_libraries(CoolSynthRender
         juce::juce_audio_utils
         juce::juce_gui_basics
         juce::juce_dsp
-        CoolSynthControllerProfiles
+        CoolSynthImages
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags
@@ -341,7 +332,7 @@ target_link_libraries(CoolSynthPresetNormalizer
         juce::juce_audio_utils
         juce::juce_gui_basics
         juce::juce_dsp
-        CoolSynthControllerProfiles
+        CoolSynthImages
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags
@@ -365,7 +356,7 @@ target_link_libraries(CoolSynthPackLibrary
         juce::juce_audio_utils
         juce::juce_gui_basics
         juce::juce_dsp
-        CoolSynthControllerProfiles
+        CoolSynthImages
         CoolSynthFactoryBank
         CoolSynthInstrumentData
         coolsynth_config_flags
