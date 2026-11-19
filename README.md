@@ -24,36 +24,33 @@ CoolSynth is **bi-timbral**. A preset can use layer A and layer B, stacked on ev
 
 What the engine has:
 
-- Sound sources
-  - virtual analog
-  - noise
-  - 2- and 4-operator FM
-  - wavetables
-  - plucked string
-  - struck bars and bells
-  - samples
-  - granular
-- Filters and shapers
-  - ladder and state-variable filters
-  - bit crusher
-  - wavefolder
-  - drive
-  - vowel filter
-  - comb filter
-- Modulation
-  - envelopes and LFOs
-  - a 16-step modulator
-  - a 24-slot modulation matrix
-  - four macros per sound
-- Arpeggiator and chords
-  - Euclidean rhythms, ratchets and chance
-  - chord memory
-- Effects
-  - drive, lo-fi, phaser, flanger and chorus
-  - tape and ping-pong delay
-  - plate reverb with shimmer, and a room
-  - compressor, EQ and pump
-  - granular and pitch shifter
+<table>
+<tr><td rowspan="8">Sound sources</td><td>Virtual analog</td></tr>
+<tr><td>Noise</td></tr>
+<tr><td>2- and 4-operator FM</td></tr>
+<tr><td>Wavetables</td></tr>
+<tr><td>Plucked string</td></tr>
+<tr><td>Struck bars and bells</td></tr>
+<tr><td>Samples</td></tr>
+<tr><td>Granular</td></tr>
+<tr><td rowspan="6">Filters and shapers</td><td>Ladder and state-variable filters</td></tr>
+<tr><td>Bit crusher</td></tr>
+<tr><td>Wavefolder</td></tr>
+<tr><td>Drive</td></tr>
+<tr><td>Vowel filter</td></tr>
+<tr><td>Comb filter</td></tr>
+<tr><td rowspan="4">Modulation</td><td>Envelopes and LFOs</td></tr>
+<tr><td>16-step modulator</td></tr>
+<tr><td>24-slot modulation matrix</td></tr>
+<tr><td>Four macros per sound</td></tr>
+<tr><td rowspan="2">Arpeggiator and chords</td><td>Euclidean rhythms, ratchets and chance</td></tr>
+<tr><td>Chord memory</td></tr>
+<tr><td rowspan="5">Effects</td><td>Drive, lo-fi, phaser, flanger and chorus</td></tr>
+<tr><td>Tape and ping-pong delay</td></tr>
+<tr><td>Plate reverb with shimmer, and a room</td></tr>
+<tr><td>Compressor, EQ and pump</td></tr>
+<tr><td>Granular and pitch shifter</td></tr>
+</table>
 
 ## Your own samples
 
