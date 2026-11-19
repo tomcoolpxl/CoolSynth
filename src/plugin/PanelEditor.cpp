@@ -3,6 +3,7 @@
 #include "SynthAudioProcessor.h"
 #include "interface/InterfaceModel.h"
 #include "midi/ControllerSetup.h"
+#include "parameters/ParameterIDs.h"
 #include "presets/MySounds.h"
 #include "synth/v3/AudioWorkers.h"
 #include "BuildInfo.h"
@@ -569,6 +570,101 @@ public:
 
     juce::String externalHint; // what the panel's hovered knob, pad, fader or button does (D204)
     juce::String notice;       // the controller's word (D211): learning, a control learned, a controller found
+
+    /** The screen as text, line by line as paint() draws it (D227, the MCP server's read_screen). A name or value
+        too long for its card is given as drawn too. */
+    juce::String describe()
+    {
+        const bool typeList = model.typeListOpen();
+        const bool home = model.view() == InterfaceModel::View::home && ! typeList;
+        const auto list = model.list();
+        const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x86\x92"));
+        juce::StringArray out;
+        out.add("[" + (home || typeList ? list.title : InterfaceModel::sectionName(model.section()).toUpperCase()) + "]   Layer "
+                + juce::String(model.part() == 0 ? "A" : "B"));
+        juce::StringArray trail;
+        for (const auto& item : model.trail())
+            trail.add((item.mark.isNotEmpty() ? "(" + item.mark + ")" : juce::String()) + (item.current ? "*" + item.text + "*" : item.text));
+        out.add("trail: " + trail.joinIntoString(" > ") + "   (*: where the main knob is)");
+        if (home || typeList)
+        {
+            out.add("list " + list.title + " (> the cursor):");
+            for (int i = 0; i < list.rows.size(); ++i)
+            {
+                auto row = juce::String(i == list.cursor ? "  > " : "    ") + list.rows[i];
+                if (static_cast<std::size_t>(i) < list.pills.size() && ! list.pills[static_cast<std::size_t>(i)].isEmpty())
+                    row << "   [" << list.pills[static_cast<std::size_t>(i)].joinIntoString(", ") << "]";
+                if (i == list.used)
+                    row << (list.title.startsWith("TYPE") || list.title == "CATEGORIES" ? "   (in use)" : "   (playing)");
+                out.add(row);
+            }
+        }
+        else
+        {
+            const auto slots = model.slotsOf(model.section());
+            const int focused = model.slotIndex(model.section());
+            for (const auto& row : InterfaceModel::rowsOf(model.section()))
+            {
+                juce::StringArray parts;
+                for (const int index : row.slots)
+                    if (index < static_cast<int>(slots.size()))
+                    {
+                        const auto& slot = slots[static_cast<std::size_t>(index)];
+                        const auto text = slot.code + " " + (slot.empty ? juce::String("-") : slot.typeName);
+                        parts.add(index == focused ? "*" + text + "*" : text);
+                    }
+                out.add(row.label.toUpperCase() + ": " + parts.joinIntoString(row.joiner.isNotEmpty() ? " " + row.joiner + " " : "   ")
+                        + (row.after.isNotEmpty() ? "   " + arrow + " " + row.after.fromFirstOccurrenceOf(" ", false, false) : juce::String()));
+            }
+            const auto slot = model.currentSlot();
+            out.add("on (*): " + slot.label + " " + (slot.empty ? juce::String("empty") : slot.typeName));
+        }
+        if (! typeList)
+        {
+            juce::StringArray names;
+            int current = 0;
+            if (home)
+            {
+                names = model.livePageNames();
+                current = model.livePage();
+            }
+            else
+            {
+                for (const auto& page : model.currentSlot().pages)
+                    names.add(page.name);
+                current = model.pageIndexOf(model.section(), model.slotIndex(model.section()));
+            }
+            for (int i = 0; i < names.size(); ++i)
+                if (i == current)
+                    names.set(i, "[" + names[i] + "]");
+            out.add("page tabs (knob 5): " + (names.isEmpty() ? juce::String("none") : names.joinIntoString(" ")));
+        }
+        if (home && model.livePage() == 0 && model.currentLayerEmpty())
+            out.add("cards: " + model.currentPage().name);
+        else
+            for (int k = 1; k <= 4; ++k)
+            {
+                const auto view = model.knob(k);
+                const auto card = cardAreas[static_cast<std::size_t>(k - 1)];
+                auto shown = [&](const juce::String& text)
+                {
+                    const auto fitted = card.isEmpty() ? text : fitMiddle(text, mono(11.0f), card.getWidth());
+                    return fitted == text ? text : text + " (shown as '" + fitted + "')";
+                };
+                out.add("card " + juce::String(k) + ": " + (view.pending ? juce::String("CLICK TO LOAD") : (view.idle ? view.why.toUpperCase() : view.role.toUpperCase()))
+                        + " | " + shown(view.name)
+                        + (view.active ? " | " + shown(view.value) + " (" + juce::String(juce::roundToInt(view.normalised * 100.0f)) + "% of its travel)"
+                                       : juce::String(" | not active")));
+            }
+        out.add("hint line: " + (notice.isNotEmpty() ? notice : (hoverText.isNotEmpty() ? hoverText : (externalHint.isNotEmpty() ? externalHint : model.hint()))));
+        return out.joinIntoString("\n");
+    }
+
+    /** Its clickable parts as the last paint left them (D227): the list rows, slots, tabs, trail, chip and part. */
+    [[nodiscard]] int hitCount() const noexcept { return static_cast<int>(hits.size()); }
+    [[nodiscard]] juce::Rectangle<int> hitArea(int i) const { return hits[static_cast<std::size_t>(i)].area; }
+    [[nodiscard]] juce::String hitHint(int i) const { return hits[static_cast<std::size_t>(i)].hint; }
+    [[nodiscard]] juce::Rectangle<int> cardArea(int knob) const { return cardAreas[static_cast<std::size_t>(knob - 1)]; }
 
     void paint(juce::Graphics& g) override
     {
@@ -2148,6 +2244,233 @@ public:
 
     void showPreferences() { prefs.show(); }
 
+    // ---- For the MCP server (D227): the panel as text, a click by name, a picture of one part --------------------
+
+    /** Draws the panel once off screen, so the clickable parts are this state's. */
+    void drawForMcp()
+    {
+        owner.timerCallback();
+        (void) createComponentSnapshot(getLocalBounds(), true, 0.25f);
+    }
+
+    juce::String describeForMcp()
+    {
+        drawForMcp();
+        const juce::String dot = juce::String(juce::CharPointer_UTF8(" \xc2\xb7 "));
+        juce::StringArray out;
+        if (prefs.isVisible() || controllerCard.isVisible())
+            out.add("A card covers the panel: " + juce::String(prefs.isVisible() ? "Preferences" : "the controller setup")
+                    + " (Escape or its close button closes it; the panel below is as follows).");
+
+        out.add("MAIN SCREEN (the left LED)");
+        for (const auto& line : juce::StringArray::fromLines(screen.describe()))
+            out.add("  " + line);
+        out.add("  main knob under it: turn " + model.mainTurnRole() + ", press " + model.mainPressRole());
+
+        out.add("LAYER SCREEN (the right LED)");
+        static const juce::StringArray rowNames { "Sound", "Shape", "Motion", "Effects" };
+        for (int layer = 0; layer < 2; ++layer)
+        {
+            const bool lit = model.part() == layer && ! model.editingMaster();
+            juce::String head = "  LAYER " + juce::String(layer == 0 ? "A" : "B") + (lit ? " (the one edited, lit)" : "") + ": "
+                                + (model.layerEmpty(layer) ? juce::String("empty") : model.layerSoundName(layer));
+            if (const int solo = owner.synth.soloLayer(); solo >= 0)
+                head << " [" << (solo == layer ? "SOLO" : "MUTED") << "]";
+            out.add(head);
+            for (int section = 0; section < InterfaceModel::sectionCount; ++section)
+            {
+                juce::StringArray blocks;
+                for (const auto& block : chainBlocks)
+                    if (block.layer == layer && block.section == section)
+                        blocks.add((block.open ? "*" : "") + block.code + (block.code == block.label ? juce::String() : " " + block.label)
+                                   + (block.on ? juce::String() : " (empty)") + (block.open ? "*" : ""));
+                out.add("    " + rowNames[section] + ": " + blocks.joinIntoString(", "));
+            }
+        }
+        out.add("  info row: " + (layerHint.isNotEmpty() ? layerHint
+                                  : model.layerModeText() + dot + juce::String(juce::roundToInt(owner.synth.tempoBpm())) + " BPM" + dot
+                                        + juce::String(owner.synth.voicesPlaying()) + " of " + juce::String(owner.synth.voiceLimit()) + " voices")
+                + dot + "CPU " + juce::String(juce::roundToInt(owner.synth.cpuLoad().percent[0])) + "%");
+        out.add("  (*: the slot the knobs are on)");
+
+        out.add("KNOBS 1-8 (under the layer screen; the main screen's cards show 1-4's values)");
+        for (int k = 0; k < 8; ++k)
+        {
+            juce::String line = "  " + juce::String(k + 1) + " " + knobLabels[static_cast<std::size_t>(k)];
+            if (k == 4)
+                line << " (turns the pages)";
+            else if (const auto view = model.knob(k + 1); view.active)
+                line << " = " << view.value;
+            if (knobIdle[static_cast<std::size_t>(k)])
+                line << " (does nothing now)";
+            out.add(line);
+        }
+
+        out.add("FADERS");
+        namespace ids = coolsynth::parameters::ids;
+        const std::array<const char*, 4> faderIds { ids::volumeA, ids::volumeB, ids::volumeFx, ids::volumeMaster };
+        for (int f = 0; f < 4; ++f)
+        {
+            juce::String line = "  " + juce::String(f + 1) + " " + model.faderName(f) + " = ";
+            if (auto* p = owner.synth.getValueTreeState().getParameter(faderIds[static_cast<std::size_t>(f)]))
+                line << p->getCurrentValueAsText();
+            if (f == 3 && model.masterBoostDb() > 0.0f)
+                line << ", Master Boost +" << juce::String(model.masterBoostDb(), 1) << " dB";
+            out.add(line);
+        }
+
+        out.add("PADS (left to right)");
+        for (int p = 0; p < 8; ++p)
+        {
+            const auto& pad = pads[static_cast<std::size_t>(p)];
+            static const juce::StringArray symbols { "Stop", "Play", "Record" };
+            const auto face = pad.symbol >= 0 ? symbols[pad.symbol] : pad.face;
+            out.add("  " + juce::String(p + 1) + " " + face + (pad.sub.isNotEmpty() ? " (" + pad.sub + ")" : juce::String())
+                    + (pad.lit ? " (lit)" : "") + (pad.glow >= 0.0f ? " (glowing: loading)" : ""));
+        }
+
+        out.add("BUTTONS: Prefs; Hold " + juce::String(model.holdOn() ? "on" : "off") + "; Oct - / Oct + (octave "
+                + juce::String(model.octaveShift()) + ")" + (model.hardwareConnected() ? "; Hold and Oct greyed: the MiniLab's own" : ""));
+        const auto device = model.deviceScreen();
+        out.add("MINILAB DISPLAY: \"" + device.line1 + "\" / \"" + device.line2 + "\"");
+        if (model.keyboardKeys() > 0)
+            out.add("YOUR KEYBOARD (the teal line over the keys): " + juce::MidiMessage::getMidiNoteName(model.keyboardLowKey(), true, true, 4)
+                    + " to " + juce::MidiMessage::getMidiNoteName(model.keyboardLowKey() + model.keyboardKeySpan(), true, true, 4));
+
+        out.add("CLICK (names for the click tool)");
+        for (int i = 0; i < screen.hitCount(); ++i)
+            out.add("  screen." + juce::String(i + 1) + ": " + screen.hitHint(i));
+        juce::StringArray cards;
+        for (int k = 1; k <= 4; ++k)
+            if (! screen.cardArea(k).isEmpty())
+                cards.add("card." + juce::String(k));
+        if (! cards.isEmpty())
+            out.add("  " + cards.joinIntoString(", ") + ": the main screen's cards (a click loads what one shows)");
+        out.add("  layer.A, layer.B: a layer's name: Home on that layer, to choose a sound");
+        out.add("  chain.A.<code>, chain.B.<code>: a block of the layer screen by its code there (G1, P2, E1, L1, I3, M): "
+                "a click edits it, again its types");
+        out.add("  pad.1 to pad.8 (as PADS), knob.1 to knob.8 (a press, as KNOBS), hold, octave.down, octave.up, fader.1 to "
+                "fader.4 with a value (0 to 1 of its travel; the Master to 1.25, above 1 the boost)");
+        out.add("  (not by click: LAYER A's menu, Prefs and the CPU, which open cards or menus over the panel)");
+        return out.joinIntoString("\n");
+    }
+
+    juce::String clickForMcp(const juce::String& name, double value)
+    {
+        drawForMcp();
+        auto press = [](juce::Component& target, juce::Point<int> at)
+        {
+            auto source = juce::Desktop::getInstance().getMainMouseSource();
+            const auto p = at.toFloat();
+            const auto now = juce::Time::getCurrentTime();
+            const juce::MouseEvent down(source, p, juce::ModifierKeys(juce::ModifierKeys::leftButtonModifier), 1.0f, 0.0f, 0.0f, 0.0f, 0.0f,
+                                        &target, &target, now, p, now, 1, false);
+            target.mouseDown(down);
+            const juce::MouseEvent up(source, p, juce::ModifierKeys(), 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, &target, &target, now, p, now, 1, false);
+            target.mouseUp(up);
+        };
+        const auto rest = name.fromFirstOccurrenceOf(".", false, false);
+        const int number = rest.getIntValue();
+        bool done = false;
+        if (name.startsWith("screen.") && number >= 1 && number <= screen.hitCount())
+        {
+            press(screen, screen.hitArea(number - 1).getCentre());
+            done = true;
+        }
+        else if (name.startsWith("card.") && number >= 1 && number <= 4 && ! screen.cardArea(number).isEmpty())
+        {
+            press(screen, screen.cardArea(number).getCentre());
+            done = true;
+        }
+        else if (name == "layer.A" || name == "layer.B")
+        {
+            const int layer = name.endsWith("A") ? 0 : 1;
+            const auto title = layerTitles[static_cast<std::size_t>(layer)];
+            press(*this, { title.getRight() + 12, title.getCentreY() }); // the sound's name, right of LAYER A
+            done = true;
+        }
+        else if (name.startsWith("chain."))
+        {
+            const int layer = rest.startsWith("A") ? 0 : 1;
+            const auto code = rest.fromFirstOccurrenceOf(".", false, false);
+            for (const auto& block : chainBlocks)
+                if (! done && block.layer == layer && block.code == code)
+                {
+                    press(*this, block.area.getCentre());
+                    done = true;
+                }
+        }
+        else if (name.startsWith("pad.") && number >= 1 && number <= 8)
+        {
+            auto& pad = pads[static_cast<std::size_t>(number - 1)];
+            press(pad, pad.getLocalBounds().getCentre());
+            done = true;
+        }
+        else if (name.startsWith("knob.") && number >= 1 && number <= 8)
+        {
+            auto& knob = knobs[static_cast<std::size_t>(number - 1)];
+            press(knob, knob.getLocalBounds().getCentre());
+            done = true;
+        }
+        else if (name == "hold" || name == "octave.down" || name == "octave.up")
+        {
+            auto& button = name == "hold" ? hold : (name == "octave.down" ? octDown : octUp);
+            if (! button.isEnabled())
+                return "Not clicked: " + name + " is greyed out (the MiniLab's own).";
+            if (button.onClick)
+                button.onClick();
+            done = true;
+        }
+        else if (name.startsWith("fader.") && number >= 1 && number <= 4)
+        {
+            auto& fader = faders[static_cast<std::size_t>(number - 1)];
+            fader.setValue(juce::jlimit(fader.getMinimum(), fader.getMaximum(), value), juce::sendNotificationSync);
+            done = true;
+        }
+        if (! done)
+            return "Nothing called '" + name + "' to click; read_screen lists the names.";
+        owner.timerCallback();
+        return "Clicked " + name + (name.startsWith("fader.") ? " to " + juce::String(value, 3) : juce::String()) + ".";
+    }
+
+    juce::Image pictureForMcp(const juce::String& name, float zoom, juce::String& error)
+    {
+        drawForMcp();
+        juce::Rectangle<int> area;
+        const auto key = name.trim().toLowerCase();
+        if (key == "main screen")
+            area = screenBox.expanded(4);
+        else if (key == "layer screen")
+            area = layerScreen.expanded(4);
+        else if (key == "knobs")
+            area = juce::Rectangle<int>(knobs[0].getX() - 18, knobs[0].getY() - 4, knobs[3].getRight() - knobs[0].getX() + 36,
+                                        knobs[7].getBottom() + 54 - knobs[0].getY() + 4);
+        else if (key == "faders")
+            area = juce::Rectangle<int>(faders[0].getX() - 20, faders[0].getY() - 18, faders[3].getRight() - faders[0].getX() + 62,
+                                        knobs[4].getBottom() + 36 - faders[0].getY() + 18);
+        else if (key == "pads")
+            area = pads[0].getBounds().getUnion(pads[7].getBounds()).expanded(6);
+        else if (key == "keys")
+            area = keyboard.getBounds().withTop(keyboard.getY() - 30);
+        else if (key == "left")
+            area = juce::Rectangle<int>(28, 16, 140, strips[0].getBottom() + 10 - 16);
+        else
+        {
+            juce::StringArray parts;
+            parts.addTokens(key, ",", {});
+            if (parts.size() == 4)
+                area = { parts[0].trim().getIntValue(), parts[1].trim().getIntValue(), parts[2].trim().getIntValue(), parts[3].trim().getIntValue() };
+        }
+        area = area.getIntersection(getLocalBounds());
+        if (area.isEmpty())
+        {
+            error = "No part called '" + name + "': main screen, layer screen, knobs, faders, pads, keys, left, or x,y,w,h in the "
+                    + juce::String(designWidth) + " x " + juce::String(designHeight) + " panel.";
+            return {};
+        }
+        return createComponentSnapshot(area, true, juce::jlimit(1.0f, 3.0f, zoom));
+    }
+
     void showControllerCard(bool stepByStep)
     {
         controllerCard.show();
@@ -2556,7 +2879,7 @@ public:
         const juce::String dot = juce::String(juce::CharPointer_UTF8(" \xc2\xb7 "));
         static const juce::StringArray motionNames { "Amp", "Filt", "Mod", "LFO1", "LFO2" };
 
-        auto block = [&](juce::Rectangle<int> box, int index, const juce::String& label, bool on, const juce::String& hint)
+        auto block = [&](juce::Rectangle<int> box, int index, const juce::String& code, const juce::String& label, bool on, const juce::String& hint)
         {
             const int key = layer * 100 + section * 10 + index;
             const bool isOpen = index == open || (index >= 6 && open >= 6);
@@ -2585,7 +2908,7 @@ public:
             g.setFont(mono(9.0f));
             g.setColour(on ? (lit ? colours::screenInk : colours::screenInk.withAlpha(0.6f)) : colours::screenDim.withAlpha(0.7f));
             g.drawFittedText(label, box.reduced(2, 0), juce::Justification::centred, 1, 0.7f);
-            chainBlocks.push_back({ box, layer, section, index, key, hint });
+            chainBlocks.push_back({ box, layer, section, index, key, hint, code, label, on, isOpen });
         };
 
         for (int i = 0; i < count && i < static_cast<int>(slots.size()); ++i)
@@ -2604,7 +2927,7 @@ public:
             const bool motion = section == 2; // envelopes and LFOs have one type each and are always there
             const juce::String label = motion ? motionNames[i] : (slot.empty ? slot.code : (effects ? shortType(slot.typeName) : slot.typeName));
             const juce::String what = slot.code + " " + (motion ? slot.label : (slot.empty ? juce::String("empty") : slot.typeName));
-            block(row.removeFromLeft(width), i, label, motion || ! slot.empty,
+            block(row.removeFromLeft(width), i, slot.code, label, motion || ! slot.empty,
                   layerName + dot + what + dot + (motion ? juce::String("click: edit it") : juce::String("click: edit it, again: its types")));
         }
         if (effects)
@@ -2612,7 +2935,7 @@ public:
             g.setFont(mono(10.0f));
             g.setColour(colours::screenDim);
             g.drawText(arrow, row.removeFromLeft(12), juce::Justification::centred);
-            block(row, 6, "M", true, "M: the chain at the end, F1-F6, both layers'" + dot + "click: edit it");
+            block(row, 6, "M", "M", true, "M: the chain at the end, F1-F6, both layers'" + dot + "click: edit it");
         }
     }
 
@@ -2741,6 +3064,8 @@ private:
         juce::Rectangle<int> area;
         int layer = 0, section = 0, slot = 0, key = 0;
         juce::String hint;
+        juce::String code, label; // "G1", and what the block shows: "VA" (D227: read and clicked by name)
+        bool on = false, open = false;
     };
     std::vector<ChainBlock> chainBlocks; // the layer screen's chain, each block clickable (D226)
     int hoveredBlock = -1;               // its key (layer * 100 + section * 10 + slot) while the mouse is on it
@@ -2785,6 +3110,15 @@ PanelEditor::~PanelEditor() = default;
 
 void PanelEditor::showControllerSetup(bool stepByStep) { content->showControllerCard(stepByStep); }
 void PanelEditor::showPreferences() { content->showPreferences(); }
+
+juce::String PanelEditor::describeForMcp() { return content->describeForMcp(); }
+
+juce::String PanelEditor::clickForMcp(const juce::String& name, double value) { return content->clickForMcp(name, value); }
+
+juce::Image PanelEditor::pictureForMcp(const juce::String& area, float zoom, juce::String& error)
+{
+    return content->pictureForMcp(area, zoom, error);
+}
 
 bool PanelEditor::shiftHeld() const noexcept
 {

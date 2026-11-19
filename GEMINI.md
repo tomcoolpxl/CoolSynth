@@ -25,7 +25,8 @@ the current state.
 - A new CoolSynth starts on Main Stage's Reese (D212). Stop ends every sound (All Sound Off, after a 3 ms fade).
 - The app has an MCP server (D225, `src/mcp`): switched on in Prefs, on `http://127.0.0.1:47613/mcp`, registered
   for this project with `claude mcp add --transport http coolsynth http://127.0.0.1:47613/mcp`. Use it to read and set
-  the running app while guiding a test, instead of asking the user to turn knobs.
+  the running app while guiding a test, instead of asking the user to turn knobs. `read_screen` gives the panel as
+  text and `click` works it by name (D227); check anything visible that way, and ask the user only for ears and hands.
 - Output is deterministic (D224): every random source restarts from its seed at a reset and when the host's
   transport starts, a bounce waits for sounds to load, and a voice cap by measured cost (`src/synth/v3/VoiceCost.h`)
   keeps a sound within half a block; `tests/DeterminismTests.cpp` holds every preset to it bit for bit.

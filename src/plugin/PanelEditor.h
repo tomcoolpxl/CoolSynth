@@ -43,6 +43,14 @@ public:
     /** Opens Preferences, as the Prefs button does (Escape closes it). */
     void showPreferences();
 
+    /** For the app's MCP server (D227), message thread: the panel as text, as it is drawn now, with the names of what
+        can be clicked; a click by one of those names, as the mouse does (a fader takes `value`, 0 to 1 of its travel);
+        a picture of one part ("main screen", "layer screen", "knobs", "faders", "pads", "keys", "left", or "x,y,w,h"
+        in the design's pixels), `zoom` (1 to 3) times its size. */
+    [[nodiscard]] juce::String describeForMcp();
+    [[nodiscard]] juce::String clickForMcp(const juce::String& name, double value = 0.0);
+    [[nodiscard]] juce::Image pictureForMcp(const juce::String& area, float zoom, juce::String& error);
+
     /** CoolSynth's Options (D174), from the panel's button and the standalone window's: Audio and MIDI (where the
         app offers it), Multi-core Auto or Off, the last second's CPU work, this computer. Message thread. */
     static void showOptions(SynthAudioProcessor& synth, juce::Component& target);

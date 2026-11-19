@@ -8,6 +8,7 @@
 #include "interface/InterfaceModel.h"
 #include "parameters/v3/PartParameters.h"
 #include "parameters/v3/SlotParameters.h"
+#include "plugin/PanelEditor.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/FactoryPresets.h"
 #include "synth/v3/UserLibrary.h"
@@ -24,6 +25,19 @@ namespace coolsynth::mcp
             for (const auto& [key, value] : properties)
                 o->setProperty(key, value);
             return juce::var(o);
+        }
+
+        /** The panel in the app's window, wherever it sits among the window's components (D227). */
+        PanelEditor* findPanel(juce::Component* component)
+        {
+            if (component == nullptr)
+                return nullptr;
+            if (auto* panel = dynamic_cast<PanelEditor*>(component))
+                return panel;
+            for (auto* child : component->getChildren())
+                if (auto* panel = findPanel(child))
+                    return panel;
+            return nullptr;
         }
 
         juce::RangedAudioParameter* parameter(SynthAudioProcessor& synth, const juce::String& id)
@@ -389,18 +403,72 @@ namespace coolsynth::mcp
                           } });
 
         tools.push_back({ "screenshot",
-                          "A picture of CoolSynth's window as the player sees it now.",
-                          objectSchema({}),
-                          [window](const juce::var&)
+                          "A picture of CoolSynth's window as the player sees it now, or of one part of the panel, enlarged: "
+                          "for checking the drawing itself (text cut off, overlaps, colours). read_screen gives what it shows as text.",
+                          objectSchema({ { "area", typeSchema("string", "Optional: 'main screen', 'layer screen', 'knobs', 'faders', 'pads', 'keys', "
+                                                                        "'left', or 'x,y,w,h' in the 1100 x 680 panel; empty: the whole window") },
+                                         { "zoom", typeSchema("number", "With an area: 1 to 3 times its size, 2 by default") } }),
+                          [window](const juce::var& args)
                           {
                               auto* component = window ? window() : nullptr;
                               if (component == nullptr || component->getWidth() <= 0)
                                   return textResult("No window to picture.", true);
-                              const auto image = component->createComponentSnapshot(component->getLocalBounds(), true, 1.0f);
+                              const auto area = args["area"].toString();
+                              juce::Image image;
+                              juce::String what;
+                              if (area.isNotEmpty())
+                              {
+                                  auto* panel = findPanel(component);
+                                  if (panel == nullptr)
+                                      return textResult("No panel in the window.", true);
+                                  juce::String error;
+                                  const float zoom = args.hasProperty("zoom") ? static_cast<float>(static_cast<double>(args["zoom"])) : 2.0f;
+                                  image = panel->pictureForMcp(area, zoom, error);
+                                  if (! image.isValid())
+                                      return textResult(error, true);
+                                  what = "The panel's " + area + ", ";
+                              }
+                              else
+                              {
+                                  image = component->createComponentSnapshot(component->getLocalBounds(), true, 1.0f);
+                                  what = "CoolSynth's window, ";
+                              }
                               juce::MemoryOutputStream png;
                               juce::PNGImageFormat().writeImageToStream(image, png);
-                              return imageResult(png.getMemoryBlock(), "CoolSynth's window, " + juce::String(image.getWidth()) + " x "
+                              return imageResult(png.getMemoryBlock(), what + juce::String(image.getWidth()) + " x "
                                                                            + juce::String(image.getHeight()) + " pixels.");
+                          } });
+
+        tools.push_back({ "read_screen",
+                          "The panel as text, as it is drawn now: the main screen (header, trail, list or slots, page tabs, the four "
+                          "cards, the hint line), the main knob's roles, the layer screen (each layer's sound and chain, the info "
+                          "row), knobs 1-8, faders, pads, buttons, the MiniLab's display, and the names the click tool takes. "
+                          "Use it instead of a screenshot to see what the screen says.",
+                          objectSchema({}),
+                          [window](const juce::var&)
+                          {
+                              auto* panel = findPanel(window ? window() : nullptr);
+                              if (panel == nullptr)
+                                  return textResult("No panel to read: the app's window is closed or shows something else.", true);
+                              return textResult(panel->describeForMcp());
+                          } });
+
+        tools.push_back({ "click",
+                          "Clicks a part of the panel by the name read_screen gives it, as the mouse does: a list row, a page tab, "
+                          "a slot, a card, a layer's name, a block of a layer's chain, a pad, a knob, Hold or Oct, or moves a fader "
+                          "to a value. Answers with the panel as text afterwards.",
+                          objectSchema({ { "name", typeSchema("string", "e.g. 'screen.4', 'card.1', 'layer.B', 'chain.A.P1', 'pad.2', 'knob.5', "
+                                                                        "'hold', 'octave.up', 'fader.4'") },
+                                         { "value", typeSchema("number", "For a fader: 0 to 1 of its travel; the Master to 1.25, above 1 the boost") } },
+                                       { "name" }),
+                          [window](const juce::var& args)
+                          {
+                              auto* panel = findPanel(window ? window() : nullptr);
+                              if (panel == nullptr)
+                                  return textResult("No panel to click: the app's window is closed or shows something else.", true);
+                              const auto result = panel->clickForMcp(args["name"].toString(),
+                                                                     args.hasProperty("value") ? static_cast<double>(args["value"]) : 0.0);
+                              return textResult(result + "\n\n" + panel->describeForMcp(), result.startsWith("Nothing") || result.startsWith("Not "));
                           } });
 
         tools.push_back({ "read_log",

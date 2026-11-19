@@ -7,6 +7,7 @@
 #include <juce_core/juce_core.h>
 
 #include "mcp/CoolSynthTools.h"
+#include "interface/InterfaceModel.h"
 #include "mcp/McpServer.h"
 #include "plugin/SynthAudioProcessor.h"
 
@@ -65,7 +66,7 @@ public:
                     expectEquals(t["inputSchema"]["type"].toString(), juce::String("object"));
                 }
             for (const char* wanted : { "get_sound", "list_parameters", "set_values", "set_slot_type", "list_presets", "load_preset",
-                                        "list_files", "set_file", "play", "panel", "screenshot", "read_log" })
+                                        "list_files", "set_file", "play", "panel", "screenshot", "read_log", "read_screen", "click" })
                 expect(names.contains(wanted), juce::String("missing tool ") + wanted);
             expectEquals(static_cast<int>(server.handleMessage(request(4, "no/such"))["error"]["code"]), -32601);
             expectEquals(static_cast<int>(server.handleMessage(request(5, "tools/call", json(R"({"name":"nope"})")))["error"]["code"]), -32602);
@@ -126,6 +127,34 @@ public:
             expectEquals(json(text.fromFirstOccurrenceOf("\r\n\r\n", false, false))["result"]["serverInfo"]["name"].toString(), juce::String("CoolSynth"));
             server.stop();
             expect(! server.listening());
+        }
+
+        beginTest("the panel read as text, clicked by name, and one part pictured (D227)");
+        {
+            std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditorAndMakeActive());
+            juce::Component* shown = editor.get();
+            coolsynth::mcp::Server panelServer("CoolSynth", "test",
+                                               coolsynth::mcp::coolSynthTools(*synth, [shown] { return shown; }, nullptr), nullptr);
+            auto call = [&](const char* arguments) { return panelServer.handleMessage(request(20, "tools/call", json(arguments))); };
+            const auto screen = firstText(call(R"({"name":"read_screen","arguments":{}})"));
+            for (const char* part : { "MAIN SCREEN", "LAYER SCREEN", "LAYER A", "KNOBS 1-8", "FADERS", "PADS", "MINILAB DISPLAY", "chain.A.<code>", "pad.1 to pad.8", "P1 Ladder" })
+                expect(screen.contains(part), juce::String("read_screen lacks ") + part);
+            const auto clicked = firstText(call(R"({"name":"click","arguments":{"name":"chain.A.P1"}})"));
+            expect(clicked.startsWith("Clicked chain.A.P1"), clicked.substring(0, 120));
+            auto& model = synth->getInterfaceModel();
+            expect(model.view() == coolsynth::ui::InterfaceModel::View::section && model.section() == 1 && model.slotIndex(1) == 0 && model.part() == 0,
+                   "the Shape section on layer A's P1, as a mouse click there does");
+            expect(clicked.contains("[SHAPE]"), "and the answer shows it");
+            const auto missing = call(R"({"name":"click","arguments":{"name":"nope"}})");
+            expect(static_cast<bool>(missing["result"]["isError"]), "an unknown name is the tool's error");
+            (void) call(R"({"name":"click","arguments":{"name":"fader.4","value":1.125}})"); // half way up the Master's boost
+            expectWithinAbsoluteError(model.masterBoostDb(), 6.0f, 0.15f, "the Master past its top: the boost");
+            (void) call(R"({"name":"click","arguments":{"name":"fader.4","value":1.0}})");
+            const auto picture = call(R"({"name":"screenshot","arguments":{"area":"layer screen","zoom":2}})");
+            expectEquals(picture["result"]["content"][0]["type"].toString(), juce::String("image"));
+            expect(picture["result"]["content"][1]["text"].toString().contains("layer screen"));
+            const auto wrong = call(R"({"name":"screenshot","arguments":{"area":"the moon"}})");
+            expect(static_cast<bool>(wrong["result"]["isError"]), "an unknown part is the tool's error");
         }
     }
 };

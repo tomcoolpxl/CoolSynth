@@ -4590,3 +4590,14 @@ The user asked for quick changes ahead of the interface redesign, laid out by th
 - Its hints. Ableton Live keeps all hover help in one place, its Info View; nothing found on help beside the pointer. The user's choice (options: the layer screen's own hints on it, recommended and chosen; every hover hint there; as it was): with the mouse on the layer screen, what it points at takes the info row's place (the CPU stays), and the info row comes back when it leaves; knobs, faders, pads and buttons keep the main screen's hint line.
 - The screens' bezels, round the glass and the main knob, are a grey a shade lighter than the panel instead of black.
 - The Master Boost's reading moved above the Master fader, under the layer screen.
+
+## D227. The MCP server reads the panel as text and clicks it by name (2026-11-19)
+
+The user, after being asked to watch a knob run through file names: "You can do that automatically... you can simulate this", then asked for a way to read the screen without screenshots, or a picture of only the LED.
+
+- Research: Playwright's MCP server reads web pages as accessibility snapshots, text with a reference per element, instead of screenshots, which cost far more tokens. JUCE has an accessibility layer, but the panel draws most of its parts itself.
+- The user's choices, all four offered: the screens as text, recommended; a picture of one part; a click by name; a JUCE accessibility tree (its timing asked separately).
+- `read_screen`: the panel describes itself line by line from what it draws (`PanelEditor::describeForMcp`): the main screen's header, trail, list or slots, page tabs, cards (with a name as drawn when shortened) and hint line, the main knob's roles, the layer screen's layers, chains and info row, knobs 1-8, faders, pads, buttons, the MiniLab's display and the keyboard line, then the names the click tool takes.
+- `click`: a mouse click at the named part, so the panel's own hit areas are tested (list rows, tabs, slots, cards, a layer's name, a chain block, pads, knobs, Hold, Oct), or a fader moved to a value; it answers with the panel as text. Not by click: menus and cards that open over the panel.
+- `screenshot` takes an area (the main screen, the layer screen, knobs, faders, pads, keys, the left column, or x,y,w,h) and a zoom of 1 to 3.
+- Tested on a panel (`tests/McpServerTests.cpp`) and on the running app.
