@@ -72,14 +72,10 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 5. Next from the research on the user's reference artists (`docs/research/sound-references.md`): the Pitch effect's
    Tune mode and formant control. The stutter effect is built (D220); its three draft presets in Night Bus (Cut-Up
    Chords, Wheel Stutter, Glitch Pad) wait for the user's ear, with the listening pass (item 3).
-6. The Museum: the hoover and Juno-106 patches still have no published source. Leads found on 2026-11-19: the
-   Alpha Juno factory tone banks as .syx files and a reader that prints every parameter
-   (llamamusic.com/mks50/mks-50_patches.html), so the hoover can be decoded once the user allows the download; the
-   Juno-106's single-patch dump is documented (ST-Log, June 1989), but Roland now sells its 128 factory patches
-   only for its own plugin, and no free factory data was found. The user fetched the collection (E:\Downloads,
-   MKS50_Alpha_Juno_Collection-A.zip): "What the" is tone T-86 of FACTORYB.SYX, a Roland bulk dump of 64 tones
-   packed in 32 bytes each; the packing is in the MKS-50 manual's bulk dump table (its text layer is garbled, the
-   scanned page is readable). The 36 parameters in order are in chriswareham/alphajuno (doc/sysex.txt, BSD).
+6. The Museum: the hoover's source is found (D223): the Alpha Juno's factory tone "What the", decoded from Roland's
+   bulk dump with the manual's table (`resources/museum-candidates/sources/alpha-juno-what-the.txt`). Next: the
+   candidate, converted from these numbers (D104), then the user's side-by-side. The Juno-106 patches still have no
+   free factory data (Roland sells its 128 for its own plugin; the dump format is documented, ST-Log, June 1989).
 7. The wine glasses as a source for the Grain generator.
 18. The added noise (D221, `docs/research/noise-modelling.md`): researched on 2026-11-19, the user chose, to build:
     - LoFi's noise at a steady level while anything plays, fading out after about a second of silence (Satin's

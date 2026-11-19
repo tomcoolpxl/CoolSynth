@@ -1,0 +1,48 @@
+# Roland Alpha Juno factory tone "What the" (the hoover), decoded on 2026-11-19 (D223).
+#
+# Source: FACTORYB.SYX, the MKS-50 / Alpha Juno-1 / Alpha Juno-2 factory tone group B, from the MKS-50 ZONE
+# collection (llamamusic.com/mks50/mks-50_patches.html, MKS50_Alpha_Juno_Collection-A.zip), tone 86.
+# Decoded with tools/museum/alphajuno_decode.py from the bulk dump table in Roland's MKS-50 owner's manual,
+# section 3.2 ("*2 TONE data format" and its switch bits). All 64 names of the bank decode correctly.
+# The 4-bit fields (aftertouch depths, key follows) are the top four bits of their 0-127 values.
+# Values as the synth stores them; what they mean in CoolSynth's terms is the candidate's work (D104).
+#
+86 'What the  ' code 0
+    dco_after_depth4 = 9
+    vcf_key_follow4 = 11
+    vcf_after_depth4 = 9
+    vca_after_depth4 = 0
+    env_key_follow4 = 9
+    bender_range = 5
+    dco_lfo_depth = 0
+    dco_env_depth = 127
+    dco_pw_pwm_depth = 127
+    dco_pwm_rate = 102
+    vcf_cutoff = 77
+    vcf_resonance = 0
+    vcf_env_depth = 75
+    vcf_lfo_depth = 75
+    vca_level = 60
+    lfo_rate = 39
+    lfo_delay = 64
+    env_t1 = 99
+    env_l1 = 68
+    env_t2 = 78
+    env_l2 = 127
+    env_t3 = 75
+    env_l3 = 127
+    env_t4 = 92
+    chorus = 1
+    dco_env_mode = 2
+    vcf_env_mode = 2
+    vca_env_mode = 2
+    wave_sub = 5
+    wave_saw = 3
+    wave_pulse = 3
+    hpf = 0
+    dco_range = 3
+    sub_level = 3
+    noise_level = 1
+    chorus_rate = 92
+    name = What the  
+    tone_data_code = 0

@@ -4517,3 +4517,11 @@ The user's choices:
 - Not yet built: TODO 19 holds the plan.
 
 Also on 2026-11-19, for the Museum (TODO 6): the user allowed every download the hoover needs ("download everything you might need"). The Alpha Juno collection is on OneDrive, which refuses an unsigned download from a script; the user offered to fetch it.
+
+## D223. The hoover's source: the Alpha Juno factory tone, decoded (2026-11-19)
+
+The Museum's hoover (D103) had no published values. The user allowed the downloads it needs and fetched MKS50_Alpha_Juno_Collection-A.zip from the MKS-50 ZONE (OneDrive refused a script). Its FACTORYB.SYX is the factory tone group B of the MKS-50 and both Alpha Junos, a Roland bulk dump: 16 messages of four tones, each tone 32 bytes sent as nibbles, least significant first.
+
+- The byte layout is Roland's own, from the MKS-50 owner's manual, section 3.2 ("*2 TONE data format" and its switch bits; ManualsLib's copy 695917, page 65, read from the scan, as the text layers of the copies are garbled). Bytes 0 to 2 hold six 4-bit fields (DCO, VCF and VCA aftertouch depth, VCF and envelope key follow, bender range); byte 3 the DCO LFO depth; bytes 4 to 20 the seventeen 7-bit values with switch bits b00 to b16 on top (chorus, the three envelope modes, the sub, saw and pulse waves, the high-pass); bytes 21 to 30 the name (6-bit characters) with b17 to b22 (range, sub level, noise level) and the chorus rate's seven bits on top.
+- Checked: all 64 names of the bank decode correctly, and "What the" is tone 86, as the MKS-50 ZONE lists it. The open-source editor chriswareham/alphajuno (BSD) gives the 36 parameters' order and ranges (its doc/sysex.txt) and a hand-made hoover.pat, which differs from the factory tone (16' against 32', no noise against a little) and is not used.
+- Kept: the decoder (`tools/museum/alphajuno_decode.py`) and the decoded tone with its origin (`resources/museum-candidates/sources/alpha-juno-what-the.txt`). The zip and the bank file are not in the repository. Next: the candidate itself, converted from these numbers as D104 asks, then the user's side-by-side.
