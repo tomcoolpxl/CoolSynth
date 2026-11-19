@@ -6,6 +6,10 @@
 #include <set>
 #include <vector>
 
+#include <juce_audio_processors/juce_audio_processors.h>
+
+#include "plugin/SynthAudioProcessor.h"
+#include "presets/FactoryPresets.h"
 #include "synth/v3/Inserts.h"
 #include "synth/v3/StutterInsert.h"
 
@@ -288,3 +292,49 @@ public:
 };
 
 static V3StutterTests v3StutterTests;
+
+/*
+    Wheel Stutter through the whole processor, as the user played it (D225): the mod wheel past halfway catches at
+    once. A 50 ms level trace from the running app could not tell, as the first repeats are nearly as loud as the note.
+*/
+class V3WheelStutterTests final : public juce::UnitTest
+{
+public:
+    V3WheelStutterTests() : juce::UnitTest("V3 Wheel Stutter", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("the mod wheel past halfway catches within the block it arrives in");
+        constexpr double rate = 48000.0;
+        constexpr int block = 256;
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        synth->setPlayConfigDetails(0, 2, rate, block);
+        synth->prepareToPlay(rate, block);
+        int preset = -1;
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+            if (coolsynth::presets::getFactoryPreset(i).name == "Wheel Stutter")
+                preset = i;
+        expect(preset >= 0);
+        synth->setCurrentProgram(preset);
+        juce::AudioBuffer<float> buffer(2, block);
+        const int wheelBlock = static_cast<int>(1.0 * rate / block);
+        int caughtBlock = -1;
+        for (int b = 0; b < static_cast<int>(2.0 * rate / block); ++b)
+        {
+            juce::MidiBuffer midi;
+            if (b == 0)
+                midi.addEvent(juce::MidiMessage::noteOn(1, 60, static_cast<juce::uint8>(100)), 0);
+            if (b == wheelBlock)
+                midi.addEvent(juce::MidiMessage::controllerEvent(1, 1, 100), 0);
+            buffer.clear();
+            synth->processBlock(buffer, midi);
+            if (caughtBlock < 0 && synth->engineForTesting().insertForTesting(0, 0).stutterForTesting().stutteringForTesting())
+                caughtBlock = b;
+        }
+        logMessage("wheel in block " + juce::String(wheelBlock) + ", stutter from block " + juce::String(caughtBlock) + " ("
+                   + juce::String(1000.0 * (caughtBlock - wheelBlock) * block / rate, 1) + " ms later)");
+        expect(caughtBlock >= wheelBlock && caughtBlock <= wheelBlock + 1, "the catch waited");
+    }
+};
+
+static V3WheelStutterTests v3WheelStutterTests;

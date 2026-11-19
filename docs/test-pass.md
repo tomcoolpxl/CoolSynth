@@ -63,9 +63,9 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
 ## Findings, to fix after the rounds
 
 - Pirate Radio's fade-out is a little strong (the user: maybe as it should be).
-- Wheel Stutter, measured through the MCP server (the wheel up at 1.00 s, down at 2.00 s, the level every 50 ms): the
-  stutter catches only at about 1.30 s, on the next eighth of its grid, not at once; letting go stops it at once. A
-  held catch (a wheel, a pad) may want to catch at once, as a performance control.
+- Wheel Stutter catches at once: through the processor the stutter starts in the very block the wheel arrives in
+  (tests/V3StutterTests.cpp). A 50 ms level trace from the running app had suggested 0.3 s, but the first repeats are
+  nearly as loud as the note, so the level cannot show the start. Nothing to fix.
 - After a replug the pads stayed white: fixed (D225), the driver sends everything again 1 s and 3 s after connecting;
   the user saw the colours come back.
 
