@@ -4470,3 +4470,12 @@ The "Your keyboard" line (D203) showed only for the MiniLab 3. MIDI never says h
 - Where the line starts until a note says otherwise: C3 (48) for 25 and 37 keys, C2 (36) for 49 and 61, A0 (21) for 88. A note outside moves it by whole octaves, as little as holds it, as the MiniLab's did (D192), within four octaves and MIDI's 128 notes; another size starts at its home again.
 - Which notes move it: with the MiniLab, only the MiniLab's own (its driver hears the device, not a DAW's played-back notes); with any other keyboard, every note that reaches CoolSynth from outside the screen (the app's MIDI inputs, the host). A DAW's played-back notes move it too, which no plugin can tell apart from playing.
 - The screen's Oct buttons still move the screen's keys with another keyboard (only the MiniLab greys them out), so only the part of the line in sight is drawn, and a sliver at the edge goes unnamed.
+
+## D219. A faster VA oscillator, bit for bit the same (2026-11-19)
+
+The user chose a lower CPU cost for the virtual analog oscillator (D215). Quality first: the sound must not change, so every step was checked against a fingerprint of the VA's exact output in thirteen modes (sine, triangle, saw, pulse, two morphs, Supersaw, unison 4, sub, sync, FM, ring, AM; `COOLSYNTH_VA_FINGERPRINT=1`), every bit of every sample, the same before and after.
+
+- The phase wrap: `x - std::floor(x)` is a library call with the build's SSE2 target (MSVC turns floor into one instruction only from SSE4.1 on; Microsoft's /arch documentation, mmozeiko's SSE floor benchmarks on GitHub). For a phase moving forward by under a cycle it is `x >= 1 ? x - 1 : x`, the same number; FM, which can move it back, keeps floor.
+- The sample being built stays in registers while the unison copies add to it, with the same additions in the same order as into the ring; before, every copy stored it and the next loaded it again. A crossing's speed is worked out only at a crossing.
+- Measured (eight-note chords, optimised Debug, this machine): one saw 1.71 % to 1.34 % of real time over the empty voices, seven saws 5.55 % to 4.69 %, the Supersaw preset 18.4 % to 17.7 % on average. The VA is now the smaller part of Supersaw: its ladder costs 5.8 %.
+- The bigger steps left change the last bit of the numbers or other things, so they are the user's to choose: the unison copies side by side in SIMD lanes (sums in another order: a difference near -140 dB), the ladder, or building for AVX2 (faster everywhere, but no CPU from before 2013).

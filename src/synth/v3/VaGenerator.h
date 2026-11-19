@@ -140,6 +140,9 @@ namespace coolsynth::synth::v3
 
                 const unsigned int now = cursor & 3u;
                 wrapRing[now] = advanceReference(referenceIncrement, fmDelta, syncTau);
+                // The sample being built, in registers while every copy adds to it: the same additions in the same
+                // order as into the ring itself, without a store and a load between one copy and the next (TODO 9).
+                Sum here { accLeft[now], accRight[now], accMono[now] };
 
                 for (int i = 0; i < count; ++i)
                 {
@@ -151,7 +154,7 @@ namespace coolsynth::synth::v3
                     if (g.mono == 0.0f)
                     {
                         // Silent in this mix: keep it running so it is in place when the mix brings it in.
-                        phase = syncTau > 0.0f ? dt * (1.0f - syncTau) : wrap(phase + dt + fmDelta);
+                        phase = syncTau > 0.0f ? dt * (1.0f - syncTau) : (useFm ? wrap(phase + dt + fmDelta) : wrapForward(phase + dt));
                         continue;
                     }
 
@@ -159,38 +162,41 @@ namespace coolsynth::synth::v3
                     {
                         // Runs on up to the reset at tau, jumps to phase zero, runs on to the sample.
                         const float before = dt * syncTau;
-                        addCrossings(waveform, phase, before, 0.0f, syncTau, g);
+                        addCrossings(waveform, phase, before, 0.0f, syncTau, g, here);
                         const float resetFrom = wrap(phase + before);
                         addEvent(syncTau,
                                  waveform.value(0.0f) - waveform.value(resetFrom),
                                  dt * (waveform.slope(0.0f) - waveform.slope(resetFrom)),
-                                 g);
+                                 g, here);
                         const float after = dt * (1.0f - syncTau);
-                        addCrossings(waveform, 0.0f, after, syncTau, 1.0f - syncTau, g);
+                        addCrossings(waveform, 0.0f, after, syncTau, 1.0f - syncTau, g, here);
                         phase = after;
                     }
                     else
                     {
                         const float delta = dt + fmDelta;
                         if (std::abs(delta) < 1.0f)
-                            addCrossings(waveform, phase, delta, 0.0f, 1.0f, g);
-                        phase = wrap(phase + delta);
+                            addCrossings(waveform, phase, delta, 0.0f, 1.0f, g, here);
+                        phase = useFm ? wrap(phase + delta) : wrapForward(phase + delta);
                     }
 
                     const float v = waveform.value(phase);
-                    accLeft[now] += v * g.left;
-                    accRight[now] += v * g.right;
-                    accMono[now] += v * g.mono;
+                    here.left += v * g.left;
+                    here.right += v * g.right;
+                    here.mono += v * g.mono;
                 }
 
-                subPhase = wrap(subPhase + subIncrement);
+                subPhase = wrapForward(subPhase + subIncrement);
                 if (subLevel > 0.0f)
                 {
                     const float v = std::sin(subPhase * kTwoPi);
-                    accLeft[now] += v * subGains.left;
-                    accRight[now] += v * subGains.right;
-                    accMono[now] += v * subGains.mono;
+                    here.left += v * subGains.left;
+                    here.right += v * subGains.right;
+                    here.mono += v * subGains.mono;
                 }
+                accLeft[now] = here.left;
+                accRight[now] = here.right;
+                accMono[now] = here.mono;
 
                 // The sample two steps back can no longer change: hand it out.
                 const unsigned int out = (cursor + 2u) & 3u;
@@ -231,6 +237,13 @@ namespace coolsynth::synth::v3
         static constexpr float kMaxFmCycles = 2.0f; // phase deviation at full combine amount
 
         struct CopyGains
+        {
+            float left = 0.0f;
+            float right = 0.0f;
+            float mono = 0.0f;
+        };
+
+        struct Sum
         {
             float left = 0.0f;
             float right = 0.0f;
@@ -317,6 +330,10 @@ namespace coolsynth::synth::v3
 
         static float wrap(float x) noexcept { return x - std::floor(x); }
 
+        /** wrap() for a phase in [0, 1] moved forward by under a cycle, so x is in [0, 2): the same number
+            (floor is 0 or 1 there), without the library call std::floor is on SSE2 (TODO 9). */
+        static float wrapForward(float x) noexcept { return x >= 1.0f ? x - 1.0f : x; }
+
         /**
             Whether moving from start by delta crosses point; fraction is where, as a share of delta.
             The test compares against start + delta, the very expression the phase update wraps, so a
@@ -367,12 +384,19 @@ namespace coolsynth::synth::v3
         }
 
         /** An event at tau in (0, 1] after the previous sample: corrects the two samples before and after it. */
-        void addEvent(float tau, float jump, float slopeChange, const CopyGains& g) noexcept
+        void addEvent(float tau, float jump, float slopeChange, const CopyGains& g, Sum& here) noexcept
         {
             for (unsigned int j = 0; j < 4u; ++j)
             {
                 const float x = static_cast<float>(static_cast<int>(j) - 1) - tau;
                 const float c = jump * stepResidual(x) + slopeChange * rampResidual(x);
+                if (j == 2u) // (cursor + 4) & 3: the sample being built, held in `here`
+                {
+                    here.left += c * g.left;
+                    here.right += c * g.right;
+                    here.mono += c * g.mono;
+                    continue;
+                }
                 const unsigned int slot = (cursor + 2u + j) & 3u;
                 accLeft[slot] += c * g.left;
                 accRight[slot] += c * g.right;
@@ -381,18 +405,21 @@ namespace coolsynth::synth::v3
         }
 
         /** Events of the shape between start and start + delta, which spans [tauOffset, tauOffset + tauScale] of the sample. */
-        void addCrossings(const Shape& w, float start, float delta, float tauOffset, float tauScale, const CopyGains& g) noexcept
+        void addCrossings(const Shape& w, float start, float delta, float tauOffset, float tauScale, const CopyGains& g, Sum& here) noexcept
         {
             if (delta == 0.0f || tauScale <= 0.0f)
                 return;
-            const float speed = std::abs(delta) / tauScale;
-            const float direction = delta > 0.0f ? 1.0f : -1.0f;
             for (int k = 0; k < w.pointCount; ++k)
             {
                 const auto& point = w.points[static_cast<std::size_t>(k)];
                 float fraction = 0.0f;
                 if (crosses(start, delta, point.phase, fraction))
-                    addEvent(tauOffset + tauScale * fraction, direction * point.jump, speed * point.slopeJump, g);
+                {
+                    // Worked out only for a crossing, about once a cycle, not every sample (TODO 9).
+                    const float speed = std::abs(delta) / tauScale;
+                    const float direction = delta > 0.0f ? 1.0f : -1.0f;
+                    addEvent(tauOffset + tauScale * fraction, direction * point.jump, speed * point.slopeJump, g, here);
+                }
             }
         }
 
@@ -411,7 +438,7 @@ namespace coolsynth::synth::v3
             float tau = -1.0f;
             if (delta > 0.0f && delta < 1.0f && crosses(referencePhase, delta, 0.0f, fraction))
                 tau = fraction;
-            referencePhase = wrap(referencePhase + delta);
+            referencePhase = fmDelta == 0.0f && delta >= 0.0f ? wrapForward(referencePhase + delta) : wrap(referencePhase + delta);
             return tau;
         }
 

@@ -76,10 +76,10 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 
 ## Engine
 
-9. Processing cost. The VA generator: Supersaw with eight-note chords takes 36 % of real time (worst block 60 %),
-   so a 16-voice Supersaw would reach the limit. Per module (`COOLSYNTH_CPU_REPORT=1`,
-   `tests/V3ModuleCostReport.cpp`, eight notes, optimised Debug): the ladder about 8 %, FM4 about 7 % (a faster
-   sine gains 6 %, D140), Drive about 6 %, Comb under 4 %, the VA saw under 2 %.
+9. Processing cost, measured on 2026-11-19 (optimised Debug, eight-note chords; `COOLSYNTH_CPU_REPORT=1`): Supersaw
+   17.7 % of real time on average, 27 % in its worst block. Its share per module, over the voices' own 2.7 %: the
+   ladder 5.8 %, the seven saws 4.7 % (5.6 % before the exact VA speed-ups of D219), the SVF 1.6 %, the rest its
+   second layer and effects. Elsewhere FM4 5.3 %, Drive 3.9 %. What next, if anything, is the user's choice (D219).
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).
