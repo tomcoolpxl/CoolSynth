@@ -102,6 +102,19 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
   played with. Done (D225): every knob change made in the app and every file choice is logged.
 - Not known yet: whether the app told you the MiniLab was in use by another program.
 
+## Retests of the fixes (2026-11-19 and 20)
+
+All passed:
+- the Master Boost: louder past the top, labelled in amber; below the 0 dB mark it is gone;
+- Back to your edit: the edited Reese came back from the list of rooms;
+- Sensitivity: one slice at 0 %, keys coming in one by one up the knob, each on a hit, no cutoff;
+- the two-line names: kits, files in a kit and your own files told apart, over all 15 entries (checked through
+  the MCP server; "Kit: Demo Kit" shows as "Kit: D…o Kit" on the main screen's card, whole under the knob);
+- the controller setup with the MiniLab driver off: knob 1 reaches CoolSynth in the DAW program and the Arturia
+  program, the saved setup having both programs' links.
+
+Found on the way: Supersaw's undertone is its sub, by design (on the listening pass list above).
+
 ## Then the release (TODO J3)
 
 - The version number is your choice; the release notes go in `docs/releases/`; then the tag.
