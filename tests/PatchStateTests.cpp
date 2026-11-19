@@ -904,3 +904,65 @@ public:
 };
 
 static NoiseTypeMigrationTests noiseTypeMigrationTests;
+
+/*
+    A state or a saved sound from before the arps' New Patterns and the Master Boost loads, with those at their defaults
+    (D224, D225): a state must name every parameter, and the user's app came back on Reese when a state of version 15
+    lacked them (the test pass of 2026-11-19).
+*/
+class NewerParametersMigrationTests final : public juce::UnitTest
+{
+public:
+    NewerParametersMigrationTests() : juce::UnitTest("Newer parameters migration", "Presets") {}
+
+    void runTest() override
+    {
+        // A sound of one's own (layer A in Mono) saved by a version that had neither parameter.
+        auto withoutNewest = [](juce::XmlElement& stateXml)
+        {
+            for (const char* id : { "pA.arpNewPatterns", "pB.arpNewPatterns", "masterBoost" })
+                for (auto* child : stateXml.getChildWithTagNameIterator("PARAM"))
+                    if (child->getStringAttribute("id") == id)
+                    {
+                        stateXml.removeChildElement(child, true);
+                        break;
+                    }
+        };
+        auto source = std::make_unique<SynthAudioProcessor>();
+        auto* mode = source->getValueTreeState().getParameter("pA.play.mode");
+        mode->setValueNotifyingHost(mode->getValueForText("Mono"));
+
+        beginTest("an_app_or_project_state_of_version_15_loads");
+        {
+            juce::MemoryBlock block;
+            source->getStateInformation(block);
+            auto root = juce::AudioProcessor::getXmlFromBinary(block.getData(), static_cast<int>(block.getSize()));
+            for (auto* child : root->getChildIterator())
+                withoutNewest(*child);
+            root->setAttribute("formatVersion", 15);
+            juce::MemoryBlock old;
+            juce::AudioProcessor::copyXmlToBinary(*root, old);
+            auto target = std::make_unique<SynthAudioProcessor>();
+            target->setStateInformation(old.getData(), static_cast<int>(old.getSize()));
+            expectEquals(target->getValueTreeState().getParameter("pA.play.mode")->getCurrentValueAsText(), juce::String("Mono"),
+                         "the saved sound, not the start sound");
+            expectEquals(target->getValueTreeState().getRawParameterValue("masterBoost")->load(), 0.0f);
+        }
+
+        beginTest("a_saved_sound_of_version_14_loads");
+        {
+            auto stateXml = source->createParameterStateXml();
+            withoutNewest(*stateXml);
+            auto patchXml = coolsynth::presets::createWrappedPatchXml(*stateXml, source->getParameterStateTypeName());
+            patchXml->setAttribute("formatVersion", 14);
+            const auto file = juce::File::getSpecialLocation(juce::File::tempDirectory).getNonexistentChildFile("coolsynth-v14", ".cspatch");
+            file.replaceWithText(patchXml->toString());
+            auto target = std::make_unique<SynthAudioProcessor>();
+            expect(target->loadMySound(file), "a version-14 sound loads");
+            expectEquals(target->getValueTreeState().getParameter("pA.play.mode")->getCurrentValueAsText(), juce::String("Mono"));
+            file.deleteFile();
+        }
+    }
+};
+
+static NewerParametersMigrationTests newerParametersMigrationTests;

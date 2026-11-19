@@ -63,7 +63,8 @@ the new preset. An earlier sound hears only what ends or bends its notes: key re
 pitch bend, All Notes Off. Five seconds after its last key and the pedal are up it fades out over half a
 second, and so does the oldest when a third earlier sound would ring or when the processor runs short of
 time; with none left and a dropout near, the playing sound's quietest released voice fades out. The units are
-summed and pass through one soft clipper to the output.
+summed, take the Master fader and the Master Boost above it (0 to +12 dB, D225), and pass through one soft
+clipper to the output.
 
 Every random number, from the voices' drift to the effects' crackle, comes from a seed of its sound, layer,
 voice and slot, and a reset or the host's transport starting takes them all back to it: a song plays and

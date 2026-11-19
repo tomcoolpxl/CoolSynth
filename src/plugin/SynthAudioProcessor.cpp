@@ -50,7 +50,9 @@ namespace
     // 11: the layer modes Stack, Split, Velocity (a 10 or 9 is carried over, D190);
     // 12: an arp and six effect slots per layer (an 11, 10 or 9 is carried over, D194);
     // 13: the Layers page's balance, detune and spread (D196; a 12 gets them at their defaults)
-    inline constexpr int processorStateFormatVersion = 15; // 15: Brown noise (D221)
+    // 15: Brown noise (D221). 16: the arps' New Patterns and the Master Boost (D224, D225): a state of 15 or before gets
+    // them at their defaults; a state must name every parameter, so a new one always raises the version.
+    inline constexpr int processorStateFormatVersion = 16;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
@@ -1022,7 +1024,7 @@ bool SynthAudioProcessor::loadIntoLayer(int layer, const std::function<bool()>& 
             if (dissolve) // the other layer empties: its defaults, every slot Off
                 target = id.matchesWildcard("p?.g?.type", true) || id.matchesWildcard("p?.p?.type", true) ? 0.0f : p->getDefaultValue();
         }
-        else if (id == ids::volumeA || id == ids::volumeB || id == ids::volumeFx || id == ids::volumeMaster)
+        else if (id == ids::volumeA || id == ids::volumeB || id == ids::volumeFx || id == ids::volumeMaster || id == ids::masterBoost)
             target = before[static_cast<std::size_t>(i)]; // the player's faders stay (D184)
         else if (takeGlobals || (id == ids::arpInternalTempoBpm && soundArpOn))
             target = after[static_cast<std::size_t>(i)]; // the sound's global settings, or its tempo for its arp
@@ -1210,6 +1212,8 @@ void SynthAudioProcessor::resetSound()
                             coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster })
         if (auto* fader = parameters.getParameter(id); fader != nullptr && fader->getValue() != 1.0f)
             fader->setValueNotifyingHost(1.0f); // at the top: the sound as designed (D184)
+    if (auto* boost = parameters.getParameter(coolsynth::parameters::ids::masterBoost); boost != nullptr && boost->getValue() != 0.0f)
+        boost->setValueNotifyingHost(0.0f); // and no boost over it (D225)
     undoHistory.clear();
 }
 
@@ -1456,7 +1460,8 @@ bool SynthAudioProcessor::loadMySound(const juce::File& file)
     // The faders stay where the player has them (D184): a saved sound brings its own levels, not the player's volumes.
     std::vector<std::pair<juce::RangedAudioParameter*, float>> faders;
     for (const char* id : { coolsynth::parameters::ids::volumeA, coolsynth::parameters::ids::volumeB,
-                            coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster })
+                            coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster,
+                            coolsynth::parameters::ids::masterBoost })
         if (auto* p = parameters.getParameter(id))
             faders.emplace_back(p, p->getValue());
 
@@ -2044,6 +2049,7 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
     for (auto& mix : settings.mix)
         mix.fx *= coolsynth::synth::faderGain(v.volumeFx->load());
     settings.masterGainLinear *= coolsynth::synth::faderGain(v.volumeMaster->load());
+    settings.masterGainLinear *= juce::Decibels::decibelsToGain(juce::jlimit(0.0f, 12.0f, v.masterBoost->load())); // D225
     // Knobs 7 and 8 (D176): Brightness moves every filter's cutoff by up to 1.5 octaves either way (0.15 of the
     // cutoff's 20 Hz - 20 kHz range, ten octaves); Space makes every reverb, delay and room up to twice or half as wet.
     for (auto& part : settings.parts)

@@ -102,6 +102,8 @@ namespace coolsynth::parameters::ids
     inline constexpr char volumeB[] = "volumeB";
     inline constexpr char volumeFx[] = "volumeFx";
     inline constexpr char volumeMaster[] = "volumeMaster";
+    // Above the Master fader's top, 0 to +12 dB (D225): louder than the sound as designed, only when asked for.
+    inline constexpr char masterBoost[] = "masterBoost";
 
 }
 
@@ -197,6 +199,7 @@ namespace coolsynth::parameters
         ids::volumeB,
         ids::volumeFx,
         ids::volumeMaster,
+        ids::masterBoost,
     });
 
     /** The fixed parameters MIDI learn accepts; part parameters are accepted by their slot-path prefix. */

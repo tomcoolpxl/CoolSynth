@@ -270,6 +270,14 @@ namespace
         for (const auto& [id, name] : { std::pair { volumeA, "Layer A Volume" }, std::pair { volumeB, "Layer B Volume" },
                                         std::pair { volumeFx, "Effects Volume" } })
             group->addChild(makeVolume(id, name));
+        // Above the Master fader's top (D225): every preset is levelled to -20 LUFS, as gain staging advises; the
+        // player can go up to 12 dB louder here, and nothing changes while it is at 0.
+        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            juce::ParameterID { masterBoost, parameterVersionHintV7 },
+            "Master Boost",
+            juce::NormalisableRange<float>(0.0f, 12.0f, 0.1f),
+            0.0f,
+            dbAttributes()));
         return group;
     }
 

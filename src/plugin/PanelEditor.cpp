@@ -1811,14 +1811,24 @@ public:
             auto& fader = faders[static_cast<std::size_t>(f)];
             fader.setSliderStyle(juce::Slider::LinearVertical);
             fader.setTextBoxStyle(juce::Slider::NoTextBox, false, 0, 0);
-            fader.setRange(0.0, 1.0);
+            // The Master's track goes on a quarter beyond its top, for the boost (D225); the others end at their top.
+            fader.setRange(0.0, f == 3 ? 1.0 + masterBoostTravel : 1.0);
             fader.setColour(juce::Slider::trackColourId, colours::ink.withAlpha(0.8f));
             fader.setColour(juce::Slider::backgroundColourId, colours::knob);
             fader.setColour(juce::Slider::thumbColourId, colours::ink);
             fader.onValueChange = [this, f]
             {
-                if (! updatingFaders)
-                    model.moveFader(f, static_cast<float>(faders[static_cast<std::size_t>(f)].getValue()), false);
+                if (updatingFaders)
+                    return;
+                const auto value = static_cast<float>(faders[static_cast<std::size_t>(f)].getValue());
+                if (f == 3 && value > 1.0f)
+                {
+                    if (model.faderValue(3) < 0.999f)
+                        model.moveFader(3, 1.0f, false);
+                    model.setMasterBoost(12.0f * (value - 1.0f) / static_cast<float>(masterBoostTravel));
+                }
+                else
+                    model.moveFader(f, value, false);
             };
             // a fader lights its thumb and names itself while the mouse is on it (D204)
             auto& watcher = faderWatchers[static_cast<std::size_t>(f)];
@@ -2231,7 +2241,8 @@ public:
         {
             auto& fader = faders[static_cast<std::size_t>(f)];
             if (! fader.isMouseButtonDown())
-                fader.setValue(model.faderValue(f), juce::dontSendNotification);
+                fader.setValue(model.faderValue(f) + (f == 3 ? masterBoostTravel * model.masterBoostDb() / 12.0f : 0.0f),
+                               juce::dontSendNotification);
         }
         updatingFaders = false;
         for (int p = 0; p < 8; ++p)
@@ -2329,6 +2340,23 @@ public:
             g.setFont(sans(12.0f));
             g.setColour(colours::ink);
             g.drawText(model.faderName(f), b.getX() - 18, b.getBottom() + 17, b.getWidth() + 36, 16, juce::Justification::centred);
+        }
+        // The Master's top, the sound as designed, marked where its boost begins (D225).
+        {
+            const auto& master = faders[3];
+            const auto b = master.getBounds();
+            const float y = static_cast<float>(b.getY()) + static_cast<float>(master.getPositionOfValue(1.0));
+            // On the Master's own right, clear of the Effects fader beside it.
+            g.setColour(colours::print);
+            g.drawLine(static_cast<float>(b.getRight()) - 2.0f, y, static_cast<float>(b.getRight()) + 6.0f, y, 1.0f);
+            g.setFont(sans(9.0f));
+            g.drawText("0 dB", b.getRight() + 8, static_cast<int>(y) - 7, 30, 14, juce::Justification::centredLeft);
+            const auto boost = model.masterBoostDb();
+            if (boost > 0.0f)
+            {
+                g.setColour(coolsynth::ui::tintColour(Tint::sound));
+                g.drawText("+" + juce::String(boost, 1) + " dB", b.getRight() + 8, b.getY() - 2, 40, 14, juce::Justification::centredLeft);
+            }
         }
 
     }
@@ -2536,6 +2564,7 @@ private:
     int hoveredPanel = -1;
     bool hoveredCpu = false;
     std::array<PanelFader, 4> faders;
+    static constexpr double masterBoostTravel = 0.25; // the Master's track beyond its top, +12 dB at its end (D225)
     std::array<Pad, 8> pads;
     juce::TextButton options, hold, octDown, octUp;
     FlatKeyboard keyboard;

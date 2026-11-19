@@ -563,6 +563,40 @@ public:
             expect(! model->list().rows[0].contains("Back to your edit"), "the row is gone");
         }
 
+        beginTest("The Master's boost above its top: 6 dB doubles the output; below the top it is gone (D225)");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+            synth->prepareToPlay(48000.0, 256);
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            synth->setCurrentProgram(0); // Basic Saw: quiet enough that 6 dB more stays clear of the clipper
+            const auto peak = [&]
+            {
+                synth->reset();
+                juce::AudioBuffer<float> buffer(2, 256);
+                float loudest = 0.0f;
+                for (int b = 0; b < 60; ++b)
+                {
+                    juce::MidiBuffer midi;
+                    if (b == 0)
+                        midi.addEvent(juce::MidiMessage::noteOn(1, 60, static_cast<juce::uint8>(100)), 0);
+                    buffer.clear();
+                    synth->processBlock(buffer, midi);
+                    loudest = std::max(loudest, buffer.getMagnitude(0, 256));
+                }
+                return loudest;
+            };
+            expectEquals(model->masterBoostDb(), 0.0f, "no boost to begin with");
+            const float designed = peak();
+            model->setMasterBoost(6.0f);
+            const float boosted = peak();
+            expectWithinAbsoluteError(juce::Decibels::gainToDecibels(boosted / designed), 6.0f, 0.05f, "6 dB louder");
+            model->moveFader(3, 1.0f, true); // the MiniLab's fader at its top: the boost stays
+            expectWithinAbsoluteError(model->masterBoostDb(), 6.0f, 0.01f);
+            model->moveFader(3, 0.9f, true); // below the top: gone
+            expectEquals(model->masterBoostDb(), 0.0f, "below the top, no boost");
+        }
+
         beginTest("Any keyboard's line: the size chosen in Preferences, placed by its notes (D218)");
         {
             auto& setup = coolsynth::midi::ControllerSetup::instance();

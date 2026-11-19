@@ -88,14 +88,16 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
 - That one file seemed not to play: replayed from the app's saved state it plays at -79 dB, as Start was at 21 % and
   the test clap has nearly all its sound in its first 50 ms. Not an engine fault; the names are now short (CST1, CST2).
 - Your own samples play very quietly: a file put into a preset takes that preset's level (Basic Saw's layer is at
-  -11 dB, as a saw is loud), and files are not levelled; the loop peaks at -24 dB.
+  -11 dB, as a saw is loud), and files are not levelled; the loop peaks at -24 dB. Measured again, the loop is only
+  3 dB under Basic Saw's own saw: the whole synth is quiet, at -20 LUFS. Fixed (D225, the user's choice): the Master
+  fader goes up to +12 dB beyond its top, the Master Boost.
 - Looking for Mono, Rain Chime, Prophet Brass and Juno Pad loaded one after the other (a click on a list row loads
   at once) and the edited kit sound was gone without a question. Fixed (D225, the user's choice): an edited sound
   the panel replaces is kept, and the list of rooms offers it first ("Back to your edit: ..."); a press restores it.
   Turning the big knob never loaded: it browses, a press or a click loads.
 - Finding Mono took a long time: the layer's play mode is Home's Voice page, knob 1, which nothing points to.
 - The flight recorder logs notes and presets but not knob changes, so a note cannot be matched to the settings it
-  played with. To add.
+  played with. Done (D225): every knob change made in the app and every file choice is logged.
 - Not known yet: whether the app told you the MiniLab was in use by another program.
 
 ## Then the release (TODO J3)

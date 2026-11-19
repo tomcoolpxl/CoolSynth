@@ -57,6 +57,8 @@ What the engine has:
 
 A song plays the same each time you start it, and its bounce matches what you heard: the random parts start again with the transport.
 
+Every preset is levelled to the same loudness, with room to spare in a mix. For more, push the screen's Master fader past its top: up to 12 dB louder.
+
 ## Your own samples
 
 Put WAV files in `C:\ProgramData\CoolSynth\Library\User`. In the Sound section, set a slot to Sample and turn its first knob past the built-in instruments to find your files. Press the knob to load one.

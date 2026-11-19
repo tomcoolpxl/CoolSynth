@@ -135,7 +135,8 @@ namespace coolsynth::presets
 
         // The four faders are the player's volumes over whatever plays (D184): a sound never moves them.
         static const juce::StringArray keptAcrossSounds { coolsynth::parameters::ids::volumeA, coolsynth::parameters::ids::volumeB,
-                                                          coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster };
+                                                          coolsynth::parameters::ids::volumeFx, coolsynth::parameters::ids::volumeMaster,
+                                                          coolsynth::parameters::ids::masterBoost }; // and the boost over it (D225)
         for (auto* base : apvts.processor.getParameters())
             if (auto* parameter = dynamic_cast<juce::RangedAudioParameter*>(base); parameter != nullptr
                 && ! keptAcrossSounds.contains(parameter->getParameterID()))

@@ -264,6 +264,9 @@ namespace coolsynth::ui
         [[nodiscard]] juce::String playingPresetName() const;
         [[nodiscard]] juce::String faderName(int fader) const;
         [[nodiscard]] float faderValue(int fader) const;
+        /** The Master's boost above its top, 0 to 12 dB (D225), and its setting from the screen's fader. */
+        [[nodiscard]] float masterBoostDb() const;
+        void setMasterBoost(float db);
 
         // ---- The bank -----------------------------------------------------------------------
         struct Category

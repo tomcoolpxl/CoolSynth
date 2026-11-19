@@ -184,12 +184,13 @@ namespace coolsynth::synth
         std::atomic<float>* volumeB = nullptr;
         std::atomic<float>* volumeFx = nullptr;
         std::atomic<float>* volumeMaster = nullptr;
+        std::atomic<float>* masterBoost = nullptr; // dB, D225
     };
 
     using GlobalParamMemberPtr = std::atomic<float>* GlobalParameterPointers::*;
 
     inline const std::array<std::pair<const char*, GlobalParamMemberPtr>,
-                            8> kGlobalParamPtrBindings = {{
+                            9> kGlobalParamPtrBindings = {{
         { coolsynth::parameters::ids::arpInternalTempoBpm,  &GlobalParameterPointers::arpInternalTempoBpm  },
         { coolsynth::parameters::ids::masterGainDb,         &GlobalParameterPointers::masterGainDb         },
         { coolsynth::parameters::ids::brightness,           &GlobalParameterPointers::brightness           },
@@ -198,6 +199,7 @@ namespace coolsynth::synth
         { coolsynth::parameters::ids::volumeB,              &GlobalParameterPointers::volumeB              },
         { coolsynth::parameters::ids::volumeFx,             &GlobalParameterPointers::volumeFx             },
         { coolsynth::parameters::ids::volumeMaster,         &GlobalParameterPointers::volumeMaster         },
+        { coolsynth::parameters::ids::masterBoost,          &GlobalParameterPointers::masterBoost          },
     }};
     /** Binds layer `layer`'s arp pointers (0 A, 1 B), by the IDs of ParameterIDs.h. */
     template <typename State>

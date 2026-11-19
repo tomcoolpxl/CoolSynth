@@ -1015,9 +1015,29 @@ namespace coolsynth::ui
         return 0.0f;
     }
 
+    float InterfaceModel::masterBoostDb() const
+    {
+        if (auto* p = parameter(coolsynth::parameters::ids::masterBoost))
+            return p->convertFrom0to1(p->getValue());
+        return 0.0f;
+    }
+
+    void InterfaceModel::setMasterBoost(float db)
+    {
+        if (auto* p = parameter(coolsynth::parameters::ids::masterBoost))
+            setNormalised(*p, p->convertTo0to1(juce::jlimit(0.0f, 12.0f, db)));
+        raisePopup("Master boost", "+" + juce::String(masterBoostDb(), 1) + " dB", masterBoostDb() / 12.0f, true, 3);
+        touched();
+    }
+
     void InterfaceModel::moveFader(int fader, float value01, bool pickup)
     {
         fader = clampInt(fader, 0, 3);
+        // The Master below its top takes the boost away (D225): a boost lives only above the top, so what the faders
+        // show is what plays, the MiniLab's fader too.
+        if (fader == 3 && value01 < 0.999f && masterBoostDb() > 0.0f)
+            if (auto* p = parameter(coolsynth::parameters::ids::masterBoost))
+                setNormalised(*p, 0.0f);
         const auto f = static_cast<std::size_t>(fader);
         // The faders are volumes the player keeps across sounds (D184): a position means the same whatever plays,
         // so the MiniLab's faders are taken as they are, with no catching up.

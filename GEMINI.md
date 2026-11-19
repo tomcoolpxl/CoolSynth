@@ -29,6 +29,9 @@ the current state.
 - Output is deterministic (D224): every random source restarts from its seed at a reset and when the host's
   transport starts, a bounce waits for sounds to load, and a voice cap by measured cost (`src/synth/v3/VoiceCost.h`)
   keeps a sound within half a block; `tests/DeterminismTests.cpp` holds every preset to it bit for bit.
+- A state must name every parameter (`buildSanitizedParameterStateTree`): a new parameter always raises
+  `processorStateFormatVersion` and `patchFormatVersion`, or older states are refused (D225). The Master Boost
+  (`masterBoost`, 0 to +12 dB) sits above the Master fader's top; presets stay at -20 LUFS (D153).
 
 ## Where things are
 
