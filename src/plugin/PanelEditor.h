@@ -40,6 +40,8 @@ public:
 
     /** Opens the controller setup's card (D211), as Prefs' Controller button does; or at its first step. */
     void showControllerSetup(bool stepByStep = false);
+    /** Opens Preferences, as the Prefs button does (Escape closes it). */
+    void showPreferences();
 
     /** CoolSynth's Options (D174), from the panel's button and the standalone window's: Audio and MIDI (where the
         app offers it), Multi-core Auto or Off, the last second's CPU work, this computer. Message thread. */

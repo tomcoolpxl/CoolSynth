@@ -4341,3 +4341,24 @@ others do and chose (pick lists, with research): **all of it, plus ready setups 
     exit). Tests: learning's owner and token, a knob refused for a button, a repeated position that is no turn, the
     setup file and its switch kept and read back, a block full of controller moves and an overflow, and the DAW's
     stop stopping the arp until the next key.
+
+## D212. A layer's right-click menu, Stop, the version in Preferences, Reese to start (2026-11-19)
+
+The user asked for four things before the release.
+- **A right click on a layer panel** (the screen's LAYER A and LAYER B; not on the MiniLab) offers the Layers page's
+  actions (D196), worded for the layer clicked whichever one the sections edit: copy it to the other, copy the other
+  to it, swap, double it onto the other, it an octave lower or higher on the other, solo it (ticked while on), empty
+  the other. As the page has them, so the two never differ; HALion's functions menu has a Copy Layer command alike
+  (Steinberg's HALion manual). A left click still picks the layer to edit.
+- **Stop** (the fifth pad, on the screen and the MiniLab; a recorder pad until now) ends every sound, as MIDI's All
+  Sound Off: at once whatever the pedal or the release, the arps, and the delay's and reverb's tails, which a panic
+  is expected to clear (MIDI 1.0's wording of All Sound Off; Nord user forum on panic and effects). The engine's
+  panic already cleared all of it; nothing called it. It cut the sound in the middle of a wave, which clicks: Stop
+  now lets the block it lands in fade to silence over 3 ms, then clears everything. The keys of that block are dropped.
+- **The version in Preferences**, the user's choice of place (not beside the CPU reading): small and faint at the
+  right of the title, "CoolSynth 0.3.0", with CoolSynth's icon left of the title. The version comes from
+  CMakeLists.txt's project version through the generated build header (`coolsynth::build::getVersion`), so it is never
+  typed in twice; the icon is `resources/icon/coolsynth-icon-512.png`, embedded and halved step by step to 64 px.
+- **A new CoolSynth starts on Reese** (Main Stage), the user's choice, instead of Contact (D193); first Supersaw, then
+  "change my mind: make Reese the default, same category". Reset the sound comes back to it, and Preferences' Reset
+  line names it from the same constant.

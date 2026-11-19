@@ -45,8 +45,9 @@ public:
 
     // The factory bank as host programs, named "Room: Preset".
     int getNumPrograms() override;
-    /** The sound a new CoolSynth starts with, the user's choice (D193), and its program number (-1 if gone). */
-    static constexpr char startSoundName[] = "Contact";
+    /** The sound a new CoolSynth starts with, the user's choice (D193: Contact; D212: Main Stage's Reese), and its
+        program number (-1 if gone). Reset the sound comes back to it. */
+    static constexpr char startSoundName[] = "Reese";
     [[nodiscard]] static int startSoundIndex();
     /** A state that is the built-in default untouched, "Init" (what CoolSynth started on before D193): nobody chose
         it, so the app and a host start on the start sound instead (D198). */
@@ -70,6 +71,8 @@ public:
     coolsynth::ui::ControllerInput& getControllerInput();
     /** A plugin's window opened (D211): its MiniLab driver takes the MiniLab from any other CoolSynth here. */
     void claimMiniLab();
+    /** Stop: every sound ends in the next block, as MIDI's All Sound Off (the keys held, the pedal, the releases, the
+        arps, the delay's and reverb's tails), after a 3 ms fade so it does not click. Any thread. */
     void requestPanic() noexcept;
 
     /** Offline use (tools, tests): waits until the sampled instruments the current patch names are in memory.

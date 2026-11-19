@@ -215,7 +215,7 @@ SynthAudioProcessor::SynthAudioProcessor()
     if (wrapperType != wrapperType_Undefined)
         coolsynth::midi::ControllerSetup::instance().start();
 
-    // A new CoolSynth, in the app or a host, starts on Contact (D193). Tests and tools (no wrapper) keep the
+    // A new CoolSynth, in the app or a host, starts on the start sound (D193, D212). Tests and tools (no wrapper) keep the
     // parameters' own defaults. A host's saved project, and the app's state from last time, are loaded after this.
     if (wrapperType != wrapperType_Undefined)
         if (const int start = startSoundIndex(); start >= 0)
@@ -505,12 +505,11 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     } tripwires { *this, buffer, blockStartMs };
     buffer.clear();
 
-    if (panicRequested.exchange(false, std::memory_order_acq_rel))
-    {
-        synthEngine.panic();
-        keyboardDisplayCleared.store(true, std::memory_order_release);
+    // Stop (requestPanic): the keys of this block are dropped, the block fades out (after the render, below), and
+    // then every voice, the arps and the effects' tails end.
+    const bool stopping = panicRequested.exchange(false, std::memory_order_acq_rel);
+    if (stopping)
         midiMessages.clear();
-    }
 
     std::array<coolsynth::synth::EngineMidiEvent, coolsynth::synth::maxEngineEventsPerBlock> engineEvents {};
     int engineEventCount = 0;
@@ -674,6 +673,18 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
                                                                           static_cast<size_t> (engineEventCount)),
                        settings,
                        transportInfo);
+    if (stopping)
+    {
+        // As MIDI's All Sound Off: at once, whatever the pedal or the release, the delay's and reverb's tails too. Over
+        // 3 ms to silence first: a sound cut in the middle of a wave clicks.
+        const int samples = buffer.getNumSamples();
+        const int fade = std::min(samples, std::max(1, juce::roundToInt(getSampleRate() * 0.003)));
+        buffer.applyGainRamp(0, fade, 1.0f, 0.0f);
+        if (samples > fade)
+            buffer.clear(fade, samples - fade);
+        synthEngine.panic();
+        keyboardDisplayCleared.store(true, std::memory_order_release);
+    }
     oldestSoundingGeneration.store(synthEngine.oldestSoundingGeneration(), std::memory_order_release);
 
     // A chord learned from the keys becomes parameter values on the message thread.

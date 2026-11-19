@@ -507,18 +507,19 @@ namespace coolsynth::ui
 
     juce::StringArray InterfaceModel::livePageNames() const { return { "Macros", "Arp", "Groove", "Chord", "Voice", "Layers" }; }
 
-    juce::StringArray InterfaceModel::layerActionNames() const
+    juce::StringArray InterfaceModel::layerActionNames(int layer) const
     {
-        const juce::String x = currentPart == 0 ? "A" : "B", y = currentPart == 0 ? "B" : "A";
-        const bool solo = synth.soloLayer() == currentPart;
+        layer = clampInt(layer, 0, 1);
+        const juce::String x = layer == 0 ? "A" : "B", y = layer == 0 ? "B" : "A";
+        const bool solo = synth.soloLayer() == layer;
         return { "Copy " + x + " to " + y, "Copy " + y + " to " + x, "Swap A and B", "Double " + x + " onto " + y,
                  x + " an octave lower on " + y, x + " an octave higher on " + y,
                  solo ? "Solo " + x + ": on" : "Solo " + x, "Empty layer " + y };
     }
 
-    void InterfaceModel::doLayerAction(int action)
+    void InterfaceModel::doLayerAction(int action, int layer)
     {
-        const int x = currentPart, y = 1 - currentPart;
+        const int x = clampInt(layer, 0, 1), y = 1 - x;
         switch (action)
         {
             case 0: synth.copyLayer(x, y); break;
@@ -1318,12 +1319,15 @@ namespace coolsynth::ui
             else
                 openHome();
         }
+        else if (pad == stopPad)
+            synth.requestPanic(); // every sound ends at once, its tails too
         // What the pad put you in, briefly on the MiniLab's screen (D186): the pad's name and the part you edit; the
         // recorder's pads, that they come later.
         if (pad >= 0 && pad < 8)
         {
             lastPopup.name = pad == homePad ? juce::String("Home") : padLabel(pad, false); // the part goes on line 2
-            lastPopup.value = pad >= 4 && pad <= 6 ? juce::String("comes later") : "Layer " + juce::String(currentPart == 0 ? "A" : "B");
+            lastPopup.value = pad == stopPad ? juce::String("All sound off")
+                              : (pad == 5 || pad == 6 ? juce::String("comes later") : "Layer " + juce::String(currentPart == 0 ? "A" : "B"));
             lastPopup.normalised = 1.0f;
             lastPopup.fader = false;
             lastPopup.pad = true;

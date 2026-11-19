@@ -56,7 +56,8 @@ juce_add_binary_data(CoolSynthInstrumentData
 juce_add_binary_data(CoolSynthControllerProfiles
     SOURCES
         resources/controller_profiles/minilab3_arturia_mode.json
-        resources/ui/coolsynth-logo-2.png)
+        resources/ui/coolsynth-logo-2.png
+        resources/icon/coolsynth-icon-512.png) # the icon beside the version in Preferences
 
 option(COOLSYNTH_ENABLE_VST3_USER_INSTALL
     "Copy CoolSynth.vst3 to the per-user Windows VST3 folder after build"

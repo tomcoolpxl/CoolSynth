@@ -37,7 +37,7 @@ if(GIT_FOUND)
     endif()
 endif()
 
-set(CONTENT "#pragma once\n#define DYNAMIC_BUILD_IDENTITY \"Build: v${PROJECT_VERSION} | ${GIT_INFO}Last Edit: ${FORMATTED_TIME}\"\n")
+set(CONTENT "#pragma once\n#define DYNAMIC_BUILD_IDENTITY \"Build: v${PROJECT_VERSION} | ${GIT_INFO}Last Edit: ${FORMATTED_TIME}\"\n#define COOLSYNTH_VERSION_STRING \"${PROJECT_VERSION}\"\n")
 
 file(WRITE "${OUTPUT_FILE}.tmp" "${CONTENT}")
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${OUTPUT_FILE}.tmp" "${OUTPUT_FILE}")

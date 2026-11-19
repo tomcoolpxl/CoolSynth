@@ -4,6 +4,7 @@
 #include <juce_core/juce_core.h>
 #include <juce_gui_basics/juce_gui_basics.h>
 
+#include "BuildInfo.h"
 #include "interface/InterfaceModel.h"
 #include "midi/MiniLab3Protocol.h"
 #include "plugin/PanelEditor.h"
@@ -284,12 +285,12 @@ public:
             expectEquals(model->part(), 1);
         }
 
-        beginTest("A new CoolSynth starts on Contact; the Workshop's plain sounds are Basic (D193)");
+        beginTest("A new CoolSynth starts on Reese (D212); the Workshop's plain sounds are Basic (D193)");
         {
             const int start = SynthAudioProcessor::startSoundIndex();
             expect(start >= 0, "the start sound is in the bank");
             if (start >= 0)
-                expectEquals(coolsynth::presets::getFactoryPreset(start).name, juce::String("Contact"));
+                expectEquals(coolsynth::presets::getFactoryPreset(start).name, juce::String("Reese"));
             bool init = false, basic = false;
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
             {
@@ -300,7 +301,7 @@ public:
             // An untouched "Init" state an older version saved gives way to the start sound (D198); an edited one stays.
             expect(SynthAudioProcessor::isUntouchedDefault("Init", false));
             expect(! SynthAudioProcessor::isUntouchedDefault("Init", true));
-            expect(! SynthAudioProcessor::isUntouchedDefault("Contact", false));
+            expect(! SynthAudioProcessor::isUntouchedDefault("Reese", false));
 
             // Reset the sound (D199): the start sound on A, B empty, faders at the top, the Layers page centred.
             auto synth = std::make_unique<SynthAudioProcessor>();
@@ -312,7 +313,7 @@ public:
             synth->setSoloLayer(1);
             synth->resetSound();
             auto raw = [&](const char* id) { return synth->getValueTreeState().getRawParameterValue(id)->load(); };
-            expect(synth->layerSound(0).name == "Contact");
+            expect(synth->layerSound(0).name == "Reese");
             expectEquals(raw("pB.g1.type"), 0.0f, "layer B empty");
             expectEquals(synth->getValueTreeState().getParameter(coolsynth::parameters::ids::volumeA)->getValue(), 1.0f, "faders at the top");
             expectEquals(raw("part.balance"), 0.0f);
@@ -692,6 +693,10 @@ public:
         model.turnKnob(1, 6, false); // a macro, and Brightness: their values show in the knobs (D183)
         model.turnKnob(7, 4, false);
         shoot("knobvalue");
+        if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))
+            panel->showPreferences(); // with the icon and the version (D212)
+        shoot("prefs");
+        expect(editor->keyPressed(juce::KeyPress(juce::KeyPress::escapeKey)), "Escape closes Preferences");
         if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))
             panel->showControllerSetup(); // the controller setup's card (D211)
         shoot("controller");
@@ -1172,3 +1177,94 @@ public:
 };
 
 static MouseBrowsingTests mouseBrowsingTests;
+
+/*
+    D212: a layer panel's right-click menu, the Stop pad and the version in Preferences. Its own class: the test
+    runner's stack frame is small in Debug.
+*/
+class StopAndLayerMenuTests final : public juce::UnitTest
+{
+public:
+    StopAndLayerMenuTests() : juce::UnitTest("Stop and the layer menu", "Interface") {}
+
+    void runTest() override
+    {
+        using coolsynth::ui::InterfaceModel;
+        auto indexOf = [](const juce::String& name)
+        {
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                if (coolsynth::presets::getFactoryPreset(i).name == name)
+                    return i;
+            return -1;
+        };
+
+        beginTest("A layer's right-click menu: the Layers page's actions for that layer, whichever is edited");
+        {
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            auto value = [&](const juce::String& id) { return synth->getValueTreeState().getRawParameterValue(id)->load(); };
+            const int keys = indexOf("Cassette Keys"), bass = indexOf("Moog Bass");
+            expect(keys >= 0 && bass >= 0);
+            synth->loadSoundIntoLayer(keys, 0);
+            synth->loadSoundIntoLayer(bass, 1);
+            expectEquals(model->part(), 0, "A is edited");
+            const auto names = model->layerActionNames(1);
+            expectEquals(names[0], juce::String("Copy B to A"));
+            expectEquals(names[1], juce::String("Copy A to B"));
+            expectEquals(names[7], juce::String("Empty layer A"));
+            expectEquals(model->layerActionNames()[0], juce::String("Copy A to B"), "the Layers page stays worded for A");
+            const float bassLevel = value("pB.mix.level"), bassType = value("pB.g1.type");
+            model->doLayerAction(0, 1); // from B's menu: Copy B to A
+            expectEquals(value("pA.g1.type"), bassType, "A plays B's sound");
+            expectEquals(value("pA.mix.level"), bassLevel);
+            expectEquals(model->part(), 0, "and A is still the one edited");
+        }
+
+        beginTest("Stop: every sound ends at once, its tails too, after a fade that does not click");
+        {
+            constexpr int block = 256;
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->prepareToPlay(48000.0, block);
+            const int supersaw = indexOf("Supersaw"); // a delay and a plate: tails to clear
+            expect(supersaw >= 0);
+            synth->loadSoundIntoLayer(supersaw, 0);
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            juce::AudioBuffer<float> buffer(2, block);
+            auto render = [&](const juce::MidiBuffer& midi)
+            {
+                juce::MidiBuffer copy(midi);
+                buffer.clear();
+                synth->processBlock(buffer, copy);
+                return buffer.getMagnitude(0, block);
+            };
+            juce::MidiBuffer key;
+            key.addEvent(juce::MidiMessage::noteOn(1, 48, static_cast<juce::uint8>(110)), 0);
+            key.addEvent(juce::MidiMessage::controllerEvent(1, 64, 127), 0); // the pedal down as well
+            render(key);
+            float playing = 0.0f;
+            for (int i = 0; i < 40; ++i)
+                playing = render({});
+            expect(playing > 1.0e-3f, "the key sounds: " + juce::String(playing));
+
+            const float before = buffer.getSample(0, block - 1);
+            model->pressPad(InterfaceModel::stopPad, false);
+            render({});
+            const int fade = juce::roundToInt(48000.0 * 0.003);
+            expect(std::abs(buffer.getSample(0, 0) - before) < 0.25f, "the sound goes on into the fade, no jump");
+            expectEquals(buffer.getMagnitude(fade, block - fade), 0.0f, "silent from 3 ms on");
+            float after = 0.0f;
+            for (int i = 0; i < 40; ++i)
+                after = std::max(after, render({}));
+            expectEquals(after, 0.0f, "no tail, though the key and the pedal are still down");
+            expect(model->popup().value == "All sound off", model->popup().value);
+        }
+
+        beginTest("Preferences shows the build's own version");
+        {
+            expectEquals(coolsynth::build::getVersion(), juce::String(COOLSYNTH_BUILD_VERSION), "CMakeLists.txt's version");
+            expect(coolsynth::build::getVersion().matchesWildcard("*.*.*", true));
+        }
+    }
+};
+
+static StopAndLayerMenuTests stopAndLayerMenuTests;

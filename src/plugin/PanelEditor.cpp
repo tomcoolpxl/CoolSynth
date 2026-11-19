@@ -5,6 +5,8 @@
 #include "midi/ControllerSetup.h"
 #include "presets/MySounds.h"
 #include "synth/v3/AudioWorkers.h"
+#include "BuildInfo.h"
+#include <BinaryData.h>
 
 namespace
 {
@@ -1070,6 +1072,9 @@ namespace
             auto r = cardArea.reduced(28, 22);
             auto head = r.removeFromTop(30);
             close.setBounds(head.removeFromRight(30));
+            iconArea = head.removeFromLeft(30);
+            head.removeFromLeft(10);
+            versionArea = head.removeFromRight(120).withTrimmedRight(8);
             titleArea = head;
             r.removeFromTop(14);
             auto section = [&](juce::Rectangle<int>& label, int height)
@@ -1114,9 +1119,14 @@ namespace
             g.setColour(colours::panelEdge.brighter(0.2f));
             g.drawRoundedRectangle(card.reduced(0.5f), 14.0f, 1.0f);
 
+            g.drawImage(icon, iconArea.toFloat(), juce::RectanglePlacement::centred);
             g.setColour(colours::ink);
             g.setFont(sans(20.0f, true));
             g.drawText("Preferences", titleArea, juce::Justification::centredLeft);
+            // Which CoolSynth this is, small and faint: the build's own version (CMakeLists.txt), never typed in here.
+            g.setColour(colours::print.withAlpha(0.6f));
+            g.setFont(sans(11.0f));
+            g.drawText("CoolSynth " + coolsynth::build::getVersion(), versionArea, juce::Justification::centredRight);
 
             auto label = [&](juce::Rectangle<int> area, const juce::String& text)
             {
@@ -1144,7 +1154,7 @@ namespace
             {
                 g.setColour(colours::muted);
                 g.setFont(sans(12.0f));
-                g.drawFittedText("Contact on layer A, layer B empty, faders at the top. Sure?", resetText,
+                g.drawFittedText(juce::String(SynthAudioProcessor::startSoundName) + " on layer A, layer B empty, faders at the top. Sure?", resetText,
                                  juce::Justification::centredLeft, 2);
             }
             label(computerLabel, "THIS COMPUTER, THE LAST SECOND");
@@ -1174,8 +1184,19 @@ namespace
         bool confirming = false; // Reset asks first, in the card (D199)
         std::array<juce::TextButton, 2> multi;
         std::array<juce::TextButton, 3> curve;
-        juce::Rectangle<int> cardArea, titleArea, soundLabel, audioLabel, controllerLabel, multiLabel, curveLabel, resetLabel, computerLabel,
-                             controllerText, multiText, curveText, resetText, computerText;
+        juce::Rectangle<int> cardArea, titleArea, iconArea, versionArea, soundLabel, audioLabel, controllerLabel, multiLabel, curveLabel,
+                             resetLabel, computerLabel, controllerText, multiText, curveText, resetText, computerText;
+        const juce::Image icon = smallIcon();
+
+        /** CoolSynth's icon (resources/icon) at 64 px, halved step by step from 512 so its thin lines stay smooth;
+            drawn at 30 it stays sharp on a screen scaled up to 200%. */
+        static juce::Image smallIcon()
+        {
+            auto image = juce::ImageCache::getFromMemory(BinaryData::coolsynthicon512_png, BinaryData::coolsynthicon512_pngSize);
+            while (image.isValid() && image.getWidth() > 64)
+                image = image.rescaled(image.getWidth() / 2, image.getHeight() / 2, juce::Graphics::highResamplingQuality);
+            return image;
+        }
     };
 }
 // ---- Controller: the guided setup (D211) ----------------------------------------------------------------
@@ -1964,7 +1985,8 @@ public:
         {
             hoveredPanel = over;
             hoveredCpu = onCpu;
-            setHoverHint(over >= 0 ? "Layer " + juce::String(over == 0 ? "A" : "B") + juce::String(juce::CharPointer_UTF8(": edit it \xc2\xb7 click"))
+            setHoverHint(over >= 0 ? "Layer " + juce::String(over == 0 ? "A" : "B")
+                                         + juce::String(juce::CharPointer_UTF8(": edit it \xc2\xb7 click; copy, swap \xc2\xb7 right click"))
                                    : (onCpu ? juce::String(juce::CharPointer_UTF8("CPU \xc2\xb7 click: Preferences")) : juce::String()));
             repaint(layerScreen);
         }
@@ -1980,6 +2002,8 @@ public:
             repaint(layerScreen);
         }
     }
+
+    void showPreferences() { prefs.show(); }
 
     void showControllerCard(bool stepByStep)
     {
@@ -2278,13 +2302,47 @@ public:
     {
         if (cpuArea.contains(e.getPosition()))
             prefs.show();
-        // A layer panel picks the layer the sections edit, as Home pressed again does (D195).
         for (int layer = 0; layer < 2; ++layer)
-            if (layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()) && model.part() != layer)
+        {
+            if (! layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()))
+                continue;
+            if (e.mods.isPopupMenu())
+                showLayerMenu(layer); // the Layers page's actions, for this layer
+            else if (model.part() != layer)
             {
+                // A layer panel picks the layer the sections edit, as Home pressed again does (D195).
                 model.togglePart();
                 owner.timerCallback();
             }
+        }
+    }
+
+    /** A right click on a layer panel: the Layers page's actions (D196), worded for that layer, whichever layer the
+        sections edit. Copying, swapping and the octaves can be undone. */
+    void showLayerMenu(int layer)
+    {
+        const juce::String name = layer == 0 ? "A" : "B";
+        juce::PopupMenu menu;
+        menu.addSectionHeader("Layer " + name + ": " + (model.layerEmpty(layer) ? juce::String("empty") : model.layerSoundName(layer)));
+        const auto actions = model.layerActionNames(layer);
+        for (int i = 0; i < actions.size(); ++i)
+        {
+            if (i == 3 || i == 6)
+                menu.addSeparator(); // copy and swap; the other layer from this one; solo and empty
+            if (i == 6)
+                menu.addItem(i + 1, "Solo " + name, true, owner.synth.soloLayer() == layer); // ticked while solo
+            else
+                menu.addItem(i + 1, actions[i]);
+        }
+        juce::Component::SafePointer<Content> self(this);
+        menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(localAreaToGlobal(layerPanels[static_cast<std::size_t>(layer)])),
+                           [self, layer](int chosen)
+                           {
+                               if (self == nullptr || chosen == 0)
+                                   return;
+                               self->model.doLayerAction(chosen - 1, layer);
+                               self->owner.timerCallback();
+                           });
     }
 
     /** The layer screen (D195): two lit panels, layer A teal and B yellow, each with what it plays; the layer the
@@ -2420,6 +2478,7 @@ PanelEditor::PanelEditor(SynthAudioProcessor& processor)
 PanelEditor::~PanelEditor() = default;
 
 void PanelEditor::showControllerSetup(bool stepByStep) { content->showControllerCard(stepByStep); }
+void PanelEditor::showPreferences() { content->showPreferences(); }
 
 bool PanelEditor::shiftHeld() const noexcept
 {

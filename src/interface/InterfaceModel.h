@@ -121,7 +121,11 @@ namespace coolsynth::ui
         static constexpr int livePageCount = 6;  // Macros, Arp, Groove, Chord, Voice, Layers (D196)
         static constexpr int layersPage = 5;
         /** The Layers page's actions, for the layer Home is on (D196). */
-        [[nodiscard]] juce::StringArray layerActionNames() const;
+        [[nodiscard]] juce::StringArray layerActionNames() const { return layerActionNames(currentPart); }
+        /** The same actions worded for a layer (0 A, 1 B): a right click on its panel on the screen offers them. */
+        [[nodiscard]] juce::StringArray layerActionNames(int layer) const;
+        /** One of those actions, for that layer (an index into layerActionNames). */
+        void doLayerAction(int action, int layer);
 
         explicit InterfaceModel(SynthAudioProcessor& processor);
 
@@ -242,6 +246,7 @@ namespace coolsynth::ui
         [[nodiscard]] PadLight padLight(int pad, bool shift) const;       // for the MiniLab: its own colours
         /** The pads, left to right (D184): Home, Sound, Shape, Motion, Stop, Play, Record, Effects. */
         static constexpr int homePad = 0;
+        static constexpr int stopPad = 4; // every sound off, its tails too
         /** Layer A or B for the sections to edit (D185, D189): Home pressed again while Home is open, or the screen's "Layer A". */
         void togglePart();
         /** After a reset: Home, layer A, its first live page (D199). */
@@ -368,7 +373,7 @@ namespace coolsynth::ui
                        const std::function<void(int)>& turn);
         /** A number, value-scaled; true when it moved. */
         bool scaleNumber(ScaledPlace& place, juce::RangedAudioParameter& p, float h0, float h1);
-        void doLayerAction(int action);
+        void doLayerAction(int action) { doLayerAction(action, currentPart); }
         std::int64_t mainTurns = 0, pageTurns = 0; // steps turned, for the screen's knobs (D193)
         Popup lastPopup;
         int changeCount = 0;

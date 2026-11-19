@@ -7,4 +7,9 @@ namespace coolsynth::build
     {
         return DYNAMIC_BUILD_IDENTITY;
     }
+
+    juce::String getVersion()
+    {
+        return COOLSYNTH_VERSION_STRING;
+    }
 }
