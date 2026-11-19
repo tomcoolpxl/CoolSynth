@@ -532,6 +532,35 @@ public:
             logMessage("largest step at a zero-release cutoff: " + juce::String(releaseStep, 3));
             expect(releaseStep < 0.12f);
         }
+
+        beginTest("the_amplifier_reaches_full_level_within_its_attack");
+        {
+            // TODO 15: what comes out, not the envelope's own value: a sine's level, one cycle at a time (A4, 109
+            // samples a cycle), reaches its held level by the programmed attack, and is not there long before.
+            for (const float attack : { 0.010f, 0.050f, 0.200f })
+            {
+                auto settings = basicSettings(Wave::sine);
+                settings.envelopes[0].attack = attack;
+                settings.envelopes[0].decay = 0.1f;
+                settings.envelopes[0].sustain = 1.0f;
+                auto voice = makeVoice();
+                voice->start(noteAt(69));
+                const int attackSamples = static_cast<int>(attack * kRate);
+                const auto out = renderVoice(*voice, settings, attackSamples + 24000).left;
+                constexpr std::size_t cycle = 109; // 48000 / 440
+                auto levelAt = [&](std::size_t end) { return rms(out, end - cycle, end); };
+                const float held = levelAt(out.size());
+                // The level of the cycle that ends a cycle after the attack, and of the one ending at half of it.
+                const float atAttack = levelAt(static_cast<std::size_t>(attackSamples) + cycle);
+                const float atHalf = levelAt(static_cast<std::size_t>(attackSamples / 2) + cycle / 2);
+                logMessage("attack " + juce::String(attack * 1000.0f, 0) + " ms: "
+                           + juce::String(20.0f * std::log10(atAttack / held), 2) + " dB a cycle after it, "
+                           + juce::String(20.0f * std::log10(atHalf / held), 2) + " dB halfway");
+                expect(held > 0.1f, "the note sounds");
+                expect(20.0f * std::log10(atAttack / held) > -0.5f, "full level by the attack's end");
+                expect(20.0f * std::log10(atHalf / held) < -1.0f, "not full long before it");
+            }
+        }
     }
 };
 

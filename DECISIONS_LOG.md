@@ -4426,6 +4426,7 @@ The user ticked, from every open item (check marks, each item explained):
 - Fine-tuning and code: the ladder filter by ear, the sound-quality tests, the 'Your keyboard' line for any keyboard, and removing V2's old panel code.
 - Not ticked: streaming samples from disk, and the recorder; both stay in TODO.md as not chosen. MPE: "never", removed from TODO.md.
 - V2's old panel code, done on 2026-11-19: the whole of `src/ui` (SynthSection, HardwareKnob, HardwareFader, LedToggleButton, PianoBarComponent, SegmentedChoiceGroup and the headers only they used) removed; nothing outside it included any of it.
+- The sound-quality tests, done on 2026-11-19 (`tests/V3ProcessorTests.cpp`, `tests/V3VoiceTests.cpp`): a 234 Hz sine through the ladder at 4 kHz, resonance 10 %, no Drive, measures 0.35 % total harmonic distortion (harmonics 2 to 8) at half scale and 1.5 % at full scale, bounded at 0.5 % and 2 %, and must grow with the level, as the transistor curve in every stage does. The amplifier's output, cycle by cycle, reaches its held level within a cycle of a 10, 50 or 200 ms attack, and is about 2.3 dB under it halfway (the default attack curve rises fast), bounded at -0.5 dB and under -1 dB.
 
 ## D216. Controllers redesigned: one owner and one route per control (2026-11-19)
 

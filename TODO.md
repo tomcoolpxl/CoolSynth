@@ -89,8 +89,6 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     level (rms 0.15 at full resonance) wants an output lift.
 14. If the saw's -79 dB alias floor at A7 ever shows in a mix: a 6-point (quintic B-spline) BLEP, about another
     25 dB for two more samples of latency.
-15. Measurement-style regressions still missing: THD of a sine through the ladder at low resonance below a stated
-    bound; an attack reaching full level within the programmed time.
 
 ## Interface and code
 

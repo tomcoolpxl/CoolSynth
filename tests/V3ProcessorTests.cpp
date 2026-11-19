@@ -225,6 +225,32 @@ public:
             expect(peakAbs(driven) < 1.1f);
         }
 
+        beginTest("a_sine_through_the_open_ladder_at_low_resonance_stays_clean");
+        {
+            // TODO 15: the total harmonic distortion of a sine well under the cutoff, at the default resonance and no
+            // Drive, the harmonics 2 to 8 against the fundamental. Every stage of the ladder has its transistor curve
+            // (Huovilainen), so a louder sine bends more: the bound is for a full-scale sine and half of it.
+            auto thdPercent = [this](float amplitude)
+            {
+                const auto input = sine(234.375f, amplitude, 4096 + kFftSize); // bin 40: the harmonics sit on bins
+                const auto output = runLadder(input, ladderParams(4000.0f, 0.1f));
+                const float fundamental = peakNearHz(output, 4096, 234.375);
+                double harmonics = 0.0;
+                for (int h = 2; h <= 8; ++h)
+                {
+                    const float level = peakNearHz(output, 4096, 234.375 * h);
+                    harmonics += static_cast<double>(level) * static_cast<double>(level);
+                }
+                const double percent = 100.0 * std::sqrt(harmonics) / static_cast<double>(fundamental);
+                logMessage("ladder THD at amplitude " + juce::String(amplitude, 2) + ": " + juce::String(percent, 4) + " %");
+                return percent;
+            };
+            const double half = thdPercent(0.5f), full = thdPercent(1.0f);
+            expect(half < 0.5, "half scale: " + juce::String(half, 4) + " %");
+            expect(full < 2.0, "full scale: " + juce::String(full, 4) + " %");
+            expect(full > half, "a louder sine bends more, as the transistors do");
+        }
+
         beginTest("bass_restores_the_low_end_lost_to_resonance");
         {
             const auto input = sine(50.0f, 0.05f, 24000);
