@@ -12,7 +12,7 @@ the current state.
 - Version 0.3.0 was released on 2026-11-19 (D208, D209, D213): installer, VST3 and app zips on GitHub Releases;
   the recorded instruments as zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`.
 - The V3 engine (`src/synth/v3/`): two layers, each with three generator slots, three processor slots, its own
-  arpeggiator and six effect slots (I1-I6); six master effect slots (F1-F6) at the end. 136 presets in 14 rooms
+  arpeggiator and six effect slots (I1-I6); six master effect slots (F1-F6) at the end, any of 14 effect types. 139 presets in 14 rooms
   (`resources/presets/*.csbank`), including the recorded instruments of the Conservatory and the Museum's rebuilt
   classic synths.
 - The panel (`src/plugin/PanelEditor`, `src/interface/InterfaceModel`) copies and drives the Arturia MiniLab 3

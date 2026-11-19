@@ -432,3 +432,67 @@ mod = src=macro3 dst=env1.time amount=0.4
 fx = src=macro2 dst=i1.wow amount=0.3
 fx = src=macro2 dst=i2.mix amount=0.25
 b.mod = src=macro4 dst=g1.level amount=-0.5
+
+[Cut-Up Chords]
+room = Night Bus
+# Drafted 2026-11-19 for the user's listening (D220). Minor ninth chords cut up on the beat, as ear
+# and Vegyn edit theirs: every half note, on its third sixteenth, the stutter may catch a sixteenth
+# and repeat it for a quarter note, every other repeat backwards and a little quieter.
+g1 = VA shape=saw unison=3 detune=12 level=0.6
+g2 = VA shape=pulse pw=0.35 oct=-1 level=0.35
+p1 = Ladder cutoff=3200 res=0.15 key=0.4
+env1 = attack=4 decay=700 sustain=0.75 release=350 velocity=0.4
+voice = env2ToP1=0 drift=2
+chord = type=minor9
+i1 = Stutter interval=1/2 offset=2/16 chance=0.7 grid=1/16 gate=1/4 reverse=alternate decay=0.15 mode=insert
+i2 = Chorus rate=0.35 depth=0.3 mix=0.25
+i3 = Reverb size=0.5 damping=0.5 mix=0.2
+mix = level=-6
+master = -0.5
+macros = names=Bright,Chance,Tail,Roll
+mod = src=macro1 dst=p1.cutoff amount=0.2
+fx = src=macro2 dst=i1.chance amount=0.3
+fx = src=macro3 dst=i3.mix amount=0.2
+fx = src=macro4 dst=i1.roll amount=0.6
+
+[Wheel Stutter]
+room = Night Bus
+# Drafted 2026-11-19 for the user's listening (D220). A sung "ah" from the vocal wavetable; push
+# the mod wheel past halfway and the stutter catches it at once and repeats it in thirty-seconds,
+# each repeat shorter and a semitone lower, until the wheel comes back down.
+g1 = Wavetable table=vocal pos=0.4 unison=2 detune=6 level=0.7
+p1 = SVF mode=bp cutoff=1500 res=0.25 key=0.6
+env1 = attack=20 decay=800 sustain=0.8 release=600 velocity=0.3
+voice = env2ToP1=0 drift=3
+i1 = Stutter chance=0 grid=1/32 gate=1/4 roll=0.35 pitch=1 decay=0.1 mode=insert
+i2 = Reverb size=0.55 damping=0.5 mix=0.25
+mix = level=-6
+master = 6
+macros = names=Vowel,Roll,Drop,Tail
+mod = src=macro1 dst=g1.pos amount=0.12
+fx = src=wheel dst=i1.hold amount=1
+fx = src=macro2 dst=i1.roll amount=0.5
+fx = src=macro3 dst=i1.pitch amount=0.3
+fx = src=macro4 dst=i2.mix amount=0.25
+
+[Glitch Pad]
+room = Night Bus
+# Drafted 2026-11-19 for the user's listening (D220). A soft pad that a sixteen-step pattern cuts
+# into: where the pattern is up, the stutter catches a thirty-second, of a length that varies,
+# and plays it backwards over the pad.
+g1 = VA shape=triangle unison=4 detune=15 level=0.6
+g2 = VA shape=sine oct=1 level=0.2
+p1 = Ladder cutoff=1800 res=0.1 key=0.3
+env1 = attack=300 decay=1200 sustain=0.9 release=1500 velocity=0.2
+voice = env2ToP1=0 drift=3
+step = values=0,0,1,1,0,0,0,1,1,1,0,0,1,1,0,0 length=16 division=1/16
+i1 = Stutter chance=0 grid=1/32 gate=1/4 variation=0.5 reverse=all decay=0.2 mode=mix
+i2 = Reverb size=0.75 damping=0.4 mix=0.35
+mix = level=-6
+master = -2.5
+macros = names=Bright,Variation,Glitch,Tail
+mod = src=macro1 dst=p1.cutoff amount=0.2
+fx = src=step dst=i1.hold amount=1
+fx = src=macro2 dst=i1.variation amount=0.4
+fx = src=macro3 dst=i1.decay amount=-0.2
+fx = src=macro4 dst=i2.mix amount=0.25

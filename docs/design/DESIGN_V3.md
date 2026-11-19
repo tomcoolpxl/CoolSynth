@@ -530,6 +530,19 @@ and frame-size changes crossfade over 20 ms; a Spectral engine starts on three f
 sound already written. Cost per stereo slot at 48 kHz: about 0.9 % of a core in Heads, 2.9 % in
 Spectral. Memory: a 1.45 s line per side and the three frame sizes, about 1.1 MB per slot.
 
+Stutter insert (2026-11-19, decision D220): a fifteenth type, Stutter, in any layer or master slot,
+after Ableton's Beat Repeat with Stutter Edit's roll. `StutterInsert.h`. It catches on the beat the
+engine passes in (every Interval at its Offset, with a Chance) or at once while Hold is on (an
+effect route puts Hold on the wheel, a macro or the step modulator): one Grid's length plays
+through and is kept (Variation picks it at random a few straight or triplet steps around Grid),
+then repeats for Gate, or while Hold stays on. Each repeat after the first can be shorter (Roll,
+halved at full, down to 8 ms), lower (Pitch, semitones per repeat by slower playback, four octaves
+at most, read through a cubic), quieter (Decay) and backwards (Reverse: All or Alternate). Every
+repeat and every way in or out fades over at most 2 ms. Mode: Insert mutes the sound while the
+repeats play, Mix plays them over it, Gate passes only them. Values in pages of four: Interval,
+Offset, Chance, Hold; Grid, Gate, Variation, Roll; Pitch, Decay, Reverse, Mode. Memory: 2 s per
+side, about 0.8 MB per slot at 48 kHz.
+
 ## 9. Parameters, state, presets
 
 ### 9.1 Parameter IDs

@@ -14,6 +14,7 @@
 #include "Module.h"
 #include "PitchInsert.h"
 #include "RoomInsert.h"
+#include "StutterInsert.h"
 
 /*
     V3 insert slots (docs/design/DESIGN_V3.md section 8; decision D81): six per part since D194, between the part's
@@ -22,8 +23,9 @@
     on), so an insert sounds exactly as the same effect does in the master section, with the
     same smoothing when a value moves or the effect is switched. Three more types have code of
     their own: Grain, the granular effect on a part (GrainInsert.h, decision D82), Room, a small
-    room around an instrument (RoomInsert.h, decision D108), and Pitch, a pitch shifter with a
-    delay (PitchInsert.h, decision D205).
+    room around an instrument (RoomInsert.h, decision D108), Pitch, a pitch shifter with a
+    delay (PitchInsert.h, decision D205), and Stutter, slices caught and repeated on the beat
+    (StutterInsert.h, decision D220).
 
     A slot has a type and twelve generic values, named and ranged by the type's descriptor, like a
     generator or processor slot. Values arrive normalised 0..1. A synced delay and the pump take
@@ -57,7 +59,8 @@ namespace coolsynth::synth::v3
         inline constexpr int grain = 11;
         inline constexpr int room = 12;
         inline constexpr int pitch = 13;
-        inline constexpr int count = 14; // new types only at the end: the index is saved in patches
+        inline constexpr int stutter = 14;
+        inline constexpr int count = 15; // new types only at the end: the index is saved in patches
     }
 
     /** Name and parameters of an insert type. The ranges are the master rack's. */
@@ -143,6 +146,22 @@ namespace coolsynth::synth::v3
                  { "mode",      "Mode",      0.0f,    1.0f,    0.0f,  Skew::linear,      Unit::choice,       false, "Heads|Spectral" },
                  { "window",    "Window",    10.0f,   200.0f,  50.0f, Skew::logarithmic, Unit::milliseconds, true },
                  { "character", "Character", 0.0f,    1.0f,    0.25f, Skew::linear,      Unit::percent,      true } }}, 11 },
+            // Pages of four: when it catches, what it catches, what each repeat does (D220). Its defaults are Beat
+            // Repeat's: every bar on beat three, sixteenths, for a quarter note.
+            { "Stutter", 2,
+              {{ { "interval",  "Interval",  0.0f, 5.0f,  3.0f,  Skew::linear, Unit::choice,    false, StutterInsert::intervalNames },
+                 { "offset",    "Offset",    0.0f, 15.0f, 8.0f,  Skew::linear, Unit::choice,    false,
+                   "0|1/16|2/16|3/16|4/16|5/16|6/16|7/16|8/16|9/16|10/16|11/16|12/16|13/16|14/16|15/16" },
+                 { "chance",    "Chance",    0.0f, 1.0f,  1.0f,  Skew::linear, Unit::percent,   true },
+                 { "hold",      "Hold",      0.0f, 1.0f,  0.0f,  Skew::linear, Unit::choice,    true,  "Off|On" },
+                 { "grid",      "Grid",      0.0f, 8.0f,  4.0f,  Skew::linear, Unit::choice,    false, StutterInsert::gridNames },
+                 { "gate",      "Gate",      0.0f, 8.0f,  3.0f,  Skew::linear, Unit::choice,    false, StutterInsert::gateNames },
+                 { "variation", "Variation", 0.0f, 1.0f,  0.0f,  Skew::linear, Unit::percent,   true },
+                 { "roll",      "Roll",      0.0f, 1.0f,  0.0f,  Skew::linear, Unit::percent,   true },
+                 { "pitch",     "Pitch",     0.0f, 12.0f, 0.0f,  Skew::linear, Unit::semitones, true },
+                 { "decay",     "Decay",     0.0f, 1.0f,  0.0f,  Skew::linear, Unit::percent,   true },
+                 { "reverse",   "Reverse",   0.0f, 2.0f,  0.0f,  Skew::linear, Unit::choice,    false, "Off|All|Alternate" },
+                 { "mode",      "Mode",      0.0f, 2.0f,  0.0f,  Skew::linear, Unit::choice,    false, "Insert|Mix|Gate" } }}, 12 },
         }};
         return table[static_cast<std::size_t>(std::clamp(typeIndex, 0, insertType::count - 1))];
     }
@@ -192,6 +211,31 @@ namespace coolsynth::synth::v3
         return p;
     }
 
+    /** A Stutter slot's values in the effect's own terms (D220). */
+    [[nodiscard]] inline StutterInsert::Settings stutterSettings(const InsertSettings& settings) noexcept
+    {
+        const auto& d = insertDescriptor(insertType::stutter);
+        auto units = [&](int index)
+        {
+            return descriptorToUnits(d.params[static_cast<std::size_t>(index)], settings.p[static_cast<std::size_t>(index)]);
+        };
+        auto choice = [&](int index, int last) { return std::clamp(static_cast<int>(std::lround(units(index))), 0, last); };
+        StutterInsert::Settings s;
+        s.intervalBeats = StutterInsert::intervalBeats[static_cast<std::size_t>(choice(0, 5))];
+        s.offsetBeats = 0.25 * choice(1, 15);
+        s.chance = units(2);
+        s.hold = choice(3, 1) == 1;
+        s.gridIndex = choice(4, 8);
+        s.gateBeats = StutterInsert::gateBeats[static_cast<std::size_t>(choice(5, 8))];
+        s.variation = units(6);
+        s.roll = units(7);
+        s.pitchSemitones = units(8);
+        s.decay = units(9);
+        s.reverse = static_cast<StutterInsert::Reverse>(choice(10, 2));
+        s.mode = static_cast<StutterInsert::Mode>(choice(11, 2));
+        return s;
+    }
+
     /** How long a slot keeps sounding once its input is silent: what the plugin reports to a host as its tail. */
     [[nodiscard]] inline double insertTailSeconds(const InsertSettings& settings, double bpm = 120.0) noexcept
     {
@@ -225,6 +269,8 @@ namespace coolsynth::synth::v3
                 return units(7) > 0.0f ? GrainInsert::bufferSeconds + 0.5 : 0.0;
             case insertType::pitch:
                 return PitchInsert::tailSeconds(pitchSettings(settings, bpm));
+            case insertType::stutter:
+                return StutterInsert::tailSeconds(stutterSettings(settings), bpm);
             default:
                 return 0.0;
         }
@@ -249,12 +295,13 @@ namespace coolsynth::synth::v3
             grain.prepare(sampleRate);
             room.prepare(sampleRate);
             pitch.prepare(sampleRate);
+            stutter.prepare(sampleRate);
             dry.setSize(2, std::max(1, maxBlockSize), false, true, true);
             fadeSamples = std::max(1, static_cast<int>(std::lround(typeFadeSeconds * sampleRate)));
             lastType = insertType::off;
             change = Change::none;
             quiet = true;
-            rackUsed = grainUsed = roomUsed = pitchUsed = false; // prepared silent
+            rackUsed = grainUsed = roomUsed = pitchUsed = stutterUsed = false; // prepared silent
         }
 
         /**
@@ -369,11 +416,14 @@ namespace coolsynth::synth::v3
                 room.clear();
             if (pitchUsed)
                 pitch.clear();
-            rackUsed = grainUsed = roomUsed = pitchUsed = false;
+            if (stutterUsed)
+                stutter.clear();
+            rackUsed = grainUsed = roomUsed = pitchUsed = stutterUsed = false;
             quiet = true;
         }
 
         [[nodiscard]] const GrainInsert& grainForTesting() const noexcept { return grain; }
+        [[nodiscard]] const StutterInsert& stutterForTesting() const noexcept { return stutter; }
 
         [[nodiscard]] int currentType() const noexcept { return lastType; }
 
@@ -461,6 +511,22 @@ namespace coolsynth::synth::v3
             {
                 pitch.clear();
                 pitchUsed = false;
+            }
+
+            // And the stutter, on the beat the engine passes in.
+            if (type == insertType::stutter)
+            {
+                if (lastType != insertType::stutter)
+                    clear();
+                stutter.process(stereo, stutterSettings(settings), context.beatsAtStart, context.beatsPerSample);
+                stutterUsed = true;
+                lastType = type;
+                return;
+            }
+            if (lastType == insertType::stutter)
+            {
+                stutter.clear();
+                stutterUsed = false;
             }
 
             coolsynth::synth::DriveParametersV2 drive;
@@ -570,6 +636,7 @@ namespace coolsynth::synth::v3
         GrainInsert grain;
         RoomInsert room;
         PitchInsert pitch;
+        StutterInsert stutter;
         int lastType = insertType::off;
         Change change = Change::none;
         static constexpr float quietLevel = 1.0e-6f; // -120 dB
@@ -578,6 +645,6 @@ namespace coolsynth::synth::v3
         int fadeSamples = 480, fadeDone = 0;
         InsertSettings heldSettings {};     // what the type playing was last given: it fades out with these
         juce::AudioBuffer<float> dry;       // the block as it came in, during a change
-        bool rackUsed = false, grainUsed = false, roomUsed = false, pitchUsed = false; // played since its last clear (D160)
+        bool rackUsed = false, grainUsed = false, roomUsed = false, pitchUsed = false, stutterUsed = false; // played since its last clear (D160)
     };
 }

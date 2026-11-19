@@ -18,7 +18,7 @@ CoolSynth needs 64-bit Windows 10 or 11.
 
 ## Sounds
 
-There are 136 presets in 14 rooms: synthwave, techno, ambient, lo-fi, classic synths rebuilt in the Museum, and 40 sampled acoustic instruments in the Conservatory.
+There are 139 presets in 14 rooms: synthwave, techno, ambient, lo-fi, classic synths rebuilt in the Museum, and 40 sampled acoustic instruments in the Conservatory.
 
 CoolSynth is **bi-timbral**. A preset can use layer A and layer B, stacked on every key, split across the keyboard, or switched by velocity. Right-click a layer on the screen to copy, swap or double it.
 
@@ -53,7 +53,7 @@ What the engine has:
   - tape and ping-pong delay
   - plate reverb with shimmer, and a room reverb
   - compressor, EQ and tempo-synced ducking
-  - granular and pitch shifter
+  - granular, pitch shifter and stutter
 
 ## Your own samples
 
@@ -65,7 +65,7 @@ A sample can be sliced across the keys, in equal pieces or at its hits, on the s
 
 Any MIDI keyboard plays CoolSynth.
 
-To see where your keyboard's keys fall on the screen's keys, set its size in **Prefs > Your keyboard**. A line then marks them and follows the notes you play. The MiniLab 3 needs no setting.
+Set your keyboard's size in **Prefs > Your keyboard** to see its keys marked on the screen's.
 
 In a DAW, the simplest way to put your controller's knobs on CoolSynth is the DAW's own mapping: MIDI Map in Ableton Live, Link to controller in FL Studio, Quick Controls in Cubase, or the learn function of Bitwig or Reaper. CoolSynth lists its four macros, Glide, Brightness, Space and the master volume first, so DAWs that give a controller a plugin's first eight controls start there.
 

@@ -69,10 +69,18 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 
 ## Sounds and effects
 
-5. Next from the research on the user's reference artists (`docs/research/sound-references.md`): the stutter
-   effect; then the Pitch effect's Tune mode and formant control.
+5. Next from the research on the user's reference artists (`docs/research/sound-references.md`): the Pitch effect's
+   Tune mode and formant control. The stutter effect is built (D220); its three draft presets in Night Bus (Cut-Up
+   Chords, Wheel Stutter, Glitch Pad) wait for the user's ear, with the listening pass (item 3).
 6. The Museum: the hoover and Juno-106 patches still have no published source.
 7. The wine glasses as a source for the Grain generator.
+18. In progress (2026-11-19, the online part with a research agent). The added noise sounds artificial at times (the
+    user, 2026-11-19): LoFi's Hiss, white noise through a one-pole low-pass at 6 kHz that follows the signal's
+    level, and its Crackle, random clicks up to 40 a second; also the Noise generator's white, pink, band and chip.
+    First and above all an online investigation (the user: "very important"): how current synths and effects model
+    them (tape hiss spectra and modulation, vinyl crackle and dust, noise that breathes with the music), from their
+    manuals, DSP papers and forums, with the sources named. Then whether CoolSynth follows that practice; put what
+    differs to the user as pick lists.
 
 ## Engine
 
@@ -80,6 +88,17 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
    14.2 % of real time on average, 19 % in its worst block (18.4 % and 26 % before D219). Its share per module, over
    the voices' own 2.7 %: the ladder 4.8 %, the seven saws 2.6 %, the SVF 1.6 %, the rest its second layer and
    effects. Elsewhere FM4 5.3 %, Drive 3.9 %. Done for now (D219): AVX2 gained nothing and the build stays SSE2.
+19. In progress (2026-11-19, the research and review with an agent). Determinism and a processing budget, the user's
+    ask on 2026-11-19: everywhere in the chain, and above all in the big sounds (many voices, long effect chains,
+    multi-core), the audio must be predictable and deterministic and every block must fit a known time budget; and
+    when it would not, CoolSynth must know what to do about it.
+    - First an online investigation, sources named: how hardware synths with a fixed DSP budget and software synths
+      handle it (polyphony capped by cost, voice stealing by CPU load, overload protection as in Kontakt or Pigments,
+      worst-case versus average cost, real-time rules such as no locks or allocations on the audio thread).
+    - Then a review of CoolSynth's code against it: what is already there (each module's cost class capping
+      polyphony, the audio thread's allocation alarm, the block tripwires, the multi-core helpers, seeded random
+      numbers), what is data-dependent or unbounded, and whether the same input always gives the same output.
+    - Then, if needed, a plan, architectural changes included; each choice to the user as a pick list.
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).

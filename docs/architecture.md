@@ -1,7 +1,7 @@
 # CoolSynth architecture
 
-CoolSynth is a polyphonic software synthesizer for Windows, a VST3 plugin and a standalone app, written in C++20
-with JUCE 8.0.12. This page describes how it is built: the engine, its threads, the interface, how sounds are
+CoolSynth is a polyphonic software synthesizer for Windows, a VST3 and CLAP plugin and a standalone app, written in
+C++20 with JUCE 9.0.5. This page describes how it is built: the engine, its threads, the interface, how sounds are
 stored, and where each part lives in the source.
 
 ![CoolSynth V3 engine map: keys and MIDI feed two layers, each with a note layer, voices of three generator and three processor slots, modulation and six insert effects; both layers are mixed into six master effect slots, the master gain, a soft clipper and the stereo output.](architecture/engine-map.svg)
@@ -44,7 +44,8 @@ is empty and is left out. Everything that is not a note, such as the wheels and 
 
 The two layers share 16 voices. Each layer may use what its patch asks for (its polyphony, one voice for mono
 and legato, its unison count), is sure of 8, and gets more when the other layer asks for fewer
-(`SoundUnit::voiceLimits` in `src/synth/v3/SoundUnit.h`).
+(`SoundUnit::voiceLimits` in `src/synth/v3/SoundUnit.h`). A released voice whose one-shot recording has ended
+frees itself once it has been silent for 100 ms, instead of running out its release (`Voice::canEndEarly`).
 
 In the code a layer is a `Part` (`src/synth/v3/Part.h`), and a whole sound, both layers with their inserts,
 the master slots, the mix and the master gain, is a `SoundUnit` (`src/synth/v3/SoundUnit.h`). The two names
@@ -131,13 +132,13 @@ and synced delays always agree.
 
 ## Effects
 
-There are 13 effect types, and any of them can sit in any insert slot or master slot, in any order
+There are 14 effect types, and any of them can sit in any insert slot or master slot, in any order
 (`src/synth/v3/Inserts.h`): Drive, Lo-fi, Phaser, Flanger, Chorus, Delay, Plate reverb, Compressor, EQ, Pump
-(tempo-synced ducking), Grain, Room and Pitch. An empty slot costs nothing.
+(tempo-synced ducking), Grain, Room, Pitch and Stutter. An empty slot costs nothing.
 
 Ten of them run the code of the older fixed master rack (`src/synth/GlobalFxRack.h`, with one rack per slot
 that has only that stage switched on), so an effect sounds the same in an insert slot as in a master slot.
-Three have code of their own:
+Four have code of their own:
 
 - **Grain** (`src/synth/v3/GrainInsert.h`) replays the last 4 seconds as a cloud of up to 32 grains, and can
   freeze.
@@ -146,13 +147,16 @@ Three have code of their own:
 - **Pitch** (`src/synth/v3/PitchInsert.h`, decision D205) shifts up to two octaves either way, by delay-line
   heads with correlation-matched splices or by a peak-shifting phase vocoder, and has a delay whose feedback
   returns into the shifter, so each repeat climbs or falls another step.
+- **Stutter** (`src/synth/v3/StutterInsert.h`, decision D220) catches a slice on the beat, by chance or while
+  Hold is on, and repeats it, each repeat optionally shorter, lower, quieter or backwards, as Ableton's Beat
+  Repeat does.
 
 When a slot's effect is switched, the old one fades out and the new one fades in along a raised cosine, with
 no corner where a fade begins or ends.
 
 ## Sounds, and how they are checked
 
-There are 136 factory presets in 14 rooms: Workshop, Bedroom, Arcade, Outrun, Observatory, Greenhouse,
+There are 139 factory presets in 14 rooms: Workshop, Bedroom, Arcade, Outrun, Observatory, Greenhouse,
 Basement, Studio 1982, Main Stage, Engine Room, Clock Tower, Conservatory, Museum and Night Bus. The player's
 own sounds appear as one more room, My Sounds, first in the browser.
 
@@ -213,6 +217,9 @@ and read it back:
   Shift) or to one sound setting. Known controllers have ready setups (`src/midi/ControllerMap.cpp`); a guided
   setup and a right click's Learn make the rest. Linked messages reach the panel through a lock-free queue and
   never the sound.
+- **In a DAW** (D216, [design/CONTROLLERS.md](design/CONTROLLERS.md)) the host's own mapping comes first: the
+  first eight parameters are the panel's Home knobs, and the CLAP publishes remote control pages that follow
+  the panel's page (`src/plugin/RemoteControlPages.h`).
 
 The interface is specified in [interface-v3.md](interface-v3.md), and the MiniLab 3 protocol, as tested on the
 device, in [minilab3-screen.md](minilab3-screen.md). `AuditionEditor` is an older editor that is still in the
@@ -278,7 +285,8 @@ Rebuild `CoolSynthRender` and `CoolSynthPresetNormalizer` after any change to a 
 ## Build and release
 
 CMake with presets (`CMakePresets.json`) and Visual Studio 2022; JUCE is a submodule in `external/JUCE`. The
-`CoolSynth` target builds the VST3 and the standalone app.
+`CoolSynth` target builds the VST3, the CLAP (through clap-juce-extensions, `external/clap-juce-extensions`)
+and the standalone app.
 
 - **Debug** is compiled with optimisation (`/O2`), so the Debug plugin and app play in real time, and uses the
   debug runtime DLLs, which only a machine with Visual Studio has.

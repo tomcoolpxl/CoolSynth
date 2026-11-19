@@ -300,7 +300,7 @@ From `docs/design/SOUND_BANK_V3.md`, `docs/interface-v3.md`, the bank files and 
 - **No pitch-shift effect.** The only shifter is the octave-up inside the reverb's shimmer loop (D50).
 - **No way to chop a sample.** A user file plays as one recording over all keys; there are no
   slices, no keymap of several files, no time-stretch in the Sample generator, and no formant control.
-- **No stutter or beat-repeat effect.** The Grain effect cannot stand in: it softens replayed
+- **No stutter or beat-repeat effect** (built since, D220). The Grain effect cannot stand in: it softens replayed
   attacks on purpose (D106), so it no longer stutters.
 - **No filter effect.** A layer or the master can be filtered only through the EQ's fixed shelves.
   The per-voice Ladder and SVF do not reach reverb and delay tails.
@@ -435,6 +435,8 @@ Tune mode to the Pitch effect.
   presets, the Pitch effect in each; Vocal Mask and High Voice play from factory sound.
 - **Slices** built the same day (D207): Equal or at attacks, one per key, played to their end, and a
   folder of files as a kit.
+- **Stutter** built on 2026-11-19 (D220): on the grid by chance or while Hold is on, with pitch drop, decay,
+  roll, variation, reverse and Beat Repeat's three modes.
 - **Corners to research:** all four, now in section 9.6.
 
 The options as they were put:
