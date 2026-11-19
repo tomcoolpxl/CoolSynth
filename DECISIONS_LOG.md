@@ -4398,3 +4398,9 @@ knob test; tag v0.3.0 at once).
   version has no file (softprops/action-gh-release's README). The installer's instrument downloads were checked
   against the Hugging Face dataset: all seven files answer and their SHA-256 match; the installer's sizes are the
   unpacked sizes, as Inno Setup asks for with `extractarchive`.
+- **Published** (2026-11-19, run 44455216037, every step green): https://github.com/tomcoolpxl/CoolSynth/releases/tag/v0.3.0,
+  a full release, not a draft or pre-release, with the installer, the VST3 and app zips and the checksums. Checked
+  signed out: each file downloads, the three packages match the published SHA-256, the installer says 0.3.0, the
+  zips hold `CoolSynth.vst3` and `CoolSynth.exe`. The release page showed every line break of the notes, so the notes
+  are written one line per paragraph and the published body was replaced with that version; the release is titled
+  "CoolSynth 0.3.0", and the workflow names later releases the same way.

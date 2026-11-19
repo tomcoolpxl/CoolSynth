@@ -63,8 +63,9 @@ jobs:
     needs: build-release-assets
     runs-on: windows-2022
     steps:
-      # The release notes, written per version in docs/releases/<tag>.md. First: checking out clears the folder,
-      # so the package bundle comes after it.
+      # The release notes, written per version in docs/releases/<tag>.md, one line per paragraph and per bullet
+      # (the release page shows every line break). First: checking out clears the folder, so the package bundle
+      # comes after it.
       - name: Check out the release notes
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
@@ -76,9 +77,15 @@ jobs:
           name: windows-release-${{ github.ref_name }}-packages
           path: release-bundle
 
+      - name: Name the release
+        id: title
+        shell: pwsh
+        run: '"name=CoolSynth $($env:GITHUB_REF_NAME.TrimStart(''v''))" >> $env:GITHUB_OUTPUT'
+
       - name: Publish GitHub release
         uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda
         with:
+          name: ${{ steps.title.outputs.name }}
           tag_name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
