@@ -9,7 +9,7 @@
 #include "Module.h"
 
 /*
-    V3 crusher and wavefolder processors (DESIGN_V3.md section 3.2; REQUIREMENTS_V3.md: crusher
+    V3 crusher and wavefolder processors (docs/design/DESIGN_V3.md section 3.2; docs/design/REQUIREMENTS_V3.md: crusher
     with bit depth 1 to 16 continuous, sample-rate reduction to 1 kHz, dry/wet; wavefolder with
     symmetry and pre-gain).
 

@@ -19,7 +19,7 @@
 #include "UserLibrary.h"
 
 /*
-    V3 sample generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: one-shot or loop, start,
+    V3 sample generator (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md: one-shot or loop, start,
     loop points, pitch tracking on or off, factory samples; decisions D83 and D96 to D98).
 
     It plays one of two kinds of source, chosen by Sample:

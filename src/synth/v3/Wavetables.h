@@ -4,7 +4,7 @@
 #include <vector>
 
 /*
-    V3 factory wavetables (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: a factory table set,
+    V3 factory wavetables (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md: a factory table set,
     band-limited playback).
 
     Four tables of 16 frames, each frame one cycle of 2048 samples, built once from their

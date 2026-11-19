@@ -71,7 +71,7 @@ Testing/
 # Local tool state and generated intermediates
 test_output.txt
 build_aux/
-.claude/settings.local.json
+.claude/
 
 # Downloaded sample candidates and reference recordings: local only, thrown away later
 /audition/

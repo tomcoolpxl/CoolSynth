@@ -13,7 +13,7 @@
 #include "Voice.h"
 
 /*
-    V3 part (DESIGN_V3.md sections 6 and 7): one patch playing on a pool of voices.
+    V3 part (docs/design/DESIGN_V3.md sections 6 and 7): one patch playing on a pool of voices.
 
     The note layer runs in this order: chord memory (one key plays a chord, see ChordMemory.h),
     the arpeggiator (reused unchanged, with the rule that a note-on is absorbed before steps are

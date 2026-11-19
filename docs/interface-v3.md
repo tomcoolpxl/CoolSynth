@@ -1,10 +1,8 @@
 # CoolSynth V3: the interface
 
 The interface designed with the user on 2026-11-14 (decisions D140 to D147), from two rounds of
-clickable mock-ups (`docs/ui-v3-mockups.html`, `docs/ui-v3-mockups-2.html`, published at
-https://claude.ai/artifact/2bUoUQmdY8dg4VCxwC6mwe) and tests on the user's MiniLab 3
-(`docs/minilab3-screen.md`). This file is the specification; where it and the mock-up disagree,
-this file wins and the mock-up is fixed.
+clickable mock-ups (in git history before D214) and tests on the user's MiniLab 3
+(`docs/minilab3-screen.md`). This file is the specification.
 
 ## 1. The idea
 
@@ -55,7 +53,7 @@ Two levels: **Home** (the sound browser) and **a section**.
   - Macros: the playing sound's four, in fixed roles (1 tone, 2 character, 3 time, 4 movement),
     named per preset in the bank file ("macros = names=Blare,Thickness,Swell,Shimmer"; "-" for one
     the sound does not use, shown as a dash); role names when a preset has none. All 120 presets
-    are routed and named, drafted for the user's review (D177, docs/macro-drafts).
+    are routed and named (D177).
   - Perform: Arp (on, rate, pattern, octaves), Groove (gate, swing, chance, latch), Chord (chord,
     strum, learn), Voice (mode, polyphony, glide, bend range).
 

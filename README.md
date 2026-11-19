@@ -1,99 +1,93 @@
 # CoolSynth
 
-![CoolSynth playing Sea Pad, a two-layer sound from the Night Bus room](screenshot.png)
+![CoolSynth playing Sea Pad from the Night Bus room](screenshot.png)
 
-CoolSynth is a two-layer software synthesizer for Windows, as a standalone app and a VST3 plugin.
-It is built around the Arturia MiniLab 3: CoolSynth drives the MiniLab's screen, pads and knobs. Any
-MIDI keyboard plays it, any controller's knobs and pads can work its panel, and the mouse reaches
-everything on screen.
+CoolSynth is a synthesizer for Windows. It runs as a standalone app or as a VST3 plugin in your DAW.
 
-How it is built, with a map of the engine: [the architecture page](docs/architecture.md).
+It was designed around the Arturia MiniLab 3 and uses its screen, pads and knobs, but any MIDI keyboard works.
 
-## What is in it
+## Download
 
-- **Two layers**, each a whole sound, played stacked, split across the keyboard, or by velocity.
-  Right-click a layer on the screen to copy, swap or double it.
-- **Nine sound sources**, three per layer at once: virtual analogue, noise, two- and four-operator
-  FM, wavetables, a plucked string, struck bars and bells, recorded instruments, and grains.
-- **Seven filters and shapers**, three per voice: a ladder and a state-variable filter, a bit
-  crusher, a wavefolder, drive, a vowel filter and a comb.
-- **Movement**: three envelopes, two LFOs per voice and two for the whole sound, a 16-step
-  modulator, a 24-slot modulation matrix, four macros per sound, chord memory and an arpeggiator
-  with Euclidean rhythms, ratchets and chance.
-- **Thirteen effects** in six slots per layer and six on the master: drive, lo-fi, phaser, flanger,
-  chorus, tape and ping-pong delay, plate reverb with shimmer, room, compressor, EQ, pump, grains,
-  and a pitch shifter with a pitch-stepping delay.
-- **136 presets in 14 rooms**, from synthwave and techno to the Night Bus room of laptop-made sounds,
-  the Museum's rebuilt classic synths and the Conservatory's 40 recorded acoustic instruments.
-- **Your own sounds**: a WAV file played across the keys, cut into slices (in equal pieces or at
-  its hits, one per key), or a folder of files played as a kit.
+Get the latest `CoolSynth-Setup` installer from the [Releases page](https://github.com/tomcoolpxl/CoolSynth/releases).
 
-## Install
+Windows may warn that the publisher is unknown, because the installer isn't code-signed. Click **More info**, then **Run anyway**.
 
-Download `CoolSynth-Setup-<version>.exe` from [Releases](https://github.com/tomcoolpxl/CoolSynth/releases)
-and run it. Windows may warn that it is from an unknown publisher (it is not code-signed): choose
-**More info**, then **Run anyway**. The installer puts:
+The installer puts the VST3 in `C:\Program Files\Common Files\VST3` and the app in the Start menu. It also downloads the sampled instruments you select from the [instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments), 2.6 GB for all of them.
 
-- the **VST3** where every DAW looks (`C:\Program Files\Common Files\VST3`); let your DAW rescan its
-  plugins and CoolSynth is listed as an instrument;
-- the **app**, with a Start menu entry;
-- the **recorded instruments** you tick (2.6 GB for all seven families), downloaded from the
-  [instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments) and checked
-  before they are unpacked. Without them everything else plays; those sounds stay silent.
+Rescan your plugins in the DAW afterwards and CoolSynth shows up as an instrument.
 
-Without the installer: the release also has the VST3 and the app as zips (copy `CoolSynth.vst3` into
-`C:\Program Files\Common Files\VST3`), and the instrument families as zips on the instrument library's
-page (their folders go in `C:\ProgramData\CoolSynth\Library`). Requires 64-bit Windows. Made and tested
-on Windows 11.
+CoolSynth needs 64-bit Windows 10 or 11.
 
-## Your controller
+## Sounds
 
-Any MIDI keyboard plays CoolSynth. Its knobs, faders, pads and buttons can work CoolSynth's panel as
-well: a knob turns knob 3 of whatever page is open, a pad opens a section.
+There are 136 presets in 14 rooms: synthwave, techno, ambient, lo-fi, classic synths rebuilt in the Museum, and 40 sampled acoustic instruments in the Conservatory.
 
-- **Known controllers** (Akai MPK mini mk3, Novation Launchkey Mini MK3 and MK4, Arturia KeyLab
-  Essential mk3, NI Komplete Kontrol M32 and A series) are set up by themselves when plugged in; the
-  screen says so.
-- **Any other**: **Prefs > Controller setup... > Set up step by step** asks for each knob, fader and
-  pad in turn: move the one you want.
-- **One at a time**: right-click a knob, fader or pad on the panel and choose **Learn**; on a knob you
-  can also tie a control to the setting it shows, on every page.
+CoolSynth is bi-timbral. A preset can use layer A and layer B, stacked on every key, split across the keyboard, or switched by velocity. Right-click a layer on the screen to copy, swap or double it.
 
-The setup is kept for the computer: the app and the plugin in every project share it.
+What the engine has:
 
-**FL Studio** passes a controller's knobs to a plugin only on a MIDI port the two share:
-in **Options > MIDI settings** select your keyboard and set its **Port** to a number (say 1); then in
-CoolSynth's window open the plugin wrapper's settings, the **Settings** tab, and set **MIDI > Input
-port** to the same number. This is the same for every plugin in FL.
+- Sound sources
+  - virtual analog
+  - noise
+  - 2- and 4-operator FM
+  - wavetables
+  - plucked string
+  - struck bars and bells
+  - samples
+  - granular
+- Filters and shapers
+  - ladder and state-variable filters
+  - bit crusher
+  - wavefolder
+  - drive
+  - vowel filter
+  - comb filter
+- Modulation
+  - envelopes and LFOs
+  - a 16-step modulator
+  - a 24-slot modulation matrix
+  - four macros per sound
+- Arpeggiator and chords
+  - Euclidean rhythms, ratchets and chance
+  - chord memory
+- Effects
+  - drive, lo-fi, phaser, flanger and chorus
+  - tape and ping-pong delay
+  - plate reverb with shimmer, and a room
+  - compressor, EQ and pump
+  - granular and pitch shifter
 
-## Your own sounds
+## Your own samples
 
-CoolSynth reads your files from the `User` folder inside the library folder
-(`C:\ProgramData\CoolSynth\Library\User`; CoolSynth makes it the first time you look). In the
-Sound section, set a slot to **Sample**: turning its first knob past the instruments lists your
-files and folders, and a press loads one.
+Put WAV files in `C:\ProgramData\CoolSynth\Library\User`. In the Sound section, set a slot to Sample and turn its first knob past the built-in instruments to find your files. Press the knob to load one.
 
-- **Slices**: on the Sample slot's fourth page set **Slices** to **Equal** (with a **Count**) or
-  **Attacks** (with a **Sensitivity**). Each piece gets its own key from **First Key** up, plays at
-  its own speed and plays to its end. With the layer in Mono, a new key cuts the last piece.
-- **Kits**: choose a folder instead of a file: each file in it gets a key, in name order.
+A sample can be sliced across the keys, in equal pieces or at its hits, on the slot's fourth page. A folder loads as a kit with one file per key.
 
-## MiniLab 3
+## Controllers
 
-CoolSynth uses the MiniLab 3's screen, pads and knobs, in the app and in a DAW: the screen shows the
-sound and the knob you turn, the pads open the sections, and the knobs turn the settings on screen.
-With CoolSynth on several tracks, the one whose window you opened last has the MiniLab. Sharing the MiniLab with the DAW needs
-Windows MIDI Services (Windows 11 24H2 or later, through Windows Update).
+Any MIDI keyboard plays CoolSynth, and its knobs, faders and pads can control the panel.
 
-So that the pads do not also play notes in a DAW, the installer adds a small script for each:
-**FL Studio** links it to the MiniLab by itself; in **Ableton Live** choose **CoolSynth_MiniLab** once
-as a Control Surface (Settings > Link, Tempo & MIDI) with Input **Minilab3 MIDI** and Output **None**,
-and leave no other MiniLab control surface selected. To use the MiniLab as a plain controller
-instead, switch **Prefs > Controller setup... > MiniLab 3 driver** to **Off**.
+These set themselves up when you plug them in: Akai MPK mini mk3, Novation Launchkey Mini MK3 and MK4, Arturia KeyLab Essential mk3, Native Instruments Komplete Kontrol M32 and A-series.
 
-## Build from source
+For anything else, open **Prefs > Controller setup > Set up step by step**, or right-click a knob, fader or pad and choose **Learn**.
 
-Prerequisites: Windows 11, Git, CMake 3.22 or newer, and Visual Studio 2022 (or its Build Tools).
+The setup is saved for the whole computer, so the app and every plugin instance share it.
+
+In FL Studio, knobs only reach a plugin when both use the same MIDI port. In **Options > MIDI settings**, give your keyboard a port number. Then in CoolSynth's plugin window, open the wrapper's **Settings** tab and set **MIDI > Input port** to the same number.
+
+## Arturia MiniLab 3
+
+CoolSynth takes over the MiniLab's screen, pads and knobs, both in the app and in a DAW. The screen shows the sound and the knob you're turning, and the pads open the sections.
+
+With CoolSynth on several tracks, the window you opened last gets the MiniLab. Using it inside a DAW needs Windows 11 24H2 or later.
+
+The installer adds scripts so the pads don't also play notes in your DAW. FL Studio finds its script by itself. In Ableton Live, open **Settings > Link, Tempo & MIDI** and choose CoolSynth_MiniLab as a control surface, with input Minilab3 MIDI and output None.
+
+To use the MiniLab as an ordinary MIDI controller instead, turn off **Prefs > Controller setup > MiniLab 3 driver**.
+
+## Building from source
+
+You need Windows, Git, CMake 3.22 or newer, and Visual Studio 2022 or its Build Tools.
 
 ```powershell
 git clone --recurse-submodules https://github.com/tomcoolpxl/CoolSynth.git
@@ -103,20 +97,10 @@ cmake --build --preset build-debug --config Debug
 ctest --test-dir build -C Debug --output-on-failure
 ```
 
-The Debug build is compiled optimised, so it plays in real time. Configure with
-`-DCOOLSYNTH_ENABLE_VST3_USER_INSTALL=ON` to have each build copy the VST3 into your own VST3
-folder (`%LOCALAPPDATA%\Programs\Common\VST3`). For a build to share, use `--config Release`: it
-carries Microsoft's C++ runtime inside it, so it runs on a computer with nothing installed.
+Debug builds are optimized, so they play in real time. Use `--config Release` for a build you want to give to someone else. Add `-DCOOLSYNTH_ENABLE_VST3_USER_INSTALL=ON` to copy the VST3 into your user VST3 folder after every build.
 
-Outputs: `build/CoolSynth_artefacts/<Config>/Standalone/CoolSynth.exe` and
-`build/CoolSynth_artefacts/<Config>/VST3/CoolSynth.vst3`.
+How the engine works is described in [docs/architecture.md](docs/architecture.md).
 
-Releases are built by `.github/workflows/windows-release.yml` when a tag such as `v0.3.0` is pushed.
+## License
 
-## Licence
-
-CoolSynth's own code is under the MIT licence (`LICENSE`). It is built with
-[JUCE](https://juce.com) 8, used under the free Starter tier of the
-[JUCE 8 licence](https://juce.com/legal/juce-8-licence/). The recorded
-instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community
-Sample Library, both released into the public domain (CC0).
+CoolSynth's own code is MIT licensed (see `LICENSE`). It's built with [JUCE](https://juce.com) 8 under the free [Starter licence](https://juce.com/legal/juce-8-licence/). The sampled instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community Sample Library, both CC0.

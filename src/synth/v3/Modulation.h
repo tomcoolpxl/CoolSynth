@@ -10,7 +10,7 @@
 #include "Module.h"
 
 /*
-    V3 sub-block modulation context (DESIGN_V3.md sections 4.2 and 5).
+    V3 sub-block modulation context (docs/design/DESIGN_V3.md sections 4.2 and 5).
 
     Once per sub-block a voice: steps every slot's SlotBase toward the targets the host set,
     clears every slot's SlotOffsets, lets the modulators and the matrix add into the offsets,

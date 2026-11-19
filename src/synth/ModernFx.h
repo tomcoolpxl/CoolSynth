@@ -9,7 +9,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 
 /*
-    The 5.3 effects (IMPLEMENTATION_PLAN_V3.md: pump, EQ, flanger).
+    The 5.3 effects (docs/design/IMPLEMENTATION_PLAN_V3.md: pump, EQ, flanger).
 
     Pump: a tempo-synced ducker, the sidechain feel. At every division the gain drops by Depth
     within 2 ms and recovers along a squared curve over Release (a share of the division). The

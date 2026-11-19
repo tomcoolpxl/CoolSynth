@@ -4,7 +4,7 @@
 #include <cmath>
 
 /*
-    V3 envelope (DESIGN_V3.md section 4.3).
+    V3 envelope (docs/design/DESIGN_V3.md section 4.3).
 
     Delay, attack, hold, decay, sustain, release. Every segment lasts exactly its programmed time
     and follows an exponential curve of adjustable sign and depth,

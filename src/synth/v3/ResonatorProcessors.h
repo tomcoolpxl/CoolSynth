@@ -11,7 +11,7 @@
 #include "Module.h"
 
 /*
-    V3 formant and comb processors (DESIGN_V3.md section 3.2; REQUIREMENTS_V3.md: formant with a
+    V3 formant and comb processors (docs/design/DESIGN_V3.md section 3.2; docs/design/REQUIREMENTS_V3.md: formant with a
     five-vowel morph, size and resonance; comb as a tuned delay with feedback, key tracking and
     polarity).
 

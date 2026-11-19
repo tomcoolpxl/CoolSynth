@@ -11,7 +11,7 @@
 #include "synth/v3/Part.h"
 
 /*
-    V3 part parameters (DESIGN_V3.md section 9.1): every parameter of one part, built from slot
+    V3 part parameters (docs/design/DESIGN_V3.md section 9.1): every parameter of one part, built from slot
     paths, and the lock-free reader that turns them into PartSettings once per block.
 
         pA.g1 .. pA.g3      generator slots (G1 defaults to VA)

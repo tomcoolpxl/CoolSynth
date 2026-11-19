@@ -1,44 +1,68 @@
 # CoolSynth Project Rules
 
-This is the main repo or agent memory file. If you need to adapt your memory file, adapt this file.
+This is the shared project memory for every AI tool (`CLAUDE.md` and `AGENTS.md` point here). If your memory file
+needs adapting, adapt this file. History is in git and in `DECISIONS_LOG.md`; this file holds only the rules and
+the current state.
 
-The V3 engine replaced V2 in the product on 2026-11-13 (plan phase 1.4); the plan is `IMPLEMENTATION_PLAN_V3.md`.
-The UI is designed last, after engine, presets and arpeggiator; until then any UI is throwaway (the generic editor).
-V3 plan phases 1 to 8 are complete as of 2026-11-13: two parts, ten generator types, eight processor types, 120 factory presets (70 synthesised in eleven rooms, 40 recorded instruments in the room Conservatory, and the room Museum, where a classic synth sound enters only when the user admits it in a side-by-side: ten so far, three of them built from a record alone, not from published settings; no candidate is waiting). Since 2026-11-14 a slot type may use twelve values (was eight) and the FM4 operators have the TX81Z's eight waves (D117). Before phase 9 (the real UI, designed with the user) comes what the interface depends on, the user's choice (D134): the master section as six free effect slots (done 2026-11-14, D135: `f1` .. `f6`, any of the twelve effects, older states carried over), then key pressure and the expression pedal as sources (done 2026-11-14, D136; full MPE later, by the user's choice), and one's own samples and wavetables (done 2026-11-14, D137: files in the User folder of the sample library, named by a generator slot's `file`, loaded in the background by `src/synth/v3/UserLibrary.cpp`, kept in the parameter state's USER_FILES child; the throwaway editor has a row of file buttons); the Museum pauses meanwhile. Then, the user's choice: the ladder and Drive made cheaper with the output bit for bit the same (D138), and grains from a live sound, a Grain slot's combine Live (D139). The interface (phase 9) started on 2026-11-14 (D140): the panel copies and drives the Arturia MiniLab 3, three navigation mock-ups are in `docs/ui-v3-mockups.html`, a second round built from the user's notes (D142: sounds one level up, pad 8 as Back, the main knob navigating in every view) in `docs/ui-v3-mockups-2.html`; the user chose E, one map per section, with the sounds in categories (D143). The full interface specification is `docs/interface-v3.md` (D140-D147), the MiniLab 3 protocol as tested on the device is `docs/minilab3-screen.md`. The architecture is described in `docs/architecture.md` (D210), linked from the README, with the engine map drawn by `tools/site/build_engine_map.py` into `docs/architecture/`: when the engine changes, update the facts in that script and in the page, run `python tools/site/build_engine_map.py --png`, and commit both. GitHub Pages is no longer used: the site is deleted, and `.github/workflows/pages.yml` and `site/` are gone. `CoolSynthRender` and `CoolSynthPresetNormalizer` are not part of the `build-debug` preset: rebuild them by target after any change to a bank file or the engine. Overnight on 2026-11-15 (D170-D177, taken while the user slept): review leftovers (a broken value resets only its stage, MIDI floods never drop a release), a click detector over the factory presets (`tests/ClickDetectorTests.cpp`; COOLSYNTH_CLICK_ONLY, COOLSYNTH_CLICK_PROFILE), effect fades as raised cosines, the flight log's per-thread load and memory, engine pills in the sound browser, an Options button on the panel with a CPU line, a velocity curve, Brightness and Space on knobs 7-8, and every preset's four macros routed and named for the user's review (`docs/macro-drafts/`; "macros = names=..." in the bank). What is still open is `TODO.md` item 34; decisions taken while the user was away are in `DECISIONS_LOG.md`. Since 2026-11-15 CoolSynth is bi-timbral (D190, D194-D197): two layers, each a whole sound with six effect slots (I1-I6) and its own arpeggiator, played as Stack, Split or Velocity; a layer with every slot Off is empty and left out; the master chain F1-F6 at the end is the combination's (only the two-layer presets use it). Home picks the sound of the layer it is on (a two-layer preset loads whole), its sixth live page Layers holds balance, detune, transpose and spread and the copy, swap, double, octave, solo and empty actions; a layer screen above knobs 1-4 shows both layers, the tempo, voices and CPU; Prefs is a dialog. One-layer presets carry their effects in layer A (moved by script, checked by rendering every preset before and after). Also on 2026-11-15 (D205, D206), from the research on the user's reference artists (`docs/research/sound-references.md`): a fourteenth effect type, Pitch (`src/synth/v3/PitchInsert.h`: Heads, the H910/H949 delay-line shifter with correlation-matched splices, and Spectral, the Laroche-Dolson peak-shifting phase vocoder; a delay whose feedback steps each repeat), and the room Night Bus (`resources/presets/13-night-bus.csbank`), sixteen presets with the Pitch effect in each. Their clips and the Pitch effect's demonstration are rendered by `tools/audition/make_nightbus.py` for the audition page. Then (D207) slices: a Sample slot cuts the user's file into pieces, one per key (Equal, or at the attacks the loader finds), a folder plays as a kit, a slice plays to its end after its key (the voice asks its generators `holdsRelease()`), and the Sample knob lists the User folder's files and folders after the instruments; processor state 14, patch 13. Since 2026-11-18 (D211) any MIDI controller plays the panel: the computer's controller setup (`%APPDATA%\CoolSynth\controller.json`, `src/midi/ControllerSetup.h`) ties a control to one of the panel's places or to one setting, ready setups for known controllers are used when one is plugged in, Preferences has a guided setup and a right click on a knob, fader or pad learns one control; knobs with end stops move by value scaling. The MiniLab driver runs in the VST3 too (`src/interface/MiniLab3Driver.h`, through Windows MIDI Services), the window opened last driving it. Since 2026-11-19 (D212, D213): a right click on a layer panel offers the Layers page's actions for that layer; the Stop pad ends every sound as All Sound Off, after a 3 ms fade (`requestPanic`); Preferences shows the icon and the build's version, which comes from CMakeLists.txt through the generated build header (`coolsynth::build::getVersion`); a new CoolSynth starts on Main Stage's Reese. V2's MIDI mapping (`MidiMappingEngine`, controller profiles, MIDI learn, `StandaloneMidiInput` and its panels) is gone; the app's settings store keeps only its audio device, multi-core, the velocity curve and the zoom.
+## What CoolSynth is now
 
-## Compatibility Stance
+- A two-layer synthesizer for Windows: a VST3 plugin and a standalone app, built with JUCE 8 (C++20, CMake).
+- Version 0.3.0 was released on 2026-11-19 (D208, D209, D213): installer, VST3 and app zips on GitHub Releases;
+  the recorded instruments as zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`.
+- The V3 engine (`src/synth/v3/`): two layers, each with three generator slots, three processor slots, its own
+  arpeggiator and six effect slots (I1-I6); six master effect slots (F1-F6) at the end. 136 presets in 14 rooms
+  (`resources/presets/*.csbank`), including the recorded instruments of the Conservatory and the Museum's rebuilt
+  classic synths.
+- The panel (`src/plugin/PanelEditor`, `src/interface/InterfaceModel`) copies and drives the Arturia MiniLab 3
+  (`src/interface/MiniLab3Driver`, in the app and in the VST3 through Windows MIDI Services).
+- Any MIDI controller plays the panel through the computer's controller setup (`src/midi/ControllerSetup`,
+  `%APPDATA%\CoolSynth\controller.json`, D211). DAW scripts for the MiniLab's pads are in `resources/daw-scripts/`.
+- A new CoolSynth starts on Main Stage's Reese (D212). Stop ends every sound (All Sound Off, after a 3 ms fade).
 
-- No backward compatibility is required anywhere in this repo unless the user explicitly asks for it.
-- Nothing has been released yet, so prefer the cleanest current V2 behavior over preserving older patch, state, parameter-ID, or controller-mapping contracts.
-- If a future task would keep backward compatibility only out of caution or inertia, do not do that by default.
-- Patch and processor-state formats must never be kept backward compatible by default. When the parameter contract changes, bump the format and reject older saved patches or state unless the user explicitly asks for compatibility.
+## Where things are
 
-Authoritative project files:
+- `README.md`: the player's guide. `docs/architecture.md`: the architecture as built, with the engine map.
+- `docs/design/`: the V3 engine's specification (`DESIGN_V3.md`, `REQUIREMENTS_V3.md`, `IMPLEMENTATION_PLAN_V3.md`,
+  `SOUND_BANK_V3.md`). `docs/interface-v3.md`: the interface specification. `docs/minilab3-screen.md`: the MiniLab
+  3 protocol as tested on the device.
+- `TODO.md`: open work only. `DECISIONS_LOG.md`: every decision, with the options and the reason.
+- `docs/releases/<tag>.md`: the release notes of each version.
+- `installer/`: the Inno Setup installer. `scripts/ci/` and `.github/workflows/`: validation and release builds.
+- `tools/`: the preset normalizer, the renderer, the library packer, the audition and engine-map scripts.
 
-- `REQUIREMENTS.md`, `REQUIREMENTS_V2.md`, `REQUIREMENTS_V3.md`, `SOUND_BANK_V3.md`
-- `DESIGN.md`, `DESIGN_V2.md`, `DESIGN_V3.md`
-- `IMPLEMENTATION_PLAN.md`, `IMPLEMENTATION_PLAN_V2.md`, `IMPLEMENTATION_PLAN_V3.md`
-- `TODO.md`
-- `DONE.md`
+## Compatibility stance
 
-Project rules:
+- No backward compatibility is required anywhere unless the user explicitly asks for it.
+- Patch and processor-state formats are not kept backward compatible by default: when the parameter contract
+  changes, bump the format. Where a migration already exists (older states carried over), keep it working.
+- 0.3.0 is out now: before a change that would stop a saved project from loading, ask the user.
 
-- Keep one `TODO.md` item small enough for one review cycle.
-- Refresh `TODO.md` from the current phase in `IMPLEMENTATION_PLAN.md`.
-- Update `TODO.md` before starting a new implementation chunk.
-- Update `TODO.md` and `DONE.md` after implementation.
-- Move an item to `DONE.md` only after the required checks, review, and doc updates are complete.
-- `DONE.md` holds only verified work.
-- Update `REQUIREMENTS.md` and `DESIGN.md` when scope or acceptance criteria change.
-- Update `IMPLEMENTATION_PLAN.md` when the order or grouping of work changes.
-- For narrow tasks, pass the exact authoritative files in the prompt instead of retyping context.
-- Ask before making a large refactor, changing the directory structure, or removing tests.
-- Before moving work to `DONE.md`, review the diff, run the required checks, and update docs if the change affected scope or structure.
-- Required checks are the Debug build and `ctest`; Release builds only on request (there are no releases while V3 is in flux).
-- The Debug configuration is compiled optimised (`coolsynth_config_flags`), so the Debug plugin and standalone play in real time; keep JUCE's recommended config flags off CoolSynth targets.
+## Project rules
+
+- Keep one `TODO.md` item small enough for one review cycle. Update `TODO.md` before starting a chunk and after it;
+  remove an item once it is verified, and record what was decided in `DECISIONS_LOG.md`.
+- Every choice that is the user's goes to the user as a pick list, with context and consequences per option and
+  the recommended one first. When the user is away, take the recommended option and log all options in
+  `DECISIONS_LOG.md`.
+- Research online how others solve a problem before proposing or coding a fix, and name the sources.
+- Text a player sees (the panel, the installer, the README, release notes) uses plain words, no internal jargon.
+- Update `docs/design/` when the engine's scope changes, and `docs/architecture.md` when the engine changes: update
+  the facts in `tools/site/build_engine_map.py` and the page, run `python tools/site/build_engine_map.py --png`,
+  and commit both.
+- Ask before a large refactor, a change of the directory structure, or removing tests.
+- Required checks: the Debug build and the tests the change touches (`ctest --test-dir build -C Debug
+  --output-on-failure` for the whole suite; `COOLSYNTH_TEST_ONLY=<part of a test's name>` runs a subset). The Debug
+  configuration is compiled optimised (`coolsynth_config_flags`), so it plays in real time; keep JUCE's recommended
+  config flags off CoolSynth targets.
+- `CoolSynthRender` and `CoolSynthPresetNormalizer` are not in the `build-debug` preset: rebuild them by target
+  after any change to a bank file or the engine.
 - Commit on `main` and push to `origin` after each verified chunk; no branches, no pull requests.
-- In this workspace, keep terminal commands profile-free (`login: false` or PowerShell `-NoProfile`) to avoid irrelevant profile-side access-denied noise in the transcript.
-- Never use heredocs (`<<'EOF'`, `<<EOF`, PowerShell here-strings) in shell commands. Write every script, test snippet and commit message to a file with the file-writing tool first, then pass the file by path (`python script.py`, `git commit -F message.txt`). Heredocs break on apostrophes in this shell and have already corrupted commands.
+- A release: set the version in `CMakeLists.txt` (`project(CoolSynth VERSION ...)`; Preferences shows it), write
+  `docs/releases/v<version>.md` (one line per paragraph and per bullet: the release page shows every line break),
+  then push the tag `v<version>`. `.github/workflows/windows-release.yml` builds, tests, packages and publishes.
+- Keep terminal commands profile-free (PowerShell `-NoProfile`) to avoid profile noise.
+- Never use heredocs (`<<'EOF'`, `<<EOF`, PowerShell here-strings) in shell commands. Write scripts, test snippets
+  and commit messages to a file first and pass the file by path (`python script.py`, `git commit -F message.txt`).
 
 ## 1. Think Before Coding
 
@@ -94,175 +118,3 @@ For multi-step tasks, state a brief plan:
 3. [Step] → verify: [check]
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
-
-## Current Project State
-
-- V2 `Phase 5` is complete: the editor has been redesigned into a 1400x600 single-page V2 instrument panel accommodating all 67 knobs and 1 fader for the new parameters, without paging. Standalone UI separation remains intact.
-- `Phase 15` is complete: the repository now has a manual-only Windows validation workflow and a tag-only Windows release workflow backed by `scripts/ci/*.ps1` and isolated CI CMake presets.
-- Live proof completed on GitHub on 2026-05-09:
-  - Manual validation run `25614177697` passed and produced diagnostics plus packaged artifacts.
-  - Release run `25614334076` passed, published a disposable prerelease, and a rerun updated that same release rather than creating a duplicate.
-- The workflow action pins now target the Node 24-compatible lines:
-  - `actions/checkout` pinned to `v6.0.2`
-  - `actions/upload-artifact` pinned to `v7.0.0`
-  - `actions/download-artifact` pinned to `v8.0.1`
-  - `softprops/action-gh-release` pinned to `v3`
-- Node-runtime validation completed on 2026-05-10:
-  - Manual validation run `25614878512` passed with the updated action pins and no Node 20 deprecation annotation.
-  - Release run `25625463636` passed with the updated release workflow pins and no Node 20 deprecation annotation.
-- Late V2 doc decisions fixed on 2026-05-14:
-  - V2 ships with 8 voices by default.
-  - A selectable 5-voice vintage-limited mode is not required for the first V2 release.
-  - V2 keeps the `.cspatch` extension while intentionally breaking V1 patch/state compatibility.
-  - First-release VST3 manual sign-off uses both Ableton Live Lite and REAPER on Windows.
-  - The UI target is a one-page instrument panel first, with paging only as a fallback.
-  - Aftertouch is a late V2 addition only if it remains straightforward after the main MIDI/controller path is stable.
-- V2 `Phase 1` completed on 2026-05-14:
-  - The APVTS surface now exposes the full grouped V2 parameter contract across oscillators, mixer, filter, dual envelopes, LFO, Poly Mod, performance, arp, drive, chorus, delay, reverb, and output.
-  - `SynthAudioProcessor` now decodes a full V2 block snapshot and renders through a new `SynthEngineV2` seam that still delegates audible output to the current legacy engine path.
-  - The current shared editor subset and bundled MiniLab 3 profile were retargeted from the old global `waveform` parameter to the new V2 `oscAWave` parameter so the shell remains usable during staged migration.
-  - Added test coverage for V2 parameter-ID uniqueness and V2 parameter-state round-trip/sanitized restore behavior.
-  - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
-- V2 `Phase 2` is implemented, manually smoke-tested, and closed on 2026-05-14:
-  - `SynthAudioProcessor::processBlock()` now converts MIDI into explicit sample-offset V2 engine events for note on/off, pitch bend, mod wheel, and sustain, then renders through a real `SynthEngineV2` event/allocation path instead of the old JUCE `Synthesiser` dispatch.
-  - `SynthEngineV2` now owns deterministic preallocated voice slots with release-first voice stealing, sustain handling, panic reset, and sample-accurate in-block event timing while keeping the audible voice intentionally simple for Phase 2.
-  - The old callback-lock-dependent live mapped-action path was removed from runtime MIDI handling. Plugin CC translation now happens off the audio thread through a raw controller-event bridge, and standalone/controller-profile translation no longer blocks the processor callback.
-  - Host-safety MIDI handling is now explicit on the V2 path: `All Notes Off`, `All Sound Off`, and `Reset All Controllers` feed the engine instead of being ignored, and those controller numbers remain reserved across MIDI learn, runtime mapping, and plugin queued-CC dispatch.
-  - Host lifecycle behavior is now tighter on the V2 plugin path: `SynthAudioProcessor::reset()` explicitly panics the allocator, clears delay tail state, and resets keyboard state, and the plugin no longer reports a hard-coded zero tail while the active V2 delay can still ring.
-  - Added automated regressions for V2 event timing, sustain release, panic, release-first stealing, oldest-held fallback stealing, processor-level note rendering, reserved-performance-control learn rejection, host-safety controller rejection, plugin controller FIFO wraparound, processor reset silence, and delay-aware tail reporting.
-  - Windows host availability is no longer a blocker for Phase 2 sign-off: `CoolSynth.exe` launches, Ableton Live 12 Lite scans the custom CoolSynth VST3 path and persists `CoolSynth` in `Live-plugins-1.db`, and REAPER was installed from the official installer on 2026-05-14 and now persists `CoolSynth.vst3` in `reaper-vstplugins64.ini` and `reaper-fxtags.ini`.
-  - Manual smoke for the current allocator path passed in standalone and Ableton Live 12 Lite on 2026-05-14. Standalone note on or off, repeated notes, and panic passed; Ableton VST3 note playback, repeated notes, panic, and no stuck-note behavior passed.
-  - Standalone sustain was not directly exercised because no CC64 sustain-pedal source was available during manual smoke. Automated sustain-path regressions remain in place, and the user accepted Phase 2 closure without a separate standalone sustain-pedal pass.
-  - A small dense note-start click was observed during large simultaneous standalone chords under aggressive settings, but it disappeared with safer knob settings and is currently treated as a patch-dependent transient rather than an allocator or host-lifecycle fault.
-  - Build identity is now visible in both the standalone status bar and a dedicated plugin footer strip so manual host checks can confirm the tested standalone and VST3 binaries match.
-  - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
-- V2 `Phase 3` has a verified implementation slice on 2026-05-14, but it is not fully closed yet because manual standalone dry-tone audition remains open in `TODO.md`:
-  - `SynthVoice` now renders a true dual-oscillator plus noise source path with pulse, triangle, saw, and later sine wave shapes; per-oscillator octave and fine tuning; per-oscillator pulse width; oscillator A hard sync to oscillator B; oscillator B low-frequency mode support; and bounded pre-filter overload gain staging ahead of the existing temporary filter path.
-  - The previously observed dense note-start click is now directly tracked as dry voice-core work and mitigated in code through a short de-click ramp plus per-voice randomized start phase, without changing allocator timing or host event offsets.
-  - Added automated regressions for pulse-width limits, sync-enabled render divergence, dual-oscillator detune divergence, dense note-start transient containment, and full-mixer stability.
-  - Local verification passed with `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, and `ctest --test-dir build -C Debug --output-on-failure`.
-- Late V2 oscillator scope update landed on 2026-05-15:
-  - V2 now exposes a real sine oscillator option again on both oscillator wave selectors without changing the dual-oscillator architecture or adding new controls.
-  - The oscillator wave enum, APVTS choice lists, processor-side waveform decoding, editor segmented controls, and legacy V1 sine-mapping seam were all updated consistently.
-  - Added a live-engine regression that confirms the sine wave path renders audibly and remains finite and bounded.
-- V2 `Phase 6` completed on 2026-05-15:
-  - Voice rendering now applies global LFO (sine/triangle/square), Poly Mod (Osc B and filter envelope to pitch, pulse width, filter cutoff), pitch bend, mod wheel, per-voice vintage drift, glide, and velocity-to-amp/filter modulation per sample. The cutoff smoother smooths the base cutoff per block while modulation acts directly per sample.
-  - `SynthEngineV2` now tracks `globalLfoPhase` and advances it across in-block event spans, broadcasts modulation parameters and the current mod-wheel value to all voices each render span, maintains a bounded held-note list, and supports poly/mono/unison play modes with Last/Low/High key priority.
-  - Mono mode retriggers from the held-note set on note-off using key priority; unison stacks all voices on the same note with deterministic vintage detune and balance-style pan spread.
-  - The voice's L/R pan is balance-style (1.0 at center, 0 at full opposite side) rather than equal-power, which preserves the prior dry-tone loudness with no spread while still producing real stereo motion under `panSpread > 0`.
-  - Added `V2Performance` test suite covering bend range, mono priority, mono low-priority fallback, unison stack count, glide rendering divergence, vintage variance bounds, and mod-wheel-driven LFO.
-  - Editor wiring was verified intact — all LFO/Poly Mod/Performance knobs already bind to the right V2 parameter IDs and lay out in the existing one-page panel.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- V2 `Phase 7` completed on 2026-05-15:
-  - `SynthEngineV2` now includes an internal arpeggiator that tracks held notes, latched notes, pattern order, octave cycling, gate timing, and pending cross-block note-offs without audio-thread allocation.
-  - `SynthAudioProcessor::processBlock()` now reads plugin playhead tempo, PPQ, and transport state when available and passes a compact transport snapshot into the engine; when host timing is incomplete, the arp falls back to its internal tempo source instead of stalling.
-  - Arp-generated note on/off events now route through the existing V2 allocator with sample offsets, so arp playback shares the same timing and voice-steal path as ordinary note play.
-  - Added `V2Arpeggiator` regressions covering pattern ordering (`Up`, `Down`, `Up/Down`, `As Played`), octave range, latch behavior, gate timing, internal-tempo fallback, host-PPQ alignment, transport-stop release, arp-disable release, and panic clearing.
-  - A Windows patch-save failure found during manual Phase 7 validation was fixed by closing the temporary output stream before replacing the destination file, and patch-state coverage now includes a real file write/read round trip.
-  - Manual standalone arp validation passed on 2026-05-15 using a simplified dry test patch: internal tempo, pattern switching, octave range, gate length, latch behavior, patch save, and patch load all worked as expected.
-  - Ableton Live Lite VST3 arp-host validation was intentionally deferred to the final release-validation phase by user request after host workflow issues during bring-up.
-- V2 `Phase 8` completed on 2026-05-15:
-  - The V2 render path now runs through a dedicated `GlobalFxRack` with the documented fixed order `drive -> chorus -> delay -> reverb -> master gain`.
-  - The new drive stage is a bounded soft-saturation pass with mix control; the chorus stage is voiced as a compact ensemble-style widener using the existing V2 rate, depth, and mix parameters; the existing delay now lives inside the rack; and a new global reverb stage completes the first-release FX set.
-  - Rack disable behavior is now explicit for the time-based stages: disabling delay or reverb clears buffered tails instead of keeping stale audio around for a later re-enable.
-  - Host tail reporting is now rack-aware rather than delay-only, so one-shot delay tails, feedback delay tails, and reverb tails all contribute to a conservative nonzero tail estimate when audible.
-  - Added automated regressions covering dry-path preservation with zero-mix FX, extreme full-rack boundedness, time-based effect disable clearing, processor reset silence with the full rack enabled, and rack-aware tail reporting.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-  - Manual validation passed on 2026-05-15 in both standalone and VST3 host use: dry baseline, drive, chorus, delay, reverb, full-rack playback, effect disable clearing, panic silence, and stop/reset tail behavior all worked as expected.
-- V2 `Phase 9` completed on 2026-05-15:
-  - MIDI learn now accepts the full exposed V2 parameter surface, including discrete controls such as waveform, play mode, and arp toggles, while still rejecting reserved performance controllers such as mod wheel, sustain, all-notes-off, and all-sound-off semantics.
-  - The bundled MiniLab 3 Arturia-mode factory profile was retargeted toward the V2 core surface: cutoff, resonance, filter envelope amount, oscillator B fine tune, amp ADSR, oscillator A and B levels, master gain, oscillator A wave, and panic.
-  - Factory-profile precedence remains deliberate: learned bindings still shadow the active factory profile by target and by CC signature so user overrides win predictably in standalone and plugin workflows.
-  - Patch actions are now visible in the VST3 editor as well as standalone, and the async patch file choosers are parented to the editor component so manual save or load validation can happen directly inside the plugin UI.
-  - The built-in init patch defaults were retuned toward a more useful dry dual-saw baseline with a moderated cutoff, positive filter-envelope contour, slight oscillator B detune, and balanced levels while keeping FX disabled.
-  - Channel aftertouch was evaluated for Phase 9 and intentionally deferred because V2 still has no explicit aftertouch destination or parameter contract; adding hidden aftertouch behavior here would broaden scope rather than stay low risk.
-  - Added automated regressions for full-surface learn eligibility, discrete learned-binding XML and plugin-state round trip, factory-profile signature shadowing by learned bindings, updated factory-profile runtime mappings, and init-default reset expectations.
-  - Manual validation passed in both standalone and VST3 use: the updated MiniLab 3 profile behaved as expected, learned CC overrides worked, plugin learned mappings restored correctly, VST3 patch buttons were visible, and patch save/load worked in the plugin workflow.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- V2 `Phase 10` completed on 2026-05-15:
-  - Wrapped `.cspatch` files and wrapped processor state now use explicit V2 format version `2` boundaries while keeping the `.cspatch` extension.
-  - Plugin state no longer accepts bare APVTS XML fallback; restore now requires the wrapped V2 processor-state root, expected state type, and a single matching parameter-state child.
-  - Parameter-state application now requires a complete current V2 parameter set, which prevents partial overlap from older or malformed payloads from silently mutating only the still-matching controls.
-  - Added automated regressions for legacy patch-version rejection, wrong-state-type rejection, incomplete and partial-overlap parameter-state rejection, and processor-state rejection for unwrapped or legacy wrapped payloads.
-  - Refreshed a factory-profile regression to assert the intended soft-takeover behavior of the oscillator-level faders under the current V2 init defaults.
-  - Manual validation passed in standalone and VST3 use: valid V2 patches reloaded identically, and legacy-version, bare-state, and partial-overlap payloads were rejected cleanly without mutating the active synth state.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-15.
-- ARP Expansion `Phase E` completed on 2026-05-17:
-  - Added `ArpAdvancedOverlay` plus the `Advanced...` entry point and a compact advanced-status strip in the shared editor, keeping the one-page panel intact while moving Euclidean, chance, ratchet, accent, and standalone tempo controls into the overlay.
-  - The overlay is a full-editor dimmed layer with a centered panel, `Escape` dismissal, close button, shared APVTS attachments, and a Euclidean visualizer that follows the same cycle helper used by the arp engine.
-  - Added editor regressions covering overlay visibility toggling, Straight-versus-Euclidean control visibility, and non-default advanced-summary text.
-  - Corrected the Phase D `E(7,12)` acceptance example from an impossible eight-pulse string to the engine's current valid rotated Euclidean necklace; online verification against Godfried Toussaint's published `E(7,12)` confirmed the engine output is a rotation of the same Euclidean rhythm necklace.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
-- ARP Expansion `Phase F` has a verified implementation slice on 2026-05-17, but it is not fully closed yet because the planned manual preset audition remains open in `TODO.md`:
-  - Bumped the wrapped `.cspatch` and wrapped processor-state format versions from `6` to `7`, intentionally rejecting older saved patches or state under the full expanded arp parameter contract.
-  - The factory-preset source pipeline now treats the YAML file as the full preset contract again: YAML and generated `FactoryPresets.cpp` both carry the new arp expansion fields plus the already-shipped `timbre` / `excite` / phaser / compressor entries.
-  - Re-emitted the YAML-backed preset data with explicit defaults for the expanded arp surface and preserved the explicit full-parameter contract across the whole factory bank.
-  - Added a larger curated `Arp` bank covering random, random-walk, order-mode, Euclidean, chance, ratchet, and accent combinations, including `Random Walk Pluck`, `Random Walk Pad`, `Random Sparks`, `Trance Gate`, `Stuttered Chord`, `Tresillo Bass`, `Cinquillo Lead`, `Polymeter Stab`, `Converge Bell`, `Inside Orbit`, `Outside Plucker`, and `Diverge Sweep`.
-  - Added preset regressions that assert full parameter coverage across the factory bank and round-trip every factory preset through the strict wrapped patch-load path.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
-- `TODO.md` now points to the remaining ARP Expansion Phase F manual preset audition and sign-off pass.
-- UI/UX review follow-up completed on 2026-11-02 (see `UI_UX_REVIEW.md` status):
-  - The editor is user-resizable with a fixed aspect ratio: `SynthAudioProcessorEditor` scales a `ContentPanel` that holds every control at the fixed design size, so layout code stays in design pixels. Zoom via right-click menu, Ctrl+plus / Ctrl+minus / Ctrl+0; the standalone persists `uiScalePercent` in the settings store.
-  - Knobs and faders are keyboard-focusable with focus rings; controls carry accessible titles and help text; the Advanced overlay is a keyboard focus container.
-  - `SynthAudioProcessor` owns a snapshot-based `ParameterUndoHistory`: one step per UI gesture, one step per bulk edit through `performUndoableEdit()`, MIDI CC changes excluded. It also tracks the patch name and dirty flag; wrapped processor state is now format version `8` and carries both. The `.cspatch` format stays at `7`.
-  - The preset selector is grouped by category with prev / next steppers and clears whenever the patch is edited.
-- Phase 11 Track A completed on 2026-05-15:
-  - `ProcessorScopeFifo` (heap-allocated lock-free FIFO) introduced in `src/plugin/ProcessorScopeFifo.h`. `SynthAudioProcessor::processBlock` writes the post-FX mono mix to `scopeFifo`; the visualizer pulls samples on its UI timer. The `getActiveEditor()` + `dynamic_cast<SynthAudioProcessorEditor*>` call is gone from the audio path (WI-A1).
-  - `SignalChainVisualizer` no longer has a `static int fftWriteIdx` or `std::atomic<bool> nextFFTBlockReady`; FFT scratch is a per-instance `std::vector<float>` filled on the UI thread only, so two plugin instances have independent spectra (WI-A2).
-  - `PluginMappedActionDispatcher` (`juce::Thread` calling host gesture APIs off the message thread) replaced by `PluginMappedActionAsyncBridge` (`juce::AsyncUpdater`). `triggerAsyncUpdate()` is the only audio-thread call; dispatch happens on the message thread (WI-A3).
-  - Dropped-event counters added to both controller event enqueue paths; `V2ScopeFifoTests` added (WI-A4).
-  - `MidiMappingEngine::translate()` locking contract documented in the header (WI-A5).
-  - Local verification passed: `cmake --preset vs2022-debug`, `cmake --build --preset build-debug --config Debug`, `ctest --test-dir build -C Debug --output-on-failure`.
-- Phase 11 Track B completed on 2026-05-15:
-  - PolyBLEP band-limited saw, pulse, and triangle oscillators replace naive aliased waveforms. Triangle uses a per-voice leaky integrator (`triState` in `OscillatorState`) to stay DC-stable (WI-B1).
-  - Hard-sync discontinuity corrected with sub-sample fractional PolyBLEP applied additively when oscB resets oscA (WI-B2).
-  - Cutoff-mod sum clamped to ±120 semitones before `std::exp2`; previously could overflow to 524288× (WI-B3).
-  - Resonance input-gain compensation: `min(1, 1/√Q)` applied before filter, bounds high-Q peaks to ≈ −14 dB at Q=25 (WI-B4).
-  - Master gain now scales as `1/√(activeVoiceCount)` instead of a hardcoded 0.35; single notes are full-level (WI-B5).
-  - Unison vintage floor removed: `jmax(vintage, 0.35f)` → `vintage`; vintage=0 yields zero drift (WI-B6).
-  - `V2AudioQualityTests` class added (9 tests); all pass. Commit: `fdd3f85`.
-- Phase 11 Track C completed on 2026-05-16:
-  - Drive normalizer (`std::tanh(preGain)`) hoisted out of the per-sample loop in `GlobalFxRack::processDrive` — computed once per block (WI-C4).
-  - `SynthVoice::renderNextBlock` per-sample pitch computation refactored: bend+vintage combined into a single pre-loop `voicePitchCarrierRatio`; glide ratio maintained as a running multiplicative state (no per-sample `pow`); LFO and polyMod pitch semitones folded before a single `exp2` per oscillator (WI-C1). All `std::pow(2.0f, …)` replaced with `std::exp2` throughout `SynthVoice.cpp` (WI-C2).
-  - Sub-rate LFO: wave evaluated every 32 samples (`lfoSubRateSamples` in `SynthParameters.h`) with linear interpolation between updates (WI-C3).
-  - `GlobalFxRack` FX mix smoothing via `juce::SmoothedValue`. Drive: per-sample ramp via `mixRampScratch`. Chorus and reverb: dry-buffer approach (JUCE DSP run at full wet, manually blended with smoothed mix). Disabling snaps smoother immediately — no ramp — to preserve clear-on-disable tail behavior (WI-C5).
-  - `ChoiceParameterPointers` struct caches `AudioParameterChoice*` for 8 choice params; `makeBlockRenderParameters` uses `getIndex()` instead of `std::round(float)`. Seven `decodeXxx` helpers deleted (WI-C6).
-  - Build clean; all tests pass.
-  - Manual smoke still pending: cutoff sweep at Q=25, unison vintage=0, FX mix sweeps (rapid automation — no clicks), high-note alias check (standalone + Ableton Live Lite + REAPER).
-- Phase 11 Track D completed on 2026-05-16:
-  - V1 engine artifacts deleted: `SynthEngine.h/.cpp` removed, `WaveformChoice` enum removed from `ParameterIDs.h`, `setWaveform(WaveformChoice)` declaration and implementation removed from `SynthVoice`, test-target V1 include removed (WI-D1).
-  - All parameter version hints flipped to V2: `makeLegacyParameterId` helper deleted, affected parameters (`filterCutoffHz`, `filterResonance`, amp ADSR, delay group, `masterGainDb`) now use `makeV2ParameterId`; `legacyVersionHint` constant and `JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING` compile definition removed (WI-D2).
-  - Magic numbers hoisted to named `inline constexpr` constants in anonymous namespace of `SynthVoice.cpp` (`kPreFilterOverloadDriveSlope`, `kPinkNoiseKelletNormalisation`, `kPolyModCutoffRangeSemitones`, `kFilterEnvCutoffRangeSemitones`, `kPolyModOscPitchRangeSemitones`, `kVelocityFilterRangeSemitones`, `kFilterQMin`, `kFilterQMax`). Duplicate `lfoSubRateSamples` in `SynthParameters.h` removed. Both `0.85f` literals in `SynthAudioProcessor.cpp` replaced with `GlobalDelay::maxFeedback` (WI-D3).
-  - `MidiToControllerEvent.h` added under `src/midi/`: a single canonical `coolsynth::midi::toControllerMidiEvent()` inline function. The local `makeControllerMidiEvent` in `SynthAudioProcessor.cpp` and the inline translation block in `StandaloneMidiInput.cpp` both replaced with calls to this shared translator (WI-D4).
-  - `SynthAudioProcessorEditor` constructor slimmed from ~773 lines to ~18 lines. Tooltip helpers (`wrapTooltipBody`, `makeTooltipText`) and all tooltip assignments moved to new `EditorTooltips.cpp`; constructor body factored into 8 private helper methods (`setupParameterRefs`, `setupVisualsAndLabels`, `setupControlAttachments`, `registerLearnableControls`, `setupActionButtons`, `setupStandaloneMode`, `setupTooltipWindow`, `applyTooltips`). `EditorTooltips.cpp` added to both main plugin and test `target_sources` (WI-D5).
-  - `ParameterValuePointersV2` bind loop replaced by a table-driven 4-line loop over `kParamPtrBindings` (65-entry `inline const std::array` in `SynthParameters.h`). A `static_assert` enforces one entry per parameter at compile time. Uses `inline const` (not `constexpr`) due to MSVC pointer-to-member limitation (WI-D6).
-  - Redundant APVTS-enforced `jlimit` calls removed from `makeBlockRenderParameters` (~40 lines removed). Kept: `jmax` envelope time floors (ms→s conversion with hard floor), `jlimit(1, 1000, delayTimeMs)` (delay buffer constraint), `jlimit(0, maxFeedback, feedback)` (runaway prevention). Removed: all 0–1 range clamps, octave index clamps, fine-cents clamps, LFO rate clamp, glide clamp, pitch-bend-range clamp, BPM clamp, etc. (WI-D7).
-  - `SignalChainVisualizer::paneWidth()` added as a private `const noexcept` method returning `(getWidth() - 36) / 5.0f`. Two `(getWidth() - 40) / 5.0f` occurrences in `timerCallback()` and one `(getWidth() - 4.0f - 32.0f) / 5.0f` in `updateIdealWaveforms()` replaced with `paneWidth()` (WI-D8).
-  - Build clean; all tests pass.
-- ARP Expansion `Phase A` has a verified local implementation slice on 2026-05-17, but it is not fully closed yet because the planned manual standalone and Ableton Live Lite smoke is still open:
-  - `ArpPatternChoice`, the APVTS arp-pattern choice list, the processor decode path, and the main editor control were expanded end-to-end for `Converge`, `Diverge`, `Inside`, `Outside`, `Random`, `Random Walk`, and `Chord`. The main arp pattern control now uses a compact combo box in the existing footprint so the 11-entry pattern list remains usable without growing the panel.
-  - `Arpeggiator` now owns a per-instance seeded `juce::Random`, a `setSeedForTesting(uint64_t)` seam, random-walk state reset on note-set and pattern changes, deterministic Converge/Diverge/Inside/Outside order formulas, exact Random / Random Walk generators, and Chord-mode simultaneous note emission with octave cycling plus all-or-nothing event-buffer guarding.
-  - Wrapped `.cspatch` files now use format version `3`, matching the approved Phase A contract break for the expanded arp pattern surface.
-  - Added direct arp-event regressions for empty-set handling, single-note collapse, exact seeded Random / Random Walk reproduction, Converge / Diverge / Inside / Outside note order, and Chord-mode stab plus ringing-note cleanup behavior.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
-- ARP Expansion `Phase B` completed on 2026-05-17:
-  - Added `arpSwing` and `arpChance` end-to-end across the APVTS contract, raw parameter binding, processor block snapshot decode, editor controls, learnable-surface registration, and tooltips.
-  - `Arpeggiator::generateEventsForBlock()` now applies rate-relative swing to every other step and seeded chance skipping after the melodic step advances, so chance does not freeze the pattern walk.
-  - Chord-mode chance uses a single roll per chord step, matching the approved Phase B behavior rather than rolling independently per note.
-  - Wrapped `.cspatch` files and wrapped processor state now use format version `4`, intentionally rejecting older saved patches or state under the expanded arp parameter contract.
-  - Added direct arp-event regressions for internal-clock swing offsets, host-synced swing offsets, and exact seeded 50% chance skip counts across 1000 steps.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `build\\CoolSynthMidiLearnTests_artefacts\\Debug\\CoolSynthMidiLearnTests.exe` on 2026-05-17.
-- ARP Expansion `Phase C` completed on 2026-05-17:
-  - Added `arpRatchetCount`, `arpRatchetChance`, `arpAccentEvery`, and `arpAccentAmount` end-to-end across the APVTS contract, raw parameter binding, processor block snapshot decode, and a temporary shared-editor arp surface pending the Phase E overlay.
-  - `Arpeggiator::generateEventsForBlock()` now expands steps into deterministic ratchet bursts, applies ratchet chance once per emitted step, and scales accent velocity on the emitted-step grid so chance skips do not desync accents.
-  - Chord mode now ratchets the whole chord stab, accent scales all notes in the chord uniformly, and expanded chord bursts are emitted atomically or dropped entirely if they would overflow the bounded arp event buffer.
-  - Wrapped `.cspatch` files and wrapped processor state now use format version `5`, intentionally rejecting older saved patches or state under the expanded arp parameter contract.
-  - Added direct arp-event regressions for ratchet offsets/counts, emitted-step accent behavior under chance skipping, chord ratchet-plus-accent application, and ratcheted chord overflow dropping.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.
-- ARP Expansion `Phase D` completed on 2026-05-17:
-  - Added `arpRhythm`, `arpEuclideanPulses`, `arpEuclideanSteps`, and `arpEuclideanRotation` end-to-end across the APVTS contract, raw parameter binding, and processor block snapshot decode.
-  - `Arpeggiator` now caches a rotated Euclidean pulse cycle and applies it in the step loop so rhythm rests advance slot position without advancing the melodic pattern walk.
-  - Host-synced Euclidean playback currently follows the explicit Phase D acceptance rule and resets the cycle at each bar boundary; the longer multi-bar-cycle implication in `ARP_EXPANSION_PLAN.md` remains a documented design contradiction to resolve later.
-  - Wrapped `.cspatch` files and wrapped processor state now use format version `6`, intentionally rejecting older saved patches or state under the expanded arp parameter contract.
-  - Added direct arp-event regressions for standard Euclidean patterns, pulse-vs-slot melodic advancement, and host-synced bar-reset behavior.
-  - Local verification passed with `cmake --build --preset build-debug --config Debug` and `ctest --test-dir build -C Debug --output-on-failure` on 2026-05-17.

@@ -1,227 +1,61 @@
 # TODO
 
-## V3: sound bank and modular engine (started 2026-11-12)
+Open work only. What is done, and why, is in `DECISIONS_LOG.md` and the git history; decisions taken while the
+user was away are there too, each with every option: review them.
 
-The factory bank is being replaced by the "Places" bank in `SOUND_BANK_V3.md`, and the bank is
-written against the engine we want. `REQUIREMENTS_V3.md` lists what that engine must have and
-proposes a slot-chain shape. The old V2 backlog items that V3 absorbs are listed at the bottom.
+## Before or right after the first release (0.3.0)
 
-1. Engine shape decided 2026-11-12: slot chain (`REQUIREMENTS_V3.md` section 7). Done.
-2. `DESIGN_V3.md` written 2026-11-12. Done.
-3. `IMPLEMENTATION_PLAN_V3.md` written 2026-11-12. Done.
-4. Phase 0.1 done 2026-11-12: `src/synth/v3/Module.h` and `tests/V3ModuleTests.cpp`.
-5. Phase 0.2 done 2026-11-13: `src/synth/v3/Modulation.h` and `tests/V3ModulationTests.cpp`.
-6. Phase 0.3 done 2026-11-13: `src/parameters/v3/SlotParameters.h/.cpp` and
-   `tests/V3ParameterTests.cpp`. Phase 0 complete.
-7. Phase 1.1 done 2026-11-13: `src/synth/v3/VaGenerator.h` and `tests/V3GeneratorTests.cpp`.
-8. Phase 1.2 done 2026-11-13: `src/synth/v3/LadderProcessor.h`, `src/synth/v3/Envelope.h` and
-   `tests/V3ProcessorTests.cpp`.
-9. Phase 1.3 done 2026-11-13: `src/synth/v3/Voice.h/.cpp`, `OffModules.h`, `DspMath.h` and
-   `tests/V3VoiceTests.cpp`; the VA generator, ladder and envelope rebuilt from first principles.
-10. Phase 1.4 done 2026-11-13: `Part`, `EngineV3`, `PartParameters`, the processor on V3, the
-   generic editor, the V2 engine, editor and bank deleted, tests ported (`EngineTestAdapter.h`).
-11. Phase 1.5 done 2026-11-13: bank files in `resources/presets`, `presets/BankFile`, the
-   loudness tool with `--apply`; 14 presets in Workshop, Studio 1982, Engine Room, Main Stage.
-12. Audition the presets; retune by ear what the ear flags, then rerun the loudness tool. It is
-   not in the default build, so build it first:
-   `cmake --build build --config Debug --target CoolSynthPresetNormalizer`, then from `build`
-   run `CoolSynthPresetNormalizer_artefacts/Debug/CoolSynthPresetNormalizer.exe --apply`.
-13. Phase 2.1 done 2026-11-13: `src/synth/v3/Lfo.h`, LFO1..2 per voice and GLFO1..2 per part,
-   their parameters and bank sections, `tests/V3LfoTests.cpp`. Juno Pad moved to 2.2.
-   Still open: the VA generator's cost. Release, eight-note chords: Supersaw 36 % of real
-   time (worst block 60 %), Clav Keys 25 %; a 16-voice Supersaw would reach the limit. The
-   optimised Debug build measures the same as Release. Measure with `COOLSYNTH_CPU_REPORT=1`
-   and the test executable.
-14. Phase 2.2 done 2026-11-13: `src/synth/v3/ModMatrix.h`, 24 slots per part, bank `mod` lines,
-   `tests/V3MatrixTests.cpp`; Juno Pad, 808 Boom and the Sync Lead sweep shipped.
-15. Phase 2.3 done 2026-11-13: global envelope, `GlobalModulators.h` (step, chaos), macros,
-   envelope-time destinations, `tests/V3GlobalModulatorTests.cpp`; Wobble and Riser shipped.
-16. Phase 2.4 done 2026-11-13: delay sync and ping-pong, `tests/V3DelayTests.cpp`; Outrun (five
-   presets), Clock Tower (five) and Pluck Drop shipped. Phase 2 complete: 29 presets.
-17. Phase 3.1 done 2026-11-13: `src/synth/v3/NoiseGenerator.h`, `tests/V3NoiseTests.cpp`; Init
-   Noise, Tape Flute, Solar Wind, Coin Pulse, Boss Bass, Power-Up, Static Hit, Riser's noise.
-18. Phase 3.2 done 2026-11-13: `src/synth/v3/FmGenerator.h` (FM2), `tests/V3FmTests.cpp`; Glass
-   Bell, Rain Chime, Crystal Pluck, FM Knock, Init FM. 41 presets.
-19. Phase 3.3 done 2026-11-13: `src/synth/v3/Fm4Generator.h` (FM4, six algorithms), tests in
-   `tests/V3FmTests.cpp`; Outrun Grid Keys. 42 presets.
-20. Phase 3.4 done 2026-11-13: `src/synth/v3/Wavetables.h/.cpp`, `WavetableGenerator.h`,
-   `tests/V3WavetableTests.cpp`; Init Wavetable, Nebula Pad, SCC Lead. Phase 3 complete: 45 presets.
-21. Phase 4.1 done 2026-11-13: `src/synth/v3/SvfProcessor.h`, `tests/V3SvfTests.cpp`; Supersaw and
-   Nebula Pad on the SVF, Deep Field. 46 presets.
-22. Phase 4.2 done 2026-11-13: `src/synth/v3/ShaperProcessors.h` (crusher, folder), the Quantized
-   matrix curve, `tests/V3ShaperTests.cpp`; SCC Lead's crusher, Basement Acid, Rust Bass, Concrete
-   Pad, Siren, Main Stage Hyper Lead. 51 presets.
-23. Phase 4.3 done 2026-11-13: the Drive processor, the combine audit (no change needed),
-   `V3DriveTests`; Basement Metal Hit. 52 presets.
-24. Phase 4.4 done 2026-11-13: `src/synth/v3/ResonatorProcessors.h` (formant, comb),
-   `tests/V3ResonatorTests.cpp`; Vinyl Choir, Furnace Drone, Neuro Growl. Phase 4 complete: 55
-   presets.
-25. Phase 5.1 done 2026-11-13: plate pre-delay, low cut, modulation and shimmer,
-   `tests/V3ReverbTests.cpp`; Shimmer Drone, Satellite Ping, Nebula Pad's pre-delay. 57 presets.
-26. Phase 5.2 done 2026-11-13: `src/synth/LoFi.h`, nine `lofi*` parameters, `tests/V3LoFiTests.cpp`;
-   Cassette Keys, Blanket Pad, Bedroom Bass, lo-fi on Vinyl Choir and Concrete Pad. 60 presets.
-27. Phase 5.3 done 2026-11-13: `src/synth/ModernFx.h` (pump, EQ, flanger), 13 parameters,
-   `tests/V3ModernFxTests.cpp`; Main Stage Future Chord. Phase 5 complete: 61 presets.
-28. Phase 6.1 done 2026-11-13: `src/synth/v3/StringGenerator.h`, the `noteOff` and `strike` module
-   hooks, `tests/V3StringTests.cpp`; Greenhouse Kalimba and Harp String. 63 presets.
-29. Phase 6.2 done 2026-11-13: `src/synth/v3/ModalGenerator.h`, `tests/V3ModalTests.cpp`;
-   Greenhouse Marimba and Bedroom Dusty Mallet. 65 presets.
-30. Phase 7.1 done 2026-11-13: `src/synth/v3/ChordMemory.h`, the `pA.chord.*` parameters, chord
-   learning through the processor, `tests/V3ChordTests.cpp`; Arcade Chip Chord, Clock Tower Chord
-   Trigger, one-key Main Stage Future Chord. 67 presets.
-31. Phase 7.2 done 2026-11-13: two parts in `EngineV3` (modes, ranges, transpose, shared voice
-   limits, part mix with an effects share), `pB.*`, `pA.mix.*`, `part.mode`, `b.` lines in bank
-   files, `tests/V3PartsTests.cpp`; Supersaw with its sub part, Juno Pad and Deep Field in two
-   layers. Open from this phase: per-part insert slots, which need effects as slot types.
-32. Phase 8 done 2026-11-13: `src/synth/v3/Samples.h` and `.cpp` (five generated factory
-   samples), `SampleGenerator.h`, `GrainGenerator.h`, `tests/V3SampleTests.cpp`; Observatory
-   Granular Sky. The bank is complete at 68 presets.
-33. Phase 9: the real UI. Started 2026-11-14 (D140): the MiniLab 3 as the panel, research done,
-    four choices taken, three navigation mock-ups in `docs/ui-v3-mockups.html`; round two after
-    the user's notes (D142) in `docs/ui-v3-mockups-2.html`: sounds one level up, pad 8 as Back.
-    Chosen (D143): E, one map per section, with the sounds in categories and a ‹ Back row;
-    (D144) pad 8 is Home, the sound browser, teal, Shift + pad 8 part A/B; no Back button.
-    (D145) Perform lives in Home: knob 5 turns live pages Macros, Arp, Groove, Chord, Voice.
-    (D146) The MiniLab's own screen tested on the device: `docs/minilab3-screen.md`.
-    (D147) Lists and sections use the scroll screen; every screen type is now tested.
-    (D148) Built: the panel (src/plugin/PanelEditor), the logic (src/interface/InterfaceModel), the
-    MiniLab driver in the standalone app (src/standalone/MiniLab3Driver). Still to try by hand and on
-    the MiniLab; unverified on the device: Shift's CC 27, pads on channel 10. Open then: Brightness
-    and Space hooks (knobs 7-8, done in D176), per-preset macro names, the own-files buttons the old
-    editor had.
-    (D149) First use on the MiniLab: main-knob step, Shift CC 27 (verified), pads on channel 10
-    (verified), mouse on the screen, the firmware's velocity-1 notes guarded.
-    (D150) The flight recorder logs tripwires and events to `%LOCALAPPDATA%\CoolSynth\logs`.
-    (D151, D152) Two audio stalls of up to 145 ms fixed: a choice slid through the instruments in
-    between, and the loader took a whole instrument's memory at once.
-    (D153) Every preset levelled to one loudness, -20 LUFS (loudest 400 ms), with chords kept
-    clean: the test chord 6 dB under the clipper, a full-velocity chord anywhere in the range under
-    it. (D154) Home blinks while an instrument loads; the keys wait until it is ready.
-    The real-time review's findings, done (D156 to D161, D165): the instrument knob loads only on a
-    click and Home glows; presets reach the audio whole; JUCE's locks kept off the audio thread;
-    no big wipes in a block; the allocation alarm and audio scenario tests; effect type changes
-    fade. (D158) Earlier sounds ring on after a preset change, Kronos-style, two kept, 5 s hold.
-    (D162 to D166) Memory banks: the library packed once (tools/PackLibrary.cpp; run it again after
-    the library changes), one sample memory taken at start, styles read on all cores but two
-    (Steinway 0.46 s). (D167) Multi-core: overlapping sounds on separate cores, bit for bit the same.
-    (D170) The review's leftovers: a broken value resets only its stage, a MIDI flood never drops a
-    release, 5 ms steal fades, the reverb's settings glide, faded effects forget their tails.
-    (D171) The tests listen for clicks: preset changes, effect changes, steals and loads on the factory
-    presets; effect fades are raised cosines now, without a corner.
-    (D172) The flight log has each thread's share of every second, late helpers, and the memory.
-    (D173) Engine pills in the software sound browser (Siren, with no generator, shows Filter).
-    (D174) An Options button on the panel (the plugin has Options now) and the CPU line beside it.
-    (D175) A velocity curve in Options: Soft, Normal (as before), Hard, for every keyboard.
-    (D176) Knobs 7 and 8 work: Brightness (every filter, 1.5 octaves) and Space (every reverb, delay, room).
-    (D177) Every preset's four macros routed and named, drafted for the user to review by ear.
-    Next: the user's ear and hands on all of this (levels, glow, click-to-load, ringing sounds, the
-    pills and Options, the velocity curves, Brightness and Space, the macros of every preset, on the
-    MiniLab); ASIO; streaming from disk for libraries bigger than the memory; the
-    recorder. Later: whether Rust would serve the engine better (answered for now: not yet, D164).
-34. Decided with the user on 2026-11-13 (decisions D81 to D86), in this order:
-    - download the CC0 libraries, build an audition page, and let the user pick instruments;
-    - measure the physical-model presets against real recordings, and classic synth references;
-    - three insert slots per part (the rack stays as the master): done, D93;
-    - a granular effect as an insert type: done, D102;
-    - Harp String: the user found neither version close to the recording (D94); redone as a
-      finger's pluck (D101): "closer, but not there", too little echo dry and too much with
-      its reverb (D105, D107); refitted harmonic by harmonic, with a second string for the
-      pluck's bright ring and the new Room effect set from the recording's reflections
-      (D108): the user found the third try close enough (D111). Done;
-    - Recorders: the user heard overdrive on chords. Two listening tests traced it to the
-      soprano's E6 recording, whose overtones clash with the other notes; at the user's
-      choice E6 and F sharp 6 now play from clean neighbours (D113); the user found the new
-      Soprano clip good (D131). Done;
-    - after the user's picks: key zones in the sample generator, sample files beside the plugin
-      at the best quality, install options;
-    - "The Museum": 8 to 12 named classic synth sounds from published patch settings, each
-      admitted by the user in a side-by-side against a reference recording (D88). The user
-      chose the first sounds (D103): DX7 E.PIANO 1 and BASS 1, Prophet-5 sync lead and brass,
-      a Minimoog bass and lead, and the hoover, LatelyBass and Juno-106 patches (sources for
-      the last three still to be found). DX7 E.PIANO 1 is admitted (D107) and is the
-      first preset of the room Museum, DX7 BASS 1 the second (D111), Prophet-5 Sync II and
-      Brass the third and fourth (D115), Minimoog Fat Bass the fifth (D118, with its sizzle
-      D128), the Minimoog Trilogy lead after seven rounds (D130). TX81Z LatelyBass, from the instrument's own
-      preset data, is the sixth (D117, admitted D119). Hoover and
-      Juno-106 still have no source. The opening of Daft Punk's "Contact" (a sample of The Sherbs'
-      "We Ride Tonight", 1981; no source names the instruments): the first synth, built from the
-      recording alone (D120), is admitted (D121); the second, heavier
-      synth (bright, every voice at its own place between the speakers) is admitted too
-      (D123, D125).
-    Done so far: both libraries downloaded; the audition page is at `audition/index.html`
-    (start the `audition` preview server to hear it); marimba and kalimba corrected and
-    accepted (D94); the user's 74 picks built into a library of FLAC files (1.4 GB, in
-    `audition/library`) that the Sample generator plays, with the room "Conservatory" of 40
-    presets (D96 to D98).
-    The library is rebuilt from the author's own mapping files (D100), which corrects the
-    faults of D99; the Conservatory presets are loudness-normalised and each style has a
-    demonstration on the audition page, waiting for the user's ear.
-    Open on the sampled instruments: the user's verdicts; a voice whose one-shot recording has
-    ended still holds its voice until its release is over (up to 20 s on bells and mallets:
-    no sound is lost, older voices are taken first, but it costs processing); install options
-    and packs; the wine glasses as a source for the Grain generator.
-    For phase 9 (asked by the user on 14 November, D132): effect slots and a preset's noise
-    quick to reach, and saving one's own version of a preset.
-35. Left open by phases 2 to 8, in the order they would pay off:
-    - MPE: each note on its own MIDI channel with its own bend, pressure and slide (the MPE
-      Pressure and MPE Slide sources are listed but fed by nothing). Later, the user's choice
-      (D136): key pressure and the expression pedal are built, MPE waits for an MPE controller;
-    - processing cost, measured per module by the opt-in report (COOLSYNTH_CPU_REPORT=1,
-      tests/V3ModuleCostReport.cpp; eight notes, optimised Debug): after D138 the ladder costs
-      about 8 % of real time, FM4 about 7 % of its own (the sine itself: a faster one gains 6 %,
-      D140), the Drive processor about 6 %, the Comb under 4 %, the VA saw under 2 %.
+1. The FL Studio knob test with the MiniLab driver Off (the friend's flow): FL's MIDI port, the wrapper's input
+   port, knob 7 moving Brightness (D211, D213).
+2. Run the released installer once on this computer (it needs an administrator's yes; D213).
 
-Decisions taken while the user was away are in `DECISIONS_LOG.md`, each with every option;
-review them.
+## The user's ear and hands
 
-36. Later, at the user's word (2026-11-15): profiles for other MIDI controller keyboards and a guided
-   tutorial to connect any one; the "Your keyboard" line over the screen's keys (D203) then takes each
-   keyboard's own key count. Today it shows only while the MiniLab is connected.
+3. A listening pass over the whole bank: levels, the glow and click-to-load, sounds ringing on after a change,
+   the engine pills, Preferences, the velocity curves, Brightness and Space, every preset's macros (D177), on the
+   MiniLab too. Retune what the ear flags, then rerun the loudness tool, which is not in the default build:
+   `cmake --build build --config Debug --target CoolSynthPresetNormalizer`, then from `build` run
+   `CoolSynthPresetNormalizer_artefacts/Debug/CoolSynthPresetNormalizer.exe --apply`.
+4. The user's verdicts on the sampled instruments (the audition page, `audition/index.html`; start the
+   `audition` preview server) and on the Night Bus presets (`tools/audition/make_nightbus.py` renders them).
 
-37. Next from the research on the user's reference artists (`docs/research/sound-references.md`, the
-   user's order of 2026-11-15): the Pitch effect and the Night Bus room are done (D205, D206), sample
-   slices and kits too (D207); next the stutter effect; the Pitch effect's Tune mode and
-   formant control come after the plain shift. The Night Bus presets wait for the user's verdicts on
-   the audition page (`tools/audition/make_nightbus.py` renders them).
+## Sounds and effects
 
-38. The first release (D208, D209, D211). Done: JUCE's Starter licence, version 0.3.0, the instrument
-   zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`, the installer
-   (`installer/CoolSynth.iss`) in both workflows, the controller work (D211), the user's tests in Ableton
-   and FL Studio (MiniLab pads, the Behringer driver at 128 samples, Stop, the layer menu; D212), the
-   clean-ups (D213), and the `v0.3.0` tag on the night of 2026-11-19, the user's order. Left: the FL Studio
-   knob test with the MiniLab driver Off (the friend's flow), and running the released installer once here.
+5. Next from the research on the user's reference artists (`docs/research/sound-references.md`): the stutter
+   effect; then the Pitch effect's Tune mode and formant control.
+6. The Museum: the hoover and Juno-106 patches still have no published source.
+7. The wine glasses as a source for the Grain generator.
+8. MPE (each note on its own channel with its own bend, pressure and slide): waits for an MPE controller (D136).
 
-## Carried over from the V2 backlog
+## Engine
 
-Still valid independently of the engine shape:
+9. Processing cost. The VA generator: Supersaw with eight-note chords takes 36 % of real time (worst block 60 %),
+   so a 16-voice Supersaw would reach the limit. Per module (`COOLSYNTH_CPU_REPORT=1`,
+   `tests/V3ModuleCostReport.cpp`, eight notes, optimised Debug): the ladder about 8 %, FM4 about 7 % (a faster
+   sine gains 6 %, D140), Drive about 6 %, Comb under 4 %, the VA saw under 2 %.
+10. A sampled voice whose one-shot recording has ended holds its voice until its release is over (up to 20 s on
+    bells and mallets): nothing is lost, older voices go first, but it costs processing.
+11. Streaming from disk, for libraries bigger than the memory.
+12. The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
+    `docs/sample-memory-and-tracks.md` (D162).
+13. Ladder by ear: drive headroom, the bass default, the mode level matching, and whether the self-oscillation
+    level (rms 0.15 at full resonance) wants an output lift.
+14. If the saw's -79 dB alias floor at A7 ever shows in a mix: a 6-point (quintic B-spline) BLEP, about another
+    25 dB for two more samples of latency.
+15. Measurement-style regressions still missing: THD of a sine through the ladder at low resonance below a stated
+    bound; an attack reaching full level within the programmed time.
 
-- Ladder by ear: drive headroom, the bass default, the mode level matching, and whether the
-  self-oscillation level (rms 0.15 at full resonance) wants an output lift.
-- If the saw's -79 dB alias floor at A7 ever shows in a mix, go to a 6-point (quintic B-spline)
-  BLEP: about another 25 dB for two more samples of latency.
-- Measurement-style regressions still missing (reverb RT60 done, D178): THD of a sine through the ladder at low resonance
-  below a stated bound; attack reaching full level within the programmed time.
+## Interface and code
 
-Absorbed into V3 (do not do them on V2):
-
-- Audition pass on the old factory presets: dropped, the bank is replaced.
-- Unison voice count and detune: V3 generator unison and whole-voice unison count.
-- Multi-part layering: V3 parts (`REQUIREMENTS_V3.md` section 3.5).
-- Plate pre-delay, input high-pass, modulation trim: V3 effects catalogue.
-- Delay ping-pong and tempo sync: V3 phase 2.
-- ARP Expansion Phase F (manual audition of the curated arp presets): dropped with the old bank;
-  the arpeggiator itself carries into V3 unchanged.
+16. The "Your keyboard" line over the screen's keys (D203) shows only while the MiniLab is connected; it should
+    take any keyboard's own key count.
+17. V2's old panel components in `src/ui` (SynthSection, HardwareKnob, HardwareFader, LedToggleButton,
+    PianoBarComponent, SegmentedChoiceGroup and their helpers) are unused since V3's panel: remove them (D213).
 
 ## Standing notes
 
-- Adding a bank file used to make the link fail (LNK1236 on the embedded bank library) because
-  of stale incremental-link databases; incremental linking is now off in Debug. If it ever
-  returns, delete the `.ilk` files under `build` and build again.
-
-- UI comes last (plan phase 9). Until then only throwaway UI: the generic editor. In the
-  standalone the MiniLab knobs do nothing until then (their mapping lived in the V2 editor);
-  notes work, devices are chosen in JUCE's audio and MIDI settings.
-
-- Supersaw must exist by the end of the project: see the done criteria at the end of
-  `IMPLEMENTATION_PLAN_V3.md`. The VA generator unison from phase 1.1 is the base; the JP-8000
-  detune curve and centre-versus-sides mix are still to add (phase 3 or 4).
+- Adding a bank file used to make the link fail (LNK1236 on the embedded bank library) because of stale
+  incremental-link databases; incremental linking is now off in Debug. If it ever returns, delete the `.ilk`
+  files under `build` and build again.
+- The engine's specification is in `docs/design/` (DESIGN_V3, REQUIREMENTS_V3, IMPLEMENTATION_PLAN_V3,
+  SOUND_BANK_V3); the architecture as built is `docs/architecture.md`.

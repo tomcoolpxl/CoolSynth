@@ -7,7 +7,7 @@
 #include "Modulation.h"
 
 /*
-    V3 modulation matrix (DESIGN_V3.md section 5).
+    V3 modulation matrix (docs/design/DESIGN_V3.md section 5).
 
     24 slots per part. Each slot takes a source, bends it with a curve, scales it by its amount
     and, when a via source is set, by that source too, and adds the result into a destination's

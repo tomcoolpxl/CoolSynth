@@ -271,7 +271,7 @@ washed-out electronic production. To get more than this, the song itself has to 
 
 ## 3. What CoolSynth has that matters here
 
-From `SOUND_BANK_V3.md`, `docs/interface-v3.md`, the bank files and the engine headers:
+From `docs/design/SOUND_BANK_V3.md`, `docs/interface-v3.md`, the bank files and the engine headers:
 
 - **Generators:** VA (sine, triangle, saw, pulse; unison up to 7, sub), Noise (White, Pink, Band,
   Chip), FM2, FM4, Wavetable (Classic, Digital, Vocal, Chip tables, unison), String, Modal,
@@ -902,7 +902,7 @@ Voice-led
 - https://antarestech.com/blog/pitch-correction-the-complete-guide-to-tuning-vocals
 - https://en.wikipedia.org/wiki/Auto-Tune
 
-CoolSynth files read: `GEMINI.md`, `SOUND_BANK_V3.md`, `docs/interface-v3.md`,
+CoolSynth files read: `GEMINI.md`, `docs/design/SOUND_BANK_V3.md`, `docs/interface-v3.md`,
 `resources/presets/*.csbank`, `src/synth/v3/Inserts.h`, `EffectRoutes.h`, `ModMatrix.h`,
 `Modulation.h`, `SampleGenerator.h`, `GrainGenerator.h`, `GrainInsert.h`, `ShaperProcessors.h`,
 `ResonatorProcessors.h`, `src/synth/ModernFx.h`, `src/synth/GlobalDelay.h`, `DECISIONS_LOG.md`

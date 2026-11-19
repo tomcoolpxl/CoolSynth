@@ -16,7 +16,7 @@
 #include "UserLibrary.h"
 
 /*
-    V3 grain generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: source, density, size,
+    V3 grain generator (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md: source, density, size,
     pitch spray, position scan, freeze).
 
     A cloud of up to twelve grains read from one of the factory samples (Samples.h), or from the

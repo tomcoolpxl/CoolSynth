@@ -205,7 +205,7 @@ keyboard. Write its design as its own document before any code.
 
 ## Per-phase close
 
-After every chunk: `TODO.md` item moved to `DONE.md` with what was verified, `DESIGN_V3.md`
+After every chunk: the `TODO.md` item closed with what was verified (DONE.md held them until D214), `DESIGN_V3.md`
 "shipped" notes where the implementation deviated, the normaliser run when presets changed, and
 the Release standalone rebuilt for audition.
 

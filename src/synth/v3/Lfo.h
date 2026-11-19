@@ -6,7 +6,7 @@
 #include <cstdint>
 
 /*
-    V3 LFO (DESIGN_V3.md sections 4.3 and 5), one class for the local LFO1..2 of every voice and
+    V3 LFO (docs/design/DESIGN_V3.md sections 4.3 and 5), one class for the local LFO1..2 of every voice and
     the global GLFO1..2 of a part.
 
     Output is bipolar, -1..1, times a depth that a delay and a fade-in build up from the last

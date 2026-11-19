@@ -14,7 +14,7 @@
 #include "Module.h"
 
 /*
-    V3 noise generator (DESIGN_V3.md section 3.1, REQUIREMENTS_V3.md: white, pink, band-passed
+    V3 noise generator (docs/design/DESIGN_V3.md section 3.1, docs/design/REQUIREMENTS_V3.md: white, pink, band-passed
     with pitch tracking, LFSR periodic with clock divider).
 
     White: uniform noise. Pink: white through seven first-order shelves with poles every two

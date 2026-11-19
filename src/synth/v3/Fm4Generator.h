@@ -11,7 +11,7 @@
 #include "Module.h"
 
 /*
-    V3 four-operator FM generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: four operators
+    V3 four-operator FM generator (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md: four operators
     with fixed algorithms).
 
     Four operators. Operator 1 always sounds at the note; operators 2, 3 and 4 run at their

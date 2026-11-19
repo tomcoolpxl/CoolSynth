@@ -8,7 +8,7 @@
 #include "Lfo.h"
 
 /*
-    V3 global modulators besides the LFOs (DESIGN_V3.md section 5): the step modulator and the
+    V3 global modulators besides the LFOs (docs/design/DESIGN_V3.md section 5): the step modulator and the
     chaos source. The global envelope is an `Envelope` run by the part.
 
     STEP plays 16 values (-1..1) at a tempo division, over a length of 1 to 16 steps. A step with

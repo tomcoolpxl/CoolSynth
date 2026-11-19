@@ -12,7 +12,7 @@
 #include "Module.h"
 
 /*
-    V3 plucked-string generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md Karplus-Strong:
+    V3 plucked-string generator (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md Karplus-Strong:
     excitation, pick position, damping, string decay, release damping, a loop filter that tracks
     pitch without going sharp). After Karplus and Strong, and Jaffe and Smith, "Extensions of the
     Karplus-Strong Plucked-String Algorithm", Computer Music Journal 7(2), 1983.

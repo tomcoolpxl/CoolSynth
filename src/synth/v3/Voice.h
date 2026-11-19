@@ -30,7 +30,7 @@
 #include "WavetableGenerator.h"
 
 /*
-    V3 voice (DESIGN_V3.md section 4).
+    V3 voice (docs/design/DESIGN_V3.md section 4).
 
     Three generator slots render at unit level, each into its own buffer; a generator with a
     combine mode receives the previous generator's link (its mono signal and wrap track), so a

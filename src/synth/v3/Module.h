@@ -14,7 +14,7 @@
 #include <juce_core/juce_core.h>
 
 /*
-    V3 module model (DESIGN_V3.md section 3).
+    V3 module model (docs/design/DESIGN_V3.md section 3).
 
     A module type is a plain class with four operations and two static descriptors. A Slot holds
     one module of its kind at a time inside a std::variant and switches type with a short

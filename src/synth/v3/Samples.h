@@ -3,7 +3,7 @@
 #include <vector>
 
 /*
-    V3 factory samples (REQUIREMENTS_V3.md section 3.1: "factory samples embedded in the
+    V3 factory samples (docs/design/REQUIREMENTS_V3.md section 3.1: "factory samples embedded in the
     binary"). The set is made by the program itself the first time it is needed, so there is no
     recording to license or to ship:
 

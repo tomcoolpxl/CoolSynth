@@ -14,7 +14,7 @@
 #include "Wavetables.h"
 
 /*
-    V3 wavetable generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: a factory table set,
+    V3 wavetable generator (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md: a factory table set,
     position with crossfade morph, band-limited playback, phase randomisation).
 
     Plays one of the factory tables (Wavetables.h), or the user's own table when the slot names a

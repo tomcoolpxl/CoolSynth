@@ -13,7 +13,7 @@ namespace
     using coolsynth::ui::InterfaceModel;
     using coolsynth::ui::Tint;
 
-    // The dark panel of the mock-up (docs/ui-v3-mockups-2.html).
+    // The dark panel of the chosen mock-up (D143).
     namespace colours
     {
         const juce::Colour background { 0xff131619 };

@@ -12,7 +12,7 @@
 #include "SoundUnit.h"
 
 /*
-    V3 engine (DESIGN_V3.md sections 2, 7 and 8; decision D158): sound units, summed, then a soft
+    V3 engine (docs/design/DESIGN_V3.md sections 2, 7 and 8; decision D158): sound units, summed, then a soft
     clipper. A sound unit (SoundUnit.h) is a whole sound: two parts, their insert slots, the master
     effect slots F1..F6, the mix and the master gain.
 

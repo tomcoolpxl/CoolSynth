@@ -16,7 +16,7 @@
 #include "RoomInsert.h"
 
 /*
-    V3 insert slots (DESIGN_V3.md section 8; decision D81): six per part since D194, between the part's
+    V3 insert slots (docs/design/DESIGN_V3.md section 8; decision D81): six per part since D194, between the part's
     voices and its place in the mix. A slot holds one effect at a time, any of the ten the master
     rack has. It runs that effect's own code (a rack of its own with only that stage switched
     on), so an insert sounds exactly as the same effect does in the master section, with the
@@ -37,7 +37,7 @@ namespace coolsynth::synth::v3
 {
     inline constexpr int insertSlotCount = 6; // a layer's own effects: six since D194 (were three), a whole sound's
 
-    /** The master effect slots F1..F6 (DESIGN_V3.md section 8, decision D135): the same slot and the same types as an
+    /** The master effect slots F1..F6 (docs/design/DESIGN_V3.md section 8, decision D135): the same slot and the same types as an
         insert, in a chain after the parts are mixed, before the master gain. */
     inline constexpr int masterSlotCount = 6;
 

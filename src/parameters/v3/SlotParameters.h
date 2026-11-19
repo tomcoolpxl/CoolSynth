@@ -10,7 +10,7 @@
 #include "synth/v3/Module.h"
 
 /*
-    V3 slot parameters (DESIGN_V3.md section 9.1).
+    V3 slot parameters (docs/design/DESIGN_V3.md section 9.1).
 
     Every slot exposes one type choice and twelve generic floats in normalised 0..1 form whose
     names, ranges, skews and units come from the descriptor of the slot's current type. Generator

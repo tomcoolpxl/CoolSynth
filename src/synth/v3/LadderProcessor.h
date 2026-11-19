@@ -16,7 +16,7 @@
 #include "Module.h"
 
 /*
-    V3 ladder processor (DESIGN_V3.md section 3.2).
+    V3 ladder processor (docs/design/DESIGN_V3.md section 3.2).
 
     A transistor ladder with a nonlinearity in every stage, not only at the input: each of the
     four one-pole stages integrates tanh(previous) - tanh(own), as the differential pairs of the

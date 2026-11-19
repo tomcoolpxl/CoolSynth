@@ -12,7 +12,7 @@
 #include "Module.h"
 
 /*
-    V3 virtual-analogue generator (DESIGN_V3.md section 3.1).
+    V3 virtual-analogue generator (docs/design/DESIGN_V3.md section 3.1).
 
     Shape morphs continuously through sine, triangle, saw and pulse; pulse width shapes the pulse.
     Every discontinuity is located exactly in time on the rendered phase trajectory and corrected

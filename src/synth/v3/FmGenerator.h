@@ -10,7 +10,7 @@
 #include "Module.h"
 
 /*
-    V3 two-operator FM generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: carrier and
+    V3 two-operator FM generator (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md: carrier and
     modulator with ratio, fine, index, feedback; phase modulation with sine operators).
 
     A sine modulator at Ratio times the note (Fine detunes it in cents) phase-modulates a sine

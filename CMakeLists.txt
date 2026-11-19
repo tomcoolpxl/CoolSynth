@@ -55,7 +55,6 @@ juce_add_binary_data(CoolSynthInstrumentData
 
 juce_add_binary_data(CoolSynthImages
     SOURCES
-        resources/ui/coolsynth-logo-2.png
         resources/icon/coolsynth-icon-512.png) # the icon beside the version in Preferences
 
 option(COOLSYNTH_ENABLE_VST3_USER_INSTALL

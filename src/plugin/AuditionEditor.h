@@ -8,7 +8,7 @@
 class SynthAudioProcessor;
 
 /*
-    Throwaway audition editor (IMPLEMENTATION_PLAN_V3.md phase 1.6): a factory preset menu,
+    Throwaway audition editor (docs/design/IMPLEMENTATION_PLAN_V3.md phase 1.6): a factory preset menu,
     grouped by room, a row of buttons that give each generator slot one of the user's own files
     (decision D137), and JUCE's generic editor under them. The real UI is designed in phase 9.
 */

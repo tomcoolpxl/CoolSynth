@@ -9,7 +9,7 @@
 #include "synth/SynthParameters.h"
 
 /*
-    V3 chord memory (DESIGN_V3.md section 6; REQUIREMENTS_V3.md 3.4): the first stage of a part's
+    V3 chord memory (docs/design/DESIGN_V3.md section 6; docs/design/REQUIREMENTS_V3.md 3.4): the first stage of a part's
     note layer. One key plays a stored chord: one of twelve types, or a learned chord of up to
     six notes. What it plays goes on to the arpeggiator, the play mode and the allocator as if
     the keys had been pressed.

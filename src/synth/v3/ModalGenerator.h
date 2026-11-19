@@ -10,7 +10,7 @@
 #include "Module.h"
 
 /*
-    V3 modal generator (DESIGN_V3.md section 3.1; REQUIREMENTS_V3.md: partials with a material
+    V3 modal generator (docs/design/DESIGN_V3.md section 3.1; docs/design/REQUIREMENTS_V3.md: partials with a material
     morph, mallet hardness, decay, strike position).
 
     Twelve partials, each a rotating complex resonator (z = (z + x) r e^{j theta}): its ring is a

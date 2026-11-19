@@ -4404,3 +4404,14 @@ knob test; tag v0.3.0 at once).
   zips hold `CoolSynth.vst3` and `CoolSynth.exe`. The release page showed every line break of the notes, so the notes
   are written one line per paragraph and the published body was replaced with that version; the release is titled
   "CoolSynth 0.3.0", and the workflow names later releases the same way.
+
+## D214. The repository cleaned up; the README rewritten (2026-11-19)
+
+The user asked to clean up the repository: "a shitload of MD documents ... they're in the history anyway", the two screenshots and the old logo.
+
+- Deleted, as the user said: the V1 and V2 plans, phases, reviews, requirements and designs (IMPLEMENTATION_PHASE1-16, IMPLEMENTATION_PLAN and _V2, ARP_EXPANSION_PLAN, CC_MIDI_REFACTOR, CODE_REVIEW_V2, REVIEW_V2_PLAN, DESIGN and DESIGN_V2, REQUIREMENTS and REQUIREMENTS_V2, NEW_UI_DESIGN_AND_IMPLEMENTATION_PLAN, NEW_UI_FEATURE_REQS_AND_PLAN, UI_UX_REVIEW, UI_VISUALIZATION_FEATURE), screenshot-vst3.png, and both unused old logos (coolsynth-logo.png at the top, resources/ui/coolsynth-logo.png). .claude/launch.json left the repository and .claude/ is ignored.
+- The four V3 documents moved to docs/design/, the user's choice (options: move them, recommended and chosen; delete them; keep them at the top). About 30 source comments point to the new paths.
+- GEMINI.md rewritten short, the user's choice (options: rewrite short, recommended and chosen; keep; delete): the rules, where things are, and a one-page current state; 42 KB to 7 KB. The compatibility stance now says that, with 0.3.0 out, a change that stops a saved project from loading is asked first.
+- DONE.md deleted and TODO.md trimmed to its 17 open items, the user's choice (options: that, recommended and chosen; move all records to docs/; keep all three). The decision log stays at the top.
+- From docs/, the user's picks: the macro drafts, the two UI mock-up pages and the old V2 notes are deleted; the track-mode note stays.
+- The README and the v0.3.0 release notes rewritten after the user's words on their layout: GitHub joins wrapped lines into blobs, and bold lead-in bullets, tables and numbered steps read as AI writing. Now short one-line paragraphs, plain sub-bullets, bold only for menu paths. CoolSynth is called bi-timbral, with layer A and layer B, as Sequential calls the Prophet Rev2; "two-layer synthesizer" is not a term. The published release body was replaced too.

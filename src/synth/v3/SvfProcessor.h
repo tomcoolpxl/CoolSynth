@@ -10,7 +10,7 @@
 #include "Module.h"
 
 /*
-    V3 state-variable filter processor (DESIGN_V3.md section 3.2; REQUIREMENTS_V3.md: LP2, HP,
+    V3 state-variable filter processor (docs/design/DESIGN_V3.md section 3.2; docs/design/REQUIREMENTS_V3.md: LP2, HP,
     BP, notch, cutoff, resonance, drive).
 
     Andy Simper's trapezoidal (zero-delay-feedback) state-variable filter, 12 dB per octave, with

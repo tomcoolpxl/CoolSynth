@@ -8,7 +8,7 @@
 #include <juce_audio_basics/juce_audio_basics.h>
 
 /*
-    Tape and vinyl lo-fi stage (SOUND_BANK_V3.md LOFI; IMPLEMENTATION_PLAN_V3.md 5.2: wow,
+    Tape and vinyl lo-fi stage (docs/design/SOUND_BANK_V3.md LOFI; docs/design/IMPLEMENTATION_PLAN_V3.md 5.2: wow,
     flutter, hiss, crackle, bandwidth, bit depth, sample rate).
 
     Wow and flutter move a short delay line: wow a slow 0.45 Hz drift (up to about 14 cents)
