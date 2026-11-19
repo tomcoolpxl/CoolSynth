@@ -76,15 +76,21 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
    Alpha Juno factory tone banks as .syx files and a reader that prints every parameter
    (llamamusic.com/mks50/mks-50_patches.html), so the hoover can be decoded once the user allows the download; the
    Juno-106's single-patch dump is documented (ST-Log, June 1989), but Roland now sells its 128 factory patches
-   only for its own plugin, and no free factory data was found.
+   only for its own plugin, and no free factory data was found. The user fetched the collection (E:\Downloads,
+   MKS50_Alpha_Juno_Collection-A.zip): "What the" is tone T-86 of FACTORYB.SYX, a Roland bulk dump of 64 tones
+   packed in 32 bytes each; the packing is in the MKS-50 manual's bulk dump table (its text layer is garbled, the
+   scanned page is readable). The 36 parameters in order are in chriswareham/alphajuno (doc/sysex.txt, BSD).
 7. The wine glasses as a source for the Grain generator.
-18. In progress (2026-11-19, the online part with a research agent). The added noise sounds artificial at times (the
-    user, 2026-11-19): LoFi's Hiss, white noise through a one-pole low-pass at 6 kHz that follows the signal's
-    level, and its Crackle, random clicks up to 40 a second; also the Noise generator's white, pink, band and chip.
-    First and above all an online investigation (the user: "very important"): how current synths and effects model
-    them (tape hiss spectra and modulation, vinyl crackle and dust, noise that breathes with the music), from their
-    manuals, DSP papers and forums, with the sources named. Then whether CoolSynth follows that practice; put what
-    differs to the user as pick lists.
+18. The added noise (D221, `docs/research/noise-modelling.md`): researched on 2026-11-19, the user chose, to build:
+    - LoFi's noise at a steady level while anything plays, fading out after about a second of silence (Satin's
+      Auto Mute), instead of following each note; the presets with hiss or crackle re-levelled (3 to 6 dB less Hiss).
+    - Crackle: clicks per channel or panned, random lengths of 20 µs to 4 ms with filtered timbres, many small and
+      few large, a quiet dense bed with a drifting rate, rare pops with a falling low thump, optionally a pattern
+      repeating at 33 1/3 rpm; independent of the sample rate.
+    - Hiss shaped as tape after playback EQ (rising above 1.3 to 2.3 kHz, rolled off at 10 to 14 kHz, a little
+      less below 500 Hz), added before the Bandwidth filter and the crush.
+    - Each LoFi slot its own seed; modulation (asperity) noise tied to Hiss; a Brown colour in the Noise generator.
+    - Then: the presets with hiss or crackle (Bedroom, Basement, Night Bus) for the user's ear.
 
 ## Engine
 
@@ -92,17 +98,20 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
    14.2 % of real time on average, 19 % in its worst block (18.4 % and 26 % before D219). Its share per module, over
    the voices' own 2.7 %: the ladder 4.8 %, the seven saws 2.6 %, the SVF 1.6 %, the rest its second layer and
    effects. Elsewhere FM4 5.3 %, Drive 3.9 %. Done for now (D219): AVX2 gained nothing and the build stays SSE2.
-19. In progress (2026-11-19, the research and review with an agent). Determinism and a processing budget, the user's
-    ask on 2026-11-19: everywhere in the chain, and above all in the big sounds (many voices, long effect chains,
-    multi-core), the audio must be predictable and deterministic and every block must fit a known time budget; and
-    when it would not, CoolSynth must know what to do about it.
-    - First an online investigation, sources named: how hardware synths with a fixed DSP budget and software synths
-      handle it (polyphony capped by cost, voice stealing by CPU load, overload protection as in Kontakt or Pigments,
-      worst-case versus average cost, real-time rules such as no locks or allocations on the audio thread).
-    - Then a review of CoolSynth's code against it: what is already there (each module's cost class capping
-      polyphony, the audio thread's allocation alarm, the block tripwires, the multi-core helpers, seeded random
-      numbers), what is data-dependent or unbounded, and whether the same input always gives the same output.
-    - Then, if needed, a plan, architectural changes included; each choice to the user as a pick list.
+19. Determinism and a processing budget (D222, `docs/research/determinism-and-budget.md`): researched and
+    reviewed on 2026-11-19, the user chose, to build:
+    - A worst-case cost test first (the slowest block and the 99th percentile per module and preset at the hardest
+      settings); its numbers set the cap.
+    - A static cap: each patch's worst-case cost (the modules' cost classes, measured) caps its voices so it fits a
+      share of a block, shown on the screen; live only, the quietest released voice goes when a dropout would
+      otherwise happen; never when bouncing.
+    - Every random source seeded from the patch and its slot and restarted at a defined start (a reset, the
+      transport starting); the random arp with an option for new patterns each play.
+    - Offline: no load-based fade, and waiting (with a time limit) for instruments and the player's sounds to load
+      instead of dropping notes.
+    - A determinism test (every preset rendered twice, fresh and after a reset, bit for bit, also offline); wider
+      real-time checks (malloc, locks, file calls on the audio thread in the test build); multi-core by layer once
+      the cost test shows the need.
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).
