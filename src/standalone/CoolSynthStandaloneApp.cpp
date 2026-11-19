@@ -135,7 +135,13 @@ private:
             });
             done->wait(10000);
         };
-        auto tools = coolsynth::mcp::coolSynthTools(synth, [this]() -> juce::Component* { return getContentComponent(); }, runner);
+        // Controller moves enter as a MIDI controller's would: the app's own MIDI input, with their time.
+        auto sendMidi = [this](const juce::MidiMessage& message)
+        {
+            if (auto* holder = getPluginHolder())
+                holder->player.getMidiMessageCollector().addMessageToQueue(message);
+        };
+        auto tools = coolsynth::mcp::coolSynthTools(synth, [this]() -> juce::Component* { return getContentComponent(); }, runner, sendMidi);
         mcp = std::make_unique<coolsynth::mcp::Server>("CoolSynth", coolsynth::build::getVersion(), std::move(tools), runner);
         if (mcp->start(coolsynth::mcp::defaultPort))
             mcpStatus = "On: Claude reaches this app at http://127.0.0.1:" + juce::String(coolsynth::mcp::defaultPort) + "/mcp.";

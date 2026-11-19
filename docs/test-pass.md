@@ -63,8 +63,11 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
 ## Findings, to fix after the rounds
 
 - Pirate Radio's fade-out is a little strong (the user: maybe as it should be).
-- Wheel Stutter: whether the stutter catches at once when the wheel passes halfway, to measure through the MCP server
-  (it needs a tool that moves a controller such as the mod wheel).
+- Wheel Stutter, measured through the MCP server (the wheel up at 1.00 s, down at 2.00 s, the level every 50 ms): the
+  stutter catches only at about 1.30 s, on the next eighth of its grid, not at once; letting go stops it at once. A
+  held catch (a wheel, a pad) may want to catch at once, as a performance control.
+- After a replug the pads stayed white: fixed (D225), the driver sends everything again 1 s and 3 s after connecting;
+  the user saw the colours come back.
 
 - With the MiniLab driver switched off (it was, since 12:16 in FL Studio) and the MiniLab left in its DAW program, the
   Arturia-program setup does not fit: notes and pads work, knobs and faders do nothing. CoolSynth should notice

@@ -101,6 +101,7 @@ namespace coolsynth::ui
         juce::String flashLine1, flashLine2; // the scroll screen the pad left: another change ends the flash
         int flashPosition = -1;
         int ticksSinceProbe = 0;
+        int ticksSinceConnect = -1; // counts after connecting, to send everything again (D225)
         bool wasConnected = false;
         bool switchedOff = false;    // the driver switched off in Preferences: the port is the app's MIDI input (D211)
 

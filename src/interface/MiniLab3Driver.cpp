@@ -149,6 +149,7 @@ namespace coolsynth::ui
                                                                                            : "connected, DAW program");
         lastKnobValue.fill(-1);
         refreshDevice(true);
+        ticksSinceConnect = 0;
         setConnected(true);
     }
 
@@ -417,7 +418,12 @@ namespace coolsynth::ui
                 setConnected(false);
                 return;
             }
-            refreshDevice(false);
+            // Just plugged in, the MiniLab is still starting and drops what comes too early: its pads stayed white
+            // after a replug in the user's test (D225). Everything again after 1 s and after 3 s.
+            const bool again = ticksSinceConnect >= 0 && (++ticksSinceConnect == 30 || ticksSinceConnect == 90);
+            if (ticksSinceConnect >= 90)
+                ticksSinceConnect = -1;
+            refreshDevice(again);
         }
         // The screen greys its own Hold and octave out while the MiniLab is there (D184).
         setConnected(isConnected());

@@ -129,7 +129,8 @@ namespace coolsynth::mcp
         }
     }
 
-    std::vector<Tool> coolSynthTools(SynthAudioProcessor& synth, std::function<juce::Component*()> window, Server::Runner runner)
+    std::vector<Tool> coolSynthTools(SynthAudioProcessor& synth, std::function<juce::Component*()> window, Server::Runner runner,
+                                     std::function<void(const juce::MidiMessage&)> sendMidi)
     {
         std::vector<Tool> tools;
 
@@ -268,13 +269,18 @@ namespace coolsynth::mcp
 
         tools.push_back({ "play",
                           "Plays notes (MIDI numbers, 60 is C4 here, the MiniLab's leftmost key at its normal octave is 48 = C3) "
-                          "as if keys were held for a time, then let go, and tells the loudest output and the most voices meanwhile.",
+                          "as if keys were held for a time, then let go, and tells the loudest output and the most voices meanwhile. "
+                          "Controllers can move while the keys are held (the mod wheel is controller 1), and a trace gives the "
+                          "loudest level of every 50 ms, to see when something starts or stops.",
                           objectSchema({ { "notes", typeSchema("array", "MIDI note numbers, e.g. [48, 52, 55]") },
                                          { "velocity", typeSchema("integer", "1 to 127, 100 by default") },
                                          { "seconds", typeSchema("number", "How long the keys are held, 1 by default, at most 10") },
-                                         { "release", typeSchema("number", "Seconds listened to after letting go, 0.5 by default, at most 10") } },
+                                         { "release", typeSchema("number", "Seconds listened to after letting go, 0.5 by default, at most 10") },
+                                         { "controllers", typeSchema("array", "Moves while held: [{\"at\": 1.0, \"number\": 1, \"value\": 100}], "
+                                                                                 "at in seconds from the keys going down, value 0 to 127") },
+                                         { "trace", typeSchema("boolean", "Also the loudest level of every 50 ms, in dBFS") } },
                                        { "notes" }),
-                          [&synth, runner](const juce::var& args)
+                          [&synth, runner, sendMidi](const juce::var& args)
                           {
                               juce::Array<int> notes;
                               if (const auto* list = args["notes"].getArray())
@@ -289,19 +295,60 @@ namespace coolsynth::mcp
                               const auto onMessageThread = [&runner](std::function<void()> job) { if (runner) runner(std::move(job)); else job(); };
                               (void) synth.takeLoudest();
                               (void) synth.takeMostVoices();
+                              struct Move { double at; int number, value; };
+                              std::vector<Move> moves;
+                              if (const auto* list = args["controllers"].getArray())
+                                  for (const auto& m : *list)
+                                      moves.push_back({ static_cast<double>(m["at"]), juce::jlimit(0, 127, static_cast<int>(m["number"])),
+                                                        juce::jlimit(0, 127, static_cast<int>(m["value"])) });
+                              std::sort(moves.begin(), moves.end(), [](const Move& a, const Move& b) { return a.at < b.at; });
+                              if (! moves.empty() && ! sendMidi)
+                                  return textResult("No MIDI input to move controllers here.", true);
+                              const bool trace = args.hasProperty("trace") && static_cast<bool>(args["trace"]);
+                              juce::StringArray traceLines;
+                              float loudHeld = 0.0f, loudAfter = 0.0f, window = 0.0f;
+                              double nextWindow = 0.05;
+                              std::size_t nextMove = 0;
+                              const auto db = [](float g) { return g > 0.0f ? juce::String(juce::Decibels::gainToDecibels(g), 1) + " dBFS" : juce::String("silence"); };
+                              // Keys down, then in 10 ms steps: due controller moves, each 50 ms window's loudest; keys up at `held`.
+                              const double started = juce::Time::getMillisecondCounterHiRes() * 0.001;
                               onMessageThread([notes, velocity, &keys] { for (const int n : notes) keys.noteOn(1, n, velocity); });
-                              juce::Thread::sleep(static_cast<int>(held * 1000.0));
-                              const float loudHeld = synth.takeLoudest();
-                              onMessageThread([notes, &keys] { for (const int n : notes) keys.noteOff(1, n, 0.5f); });
-                              juce::Thread::sleep(static_cast<int>(after * 1000.0));
-                              const float loudAfter = synth.takeLoudest();
+                              bool keysUp = false;
+                              for (;;)
+                              {
+                                  const double now = juce::Time::getMillisecondCounterHiRes() * 0.001 - started;
+                                  while (nextMove < moves.size() && moves[nextMove].at <= now)
+                                  {
+                                      sendMidi(juce::MidiMessage::controllerEvent(1, moves[nextMove].number, moves[nextMove].value)
+                                                   .withTimeStamp(juce::Time::getMillisecondCounterHiRes() * 0.001));
+                                      ++nextMove;
+                                  }
+                                  if (now >= nextWindow)
+                                  {
+                                      const float loud = synth.takeLoudest();
+                                      window = loud;
+                                      (keysUp ? loudAfter : loudHeld) = std::max(keysUp ? loudAfter : loudHeld, loud);
+                                      if (trace)
+                                          traceLines.add(juce::String(nextWindow, 2) + " s " + db(window));
+                                      nextWindow += 0.05;
+                                  }
+                                  if (! keysUp && now >= held)
+                                  {
+                                      keysUp = true;
+                                      onMessageThread([notes, &keys] { for (const int n : notes) keys.noteOff(1, n, 0.5f); });
+                                  }
+                                  if (now >= held + after)
+                                      break;
+                                  juce::Thread::sleep(10);
+                              }
+                              (void) synth.takeLoudest();
                               const int voices = synth.takeMostVoices();
                               juce::StringArray names;
                               for (const int n : notes)
                                   names.add(noteName(n) + " (" + juce::String(n) + ")");
-                              const auto db = [](float g) { return g > 0.0f ? juce::String(juce::Decibels::gainToDecibels(g), 1) + " dBFS" : juce::String("silence"); };
                               return textResult("Played " + names.joinIntoString(", ") + " for " + juce::String(held, 2) + " s: loudest while held "
-                                                + db(loudHeld) + ", after letting go " + db(loudAfter) + ", at most " + juce::String(voices) + " voices.");
+                                                + db(loudHeld) + ", after letting go " + db(loudAfter) + ", at most " + juce::String(voices) + " voices."
+                                                + (trace ? "\nEvery 50 ms:\n" + traceLines.joinIntoString("\n") : juce::String()));
                           },
                           true });
 
