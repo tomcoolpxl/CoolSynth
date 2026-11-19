@@ -7,7 +7,9 @@ user was away are there too, each with every option: review them.
 
 1. The FL Studio knob test with the MiniLab driver Off (the friend's flow): FL's MIDI port, the wrapper's input
    port, knob 7 moving Brightness (D211, D213).
-2. Run the released installer once on this computer (it needs an administrator's yes; D213).
+2. Run the released installer once on this computer (it needs an administrator's yes; D213). Then check that
+   Ableton finds the installed CoolSynth: its custom VST3 folder is empty since D213, so **Use VST3 Plug-In System
+   Folders** must be on.
 
 ## The user's ear and hands
 
