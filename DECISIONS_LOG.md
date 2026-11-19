@@ -4270,3 +4270,19 @@ others do and chose (pick lists, with research): **all of it, plus ready setups 
   (`MiniLab3Driver::isPadEcho`). And the arpeggiator was silent while a DAW knew its tempo but was not playing:
   now a key starts it at the DAW's tempo; while the DAW plays it locks to the bar as before, and the DAW's stop
   stops it until the next key.
+- **Pads in FL Studio: DAW scripts**, the user's choice after research (2026-11-19). In FL the pads still played
+  notes: FL runs a plugin in pieces of a few samples, so the host's copy of a pad's note reaches the sound before the
+  driver hears the pad on the MiniLab's own port, and `isPadEcho` (a timing guess) misses it. How others do it:
+  controllers put their DAW-mode controls on a second port the tracks do not listen to (Novation's Launchkey, "MIDI
+  IN2"), or a DAW script takes them (Ableton: messages a control surface uses "can no longer be used as input for
+  MIDI tracks"; Arturia's and Novation's own integrations); or the track listens to the keys' channel only. The
+  MiniLab 3 sends pads and keys on the same port, so the second-port way is out. Options: DAW scripts that claim
+  the pads, recommended and chosen; the track set to channel 1 by the user; holding pad notes back up to 5 ms
+  (rejected: the user wants no delay). `resources/daw-scripts/`: an FL Studio script (`device_CoolSynth_MiniLab.py`,
+  `OnMidiIn` marks channel-10 notes 36-51 handled) and an Ableton control surface (`CoolSynth_MiniLab`, a
+  `_Framework` script that listens to those notes and sends nothing). FL links the script by itself through its
+  `supportedDevices` header (FL Studio Python API, script metadata); where FL had already linked its own Arturia
+  MiniLab 3 script (on this computer), the link was switched in FL's registry (`Devices\MIDI input\Minilab3 MIDI`,
+  `ScriptFolder`). The Ableton script is chosen once as a control surface: Ableton loads scripts by itself only by
+  USB ID (`get_capabilities`), and the MiniLab's port order for that is not known for sure, so it is left out.
+  `isPadEcho` stays as a fallback where no script is chosen.
