@@ -171,6 +171,9 @@ namespace coolsynth::ui
         /** A block of the layer screen's chain clicked (D226): that layer's section, on that slot; the slot already
             open there, clicked again: its type list, as clickSlot. */
         void openSlot(int layer, int section, int slot);
+        /** A layer's sound name on the layer screen clicked (D226): Home, on that layer, its list on the sound the
+            layer plays, to choose another for it. */
+        void openHomeFor(int layer);
         /** A click on a page tab: the live page in Home, the focused slot's page in a section. */
         void clickPage(int page);
         /** One level up (D181): closes the type list, leaves a sound list for the rooms, a section for Home. */

@@ -1263,6 +1263,10 @@ public:
         model.openSlot(layerBefore, 0, 1); // back to the first layer's G2, in another section
         expect(model.part() == layerBefore && model.section() == 0 && model.slotIndex(0) == 1 && ! model.typeListOpen());
         expectEquals(static_cast<int>(model.slotsOf(3, 1 - layerBefore).size()), 12, "either layer's slots: six of its own, six at the end");
+        model.openHomeFor(1 - layerBefore); // the other layer's sound name clicked: Home, on that layer
+        expect(model.view() == coolsynth::ui::InterfaceModel::View::home && model.part() == 1 - layerBefore && model.inCategory(),
+               "Home's list of sounds, for that layer");
+        model.openHomeFor(layerBefore);
 
         beginTest("The wheel scrolls the screen's list, and a right click goes back, on the panel itself");
         std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditorAndMakeActive());

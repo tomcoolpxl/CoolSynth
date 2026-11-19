@@ -1489,6 +1489,13 @@ namespace coolsynth::ui
         touched();
     }
 
+    void InterfaceModel::openHomeFor(int layer)
+    {
+        currentPart = clampInt(layer, 0, 1);
+        openHome();
+        touched();
+    }
+
     void InterfaceModel::back()
     {
         // One level up, for a mouse or a computer keyboard (D181): the type list closes, a sound list goes back to

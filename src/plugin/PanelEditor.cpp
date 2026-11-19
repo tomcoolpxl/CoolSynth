@@ -2105,27 +2105,43 @@ public:
                 onBlock = &block;
         const int blockKey = onBlock != nullptr ? onBlock->key : -1;
         setMouseCursor(over >= 0 || onCpu ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::NormalCursor);
-        if (over != hoveredPanel || onCpu != hoveredCpu || blockKey != hoveredBlock)
+
+        // What the mouse is on, said on the layer screen itself, in the info row's place (D226, the user's choice).
+        const juce::String dot = juce::String(juce::CharPointer_UTF8(" \xc2\xb7 "));
+        juce::String hint;
+        if (onBlock != nullptr)
+            hint = onBlock->hint;
+        else if (over >= 0)
+        {
+            const juce::String name = "Layer " + juce::String(over == 0 ? "A" : "B");
+            if (layerTitles[static_cast<std::size_t>(over)].contains(e.getPosition()))
+                hint = name + dot + "click: copy, swap, solo, empty";
+            else
+                hint = name + dot + (model.layerEmpty(over) ? juce::String("empty") : model.layerSoundName(over)) + dot
+                       + "click: choose a sound in Home" + dot + "right click: copy, swap";
+        }
+        else if (onCpu)
+            hint = "CPU" + dot + "click: Preferences";
+
+        if (over != hoveredPanel || onCpu != hoveredCpu || blockKey != hoveredBlock || hint != layerHint)
         {
             hoveredPanel = over;
             hoveredCpu = onCpu;
             hoveredBlock = blockKey;
-            setHoverHint(onBlock != nullptr ? onBlock->hint
-                         : over >= 0 ? "Layer " + juce::String(over == 0 ? "A" : "B")
-                                           + juce::String(juce::CharPointer_UTF8(": edit it \xc2\xb7 click; copy, swap \xc2\xb7 right click"))
-                                     : (onCpu ? juce::String(juce::CharPointer_UTF8("CPU \xc2\xb7 click: Preferences")) : juce::String()));
+            layerHint = hint;
+            setHoverHint({}); // the main screen's hint line is for the rest of the panel
             repaint(layerScreen);
         }
     }
 
     void mouseExit(const juce::MouseEvent&) override
     {
-        if (hoveredPanel >= 0 || hoveredCpu || hoveredBlock >= 0)
+        if (hoveredPanel >= 0 || hoveredCpu || hoveredBlock >= 0 || layerHint.isNotEmpty())
         {
             hoveredPanel = -1;
             hoveredCpu = false;
             hoveredBlock = -1;
-            setHoverHint({});
+            layerHint.clear();
             repaint(layerScreen);
         }
     }
@@ -2474,12 +2490,14 @@ public:
         {
             if (! layerPanels[static_cast<std::size_t>(layer)].contains(e.getPosition()))
                 continue;
-            if (e.mods.isPopupMenu())
-                showLayerMenu(layer); // the Layers page's actions, for this layer
-            else if (model.part() != layer)
+            // LAYER A clicked, or the panel right-clicked: the Layers page's actions, for this layer (D196, D226).
+            if (e.mods.isPopupMenu() || layerTitles[static_cast<std::size_t>(layer)].contains(e.getPosition()))
+                showLayerMenu(layer);
+            else
             {
-                // A layer panel picks the layer the sections edit, as Home pressed again does (D195).
-                model.togglePart();
+                // Its sound's name or the panel elsewhere: Home on this layer, to choose another sound (D226; it
+                // picked the layer only, D195).
+                model.openHomeFor(layer);
                 owner.timerCallback();
             }
         }
@@ -2640,8 +2658,9 @@ public:
             g.setFont(mono(10.0f, true));
             g.setColour(lit ? tint : tint.withMultipliedBrightness(0.55f).withMultipliedSaturation(0.6f));
             const juce::String title = layer == 0 ? "LAYER A" : "LAYER B";
-            g.drawText(title, head.removeFromLeft(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), title) + 8),
-                       juce::Justification::centredLeft);
+            const auto titleArea = head.removeFromLeft(juce::GlyphArrangement::getStringWidthInt(g.getCurrentFont(), title) + 8);
+            layerTitles[static_cast<std::size_t>(layer)] = titleArea; // a click: the layer's menu (D226)
+            g.drawText(title, titleArea, juce::Justification::centredLeft);
             if (const int solo = owner.synth.soloLayer(); solo >= 0)
             {
                 const juce::String word = solo == layer ? "SOLO" : "MUTED";
@@ -2673,10 +2692,18 @@ public:
             g.drawText(master, infoRow.removeFromLeft(w), juce::Justification::centredLeft);
         }
         g.setFont(mono(10.0f));
-        g.setColour(colours::screenDim);
-        g.drawText(model.layerModeText() + dot + juce::String(juce::roundToInt(owner.synth.tempoBpm())) + " BPM" + dot
-                       + juce::String(owner.synth.voicesPlaying()) + " of " + juce::String(owner.synth.voiceLimit()) + " voices",
-                   infoRow.withTrimmedRight(cpuArea.getWidth()), juce::Justification::centredLeft);
+        if (layerHint.isNotEmpty()) // the mouse on this screen: what it points at, here (D226, the user's choice)
+        {
+            g.setColour(colours::screenInk);
+            g.drawFittedText(layerHint, infoRow.withTrimmedRight(cpuArea.getWidth() + 6), juce::Justification::centredLeft, 1, 0.8f);
+        }
+        else
+        {
+            g.setColour(colours::screenDim);
+            g.drawText(model.layerModeText() + dot + juce::String(juce::roundToInt(owner.synth.tempoBpm())) + " BPM" + dot
+                           + juce::String(owner.synth.voicesPlaying()) + " of " + juce::String(owner.synth.voiceLimit()) + " voices",
+                       infoRow.withTrimmedRight(cpuArea.getWidth()), juce::Justification::centredLeft);
+        }
         auto cpu = infoRow.removeFromRight(cpuArea.getWidth()).toFloat();
         g.setFont(mono(11.0f));
         g.setColour(percent >= 90.0f ? coolsynth::ui::tintColour(Tint::record)
@@ -2717,6 +2744,8 @@ private:
     };
     std::vector<ChainBlock> chainBlocks; // the layer screen's chain, each block clickable (D226)
     int hoveredBlock = -1;               // its key (layer * 100 + section * 10 + slot) while the mouse is on it
+    std::array<juce::Rectangle<int>, 2> layerTitles; // LAYER A and LAYER B: a click opens the layer's menu (D226)
+    juce::String layerHint;              // what the mouse is on in the layer screen, said in its info row (D226)
     PrefsCard prefs { owner.synth };                 // over everything, hidden until Prefs is pressed (D197)
     ControllerCard controllerCard { owner.synth };   // the controller setup, from Prefs or a right click (D211)
     bool learningHere = false;                       // a right click's Learn is listening (D211)
