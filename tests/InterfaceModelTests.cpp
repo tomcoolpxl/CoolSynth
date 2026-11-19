@@ -650,7 +650,7 @@ public:
 
 static MiniLab3ProtocolTests miniLab3ProtocolTests;
 
-/* Draws the V3 panel in a few states to PNG files in the build folder, to look at (build/panel-*.png). */
+/* Draws the V3 panel in a few states to PNG files beside the test program, to look at (panel-*.png). */
 class PanelSnapshotTests final : public juce::UnitTest
 {
 public:
@@ -664,7 +664,8 @@ public:
         auto& model = synth->getInterfaceModel();
         std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditor());
         expect(editor != nullptr);
-        const auto folder = juce::File::getCurrentWorkingDirectory();
+        // beside the test program, in the build folder, wherever it is run from (not the source tree)
+        const auto folder = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
         auto shoot = [&](const juce::String& state)
         {
             if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))

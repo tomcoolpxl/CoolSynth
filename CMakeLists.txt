@@ -80,6 +80,8 @@ juce_add_plugin(CoolSynth
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     VST3_CATEGORIES Instrument Synth
+    # Two knobs over a little keyboard (D209): the app's icon, and the VST3 bundle's in Explorer.
+    ICON_BIG "${CMAKE_CURRENT_SOURCE_DIR}/resources/icon/coolsynth-icon-512.png"
     COPY_PLUGIN_AFTER_BUILD ${COOLSYNTH_ENABLE_VST3_USER_INSTALL}
     VST3_COPY_DIR "${COOLSYNTH_VST3_USER_DIR}")
 

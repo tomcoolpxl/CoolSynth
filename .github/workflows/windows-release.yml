@@ -75,6 +75,17 @@ jobs:
           tag_name: ${{ github.ref_name }}
           target_commitish: ${{ github.sha }}
           generate_release_notes: true
+          # Shown above GitHub's generated notes (the action prepends a body to them).
+          body: |
+            ## Install
+
+            Download **CoolSynth-Setup-${{ github.ref_name }}.exe** below and run it. It installs the VST3 for your music software, the standalone app, and the recorded instruments you tick, which it downloads from the [CoolSynth instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments) (2.6 GB for all of them).
+
+            Windows may warn that the installer comes from an unknown publisher, because it is not code-signed: choose **More info**, then **Run anyway**.
+
+            Without the installer: the zips below hold the VST3 and the app, and the instruments are on the [instrument library's page](https://huggingface.co/datasets/tomccargo/coolsynth-instruments).
+
+            Setting up your keyboard, an Arturia MiniLab 3, or FL Studio: see [the guide](https://github.com/tomcoolpxl/CoolSynth#readme).
           prerelease: ${{ contains(github.ref_name, '-') }}
           overwrite_files: true
           fail_on_unmatched_files: true
