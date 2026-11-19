@@ -32,6 +32,11 @@ namespace coolsynth::midi::minilab3
 
     inline juce::MidiMessage connect()    { return sysex({ 0x02, 0x00, 0x40, 0x6A, 0x21 }); }
     inline juce::MidiMessage disconnect() { return sysex({ 0x02, 0x00, 0x40, 0x6A, 0x20 }); }
+    // Leaving, as Arturia's and Bitwig's scripts do (D216): the screen cleared, then the disconnect in both forms the
+    // scripts use (Ableton's `02 00`, Bitwig's and FL's `02 02`). No message switches the MiniLab's program: it stays
+    // in the DAW program until Shift + pad 3.
+    inline juce::MidiMessage clearScreen()      { return sysex({ 0x04, 0x01, 0x60, 0x0A, 0x0A, 0x5F, 0x51, 0x00 }); }
+    inline juce::MidiMessage disconnectOther()  { return sysex({ 0x02, 0x02, 0x40, 0x6A, 0x20 }); }
 
     /** Text the screen can show: printable ASCII only ("·" becomes "-"), cut to maxChars. */
     inline std::vector<juce::uint8> screenText(const juce::String& text, int maxChars)

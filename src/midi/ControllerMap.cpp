@@ -75,7 +75,7 @@ namespace coolsynth::midi
 
         Encoding encodingFromKey(const juce::String& key)
         {
-            for (auto e : { Encoding::absolute, Encoding::binaryOffset, Encoding::twosComplement, Encoding::signBit })
+            for (auto e : { Encoding::absolute, Encoding::binaryOffset, Encoding::twosComplement, Encoding::signBit, Encoding::offsetGap })
                 if (encodingKey(e) == key)
                     return e;
             return Encoding::absolute;
@@ -169,6 +169,14 @@ namespace coolsynth::midi
         places.push_back({ place, control, encoding });
     }
 
+    void ControllerMap::alsoLink(Place place, ControlId control, Encoding encoding)
+    {
+        if ((! control.isValid() && control.channel != 0) || isReserved(control))
+            return;
+        letGo(*this, control);
+        places.push_back({ place, control, encoding });
+    }
+
     void ControllerMap::link(const juce::String& parameterId, ControlId control, Encoding encoding)
     {
         if (parameterId.isEmpty() || isReserved(control))
@@ -231,7 +239,7 @@ namespace coolsynth::midi
                 if (auto* object = item.getDynamicObject())
                     if (const auto place = placeFromKey(object->getProperty("place").toString()))
                         if (const auto control = controlFromVar(object->getProperty("control")))
-                            map.link(*place, *control, encodingFromKey(object->getProperty("encoding").toString()));
+                            map.alsoLink(*place, *control, encodingFromKey(object->getProperty("encoding").toString())); // a place may have several (D216)
         if (auto* array = root->getProperty("settings").getArray())
             for (const auto& item : *array)
                 if (auto* object = item.getDynamicObject())
@@ -264,6 +272,7 @@ namespace coolsynth::midi
             case Encoding::binaryOffset:   return value == 0 ? 0 : value - 64; // some send a 0 between turns
             case Encoding::twosComplement: return value < 64 ? value : value - 128;
             case Encoding::signBit:        return (value & 64) != 0 ? -(value & 63) : (value & 63);
+            case Encoding::offsetGap:      return value == 0 ? 0 : (value >= 64 ? value - 64 : value - 63);
             case Encoding::absolute:
             default:                       return 0;
         }
@@ -301,6 +310,7 @@ namespace coolsynth::midi
             case Encoding::binaryOffset:   return "binaryOffset";
             case Encoding::twosComplement: return "twosComplement";
             case Encoding::signBit:        return "signBit";
+            case Encoding::offsetGap:      return "offsetGap";
             case Encoding::absolute:
             default:                       return "absolute";
         }
@@ -313,6 +323,7 @@ namespace coolsynth::midi
             case Encoding::binaryOffset:   return "endless knob";
             case Encoding::twosComplement: return "endless knob";
             case Encoding::signBit:        return "endless knob";
+            case Encoding::offsetGap:      return "endless knob";
             case Encoding::absolute:
             default:                       return "knob or fader";
         }
@@ -386,12 +397,25 @@ namespace coolsynth::midi
 
             // Arturia MiniLab 3 in its Arturia program (D211; tested on the device in V2): without CoolSynth's own
             // driver, which talks to it in its DAW program and lights its screen and pads (D184).
-            auto* ml3 = add("arturia.minilab3", "Arturia MiniLab 3 (Arturia program)", { "Minilab3", "MiniLab 3" },
-                            "For a MiniLab 3 with the MiniLab 3 driver switched Off: no screen and no pad lights.");
+            auto* ml3 = add("arturia.minilab3", "Arturia MiniLab 3", { "Minilab3", "MiniLab 3" },
+                            "For a MiniLab 3 with the MiniLab 3 driver switched Off, in its Arturia or its DAW program: no screen and no pad lights.");
             knobs(*ml3, { 74, 71, 76, 77, 93, 18, 19, 16 });
             faders(*ml3, { 82, 83, 85, 17 });
             ml3->link(Place::mainTurn, cc(114), Encoding::binaryOffset);
             padNotes(*ml3, 36, 10);
+            // The same MiniLab in its DAW program, where CoolSynth's driver leaves it: no message switches its program
+            // (only Shift + pad 3 does), so both programs' numbers are linked (D216; docs/minilab3-screen.md).
+            int knob = 1;
+            for (const int n : { 86, 87, 89, 90, 110, 111, 116, 117 })
+                ml3->alsoLink(knobPlace(knob++), cc(n), Encoding::absolute);
+            int fader = 0;
+            for (const int n : { 14, 15, 30, 31 })
+                ml3->alsoLink(static_cast<Place>(static_cast<int>(Place::fader1) + fader++), cc(n), Encoding::absolute);
+            ml3->alsoLink(Place::mainTurn, cc(28), Encoding::offsetGap);  // 65 one click right, 62 one left
+            ml3->alsoLink(Place::mainTurn, cc(29), Encoding::offsetGap);  // turned with Shift held
+            ml3->alsoLink(Place::mainPress, cc(118), Encoding::absolute);
+            ml3->alsoLink(Place::mainPress, cc(119), Encoding::absolute); // pressed with Shift held
+            ml3->alsoLink(Place::shift, cc(27), Encoding::absolute);
 
             // Native Instruments Komplete Kontrol M32 and A series in MIDI mode (Shift + Plug-in): knobs CC 14-21.
             auto* nik = add("ni.kompletekontrol", "NI Komplete Kontrol M32 / A series", { "KOMPLETE KONTROL M32", "KOMPLETE KONTROL A" },

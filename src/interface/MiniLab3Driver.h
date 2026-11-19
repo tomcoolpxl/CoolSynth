@@ -43,10 +43,6 @@ namespace coolsynth::ui
             the host passes on are not the sound's (D211). */
         [[nodiscard]] static bool drivenInPlugin() noexcept { return pluginDriving.load(std::memory_order_relaxed); }
 
-        /** Audio thread: a note-on the host passes on that is the echo of a MiniLab pad the driver just heard (D211).
-            Ableton gives an instrument every note on channel 1, so a pad (channel 10) and a key of the same pitch look
-            alike there; the driver hears both on the MiniLab's own port, with their channels, a moment earlier. */
-        [[nodiscard]] static bool isPadEcho(const juce::MidiMessage& message) noexcept;
 
     private:
         void handleIncomingMidiMessage(juce::MidiInput* source, const juce::MidiMessage& message) override;
@@ -94,15 +90,20 @@ namespace coolsynth::ui
         int flashPosition = -1;
         int ticksSinceProbe = 0;
         bool wasConnected = false;
-        bool portGivenToApp = false; // switched off: the MiniLab's port is the app's MIDI input again (D211)
+        bool switchedOff = false;    // the driver switched off in Preferences: the port is the app's MIDI input (D211)
+
+        // The device list, read only when Windows says it changed (D216).
+        juce::MidiDeviceListConnection deviceList;
+        std::atomic<bool> devicesChanged { true };
+        bool devicePresent = false;
+        bool portBusy = false;       // present, but another program holds the port (no Windows MIDI Services)
+        bool busyAnnounced = false;
+        static inline bool liveChannelHintShown = false; // Live's channel-1 hint, once per program (D216)
+        [[nodiscard]] static bool miniLabPresent();
 
         // Who drives the MiniLab (D211): one driver in this program, and this program among others.
         static inline MiniLab3Driver* owner = nullptr;
         static inline std::atomic<bool> pluginDriving { false };
-        // When the MiniLab's port last brought each note as a pad and as a key (milliseconds): MIDI thread writes.
-        static inline std::array<std::atomic<double>, 128> padPressedAt {};
-        static inline std::array<std::atomic<double>, 128> keyPressedAt {};
-        static inline std::array<std::atomic<bool>, 128> padHeld {}; // a pad down now, by its note (review of D211)
         static juce::InterProcessLock& programLock();
         static inline bool programHoldsLock = false;
     };

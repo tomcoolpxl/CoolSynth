@@ -46,7 +46,10 @@ namespace coolsynth::midi
             return;
         started = true;
         readFile();
-        // Looks for a known controller a moment later, once the app's MiniLab driver is there (D184).
+        // Known controllers are looked for when Windows says the MIDI devices changed, not every few seconds (D216);
+        // the first look comes a moment later, once the app's MiniLab driver is there (D184).
+        deviceList = juce::MidiDeviceListConnection::make([this] { lookAgain.store(true, std::memory_order_relaxed); });
+        lookAgain.store(true, std::memory_order_relaxed);
         fileTimer = std::make_unique<juce::TimedCallback>([this] { tick(); });
         fileTimer->startTimer(2000);
     }
@@ -56,6 +59,7 @@ namespace coolsynth::midi
         stopAllLearning();
         fileTimer.reset();
         learnTimer.reset();
+        deviceList.reset();
         started = false;
     }
 
@@ -189,8 +193,8 @@ namespace coolsynth::midi
         // Another program (the app, or a host) may have saved the setup: read it again.
         if (file().getLastModificationTime() != fileTime)
             readFile();
-        // Every few seconds, while nothing is set up, a known controller may have been plugged in or out.
-        if (currentOrigin != Origin::saved && (ticks++ % 2) == 0)
+        // A known controller plugged in or out, or the MiniLab driver taking or leaving the MiniLab, while nothing is set up.
+        if (lookAgain.exchange(false, std::memory_order_relaxed) && currentOrigin != Origin::saved)
             lookForKnownController();
     }
 

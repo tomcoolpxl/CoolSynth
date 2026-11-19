@@ -20,6 +20,7 @@ namespace coolsynth::midi
         binaryOffset,   // a turn: 64 + steps (65 one step right, 63 one left)
         twosComplement, // a turn: 1 one step right, 127 one left
         signBit,        // a turn: 1 one step right, 65 one left
+        offsetGap,      // a turn: 64 + steps right, 63 - steps left; 63 never comes (the MiniLab 3's DAW program, D216)
     };
 
     /** One control on the controller: a controller number or a note, on one channel (1-16). */
@@ -85,6 +86,9 @@ namespace coolsynth::midi
         [[nodiscard]] const SettingLink* linkOf(const juce::String& parameterId) const noexcept;
         /** Links a place, or a setting; whatever that control or that place or setting had before is let go. */
         void link(Place place, ControlId control, Encoding encoding);
+        /** One more control for a place that keeps the ones it has: a controller whose programs send different
+            numbers for the same knob (the MiniLab 3, D216). The control still stands for this place only. */
+        void alsoLink(Place place, ControlId control, Encoding encoding);
         void link(const juce::String& parameterId, ControlId control, Encoding encoding);
         void forget(Place place);
         void forget(const juce::String& parameterId);

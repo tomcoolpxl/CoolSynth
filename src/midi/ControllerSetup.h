@@ -7,6 +7,7 @@
 #include <optional>
 
 #include <juce_audio_basics/juce_audio_basics.h>
+#include <juce_audio_devices/juce_audio_devices.h>
 #include <juce_events/juce_events.h>
 
 #include "ControllerMap.h"
@@ -71,7 +72,11 @@ namespace coolsynth::midi
         }
 
         /** The MiniLab 3 has CoolSynth's own driver (D184): its ready profile is not offered for it then (D211). */
-        void setMiniLabDriven(bool driven) noexcept { miniLabDriven.store(driven, std::memory_order_relaxed); }
+        void setMiniLabDriven(bool driven) noexcept
+        {
+            if (miniLabDriven.exchange(driven, std::memory_order_relaxed) != driven)
+                lookAgain.store(true, std::memory_order_relaxed); // its ready setup applies, or no longer does
+        }
         /** The MiniLab driver may take the MiniLab (D211): off, the MiniLab is a controller like any other. Kept with
             the setup, for this computer. */
         [[nodiscard]] bool miniLabDriverOn() const noexcept { return driverOn; }
@@ -126,7 +131,6 @@ namespace coolsynth::midi
         bool started = false;
         bool testing = false;
         juce::Time fileTime;
-        int ticks = 0;
         juce::String foundProfile;
         int notices = 0;
         juce::String notice;
@@ -134,6 +138,8 @@ namespace coolsynth::midi
         bool driverOn = true;
 
         std::unique_ptr<juce::TimedCallback> fileTimer; // only while a CoolSynth runs (shutDown)
+        juce::MidiDeviceListConnection deviceList;      // the MIDI devices changed: look for a known controller (D216)
+        std::atomic<bool> lookAgain { true };
         juce::File testFile;                            // useFileForTesting
 
         std::atomic<bool> learning { false };

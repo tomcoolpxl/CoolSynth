@@ -19,10 +19,23 @@ namespace coolsynth::ui
     MiniLab3Driver::MiniLab3Driver(InterfaceModel& m, SynthAudioProcessor& processor, juce::AudioDeviceManager* deviceManager)
         : model(m), synth(processor), devices(deviceManager), inPlugin(deviceManager == nullptr)
     {
+        // Told when MIDI devices come and go, instead of listing them every two seconds (D216). Only a flag here: the
+        // timer, on the message thread, looks.
+        deviceList = juce::MidiDeviceListConnection::make([this] { devicesChanged.store(true, std::memory_order_relaxed); });
+        devicePresent = miniLabPresent();
+        devicesChanged.store(false, std::memory_order_relaxed);
         // The first CoolSynth in this program takes the MiniLab, if no other program has it (D211).
-        if (owner == nullptr && takeDevice())
+        if (owner == nullptr && devicePresent && takeDevice())
             tryOpen();
         startTimerHz(30);
+    }
+
+    bool MiniLab3Driver::miniLabPresent()
+    {
+        for (const auto& info : juce::MidiInput::getAvailableDevices())
+            if (ml::isDawPort(info.name))
+                return true;
+        return false;
     }
 
     MiniLab3Driver::~MiniLab3Driver()
@@ -112,10 +125,20 @@ namespace coolsynth::ui
         output = juce::MidiOutput::openDevice(outInfo.identifier);
         if (input == nullptr || output == nullptr)
         {
-            // Another program has the port and Windows does not share it (no Windows MIDI Services): try again later.
+            // Another program has the port and Windows does not share it (no Windows MIDI Services): the MiniLab plays
+            // as a plain controller meanwhile (its ready setup), and the driver tries again every two seconds (D216).
             close(false);
+            portBusy = true;
+            if (! busyAnnounced)
+            {
+                busyAnnounced = true;
+                coolsynth::midi::ControllerSetup::instance().announce(
+                    "The MiniLab 3 is in use by another program: it plays as a plain keyboard here.");
+            }
             return;
         }
+        portBusy = false;
+        busyAnnounced = false;
         inputIdentifier = inInfo.identifier;
         input->start();
         send(ml::connect());
@@ -131,7 +154,11 @@ namespace coolsynth::ui
         if (input != nullptr)
             input->stop();
         if (output != nullptr && sayGoodbye)
+        {
+            output->sendMessageNow(ml::clearScreen());
             output->sendMessageNow(ml::disconnect());
+            output->sendMessageNow(ml::disconnectOther());
+        }
         input = nullptr;
         output = nullptr;
         inputIdentifier = {};
@@ -147,24 +174,19 @@ namespace coolsynth::ui
             pluginDriving.store(connected, std::memory_order_relaxed);
         auto& setup = coolsynth::midi::ControllerSetup::instance();
         setup.setMiniLabDriven(connected);
-        // A DAW's own MiniLab script would talk to it too, and the two screens would fight (D211).
+        // A DAW's own MiniLab script would talk to it too, and the two screens would fight (D211). Live hands an
+        // instrument every note on channel 1, so the pads (channel 10) would play notes; a track that takes channel 1
+        // only never gets them (D216): said once while this program runs.
         if (connected && inPlugin)
-            setup.announce("MiniLab 3 connected to CoolSynth.");
-    }
-
-    bool MiniLab3Driver::isPadEcho(const juce::MidiMessage& message) noexcept
-    {
-        if (! message.isNoteOn())
-            return false; // a release is harmless, and a key's must never be lost
-        const int note = message.getNoteNumber();
-        if (note < ml::firstPadNote || note >= ml::firstPadNote + 8)
-            return false;
-        const double pad = padPressedAt[static_cast<std::size_t>(note)].load(std::memory_order_relaxed);
-        const double key = keyPressedAt[static_cast<std::size_t>(note)].load(std::memory_order_relaxed);
-        // The host's copy comes a block or two after the driver heard it; a key of that pitch since is a key. And only
-        // while that pad is still down: a key played just after a pad let go is a key (review of D211).
-        return padHeld[static_cast<std::size_t>(note)].load(std::memory_order_relaxed)
-            && pad > key && juce::Time::getMillisecondCounterHiRes() - pad < 250.0;
+        {
+            if (juce::PluginHostType().isAbletonLive() && ! liveChannelHintShown)
+            {
+                liveChannelHintShown = true;
+                setup.announce("In Live, set this track's MIDI input to channel 1, so the MiniLab's pads don't play notes.");
+            }
+            else
+                setup.announce("MiniLab 3 connected to CoolSynth.");
+        }
     }
 
     void MiniLab3Driver::send(const juce::MidiMessage& message)
@@ -178,14 +200,6 @@ namespace coolsynth::ui
         // MIDI thread: in the app keys and performance go straight to the sound; in a plugin the host brings them.
         // Controls go to the message thread.
         const auto kind = ml::decode(message).kind;
-        if (message.isNoteOn())
-        {
-            // when each pitch last came as a pad or as a key, for telling a pad's echo from the host (D211)
-            auto& at = kind == ml::Control::Kind::pad ? padPressedAt : keyPressedAt;
-            at[static_cast<std::size_t>(message.getNoteNumber())].store(juce::Time::getMillisecondCounterHiRes(), std::memory_order_relaxed);
-        }
-        if (kind == ml::Control::Kind::pad && message.isNoteOnOrOff())
-            padHeld[static_cast<std::size_t>(message.getNoteNumber())].store(message.isNoteOn(), std::memory_order_relaxed);
         if (kind == ml::Control::Kind::other)
         {
             if (message.isSysEx())
@@ -330,30 +344,35 @@ namespace coolsynth::ui
             const juce::ScopedLock lock(queueLock);
             pending.swap(queue);
         }
+        // The device list is read only when Windows says it changed (D216).
+        const bool changed = devicesChanged.exchange(false, std::memory_order_relaxed);
+        if (changed)
+            devicePresent = miniLabPresent();
+
         if (! coolsynth::midi::ControllerSetup::instance().miniLabDriverOn())
         {
+            const bool justSwitchedOff = ! switchedOff;
+            switchedOff = true;
             giveUp(); // switched off in Preferences (D211)
             // In the app the MiniLab is then one of its MIDI inputs, as any controller is (an earlier run of the
-            // driver left it switched off there).
-            if (devices != nullptr && ! portGivenToApp)
+            // driver left it switched off there): once, and again when it is plugged back in.
+            if (devices != nullptr && (justSwitchedOff || changed))
                 for (const auto& info : juce::MidiInput::getAvailableDevices())
                     if (ml::isDawPort(info.name))
-                    {
                         devices->setMidiInputDeviceEnabled(info.identifier, true);
-                        portGivenToApp = true;
-                    }
             return;
         }
-        portGivenToApp = false;
+        switchedOff = false;
+        // Every two seconds, only to wait for another program to let go of the MiniLab or of its port.
+        const bool retry = ++ticksSinceProbe >= 60;
+        if (retry)
+            ticksSinceProbe = 0;
+
         if (owner != this)
         {
-            // Another CoolSynth drives it, or nobody: the first one to look takes it, every two seconds (D211).
-            if (owner == nullptr && ++ticksSinceProbe >= 60)
-            {
-                ticksSinceProbe = 0;
-                if (takeDevice())
-                    tryOpen();
-            }
+            // Another CoolSynth drives it, or nobody: the first one to look takes it (D211).
+            if (owner == nullptr && devicePresent && (changed || retry) && takeDevice())
+                tryOpen();
             return;
         }
         for (const auto& message : pending)
@@ -363,31 +382,20 @@ namespace coolsynth::ui
 
         if (! isConnected())
         {
-            if (++ticksSinceProbe >= 60) // look for the device every two seconds
-            {
-                ticksSinceProbe = 0;
+            if (devicePresent && (changed || (retry && portBusy)))
                 tryOpen();
-            }
         }
         else
         {
-            // unplugged: the port is gone from the list
-            if (++ticksSinceProbe >= 60)
+            if (changed && ! devicePresent)
             {
-                ticksSinceProbe = 0;
-                bool present = false;
-                for (const auto& info : juce::MidiInput::getAvailableDevices())
-                    present = present || info.identifier == inputIdentifier;
-                if (! present)
-                {
-                    // the device is gone: drop the ports without talking to it
-                    coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, "unplugged");
-                    input = nullptr;
-                    output = nullptr;
-                    inputIdentifier = {};
-                    setConnected(false);
-                    return;
-                }
+                // unplugged: the device is gone, so drop the ports without talking to it
+                coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, "unplugged");
+                input = nullptr;
+                output = nullptr;
+                inputIdentifier = {};
+                setConnected(false);
+                return;
             }
             refreshDevice(false);
         }

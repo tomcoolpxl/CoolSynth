@@ -9,6 +9,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "midi/ControllerSetup.h"
+#include "midi/DuplicateNoteFilter.h"
 #include "plugin/ParameterUndoHistory.h"
 #include "plugin/ProcessorScopeFifo.h"
 #include "parameters/v3/PartParameters.h"
@@ -423,6 +424,8 @@ private:
     void releaseRetiredUserSounds();
     coolsynth::synth::v3::EngineV3 synthEngine;
     std::atomic<bool> panicRequested { false };
+    coolsynth::midi::DuplicateNoteFilter duplicateNotes; // audio thread: one note by two routes plays once (D216)
+    std::int64_t samplesSoFar = 0;                       // audio thread: the filter's clock
     int currentProgram = 0;
     juce::File playingMySoundFile;                                  // D180: a saved sound playing, else none
     bool playingFactorySound = true;                                // D193: currentProgram is the sound playing

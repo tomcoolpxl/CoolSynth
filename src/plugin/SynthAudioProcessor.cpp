@@ -396,6 +396,8 @@ void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     setLatencySamples(synthEngine.getLatencySamples());
     scopeFifo.clear();
     monoMixScratch.resize(static_cast<size_t>(samplesPerBlock));
+    duplicateNotes.prepare(sampleRate);
+    samplesSoFar = 0;
 }
 
 void SynthAudioProcessor::releaseResources()
@@ -536,17 +538,28 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         // is being learned, all of them.
         if (! clicked)
         {
+            const std::int64_t time = samplesSoFar + samplePosition;
             // The MiniLab's knobs, pads and buttons the host passes on while a CoolSynth here drives it (D211): the
-            // driver has them already, and a pad must not play a note.
+            // driver has them already, and a pad must not play a note. By message, exactly (D216).
             namespace ml = coolsynth::midi::minilab3;
-            if (coolsynth::ui::MiniLab3Driver::drivenInPlugin()
-                && (ml::decode(message).kind != ml::Control::Kind::other || coolsynth::ui::MiniLab3Driver::isPadEcho(message)))
+            if (coolsynth::ui::MiniLab3Driver::drivenInPlugin() && ml::decode(message).kind != ml::Control::Kind::other)
+            {
+                if (message.isNoteOn())
+                    duplicateNotes.noteTaken(message.getNoteNumber(), time);
                 return;
+            }
             using coolsynth::midi::ControllerSetup;
             if (ControllerSetup::wanted(message))
                 if (const auto event = coolsynth::midi::toControllerEvent(message))
                     enqueueControllerEvent(*event);
             if (ControllerSetup::takesFromSound(message))
+            {
+                if (message.isNoteOn())
+                    duplicateNotes.noteTaken(message.getNoteNumber(), time);
+                return;
+            }
+            // The same note again by a second route (FL Studio with a MIDI port set): it plays once (D216).
+            if (duplicateNotes.isDuplicate(message, time))
                 return;
         }
         if (loading && message.isNoteOn())
@@ -710,6 +723,7 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     {
         scopeFifo.write(buffer.getReadPointer(0), numSamples);
     }
+    samplesSoFar += numSamples; // the duplicate-note filter's clock (D216)
 }
 
 void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, double startMs) noexcept

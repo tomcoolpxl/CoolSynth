@@ -7,8 +7,10 @@
 #include "interface/InterfaceModel.h"
 #include "midi/ControllerMap.h"
 #include "midi/ControllerSetup.h"
+#include "midi/DuplicateNoteFilter.h"
 #include "parameters/ParameterIDs.h"
 #include "plugin/SynthAudioProcessor.h"
+#include "presets/FactoryPresets.h"
 
 /*
     Any controller on the panel (D211): the map, the turn detection, value scaling, the ready profiles, and a
@@ -327,3 +329,110 @@ public:
 };
 
 static ControllerTests controllerTests;
+
+/*
+    D216: one note by two routes plays once (FL Studio's doubled delivery), and the MiniLab 3's ready setup in both its
+    programs. Its own class: the test runner's stack frame is small in Debug.
+*/
+class ControllerRouteTests final : public juce::UnitTest
+{
+public:
+    ControllerRouteTests() : juce::UnitTest("Controller routes", "CoolSynth") {}
+
+    void runTest() override
+    {
+        using namespace coolsynth::midi;
+        auto cc = [](int number, int channel = 1) { return ControlId { ControlId::Kind::cc, channel, number }; };
+
+        beginTest("a second copy of a note within 3 ms is dropped, with one of its releases");
+        {
+            DuplicateNoteFilter filter;
+            filter.prepare(48000.0); // 3 ms = 144 samples
+            const auto on = juce::MidiMessage::noteOn(1, 60, static_cast<juce::uint8>(100));
+            const auto off = juce::MidiMessage::noteOff(1, 60);
+            expect(! filter.isDuplicate(on, 1000), "the first copy plays");
+            expect(filter.isDuplicate(juce::MidiMessage::noteOn(10, 60, static_cast<juce::uint8>(100)), 1000),
+                   "the second, at the same moment and on another channel, does not");
+            expect(filter.isDuplicate(off, 1200), "one release is the copy's");
+            expect(! filter.isDuplicate(off, 1200), "the other is the key's own");
+            expect(! filter.isDuplicate(on, 1000 + 144 + 1), "a new strike after the window plays");
+            expect(! filter.isDuplicate(juce::MidiMessage::noteOn(1, 62, static_cast<juce::uint8>(90)), 1000),
+                   "another note at the same moment is a chord");
+            filter.noteTaken(36, 5000);
+            expect(filter.isDuplicate(juce::MidiMessage::noteOn(1, 36, static_cast<juce::uint8>(90)), 5010),
+                   "a pad the panel took does not sound by the other route");
+        }
+
+        beginTest("a pad's copy by FL Studio's second route plays no note");
+        {
+            // FL with a MIDI port set delivers the pad twice: on its own channel (10, linked: the panel takes it) and
+            // again through its routing to the selected channel, here on channel 1.
+            ControllerMap map;
+            map.link(Place::pad1, { ControlId::Kind::note, 10, 36 }, Encoding::absolute);
+            ControllerSetup::instance().useForTesting(map);
+            auto processor = std::make_unique<SynthAudioProcessor>();
+            processor->prepareToPlay(48000.0, 256);
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                if (coolsynth::presets::getFactoryPreset(i).name == "Basic Saw")
+                    processor->loadSoundIntoLayer(i, 0);
+            juce::AudioBuffer<float> buffer(2, 256);
+            juce::MidiBuffer both;
+            both.addEvent(juce::MidiMessage::noteOn(10, 36, static_cast<juce::uint8>(100)), 10);
+            both.addEvent(juce::MidiMessage::noteOn(1, 36, static_cast<juce::uint8>(100)), 10);
+            processor->processBlock(buffer, both);
+            processor->flushMappedControllerEventsSync();
+            expectEquals(processor->engineForTesting().activeVoiceCount(), 0, "the pad plays no note by either route");
+            expect(processor->getInterfaceModel().view() == coolsynth::ui::InterfaceModel::View::home, "and pad 1 opened Home");
+
+            // A key of that pitch a moment later is a key.
+            juce::MidiBuffer key;
+            key.addEvent(juce::MidiMessage::noteOn(1, 36, static_cast<juce::uint8>(100)), 200);
+            processor->processBlock(buffer, key);
+            expectEquals(processor->engineForTesting().activeVoiceCount(), 1, "the key plays");
+            ControllerSetup::instance().useForTesting({});
+        }
+
+        beginTest("the MiniLab 3's ready setup answers in its Arturia and its DAW program");
+        {
+            const auto* ml = readyProfile("arturia.minilab3");
+            expect(ml != nullptr);
+            if (ml != nullptr)
+            {
+                const auto& map = ml->map;
+                for (int number : { 19, 116 })
+                {
+                    const auto* link = map.placeFor(cc(number));
+                    expect(link != nullptr && link->place == Place::knob7, "knob 7 as CC " + juce::String(number));
+                }
+                for (int number : { 17, 31 })
+                {
+                    const auto* link = map.placeFor(cc(number));
+                    expect(link != nullptr && link->place == Place::fader4, "fader 4 as CC " + juce::String(number));
+                }
+                const auto* turn = map.placeFor(cc(28));
+                expect(turn != nullptr && turn->place == Place::mainTurn && turn->encoding == Encoding::offsetGap);
+                expect(map.placeFor(cc(118)) != nullptr && map.placeFor(cc(118))->place == Place::mainPress);
+                expect(map.placeFor(cc(27)) != nullptr && map.placeFor(cc(27))->place == Place::shift);
+                expect(map.linkOf(Place::knob7) != nullptr && map.linkOf(Place::knob7)->control == cc(19, 0),
+                       "the panel names the Arturia program's control first");
+
+                // Kept whole when saved and read back (a place with two controls).
+                const auto copy = ControllerMap::fromVar(juce::JSON::parse(juce::JSON::toString(map.toVar())));
+                expectEquals(static_cast<int>(copy.places.size()), static_cast<int>(map.places.size()));
+                expect(copy.placeFor(cc(116)) != nullptr && copy.placeFor(cc(19)) != nullptr);
+            }
+            // The DAW program's main knob: 65 one click right, 62 one click left (63 never comes).
+            expectEquals(relativeSteps(Encoding::offsetGap, 65), 1);
+            expectEquals(relativeSteps(Encoding::offsetGap, 66), 2);
+            expectEquals(relativeSteps(Encoding::offsetGap, 62), -1);
+            expectEquals(relativeSteps(Encoding::offsetGap, 61), -2);
+
+            // Learning a place still gives it one control.
+            ControllerMap learned = ml != nullptr ? ml->map : ControllerMap {};
+            learned.link(Place::knob7, cc(50), Encoding::absolute);
+            expect(learned.placeFor(cc(19)) == nullptr && learned.placeFor(cc(116)) == nullptr, "both old controls let go");
+        }
+    }
+};
+
+static ControllerRouteTests controllerRouteTests;
