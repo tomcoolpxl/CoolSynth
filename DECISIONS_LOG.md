@@ -4415,3 +4415,13 @@ The user asked to clean up the repository: "a shitload of MD documents ... they'
 - DONE.md deleted and TODO.md trimmed to its 17 open items, the user's choice (options: that, recommended and chosen; move all records to docs/; keep all three). The decision log stays at the top.
 - From docs/, the user's picks: the macro drafts, the two UI mock-up pages and the old V2 notes are deleted; the track-mode note stays.
 - The README and the v0.3.0 release notes rewritten after the user's words on their layout: GitHub joins wrapped lines into blobs, and bold lead-in bullets, tables and numbered steps read as AI writing. Now short one-line paragraphs, plain sub-bullets, bold only for menu paths. CoolSynth is called bi-timbral, with layer A and layer B, as Sequential calls the Prophet Rev2; "two-layer synthesizer" is not a term. The published release body was replaced too.
+
+## D215. What to do after 0.3.0 (2026-11-19)
+
+The user ticked, from every open item (check marks, each item explained):
+
+- Release and listening: the FL Studio knob test, the installer and Ableton check, the listening pass, and the verdicts on the sampled instruments and the Night Bus presets.
+- Sounds and effects: the stutter effect (then the Pitch effect's Tune mode and formant control), the Museum's hoover and Juno-106, the wine glasses for the granular source.
+- Engine: a lower CPU cost for the virtual analog oscillator, and freeing a sampled voice once its recording has ended.
+- Fine-tuning and code: the ladder filter by ear, the sound-quality tests, the 'Your keyboard' line for any keyboard, and removing V2's old panel code.
+- Not ticked: streaming samples from disk, and the recorder; both stay in TODO.md as not chosen. MPE: "never", removed from TODO.md.

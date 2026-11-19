@@ -1,6 +1,6 @@
 # TODO
 
-Open work only. What is done, and why, is in `DECISIONS_LOG.md` and the git history; decisions taken while the
+Open work only. Chosen by the user on 2026-11-19 (D215): items 1-7 and 9-17 except 11 and 12; MPE dropped for good. What is done, and why, is in `DECISIONS_LOG.md` and the git history; decisions taken while the
 user was away are there too, each with every option: review them.
 
 ## Before or right after the first release (0.3.0)
@@ -27,7 +27,6 @@ user was away are there too, each with every option: review them.
    effect; then the Pitch effect's Tune mode and formant control.
 6. The Museum: the hoover and Juno-106 patches still have no published source.
 7. The wine glasses as a source for the Grain generator.
-8. MPE (each note on its own channel with its own bend, pressure and slide): waits for an MPE controller (D136).
 
 ## Engine
 
@@ -37,8 +36,8 @@ user was away are there too, each with every option: review them.
    sine gains 6 %, D140), Drive about 6 %, Comb under 4 %, the VA saw under 2 %.
 10. A sampled voice whose one-shot recording has ended holds its voice until its release is over (up to 20 s on
     bells and mallets): nothing is lost, older voices go first, but it costs processing.
-11. Streaming from disk, for libraries bigger than the memory.
-12. The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
+11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
+12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).
 13. Ladder by ear: drive headroom, the bass default, the mode level matching, and whether the self-oscillation
     level (rms 0.15 at full resonance) wants an output lift.
