@@ -45,7 +45,6 @@ public:
     bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
     void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
-    juce::AudioProcessorEditor* createEditor() override;
     bool hasEditor() const override { return true; }
 
     // ---- CLAP remote control pages (D216): a controller's eight knobs follow the panel's page ------------------
@@ -284,6 +283,9 @@ public:
     }
 
 private:
+    // Private as in JUCE 9: an editor is made through createEditorAndMakeActive, so getActiveEditor knows it.
+    juce::AudioProcessorEditor* createEditor() override;
+
     /** Controller moves and learned chords reach the message thread through a flag that a 100 Hz timer reads:
         JUCE's AsyncUpdater takes a lock and may allocate when the audio thread triggers it (D159). */
     class PluginMappedActionAsyncBridge final : private juce::Timer

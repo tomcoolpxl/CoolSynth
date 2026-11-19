@@ -67,6 +67,18 @@ namespace coolsynth::ui
         std::unique_ptr<juce::MidiOutput> output;
         juce::String inputIdentifier;
 
+        // JUCE 9 says when a port it opened is gone, and whether a message got out: either marks the ports lost, and
+        // the next timer tick drops them (not inside the port's own call). Message thread.
+        struct PortWatch final : juce::ump::DisconnectionListener
+        {
+            explicit PortWatch(bool& lostFlag) : lost(lostFlag) {}
+            void disconnected() override { lost = true; }
+            bool& lost;
+        };
+        bool portLost = false;
+        PortWatch portWatch { portLost };
+        void dropPorts();
+
         juce::CriticalSection queueLock;
         std::vector<juce::MidiMessage> queue;   // control messages from the MIDI thread
 

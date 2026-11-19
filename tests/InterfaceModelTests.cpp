@@ -663,7 +663,7 @@ public:
         const juce::ScopedJuceInitialiser_GUI gui;
         auto synth = std::make_unique<SynthAudioProcessor>();
         auto& model = synth->getInterfaceModel();
-        std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditor());
+        std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditorAndMakeActive());
         expect(editor != nullptr);
         // beside the test program, in the build folder, wherever it is run from (not the source tree)
         const auto folder = juce::File::getSpecialLocation(juce::File::currentExecutableFile).getParentDirectory();
@@ -1135,7 +1135,7 @@ public:
         model.back();
 
         beginTest("The wheel scrolls the screen's list, and a right click goes back, on the panel itself");
-        std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditor());
+        std::unique_ptr<juce::AudioProcessorEditor> editor(synth->createEditorAndMakeActive());
         auto* panel = dynamic_cast<PanelEditor*>(editor.get());
         expect(panel != nullptr);
         model.pressPad(coolsynth::ui::InterfaceModel::homePad, false);

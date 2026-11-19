@@ -207,7 +207,7 @@ env1 = loop=maybe attack=abc
         {
             auto processor = std::make_unique<SynthAudioProcessor>();
             {
-                std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditor());
+                std::unique_ptr<juce::AudioProcessorEditor> editor(processor->createEditorAndMakeActive());
                 expect(editor != nullptr);
                 expect(editor->getWidth() >= 560 && editor->getHeight() > 100);
                 editor->setSize(900, 700);

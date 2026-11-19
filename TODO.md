@@ -33,18 +33,21 @@ C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, test
     - The installer puts it in `C:\Program Files\Common Files\CLAP` (its own tick box); the release has a CLAP zip.
 C6. Test per DAW (Ableton, FL Studio, Reaper, and Bitwig or Studio One if available): which hosts call `IMidiMapping`
     (a logging build), the duplicate filter, the channel-1 setting, the guided setup step by step (never tested by
-    hand yet), the MiniLab in both programs, and the CLAP pages. To try a build in a DAW without a release, make a
+    hand yet), the MiniLab in both programs, and the CLAP pages. From J1b: unplug and replug the MiniLab (its screen
+    should let go at once), the layer menu (a right click on a layer panel) opening at the panel in two DAWs, and the
+    panel at Windows scaling 125 % and 150 % in the app and in a DAW (the CLAP's editor too: clap-juce-extensions
+    has an open report of a clipped editor at such scaling). The user chose on 2026-11-19 to do this later, after
+    the coding left (D217). To try a build in a DAW without a release, make a
     test installer from the Debug build (from `installer`):
     `iscc /DAppVersion=0.3.0 /DBuildDir=..\build\CoolSynth_artefacts\Debug /O<folder> CoolSynth.iss`.
 
 ## JUCE, platforms and the next release
 
 J1. JUCE 9.0.5: done on 2026-11-19 (D217). Everything builds, the CLAP too, and the full suite passes (562 s).
-J1b. The JUCE 9 review round (D217): done, with two fixes (the Save dialog's replace question off the deprecated
-    `showOkCancelBox`; a saved sound's path from a Mac project no longer taken for a Windows path). Left for the
-    user to choose, as a pick list: noticing a MiniLab pulled out at once (`sendMessageNow` now says whether it got
-    there), Windows MIDI Services in JUCE (multi-client ports, no "in use by another program"), popup menus parented
-    to the plugin window, the test calls to `createEditorAndMakeActive`, a look at the panel at 125 % and 150 %.
+J1b. The JUCE 9 review round (D217): done. Fixed: the Save dialog's replace question (off the deprecated
+    `showOkCancelBox`), a saved sound's path from a Mac project, CoolSynth letting go of a MiniLab as soon as its
+    port is gone, the layer menu tied to the panel, the editor made the JUCE 9 way. Windows MIDI Services stays
+    Windows' own, the user's choice. Left: the hardware and DAW checks, under C6.
 J2. macOS, for the user's Mac (the user comes back to it): AU, VST3 and CLAP on macOS; an installer package with
     signing and notarisation; the MiniLab driver on CoreMIDI; the FL Studio and Ableton script folders on macOS; the
     sample library's place; a macOS runner in the CI. In Logic an AU gets the controller's messages as sent.

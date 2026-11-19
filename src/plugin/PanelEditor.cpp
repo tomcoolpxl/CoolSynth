@@ -2335,7 +2335,10 @@ public:
                 menu.addItem(i + 1, actions[i]);
         }
         juce::Component::SafePointer<Content> self(this);
-        menu.showMenuAsync(juce::PopupMenu::Options().withTargetScreenArea(localAreaToGlobal(layerPanels[static_cast<std::size_t>(layer)])),
+        // The panel as the target first, for the menu's scale on a hi-DPI screen and, since JUCE 9.0.5, a native
+        // window tied to the plugin's; then the layer panel's area, where it opens.
+        menu.showMenuAsync(juce::PopupMenu::Options().withTargetComponent(this)
+                                                     .withTargetScreenArea(localAreaToGlobal(layerPanels[static_cast<std::size_t>(layer)])),
                            [self, layer](int chosen)
                            {
                                if (self == nullptr || chosen == 0)

@@ -140,6 +140,9 @@ namespace coolsynth::ui
         portBusy = false;
         busyAnnounced = false;
         inputIdentifier = inInfo.identifier;
+        portLost = false;
+        input->addDisconnectionListener(portWatch);
+        output->addDisconnectionListener(portWatch);
         input->start();
         send(ml::connect());
         coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, inPlugin ? "connected in a plugin, DAW program"
@@ -153,12 +156,21 @@ namespace coolsynth::ui
     {
         if (input != nullptr)
             input->stop();
-        if (output != nullptr && sayGoodbye)
+        if (output != nullptr && sayGoodbye && ! portLost)
         {
             output->sendMessageNow(ml::clearScreen());
             output->sendMessageNow(ml::disconnect());
             output->sendMessageNow(ml::disconnectOther());
         }
+        dropPorts();
+    }
+
+    void MiniLab3Driver::dropPorts()
+    {
+        if (input != nullptr)
+            input->removeDisconnectionListener(portWatch);
+        if (output != nullptr)
+            output->removeDisconnectionListener(portWatch);
         input = nullptr;
         output = nullptr;
         inputIdentifier = {};
@@ -191,8 +203,9 @@ namespace coolsynth::ui
 
     void MiniLab3Driver::send(const juce::MidiMessage& message)
     {
-        if (output != nullptr)
-            output->sendMessageNow(message);
+        // A message that did not get out: the port is gone (JUCE 9 says so; a sysex message may not).
+        if (output != nullptr && ! output->sendMessageNow(message))
+            portLost = true;
     }
 
     void MiniLab3Driver::handleIncomingMidiMessage(juce::MidiInput*, const juce::MidiMessage& message)
@@ -387,13 +400,20 @@ namespace coolsynth::ui
         }
         else
         {
-            if (changed && ! devicePresent)
+            if ((changed && ! devicePresent) || portLost)
             {
-                // unplugged: the device is gone, so drop the ports without talking to it
-                coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, "unplugged");
-                input = nullptr;
-                output = nullptr;
-                inputIdentifier = {};
+                // Unplugged, or its port went away (JUCE 9 says so at once, before Windows' device list changes):
+                // the ports are dropped without talking to the device.
+                coolsynth::diag::record(coolsynth::diag::Event::miniLab, 0, 0, 0.0f, 0.0f, portLost ? "port lost" : "unplugged");
+                dropPorts();
+                if (portLost)
+                {
+                    portLost = false;
+                    devicePresent = miniLabPresent();
+                    // Still listed: unplugged before Windows took it off the list, or a port that failed. Opened again
+                    // every two seconds, without telling the player another program has it, until the list says gone.
+                    portBusy = busyAnnounced = devicePresent;
+                }
                 setConnected(false);
                 return;
             }
