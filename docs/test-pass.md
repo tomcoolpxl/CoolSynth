@@ -81,8 +81,10 @@ Each line says what to do and what should happen. Tick it off here, or tell me w
 - Choosing a sample by turning one knob through the whole list is slow, and clicking the lit value should set it
   too (TODO 26).
 - The value display is too small for a file's name: "CoolSynth test kit" and "CoolSynth test kit/10 clap.wav"
-  look the same, as only the first characters show. The list holds the kit folder and then each file inside it, so
-  you chose the clap file instead of the kit without seeing it.
+  looked the same, as only the first characters showed. Fixed (D225, the user's choice): the knob's name line says
+  where the file is ("Kit: CST2", "CST2/", "Your files"), its value line the file's name without ".wav"
+  (a kit: how many files); what does not fit is shortened in the middle, on the panel and on the MiniLab.
+  Not built: the single slow scroll of a long name after the knob rests.
 - That one file seemed not to play: replayed from the app's saved state it plays at -79 dB, as Start was at 21 % and
   the test clap has nearly all its sound in its first 50 ms. Not an engine fault; the names are now short (CST1, CST2).
 - Your own samples play very quietly: a file put into a preset takes that preset's level (Basic Saw's layer is at

@@ -45,6 +45,22 @@ namespace
 
     const juce::String emDash = juce::String(juce::CharPointer_UTF8("\xe2\x80\x94"));
 
+    /** Text that fits a width: as it is, or its start and its end with the middle left out (D225), as a file's own name
+        is mostly at its end and "CST2/1 kick" must not read as "CST2/1 k...". */
+    juce::String fitMiddle(const juce::String& text, const juce::Font& font, int width)
+    {
+        if (juce::GlyphArrangement::getStringWidthInt(font, text) <= width)
+            return text;
+        const juce::String dots(juce::CharPointer_UTF8("\xe2\x80\xa6"));
+        for (int keep = text.length() - 1; keep > 1; --keep)
+        {
+            const auto shorter = text.substring(0, (keep + 1) / 2) + dots + text.substring(text.length() - keep / 2);
+            if (juce::GlyphArrangement::getStringWidthInt(font, shorter) <= width)
+                return shorter;
+        }
+        return dots;
+    }
+
     /** A mouse wheel's steps (D193): one notch is one step. JUCE gives a Windows notch as 0.234375 (120 / 2 / 256),
         which times the old 8.5 made 1.99 and so moved one row, then two. A high-resolution wheel's part-notches add
         up; a smooth wheel (a trackpad) scrolls as before. `sum` keeps what has not made a whole step yet. */
@@ -645,9 +661,10 @@ public:
                        card.removeFromTop(12), juce::Justification::centredLeft);
             g.setFont(mono(11.0f));
             g.setColour(view.active && ! view.idle ? colours::screenInk : (view.active ? colours::screenDim : colours::screenLine.brighter(0.3f)));
-            g.drawText(view.name, card.removeFromTop(15), juce::Justification::centredLeft);
+            g.drawText(fitMiddle(view.name, g.getCurrentFont(), card.getWidth()), card.removeFromTop(15), juce::Justification::centredLeft);
             g.setColour(view.active ? accent : colours::screenLine);
-            g.drawText(view.active ? view.value : juce::String(), card.removeFromTop(15), juce::Justification::centredLeft);
+            g.drawText(view.active ? fitMiddle(view.value, g.getCurrentFont(), card.getWidth()) : juce::String(), card.removeFromTop(15),
+                       juce::Justification::centredLeft);
             auto bar = card.removeFromTop(3).toFloat();
             g.setColour(colours::screenLine);
             g.fillRoundedRectangle(bar, 1.5f);

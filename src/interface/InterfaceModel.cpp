@@ -708,6 +708,9 @@ namespace coolsynth::ui
         {
             view.value = source && pendingChoice->index >= instruments ? userEntryText(pendingChoice->index - instruments)
                                                                       : p->getText(pendingChoice->value, 64);
+            if (const int entry = pendingChoice->index - instruments;
+                source && entry >= 0 && entry < static_cast<int>(userEntries.size()) && userEntries[static_cast<std::size_t>(entry)].name.isNotEmpty())
+                describeUserFile(userEntries[static_cast<std::size_t>(entry)].name, userEntries[static_cast<std::size_t>(entry)].kit, view.name, view.value);
             view.normalised = pendingChoice->value;
             view.pending = true;
         }
@@ -716,7 +719,7 @@ namespace coolsynth::ui
             // The user's own file or kit (D207), by its name.
             const auto file = synth.getUserFile(part, slot);
             const bool kit = coolsynth::synth::v3::UserLibrary::instance().folder().getChildFile(file).isDirectory();
-            view.value = kit ? file + "/ (kit)" : file;
+            describeUserFile(file, kit, view.name, view.value);
             view.normalised = 1.0f;
         }
         return view;
@@ -943,6 +946,24 @@ namespace coolsynth::ui
                 if (userEntries[i].name == file)
                     return instruments + static_cast<int>(i);
         return juce::roundToInt(source.getValue() * static_cast<float>(instruments - 1));
+    }
+
+    void InterfaceModel::describeUserFile(const juce::String& file, bool kit, juce::String& where, juce::String& name) const
+    {
+        if (kit)
+        {
+            int files = 0;
+            for (const auto& e : userEntries)
+                if (! e.kit && e.name.startsWith(file + "/") && ! e.name.fromFirstOccurrenceOf(file + "/", false, false).containsChar('/'))
+                    ++files;
+            where = "Kit: " + file;
+            name = files == 1 ? juce::String("1 file") : juce::String(files) + " files";
+            return;
+        }
+        const auto folder = file.containsChar('/') ? file.upToLastOccurrenceOf("/", false, false) : juce::String();
+        where = folder.isEmpty() ? juce::String("Your files") : folder + "/";
+        const auto own = file.fromLastOccurrenceOf("/", false, false);
+        name = own.containsChar('.') ? own.upToLastOccurrenceOf(".", false, false) : own;
     }
 
     juce::String InterfaceModel::userEntryText(int entry) const

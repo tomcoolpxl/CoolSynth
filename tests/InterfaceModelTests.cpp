@@ -141,14 +141,18 @@ public:
                 folder.getChildFile("Breaks/amen.wav").replaceWithText("not audio, but a name");
                 folder.getChildFile("vox.wav").replaceWithText("not audio, but a name");
                 model->turnKnob(1, 500, false);
-                expectEquals(model->knob(1).value, juce::String("vox.wav"), "the last of the user's entries");
+                // Two lines (D225): where the file is, then its name without the extension; a kit says so.
+                expectEquals(model->knob(1).value, juce::String("vox"), "the last of the user's entries");
+                expectEquals(model->knob(1).name, juce::String("Your files"));
                 model->turnKnob(1, -1, false);
-                expectEquals(model->knob(1).value, juce::String("Breaks/amen.wav"));
+                expectEquals(model->knob(1).value, juce::String("amen"));
+                expectEquals(model->knob(1).name, juce::String("Breaks/"), "a file in a folder: the folder on its own line");
                 model->turnKnob(1, -1, false);
-                expectEquals(model->knob(1).value, juce::String("Breaks/ (kit)"), "a folder plays as a kit");
+                expectEquals(model->knob(1).name, juce::String("Kit: Breaks"), "a folder plays as a kit");
+                expectEquals(model->knob(1).value, juce::String("1 file"));
                 model->pressKnob(1);
                 expectEquals(synth->getUserFile(0, 1), juce::String("Breaks"));
-                expectEquals(model->knob(1).value, juce::String("Breaks/ (kit)"), "the knob names what plays");
+                expectEquals(model->knob(1).name, juce::String("Kit: Breaks"), "the knob names what plays");
 
                 model->turnKnob(1, -1, false); // back onto the last instrument
                 expect(! model->knob(1).value.contains("/"), model->knob(1).value);

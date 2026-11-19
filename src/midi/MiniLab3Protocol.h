@@ -58,6 +58,16 @@ namespace coolsynth::midi::minilab3
         return bytes;
     }
 
+    /** A long name with its start and its end, the middle left out ("Flemish..chord"), as file names are shortened
+        (D225): a file's own name is mostly at its end. */
+    inline juce::String middleCut(const juce::String& text, int maxChars)
+    {
+        if (text.length() <= maxChars || maxChars < 5)
+            return text;
+        const int kept = maxChars - 2;
+        return text.substring(0, (kept + 1) / 2) + ".." + text.substring(text.length() - kept / 2);
+    }
+
     inline juce::uint8 to7Bit(juce::uint8 component) noexcept { return static_cast<juce::uint8>(component >> 1); }
 
     /** One pad of bank A (0-7) in any colour, kept until changed. */
@@ -99,7 +109,8 @@ namespace coolsynth::midi::minilab3
     inline juce::MidiMessage popup(bool fader, const juce::String& name, const juce::String& value, float normalised)
     {
         const auto v = static_cast<juce::uint8>(juce::jlimit(0, 127, juce::roundToInt(normalised * 127.0f)));
-        return detail::screen({ 0x1F, static_cast<juce::uint8>(fader ? 0x04 : 0x03), 0x02, v, 0x00, 0x00 }, name, 16, value, 18);
+        return detail::screen({ 0x1F, static_cast<juce::uint8>(fader ? 0x04 : 0x03), 0x02, v, 0x00, 0x00 }, middleCut(name, 16), 16,
+                              middleCut(value, 18), 18);
     }
 
     /** The full screen: top line big (16 characters), bottom line small (18), no arrows, no marker. Stays until

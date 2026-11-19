@@ -5,6 +5,7 @@
 #include <juce_gui_basics/juce_gui_basics.h>
 
 #include "diagnostics/FlightRecorder.h"
+#include "interface/InterfaceModel.h"
 #include "parameters/v3/PartParameters.h"
 #include "parameters/v3/SlotParameters.h"
 #include "plugin/SynthAudioProcessor.h"
@@ -351,6 +352,41 @@ namespace coolsynth::mcp
                                                 + (trace ? "\nEvery 50 ms:\n" + traceLines.joinIntoString("\n") : juce::String()));
                           },
                           true });
+
+        tools.push_back({ "panel",
+                          "Works the panel as the MiniLab or the mouse does, to bring a page into view or to try a control: press "
+                          "a pad (1-8, as the screen numbers them from the left: 1 is Home), turn a knob (1-8; 5 turns the "
+                          "pages) or the main knob by steps, or press a knob or the main knob. Take a screenshot to see the result.",
+                          objectSchema({ { "control", typeSchema("string", "'pad', 'knob', 'main' (the big knob under the screen)") },
+                                         { "number", typeSchema("integer", "The pad (1-8) or knob (1-8); not for 'main'") },
+                                         { "action", typeSchema("string", "'press' or 'turn'") },
+                                         { "steps", typeSchema("integer", "For 'turn': steps, negative turns left; 1 by default") },
+                                         { "shift", typeSchema("boolean", "A pad pressed with Shift held") } },
+                                       { "control", "action" }),
+                          [&synth](const juce::var& args)
+                          {
+                              auto& model = synth.getInterfaceModel();
+                              const auto control = args["control"].toString();
+                              const auto action = args["action"].toString();
+                              const int number = static_cast<int>(args["number"]);
+                              const int steps = args.hasProperty("steps") ? static_cast<int>(args["steps"]) : 1;
+                              if (control == "pad" && action == "press" && number >= 1 && number <= 8)
+                                  model.pressPad(number - 1, static_cast<bool>(args["shift"]));
+                              else if (control == "knob" && action == "turn" && number == 5)
+                                  model.turnPageKnob(steps);
+                              else if (control == "knob" && action == "turn" && number >= 1 && number <= 8)
+                                  model.turnKnob(number, steps, false);
+                              else if (control == "knob" && action == "press" && number >= 1 && number <= 8)
+                                  model.pressKnob(number);
+                              else if (control == "main" && action == "turn")
+                                  model.turnMain(steps);
+                              else if (control == "main" && action == "press")
+                                  model.pressMain();
+                              else
+                                  return textResult("Not a control: " + control + " " + juce::String(number) + " " + action, true);
+                              return textResult("Done: " + control + (control == "main" ? juce::String() : " " + juce::String(number)) + " " + action
+                                                + (action == "turn" ? " " + juce::String(steps) : juce::String()) + ".");
+                          } });
 
         tools.push_back({ "screenshot",
                           "A picture of CoolSynth's window as the player sees it now.",

@@ -65,7 +65,7 @@ public:
                     expectEquals(t["inputSchema"]["type"].toString(), juce::String("object"));
                 }
             for (const char* wanted : { "get_sound", "list_parameters", "set_values", "set_slot_type", "list_presets", "load_preset",
-                                        "list_files", "set_file", "play", "screenshot", "read_log" })
+                                        "list_files", "set_file", "play", "panel", "screenshot", "read_log" })
                 expect(names.contains(wanted), juce::String("missing tool ") + wanted);
             expectEquals(static_cast<int>(server.handleMessage(request(4, "no/such"))["error"]["code"]), -32601);
             expectEquals(static_cast<int>(server.handleMessage(request(5, "tools/call", json(R"({"name":"nope"})")))["error"]["code"]), -32602);

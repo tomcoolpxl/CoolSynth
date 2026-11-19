@@ -322,6 +322,9 @@ namespace coolsynth::ui
         /** Where the slot's source sits in the browsed list: its instrument, or the user's file after them. */
         [[nodiscard]] int loadedSourceIndex(const juce::RangedAudioParameter& source, int part, int slot) const;
         [[nodiscard]] juce::String userEntryText(int entry) const;
+        /** A file of the user's on a knob's two lines (D225): where it is ("Kit: CST2", "CST2/", "Your files"),
+            then its name without the extension (a kit: how many files), so a kit and a file in it never look alike. */
+        void describeUserFile(const juce::String& file, bool kit, juce::String& where, juce::String& name) const;
         void cancelPendingChoice() noexcept { pendingChoice.reset(); }
 
         juce::RangedAudioParameter* parameter(const juce::String& id) const;
