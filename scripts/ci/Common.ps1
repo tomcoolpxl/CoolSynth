@@ -252,9 +252,10 @@ function New-CoolSynthInstaller {
     $script = Join-Path $BuildContext.SourceRoot 'installer/CoolSynth.iss'
 
     $packageDir = $BuildContext.PackageDirectory
+    # ISCC's lines go to the screen and the log, not into this function's result (which must be the one package).
     Invoke-LoggedCommand -LogPath (Join-Path $BuildContext.LogsDirectory 'installer.log') -ScriptBlock {
         & $iscc "/DAppVersion=$version" "/DBuildDir=$buildDir" "/O$packageDir" "/F$baseName" $script
-    }
+    } | Out-Host
 
     $installer = Join-Path $BuildContext.PackageDirectory "$baseName.exe"
     Assert-PathExists -Path $installer -Description 'Installer'

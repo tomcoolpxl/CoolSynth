@@ -436,8 +436,10 @@ public:
                 const auto end = changed->now();
                 const auto changedRoughness = changed->roughness(at, end);
                 const auto ownRoughnessThere = ownRoughness(*changed, at, 0);
-                // It counts only if the earlier sound was still sounding while the loader worked.
-                const auto loadEnd = at + static_cast<std::size_t>(loadingBlocks) * blockSize;
+                // It counts only if the earlier sound was still sounding while the loader worked: over the load, and at
+                // least 50 ms, since an instrument in Windows' file cache is read in two blocks, too short to measure.
+                const auto minimumWindow = static_cast<std::size_t>(0.05 * sampleRate);
+                const auto loadEnd = at + std::max(static_cast<std::size_t>(loadingBlocks) * blockSize, minimumWindow);
                 loadsSeen += loadingBlocks > 0 && changed->roughness(at, loadEnd) > audibleFloor ? 1 : 0;
                 changed.reset();
 
