@@ -82,6 +82,10 @@ namespace coolsynth::synth::v3
         void prepare(double sampleRate, int maxBlockSize, std::uint32_t seed);
         /** Silent and idle at once: voices, held keys, effect tails, the mix's and the master gain's ramps. */
         void panic() noexcept;
+        /** Every random number of the sound back to where prepare left it, the beat count at 0: a defined start (D222). */
+        void reseed() noexcept;
+        /** The live emergency (D222): the quietest released voice of either layer fades out. False if none. */
+        bool shedQuietestReleased() noexcept;
 
         /**
             One block of at most the prepared size, with its events, played with `settings`, added into the sum: after
@@ -101,6 +105,9 @@ namespace coolsynth::synth::v3
         {
             return parts[0]->activeVoiceCountForTesting() + parts[1]->activeVoiceCountForTesting();
         }
+        /** The voices the playing layers may use, after the cap (D222), as of the last block. */
+        [[nodiscard]] int voiceLimit() const noexcept { return limitsNow[0] + limitsNow[1]; }
+        [[nodiscard]] int voiceLimitForTesting(int part) const noexcept { return limitsNow[static_cast<std::size_t>(std::clamp(part, 0, partCount - 1))]; }
         [[nodiscard]] std::uint32_t consumeLearnedChord(int partIndex) noexcept
         {
             return parts[static_cast<std::size_t>(std::clamp(partIndex, 0, partCount - 1))]->consumeLearnedChord();
@@ -170,5 +177,6 @@ namespace coolsynth::synth::v3
         float peak = 0.0f;
         double hostRate = 48000.0;
         double freeBeats = 0.0; // the beat count while no host position drives it
+        std::array<int, partCount> limitsNow {}; // each layer's voices after the cap, 0 when not playing
     };
 }

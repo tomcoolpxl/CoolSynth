@@ -44,6 +44,7 @@ namespace coolsynth::synth::v3
         static constexpr double quietSeconds = 0.25;   // silent this long: it ends at once
         static constexpr float quietLevel = 1.0e-5f;   // -100 dB
         static constexpr float overloadShare = 0.75f;  // of the block's time: the oldest earlier sound gives way
+        static constexpr float emergencyShare = 0.9f;  // with none left: a released voice of the sound itself (D222)
 
         using StageTiming = v3::StageTiming;
 
@@ -56,6 +57,10 @@ namespace coolsynth::synth::v3
                     const EngineSettings& settings,
                     const EngineTransportInfo& transport = {}) noexcept;
         void panic() noexcept;
+        /** As prepare leaves it: every sound ended, the first current, every random number from its seed (D222). */
+        void restart() noexcept;
+        /** Every random number from its seed, the sound as it is: the transport starting (D222). */
+        void reseed() noexcept;
 
         /** The share of its time the last block took, 0 to 1 or more: an earlier sound gives way when it is high. */
         void setLoad(float shareOfBlockTime) noexcept { load = shareOfBlockTime; }
@@ -68,6 +73,8 @@ namespace coolsynth::synth::v3
         // ---- For the flight recorder's tripwires (diagnostics/FlightRecorder.h), audio thread ----------------
         /** The slowest stage of the last block. */
         [[nodiscard]] const StageTiming& slowestStage() const noexcept { return slowest; }
+        /** The playing sound's voices after the cap (D222). */
+        [[nodiscard]] int voiceLimit() const noexcept { return units[static_cast<std::size_t>(current)]->voiceLimit(); }
         [[nodiscard]] int activeVoiceCount() const noexcept
         {
             int voices = 0;
@@ -97,6 +104,9 @@ namespace coolsynth::synth::v3
         /** True while a sampled instrument that a playing part names is still being read into memory (one that is
             not installed does not count). Asking is what starts the read. Audio thread, never waits. */
         [[nodiscard]] static bool sampledInstrumentPending(const EngineSettings& settings) noexcept;
+        /** Bouncing only (D222), as it waits: up to the time given for each sampled instrument and user's sound a
+            playing part names, so an offline render plays every key from the first block. False if one did not come. */
+        static bool waitForSounds(const EngineSettings& settings, int timeoutMilliseconds);
 
         [[nodiscard]] static int voicesWanted(const PartSettings& settings) noexcept { return SoundUnit::voicesWanted(settings); }
         [[nodiscard]] static std::array<int, partCount> voiceLimits(const std::array<int, partCount>& wanted) noexcept

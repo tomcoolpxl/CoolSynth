@@ -68,8 +68,13 @@ namespace coolsynth::synth::v3
             rng = (memory.seed() + 1u) * 2654435761u ^ 0x9E3779B9u;
             if (rng == 0)
                 rng = 1;
+            rngStart = rng;
             reset();
         }
+
+        /** Back to the random numbers it was prepared with: a defined start (D222). Not per note: a note's reset keeps
+            them running, so every note differs. */
+        void reseed() noexcept { rng = rngStart; }
 
         void reset() noexcept
         {
@@ -235,7 +240,7 @@ namespace coolsynth::synth::v3
         float currentPosition = 0.0f;
         bool positionPrimed = false;
         bool phasesPending = false;
-        std::uint32_t rng = 1;
+        std::uint32_t rng = 1, rngStart = 1;
         std::array<float, 4> ringLeft {}, ringRight {}, ringMono {}, ringWrap {};
         unsigned int cursor = 0;
         std::span<float> signalTrack, wrapTrack;

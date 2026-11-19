@@ -1,8 +1,10 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <memory>
+#include <vector>
 
 #include "parameters/v3/SlotParameters.h"
 #include "plugin/SynthAudioProcessor.h"
@@ -468,33 +470,61 @@ public:
 
         constexpr double sampleRate = 48000.0;
         constexpr int block = 256;
-        constexpr int blocks = static_cast<int>(2.0 * sampleRate) / block;
-        for (int index = 0; index < coolsynth::presets::getFactoryPresetCount(); ++index)
+        const double blockSeconds = block / sampleRate;
+        // Each block's share of its time, while `keys` plays: the first chord at the start, the second (if any) half
+        // way, which steals the first's voices (D222).
+        const auto play = [&](const coolsynth::presets::FactoryPreset& preset, double seconds, const std::vector<int>& first,
+                              const std::vector<int>& second)
         {
-            const auto& preset = coolsynth::presets::getFactoryPreset(index);
             auto processor = std::make_unique<SynthAudioProcessor>();
             processor->prepareToPlay(sampleRate, block);
             coolsynth::presets::applyFactoryPreset(processor->getValueTreeState(), preset);
-
+            processor->loadSampledInstrumentsNow();
             juce::AudioBuffer<float> buffer(2, block);
-            double worstBlock = 0.0;
-            const auto start = juce::Time::getHighResolutionTicks();
+            const int blocks = static_cast<int>(seconds * sampleRate) / block;
+            std::vector<double> shares;
+            shares.reserve(static_cast<std::size_t>(blocks));
             for (int b = 0; b < blocks; ++b)
             {
                 juce::MidiBuffer midi;
-                if (b == 0)
-                    for (int note : { 48, 52, 55, 59, 60, 64, 67, 72 })
-                        midi.addEvent(juce::MidiMessage::noteOn(1, note, static_cast<juce::uint8>(100)), 0);
+                for (const int note : b == 0 ? first : b == blocks / 2 ? second : std::vector<int> {})
+                    midi.addEvent(juce::MidiMessage::noteOn(1, note, static_cast<juce::uint8>(127)), 0);
                 buffer.clear();
                 const auto blockStart = juce::Time::getHighResolutionTicks();
                 processor->processBlock(buffer, midi);
-                worstBlock = std::max(worstBlock, juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - blockStart));
+                shares.push_back(100.0 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - blockStart) / blockSeconds);
             }
-            const double seconds = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start);
-            const double blockSeconds = block / sampleRate;
-            logMessage(preset.name.paddedRight(' ', 16) + " average " + juce::String(100.0 * seconds / 2.0, 1)
-                       + " % of real time, worst block " + juce::String(100.0 * worstBlock / blockSeconds, 1) + " %");
+            double average = 0.0;
+            for (const double s : shares)
+                average += s;
+            average /= static_cast<double>(std::max<std::size_t>(1, shares.size()));
+            std::sort(shares.begin(), shares.end());
+            const double p99 = shares.empty() ? 0.0 : shares[std::min(shares.size() - 1, static_cast<std::size_t>(0.99 * static_cast<double>(shares.size())))];
+            return std::array<double, 3> { average, p99, shares.empty() ? 0.0 : shares.back() };
+        };
+        std::vector<int> sixteen, sixteenMore;
+        for (int i = 0; i < 16; ++i)
+        {
+            sixteen.push_back(36 + 3 * i);
+            sixteenMore.push_back(37 + 3 * i);
         }
+        std::vector<std::pair<double, juce::String>> heaviest;
+        for (int index = 0; index < coolsynth::presets::getFactoryPresetCount(); ++index)
+        {
+            const auto& preset = coolsynth::presets::getFactoryPreset(index);
+            const auto chord = play(preset, 2.0, { 48, 52, 55, 59, 60, 64, 67, 72 }, {});
+            // The worst case (D222): sixteen keys at full velocity, then sixteen others, three seconds.
+            const auto hard = play(preset, 3.0, sixteen, sixteenMore);
+            logMessage(preset.name.paddedRight(' ', 16) + " average " + juce::String(chord[0], 1) + " % of real time, p99 "
+                       + juce::String(chord[1], 1) + " %, worst block " + juce::String(chord[2], 1) + " %; 16 keys twice: average "
+                       + juce::String(hard[0], 1) + " %, p99 " + juce::String(hard[1], 1) + " %, worst " + juce::String(hard[2], 1) + " %");
+            heaviest.emplace_back(hard[1], preset.name + " " + juce::String(hard[1], 1) + " %");
+        }
+        std::sort(heaviest.begin(), heaviest.end(), [](const auto& a, const auto& b) { return a.first > b.first; });
+        juce::StringArray top;
+        for (std::size_t i = 0; i < std::min<std::size_t>(10, heaviest.size()); ++i)
+            top.add(heaviest[i].second);
+        logMessage("heaviest at p99 with 16 keys twice: " + top.joinIntoString(", "));
     }
 };
 

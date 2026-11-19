@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <cmath>
 #include <memory>
@@ -87,6 +88,16 @@ namespace
                 s << static_cast<juce::int64>(v) << " ";
         return s.trim();
     }
+
+    /** The kinds of the first blocking calls the watch saw in audio blocks (D222). */
+    juce::String firstBlockingKinds()
+    {
+        juce::StringArray kinds;
+        for (const auto& kind : diag::audioBlockingCalls.firstKinds)
+            if (const auto k = kind.load(); k != 0)
+                kinds.add(diag::blockingCallName(k));
+        return kinds.joinIntoString(" ");
+    }
 }
 
 class AudioScenarioTests final : public juce::UnitTest
@@ -114,6 +125,46 @@ public:
             diag::resetAudioAllocations();
         }
 
+        beginTest("The watch counts the heap, a lock, a sleep and a file inside an audio block, and none outside (D222)");
+        {
+            expect(diag::watchBlockingCalls(), "the import tables could not be patched");
+            juce::CriticalSection lock;
+            const auto here = juce::File::getSpecialLocation(juce::File::currentExecutableFile);
+            diag::resetAudioAllocations();
+            {
+                const juce::ScopedLock held(lock);
+                juce::Thread::sleep(0);
+                juce::ignoreUnused(here.existsAsFile());
+            }
+            expectEquals(diag::audioBlockingCalls.count.load(), 0, "outside a block: " + firstBlockingKinds());
+            const auto kindSeen = [](diag::BlockingCall kind)
+            {
+                for (const auto& k : diag::audioBlockingCalls.firstKinds)
+                    if (k.load() == static_cast<int>(kind))
+                        return true;
+                return false;
+            };
+            for (const auto kind : { diag::BlockingCall::heap, diag::BlockingCall::lock, diag::BlockingCall::sleep, diag::BlockingCall::file })
+            {
+                diag::resetAudioAllocations();
+                {
+                    const diag::AudioBlockScope block;
+                    switch (kind)
+                    {
+                        case diag::BlockingCall::heap: std::free(std::malloc(64)); break;
+                        case diag::BlockingCall::lock: { const juce::ScopedLock held(lock); break; }
+                        case diag::BlockingCall::sleep: juce::Thread::sleep(20); break; // shorter ones wait on an event
+                        case diag::BlockingCall::file: juce::ignoreUnused(here.existsAsFile()); break;
+                        case diag::BlockingCall::none:
+                        case diag::BlockingCall::wait:
+                        default: break;
+                    }
+                }
+                expect(kindSeen(kind), juce::String("not seen: ") + diag::blockingCallName(static_cast<int>(kind)));
+            }
+            diag::resetAudioAllocations();
+        }
+
         beginTest("Every preset, a chord, and a switch to the next preset while it rings");
         {
             auto rig = std::make_unique<Rig>();
@@ -132,6 +183,7 @@ public:
                 rig->play(0.15);
             }
             expectEquals(diag::audioAllocations.count.load(), 0, "allocations in audio blocks, first sizes: " + firstSizes());
+            expectEquals(diag::audioBlockingCalls.count.load(), 0, "blocking calls in audio blocks, first kinds: " + firstBlockingKinds() + juce::String(diag::firstBlockingCallers()));
             expectEquals(rig->brokenSamples, 0, "NaN or infinity in the output");
             logMessage("worst block " + juce::String(rig->worstMs, 2) + " ms of " + juce::String(1000.0 * preparedBlock / sampleRate, 2)
                        + " ms over " + juce::String(presets) + " switches; peak " + juce::String(juce::Decibels::gainToDecibels(rig->peak), 1) + " dB");
@@ -155,6 +207,7 @@ public:
             rig->synth->requestPanic();
             rig->block(preparedBlock);
             expectEquals(diag::audioAllocations.count.load(), 0, "allocations, first sizes: " + firstSizes());
+            expectEquals(diag::audioBlockingCalls.count.load(), 0, "blocking calls in audio blocks, first kinds: " + firstBlockingKinds() + juce::String(diag::firstBlockingCallers()));
             expectEquals(rig->brokenSamples, 0);
             logMessage("All Sound Off block " + juce::String(soundOffMs, 3) + " ms, panic block " + juce::String(rig->worstMs, 3) + " ms");
         }
@@ -176,6 +229,7 @@ public:
                 rig->play(0.05);
             }
             expectEquals(diag::audioAllocations.count.load(), 0, "allocations, first sizes: " + firstSizes());
+            expectEquals(diag::audioBlockingCalls.count.load(), 0, "blocking calls in audio blocks, first kinds: " + firstBlockingKinds() + juce::String(diag::firstBlockingCallers()));
             expectEquals(rig->brokenSamples, 0);
             logMessage("worst block with 32 note-ons " + juce::String(rig->worstMs, 2) + " ms");
         }
@@ -308,6 +362,7 @@ public:
                 rig->play(0.05, length);
             }
             expectEquals(diag::audioAllocations.count.load(), 0, "allocations, first sizes: " + firstSizes());
+            expectEquals(diag::audioBlockingCalls.count.load(), 0, "blocking calls in audio blocks, first kinds: " + firstBlockingKinds() + juce::String(diag::firstBlockingCallers()));
             expectEquals(rig->brokenSamples, 0);
             expectGreaterThan(rig->peak, 0.001f, "it played");
         }

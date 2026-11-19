@@ -125,6 +125,8 @@ public:
     /** For the layer screen (D195): the voices sounding at the last block, and the tempo the arps and synced effects
         follow (the host's while it plays, else the internal one). */
     [[nodiscard]] int voicesPlaying() const noexcept { return voicesNow.load(std::memory_order_relaxed); }
+    /** What the playing sound may use after the voice cap (D222). */
+    [[nodiscard]] int voiceLimit() const noexcept { return voiceLimitNow.load(std::memory_order_relaxed); }
     [[nodiscard]] float tempoBpm() const noexcept { return tempoNow.load(std::memory_order_relaxed); }
 
     [[nodiscard]] CpuLoad cpuLoad() const noexcept
@@ -181,6 +183,10 @@ public:
 
     juce::MidiKeyboardState& getKeyboardState() noexcept { return keyboardState; }
     [[nodiscard]] coolsynth::synth::v3::EngineV3& engineForTesting() noexcept { return synthEngine; }
+    [[nodiscard]] const coolsynth::synth::v3::EngineSettings& engineSettingsForTesting() noexcept { return makeEngineSettings(); }
+    /** Live, a block finished late lets a sound or a released voice go (D158, D224): a test about the sound itself
+        turns that off, so a busy computer cannot change what it hears. */
+    void ignoreLoadForTesting(bool ignore) noexcept { loadIgnoredForTesting = ignore; }
     /** Multi-core (D164): Auto, the default, renders sounds that overlap on several cores; off keeps them all on the
         audio thread. Serial anyway while a host renders offline. COOLSYNTH_MULTICORE=0 switches it off. */
     void setMultiCore(bool on) noexcept { multiCoreWanted.store(on, std::memory_order_relaxed); }
@@ -445,6 +451,10 @@ private:
     /** Message thread: lets go of the user's files that only sounds which have ended still used. */
     void releaseRetiredUserSounds();
     coolsynth::synth::v3::EngineV3 synthEngine;
+    bool hostWasPlaying = false; // audio thread: the transport starting reseeds the engine (D222)
+    static constexpr int bounceWaitMilliseconds = 10000; // a bounce's wait for each sound (D222)
+    bool bounceGaveUp = false; // audio thread: a sound did not come within that wait
+    bool loadIgnoredForTesting = false;
     std::atomic<bool> panicRequested { false };
     std::vector<coolsynth::plugin::RemotePage> remotePagesNow; // message thread: the CLAP pages the host has (D216)
     int remotePageShown = -1;
@@ -487,6 +497,7 @@ private:
     std::atomic<int> threadLoadCount { 1 };
     std::atomic<float> worstBlockShare { 0.0f };
     std::atomic<int> voicesNow { 0 };       // D195: the layer screen's voice count
+    std::atomic<int> voiceLimitNow { 0 };   // D222: and what the cap allows
     std::atomic<float> tempoNow { 120.0f }; // D195: the tempo followed
     double secondBusyMs = 0.0; // audio thread: this second's block time (D172)
     float secondWorstMs = 0.0f;

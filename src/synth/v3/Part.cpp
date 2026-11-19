@@ -27,7 +27,7 @@ namespace coolsynth::synth::v3
         appliedGlobalEnvelope.attack = -1.0f; // forces the first apply
         stepModulator.prepare(voiceRate);
         chaos.prepare(voiceRate, seed ^ 0xC4A05000u);
-        arpeggiator.prepare(hostRate);
+        arpeggiator.prepare(hostRate, seed ^ 0xA4B00000u);
         chordMemory.prepare(hostRate);
         const auto chordCapacity = static_cast<std::size_t>(ChordMemory::maxEventsPerInput * coolsynth::synth::maxEngineEventsPerBlock
                                                             + ChordMemory::maxPending);
@@ -50,6 +50,12 @@ namespace coolsynth::synth::v3
 
         prepared = true;
         reset();
+        // Each reset draws the LFOs' first random values anew: the state now, as a fresh part plays, is the one a
+        // reseed returns to (D222).
+        for (auto& v : voices)
+            v.keepAsStart();
+        for (auto& l : globalLfos)
+            l.keepAsStart();
     }
 
     void Part::reset() noexcept
@@ -82,6 +88,42 @@ namespace coolsynth::synth::v3
         macrosPrimed = false;
         keyIsDown.fill(false);
         keysDown = 0;
+        effectSourceValues = {}; // the effect routes' starting point, as a fresh part's (D222)
+    }
+
+    void Part::reseed() noexcept
+    {
+        for (auto& v : voices)
+            v.reseed();
+        for (auto& l : globalLfos)
+            l.reseed();
+        chaos.reseed();
+        arpeggiator.reseed();
+        counter = 0;
+    }
+
+    int Part::quietestReleased(float& level) const noexcept
+    {
+        int best = -1;
+        level = std::numeric_limits<float>::max();
+        for (std::size_t i = 0; i < voices.size(); ++i)
+        {
+            const auto& v = voices[i];
+            if (! v.isActive() || v.isFadingOut() || state[i].keyDown || state[i].sustained)
+                continue;
+            if (const float l = v.ampLevel(); l < level)
+            {
+                level = l;
+                best = static_cast<int>(i);
+            }
+        }
+        return best;
+    }
+
+    void Part::fadeOutVoice(int index) noexcept
+    {
+        if (index >= 0 && index < static_cast<int>(voices.size()))
+            voices[static_cast<std::size_t>(index)].fadeOut();
     }
 
     bool Part::anyVoiceActive() const noexcept

@@ -342,8 +342,21 @@ public:
                 const auto [kept, keptAt] = render(false);
                 juce::ignoreUnused(keptAt);
                 const auto window = samplesFor(0.03);
+                // Also the sound's own roughness for its level just after the turn, at the level it has during it
+                // (D224): a decaying note the macros make brighter stays rougher for as long as it sounds, as Satellite
+                // Ping's ping does, while a click comes and goes. A click hidden in a large brightening needs a spike.
+                const auto peakOf = [](const Recorder& r, std::size_t from, std::size_t to)
+                {
+                    float peak = 0.0f;
+                    for (std::size_t s = from; s < std::min(to, r.left.size()); ++s)
+                        peak = std::max({ peak, std::abs(r.left[s]), std::abs(r.right[s]) });
+                    return peak;
+                };
+                const float afterLevel = peakOf(*turned, at + window, at + 2 * window);
+                const float forItsLevel = afterLevel > 0.0f ? turned->roughness(at + window, at + 2 * window) / afterLevel * peakOf(*turned, at, at + window)
+                                                            : 0.0f;
                 const Finding f { turned->roughness(at, at + window),
-                                  std::max(ownRoughness(*turned, at, window), kept->roughness(at, at + window)) };
+                                  std::max({ ownRoughness(*turned, at, window), kept->roughness(at, at + window), forItsLevel }) };
                 tally.add(f, presetName(i) + (clicks(f) ? profile(*turned, at, *kept, at) : juce::String()), *turned, *kept, at);
             }
             logMessage(tally.note());

@@ -95,6 +95,10 @@ namespace coolsynth::synth::v3
             reset();
         }
 
+        /** Back to the random numbers it was prepared with: a defined start (D222). Not per note: a note's reset keeps
+            them running, so every note differs. */
+        void reseed() noexcept { noise = noiseStart; }
+
         void reset() noexcept
         {
             left = {};
@@ -401,7 +405,8 @@ namespace coolsynth::synth::v3
         float k = 0.0f;
         bool primed = false;
         Channel left, right;
-        std::uint32_t noise = 0x9E3779B9u;
+        static constexpr std::uint32_t noiseStart = 0x9E3779B9u;
+        std::uint32_t noise = noiseStart;
     };
 
     static_assert(Module<LadderProcessor>);

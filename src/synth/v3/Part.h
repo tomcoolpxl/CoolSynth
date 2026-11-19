@@ -113,6 +113,12 @@ namespace coolsynth::synth::v3
 
         /** Panic: silence, empty note stack, controllers at rest. */
         void reset() noexcept;
+        /** Every random number of the layer back to where prepare left it: a defined start (D222). */
+        void reseed() noexcept;
+        /** The live emergency (D222): the quietest voice whose key is up and not held by the pedal, and its level;
+            -1 if there is none. fadeOutVoice lets it go over the steal fade. */
+        [[nodiscard]] int quietestReleased(float& level) const noexcept;
+        void fadeOutVoice(int index) noexcept;
 
         /** Writes (not adds) the part's host-rate output. Event offsets are relative to this call. */
         void render(float* left,

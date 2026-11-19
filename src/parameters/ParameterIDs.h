@@ -17,6 +17,7 @@ namespace coolsynth::parameters::ids
     inline constexpr int parameterVersionHintV4 = 4;
     inline constexpr int parameterVersionHintV5 = 5;
     inline constexpr int parameterVersionHintV6 = 6;
+    inline constexpr int parameterVersionHintV7 = 7;
 
     // The arpeggiator: one per layer since D194, each layer's own, as Korg's wavestate gives each layer one. These
     // name layer A's ("pA.arpEnabled"); arpOfLayer() gives layer B's. Before D194 one arp ("arpEnabled") served both.
@@ -36,6 +37,8 @@ namespace coolsynth::parameters::ids
     inline constexpr char arpEuclideanSteps[] = "pA.arpEuclideanSteps";
     inline constexpr char arpEuclideanRotation[] = "pA.arpEuclideanRotation";
     inline constexpr char arpLatch[] = "pA.arpLatch";
+    // Off, random choices repeat from play to play; on, each play draws new ones (D222).
+    inline constexpr char arpNewPatterns[] = "pA.arpNewPatterns";
     namespace layerB
     {
         inline constexpr char arpEnabled[] = "pB.arpEnabled";
@@ -54,11 +57,12 @@ namespace coolsynth::parameters::ids
         inline constexpr char arpEuclideanSteps[] = "pB.arpEuclideanSteps";
         inline constexpr char arpEuclideanRotation[] = "pB.arpEuclideanRotation";
         inline constexpr char arpLatch[] = "pB.arpLatch";
+        inline constexpr char arpNewPatterns[] = "pB.arpNewPatterns";
     }
     // The tempo while no host plays, one for the sound: the arps and the synced effects follow it.
     inline constexpr char arpInternalTempoBpm[] = "arpInternalTempoBpm";
 
-    inline constexpr std::array<std::pair<const char*, const char*>, 16> arpLayerIds {{
+    inline constexpr std::array<std::pair<const char*, const char*>, 17> arpLayerIds {{
         { arpEnabled, layerB::arpEnabled },
         { arpRateDivision, layerB::arpRateDivision },
         { arpPattern, layerB::arpPattern },
@@ -74,7 +78,8 @@ namespace coolsynth::parameters::ids
         { arpEuclideanPulses, layerB::arpEuclideanPulses },
         { arpEuclideanSteps, layerB::arpEuclideanSteps },
         { arpEuclideanRotation, layerB::arpEuclideanRotation },
-        { arpLatch, layerB::arpLatch }
+        { arpLatch, layerB::arpLatch },
+        { arpNewPatterns, layerB::arpNewPatterns }
     }};
 
     /** Layer `layer`'s (0 A, 1 B) arp parameter, given layer A's ID. */
@@ -166,6 +171,7 @@ namespace coolsynth::parameters
         ids::arpEuclideanSteps,
         ids::arpEuclideanRotation,
         ids::arpLatch,
+        ids::arpNewPatterns,
         ids::layerB::arpEnabled,
         ids::layerB::arpRateDivision,
         ids::layerB::arpPattern,
@@ -182,6 +188,7 @@ namespace coolsynth::parameters
         ids::layerB::arpEuclideanSteps,
         ids::layerB::arpEuclideanRotation,
         ids::layerB::arpLatch,
+        ids::layerB::arpNewPatterns,
         ids::arpInternalTempoBpm,
         ids::masterGainDb,
         ids::brightness,

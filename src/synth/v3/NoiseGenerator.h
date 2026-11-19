@@ -79,7 +79,18 @@ namespace coolsynth::synth::v3
                 rngLeft = 1;
             if (rngRight == 0)
                 rngRight = 1;
+            rngLeftStart = rngLeft;
+            rngRightStart = rngRight;
             reset();
+        }
+
+        /** Back to the random numbers it was prepared with: a defined start (D222). Not per note: a note's reset keeps
+            them running, so every note differs. */
+        void reseed() noexcept
+        {
+            rngLeft = rngLeftStart;
+            rngRight = rngRightStart;
+            shift = 1;
         }
 
         /** Clears filters and the output delay; the noise itself runs on, so every note differs. */
@@ -365,7 +376,7 @@ namespace coolsynth::synth::v3
         unsigned int cursor = 0;
         double clockPhase = 0.0;
         std::uint32_t shift = 1;
-        std::uint32_t rngLeft = 1, rngRight = 2;
+        std::uint32_t rngLeft = 1, rngRight = 2, rngLeftStart = 1, rngRightStart = 2;
         std::span<float> signalTrack;
         GeneratorLink input {};
     };

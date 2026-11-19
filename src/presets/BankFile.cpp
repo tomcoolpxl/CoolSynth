@@ -35,7 +35,7 @@ namespace coolsynth::presets
                     { "chance", ids::arpChance }, { "ratchet", ids::arpRatchetCount }, { "ratchetChance", ids::arpRatchetChance },
                     { "accentEvery", ids::arpAccentEvery }, { "accent", ids::arpAccentAmount }, { "rhythm", ids::arpRhythm },
                     { "pulses", ids::arpEuclideanPulses }, { "steps", ids::arpEuclideanSteps }, { "rotation", ids::arpEuclideanRotation },
-                    { "latch", ids::arpLatch } } } },
+                    { "latch", ids::arpLatch }, { "newPatterns", ids::arpNewPatterns } } } },
             };
             return sections;
         }

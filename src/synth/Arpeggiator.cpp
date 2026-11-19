@@ -71,11 +71,21 @@ namespace coolsynth::synth
 
     Arpeggiator::Arpeggiator() noexcept = default;
 
-    void Arpeggiator::prepare(double sampleRate) noexcept
+    void Arpeggiator::prepare(double sampleRate, std::uint32_t seed) noexcept
     {
         preparedSampleRate = juce::jmax(1.0, sampleRate);
-        rng.setSeed(static_cast<int64_t>(juce::Time::getHighResolutionTicks()));
+        seedValue = static_cast<int64_t>(seed);
+        rng.setSeed(seedValue);
         panic();
+    }
+
+    void Arpeggiator::reseed() noexcept
+    {
+        // At a defined start the random choices begin again, so a song plays its arp the same each time, unless
+        // the player asks for new patterns each play (D222).
+        if (! currentParameters.newPatterns)
+            rng.setSeed(seedValue);
+        resetPatternWalkState();
     }
 
     void Arpeggiator::panic() noexcept

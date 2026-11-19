@@ -1,9 +1,11 @@
 #include "SoundUnit.h"
+#include "VoiceCost.h"
 
 #include "diagnostics/FlightRecorder.h"
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 
 namespace coolsynth::synth::v3
 {
@@ -155,6 +157,38 @@ namespace coolsynth::synth::v3
         freeBeats = 0.0;
     }
 
+    void SoundUnit::reseed() noexcept
+    {
+        for (auto& part : parts)
+            part->reseed();
+        for (auto& slots : inserts)
+            for (auto& slot : slots)
+                slot.reseed();
+        for (auto& slot : *masterSlots)
+            slot.reseed();
+        freeBeats = 0.0;
+    }
+
+    bool SoundUnit::shedQuietestReleased() noexcept
+    {
+        int bestPart = -1, bestVoice = -1;
+        float quietest = std::numeric_limits<float>::max();
+        for (int p = 0; p < partCount; ++p)
+        {
+            float level = 0.0f;
+            if (const int v = parts[static_cast<std::size_t>(p)]->quietestReleased(level); v >= 0 && level < quietest)
+            {
+                quietest = level;
+                bestPart = p;
+                bestVoice = v;
+            }
+        }
+        if (bestPart < 0)
+            return false;
+        parts[static_cast<std::size_t>(bestPart)]->fadeOutVoice(bestVoice);
+        return true;
+    }
+
     SoundUnit::MixGains SoundUnit::gainsFor(const PartMix& mix) noexcept
     {
         const float level = mix.levelDb <= silentLevelDb ? 0.0f : juce::Decibels::decibelsToGain(std::min(mix.levelDb, 12.0f));
@@ -299,6 +333,11 @@ namespace coolsynth::synth::v3
         std::array<int, partCount> voices { voicesWanted(settings.parts[0]), voicesWanted(settings.parts[1]) };
         if (active[0] && active[1])
             voices = voiceLimits(voices);
+        // The voice cap (D222): as many as the patch's worst case lets fit its share of a block, the same live and
+        // bounced, on every computer.
+        voices = voiceCost::cap(settings, active, voices, hostRate);
+        for (std::size_t p = 0; p < parts.size(); ++p)
+            limitsNow[p] = active[p] ? voices[p] : 0;
 
         // Where each part's part-wide sources stood before this block: the effect routes ramp from there (D179).
         std::array<ModSources, partCount> sourcesBefore {};
@@ -320,6 +359,8 @@ namespace coolsynth::synth::v3
             patch = settings.parts[p];
             if (patch.playMode == PlayMode::poly)
                 patch.polyphony = voices[p];
+            else if (patch.playMode == PlayMode::unison)
+                patch.unisonVoices = std::max(2, voices[p]); // unison needs two; the cap's one would be mono
             patch.tuneSemitones = settings.mix[p].fineCents * 0.01f;
 
             const StageClock stageClock { slowest, p == 0 ? 1 : 2 };

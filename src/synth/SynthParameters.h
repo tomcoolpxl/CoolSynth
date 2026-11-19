@@ -40,6 +40,7 @@ namespace coolsynth::synth
         int euclideanSteps = 8;
         int euclideanRotation = 0;
         bool latch = false;
+        bool newPatterns = false; // random choices go on at a defined start instead of repeating (D222)
     };
 
     struct DriveParametersV2
@@ -168,6 +169,7 @@ namespace coolsynth::synth
         std::atomic<float>* euclideanSteps = nullptr;
         std::atomic<float>* euclideanRotation = nullptr;
         std::atomic<float>* latch = nullptr;
+        std::atomic<float>* newPatterns = nullptr;
     };
 
     /** Raw values of the parameters outside a part, resolved by ID once. */
@@ -220,6 +222,7 @@ namespace coolsynth::synth
         p.euclideanSteps = get(ids::arpEuclideanSteps);
         p.euclideanRotation = get(ids::arpEuclideanRotation);
         p.latch = get(ids::arpLatch);
+        p.newPatterns = get(ids::arpNewPatterns);
         return p;
     }
 }

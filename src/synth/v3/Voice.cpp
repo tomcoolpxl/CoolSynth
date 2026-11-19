@@ -50,10 +50,24 @@ namespace coolsynth::synth::v3
         rng = seed * 2654435761u + 0x9E3779B9u;
         if (rng == 0)
             rng = 1;
+        rngStart = rng;
         driftStage = driftValue = driftTarget = 0.0f;
         driftSamplesToNext = 0;
         prepared = true;
         reset();
+    }
+
+    void Voice::reseed() noexcept
+    {
+        rng = rngStart;
+        driftStage = driftValue = driftTarget = 0.0f;
+        driftSamplesToNext = 0;
+        for (auto& l : lfos)
+            l.reseed();
+        for (auto& g : generators)
+            g.slot.reseed();
+        for (auto& p : processors)
+            p.slot.reseed();
     }
 
     void Voice::reset() noexcept
@@ -67,6 +81,7 @@ namespace coolsynth::synth::v3
         released = false;
         releaseWaiting = false;
         stealRemaining = 0;
+        fadingOut = false;
         envelopeHold = 0;
         polyPressure = 0.0f;
         pressurePrimed = false;
@@ -105,6 +120,7 @@ namespace coolsynth::synth::v3
         pendingNote = start;
         pending = true;
         pendingReleased = false;
+        fadingOut = false;
     }
 
     void Voice::startPendingNote(const VoiceGlobals& globals) noexcept
@@ -200,6 +216,14 @@ namespace coolsynth::synth::v3
         note.detuneCents = start.detuneCents;
         polyPressure = 0.0f; // another key now: its own pressure starts at 0
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
+    }
+
+    void Voice::fadeOut() noexcept
+    {
+        if (! isActive() || pending || stealRemaining > 0)
+            return;
+        stealRemaining = stealTotal;
+        fadingOut = true;
     }
 
     void Voice::release(float velocity) noexcept
@@ -371,6 +395,13 @@ namespace coolsynth::synth::v3
             if (stealRemaining > 0)
             {
                 stealRemaining -= n;
+                if (stealRemaining == 0 && fadingOut)
+                {
+                    fadingOut = false; // faded out to make time (D222): the voice is free
+                    for (auto& e : envelopes)
+                        e.reset();
+                    break;
+                }
                 if (stealRemaining == 0)
                     startPendingNote(globals); // the old note is silent now: start the waiting one from a clean slate
             }

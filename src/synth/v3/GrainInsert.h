@@ -68,9 +68,14 @@ namespace coolsynth::synth::v3
             clear();
         }
 
+        /** The slot's own random numbers (D222); clear and reseed start them again. */
+        void setSeed(std::uint32_t newSeed) noexcept { seedStart = newSeed == 0 ? 0x9E3779B9u : newSeed; seed = seedStart; }
+        void reseed() noexcept { seed = seedStart; }
+
         /** Silence: the recording and every grain gone. */
         void clear() noexcept
         {
+            seed = seedStart;
             std::fill(buffer.begin(), buffer.end(), 0.0f);
             std::fill(marks.begin(), marks.end(), 0.0f);
             peak = smoothed = 0.0f;
@@ -285,6 +290,6 @@ namespace coolsynth::synth::v3
         int recorded = 0;  // how many frames back from there hold sound
         double untilNext = 0.0;
         float level = 1.0f; // the cloud's level as it is now: down at once, up slowly
-        std::uint32_t seed = 0x9E3779B9u;
+        std::uint32_t seed = 0x9E3779B9u, seedStart = 0x9E3779B9u;
     };
 }

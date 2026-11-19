@@ -80,6 +80,10 @@ namespace coolsynth::synth::v3
             reset();
         }
 
+        /** Back to the random numbers it was prepared with: a defined start (D222). Not per note: a note's reset keeps
+            them running, so every note differs. */
+        void reseed() noexcept { random = randomStart; }
+
         void reset() noexcept
         {
             phases.fill(0.0f);
@@ -664,7 +668,8 @@ namespace coolsynth::synth::v3
         std::span<float> signalTrack;
         std::span<float> wrapTrack;
         GeneratorLink input {};
-        std::uint32_t random = 0x2545F491u;
+        static constexpr std::uint32_t randomStart = 0x2545F491u; // as before D222, so rendered presets stay as they were
+        std::uint32_t random = randomStart;
         bool phasesPending = false;
     };
 

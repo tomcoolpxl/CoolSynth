@@ -28,7 +28,10 @@ namespace coolsynth::synth
     public:
         Arpeggiator() noexcept;
 
-        void prepare(double sampleRate) noexcept;
+        /** seed: the layer's own random numbers (D222: the same every play, no longer the clock's). */
+        void prepare(double sampleRate, std::uint32_t seed = 0x4A2B9u) noexcept;
+        /** Back to its first random numbers: a defined start (D222). */
+        void reseed() noexcept;
         void panic() noexcept;
         void setSeedForTesting(uint64_t seed) noexcept;
 
@@ -143,5 +146,6 @@ namespace coolsynth::synth
         int euclideanStepCount = 1;
         int euclideanPosition = 0;
         juce::Random rng;
+        std::int64_t seedValue = 0x4A2B9;
     };
 }

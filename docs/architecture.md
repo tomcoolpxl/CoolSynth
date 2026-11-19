@@ -44,8 +44,11 @@ is empty and is left out. Everything that is not a note, such as the wheels and 
 
 The two layers share 16 voices. Each layer may use what its patch asks for (its polyphony, one voice for mono
 and legato, its unison count), is sure of 8, and gets more when the other layer asks for fewer
-(`SoundUnit::voiceLimits` in `src/synth/v3/SoundUnit.h`). A released voice whose one-shot recording has ended
-frees itself once it has been silent for 100 ms, instead of running out its release (`Voice::canEndEarly`).
+(`SoundUnit::voiceLimits` in `src/synth/v3/SoundUnit.h`). A heavy patch gets fewer: its voices and effects must
+fit half a block on the development machine, by each module's measured worst case, so the count depends on the
+patch alone, the same live and bounced (`src/synth/v3/VoiceCost.h`, D222); the screen shows it. A released voice
+whose one-shot recording has ended frees itself once it has been silent for 100 ms, instead of running out its
+release (`Voice::canEndEarly`).
 
 In the code a layer is a `Part` (`src/synth/v3/Part.h`), and a whole sound, both layers with their inserts,
 the master slots, the mix and the master gain, is a `SoundUnit` (`src/synth/v3/SoundUnit.h`). The two names
@@ -59,7 +62,13 @@ the keys or the pedal go on with the sound they started with, its effects includ
 the new preset. An earlier sound hears only what ends or bends its notes: key releases, the sustain pedal,
 pitch bend, All Notes Off. Five seconds after its last key and the pedal are up it fades out over half a
 second, and so does the oldest when a third earlier sound would ring or when the processor runs short of
-time. The units are summed and pass through one soft clipper to the output.
+time; with none left and a dropout near, the playing sound's quietest released voice fades out. The units are
+summed and pass through one soft clipper to the output.
+
+Every random number, from the voices' drift to the effects' crackle, comes from a seed of its sound, layer,
+voice and slot, and a reset or the host's transport starting takes them all back to it: a song plays and
+bounces the same each time, bit for bit (D222); an arpeggiator's New Patterns switch keeps drawing new ones. Bouncing never lets a sound go for lack of time and waits for
+the sampled instruments and the player's own sounds to load.
 
 ## Signal flow
 
@@ -261,7 +270,9 @@ sources but no longer used.
 **Tests.** All tests are one program, `CoolSynthMidiLearnTests` (the name is older than what it tests), built
 from `tests/*.cpp` and run by `ctest`. Set `COOLSYNTH_TEST_ONLY` to part of a test's name to run only those
 tests. The test program replaces the global memory allocator and counts every allocation made inside an
-audio block; the audio scenario tests expect none (`tests/AudioThreadAlarm.cpp`, D161). The click detector (`tests/ClickDetectorTests.cpp`) renders every
+audio block, and watches the C heap, locks, waits, sleeps and file calls there too; the audio scenario tests
+expect none (`tests/AudioThreadAlarm.cpp`, D161, D222). The determinism test renders every preset fresh and
+after a reset and expects the same bits (`tests/DeterminismTests.cpp`). The click detector (`tests/ClickDetectorTests.cpp`) renders every
 factory preset; `COOLSYNTH_CLICK_ONLY` narrows it to presets whose names contain a given text.
 
 **Command-line tools** (C++, built by target, not by the `build-debug` preset):

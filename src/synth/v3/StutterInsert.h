@@ -78,8 +78,13 @@ namespace coolsynth::synth::v3
             clear();
         }
 
+        /** The slot's own random numbers (D222); clear and reseed start them again. */
+        void setSeed(std::uint32_t newSeed) noexcept { randomStart = newSeed == 0 ? 0x6C8E9CF5u : newSeed; random = randomStart; }
+        void reseed() noexcept { random = randomStart; }
+
         void clear() noexcept
         {
+            random = randomStart;
             state = State::idle;
             dryLevel = 1.0f;
             wetLevel = 0.0f;
@@ -271,6 +276,6 @@ namespace coolsynth::synth::v3
         float gain = 1.0f;
         bool backwards = false;
         float dryLevel = 1.0f, wetLevel = 0.0f;
-        std::uint32_t random = 0x6C8E9CF5u;
+        std::uint32_t random = 0x6C8E9CF5u, randomStart = 0x6C8E9CF5u;
     };
 }

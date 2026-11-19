@@ -1,9 +1,11 @@
 #include <juce_core/juce_core.h>
 
+#include <algorithm>
 #include <cstring>
 #include <memory>
 #include <vector>
 
+#include "synth/v3/Inserts.h"
 #include "synth/v3/Part.h"
 
 /*
@@ -65,6 +67,64 @@ namespace
             part->render(left.data(), right.data(), block, events, settings, {});
         }
         return 100.0 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start) / 2.0;
+    }
+
+    /** A block's cost as a share of its own time: the average, the 99th percentile and the slowest. */
+    struct BlockCost
+    {
+        double average = 0.0, p99 = 0.0, worst = 0.0;
+    };
+
+    BlockCost costOf(std::vector<double> shares)
+    {
+        BlockCost c;
+        if (shares.empty())
+            return c;
+        for (const double s : shares)
+            c.average += s;
+        c.average /= static_cast<double>(shares.size());
+        std::sort(shares.begin(), shares.end());
+        c.p99 = shares[std::min(shares.size() - 1, static_cast<std::size_t>(0.99 * static_cast<double>(shares.size())))];
+        c.worst = shares.back();
+        return c;
+    }
+
+    /** Sixteen voices, each its own key, held three seconds, then all struck again: the steal fades and the clearing
+        of used slots fall in the measured blocks too (D222). */
+    BlockCost worstCaseOf(const PartSettings& settings)
+    {
+        constexpr double rate = 48000.0;
+        constexpr int block = 256;
+        constexpr int blocks = static_cast<int>(3.0 * rate) / block;
+        auto part = std::make_unique<Part>();
+        part->prepare(rate, block, 7);
+        std::vector<float> left(block), right(block);
+        std::vector<coolsynth::synth::EngineMidiEvent> chord, again;
+        for (int i = 0; i < Part::maxVoices; ++i)
+        {
+            coolsynth::synth::EngineMidiEvent e;
+            e.type = coolsynth::synth::EngineMidiEventType::noteOn;
+            e.noteNumber = static_cast<uint8_t>(36 + 3 * i);
+            e.value = 1.0f;
+            chord.push_back(e);
+            e.noteNumber = static_cast<uint8_t>(37 + 3 * i);
+            again.push_back(e);
+        }
+        std::vector<double> shares;
+        shares.reserve(blocks);
+        const double blockSeconds = block / rate;
+        for (int b = 0; b < blocks; ++b)
+        {
+            std::fill(left.begin(), left.end(), 0.0f);
+            std::fill(right.begin(), right.end(), 0.0f);
+            const auto events = b == 0 ? std::span<const coolsynth::synth::EngineMidiEvent>(chord)
+                              : b == blocks / 2 ? std::span<const coolsynth::synth::EngineMidiEvent>(again)
+                                                : std::span<const coolsynth::synth::EngineMidiEvent>();
+            const auto start = juce::Time::getHighResolutionTicks();
+            part->render(left.data(), right.data(), block, events, settings, {});
+            shares.push_back(100.0 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start) / blockSeconds);
+        }
+        return costOf(std::move(shares));
     }
 }
 
@@ -140,6 +200,152 @@ public:
         }
     }
 };
+
+/*
+    Opt-in (set COOLSYNTH_CPU_REPORT): each module's worst case (D222, TODO 19), the numbers the voice cap is set from.
+    Sixteen voices at the module's hardest settings, struck twice so steals fall in the blocks; the average, the 99th
+    percentile and the slowest block as a share of a 256-sample block at 48 kHz, each the best of three runs. A
+    voice's share is the line less the empty voices', over sixteen; a processor's, less the plain saw's too.
+*/
+class V3WorstCaseCost final : public juce::UnitTest
+{
+public:
+    V3WorstCaseCost() : juce::UnitTest("V3 worst-case cost", "V3") {}
+
+    void runTest() override
+    {
+        beginTest("worst_case_of_each_module");
+        if (juce::SystemStats::getEnvironmentVariable("COOLSYNTH_CPU_REPORT", {}).isEmpty())
+        {
+            logMessage("skipped: set COOLSYNTH_CPU_REPORT=1 to measure");
+            return;
+        }
+
+        auto base = []
+        {
+            PartSettings s;
+            Envelope::Parameters held;
+            held.attack = 0.002f;
+            held.decay = 0.2f;
+            held.sustain = 1.0f;
+            held.release = 0.5f;
+            s.voice.envelopes = { held, held, held };
+            s.polyphony = Part::maxVoices;
+            return s;
+        };
+        auto measure = [&](const PartSettings& s)
+        {
+            BlockCost best { 1.0e9, 1.0e9, 1.0e9 };
+            for (int run = 0; run < 3; ++run) // the least disturbed of three, each figure on its own
+            {
+                const auto c = worstCaseOf(s);
+                best.average = std::min(best.average, c.average);
+                best.p99 = std::min(best.p99, c.p99);
+                best.worst = std::min(best.worst, c.worst);
+            }
+            return best;
+        };
+        const auto empty = measure(base());
+        auto line = [&](const juce::String& label, const BlockCost& c, const BlockCost& under)
+        {
+            logMessage(label.paddedRight(' ', 30) + "average " + juce::String(c.average, 2) + " %, p99 " + juce::String(c.p99, 2)
+                       + " %, slowest " + juce::String(c.worst, 2) + " %; a voice at p99 "
+                       + juce::String((c.p99 - under.p99) / Part::maxVoices, 3) + " %");
+        };
+        line("empty voices", empty, BlockCost {});
+
+        const std::vector<std::pair<juce::String, GeneratorSettings>> generators {
+            { "VA saw", generatorOf(generatorType::va, { { VaGenerator::shape, 2.0f } }) },
+            { "VA saw, unison 7, sub", generatorOf(generatorType::va, { { VaGenerator::shape, 2.0f }, { VaGenerator::unison, 7.0f },
+                                                                          { VaGenerator::detune, 200.0f }, { VaGenerator::sub, 1.0f } }) },
+            { "Noise", generatorOf(generatorType::noise, { { NoiseGenerator::resonance, 1.0f } }) },
+            { "FM2, index 10, feedback", generatorOf(generatorType::fm2, { { FmGenerator::index, 10.0f }, { FmGenerator::feedback, 1.0f } }) },
+            { "FM4, feedback", generatorOf(generatorType::fm4, { { Fm4Generator::feedback, 1.0f }, { Fm4Generator::level2, 1.0f },
+                                                                 { Fm4Generator::level3, 1.0f }, { Fm4Generator::level4, 1.0f } }) },
+            { "Wavetable, unison 5", generatorOf(generatorType::wavetable, { { WavetableGenerator::unison, 5.0f }, { WavetableGenerator::detune, 100.0f } }) },
+            { "String, long decay", generatorOf(generatorType::string, { { StringGenerator::decay, 10.0f } }) },
+            { "Modal, long decay", generatorOf(generatorType::modal, { { ModalGenerator::decay, 10.0f }, { ModalGenerator::hardness, 1.0f } }) },
+            { "Sample (generated)", generatorOf(generatorType::sample) },
+            { "Grain, densest, longest", generatorOf(generatorType::grain, { { GrainGenerator::density, 80.0f }, { GrainGenerator::size, 500.0f },
+                                                                             { GrainGenerator::pitchSpray, 1.0f } }) },
+        };
+        BlockCost saw;
+        for (const auto& [label, generator] : generators)
+        {
+            auto s = base();
+            s.voice.generators[0] = generator;
+            const auto c = measure(s);
+            if (label == "VA saw")
+                saw = c;
+            line(label, c, empty);
+        }
+        const std::vector<std::pair<juce::String, int>> processors {
+            { "VA saw + Ladder", processorType::ladder }, { "VA saw + SVF", processorType::svf },
+            { "VA saw + Crusher", processorType::crusher }, { "VA saw + Folder", processorType::folder },
+            { "VA saw + Drive", processorType::drive }, { "VA saw + Formant", processorType::formant },
+            { "VA saw + Comb", processorType::comb },
+        };
+        for (const auto& [label, type] : processors)
+        {
+            auto s = base();
+            s.voice.generators[0] = generators.front().second;
+            s.voice.processors[0] = processorOf(type);
+            line(label, measure(s), saw);
+        }
+
+        // Each effect once for the sound, at its defaults, on a loud stereo signal; Pitch in both modes.
+        beginTest("worst_case_of_each_effect");
+        struct Effect { juce::String label; InsertSettings settings; };
+        std::vector<Effect> effects;
+        for (int type = 1; type < insertType::count; ++type)
+            effects.push_back({ insertDescriptor(type).name, InsertSettings::of(type) });
+        effects.push_back({ "Pitch, spectral", InsertSettings::of(insertType::pitch, { { 8, 1.0f } }) });
+        effects.push_back({ "Grain, densest", InsertSettings::of(insertType::grain, { { 0, 500.0f }, { 1, 80.0f } }) });
+        for (const auto& effect : effects)
+        {
+            BlockCost best { 1.0e9, 1.0e9, 1.0e9 };
+            for (int run = 0; run < 3; ++run)
+            {
+                constexpr double rate = 48000.0;
+                constexpr int block = 256;
+                constexpr int blocks = static_cast<int>(3.0 * rate) / block;
+                auto slot = std::make_unique<InsertSlot>();
+                slot->prepare(rate, block, 3);
+                juce::AudioBuffer<float> stereo(2, block);
+                std::uint32_t noise = 1u;
+                double phase = 0.0;
+                std::vector<double> shares;
+                InsertContext context;
+                context.beatsPerSample = 2.0 / rate;
+                for (int b = 0; b < blocks; ++b)
+                {
+                    for (int s = 0; s < block; ++s)
+                    {
+                        noise = noise * 1664525u + 1013904223u;
+                        phase += 110.0 / rate;
+                        phase -= std::floor(phase);
+                        const float saw = static_cast<float>(2.0 * phase - 1.0) * 0.4f;
+                        const float n = static_cast<float>(noise >> 8) * (2.0f / 16777216.0f) - 1.0f;
+                        stereo.setSample(0, s, saw + 0.1f * n);
+                        stereo.setSample(1, s, saw - 0.1f * n);
+                    }
+                    context.beatsAtStart = b * block * context.beatsPerSample;
+                    const auto start = juce::Time::getHighResolutionTicks();
+                    slot->process(stereo, effect.settings, context);
+                    shares.push_back(100.0 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start) / (block / rate));
+                }
+                const auto c = costOf(std::move(shares));
+                best.average = std::min(best.average, c.average);
+                best.p99 = std::min(best.p99, c.p99);
+                best.worst = std::min(best.worst, c.worst);
+            }
+            logMessage(effect.label.paddedRight(' ', 30) + "average " + juce::String(best.average, 2) + " %, p99 "
+                       + juce::String(best.p99, 2) + " %, slowest " + juce::String(best.worst, 2) + " %");
+        }
+    }
+};
+
+static V3WorstCaseCost v3WorstCaseCost;
 
 /*
     Opt-in (set COOLSYNTH_VA_FINGERPRINT): a fingerprint of the VA generator's exact output in each of its modes,

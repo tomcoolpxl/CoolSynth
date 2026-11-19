@@ -6,6 +6,7 @@
 
 #include "SampleGenerator.h"
 #include "SampleLibrary.h"
+#include "UserLibrary.h"
 #include "AudioWorkers.h"
 
 namespace coolsynth::synth::v3
@@ -35,6 +36,33 @@ namespace coolsynth::synth::v3
         return false;
     }
 
+    bool EngineV3::waitForSounds(const EngineSettings& settings, int timeoutMilliseconds)
+    {
+        const auto& d = SampleGenerator::descriptor();
+        auto& library = SampleLibrary::instance();
+        bool allThere = true;
+        for (const auto& part : settings.parts)
+        {
+            if (layerEmpty(part))
+                continue;
+            for (const auto& generator : part.voice.generators)
+            {
+                if (generator.userSound >= 0)
+                    allThere = UserLibrary::instance().waitUntilLoaded(generator.userSound, timeoutMilliseconds) && allThere;
+                if (generator.type != generatorType::sample)
+                    continue;
+                const int which = static_cast<int>(std::lround(descriptorToUnits(d.params[SampleGenerator::sample], generator.p[SampleGenerator::sample])));
+                if (which < SampleGenerator::firstInstrument)
+                    continue;
+                const int instrument = which - SampleGenerator::firstInstrument;
+                const int style = static_cast<int>(std::lround(descriptorToUnits(d.params[SampleGenerator::style], generator.p[SampleGenerator::style])));
+                if (! library.missing(instrument, style))
+                    allThere = library.loadNow(instrument, style, timeoutMilliseconds) != nullptr && allThere;
+            }
+        }
+        return allThere;
+    }
+
     EngineV3::EngineV3()
     {
         for (auto& unit : units)
@@ -46,9 +74,10 @@ namespace coolsynth::synth::v3
     {
         const int block = std::max(1, maxBlockSize);
         hostRate = std::max(1000.0, sampleRate);
-        // Unit 0 keeps the seeds the parts always had (0x5EED and 0xB5EED), so rendered presets stay as they were.
+        // Every unit the seeds unit 0 always had (0x5EED and 0xB5EED), so rendered presets stay as they were: a sound's
+        // random numbers are the sound's, whichever unit plays it (D222), as each unit reseeds when it takes a new one.
         for (int u = 0; u < unitCount; ++u)
-            units[static_cast<std::size_t>(u)]->prepare(sampleRate, block, 0x5EEDu + 0x10001u * static_cast<std::uint32_t>(u));
+            units[static_cast<std::size_t>(u)]->prepare(sampleRate, block, 0x5EEDu);
         for (auto& events : unitEvents)
             events.assign(static_cast<std::size_t>(2 * coolsynth::synth::maxEngineEventsPerBlock + 16), {});
         pieceEvents.assign(static_cast<std::size_t>(coolsynth::synth::maxEngineEventsPerBlock), {});
@@ -82,6 +111,24 @@ namespace coolsynth::synth::v3
         keyOwner.fill(-1);
         controllers = {};
         sum.clear();
+    }
+
+    void EngineV3::restart() noexcept
+    {
+        // As prepare leaves it (D222): every sound ended, the first one current, every random number from its seed.
+        panic();
+        state[static_cast<std::size_t>(current)].phase = Phase::idle;
+        current = 0;
+        state[0].phase = Phase::playing;
+        for (auto& unit : units)
+            unit->reseed();
+        generationPrimed = false;
+    }
+
+    void EngineV3::reseed() noexcept
+    {
+        for (auto& unit : units)
+            unit->reseed();
     }
 
     void EngineV3::endUnit(int u) noexcept
@@ -145,7 +192,11 @@ namespace coolsynth::synth::v3
         if (std::memcmp(compareScratch.get(), lastSettings.get(), sizeof(EngineSettings)) == 0
             || (! units[static_cast<std::size_t>(current)]->isSounding() && playing.keysHeld == 0))
         {
-            playing.generation = incoming; // nothing rings, or nothing changed: the same unit plays on
+            // Nothing rings, or nothing changed: the same unit plays on. A new sound in silence starts from its seeds,
+            // as it would in another unit (D222); a sound that rings is never disturbed.
+            if (! units[static_cast<std::size_t>(current)]->isSounding() && playing.keysHeld == 0)
+                units[static_cast<std::size_t>(current)]->reseed();
+            playing.generation = incoming;
             return;
         }
 
@@ -182,6 +233,7 @@ namespace coolsynth::synth::v3
             endUnit(next);
         }
         current = next;
+        units[static_cast<std::size_t>(current)]->reseed(); // the new sound from its seeds (D222)
         state[static_cast<std::size_t>(current)].phase = Phase::playing;
         state[static_cast<std::size_t>(current)].generation = incoming;
         controllersToCurrent = true; // it starts with the pedal, the bend and the wheels where they are
@@ -383,9 +435,16 @@ namespace coolsynth::synth::v3
         followSoundChange(settings);
         routeEvents(events);
 
-        // Short of time: the oldest earlier sound gives way, as on the Kronos.
+        // Short of time: the oldest earlier sound gives way, as on the Kronos. With none left and a dropout near, the
+        // playing sound's quietest released voice fades out, one a block, as Kontakt's overload protection kills
+        // voices (D222). The voice cap keeps this rare; a bounce reads no load, so it never happens there.
         if (load > overloadShare)
-            startFading(oldestRinging());
+        {
+            if (const int oldest = oldestRinging(); oldest >= 0)
+                startFading(oldest);
+            else if (load > emergencyShare)
+                (void) units[static_cast<std::size_t>(current)]->shedQuietestReleased();
+        }
         load = 0.0f;
 
         // First the bookkeeping, here: holds, fades and what each sounding unit is to render.

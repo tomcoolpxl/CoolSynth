@@ -81,6 +81,17 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
     Brown). Left: the user's ear on the presets with hiss or crackle (Bedroom, Basement, Night Bus), with the
     listening pass (item 3).
+20. Parked (the user, 2026-11-19): chip sounds and chiptune. Research online, in depth, how the sound chips
+    sound (pulse widths, the triangle's steps, the noise registers, the sample rates and DACs) and what other synths
+    and plugins offer for it, then compare with CoolSynth's Noise Chip Mode, the Crusher and LoFi, and propose.
+21. Parked (the user, 2026-11-19): presets for the legendary ARP and Oberheim sounds. Do we need presets of their
+    own (the ARP 2600, which the user remembered as "2700 or something", and the Odyssey; the Oberheim SEM and the
+    OB-X family), or are the instruments and sounds already researched and in the bank close enough (OB Strings,
+    the Museum's sources)? Check online what their famous sounds are and compare with what the bank has.
+22. Parked (the user, 2026-11-19): presets that use the whole engine. Most presets use a few slots; few fill both
+    layers, every generator and processor slot, the effect chains and the macros. Check online how other synths'
+    factory banks show what the engine can do (a category of their own, or spread through the bank), count how far
+    the current presets go, and propose whether a set or a category is wanted.
 
 ## Engine
 
@@ -88,20 +99,20 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
    14.2 % of real time on average, 19 % in its worst block (18.4 % and 26 % before D219). Its share per module, over
    the voices' own 2.7 %: the ladder 4.8 %, the seven saws 2.6 %, the SVF 1.6 %, the rest its second layer and
    effects. Elsewhere FM4 5.3 %, Drive 3.9 %. Done for now (D219): AVX2 gained nothing and the build stays SSE2.
-19. Determinism and a processing budget (D222, `docs/research/determinism-and-budget.md`): researched and
-    reviewed on 2026-11-19, the user chose, to build:
-    - A worst-case cost test first (the slowest block and the 99th percentile per module and preset at the hardest
-      settings); its numbers set the cap.
-    - A static cap: each patch's worst-case cost (the modules' cost classes, measured) caps its voices so it fits a
-      share of a block, shown on the screen; live only, the quietest released voice goes when a dropout would
-      otherwise happen; never when bouncing.
-    - Every random source seeded from the patch and its slot and restarted at a defined start (a reset, the
-      transport starting); the random arp with an option for new patterns each play.
-    - Offline: no load-based fade, and waiting (with a time limit) for instruments and the player's sounds to load
-      instead of dropping notes.
-    - A determinism test (every preset rendered twice, fresh and after a reset, bit for bit, also offline); wider
-      real-time checks (malloc, locks, file calls on the audio thread in the test build); multi-core by layer once
-      the cost test shows the need.
+19. Determinism and a processing budget (D222, D224, `docs/research/determinism-and-budget.md`): built on
+    2026-11-19 as the user chose. Every preset renders the same bits fresh and after a reset, live and bounced;
+    bouncing waits for sounds to load and never fades for load; the arps' New Patterns switch; the test build
+    watches the heap, locks, waits, sleeps and files in audio blocks; the worst-case cost test, the voice cap shown
+    on the screen and the live emergency. Left: the user's hands on the cap and the emergency (a heavy preset, a
+    slow block size), and multi-core by layer if a single sound ever needs more than its share.
+23. Parked (the user, 2026-11-19): profile the heaviest sound there can be and optimise. Build a patch that fills
+    everything (both layers, every generator and processor slot at its costliest settings, sixteen voices, every
+    effect slot), run it under a profiler for CPU and memory, and find where the time and the memory go and what
+    can be faster or smaller without changing the sound. The worst-case cost test of item 19 gives the numbers
+    to start from. With proper tools, compared first: melatonin_perfetto (a JUCE module that traces marked code
+    into Google's Perfetto; the markers compile away when off), Intel VTune (hot functions, threads; inside
+    Visual Studio), Visual Studio's own CPU and memory profilers, Windows' event tracing (ETW) with its
+    Performance Analyzer, and others the research turns up (Superluminal, Tracy).
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).
@@ -111,6 +122,17 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     25 dB for two more samples of latency.
 
 ## Interface and code
+
+24. Parked (the user, 2026-11-19): making and keeping your own sounds. How easy is it today to start a sound,
+    save it, name it, find it again, sort and share it (My Sounds, the bank files)? Check online what hardware
+    synths do (an init sound, Compare against the saved one, categories and favourites, librarians, banks on a
+    stick) and above all what other plugins do (browsers, tags, search, favourites, files you can share). Keep it
+    simple: plugins are the model, not hardware's limits, which would only make it more confusing. Then propose
+    what to improve, the same in the plugin and the standalone app. With the real interface (UI last).
+25. Parked (the user, 2026-11-19): tempo. Today the arps' internal tempo (the info row's BPM) drives the arps and
+    the synced effects when no host plays, and a DAW's tempo when one does. Missing, perhaps: setting it on the
+    panel, tap tempo, a metronome, MIDI clock in and out in the standalone app. Decide together with the recorder
+    and a sequencer or editor (item 12); check online what other synths and plugins offer.
 
 
 ## Standing notes

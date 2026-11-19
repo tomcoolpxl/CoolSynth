@@ -55,6 +55,8 @@ What the engine has:
   - compressor, EQ and tempo-synced ducking
   - granular, pitch shifter and stutter
 
+A song plays the same each time you start it, and its bounce matches what you heard: the random parts start again with the transport.
+
 ## Your own samples
 
 Put WAV files in `C:\ProgramData\CoolSynth\Library\User`. In the Sound section, set a slot to Sample and turn its first knob past the built-in instruments to find your files. Press the knob to load one.

@@ -2450,7 +2450,7 @@ public:
         g.setFont(mono(10.0f));
         g.setColour(colours::screenDim);
         g.drawText(model.layerModeText() + dot + juce::String(juce::roundToInt(owner.synth.tempoBpm())) + " BPM" + dot
-                       + juce::String(owner.synth.voicesPlaying()) + " voices",
+                       + juce::String(owner.synth.voicesPlaying()) + " of " + juce::String(owner.synth.voiceLimit()) + " voices",
                    infoRow.withTrimmedRight(cpuArea.getWidth()), juce::Justification::centredLeft);
         auto cpu = infoRow.removeFromRight(cpuArea.getWidth()).toFloat();
         g.setFont(mono(11.0f));

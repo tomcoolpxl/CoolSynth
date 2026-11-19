@@ -221,6 +221,7 @@ namespace
             15,
             0));
         group->addChild(makeBoolParameter(L(arpLatch), parameterVersionHint, layerName + " Arp Latch", false));
+        group->addChild(makeBoolParameter(L(arpNewPatterns), parameterVersionHintV7, layerName + " Arp New Patterns", false));
         return group;
     }
 

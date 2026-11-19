@@ -23,6 +23,9 @@ the current state.
   the panel's Home knobs (layer A's macros, glide, Brightness, Space, master volume); the CLAP's remote control pages
   follow the panel's page; a note reaching CoolSynth by two routes within 3 ms plays once (`src/midi/DuplicateNoteFilter.h`).
 - A new CoolSynth starts on Main Stage's Reese (D212). Stop ends every sound (All Sound Off, after a 3 ms fade).
+- Output is deterministic (D224): every random source restarts from its seed at a reset and when the host's
+  transport starts, a bounce waits for sounds to load, and a voice cap by measured cost (`src/synth/v3/VoiceCost.h`)
+  keeps a sound within half a block; `tests/DeterminismTests.cpp` holds every preset to it bit for bit.
 
 ## Where things are
 

@@ -399,6 +399,8 @@ void SynthAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
     monoMixScratch.resize(static_cast<size_t>(samplesPerBlock));
     duplicateNotes.prepare(sampleRate);
     samplesSoFar = 0;
+    hostWasPlaying = false;
+    bounceGaveUp = false;
 }
 
 void SynthAudioProcessor::releaseResources()
@@ -409,7 +411,8 @@ void SynthAudioProcessor::releaseResources()
 void SynthAudioProcessor::reset()
 {
     panicRequested.store(false, std::memory_order_release);
-    synthEngine.panic();
+    synthEngine.restart(); // as freshly prepared, every random number from its seed: a defined start (D222)
+    bounceGaveUp = false;
     keyboardDisplayCleared.store(true, std::memory_order_release); // hosts may call this on the audio thread: no lock here
     scopeFifo.clear();
 }
@@ -528,6 +531,15 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
     // ready (D154); notes already sounding go on. Checked before the keys, so even the first block of a new
     // preset holds them back.
     const auto& settings = makeEngineSettings();
+    // A bounce has the time a live block has not (D222): it waits for those sounds, so every key plays from the first.
+    // One that is not there after the wait is not waited for again until the next start.
+    if (isNonRealtime() && ! bounceGaveUp)
+    {
+        const auto waitStarted = juce::Time::getMillisecondCounter();
+        if (! coolsynth::synth::v3::EngineV3::waitForSounds(settings, bounceWaitMilliseconds)
+            && juce::Time::getMillisecondCounter() - waitStarted >= static_cast<juce::uint32>(bounceWaitMilliseconds))
+            bounceGaveUp = true;
+    }
     const bool loading = coolsynth::synth::v3::EngineV3::sampledInstrumentPending(settings);
     if (loading != instrumentLoading.load(std::memory_order_relaxed))
     {
@@ -685,6 +697,12 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         }
     }
 
+    // The host's transport starting is a defined start (D222): every random number from its seed, so playing a
+    // song from the same place twice sounds the same, and so does bouncing it.
+    if (transportInfo.hostIsPlaying && ! hostWasPlaying)
+        synthEngine.reseed();
+    hostWasPlaying = transportInfo.hostIsPlaying;
+
     tempoNow.store(transportInfo.hostHasTempo && transportInfo.hostIsPlaying ? static_cast<float>(transportInfo.hostBpm)
                                                                              : parameterValues.arpInternalTempoBpm->load(),
                    std::memory_order_relaxed);
@@ -749,7 +767,8 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     if (loadSamples >= 64)
     {
         const float span = static_cast<float>(1000.0 * loadSamples / rate);
-        synthEngine.setLoad(span > 0.0f ? loadTookMs / span : 0.0f);
+        // A bounce takes the time it needs: no sound gives way to the load there (D222).
+        synthEngine.setLoad(span > 0.0f && ! isNonRealtime() && ! loadIgnoredForTesting ? loadTookMs / span : 0.0f);
         loadTookMs = 0.0f;
         loadSamples = 0;
     }
@@ -825,6 +844,7 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     tripwireWorstMs = std::max(tripwireWorstMs, took);
     tripwirePeak = std::max(tripwirePeak, peak);
     voicesNow.store(synthEngine.activeVoiceCount(), std::memory_order_relaxed);
+    voiceLimitNow.store(synthEngine.voiceLimit(), std::memory_order_relaxed);
     tripwireVoices = std::max(tripwireVoices, synthEngine.activeVoiceCount());
     tripwireClipped += synthEngine.consumeClippedSamples();
     tripwireSamples += n;
@@ -1964,6 +1984,7 @@ void SynthAudioProcessor::fillEngineSettings(coolsynth::synth::v3::EngineSetting
         arp.euclideanSteps = index(a.euclideanSteps);
         arp.euclideanRotation = index(a.euclideanRotation);
         arp.latch = decodeBool(a.latch->load()) || screenHold.load(std::memory_order_relaxed); // the screen's Hold latches a running arp (D184)
+        arp.newPatterns = decodeBool(a.newPatterns->load());
     }
 
     coolsynth::parameters::v3::readMasterEffects(masterEffectValues, settings.master);

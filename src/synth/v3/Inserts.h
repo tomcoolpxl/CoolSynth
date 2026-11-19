@@ -293,6 +293,9 @@ namespace coolsynth::synth::v3
         void prepare(double sampleRate, int maxBlockSize, std::uint32_t seed = 0)
         {
             rack.setSeed(seed);
+            grain.setSeed(seed * 0x9E3779B1u + 1u);
+            pitch.setSeed(seed * 0x9E3779B1u + 2u);
+            stutter.setSeed(seed * 0x9E3779B1u + 3u);
             rack.prepare(sampleRate, std::max(1, maxBlockSize), 2);
             grain.prepare(sampleRate);
             room.prepare(sampleRate);
@@ -422,6 +425,15 @@ namespace coolsynth::synth::v3
                 stutter.clear();
             rackUsed = grainUsed = roomUsed = pitchUsed = stutterUsed = false;
             quiet = true;
+        }
+
+        /** Every effect's random numbers back to their first: a defined start (D222). */
+        void reseed() noexcept
+        {
+            rack.reseed();
+            grain.reseed();
+            pitch.reseed();
+            stutter.reseed();
         }
 
         [[nodiscard]] const GrainInsert& grainForTesting() const noexcept { return grain; }

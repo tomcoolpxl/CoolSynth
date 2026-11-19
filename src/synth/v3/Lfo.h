@@ -78,6 +78,27 @@ namespace coolsynth::synth::v3
             if (rng == 0)
                 rng = 1;
             reset();
+            keepAsStart();
+        }
+
+        /** The random state as it is now becomes the defined start a reseed returns to: the owner calls it once its
+            own preparation is done, as each reset there draws new values (D222). */
+        void keepAsStart() noexcept
+        {
+            rngStart = rng;
+            heldStart = held;
+            fromStart = from;
+            toStart = to;
+        }
+
+        /** As it was prepared, from phase 0: a defined start (D222). */
+        void reseed() noexcept
+        {
+            reset();
+            rng = rngStart;
+            held = heldStart;
+            from = fromStart;
+            to = toStart;
         }
 
         /** Free-running from phase 0 at full depth. */
@@ -244,6 +265,7 @@ namespace coolsynth::synth::v3
         bool finished = false;
         float held = 0.0f, from = 0.0f, to = 0.0f;
         float lastValue = 0.0f;
-        std::uint32_t rng = 1;
+        std::uint32_t rng = 1, rngStart = 1;
+        float heldStart = 0.0f, fromStart = 0.0f, toStart = 0.0f;
     };
 }

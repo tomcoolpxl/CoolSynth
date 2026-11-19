@@ -104,6 +104,14 @@ namespace coolsynth::synth::v3
             rng = seed * 2246822519u + 0x165667B1u;
             if (rng == 0)
                 rng = 1;
+            rngStart = rng;
+            reset();
+        }
+
+        /** Back to its first random numbers: a defined start (D222). */
+        void reseed() noexcept
+        {
+            rng = rngStart;
             reset();
         }
 
@@ -145,6 +153,6 @@ namespace coolsynth::synth::v3
         double sampleRate = 48000.0;
         float stage = 0.0f, value = 0.0f, target = 0.0f;
         int samplesToNext = 0;
-        std::uint32_t rng = 1;
+        std::uint32_t rng = 1, rngStart = 1;
     };
 }

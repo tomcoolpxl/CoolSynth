@@ -350,6 +350,17 @@ namespace coolsynth::synth::v3
             }, instances[active].module);
         }
 
+        /** Every module the slot holds back to its first random numbers: a defined start (D222). */
+        void reseed() noexcept
+        {
+            for (auto& instance : instances)
+                std::visit([](auto& module)
+                {
+                    if constexpr (requires { module.reseed(); })
+                        module.reseed();
+                }, instance.module);
+        }
+
         /** No other type is fading in or waiting to. */
         [[nodiscard]] bool typeSettled() const noexcept { return fadeRemaining <= 0 && pendingType.load(std::memory_order_relaxed) < 0; }
 

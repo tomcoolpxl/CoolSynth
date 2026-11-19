@@ -79,6 +79,23 @@ namespace coolsynth::synth
             seed = newSeed == 0 ? 0x2545F491u : newSeed;
         }
 
+        /** Back to the slot's first random numbers, the record's marks again where they were (D222). */
+        void reseed() noexcept
+        {
+            rng = seed;
+            noiseRng = seed * 0x9E3779B1u + 0x7F4A7C15u;
+            if (noiseRng == 0)
+                noiseRng = 1;
+            rotation = 0.0;
+            bedDrift = bedDriftTarget = 0.0f;
+            for (auto& mark : marks)
+            {
+                mark.phase = 0.5 * (nextNoise() + 1.0f);
+                mark.size = 0.02f + 0.04f * (0.5f * (nextNoise() + 1.0f));
+                mark.channel = nextNoise() > 0.0f ? 1 : 0;
+            }
+        }
+
         void reset() noexcept
         {
             for (auto& c : channels)
@@ -91,21 +108,9 @@ namespace coolsynth::synth
                 c.thump = {};
             }
             write = 0;
-            rng = seed;
-            noiseRng = seed * 0x9E3779B1u + 0x7F4A7C15u;
-            if (noiseRng == 0)
-                noiseRng = 1;
             noiseGain = 0.0f;
             quietFor = quietHold;
-            rotation = 0.0;
-            bedDrift = bedDriftTarget = 0.0f;
-            // Two marks on the record, at their places on the turn, ticking each time round.
-            for (auto& mark : marks)
-            {
-                mark.phase = 0.5 * (nextNoise() + 1.0f);
-                mark.size = 0.02f + 0.04f * (0.5f * (nextNoise() + 1.0f));
-                mark.channel = nextNoise() > 0.0f ? 1 : 0;
-            }
+            reseed(); // two marks on the record, at their places on the turn, ticking each time round
             wowPhase = flutterPhase = 0.0;
             wowDrift = wowDriftTarget = 0.0f;
             holdPhase = 1.0;
@@ -318,7 +323,7 @@ namespace coolsynth::synth
         std::array<float, 2> addClick(float size, int numChannels) noexcept
         {
             const float lengthSeconds = 2.0e-5f * std::pow(200.0f, 0.5f * (nextNoise() + 1.0f)); // 20 us to 4 ms
-            const int length = std::max(1, static_cast<int>(lengthSeconds * static_cast<float>(sampleRate)));
+            const int clickLength = std::max(1, static_cast<int>(lengthSeconds * static_cast<float>(sampleRate)));
             const float sign = nextNoise() > 0.0f ? 1.0f : -1.0f;
             // Mostly one groove wall, so one channel; sometimes both, panned.
             const float side = nextNoise();
@@ -339,7 +344,7 @@ namespace coolsynth::synth
             const double cutoffHz = std::clamp(0.5 / static_cast<double>(lengthSeconds), 300.0, 0.45 * sampleRate);
             const float colour = static_cast<float>(1.0 - std::exp(-2.0 * juce::MathConstants<double>::pi * cutoffHz / sampleRate));
             const float makeUp = std::sqrt((2.0f - colour) / colour);
-            const float decay = std::exp(-4.0f / static_cast<float>(length));
+            const float decay = std::exp(-4.0f / static_cast<float>(clickLength));
             for (int ch = 0; ch < std::min(numChannels, 2); ++ch)
             {
                 const float gain = ch == 0 ? leftGain : rightGain;
@@ -350,7 +355,7 @@ namespace coolsynth::synth
                 for (auto& v : clicks)
                     if (v.left <= 0 || v.level < slot->level)
                         slot = &v; // a free voice, or the quietest
-                *slot = { length, sign * size * gain * makeUp, decay, colour, 0.0f };
+                *slot = { clickLength, sign * size * gain * makeUp, decay, colour, 0.0f };
             }
             return { leftGain, rightGain };
         }

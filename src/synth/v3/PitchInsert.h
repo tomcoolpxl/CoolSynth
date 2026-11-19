@@ -358,9 +358,14 @@ namespace coolsynth::synth::v3
             clear();
         }
 
+        /** The slot's own random numbers (D222); clear and reseed start them again. */
+        void setSeed(std::uint32_t newSeed) noexcept { noiseStart = newSeed == 0 ? 0x12345678u : newSeed; noise = noiseStart; }
+        void reseed() noexcept { noise = noiseStart; }
+
         /** Silence: the delay line and both engines empty. */
         void clear() noexcept
         {
+            noise = noiseStart;
             for (auto& r : ring)
                 std::fill(r.begin(), r.end(), 0.0f);
             for (auto& channel : spectral)
@@ -920,6 +925,6 @@ namespace coolsynth::synth::v3
         bool startPending = false, fresh = true;
         double minimumFade = 72.0;
         int searchStep = 2, correlationLength = 480;
-        std::uint32_t noise = 0x12345678u;
+        std::uint32_t noise = 0x12345678u, noiseStart = 0x12345678u;
     };
 }

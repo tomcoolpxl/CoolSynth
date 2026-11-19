@@ -200,6 +200,14 @@ namespace coolsynth::synth::v3
 
         /** Message thread. sampleRate is the voice rate (twice the host rate in the engine). */
         void prepare(double sampleRate, std::uint32_t seed);
+        /** Its random numbers, its drift and its slots' back to where prepare left them: a defined start (D222). */
+        void reseed() noexcept;
+        /** Its LFOs' random state as it is now is the start a reseed returns to: once the part's preparation is done. */
+        void keepAsStart() noexcept
+        {
+            for (auto& l : lfos)
+                l.keepAsStart();
+        }
 
         /** Silent and idle at once. */
         void reset() noexcept;
@@ -214,6 +222,10 @@ namespace coolsynth::synth::v3
         /** Pitch only, envelopes carry on; glides like retrigger(). */
         void legato(const NoteStart& note) noexcept;
         void release(float releaseVelocity = 0.5f) noexcept;
+        /** Out over the steal fade and then free, the live emergency's way (D222): a note that is sounding and
+            not already fading. */
+        void fadeOut() noexcept;
+        [[nodiscard]] bool isFadingOut() const noexcept { return fadingOut; }
         void kill() noexcept { reset(); }
         /** Let go and waiting for a slice to end before releasing (D207). */
         [[nodiscard]] bool isReleaseWaiting() const noexcept { return releaseWaiting; }
@@ -294,6 +306,7 @@ namespace coolsynth::synth::v3
         bool releaseWaiting = false; // let go, but a slice still plays to its end first (D207)
         bool prepared = false;
         int stealRemaining = 0;
+        bool fadingOut = false; // the steal fade ends the voice instead of starting a waiting note
         int envelopeHold = 0; // samples the envelopes wait at a fresh note, matching the generators' latency
         int stealTotal = 1;
         // A released voice whose recordings have ended ends once it has been this quiet this long (TODO 10).
@@ -315,6 +328,7 @@ namespace coolsynth::synth::v3
         float driftTarget = 0.0f;
         int driftSamplesToNext = 0;
         std::uint32_t rng = 1;
+        std::uint32_t rngStart = 1; // what prepare seeded rng with (D222)
         float sampleRate = 96000.0f;
         // The last second of the generator before a Grain slot set to Live (decision D139); on the heap, a voice is
         // kept in an array. Only the first such slot gets it.

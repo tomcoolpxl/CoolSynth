@@ -109,6 +109,12 @@ namespace coolsynth::synth
         chorusWasAudible = false;
         delayWasAudible = false;
         reverbWasAudible = false;
+        // The mixes as prepare leaves them, and the delay starting at its settings, not gliding from the time it was
+        // left at: a cleared rack plays as a fresh one (D222).
+        delay.rearm();
+        driveMixSmoothed.setCurrentAndTargetValue(0.0f);
+        chorusMixSmoothed.setCurrentAndTargetValue(0.0f);
+        reverbMixSmoothed.setCurrentAndTargetValue(0.0f);
     }
 
     void GlobalFxRack::process(juce::AudioBuffer<float>& buffer,
