@@ -392,6 +392,25 @@ public:
             ControllerSetup::instance().useForTesting({});
         }
 
+        beginTest("the first eight parameters a DAW sees are the panel's knobs on Home");
+        {
+            // DAWs that give a controller a plugin's first eight controls (Cubase's Quick Controls, Ableton's banks,
+            // generic scripts) start here (D216): layer A's four macros, Glide, Brightness, Space, the master volume.
+            auto processor = std::make_unique<SynthAudioProcessor>();
+            const auto& all = processor->getParameters();
+            const juce::StringArray wanted { "pA.macro1", "pA.macro2", "pA.macro3", "pA.macro4", "pA.voice.glide",
+                                             coolsynth::parameters::ids::brightness, coolsynth::parameters::ids::space,
+                                             coolsynth::parameters::ids::volumeMaster };
+            expect(all.size() > wanted.size());
+            for (int i = 0; i < wanted.size() && i < all.size(); ++i)
+            {
+                auto* ranged = dynamic_cast<juce::RangedAudioParameter*>(all[i]);
+                expect(ranged != nullptr && ranged->getParameterID() == wanted[i],
+                       "parameter " + juce::String(i + 1) + ": " + (ranged != nullptr ? ranged->getParameterID() : juce::String("?")));
+            }
+            expectEquals(all[0]->getName(32), juce::String("A Macro 1"));
+        }
+
         beginTest("the MiniLab 3's ready setup answers in its Arturia and its DAW program");
         {
             const auto* ml = readyProfile("arturia.minilab3");

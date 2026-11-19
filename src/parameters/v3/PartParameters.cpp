@@ -181,7 +181,7 @@ namespace coolsynth::parameters::v3
             return group;
         }
 
-        std::unique_ptr<juce::AudioProcessorParameterGroup> makeGlobalModulatorGroups(Part part)
+        std::unique_ptr<juce::AudioProcessorParameterGroup> makeGlobalModulatorGroups(Part part, bool withMacros)
         {
             auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".global", "Global Modulators", "|");
 
@@ -219,10 +219,13 @@ namespace coolsynth::parameters::v3
             step->addChild(std::make_unique<juce::AudioParameterBool>(makeId(stepParameterId(part, "retrigger")), "Step Retrigger", true));
             group->addChild(std::move(step));
 
-            auto macros = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".macros", "Macros", "|");
-            for (int i = 1; i <= sv3::macroCount; ++i)
-                macros->addChild(floatParameter(macroParameterId(part, i), "Macro " + juce::String(i), { 0.0f, 1.0f }, 0.0f, percentAttributes()));
-            group->addChild(std::move(macros));
+            if (withMacros) // layer A's are first in the list, in the Controls group (D216)
+            {
+                auto macros = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".macros", "Macros", "|");
+                for (int i = 1; i <= sv3::macroCount; ++i)
+                    macros->addChild(makeMacroParameter(part, i));
+                group->addChild(std::move(macros));
+            }
 
             auto chaosGroup = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".chaos", "Chaos", "|");
             chaosGroup->addChild(floatParameter(chaosParameterId(part), "Chaos Rate", logRange(0.01f, 10.0f), 0.5f, hzAttributes()));
@@ -428,7 +431,20 @@ namespace coolsynth::parameters::v3
         return id.startsWith("pA.") || id.startsWith("pB.");
     }
 
-    std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part)
+    std::unique_ptr<juce::AudioParameterFloat> makeMacroParameter(Part part, int oneBasedMacro)
+    {
+        return floatParameter(macroParameterId(part, oneBasedMacro),
+                              juce::String(part == Part::a ? "A" : "B") + " Macro " + juce::String(oneBasedMacro),
+                              { 0.0f, 1.0f }, 0.0f, percentAttributes());
+    }
+
+    std::unique_ptr<juce::AudioParameterFloat> makeGlideParameter(Part part)
+    {
+        return floatParameter(voiceParameterId(part, "glide"), juce::String(part == Part::a ? "A" : "B") + " Glide",
+                              squaredRange(0.0f, 5000.0f), 0.0f, msAttributes());
+    }
+
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part, bool withControls)
     {
         auto group = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part), part == Part::a ? "Layer A" : "Layer B", "|");
 
@@ -448,12 +464,13 @@ namespace coolsynth::parameters::v3
             group->addChild(makeLfoGroup(part, "glfo" + juce::String(i), "Global LFO " + juce::String(i), true));
         group->addChild(makeMatrixGroup(part));
         group->addChild(makeEffectRouteGroup(part));
-        group->addChild(makeGlobalModulatorGroups(part));
+        group->addChild(makeGlobalModulatorGroups(part, withControls));
 
         auto voice = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".voice", "Voice", "|");
         voice->addChild(floatParameter(voiceParameterId(part, "env2ToP1"), "Env 2 to P1", { -1.0f, 1.0f }, 0.2f, percentAttributes()));
         voice->addChild(floatParameter(voiceParameterId(part, "velToP1"), "Velocity to P1", { -1.0f, 1.0f }, 0.0f, percentAttributes()));
-        voice->addChild(floatParameter(voiceParameterId(part, "glide"), "Glide", squaredRange(0.0f, 5000.0f), 0.0f, msAttributes()));
+        if (withControls)
+            voice->addChild(makeGlideParameter(part));
         voice->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(voiceParameterId(part, "glideMode")), "Glide Mode",
                                                                     juce::StringArray { "Time", "Rate" }, 0));
         voice->addChild(floatParameter(voiceParameterId(part, "glideDown"), "Glide Down", { 0.25f, 4.0f }, 1.0f,

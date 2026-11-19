@@ -238,6 +238,21 @@ namespace
         return group;
     }
 
+    // The four faders (D184): volumes over the sound as designed, the top (1) as designed; shown in dB.
+    std::unique_ptr<juce::AudioParameterFloat> makeVolume(const char* id, const char* name)
+    {
+        const auto volume = juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int)
+        {
+            const float gain = coolsynth::synth::faderGain(value);
+            if (gain <= 1.0e-6f)
+                return juce::String("off");
+            const float db = juce::Decibels::gainToDecibels(gain);
+            return db > -0.05f ? juce::String("0.0 dB") : juce::String(db, 1) + " dB";
+        });
+        return std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(id), name, juce::NormalisableRange<float>(0.0f, 1.0f), 1.0f,
+                                                          volume);
+    }
+
     std::unique_ptr<juce::AudioProcessorParameterGroup> makeOutputGroup()
     {
         using namespace coolsynth::parameters::ids;
@@ -250,30 +265,39 @@ namespace
             -6.0f,
             dbAttributes()));
 
-        // Knobs 7 and 8, the same on every page (D176): the sound as designed in the middle.
+        // The four faders (D184); the master volume is in the Controls group, first in the list (D216).
+        for (const auto& [id, name] : { std::pair { volumeA, "Layer A Volume" }, std::pair { volumeB, "Layer B Volume" },
+                                        std::pair { volumeFx, "Effects Volume" } })
+            group->addChild(makeVolume(id, name));
+        return group;
+    }
+
+    // Knobs 7 and 8, the same on every page (D176): the sound as designed in the middle.
+    std::unique_ptr<juce::AudioParameterFloat> makeCentred(const char* id, const char* name)
+    {
         const auto centred = juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int)
         {
             const int percent = juce::roundToInt(100.0f * value);
             return percent == 0 ? juce::String("as the sound") : (percent > 0 ? "+" : "") + juce::String(percent) + " %";
         });
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(brightness), "Brightness",
-                                                                    juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f, centred));
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(space), "Space",
-                                                                    juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f, centred));
+        return std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(id), name, juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f,
+                                                          centred);
+    }
 
-        // The four faders (D184): volumes over the sound as designed, the top (1) as designed; shown in dB.
-        const auto volume = juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float value, int)
-        {
-            const float gain = coolsynth::synth::faderGain(value);
-            if (gain <= 1.0e-6f)
-                return juce::String("off");
-            const float db = juce::Decibels::gainToDecibels(gain);
-            return db > -0.05f ? juce::String("0.0 dB") : juce::String(db, 1) + " dB";
-        });
-        for (const auto& [id, name] : { std::pair { volumeA, "Layer A Volume" }, std::pair { volumeB, "Layer B Volume" },
-                                        std::pair { volumeFx, "Effects Volume" }, std::pair { volumeMaster, "Master Volume" } })
-            group->addChild(std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(id), name,
-                                                                        juce::NormalisableRange<float>(0.0f, 1.0f), 1.0f, volume));
+    /** First in the list, for DAWs that map a controller's first eight knobs to a plugin's first eight parameters
+        (Cubase's Quick Controls, Ableton's banks, generic scripts; D216): as the panel's knobs on Home, layer A's
+        four macros, Glide, Brightness and Space, and the master volume in the place of the page knob. */
+    std::unique_ptr<juce::AudioProcessorParameterGroup> makeControlsGroup()
+    {
+        namespace pv = coolsynth::parameters::v3;
+        using namespace coolsynth::parameters::ids;
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>("controls", "Controls", " / ");
+        for (int i = 1; i <= 4; ++i)
+            group->addChild(pv::makeMacroParameter(pv::Part::a, i));
+        group->addChild(pv::makeGlideParameter(pv::Part::a));
+        group->addChild(makeCentred(brightness, "Brightness"));
+        group->addChild(makeCentred(space, "Space"));
+        group->addChild(makeVolume(volumeMaster, "Master Volume"));
         return group;
     }
 }
@@ -281,8 +305,9 @@ namespace
 juce::AudioProcessorValueTreeState::ParameterLayout coolsynth::parameters::createParameterLayout()
 {
     juce::AudioProcessorValueTreeState::ParameterLayout layout;
-    layout.add(coolsynth::parameters::v3::makePartsGroup(),
-               coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::a),
+    layout.add(makeControlsGroup(), // first: the eight a DAW maps a controller's knobs to (D216)
+               coolsynth::parameters::v3::makePartsGroup(),
+               coolsynth::parameters::v3::makePartGroup(coolsynth::parameters::v3::Part::a, false),
                makeArpGroup(0),
                makeTempoGroup(),
                coolsynth::parameters::v3::makeMasterEffectsGroup(),

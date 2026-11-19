@@ -13,16 +13,19 @@ user was away are there too, each with every option: review them.
 
 ## Controllers (D216, `docs/design/CONTROLLERS.md`)
 
-C1. README: the DAW's own mapping first (FL: Link to controller or Multilink, no port), CoolSynth's Learn second.
-C2. Parameter order and gestures: the eight most useful parameters first, stable IDs, every panel edit a proper
-    begin/change/end gesture.
-C3. An exact duplicate-note filter for FL's doubled delivery when a port is set.
-C4. The MiniLab: drop every driver-owned message from the DAW's input exactly (replaces the `isPadEcho` timing guess);
-    the channel-1 hint where the DAW merges channels; the FL script linking by itself again; a ready setup for the
-    DAW program; the disconnect in both forms after clearing the screen; device-change notifications instead of
-    polling; a fallback when the port cannot be opened.
+Done on 2026-11-19, tested by the suite, not yet in a DAW: C1 (the README), C2 (the first eight parameters as the
+panel's Home, the user's choice; gestures were already right), C3 (the duplicate-note filter), and of C4 the exact
+drop, the channel-1 hint, the ready setup for both programs, the disconnect, the device-change notifications and the
+busy-port fallback.
+
+C4. Left of the MiniLab work: the FL script linking by itself. Arturia's own FL script claims the MiniLab by its
+    hardware ID (`supportedHardwareIds=00 20 6B 02 00 04 04`), ours by port name, and FL had fallen back to its
+    generic controller; FL documents no rule for which wins. Also to try: FL's own "Forward CCs to current plugin
+    Port 10" script, which hands knobs to a plugin on port 10 without putting the controller on a port.
 C5. A CLAP build with remote control pages (clap-juce-extensions), one page per panel page and `suggest_page`; the
-    installer installs it.
+    installer installs it. Two catches from its README: under CLAP JUCE reports the wrapper type as undefined, which
+    CoolSynth reads as "a test" (its `clap_properties` flag tells them apart), and stepped parameters reach CLAP
+    hosts as continuous ones.
 C6. Test per DAW (Ableton, FL Studio, Reaper, and Bitwig or Studio One if available): which hosts call `IMidiMapping`
     (a logging build), the duplicate filter, the channel-1 setting, the guided setup step by step (never tested by
     hand yet), and the MiniLab in both programs.

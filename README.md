@@ -63,15 +63,17 @@ A sample can be sliced across the keys, in equal pieces or at its hits, on the s
 
 ## Controllers
 
-Any MIDI keyboard plays CoolSynth, and its knobs, faders and pads can control the panel.
+Any MIDI keyboard plays CoolSynth.
 
-These set themselves up when you plug them in: Akai MPK mini mk3, Novation Launchkey Mini MK3 and MK4, Arturia KeyLab Essential mk3, Native Instruments Komplete Kontrol M32 and A-series.
+In a DAW, the simplest way to put your controller's knobs on CoolSynth is the DAW's own mapping: MIDI Map in Ableton Live, Link to controller in FL Studio, Quick Controls in Cubase, or the learn function of Bitwig or Reaper. CoolSynth lists its four macros, Glide, Brightness, Space and the master volume first, so DAWs that give a controller a plugin's first eight controls start there.
 
-For anything else, open **Prefs > Controller setup > Set up step by step**, or right-click a knob, fader or pad and choose **Learn**.
+CoolSynth can also learn your controller itself, so its knobs, faders and pads work the panel the way the MiniLab does, following the page you're on:
 
-The setup is saved for the whole computer, so the app and every plugin instance share it.
+- These set themselves up when you plug them in: Akai MPK mini mk3, Novation Launchkey Mini MK3 and MK4, Arturia KeyLab Essential mk3, Native Instruments Komplete Kontrol M32 and A-series.
+- For anything else, open **Prefs > Controller setup > Set up step by step**, or right-click a knob, fader or pad and choose **Learn**.
+- The setup is saved for the whole computer, so the app and every plugin instance share it.
 
-In FL Studio, knobs only reach a plugin when both use the same MIDI port. In **Options > MIDI settings**, give your keyboard a port number. Then in CoolSynth's plugin window, open the wrapper's **Settings** tab and set **MIDI > Input port** to the same number.
+In FL Studio, CoolSynth's own learning only gets your knobs through a shared MIDI port. In **Options > MIDI settings**, give your keyboard a port number. Then in CoolSynth's plugin window, open the wrapper's **Settings** tab and set **MIDI > Input port** to the same number.
 
 ## Arturia MiniLab 3
 
@@ -79,9 +81,12 @@ CoolSynth takes over the MiniLab's screen, pads and knobs, both in the app and i
 
 With CoolSynth on several tracks, the window you opened last gets the MiniLab. Using it inside a DAW needs Windows 11 24H2 or later.
 
-The installer adds scripts so the pads don't also play notes in your DAW. FL Studio finds its script by itself. In Ableton Live, open **Settings > Link, Tempo & MIDI** and choose CoolSynth_MiniLab as a control surface, with input Minilab3 MIDI and output None.
+The MiniLab sends its pads on MIDI channel 10 and its keys on channel 1. To keep the pads from also playing notes in your DAW:
 
-To use the MiniLab as an ordinary MIDI controller instead, turn off **Prefs > Controller setup > MiniLab 3 driver**.
+- In Ableton Live, set the CoolSynth track's **MIDI From** channel to **Ch. 1**. Or open **Settings > Link, Tempo & MIDI** and choose CoolSynth_MiniLab as a control surface, with input Minilab3 MIDI and output None.
+- In FL Studio, check that **Options > MIDI settings** shows CoolSynth MiniLab 3 as the MiniLab's controller type. The installer adds that script.
+
+To use the MiniLab as an ordinary MIDI controller instead, turn off **Prefs > Controller setup > MiniLab 3 driver**. It then works in its Arturia program and in its DAW program.
 
 ## Building from source
 

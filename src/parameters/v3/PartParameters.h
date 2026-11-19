@@ -90,7 +90,11 @@ namespace coolsynth::parameters::v3
     [[nodiscard]] juce::String macroParameterId(Part part, int oneBasedMacro);
     [[nodiscard]] juce::String chaosParameterId(Part part);
 
-    [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part);
+    /** A layer's parameters. withControls false leaves out its macros and Glide: layer A's are first in the list, in
+        the Controls group, for DAWs that map a controller's first eight knobs (D216). */
+    [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part, bool withControls = true);
+    [[nodiscard]] std::unique_ptr<juce::AudioParameterFloat> makeMacroParameter(Part part, int oneBasedMacro);
+    [[nodiscard]] std::unique_ptr<juce::AudioParameterFloat> makeGlideParameter(Part part);
     /** What belongs to the patch as a whole: the part mode. */
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartsGroup();
 
