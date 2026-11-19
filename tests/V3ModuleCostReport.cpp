@@ -216,6 +216,64 @@ public:
             }
             logMessage(juce::String("VA ") + c.name + ": " + juce::String::toHexString(static_cast<juce::int64>(hash)));
         }
+
+        // The ladder the same way (TODO 9, D219): a detuned saw pair with a little noise, through each mode, at gentle,
+        // strong and singing resonance, with Drive, Bass, the shaking cutoff (FM) and Leak, the cutoff sweeping.
+        struct LadderCase { const char* name; float mode, res, drive, bass, fm, leak, inputLevel; };
+        const LadderCase ladders[] {
+            { "lp24", 0.0f, 0.1f, 0.0f, 0.5f, 0.0f, 0.0f, 0.5f },       { "lp12", 1.0f, 0.5f, 0.0f, 0.5f, 0.0f, 0.0f, 0.5f },
+            { "bp", 2.0f, 0.7f, 6.0f, 0.0f, 0.0f, 0.0f, 0.5f },         { "hp12", 3.0f, 0.3f, 0.0f, 0.0f, 0.0f, 0.05f, 0.5f },
+            { "singing", 0.0f, 1.0f, 0.0f, 0.5f, 0.0f, 0.0f, 0.2f },    { "drive 24", 0.0f, 0.85f, 24.0f, 1.0f, 0.0f, 0.0f, 1.0f },
+            { "fm", 0.0f, 0.6f, 3.0f, 0.5f, 1.5f, 0.1f, 0.7f },         { "loud", 1.0f, 0.95f, 12.0f, 1.0f, 0.0f, 0.0f, 2.0f },
+        };
+        for (const auto& c : ladders)
+        {
+            SlotMemory memory;
+            memory.allocate(0);
+            auto ladder = std::make_unique<LadderProcessor>();
+            ladder->prepare(96000.0, sub, memory);
+            SlotParams p;
+            p.p[LadderProcessor::resonance] = c.res;
+            p.p[LadderProcessor::drive] = c.drive;
+            p.p[LadderProcessor::keyTrack] = 0.5f;
+            p.p[LadderProcessor::mode] = c.mode;
+            p.p[LadderProcessor::bass] = c.bass;
+            p.p[LadderProcessor::fm] = c.fm;
+            p.p[LadderProcessor::leak] = c.leak;
+            p.frequencyHz = 220.0f;
+            std::uint64_t hash = 1469598103934665603ull;
+            std::vector<float> l(sub), r(sub), shake(sub);
+            std::uint32_t noise = 12345u;
+            double phaseA = 0.0, phaseB = 0.0, phaseC = 0.0;
+            for (int block = 0; block < 6000; ++block)
+            {
+                p.p[LadderProcessor::cutoff] = 40.0f * std::exp2(9.0f * static_cast<float>(block % 3000) / 3000.0f); // 40 Hz to 20 kHz
+                for (int s = 0; s < sub; ++s)
+                {
+                    noise = noise * 1664525u + 1013904223u;
+                    const float n = static_cast<float>(noise >> 8) * (2.0f / 16777216.0f) - 1.0f;
+                    phaseA += 220.0 / 96000.0;
+                    phaseB += 221.3 / 96000.0;
+                    phaseC += 110.0 / 96000.0;
+                    phaseA -= std::floor(phaseA);
+                    phaseB -= std::floor(phaseB);
+                    phaseC -= std::floor(phaseC);
+                    l[static_cast<std::size_t>(s)] = c.inputLevel * (static_cast<float>(2.0 * phaseA - 1.0) * 0.5f + 0.02f * n);
+                    r[static_cast<std::size_t>(s)] = c.inputLevel * (static_cast<float>(2.0 * phaseB - 1.0) * 0.5f - 0.02f * n);
+                    shake[static_cast<std::size_t>(s)] = static_cast<float>(std::sin(6.283185307179586 * phaseC));
+                }
+                p.modulator = shake.data();
+                ladder->process(l.data(), r.data(), sub, p);
+                for (int s = 0; s < sub; ++s)
+                    for (const float v : { l[static_cast<std::size_t>(s)], r[static_cast<std::size_t>(s)] })
+                    {
+                        std::uint32_t bits;
+                        std::memcpy(&bits, &v, sizeof(bits));
+                        hash = (hash ^ bits) * 1099511628211ull;
+                    }
+            }
+            logMessage(juce::String("Ladder ") + c.name + ": " + juce::String::toHexString(static_cast<juce::int64>(hash)));
+        }
     }
 };
 

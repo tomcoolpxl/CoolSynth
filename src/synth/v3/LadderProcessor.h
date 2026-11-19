@@ -301,8 +301,12 @@ namespace coolsynth::synth::v3
             const __m128 denominator = _mm_add_ps(_mm_set1_ps(135135.0f),
                 _mm_mul_ps(x2, _mm_add_ps(_mm_set1_ps(62370.0f), _mm_mul_ps(x2, _mm_add_ps(_mm_set1_ps(3150.0f), _mm_mul_ps(_mm_set1_ps(28.0f), x2))))));
             const __m128 rational = _mm_div_ps(numerator, denominator);
-            const __m128 large = _mm_div_ps(_mm_set1_ps(1.0f), _mm_sqrt_ps(x2));
             const __m128 useLarge = _mm_cmpge_ps(x2, _mm_set1_ps(24.0f));
+            // Past |x| 4.9 the rational gives way to 1/|x|; that is rare, so its square root and division are worked
+            // out only when a lane needs them. The blend would pick the rational in every lane: the same bits (D219).
+            if (_mm_movemask_ps(useLarge) == 0)
+                return rational;
+            const __m128 large = _mm_div_ps(_mm_set1_ps(1.0f), _mm_sqrt_ps(x2));
             return _mm_or_ps(_mm_and_ps(useLarge, large), _mm_andnot_ps(useLarge, rational));
         }
 
@@ -318,16 +322,24 @@ namespace coolsynth::synth::v3
             const __m128 gv = _mm_set1_ps(g);
             const __m128 kv = _mm_set1_ps(k);
             const __m128 one = _mm_set1_ps(1.0f);
+            const __m128 zero = _mm_setzero_ps();
+            // Left and right use two of the register's four lanes, so two stages share one register: stages 1 and 2
+            // in one, 3 and 4 in another, [left, right, left, right]. Every lane's arithmetic is as before, so left
+            // and right come out the same to the last bit, with six divisions a solve instead of fifteen and the five
+            // square roots only when a lane needs them (D219). The high pair is moved down with zeros above it.
             const __m128 t0 = tanhOverX4(input);
-            const __m128 t1 = tanhOverX4(o1);
-            const __m128 t2 = tanhOverX4(o2);
-            const __m128 t3 = tanhOverX4(o3);
-            const __m128 t4 = tanhOverX4(o4);
+            const __m128 t12 = tanhOverX4(_mm_movelh_ps(o1, o2));
+            const __m128 t34 = tanhOverX4(_mm_movelh_ps(o3, o4));
+            const __m128 t1 = t12;
+            const __m128 t2 = _mm_movehl_ps(zero, t12);
+            const __m128 t3 = t34;
 
-            const __m128 d1 = _mm_div_ps(one, _mm_add_ps(one, _mm_mul_ps(gv, t1)));
-            const __m128 d2 = _mm_div_ps(one, _mm_add_ps(one, _mm_mul_ps(gv, t2)));
-            const __m128 d3 = _mm_div_ps(one, _mm_add_ps(one, _mm_mul_ps(gv, t3)));
-            const __m128 d4 = _mm_div_ps(one, _mm_add_ps(one, _mm_mul_ps(gv, t4)));
+            const __m128 d12 = _mm_div_ps(one, _mm_add_ps(one, _mm_mul_ps(gv, t12)));
+            const __m128 d34 = _mm_div_ps(one, _mm_add_ps(one, _mm_mul_ps(gv, t34)));
+            const __m128 d1 = d12;
+            const __m128 d2 = _mm_movehl_ps(zero, d12);
+            const __m128 d3 = d34;
+            const __m128 d4 = _mm_movehl_ps(zero, d34);
             const __m128 a1 = _mm_mul_ps(_mm_mul_ps(gv, t0), d1);
             const __m128 a2 = _mm_mul_ps(_mm_mul_ps(gv, t1), d2);
             const __m128 a3 = _mm_mul_ps(_mm_mul_ps(gv, t2), d3);
