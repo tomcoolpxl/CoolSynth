@@ -1,7 +1,9 @@
 # TODO
 
-Open work only. Chosen by the user on 2026-11-19 (D215): items 1-7 and 9-17 except 11 and 12; MPE dropped for good. What is done, and why, is in `DECISIONS_LOG.md` and the git history; decisions taken while the
-user was away are there too, each with every option: review them.
+Open work only. Chosen by the user on 2026-11-19 (D215): items 1-7 and 9-17 except 11 and 12; MPE dropped for good.
+Order since then: the controller redesign (C1-C6, D216), JUCE 9 (J1, D217), then the next release (J3). What is done,
+and why, is in `DECISIONS_LOG.md` and the git history; decisions taken while the user was away are there too, each
+with every option: review them.
 
 ## Before or right after the first release (0.3.0)
 
@@ -22,13 +24,34 @@ C4. Left of the MiniLab work: the FL script linking by itself. Arturia's own FL 
     hardware ID (`supportedHardwareIds=00 20 6B 02 00 04 04`), ours by port name, and FL had fallen back to its
     generic controller; FL documents no rule for which wins. Also to try: FL's own "Forward CCs to current plugin
     Port 10" script, which hands knobs to a plugin on port 10 without putting the controller on a port.
-C5. A CLAP build with remote control pages (clap-juce-extensions), one page per panel page and `suggest_page`; the
-    installer installs it. Two catches from its README: under CLAP JUCE reports the wrapper type as undefined, which
-    CoolSynth reads as "a test" (its `clap_properties` flag tells them apart), and stepped parameters reach CLAP
-    hosts as continuous ones.
+C5. A CLAP build with remote control pages, in progress (paused for the JUCE 9 switch, J1):
+    - Done, not built: clap-juce-extensions as a submodule in `external/`, pinned at 6bde108 (2026-11-06); the
+      `clap_juce_extensions_plugin` CMake target with `CLAP_USE_JUCE_PARAMETER_RANGES DISCRETE` (stepped parameters
+      keep their steps); `madeByHostOrApp()` and `inDaw()` in the processor, so a CLAP CoolSynth is not taken for a
+      test (JUCE reports CLAP's wrapper type as undefined; the extension's `is_clap` tells them apart).
+    - To fix: commit 3dd4327 registered the submodule at 3837f4a (2026-11-17) instead of the pinned 6bde108.
+    - Left: the remote control pages (one per panel page: its four knobs, then Glide, Brightness, Space and the
+      master volume), `suggestRemoteControlsPage` when the panel changes page, `remoteControlsChanged` when a slot's
+      type changes the page; the installer installing `CoolSynth.clap` in `C:\Program Files\Common Files\CLAP`; the
+      CI building and packaging it; tests.
 C6. Test per DAW (Ableton, FL Studio, Reaper, and Bitwig or Studio One if available): which hosts call `IMidiMapping`
     (a logging build), the duplicate filter, the channel-1 setting, the guided setup step by step (never tested by
-    hand yet), and the MiniLab in both programs.
+    hand yet), the MiniLab in both programs, and the CLAP pages. To try a build in a DAW without a release, make a
+    test installer from the Debug build (from `installer`):
+    `iscc /DAppVersion=0.3.0 /DBuildDir=..\build\CoolSynth_artefacts\Debug /O<folder> CoolSynth.iss`.
+
+## JUCE, platforms and the next release
+
+J1. JUCE 9.0.5 instead of 8.0.12, the user's choice on 2026-11-19 (D217), in progress: work through
+    `external/JUCE/BREAKING_CHANGES.md` from 8.0.12 on, build, the full suite, then the CLAP build on JUCE 9 (the
+    extension is not confirmed on JUCE 9). It brings the security fixes for malformed WAV/AIFF files, XML,
+    ValueTree and JSON input (CoolSynth reads all four from outside) and WinMM MIDI fixes.
+J2. macOS, for the user's Mac (the user comes back to it): AU, VST3 and CLAP on macOS; an installer package with
+    signing and notarisation; the MiniLab driver on CoreMIDI; the FL Studio and Ableton script folders on macOS; the
+    sample library's place; a macOS runner in the CI. In Logic an AU gets the controller's messages as sent.
+J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks the number), the release notes in
+    `docs/releases/`, the tag. It carries the controller redesign, JUCE 9 and the CLAP build.
+J4. GEMINI.md's current state: add the controller design (D216), JUCE 9 (D217) and CLAP once they are in.
 
 ## The user's ear and hands
 

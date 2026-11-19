@@ -4436,3 +4436,10 @@ The FL Studio test of the released 0.3.0 failed: with the MiniLab driver Off the
 - The MiniLab's pads in a DAW, the user's choice (options: three layers together, recommended and chosen; scripts only; plugin-side timing guesses): the plugin drops every message the driver owns, exactly; CoolSynth tells the player once to set the track to channel 1 where the DAW merges channels; the FL and Ableton scripts stay optional, and the FL script's linking is fixed (FL had fallen back to its generic controller).
 - The driver switched Off, the user's choice (options: ready setups for both MiniLab programs, recommended and chosen; ask for Shift + pad 3; both): a ready setup for the DAW program besides the Arturia program; the disconnect sent in both forms after clearing the screen.
 - Also in the design: device-change notifications instead of listing devices every few seconds, a fallback when the port cannot be opened, and the standalone app keeping CoolSynth's own setups and Learn, where nothing stands between the controller and CoolSynth.
+
+## D217. JUCE 9.0.5 (2026-11-19)
+
+The user asked whether CoolSynth uses the latest JUCE and what is new. It used 8.0.12; current are 9.0.5 (2 November 2026) and the security releases 8.0.16 and 8.0.17 of the 8 line (JUCE's GitHub releases). The security fixes harden what CoolSynth reads from outside: malformed WAV and AIFF files, XML and ValueTree streams (a DAW's saved state), JSON (the controller setup), strings. JUCE 9 adds WinMM MIDI fixes, faster software rendering and Direct2D fixes; its promised native CLAP did not come (it waits for AudioProcessor v2; JUCE's 9 announcement), so clap-juce-extensions stays, whose JUCE 9 support is not confirmed. Licence terms are unchanged from JUCE 8.
+
+- The user's choice (options: 8.0.17-security now, recommended; JUCE 9.0.5, chosen; 8.0.17 now and JUCE 9 later; stay on 8.0.12), "because I also want to support macOS. I have a Mac. I'll come back with that" (TODO J2).
+- The switch works through JUCE's BREAKING_CHANGES.md from 8.0.12 on, then the full suite, then the CLAP build on JUCE 9.
