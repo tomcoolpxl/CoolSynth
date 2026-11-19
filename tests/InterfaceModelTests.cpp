@@ -535,6 +535,34 @@ public:
             expectEquals(model->keyboardLowKey(), 0, "four octaves down at most");
         }
 
+        beginTest("An edited sound another replaced comes back from the top of the list of rooms (D225)");
+        {
+            // The user's test pass: looking for Mono, three presets loaded over an edited sound and it was gone.
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            auto* mode = synth->getValueTreeState().getParameter("pA.play.mode");
+            mode->setValueNotifyingHost(mode->getValueForText("Mono"));
+            expect(synth->isPatchDirty(), "an edit");
+            const auto edited = synth->getPatchName();
+            // Another sound of the room Home shows, clicked: it loads over the edit.
+            const auto room = model->list();
+            const int other = room.used == 1 ? 2 : 1;
+            model->clickListRow(other);
+            expect(synth->hasEditRecall(), "the edit is kept");
+            expectEquals(mode->getCurrentValueAsText(), juce::String("Poly"), "another sound plays");
+            // Back to the rooms: the edit is the first row.
+            model->clickListRow(0); // "Back to categories"
+            const auto rooms = model->list();
+            expect(rooms.rows[0].contains("Back to your edit: " + edited), rooms.rows[0]);
+            expectEquals(model->mainPressRole(), juce::String("Open"));
+            model->turnMain(-100); // to the top
+            expectEquals(model->mainPressRole(), juce::String("Restore"));
+            model->pressMain();
+            expectEquals(mode->getCurrentValueAsText(), juce::String("Mono"), "the edit is back");
+            expect(! synth->hasEditRecall(), "and no longer kept");
+            expect(! model->list().rows[0].contains("Back to your edit"), "the row is gone");
+        }
+
         beginTest("Any keyboard's line: the size chosen in Preferences, placed by its notes (D218)");
         {
             auto& setup = coolsynth::midi::ControllerSetup::instance();

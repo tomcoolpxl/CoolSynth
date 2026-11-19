@@ -1058,6 +1058,27 @@ void SynthAudioProcessor::loadSoundIntoLayer(int program, int layer)
     currentProgram = program;
 }
 
+void SynthAudioProcessor::keepEditForRecall()
+{
+    if (! isPatchDirty())
+        return;
+    editRecall.reset();
+    getStateInformation(editRecall);
+    editRecallSound = getPatchName();
+}
+
+bool SynthAudioProcessor::restoreEditRecall()
+{
+    if (editRecall.getSize() == 0)
+        return false;
+    const auto state = editRecall;
+    editRecall.reset();
+    editRecallSound.clear();
+    setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+    patchDirty.store(true, std::memory_order_relaxed); // it is the edit again
+    return true;
+}
+
 bool SynthAudioProcessor::loadMySoundIntoLayer(const juce::File& file, int layer)
 {
     auto result = coolsynth::presets::readPatchFile(file, getParameterStateTypeName());

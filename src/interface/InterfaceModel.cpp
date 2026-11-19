@@ -262,6 +262,7 @@ namespace coolsynth::ui
 
     void InterfaceModel::loadPreset(int preset)
     {
+        synth.keepEditForRecall(); // an edited sound stays reachable, first in the list of rooms (D225)
         if (preset >= mySoundBase)
         {
             const auto k = static_cast<std::size_t>(preset - mySoundBase);
@@ -1274,8 +1275,8 @@ namespace coolsynth::ui
         {
             if (currentLivePage == layersPage)
                 layerAction = clampInt(layerAction + steps, 0, layerActionNames().size() - 1);
-            else if (! browser.inCategory) // -1: the "Empty layer" row (D194)
-                browser.category = clampInt(browser.category + steps, -1, static_cast<int>(bank.size()) - 1);
+            else if (! browser.inCategory) // -1: the "Empty layer" row (D194); -2, above it, an edit to go back to (D225)
+                browser.category = clampInt(browser.category + steps, synth.hasEditRecall() ? recallRow : -1, static_cast<int>(bank.size()) - 1);
             else
                 browser.row = clampInt(browser.row + steps, 0,
                                        static_cast<int>(bank[static_cast<std::size_t>(browser.category)].presets.size()));
@@ -1303,8 +1304,16 @@ namespace coolsynth::ui
         {
             if (currentLivePage == layersPage)
                 doLayerAction(layerAction); // (D196)
+            else if (! browser.inCategory && browser.category == recallRow)
+            {
+                synth.restoreEditRecall(); // the edit back, as it was (D225)
+                browser.category = 0;
+            }
             else if (! browser.inCategory && browser.category < 0)
+            {
+                synth.keepEditForRecall();
                 synth.emptyLayer(currentPart); // "Empty layer A/B" (D194)
+            }
             else if (! browser.inCategory)
             {
                 browser.inCategory = true;
@@ -1409,7 +1418,7 @@ namespace coolsynth::ui
             else if (browser.inCategory)
                 browser.row = row;
             else
-                browser.category = row - 1; // row 0 is "Empty layer" (D194)
+                browser.category = row - 1 - (synth.hasEditRecall() ? 1 : 0); // "Empty layer" first (D194), an edit before it (D225)
         }
         else
             return;
@@ -1546,11 +1555,15 @@ namespace coolsynth::ui
         if (! browser.inCategory)
         {
             view.title = "CATEGORIES";
+            // The edited sound another replaced, to go back to (D225), then a way to clear the layer (D194).
+            const int extra = synth.hasEditRecall() ? 1 : 0;
+            if (extra != 0)
+                view.rows.add(juce::String(juce::CharPointer_UTF8("\xe2\x86\xba Back to your edit: ")) + synth.editRecallName());
             view.rows.add("Empty layer " + juce::String(currentPart == 0 ? "A" : "B")); // first, to clear the layer (D194)
             for (const auto& category : bank)
                 view.rows.add(category.name);
-            view.cursor = browser.category + 1;
-            view.used = layerEmpty(currentPart) ? 0 : categoryOfPreset(playingPreset()) + 1;
+            view.cursor = juce::jlimit(0, view.rows.size() - 1, browser.category + 1 + extra);
+            view.used = layerEmpty(currentPart) ? extra : categoryOfPreset(playingPreset()) + 1 + extra;
             return view;
         }
         const auto& category = bank[static_cast<std::size_t>(browser.category)];
@@ -1616,7 +1629,8 @@ namespace coolsynth::ui
             if (currentLivePage == layersPage)
                 return "Do";
             if (! browser.inCategory)
-                return browser.category < 0 ? (layerEmpty(currentPart) ? none : juce::String("Empty")) : juce::String("Open");
+                return browser.category == recallRow ? juce::String("Restore")
+                                                     : (browser.category < 0 ? (layerEmpty(currentPart) ? none : juce::String("Empty")) : juce::String("Open"));
             if (browser.row == 0)
                 return "Back";
             const int preset = bank[static_cast<std::size_t>(browser.category)].presets[static_cast<std::size_t>(browser.row - 1)];

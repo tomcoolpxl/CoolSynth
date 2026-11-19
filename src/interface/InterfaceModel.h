@@ -279,6 +279,7 @@ namespace coolsynth::ui
         static constexpr int mySoundBase = 1000000;
 
     private:
+        static constexpr int recallRow = -2; // the browser's row for an edit to go back to (D225)
         struct Browser
         {
             bool inCategory = true;

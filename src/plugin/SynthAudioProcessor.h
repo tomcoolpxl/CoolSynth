@@ -241,6 +241,13 @@ public:
     bool loadMySoundIntoLayer(const juce::File& file, int layer);
     /** Every generator and processor slot of `layer` Off: the layer is left out (D190). */
     void emptyLayer(int layer);
+    /** The edited sound, kept when the panel loads another over it (D225, the user's test pass): Home's list offers it
+        back first. Does nothing for a sound not edited. Message thread. */
+    void keepEditForRecall();
+    /** The kept edit back, as it was; then it is no longer kept. False when none is kept. Message thread. */
+    bool restoreEditRecall();
+    [[nodiscard]] bool hasEditRecall() const noexcept { return editRecall.getSize() > 0; }
+    [[nodiscard]] juce::String editRecallName() const { return editRecallSound; }
     /** Preferences' Reset (D199): the sound only. The start sound on layer A, layer B empty, the faders at the top,
         the Layers page and knobs 7-8 centred, solo off. The Preferences choices and MIDI learn stay. */
     void resetSound();
@@ -494,6 +501,8 @@ private:
     bool suppressGestureSnapshots = false;
     std::atomic<bool> applyingPatch { false };
     std::atomic<bool> patchDirty { false };
+    juce::MemoryBlock editRecall;   // D225: the last edited sound the panel replaced
+    juce::String editRecallSound;
     juce::String patchName { "Init" };
     mutable juce::CriticalSection patchIdentityLock;
     static juce::PropertiesFile& pluginOptions(); // the plugin's per-computer choices (D174)
