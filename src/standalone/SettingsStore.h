@@ -62,6 +62,17 @@ namespace coolsynth::standalone
             propertySet.setValue("multiCore", on);
         }
 
+        /** The MCP server (D225): off until the player switches it on in Prefs. */
+        bool getMcpServer() const
+        {
+            return propertySet.getBoolValue("mcpServer", false);
+        }
+
+        void setMcpServer(bool on)
+        {
+            propertySet.setValue("mcpServer", on);
+        }
+
         /** The keyboard's velocity curve (D175): 0 Soft, 1 Normal, 2 Hard. */
         int getVelocityCurve() const
         {

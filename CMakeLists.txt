@@ -142,6 +142,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/standalone/StandaloneAudioSupport.cpp
     src/interface/MiniLab3Driver.cpp
     src/diagnostics/FlightRecorder.cpp
+    src/mcp/McpServer.cpp
+    src/mcp/CoolSynthTools.cpp
     src/synth/Arpeggiator.cpp
     src/synth/GlobalDelay.cpp
     src/synth/GlobalFxRack.cpp
@@ -225,6 +227,7 @@ if(BUILD_TESTING)
             tests/V3StutterTests.cpp
             tests/DeterminismTests.cpp
             tests/V3VoiceCapTests.cpp
+            tests/McpServerTests.cpp
             tests/V3InstrumentTests.cpp
             tests/V3VoiceTests.cpp
             tests/V3PartTests.cpp

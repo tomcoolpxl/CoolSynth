@@ -129,6 +129,21 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     stick) and above all what other plugins do (browsers, tags, search, favourites, files you can share). Keep it
     simple: plugins are the model, not hardware's limits, which would only make it more confusing. Then propose
     what to improve, the same in the plugin and the standalone app. With the real interface (UI last).
+26. From the user's test pass (2026-11-19): the sample selection wants a better interface (choosing an instrument
+    or a file of your own by turning one knob through the whole list is slow); and clicking the LED (the panel's
+    lit value) should let you set the value too. With the real interface (UI last).
+27. Parked (the user, 2026-11-19), a big discussion: playing your own samples. In the test pass the user had to load
+    a normal instrument (Basic Saw) into layer A to get a sample playing at all, then find the Sample type inside
+    the G1-G3 chain. Seeing every element of the chain is advanced and wanted, but samples (a loop, slices, a kit)
+    may need a level of their own: a simpler way in, a sampler view, a starting sound. Research how other synths
+    and samplers present it, then options to choose from. Goes with items 24 and 26.
+28. Started on 2026-11-19 (D225): the app's MCP server, switched on in Prefs, registered with Claude Code. Left: a
+    tool that moves a controller (the mod wheel, for Wheel Stutter's timing), saving a sound, perhaps the plugins.
+    The user's request: an MCP server in CoolSynth, so Claude can read and set the running
+    app's settings (parameters, the slots' files, presets), read the flight log and play notes while guiding a test,
+    instead of closing the app to edit its saved state. Off by default, this computer only (localhost), probably the
+    app and test builds only. Check online how others expose a running program to MCP (a local HTTP or stdio server,
+    JUCE examples, security), then options to choose from.
 25. Parked (the user, 2026-11-19): tempo. Today the arps' internal tempo (the info row's BPM) drives the arps and
     the synced effects when no host plays, and a DAW's tempo when one does. Missing, perhaps: setting it on the
     panel, tap tempo, a metronome, MIDI clock in and out in the standalone app. Decide together with the recorder

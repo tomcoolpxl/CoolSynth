@@ -188,6 +188,24 @@ public:
 
     void runTest() override
     {
+        // Opt-in (COOLSYNTH_ATTACKS_OF=a WAV): the attacks the detector finds in a file, to study one, with the
+        // Sensitivity at which each comes in ((1 - sensitivity) squared of the strongest).
+        if (const auto path = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_ATTACKS_OF", {}); path.isNotEmpty())
+        {
+            beginTest("the_attacks_of_a_file");
+            juce::AudioFormatManager formats;
+            formats.registerBasicFormats();
+            if (std::unique_ptr<juce::AudioFormatReader> reader { formats.createReaderFor(juce::File(path)) })
+            {
+                juce::AudioBuffer<float> audio(1, static_cast<int>(reader->lengthInSamples));
+                reader->read(&audio, 0, audio.getNumSamples(), 0, true, false);
+                const auto attacks = UserLibrary::findAttacks(audio.getReadPointer(0), audio.getNumSamples(), reader->sampleRate);
+                for (const auto& a : attacks)
+                    logMessage(juce::String(a.frame / reader->sampleRate, 3) + " s, strength " + juce::String(a.strength, 3)
+                               + ", in from Sensitivity " + juce::String(100.0f * (1.0f - std::sqrt(a.strength)), 0) + " %");
+            }
+            return;
+        }
         const auto folder = juce::File::getSpecialLocation(juce::File::tempDirectory)
                                 .getChildFile("CoolSynthSliceTests_" + juce::String::toHexString(juce::Random::getSystemRandom().nextInt()));
         folder.createDirectory();

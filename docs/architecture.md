@@ -267,6 +267,12 @@ sources but no longer used.
 
 ## Tests and tools
 
+**The app's MCP server** (`src/mcp`, D225). Switched on in the app's Prefs, the app answers the Model Context
+Protocol on `http://127.0.0.1:47613/mcp` (Streamable HTTP, written with JUCE's sockets and JSON): Claude Code reads
+and sets the sound by the values the screen shows, loads presets and files, plays notes and measures the output,
+pictures the window and reads the flight log, which now also logs every knob change and file choice. Its tools
+run on the message thread.
+
 **Tests.** All tests are one program, `CoolSynthMidiLearnTests` (the name is older than what it tests), built
 from `tests/*.cpp` and run by `ctest`. Set `COOLSYNTH_TEST_ONLY` to part of a test's name to run only those
 tests. The test program replaces the global memory allocator and counts every allocation made inside an

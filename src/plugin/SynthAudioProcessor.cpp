@@ -307,6 +307,8 @@ void SynthAudioProcessor::setUserFile(int part, int slot, const juce::String& na
     namespace pv3 = coolsynth::parameters::v3;
     const auto key = pv3::userFileKey(part == 0 ? pv3::Part::a : pv3::Part::b, juce::jlimit(1, pv3::partGeneratorSlots, slot));
     auto files = parameters.state.getOrCreateChildWithName(pv3::userFilesTag, nullptr);
+    // The last 47 characters: a long path keeps its file's name (D224).
+    coolsynth::diag::record(coolsynth::diag::Event::userFile, part, slot, 0.0f, 0.0f, name.trim().getLastCharacters(47).toRawUTF8());
     if (name.trim().isEmpty())
         files.removeProperty(key, nullptr);
     else
@@ -844,6 +846,10 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     tripwireWorstMs = std::max(tripwireWorstMs, took);
     tripwirePeak = std::max(tripwirePeak, peak);
     voicesNow.store(synthEngine.activeVoiceCount(), std::memory_order_relaxed);
+    if (peak > loudestSinceAsked.load(std::memory_order_relaxed))
+        loudestSinceAsked.store(peak, std::memory_order_relaxed);
+    if (const int voices = synthEngine.activeVoiceCount(); voices > mostVoicesSinceAsked.load(std::memory_order_relaxed))
+        mostVoicesSinceAsked.store(voices, std::memory_order_relaxed);
     voiceLimitNow.store(synthEngine.voiceLimit(), std::memory_order_relaxed);
     tripwireVoices = std::max(tripwireVoices, synthEngine.activeVoiceCount());
     tripwireClipped += synthEngine.consumeClippedSamples();
@@ -1670,8 +1676,17 @@ void SynthAudioProcessor::resetAutomatableParametersToDefaults()
 
 // ---- Undo and patch identity ---------------------------------------------------
 
-void SynthAudioProcessor::parameterValueChanged(int, float)
+void SynthAudioProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
+    // Every change made on the panel, a controller or Learn, as the screen shows it, so a note in the flight log can
+    // be matched to the settings it played with (the user's test pass, D224). Not a preset's own values (it is
+    // logged by name), and not the host's automation, which arrives on the audio thread.
+    if (! applyingPatch.load(std::memory_order_relaxed) && juce::MessageManager::existsAndIsCurrentThread())
+        if (auto* withId = dynamic_cast<juce::AudioProcessorParameterWithID*>(getParameters()[parameterIndex]))
+        {
+            const auto text = (withId->paramID + " " + withId->getText(newValue, 24)).substring(0, 47);
+            coolsynth::diag::record(coolsynth::diag::Event::parameter, parameterIndex, 0, newValue, 0.0f, text.toRawUTF8());
+        }
     if (! applyingPatch.load(std::memory_order_relaxed))
         patchDirty.store(true, std::memory_order_relaxed);
 }

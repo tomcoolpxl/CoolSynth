@@ -1,6 +1,8 @@
 #if JucePlugin_Build_Standalone
 
 #include "StandaloneAudioSupport.h"
+#include "BuildInfo.h"
+#include "mcp/CoolSynthTools.h"
 #include "SettingsStore.h"
 #include "interface/MiniLab3Driver.h"
 #include "parameters/ParameterIDs.h"
@@ -63,11 +65,27 @@ public:
                 };
                 miniLab = std::make_unique<coolsynth::ui::MiniLab3Driver>(synth->getInterfaceModel(), *synth,
                                                                           &host->deviceManager);
+                // Claude's way in while it guides a test (D225): off until switched on in Prefs, remembered.
+                synth->mcpServerOn = [this] { return mcp != nullptr && mcp->listening(); };
+                synth->chooseMcpServer = [this, synth](bool on)
+                {
+                    switchMcp(*synth, on);
+                    if (auto* store = coolsynth::standalone::getStandaloneSettingsStore())
+                        store->setMcpServer(on);
+                };
+                synth->mcpServerStatus = [this] { return mcpStatus; };
+                if (auto* store = coolsynth::standalone::getStandaloneSettingsStore(); store != nullptr && store->getMcpServer())
+                    switchMcp(*synth, true);
             }
         startTimer(1000);
     }
 
-    ~CoolSynthStandaloneWindow() override { stopTimer(); }
+    ~CoolSynthStandaloneWindow() override
+    {
+        stopTimer();
+        alive->store(false); // a tool's job still queued finds the app gone and does nothing
+        mcp = nullptr;
+    }
 
     // The MiniLab cannot be asked where its faders stand (its faders only send their moves; D187): so the app keeps
     // where they were. JUCE saves the whole state when the window closes; this also saves it once a fader has moved,
@@ -94,6 +112,43 @@ public:
 
 
 private:
+    void switchMcp(SynthAudioProcessor& synth, bool on)
+    {
+        mcp = nullptr;
+        mcpStatus = "Off: Claude cannot reach this app.";
+        if (! on)
+            return;
+        // A tool runs on the message thread, as the panel's own edits do, and the server waits for it (10 s at most).
+        coolsynth::mcp::Server::Runner runner = [alive = alive](std::function<void()> job)
+        {
+            if (juce::MessageManager::getInstance()->isThisTheMessageThread())
+            {
+                job();
+                return;
+            }
+            auto done = std::make_shared<juce::WaitableEvent>();
+            juce::MessageManager::callAsync([alive, done, job = std::move(job)]
+            {
+                if (alive->load())
+                    job();
+                done->signal();
+            });
+            done->wait(10000);
+        };
+        auto tools = coolsynth::mcp::coolSynthTools(synth, [this]() -> juce::Component* { return getContentComponent(); }, runner);
+        mcp = std::make_unique<coolsynth::mcp::Server>("CoolSynth", coolsynth::build::getVersion(), std::move(tools), runner);
+        if (mcp->start(coolsynth::mcp::defaultPort))
+            mcpStatus = "On: Claude reaches this app at http://127.0.0.1:" + juce::String(coolsynth::mcp::defaultPort) + "/mcp.";
+        else
+        {
+            mcp = nullptr;
+            mcpStatus = "Could not start: port " + juce::String(coolsynth::mcp::defaultPort) + " is taken (another CoolSynth?).";
+        }
+    }
+
+    std::shared_ptr<std::atomic<bool>> alive = std::make_shared<std::atomic<bool>>(true);
+    std::unique_ptr<coolsynth::mcp::Server> mcp; // stopped before the holder and the panel go
+    juce::String mcpStatus = "Off: Claude cannot reach this app.";
     std::unique_ptr<coolsynth::ui::MiniLab3Driver> miniLab; // destroyed before the holder
     std::array<float, 4> savedVolumes { -1.0f, -1.0f, -1.0f, -1.0f }; // the faders as last saved (D187)
 };

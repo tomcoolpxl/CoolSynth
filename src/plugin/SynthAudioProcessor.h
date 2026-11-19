@@ -125,6 +125,10 @@ public:
     /** For the layer screen (D195): the voices sounding at the last block, and the tempo the arps and synced effects
         follow (the host's while it plays, else the internal one). */
     [[nodiscard]] int voicesPlaying() const noexcept { return voicesNow.load(std::memory_order_relaxed); }
+    /** For the MCP's play tool (D225): the loudest output sample and the most voices since the last call, then
+        from nothing again. Any thread. */
+    [[nodiscard]] float takeLoudest() noexcept { return loudestSinceAsked.exchange(0.0f, std::memory_order_relaxed); }
+    [[nodiscard]] int takeMostVoices() noexcept { return mostVoicesSinceAsked.exchange(0, std::memory_order_relaxed); }
     /** What the playing sound may use after the voice cap (D222). */
     [[nodiscard]] int voiceLimit() const noexcept { return voiceLimitNow.load(std::memory_order_relaxed); }
     [[nodiscard]] float tempoBpm() const noexcept { return tempoNow.load(std::memory_order_relaxed); }
@@ -198,6 +202,10 @@ public:
     std::function<void(bool)> rememberMultiCore;
     /** Set by the standalone app: opens its audio and MIDI settings; the panel's Options offers it when set. */
     std::function<void()> showAudioSettings;
+    /** The app's MCP server (D225): set by the app only, so Prefs shows its switch there and nowhere else. */
+    std::function<bool()> mcpServerOn;
+    std::function<void(bool)> chooseMcpServer;
+    std::function<juce::String()> mcpServerStatus;
 
     // ---- My Sounds (D180): the player's own saved sounds, message thread ------------------------
     enum class SaveResult { saved, exists, failed };
@@ -498,6 +506,8 @@ private:
     std::atomic<float> worstBlockShare { 0.0f };
     std::atomic<int> voicesNow { 0 };       // D195: the layer screen's voice count
     std::atomic<int> voiceLimitNow { 0 };   // D222: and what the cap allows
+    std::atomic<float> loudestSinceAsked { 0.0f };  // D225, the MCP's play tool
+    std::atomic<int> mostVoicesSinceAsked { 0 };
     std::atomic<float> tempoNow { 120.0f }; // D195: the tempo followed
     double secondBusyMs = 0.0; // audio thread: this second's block time (D172)
     float secondWorstMs = 0.0f;

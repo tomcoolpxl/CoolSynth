@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "parameters/v3/SlotParameters.h"
 #include "plugin/SynthAudioProcessor.h"
 #include "presets/BankFile.h"
 #include "presets/FactoryPresets.h"
@@ -362,3 +363,208 @@ public:
 };
 
 static V3UserFileStateTests v3UserFileStateTests;
+
+/*
+    Opt-in (COOLSYNTH_USER_FOLDER=a User folder): the user's test pass of 2026-11-19, step by step through the
+    processor: a loop in G1, sliced equally, then a kit folder, slices off, then the loop again, a key each time.
+*/
+class V3UserFileSwapTests final : public juce::UnitTest
+{
+public:
+    V3UserFileSwapTests() : juce::UnitTest("V3 user file swap", "V3") {}
+
+    void runTest() override
+    {
+        // Opt-in, for guiding the user's tests (D224): COOLSYNTH_SET_STATE=the app's CoolSynth.settings (the app closed)
+        // and COOLSYNTH_SET="id=value;id=value", values as the screen shows them ("Mono", "21 %"): the app's state with
+        // those set, written back, so the user only plays.
+        if (const auto settingsPath = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_SET_STATE", {}); settingsPath.isNotEmpty())
+        {
+            beginTest("the app's state, set");
+            if (const auto user = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_USER_FOLDER", {}); user.isNotEmpty())
+                coolsynth::synth::v3::UserLibrary::instance().setFolder(juce::File(user));
+            juce::PropertiesFile::Options options;
+            options.storageFormat = juce::PropertiesFile::storeAsXML;
+            juce::PropertiesFile settings(juce::File(settingsPath), options);
+            juce::MemoryBlock state;
+            state.fromBase64Encoding(settings.getValue("filterState"));
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+            synth->prepareToPlay(48000.0, 256);
+            synth->setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+            for (const auto& pair : juce::StringArray::fromTokens(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_SET", {}), ";", {}))
+            {
+                const auto id = pair.upToFirstOccurrenceOf("=", false, false).trim();
+                const auto value = pair.fromFirstOccurrenceOf("=", false, false).trim();
+                if (id == "preset") // preset=Basic Saw, by name
+                {
+                    for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+                        if (coolsynth::presets::getFactoryPreset(i).name == value)
+                            synth->setCurrentProgram(i);
+                    logMessage("preset " + value);
+                    continue;
+                }
+                if (id.startsWith("type:")) // type:pA.g1=Sample, then that type's defaults, as the panel's type list does
+                {
+                    const auto prefix = id.fromFirstOccurrenceOf(":", false, false);
+                    if (auto* type = synth->getValueTreeState().getParameter(prefix + ".type"))
+                        type->setValueNotifyingHost(type->getValueForText(value));
+                    for (int i = 1; i <= coolsynth::parameters::v3::genericParameterCount; ++i)
+                        if (auto* generic = dynamic_cast<coolsynth::parameters::v3::GenericSlotParameter*>(
+                                synth->getValueTreeState().getParameter(prefix + ".p" + juce::String(i))))
+                            generic->setValueNotifyingHost(generic->currentTypeDefault());
+                    logMessage(prefix + " type " + value + " with its defaults");
+                    continue;
+                }
+                if (id.startsWith("file:")) // file:A1=CST2, a layer's generator slot's own file or kit
+                {
+                    const auto where = id.fromFirstOccurrenceOf(":", false, false);
+                    synth->setUserFile(where.startsWithIgnoreCase("B") ? 1 : 0, where.getLastCharacters(1).getIntValue(), value);
+                    logMessage("file " + where + " = '" + value + "'");
+                    continue;
+                }
+                auto* p = synth->getValueTreeState().getParameter(id);
+                expect(p != nullptr, "no parameter " + id);
+                if (p == nullptr)
+                    continue;
+                p->setValueNotifyingHost(p->getValueForText(value));
+                logMessage(id + " = " + p->getCurrentValueAsText() + " (asked " + value + ")");
+            }
+            juce::MemoryBlock saved;
+            synth->getStateInformation(saved);
+            settings.setValue("filterState", saved.toBase64Encoding());
+            expect(settings.save(), "could not write " + settingsPath);
+            return;
+        }
+
+        // Opt-in (COOLSYNTH_STATE_FROM=the app's CoolSynth.settings): the app's own state as it closed, played.
+        if (const auto settingsPath = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_STATE_FROM", {}); settingsPath.isNotEmpty())
+        {
+            beginTest("the app's state, played");
+            juce::PropertiesFile::Options options;
+            options.storageFormat = juce::PropertiesFile::storeAsXML;
+            juce::PropertiesFile settings(juce::File(settingsPath), options);
+            juce::MemoryBlock state;
+            state.fromBase64Encoding(settings.getValue("filterState"));
+            if (const auto user = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_USER_FOLDER", {}); user.isNotEmpty())
+                coolsynth::synth::v3::UserLibrary::instance().setFolder(juce::File(user));
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+            synth->prepareToPlay(48000.0, 256);
+            synth->setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+            synth->loadUserSoundsNow(5000);
+            synth->loadSampledInstrumentsNow();
+            auto& library = coolsynth::synth::v3::UserLibrary::instance();
+            for (int slot = 1; slot <= 3; ++slot)
+            {
+                const auto& g = synth->engineSettingsForTesting().parts[0].voice.generators[static_cast<std::size_t>(slot - 1)];
+                juce::String values;
+                for (int i = 0; i < 12; ++i)
+                    values << juce::String(g.p[static_cast<std::size_t>(i)], 3) << " ";
+                const auto* loaded = g.userSound >= 0 ? library.sample(g.userSound) : nullptr;
+                if (g.userSound >= 0)
+                    logMessage("G" + juce::String(slot) + " problem: '" + library.problem(g.userSound) + "', status '" + synth->getUserFileStatus(0, slot) + "'");
+                logMessage("G" + juce::String(slot) + ": type " + juce::String(g.type) + ", level " + juce::String(g.level, 2) + ", file '"
+                           + synth->getUserFile(0, slot) + "', handle " + juce::String(g.userSound) + ", in memory "
+                           + (loaded != nullptr ? juce::String(static_cast<int>(loaded->zones.size())) + " zones" + (loaded->kit ? " (a kit)" : "") : juce::String("no"))
+                           + ", values " + values);
+            }
+            const auto& part = synth->engineSettingsForTesting().parts[0];
+            logMessage("layer A: play mode " + juce::String(static_cast<int>(part.playMode)) + ", polyphony " + juce::String(part.polyphony)
+                       + "; layer B empty " + juce::String(layerEmpty(synth->engineSettingsForTesting().parts[1]) ? "yes" : "no")
+                       + ", mix A level " + juce::String(synth->engineSettingsForTesting().mix[0].levelDb, 1) + " dB");
+            juce::AudioBuffer<float> buffer(2, 256);
+            for (const int note : { 48, 49, 50, 51, 60 })
+            {
+                float peak = 0.0f;
+                for (int b = 0; b < 80; ++b)
+                {
+                    juce::MidiBuffer midi;
+                    if (b == 1)
+                        midi.addEvent(juce::MidiMessage::noteOn(1, note, static_cast<juce::uint8>(110)), 0);
+                    if (b == 40)
+                        midi.addEvent(juce::MidiMessage::noteOff(1, note), 0);
+                    buffer.clear();
+                    synth->processBlock(buffer, midi);
+                    peak = std::max(peak, buffer.getMagnitude(0, 256));
+                }
+                logMessage("note " + juce::String(note) + ": peak " + juce::String(juce::Decibels::gainToDecibels(peak), 1) + " dB");
+            }
+            return;
+        }
+
+        beginTest("a loop, a kit, the loop again");
+        const auto folderPath = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_USER_FOLDER", {});
+        if (folderPath.isEmpty())
+        {
+            logMessage("skipped: set COOLSYNTH_USER_FOLDER");
+            return;
+        }
+        auto& library = coolsynth::synth::v3::UserLibrary::instance();
+        library.setFolder(juce::File(folderPath));
+        auto synth = std::make_unique<SynthAudioProcessor>();
+        synth->setPlayConfigDetails(0, 2, 48000.0, 256);
+        synth->prepareToPlay(48000.0, 256);
+        synth->setCurrentProgram(0);
+        auto& state = synth->getValueTreeState();
+        auto set = [&](const char* id, float units)
+        {
+            if (auto* p = dynamic_cast<juce::RangedAudioParameter*>(state.getParameter(id)))
+                p->setValueNotifyingHost(p->convertTo0to1(units));
+        };
+        set("pA.g1.type", 8.0f); // Sample, then its own defaults, as the panel's type list sets them
+        for (int i = 1; i <= coolsynth::parameters::v3::genericParameterCount; ++i)
+            if (auto* generic = dynamic_cast<coolsynth::parameters::v3::GenericSlotParameter*>(state.getParameter("pA.g1.p" + juce::String(i))))
+                generic->setValueNotifyingHost(generic->currentTypeDefault());
+        juce::AudioBuffer<float> buffer(2, 256);
+        auto play = [&](const juce::String& label)
+        {
+            synth->loadUserSoundsNow(5000);
+            float peak = 0.0f;
+            for (int b = 0; b < 100; ++b)
+            {
+                juce::MidiBuffer midi;
+                if (b == 1)
+                    midi.addEvent(juce::MidiMessage::noteOn(1, 48, static_cast<juce::uint8>(110)), 0);
+                if (b == 60)
+                    midi.addEvent(juce::MidiMessage::noteOff(1, 48), 0);
+                buffer.clear();
+                synth->processBlock(buffer, midi);
+                peak = std::max(peak, buffer.getMagnitude(0, 256));
+            }
+            const auto& g = synth->engineSettingsForTesting().parts[0].voice.generators[0];
+            const auto* loaded = g.userSound >= 0 ? library.sample(g.userSound) : nullptr;
+            logMessage(label + ": peak " + juce::String(juce::Decibels::gainToDecibels(peak), 1) + " dB, file '"
+                       + synth->getUserFile(0, 1) + "', status '" + synth->getUserFileStatus(0, 1) + "', type " + juce::String(g.type)
+                       + ", handle " + juce::String(g.userSound) + ", in memory " + (loaded != nullptr ? juce::String(static_cast<int>(loaded->zones.size())) + " zones" : juce::String("no"))
+                       + ", level " + juce::String(g.level, 2));
+            return peak;
+        };
+        synth->setUserFile(0, 1, "CoolSynth test loop.wav");
+        expect(play("loop") > 0.01f);
+        set("pA.g1.p9", 1.0f); // Slices: Equal
+        expect(play("loop, sliced equally") > 0.01f);
+        synth->setUserFile(0, 1, "CoolSynth test kit");
+        expect(play("the kit, still sliced") > 0.01f);
+        set("pA.g1.p9", 0.0f); // Slices: Off
+        expect(play("the kit") > 0.01f);
+        synth->setUserFile(0, 1, "CoolSynth test loop.wav");
+        expect(play("the loop again") > 0.01f);
+        // Round 2b left Start up a little and Reverse may be on: the kit and the loop with them.
+        for (const float start : { 0.1f, 0.3f })
+            for (const float reverse : { 0.0f, 1.0f })
+                for (const char* file : { "CoolSynth test kit", "CoolSynth test loop.wav" })
+                    for (const float slices : { 0.0f, 1.0f })
+                    {
+                        synth->setUserFile(0, 1, file);
+                        set("pA.g1.p2", start);
+                        set("pA.g1.p7", reverse);
+                        set("pA.g1.p9", slices);
+                        play(juce::String(file) + ", start " + juce::String(start, 1) + (reverse > 0.0f ? ", reversed" : "")
+                             + (slices > 0.0f ? ", sliced" : ""));
+                    }
+        library.setFolder(juce::File());
+    }
+};
+
+static V3UserFileSwapTests v3UserFileSwapTests;

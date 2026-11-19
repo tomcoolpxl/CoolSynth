@@ -995,6 +995,22 @@ namespace
                 b.onClick = [this, i] { synth.chooseMultiCore(i == 0); refresh(); };
                 b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight : juce::Button::ConnectedOnLeft);
             }
+            // Claude's way into the app (D225): only the app sets the hooks, so the plugin never shows this row.
+            const char* mcpNames[] { "Off", "On" };
+            for (int i = 0; i < 2; ++i)
+            {
+                auto& b = mcp[static_cast<std::size_t>(i)];
+                style(b, true);
+                b.setButtonText(mcpNames[i]);
+                b.onClick = [this, i]
+                {
+                    if (synth.chooseMcpServer)
+                        synth.chooseMcpServer(i == 1);
+                    refresh();
+                };
+                b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight : juce::Button::ConnectedOnLeft);
+                addChildComponent(b);
+            }
             const char* curveNames[] { "Soft", "Normal", "Hard" };
             for (int i = 0; i < 3; ++i)
             {
@@ -1032,6 +1048,8 @@ namespace
         void show()
         {
             audio.setVisible(static_cast<bool>(synth.showAudioSettings)); // the app sets its hook after the panel is built
+            for (auto& b : mcp)
+                b.setVisible(static_cast<bool>(synth.chooseMcpServer));
             confirming = false;
             layOutReset();
             resized();
@@ -1066,6 +1084,9 @@ namespace
             multi[1].setToggleState(! synth.multiCore(), juce::dontSendNotification);
             for (int i = 0; i < 3; ++i)
                 curve[static_cast<std::size_t>(i)].setToggleState(synth.velocityCurve() == i, juce::dontSendNotification);
+            const bool mcpOn = synth.mcpServerOn && synth.mcpServerOn();
+            mcp[0].setToggleState(! mcpOn, juce::dontSendNotification);
+            mcp[1].setToggleState(mcpOn, juce::dontSendNotification);
             const int keys = coolsynth::midi::ControllerSetup::instance().keyboardKeys();
             for (std::size_t i = 0; i < keySize.size(); ++i)
                 keySize[i].setToggleState(coolsynth::midi::ControllerSetup::keyboardSizes[i] == keys, juce::dontSendNotification);
@@ -1090,7 +1111,11 @@ namespace
 
         void resized() override
         {
-            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 622 : 562).withCentre(getLocalBounds().getCentre());
+            const bool withMcp = static_cast<bool>(synth.chooseMcpServer);
+            // With the MCP row (the app's only) the rows sit a little closer, so the card still fits the panel.
+            const int gap = withMcp ? 10 : 14;
+            cardArea = juce::Rectangle<int>(480, (synth.showAudioSettings ? 622 : 562) + (withMcp ? 60 - 8 * (14 - gap) : 0))
+                           .withCentre(getLocalBounds().getCentre());
             auto r = cardArea.reduced(28, 22);
             auto head = r.removeFromTop(30);
             close.setBounds(head.removeFromRight(30));
@@ -1103,7 +1128,7 @@ namespace
             {
                 label = r.removeFromTop(16);
                 auto row = r.removeFromTop(height);
-                r.removeFromTop(14);
+                r.removeFromTop(gap);
                 return row;
             };
             save.setBounds(section(soundLabel, 30).withWidth(170));
@@ -1127,6 +1152,13 @@ namespace
             for (auto& b : curve)
                 b.setBounds(buttons.removeFromLeft(90));
             curveText = curveRow;
+            if (withMcp)
+            {
+                auto mcpRow = section(mcpLabel, 30);
+                for (auto& b : mcp)
+                    b.setBounds(mcpRow.removeFromLeft(70));
+                mcpText = mcpRow.withTrimmedLeft(12);
+            }
             auto resetRow = section(resetLabel, 30);
             reset.setBounds(resetRow.withWidth(170));
             resetYes.setBounds(resetRow.removeFromLeft(90));
@@ -1187,6 +1219,13 @@ namespace
             label(multiLabel, "MULTI-CORE");
             label(curveLabel, "VELOCITY CURVE");
             label(resetLabel, "RESET");
+            if (synth.chooseMcpServer)
+            {
+                label(mcpLabel, "CLAUDE (MCP)");
+                g.setColour(colours::muted);
+                g.setFont(sans(12.0f));
+                g.drawFittedText(synth.mcpServerStatus ? synth.mcpServerStatus() : juce::String(), mcpText, juce::Justification::centredLeft, 2);
+            }
             if (confirming)
             {
                 g.setColour(colours::muted);
@@ -1221,6 +1260,8 @@ namespace
         bool confirming = false; // Reset asks first, in the card (D199)
         std::array<juce::TextButton, 2> multi;
         std::array<juce::TextButton, 3> curve;
+        std::array<juce::TextButton, 2> mcp;
+        juce::Rectangle<int> mcpLabel, mcpText;
         std::array<juce::TextButton, coolsynth::midi::ControllerSetup::keyboardSizes.size()> keySize;
         juce::Rectangle<int> cardArea, titleArea, iconArea, versionArea, soundLabel, audioLabel, controllerLabel, multiLabel, curveLabel,
                              resetLabel, computerLabel, controllerText, multiText, curveText, resetText, computerText, keysLabel, keysText;

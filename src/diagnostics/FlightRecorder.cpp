@@ -162,6 +162,10 @@ namespace coolsynth::diag
             case Event::miniLab: return juce::String("MiniLab: ") + r.text;
             case Event::message:
                 return juce::String(r.text) + ((r.a != 0 || r.b != 0) ? " (" + juce::String(r.a) + ", " + juce::String(r.b) + ")" : juce::String());
+            case Event::parameter: return "set " + juce::String(r.text) + " (" + juce::String(r.x, 3) + ")";
+            case Event::userFile:
+                return juce::String(r.a == 0 ? "layer A" : "layer B") + " G" + juce::String(r.b) + " file: "
+                       + (r.text[0] != 0 ? juce::String(r.text) : juce::String("none"));
         }
         return "?";
     }

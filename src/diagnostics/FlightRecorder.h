@@ -42,7 +42,9 @@ namespace coolsynth::diag
         noteOff,          // a: note
         velocityFixed,    // a: note, b: the velocity used instead of 1
         miniLab,          // text: what happened
-        message           // text
+        message,          // text
+        parameter,        // a: parameter index, x: new value 0..1, text: its ID and the value as the screen shows it
+        userFile          // a: layer (0 A, 1 B), b: generator slot, text: the file or kit, empty when let go
     };
 
     /** Engine stages, for blockSlow's stage code. */
