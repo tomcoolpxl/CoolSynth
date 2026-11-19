@@ -153,6 +153,9 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     with what each item can do (copy, paste, clear, swap, choose a type, learn, reset to default). Today only the
     layer panels (copy, swap, solo) and the controls (Learn) have one. Check online how other plugins and synths do
     it, then options to choose from. With the real interface (UI last).
+30. Parked (the user, 2026-11-19): the famous bass drum of the theme of the series Succession (Nicholas Britell's
+    main title). Research how it is made (online: interviews, breakdowns, remakes), then whether CoolSynth can
+    play it (a drum voice, a sample, a preset) and options to choose from.
 
 
 ## Standing notes
