@@ -51,9 +51,9 @@ Name: "compact"; Description: "The VST3 and the app, without the recorded instru
 Name: "custom"; Description: "Choose"; Flags: iscustom
 
 [Components]
-Name: "vst3"; Description: "VST3 plugin, for your DAW (Common Files\VST3)"; Types: full compact custom
+Name: "vst3"; Description: "VST3 plugin, to play CoolSynth in your music software (DAW)"; Types: full compact custom
 Name: "app"; Description: "Standalone app"; Types: full compact custom
-Name: "minilab"; Description: "MiniLab 3 scripts for FL Studio and Ableton Live (the pads stay CoolSynth's)"; Types: full compact custom
+Name: "minilab"; Description: "Arturia MiniLab 3 support in FL Studio and Ableton Live"; Types: full compact custom
 
 [Files]
 Source: "{#BuildDir}\VST3\CoolSynth.vst3\*"; DestDir: "{commoncf64}\VST3\CoolSynth.vst3"; Components: vst3; Flags: ignoreversion recursesubdirs createallsubdirs

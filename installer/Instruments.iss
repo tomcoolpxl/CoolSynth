@@ -2,7 +2,7 @@
 ; (https://huggingface.co/datasets/tomccargo/coolsynth-instruments). Do not edit by hand.
 
 [Components]
-Name: "instruments"; Description: "Recorded instruments (downloaded from Hugging Face while installing)"; Types: full
+Name: "instruments"; Description: "Recorded instruments (downloaded while installing)"; Types: full
 Name: "instruments\keys"; Description: "Keys: grand and upright pianos, two harpsichords, FM keys"; Types: full
 Name: "instruments\strings"; Description: "Strings: violins, violas, cellos, double bass, solo violin"; Types: full
 Name: "instruments\plucked"; Description: "Plucked: folk harp, dan tranh, kalimba"; Types: full
