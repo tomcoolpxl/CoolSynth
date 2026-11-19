@@ -24,7 +24,7 @@ AppSupportURL=https://github.com/tomcoolpxl/CoolSynth/issues
 AppUpdatesURL=https://github.com/tomcoolpxl/CoolSynth/releases
 DefaultDirName={autopf}\CoolSynth
 DisableProgramGroupPage=yes
-LicenseFile=..\LICENSE
+; No licence page: the MIT licence asks for no acceptance, only that its notice ships with copies (LICENSE.txt below).
 OutputDir=..\build\installer
 OutputBaseFilename=CoolSynth-Setup-{#AppVersion}
 Compression=lzma2/max
