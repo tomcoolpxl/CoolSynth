@@ -79,9 +79,9 @@ files and folders, and a press loads one.
 
 ## MiniLab 3
 
-CoolSynth takes over the MiniLab 3's DAW mode, in the app and in a DAW: its screen shows the sound
-and the knob you turn, its pads open the sections, and its knobs turn the settings on screen. In a
-DAW the CoolSynth whose window you opened last drives it. Sharing the MiniLab with the DAW needs
+CoolSynth uses the MiniLab 3's screen, pads and knobs, in the app and in a DAW: the screen shows the
+sound and the knob you turn, the pads open the sections, and the knobs turn the settings on screen.
+With CoolSynth on several tracks, the one whose window you opened last has the MiniLab. Sharing the MiniLab with the DAW needs
 Windows MIDI Services (Windows 11 24H2 or later, through Windows Update).
 
 So that the pads do not also play notes in a DAW, the installer adds a small script for each:

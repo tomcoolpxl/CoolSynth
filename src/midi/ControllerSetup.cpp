@@ -155,7 +155,7 @@ namespace coolsynth::midi
         {
             current = profile->map;
             currentOrigin = Origin::found;
-            notice = profile->name + " found: its ready setup is in use. Preferences > Controller to change it.";
+            notice = profile->name + " is set up for CoolSynth. To change it: Prefs > Controller setup.";
             ++notices;
         }
         publish();

@@ -149,7 +149,7 @@ namespace coolsynth::ui
         setup.setMiniLabDriven(connected);
         // A DAW's own MiniLab script would talk to it too, and the two screens would fight (D211).
         if (connected && inPlugin)
-            setup.announce("MiniLab 3 connected. In your DAW, set its MiniLab control surface to None.");
+            setup.announce("MiniLab 3 connected to CoolSynth.");
     }
 
     bool MiniLab3Driver::isPadEcho(const juce::MidiMessage& message) noexcept

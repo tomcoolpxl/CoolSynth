@@ -58,18 +58,23 @@ Name: "minilab"; Description: "Arturia MiniLab 3 support in FL Studio and Ableto
 [Files]
 Source: "{#BuildDir}\VST3\CoolSynth.vst3\*"; DestDir: "{commoncf64}\VST3\CoolSynth.vst3"; Components: vst3; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#BuildDir}\Standalone\CoolSynth.exe"; DestDir: "{app}"; Components: app; Flags: ignoreversion
-Source: "..\README.md"; DestDir: "{app}"; Components: app; Flags: ignoreversion isreadme
 Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 ; The MiniLab 3 scripts (D211), in the player's own Documents where FL Studio and Ableton Live look for them. FL links
 ; its script to the MiniLab by itself; in Live it is chosen once as a control surface. Harmless without a MiniLab.
 Source: "..\resources\daw-scripts\fl-studio\CoolSynth MiniLab\*.py"; DestDir: "{userdocs}\Image-Line\FL Studio\Settings\Hardware\CoolSynth MiniLab"; Components: minilab; Flags: ignoreversion
 Source: "..\resources\daw-scripts\ableton\CoolSynth_MiniLab\*.py"; DestDir: "{userdocs}\Ableton\User Library\Remote Scripts\CoolSynth_MiniLab"; Components: minilab; Flags: ignoreversion
 
+[InstallDelete]
+; Installed by 0.3.0 test builds and no longer: the guide is a web page now.
+Type: files; Name: "{app}\README.md"
+
 [Icons]
 Name: "{autoprograms}\CoolSynth"; Filename: "{app}\CoolSynth.exe"; Components: app
 
 [Run]
 Filename: "{app}\CoolSynth.exe"; Description: "Start CoolSynth"; Components: app; Flags: nowait postinstall skipifsilent
+; The guide on the web, where it shows as a page (a README in a text editor is markdown, not help).
+Filename: "https://github.com/tomcoolpxl/CoolSynth#readme"; Description: "Open CoolSynth's guide on the web (setting up your keyboard and DAW)"; Flags: shellexec nowait postinstall skipifsilent unchecked
 
 ; The instrument families: components, downloads and what uninstalling removes (generated).
 #include "Instruments.iss"

@@ -308,11 +308,11 @@ namespace coolsynth::midi
     {
         switch (encoding)
         {
-            case Encoding::binaryOffset:   return "endless, 64 +/- steps";
-            case Encoding::twosComplement: return "endless, 1 right / 127 left";
-            case Encoding::signBit:        return "endless, 1 right / 65 left";
+            case Encoding::binaryOffset:   return "endless knob";
+            case Encoding::twosComplement: return "endless knob";
+            case Encoding::signBit:        return "endless knob";
             case Encoding::absolute:
-            default:                       return "position 0-127";
+            default:                       return "knob or fader";
         }
     }
 
@@ -363,21 +363,21 @@ namespace coolsynth::midi
 
             // Akai MPK mini mk3, program 1: knobs CC 70-77; pads bank A notes 36-43 on channel 10.
             auto* mpk = add("akai.mpkmini3", "Akai MPK mini mk3", { "MPK mini 3" },
-                            "Program 1 (as it comes). No main knob: browse with the mouse, or give it one in the setup.");
+                            "Works as the keyboard comes. It has no knob for browsing: use the mouse, or pick one with Set up step by step.");
             knobs(*mpk, { 70, 71, 72, 73, 74, 75, 76, 77 });
             padNotes(*mpk, 36, 10);
 
             // Novation Launchkey Mini MK3 and MK4, as they start: the knobs in Custom mode send CC 21-28.
             auto* lk3 = add("novation.launchkeymini3", "Novation Launchkey Mini MK3", { "Launchkey Mini MK3", "Launchkey Mini MIDI" },
-                            "The knobs as they start (Custom). Pads, main knob and Shift: give them in the setup.");
+                            "Its knobs work as the keyboard comes. For its pads and a browsing knob, use Set up step by step.");
             knobs(*lk3, { 21, 22, 23, 24, 25, 26, 27, 28 });
             auto* lk4 = add("novation.launchkeymini4", "Novation Launchkey Mini MK4", { "Launchkey Mini MK4" },
-                            "The knobs as they start (Custom 1). Pads, main knob and Shift: give them in the setup.");
+                            "Its knobs work as the keyboard comes. For its pads and a browsing knob, use Set up step by step.");
             knobs(*lk4, { 21, 22, 23, 24, 25, 26, 27, 28 });
 
             // Arturia KeyLab Essential mk3, program User 1: knobs and faders; pads bank A notes 36-43 on channel 10.
             auto* kle = add("arturia.keylabessential3", "Arturia KeyLab Essential mk3", { "KL Essential" },
-                            "Choose the User 1 program with Prog. Main knob: give it in the setup.");
+                            "On the keyboard, choose the User 1 program with the Prog button. For a browsing knob, use Set up step by step.");
             knobs(*kle, { 74, 71, 76, 77, 93, 18, 19, 16 });
             faders(*kle, { 73, 75, 79, 72 });
             padNotes(*kle, 36, 10);
@@ -385,7 +385,7 @@ namespace coolsynth::midi
             // Arturia MiniLab 3 in its Arturia program (D211; tested on the device in V2): without CoolSynth's own
             // driver, which talks to it in its DAW program and lights its screen and pads (D184).
             auto* ml3 = add("arturia.minilab3", "Arturia MiniLab 3 (Arturia program)", { "Minilab3", "MiniLab 3" },
-                            "Without CoolSynth's MiniLab driver: no screen and no pad lights.");
+                            "For a MiniLab 3 with the MiniLab 3 driver switched Off: no screen and no pad lights.");
             knobs(*ml3, { 74, 71, 76, 77, 93, 18, 19, 16 });
             faders(*ml3, { 82, 83, 85, 17 });
             ml3->link(Place::mainTurn, cc(114), Encoding::binaryOffset);
@@ -393,7 +393,7 @@ namespace coolsynth::midi
 
             // Native Instruments Komplete Kontrol M32 and A series in MIDI mode (Shift + Plug-in): knobs CC 14-21.
             auto* nik = add("ni.kompletekontrol", "NI Komplete Kontrol M32 / A series", { "KOMPLETE KONTROL M32", "KOMPLETE KONTROL A" },
-                            "MIDI mode: Shift + Plug-in on the keyboard. Main knob: give it in the setup.");
+                            "On the keyboard, press Shift + Plug-in for MIDI mode. For a browsing knob, use Set up step by step.");
             knobs(*nik, { 14, 15, 16, 17, 18, 19, 20, 21 });
             return profiles;
         }

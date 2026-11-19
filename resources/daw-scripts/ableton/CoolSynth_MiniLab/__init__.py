@@ -28,7 +28,7 @@ class CoolSynthMiniLab(ControlSurface):
             self._pads = [ButtonElement(True, MIDI_NOTE_TYPE, PAD_CHANNEL, note) for note in PAD_NOTES]
             for pad in self._pads:
                 pad.add_value_listener(self._pad_pressed)
-        self.show_message("CoolSynth MiniLab: the pads belong to CoolSynth")
+        self.show_message("CoolSynth is set up for the MiniLab 3")
 
     def _pad_pressed(self, value):
         pass  # CoolSynth's MiniLab driver has the pad already

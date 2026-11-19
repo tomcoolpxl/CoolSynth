@@ -1134,7 +1134,7 @@ namespace
                 g.setColour(colours::muted);
                 g.setFont(sans(12.0f));
                 g.drawFittedText(setup.origin() == Origin::none ? juce::String("Nothing set up yet.")
-                                     : (setup.origin() == Origin::found ? setup.map().name + ", ready setup." : juce::String("Your setup.")),
+                                     : (setup.origin() == Origin::found ? setup.map().name + ", set up by itself." : juce::String("Your own setup.")),
                                  controllerText, juce::Justification::centredLeft, 2);
             }
             label(multiLabel, "MULTI-CORE");
@@ -1337,14 +1337,14 @@ namespace
             words(statusText, status(), colours::ink, 13.0f, 3);
             label(driverLabel, "MINILAB 3 DRIVER");
             words(driverText, cm::ControllerSetup::instance().miniLabDriverOn()
-                                  ? "CoolSynth drives a MiniLab 3's screen, pads and knobs."
-                                  : "A MiniLab 3 is a controller like any other: its own program, a ready setup.",
+                                  ? "CoolSynth uses a MiniLab 3's screen, pads and knobs."
+                                  : "A MiniLab 3 works like any other keyboard.",
                   colours::muted);
-            label(readyLabel, "READY SETUPS");
+            label(readyLabel, "KNOWN CONTROLLERS");
             if (const auto* p = chosenProfile())
                 words(readyText, p->note, colours::muted);
             else
-                words(readyText, "For controllers CoolSynth knows, from their makers' manuals.", colours::muted);
+                words(readyText, "If your keyboard is in this list, choose it and click Use.", colours::muted);
             label(stepsLabel, "STEP BY STEP");
             words(stepsText, "Asks for the main knob, the knobs, faders and pads, and Shift, one at a time; skip any your "
                              "keyboard lacks.", colours::muted);
@@ -1388,19 +1388,19 @@ namespace
             switch (setup.origin())
             {
                 case cm::ControllerSetup::Origin::found:
-                    text = map.name + ", a ready setup: the controller is plugged in. " + count + ".";
+                    text = map.name + ": set up by itself, because it is plugged in.";
                     break;
                 case cm::ControllerSetup::Origin::saved:
-                    text = "Your setup, " + count + (map.profileId.isNotEmpty() ? ", begun as " + map.name : juce::String()) + ".";
+                    text = "Your own setup: " + count + " linked.";
                     break;
                 case cm::ControllerSetup::Origin::none:
                 default:
-                    text = "Nothing set up: your keyboard's keys play, its knobs and pads do nothing here.";
+                    text = "Nothing set up: your keys play, but your knobs and pads do not move CoolSynth's panel.";
                     break;
             }
-            text += " Kept for this computer: the app and the plugin in every project.";
+            text += " The app and the plugin share it, in every project.";
             if (synth.getInterfaceModel().hardwareConnected())
-                text += " The MiniLab 3 has its own driver and needs none of this.";
+                text += " Your MiniLab 3 needs no setup: CoolSynth handles it.";
             return text;
         }
 
@@ -1410,14 +1410,14 @@ namespace
             switch (place)
             {
                 case Place::mainTurn:
-                    return "The knob that browses: sounds, lists, types. Turn the one you want a little right, then left, and "
-                           "let go. An endless knob is best. No knob to spare? Press a button: it becomes one step left, and "
-                           "the next step asks for right.";
+                    return "The knob for browsing sounds and lists. Turn the knob you want a little right, then left, and let "
+                           "go. No knob to spare? Press a button instead: it steps left, and the next step asks for a "
+                           "button that steps right.";
                 case Place::mainRight: return "The button for one step right.";
-                case Place::mainPress: return "Press what opens, loads and chooses: the browsing knob's own press, a button or a pad.";
-                case Place::knob5:     return "The knob that turns the pages. Turn it a little right, then left, and let go.";
-                case Place::shift:     return "The button you hold for Shift: fine steps on the knobs, the pads' second meaning.";
-                case Place::back:      return "The button that goes back one level.";
+                case Place::mainPress: return "Press what you want for opening and loading: the browsing knob's own press, a button or a pad.";
+                case Place::knob5:     return "The knob for turning pages. Turn it a little right, then left, and let go.";
+                case Place::shift:     return "Press the button you want to hold as Shift: it makes the knobs move in small steps.";
+                case Place::back:      return "Press the button you want for going back.";
                 default:
                     break;
             }
@@ -1509,7 +1509,7 @@ namespace
             {
                 if (place != Place::mainTurn)
                 {
-                    heard = "That was a button: " + cm::placeName(place).toLowerCase() + " wants a knob. Try another, or Skip.";
+                    heard = "That was a button, but this needs a knob. Turn a knob, or press Skip.";
                     repaint();
                     listen();
                     return;
@@ -1911,7 +1911,7 @@ public:
                 }
                 if (h.button && (parameterId.isNotEmpty() || ! cm::isButtonPlace(place)))
                 {
-                    self->setNotice("That was a button: " + what + " wants a knob. Right-click to try again.", 6000);
+                    self->setNotice("That was a button, but " + what + " needs a knob. Right-click it to try again.", 6000);
                     return;
                 }
                 if (parameterId.isNotEmpty())
