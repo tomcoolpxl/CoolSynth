@@ -4459,3 +4459,12 @@ The user asked whether CoolSynth uses the latest JUCE and what is new. It used 8
   - The editor the JUCE 9 way, chosen: the tests use `createEditorAndMakeActive`, and CoolSynth's `createEditor` override is private, as JUCE 9 made the base's.
 - Windows MIDI Services in JUCE (options: leave it to Windows, recommended and chosen; JUCE's own backend): Windows 11 routes WinMM through Windows MIDI Services since February 2026, so ports are shared already (Microsoft's Windows Experience blog, 2026-02-17). JUCE's backend would add MIDI 2.0 only, at the cost of a NuGet package outside the official feed and the SDK runtime in the installer (JUCE's notes in juce_audio_devices.h).
 - The DAW test (options: now with a new test installer, recommended; later, chosen): the user keeps it for later; the coding goes on meanwhile.
+
+## D218. Any keyboard's size for the line over the screen's keys (2026-11-19)
+
+The "Your keyboard" line (D203) showed only for the MiniLab 3. MIDI never says how many keys a keyboard has: no standard message carries it (MIDI.org forum, "how to detect number of piano keys"); programs ask for the size (Melodics, Synthesia), learn the lowest and highest key (NI's Hypha, MainStage's key range), or guess from the notes played.
+
+- The user's choice (options: pick the size in Preferences, recommended and chosen; press the lowest and highest key; guess from the notes played; keep it MiniLab only): Preferences has a row YOUR KEYBOARD with None, 25, 37, 49, 61 and 88. It is kept with the controller setup in controller.json (`keyboardKeys`), for the computer; the MiniLab 3 connected is 25 keys whatever the row says.
+- Where the line starts until a note says otherwise: C3 (48) for 25 and 37 keys, C2 (36) for 49 and 61, A0 (21) for 88. A note outside moves it by whole octaves, as little as holds it, as the MiniLab's did (D192), within four octaves and MIDI's 128 notes; another size starts at its home again.
+- Which notes move it: with the MiniLab, only the MiniLab's own (its driver hears the device, not a DAW's played-back notes); with any other keyboard, every note that reaches CoolSynth from outside the screen (the app's MIDI inputs, the host). A DAW's played-back notes move it too, which no plugin can tell apart from playing.
+- The screen's Oct buttons still move the screen's keys with another keyboard (only the MiniLab greys them out), so only the part of the line in sight is drawn, and a sliver at the edge goes unnamed.

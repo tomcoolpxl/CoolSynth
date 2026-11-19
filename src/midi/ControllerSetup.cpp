@@ -1,5 +1,7 @@
 #include "ControllerSetup.h"
 
+#include <algorithm>
+
 #include <juce_audio_devices/juce_audio_devices.h>
 
 namespace coolsynth::midi
@@ -69,6 +71,7 @@ namespace coolsynth::midi
         started = false;
         testFile = juce::File();
         driverOn = true;
+        keys = 0;
         fileTimer.reset();
         current = std::move(map);
         currentOrigin = current.empty() ? Origin::none : Origin::saved;
@@ -105,19 +108,32 @@ namespace coolsynth::midi
         ++changes;
     }
 
+    void ControllerSetup::setKeyboardKeys(int count)
+    {
+        if (std::find(keyboardSizes.begin(), keyboardSizes.end(), count) == keyboardSizes.end() || count == keys)
+            return;
+        keys = count;
+        save();
+        ++changes;
+    }
+
     void ControllerSetup::save()
     {
         if (testing)
             return;
         const auto f = file();
         const bool saved = currentOrigin == Origin::saved;
-        if (! saved && driverOn)
+        if (! saved && driverOn && keys == 0)
             f.deleteFile(); // nothing of the player's own to keep
         else
         {
             auto value = saved ? current.toVar() : ControllerMap {}.toVar();
             if (auto* object = value.getDynamicObject())
+            {
                 object->setProperty("miniLabDriver", driverOn);
+                if (keys != 0)
+                    object->setProperty("keyboardKeys", keys);
+            }
             f.getParentDirectory().createDirectory();
             f.replaceWithText(juce::JSON::toString(value));
         }
@@ -130,9 +146,10 @@ namespace coolsynth::midi
         fileTime = f.getLastModificationTime();
         if (! f.existsAsFile())
         {
-            if (! driverOn)
+            if (! driverOn || keys != 0)
             {
                 driverOn = true;
+                keys = 0;
                 ++changes;
             }
             if (currentOrigin == Origin::saved)
@@ -145,11 +162,16 @@ namespace coolsynth::midi
         }
         const auto value = juce::JSON::parse(f);
         if (auto* object = value.getDynamicObject())
+        {
             driverOn = ! object->hasProperty("miniLabDriver") || static_cast<bool>(object->getProperty("miniLabDriver"));
+            // A size CoolSynth does not offer (a hand-edited file) is no size.
+            const int read = static_cast<int>(object->getProperty("keyboardKeys"));
+            keys = std::find(keyboardSizes.begin(), keyboardSizes.end(), read) != keyboardSizes.end() ? read : 0;
+        }
         auto map = ControllerMap::fromVar(value);
         if (map.empty() && currentOrigin == Origin::found)
         {
-            ++changes; // only the switch changed: a found setup stays in use
+            ++changes; // only the switch or the keyboard's size changed: a found setup stays in use
             return;
         }
         current = std::move(map);

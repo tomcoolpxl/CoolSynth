@@ -6,6 +6,7 @@
 
 #include "BuildInfo.h"
 #include "interface/InterfaceModel.h"
+#include "midi/ControllerSetup.h"
 #include "midi/MiniLab3Protocol.h"
 #include "plugin/PanelEditor.h"
 #include "parameters/ParameterIDs.h"
@@ -517,15 +518,51 @@ public:
             expectEquals(model->knob(1).name, juce::String(juce::CharPointer_UTF8("\xe2\x80\x94")), "a dash, no fake name");
             expect(! model->knob(1).active);
 
-            expectEquals(model->miniLabLowKey(), 48, "C3 to C5 until a key says otherwise");
-            model->keyPlayedOnMiniLab(60);
-            expectEquals(model->miniLabLowKey(), 48, "inside: nothing moves");
-            model->keyPlayedOnMiniLab(80);
-            expectEquals(model->miniLabLowKey(), 60, "one octave up holds it");
-            model->keyPlayedOnMiniLab(40);
-            expectEquals(model->miniLabLowKey(), 36, "down as little as holds it");
-            model->keyPlayedOnMiniLab(0);
-            expectEquals(model->miniLabLowKey(), 0, "four octaves down at most");
+            model->setHardwareConnected(true); // the MiniLab: 25 keys, whatever Preferences says
+            expectEquals(model->keyboardKeys(), 25);
+            expectEquals(model->keyboardLowKey(), 48, "C3 to C5 until a key says otherwise");
+            model->keyPlayed(60);
+            expectEquals(model->keyboardLowKey(), 48, "inside: nothing moves");
+            model->keyPlayed(80);
+            expectEquals(model->keyboardLowKey(), 60, "one octave up holds it");
+            model->keyPlayed(40);
+            expectEquals(model->keyboardLowKey(), 36, "down as little as holds it");
+            model->keyPlayed(0);
+            expectEquals(model->keyboardLowKey(), 0, "four octaves down at most");
+        }
+
+        beginTest("Any keyboard's line: the size chosen in Preferences, placed by its notes (D218)");
+        {
+            auto& setup = coolsynth::midi::ControllerSetup::instance();
+            setup.useForTesting({});
+            auto synth = std::make_unique<SynthAudioProcessor>();
+            auto model = std::make_unique<InterfaceModel>(*synth);
+            expectEquals(model->keyboardKeys(), 0, "no size chosen: no line");
+            model->keyPlayed(100);
+            expectEquals(model->keyboardKeySpan(), 0);
+
+            setup.setKeyboardKeys(61);
+            expectEquals(model->keyboardKeys(), 61);
+            expectEquals(model->keyboardLowKey(), 36, "61 keys: C2 to C7 until a key says otherwise");
+            model->keyPlayed(90);
+            expectEquals(model->keyboardLowKey(), 36, "inside: nothing moves");
+            model->keyPlayed(100);
+            expectEquals(model->keyboardLowKey(), 48, "one octave up holds it");
+            model->keyPlayed(20);
+            expectEquals(model->keyboardLowKey(), 12, "down as little as holds it");
+
+            setup.setKeyboardKeys(88);
+            expectEquals(model->keyboardLowKey(), 21, "another size starts at its home: A0");
+            model->keyPlayed(21);
+            model->keyPlayed(108);
+            expectEquals(model->keyboardLowKey(), 21, "a full piano never moves");
+            expectEquals(model->keyboardKeySpan(), 87);
+
+            setup.setKeyboardKeys(50);
+            expectEquals(model->keyboardKeys(), 88, "a size CoolSynth does not offer is ignored");
+            model->setHardwareConnected(true);
+            expectEquals(model->keyboardKeys(), 25, "the MiniLab connected: its own 25 keys");
+            setup.useForTesting({});
         }
 
         beginTest("The faders are volumes over the sound: at the top, taken as they are, kept across sounds (D184)");
@@ -704,6 +741,16 @@ public:
             panel->showControllerSetup(true); // its first step
         shoot("controller-step");
         coolsynth::midi::ControllerSetup::instance().stopAllLearning();
+        if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))
+            panel->showControllerSetup(false);
+        expect(editor->keyPressed(juce::KeyPress(juce::KeyPress::escapeKey)), "Escape closes the controller setup");
+        // A 49-key keyboard chosen in Preferences, played an octave up: the line over its keys (D218).
+        auto& setup = coolsynth::midi::ControllerSetup::instance();
+        setup.useForTesting({});
+        setup.setKeyboardKeys(49);
+        model.keyPlayed(90);
+        shoot("keyboard-line");
+        setup.useForTesting({});
     }
 };
 

@@ -458,12 +458,19 @@ void SynthAudioProcessor::showHeardKeys()
     const juce::ScopedValueSetter<bool> showing(showingHeardKeys, true);
     if (keyboardDisplayCleared.exchange(false, std::memory_order_acq_rel))
         keyboardState.allNotesOff(0);
+    // The line over the screen's keys follows any keyboard's notes (D218); the MiniLab's own, only by its driver,
+    // which hears the MiniLab itself and not a DAW's played-back notes.
+    auto* lineModel = interfaceModel != nullptr && ! interfaceModel->hardwareConnected() ? interfaceModel.get() : nullptr;
     const auto scope = heardKeys.read(heardKeys.getNumReady());
     scope.forEach([&](int index)
     {
         const auto event = heardKeyEvents[static_cast<std::size_t>(index)];
         if (event.velocity > 0)
+        {
             keyboardState.noteOn(1, event.note, static_cast<float>(event.velocity) / 127.0f);
+            if (lineModel != nullptr)
+                lineModel->keyPlayed(event.note);
+        }
         else
             keyboardState.noteOff(1, event.note, 0.0f);
     });

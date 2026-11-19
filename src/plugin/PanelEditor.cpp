@@ -1005,6 +1005,25 @@ namespace
                 b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight
                                            : (i == 2 ? juce::Button::ConnectedOnLeft : juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight));
             }
+            // The player's keyboard size, for the line over the screen's keys (D218): MIDI never says it.
+            const auto& sizes = coolsynth::midi::ControllerSetup::keyboardSizes;
+            for (std::size_t i = 0; i < keySize.size(); ++i)
+            {
+                auto& b = keySize[i];
+                style(b, true);
+                b.setButtonText(sizes[i] == 0 ? juce::String("None") : juce::String(sizes[i]));
+                b.onClick = [this, size = sizes[i]]
+                {
+                    coolsynth::midi::ControllerSetup::instance().setKeyboardKeys(size);
+                    refresh();
+                    if (auto* panel = getParentComponent())
+                        panel->repaint(); // the line over the screen's keys
+                };
+                b.setConnectedEdges(i == 0 ? juce::Button::ConnectedOnRight
+                                           : (i + 1 == keySize.size() ? juce::Button::ConnectedOnLeft
+                                                                      : juce::Button::ConnectedOnLeft | juce::Button::ConnectedOnRight));
+                addAndMakeVisible(b);
+            }
             for (auto* c : std::initializer_list<juce::Component*> { &close, &save, &audio, &controller, &multi[0], &multi[1], &curve[0], &curve[1],
                                                                      &curve[2], &reset, &resetYes, &resetNo })
                 addAndMakeVisible(*c);
@@ -1047,6 +1066,9 @@ namespace
             multi[1].setToggleState(! synth.multiCore(), juce::dontSendNotification);
             for (int i = 0; i < 3; ++i)
                 curve[static_cast<std::size_t>(i)].setToggleState(synth.velocityCurve() == i, juce::dontSendNotification);
+            const int keys = coolsynth::midi::ControllerSetup::instance().keyboardKeys();
+            for (std::size_t i = 0; i < keySize.size(); ++i)
+                keySize[i].setToggleState(coolsynth::midi::ControllerSetup::keyboardSizes[i] == keys, juce::dontSendNotification);
             repaint();
         }
 
@@ -1068,7 +1090,7 @@ namespace
 
         void resized() override
         {
-            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 544 : 484).withCentre(getLocalBounds().getCentre());
+            cardArea = juce::Rectangle<int>(480, synth.showAudioSettings ? 622 : 562).withCentre(getLocalBounds().getCentre());
             auto r = cardArea.reduced(28, 22);
             auto head = r.removeFromTop(30);
             close.setBounds(head.removeFromRight(30));
@@ -1090,6 +1112,11 @@ namespace
             auto controllerRow = section(controllerLabel, 30);
             controller.setBounds(controllerRow.removeFromLeft(190));
             controllerText = controllerRow.withTrimmedLeft(12);
+            auto keysRow = section(keysLabel, 48);
+            auto keyButtons = keysRow.removeFromTop(30);
+            for (auto& b : keySize)
+                b.setBounds(keyButtons.removeFromLeft(64));
+            keysText = keysRow;
             auto multiRow = section(multiLabel, 48);
             auto buttons = multiRow.removeFromTop(30);
             for (auto& b : multi)
@@ -1147,6 +1174,16 @@ namespace
                                      : (setup.origin() == Origin::found ? setup.map().name + ", set up by itself." : juce::String("Your own setup.")),
                                  controllerText, juce::Justification::centredLeft, 2);
             }
+            label(keysLabel, "YOUR KEYBOARD");
+            {
+                const int keys = coolsynth::midi::ControllerSetup::instance().keyboardKeys();
+                g.setColour(colours::muted);
+                g.setFont(sans(12.5f));
+                g.drawText(synth.getInterfaceModel().hardwareConnected() ? juce::String("Your MiniLab 3 needs no setting here: 25 keys.")
+                               : (keys == 0 ? juce::String("No line over the screen's keys.")
+                                            : "The line over the screen's keys shows your " + juce::String(keys) + " keys."),
+                           keysText, juce::Justification::centredLeft);
+            }
             label(multiLabel, "MULTI-CORE");
             label(curveLabel, "VELOCITY CURVE");
             label(resetLabel, "RESET");
@@ -1184,8 +1221,9 @@ namespace
         bool confirming = false; // Reset asks first, in the card (D199)
         std::array<juce::TextButton, 2> multi;
         std::array<juce::TextButton, 3> curve;
+        std::array<juce::TextButton, coolsynth::midi::ControllerSetup::keyboardSizes.size()> keySize;
         juce::Rectangle<int> cardArea, titleArea, iconArea, versionArea, soundLabel, audioLabel, controllerLabel, multiLabel, curveLabel,
-                             resetLabel, computerLabel, controllerText, multiText, curveText, resetText, computerText;
+                             resetLabel, computerLabel, controllerText, multiText, curveText, resetText, computerText, keysLabel, keysText;
         const juce::Image icon = smallIcon();
 
         /** CoolSynth's icon (resources/icon) at 64 px, halved step by step from 512 so its thin lines stay smooth;
@@ -2088,7 +2126,7 @@ public:
         int start = juce::jlimit(0, 127 - shownKeySpan, firstKey + 12 * model.octaveShift());
         if (model.hardwareConnected())
         {
-            const int low = model.miniLabLowKey(), high = low + InterfaceModel::miniLabKeySpan;
+            const int low = model.keyboardLowKey(), high = low + model.keyboardKeySpan();
             start = firstKey;
             while (high > start + shownKeySpan && start + 12 <= 127 - shownKeySpan)
                 start += 12;
@@ -2179,13 +2217,14 @@ public:
             g.setColour(colours::print);
             g.drawText(s == 0 ? "Pitch" : "Mod", strip.removeFromBottom(22.0f), juce::Justification::centred);
         }
-        // A thin line over the MiniLab's 25 keys, as far as its notes tell (D192), named in small print in the
-        // line's own teal, which moves with it (D203).
-        if (model.hardwareConnected())
+        // A thin line over the player's keyboard, as far as its notes tell (D192): the MiniLab's 25 keys, or the size
+        // chosen in Preferences (D218); named in small print in the line's own teal, which moves with it (D203). With
+        // another keyboard the screen's Oct buttons still move the screen's keys, so only the part in sight is drawn.
+        const int lineLow = model.keyboardLowKey(), lineHigh = lineLow + model.keyboardKeySpan();
+        if (model.keyboardKeys() > 0 && lineHigh >= shownStart && lineLow <= shownStart + shownKeySpan)
         {
-            const int low = model.miniLabLowKey(), high = low + InterfaceModel::miniLabKeySpan;
-            const auto first = keyboard.getRectangleForKey(juce::jmax(low, shownStart));
-            const auto last = keyboard.getRectangleForKey(juce::jmin(high, shownStart + shownKeySpan));
+            const auto first = keyboard.getRectangleForKey(juce::jmax(lineLow, shownStart));
+            const auto last = keyboard.getRectangleForKey(juce::jmin(lineHigh, shownStart + shownKeySpan));
             const float x0 = static_cast<float>(keyboard.getX()) + first.getX();
             const float x1 = static_cast<float>(keyboard.getX()) + last.getRight();
             const float y = static_cast<float>(keyboard.getY()) - 8.0f;
@@ -2193,7 +2232,8 @@ public:
             g.setColour(teal);
             g.fillRoundedRectangle(juce::Rectangle<float>(x0 + 1.0f, y, x1 - x0 - 2.0f, 3.0f), 1.5f);
             g.setFont(sans(10.5f));
-            g.drawText("Your keyboard", juce::Rectangle<float>(x0, y - 16.0f, x1 - x0, 14.0f), juce::Justification::centred);
+            if (x1 - x0 >= 80.0f) // a sliver at the edge goes unnamed rather than cut short
+                g.drawText("Your keyboard", juce::Rectangle<float>(x0, y - 16.0f, x1 - x0, 14.0f), juce::Justification::centred, false);
         }
 
         paintLayerScreen(g);

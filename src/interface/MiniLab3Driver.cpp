@@ -391,7 +391,7 @@ namespace coolsynth::ui
         for (const auto& message : pending)
             apply(message);
         if (const int note = lastKeyNote.exchange(-1, std::memory_order_relaxed); note >= 0)
-            model.keyPlayedOnMiniLab(note);
+            model.keyPlayed(note);
 
         if (! isConnected())
         {

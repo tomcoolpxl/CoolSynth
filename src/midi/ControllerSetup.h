@@ -81,6 +81,12 @@ namespace coolsynth::midi
             the setup, for this computer. */
         [[nodiscard]] bool miniLabDriverOn() const noexcept { return driverOn; }
         void setMiniLabDriverOn(bool on);
+        /** The player's keyboard, for the line over the screen's keys (D203, D218): 25, 37, 49, 61 or 88 keys, or 0 for
+            no line. MIDI never says how many keys a keyboard has, so the player says, in Preferences; the MiniLab 3
+            needs none (25). Kept with the setup, for this computer. */
+        [[nodiscard]] int keyboardKeys() const noexcept { return keys; }
+        void setKeyboardKeys(int count);
+        static constexpr std::array<int, 6> keyboardSizes { 0, 25, 37, 49, 61, 88 };
 
         // ---- Learning -------------------------------------------------------------------------------------------
         struct Heard
@@ -136,6 +142,7 @@ namespace coolsynth::midi
         juce::String notice;
         std::atomic<bool> miniLabDriven { false };
         bool driverOn = true;
+        int keys = 0;
 
         std::unique_ptr<juce::TimedCallback> fileTimer; // only while a CoolSynth runs (shutDown)
         juce::MidiDeviceListConnection deviceList;      // the MIDI devices changed: look for a known controller (D216)

@@ -182,6 +182,7 @@ public:
             map.link("brightness", cc(22, 3), Encoding::absolute);
             setup.setMap(map);
             setup.setMiniLabDriverOn(false);
+            setup.setKeyboardKeys(49);
             expect(file.existsAsFile(), "saved");
             const auto saved = juce::JSON::parse(file);
             expect(saved.getDynamicObject() != nullptr && ! static_cast<bool>(saved.getProperty("miniLabDriver", true)));
@@ -192,6 +193,7 @@ public:
             setup.useFileForTesting(file);
             expect(setup.origin() == ControllerSetup::Origin::saved);
             expect(! setup.miniLabDriverOn(), "the switch came back off");
+            expectEquals(setup.keyboardKeys(), 49, "the keyboard's size came back");
             const auto* knob = setup.map().linkOf(Place::knob1);
             expect(knob != nullptr && knob->control == cc(21) && knob->encoding == Encoding::binaryOffset);
             const auto* setting = setup.map().settingFor(cc(22, 3));
@@ -201,6 +203,15 @@ public:
             file.deleteFile();
             setup.useFileForTesting(file);
             expect(setup.map().empty() && setup.origin() == ControllerSetup::Origin::none && setup.miniLabDriverOn());
+            expectEquals(setup.keyboardKeys(), 0);
+
+            // Only a keyboard size of the player's own: the file is kept for it.
+            setup.setKeyboardKeys(61);
+            expect(file.existsAsFile(), "kept for the keyboard's size alone");
+            setup.useFileForTesting(file);
+            expectEquals(setup.keyboardKeys(), 61);
+            setup.setKeyboardKeys(0);
+            expect(! file.existsAsFile(), "nothing of the player's own left");
 
             setup.useForTesting({});
             file.deleteFile();

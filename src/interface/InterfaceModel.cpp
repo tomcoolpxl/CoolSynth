@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 
+#include "midi/ControllerSetup.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/v3/PartParameters.h"
 #include "parameters/v3/SlotParameters.h"
@@ -300,18 +301,46 @@ namespace coolsynth::ui
         touched();
     }
 
-    void InterfaceModel::keyPlayedOnMiniLab(int note) noexcept
+    int InterfaceModel::keyboardKeys() const noexcept
     {
-        const int low = miniLabLowKey();
-        int octaveNow = miniLabOctave;
-        if (note < low)
-            octaveNow = static_cast<int>(std::floor(static_cast<double>(note - miniLabHomeLowKey) / 12.0));
-        else if (note > low + miniLabKeySpan)
-            octaveNow = static_cast<int>(std::ceil(static_cast<double>(note - miniLabHomeLowKey - miniLabKeySpan) / 12.0));
-        octaveNow = clampInt(octaveNow, -4, 4); // the MiniLab shifts four octaves each way
-        if (octaveNow != miniLabOctave)
+        return hardware ? 25 : coolsynth::midi::ControllerSetup::instance().keyboardKeys();
+    }
+
+    int InterfaceModel::homeLowKey(int keys) noexcept
+    {
+        if (keys >= 88)
+            return 21;
+        return keys >= 49 ? 36 : 48;
+    }
+
+    int InterfaceModel::keyboardLowKey() const noexcept
+    {
+        const int keys = keyboardKeys();
+        return homeLowKey(keys) + (keys == keyboardOctaveKeys ? 12 * keyboardOctave : 0);
+    }
+
+    void InterfaceModel::keyPlayed(int note) noexcept
+    {
+        const int keys = keyboardKeys();
+        if (keys == 0)
+            return;
+        if (keys != keyboardOctaveKeys)
         {
-            miniLabOctave = octaveNow;
+            keyboardOctaveKeys = keys;
+            keyboardOctave = 0;
+        }
+        const int home = homeLowKey(keys), span = keys - 1;
+        const int low = home + 12 * keyboardOctave;
+        int octaveNow = keyboardOctave;
+        if (note < low)
+            octaveNow = static_cast<int>(std::floor(static_cast<double>(note - home) / 12.0));
+        else if (note > low + span)
+            octaveNow = static_cast<int>(std::ceil(static_cast<double>(note - home - span) / 12.0));
+        // Four octaves each way, as the MiniLab shifts, and never past MIDI's 128 notes.
+        octaveNow = clampInt(octaveNow, juce::jmax(-4, -(home / 12)), juce::jmin(4, (127 - home - span) / 12));
+        if (octaveNow != keyboardOctave)
+        {
+            keyboardOctave = octaveNow;
             touched();
         }
     }

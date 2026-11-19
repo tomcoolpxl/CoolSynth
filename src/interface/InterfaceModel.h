@@ -207,12 +207,17 @@ namespace coolsynth::ui
         void setHardwareConnected(bool connected);
         [[nodiscard]] bool hardwareConnected() const noexcept { return hardware; }
 
-        /** The MiniLab's 25 keys, as far as its notes tell (D192): its Oct buttons send nothing, so a key played
-            outside the keys it was thought to have moves them, by whole octaves, as little as holds that key. */
-        void keyPlayedOnMiniLab(int note) noexcept;
-        static constexpr int miniLabHomeLowKey = 48; // C3, the MiniLab's lowest key without an octave shift
-        static constexpr int miniLabKeySpan = 24;   // 25 keys, C to C
-        [[nodiscard]] int miniLabLowKey() const noexcept { return miniLabHomeLowKey + 12 * miniLabOctave; }
+        /** The player's keyboard over the screen's keys (D192, D203, D218): the MiniLab's 25 keys while it is
+            connected, else the size chosen in Preferences; 0, no line. Its place goes by the notes it plays, as no
+            keyboard says where its octave buttons put it: a key played outside the keys it was thought to have moves
+            them, by whole octaves, as little as holds that key. */
+        [[nodiscard]] int keyboardKeys() const noexcept;
+        [[nodiscard]] int keyboardLowKey() const noexcept;
+        [[nodiscard]] int keyboardKeySpan() const noexcept { return juce::jmax(0, keyboardKeys() - 1); }
+        void keyPlayed(int note) noexcept;
+        /** Where a keyboard of that size starts without an octave shift: C3 (48) for 25 and 37 keys (the MiniLab's),
+            C2 (36) for 49 and 61, A0 (21) for 88. */
+        [[nodiscard]] static int homeLowKey(int keys) noexcept;
 
         // ---- What to show -----------------------------------------------------------------
         [[nodiscard]] static juce::String sectionName(int section);
@@ -352,7 +357,8 @@ namespace coolsynth::ui
         bool hold = false;     // the screen's Hold (D184)
         int octave = 0;        // the screen's keys, octaves from C3
         bool hardware = false; // a MiniLab connected
-        int miniLabOctave = 0; // the MiniLab's octave shift, as its notes tell (D192)
+        int keyboardOctave = 0;     // the player's keyboard's octave shift, as its notes tell (D192)
+        int keyboardOctaveKeys = 0; // the size that shift was found for: another size starts again at home
         int layerAction = 0;   // the Layers page's action under the main knob (D196)
         std::array<int, 9> deviceCounts {};            // counts not yet a step, per MiniLab knob (D200)
         std::array<juce::String, 9> deviceTargets {};  // what each knob moved last: another target starts afresh

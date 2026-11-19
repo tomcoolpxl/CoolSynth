@@ -94,8 +94,6 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 
 ## Interface and code
 
-16. The "Your keyboard" line over the screen's keys (D203) shows only while the MiniLab is connected; it should
-    take any keyboard's own key count.
 
 ## Standing notes
 

@@ -65,6 +65,8 @@ A sample can be sliced across the keys, in equal pieces or at its hits, on the s
 
 Any MIDI keyboard plays CoolSynth.
 
+To see where your keyboard's keys fall on the screen's keys, set its size in **Prefs > Your keyboard**. A line then marks them and follows the notes you play. The MiniLab 3 needs no setting.
+
 In a DAW, the simplest way to put your controller's knobs on CoolSynth is the DAW's own mapping: MIDI Map in Ableton Live, Link to controller in FL Studio, Quick Controls in Cubase, or the learn function of Bitwig or Reaper. CoolSynth lists its four macros, Glide, Brightness, Space and the master volume first, so DAWs that give a controller a plugin's first eight controls start there.
 
 CoolSynth can also learn your controller itself, so its knobs, faders and pads work the panel the way the MiniLab does, following the page you're on:
