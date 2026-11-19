@@ -4588,6 +4588,7 @@ The user asked for quick changes ahead of the interface redesign, laid out by th
   - a click opens that layer's section on that slot, a second its type list (`InterfaceModel::openSlot`, tested).
 - The layer screen's head, the user's request: LAYER A clicked opens the layer's menu (copy, swap, solo, empty), as a right click does; the sound's name or the panel elsewhere opens Home on that layer, its list on the sound it plays, to choose another (`InterfaceModel::openHomeFor`, tested). It used to pick the layer only.
 - Its hints. Ableton Live keeps all hover help in one place, its Info View; nothing found on help beside the pointer. The user's choice (options: the layer screen's own hints on it, recommended and chosen; every hover hint there; as it was): with the mouse on the layer screen, what it points at takes the info row's place (the CPU stays), and the info row comes back when it leaves; knobs, faders, pads and buttons keep the main screen's hint line.
+- The two knobs that steer the screen, the user's request: the main knob as large as knob 5 (62 px, was 68) with knob 5's 3 px ring in its own pointer's grey, and a dot in the middle of both, grey and white.
 - The screens' bezels, round the glass and the main knob, are a grey a shade lighter than the panel instead of black.
 - The Master Boost's reading moved above the Master fader, under the layer screen.
 

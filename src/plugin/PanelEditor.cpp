@@ -266,6 +266,11 @@ public:
             g.setColour(juce::Colour(0xfff2f5f8));
             g.drawEllipse(circle.expanded(2.0f), 3.0f);
         }
+        else if (isMain) // the main knob: knob 5's ring, in its own pointer's grey (D226, the user's request)
+        {
+            g.setColour(juce::Colour(0xff8a939c));
+            g.drawEllipse(circle.expanded(2.0f), 3.0f);
+        }
         if (hovered) // a soft halo while the mouse is on it (D204)
         {
             const auto glow = ! ring.isTransparent() ? ring.withAlpha(1.0f) : (isMain ? juce::Colour(0xff8a939c) : colours::ink);
@@ -285,6 +290,12 @@ public:
         pointer.addRoundedRectangle(-1.5f, -r + 5.0f, 3.0f, r * 0.42f, 1.5f);
         g.setColour(isMain ? juce::Colour(0xff8a939c) : colours::ink);
         g.fillPath(pointer, juce::AffineTransform::rotation(angle).translated(centre));
+        // The two knobs that steer the screen, the main knob and knob 5, have a dot in the middle (D226).
+        if (isMain || navigation)
+        {
+            g.setColour(isMain ? juce::Colour(0xff8a939c) : juce::Colour(0xfff2f5f8));
+            g.fillEllipse(juce::Rectangle<float>(6.0f, 6.0f).withCentre(centre));
+        }
 
         // While it turns, its value in the middle on a disc of the knob's own grey, fading out once it stops (D183).
         // A number gets a smaller disc, so more of the pointer shows as it goes round; a name keeps the larger one.
@@ -2814,7 +2825,7 @@ public:
         screenBox = { screenX, top, screenWidth, 418 };
         screen.setBounds(screenBox.reduced(12).withHeight(318));
         const int knobY = screen.getBottom() + 12;
-        mainKnob.setBounds(screenBox.getCentreX() - 34, knobY, 68, 68);
+        mainKnob.setBounds(screenBox.getCentreX() - 31, knobY + 3, 62, 62); // knob 5's size, its centre kept (D226)
         mainTurnArea = { screenBox.getX() + 20, knobY + 18, screenBox.getWidth() / 2 - 60, 34 };
         mainPressArea = { screenBox.getCentreX() + 44, knobY + 18, screenBox.getWidth() / 2 - 60, 34 };
 
