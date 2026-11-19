@@ -146,13 +146,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/GlobalDelay.cpp
     src/synth/GlobalFxRack.cpp
     src/synth/Phaser.cpp
-    src/synth/Compressor.cpp
-    src/ui/HardwareFader.cpp
-    src/ui/HardwareKnob.cpp
-    src/ui/LedToggleButton.cpp
-    src/ui/PianoBarComponent.cpp
-    src/ui/SegmentedChoiceGroup.cpp
-    src/ui/SynthSection.cpp)
+    src/synth/Compressor.cpp)
 
 target_sources(CoolSynth PRIVATE ${COOLSYNTH_SHARED_SOURCES})
 

@@ -244,7 +244,6 @@ sources but no longer used.
 | `src/interface` | `InterfaceModel`, the interface's logic; the MiniLab driver; `ControllerInput`, any controller on the panel |
 | `src/midi` | The controller map, ready setups and the computer's setup; the MiniLab 3 protocol; V2's mapping and the MIDI monitor, still used by the app's settings store |
 | `src/standalone` | The standalone app, its MIDI input and settings, the MiniLab driver |
-| `src/ui` | Drawing: knobs, faders, the piano bar, the palette, the status bar |
 | `src/diagnostics` | The flight recorder and the audio thread's allocation alarm |
 | `resources` | The preset banks, the instrument catalogue, the controller profile, images |
 | `tests` | The test program's sources |

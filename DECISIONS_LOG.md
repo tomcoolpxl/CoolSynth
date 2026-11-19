@@ -4425,6 +4425,7 @@ The user ticked, from every open item (check marks, each item explained):
 - Engine: a lower CPU cost for the virtual analog oscillator, and freeing a sampled voice once its recording has ended.
 - Fine-tuning and code: the ladder filter by ear, the sound-quality tests, the 'Your keyboard' line for any keyboard, and removing V2's old panel code.
 - Not ticked: streaming samples from disk, and the recorder; both stay in TODO.md as not chosen. MPE: "never", removed from TODO.md.
+- V2's old panel code, done on 2026-11-19: the whole of `src/ui` (SynthSection, HardwareKnob, HardwareFader, LedToggleButton, PianoBarComponent, SegmentedChoiceGroup and the headers only they used) removed; nothing outside it included any of it.
 
 ## D216. Controllers redesigned: one owner and one route per control (2026-11-19)
 

@@ -96,8 +96,6 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
 
 16. The "Your keyboard" line over the screen's keys (D203) shows only while the MiniLab is connected; it should
     take any keyboard's own key count.
-17. V2's old panel components in `src/ui` (SynthSection, HardwareKnob, HardwareFader, LedToggleButton,
-    PianoBarComponent, SegmentedChoiceGroup and their helpers) are unused since V3's panel: remove them (D213).
 
 ## Standing notes
 
