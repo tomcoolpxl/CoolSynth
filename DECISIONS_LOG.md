@@ -4574,3 +4574,13 @@ The user's test pass of what changed since 0.3.0 began (`docs/test-pass.md`, the
   - the screen's Master fader goes a quarter beyond its top for it, marked "0 dB" where the boost begins; the Master moved below its top, by the mouse or the MiniLab, takes the boost away;
   - it stays across sounds as the faders do, and a reset sets it to 0.
 - The state versions: a state must name every parameter, so a new parameter always raises the version. The New Patterns switches (D224) and the Master Boost raise the app and project state to version 16 and the sound files to 15; older ones get them at their defaults (a test).
+
+## D226. The panel rearranged for a bigger layer screen (2026-11-19)
+
+The user asked for quick changes ahead of the interface redesign, laid out by them:
+
+- The knob rows move down 75 px, still 132 px apart: a lower knob's name on two lines ends at the main screen's bezel.
+- The faders are as tall as the two knob rows (196 px, were 330): a thumb at the top is level with the upper knobs' top, the track ends by the lower knobs' bottom, and their numbers and names sit on the lower knobs' lines.
+- The layer screen takes the room freed above the knobs and the faders: from knob 1 to the Master, down to 26 px above the upper knobs (482 by 157 px, was 287 by 82). Each layer's panel shows its sound larger, and at its foot what it is made of: its sources mixed ("VA + Wavetable") and its processors in a row ("→ Ladder → Drive").
+- The screens' bezels, round the glass and the main knob, are a grey a shade lighter than the panel instead of black.
+- The Master Boost's reading moved above the Master fader, under the layer screen.

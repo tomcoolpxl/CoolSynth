@@ -31,6 +31,7 @@ namespace
         const juce::Colour padOff { 0xff1a1d21 };
         const juce::Colour link { 0xff7fa8ff };
         const juce::Colour mainKnob { 0xff1c1f23 };
+        const juce::Colour bezel { 0xff272b30 }; // round the screens' glass, a shade lighter than the panel (D226)
     }
 
     juce::Font sans(float size, bool bold = false)
@@ -2269,9 +2270,11 @@ public:
         g.setColour(colours::panelEdge);
         g.drawRoundedRectangle(panelBounds.reduced(0.5f), 22.0f, 1.0f);
 
-        // the screen's black surround
-        g.setColour(juce::Colour(0xff0b0d10));
+        // the screen's bezel, round the glass and the main knob: a grey a shade lighter than the panel (D226)
+        g.setColour(colours::bezel);
         g.fillRoundedRectangle(screenBox.toFloat(), 12.0f);
+        g.setColour(colours::panelEdge);
+        g.drawRoundedRectangle(screenBox.toFloat().reduced(0.5f), 12.0f, 1.0f);
 
         // strips and the left column's print
         g.setFont(sans(10.0f));
@@ -2330,16 +2333,17 @@ public:
                              juce::Justification::centredTop, 2);
         }
 
-        // fader numbers and names
+        // fader numbers and names, on the lower knobs' lines (D226)
+        const int numberLine = knobs[4].getBottom() + 1;
         for (int f = 0; f < 4; ++f)
         {
             const auto b = faders[static_cast<std::size_t>(f)].getBounds();
             g.setFont(sans(11.0f, true));
             g.setColour(colours::print);
-            g.drawText(juce::String(f + 1), b.getX() - 10, b.getBottom() + 2, b.getWidth() + 20, 15, juce::Justification::centred);
+            g.drawText(juce::String(f + 1), b.getX() - 10, numberLine, b.getWidth() + 20, 16, juce::Justification::centred);
             g.setFont(sans(12.0f));
             g.setColour(colours::ink);
-            g.drawText(model.faderName(f), b.getX() - 18, b.getBottom() + 17, b.getWidth() + 36, 16, juce::Justification::centred);
+            g.drawText(model.faderName(f), b.getX() - 18, numberLine + 16, b.getWidth() + 36, 16, juce::Justification::centred);
         }
         // The Master's top, the sound as designed, marked where its boost begins (D225).
         {
@@ -2351,11 +2355,13 @@ public:
             g.drawLine(static_cast<float>(b.getRight()) - 2.0f, y, static_cast<float>(b.getRight()) + 6.0f, y, 1.0f);
             g.setFont(sans(9.0f));
             g.drawText("0 dB", b.getRight() + 8, static_cast<int>(y) - 7, 30, 14, juce::Justification::centredLeft);
+            // the boost over the Master's own top, under the layer screen (D226)
             const auto boost = model.masterBoostDb();
             if (boost > 0.0f)
             {
                 g.setColour(coolsynth::ui::tintColour(Tint::sound));
-                g.drawText("+" + juce::String(boost, 1) + " dB", b.getRight() + 8, b.getY() - 2, 40, 14, juce::Justification::centredLeft);
+                g.setFont(sans(10.0f, true));
+                g.drawText("+" + juce::String(boost, 1) + " dB", b.getCentreX() - 30, b.getY() - 15, 60, 13, juce::Justification::centred);
             }
         }
 
@@ -2386,20 +2392,27 @@ public:
         mainTurnArea = { screenBox.getX() + 20, knobY + 18, screenBox.getWidth() / 2 - 60, 34 };
         mainPressArea = { screenBox.getCentreX() + 44, knobY + 18, screenBox.getWidth() / 2 - 60, 34 };
 
-        // knobs 1-8 in two rows
+        // Knobs 1-8 in two rows, 132 apart, low on the panel (D226, the user's layout): a lower knob's name on two
+        // lines ends where the main screen's bezel does.
         const int cell = knobsWidth / 4;
+        const int upperRow = top + 179, lowerRow = upperRow + 132;
         for (int k = 0; k < 8; ++k)
         {
             const int row = k / 4, col = k % 4;
-            knobs[static_cast<std::size_t>(k)].setBounds(knobsX + col * cell + (cell - 62) / 2, top + (row == 0 ? 104 : 236), 62, 62);
+            knobs[static_cast<std::size_t>(k)].setBounds(knobsX + col * cell + (cell - 62) / 2, row == 0 ? upperRow : lowerRow, 62, 62);
         }
-        // The layer screen above knobs 1-4, as wide as from knob 1 to knob 4 (D195); the rows moved down for it.
-        layerScreen = juce::Rectangle<int>(knobs[0].getX(), top, knobs[3].getRight() - knobs[0].getX(), 82);
 
-        // faders
+        // The faders as tall as the two knob rows (D226): at the top their thumb is level with the upper knobs' top
+        // edge (a knob draws its circle 4 px in, a fader its thumb 6 px), at the bottom their track ends by the lower
+        // knobs' bottom edge; their numbers and names on the lower knobs' lines.
         const int faderCell = faderWidth / 4;
         for (int f = 0; f < 4; ++f)
-            faders[static_cast<std::size_t>(f)].setBounds(fadersX + f * faderCell + (faderCell - 32) / 2, top + 10, 32, 330);
+            faders[static_cast<std::size_t>(f)].setBounds(fadersX + f * faderCell + (faderCell - 32) / 2, upperRow - 2,
+                                                          32, lowerRow + 62 - (upperRow - 2));
+
+        // The layer screen above the knobs and the faders, from knob 1 to the Master (D195, grown in D226), down to
+        // 26 px above the upper knobs' circles, as far as the knobs keep from the main screen.
+        layerScreen = juce::Rectangle<int>(knobs[0].getX(), top, faders[3].getRight() - knobs[0].getX(), upperRow - 22 - top);
 
         // pads under the screen, knobs and faders
         const int padsY = screenBox.getBottom() + 22;
@@ -2421,7 +2434,7 @@ public:
         prefs.setBounds(getLocalBounds()); // the dialog covers the panel; its card sits in the middle (D197)
         controllerCard.setBounds(getLocalBounds());
         // the CPU: the layer screen's bottom right corner (D195; beside the main knob from D191)
-        cpuArea = layerScreen.reduced(12, 8).removeFromBottom(14).removeFromRight(70);
+        cpuArea = layerScreen.reduced(16, 13).removeFromBottom(14).removeFromRight(70); // as paintLayerScreen's info row
     }
 
     void mouseDown(const juce::MouseEvent& e) override
@@ -2480,17 +2493,19 @@ public:
     void paintLayerScreen(juce::Graphics& g)
     {
         const auto box = layerScreen.toFloat();
-        g.setColour(juce::Colour(0xff0b0d10)); // the main screen's black surround
-        g.fillRoundedRectangle(box, 10.0f);
-        const auto glass = box.reduced(5.0f);
+        g.setColour(colours::bezel); // the main screen's bezel (D226)
+        g.fillRoundedRectangle(box, 12.0f);
+        g.setColour(colours::panelEdge);
+        g.drawRoundedRectangle(box.reduced(0.5f), 12.0f, 1.0f);
+        const auto glass = box.reduced(8.0f);
         g.setColour(colours::screen);
         g.fillRoundedRectangle(glass, 6.0f);
         g.setColour(colours::screenLine);
         g.drawRoundedRectangle(glass.reduced(0.5f), 6.0f, 1.0f);
 
-        auto inner = layerScreen.reduced(12, 9);
+        auto inner = layerScreen.reduced(16, 13);
         auto infoRow = inner.removeFromBottom(14);
-        inner.removeFromBottom(5);
+        inner.removeFromBottom(7);
         const int gap = 8;
         const int panelWidth = (inner.getWidth() - gap) / 2;
         for (int layer = 0; layer < 2; ++layer)
@@ -2510,16 +2525,34 @@ public:
             g.setColour(lit ? tint : (hover ? tint.withAlpha(0.6f) : colours::screenLine.brighter(0.25f)));
             g.drawRoundedRectangle(r.reduced(0.75f), 5.0f, lit || hover ? 1.5f : 1.0f);
 
-            auto text = panel.reduced(8, 4);
+            auto text = panel.reduced(10, 7);
             g.setFont(mono(10.0f, true));
             g.setColour(lit ? tint : tint.withMultipliedBrightness(0.55f).withMultipliedSaturation(0.6f));
             auto head = text.removeFromTop(13);
             g.drawText(layer == 0 ? "LAYER A" : "LAYER B", head, juce::Justification::centredLeft);
             if (const int solo = owner.synth.soloLayer(); solo >= 0) // a layer heard alone (D196)
                 g.drawText(solo == layer ? "SOLO" : "MUTED", head, juce::Justification::centredRight);
-            g.setFont(sans(13.5f, ! empty));
+            text.removeFromTop(5);
+            g.setFont(sans(19.0f, ! empty));
             g.setColour(empty ? colours::screenDim.withAlpha(lit ? 0.9f : 0.6f) : (lit ? colours::screenInk : colours::screenDim));
-            g.drawFittedText(empty ? juce::String("empty") : model.layerSoundName(layer), text, juce::Justification::centredLeft, 1, 0.8f);
+            g.drawFittedText(empty ? juce::String("empty") : model.layerSoundName(layer), text.removeFromTop(24),
+                             juce::Justification::centredLeft, 1, 0.8f);
+
+            // What the layer is made of, at the panel's foot (D226): its sources mixed, then its processors in a row.
+            const auto [sources, processors] = model.layerChain(layer);
+            const juce::String arrow = juce::String(juce::CharPointer_UTF8("\xe2\x86\x92 "));
+            g.setFont(sans(12.0f));
+            g.setColour(colours::screenDim.withAlpha(lit ? 1.0f : 0.7f));
+            auto foot = text.removeFromBottom(32);
+            if (empty)
+                g.drawText("Load a sound from Home", foot.removeFromTop(16), juce::Justification::centredLeft);
+            else
+            {
+                g.drawFittedText(sources.isNotEmpty() ? sources : juce::String("no source"), foot.removeFromTop(16),
+                                 juce::Justification::centredLeft, 1, 0.85f);
+                if (processors.isNotEmpty())
+                    g.drawFittedText(arrow + processors, foot, juce::Justification::centredLeft, 1, 0.85f);
+            }
         }
 
         // the info row: mode, tempo, voices; the CPU at the right, amber from 60%, red from 90%

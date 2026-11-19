@@ -186,6 +186,9 @@ namespace coolsynth::ui
         [[nodiscard]] bool layerEmpty(int layer) const;
         [[nodiscard]] juce::String layerSoundName(int layer) const;
         [[nodiscard]] juce::String layerModeText() const;
+        /** A layer's chain for the layer screen (D226): its sound sources, mixed ("VA + Wavetable"), and its
+            processors in a row ("Ladder → Drive"); empty strings for what it has none of. */
+        [[nodiscard]] std::pair<juce::String, juce::String> layerChain(int layer) const;
         [[nodiscard]] bool typeListOpen() const noexcept { return typeList.open; }
         [[nodiscard]] bool inCategory() const noexcept { return browser.inCategory; }
         [[nodiscard]] int livePage() const noexcept { return currentLivePage; }

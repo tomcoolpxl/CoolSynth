@@ -407,6 +407,33 @@ namespace coolsynth::ui
         return text;
     }
 
+    std::pair<juce::String, juce::String> InterfaceModel::layerChain(int layer) const
+    {
+        const juce::String prefix = layer == 0 ? "pA" : "pB";
+        juce::StringArray sources, processors;
+        for (int s = 1; s <= 3; ++s)
+        {
+            if (auto* type = parameter(prefix + ".g" + juce::String(s) + ".type"); type != nullptr && type->getValue() > 0.0f)
+                sources.add(type->getCurrentValueAsText());
+            if (auto* type = parameter(prefix + ".p" + juce::String(s) + ".type"); type != nullptr && type->getValue() > 0.0f)
+                processors.add(type->getCurrentValueAsText());
+        }
+        // Mixed sources are counted ("VA ×2"), as their order says nothing; processors in a row keep theirs.
+        juce::StringArray counted, seen;
+        for (const auto& source : sources)
+        {
+            if (seen.contains(source))
+                continue;
+            seen.add(source);
+            int n = 0;
+            for (const auto& other : sources)
+                n += other == source ? 1 : 0;
+            counted.add(n > 1 ? source + juce::String(juce::CharPointer_UTF8(" \xc3\x97")) + juce::String(n) : source);
+        }
+        // the Sound section's slots are mixed, the Shape section's in a row (rowsOf)
+        return { counted.joinIntoString(" + "), processors.joinIntoString(juce::String(juce::CharPointer_UTF8(" \xe2\x86\x92 "))) };
+    }
+
     bool InterfaceModel::layerEmpty(int layer) const
     {
         const juce::String prefix = layer == 0 ? "pA" : "pB";
