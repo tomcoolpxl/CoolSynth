@@ -2048,6 +2048,58 @@ public:
             expect(buffer.getMagnitude(0, blockSamples) > 1.0e-4f, "and it sounds");
         }
 
+        beginTest("the_hosts_stop_stops_the_arp_and_a_key_starts_it_again");
+        {
+            // D211, its review: a DAW's stop silences the arp although a key is still held; the next key brings it back.
+            constexpr int blockSamples = 3000;
+            coolsynth::testing::TestEngine engine;
+            engine.prepare(48000.0, blockSamples, 2);
+
+            auto parameters = makeBasicParameters();
+            parameters.arp.enabled = true;
+            parameters.arp.rate = coolsynth::parameters::ArpRateChoice::sixteenth;
+            parameters.arp.octaveRange = 1;
+            parameters.arp.gateLength = 0.95f;
+
+            coolsynth::synth::EngineTransportInfo transport;
+            transport.hostHasTempo = true;
+            transport.hostHasPpq = true;
+            transport.hostIsPlaying = true;
+            transport.hostBpm = 120.0;
+            transport.hostPpqAtBlockStart = 0.0;
+            const double beatsPerBlock = blockSamples / 48000.0 * transport.hostBpm / 60.0;
+
+            juce::AudioBuffer<float> buffer(2, blockSamples);
+            std::array<coolsynth::synth::EngineMidiEvent, 1> firstKey {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 60, 1.0f, false }
+            }};
+            buffer.clear();
+            engine.render(buffer, firstKey, parameters, transport);
+            // Three blocks end at sample 9000, inside the second sixteenth (6000 to 12000 at 120 BPM): a step rings.
+            for (int block = 1; block < 3; ++block)
+            {
+                transport.hostPpqAtBlockStart += beatsPerBlock;
+                buffer.clear();
+                engine.render(buffer, {}, parameters, transport);
+            }
+            expect(engine.getArpRingingNoteCountForTesting() >= 1, "the arp plays with the host");
+
+            transport.hostIsPlaying = false; // the DAW stops; the key stays down
+            for (int block = 0; block < 4; ++block)
+            {
+                buffer.clear();
+                engine.render(buffer, {}, parameters, transport);
+                expectEquals(engine.getArpRingingNoteCountForTesting(), 0, "quiet after the stop, block " + juce::String(block));
+            }
+
+            std::array<coolsynth::synth::EngineMidiEvent, 1> secondKey {{
+                { coolsynth::synth::EngineMidiEventType::noteOn, 0, 64, 1.0f, false }
+            }};
+            buffer.clear();
+            engine.render(buffer, secondKey, parameters, transport);
+            expect(engine.getArpRingingNoteCountForTesting() >= 1, "a key starts it again, the host still stopped");
+        }
+
         beginTest("arp_disable_mid_play_releases_ringing_note");
         {
             constexpr int blockSamples = 3000; // shorter than the long gate so the note is still held

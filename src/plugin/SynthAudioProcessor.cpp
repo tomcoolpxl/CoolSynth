@@ -29,6 +29,8 @@
 
 namespace
 {
+    std::atomic<int> liveProcessors { 0 }; // CoolSynths alive in this program (the controller setup's timers)
+
     std::array<juce::String, 4> splitNames(const juce::String& text)
     {
         std::array<juce::String, 4> names {};
@@ -189,6 +191,7 @@ SynthAudioProcessor::SynthAudioProcessor()
     , masterEffectValues(coolsynth::parameters::v3::bindMasterEffectPointers(parameters))
     , mappedActionBridge(*this)
 {
+    liveProcessors.fetch_add(1, std::memory_order_relaxed);
     for (auto* parameter : getParameters())
     {
         parameter->addListener(this);
@@ -281,6 +284,9 @@ void SynthAudioProcessor::chooseMultiCore(bool on)
 
 SynthAudioProcessor::~SynthAudioProcessor()
 {
+    // The last CoolSynth in this program: the controller setup's timers go while JUCE still runs (review of D211).
+    if (liveProcessors.fetch_sub(1, std::memory_order_relaxed) == 1)
+        coolsynth::midi::ControllerSetup::instance().shutDown();
     keyboardState.removeListener(this);
     parameters.state.removeListener(this);
     for (const auto& retired : retiredUserSounds)
@@ -702,8 +708,18 @@ void SynthAudioProcessor::checkBlockTripwires(juce::AudioBuffer<float>& buffer, 
     const double rate = getSampleRate() > 0.0 ? getSampleRate() : 48000.0;
     const float budget = static_cast<float>(1000.0 * n / rate);
     const float took = static_cast<float>(juce::Time::getMillisecondCounterHiRes() - startMs);
-    // The engine lets an earlier sound go when the blocks run short of time (D158).
-    synthEngine.setLoad(budget > 0.0f ? took / budget : 0.0f);
+    // The engine lets an earlier sound go when the blocks run short of time (D158). Measured over at least 64 samples:
+    // FL Studio's slivers of a few samples cost more than their budget by their fixed work alone, and would have
+    // faded a ringing sound with time to spare (the review of D211).
+    loadTookMs += took;
+    loadSamples += n;
+    if (loadSamples >= 64)
+    {
+        const float span = static_cast<float>(1000.0 * loadSamples / rate);
+        synthEngine.setLoad(span > 0.0f ? loadTookMs / span : 0.0f);
+        loadTookMs = 0.0f;
+        loadSamples = 0;
+    }
 
     // Each second of audio, the work of every thread: the audio thread's blocks and each helper's tasks (D172). The
     // screen shows it (cpuLoad); the flight recorder logs it. The helpers are the program's, so with two CoolSynths
@@ -1668,13 +1684,17 @@ juce::String SynthAudioProcessor::getPatchName() const
 
 void SynthAudioProcessor::enqueueControllerEvent(const coolsynth::midi::ControllerEvent& event) noexcept
 {
-    const auto scope = controllerEvents.write(1);
-    if (scope.blockSize1 + scope.blockSize2 == 0)
     {
-        droppedControllerEventCount.fetch_add(1, std::memory_order_relaxed);
-        return;
+        // The write is finished (the scope's end) before the message thread is told: told first, it could look
+        // before the event is there, and the event would wait for the next one (the review of D211).
+        const auto scope = controllerEvents.write(1);
+        if (scope.blockSize1 + scope.blockSize2 == 0)
+        {
+            droppedControllerEventCount.fetch_add(1, std::memory_order_relaxed);
+            return;
+        }
+        controllerEventSlots[static_cast<size_t>(scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2)] = event;
     }
-    controllerEventSlots[static_cast<size_t>(scope.blockSize1 > 0 ? scope.startIndex1 : scope.startIndex2)] = event;
     mappedActionBridge.triggerAsyncUpdate();
 }
 
@@ -1691,6 +1711,9 @@ void SynthAudioProcessor::dispatchPendingControllerEvents()
             getControllerInput().handle(controllerEventSlots[static_cast<size_t>(index)]);
         });
     }
+    // Still more after the turns: the next tick takes them, rather than the next controller message.
+    if (controllerEvents.getNumReady() > 0)
+        mappedActionBridge.triggerAsyncUpdate();
 }
 
 coolsynth::ui::ControllerInput& SynthAudioProcessor::getControllerInput()

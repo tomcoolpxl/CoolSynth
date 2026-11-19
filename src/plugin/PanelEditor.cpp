@@ -1364,6 +1364,8 @@ namespace
         bool confirming = false;
         bool stepping = false;
         bool listening = false;
+        int learnToken = 0; // the learning this card started (review of D211)
+        bool waitingForOther = false; // another window took the learning over: listen again once it is done
         int step = 0;
         std::vector<cm::Place> steps;
         juce::String heard; // what the step heard, or how to go on
@@ -1476,7 +1478,9 @@ namespace
             auto& setup = cm::ControllerSetup::instance();
             juce::Component::SafePointer<ControllerCard> self(this);
             listening = true;
-            setup.learn(cm::isButtonPlace(place) ? cm::ControllerSetup::Expect::press : cm::ControllerSetup::Expect::turn,
+            waitingForOther = false;
+            learnToken = setup.learn(&synth.getControllerInput(),
+                        cm::isButtonPlace(place) ? cm::ControllerSetup::Expect::press : cm::ControllerSetup::Expect::turn,
                         [self, place](const cm::ControllerSetup::Heard& h)
                         {
                             if (self != nullptr)
@@ -1495,8 +1499,9 @@ namespace
         void listenNoMore()
         {
             if (listening)
-                cm::ControllerSetup::instance().stopLearning();
+                cm::ControllerSetup::instance().stopLearning(learnToken);
             listening = false;
+            waitingForOther = false;
         }
 
         void heardControl(cm::Place place, const cm::ControllerSetup::Heard& h)
@@ -1533,6 +1538,22 @@ namespace
 
         void timerCallback() override
         {
+            // Another CoolSynth window started learning meanwhile: this step waits until it is done, then listens again.
+            auto& setup = cm::ControllerSetup::instance();
+            if (listening && ! setup.learningWith(learnToken))
+            {
+                listening = false;
+                waitingForOther = true;
+                heard = "Another CoolSynth window is learning: this step waits for it.";
+                repaint();
+            }
+            if (waitingForOther && stepping && ! setup.isLearning())
+            {
+                waitingForOther = false;
+                heard = {};
+                listen();
+                repaint();
+            }
             if (advanceAt != 0 && static_cast<juce::int32>(juce::Time::getMillisecondCounter() - advanceAt) >= 0)
             {
                 advanceAt = 0;
@@ -1814,7 +1835,7 @@ public:
         if (! learningHere)
             return false;
         learningHere = false;
-        coolsynth::midi::ControllerSetup::instance().stopLearning();
+        coolsynth::midi::ControllerSetup::instance().stopLearning(learnToken); // only this panel's own (review of D211)
         setNotice({}, 1);
         return true;
     }
@@ -1889,7 +1910,8 @@ public:
                       + escape, 0);
         learningHere = true;
         juce::Component::SafePointer<Content> self(this);
-        cm::ControllerSetup::instance().learn(
+        learnToken = cm::ControllerSetup::instance().learn(
+            &owner.synth.getControllerInput(),
             press ? cm::ControllerSetup::Expect::press : cm::ControllerSetup::Expect::turn,
             [self, place, parameterId, what](const cm::ControllerSetup::Heard& h)
             {
@@ -1988,7 +2010,14 @@ public:
         prefs.refresh();
         // The controller's word (D211): a ready setup found, said once in this program for a while; a notice's time over.
         const auto& setup = coolsynth::midi::ControllerSetup::instance();
-        if (setup.noticeSerial() != shownSetupNotice)
+        // A Learn taken over by another CoolSynth window: this one's prompt goes.
+        if (learningHere && ! setup.learningWith(learnToken))
+        {
+            learningHere = false;
+            setNotice({}, 1);
+        }
+        // Setup notices wait while a Learn listens: its prompt stays on the screen (review of D211).
+        if (setup.noticeSerial() != shownSetupNotice && ! learningHere)
         {
             shownSetupNotice = setup.noticeSerial();
             setNotice(setup.noticeText(), 9000);
@@ -2356,6 +2385,7 @@ private:
     PrefsCard prefs { owner.synth };                 // over everything, hidden until Prefs is pressed (D197)
     ControllerCard controllerCard { owner.synth };   // the controller setup, from Prefs or a right click (D211)
     bool learningHere = false;                       // a right click's Learn is listening (D211)
+    int learnToken = 0;                              // and which learning it is (review of D211)
     juce::uint32 noticeUntil = 0;                    // when the screen's notice goes; 0: it stays
     static inline int shownSetupNotice = 0;          // the setup's last notice shown, by any panel in this program
     std::array<juce::Rectangle<int>, 2> strips;

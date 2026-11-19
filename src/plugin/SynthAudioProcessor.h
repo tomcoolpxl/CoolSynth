@@ -462,6 +462,8 @@ private:
     int secondSamples = 0;
     float tripwireWorstMs = 0.0f, tripwirePeak = 0.0f;
     int tripwireVoices = 0, tripwireClipped = 0, tripwireSamples = 0;
+    float loadTookMs = 0.0f; // the engine's load over at least 64 samples (FL's slivers): audio thread
+    int loadSamples = 0;
 
     std::atomic<bool> instrumentLoading { false };
     int notesHeldBack = 0; // keys pressed while loading, ignored: audio thread

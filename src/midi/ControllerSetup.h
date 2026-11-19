@@ -31,7 +31,7 @@ namespace coolsynth::midi
     /** Notes and controllers only; anything else is not a controller's. */
     [[nodiscard]] std::optional<ControllerEvent> toControllerEvent(const juce::MidiMessage& message) noexcept;
 
-    class ControllerSetup final : private juce::Timer
+    class ControllerSetup final
     {
     public:
         static ControllerSetup& instance();
@@ -39,6 +39,10 @@ namespace coolsynth::midi
         /** Reads the computer's setup and starts watching it and the MIDI inputs; once, from any CoolSynth that plays
             (not tests and tools, which set a map with useForTesting). */
         void start();
+        /** The last CoolSynth in this program closed: its timers go now, while JUCE still runs (a timer kept to the
+            program's end outlived JUCE's timer thread; the review of D211). The setup itself stays; start() again
+            starts it afresh. */
+        void shutDown();
 
         [[nodiscard]] const ControllerMap& map() const noexcept { return current; }
         enum class Origin { none, saved, found };
@@ -52,6 +56,9 @@ namespace coolsynth::midi
         void setMap(ControllerMap map);
         /** No file and no looking at inputs: the map as given. */
         void useForTesting(ControllerMap map);
+        /** Tests: this file in place of the computer's, read now and written on every change, as in a CoolSynth that
+            plays; no timers and no looking at inputs. useForTesting ends it. */
+        void useFileForTesting(const juce::File& file);
 
         /** A line for the screen, once: "Akai MPK mini mk3 found: its ready setup is in use (Preferences)". */
         [[nodiscard]] int noticeSerial() const noexcept { return notices; }
@@ -78,13 +85,20 @@ namespace coolsynth::midi
             bool button = false;
         };
         enum class Expect { turn, press };
-        /** Listens for the next control moved on any controller: a turn is judged once the control rests (it is
-            asked to go right, then left), a press at once. `progress` says what was heard so far. */
-        void learn(Expect expect, std::function<void(const Heard&)> done, std::function<void(const juce::String&)> progress = {});
-        void stopLearning();
+        /** Listens for the next control moved on the controller of one CoolSynth (`owner`, its ControllerInput): a turn
+            is judged once the control rests (it is asked to go right, then left), a press at once. `progress` says what
+            was heard so far. Returns this learning's token: a later learn() takes over, and only its own token stops
+            it. A host feeding two CoolSynths the same keyboard brings each move twice; only the owner's count. */
+        int learn(const void* owner, Expect expect, std::function<void(const Heard&)> done,
+                  std::function<void(const juce::String&)> progress = {});
+        /** Stops that learning, if it is still the one listening. */
+        void stopLearning(int token);
+        void stopAllLearning();
         [[nodiscard]] bool isLearning() const noexcept { return learning.load(std::memory_order_relaxed); }
-        /** Every CoolSynth passes on what its controller sent while learning goes on. */
-        void hear(const ControllerEvent& event);
+        /** True while the learning with this token listens: false once it heard, was stopped or was taken over. */
+        [[nodiscard]] bool learningWith(int token) const noexcept { return isLearning() && token == currentToken; }
+        /** Every CoolSynth passes on what its controller sent while learning goes on, with itself as the source. */
+        void hear(const ControllerEvent& event, const void* source);
         /** Tests: judges what was heard now, as if the control had rested. */
         void finishLearningNow() { finishLearning(true); }
 
@@ -99,7 +113,7 @@ namespace coolsynth::midi
 
     private:
         ControllerSetup() = default;
-        void timerCallback() override;
+        void tick();
         void publish();
         void readFile();
         void save();
@@ -119,7 +133,12 @@ namespace coolsynth::midi
         std::atomic<bool> miniLabDriven { false };
         bool driverOn = true;
 
+        std::unique_ptr<juce::TimedCallback> fileTimer; // only while a CoolSynth runs (shutDown)
+        juce::File testFile;                            // useFileForTesting
+
         std::atomic<bool> learning { false };
+        int currentToken = 0;
+        const void* learningOwner = nullptr;
         Expect expecting = Expect::turn;
         std::function<void(const Heard&)> onHeard;
         std::function<void(const juce::String&)> onProgress;

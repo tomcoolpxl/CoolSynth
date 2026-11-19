@@ -4314,3 +4314,30 @@ others do and chose (pick lists, with research): **all of it, plus ready setups 
   recorder called each a dropout (943 in ten minutes) though the audio thread was busy 1.4 to 4.8% of each second
   and the worst block took 0.55 ms of 3 to 5. Blocks under 64 samples no longer raise the alarm; their time still
   counts in the second's summary.
+- **The review of D211** (2026-11-19): a review of the day's code; the user chose to fix everything it found.
+  - *The controller queue*: the audio thread finishes writing an event before it tells the message thread (told
+    first, the event could wait for the next one); events left after eight rounds go at the next tick.
+  - *Learning belongs to the CoolSynth that asked*: `learn` takes the asking CoolSynth's controller input and
+    returns a token. A host feeding two CoolSynths one keyboard brings every move twice; only the owner's count. An
+    older window closing no longer ends a newer learning; a card whose learning was taken over waits, then listens
+    again. Learning for a button turns down a knob or fader and says so.
+  - *Endless knobs*: a control a ready setup calls a position is taken as endless only after three equal values
+    such a knob sends for one step (61-67 but 64, 1-3, 125-126); other repeats (a resend, a 14-bit fader's coarse
+    half) are no evidence, so a knob is never taken for an endless one by chance. A changed setup forgets what was
+    guessed. Values 0 or 97 and up only are two's complement turned left.
+  - *FL Studio*: the load that decides when sounds are cut is measured over at least 64 samples, so FL's slivers no
+    longer look like overload and cut tails. The FL script takes the pads only while a CoolSynth is in the project
+    (FL's `channels.channelCount` and `plugins.getPluginName`); without one they play notes in FL as usual.
+  - *The MiniLab*: a host's note is a pad's echo only while that pad is held and when it came after the key, within
+    250 ms, so a low key played after a pad is no longer lost. The user's sounds folder is read at most once a second
+    while a controller's knob with end stops moves through it (each of its messages read it); a turn still reads it
+    each time, so files just dropped in show at once. The setup's notices wait while Learn's prompt is on the screen.
+  - *The installer*: an elevated installer's `{userdocs}` is the administrator's (Inno Setup's [Run] section help;
+    its mailing list, "RunAsOriginalUser"), so the scripts go to the install folder and
+    `installer/Install-MiniLabScripts.ps1` copies them on, run as the player who started the installer
+    (`runasoriginaluser`); it finds Documents where Windows keeps it, OneDrive's included. Uninstalling removes them
+    from the Documents of the account that approved it.
+  - *Leaving*: the setup's timers go with the last CoolSynth in the program, while JUCE still runs (Debug warned at
+    exit). Tests: learning's owner and token, a knob refused for a button, a repeated position that is no turn, the
+    setup file and its switch kept and read back, a block full of controller moves and an overflow, and the DAW's
+    stop stopping the arp until the next key.

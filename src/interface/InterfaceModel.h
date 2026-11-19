@@ -300,8 +300,12 @@ namespace coolsynth::ui
             bool kit = false;
         };
         std::vector<UserEntry> userEntries;
+        juce::uint32 userEntriesReadAt = 0; // when the folder was last read
         juce::String userFolderPath;
-        void refreshUserEntries();
+        /** Reads the user's folder again. `fromController`: at most once a second, as a controller's knob with end stops
+            sends a hundred messages a second and each would read it (review of D211); a turn of a knob reads it each time,
+            so files just dropped in show at once. */
+        void refreshUserEntries(bool fromController = false);
         /** The layer (0, 1) and generator slot (1..3) of a Sample slot's source (".p1"), or false. */
         [[nodiscard]] bool sampleSourceOf(const juce::String& parameterId, int& part, int& slot) const;
         /** Where the slot's source sits in the browsed list: its instrument, or the user's file after them. */

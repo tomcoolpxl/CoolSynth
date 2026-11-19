@@ -866,8 +866,12 @@ namespace coolsynth::ui
         return slot >= 1 && slot <= pv::partGeneratorSlots;
     }
 
-    void InterfaceModel::refreshUserEntries()
+    void InterfaceModel::refreshUserEntries(bool fromController)
     {
+        const auto now = juce::Time::getMillisecondCounter();
+        if (fromController && userEntriesReadAt != 0 && now - userEntriesReadAt < 1000)
+            return;
+        userEntriesReadAt = now == 0 ? 1 : now;
         userEntries.clear();
         auto folder = coolsynth::synth::v3::UserLibrary::instance().folder();
         folder.createDirectory(); // there is always a place to put one's files (D207)
@@ -1073,7 +1077,7 @@ namespace coolsynth::ui
             const bool source = sampleSourceOf(id, part, slot);
             const bool browsing = pendingChoice.has_value() && pendingChoice->id == id;
             if (source && ! browsing)
-                refreshUserEntries();
+                refreshUserEntries(true);
             const int total = instruments + (source ? static_cast<int>(userEntries.size()) : 0);
             const int loaded = source ? loadedSourceIndex(*p, part, slot) : juce::roundToInt(p->getValue() * static_cast<float>(instruments - 1));
             scaleList(place, id, browsing ? pendingChoice->index : loaded, total, h0, h1, turn);

@@ -289,6 +289,8 @@ namespace coolsynth::midi
             return Encoding::signBit;
         if (low && values.front() >= 1 && values.front() <= 31)
             return Encoding::twosComplement; // turned right only: the commoner of the two
+        if (all([](int v) { return v == 0 || v >= 97; }))
+            return Encoding::twosComplement; // turned left only: 127, 126 are -1, -2
         return Encoding::binaryOffset;
     }
 

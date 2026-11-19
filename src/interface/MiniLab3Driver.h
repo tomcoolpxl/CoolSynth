@@ -102,6 +102,7 @@ namespace coolsynth::ui
         // When the MiniLab's port last brought each note as a pad and as a key (milliseconds): MIDI thread writes.
         static inline std::array<std::atomic<double>, 128> padPressedAt {};
         static inline std::array<std::atomic<double>, 128> keyPressedAt {};
+        static inline std::array<std::atomic<bool>, 128> padHeld {}; // a pad down now, by its note (review of D211)
         static juce::InterProcessLock& programLock();
         static inline bool programHoldsLock = false;
     };

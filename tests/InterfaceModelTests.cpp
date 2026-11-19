@@ -698,7 +698,7 @@ public:
         if (auto* panel = dynamic_cast<PanelEditor*>(editor.get()))
             panel->showControllerSetup(true); // its first step
         shoot("controller-step");
-        coolsynth::midi::ControllerSetup::instance().stopLearning();
+        coolsynth::midi::ControllerSetup::instance().stopAllLearning();
     }
 };
 

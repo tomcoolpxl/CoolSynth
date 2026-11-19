@@ -34,6 +34,8 @@ namespace coolsynth::midi
 
     juce::File ControllerSetup::file() const
     {
+        if (testFile != juce::File())
+            return testFile;
         return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
             .getChildFile("CoolSynth").getChildFile("controller.json");
     }
@@ -45,16 +47,37 @@ namespace coolsynth::midi
         started = true;
         readFile();
         // Looks for a known controller a moment later, once the app's MiniLab driver is there (D184).
-        startTimer(2000);
+        fileTimer = std::make_unique<juce::TimedCallback>([this] { tick(); });
+        fileTimer->startTimer(2000);
+    }
+
+    void ControllerSetup::shutDown()
+    {
+        stopAllLearning();
+        fileTimer.reset();
+        learnTimer.reset();
+        started = false;
     }
 
     void ControllerSetup::useForTesting(ControllerMap map)
     {
         testing = true;
-        stopTimer();
+        started = false;
+        testFile = juce::File();
+        driverOn = true;
+        fileTimer.reset();
         current = std::move(map);
         currentOrigin = current.empty() ? Origin::none : Origin::saved;
         publish();
+    }
+
+    void ControllerSetup::useFileForTesting(const juce::File& f)
+    {
+        fileTimer.reset();
+        testing = false;
+        started = true; // start() makes no timers now
+        testFile = f;
+        readFile();
     }
 
     void ControllerSetup::setMap(ControllerMap map)
@@ -161,7 +184,7 @@ namespace coolsynth::midi
         publish();
     }
 
-    void ControllerSetup::timerCallback()
+    void ControllerSetup::tick()
     {
         // Another program (the app, or a host) may have saved the setup: read it again.
         if (file().getLastModificationTime() != fileTime)
@@ -222,9 +245,11 @@ namespace coolsynth::midi
 
     // ---- Learning ---------------------------------------------------------------------------------------------
 
-    void ControllerSetup::learn(Expect expect, std::function<void(const Heard&)> done, std::function<void(const juce::String&)> progress)
+    int ControllerSetup::learn(const void* owner, Expect expect, std::function<void(const Heard&)> done,
+                               std::function<void(const juce::String&)> progress)
     {
         expecting = expect;
+        learningOwner = owner;
         onHeard = std::move(done);
         onProgress = std::move(progress);
         candidate.reset();
@@ -234,23 +259,33 @@ namespace coolsynth::midi
         if (learnTimer == nullptr)
             learnTimer = std::make_unique<juce::TimedCallback>([this] { finishLearning(); });
         learnTimer->startTimer(50);
+        return ++currentToken;
     }
 
-    void ControllerSetup::stopLearning()
+    void ControllerSetup::stopLearning(int token)
+    {
+        // Only the learning still listening: an older one's window closing must not end a newer one (review of D211).
+        if (token == currentToken)
+            stopAllLearning();
+    }
+
+    void ControllerSetup::stopAllLearning()
     {
         learning.store(false, std::memory_order_relaxed);
         learningNow.store(false, std::memory_order_relaxed);
         if (learnTimer != nullptr)
             learnTimer->stopTimer();
+        learningOwner = nullptr;
         onHeard = nullptr;
         onProgress = nullptr;
         candidate.reset();
         values.clear();
     }
 
-    void ControllerSetup::hear(const ControllerEvent& event)
+    void ControllerSetup::hear(const ControllerEvent& event, const void* source)
     {
-        if (! isLearning() || isReserved(event.control))
+        // Only the controller of the CoolSynth that asked: a host feeding two CoolSynths would bring each move twice.
+        if (! isLearning() || source != learningOwner || isReserved(event.control))
             return;
         if (event.note)
         {
@@ -258,7 +293,7 @@ namespace coolsynth::midi
                 return; // a release says nothing new
             // A key or a pad: a button, at once.
             auto done = onHeard;
-            stopLearning();
+            stopAllLearning();
             if (done)
                 done({ event.control, Encoding::absolute, true });
             return;
@@ -288,6 +323,15 @@ namespace coolsynth::midi
         {
             if (quiet < 250.0)
                 return;
+            if (! buttonLike)
+            {
+                // A knob or fader touched while a button was wanted: not taken (review of D211).
+                candidate.reset();
+                values.clear();
+                if (onProgress)
+                    onProgress("That was a knob or fader: press a button or pad.");
+                return;
+            }
             heard.button = true;
         }
         else
@@ -304,7 +348,7 @@ namespace coolsynth::midi
             heard.encoding = heard.button ? Encoding::absolute : guessEncoding(values);
         }
         auto done = onHeard;
-        stopLearning();
+        stopAllLearning();
         if (done)
             done(heard);
     }

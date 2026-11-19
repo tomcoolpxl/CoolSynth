@@ -18,8 +18,14 @@ namespace coolsynth::ui
         auto& setup = cm::ControllerSetup::instance();
         if (setup.isLearning())
         {
-            setup.hear(event);
+            setup.hear(event, this);
             return;
+        }
+        // A changed setup starts every control afresh: what was guessed of it belonged to the old one.
+        if (setup.revision() != seenRevision)
+        {
+            seenRevision = setup.revision();
+            lastValues.clear();
         }
         const auto& map = setup.map();
         const auto* place = map.placeFor(event.control);
@@ -33,9 +39,14 @@ namespace coolsynth::ui
         auto encoding = place != nullptr ? place->encoding : setting->encoding;
         if (encoding == cm::Encoding::absolute && ! event.note)
         {
-            // The same value twice, away from the ends: this control turns. Its value tells how.
-            if (! last.turns && previous == event.value && event.value != 0 && event.value != 127)
-                last.turns = cm::guessEncoding({ event.value, event.value });
+            // Three times the same value an endless knob sends for one step (63-65, 1-3, 125-126): this control turns.
+            // Any other repeat is not evidence (a 14-bit fader's coarse half, a resend), so a knob is never taken for
+            // an endless one by chance (review of D211).
+            const bool turnLike = (event.value >= 61 && event.value <= 67 && event.value != 64)
+                               || (event.value >= 1 && event.value <= 3) || (event.value >= 125 && event.value <= 126);
+            last.repeats = previous == event.value && turnLike ? last.repeats + 1 : 0;
+            if (! last.turns && last.repeats >= 2)
+                last.turns = cm::guessEncoding({ event.value, event.value, event.value });
             if (last.turns)
                 encoding = *last.turns;
         }

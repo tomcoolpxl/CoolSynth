@@ -27,7 +27,9 @@ namespace coolsynth::ui
             /** A control the setup calls a position that repeats a value away from its ends turns instead: a ready
                 profile may not know how the keyboard was set (D211). */
             std::optional<coolsynth::midi::Encoding> turns;
+            int repeats = 0; // the same turn-like value in a row
         };
+        int seenRevision = -1;
         [[nodiscard]] static int keyOf(const coolsynth::midi::ControlId& c) noexcept;
         void play(const coolsynth::midi::PlaceLink& link, const coolsynth::midi::ControllerEvent& event,
                   coolsynth::midi::Encoding encoding, int previous);

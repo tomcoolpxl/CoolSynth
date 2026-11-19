@@ -161,8 +161,10 @@ namespace coolsynth::ui
             return false;
         const double pad = padPressedAt[static_cast<std::size_t>(note)].load(std::memory_order_relaxed);
         const double key = keyPressedAt[static_cast<std::size_t>(note)].load(std::memory_order_relaxed);
-        // The host's copy comes a block or two after the driver heard it; a key of that pitch since is a key.
-        return pad > key && juce::Time::getMillisecondCounterHiRes() - pad < 250.0;
+        // The host's copy comes a block or two after the driver heard it; a key of that pitch since is a key. And only
+        // while that pad is still down: a key played just after a pad let go is a key (review of D211).
+        return padHeld[static_cast<std::size_t>(note)].load(std::memory_order_relaxed)
+            && pad > key && juce::Time::getMillisecondCounterHiRes() - pad < 250.0;
     }
 
     void MiniLab3Driver::send(const juce::MidiMessage& message)
@@ -182,6 +184,8 @@ namespace coolsynth::ui
             auto& at = kind == ml::Control::Kind::pad ? padPressedAt : keyPressedAt;
             at[static_cast<std::size_t>(message.getNoteNumber())].store(juce::Time::getMillisecondCounterHiRes(), std::memory_order_relaxed);
         }
+        if (kind == ml::Control::Kind::pad && message.isNoteOnOrOff())
+            padHeld[static_cast<std::size_t>(message.getNoteNumber())].store(message.isNoteOn(), std::memory_order_relaxed);
         if (kind == ml::Control::Kind::other)
         {
             if (message.isSysEx())
