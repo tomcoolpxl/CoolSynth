@@ -115,6 +115,17 @@ All passed:
 
 Found on the way: Supersaw's undertone is its sub, by design (on the listening pass list above).
 
+## The DAW round (2026-11-20, test installer from build 4f3fdb8)
+
+- FL Studio 2025, VST3: CoolSynth loaded, the MiniLab connected to it in its DAW program, 163 notes each arrived
+  once, the Master fader moved and came back to 0 dB.
+- Not working: the project saved with CoolSynth in it (the file holds its VST3 path and state: Reese, edited)
+  opened twice without CoolSynth. FL showed only its Sampler, CoolSynth's log shows no start, and Windows logged no
+  crash. Cause unknown; to investigate before the release.
+- Two FL Studio crashes at 00:49 (combase.dll, fail-fast) were Claude's attempts to open the project from outside
+  while FL ran, not the user's FL.
+- Not done yet: the CLAP in FL Studio; Ableton Live 12 Lite (VST3; Live loads no CLAP); Reaper is not installed.
+
 ## Then the release (TODO J3)
 
 - The version number is your choice; the release notes go in `docs/releases/`; then the tag.
