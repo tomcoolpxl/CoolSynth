@@ -10,6 +10,10 @@ namespace coolsynth::synth::v3
     namespace
     {
         constexpr float kSilentLevel = 1.0e-4f;              // a voice this quiet is restarted without a fade
+        // A released voice whose recordings have ended stops once its own output has stayed under -100 dB (above the
+        // ladder's -110 dB noise floor) for 100 ms, rather than ringing out a release of up to 20 s (TODO 10).
+        constexpr float kEndedLevel = 1.0e-5f;
+        constexpr float kEndedAfterSeconds = 0.1f;
         constexpr float kDriftSmoothingSeconds = 0.25f;      // each of two cascaded one-poles
         constexpr float kDriftMinHoldSeconds = 0.3f;
         constexpr float kDriftHoldRangeSeconds = 0.5f;
@@ -66,6 +70,7 @@ namespace coolsynth::synth::v3
         envelopeHold = 0;
         polyPressure = 0.0f;
         pressurePrimed = false;
+        silentSamples = 0;
     }
 
     bool Voice::isActive() const noexcept
@@ -231,6 +236,7 @@ namespace coolsynth::synth::v3
     void Voice::beginNote(const NoteStart& start, const ModSources& base) noexcept
     {
         note = start;
+        silentSamples = 0;
         released = false;
         releaseWaiting = false;
         releaseVelocity = 0.0f;
@@ -368,7 +374,46 @@ namespace coolsynth::synth::v3
                 if (stealRemaining == 0)
                     startPendingNote(globals); // the old note is silent now: start the waiting one from a clean slate
             }
+            else
+            {
+                // A released note whose recordings have ended: once it has been silent long enough, the voice is
+                // free, not held through the rest of a long release (TODO 10).
+                silentSamples = lastSubBlockPeak < kEndedLevel ? silentSamples + n : 0;
+                if (released && ! releaseWaiting && ! pending && silentSamples >= static_cast<int>(kEndedAfterSeconds * sampleRate)
+                    && canEndEarly(settings))
+                {
+                    for (auto& e : envelopes)
+                        e.reset();
+                    break;
+                }
+            }
         }
+    }
+
+    bool Voice::canEndEarly(const VoiceSettings& settings) const noexcept
+    {
+        // Every generator silent until a new note: a one-shot recording that has ended, or an empty slot.
+        for (const auto& g : generators)
+            if (! g.slot.silentUntilNextNote())
+                return false;
+        // Nothing that could sound again by itself: a ladder sings from its noise floor once its resonance reaches
+        // the oscillation point, so a ladder at or past it, or with its resonance on the matrix, keeps the voice.
+        // The other processors only ring down (the SVF's Q stops at 40, the comb's feedback at 0.98).
+        for (std::size_t j = 0; j < processors.size(); ++j)
+        {
+            const auto& p = processors[j];
+            if (! p.slot.typeSettled())
+                return false;
+            if (p.slot.typeIndex() != processorType::ladder && settings.processors[j].type != processorType::ladder)
+                continue;
+            if (settings.processors[j].p[LadderProcessor::resonance] >= LadderProcessor::oscillationResonance)
+                return false;
+            const int resonance = modDestination::processorParameter(static_cast<int>(j), LadderProcessor::resonance);
+            for (int i = 0; i < settings.matrix.count; ++i)
+                if (settings.matrix.slots[static_cast<std::size_t>(i)].destination == resonance)
+                    return false;
+        }
+        return true;
     }
 
     void Voice::renderSubBlock(float* left, float* right, int offset, int n, const VoiceSettings& settings, const VoiceGlobals& globals) noexcept
@@ -518,14 +563,18 @@ namespace coolsynth::synth::v3
         const float vcaStep = (vcaTarget - vcaFrom) / static_cast<float>(n);
 
         const float fadeScale = 1.0f / static_cast<float>(stealTotal);
+        float peak = 0.0f; // this voice's own output, for ending a released one early (TODO 10)
         for (int s = 0; s < n; ++s)
         {
             float gain = amp[s] * note.gain * (vcaFrom + vcaStep * static_cast<float>(s + 1));
             if (stealRemaining > 0)
                 gain *= static_cast<float>(stealRemaining - 1 - s) * fadeScale;
-            left[s] += mixL[s] * gain;
-            right[s] += mixR[s] * gain;
+            const float outLeft = mixL[s] * gain, outRight = mixR[s] * gain;
+            left[s] += outLeft;
+            right[s] += outRight;
+            peak = std::max(peak, std::max(std::abs(outLeft), std::abs(outRight)));
         }
+        lastSubBlockPeak = peak;
     }
 
     void Voice::advancePitch(int n, const VoiceSettings& settings) noexcept

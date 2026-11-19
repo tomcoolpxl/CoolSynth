@@ -533,6 +533,77 @@ public:
             expect(releaseStep < 0.12f);
         }
 
+        beginTest("a_released_voice_whose_recording_has_ended_frees_itself");
+        {
+            // TODO 10: a one-shot recording, the built-in strings two octaves up (one second), released after 0.2 s
+            // into a 20 s release. Once the recording has ended and the voice has been silent 100 ms, it is free.
+            auto sampled = [](bool loop)
+            {
+                VoiceSettings s;
+                auto& g = s.generators[0];
+                g.type = generatorType::sample;
+                const auto& d = SampleGenerator::descriptor();
+                for (int i = 0; i < d.usedParams; ++i)
+                    g.p[static_cast<std::size_t>(i)] = unitsToNormalised(d.params[static_cast<std::size_t>(i)], d.params[static_cast<std::size_t>(i)].def);
+                g.p[SampleGenerator::sample] = unitsToNormalised(d.params[SampleGenerator::sample], static_cast<float>(SampleBank::Sample::strings));
+                g.p[SampleGenerator::loop] = loop ? 1.0f : 0.0f;
+                g.p[SampleGenerator::start] = 0.0f;
+                g.p[SampleGenerator::reverse] = 0.0f;
+                g.level = 1.0f;
+                auto envelope = heldEnvelope();
+                envelope.release = 20.0f;
+                s.envelopes = { envelope, envelope, envelope };
+                return s;
+            };
+            // Seconds until the voice is free, or -1 if it still plays after `limit` seconds.
+            auto freedAfter = [](const VoiceSettings& settings, float limit, std::vector<float>* output = nullptr)
+            {
+                auto voice = makeVoice();
+                voice->start(noteAt(84));
+                std::vector<float> out = renderVoice(*voice, settings, 9600).left;
+                voice->release();
+                for (int block = 0; block * 4800 < static_cast<int>(limit * kRate); ++block)
+                {
+                    append(out, renderVoice(*voice, settings, 4800).left);
+                    if (! voice->isActive())
+                    {
+                        if (output != nullptr)
+                            *output = out;
+                        return static_cast<float>(out.size()) / static_cast<float>(kRate);
+                    }
+                }
+                if (output != nullptr)
+                    *output = out;
+                return -1.0f;
+            };
+
+            std::vector<float> ended;
+            const float oneShot = freedAfter(sampled(false), 5.0f, &ended);
+            logMessage("a one-shot recording of one second, released at 0.2 s into 20 s: free after " + juce::String(oneShot, 2) + " s");
+            expect(oneShot > 1.0f && oneShot < 1.3f, "free soon after the recording ends: " + juce::String(oneShot, 2) + " s");
+            expectGreaterThan(rms(ended, 9600, 43200), 0.01f, "it played");
+
+            expectEquals(freedAfter(sampled(true), 3.0f), -1.0f, "a loop never ends: the release plays out");
+
+            auto singing = sampled(false);
+            singing.processors[0] = ladder(1000.0f, 0.95f);
+            expectEquals(freedAfter(singing, 3.0f), -1.0f, "a ladder past its oscillation point sings on its own");
+
+            auto swept = sampled(false);
+            swept.processors[0] = ladder(1000.0f, 0.5f);
+            MatrixSlot route;
+            route.source = ModSource::lfo1;
+            route.destination = modDestination::processorParameter(0, LadderProcessor::resonance);
+            route.amount = 0.5f;
+            swept.matrix.add(route);
+            expectEquals(freedAfter(swept, 3.0f), -1.0f, "a ladder whose resonance moves could start to sing");
+
+            auto calm = sampled(false);
+            calm.processors[0] = ladder(1000.0f, 0.3f);
+            const float filtered = freedAfter(calm, 5.0f);
+            expect(filtered > 1.0f && filtered < 1.4f, "a calm ladder rings down and lets the voice go: " + juce::String(filtered, 2) + " s");
+        }
+
         beginTest("the_amplifier_reaches_full_level_within_its_attack");
         {
             // TODO 15: what comes out, not the envelope's own value: a sine's level, one cycle at a time (A4, 109

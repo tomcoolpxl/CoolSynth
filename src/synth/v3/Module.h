@@ -335,6 +335,24 @@ namespace coolsynth::synth::v3
             }, instances[active].module);
         }
 
+        /** Generator slots: true when the module can make no sound until a new note (a one-shot recording that has
+            ended, an empty slot) and no other type is on its way in. Types that do not say are never silent. */
+        [[nodiscard]] bool silentUntilNextNote() const noexcept
+        {
+            if (fadeRemaining > 0 || pendingType.load(std::memory_order_relaxed) >= 0)
+                return false;
+            return std::visit([](const auto& module)
+            {
+                if constexpr (requires { module.silentUntilNextNote(); })
+                    return module.silentUntilNextNote();
+                else
+                    return false;
+            }, instances[active].module);
+        }
+
+        /** No other type is fading in or waiting to. */
+        [[nodiscard]] bool typeSettled() const noexcept { return fadeRemaining <= 0 && pendingType.load(std::memory_order_relaxed) < 0; }
+
         /** The same voice plays again without a restart, for the types that are struck (a string). */
         void strike() noexcept
         {

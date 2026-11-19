@@ -80,8 +80,6 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
    so a 16-voice Supersaw would reach the limit. Per module (`COOLSYNTH_CPU_REPORT=1`,
    `tests/V3ModuleCostReport.cpp`, eight notes, optimised Debug): the ladder about 8 %, FM4 about 7 % (a faster
    sine gains 6 %, D140), Drive about 6 %, Comb under 4 %, the VA saw under 2 %.
-10. A sampled voice whose one-shot recording has ended holds its voice until its release is over (up to 20 s on
-    bells and mallets): nothing is lost, older voices go first, but it costs processing.
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).

@@ -229,6 +229,10 @@ namespace coolsynth::synth::v3
         /** The same voice again: the sample starts over. */
         void strike() noexcept { startPending = true; }
 
+        /** A one-shot recording that has played to its end, with no start waiting: silence until the next note, so
+            a released voice need not ring out its envelope (TODO 10). A loop never ends. */
+        [[nodiscard]] bool silentUntilNextNote() const noexcept { return finished && ! startPending; }
+
         void setLink(const GeneratorLink& in) noexcept { input = in; }
         [[nodiscard]] GeneratorLink link() const noexcept { return { signalTrack.data(), nullptr }; }
 

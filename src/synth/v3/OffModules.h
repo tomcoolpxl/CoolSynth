@@ -21,6 +21,8 @@ namespace coolsynth::synth::v3
         void noteOn(const NoteContext&) noexcept {}
         void setLink(const GeneratorLink&) noexcept {}
         [[nodiscard]] GeneratorLink link() const noexcept { return {}; }
+        /** Nothing to play, ever (TODO 10). */
+        [[nodiscard]] bool silentUntilNextNote() const noexcept { return true; }
 
         void process(float* left, float* right, int numSamples, const SlotParams&) noexcept
         {

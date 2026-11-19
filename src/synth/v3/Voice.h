@@ -296,6 +296,10 @@ namespace coolsynth::synth::v3
         int stealRemaining = 0;
         int envelopeHold = 0; // samples the envelopes wait at a fresh note, matching the generators' latency
         int stealTotal = 1;
+        // A released voice whose recordings have ended ends once it has been this quiet this long (TODO 10).
+        int silentSamples = 0;
+        float lastSubBlockPeak = 0.0f;
+        [[nodiscard]] bool canEndEarly(const VoiceSettings& settings) const noexcept;
 
         float currentPitch = 60.0f;
         float targetPitch = 60.0f;
