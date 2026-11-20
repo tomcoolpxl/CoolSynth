@@ -1,0 +1,50 @@
+CoolSynth for Windows, now also as a CLAP plugin. (Draft: the version number is still to be chosen.)
+
+## Install
+
+Download `CoolSynth-Setup-<version>.exe` below and run it. It updates 0.3.0 in place; your own sounds and samples stay.
+
+Windows may warn that the publisher is unknown, because the installer isn't code-signed. Click **More info**, then **Run anyway**.
+
+The installer puts the VST3 in `C:\Program Files\Common Files\VST3`, the CLAP in `C:\Program Files\Common Files\CLAP` and the app in the Start menu. The sampled instruments you already have stay; untick them to skip the download.
+
+## What's new
+
+There are 139 presets now. Three new ones use the new stutter effect: Cut-Up Chords, Wheel Stutter and Glitch Pad.
+
+- Sound
+  - A stutter effect that catches a slice of the sound and repeats it in time.
+  - Hiss and crackle that sound like tape and records, and fall silent with the music.
+  - Every preset is levelled to the same loudness. For more, push the Master fader past its 0 dB mark, on the screen or with your controller's fader 4: up to 12 dB louder.
+- Playing in a song
+  - A song plays the same each time you start it, and its bounce matches what you heard.
+  - An arpeggiator can draw new random patterns each time instead, with its New Patterns switch.
+  - When a sound would ask more of your computer than it has, CoolSynth plays fewer voices instead of crackling.
+- Your own samples
+  - Slicing by hits finds kicks, snares and hats alike, and Sensitivity adds one slice at a time over the whole knob.
+  - A file's name shows on two lines, where it is and what it is, so a kit and a file in it never look alike.
+- The panel
+  - The layer screen is larger and shows what each layer is made of. Click a part to edit it, the sound's name to choose another, LAYER A for its menu.
+  - An edited sound you replace by mistake comes back from the top of the list: Back to your edit.
+  - Screen readers name the knobs, faders and pads, with their values.
+- Controllers
+  - Your DAW's own mapping comes first, and CoolSynth's first eight controls are the panel's Home knobs.
+  - The CLAP version's knob pages follow the panel's page in DAWs that show them.
+  - The size of your keyboard is marked over the screen's keys.
+  - The MiniLab 3 works in both its programs, and its lights come back after you unplug it.
+- In your DAW
+  - A value you type in your DAW's parameter list is read as you typed it, "1.5 s" included.
+  - The parameter names in your DAW follow a slot's new type.
+- In the app, **Prefs > Claude (MCP)** lets Claude Code read and play the app while it helps you. It is off until you switch it on, and only this computer can reach it.
+
+Projects and sounds saved with 0.3.0 open as they were.
+
+## Files
+
+- `CoolSynth-Setup-<version>.exe` is the installer. Start here.
+- `CoolSynth-windows-x64-vst3-<version>.zip` holds just the VST3.
+- `CoolSynth-windows-x64-clap-<version>.zip` holds just the CLAP.
+- `CoolSynth-windows-x64-standalone-<version>.zip` holds just the app.
+- `CoolSynth-windows-x64-sha256-<version>.txt` has checksums for the other files.
+
+More in the [README](https://github.com/tomcoolpxl/CoolSynth#readme).
