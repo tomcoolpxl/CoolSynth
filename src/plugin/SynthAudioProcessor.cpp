@@ -709,7 +709,9 @@ void SynthAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::M
         synthEngine.reseed();
     hostWasPlaying = transportInfo.hostIsPlaying;
 
-    tempoNow.store(transportInfo.hostHasTempo && transportInfo.hostIsPlaying ? static_cast<float>(transportInfo.hostBpm)
+    // The tempo the sound uses: the host's whenever it gives one, playing or stopped, as the arps and synced LFOs do
+    // (docs/research/tempo.md found the row showing the internal tempo in a stopped DAW).
+    tempoNow.store(transportInfo.hostHasTempo && transportInfo.hostBpm > 0.0 ? static_cast<float>(transportInfo.hostBpm)
                                                                              : parameterValues.arpInternalTempoBpm->load(),
                    std::memory_order_relaxed);
     synthEngine.setMultiCore(multiCoreWanted.load(std::memory_order_relaxed) && ! isNonRealtime());
