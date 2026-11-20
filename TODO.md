@@ -168,10 +168,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.
-32. The TB-303 as its circuit (D241, the user's choice; next): the Chicago acid bass. Its VCO, its diode ladder
-    filter, its envelopes, accent and slide circuits, played by the layer's step sequencer with its slides; the
-    Acid preset to become the real thing. Researched: `docs/research/tb-303-circuit.md`; the choices it lists go
-    to the user first.
+32. The TB-303 (D241, D242): built as a generator, rewritten from Open303 (the user's choice over our own circuit),
+    accent on at velocity 100, slide by legato notes at the 303's 22 ms; the Acid preset on it. Checked against
+    published figures: Stinchcombe's filter response within 0.1 dB, the slide's RC, the square's duty, no
+    self-oscillation. Left: the user's ears; a check against a real 303's recordings when an owner's turn up;
+    whether the 303's own step sequencer (accent and slide per step) comes into the layer's.
 33. The whole TR-808 (D241, after the 303): its voices beyond the bass drum, about five circuit families (the
     bridged-T toms, congas, rim and claves on the bass drum's machinery; the snare; the six-oscillator bank for
     cowbell, cymbal and hats; the clap and maracas), as generators and as a kit. Aimed at house use; researched:

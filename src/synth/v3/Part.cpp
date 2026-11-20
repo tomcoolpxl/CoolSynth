@@ -16,6 +16,7 @@ namespace coolsynth::synth::v3
         SampleLibrary::instance(); // and the sampled instruments' library (it reads its folder and starts its loader)
         Tr808BassDrum::warmUp();   // and the Kick's 808 circuit at rest, solved once
         Tr909BassDrum::warmUp();   // and its 909's
+        Tb303Generator::warmUp();  // and the TB-303's band-limited waves
 
         const double voiceRate = hostRate * oversampleFactor;
         for (std::size_t i = 0; i < voices.size(); ++i)

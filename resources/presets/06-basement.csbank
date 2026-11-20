@@ -3,25 +3,23 @@
 
 [Acid]
 room = Basement
-# The squelch: a saw an octave down through a resonant, driven ladder that its envelope snaps
-# open. Harder notes accent the filter; overlapping notes slide.
-g1 = VA shape=saw oct=-1 level=0.85
-p1 = Ladder cutoff=280 res=0.75 drive=8 key=0.3 bass=0.6
-env1 = attack=1 decay=200 sustain=0.6 release=60
-env2 = attack=1 decay=200 sustain=0 release=80 decayCurve=-0.7
-voice = env2ToP1=0.55 velToP1=0.3 glide=40
-play = mode=legato glideLegato=on
+# The squelch: the TB-303 generator (D242), the 303's voice from its own envelope and filter, an octave
+# down. Notes at velocity 100 or more are accented (louder, the filter swept higher); overlapping notes
+# slide, at the 303's 22 ms.
+g1 = TB-303 cutoff=520 res=0.85 envmod=0.6 decay=380 accent=0.8 oct=-1 level=0.9
+env1 = attack=0 decay=200 sustain=1 release=8
+voice = glide=0
+play = mode=legato
 i1 = Drive amount=0.3 mix=0.7
 mix = level=-10.5
-master = 0
-# Macros (drafted 2026-11-15 for the user's review, D177): Cutoff, Squelch, Decay, Wobble
+master = 4.5
+# Macros: Cutoff, Squelch (resonance and env mod), Decay, Wobble (an LFO on the cutoff)
 macros = names=Cutoff,Squelch,Decay,Wobble
-mod = src=macro1 dst=p1.cutoff amount=0.15
-mod = src=macro2 dst=p1.res amount=0.12
-mod = src=macro2 dst=p1.drive amount=0.25
-mod = src=macro3 dst=env1.time amount=0.3
-mod = src=macro3 dst=env2.time amount=0.3
-mod = src=lfo1 dst=p1.cutoff amount=0.1 via=macro4
+mod = src=macro1 dst=g1.cutoff amount=0.3
+mod = src=macro2 dst=g1.res amount=0.15
+mod = src=macro2 dst=g1.envmod amount=0.3
+mod = src=macro3 dst=g1.decay amount=0.4
+mod = src=lfo1 dst=g1.cutoff amount=0.15 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.25
 
 [Rust Bass]

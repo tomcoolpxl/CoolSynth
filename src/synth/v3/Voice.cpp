@@ -216,6 +216,8 @@ namespace coolsynth::synth::v3
         note.detuneCents = start.detuneCents;
         polyPressure = 0.0f; // another key now: its own pressure starts at 0
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
+        for (auto& g : generators)
+            g.slot.legato(start.note, start.velocity); // a TB-303 slides, and hears the key's accent (D242)
     }
 
     void Voice::fadeOut() noexcept

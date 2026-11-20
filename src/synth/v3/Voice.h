@@ -28,6 +28,7 @@
 #include "ShaperProcessors.h"
 #include "StringGenerator.h"
 #include "SvfProcessor.h"
+#include "Tb303Generator.h"
 #include "VaGenerator.h"
 #include "WavetableGenerator.h"
 
@@ -63,7 +64,7 @@ namespace coolsynth::synth::v3
 {
     using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator, WavetableGenerator,
                                         StringGenerator, ModalGenerator, SampleGenerator, GrainGenerator, ChipGenerator,
-                                        KickGenerator>; // new types only at the end
+                                        KickGenerator, Tb303Generator>; // new types only at the end
     using ProcessorTypes = std::variant<OffProcessor, LadderProcessor, SvfProcessor, CrusherProcessor, FolderProcessor, DriveProcessor,
                                         FormantProcessor, CombProcessor>; // new types only at the end
     using GeneratorSlot = Slot<GeneratorTypes>;
@@ -83,6 +84,7 @@ namespace coolsynth::synth::v3
         inline constexpr int grain = 9;
         inline constexpr int chip = 10; // D230
         inline constexpr int kick = 11; // D232
+        inline constexpr int tb303 = 12; // D242
     }
     namespace processorType
     {
@@ -106,6 +108,7 @@ namespace coolsynth::synth::v3
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::grain, GeneratorTypes>, GrainGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::chip, GeneratorTypes>, ChipGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::kick, GeneratorTypes>, KickGenerator>);
+    static_assert(std::is_same_v<std::variant_alternative_t<generatorType::tb303, GeneratorTypes>, Tb303Generator>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::ladder, ProcessorTypes>, LadderProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::svf, ProcessorTypes>, SvfProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::folder, ProcessorTypes>, FolderProcessor>);

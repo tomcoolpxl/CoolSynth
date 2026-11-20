@@ -55,6 +55,21 @@ Sound-alikes and parts:
 - Sir Galaxy's loops: an unmodified 303, settings not given. Others are clones or forbid redistribution.
 - A check against a real unit needs an owner's recordings at known settings.
 
+## Built (D242)
+
+The user's choices: checked against SPICE and published numbers; built on Open303's engine, rewritten into `src/synth/v3/Tb303Generator.h` with its MIT notice; a TB-303 generator; the accent on or off at velocity 100; the 303's own knobs and the slide's time.
+
+Changed from Open303 for CoolSynth: the band-limited tables built once and shared (Open303 kept two of some 210 kB per instance); the note list left to the layer (Open303's allocated on every note); the core at 2x inside the voice's 96 kHz (192 kHz, near Open303's 176.4 kHz design point; at 4x the harmonics agree within 0.1 to 0.5 dB, so 4x buys nothing); a legato hook from the voice, so a slid note keeps its envelopes and is heard for its accent.
+
+Against the published figures (`tests/V3Tb303Tests.cpp`):
+- The filter: Open303's coupled ladder matches Stinchcombe's response, -1 / (s^4 + 6.727 s^3 + 14.142 s^2 + 9.514 s + 1), within 0.1 dB from an eighth of the cutoff to sixteen times it, its frequency read as 1.2 f / fc; 23.3 dB an octave at the top.
+- Resonance: the feedback reaches 17.8 at full and the ladder rings but does not self-oscillate, as a stock 303's does not (the Devil Fish adds it).
+- The slide: Open303's time constant was 12 ms; the 303's is an RC of 100 kOhm and 220 nF (C35), 22 ms, its corner measured at 7.2 to 7.5 Hz (synth-diy, Gearspace). Corrected: Slide is the time to 95 %, 66 ms on the 303, three time constants.
+- The square: 46.9 % duty, the x0xb0x's about 45 %.
+- The accent: velocity 98 plays as 64 does; 100 plays 2.3 times as loud at the panel's middle, its filter swept higher.
+
+Not checked: a real 303's recordings at known settings (none free); the accent's sweep against a real one (Open303's 15 ms against Whittle's 47 kOhm and 1 uF).
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

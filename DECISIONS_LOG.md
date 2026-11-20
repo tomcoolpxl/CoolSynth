@@ -4822,3 +4822,25 @@ Seeing how much one instrument had taken, the user asked whether the whole 808 c
 
 The order: the TB-303 as its circuit (TODO 32), the whole 808 (TODO 33), then the 909's cost and price (TODO 30).
 
+## D242. The TB-303 generator, from Open303 (2026-11-20)
+
+The first of D241's order, built on the research in `docs/research/tb-303-circuit.md`. The user's choices, each put as a pick list:
+- The reference (options: SPICE and published numbers, recommended and chosen; an owner's recordings first; by ear only). No free recordings of a real 303 at known settings exist.
+- How it is built (options: our own circuit model in `CircuitWdf.h`, recommended; TriggerFish's BSD code ported; Open303's engine, chosen). Open303 is a tuned sound-alike, so the checks are its outputs against published figures, and it is corrected where it misses them.
+- Where it lives (options: a TB-303 generator, recommended and chosen; the diode ladder as a filter; both).
+- Where Open303's code lives (options: vendored in `external/open303`, recommended; a patched submodule; rewritten into our own files, chosen): `src/synth/v3/Tb303Generator.h`, Open303's MIT notice kept in it, credited in the README.
+- The accent (options: on or off at a velocity threshold as the 303's, recommended and chosen; scaled by velocity): on at velocity 100 of 127, Open303's threshold.
+- The knobs (options: the 303's own and the slide, recommended and chosen; with the Devil Fish's extras): Waveform, Cutoff (314 to 2394 Hz, the 303's range as Open303 measured it), Resonance, Env Mod, Decay (200 to 2000 ms), Accent, Slide.
+
+Taken on the way, each by the user's rule or as the only way:
+- A legato hook in the engine (`Slot::legato`, called from `Voice::legato`): the layer in legato only retargeted the pitch, so a generator could not know it slid, nor hear the slid note's accent. A correction to D241 and TODO 32: CoolSynth's 16-step sequencer's slides move a modulation value, not notes; a 303 slide is a legato note (from MIDI or the arpeggiator).
+- Real time (the codebase's rule): Open303's two wavetables (some 210 kB each, per instance) became one shared bank built at `Part::prepare`; its note list (a `std::list`, allocating on every note) gave way to the layer's.
+- Oversampling (options: the core at 2x inside the voice's 96 kHz, recommended and taken; 4x, as Open303 runs at 44.1 kHz): 192 kHz sits near Open303's own 176.4 kHz; at 4x the harmonics agree within 0.1 to 0.5 dB.
+- Corrected toward the published figures: the slide's time constant, 12 ms in Open303, is the 303's 22 ms (100 kOhm and 220 nF, C35; its corner measured at 7.2 to 7.5 Hz), Slide now the time to 95 %, 66 ms by default.
+- Checked and kept: the filter matches Stinchcombe's analysis within 0.1 dB across seven octaves; it does not self-oscillate, as a stock 303's does not; the square's duty is 46.9 % (the x0xb0x's about 45 %).
+- The output level: a held note with the filter open peaks near 0.9, an accent near 1.06.
+- The Acid preset (Basement) now plays the TB-303 in legato, levelled to -20 LUFS (master +4.5 dB); its macros are Cutoff, Squelch (resonance and env mod), Decay and Wobble.
+- The voice cap (options: priced at the average over its voices in its hardest settings, 1.36 % of a block a voice, as the steady generators are, recommended and taken; at its 99th percentile, 1.69 %): about seven VA voices, chiefly its 2x core and the twelfth-order quarter-band filter.
+
+Left: the user's ears; a check against a real 303's recordings when an owner's turn up; the accent's sweep (Open303's 15 ms against Whittle's 47 kOhm and 1 uF and TriggerFish's 47 kOhm and 33 nF, to settle from the service notes); whether the 303's own step sequencer (accent and slide per step) comes into the layer's.
+

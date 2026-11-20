@@ -88,9 +88,8 @@ public:
 
     void runTest() override
     {
-        beginTest("kick_is_the_last_generator_type_with_twelve_knobs");
+        beginTest("kick_is_generator_type_eleven_with_twelve_knobs");
         {
-            expectEquals(GeneratorSlot::typeCount, 12);
             expectEquals(juce::String(GeneratorSlot::descriptorFor(generatorType::kick).name), juce::String("Kick"));
             expectEquals(KickGenerator::descriptor().usedParams, maxSlotParameters);
         }

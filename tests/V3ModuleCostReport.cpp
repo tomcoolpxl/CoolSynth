@@ -179,6 +179,7 @@ public:
             { "Sample (generated)", generatorOf(generatorType::sample) },
             { "Grain", generatorOf(generatorType::grain) },
             { "Chip", generatorOf(generatorType::chip) },
+            { "TB-303", generatorOf(generatorType::tb303) },
         };
         for (const auto& [label, generator] : generators)
         {
@@ -280,6 +281,10 @@ public:
             { "Kick, 909, all on, driven", generatorOf(generatorType::kick, { { KickGenerator::model, 1.0f }, { KickGenerator::click, 1.0f },
                                                                                { KickGenerator::noise, 1.0f }, { KickGenerator::shape, 1.0f },
                                                                                { KickGenerator::drive, 24.0f }, { KickGenerator::decay, 10000.0f } }) },
+            // The TB-303's hardest: full resonance, square, accent, the longest decay.
+            { "TB-303, square, resonant, accented", generatorOf(generatorType::tb303, { { Tb303Generator::waveform, 1.0f }, { Tb303Generator::resonance, 1.0f },
+                                                                                         { Tb303Generator::envMod, 1.0f }, { Tb303Generator::accent, 1.0f },
+                                                                                         { Tb303Generator::decay, 2000.0f } }) },
         };
         BlockCost saw;
         for (const auto& [label, generator] : generators)

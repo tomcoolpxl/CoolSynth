@@ -38,6 +38,7 @@ What the engine has:
   - granular
   - sound chips: the NES, Game Boy, C64 SID, AY and YM, Konami's SCC, with their frame-rate arpeggios and drums
   - a tuned kick drum: the TR-808 and the TR-909 as their circuits, and a modern kick
+  - the TB-303 bass line, after Open303, with its accent and slide
 - Filters and shapers
   - ladder and state-variable filters; the state-variable one also morphs as the Oberheim SEM and has the C64 SID's 6581 and 8580 characters
   - bit crusher
@@ -119,4 +120,4 @@ How the engine works is described in [docs/architecture.md](docs/architecture.md
 
 ## License
 
-CoolSynth's own code is MIT licensed (see `LICENSE`). It's built with [JUCE](https://juce.com) 8 under the free [Starter licence](https://juce.com/legal/juce-8-licence/). The sampled instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community Sample Library, both CC0.
+CoolSynth's own code is MIT licensed (see `LICENSE`). It's built with [JUCE](https://juce.com) 8 under the free [Starter licence](https://juce.com/legal/juce-8-licence/). The sampled instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community Sample Library, both CC0. The TB-303 generator is rewritten from [Open303](https://github.com/RobinSchmidt/Open303) by Robin Schmidt, MIT licensed; its notice is kept in `src/synth/v3/Tb303Generator.h`.

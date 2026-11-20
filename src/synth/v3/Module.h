@@ -364,6 +364,18 @@ namespace coolsynth::synth::v3
         /** No other type is fading in or waiting to. */
         [[nodiscard]] bool typeSettled() const noexcept { return fadeRemaining <= 0 && pendingType.load(std::memory_order_relaxed) < 0; }
 
+        /** The layer in legato: the voice slides to another key without a restart. The types that take it hear the key
+            and its velocity (the TB-303's slide, which keeps its envelopes and takes the new note's accent, D242). */
+        void legato(int noteNumber, float velocity) noexcept
+        {
+            lastNote.noteNumber = noteNumber;
+            std::visit([noteNumber, velocity](auto& module)
+            {
+                if constexpr (requires { module.legato(noteNumber, velocity); })
+                    module.legato(noteNumber, velocity);
+            }, instances[active].module);
+        }
+
         /** The same voice plays again without a restart, for the types that are struck (a string, a kick: those that
             take it hear the new note's velocity). */
         void strike(float velocity = 1.0f) noexcept
