@@ -4809,3 +4809,16 @@ The user asked for every assumption to be checked: each reading of `tools/kick90
 - Checked and kept: Q10 a PNP (mw909's opposite polarity would latch the loop); R36 to +15 V (with mw909; shoreline returns it to Q4's collector); Q12's emitter on the mixer (with shoreline; the other way in SPICE is no better on the decay and worse on the harmonics); Q2's emitter straight on +15 V (mw909 adds 100 Ohm, not on the drawing); the hold from the circuit (its time to -10 dB matches the recordings); the accent from 2 to 4 V (7.5 dB on the peak, 5.9 on the body, against the units' 6.0 and 6.8).
 - Left open: the noise generator's clock and so its level (mine 380 kHz; shoreline reads 137.7 kHz, 4.4 dB hotter; mw909 455 kHz; the service notes give none), and H2.
 
+## D241. Next after the 909: the TB-303, then the whole 808 (2026-11-20)
+
+Seeing how much one instrument had taken, the user asked whether the whole 808 could come into the synth. Both of CoolSynth's circuit drums are bass drums only: a TR-808 has 16 sounds, all analog; a TR-909 has eleven, seven of them analog circuits and four (the hats and cymbals) 6-bit samples in ROM. The 808's other voices fall into about five circuit families: the bridged-T toms, congas, rim shot and claves (the bass drum's machinery); the snare (two bridged-T networks and noise); the bank of six Schmitt-trigger oscillators that the cowbell, cymbal and both hats filter; the clap and maracas. The cymbal and the cowbell have published circuit models (Werner, Abel and Smith, ICMC 2014 and AES 2014), as the bass drum has.
+
+- The whole 808 (options: yes, staged, after the 909 step, chosen; only a few voices; not now).
+- Its shape (options: one kit generator, each key an instrument; separate generators like the Kick; both, chosen).
+- Its fidelity (options: circuit with SPICE and recordings spot-checked; a full audit as the 909's; behavioural): the user answered with its use, house music. Its fidelity and order are to be put again when its stage starts.
+- What the Chicago knob-turning sound is: the TB-303 Bass Line (Phuture's "Acid Tracks"), not the 808, whose knobs are each voice's level, tone, decay and tuning. CoolSynth's Acid preset is a sound-alike (a VA saw into the driven Ladder, with the step sequencer's slides).
+- What comes next (options: the TB-303 as its circuit, recommended; the whole 808 as chosen; both, the 303 first, chosen).
+- The 909 made cheaper and priced (D238): postponed by the user until after the whole 808. Its 33.3 % price stands meanwhile. The largest saving found so far: since Q8 is a PNP (D240) the click circuit never comes to rest.
+
+The order: the TB-303 as its circuit (TODO 32), the whole 808 (TODO 33), then the 909's cost and price (TODO 30).
+

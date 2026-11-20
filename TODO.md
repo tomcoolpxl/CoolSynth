@@ -161,11 +161,21 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     first 20 ms duller than the recordings'). The 909 is its circuit too (D237, built D238): the whole drum from the
     service notes, within 1 % of ngspice stage by stage, R8 read to -15 V (D239), checked against shoreline and
     mw909 (D240): Q8 a PNP switch and R495 give the real click, the triangle fitted near 4.9 V the real pitch and
-    harmonics. Next: the 909 made cheaper, then priced. Open: H2 6 dB over the real units', the noise clock. Left:
-    the user's ears on both circuits, Succession 808 and Modern.
+    harmonics. The 909 made cheaper, then priced: postponed by the user until after the whole 808 (D241); its 33.3 %
+    price stands. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
+    though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock. Left: the
+    user's ears on both circuits, Succession 808 and Modern.
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.
+32. The TB-303 as its circuit (D241, the user's choice; next): the Chicago acid bass. Its VCO, its diode ladder
+    filter, its envelopes, accent and slide circuits, played by the layer's step sequencer with its slides; the
+    Acid preset to become the real thing. To be researched first (the service notes, the filter's analyses, the
+    x0xb0x clone, open emulations), with the choices put to the user.
+33. The whole TR-808 (D241, after the 303): its voices beyond the bass drum, about five circuit families (the
+    bridged-T toms, congas, rim and claves on the bass drum's machinery; the snare; the six-oscillator bank for
+    cowbell, cymbal and hats; the clap and maracas), as generators and as a kit. Aimed at house use; its fidelity
+    and order to be put to the user when its stage starts. Then the 909 made cheaper and priced (30).
 
 
 ## Standing notes
