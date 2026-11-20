@@ -15,13 +15,18 @@ You cancelled the 06:15 resume task before going to sleep, so the work stops whe
 - Arcade is revoiced with it: five presets, drafts for your ears.
 - The Kick generator is built (D232): 808, 909 and Modern.
 - Succession 808 is drafted in Engine Room, for your ears.
+- The SVF has the SEM's morph (Mode LP>HP with a Morph knob), the SID's LP+BP and BP+HP, and a Character knob: Clean (as before, to the bit), SID 6581, SID 8580 (D233).
+  - Saved sounds and DAW projects are converted on load (format versions 17 and 16).
 - Seven research reports in docs/research; the ones that touch the interface wait at the end of this file.
 - A small fix: the info row showed the wrong tempo in a stopped DAW.
+- The full test suite ran on the build with all of it: 579 tests, all passing but one SVF check that measured in the wrong place; that check was fixed and its group, the voice cap and the scenarios ran again and passed.
+- None of this is in 0.4.0: the generators and the SVF characters wait for the next release.
 
 For your ears, when you have a moment:
 - the Chip generator on each chip (any sound, G1 type Chip; Arcade's five);
 - Succession 808 (Engine Room), played at C4, A flat 3, F3 and G3;
-- the Kick generator's 909 and Modern models.
+- the Kick generator's 909 and Modern models;
+- the SVF's SID 6581 and 8580 characters and the LP>HP morph (P1 type SVF, Character and Mode; Morph on a macro or LFO).
 
 One slip: twice tonight a shell command of mine contained a heredoc, against your rule. Both did nothing (no-ops), but they should not have been written.
 
