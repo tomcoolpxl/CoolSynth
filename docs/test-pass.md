@@ -127,7 +127,8 @@ Found on the way: Supersaw's undertone is its sub, by design (on the listening p
   - CoolSynth takes the state from that file as a host gives it (the opt-in test `Host state blob`,
     `COOLSYNTH_STATE_BLOB`): the edited Reese, playing at -14.8 dBFS;
   - Image-Line's manual: in trial mode FL Studio saves projects but does not reopen them until it is unlocked. FL's
-    settings here have no registration entry where older versions keep one, so it may be the trial (not confirmed).
+    settings here have no registration entry where older versions keep one; the user's FL Studio is the trial.
+    Reopening is FL's limit, not CoolSynth's: the save-and-reopen check moves to Ableton Live.
 - Two FL Studio crashes at 00:49 (combase.dll, fail-fast) were Claude's attempts to open the project from outside
   while FL ran, not the user's FL.
 - Not done yet: the CLAP in FL Studio; Ableton Live 12 Lite (VST3; Live loads no CLAP); Reaper is not installed.
