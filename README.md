@@ -2,7 +2,7 @@
 
 ![CoolSynth with both layers loaded, each shown as its chain of slots](screenshot.png)
 
-CoolSynth is a bi-timbral, multi-engine hybrid synthesizer for Windows.
+CoolSynth is a bi-timbral, multi-engine hybrid synthesizer.
 Two layers play at once, stacked, split or by velocity, and each is a chain of slots: three sound engines, three filters or shapers, and six effects, every slot taking any engine or effect of its kind.
 
 It runs as a standalone app or as a VST3 or CLAP plugin in your DAW.
@@ -17,7 +17,7 @@ Windows may warn that the publisher is unknown, because the installer isn't code
 
 The installer puts the VST3 in `C:\Program Files\Common Files\VST3`, the CLAP in `C:\Program Files\Common Files\CLAP` and the app in the Start menu. It also downloads the sampled instruments you select from the [instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments), 2.6 GB for all of them.
 
-CoolSynth needs 64-bit Windows 10 or 11.
+CoolSynth runs on 64-bit Windows 10 or 11 for now; macOS is planned.
 
 ## Sounds
 
