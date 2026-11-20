@@ -62,6 +62,7 @@ Source: "{#BuildDir}\VST3\CoolSynth.vst3\*"; DestDir: "{commoncf64}\VST3\CoolSyn
 Source: "{#BuildDir}\CLAP\CoolSynth.clap"; DestDir: "{commoncf64}\CLAP"; Components: clap; Flags: ignoreversion
 Source: "{#BuildDir}\Standalone\CoolSynth.exe"; DestDir: "{app}"; Components: app; Flags: ignoreversion
 Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
+Source: "..\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; The MiniLab 3 scripts (D211). They belong in the player's own Documents, where FL Studio and Ableton Live look for
 ; them, but an elevated installer's {userdocs} is the administrator's: so they go in the install folder first and
 ; Install-MiniLabScripts.ps1 copies them on as the player who started the installer ([Run] below). FL links its script

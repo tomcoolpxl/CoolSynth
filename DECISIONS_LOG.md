@@ -4844,3 +4844,8 @@ Taken on the way, each by the user's rule or as the only way:
 
 Left: the user's ears; a check against a real 303's recordings when an owner's turn up; the accent's sweep (Open303's 15 ms against Whittle's 47 kOhm and 1 uF and TriggerFish's 47 kOhm and 33 nF, to settle from the service notes); whether the 303's own step sequencer (accent and slide per step) comes into the layer's.
 
+## D243. Open303's notice ships; the 808 and the 909's cost work paused (2026-11-20)
+
+- The MIT notice for the shipped app (options: a third-party notices file, recommended and chosen; appended to LICENSE; left in the source and README only): Open303's licence asks that its notice go with every copy, binaries included. `THIRD_PARTY_NOTICES.txt` at the repository's root holds it, with room for later ones; the installer copies it beside `LICENSE.txt`; the README points to it.
+- The whole 808 (TODO 33) and the 909's cost work (TODO 30): paused by the user. The 808's fidelity and order, asked as it was to begin, go to the user again when it resumes.
+

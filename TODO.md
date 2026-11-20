@@ -161,8 +161,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     first 20 ms duller than the recordings'). The 909 is its circuit too (D237, built D238): the whole drum from the
     service notes, within 1 % of ngspice stage by stage, R8 read to -15 V (D239), checked against shoreline and
     mw909 (D240): Q8 a PNP switch and R495 give the real click, the triangle fitted near 4.9 V the real pitch and
-    harmonics. The 909 made cheaper, then priced: postponed by the user until after the whole 808 (D241); its 33.3 %
-    price stands. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
+    harmonics. The 909 made cheaper, then priced: postponed by the user until after the whole 808 (D241), both
+    now paused (D243); its 33.3 % price stands. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
     though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock. Left: the
     user's ears on both circuits, Succession 808 and Modern.
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
@@ -176,7 +176,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 33. The whole TR-808 (D241, after the 303): its voices beyond the bass drum, about five circuit families (the
     bridged-T toms, congas, rim and claves on the bass drum's machinery; the snare; the six-oscillator bank for
     cowbell, cymbal and hats; the clap and maracas), as generators and as a kit. Aimed at house use; researched:
-    `docs/research/tr-808-voices.md`; its fidelity and order to be put to the user when its stage starts. Then the 909 made cheaper and priced (30).
+    `docs/research/tr-808-voices.md`. Paused by the user (D243), with the 909's cost work (30); its fidelity and
+    order to be put to the user when it resumes. Then the 909 made cheaper and priced (30).
 
 
 ## Standing notes
