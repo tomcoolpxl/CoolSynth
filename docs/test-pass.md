@@ -149,6 +149,12 @@ Found on the way: Supersaw's undertone is its sub, by design (on the listening p
     freed, both CoolSynths already removed cleanly); the second close was clean.
 - Not done yet: Reaper is not installed; the MiniLab's keys were not played into the CLAP or into Zrythm (the notes
   came from FL's typing keyboard and Zrythm's clips).
+- Automatic checks (D228): the test program hosts the built VST3 (plays, reopens its state bit for bit, bounces
+  twice the same, opens its panel); pluginval passes the VST3 at strictness 5; clap-validator found typed values
+  read back wrong and renamed parameters the host never heard of, both fixed; left as accepted: the start sound
+  is not the declared defaults, and a curved value can come back a float step off.
+- The MiniLab's fader 4 now reaches the Master Boost (0 dB at four fifths, +12 dB at its top): the app's log has it
+  up to +12 dB and back; the user heard it louder at the top and smooth through 0 dB.
 
 ## Then the release (TODO J3)
 
