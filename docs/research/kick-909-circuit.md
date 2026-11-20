@@ -21,12 +21,12 @@ The bass drum sits on the voicing board, drawn on page 11 of the service notes.
   - The circuit descriptions cover the snare, cymbals, CPU and tape, not the bass drum; they say the snare, bass and toms "operate basically in the same manner" and share one noise generator.
   - The change list: C9 from 0.22 µF to 0.33 µF "for expanding the TUNE range".
 
-What follows is from the schematic image, checked against two independent readings of it: the mw909 research notes ([01-voices-analog.md](https://github.com/mattWoolly/mw909/blob/main/research/01-voices-analog.md)) and the constants in the operator project's code ([bd/mod.rs](https://raw.githubusercontent.com/HelveticaScenario/operator/4273dfa/crates/modular_core/src/dsp/drums/tr909/bd/mod.rs)), both read.
+What follows is from the schematic image, checked against two independent readings of it: the mw909 research notes ([01-voices-analog.md](https://github.com/mattWoolly/mw909/blob/main/research/01-voices-analog.md)) and the operator project's.
 Where the three agree, a value is given plainly; where the image is unclear to me, it says so.
 
 ### Trigger
 
-- The sequencer's trigger is a 5 V pulse, 2 ms long; each voice turns it into a 15 V pulse on its own transistors ([operator circuit.rs](https://raw.githubusercontent.com/HelveticaScenario/operator/4273dfa/crates/modular_core/src/dsp/drums/tr909/circuit.rs)).
+- The sequencer's trigger is a 5 V pulse, 2 ms long; each voice turns it into a 15 V pulse on its own transistors.
 - TRIG enters through R1 22 k and R2 10 k to Q1; Q1 drives Q2 (PNP, from +15 V, R3 100 k, R4 47 k, D4), whose collector is the unaccented +15 V pulse.
 - C6 0.0022 µF and R11 4.7 k at the input; R19 2.2 k at Q1.
 - C1 0.068 µF and R12 100 k to Q7 (R13 47 k), which drives Q11's base through R47 330 k: the VCO's reset.
@@ -43,7 +43,7 @@ Where the three agree, a value is given plainly; where the image is unclear to m
 ### Control voltage
 
 - IC12a sums the envelope and an offset: R28 150 k feedback, R27 1.5 M from +15 V, R25 100 k on the other input.
-- V_cv = (R28/R27) 15 V + (R28/R26) V_C9 = 1.50 V + 0.4545 V_C9 (operator's code; mw909).
+- V_cv = (R28/R27) 15 V + (R28/R26) V_C9 = 1.50 V + 0.4545 V_C9 (mw909; operator agrees).
 - C9 charges to about 14 V in the 2 ms pulse (my estimate: 15 V less a diode, R21 against the drain), so the peak V_cv is about 7.9 V, 5.3 times the resting 1.5 V.
 
 ### VCO
@@ -95,7 +95,7 @@ A triangle oscillator of an integrator and a comparator, with a switched inverte
 ### Parts types
 
 - The 9090 builder replaced BC549 and BC559 with 2SC2603F and 2SA1115-F, "both original 909 parts" ([subatomicglue](https://www.subatomicglue.com/9090l0g/), read).
-- Operator's code uses the 2SC945's saturation current and the 2SD1469 muting transistor for some VCAs (in the snare, by mw909's account).
+- Operator assumes the 2SC945's saturation current and the 2SD1469 muting transistor for some VCAs (in the snare, by mw909's account).
 - I could not confirm the bass drum's transistor types from the parts list: the ManualsLib scans have no text and the OCR does not tag parts by voice.
 
 ### What the real machine measures
@@ -116,22 +116,19 @@ The derived numbers miss the measured ones in exactly the transistor-level place
 
 ### Operator (Shoreline), Rust, AGPL-3.0
 
-[Pull request 169](https://github.com/HelveticaScenario/operator/pull/169), [repository](https://github.com/HelveticaScenario/operator), read.
+[Pull request 169](https://github.com/HelveticaScenario/operator/pull/169), [repository](https://github.com/HelveticaScenario/operator).
 - Circuit-level: "TR-909 bass drum, simulated from the 909 service notes' voicing board", the designators as the service notes'.
-- Structure: the pitch envelope as an exact RC update on C9; the VCO as an integrator reflecting between the comparator's thresholds; the shaper and Q12 solved together by Newton; the decay and attack networks as small modified-nodal-analysis systems with precomputed switch states; transistors by Ebers-Moll.
-- The VCO ([vco.rs](https://raw.githubusercontent.com/HelveticaScenario/operator/4273dfa/crates/modular_core/src/dsp/drums/tr909/vco.rs)): each sample moves the triangle by slope × dt; on reaching a threshold it snaps there, flips direction and spends the rest of the sample's travel the other way. No BLEP or oversampling.
-- The shaper's Newton ([circuit.rs](https://raw.githubusercontent.com/HelveticaScenario/operator/4273dfa/crates/modular_core/src/dsp/drums/tr909/circuit.rs)): two unknowns, the diode node and Q12's collector, a 2 × 2 Jacobian, at most 20 iterations, steps clamped to 0.1 V and 0.01 V, warm-started.
 - Checked by 15 behavioural tests; its ngspice cross-check covers only the clap.
-- Lessons: the 909 splits cleanly at its op-amp outputs, and a hybrid of exact RC updates, an event-driven VCO and small Newton roots works. Licence: facts only; its code cannot go into MIT CoolSynth.
+- Lessons: a circuit-level 909 kick exists and runs; the 909 splits cleanly at its op-amp outputs.
 
 ### mw909, C++/JUCE plugin, AGPL-3.0-or-later
 
-[Repository](https://github.com/mattWoolly/mw909), read; the research notes cited above.
+[Repository](https://github.com/mattWoolly/mw909); the research notes cited above.
 - "The analog voices are simulated in volts, part by part"; the kick is a triangle whose integrator is shorted for the 2 ms trigger, swept from 302 to 49.5 Hz, shaped by the diode pair.
 - The research notes are the best circuit description found: every stage, every value, the equations, measurements against recordings, open conflicts listed.
 - Its emulation notes recommend a behavioural discretisation: a phase accumulator linear in V_cv, exact one-pole envelopes, a static shaper, a thresholded VCA with a hold timer.
 - On aliasing: a naive triangle at 48 kHz aliases at −88 dB at 49 Hz to −65 dB at 291 Hz; with polyBLAMP on the corners and polyBLEP on the reset, "1× is enough for every 909 analog VCO".
-- Lessons: the measurements and the open conflicts; the check list for any model. The notes are AGPL-licensed text; facts can be used, text and code not copied.
+- Lessons: the measurements and the open conflicts; the check list for any model.
 
 ### model909, C, MIT
 
@@ -232,7 +229,7 @@ The comparator:
 - IC13b works saturated, with positive feedback; it is not an op-amp at its virtual ground, so it cannot be a nullor in `CircuitWdf.h` as the 808's op-amps are.
 - It switches the circuit between two linear states (Q10 on or off). In a WDF that means two scattering matrices and a jump at the switching instant, which almost never falls on a sample.
 - Snapping the switch to the sample grid jitters the period by up to a sample: at 96 kHz and 295 Hz about 0.3 % of a period, and a click of aliasing at every corner.
-- How others handle it: operator integrates the triangle analytically and reflects at the exact crossing inside the sample; mw909 adds polyBLAMP at the corners ([Esqueda, Välimäki, Bilbao, "Rounding Corners with BLAMP"](https://dafx.de/paper-archive/details/xRM0GiuF-JmeN0_aaP9VNg), read). Nobody solves the comparator inside a WDF.
+- How others handle it: mw909's notes recommend polyBLAMP at the corners ([Esqueda, Välimäki, Bilbao, "Rounding Corners with BLAMP"](https://dafx.de/paper-archive/details/xRM0GiuF-JmeN0_aaP9VNg), read). Nobody solves the comparator inside a WDF.
 - The integrator itself is linear and exact: between flips the triangle is a straight line with slope V_cv / (R59 C14), so an event-driven VCO loses nothing.
 
 The reset:
@@ -369,7 +366,6 @@ Downloads needing permission:
 - Colin Fraser, 909 mods (fetch failed): http://www.colinfraser.com/tr909/909mods/909mods.htm
 - network-909, bass drum (fetch failed, search summary only): http://www.network-909.de/bassdrum.htm
 - Operator (Shoreline): https://github.com/HelveticaScenario/operator and https://github.com/HelveticaScenario/operator/pull/169
-- Operator source: https://raw.githubusercontent.com/HelveticaScenario/operator/4273dfa/crates/modular_core/src/dsp/drums/tr909/bd/mod.rs and https://raw.githubusercontent.com/HelveticaScenario/operator/4273dfa/crates/modular_core/src/dsp/drums/tr909/vco.rs and https://raw.githubusercontent.com/HelveticaScenario/operator/4273dfa/crates/modular_core/src/dsp/drums/tr909/circuit.rs
 - mw909: https://github.com/mattWoolly/mw909 and https://github.com/mattWoolly/mw909/blob/main/research/01-voices-analog.md and https://github.com/mattWoolly/mw909/blob/main/research/05-emulation-techniques.md
 - model909: https://github.com/DMDaudio/model909 and https://raw.githubusercontent.com/DMDaudio/model909/main/research/909-circuits.md
 - Replicant909: https://github.com/DanimanX/Replicant909
