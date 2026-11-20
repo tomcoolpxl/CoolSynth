@@ -379,6 +379,59 @@ public:
 
 static AudioScenarioTests audioScenarioTests;
 
+/** The tempo the info row shows (`tempoBpm`, PanelEditor's row), against a host that is stopped, playing, or gives
+    no tempo: a stopped DAW's tempo is the one the sound already uses, not the internal 120 (53d594a). */
+class HostTempoTests final : public juce::UnitTest
+{
+public:
+    HostTempoTests() : juce::UnitTest("The tempo shown follows the host's, stopped or playing", "Audio") {}
+
+    struct Host final : juce::AudioPlayHead
+    {
+        juce::Optional<double> bpm;
+        bool playing = false;
+
+        juce::Optional<PositionInfo> getPosition() const override
+        {
+            PositionInfo position;
+            position.setBpm(bpm);
+            position.setIsPlaying(playing);
+            position.setPpqPosition(0.0);
+            return position;
+        }
+    };
+
+    void runTest() override
+    {
+        auto rig = std::make_unique<Rig>();
+        Host host;
+        rig->synth->setPlayHead(&host);
+        const float internal = rig->synth->tempoBpm();
+
+        beginTest("A stopped host at 90 BPM: 90");
+        host.bpm = 90.0;
+        host.playing = false;
+        rig->block(preparedBlock);
+        expectWithinAbsoluteError(rig->synth->tempoBpm(), 90.0f, 1.0e-3f);
+
+        beginTest("The same host playing at 140 BPM: 140");
+        host.bpm = 140.0;
+        host.playing = true;
+        rig->block(preparedBlock);
+        expectWithinAbsoluteError(rig->synth->tempoBpm(), 140.0f, 1.0e-3f);
+
+        beginTest("A host that gives no tempo: the internal one");
+        host.bpm = {};
+        host.playing = false;
+        rig->block(preparedBlock);
+        expectWithinAbsoluteError(rig->synth->tempoBpm(), internal, 1.0e-3f);
+
+        rig->synth->setPlayHead(nullptr);
+    }
+};
+
+static HostTempoTests hostTempoTests;
+
 // ---- Effect routes (D179): the part's global sources move its effects ---------------------------------
 
 class EffectRouteTests final : public juce::UnitTest
