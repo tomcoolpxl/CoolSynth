@@ -372,16 +372,16 @@ namespace coolsynth::synth::v3
 
         /**
             DECAY (VR5) for a time to -60 dB: measured on the circuit model (tests/V3Tr909Tests.cpp, COOLSYNTH_909_TABLES),
-            read between points on a log scale. The circuit's shortest is 0.1 s, its stock longest 0.51 s (1 MOhm); past
-            that VR5 is a bend up to 10 MOhm, 1.13 s, where C8's other path (R54 into Q12) takes over: a longer Decay
+            read between points on a log scale. The circuit's shortest is 0.1 s, its stock longest 0.5 s (1 MOhm); past
+            that VR5 is a bend up to 10 MOhm, 1.06 s, where C8's other path (R54 into Q12) takes over: a longer Decay
             stays there.
         */
         static double decay909ForSeconds(double seconds) noexcept
         {
             static constexpr std::array<double, 17> ohms { 1.0, 10.0e3, 30.0e3, 60.0e3, 100.0e3, 150.0e3, 220.0e3, 330.0e3, 470.0e3,
                                                            680.0e3, 1.0e6, 1.5e6, 2.2e6, 3.3e6, 4.7e6, 6.8e6, 10.0e6 };
-            static constexpr std::array<double, 17> t60 { 0.100, 0.110, 0.120, 0.150, 0.170, 0.200, 0.240, 0.300, 0.350,
-                                                          0.420, 0.510, 0.610, 0.710, 0.810, 0.910, 1.030, 1.130 };
+            static constexpr std::array<double, 17> t60 { 0.100, 0.110, 0.120, 0.140, 0.170, 0.200, 0.240, 0.290, 0.350,
+                                                          0.420, 0.500, 0.590, 0.680, 0.780, 0.880, 0.960, 1.060 };
             if (seconds <= t60.front())
                 return ohms.front();
             for (std::size_t i = 1; i < t60.size(); ++i)

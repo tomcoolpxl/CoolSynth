@@ -20,13 +20,24 @@ namespace
     struct Knobs
     {
         double dac = 2.5, tune = 0.5, decay = 0.5, attack = 0.5, level = 0.5;
+        bool measuredDecay = false; // DECAY as a real unit's pot measures (for recordings), not render.py's taper
     };
+
+    /** DECAY's resistance on a real unit at a turn: mw909's fit to its unit's recordings at 0, 25, 50, 75 and 100 %
+        (39 k, 165 k, 284 k, 447 k, 1.299 M), read between the marks on a log scale. */
+    double measuredDecayOhms(double turn)
+    {
+        static constexpr double ohms[] = { 39.0e3, 165.0e3, 284.0e3, 447.0e3, 1.299e6 };
+        const double at = std::clamp(turn, 0.0, 1.0) * 4.0;
+        const int i = std::min(3, static_cast<int>(at));
+        return ohms[i] * std::pow(ohms[i + 1] / ohms[i], at - i);
+    }
 
     /** The knobs as render.py turns them into parts. */
     void setKnobs(Tr909BassDrum& drum, const Knobs& k)
     {
         drum.setTuneOhms(100.0e3 * Tr909BassDrum::audioTaper(k.tune));
-        drum.setDecayOhms(1.0e6 * Tr909BassDrum::audioTaper(k.decay));
+        drum.setDecayOhms(k.measuredDecay ? measuredDecayOhms(k.decay) : 1.0e6 * Tr909BassDrum::audioTaper(k.decay));
         drum.setAttackOhms(500.0 * (1.0 - k.attack));
         drum.setLevelOhms(100.0e3 * k.level);
         if (const auto width = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_909_TRIGGER", {}); width.isNotEmpty())
@@ -414,6 +425,7 @@ public:
                         k.dac = 2.0;
                         k.tune = turns[t];
                         k.decay = turns[d];
+                        k.measuredDecay = true;
                         k.attack = a == 0 ? 0.0 : 1.0;
                         k.level = 1.0;
                         const auto r = render(k, 1.2);
@@ -474,6 +486,7 @@ public:
                         k.tune = 0.01 * tune;
                         k.attack = 0.01 * attack;
                         k.decay = 0.01 * decay;
+                        k.measuredDecay = true;
                         k.level = 1.0;
                         const auto r = render(k, 1.2);
                         std::vector<double> modelled(r.out.begin() + static_cast<long>(0.005 * 96000.0), r.out.end());

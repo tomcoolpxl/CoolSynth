@@ -291,6 +291,23 @@ R8 to -15 V, the user's choice after the above (D238). Operator reads R8 there; 
 
 The click, read again. AudioRealism trimmed each file at its own point: aligned by the oscillator's zero crossings, the full-ATTACK hit runs 0.43 to 0.55 ms ahead of the ATTACK 0 one throughout. Realigned, the real click is a sharp negative spike at the trigger's end, as the body starts, with a short ramp into it: the pulse's falling edge through Q8, C2 and the Sallen-Key, which R8 to -15 V now lets Q9 pass (SPICE: Q9's emitter swings +0.9 V at the trigger's start and -0.8 V at its end). But it reaches the output some 20 dB too weak in SPICE whatever the reading: R44 into a1 (about 325 Ohm with R56) loses 37 dB, R55's 47 Ohm under VR3 another 18 dB, and Q6, saturated with both its junctions near 0 V and its base fed through R42's 470 kOhm, passes the rest with a transconductance of a few millisiemens (about 5 I_B / V_T). Tried in SPICE without the real click appearing: Q6's emitter and collector swapped, R495 (150 kOhm from Q6's base to ground, early units), R55 as 47 kOhm, R56 as 330 kOhm.
 
+## Checked against shoreline and mw909 (D240)
+
+Every reading was set against shoreline's (operator's new name) and mw909's readings and published measurements, and against the user's colour scan of the same service notes. Page 6 there describes the analog voices through the snare: the trigger forces the comparator, resets the integrator and mutes the voice's VCA; the noise is two 4006s in cascade (32 stages) clocked through IC31's gates, its rate not given. Neither gets the click from the drawing as printed: shoreline reads Q8 as a switch, mw909 fits a pulse to its recordings, and it fits the triangle at 4.884 V (49.5 Hz), the hold (62 ms) and the DECAY pot's resistances the same way.
+
+What changed, each tried in SPICE against both units first:
+- Q8 is a PNP switch, not an NPN follower: R6 from +15 V to its base and R5 from the pulse node make it on at rest (C5 near +15 V), off while the pulse lasts, back on at its end. The rising edge at the trigger's end passes Q9 and C11 as a positive pulse, which Q6 sinks from the mixer's input: the negative spike both units show at the body's start; the falling edge at the start finds Q6 unable to pass it, so the trigger stays quiet.
+- R495, 150 kOhm from Q6's base to ground, printed "SN up to 371499 surface mounted", is taken as on every unit. With it the click's size lands: peak against body 1.17, 1.36, 1.90 at ATTACK 0, half, full against 1.15, 1.34, 1.91. Without it, 1.38, 1.66, 2.44.
+- The triangle near 4.9 V (R50 as 60 kOhm): the settled pitch 49.6 Hz in SPICE and H3, H5, H7 within 1.5 dB of AudioRealism's (-26.4, -39.8, -40.8 against -25.9, -41.3, -41.6); at 47 kOhm H3 is -40 dB. Rob Roy's unit is brighter (H3 -20 dB), likely its 1995 recording chain.
+- mw909's measured DECAY resistances (39 k, 165 k, 284 k, 447 k, 1.299 M at 0, 25, 50, 75, 100 %) explain most of the short-decay gap: with them the decay lands at every mark, Decay 0's -40 dB time excepted (115 ms against 150).
+
+Kept, with the reason:
+- Q10 a PNP: the loop only oscillates so; mw909's opposite reading would latch.
+- R36 to +15 V, with mw909 (shoreline returns it to Q4's collector).
+- Q12's emitter on the mixer's virtual ground, with shoreline: swapped, SPICE is no better on the decay and gives H3 -45 dB.
+- H2 at -22.5 dB against -28: it moves only with the swing at Q12's collector (R43 as 22 Ohm gives -29.5), not with Q12's betas or a diode mismatch; R43 is printed 47 Ohm, so it stays, open.
+- The noise level: my 380 kHz clock against shoreline's 137.7 kHz and mw909's 455 kHz readings of the same oscillator; open.
+
 For the solver (`CircuitWdf.h`):
 - PNP transistors: the NPN's equations with signs turned.
 - A diode pair as one port (D10, D11).

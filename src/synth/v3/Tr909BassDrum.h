@@ -24,10 +24,11 @@
         Hold         C7 holds Q3, which keeps Q4 passing the accent into C8 (ENV1) through R35 and D9, clamped softly
                      by D8 at R36 and R22. Runs from a hit until the hold is over; then Q4 and D9 are off and C8 falls
                      through DECAY (VR5) and R58, and through R54 into Q12's base: an RC, followed exactly
-        Click        Q8 follows the pulse; the Sallen-Key around Q9 rings, Q9's emitter held by R8 toward -15 V, and
-                     C11 passes it through R44 toward the attack's VCA. Runs from a hit until it is back at rest
+        Click        Q8, a PNP switch, lets C5 fall while the pulse lasts and snaps it back to +15 V at its end; the
+                     Sallen-Key around Q9 passes the edges, Q9's emitter held by R8 toward -15 V, and C11 passes them
+                     through R44 toward the attack's VCA. Runs from a hit until it is back at rest
         Attack       the click (through R44, as a current) and the noise (R10 to C13) through ATTACK (VR3) into the VCA
-                     Q6, its base on ENV2 (C12, R42)
+                     Q6, its base on ENV2 (C12, R42, R495): it passes the rising edge at the trigger's end as the click
         Body         the triangle through R52 into the diode pair D10, D11, then R53 and R43 into the VCA Q12
 
     The oscillator is not a circuit of its own: IC12b passes plus or minus the control voltage as the PNP Q10 (the
@@ -43,7 +44,10 @@
     So Q9 is a working follower, C11 sits forward-biased as its + marking says, and with nothing fitted the trigger
     stays quiet, the accent spans what two real 909s' recordings show and long decays land on theirs (as printed, the
     accent reaches the attack's VCA through C11 during the trigger and C11 feeds C8 after the hold, nearly doubling
-    the decay). Still open: short decays' tails fall faster than the recordings', and the click is weaker (D238).
+    the decay). Q8 is read as a PNP switch and R495 (printed for early units) as on every unit (D240): with them the
+    click lands on both units' at every ATTACK, nothing fitted. One part is fitted (D240): R50, printed 47 kOhm, as
+    60 kOhm, a triangle near 4.9 V that gives the real units' settled pitch and harmonics at once. Measured against the
+    DECAY pot's real resistances (mw909's), the decay lands at every mark. Still open: H2 6 dB over the units'.
     Volts in, volts out.
 */
 namespace coolsynth::synth::v3
@@ -56,7 +60,9 @@ namespace coolsynth::synth::v3
         static constexpr double diodeSaturation = 2.52e-9, diodeThermal = 1.752 * thermal;
         static constexpr double supply = 15.0;
         static constexpr double nominalC14 = 0.033e-6;
-        static constexpr double r49 = 100.0e3, r50 = 47.0e3, r51 = 2.2e3, r59 = 47.0e3;
+        // R50 is printed 47 kOhm; fitted to 60 kOhm (D240): a triangle near 4.9 V gives the real units' 49.5 Hz and their
+        // harmonics at once (the one fitted part).
+        static constexpr double r49 = 100.0e3, r50 = 60.0e3, r51 = 2.2e3, r59 = 47.0e3;
         static constexpr double triggerVolts = 5.0;
 
         Tr909BassDrum()
@@ -78,6 +84,7 @@ namespace coolsynth::synth::v3
         void prepare(double rate) noexcept
         {
             sampleRate = rate;
+            c12Fall = std::exp(-1.0 / (c12Farads * (r42 + r495) * rate));
             front.setSampleRate(rate);
             pitch.setSampleRate(rate);
             hold.setSampleRate(rate);
@@ -122,6 +129,8 @@ namespace coolsynth::synth::v3
         {
             accentVolts = std::clamp(3.13 * std::clamp(dacVolts, 0.0, 5.0), -13.0, 13.0); // IC11b, x(1 + 10k / 4.7k)
             triggerTime = 0.0;
+            if (attackResting)
+                attack.setCapacitorVoltage(attackC12, values.c12); // the circuit takes C12 back from the RC
             frontResting = attackResting = clickResting = false;
             if (pitchLinear)
             {
@@ -263,13 +272,16 @@ namespace coolsynth::synth::v3
                 const double q6b = attack.probe(probeQ6b);
                 values.a1 = a1;
                 values.c12 = attack.probe(probeC12);
-                // Q6's emitter current: through VR3 (what R44 and R45 bring to a1, less R56's) less R55's, and its base's.
+                // Q6's emitter current: through VR3 (what R44 and R45 bring to a1, less R56's) less R55's, and its base's
+                // (R42's less R495's).
                 const double throughVr3 = injected44 + (n13 - a1) / r45 - a1 / r56;
-                emitter6 = throughVr3 - a2 / r55 + (values.c12 - q6b) / r42;
+                emitter6 = throughVr3 - a2 / r55 + (values.c12 - q6b) / r42 - q6b / r495;
                 // Rests once Q6 passes under a nanoampere (under -90 dB at the output) and Q5 has stopped feeding ENV2.
                 attackStill = std::abs(emitter6) < 1.0e-9 && injected41 == 0.0 ? attackStill + 1 : 0;
                 attackResting = ! active && attackStill > static_cast<int>(0.002 * sampleRate);
             }
+            else
+                values.c12 *= c12Fall; // Q6 is off: C12 drains through R42 and R495, an RC followed exactly
 
             // IC11a: the currents into its virtual ground through LEVEL; clipped at the rails.
             return std::clamp(-levelOhms * (emitter12 + emitter6), -13.0, 13.0);
@@ -297,8 +309,8 @@ namespace coolsynth::synth::v3
         double comparatorSwing = 13.0;
 
     private:
-        static constexpr double r41 = 22.0e3, r42 = 470.0e3, r43 = 47.0, r44 = 22.0e3, r45 = 4.7e3, r53 = 2.2e3, r54 = 470.0e3,
-                                r55 = 47.0, r56 = 330.0, r58 = 47.0e3, c8Farads = 0.33e-6;
+        static constexpr double r41 = 22.0e3, r42 = 470.0e3, r495 = 150.0e3, r43 = 47.0, r44 = 22.0e3, r45 = 4.7e3, r53 = 2.2e3, r54 = 470.0e3,
+                                r55 = 47.0, r56 = 330.0, r58 = 47.0e3, c8Farads = 0.33e-6, c12Farads = 0.033e-6;
         static constexpr double injectionOhms = 1.0e9; // a current from another circuit, as a source behind this
 
         // ---- The oscillator --------------------------------------------------------------------------------------
@@ -583,7 +595,7 @@ namespace coolsynth::synth::v3
             clickA1 = click.addInput(11);
             click.addResistor(1, 3, 100.0e3);  // R5
             click.addResistor(2, 3, 22.0e3);   // R6
-            addNpn(click, 2, 3, 4);            // Q8
+            addPnp(click, 4, 3, 2);            // Q8, a PNP switch (D240): on at rest, off while the pulse lasts
             click.addCapacitor(4, 0, 6.8e-9);  // C5
             click.addResistor(4, 0, 22.0e3);   // R14
             click.addCapacitor(4, 5, 3.3e-9);  // C2
@@ -614,8 +626,9 @@ namespace coolsynth::synth::v3
             attack.addResistor(1, 0, r56);      // R56
             vr3 = attack.addResistor(1, 6, 250.0); // VR3, ATTACK
             attack.addResistor(6, 0, r55);      // R55
-            attack.addCapacitor(7, 0, 0.033e-6); // C12
+            attackC12 = attack.addCapacitor(7, 0, c12Farads); // C12
             attack.addResistor(7, 8, r42);      // R42
+            attack.addResistor(8, 0, r495);     // R495
             attackFrom41 = attack.addSource(7, 0, injectionOhms); // what R41 brings from Q5
             attackFrom44 = attack.addSource(1, 0, injectionOhms); // what R44 brings from the click
             addNpn(attack, 6, 8, 0);            // Q6, its emitter on IC11a's virtual ground
@@ -655,7 +668,7 @@ namespace coolsynth::synth::v3
         int holdN4 = 0, holdAcc = 0, holdVcc = 0, holdQ12b = 0, holdC8 = 0, holdVr5 = 0;
         int clickN4 = 0, clickVcc = 0, clickVee = 0, clickA1 = 0;
         int probeC8 = 0, probeC7 = 0, probeE1 = 0, probeNk = 0, probeQ9e = 0, probeN11c = 0, probeQ8e = 0;
-        int attackNoise = 0, attackFrom41 = 0, attackFrom44 = 0, r10 = 0, vr3 = 0;
+        int attackNoise = 0, attackFrom41 = 0, attackFrom44 = 0, attackC12 = 0, r10 = 0, vr3 = 0;
         int probeA1 = 0, probeN13 = 0, probeA2 = 0, probeC12 = 0, probeQ6b = 0;
         int bodyTri = 0, bodyC8 = 0, r52 = 0, probeNd = 0, probeNvca = 0, probeQ12b = 0;
 
@@ -724,7 +737,7 @@ namespace coolsynth::synth::v3
         double triangle = 0.0, lastTriangle = 0.0, blampNext = 0.0, triangleOut = 0.0;
         bool comparatorHigh = true;
         double c14 = nominalC14, tuning = 1.0;
-        double levelOhms = 50.0e3, vr2Ohms = 50.0e3, r26Ohms = 330.0e3, vr5Ohms = 150.0e3;
+        double levelOhms = 50.0e3, vr2Ohms = 50.0e3, r26Ohms = 330.0e3, vr5Ohms = 150.0e3, c12Fall = 1.0;
         bool frontResting = true, attackResting = true, clickResting = true, pitchLinear = true, envelopeRunning = false;
         int frontStill = 0, attackStill = 0, clickStill = 0, envelopeQuiet = 0;
         std::uint32_t noiseState = 0x9E3779B9u;

@@ -52,6 +52,8 @@ Q5 n5c q5b acc QP
 R41 n5c c12 22k
 C12 c12 0 33n
 R42 c12 q6b 470k
+* R495 (printed "SN up to 371499 surface mounted"): from Q6's base to ground
+R495 q6b 0 150k
 * The hold: C7 from the pulse, through R18 into Q3, which keeps Q4 passing the accent
 D6 n4 n6 DS
 R20 n6 c7 6.8k
@@ -101,7 +103,8 @@ R51 n51 tri 2.2k
 * IC13b: the comparator with hysteresis (R49, R50)
 XU13B nx tri vcc vee cmp OPAMP
 R49 cmp nx 100k
-R50 nx 0 47k
+* R50 printed 47k; fitted to 60k (D240): a triangle near 4.9 V gives the real units' 49.5 Hz and harmonics
+R50 nx 0 60k
 * The shaper (D10, D11) and the VCA Q12, its emitter on the mixer's virtual ground
 R52 tri nd 10k
 D10 nd 0 DS
@@ -109,11 +112,13 @@ D11 0 nd DS
 R53 nd nvca 2.2k
 R43 nvca 0 47
 Q12 nvca q12b sum QN
-* The click: Q8 follows the pulse; the Sallen-Key low-pass around Q9 rings. R8 returns to -15 V, as operator reads it
+* The click: Q8 lets C5 fall while the pulse lasts and snaps it back at its end; the Sallen-Key low-pass around Q9
+* passes the edges. R8 returns to -15 V, as operator reads it
 * (D238): the service notes print it to Q4's collector (e1), which two real 909s' recordings contradict
 R6 vcc q8b 22k
 R5 n4 q8b 100k
-Q8 vcc q8b q8e QN
+* Q8 a PNP switch (D240): on at rest, holding C5 near +15 V; off while the pulse lifts its base
+Q8 q8e q8b vcc QP
 C5 q8e 0 6.8n
 R14 q8e 0 22k
 C2 q8e n2c 3.3n
