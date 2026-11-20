@@ -153,8 +153,8 @@ public:
                     {
                         case diag::BlockingCall::heap:
                         {
-                            // Through volatiles: an optimising build may remove a malloc whose memory nobody uses, and
-                            // then the release build's watch has nothing to see (the 0.4.0 release run, D228).
+                            // Through volatiles, so no optimiser can drop a malloc whose memory nobody uses. A release
+                            // build's watch sees it at HeapAlloc (the 0.4.0 release run, D228).
                             volatile std::size_t bytes = 64;
                             void* volatile kept = std::malloc(bytes);
                             std::free(kept);

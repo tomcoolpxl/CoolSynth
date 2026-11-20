@@ -107,6 +107,25 @@ namespace
     void* __cdecl countedCalloc(size_t count, size_t size) { note(diag::BlockingCall::heap); return heapCalloc.call(count, size); }
     void* __cdecl countedRealloc(void* block, size_t size) { note(diag::BlockingCall::heap); return heapRealloc.call(block, size); }
 
+    // A release build carries the C runtime inside it (/MT): its malloc is no import to point elsewhere, and there is
+    // no debug allocation hook. Its heap is watched where that runtime asks Windows for memory (the 0.4.0 release
+    // run, D228).
+    Original<decltype(&HeapAlloc)> heapAlloc;
+    Original<decltype(&HeapReAlloc)> heapReAlloc;
+    Original<decltype(&HeapFree)> heapFreeBlock;
+    LPVOID WINAPI countedHeapAlloc(HANDLE heap, DWORD flags, SIZE_T size) { note(diag::BlockingCall::heap); return heapAlloc.call(heap, flags, size); }
+    LPVOID WINAPI countedHeapReAlloc(HANDLE heap, DWORD flags, LPVOID block, SIZE_T size)
+    {
+        note(diag::BlockingCall::heap);
+        return heapReAlloc.call(heap, flags, block, size);
+    }
+    BOOL WINAPI countedHeapFree(HANDLE heap, DWORD flags, LPVOID block)
+    {
+        if (block != nullptr)
+            note(diag::BlockingCall::heap);
+        return heapFreeBlock.call(heap, flags, block);
+    }
+
     void WINAPI countedEnterCriticalSection(LPCRITICAL_SECTION cs) { note(diag::BlockingCall::lock); enterCriticalSection.call(cs); }
     void WINAPI countedAcquireSrwExclusive(PSRWLOCK lock) { note(diag::BlockingCall::lock); acquireSrwExclusive.call(lock); }
     void WINAPI countedAcquireSrwShared(PSRWLOCK lock) { note(diag::BlockingCall::lock); acquireSrwShared.call(lock); }
@@ -302,6 +321,13 @@ bool coolsynth::diag::watchBlockingCalls()
             patchImports(GetModuleHandleW(module), hooks + 1, std::size(hooks) - 1);
        #if defined(_DEBUG)
         _CrtSetAllocHook(&countHeap);
+       #else
+        Hook windowsHeap[] {
+            hook("HeapAlloc", heapAlloc, &countedHeapAlloc),
+            hook("HeapReAlloc", heapReAlloc, &countedHeapReAlloc),
+            hook("HeapFree", heapFreeBlock, &countedHeapFree),
+        };
+        patchImports(GetModuleHandleW(nullptr), windowsHeap, std::size(windowsHeap));
        #endif
         return enterCriticalSection.call != nullptr && sleepPlain.call != nullptr;
     }();
