@@ -55,12 +55,12 @@ J1b. The JUCE 9 review round (D217): done. Fixed: the Save dialog's replace ques
     `showOkCancelBox`), a saved sound's path from a Mac project, CoolSynth letting go of a MiniLab as soon as its
     port is gone, the layer menu tied to the panel, the editor made the JUCE 9 way. Windows MIDI Services stays
     Windows' own, the user's choice. Left: the hardware and DAW checks, under C6.
-J2. macOS, for the user's Mac (the user comes back to it): AU, VST3 and CLAP on macOS; an installer package with
-    signing and notarisation; the MiniLab driver on CoreMIDI; the FL Studio and Ableton script folders on macOS; the
-    sample library's place; a macOS runner in the CI. In Logic an AU gets the controller's messages as sent.
-    From the JUCE 9 review: `CMAKE_OSX_DEPLOYMENT_TARGET` 12.0 or later (Xcode 27 drops older); CoreMIDI ports are
-    shared, so the MiniLab is never busy but its notes can arrive twice (the duplicate filter); the MiniLab's port
-    names on macOS must be checked against `ml::isDawPort`; the standalone app gains JUCE 9's lower CoreAudio latency.
+J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the Windows-only code and the user's
+    choices (D234): `docs/design/MACOS.md`; the research: `docs/research/macos.md`. Apple Silicon only, macOS 13 or
+    newer, AUv2, VST3 and CLAP, an unsigned .pkg into the user's `~/Library`, the instruments in `~/Music/CoolSynth`
+    downloaded by the installer, sse2neon, Clang's default floating point, the audio-thread watch ported with
+    fishhook, GitHub's Mac runner. CoreMIDI shares ports, so the MiniLab is never busy but its notes can arrive twice
+    (the duplicate filter); its port names must be checked against `ml::isDawPort`.
 
 ## The user's ear and hands
 

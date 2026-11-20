@@ -4683,3 +4683,20 @@ The SEM morph (D229, TODO 21) and the SID's filter as a character of the SVF (D2
 - The voice cap prices the 6581 on its own (`svf6581`, 0.40, measured against the clean SVF in the same run); Clean and the 8580 keep the SVF's 0.17.
 - `tests/V3SvfTests.cpp`: Clean bit for bit as before in its four modes; the morph from LP through the notch (under -40 dB at the cutoff, 0 dB either side, at a quarter the notch at the cutoff times root 3) to HP; the sums; the 8580's range and steps; the 6581's curve, floor and drop, Curve's brightness, a clean quiet sine and a second harmonic on a loud one; every character and new mode bounded at full resonance and drive; the 6581's top step rings down; an older sound keeps its mode.
 
+## D234. CoolSynth on macOS: the plan and the user's choices (2026-11-20)
+
+The user wants Mac support and will port it in a Claude Code session on their own Mac. Planned on Windows: the Windows-only code listed (`docs/design/MACOS.md`), the Mac researched online (`docs/research/macos.md`: JUCE 9 on macOS, Apple Silicon, signing and notarisation, installers, CoreMIDI and the MiniLab, real-time checks, CI). The README's opening no longer says "for Windows". The user's choices, asked as pick lists with the recommended option first:
+
+- Signing (options: the Apple Developer Program, 99 USD a year, recommended; unsigned with the steps explained, chosen; decide at the installer phase): unsigned.
+- Processors (options: universal, recommended; Apple Silicon only, chosen).
+- Audio Unit (options: AUv2, recommended and chosen; AUv2 and AUv3; none).
+- Oldest macOS (options: 12, recommended; 13 or newer, chosen; 11).
+- Installer (options: a .pkg with a choice per format, recommended and chosen; a .dmg to drag from; the pkg in a .dmg).
+- Plugin folders (options: the system's /Library, recommended; the user's ~/Library, chosen).
+- Sample library (options: /Users/Shared/CoolSynth, recommended; /Library/Application Support; ~/Music/CoolSynth, chosen).
+- Instruments (options: downloaded by the installer as on Windows, recommended and chosen; in CoolSynth on first run, the research's preference).
+- SIMD on Apple Silicon (options: sse2neon, recommended and chosen; hand-written NEON; the plain code).
+- Floating point (options: -ffp-contract=off to match Windows, recommended; Clang's default, chosen): renders differ from Windows in the last bits, so the exact-number tests need Mac references.
+- Audio-thread checks (options: RealtimeSanitizer in a separate build, recommended; port today's watch with fishhook, chosen).
+- CI (options: GitHub's hosted Apple Silicon runner, recommended and chosen; the user's Mac, self-hosted).
+
