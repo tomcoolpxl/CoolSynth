@@ -22,13 +22,10 @@
                      cut); Q5 passes the accent into ENV2 (R41)
         Pitch        ENV3: the pulse charges C9 through D7, TUNE (VR2) sets its fall; IC12a makes the control voltage
         Hold         C7 holds Q3, which keeps Q4 passing the accent into C8 (ENV1) through R35 and D9, clamped softly
-                     by D8 at R36 and R22; R8 from Q9's emitter. Runs from a hit until the hold is over
-        Click        Q8 follows the pulse; the Sallen-Key around Q9 rings and charges C11 through R44 toward the
-                     attack's VCA; R8 to the hold's accent (Q4 holds it stiff during the click, and after it C3 and
-                     C11 keep Q9's emitter slow, so R8 can join the two a sample apart). Runs alongside the hold
-        Decay        then what is left of it: C8 falling through DECAY (VR5) and R58, and through R54 into Q12's base,
-                     while C11 and C3, charged to the accent at Q9's emitter, feed it through R8, R35 and D9 (which
-                     stretches the 909's decay well past C8's own RC); capacitor voltages handed over both ways
+                     by D8 at R36 and R22. Runs from a hit until the hold is over; then Q4 and D9 are off and C8 falls
+                     through DECAY (VR5) and R58, and through R54 into Q12's base: an RC, followed exactly
+        Click        Q8 follows the pulse; the Sallen-Key around Q9 rings, Q9's emitter held by R8 toward -15 V, and
+                     C11 passes it through R44 toward the attack's VCA. Runs from a hit until it is back at rest
         Attack       the click (through R44, as a current) and the noise (R10 to C13) through ATTACK (VR3) into the VCA
                      Q6, its base on ENV2 (C12, R42)
         Body         the triangle through R52 into the diode pair D10, D11, then R53 and R43 into the VCA Q12
@@ -41,9 +38,13 @@
 
     Transistors and diodes as generic models (2SC2603, 2SA1115 and 1SS133 have no published ones): Ebers-Moll with
     Is 10 fA, betaF 300 (NPN) or 250 (PNP), betaR 5; Shockley diodes as the 1N4148's model, Is 2.52 nA, n 1.752.
-    The op-amps (M5218L) ideal; the comparator swings to +-13 V, as TI's RC4558 macromodel does in SPICE. One part
-    fitted (D238): C11, an electrolytic the click's accent holds reverse-biased, leaks; 330 kOhm across it brings
-    the decay onto Rob Roy's recordings of a real 909 (as drawn it lasts nearly twice theirs). Volts in, volts out.
+    The op-amps (M5218L) ideal; the comparator swings to +-13 V, as TI's RC4558 macromodel does in SPICE. One reading
+    differs from the drawing (D238): R8 returns to -15 V, as operator reads it, not to Q4's collector as printed.
+    So Q9 is a working follower, C11 sits forward-biased as its + marking says, and with nothing fitted the trigger
+    stays quiet, the accent spans what two real 909s' recordings show and long decays land on theirs (as printed, the
+    accent reaches the attack's VCA through C11 during the trigger and C11 feeds C8 after the hold, nearly doubling
+    the decay). Still open: short decays' tails fall faster than the recordings', and the click is weaker (D238).
+    Volts in, volts out.
 */
 namespace coolsynth::synth::v3
 {
@@ -64,7 +65,6 @@ namespace coolsynth::synth::v3
             buildPitch();
             buildHold();
             buildClick();
-            buildDecay();
             buildAttack();
             buildBody();
             // The transistors switch hard on the trigger's edges: more room than the default 12 iterations.
@@ -82,7 +82,6 @@ namespace coolsynth::synth::v3
             pitch.setSampleRate(rate);
             hold.setSampleRate(rate);
             click.setSampleRate(rate);
-            decay.setSampleRate(rate);
             attack.setSampleRate(rate);
             body.setSampleRate(rate);
             rest();
@@ -96,16 +95,15 @@ namespace coolsynth::synth::v3
             pitch.restore(r.pitch);
             hold.restore(r.hold);
             click.restore(r.click);
-            decay.restore(r.decay);
             attack.restore(r.attack);
             body.restore(r.body);
             values = r.values;
             triangle = lastTriangle = blampNext = triangleOut = 0.0;
             comparatorHigh = true;
             triggerTime = -1.0;
-            frontResting = attackResting = pitchLinear = true;
+            frontResting = attackResting = clickResting = pitchLinear = true;
             envelopeRunning = false;
-            frontStill = attackStill = envelopeQuiet = 0;
+            frontStill = attackStill = clickStill = envelopeQuiet = 0;
             applyInputs();
         }
 
@@ -124,21 +122,18 @@ namespace coolsynth::synth::v3
         {
             accentVolts = std::clamp(3.13 * std::clamp(dacVolts, 0.0, 5.0), -13.0, 13.0); // IC11b, x(1 + 10k / 4.7k)
             triggerTime = 0.0;
-            frontResting = attackResting = false;
+            frontResting = attackResting = clickResting = false;
             if (pitchLinear)
             {
                 pitch.setCapacitorVoltage(pitchC9, values.c9); // the circuit takes C9 back from the RC
                 pitchLinear = false;
             }
-            frontStill = attackStill = envelopeQuiet = 0;
+            frontStill = attackStill = clickStill = envelopeQuiet = 0;
             if (! envelopeRunning)
             {
-                // The hold and the click take over from the decay: their rest, with the decay's capacitors as they are.
+                // The hold takes over from the decay's RC: its rest, with C8 as it is.
                 hold.restore(restState().hold);
-                click.restore(restState().click);
-                hold.setCapacitorVoltage(holdC8, decay.portVoltage(decayC8));
-                click.setCapacitorVoltage(clickC3, decay.portVoltage(decayC3));
-                click.setCapacitorVoltage(clickC11, decay.portVoltage(decayC11));
+                hold.setCapacitorVoltage(holdC8, values.c8);
                 envelopeRunning = true;
             }
         }
@@ -159,8 +154,8 @@ namespace coolsynth::synth::v3
         /** DECAY: VR5, 0..1 MOhm. */
         void setDecayOhms(double ohms) noexcept
         {
-            hold.setResistance(holdVr5, std::max(1.0, ohms));
-            decay.setResistance(decayVr5, std::max(1.0, ohms));
+            vr5Ohms = std::max(1.0, ohms);
+            hold.setResistance(holdVr5, vr5Ohms);
         }
         /** ATTACK: VR3, 500 Ohm (none of the attack) to 0 (all of it). */
         void setAttackOhms(double ohms) noexcept { attack.setResistance(vr3, std::max(0.1, ohms)); }
@@ -168,12 +163,6 @@ namespace coolsynth::synth::v3
         void setLevelOhms(double ohms) noexcept { levelOhms = std::max(0.0, ohms); }
         /** The drive mod: R52, stock 10 kOhm (smaller, the diodes clip harder toward a square). */
         void setShaperOhms(double ohms) noexcept { body.setResistance(r52, std::max(100.0, ohms)); }
-        /** C11's leak: the electrolytic sits reverse-biased by the accent at Q9's emitter (its + is on R44's side). */
-        void setC11LeakOhms(double ohms) noexcept
-        {
-            click.setResistance(clickLeak11, std::max(1.0, ohms));
-            decay.setResistance(decayLeak11, std::max(1.0, ohms));
-        }
         /** The noise branch: R10, stock 12 kOhm (smaller, more noise). */
         void setNoiseOhms(double ohms) noexcept { attack.setResistance(r10, std::max(100.0, ohms)); }
         /** The oscillator's capacitor scaled: the pitch by 1 / scale (the key). */
@@ -259,6 +248,7 @@ namespace coolsynth::synth::v3
             const double emitter12 = (values.c8 - values.q12b) / r54 + (nd - nvca) / r53 - nvca / r43;
 
             stepEnvelope(active);
+            stepClick(active);
 
             double emitter6 = 0.0;
             const double injected41 = frontResting ? 0.0 : (values.n5c - values.c12) / r41;
@@ -296,13 +286,13 @@ namespace coolsynth::synth::v3
         [[nodiscard]] bool comparatorIsHigh() const noexcept { return comparatorHigh; }
         [[nodiscard]] bool frontIsResting() const noexcept { return frontResting; }
         [[nodiscard]] bool envelopeIsRunning() const noexcept { return envelopeRunning; }
-        /** The solver's last iterations in each circuit: front, pitch, hold and click (the larger), decay, attack, body. */
+        /** The solver's last iterations in each circuit: front, pitch, hold, click, attack, body. */
         [[nodiscard]] std::array<int, 6> newtonSteps() const noexcept
         {
-            return { front.lastNewtonSteps(), pitch.lastNewtonSteps(), std::max(hold.lastNewtonSteps(), click.lastNewtonSteps()),
-                     decay.lastNewtonSteps(),
+            return { front.lastNewtonSteps(), pitch.lastNewtonSteps(), hold.lastNewtonSteps(), click.lastNewtonSteps(),
                      attack.lastNewtonSteps(), body.lastNewtonSteps() };
         }
+        [[nodiscard]] bool clickIsResting() const noexcept { return clickResting; }
 
         double comparatorSwing = 13.0;
 
@@ -310,7 +300,6 @@ namespace coolsynth::synth::v3
         static constexpr double r41 = 22.0e3, r42 = 470.0e3, r43 = 47.0, r44 = 22.0e3, r45 = 4.7e3, r53 = 2.2e3, r54 = 470.0e3,
                                 r55 = 47.0, r56 = 330.0, r58 = 47.0e3, c8Farads = 0.33e-6;
         static constexpr double injectionOhms = 1.0e9; // a current from another circuit, as a source behind this
-        static constexpr double c11LeakOhms = 330.0e3; // fitted to Rob Roy's recordings (D238): reverse-biased, C11 leaks
 
         // ---- The oscillator --------------------------------------------------------------------------------------
         /**
@@ -394,10 +383,10 @@ namespace coolsynth::synth::v3
 
         // ---- The envelope and the decay ------------------------------------------------------------------------
         /**
-            The hold and the click from a hit until the hold has let go (C7 drained below Q3's knee, so Q4 is off) and
-            the click has rung out (Q8 back at rest); then the decay circuit carries C8, C3 and C11 on. C7 under 0.6 V
-            leaves Q3's base under 0.3 V: a nanoampere, and Q4 passes a few hundred nanoamperes, against the
-            microamperes C8 loses.
+            The hold from a hit until it has let go (C7 drained below Q3's knee, so Q4 is off); then C8 is an RC, VR5
+            and R58 to ground and R54 to Q12's base, followed exactly a sample at a time (D9 is off: nothing drives
+            its anode any more). C7 under 0.6 V leaves Q3's base under 0.3 V: a nanoampere, and Q4 passes a few hundred
+            nanoamperes, against the microamperes C8 loses.
         */
         void stepEnvelope(bool active) noexcept
         {
@@ -406,39 +395,40 @@ namespace coolsynth::synth::v3
                 hold.setInput(holdN4, values.n4);
                 hold.setInput(holdAcc, accentVolts);
                 hold.setInput(holdQ12b, values.q12b);
-                hold.setInput(holdQ9e, values.q9e);
                 hold.process();
                 values.c8 = hold.probe(probeC8);
                 values.c7 = hold.probe(probeC7);
                 values.e1 = hold.probe(probeE1);
                 values.nk = hold.probe(probeNk);
-                click.setInput(clickN4, values.n4);
-                click.setInput(clickE1, values.e1);
-                click.setInput(clickA1, values.a1);
-                click.process();
-                values.q9e = click.probe(probeQ9e);
-                values.n11c = click.probe(probeN11c);
-                const double q8e = click.probe(probeQ8e);
-                const bool quiet = ! active && values.c7 < 0.6 && values.n4 < 1.0 && std::abs(q8e - restState().values.q8e) < 1.0e-3;
-                values.q8e = q8e;
+                const bool quiet = ! active && values.c7 < 0.6 && values.n4 < 1.0;
                 envelopeQuiet = quiet ? envelopeQuiet + 1 : 0;
-                if (envelopeQuiet > static_cast<int>(0.002 * sampleRate))
-                {
-                    decay.restore(restState().decay);
-                    decay.setCapacitorVoltage(decayC8, hold.portVoltage(holdC8));
-                    decay.setCapacitorVoltage(decayC3, click.portVoltage(clickC3));
-                    decay.setCapacitorVoltage(decayC11, click.portVoltage(clickC11));
-                    envelopeRunning = false;
-                }
+                envelopeRunning = envelopeQuiet <= static_cast<int>(0.002 * sampleRate);
                 return;
             }
-            decay.setInput(decayQ12b, values.q12b);
-            decay.setInput(decayA1, values.a1);
-            decay.process();
-            values.c8 = decay.probe(probeDecayC8);
-            values.nk = decay.probe(probeDecayNk);
-            values.q9e = decay.probe(probeDecayQ9e);
-            values.n11c = decay.probe(probeDecayN11c);
+            const double g = 1.0 / (vr5Ohms + r58) + 1.0 / r54;
+            const double target = values.q12b / r54 / g;
+            values.c8 = target + (values.c8 - target) * std::exp(-g / (c8Farads * sampleRate));
+        }
+
+        /** The click from a hit until Q8, Q9 and C11 are back at rest (C11 recovers in tens of milliseconds); at rest
+            its last values stand. */
+        void stepClick(bool active) noexcept
+        {
+            if (clickResting && ! active)
+                return;
+            click.setInput(clickN4, values.n4);
+            click.setInput(clickA1, values.a1);
+            click.process();
+            const auto& rest = restState().values;
+            values.q9e = click.probe(probeQ9e);
+            values.n11c = click.probe(probeN11c);
+            values.q8e = click.probe(probeQ8e);
+            // C11 within a millivolt of rest (it carries a1's noise too, through R44, so never closer): what stops then,
+            // under 45 nA through R44, Q6 passes far under the noise floor.
+            const bool still = std::abs(values.q8e - rest.q8e) < 1.0e-4 && std::abs(values.q9e - rest.q9e) < 1.0e-4
+                               && std::abs((values.n11c - values.q9e) - (rest.n11c - rest.q9e)) < 1.0e-3;
+            clickStill = still ? clickStill + 1 : 0;
+            clickResting = ! active && clickStill > static_cast<int>(0.002 * sampleRate);
         }
 
         /** The 4006 noise: 0/15 V bits at about 380 kHz, whose density below 20 kHz is a white 3.0e-4 V^2/Hz, given
@@ -466,14 +456,10 @@ namespace coolsynth::synth::v3
             hold.setInput(holdN4, values.n4);
             hold.setInput(holdAcc, accentVolts);
             hold.setInput(holdQ12b, values.q12b);
-            hold.setInput(holdQ9e, values.q9e);
             click.setInput(clickVcc, supply);
+            click.setInput(clickVee, -supply);
             click.setInput(clickN4, values.n4);
-            click.setInput(clickE1, values.e1);
             click.setInput(clickA1, values.a1);
-            decay.setInput(decayVcc, supply);
-            decay.setInput(decayQ12b, values.q12b);
-            decay.setInput(decayA1, values.a1);
             attack.setInput(attackNoise, 7.5);
             attack.setSource(attackFrom41, 0.0);
             attack.setSource(attackFrom44, 0.0);
@@ -554,15 +540,13 @@ namespace coolsynth::synth::v3
         }
 
         // Hold: 1 n4 (input), 2 D6/R20, 3 C7, 4 Q3's base, 5 Q3's collector, 6 Q4's base, 7 the accent (input), 8 e1 (Q4's
-        // collector), 9 nk, 10 the clamp's divider, 11 +15 (input), 12 C8, 13 VR5/R58, 14 Q12's base (input), 15 Q9's
-        // emitter (input).
+        // collector), 9 nk, 10 the clamp's divider, 11 +15 (input), 12 C8, 13 VR5/R58, 14 Q12's base (input).
         void buildHold()
         {
             holdN4 = hold.addInput(1);
             holdAcc = hold.addInput(7);
             holdVcc = hold.addInput(11);
             holdQ12b = hold.addInput(14);
-            holdQ9e = hold.addInput(15);
             addDiode(hold, 1, 2);              // D6
             hold.addResistor(2, 3, 6.8e3);     // R20
             hold.addCapacitor(3, 0, 0.033e-6); // C7
@@ -581,7 +565,8 @@ namespace coolsynth::synth::v3
             holdVr5 = hold.addResistor(12, 13, 150.0e3); // VR5, DECAY
             hold.addResistor(13, 0, r58);      // R58
             hold.addResistor(12, 14, r54);     // R54
-            hold.addResistor(15, 8, 10.0e3);   // R8, from Q9's emitter
+            // e1 and nk meet only junctions while Q4 is off: a leak (as SPICE's gmin) gives the solver a way to ground.
+            hold.addResistor(8, 0, 10.0e6);
             probeC8 = hold.addProbe(12);
             probeC7 = hold.addProbe(3);
             probeE1 = hold.addProbe(8);
@@ -589,12 +574,12 @@ namespace coolsynth::synth::v3
         }
 
         // Click: 1 n4 (input), 2 +15 (input), 3 Q8's base, 4 Q8's emitter, 5 C2/R7, 6 the Sallen-Key's middle, 7 Q9's base,
-        // 8 Q9's emitter, 9 e1 (input), 10 C11/R44, 11 a1 (input).
+        // 8 Q9's emitter, 9 -15 (input), 10 C11/R44, 11 a1 (input).
         void buildClick()
         {
             clickN4 = click.addInput(1);
             clickVcc = click.addInput(2);
-            clickE1 = click.addInput(9);
+            clickVee = click.addInput(9);
             clickA1 = click.addInput(11);
             click.addResistor(1, 3, 100.0e3);  // R5
             click.addResistor(2, 3, 22.0e3);   // R6
@@ -606,42 +591,14 @@ namespace coolsynth::synth::v3
             click.addResistor(6, 0, 100.0e3);  // R15
             click.addResistor(6, 7, 39.0e3);   // R16
             click.addCapacitor(7, 0, 100.0e-12); // C4
-            clickC3 = click.addCapacitor(6, 8, 4.7e-9); // C3
+            click.addCapacitor(6, 8, 4.7e-9);  // C3
             addNpn(click, 2, 7, 8);            // Q9
-            click.addResistor(8, 9, 10.0e3);   // R8, to the hold's accent
-            clickC11 = click.addCapacitor(8, 10, 0.47e-6); // C11
-            clickLeak11 = click.addResistor(8, 10, c11LeakOhms); // C11's leak, reverse-biased
+            click.addResistor(8, 9, 10.0e3);   // R8, to -15 V (operator's reading; printed to Q4's collector, D238)
+            click.addCapacitor(8, 10, 0.47e-6); // C11
             click.addResistor(10, 11, r44);    // R44, to a1
             probeQ9e = click.addProbe(8);
             probeN11c = click.addProbe(10);
             probeQ8e = click.addProbe(4);
-        }
-
-        // Decay: 1 e1, 2 nk, 3 the clamp's divider, 4 +15 (input), 5 C8, 6 VR5/R58, 7 Q12's base (input), 8 Q9's emitter,
-        // 9 C11/R44, 10 a1 (input). Q4, Q8 and Q9 are off by now; C3's other end, the Sallen-Key's middle, is at rest (0 V).
-        void buildDecay()
-        {
-            decayVcc = decay.addInput(4);
-            decayQ12b = decay.addInput(7);
-            decayA1 = decay.addInput(10);
-            decay.addResistor(1, 2, 1.8e3);      // R35
-            addDiode(decay, 2, 3);               // D8
-            decay.addResistor(4, 3, 47.0e3);     // R36
-            decay.addResistor(3, 0, 10.0e3);     // R22
-            addDiode(decay, 2, 5);               // D9
-            decayC8 = decay.addCapacitor(5, 0, c8Farads); // C8
-            decayVr5 = decay.addResistor(5, 6, 150.0e3); // VR5
-            decay.addResistor(6, 0, r58);        // R58
-            decay.addResistor(5, 7, r54);        // R54
-            decay.addResistor(8, 1, 10.0e3);     // R8
-            decayC3 = decay.addCapacitor(0, 8, 4.7e-9); // C3, oriented as in the envelope
-            decayC11 = decay.addCapacitor(8, 9, 0.47e-6); // C11
-            decayLeak11 = decay.addResistor(8, 9, c11LeakOhms); // C11's leak
-            decay.addResistor(9, 10, r44);       // R44
-            probeDecayC8 = decay.addProbe(5);
-            probeDecayNk = decay.addProbe(2);
-            probeDecayQ9e = decay.addProbe(8);
-            probeDecayN11c = decay.addProbe(9);
         }
 
         // Attack: 1 a1, 2 the noise bus (input), 3 R10/R9, 4 C15/R46, 5 C13, 6 a2 (Q6's collector), 7 C12, 8 Q6's base.
@@ -687,20 +644,17 @@ namespace coolsynth::synth::v3
 
         wdf::Circuit<21, 32, 5, 0, 12, 4> front;
         wdf::Circuit<8, 9, 2, 1, 1, 2> pitch;
-        wdf::Circuit<15, 21, 5, 0, 7, 4> hold;
-        wdf::Circuit<11, 18, 4, 0, 4, 3> click;
-        wdf::Circuit<10, 14, 3, 0, 2, 4> decay;
+        wdf::Circuit<14, 21, 4, 0, 7, 4> hold;
+        wdf::Circuit<11, 17, 4, 0, 4, 3> click;
         wdf::Circuit<8, 16, 1, 0, 2, 5> attack;
         wdf::Circuit<5, 7, 2, 0, 3, 3> body;
 
         int frontTrig = 0, frontVcc = 0, frontAcc = 0, frontC12 = 0, frontCmp = 0;
         int probeN4 = 0, probeN7c = 0, probeN5c = 0, probeX = 0;
         int pitchN4 = 0, pitchVcc = 0, pitchC9 = 0, vr2 = 0, r26 = 0, probeCv = 0, probeC9 = 0;
-        int holdN4 = 0, holdAcc = 0, holdVcc = 0, holdQ12b = 0, holdQ9e = 0, holdC8 = 0, holdVr5 = 0;
-        int clickN4 = 0, clickVcc = 0, clickE1 = 0, clickA1 = 0, clickC3 = 0, clickC11 = 0, clickLeak11 = 0, decayLeak11 = 0;
+        int holdN4 = 0, holdAcc = 0, holdVcc = 0, holdQ12b = 0, holdC8 = 0, holdVr5 = 0;
+        int clickN4 = 0, clickVcc = 0, clickVee = 0, clickA1 = 0;
         int probeC8 = 0, probeC7 = 0, probeE1 = 0, probeNk = 0, probeQ9e = 0, probeN11c = 0, probeQ8e = 0;
-        int decayVcc = 0, decayQ12b = 0, decayA1 = 0, decayC8 = 0, decayC3 = 0, decayC11 = 0, decayVr5 = 0;
-        int probeDecayC8 = 0, probeDecayNk = 0, probeDecayQ9e = 0, probeDecayN11c = 0;
         int attackNoise = 0, attackFrom41 = 0, attackFrom44 = 0, r10 = 0, vr3 = 0;
         int probeA1 = 0, probeN13 = 0, probeA2 = 0, probeC12 = 0, probeQ6b = 0;
         int bodyTri = 0, bodyC8 = 0, r52 = 0, probeNd = 0, probeNvca = 0, probeQ12b = 0;
@@ -711,7 +665,6 @@ namespace coolsynth::synth::v3
             decltype(pitch)::Snapshot pitch {};
             decltype(hold)::Snapshot hold {};
             decltype(click)::Snapshot click {};
-            decltype(decay)::Snapshot decay {};
             decltype(attack)::Snapshot attack {};
             decltype(body)::Snapshot body {};
             Values values {};
@@ -748,7 +701,6 @@ namespace coolsynth::synth::v3
                 v.q9e = drum->click.probe(drum->probeQ9e);
                 v.n11c = drum->click.probe(drum->probeN11c);
                 v.q8e = drum->click.probe(drum->probeQ8e);
-                drum->decay.settle();
                 drum->applyInputs();
                 drum->attack.settle();
                 v.a1 = drum->attack.probe(drum->probeA1);
@@ -758,7 +710,6 @@ namespace coolsynth::synth::v3
                 s.pitch = drum->pitch.snapshot();
                 s.hold = drum->hold.snapshot();
                 s.click = drum->click.snapshot();
-                s.decay = drum->decay.snapshot();
                 s.attack = drum->attack.snapshot();
                 s.body = drum->body.snapshot();
                 s.values = v;
@@ -773,9 +724,9 @@ namespace coolsynth::synth::v3
         double triangle = 0.0, lastTriangle = 0.0, blampNext = 0.0, triangleOut = 0.0;
         bool comparatorHigh = true;
         double c14 = nominalC14, tuning = 1.0;
-        double levelOhms = 50.0e3, vr2Ohms = 50.0e3, r26Ohms = 330.0e3;
-        bool frontResting = true, attackResting = true, pitchLinear = true, envelopeRunning = false;
-        int frontStill = 0, attackStill = 0, envelopeQuiet = 0;
+        double levelOhms = 50.0e3, vr2Ohms = 50.0e3, r26Ohms = 330.0e3, vr5Ohms = 150.0e3;
+        bool frontResting = true, attackResting = true, clickResting = true, pitchLinear = true, envelopeRunning = false;
+        int frontStill = 0, attackStill = 0, clickStill = 0, envelopeQuiet = 0;
         std::uint32_t noiseState = 0x9E3779B9u;
     };
 }

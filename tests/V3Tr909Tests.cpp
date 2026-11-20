@@ -29,8 +29,6 @@ namespace
         drum.setDecayOhms(1.0e6 * Tr909BassDrum::audioTaper(k.decay));
         drum.setAttackOhms(500.0 * (1.0 - k.attack));
         drum.setLevelOhms(100.0e3 * k.level);
-        if (const auto leak = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_909_C11LEAK", {}); leak.isNotEmpty())
-            drum.setC11LeakOhms(leak.getDoubleValue());
         if (const auto width = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_909_TRIGGER", {}); width.isNotEmpty())
             drum.setTriggerSeconds(width.getDoubleValue());
     }
@@ -208,7 +206,6 @@ public:
                 auto drum = std::make_unique<Tr909BassDrum>();
                 drum->prepare(96000.0);
                 setKnobs(*drum, c.knobs);
-                drum->setC11LeakOhms(1.0e12); // the schematic as drawn
                 std::vector<std::vector<double>> model(9);
                 const int start = static_cast<int>(0.005 * 96000.0);
                 for (int i = 0; i < start + static_cast<int>(0.2 * 96000.0); ++i)
@@ -273,19 +270,55 @@ public:
                 std::vector<double> spiceSweep, modelSweep;
                 semitones(spice[4], spiceSweep);
                 semitones(model[4], modelSweep);
-                // The output's envelope: peaks over 25 ms (a period and more, so the pitch's small drift does not move it), in dB.
-                double worstDb = 0.0;
-                for (std::size_t w = 0; w + 600 <= std::min<std::size_t>(n, 4800); w += 600)
+                // The output's envelope, traced through each one's own negative half-cycles (their peaks against the output
+                // at rest) and compared at the same times, every 10 ms while SPICE's is within 26 dB of its peak: the
+                // model's pitch runs 1.9 % high (the ideal comparator's swing), so windows of fixed length would catch its
+                // cycles at other phases on a steep decay.
+                const auto envelopeOf = [](const std::vector<double>& t, const std::vector<double>& x)
                 {
-                    double a = 0.0, b = 0.0;
-                    for (std::size_t i = w; i < w + 600; ++i)
+                    std::vector<std::pair<double, double>> lobes;
+                    const double rest = x.front();
+                    double peak = 0.0, at = 0.0;
+                    for (std::size_t i = 1; i < x.size(); ++i)
                     {
-                        a = std::max(a, std::abs(spice[8][i]));
-                        b = std::max(b, std::abs(model[8][i]));
+                        const double y = x[i] - rest;
+                        if (y < peak)
+                        {
+                            peak = y;
+                            at = t[i];
+                        }
+                        if (y > 0.0 && x[i - 1] - rest <= 0.0 && peak < 0.0)
+                        {
+                            lobes.emplace_back(at, -peak);
+                            peak = 0.0;
+                        }
                     }
-                    if (a > 0.05)
-                        worstDb = std::max(worstDb, std::abs(20.0 * std::log10(b / a)));
+                    return lobes;
+                };
+                const auto levelAt = [](const std::vector<std::pair<double, double>>& lobes, double t)
+                {
+                    for (std::size_t i = 1; i < lobes.size(); ++i)
+                        if (lobes[i].first >= t)
+                        {
+                            const double f = (t - lobes[i - 1].first) / (lobes[i].first - lobes[i - 1].first);
+                            return std::exp(std::log(lobes[i - 1].second) + f * (std::log(lobes[i].second) - std::log(lobes[i - 1].second)));
+                        }
+                    return 0.0;
+                };
+                const auto spiceLobes = envelopeOf(spice[0], spice[8]), modelLobes = envelopeOf(model[0], model[8]);
+                double worstDb = 0.0, top = 0.0;
+                for (const auto& lobe : spiceLobes)
+                    top = std::max(top, lobe.second);
+                juce::String envelope;
+                for (double t = 0.01; t < 0.19; t += 0.01)
+                {
+                    const double a = levelAt(spiceLobes, t), b = levelAt(modelLobes, t);
+                    if (a < 0.05 * top || b <= 0.0)
+                        continue;
+                    worstDb = std::max(worstDb, std::abs(20.0 * std::log10(b / a)));
+                    envelope << " " << juce::String(20.0 * std::log10(b / a), 2);
                 }
+                logMessage(juce::String(c.file) + ": the envelope every 10 ms, model against SPICE in dB:" + envelope);
                 logMessage(juce::String(c.file) + ": pulse " + juce::String(width(spice[1]), 2) + "/" + juce::String(width(model[1]), 2)
                            + " ms, height x" + juce::String(pulseHeight, 4) + "; rms error C9 " + juce::String(100.0 * relative(2), 2)
                            + " %, CV " + juce::String(100.0 * relative(3), 2) + " %, C8 " + juce::String(100.0 * relative(5), 2) + " %, C12 "
@@ -302,7 +335,7 @@ public:
                 expectLessThan(relative(7), 0.02, "Q9's emitter");
                 for (std::size_t k = 0; k < 3; ++k)
                     expectWithinAbsoluteError(modelSweep[k], spiceSweep[k], 0.3, "the sweep");
-                expectLessThan(worstDb, 1.5, "the output's envelope");
+                expectLessThan(worstDb, 0.5, "the output's envelope");
             }
         }
 
@@ -602,7 +635,7 @@ public:
             juce::File file(path);
             file.deleteFile();
             juce::FileOutputStream csv(file);
-            csv << "time,n1,n4,n7c,c9,cv,sq,tri,cmp,nx,c7,e1,nk,c8,c12,q8e,q9e,a2,nvca,out,acc\n";
+            csv << "time,q12b,n4,n7c,c9,cv,sq,tri,cmp,nx,c7,e1,nk,c8,c12,q8e,q9e,a2,nvca,out,acc\n";
             const int samples = static_cast<int>(0.4 * 96000.0);
             const auto start = juce::Time::getHighResolutionTicks();
             double busy = 0.0, window = 0.0;
@@ -622,7 +655,7 @@ public:
                 if ((i + 1) % 960 == 0)
                 {
                     profile << " " << (i + 1) / 96 - 10 << ":" << juce::String(100.0 * window / 0.01, 1) << (drum->envelopeIsRunning() ? "E" : "D")
-                            << (drum->frontIsResting() ? "" : "F");
+                            << (drum->frontIsResting() ? "" : "F") << (drum->clickIsResting() ? "" : "C");
                     window = 0.0;
                 }
                 const auto steps = drum->newtonSteps();
@@ -638,7 +671,7 @@ public:
                           << " steps " << steps[0] << "/" << steps[2];
                 const auto& s = drum->stage();
                 const double cmp = drum->comparatorIsHigh() ? drum->comparatorSwing : -drum->comparatorSwing;
-                csv << juce::String(i / 96000.0, 8) << ",0," << juce::String(s.n4, 6) << "," << juce::String(s.n7c, 6) << ","
+                csv << juce::String(i / 96000.0, 8) << "," << juce::String(s.q12b, 6) << "," << juce::String(s.n4, 6) << "," << juce::String(s.n7c, 6) << ","
                     << juce::String(s.c9, 6) << "," << juce::String(s.cv, 6) << ",0," << juce::String(drum->triangleVolts(), 6) << ","
                     << juce::String(cmp, 3) << "," << juce::String(s.x, 6) << "," << juce::String(s.c7, 6) << ","
                     << juce::String(s.e1, 6) << "," << juce::String(s.nk, 6) << "," << juce::String(s.c8, 6) << "," << juce::String(s.c12, 6) << "," << juce::String(s.q8e, 6) << ","
@@ -648,8 +681,8 @@ public:
             juce::String solver;
             for (std::size_t c = 0; c < 6; ++c)
                 solver << " " << most[c] << "(" << atLimit[c] << ", avg " << juce::String(totalSteps[c] / samples, 2) << ")";
-            logMessage("most Newton steps (samples at the limit), front pitch envelope decay attack body:" + solver + early);
-            logMessage("% of real time per 10 ms (ms after the hit: E envelope, D decay, F front):" + profile);
+            logMessage("most Newton steps (samples at the limit), front pitch hold click attack body:" + solver + early);
+            logMessage("% of real time per 10 ms (ms after the hit: E hold, D decay, F front, C click):" + profile);
             logMessage("wrote " + path + "; the drum took " + juce::String(1.0e3 * busy, 1) + " ms for 0.4 s, all of it "
                        + juce::String(1.0e3 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start), 1) + " ms");
         }

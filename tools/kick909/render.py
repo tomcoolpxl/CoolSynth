@@ -20,7 +20,7 @@ ROOT = os.path.dirname(os.path.dirname(HERE))
 NGSPICE = os.path.join(ROOT, "tools", "ngspice", "Spice64", "bin", "ngspice_con.exe")
 NETLIST = os.path.join(HERE, "bassdrum.cir")
 RC4558 = os.path.join(ROOT, "tools", "references", "rc4558", "RC4558.301")
-NODES = ["n1", "n4", "n7c", "c9", "cv", "sq", "tri", "cmp", "nx", "c7", "e1", "nk", "c8", "c12", "q8e", "q9e",
+NODES = ["sum", "q12b", "n1", "n4", "n7c", "c9", "cv", "sq", "tri", "cmp", "nx", "c7", "e1", "nk", "c8", "c12", "q8e", "q9e",
          "a2", "nvca", "out", "acc"]
 AUDIO_TAPER = 32.1  # 15 % of the track at mid-travel
 

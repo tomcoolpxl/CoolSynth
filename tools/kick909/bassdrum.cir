@@ -109,7 +109,8 @@ D11 0 nd DS
 R53 nd nvca 2.2k
 R43 nvca 0 47
 Q12 nvca q12b sum QN
-* The click: Q8 follows the pulse; the Sallen-Key low-pass around Q9 rings; R8 returns to the hold's accent (e1)
+* The click: Q8 follows the pulse; the Sallen-Key low-pass around Q9 rings. R8 returns to -15 V, as operator reads it
+* (D238): the service notes print it to Q4's collector (e1), which two real 909s' recordings contradict
 R6 vcc q8b 22k
 R5 n4 q8b 100k
 Q8 vcc q8b q8e QN
@@ -122,7 +123,7 @@ R16 s1 s2 39k
 C4 s2 0 100p
 C3 s1 q9e 4.7n
 Q9 vcc s2 q9e QN
-R8 q9e e1 10k
+R8 q9e vee 10k
 C11 q9e n11c 0.47u
 R44 n11c a1 22k
 * The noise: divided, high-passed (C15), low-passed (R46, C13)
