@@ -170,12 +170,12 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.
 32. The TB-303 as its circuit (D241, the user's choice; next): the Chicago acid bass. Its VCO, its diode ladder
     filter, its envelopes, accent and slide circuits, played by the layer's step sequencer with its slides; the
-    Acid preset to become the real thing. To be researched first (the service notes, the filter's analyses, the
-    x0xb0x clone, open emulations), with the choices put to the user.
+    Acid preset to become the real thing. Researched: `docs/research/tb-303-circuit.md`; the choices it lists go
+    to the user first.
 33. The whole TR-808 (D241, after the 303): its voices beyond the bass drum, about five circuit families (the
     bridged-T toms, congas, rim and claves on the bass drum's machinery; the snare; the six-oscillator bank for
-    cowbell, cymbal and hats; the clap and maracas), as generators and as a kit. Aimed at house use; its fidelity
-    and order to be put to the user when its stage starts. Then the 909 made cheaper and priced (30).
+    cowbell, cymbal and hats; the clap and maracas), as generators and as a kit. Aimed at house use; researched:
+    `docs/research/tr-808-voices.md`; its fidelity and order to be put to the user when its stage starts. Then the 909 made cheaper and priced (30).
 
 
 ## Standing notes
