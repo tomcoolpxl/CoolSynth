@@ -223,7 +223,7 @@ i1 = Pitch pitch=12 mix=0.18 sync=on division=1/16 feedback=0.35 window=30 chara
 i2 = Chorus rate=0.4 depth=0.3 mix=0.25
 i3 = Reverb size=0.45 damping=0.5 mix=0.18
 mix = level=-1
-master = 0
+master = 2.5
 macros = names=Bright,Climb,Tail,Steady
 mod = src=macro1 dst=p1.cutoff amount=0.15
 mod = src=macro3 dst=env1.time amount=0.4
@@ -396,7 +396,7 @@ i1 = Pitch pitch=12 mix=0.3 mode=spectral window=20 character=0.6
 i2 = Delay sync=on division=1/8. feedback=0.25 mix=0.15
 i3 = Reverb size=0.5 damping=0.45 mix=0.18
 mix = level=-2
-master = 0
+master = 2.5
 macros = names=Bright,Glass,Echo,Steps
 mod = src=macro1 dst=p1.cutoff amount=0.15
 mod = src=lfo1 dst=pitch amount=0.0225 curve=quantized via=macro4
