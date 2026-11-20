@@ -33,6 +33,7 @@ What the engine has:
   - modal synthesis (bars, bells)
   - multisampled instruments
   - granular
+  - sound chips: the NES, Game Boy, C64 SID, AY and YM, Konami's SCC, with their frame-rate arpeggios and drums
 - Filters and shapers
   - ladder and state-variable filters
   - bit crusher

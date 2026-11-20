@@ -160,7 +160,7 @@ namespace coolsynth::synth::v3
         for (auto& g : generators)
         {
             g.slot.noteChanged(start.note); // a slice picks this key's piece (D207)
-            g.slot.strike();                // a string is plucked again; oscillators run on
+            g.slot.strike(start.velocity);  // a string is plucked again, a kick struck; oscillators run on
         }
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
         startEnvelopes(envelopeTimeFactors(sources, start, noteRandom)); // this voice's sources are current

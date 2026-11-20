@@ -1,10 +1,11 @@
 # Arcade: chip sounds. Pulse waves at 12.5, 25 and 50 percent, arpeggio-fast pitch, periodic
 # noise. Thin, fast, cheerful. Room rule: filter open, no reverb, at most one slap of delay.
+# Revoiced with the Chip generator on 2026-11-20 (D231), drafts for the user's ears; the VA versions are in git.
 
 [Coin Pulse]
 room = Arcade
-# A 25 percent pulse lead whose vibrato fades in over 300 ms, with one slap back.
-g1 = VA shape=pulse pw=0.25 rand=0 level=0.75
+# The NES's 25 percent pulse as a lead, its vibrato fading in over 300 ms, with one slap back.
+g1 = Chip chip=nes wave=pulse duty=0.25 level=0.75
 p1 = Off
 env1 = attack=1 decay=1 sustain=1 release=20
 lfo1 = shape=triangle rate=6 fade=300 retrigger=on
@@ -13,18 +14,19 @@ voice = env2ToP1=0
 play = mode=mono
 i1 = Delay time=90 feedback=0 mix=0.2
 mix = level=-6
-master = 0
+master = 5
 # Macros (drafted 2026-11-15 for the user's review, D177): Round, Buzz, Tail, Vibrato
 macros = names=Round,Buzz,Tail,Vibrato
-mod = src=macro1 dst=g1.pw amount=0.2778
-mod = src=macro2 dst=g1.shape amount=-0.3333
+mod = src=macro1 dst=g1.duty amount=0.25
+mod = src=macro2 dst=g1.duty amount=-0.125
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.008 via=macro4
 
 [Boss Bass]
 room = Arcade
-# A 12.5 percent pulse bass that jumps between the note and its octave every sixteenth.
-g1 = VA shape=pulse pw=0.125 oct=-1 rand=0 level=0.8
+# The NES's 12.5 percent pulse as a bass that jumps between the note and its octave every sixteenth.
+# Buzz brings in the chip's duty sweep, a width step every frame.
+g1 = Chip chip=nes wave=pulse duty=0.125 seq=dutysweep depth=0 oct=-1 level=0.8
 p1 = Off
 env1 = attack=1 decay=1 sustain=1 release=30
 glfo1 = shape=square sync=on division=1/16 phase=180 retrigger=on
@@ -32,30 +34,30 @@ mod = src=glfo1 dst=pitch amount=0.25 curve=unipolar
 voice = env2ToP1=0
 play = mode=mono
 mix = level=-6
-master = 0
+master = 4.5
 # Macros (drafted 2026-11-15 for the user's review, D177): Round, Buzz, Tail, Vibrato
 macros = names=Round,Buzz,Tail,Vibrato
-mod = src=macro1 dst=g1.pw amount=0.2
-mod = src=macro2 dst=g1.shape amount=-0.3333
+mod = src=macro1 dst=g1.duty amount=0.18
+mod = src=macro2 dst=g1.depth amount=0.6
 mod = src=macro3 dst=env1.time amount=0.75
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.4
 
 [Power-Up]
 room = Arcade
-# A square bleep that rises an octave in 120 ms and stops.
-g1 = VA shape=pulse pw=0.5 rand=0 level=0.75
+# The NES's square bleep that rises an octave in 120 ms and stops. Buzz brings in the duty sweep.
+g1 = Chip chip=nes wave=pulse duty=0.5 seq=dutysweep depth=0 level=0.75
 p1 = Off
 env1 = attack=1 decay=130 sustain=0 release=30
 env2 = attack=120 attackCurve=0 decay=1 sustain=1 release=30
 mod = src=env2 dst=pitch amount=0.25
 voice = env2ToP1=0
 mix = level=-6
-master = 0
+master = 4.5
 # Macros (drafted 2026-11-15 for the user's review, D177): Thin, Buzz, Length, Warble
 macros = names=Thin,Buzz,Length,Warble
-mod = src=macro1 dst=g1.pw amount=-0.4167
-mod = src=macro2 dst=g1.shape amount=-0.3333
+mod = src=macro1 dst=g1.duty amount=-0.375
+mod = src=macro2 dst=g1.depth amount=0.6
 mod = src=macro3 dst=env1.time amount=0.5
 mod = src=macro3 dst=env2.time amount=0.5
 mod = src=lfo1 dst=pitch amount=0.01 via=macro4
@@ -79,20 +81,20 @@ mod = src=random dst=g1.clock amount=0.04 via=macro4
 
 [SCC Lead]
 room = Arcade
-# The 4-bit, 32-step chip table: its pulse width climbs through eight duty cycles at 1/16, one
-# frame per step, through a 4-bit crusher, with a vibrato that fades in and one slap back.
-g1 = Wavetable table=chip pos=0 rand=0 level=0.75
+# The SCC's 32-step pulse: its width climbs from 1/8 to 7/16 at 1/16, a step each sixteenth,
+# through a 4-bit crusher, with a vibrato that fades in and one slap back.
+g1 = Chip chip=scc wave=pulse duty=0.125 level=0.75
 p1 = Crusher bits=4 rate=48000 mix=1
 env1 = attack=1 decay=1 sustain=1 release=40
 step = values=0,0.0667,0.1333,0.2,0.2667,0.3333,0.4,0.4667 length=8 division=1/16
 lfo1 = shape=triangle rate=6 fade=250 retrigger=on
-mod = src=step dst=g1.pos amount=1
+mod = src=step dst=g1.duty amount=0.67
 mod = src=lfo1 dst=pitch amount=0.008
 voice = env2ToP1=0 glide=30
 play = mode=legato
 i1 = Delay time=120 feedback=0 mix=0.18
 mix = level=-5.5
-master = 0
+master = 3
 # Macros (drafted 2026-11-15 for the user's review, D177): Smooth, Grit, Tail, Vibrato
 macros = names=Smooth,Grit,Tail,Vibrato
 mod = src=macro1 dst=p1.bits amount=0.4
@@ -102,20 +104,18 @@ mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 
 [Chip Chord]
 room = Arcade
-# One key plays a major triad and the arp runs up it at 1/32, the way a three-voice sound chip
-# faked a chord: a square wave, no filter, each step held until the next.
-g1 = VA shape=pulse pw=0.5 rand=0 level=0.75
+# One key plays a major triad the way a sound chip faked a chord on one channel: the chip's own
+# arpeggio, a note every frame (60 a second), on the NES's square. Spread takes it over two and three octaves.
+g1 = Chip chip=nes wave=pulse duty=0.5 seq=arpmajor speed=1 depth=0 level=0.75
 p1 = Off
 env1 = attack=1 decay=1 sustain=1 release=15
 voice = env2ToP1=0
 play = mode=mono
-chord = type=major
-arp = on rate=1/32 pattern=up octaves=1 gate=1
 mix = level=-9
-master = 0
-# Macros (drafted 2026-11-15 for the user's review, D177): Thin, Buzz, Blur, Sweep
-macros = names=Thin,Buzz,Blur,Sweep
-mod = src=macro1 dst=g1.pw amount=-0.4167
-mod = src=macro2 dst=g1.shape amount=-0.3333
+master = 4.5
+# Macros (drafted 2026-11-15 for the user's review, D177; Spread on 2026-11-20): Thin, Spread, Blur, Sweep
+macros = names=Thin,Spread,Blur,Sweep
+mod = src=macro1 dst=g1.duty amount=-0.375
+mod = src=macro2 dst=g1.depth amount=0.7
 mod = src=macro3 dst=env1.time amount=1
-mod = src=glfo1 dst=g1.pw amount=0.3 via=macro4
+mod = src=glfo1 dst=g1.duty amount=0.27 via=macro4

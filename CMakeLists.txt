@@ -122,6 +122,7 @@ set(COOLSYNTH_SHARED_SOURCES
     src/synth/v3/Voice.cpp
     src/synth/v3/Part.cpp
     src/synth/v3/Wavetables.cpp
+    src/synth/v3/ChipWaves.cpp
     src/synth/v3/Samples.cpp
     src/synth/v3/InstrumentCatalogue.cpp
     src/synth/v3/SampleLibrary.cpp
@@ -210,6 +211,7 @@ if(BUILD_TESTING)
             tests/V3NoiseTests.cpp
             tests/V3FmTests.cpp
             tests/V3WavetableTests.cpp
+            tests/V3ChipTests.cpp
             tests/V3SvfTests.cpp
             tests/V3ShaperTests.cpp
             tests/V3ResonatorTests.cpp

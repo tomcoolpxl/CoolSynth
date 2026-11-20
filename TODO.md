@@ -9,7 +9,8 @@ items, sounds of one's own and tempo): the parked sound items first. Researched 
 a dedicated Chip generator (20), a kick generator (30), the SEM morph on the SVF and a Museum set of ARP and
 Oberheim presets (21), then the presets: the Succession kick, Arcade revoiced, six deep presets in the rooms (22).
 Each is designed with the user (options) before it is built. The full bank by ear (3), the interface (26, 27, 29,
-31) and items 24 and 25 wait.
+31) and items 24 and 25 wait; research reports for 23 to 27 and 29 are in `docs/research/`, their options in
+`docs/overnight-2026-11-20.md`.
 
 ## Before or right after the first release (0.3.0)
 
@@ -90,9 +91,9 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
     Brown). Left: the user's ear on the presets with hiss or crackle (Bedroom, Basement, Night Bus), with the
     listening pass (item 3).
-20. Parked (the user, 2026-11-19): chip sounds and chiptune. Research online, in depth, how the sound chips
-    sound (pulse widths, the triangle's steps, the noise registers, the sample rates and DACs) and what other synths
-    and plugins offer for it, then compare with CoolSynth's Noise Chip Mode, the Crusher and LoFi, and propose.
+20. Chip sounds and chiptune. The Chip generator is built (D230, D231). Left: the user's ears on it (each chip's
+    waves, the drums and arpeggios, the named waves, which are my own recipes), Arcade revoiced with it, and the SID
+    filter as an SVF character.
 21. Parked (the user, 2026-11-19): presets for the legendary ARP and Oberheim sounds. Do we need presets of their
     own (the ARP 2600, which the user remembered as "2700 or something", and the Odyssey; the Oberheim SEM and the
     OB-X family), or are the instruments and sounds already researched and in the bank close enough (OB Strings,

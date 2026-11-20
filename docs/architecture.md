@@ -75,9 +75,10 @@ the sampled instruments and the player's own sounds to load.
 
 Per voice:
 
-1. **Three generator slots**, G1 to G3. Each holds any of 9 generator types (VA, Noise, FM2, FM4, Wavetable,
-   String, Modal, Sample, Grain). A generator can sync, ring-modulate, frequency-modulate or
-   amplitude-modulate the next one.
+1. **Three generator slots**, G1 to G3. Each holds any of 10 generator types (VA, Noise, FM2, FM4, Wavetable,
+   String, Modal, Sample, Grain, Chip). A generator can sync, ring-modulate, frequency-modulate or
+   amplitude-modulate the next one. Chip (`ChipGenerator.h`, D231) plays the NES, Game Boy, SID, AY, YM and SCC
+   with their frame tables (`docs/design/CHIP_GENERATOR.md`).
 2. The generators are summed into **three processor slots in series**, P1 to P3. Each holds any of 7
    processor types (Ladder, SVF, Comb, Formant, Folder, Crusher, Drive). Generator 3 can modulate the ladder's
    cutoff at audio rate.
@@ -240,9 +241,9 @@ sources but no longer used.
 - **Parameters** are a JUCE `AudioProcessorValueTreeState`, laid out in `src/parameters`
   (`ParameterLayout`, and in `src/parameters/v3` the per-layer and per-slot parameters).
 - **The processor state**, which a host saves in its project, is XML with the root `COOLSYNTH_PROCESSOR_STATE`,
-  at format version 14. It holds the parameters, the sound's name and file, and the player's files a slot uses.
+  at format version 16. It holds the parameters, the sound's name and file, and the player's files a slot uses.
   The controller setup is not in it: it is the computer's (D211).
-- **A patch file** (`.cspatch`, `src/presets/PatchState.h`) holds one sound, at format version 13. The player's
+- **A patch file** (`.cspatch`, `src/presets/PatchState.h`) holds one sound, at format version 15. The player's
   own sounds are patch files in `Documents\CoolSynth\My Sounds` (`src/presets/MySounds.h`).
 - **The factory presets** are text bank files, `resources/presets/*.csbank`, one per room, read by
   `src/presets/BankFile` and compiled into the binary.

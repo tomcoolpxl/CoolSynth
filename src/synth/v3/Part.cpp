@@ -11,6 +11,7 @@ namespace coolsynth::synth::v3
         hostRate = std::max(1000.0, hostSampleRate);
         maxBlock = std::max(1, maxBlockSize);
         WavetableBank::instance(); // built here, off the audio thread, before any slot can switch to it
+        ChipWaveBank::instance();  // likewise the Chip generator's shapes
         SampleBank::instance();    // likewise the factory samples
         SampleLibrary::instance(); // and the sampled instruments' library (it reads its folder and starts its loader)
 

@@ -4639,4 +4639,20 @@ The user's choices for TODO 20 (D229: a dedicated Chip generator), after online 
 - Aliasing (options: band-limited with a Raw switch, recommended and chosen; band-limited only; raw only).
 - The SID filter (options: a new character of the SVF for any sound, recommended and chosen; inside the Chip generator; none).
 - The twelve knobs (`docs/design/CHIP_GENERATOR.md`; options: build it as designed, recommended and chosen; NES and Game Boy first; change the knobs): Chip, Wave, Duty, Table, Sequence, Speed, Depth, Decay, Sweep, Frame, Output, Raw.
-- The user went to sleep after this: decisions from here on are taken as recommended and logged with every option, for the morning; a one-time task at 06:15 continues the work if the usage limit stops this session.
+- The user went to sleep after this: decisions from here on are taken as recommended and logged with every option, for the morning, each also as the pick list it would have been in `docs/overnight-2026-11-20.md` (the user's wish); the ones that need a discussion, the interface above all, wait there. A one-time task at 06:15 was set up to go on after the usage limit, and cancelled by the user before sleeping.
+
+## D231. The Chip generator, built (2026-11-20)
+
+Built as designed (D230), the user asleep; the smaller choices taken as recommended, each with its options in `docs/overnight-2026-11-20.md`.
+
+- `src/synth/v3/ChipGenerator.h`, the eleventh generator type (`generatorType::chip`, at the end, so saved sounds load as they were), and `src/synth/v3/ChipWaves.h`: 79 band-limited shapes (the triangles, saws, the AY's and YM's buzz through Ayumi's DAC tables, the SID's combined waves at 16 widths, ten named waves at 4 and 8 bits), about 7 MB, built when a layer is prepared.
+- The pulse, the five noise registers and every jump the frame tables make are band-limited steps: at F7 the largest alias is at -86 dB, Raw -30 dB.
+- Noise follows the key at 93 clocks a note period (the Game Boy's 7-bit mode 127), rounded to the rates each chip has: sixteen on the NES, 31 on the AY, any on the SID.
+- Decay counts the chip's own envelope period (the NES's quarter frames, the Game Boy's 64 Hz, the SID's sixteen decay rates with its exponential steps; a step every N frames on the others).
+- Output Chip: the NES's mixer curve and its 90 Hz and 14 kHz filters (nesdev.org; the 440 Hz high-pass an older page named is not there), the Game Boy's 28 Hz, reSID's external filter, the AY's and YM's logarithmic volume.
+- Left out, with the reason: the SID's DC offset (constant on the chip; under CoolSynth's envelopes only thumps); the SID's own ring (a link carries no phase): Ring is the shared one. The NES triangle has no volume, as on the chip. The 6581's combined waves are half the 8580's.
+- `tests/V3ChipTests.cpp`: every chip and wave at a saw's loudness (-15 to -3 dB), the aliases, the pulse widths, the registers' lengths (32767, 93, 127, 131071, 8388607) and pitches, an arpeggio a frame at a time, the decays, a kick, a hard restart, sync, the NES's high-pass, a width sweep without steps.
+- Its cost in the voice cap: 0.33 % of a block a voice at its hardest (a combined wave between two widths with an arpeggio, or the NES's noise with its output filters), against the VA saw's 0.16 in the same run.
+- A retrigger restarts the frame tables, as a tracker's new note does; a struck slot now also hears the new note's velocity (`Slot::strike`), for the kick to come.
+- Arcade revoiced with it (D229), drafts for the user's ears, levelled to -20 LUFS (their masters 3 to 5 dB up: the chip's pulse swings ±0.6 where the VA's swings ±1): Coin Pulse, Boss Bass and Power-Up on the NES's pulse, SCC Lead on the SCC's 32-step pulse, Chip Chord on the chip's own arpeggio at a note a frame instead of the chord memory and the arp; Static Hit stays, already the NES's noise.
+- The heap watch's test failed in the 0.4.0 release run a second time: a release build carries the C runtime inside it (/MT), so its malloc is no import and the debug allocation hook is not there. The watch now also counts HeapAlloc, HeapReAlloc and HeapFree in release builds (`tests/AudioThreadAlarm.cpp`); the volatiles of 787f9b6 were not the cause.

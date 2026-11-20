@@ -364,12 +364,15 @@ namespace coolsynth::synth::v3
         /** No other type is fading in or waiting to. */
         [[nodiscard]] bool typeSettled() const noexcept { return fadeRemaining <= 0 && pendingType.load(std::memory_order_relaxed) < 0; }
 
-        /** The same voice plays again without a restart, for the types that are struck (a string). */
-        void strike() noexcept
+        /** The same voice plays again without a restart, for the types that are struck (a string, a kick: those that
+            take it hear the new note's velocity). */
+        void strike(float velocity = 1.0f) noexcept
         {
-            std::visit([](auto& module)
+            std::visit([velocity](auto& module)
             {
-                if constexpr (requires { module.strike(); })
+                if constexpr (requires { module.strike(velocity); })
+                    module.strike(velocity);
+                else if constexpr (requires { module.strike(); })
                     module.strike();
             }, instances[active].module);
         }

@@ -68,9 +68,35 @@ model brings that chip's quirks.
 
 What already exists stays where it is:
 - the slot's level, pan, octave, semitone and fine;
-- Combine with the generator before it: Sync (hard sync, as the SID), Ring (the SID's: the triangle turned by the
-  other's sign), AM, FM;
+- Combine with the generator before it: Sync (hard sync, as the SID), Ring, AM, FM, as on every generator (the
+  SID's own ring needs the other oscillator's phase, which a generator link does not carry);
 - the voice's envelopes, LFOs and matrix for the rest.
+
+## As built (D231)
+
+- `src/synth/v3/ChipGenerator.h` and `src/synth/v3/ChipWaves.h`; tests in `tests/V3ChipTests.cpp`.
+- Decay counts the chip's own envelope period: Off, then 1 to 16.
+  - The NES: a step every N quarter frames, its envelope's own period.
+  - The Game Boy: a step every N/64 s.
+  - The SID: its decay stage's sixteen rates, 6 ms to 24 s, with its exponential steps (reSID).
+  - The AY, YM and SCC have none per channel: a step every N frames, as a tracker does.
+- Noise follows the key, 93 register clocks a note period (the Game Boy's 7-bit mode 127), rounded to the rates the
+  chip can make: sixteen on the NES, 31 on the AY, 112 on the Game Boy, any on the SID. The SCC's noise is the
+  MSX's AY.
+- Noise Short is the NES's 93-step mode, the Game Boy's 7-bit mode on the Game Boy.
+- Output Chip: the NES's mixer curve and its 90 Hz and 14 kHz filters, the Game Boy's 28 Hz high-pass (its
+  capacitor), reSID's external filter for the C64, the AY's and YM's logarithmic volume (Ayumi's tables).
+- The NES triangle has no volume, as on the chip: Decay and Pluck reach it only at 0.
+- The SID 6581's combined waves are half the 8580's level.
+- The SID's DC offset is left out: constant on the chip, it would only thump under CoolSynth's envelopes.
+- The ten named waves are my own harmonic recipes in the spirit of the classics; no game's data is copied.
+- Sequences, a step every Speed frames, Depth as follows:
+  - Kick and Tom: a frame of noise, then the tone falling Depth × 4 octaves to the note.
+  - Snare: noise with a tone frame; Hat: high noise, Depth its length.
+  - The arpeggios: Depth 0 to a third one octave, then two, then three.
+  - Duty Sweep: Depth the width's swing; Pluck and Swell: how far the volume falls or starts.
+  - Blip: the first step up to two octaves; Vibrato: after twelve steps, up to two semitones.
+  - Hard Restart: the first step silent, then the phase restarts.
 
 ## How it is made
 

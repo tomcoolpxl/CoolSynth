@@ -8,6 +8,7 @@
 
 #include <memory>
 
+#include "ChipGenerator.h"
 #include "Envelope.h"
 #include "LiveBuffer.h"
 #include "Fm4Generator.h"
@@ -60,7 +61,7 @@
 namespace coolsynth::synth::v3
 {
     using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator, WavetableGenerator,
-                                        StringGenerator, ModalGenerator, SampleGenerator, GrainGenerator>; // new types only at the end
+                                        StringGenerator, ModalGenerator, SampleGenerator, GrainGenerator, ChipGenerator>; // new types only at the end
     using ProcessorTypes = std::variant<OffProcessor, LadderProcessor, SvfProcessor, CrusherProcessor, FolderProcessor, DriveProcessor,
                                         FormantProcessor, CombProcessor>; // new types only at the end
     using GeneratorSlot = Slot<GeneratorTypes>;
@@ -78,6 +79,7 @@ namespace coolsynth::synth::v3
         inline constexpr int modal = 7;
         inline constexpr int sample = 8;
         inline constexpr int grain = 9;
+        inline constexpr int chip = 10; // D230
     }
     namespace processorType
     {
@@ -99,6 +101,7 @@ namespace coolsynth::synth::v3
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::modal, GeneratorTypes>, ModalGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::sample, GeneratorTypes>, SampleGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::grain, GeneratorTypes>, GrainGenerator>);
+    static_assert(std::is_same_v<std::variant_alternative_t<generatorType::chip, GeneratorTypes>, ChipGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::ladder, ProcessorTypes>, LadderProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::svf, ProcessorTypes>, SvfProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::folder, ProcessorTypes>, FolderProcessor>);

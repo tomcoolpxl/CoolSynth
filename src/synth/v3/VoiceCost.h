@@ -27,7 +27,7 @@ namespace coolsynth::synth::v3::voiceCost
     struct Costs
     {
         float voice = 0.0f;                                    // an empty voice: envelopes, matrix, the decimator
-        std::array<float, 10> generator {};                    // by generatorType, one copy
+        std::array<float, 11> generator {};                    // by generatorType, one copy
         float vaCopy = 0.0f, wavetableCopy = 0.0f;             // each unison copy past the first
         std::array<float, 8> processor {};                     // by processorType
         std::array<float, insertType::count> effect {};        // by insertType, once for the sound
@@ -38,8 +38,8 @@ namespace coolsynth::synth::v3::voiceCost
     // them; the VA's copies include the sub. Grain's effect is priced by its grains at once (grainEffect).
     inline constexpr Costs measured {
         0.35f, // the voice itself
-        //  Off   VA    Noise FM2   FM4   Wave  String Modal Sample Grain
-        { 0.0f, 0.19f, 0.05f, 0.30f, 0.86f, 0.12f, 0.38f, 0.15f, 0.13f, 0.85f },
+        //  Off   VA    Noise FM2   FM4   Wave  String Modal Sample Grain Chip
+        { 0.0f, 0.19f, 0.05f, 0.30f, 0.86f, 0.12f, 0.38f, 0.15f, 0.13f, 0.85f, 0.33f }, // Chip: 2026-11-20, D231
         0.04f, 0.12f,
         //  Off   Ladder SVF  Crush Folder Drive Formant Comb
         { 0.0f, 0.56f, 0.17f, 0.04f, 0.23f, 0.48f, 0.23f, 0.28f },

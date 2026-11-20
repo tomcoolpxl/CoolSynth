@@ -178,6 +178,7 @@ public:
             { "Modal", generatorOf(generatorType::modal) },
             { "Sample (generated)", generatorOf(generatorType::sample) },
             { "Grain", generatorOf(generatorType::grain) },
+            { "Chip", generatorOf(generatorType::chip) },
         };
         for (const auto& [label, generator] : generators)
         {
@@ -268,6 +269,10 @@ public:
             { "Sample (generated)", generatorOf(generatorType::sample) },
             { "Grain, densest, longest", generatorOf(generatorType::grain, { { GrainGenerator::density, 80.0f }, { GrainGenerator::size, 500.0f },
                                                                              { GrainGenerator::pitchSpray, 1.0f } }) },
+            // The Chip's hardest: a combined wave read between two widths with an arpeggio; and its noise register.
+            { "Chip, Tri+Saw+Pulse, arp", generatorOf(generatorType::chip, { { ChipGenerator::chip, 3.0f }, { ChipGenerator::wave, 8.0f },
+                                                                              { ChipGenerator::duty, 0.4f }, { ChipGenerator::sequence, 5.0f } }) },
+            { "Chip, NES noise", generatorOf(generatorType::chip, { { ChipGenerator::wave, 3.0f }, { ChipGenerator::output, 0.0f } }) },
         };
         BlockCost saw;
         for (const auto& [label, generator] : generators)
