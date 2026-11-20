@@ -133,7 +133,22 @@ Found on the way: Supersaw's undertone is its sub, by design (on the listening p
   while FL ran, not the user's FL.
 - Ableton Live 12 Lite, VST3: found after a rescan, played the MiniLab's keys and knob 1; the set saved, closed and
   opened again, CoolSynth started again and played (its log: two sessions, 01:03 and 01:05).
-- Not done yet: the CLAP in FL Studio (Live loads no CLAP); Reaper is not installed.
+- FL Studio 2025, CLAP: loaded from FL's browser (Generators, CLAP), the panel showed, FL's typing keyboard played
+  notes 60, 64, 67 and 48 at about -17 dB (its log: `CoolSynth.clap`, 01:14). Not saved: FL is the trial.
+- Zrythm 1.0.0 trial, VST3 and CLAP: both found in the plugin scan, both loaded on instrument tracks with their
+  panels, and both played notes from clips in Zrythm's piano roll at about -17 dB. The project saved, Zrythm closed
+  and opened it again: both CoolSynths started again (logs at 01:40:10, VST3, and 01:40:11, CLAP), their panels
+  showed and they played the saved notes.
+- Zrythm's own problems on the way, none from CoolSynth:
+  - it did not start here: its image loader list (`loaders.cache`) leaves out the SVG loader it ships, so it quits
+    with "SVG loader was not found"; started with `GDK_PIXBUF_MODULE_FILE` pointing at a corrected copy, the install
+    left as it is;
+  - its Vulkan drawing showed stale frames; started with `GSK_RENDERER=gl`, and `GDK_SCALE=2` to be readable;
+  - maximized, it drops clicks on the right part of its window; a window sized by hand works;
+  - the first close crashed inside zrythm.exe (its backtrace: the piano roll's ruler redrawn after the project was
+    freed, both CoolSynths already removed cleanly); the second close was clean.
+- Not done yet: Reaper is not installed; the MiniLab's keys were not played into the CLAP or into Zrythm (the notes
+  came from FL's typing keyboard and Zrythm's clips).
 
 ## Then the release (TODO J3)
 
