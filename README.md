@@ -1,8 +1,11 @@
 # CoolSynth
 
-![CoolSynth playing Sea Pad from the Night Bus room](screenshot.png)
+![CoolSynth with both layers loaded, each shown as its chain of slots](screenshot.png)
 
-CoolSynth is a synthesizer for Windows. It runs as a standalone app or as a VST3 or CLAP plugin in your DAW.
+CoolSynth is a bi-timbral, multi-engine hybrid synthesizer for Windows.
+Two layers play at once, stacked, split or by velocity, and each is a chain of slots: three sound engines, three filters or shapers, and six effects, every slot taking any engine or effect of its kind.
+
+It runs as a standalone app or as a VST3 or CLAP plugin in your DAW.
 
 It was designed around the Arturia MiniLab 3 and uses its screen, pads and knobs, but any MIDI keyboard works.
 
