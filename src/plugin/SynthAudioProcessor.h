@@ -326,6 +326,10 @@ private:
             if (ticks < 100 && ++ticks == 100)
                 owner.startMiniLabDriver();
             owner.followRemoteControls(); // CLAP: the pages follow the panel (D216)
+            // A slot's type changed: its generic parameters have new names, which the host is told (D228; the VST3
+            // wrapper sends the titles again, the CLAP's asks the host to rescan them).
+            if (owner.parameterNamesChanged.exchange(false, std::memory_order_acq_rel))
+                owner.updateHostDisplay(juce::AudioProcessorListener::ChangeDetails().withParameterInfoChanged(true));
             if (! pending.exchange(false, std::memory_order_acq_rel))
                 return;
             owner.dispatchPendingControllerEvents();
@@ -423,6 +427,12 @@ private:
     std::array<LiveMessage, liveQueueSize> liveMessages {};
     coolsynth::synth::GlobalParameterPointers parameterValues;
     juce::StringArray knownParameterIds; // every parameter, for patch and state validation
+    std::vector<bool> slotTypeParameter;           // by index: a slot's type, whose change renames its parameters (D228)
+    std::atomic<bool> parameterNamesChanged { false }; // set on any thread, told to the host on the message thread
+public:
+    /** True when the host is still to be told that parameter names changed (D228); for tests. */
+    [[nodiscard]] bool hostToHearOfNewNames() const noexcept { return parameterNamesChanged.load(std::memory_order_acquire); }
+private:
     std::array<coolsynth::parameters::v3::PartParameterPointers, coolsynth::synth::v3::partCount> partParameterValues;
     std::atomic<float>* partModeValue = nullptr;
     std::atomic<float>* velocitySplitValue = nullptr; // D190

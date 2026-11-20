@@ -1037,6 +1037,41 @@ namespace coolsynth::ui
         touched();
     }
 
+    float InterfaceModel::masterTravel() const
+    {
+        return faderValue(3) + masterBoostTravel * masterBoostDb() / 12.0f;
+    }
+
+    void InterfaceModel::moveMasterAlongTravel(float travel)
+    {
+        travel = juce::jlimit(0.0f, 1.0f + masterBoostTravel, travel);
+        if (travel <= 1.0f)
+        {
+            if (masterBoostDb() > 0.0f) // at its top or below: no boost
+                if (auto* p = parameter(coolsynth::parameters::ids::masterBoost))
+                    setNormalised(*p, 0.0f);
+            moveFader(3, travel, false);
+            return;
+        }
+        if (faderValue(3) < 0.999f)
+            moveFader(3, 1.0f, false);
+        setMasterBoost(12.0f * (travel - 1.0f) / masterBoostTravel);
+    }
+
+    void InterfaceModel::moveFaderFromController(int fader, float position01)
+    {
+        position01 = juce::jlimit(0.0f, 1.0f, position01);
+        if (clampInt(fader, 0, 3) == 3)
+            moveMasterAlongTravel(position01 * (1.0f + masterBoostTravel));
+        else
+            moveFader(fader, position01, false);
+    }
+
+    float InterfaceModel::controllerFaderPosition(int fader) const
+    {
+        return clampInt(fader, 0, 3) == 3 ? masterTravel() / (1.0f + masterBoostTravel) : faderValue(fader);
+    }
+
     void InterfaceModel::moveFader(int fader, float value01, bool pickup)
     {
         fader = clampInt(fader, 0, 3);

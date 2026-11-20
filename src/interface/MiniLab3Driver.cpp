@@ -267,7 +267,8 @@ namespace coolsynth::ui
                 break;
             }
             case Kind::fader:
-                model.moveFader(control.index, static_cast<float>(control.value) / 127.0f, true);
+                // fader 4 runs along the Master's whole travel: 0 dB at four fifths, +12 dB at the top (D228)
+                model.moveFaderFromController(control.index, static_cast<float>(control.value) / 127.0f);
                 break;
             case Kind::mainTurn:
                 model.turnMain(control.value);

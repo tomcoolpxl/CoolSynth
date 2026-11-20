@@ -595,6 +595,22 @@ public:
             expectWithinAbsoluteError(model->masterBoostDb(), 6.0f, 0.01f);
             model->moveFader(3, 0.9f, true); // below the top: gone
             expectEquals(model->masterBoostDb(), 0.0f, "below the top, no boost");
+
+            // A controller's fader 4 runs along the Master's whole travel (D228, the user's choice): 0 dB at four fifths
+            // of its throw, +12 dB at its top, as the screen's fader.
+            model->moveFaderFromController(3, 1.0f);
+            expectWithinAbsoluteError(model->faderValue(3), 1.0f, 0.001f, "at its top the Master is at its own top");
+            expectWithinAbsoluteError(model->masterBoostDb(), 12.0f, 0.01f, "and +12 dB beyond it");
+            model->moveFaderFromController(3, 0.9f);
+            expectWithinAbsoluteError(model->masterBoostDb(), 6.0f, 0.05f, "half way above 0 dB: +6 dB");
+            model->moveFaderFromController(3, 0.8f);
+            expectWithinAbsoluteError(model->faderValue(3), 1.0f, 0.001f, "four fifths: 0 dB");
+            expectEquals(model->masterBoostDb(), 0.0f, "no boost there");
+            model->moveFaderFromController(3, 0.4f);
+            expectWithinAbsoluteError(model->faderValue(3), 0.5f, 0.001f, "below it, the fader's own travel");
+            expectWithinAbsoluteError(model->controllerFaderPosition(3), 0.4f, 0.001f, "and its place read back");
+            model->moveFaderFromController(0, 0.4f);
+            expectWithinAbsoluteError(model->faderValue(0), 0.4f, 0.001f, "the other faders as they were");
         }
 
         beginTest("Any keyboard's line: the size chosen in Preferences, placed by its notes (D218)");

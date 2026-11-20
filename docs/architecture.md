@@ -286,7 +286,10 @@ after a reset and expects the same bits (`tests/DeterminismTests.cpp`). The clic
 factory preset; `COOLSYNTH_CLICK_ONLY` narrows it to presets whose names contain a given text. The test
 program also hosts the built VST3 as a DAW does (`tests/HostedPluginTests.cpp`, D228): it plays, saves and
 reopens its state, bounces twice and opens its panel; the hosted plugin, told by `COOLSYNTH_TEST_HOST`, leaves
-the MiniLab and the flight log alone.
+the MiniLab and the flight log alone. Every parameter's typed text must read back as shown, and random settings
+must come back after a reload (`tests/ParameterRoundTripTests.cpp`); a typed value is read by the parameter's own
+display (`src/parameters/TextToValue.h`). Outside the tests, pluginval (VST3) and clap-validator (CLAP) check
+the plugins, from `tools/validators` (downloaded, not committed).
 
 **Command-line tools** (C++, built by target, not by the `build-debug` preset):
 

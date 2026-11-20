@@ -1981,12 +1981,8 @@ public:
                 if (updatingFaders)
                     return;
                 const auto value = static_cast<float>(faders[static_cast<std::size_t>(f)].getValue());
-                if (f == 3 && value > 1.0f)
-                {
-                    if (model.faderValue(3) < 0.999f)
-                        model.moveFader(3, 1.0f, false);
-                    model.setMasterBoost(12.0f * (value - 1.0f) / static_cast<float>(masterBoostTravel));
-                }
+                if (f == 3)
+                    model.moveMasterAlongTravel(value); // its top, then the boost beyond, as the MiniLab's fader 4 (D228)
                 else
                     model.moveFader(f, value, false);
             };
@@ -2672,7 +2668,7 @@ public:
         {
             auto& fader = faders[static_cast<std::size_t>(f)];
             if (! fader.isMouseButtonDown())
-                fader.setValue(model.faderValue(f) + (f == 3 ? masterBoostTravel * model.masterBoostDb() / 12.0f : 0.0f),
+                fader.setValue(f == 3 ? model.masterTravel() : model.faderValue(f),
                                juce::dontSendNotification);
         }
         updatingFaders = false;
@@ -3131,7 +3127,7 @@ private:
     int hoveredPanel = -1;
     bool hoveredCpu = false;
     std::array<PanelFader, 4> faders;
-    static constexpr double masterBoostTravel = 0.25; // the Master's track beyond its top, +12 dB at its end (D225)
+    static constexpr double masterBoostTravel = InterfaceModel::masterBoostTravel; // the Master's track beyond its top (D225)
     std::array<Pad, 8> pads;
     juce::TextButton options, hold, octDown, octUp;
     FlatKeyboard keyboard;

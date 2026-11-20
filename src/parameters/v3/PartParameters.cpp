@@ -1,4 +1,5 @@
 #include "PartParameters.h"
+#include "parameters/TextToValue.h"
 
 #include <cmath>
 
@@ -54,7 +55,7 @@ namespace coolsynth::parameters::v3
                                                                   juce::NormalisableRange<float> range, float defaultValue,
                                                                   juce::AudioParameterFloatAttributes attributes = {})
         {
-            return std::make_unique<juce::AudioParameterFloat>(makeId(id), name, range, defaultValue, attributes);
+            return std::make_unique<coolsynth::parameters::FloatParameter>(makeId(id), name, range, defaultValue, attributes);
         }
 
         struct EnvelopeDefaults
@@ -151,7 +152,7 @@ namespace coolsynth::parameters::v3
                                                                                  "Mod " + juce::String(i), "|");
                 slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("src"), n + "Source", modSourceNames(), 0));
                 slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("dst"), n + "Destination", modDestinationNames(), 0));
-                slot->addChild(std::make_unique<juce::AudioParameterFloat>(id("amount"), n + "Amount", juce::NormalisableRange<float> { -1.0f, 1.0f },
+                slot->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(id("amount"), n + "Amount", juce::NormalisableRange<float> { -1.0f, 1.0f },
                                                                            0.0f, amountAttributes()));
                 slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("via"), n + "Via", modSourceNames(), 0));
                 slot->addChild(std::make_unique<juce::AudioParameterChoice>(id("curve"), n + "Curve", modCurveNames(), 0));
@@ -172,7 +173,7 @@ namespace coolsynth::parameters::v3
                                                                                   "FX Route " + juce::String(i), "|");
                 route->addChild(std::make_unique<juce::AudioParameterChoice>(id("src"), n + "Source", modSourceNames(), 0));
                 route->addChild(std::make_unique<juce::AudioParameterChoice>(id("dst"), n + "Destination", effectDestinationNames(), 0));
-                route->addChild(std::make_unique<juce::AudioParameterFloat>(id("amount"), n + "Amount", juce::NormalisableRange<float> { -1.0f, 1.0f },
+                route->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(id("amount"), n + "Amount", juce::NormalisableRange<float> { -1.0f, 1.0f },
                                                                             0.0f, amountAttributes()));
                 route->addChild(std::make_unique<juce::AudioParameterChoice>(id("via"), n + "Via", modSourceNames(), 0));
                 route->addChild(std::make_unique<juce::AudioParameterChoice>(id("curve"), n + "Curve", modCurveNames(), 0));
@@ -289,17 +290,17 @@ namespace coolsynth::parameters::v3
         group->addChild(std::make_unique<juce::AudioParameterInt>(makeId(velocitySplitParameterId), "Velocity Split", 2, 127, 64));
         group->addChild(std::make_unique<juce::AudioParameterInt>(makeId(velocityFadeParameterId), "Velocity Fade", 0, 64, 16));
         // The Layers page (D196): balance, detune and stereo spread between the layers.
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+        group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
             makeId(layerBalanceParameterId), "Layer Balance", juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f,
             juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int)
             {
                 const int percent = juce::roundToInt(100.0f * std::abs(v));
                 return percent == 0 ? juce::String("A = B") : (v < 0.0f ? "A " : "B ") + juce::String(percent) + "%";
             })));
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+        group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
             makeId(layerDetuneParameterId), "Layer Detune", juce::NormalisableRange<float>(0.0f, 50.0f), 0.0f,
             juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int) { return juce::String(v, 1) + " ct"; })));
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+        group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
             makeId(layerSpreadParameterId), "Layer Spread", juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f,
             juce::AudioParameterFloatAttributes().withStringFromValueFunction([](float v, int) { return juce::String(juce::roundToInt(100.0f * v)) + "%"; })));
         return group;

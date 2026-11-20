@@ -238,6 +238,7 @@ if(BUILD_TESTING)
             tests/V3LiveGrainTests.cpp
             tests/V3BankTests.cpp
             tests/HostedPluginTests.cpp
+            tests/ParameterRoundTripTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests

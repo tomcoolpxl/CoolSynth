@@ -276,6 +276,15 @@ namespace coolsynth::ui
         /** The Master's boost above its top, 0 to 12 dB (D225), and its setting from the screen's fader. */
         [[nodiscard]] float masterBoostDb() const;
         void setMasterBoost(float db);
+        /** The Master fader's whole travel, its 0 dB top and the boost beyond (D225, D228): 0 to 1 is the fader, then
+            `masterBoostTravel` more is +12 dB. The screen's fader and the MiniLab's fader 4 both move along it. */
+        static constexpr float masterBoostTravel = 0.25f;
+        [[nodiscard]] float masterTravel() const;
+        void moveMasterAlongTravel(float travel);
+        /** A controller's fader at a place on its throw, 0 to 1: the Master's throw is its whole travel, so 0 dB is
+            at four fifths and +12 dB at the top, as on the screen (D228, the user's choice). */
+        void moveFaderFromController(int fader, float position01);
+        [[nodiscard]] float controllerFaderPosition(int fader) const;
 
         // ---- The bank -----------------------------------------------------------------------
         struct Category

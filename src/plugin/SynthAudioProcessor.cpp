@@ -198,8 +198,10 @@ SynthAudioProcessor::SynthAudioProcessor()
     for (auto* parameter : getParameters())
     {
         parameter->addListener(this);
-        if (auto* withId = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameter))
+        auto* withId = dynamic_cast<juce::AudioProcessorParameterWithID*>(parameter);
+        if (withId != nullptr)
             knownParameterIds.add(withId->paramID);
+        slotTypeParameter.push_back(withId != nullptr && withId->paramID.endsWith(".type"));
     }
     for (auto& handle : userSoundHandles)
         handle.store(-1);
@@ -1323,6 +1325,14 @@ void SynthAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
 void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
+    // A whole sound: the host reads every name again (D228), at once when it loads on the message thread, as a CLAP
+    // host checks right after the load; from any other thread the timer tells it.
+    parameterNamesChanged.store(true, std::memory_order_release);
+    const juce::ScopeGuard tellHost { [this]
+    {
+        if (juce::MessageManager::existsAndIsCurrentThread() && parameterNamesChanged.exchange(false, std::memory_order_acq_rel))
+            updateHostDisplay(juce::AudioProcessorListener::ChangeDetails().withParameterInfoChanged(true));
+    } };
     if (auto xml = getXmlFromBinary(data, sizeInBytes))
     {
         if (! xml->hasTagName(processorStateRootTag))
@@ -1706,6 +1716,10 @@ void SynthAudioProcessor::resetAutomatableParametersToDefaults()
 
 void SynthAudioProcessor::parameterValueChanged(int parameterIndex, float newValue)
 {
+    // A slot's type: its parameters' names change; the host is told on the message thread (D228). Any thread.
+    if (parameterIndex >= 0 && static_cast<std::size_t>(parameterIndex) < slotTypeParameter.size()
+        && slotTypeParameter[static_cast<std::size_t>(parameterIndex)])
+        parameterNamesChanged.store(true, std::memory_order_release);
     // Every change made on the panel, a controller or Learn, as the screen shows it, so a note in the flight log can
     // be matched to the settings it played with (the user's test pass, D224). Not a preset's own values (it is
     // logged by name), and not the host's automation, which arrives on the audio thread.

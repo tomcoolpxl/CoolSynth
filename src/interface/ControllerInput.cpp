@@ -126,12 +126,13 @@ namespace coolsynth::ui
         }
         if (place >= Place::fader1 && place <= Place::fader4)
         {
-            // The faders are volumes the player keeps (D184): taken as they stand.
+            // The faders are volumes the player keeps (D184): taken as they stand; the Master's throw is its whole
+            // travel, its boost above 0 dB included (D228).
             const int fader = cm::faderOf(place);
             if (turns)
-                model.moveFader(fader, juce::jlimit(0.0f, 1.0f, model.faderValue(fader) + static_cast<float>(steps) / 100.0f), false);
+                model.moveFaderFromController(fader, model.controllerFaderPosition(fader) + static_cast<float>(steps) / 100.0f);
             else
-                model.moveFader(fader, static_cast<float>(event.value) / 127.0f, false);
+                model.moveFaderFromController(fader, static_cast<float>(event.value) / 127.0f);
         }
     }
 }

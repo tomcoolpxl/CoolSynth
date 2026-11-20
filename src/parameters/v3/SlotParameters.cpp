@@ -1,4 +1,5 @@
 #include "SlotParameters.h"
+#include "parameters/TextToValue.h"
 
 #include <cmath>
 
@@ -226,9 +227,9 @@ namespace coolsynth::parameters::v3
             return juce::jlimit(0.0f, 1.0f, text.getFloatValue());
         const auto& d = currentDescriptor().params[static_cast<std::size_t>(index)];
         float units = 0.0f;
-        if (! parseDescriptorValue(d, text, units))
-            return get();
-        return coolsynth::synth::v3::unitsToNormalised(d, units);
+        const float parsed = parseDescriptorValue(d, text, units) ? coolsynth::synth::v3::unitsToNormalised(d, units) : get();
+        // read back as this type shows it, morphs ("Sine > Triangle 30 %") and units included (D228)
+        return coolsynth::parameters::valueForText(text, [this](float v) { return getText(v, 1024); }, parsed);
     }
 
     std::unique_ptr<juce::AudioProcessorParameterGroup> makeSlotGroup(const SlotPath& path,
@@ -254,21 +255,21 @@ namespace coolsynth::parameters::v3
 
         if (path.kind == SlotKind::generator)
         {
-            group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
                 makeId(fixedParameterId(path, "level")), "Level", juce::NormalisableRange<float>(0.0f, 1.0f), 0.8f));
-            group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
                 makeId(fixedParameterId(path, "pan")), "Pan", juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f));
             group->addChild(std::make_unique<juce::AudioParameterInt>(
                 makeId(fixedParameterId(path, "oct")), "Octave", octaveMin, octaveMax, 0));
             group->addChild(std::make_unique<juce::AudioParameterInt>(
                 makeId(fixedParameterId(path, "semi")), "Semitone", semitoneMin, semitoneMax, 0));
-            group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
                 makeId(fixedParameterId(path, "fine")), "Fine", juce::NormalisableRange<float>(fineCentsMin, fineCentsMax), 0.0f));
             group->addChild(std::make_unique<juce::AudioParameterBool>(
                 makeId(fixedParameterId(path, "key")), "Key Track", true));
             group->addChild(std::make_unique<juce::AudioParameterChoice>(
                 makeId(fixedParameterId(path, "combine")), "Combine", combineModeNames, 0));
-            group->addChild(std::make_unique<juce::AudioParameterFloat>(
+            group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
                 makeId(fixedParameterId(path, "amount")), "Combine Amount", juce::NormalisableRange<float>(0.0f, 1.0f), 0.5f));
         }
 

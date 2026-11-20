@@ -1,4 +1,5 @@
 #include "ParameterLayout.h"
+#include "parameters/TextToValue.h"
 
 #include "synth/SynthParameters.h"
 
@@ -109,7 +110,7 @@ namespace
                                                                     const juce::String& name,
                                                                     float defaultValue)
     {
-        return std::make_unique<juce::AudioParameterFloat>(
+        return std::make_unique<coolsynth::parameters::FloatParameter>(
             juce::ParameterID { id, versionHint },
             name,
             juce::NormalisableRange<float>(0.0f, 1.0f),
@@ -142,7 +143,7 @@ namespace
         };
         const auto makePercentParameter = [](const juce::String& id, int hint, const juce::String& name, float value)
         {
-            return std::make_unique<juce::AudioParameterFloat>(juce::ParameterID { id, hint }, name,
+            return std::make_unique<coolsynth::parameters::FloatParameter>(juce::ParameterID { id, hint }, name,
                                                                juce::NormalisableRange<float>(0.0f, 1.0f), value, percentAttributes());
         };
 
@@ -178,7 +179,7 @@ namespace
             1,
             juce::AudioParameterIntAttributes().withStringFromValueFunction([](int value, int) { return formatOctaveRange(value - 1); })));
         group->addChild(makePercentParameter(L(arpGate), parameterVersionHint, layerName + " Arp Gate", 0.5f));
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+        group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
             juce::ParameterID { L(arpSwing), parameterVersionHintV4 },
             layerName + " Arp Swing",
             juce::NormalisableRange<float>(0.0f, 0.75f),
@@ -230,7 +231,7 @@ namespace
     {
         using namespace coolsynth::parameters::ids;
         auto group = std::make_unique<juce::AudioProcessorParameterGroup>("tempo", "Tempo", " / ");
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+        group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
             makeV2ParameterId(arpInternalTempoBpm),
             "Internal BPM",
             juce::NormalisableRange<float>(40.0f, 240.0f),
@@ -250,7 +251,7 @@ namespace
             const float db = juce::Decibels::gainToDecibels(gain);
             return db > -0.05f ? juce::String("0.0 dB") : juce::String(db, 1) + " dB";
         });
-        return std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(id), name, juce::NormalisableRange<float>(0.0f, 1.0f), 1.0f,
+        return std::make_unique<coolsynth::parameters::FloatParameter>(makeV2ParameterId(id), name, juce::NormalisableRange<float>(0.0f, 1.0f), 1.0f,
                                                           volume);
     }
 
@@ -259,7 +260,7 @@ namespace
         using namespace coolsynth::parameters::ids;
 
         auto group = std::make_unique<juce::AudioProcessorParameterGroup>("output", "Output", " / ");
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+        group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
             makeV2ParameterId(masterGainDb),
             "Master Gain",
             juce::NormalisableRange<float>(-60.0f, 6.0f),
@@ -272,7 +273,7 @@ namespace
             group->addChild(makeVolume(id, name));
         // Above the Master fader's top (D225): every preset is levelled to -20 LUFS, as gain staging advises; the
         // player can go up to 12 dB louder here, and nothing changes while it is at 0.
-        group->addChild(std::make_unique<juce::AudioParameterFloat>(
+        group->addChild(std::make_unique<coolsynth::parameters::FloatParameter>(
             juce::ParameterID { masterBoost, parameterVersionHintV7 },
             "Master Boost",
             juce::NormalisableRange<float>(0.0f, 12.0f, 0.1f),
@@ -289,7 +290,7 @@ namespace
             const int percent = juce::roundToInt(100.0f * value);
             return percent == 0 ? juce::String("as the sound") : (percent > 0 ? "+" : "") + juce::String(percent) + " %";
         });
-        return std::make_unique<juce::AudioParameterFloat>(makeV2ParameterId(id), name, juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f,
+        return std::make_unique<coolsynth::parameters::FloatParameter>(makeV2ParameterId(id), name, juce::NormalisableRange<float>(-1.0f, 1.0f), 0.0f,
                                                           centred);
     }
 

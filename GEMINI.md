@@ -32,7 +32,12 @@ the current state.
   keeps a sound within half a block; `tests/DeterminismTests.cpp` holds every preset to it bit for bit.
 - A state must name every parameter (`buildSanitizedParameterStateTree`): a new parameter always raises
   `processorStateFormatVersion` and `patchFormatVersion`, or older states are refused (D225). The Master Boost
-  (`masterBoost`, 0 to +12 dB) sits above the Master fader's top; presets stay at -20 LUFS (D153).
+  (`masterBoost`, 0 to +12 dB) sits above the Master fader's top; presets stay at -20 LUFS (D153). A controller's
+  fader 4 runs along the Master's whole travel, 0 dB at four fifths (D228).
+- Plugin checks (D228): `tests/HostedPluginTests.cpp` hosts the built VST3; pluginval and clap-validator live in
+  `tools/validators` (not committed; run them with `COOLSYNTH_TEST_HOST=1` and `COOLSYNTH_LIBRARY` at an empty
+  folder, so the plugin leaves the MiniLab, the flight log and the 3.8 GB library alone). A new float parameter
+  is a `coolsynth::parameters::FloatParameter`, so typed values read back.
 
 ## Where things are
 

@@ -57,7 +57,7 @@ What the engine has:
 
 A song plays the same each time you start it, and its bounce matches what you heard: the random parts start again with the transport.
 
-Every preset is levelled to the same loudness, with room to spare in a mix. For more, push the screen's Master fader past its top: up to 12 dB louder.
+Every preset is levelled to the same loudness, with room to spare in a mix. For more, push the Master fader past its 0 dB mark, on the screen or with your controller's fader 4: up to 12 dB louder at the top.
 
 ## Your own samples
 

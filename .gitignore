@@ -78,3 +78,6 @@ build_aux/
 
 # Python caches
 __pycache__/
+
+# Plugin validators downloaded for testing (D228): pluginval and clap-validator
+tools/validators/
