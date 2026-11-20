@@ -159,9 +159,8 @@ public:
 
     void runTest() override
     {
-        beginTest("chip_is_the_last_generator_type_with_twelve_knobs");
+        beginTest("chip_is_a_generator_type_with_twelve_knobs");
         {
-            expectEquals(GeneratorSlot::typeCount, 11);
             expectEquals(juce::String(GeneratorSlot::descriptorFor(generatorType::chip).name), juce::String("Chip"));
             const auto& d = ChipGenerator::descriptor();
             expectEquals(d.usedParams, maxSlotParameters);

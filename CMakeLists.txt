@@ -212,6 +212,7 @@ if(BUILD_TESTING)
             tests/V3FmTests.cpp
             tests/V3WavetableTests.cpp
             tests/V3ChipTests.cpp
+            tests/V3KickTests.cpp
             tests/V3SvfTests.cpp
             tests/V3ShaperTests.cpp
             tests/V3ResonatorTests.cpp

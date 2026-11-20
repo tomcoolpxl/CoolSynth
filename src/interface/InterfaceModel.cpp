@@ -136,6 +136,8 @@ namespace coolsynth::ui
                     pill = "Grain";
                 else if (type == "Chip")
                     pill = "Chip";
+                else if (type == "Kick")
+                    pill = "Kick";
                 else if (type == "String" || type == "Modal")
                     pill = "Physical";
                 else if (type == "Noise")

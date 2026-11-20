@@ -61,11 +61,6 @@ J2. macOS, for the user's Mac (the user comes back to it): AU, VST3 and CLAP on 
     From the JUCE 9 review: `CMAKE_OSX_DEPLOYMENT_TARGET` 12.0 or later (Xcode 27 drops older); CoreMIDI ports are
     shared, so the MiniLab is never busy but its notes can arrive twice (the duplicate filter); the MiniLab's port
     names on macOS must be checked against `ml::isDawPort`; the standalone app gains JUCE 9's lower CoreAudio latency.
-J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks the number), the release notes in
-    `docs/releases/`, the tag. It carries the controller redesign, JUCE 9 and the CLAP build. The user's choices
-    (2026-11-20; options: 0.4.0, recommended and chosen, 0.3.1, 1.0.0; after the listening pass, recommended and
-    chosen, or at once): 0.4.0, released after the listening pass (item 3); notes drafted in
-    `docs/releases/v0.4.0.md`. The test pass (`docs/test-pass.md`) and the DAW round are done.
 
 ## The user's ear and hands
 
@@ -163,9 +158,8 @@ J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks 
     with what each item can do (copy, paste, clear, swap, choose a type, learn, reset to default). Today only the
     layer panels (copy, swap, solo) and the controls (Learn) have one. Check online how other plugins and synths do
     it, then options to choose from. With the real interface (UI last).
-30. Parked (the user, 2026-11-19): the famous bass drum of the theme of the series Succession (Nicholas Britell's
-    main title). Research how it is made (online: interviews, breakdowns, remakes), then whether CoolSynth can
-    play it (a drum voice, a sample, a preset) and options to choose from.
+30. The Succession bass drum. The Kick generator is built (D232) and Succession 808 drafted in Engine Room. Left:
+    the user's ears on it and on the three models; Werner's full circuit model if the ears want more of the 808.
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.

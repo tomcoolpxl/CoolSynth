@@ -308,8 +308,22 @@ public:
                     const auto [kept, keptAt] = render(false);
                     juce::ignoreUnused(keptAt);
                     const auto window = samplesFor(0.03);
+                    // As the macros' test (D224): a sound the sweep makes brighter stays rougher for as long as it
+                    // sounds, while a click comes and goes, so the reference also holds its roughness just after the
+                    // sweep at the level it has during it. Polyrhythm Pad, first checked when Succession 808 moved the
+                    // every-third choice (D232), brightens without a spike.
+                    const auto peakOf = [](const Recorder& r, std::size_t from, std::size_t to)
+                    {
+                        float peak = 0.0f;
+                        for (std::size_t s = from; s < std::min(to, r.left.size()); ++s)
+                            peak = std::max({ peak, std::abs(r.left[s]), std::abs(r.right[s]) });
+                        return peak;
+                    };
+                    const float afterLevel = peakOf(*swept, at + window, at + 2 * window);
+                    const float forItsLevel = afterLevel > 0.0f ? swept->roughness(at + window, at + 2 * window) / afterLevel * peakOf(*swept, at, at + window)
+                                                                : 0.0f;
                     const Finding f { swept->roughness(at, at + window),
-                                      std::max(ownRoughness(*swept, at, window), kept->roughness(at, at + window)) };
+                                      std::max({ ownRoughness(*swept, at, window), kept->roughness(at, at + window), forItsLevel }) };
                     tally.add(f, presetName(i) + " " + knob + (clicks(f) ? profile(*swept, at, *kept, at) : juce::String()), *swept, *kept, at);
                 }
             logMessage(tally.note());

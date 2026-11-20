@@ -130,3 +130,26 @@ mod = src=macro3 dst=env2.time amount=0.4
 mod = src=macro3 dst=env1.time amount=0.4
 mod = src=lfo1 dst=pitch amount=0.006 via=macro4
 mod = src=macro4 dst=lfo1.rate amount=0.36
+
+[Succession 808]
+room = Engine Room
+# The TR-808 under the Succession theme, as a sound-alike: no source gives its settings (D232).
+# The Kick generator's 808: a struck resonator whose attack jumps up for 6 ms and then sighs down
+# almost three semitones onto the note. Played at C4 it rings on C2, the theme's C minor root;
+# Ab, F and G play its other roots. Mono, so each hit strikes the drum still ringing; harder
+# hits punch and sigh more. A boom of 1.3 s, about three beats at 140 BPM, darkened and driven.
+# Drafted 2026-11-20 for the user's ears.
+g1 = Kick model=808 decay=1300 punch=12 ptime=6 sigh=2.7 click=0.2 noise=0 shape=0.2 accent=0.6 drive=6 tone=0.35 trig=oneshot oct=-2 level=0.9
+p1 = Off
+env1 = attack=0.5 decay=1 sustain=1 release=40 velocity=0
+voice = env2ToP1=0
+play = mode=mono
+i1 = Drive amount=0.25 mix=0.4
+mix = level=-8
+master = 0.5
+# Macros (drafted 2026-11-20 for the user's review, in the bank's order: tone, character, time, movement): Tone, Punch, Boom, Grit
+macros = names=Tone,Punch,Boom,Grit
+mod = src=macro1 dst=g1.tone amount=0.4
+mod = src=macro2 dst=g1.punch amount=0.25
+mod = src=macro3 dst=g1.decay amount=0.2
+mod = src=macro4 dst=g1.drive amount=0.5

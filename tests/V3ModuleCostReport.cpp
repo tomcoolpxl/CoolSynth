@@ -273,6 +273,13 @@ public:
             { "Chip, Tri+Saw+Pulse, arp", generatorOf(generatorType::chip, { { ChipGenerator::chip, 3.0f }, { ChipGenerator::wave, 8.0f },
                                                                               { ChipGenerator::duty, 0.4f }, { ChipGenerator::sequence, 5.0f } }) },
             { "Chip, NES noise", generatorOf(generatorType::chip, { { ChipGenerator::wave, 3.0f }, { ChipGenerator::output, 0.0f } }) },
+            // The Kick's hardest: the 808 with every part on, driven.
+            { "Kick, 808, all on, driven", generatorOf(generatorType::kick, { { KickGenerator::click, 1.0f }, { KickGenerator::noise, 1.0f },
+                                                                               { KickGenerator::shape, 1.0f }, { KickGenerator::drive, 24.0f },
+                                                                               { KickGenerator::tone, 0.5f }, { KickGenerator::decay, 10000.0f } }) },
+            { "Kick, 909, all on, driven", generatorOf(generatorType::kick, { { KickGenerator::model, 1.0f }, { KickGenerator::click, 1.0f },
+                                                                               { KickGenerator::noise, 1.0f }, { KickGenerator::shape, 1.0f },
+                                                                               { KickGenerator::drive, 24.0f }, { KickGenerator::decay, 10000.0f } }) },
         };
         BlockCost saw;
         for (const auto& [label, generator] : generators)

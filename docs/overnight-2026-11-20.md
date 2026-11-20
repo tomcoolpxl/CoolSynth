@@ -6,6 +6,25 @@ Decisions that need a real discussion (the interface above all) were not taken: 
 
 You cancelled the 06:15 resume task before going to sleep, so the work stops when this session's credits run out.
 
+## What was done
+
+- 0.4.0 is published, after a third release run: https://github.com/tomcoolpxl/CoolSynth/releases/tag/v0.4.0
+  - Installer, VST3, CLAP and app zips, checksums.
+  - The first fix for the failing test was based on a wrong guess; the real cause and fix are below.
+- The Chip generator is built (D231): every chip and wave, the frame tables, band-limited, tested.
+- Arcade is revoiced with it: five presets, drafts for your ears.
+- The Kick generator is built (D232): 808, 909 and Modern.
+- Succession 808 is drafted in Engine Room, for your ears.
+- Seven research reports in docs/research; the ones that touch the interface wait at the end of this file.
+- A small fix: the info row showed the wrong tempo in a stopped DAW.
+
+For your ears, when you have a moment:
+- the Chip generator on each chip (any sound, G1 type Chip; Arcade's five);
+- Succession 808 (Engine Room), played at C4, A flat 3, F3 and G3;
+- the Kick generator's 909 and Modern models.
+
+One slip: twice tonight a shell command of mine contained a heredoc, against your rule. Both did nothing (no-ops), but they should not have been written.
+
 ## Decisions taken
 
 ### Two presets under the bank's loudness
@@ -40,7 +59,7 @@ Question: how to make the release's tests pass?
 - Build the release's tests in Debug
   - The shipped build would go untested.
 
-Taken: watch HeapAlloc in release builds.
+Taken: watch HeapAlloc in release builds. The tag moved to that commit (76a0f39), the run passed, and 0.4.0 is published: https://github.com/tomcoolpxl/CoolSynth/releases/tag/v0.4.0 (installer, VST3, CLAP and app zips, checksums). The Chip and Kick generators came after it and are not in 0.4.0.
 
 ### The Chip generator: how it is built
 
@@ -141,6 +160,62 @@ Question: how to revoice the Arcade room?
 
 Taken: revoiced in place, levelled with the loudness tool, marked as drafts in the bank.
 
+### The Kick generator (D232)
+
+You chose a kick generator (D229). The research is in docs/research/kick-generator.md.
+
+Question: what kind of kick generator?
+
+- One generator with a Model switch, 808, 909 and Modern, over twelve shared knobs (Recommended)
+  - The Succession 808, the 909 and today's kicks in one slot, as the Chip generator shares its knobs across chips.
+  - Some knobs mean slightly different things per model.
+- The 808 circuit model alone
+  - The real 808; nothing else.
+- A pitch-envelope kick alone (909 and modern)
+  - Quick; an 808 only imitated, without its accent, sigh or hits on a ringing drum.
+
+Taken: one generator with a Model switch.
+
+Question: how far to model the 808?
+
+- A struck resonator that does what Werner, Abel and Smith measured: the attack shift, the level-dependent sigh, the accent, hits on a ringing drum, the clipped pulse as click (Recommended)
+  - Built and tested tonight; calibrated to the paper's numbers (a sigh of about 2.4 semitones over a quarter second).
+- Werner's full circuit model in wave digital filters
+  - The most faithful; long work, best calibrated against reference recordings you would listen to.
+- A pitch-envelope imitation
+  - Cheapest; not the 808's behaviour.
+
+Taken: the struck resonator; the full circuit model stays possible if your ears want more.
+
+Question: the Drive curve?
+
+- A cubic soft clip with first-order anti-aliasing (Recommended)
+  - Brought the kick from 0.9 % to 0.33 % of a block a voice, with the pitch moved to every fourth sample.
+- tanh with the same anti-aliasing
+  - A slightly rounder clip at about three times the cost.
+
+Taken: the cubic.
+
+Question: the Succession preset?
+
+- Succession 808 in Engine Room, from the research's sketch: the 808 at C2 when C4 is played, a 1.3 s boom, a sigh of 2.7 semitones, dark, driven, mono so each hit strikes the ringing drum (Recommended)
+  - A sound-alike: no source gives the theme's settings, nor that its 808s are tuned to the bass (D229 said so; corrected in D232).
+- Tuned to C1 for big speakers
+- In the Night Bus room
+
+Taken: Succession 808 in Engine Room, levelled, a draft for your ears.
+
+Question: a click test flagged Polyrhythm Pad, a preset I did not touch. The Brightness and Space test checks every third preset, and adding Succession 808 moved that choice onto Polyrhythm Pad for the first time. Its Brightness sweep read 1.75 times the sound's own roughness, but the profile shows no spike: the pad simply stays brighter. What to do?
+
+- Give that test the rule the macros' test already has (D224): the reference also holds the sound's roughness just after the change, at its level during it (Recommended)
+  - A click comes and goes; a brighter sound stays rough. With the rule it reads 0.92.
+- Smooth Brightness in the engine
+  - Engine work for a change nobody hears as a click.
+- Change Polyrhythm Pad
+  - Changes a sound to please a test.
+
+Taken: the test's rule.
+
 ### Something to know: a download without your OK
 
 The research helper for the SVF read PDFs and source files to the scratchpad to read their text, and once fetched a PDF with curl without asking you first.
@@ -205,6 +280,22 @@ Question: which right-click menus?
 - Controls only
 - The full set, also on list rows (load into A or B, rename, delete, lock a setting)
 - The host's items and reset now, the rest with the real interface
+
+### Not started: the Museum's ARP and Oberheim set, and six deep presets
+
+Both were chosen (D229). They are sound design that only your ears can judge, so I left them rather than draft them blind.
+
+Question: how to make the Museum's ARP and Oberheim set (OB-Xa Jump, OB-X stabs, an SEM notch pad with the new morph, the Odyssey's Chameleon bass, an Odyssey sync lead)?
+
+- As every Museum sound: from published settings, fitted against reference recordings you approve side by side, waiting in resources/museum-candidates until admitted (Recommended)
+  - The Museum's rule (D88, D103); needs recordings and your ears for each.
+- Drafts from published settings alone, straight into the Museum
+  - Quicker; breaks the room's rule, and a first Prophet-5 version built that way "sounded like a midi pc sound card" to you.
+
+Question: the six deep presets (both layers, many effect slots)?
+
+- Design them with you, one room at a time, each heard before the next (Recommended)
+- Drafted by me in one go, levelled, for you to judge afterwards
 
 ### Profiling (TODO 23, docs/research/profiling.md)
 
