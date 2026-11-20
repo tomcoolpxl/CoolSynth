@@ -81,3 +81,6 @@ __pycache__/
 
 # Plugin validators downloaded for testing (D228): pluginval and clap-validator
 tools/validators/
+# The 808 circuit model's references (D235): ngspice, Werner's thesis, Fischer's TR-808 samples; never shipped
+tools/ngspice/
+tools/references/
