@@ -55,7 +55,10 @@ J2. macOS, for the user's Mac (the user comes back to it): AU, VST3 and CLAP on 
     shared, so the MiniLab is never busy but its notes can arrive twice (the duplicate filter); the MiniLab's port
     names on macOS must be checked against `ml::isDawPort`; the standalone app gains JUCE 9's lower CoreAudio latency.
 J3. The next release, after C6: the version in `CMakeLists.txt` (the user picks the number), the release notes in
-    `docs/releases/`, the tag. It carries the controller redesign, JUCE 9 and the CLAP build.
+    `docs/releases/`, the tag. It carries the controller redesign, JUCE 9 and the CLAP build. The user's choices
+    (2026-11-20; options: 0.4.0, recommended and chosen, 0.3.1, 1.0.0; after the listening pass, recommended and
+    chosen, or at once): 0.4.0, released after the listening pass (item 3); notes drafted in
+    `docs/releases/v0.4.0.md`. The test pass (`docs/test-pass.md`) and the DAW round are done.
 
 ## The user's ear and hands
 
