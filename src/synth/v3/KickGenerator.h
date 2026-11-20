@@ -11,17 +11,19 @@
 
 #include "DspMath.h"
 #include "Module.h"
+#include "Tr808BassDrum.h"
 
 /*
-    The Kick generator (docs/research/kick-generator.md, D229, D232): a kick drum in one slot, tuned to the key, with
-    three models behind one set of knobs, as the Chip generator's chips share theirs.
+    The Kick generator (docs/research/kick-generator.md, D229, D232, D235): a kick drum in one slot, tuned to the key,
+    with three models behind one set of knobs, as the Chip generator's chips share theirs.
 
-    808: a struck resonator, as the TR-808's bridged-T is (Werner, Abel and Smith, DAFx 2014): the trigger pulse rings
-    it, and the ring is the drum. Its pitch does what the paper measured: for the first few milliseconds it sits more
-    than an octave up (Punch over Punch Time, the attack shift), then it "sighs" down a few semitones over about a
-    quarter second, further the harder the hit (Sigh, Accent). A new hit lands on the drum still ringing, so no two
-    hits are quite alike. The resonator is a decaying phasor turned by the pitch each sample, so it stays a sine
-    however the pitch moves; Shape clips it as the 808's op-amps do; the trigger pulse leaks through as its click.
+    808: the TR-808 bass drum's circuit (Tr808BassDrum.h, Werner's thesis in wave digital filters): the trigger
+    pulse through the pulse shaper rings the bridged-T, the envelope generator's transistor shifts it up for the
+    attack, the leakage makes its sigh, the feedback buffer its decay, the output filter its tone. The knobs reach
+    the circuit's own controls and bends: Decay is VR6 (read through a table measured on the model, so it still
+    means seconds to -60 dB), Tone is VR5, Accent moves the trigger between 4 and 14 V with the velocity, Click is
+    the trigger's width, Punch the attack shift (R166), Punch Time the envelope (C38), Sigh the leakage (R161), Shape
+    the op-amps' rails. The key tunes it by the bridged-T's capacitors, as the 808's tuning mod does.
 
     909 and Modern: an oscillator thrown up in pitch and falling to the note (Punch, Punch Time), the 909's shaped
     towards a rounded square (Shape) with its attack pulse and noise burst, Modern a pure sine with a short bright
@@ -45,7 +47,7 @@ namespace coolsynth::synth::v3
         static constexpr int latencySamples = generatorLatencySamples;
         static constexpr float level = 0.8f;          // a full hit's body peaks near here
         static constexpr double silentLevel = 1.0e-4; // -80 dB: the tail has ended
-        static constexpr double sighSeconds = 0.08;   // the 808's sigh settles within about a quarter second
+        static constexpr double circuitVoltsToLevel = 0.18; // the circuit's volts to the slot's level: an accent of half at full velocity peaks near 0.8
 
         static const ModuleDescriptor& descriptor()
         {
@@ -77,6 +79,8 @@ namespace coolsynth::synth::v3
             if (rngStart == 0)
                 rngStart = 1;
             rng = rngStart;
+            circuit.prepare(sampleRate);
+            circuit.setLevel(0.99);
             reset();
         }
 
@@ -85,7 +89,7 @@ namespace coolsynth::synth::v3
 
         void reset() noexcept
         {
-            body = { 0.0, 0.0 };
+            circuit.rest();
             oscillator = { 1.0, 0.0 };
             turn = { 1.0, 0.0 };
             controlCountdown = 0;
@@ -138,7 +142,7 @@ namespace coolsynth::synth::v3
             // Each sample the body's amplitude falls by this much: -60 dB over Decay.
             const double fall = std::exp(-6.907755 / (decaySeconds * fs));
             const double punchFall = std::exp(-1.0 / (punchSeconds * fs));
-            const double sighFall = std::exp(-1.0 / ((kind == Model::tr808 ? sighSeconds : decaySeconds / 3.0) * fs));
+            const double sighFall = std::exp(-1.0 / ((decaySeconds / 3.0) * fs));
             const double clickFall = std::exp(-1.0 / (0.004 * fs)); // the attack's own short decay
             const double noiseFall = std::exp(-1.0 / ((kind == Model::tr909 ? 0.03 : 0.015) * fs));
             const double toneHz = std::min(0.45 * fs, 80.0 * std::pow(250.0, static_cast<double>(toneAmount)));
@@ -167,6 +171,11 @@ namespace coolsynth::synth::v3
             const bool useRing = params.combine == Combine::ring && input.signal != nullptr;
             const bool useAm = params.combine == Combine::am && input.signal != nullptr;
 
+            const bool circuitModel = kind == Model::tr808;
+            if (circuitModel)
+                configureCircuit(decaySeconds, punchSemis, punchSeconds, sighSemis, shapeAmount, toneAmount, note);
+            const double follow = std::exp(-1.0 / (0.02 * fs)); // the 808's level follower, for its end
+
             for (int s = 0; s < numSamples; ++s)
             {
                 if (hitPending)
@@ -179,8 +188,8 @@ namespace coolsynth::synth::v3
                     sighEnvelope = 1.0;
                     clickEnvelope = 1.0;
                     noiseEnvelope = 1.0;
-                    if (kind == Model::tr808)
-                        body += std::complex<double>(static_cast<double>(hitLevel), 0.0); // a real kick: the sine starts at 0
+                    if (circuitModel)
+                        circuit.trigger(4.0 + 10.0 * static_cast<double>(accentAmount * lastVelocity), triggerWidth(clickAmount));
                     else
                     {
                         if (bodyLevel <= silentLevel)
@@ -191,18 +200,15 @@ namespace coolsynth::synth::v3
                 }
 
                 // The pitch at a control rate of a quarter of the voice's: the turn of each sample's phasor.
-                if (controlCountdown <= 0)
+                if (! circuitModel && controlCountdown <= 0)
                 {
                     controlCountdown = controlInterval;
                     const double hitPower = static_cast<double>(hitLevel);
                     const double semitones = punchSemis * std::sqrt(hitPower) * punchEnvelope + sighSemis * hitPower * sighEnvelope;
                     const double hz = std::min(0.4 * fs, note * std::exp2(semitones / 12.0));
                     const double w = juce::MathConstants<double>::twoPi * hz / fs;
-                    turn = std::polar(kind == Model::tr808 ? fall : 1.0, w);
-                    if (kind == Model::tr808)
-                        bodyLevel = std::abs(body);
-                    else
-                        oscillator /= std::abs(oscillator); // keeps the turning phasor on the unit circle
+                    turn = std::polar(1.0, w);
+                    oscillator /= std::abs(oscillator); // keeps the turning phasor on the unit circle
                 }
                 --controlCountdown;
 
@@ -211,12 +217,17 @@ namespace coolsynth::synth::v3
                 shapeNow += shapeStep;
 
                 float drum = 0.0f;
-                if (kind == Model::tr808)
+                if (circuitModel)
                 {
-                    body *= turn;
-                    const float v = static_cast<float>(body.imag());
-                    // The op-amps clip a hard-driven drum (Shape).
-                    drum = shaped ? shapeOf(v) : v;
+                    // The circuit runs from a hit until it has rung down; then it rests (and costs nothing).
+                    if (sinceHit < 0.05 * fs || bodyLevel > silentLevel)
+                    {
+                        const double y = circuit.process() * circuitVoltsToLevel;
+                        bodyLevel = std::max(std::abs(y), bodyLevel * follow);
+                        drum = static_cast<float>(y) / level;
+                    }
+                    else
+                        bodyLevel = 0.0;
                 }
                 else
                 {
@@ -234,7 +245,7 @@ namespace coolsynth::synth::v3
 
                 // The attack: the 808's trigger pulse leaking through, the 909's attack pulse, Modern's bright transient.
                 float attack = 0.0f;
-                if (clickAmount > 0.0f && clickEnvelope > 1.0e-4)
+                if (! circuitModel && clickAmount > 0.0f && clickEnvelope > 1.0e-4) // the 808's click is its circuit's own
                 {
                     const double t = sinceHit / fs;
                     float pulse = 0.0f;
@@ -264,7 +275,7 @@ namespace coolsynth::synth::v3
                     hiss = 0.5f * noiseAmount * hitLevel * static_cast<float>(noiseEnvelope) * nextNoise();
 
                 float value = level * drum + attack + hiss;
-                if (toneOn)
+                if (toneOn && ! circuitModel) // the 808's Tone is its circuit's VR5
                     value = onePole(toneState, value, toneCoefficient);
                 if (driven)
                 {
@@ -309,6 +320,53 @@ namespace coolsynth::synth::v3
         }
 
     private:
+        /**
+            The 808 circuit's controls and bends from the knobs, once a block (a change makes the circuit analyse
+            again, a few microseconds): each knob's default is the stock circuit.
+        */
+        void configureCircuit(double decaySeconds, double punchSemis, double punchSeconds, double sighSemis, float shapeAmount,
+                              float toneAmount, double note) noexcept
+        {
+            circuit.setAttackResistor(6.8e3 * std::pow(4.0, (12.0 - punchSemis) / 12.0)); // Punch 12: the stock R166
+            circuit.setEnvelopeScale(punchSeconds / 0.006);                                 // Punch Time 6 ms: the stock C38
+            circuit.setLeakResistor(1.0e6 * 2.4 / std::max(0.05, sighSemis));             // Sigh 2.4: the stock R161
+            circuit.setRails(15.0 - 11.0 * static_cast<double>(shapeAmount));             // Shape 0: the stock 15 V rails
+            circuit.setTone(Tr808BassDrum::toneForKnob(static_cast<double>(toneAmount))); // the knob through VR5's taper
+            // The tail on the note: the bridged-T's capacitors scaled, as the 808's tuning mod does. Only a move of
+            // more than about a fifth of a cent re-tunes: each new tuning makes the resonator analyse again, and a
+            // voice's slow drift would otherwise do that every block.
+            const double scale = circuit.tailHz(1.0) / std::max(5.0, note);
+            if (std::abs(scale / circuit.currentTuning() - 1.0) > 1.0e-4)
+                circuit.setTuning(scale);
+            // The decay in seconds whatever the tuning: it scales with the capacitors.
+            circuit.setDecay(decayForSeconds(decaySeconds / circuit.currentTuning()));
+        }
+
+        /** Click: the trigger's width, 0.1 ms at 0, the stock 1 ms at the default 0.3, 10 ms at 1 (a bend). */
+        static double triggerWidth(float click) noexcept
+        {
+            const double c = juce::jlimit(0.0, 1.0, static_cast<double>(click));
+            return c <= 0.3 ? 0.0001 * std::pow(10.0, c / 0.3) : 0.001 * std::pow(10.0, (c - 0.3) / 0.7);
+        }
+
+        /**
+            The Decay setting (VR6 over its stock 500 kOhm) for a time to -60 dB, at the stock tuning: measured on the
+            circuit model (tests/V3Tr808Tests.cpp, COOLSYNTH_808_DECAY_TABLE), read between points on a log scale.
+            The circuit's shortest is 0.17 s; past 2.7 s it is the extended-decay bend.
+        */
+        static double decayForSeconds(double seconds) noexcept
+        {
+            static constexpr std::array<double, 29> t60 { 0.167, 0.237, 0.298, 0.363, 0.450, 0.523, 0.610, 0.702, 0.801, 0.907,
+                                                           1.021, 1.146, 1.281, 1.429, 1.592, 1.771, 1.969, 2.190, 2.453, 2.733,
+                                                           3.052, 3.418, 3.843, 4.357, 4.951, 5.670, 6.567, 7.710, 9.213 };
+            if (seconds <= t60.front())
+                return 0.05;
+            for (std::size_t i = 1; i < t60.size(); ++i)
+                if (seconds <= t60[i])
+                    return 0.05 * static_cast<double>(i) + 0.05 * std::log(seconds / t60[i - 1]) / std::log(t60[i] / t60[i - 1]);
+            return std::min(1.48, 1.45 + 0.05 * std::log(seconds / t60.back()) / std::log(t60.back() / t60[t60.size() - 2]));
+        }
+
         void hit(float velocity) noexcept
         {
             lastVelocity = juce::jlimit(0.0f, 1.0f, velocity);
@@ -383,7 +441,8 @@ namespace coolsynth::synth::v3
 
         double sampleRate = 96000.0;
         static constexpr int controlInterval = 4;
-        std::complex<double> body { 0.0, 0.0 }, oscillator { 1.0, 0.0 }, turn { 1.0, 0.0 };
+        std::complex<double> oscillator { 1.0, 0.0 }, turn { 1.0, 0.0 };
+        Tr808BassDrum circuit;
         int controlCountdown = 0;
         double bodyLevel = 0.0, sinceHit = 1.0e9;
         double punchEnvelope = 0.0, sighEnvelope = 0.0, clickEnvelope = 0.0, noiseEnvelope = 0.0;

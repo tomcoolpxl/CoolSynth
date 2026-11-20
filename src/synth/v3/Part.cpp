@@ -14,6 +14,7 @@ namespace coolsynth::synth::v3
         ChipWaveBank::instance();  // likewise the Chip generator's shapes
         SampleBank::instance();    // likewise the factory samples
         SampleLibrary::instance(); // and the sampled instruments' library (it reads its folder and starts its loader)
+        Tr808BassDrum::warmUp();   // and the Kick's 808 circuit at rest, solved once
 
         const double voiceRate = hostRate * oversampleFactor;
         for (std::size_t i = 0; i < voices.size(); ++i)

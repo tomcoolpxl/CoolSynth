@@ -17,8 +17,8 @@
     The scattering matrix comes from modified nodal analysis of the root with each port replaced by its Norton
     equivalent (Werner, Smith, Abel, DAFx 2015), recomputed only when a resistance or capacitance changes:
     b = S a + Q u, with u the ideal inputs. The nonlinear ports are solved at the root each sample by Newton's method
-    in their port voltages (Werner, Nangia, Smith, Abel, DAFx 2015; Olsen, Werner, Smith, DAFx 2016), warm-started
-    from the last sample, with SPICE's junction limiting. Diodes and transistors follow the thesis's models
+    in their port voltages (Werner, Nangia, Smith, Abel, DAFx 2015; Olsen, Werner, Smith, DAFx 2016), started from
+    where the last samples point (solveDevices), with SPICE's junction limiting. Diodes and transistors follow the thesis's models
     (Shockley; Ebers-Moll in transport form). Double precision; all storage inline, no heap.
 */
 namespace coolsynth::synth::v3::wdf
@@ -30,6 +30,7 @@ namespace coolsynth::synth::v3::wdf
     public:
         static constexpr int maxUnknowns = MaxNodes + MaxInputs + MaxNullors;
         static constexpr int maxColumns = MaxPorts + MaxInputs;
+        static constexpr int maxDevicePorts = MaxNonlinear > 0 ? MaxNonlinear : 1;
 
         // ---- Building (message thread or prepare: no heap, so also safe on the audio thread) -------------------
 
@@ -61,6 +62,7 @@ namespace coolsynth::synth::v3::wdf
             d.isTransistor = false;
             d.saturation = saturation;
             d.thermal = thermal;
+            d.derive();
             d.port[0] = addPort(anode, cathode, Kind::nonlinear, portOhms, 0.0, 1.0);
             d.slot[0] = nonlinearCount++;
             nonlinearPort[static_cast<std::size_t>(d.slot[0])] = d.port[0];
@@ -75,6 +77,7 @@ namespace coolsynth::synth::v3::wdf
             d.betaF = betaF;
             d.betaR = betaR;
             d.thermal = thermal;
+            d.derive();
             d.port[0] = addPort(base, emitter, Kind::nonlinear, 2000.0, 0.0, 1.0);
             d.port[1] = addPort(collector, emitter, Kind::nonlinear, 20000.0, 0.0, 1.0);
             d.slot[0] = nonlinearCount++;
@@ -131,6 +134,7 @@ namespace coolsynth::synth::v3::wdf
             }
             for (int m = 0; m < nonlinearCount; ++m)
                 voltage[static_cast<std::size_t>(m)] = 0.0;
+            previousVoltage = earlierVoltage = voltage;
         }
 
         /**
@@ -166,6 +170,42 @@ namespace coolsynth::synth::v3::wdf
             dirty = true;
         }
 
+        /** The circuit's state (its waves and its devices' last solution), to come back to cheaply. */
+        struct Snapshot
+        {
+            std::array<double, MaxPorts> toRoot {}, fromRoot {}, alphaState {};
+            std::array<double, MaxNonlinear> voltage {}, current {};
+        };
+
+        [[nodiscard]] Snapshot snapshot() const noexcept
+        {
+            Snapshot s;
+            for (int k = 0; k < portCount; ++k)
+            {
+                const auto& p = ports[static_cast<std::size_t>(k)];
+                s.toRoot[static_cast<std::size_t>(k)] = p.toRoot;
+                s.fromRoot[static_cast<std::size_t>(k)] = p.fromRoot;
+                s.alphaState[static_cast<std::size_t>(k)] = p.alphaState;
+            }
+            s.voltage = voltage;
+            s.current = current;
+            return s;
+        }
+
+        void restore(const Snapshot& s) noexcept
+        {
+            for (int k = 0; k < portCount; ++k)
+            {
+                auto& p = ports[static_cast<std::size_t>(k)];
+                p.toRoot = s.toRoot[static_cast<std::size_t>(k)];
+                p.fromRoot = s.fromRoot[static_cast<std::size_t>(k)];
+                p.alphaState = s.alphaState[static_cast<std::size_t>(k)];
+            }
+            voltage = s.voltage;
+            previousVoltage = earlierVoltage = s.voltage; // a rest state is still
+            current = s.current;
+        }
+
         /** One sample. */
         void process() noexcept { step(maxNewtonSteps); }
 
@@ -189,6 +229,7 @@ namespace coolsynth::synth::v3::wdf
             double value = 1.0;   // ohms: resistors, sources and the devices' port resistances
             double farads = 0.0;  // capacitors
             double alpha = 1.0;
+            double keep = 0.0, take = 1.0; // the alpha transform's update: (1 - alpha) / 2 and (1 + alpha) / 2
             double volts = 0.0;   // sources
             double resistance = 1.0; // the port resistance in use
             double toRoot = 0.0;   // the wave from the element into the root (a)
@@ -205,7 +246,18 @@ namespace coolsynth::synth::v3::wdf
         {
             bool isTransistor = false;
             double saturation = 1.0e-14, betaF = 100.0, betaR = 1.0, thermal = 0.02585;
-            std::array<int, 2> port {}, slot {};
+            int port[2] {}, slot[2] {};
+            // Derived once, for the solver: 1 / VT, 1 / betaF, 1 / betaR, 1 + 1 / betaR, pnjlim's critical voltage.
+            double inverseThermal = 1.0 / 0.02585, inverseBetaF = 0.01, inverseBetaR = 1.0, reverseFactor = 2.0, critical = 0.6;
+
+            void derive() noexcept
+            {
+                inverseThermal = 1.0 / thermal;
+                inverseBetaF = 1.0 / betaF;
+                inverseBetaR = 1.0 / betaR;
+                reverseFactor = 1.0 + inverseBetaR;
+                critical = thermal * std::log(thermal / (1.4142135623730951 * saturation));
+            }
         };
 
         int addPort(int n1, int n2, Kind kind, double ohms, double farads, double alpha)
@@ -218,6 +270,8 @@ namespace coolsynth::synth::v3::wdf
             p.value = ohms;
             p.farads = farads;
             p.alpha = alpha;
+            p.keep = 0.5 * (1.0 - alpha);
+            p.take = 0.5 * (1.0 + alpha);
             dirty = true;
             return portCount++;
         }
@@ -238,8 +292,26 @@ namespace coolsynth::synth::v3::wdf
 
         // ---- The root's analysis -------------------------------------------------------------------------------
 
+        /** The analysis's matrices, needed only while it runs: one set a thread, not one a circuit. */
+        struct Scratch
+        {
+            std::array<std::array<double, maxUnknowns>, maxUnknowns> Y {};
+            std::array<std::array<double, maxColumns>, maxUnknowns> X {};
+            std::array<std::array<double, MaxPorts>, MaxPorts> S {};
+            std::array<std::array<double, MaxInputs>, MaxPorts> Q {};
+            std::array<std::array<double, maxColumns>, MaxProbes> W {};
+            std::array<std::array<double, (MaxNonlinear > 0 ? MaxNonlinear : 1)>, (MaxNonlinear > 0 ? MaxNonlinear : 1)> M {};
+        };
+
         void analyse() noexcept
         {
+            static thread_local Scratch scratchSpace;
+            auto& Y = scratchSpace.Y;
+            auto& X = scratchSpace.X;
+            auto& S = scratchSpace.S;
+            auto& Q = scratchSpace.Q;
+            auto& W = scratchSpace.W;
+            auto& M = scratchSpace.M;
             const int unknowns = nodeCount() + inputCount + nullorCount;
             const int columns = portCount + inputCount;
             for (int r = 0; r < unknowns; ++r)
@@ -469,245 +541,343 @@ namespace coolsynth::synth::v3::wdf
             if (dirty)
                 analyse();
 
-            // The waves into the root from every linear element.
-            for (int k = 0; k < portCount; ++k)
-            {
-                auto& p = ports[static_cast<std::size_t>(k)];
-                switch (p.kind)
-                {
-                    case Kind::resistor: p.toRoot = 0.0; break;
-                    case Kind::source: p.toRoot = p.volts; break;
-                    case Kind::capacitor:
-                        if (openCapacitors)
-                            p.toRoot = 0.0;
-                        else
-                        {
-                            const double bCoef = 0.5 * (1.0 - p.alpha), aCoef = 0.5 * (1.0 + p.alpha);
-                            p.alphaState = bCoef * p.alphaState + aCoef * p.fromRoot;
-                            p.toRoot = p.alphaState;
-                        }
-                        break;
-                    case Kind::nonlinear: break;
-                }
-            }
-
-            // The waves into the root, packed: the linear senders, the inputs, then the devices (below).
-            const int linear = linearSendingCount + inputCount;
+            // Plain pointers from here: a sample's loops are short and many, and a checked index costs more than the
+            // arithmetic in a Debug build (the one the voice cap is measured in).
+            Port* port = ports.data();
+            const int* send = sending.data();
             double* x = packed.data();
+
+            // The waves into the root, packed: the linear senders (capacitors and sources: a resistor sends none),
+            // the inputs, then the devices (below).
             for (int j = 0; j < linearSendingCount; ++j)
-                x[j] = ports[static_cast<std::size_t>(sending[static_cast<std::size_t>(j)])].toRoot;
+            {
+                Port& p = port[send[j]];
+                if (p.kind == Kind::capacitor)
+                {
+                    if (openCapacitors)
+                        p.toRoot = 0.0;
+                    else
+                    {
+                        p.alphaState = p.keep * p.alphaState + p.take * p.fromRoot;
+                        p.toRoot = p.alphaState;
+                    }
+                }
+                else
+                    p.toRoot = p.volts;
+                x[j] = p.toRoot;
+            }
+            const double* in = inputs.data();
             for (int j = 0; j < inputCount; ++j)
-                x[linearSendingCount + j] = inputs[static_cast<std::size_t>(j)];
+                x[linearSendingCount + j] = in[j];
+            const int linear = linearSendingCount + inputCount;
 
             const int m = nonlinearCount;
             if (m > 0)
             {
                 // p = M (S a + Q u) over the linear part, for the devices' ports (folded into one matrix).
-                std::array<double, MaxNonlinear> p {};
+                double p[maxDevicePorts];
                 for (int r = 0; r < m; ++r)
                 {
                     const double* row = toDevices[static_cast<std::size_t>(r)].data();
                     double sum = 0.0;
                     for (int c = 0; c < linear; ++c)
                         sum += row[c] * x[c];
-                    p[static_cast<std::size_t>(r)] = sum;
+                    p[r] = sum;
                 }
                 solveDevices(p, newtonLimit);
                 // The waves the devices send back: a = v - R i.
+                const int* devicePort = nonlinearPort.data();
+                const double* v = voltage.data();
+                const double* i = current.data();
                 for (int r = 0; r < m; ++r)
                 {
-                    auto& port = ports[static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(r)])];
-                    port.toRoot = voltage[static_cast<std::size_t>(r)] - port.resistance * current[static_cast<std::size_t>(r)];
-                    x[linear + r] = port.toRoot;
+                    Port& d = port[devicePort[r]];
+                    d.toRoot = v[r] - d.resistance * i[r];
+                    x[linear + r] = d.toRoot;
                 }
             }
 
             // Scatter only into the ports that keep a wave (the capacitors: resistors and sources absorb what comes
             // back), and read the probes, both from the packed waves.
             const int columns = linear + m;
+            const int* keeper = capacitorPort.data();
             for (int r = 0; r < capacitorCount; ++r)
             {
                 const double* row = toCapacitors[static_cast<std::size_t>(r)].data();
                 double sum = 0.0;
                 for (int c = 0; c < columns; ++c)
                     sum += row[c] * x[c];
-                ports[static_cast<std::size_t>(capacitorPort[static_cast<std::size_t>(r)])].fromRoot = sum;
+                port[keeper[r]].fromRoot = sum;
             }
+            double* probe = probes.data();
             for (int j = 0; j < probeCount; ++j)
             {
                 const double* row = toProbes[static_cast<std::size_t>(j)].data();
                 double sum = 0.0;
                 for (int c = 0; c < columns; ++c)
                     sum += row[c] * x[c];
-                probes[static_cast<std::size_t>(j)] = sum;
+                probe[j] = sum;
             }
         }
 
-        /** The devices' currents for their port voltages, and the Jacobian. */
-        void deviceCurrents(const std::array<double, MaxNonlinear>& v, std::array<double, MaxNonlinear>& i,
-                            std::array<std::array<double, MaxNonlinear>, MaxNonlinear>& jacobian) const noexcept
+        /**
+            The devices' currents at their port voltages v, and their conductances: g[k][c] = di_k / dv_c, written only
+            inside each device's own block (a diode's one port, a transistor's two), where the solver reads it.
+        */
+        void deviceCurrents(const double* v, double* i, double (*g)[maxDevicePorts]) const noexcept
         {
+            const Device* device = devices.data();
             for (int d = 0; d < deviceCount; ++d)
             {
-                const auto& dev = devices[static_cast<std::size_t>(d)];
-                const auto s0 = static_cast<std::size_t>(dev.slot[0]);
+                const Device& dev = device[d];
+                const int s0 = dev.slot[0];
                 if (! dev.isTransistor)
                 {
-                    const double e = std::exp(std::min(v[s0] / dev.thermal, 80.0));
+                    const double e = std::exp(std::min(v[s0] * dev.inverseThermal, 80.0));
                     i[s0] = dev.saturation * (e - 1.0);
-                    jacobian[s0][s0] = dev.saturation * e / dev.thermal;
+                    g[s0][s0] = dev.saturation * e * dev.inverseThermal;
                     continue;
                 }
-                const auto s1 = static_cast<std::size_t>(dev.slot[1]);
+                const int s1 = dev.slot[1];
                 const double vbe = v[s0], vce = v[s1], vbc = vbe - vce;
-                const double ef = std::exp(std::min(vbe / dev.thermal, 80.0));
-                const double er = std::exp(std::min(vbc / dev.thermal, 80.0));
+                const double ef = std::exp(std::min(vbe * dev.inverseThermal, 80.0));
+                const double er = std::exp(std::min(vbc * dev.inverseThermal, 80.0));
                 const double iF = dev.saturation * (ef - 1.0), iR = dev.saturation * (er - 1.0);
-                const double gF = dev.saturation * ef / dev.thermal, gR = dev.saturation * er / dev.thermal;
+                const double gF = dev.saturation * ef * dev.inverseThermal, gR = dev.saturation * er * dev.inverseThermal;
                 // Base current iF / bF + iR / bR, collector current iF - iR (1 + 1 / bR).
-                i[s0] = iF / dev.betaF + iR / dev.betaR;
-                i[s1] = iF - iR * (1.0 + 1.0 / dev.betaR);
+                i[s0] = iF * dev.inverseBetaF + iR * dev.inverseBetaR;
+                i[s1] = iF - iR * dev.reverseFactor;
                 // d/dvbe and d/dvce, with dvbc/dvbe = 1 and dvbc/dvce = -1.
-                jacobian[s0][s0] = gF / dev.betaF + gR / dev.betaR;
-                jacobian[s0][s1] = -gR / dev.betaR;
-                jacobian[s1][s0] = gF - gR * (1.0 + 1.0 / dev.betaR);
-                jacobian[s1][s1] = gR * (1.0 + 1.0 / dev.betaR);
+                g[s0][s0] = gF * dev.inverseBetaF + gR * dev.inverseBetaR;
+                g[s0][s1] = -gR * dev.inverseBetaR;
+                g[s1][s0] = gF - gR * dev.reverseFactor;
+                g[s1][s1] = gR * dev.reverseFactor;
             }
         }
 
         /** SPICE's pnjlim: a junction's new voltage kept from leaping up the exponential. */
-        static double limitJunction(double vNew, double vOld, double thermal, double saturation) noexcept
+        static double limitJunction(double vNew, double vOld, const Device& dev) noexcept
         {
-            const double vCritical = thermal * std::log(thermal / (1.4142135623730951 * saturation));
-            if (vNew > vCritical && std::abs(vNew - vOld) > 2.0 * thermal)
+            if (vNew > dev.critical && std::abs(vNew - vOld) > 2.0 * dev.thermal)
             {
                 if (vOld > 0.0)
                 {
-                    const double arg = 1.0 + (vNew - vOld) / thermal;
-                    return arg > 0.0 ? vOld + thermal * std::log(arg) : vCritical;
+                    const double arg = 1.0 + (vNew - vOld) * dev.inverseThermal;
+                    return arg > 0.0 ? vOld + dev.thermal * std::log(arg) : dev.critical;
                 }
-                return thermal * std::log(vNew / thermal);
+                return dev.thermal * std::log(vNew * dev.inverseThermal);
             }
             return vNew;
         }
 
         /** Newton's method on v = p + K f(v), from the last sample's voltages. */
-        void solveDevices(const std::array<double, MaxNonlinear>& p, int limit) noexcept
+        void solveDevices(const double* p, int limit) noexcept
         {
             const int m = nonlinearCount;
-            std::array<double, MaxNonlinear> f {}, residual {}, delta {};
-            std::array<std::array<double, MaxNonlinear>, MaxNonlinear> df {}, jac {};
-            // While every junction is below its knee (the drum's tail), start from one fixed-point step, v = p + K i
-            // with the last sample's currents: then exact, so the check below usually ends the solve at once. With a
-            // junction conducting, such a step can overshoot, so the last voltages are the start.
+            const Device* device = devices.data();
+            double* v = voltage.data();
+            double f[maxDevicePorts], residual[maxDevicePorts], delta[maxDevicePorts];
+            double g[maxDevicePorts][maxDevicePorts];
+            double jac[maxDevicePorts][maxDevicePorts];
+            const double* k[maxDevicePorts];
+            for (int r = 0; r < m; ++r)
+                k[r] = K[static_cast<std::size_t>(r)].data();
+
+            // The start. While every junction is below its knee (much of the drum's tail), one fixed-point step,
+            // v = p + K i with the last sample's currents: then exact, so the check below usually ends the solve at
+            // once. With a junction conducting such a step can overshoot, so after a sample that solved at once or
+            // nearly, the last three samples' voltages carried on in a parabola, each junction limited as a Newton
+            // step is: close enough that one step usually ends it. Where the circuit turns sharply (a trigger's edge)
+            // a parabola overshoots too: there the last voltages.
+            double* before = previousVoltage.data();
+            double* earlier = earlierVoltage.data();
+            double last[maxDevicePorts];
+            for (int r = 0; r < m; ++r)
+                last[r] = v[r];
             bool allOff = true;
             for (int d = 0; d < deviceCount && allOff; ++d)
             {
-                const auto& dev = devices[static_cast<std::size_t>(d)];
-                const double v0 = voltage[static_cast<std::size_t>(dev.slot[0])];
-                allOff = v0 < 0.4 && (! dev.isTransistor || v0 - voltage[static_cast<std::size_t>(dev.slot[1])] < 0.4);
+                const Device& dev = device[d];
+                const double v0 = v[dev.slot[0]];
+                allOff = v0 < 0.4 && (! dev.isTransistor || v0 - v[dev.slot[1]] < 0.4);
             }
+            bool guessed = false;
             if (allOff && ! openCapacitors)
             {
-                std::array<double, MaxNonlinear> guess {};
+                const double* i = current.data();
+                double guess[maxDevicePorts];
                 for (int r = 0; r < m; ++r)
                 {
                     double kf = 0.0;
                     for (int c = 0; c < m; ++c)
-                        kf += K[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] * current[static_cast<std::size_t>(c)];
-                    guess[static_cast<std::size_t>(r)] = p[static_cast<std::size_t>(r)] + kf;
+                        kf += k[r][c] * i[c];
+                    guess[r] = p[r] + kf;
                 }
                 // Used only if it stays below the knees too.
                 bool stillOff = true;
                 for (int d = 0; d < deviceCount && stillOff; ++d)
                 {
-                    const auto& dev = devices[static_cast<std::size_t>(d)];
-                    const double g0 = guess[static_cast<std::size_t>(dev.slot[0])];
-                    stillOff = g0 < 0.4 && (! dev.isTransistor || g0 - guess[static_cast<std::size_t>(dev.slot[1])] < 0.4);
+                    const Device& dev = device[d];
+                    const double g0 = guess[dev.slot[0]];
+                    stillOff = g0 < 0.4 && (! dev.isTransistor || g0 - guess[dev.slot[1]] < 0.4);
                 }
                 if (stillOff)
-                    voltage = guess;
+                {
+                    for (int r = 0; r < m; ++r)
+                        v[r] = guess[r];
+                    guessed = true;
+                }
             }
+            if (! guessed && ! openCapacitors && newtonSteps <= 1)
+                for (int d = 0; d < deviceCount; ++d)
+                {
+                    const Device& dev = device[d];
+                    const int s0 = dev.slot[0];
+                    const double vbe = limitJunction(3.0 * (last[s0] - before[s0]) + earlier[s0], last[s0], dev);
+                    if (! dev.isTransistor)
+                    {
+                        v[s0] = vbe;
+                        continue;
+                    }
+                    const int s1 = dev.slot[1];
+                    const double vbcLast = last[s0] - last[s1], vbcBefore = before[s0] - before[s1], vbcEarlier = earlier[s0] - earlier[s1];
+                    const double vbc = limitJunction(3.0 * (vbcLast - vbcBefore) + vbcEarlier, vbcLast, dev);
+                    v[s0] = vbe;
+                    v[s1] = vbe - vbc;
+                }
+            for (int r = 0; r < m; ++r)
+            {
+                earlier[r] = before[r];
+                before[r] = last[r];
+            }
+
             newtonSteps = 0;
             bool converged = false;
             for (int it = 0; it < limit; ++it)
             {
-                deviceCurrents(voltage, f, df);
+                deviceCurrents(v, f, g);
                 double worst = 0.0;
                 for (int r = 0; r < m; ++r)
                 {
                     double kf = 0.0;
                     for (int c = 0; c < m; ++c)
-                        kf += K[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] * f[static_cast<std::size_t>(c)];
-                    residual[static_cast<std::size_t>(r)] = voltage[static_cast<std::size_t>(r)] - p[static_cast<std::size_t>(r)] - kf;
-                    worst = std::max(worst, std::abs(residual[static_cast<std::size_t>(r)]));
+                        kf += k[r][c] * f[c];
+                    residual[r] = v[r] - p[r] - kf;
+                    worst = std::max(worst, std::abs(residual[r]));
                 }
-                if (worst < 1.0e-8) // 10 nV
+                if (worst < 1.0e-7) // 100 nV: some -150 dB under the drum's volts
                 {
                     converged = true; // f is the current at these voltages
                     break;
                 }
-                for (int r = 0; r < m; ++r)
-                    for (int c = 0; c < m; ++c)
+                // The Jacobian I - K G, G block diagonal by device: each column has a device's one or two terms.
+                for (int d = 0; d < deviceCount; ++d)
+                {
+                    const Device& dev = device[d];
+                    const int s0 = dev.slot[0];
+                    if (! dev.isTransistor)
                     {
-                        double kd = 0.0;
-                        for (int k = 0; k < m; ++k)
-                            kd += K[static_cast<std::size_t>(r)][static_cast<std::size_t>(k)] * df[static_cast<std::size_t>(k)][static_cast<std::size_t>(c)];
-                        jac[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = (r == c ? 1.0 : 0.0) - kd;
+                        const double g00 = g[s0][s0];
+                        for (int r = 0; r < m; ++r)
+                            jac[r][s0] = (r == s0 ? 1.0 : 0.0) - k[r][s0] * g00;
+                        continue;
                     }
-                // delta = jac^-1 residual, by elimination.
+                    const int s1 = dev.slot[1];
+                    const double g00 = g[s0][s0], g01 = g[s0][s1], g10 = g[s1][s0], g11 = g[s1][s1];
+                    for (int r = 0; r < m; ++r)
+                    {
+                        const double k0 = k[r][s0], k1 = k[r][s1];
+                        jac[r][s0] = (r == s0 ? 1.0 : 0.0) - (k0 * g00 + k1 * g10);
+                        jac[r][s1] = (r == s1 ? 1.0 : 0.0) - (k0 * g01 + k1 * g11);
+                    }
+                }
+                // delta = jac^-1 residual, by elimination with partial pivoting (rows swapped as pointers).
+                double* row[maxDevicePorts];
                 for (int r = 0; r < m; ++r)
-                    delta[static_cast<std::size_t>(r)] = residual[static_cast<std::size_t>(r)];
+                {
+                    row[r] = jac[r];
+                    delta[r] = residual[r];
+                }
                 for (int col = 0; col < m; ++col)
                 {
                     int pivot = col;
                     for (int r = col + 1; r < m; ++r)
-                        if (std::abs(jac[static_cast<std::size_t>(r)][static_cast<std::size_t>(col)]) > std::abs(jac[static_cast<std::size_t>(pivot)][static_cast<std::size_t>(col)]))
+                        if (std::abs(row[r][col]) > std::abs(row[pivot][col]))
                             pivot = r;
-                    std::swap(jac[static_cast<std::size_t>(pivot)], jac[static_cast<std::size_t>(col)]);
-                    std::swap(delta[static_cast<std::size_t>(pivot)], delta[static_cast<std::size_t>(col)]);
-                    const double d = jac[static_cast<std::size_t>(col)][static_cast<std::size_t>(col)];
+                    std::swap(row[pivot], row[col]);
+                    std::swap(delta[pivot], delta[col]);
+                    const double d = row[col][col];
                     if (std::abs(d) < 1.0e-300)
                         continue;
                     for (int r = col + 1; r < m; ++r)
                     {
-                        const double fct = jac[static_cast<std::size_t>(r)][static_cast<std::size_t>(col)] / d;
+                        const double fct = row[r][col] / d;
                         for (int c = col; c < m; ++c)
-                            jac[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] -= fct * jac[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)];
-                        delta[static_cast<std::size_t>(r)] -= fct * delta[static_cast<std::size_t>(col)];
+                            row[r][c] -= fct * row[col][c];
+                        delta[r] -= fct * delta[col];
                     }
                 }
                 for (int col = m - 1; col >= 0; --col)
                 {
-                    double v = delta[static_cast<std::size_t>(col)];
-                    for (int k = col + 1; k < m; ++k)
-                        v -= jac[static_cast<std::size_t>(col)][static_cast<std::size_t>(k)] * delta[static_cast<std::size_t>(k)];
-                    const double d = jac[static_cast<std::size_t>(col)][static_cast<std::size_t>(col)];
-                    delta[static_cast<std::size_t>(col)] = std::abs(d) < 1.0e-300 ? 0.0 : v / d;
+                    double s = delta[col];
+                    for (int c = col + 1; c < m; ++c)
+                        s -= row[col][c] * delta[c];
+                    const double d = row[col][col];
+                    delta[col] = std::abs(d) < 1.0e-300 ? 0.0 : s / d;
+                }
+                // A step this small leaves the answer within some 10 nV (Newton's error goes as the step squared
+                // over twice VT): take it, the currents carried along their slopes, without evaluating the junctions
+                // again, as SPICE's step tolerance ends its iterations.
+                double largest = 0.0;
+                for (int r = 0; r < m; ++r)
+                    largest = std::max(largest, std::abs(delta[r]));
+                if (largest < 2.0e-5)
+                {
+                    for (int r = 0; r < m; ++r)
+                        v[r] -= delta[r];
+                    for (int d = 0; d < deviceCount; ++d)
+                    {
+                        const Device& dev = device[d];
+                        const int s0 = dev.slot[0];
+                        if (! dev.isTransistor)
+                        {
+                            f[s0] -= g[s0][s0] * delta[s0];
+                            continue;
+                        }
+                        const int s1 = dev.slot[1];
+                        const double d0 = delta[s0], d1 = delta[s1];
+                        f[s0] -= g[s0][s0] * d0 + g[s0][s1] * d1;
+                        f[s1] -= g[s1][s0] * d0 + g[s1][s1] * d1;
+                    }
+                    ++newtonSteps;
+                    converged = true;
+                    break;
                 }
                 // The step, its junctions limited as SPICE limits them.
                 for (int d = 0; d < deviceCount; ++d)
                 {
-                    const auto& dev = devices[static_cast<std::size_t>(d)];
-                    const auto s0 = static_cast<std::size_t>(dev.slot[0]);
+                    const Device& dev = device[d];
+                    const int s0 = dev.slot[0];
                     if (! dev.isTransistor)
                     {
-                        voltage[s0] = limitJunction(voltage[s0] - delta[s0], voltage[s0], dev.thermal, dev.saturation);
+                        v[s0] = limitJunction(v[s0] - delta[s0], v[s0], dev);
                         continue;
                     }
-                    const auto s1 = static_cast<std::size_t>(dev.slot[1]);
-                    const double vbeOld = voltage[s0], vbcOld = voltage[s0] - voltage[s1];
-                    const double vbe = limitJunction(vbeOld - delta[s0], vbeOld, dev.thermal, dev.saturation);
-                    const double vbc = limitJunction((vbeOld - delta[s0]) - (voltage[s1] - delta[s1]), vbcOld, dev.thermal, dev.saturation);
-                    voltage[s0] = vbe;
-                    voltage[s1] = vbe - vbc;
+                    const int s1 = dev.slot[1];
+                    const double vbeOld = v[s0], vbcOld = v[s0] - v[s1];
+                    const double vbe = limitJunction(vbeOld - delta[s0], vbeOld, dev);
+                    const double vbc = limitJunction((vbeOld - delta[s0]) - (v[s1] - delta[s1]), vbcOld, dev);
+                    v[s0] = vbe;
+                    v[s1] = vbe - vbc;
                 }
                 ++newtonSteps;
             }
+            double* i = current.data();
             if (converged)
-                current = f;
+                for (int r = 0; r < m; ++r)
+                    i[r] = f[r];
             else
-                deviceCurrents(voltage, current, df);
+                deviceCurrents(v, i, g);
         }
 
         int nodeCount() const noexcept
@@ -732,6 +902,7 @@ namespace coolsynth::synth::v3::wdf
         std::array<int, MaxProbes> probeNode {};
         std::array<double, MaxProbes> probes {};
         std::array<double, MaxNonlinear> voltage {}, current {};
+        std::array<double, MaxNonlinear> previousVoltage {}, earlierVoltage {}; // two samples back and three, for the solver's start
         std::array<double, maxColumns> packed {};
         std::array<std::array<double, maxColumns>, (MaxNonlinear > 0 ? MaxNonlinear : 1)> toDevices {};
         std::array<std::array<double, maxColumns>, MaxPorts> toCapacitors {};
@@ -739,12 +910,7 @@ namespace coolsynth::synth::v3::wdf
         std::array<int, MaxPorts> sending {}, capacitorPort {};
         int sendingCount = 0, linearSendingCount = 0, capacitorCount = 0;
 
-        std::array<std::array<double, maxUnknowns>, maxUnknowns> Y {};
-        std::array<std::array<double, maxColumns>, maxUnknowns> X {};
-        std::array<std::array<double, MaxPorts>, MaxPorts> S {};
-        std::array<std::array<double, MaxInputs>, MaxPorts> Q {};
-        std::array<std::array<double, maxColumns>, MaxProbes> W {};
-        std::array<std::array<double, MaxNonlinear>, MaxNonlinear> M {}, K {};
+        std::array<std::array<double, MaxNonlinear>, MaxNonlinear> K {};
 
         int portCount = 0, inputCount = 0, nullorCount = 0, deviceCount = 0, nonlinearCount = 0, probeCount = 0;
         int newtonSteps = 0;

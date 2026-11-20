@@ -4725,3 +4725,25 @@ The user went through `docs/overnight-2026-11-20.md`, accepted the night's decis
 - Six deep presets (options: with the user one at a time, recommended and chosen; drafted together; not now).
 - Profiling (options: Windows Performance Recorder, recommended and chosen; Visual Studio's profilers; Tracy; AMD uProf), CPU first (recommended and chosen; memory first; both), before the Mac port (recommended and chosen; now; only when a sound hits the cap).
 
+## D236. The 808 as its circuit, built (2026-11-20)
+
+Built while the user was away, who had said to start with what needs no permission, the 808 first. Each decision was taken as recommended and is in `docs/overnight-2026-11-20.md` as its pick list, for review.
+
+The Kick generator's 808 (D232's struck resonator) is replaced by Werner's circuit, as chosen in D235: `src/synth/v3/Tr808BassDrum.h` on `src/synth/v3/CircuitWdf.h`, a wave digital filter whose R-type root holds every element of a sub-circuit, its scattering from modified nodal analysis, op-amps as nullors, the transistors and diodes solved at the root by Newton's method. The four sub-circuits are the thesis's; at 96 kHz the output is within 2.5 % rms of ngspice renders of the whole schematic (1.2 % accented), the sigh within 0.25 Hz, the decay within 3 %.
+
+- R164 (options: 47 kOhm as in the DAFx 2014 paper and the service notes, recommended and taken; the thesis table's 4.7 kOhm with VR6 held stable): with 4.7 kOhm the loop gain is about 8 and the drum oscillates.
+- chowdsp_wdf (options: our own root for every element, chowdsp_wdf not added, recommended and taken; chowdsp_wdf for the pulse shaper and output filter alone): the op-amps and devices tie each sub-circuit into one root, so its adaptors had nothing to do; it was never downloaded.
+- Q44 (options: an ideal emitter follower, recommended and taken; a transistor like Q43).
+- Oversampling (options: none, the voices run at 96 kHz, recommended and taken; 2x inside the circuit).
+- The knobs (options: each on the part that does its job, recommended and taken; the 808's own controls only): Decay on VR6 through a table measured on the model (`decayForSeconds`), extended past 500 kOhm to 740 kOhm for the knob's 10 s; Punch on R166, Punch Time on C38, Sigh on R161, Click on the trigger's width (0.1, 1, 10 ms), Accent on the trigger's height (4 to 14 V), Shape on the op-amps' rails (15 to 4 V, a soft clip outside the loop), Tone on VR5; the key on C41 and C42.
+- The Tone knob (options: VR5 turned as the C-taper pot the service notes' parts list gives, fitted to Michael Fischer's recordings, a quarter of VR5 left at mid-travel, recommended and taken; linear as the thesis parametrises it): `Tr808BassDrum::toneForKnob`; VR6 is B taper, so Decay stays linear in VR6 ([parts list](https://www.manualslib.com/manual/1217113/Roland-Tr-808.html?page=16)).
+- The shortest decay (options: the circuit's floor, 0.17 s at the stock tuning, recommended and taken; a fade after the circuit for shorter settings).
+- A hit on a ringing drum (options: for the 808, no steeper than the same hit on a silent drum plus the ring's slope, recommended and taken; a higher fixed limit for every model; a softer 808 attack): the tapered Tone's attack reached 0.0201 against the old limit of 0.02.
+- The accent's level (options: the circuit's, the kick test now expecting a soft hit under 0.8 of a full one, recommended and taken; the output scaled with velocity on top).
+- The voice cap (options: the 808 priced at its 99th percentile, 6.6 % a voice, as the spiking effects are, recommended and taken; at its average, 3.1 %): `voiceCost::Costs::kick808`, beside the 909's and Modern's 0.41.
+- The solver (options: 100 nV with a start from the last samples, recommended and taken; 10 nV): the start is a fixed-point step while every junction is off, a parabola through the last three samples after a sample that solved at once, else the last voltages; a step under 20 uV is taken without evaluating the junctions again. Half the hit's work, the comparison with SPICE unchanged.
+
+Against Fischer's 25 recorded bass drums (analysis only, `COOLSYNTH_808_FISCHER` in `tests/V3Tr808Tests.cpp`): the tail's pitch 49.6 to 50.4 Hz recorded against 49.3 to 49.6 modelled, the sigh within about 1 Hz from Decay 5 up; the recorded unit rings 25 to 35 % longer at the long marks (a part's tolerance; the Decay knob reads seconds and reaches both); the model's first 20 ms about 15 % duller at every mark, left for the user's ears.
+
+Also: the rest state is solved once for the process (`Tr808BassDrum::warmUp`, from `Part::prepare`), so a slot switching to the Kick on the audio thread only copies it; the per-sample loops run on plain pointers, as checked indexing cost more than the arithmetic in the Debug build the cap is measured in. Succession 808 levelled again (master 0.5 to 2.0 dB). Left for the user's ears: the 808 circuit, Succession 808, the 909 and Modern.
+

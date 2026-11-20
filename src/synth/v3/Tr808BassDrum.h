@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 
 #include "CircuitWdf.h"
 
@@ -41,7 +42,11 @@ namespace coolsynth::synth::v3
             buildOutput();
         }
 
-        /** At a sample rate, settled at rest. */
+        /**
+            At a sample rate, at rest. Cheap enough for the audio thread, where a slot switching to the Kick prepares
+            it: the rest state is solved once for the process (restState), and each circuit's analysis waits for its
+            first sample.
+        */
         void prepare(double rate) noexcept
         {
             sampleRate = rate;
@@ -49,8 +54,35 @@ namespace coolsynth::synth::v3
             envelope.setSampleRate(rate);
             resonator.setSampleRate(rate);
             output.setSampleRate(rate);
-            settle();
+            rest();
         }
+
+        /** Back to rest: a copy of the solved rest state, no solving. */
+        void rest() noexcept
+        {
+            const RestState& r = restState();
+            pulse.restore(r.pulse);
+            envelope.restore(r.envelope);
+            resonator.restore(r.resonator);
+            output.restore(r.output);
+            triggerTime = -1.0;
+            pulseResting = envelopeResting = true;
+            lastEnvelope = r.envelopeVolts;
+            stillSamples = 0;
+            resonator.setInput(resonatorEnvelope, r.envelopeVolts);
+            resonator.setInput(resonatorPulse, 0.0);
+            pulse.setInput(pulseIn, 0.0);
+            envelope.setInput(envelopeIn, 0.0);
+            envelope.setInput(envelopeSupply, supply);
+            output.setInput(outputIn, 0.0);
+        }
+
+        /**
+            The circuit's rest state, solved on first use and kept for the process: call it once off the audio thread
+            (Part::prepare does) so no slot ever solves it there. It depends on neither the sample rate nor the knobs:
+            the capacitors are open at rest, and the knobs are capacitors and resistors no direct current flows through.
+        */
+        static void warmUp() noexcept { restState(); }
 
         /** Back to the circuit at rest: capacitors charged as they are with no trigger. */
         void settle() noexcept
@@ -80,10 +112,20 @@ namespace coolsynth::synth::v3
             triggerTime = 0.0;
         }
 
-        /** Decay 0..1: VR6 from 0 to 500 kOhm. */
-        void setDecay(double amount) noexcept { resonator.setResistance(vr6, std::max(1.0, std::clamp(amount, 0.0, 1.0) * 500.0e3)); }
+        /** Decay 0..1: VR6 from 0 to 500 kOhm; past 1 the extended-decay bend, VR6 up to 740 kOhm (the loop gain then nears the 0.94 where the drum would ring on). */
+        void setDecay(double amount) noexcept { resonator.setResistance(vr6, std::max(1.0, std::clamp(amount, 0.0, 1.48) * 500.0e3)); }
         /** Tone 0..1: VR5 from 10 kOhm to 0 (the thesis's (1 - c) VR5). */
         void setTone(double amount) noexcept { output.setResistance(vr5, std::max(1.0, (1.0 - std::clamp(amount, 0.0, 1.0)) * 10.0e3)); }
+        /**
+            The Tone knob's turn, 0..1, as setTone's amount. VR5 is a C-taper pot (the service notes' parts list), so
+            the share of it left in the circuit falls fast as the knob turns up: about a quarter at mid-travel, as
+            fitted to Michael Fischer's recordings of a real 808, whose brightness steps evenly with the knob.
+        */
+        [[nodiscard]] static double toneForKnob(double turn) noexcept
+        {
+            const double t = std::clamp(turn, 0.0, 1.0);
+            return 1.0 - (std::pow(8.0, 1.0 - t) - 1.0) / 7.0;
+        }
         /** Level 0..1: VR4's wiper. */
         void setLevel(double amount) noexcept
         {
@@ -94,9 +136,38 @@ namespace coolsynth::synth::v3
         /** The bridged-T's capacitors scaled together: the pitch by 1 / scale, its Q kept (the tuning mod). */
         void setTuning(double scale) noexcept
         {
+            tuning = scale;
             resonator.setCapacitance(c41, nominalC41 * scale);
             resonator.setCapacitance(c42, nominalC42 * scale);
         }
+
+        // The circuit bends the Kick's knobs reach (docs/research/kick-808-wdf.md).
+        /** R166, the resistance left when Q43 shorts R165: smaller, a higher attack shift. Stock 6.8 kOhm. */
+        void setAttackResistor(double ohms) noexcept
+        {
+            r166Ohms = std::max(10.0, ohms);
+            resonator.setResistance(r166, r166Ohms);
+        }
+        /** C38 scaled: the envelope generator, and so the attack shift, lasts longer or shorter. Stock 0.1 uF. */
+        void setEnvelopeScale(double scale) noexcept { envelope.setCapacitance(c38, 0.1e-6 * std::max(0.01, scale)); }
+        /** R161, the leakage that makes the sigh: smaller, more sigh. Stock 1 MOhm. */
+        void setLeakResistor(double ohms) noexcept
+        {
+            r161Ohms = std::clamp(ohms, 1.0e3, 1.0e9);
+            resonator.setResistance(r161Resonator, r161Ohms);
+            envelope.setResistance(r161Envelope, r161Ohms);
+        }
+        /** The op-amps' rails: the resonator's output clips softly near them. Stock 15 V. */
+        void setRails(double volts) noexcept { rails = std::clamp(volts, 1.0, 15.0); }
+
+        /** The settled pitch of the tail at a tuning, with Q43 off: the bridged-T's centre frequency. */
+        [[nodiscard]] double tailHz(double scale) const noexcept
+        {
+            const double g = 1.0 / (47.0e3 + r166Ohms) + 1.0 / 470.0e3 + 1.0 / r161Ohms;
+            const double c = scale * nominalC41;
+            return std::sqrt(g / (c * c * 1.0e6)) / 6.283185307179586;
+        }
+        [[nodiscard]] double currentTuning() const noexcept { return tuning; }
 
         /** One sample of the whole drum; returns the output in volts. */
         double process() noexcept
@@ -132,16 +203,27 @@ namespace coolsynth::synth::v3
                 envelope.setInput(envelopeIn, vin);
                 envelope.process();
                 const double v = envelope.probe(envelopeOut);
-                stillSamples = std::abs(v - lastEnvelope) < 1.0e-7 ? stillSamples + 1 : 0;
+                stillSamples = std::abs(v - lastEnvelope) < 1.0e-6 ? stillSamples + 1 : 0; // above the solver's 0.1 uV
                 lastEnvelope = v;
                 envelopeResting = ! active && stillSamples > static_cast<int>(0.005 * sampleRate);
             }
             resonator.setInput(resonatorEnvelope, envelope.probe(envelopeOut));
             resonator.setInput(resonatorPulse, pulseResting ? 0.0 : pulse.probe(pulseOut));
             resonator.process();
-            output.setInput(outputIn, resonator.probe(resonatorOut));
+            output.setInput(outputIn, clipToRails(resonator.probe(resonatorOut)));
             output.process();
             return output.probe(outputOut);
+        }
+
+        /** The op-amps' rails, as a soft clip of the resonator's output: untouched below 80 % of them. */
+        [[nodiscard]] double clipToRails(double v) const noexcept
+        {
+            const double knee = 0.8 * rails;
+            const double a = std::abs(v);
+            if (a <= knee)
+                return v;
+            const double over = knee + (rails - knee) * std::tanh((a - knee) / (rails - knee));
+            return v < 0.0 ? -over : over;
         }
 
         // The stages' last outputs, for tests against the reference.
@@ -149,6 +231,10 @@ namespace coolsynth::synth::v3
         [[nodiscard]] double envelopeVolts() const noexcept { return envelope.probe(envelopeOut); }
         [[nodiscard]] double resonatorVolts() const noexcept { return resonator.probe(resonatorOut); }
         [[nodiscard]] int newtonSteps() const noexcept { return std::max(envelope.lastNewtonSteps(), resonator.lastNewtonSteps()); }
+        [[nodiscard]] int envelopeNewtonSteps() const noexcept { return envelopeResting ? 0 : envelope.lastNewtonSteps(); }
+        [[nodiscard]] int resonatorNewtonSteps() const noexcept { return resonator.lastNewtonSteps(); }
+        [[nodiscard]] bool pulseIsResting() const noexcept { return pulseResting; }
+        [[nodiscard]] bool envelopeIsResting() const noexcept { return envelopeResting; }
 
     private:
         // Pulse shaper: 1 vin, 2 npulse.
@@ -171,10 +257,10 @@ namespace coolsynth::synth::v3
             envelope.addResistor(2, 0, 2.7e3);     // R158
             envelope.addCapacitor(2, 0, 6.8e-9);   // C0, added by the thesis for the solver
             envelope.addResistor(4, 3, 1.0e6);     // R156
-            envelope.addCapacitor(3, 0, 0.1e-6);   // C38
+            c38 = envelope.addCapacitor(3, 0, 0.1e-6); // C38
             envelope.addResistor(4, 5, 22.0e3);    // R160
             envelope.addCapacitor(5, 6, 0.033e-6); // C39
-            envelope.addResistor(6, 0, 1.0e6);     // R161, to the resonator's top node, near ground
+            r161Envelope = envelope.addResistor(6, 0, 1.0e6); // R161, to the resonator's top node, near ground
             envelope.addResistor(5, 0, 106.0e3);   // R159 to Q43's base, as the thesis tunes it
             envelope.addTransistor(3, 2, 0, transistorSaturation, betaF, betaR, thermal); // Q41
             envelope.addTransistor(5, 3, 0, transistorSaturation, betaF, betaR, thermal); // Q42
@@ -190,9 +276,9 @@ namespace coolsynth::synth::v3
             resonatorEnvelope = resonator.addInput(1);
             resonatorPulse = resonator.addInput(2);
             resonator.addCapacitor(1, 3, 0.033e-6);      // C39
-            resonator.addResistor(3, 4, 1.0e6);          // R161
+            r161Resonator = resonator.addResistor(3, 4, 1.0e6); // R161
             resonator.addResistor(1, 5, 100.0e3);        // R159
-            resonator.addResistor(4, 6, 6.8e3);          // R166
+            r166 = resonator.addResistor(4, 6, 6.8e3);   // R166
             resonator.addResistor(6, 0, 47.0e3);         // R165
             c41 = resonator.addCapacitor(4, 7, nominalC41); // C41
             c42 = resonator.addCapacitor(4, 8, nominalC42); // C42
@@ -244,8 +330,36 @@ namespace coolsynth::synth::v3
         int resonatorEnvelope = 0, resonatorPulse = 0, resonatorOut = 0, c41 = 0, c42 = 0, vr6 = 0;
         int outputIn = 0, outputOut = 0, vr5 = 0, vr4Top = 0, vr4Bottom = 0;
 
+        struct RestState
+        {
+            decltype(pulse)::Snapshot pulse {};
+            decltype(envelope)::Snapshot envelope {};
+            decltype(resonator)::Snapshot resonator {};
+            decltype(output)::Snapshot output {};
+            double envelopeVolts = 0.0;
+        };
+
+        static const RestState& restState() noexcept
+        {
+            static const RestState state = []
+            {
+                auto drum = std::make_unique<Tr808BassDrum>();
+                drum->settle();
+                RestState s;
+                s.pulse = drum->pulse.snapshot();
+                s.envelope = drum->envelope.snapshot();
+                s.resonator = drum->resonator.snapshot();
+                s.output = drum->output.snapshot();
+                s.envelopeVolts = drum->envelope.probe(drum->envelopeOut);
+                return s;
+            }();
+            return state;
+        }
+
         double sampleRate = 96000.0;
         double triggerTime = -1.0, triggerVolts = 4.0, triggerWidth = 0.001;
+        int c38 = 0, r161Envelope = 0, r161Resonator = 0, r166 = 0;
+        double r166Ohms = 6.8e3, r161Ohms = 1.0e6, rails = 15.0, tuning = 1.0;
         bool pulseResting = false, envelopeResting = false;
         double lastEnvelope = 0.0;
         int stillSamples = 0;

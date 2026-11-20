@@ -146,7 +146,7 @@ voice = env2ToP1=0
 play = mode=mono
 i1 = Drive amount=0.25 mix=0.4
 mix = level=-8
-master = 0.5
+master = 2
 # Macros (drafted 2026-11-20 for the user's review, in the bank's order: tone, character, time, movement): Tone, Punch, Boom, Grit
 macros = names=Tone,Punch,Boom,Grit
 mod = src=macro1 dst=g1.tone amount=0.4

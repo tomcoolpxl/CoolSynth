@@ -78,8 +78,9 @@ Per voice:
 1. **Three generator slots**, G1 to G3. Each holds any of 11 generator types (VA, Noise, FM2, FM4, Wavetable,
    String, Modal, Sample, Grain, Chip, Kick). A generator can sync, ring-modulate, frequency-modulate or
    amplitude-modulate the next one. Chip (`ChipGenerator.h`, D231) plays the NES, Game Boy, SID, AY, YM and SCC
-   with their frame tables (`docs/design/CHIP_GENERATOR.md`); Kick (`KickGenerator.h`, D232) is a tuned kick drum,
-   the TR-808 as a struck resonator, the 909 and a modern one.
+   with their frame tables (`docs/design/CHIP_GENERATOR.md`); Kick (`KickGenerator.h`, D232) is a tuned kick drum:
+   the TR-808 as its circuit in wave digital filters (`Tr808BassDrum.h` on `CircuitWdf.h`, D236), the 909 and a
+   modern one.
 2. The generators are summed into **three processor slots in series**, P1 to P3. Each holds any of 7
    processor types (Ladder, SVF, Comb, Formant, Folder, Crusher, Drive). Generator 3 can modulate the ladder's
    cutoff at audio rate. The SVF also morphs from low-pass to high-pass as the Oberheim SEM does, and takes the

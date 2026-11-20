@@ -153,11 +153,12 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     to the system clipboard as text. Right click always opens a menu, Back is an item in every menu. Opened by right
     click, long press and Shift+F10; each change one undo step.
 30. The Succession bass drum. The Kick generator is built (D232) and Succession 808 drafted in Engine Room. The
-    user changed the night's choice (D235): Werner's full circuit model of the 808 in wave digital filters replaces
-    today's 808, the full circuit with its envelope generator, on chowdsp_wdf with our own Newton root for Q43 and
-    D52, the resonator's capacitors scaled with the key, checked against ngspice renders and Fischer's samples. Plan
-    and phases: `docs/research/kick-808-wdf.md`; the four downloads are allowed. Left also: the user's ears on the
-    909 and Modern models.
+    user changed the night's choice (D235): Werner's full circuit model of the 808 in wave digital filters. Built
+    (D236): the full circuit with its envelope generator, our own root for every element (chowdsp_wdf not needed),
+    the resonator's capacitors scaled with the key, within 2.5 % of ngspice renders and close to Fischer's
+    recordings; Succession 808 levelled again. Left: the user's ears on the 808 circuit, Succession 808 and the 909
+    and Modern models; the open questions in D236 (short decays, oversampling for the hardest Shape, the model's
+    first 20 ms duller than the recordings').
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.

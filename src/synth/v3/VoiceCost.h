@@ -13,7 +13,8 @@
     (tests/V3ModuleCostReport.cpp, COOLSYNTH_CPU_REPORT=1) on the development machine, the optimised Debug build, in
     percent of a 256-sample block at 48 kHz: each module at its hardest settings in sixteen voices, struck twice,
     the best of three runs. A voice's share is the average over the voices, as the 99th percentile divided by
-    sixteen is lost in the timer's noise; an effect's is its 99th percentile, as some spike (spectral Pitch's frames).
+    sixteen is lost in the timer's noise; an effect's is its 99th percentile, as some spike (spectral Pitch's frames),
+    and so is the Kick's 808 circuit's, whose work is mostly in each hit.
     At other rates the costs scale with the rate, as the voices run at twice the host's. The effects come off the
     budget first, once per sound; the layers then share what is left in proportion to what they ask for, never
     below one voice. A slower computer is the live emergency's (EngineV3::emergencyShare), never a bounce's.
@@ -33,6 +34,7 @@ namespace coolsynth::synth::v3::voiceCost
         std::array<float, insertType::count> effect {};        // by insertType, once for the sound
         float spectralPitch = 0.0f;                            // Pitch in its spectral mode, instead of its heads
         float svf6581 = 0.0f;                                  // the SVF in its SID 6581 character, instead of Clean's
+        float kick808 = 0.0f;                                  // the Kick's 808 circuit, instead of its other models
     };
 
     // Measured on 2026-11-19 (D224). Wavetable's five copies cost alike, so one copy and each more are a fifth of
@@ -40,7 +42,7 @@ namespace coolsynth::synth::v3::voiceCost
     inline constexpr Costs measured {
         0.35f, // the voice itself
         //  Off   VA    Noise FM2   FM4   Wave  String Modal Sample Grain Chip  Kick
-        { 0.0f, 0.19f, 0.05f, 0.30f, 0.86f, 0.12f, 0.38f, 0.15f, 0.13f, 0.85f, 0.33f, 0.33f }, // Chip, Kick: 2026-11-20
+        { 0.0f, 0.19f, 0.05f, 0.30f, 0.86f, 0.12f, 0.38f, 0.15f, 0.13f, 0.85f, 0.33f, 0.41f }, // Chip, Kick: 2026-11-20
         0.04f, 0.12f,
         //  Off   Ladder SVF  Crush Folder Drive Formant Comb
         { 0.0f, 0.56f, 0.17f, 0.04f, 0.23f, 0.48f, 0.23f, 0.28f },
@@ -48,6 +50,7 @@ namespace coolsynth::synth::v3::voiceCost
         { 0.0f, 0.80f, 0.65f, 0.53f, 0.45f, 0.28f, 0.39f, 0.77f, 0.23f, 0.10f, 0.10f, 0.40f, 0.86f, 3.79f, 0.36f },
         5.54f,
         0.40f, // the SVF's 6581: measured 2026-11-20 (D233), 0.42 against the clean SVF's 0.20 in the same run
+        6.60f, // the 808 circuit (D236): measured 2026-11-20 at its 99th percentile; its average was 3.07, the 909's 0.41
     };
 
     /** The Grain effect's grains at once, density times size, each this much (its densest, 40 at once, took 7.1). */
@@ -69,7 +72,10 @@ namespace coolsynth::synth::v3::voiceCost
         for (const auto& g : part.voice.generators)
         {
             const int type = std::clamp(g.type, 0, static_cast<int>(c.generator.size()) - 1);
-            cost += c.generator[static_cast<std::size_t>(type)];
+            const bool circuit808 = type == generatorType::kick
+                                    && std::lround(descriptorToUnits(KickGenerator::descriptor().params[KickGenerator::model], g.p[KickGenerator::model]))
+                                           == static_cast<long>(KickGenerator::Model::tr808);
+            cost += circuit808 ? c.kick808 : c.generator[static_cast<std::size_t>(type)];
             if (type == generatorType::va)
                 cost += c.vaCopy * static_cast<float>(detail::unisonOf(g, VaGenerator::descriptor(), VaGenerator::unison) - 1);
             else if (type == generatorType::wavetable)

@@ -372,3 +372,153 @@ Question: which profiler first?
   - A download and a driver.
 
 Taken: WPR and WPA first, when the profiling is done.
+
+## The afternoon: the 808 as its circuit (D236)
+
+You left saying to start with what needs no permission, the 808 first.
+Done while you were away; the decisions follow as pick lists, the recommended option first.
+
+- The Kick generator's 808 is now Werner's circuit: the trigger's pulse shaper, the envelope generator's two transistors, the bridged-T resonator with Q43 and D52, the feedback buffer with the Decay pot, the tone, level and output buffer.
+  - Checked stage by stage against ngspice renders of the whole schematic: the output within 2.5 % rms (1.2 % accented), the sigh within 0.25 Hz, the decay within 3 %.
+- It costs about half of what its first version did this morning: 3.1 % of a block a voice on average, 6.6 % in its hits, against 0.33 % for the old struck resonator.
+  - The voice cap prices the 808 on its own; the 909 and Modern stay cheap (0.41 %).
+- A slot switching to the Kick no longer solves the circuit on the audio thread: its rest state is solved once at startup.
+- Compared with Michael Fischer's 1994 recordings of a real 808 (analysis only, never shipped), 25 bass drums at five Tone and five Decay marks:
+  - the tail's pitch: the recordings 49.6 to 50.4 Hz, the model 49.3 to 49.6 Hz;
+  - the sigh: within about 1 Hz at Decay 5 and up;
+  - the decay: the recorded unit rings 25 to 35 % longer at the long marks (3.7 s against 2.7 s at full); the Kick's Decay knob reads seconds, so it reaches both;
+  - the brightness of the first 20 ms: the model about 15 % duller at every mark, perhaps the real trigger's sharper edges; for your ears.
+- The Tone knob now turns VR5 as the 808's C-taper pot does (the service notes' parts list), fitted to the recordings.
+- Succession 808 is levelled again: master from 0.5 to 2.0 dB (the circuit is quieter, the tapered Tone a little brighter).
+
+For your ears:
+- Succession 808 (Engine Room), at C4, A flat 3, F3 and G3, as before;
+- any Kick on Model 808: Punch, Punch Time, Sigh, Click, Shape, Accent, Tone and Decay now each move a part of the circuit.
+
+One slip: a shell command of mine held an empty heredoc, against your rule; it only created an empty file, deleted at once.
+
+### R164
+
+Question: the thesis's parts table gives R164 as 4.7 kOhm. With it the feedback loop's gain is about 8 and the drum oscillates on its own; it rings forever only above 0.94. Which value?
+
+- 47 kOhm, as in Werner's DAFx 2014 paper and the service notes (Recommended)
+  - The drum then matches the thesis's own figures.
+- 4.7 kOhm as the table says, with VR6 held low enough to stay stable
+  - Follows what looks like a typo; the Decay's range changes.
+
+Taken: 47 kOhm.
+
+### chowdsp_wdf
+
+Question: you chose chowdsp_wdf with our own root for the nonlinear parts. In the 808 every element ends up under one root (the op-amps, Q43 and D52 tie the bridged-T and the feedback into one network that no series-parallel tree splits), so chowdsp's adaptors have nothing left to do. What then?
+
+- Our own root holds every element; chowdsp_wdf is not added (Recommended)
+  - No dependency, nothing downloaded for it; the pulse shaper keeps the thesis's alpha transform, as chowdsp's CapacitorAlphaT has it.
+- Add chowdsp_wdf for the pulse shaper and the output filter alone
+  - A dependency for two small trees the root already solves.
+
+Taken: our own root; chowdsp_wdf is not in the repository.
+
+### The output buffer Q44
+
+Question: how to model the output transistor Q44?
+
+- An ideal emitter follower (Recommended)
+  - It only buffers; the thesis treats the output stage as linear.
+- A transistor solved like Q43
+  - More cost for a difference below the comparison's noise.
+
+Taken: the ideal follower.
+
+### Oversampling
+
+Question: should the circuit run faster than the voice?
+
+- No: the voices already run at 96 kHz (Recommended)
+  - Within 2.5 % of SPICE as it is; the rails' soft clip sits outside the feedback loop.
+- 2x inside the circuit
+  - About twice the cost, for the hardest Shape settings only.
+
+Taken: no oversampling; to revisit if the hardest Shape aliases to your ears.
+
+### The knobs on the circuit
+
+Question: how do the Kick's twelve knobs reach the 808's circuit? Each knob's default is the stock 808.
+
+- Each knob moves the part of the circuit that does that job (Recommended)
+  - Decay: VR6, through a table measured on the model so the knob still reads seconds; past VR6's 500 kOhm an extended range up to 740 kOhm, to reach the knob's 10 s.
+  - Punch: R166, the attack's pitch jump; Punch Time: C38, how long the envelope generator holds Q43 on; Sigh: R161, the leak that bends the pitch.
+  - Click: the trigger's width, 0.1 ms to the stock 1 ms to 10 ms; Accent: the trigger from 4 V unaccented to 14 V.
+  - Shape: the op-amps' rails from 15 V down to 4 V, a soft clip at the resonator's output; Tone: VR5.
+- Only the 808's own controls (Decay, Tone, Accent), the other knobs without effect on this model
+  - The real panel; the bends gone.
+
+Taken: each knob on its part.
+
+### The Tone knob's taper
+
+Question: the service notes' parts list gives VR5, the bass drum's Tone pot, as 10 kOhm C taper (Decay's VR6 is B, linear). Turned linearly, the model's brightness barely moves until the top of the knob; Fischer's recordings step evenly. How should the Kick's Tone turn VR5?
+
+- As the C taper, fitted to the recordings: about a quarter of VR5 left at mid-travel (Recommended)
+  - The model's brightness then steps as the recordings do (0, 0.21, 0.50, 0.79, 1 of its range against 0, 0.11, 0.52, 0.74, 1).
+  - The default Tone, 0.5, sounds a little brighter than before; Succession 808 was levelled again.
+- Linear, as the thesis parametrises it
+  - Most of the knob does little.
+
+Taken: the C taper.
+
+### The shortest decay
+
+Question: at the stock tuning the circuit's shortest decay is 0.17 s to -60 dB (Fischer's recorded unit: 0.27 s); the Decay knob goes down to 50 ms. What below 0.17 s?
+
+- The circuit's floor: the 808 stays at 0.17 s (Recommended)
+  - Faithful; the knob's lowest stretch does nothing on this model. Higher notes reach shorter, their capacitors being smaller.
+- A fade after the circuit for the shorter settings
+  - Reaches the whole knob; not the circuit any more.
+
+Taken: the floor; say so if short 808s should be possible.
+
+### A hit on a ringing drum
+
+Question: a kick test checks that a hit on a ringing drum makes no step: no sample-to-sample move above 0.02. With the tapered Tone the 808's circuit reached 0.0201, its own attack (on a silent drum the same hit moves 0.0192). What to do?
+
+- For the 808, compare with the same hit on a silent drum, plus the ring's own slope (Recommended)
+  - Tests what the check is for, a jump in the state; the circuit has no state to jump.
+- Raise the fixed limit for all models
+  - Loosens the 909's and Modern's check for no reason.
+- Make the 808's attack softer
+  - Changes the circuit to please a test.
+
+Taken: the comparison with a silent drum; the 909 and Modern keep 0.02.
+
+### The accent's level
+
+Question: the old model's soft hit (velocity 0.3 with Accent full) was under half the full hit's level. The circuit gives about two thirds, as Werner measures: the accent grows the attack more than the ring. What to do?
+
+- Keep the circuit's accent; the test now expects the soft hit under 0.8 of the full one (Recommended)
+- Scale the output with velocity on top
+  - More contrast; no longer the circuit.
+
+Taken: the circuit's accent.
+
+### The voice cap's price for the 808
+
+Question: the cap counts a voice at its average cost, because most modules' 99th percentile drowns in the timer's noise. The 808's does not: 3.1 % a voice on average, 6.6 % in its hits. Which price?
+
+- Its hits, 6.6 %, as the effects that spike are priced (Recommended)
+  - Seven 808 voices fit a sound's 50 % budget, and even all of them struck at once stay inside it. A mono kick never notices.
+- Its average, 3.1 %
+  - Fourteen voices, but fourteen hits struck together could take a whole block.
+
+Taken: its hits.
+
+### The solver's tolerance
+
+Question: how exactly must the circuit's Newton solver settle each sample?
+
+- To 100 nV, some 150 dB under the drum's volts, starting from where the last samples point (Recommended)
+  - Half the work in the hit, a third less in the tail; the comparison with SPICE is unchanged to every digit shown.
+- To 10 nV, as this morning
+  - About twice the cost of each hit.
+
+Taken: 100 nV.
