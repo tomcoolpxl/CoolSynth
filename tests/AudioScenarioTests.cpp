@@ -151,7 +151,15 @@ public:
                     const diag::AudioBlockScope block;
                     switch (kind)
                     {
-                        case diag::BlockingCall::heap: std::free(std::malloc(64)); break;
+                        case diag::BlockingCall::heap:
+                        {
+                            // Through volatiles: an optimising build may remove a malloc whose memory nobody uses, and
+                            // then the release build's watch has nothing to see (the 0.4.0 release run, D228).
+                            volatile std::size_t bytes = 64;
+                            void* volatile kept = std::malloc(bytes);
+                            std::free(kept);
+                            break;
+                        }
                         case diag::BlockingCall::lock: { const juce::ScopedLock held(lock); break; }
                         case diag::BlockingCall::sleep: juce::Thread::sleep(20); break; // shorter ones wait on an event
                         case diag::BlockingCall::file: juce::ignoreUnused(here.existsAsFile()); break;
