@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoolSynth Listening Pass</title>
+<style>
+  /* One column of checks grouped like the panel's pads; each card: what to press, what to turn, what to hear. */
+  :root {
+    --panel: #15171a;
+    --surface: #1d2024;
+    --screen: #0c0d0f;
+    --line: #2c3036;
+    --ink: #e8e6e1;
+    --muted: #9aa0a8;
+    --amber: #f0a43a;
+    --teal: #3fc4b0;
+    --ok: #5cc98a;
+    --issue: #ef6b5b;
+    --skip: #7d8590;
+    --font-text: "Segoe UI", system-ui, sans-serif;
+    --font-mono: "Cascadia Mono", Consolas, monospace;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--panel); color: var(--ink); font: 15px/1.5 var(--font-text); }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 22px 16px 60px; }
+  h1 { font: 600 1.7rem/1.2 var(--font-text); margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 14px; max-width: 70ch; }
+  .status {
+    position: sticky; top: 0; z-index: 5; background: var(--panel);
+    border-bottom: 1px solid var(--line); padding: 10px 0; margin-bottom: 6px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  }
+  .app { font: 600 0.84rem var(--font-mono); padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); }
+  .app[data-ok="true"] { color: var(--ok); border-color: var(--ok); }
+  .app[data-ok="false"] { color: var(--issue); border-color: var(--issue); }
+  .bar { flex: 1 1 160px; height: 8px; background: var(--screen); border-radius: 4px; overflow: hidden; border: 1px solid var(--line); }
+  .bar span { display: block; height: 100%; width: 0; background: var(--teal); transition: width .3s; }
+  .counts { font: 0.86rem var(--font-mono); color: var(--muted); display: flex; gap: 12px; }
+  .counts b { color: var(--ink); }
+  .filters { display: flex; gap: 6px; }
+  .filters button { font: 500 0.82rem var(--font-text); background: transparent; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+  .filters button[aria-pressed="true"] { color: var(--ink); border-color: var(--teal); }
+  section > h2 { font: 600 0.78rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--amber); margin: 28px 0 4px; }
+  section > p { color: var(--muted); margin: 0 0 10px; font-size: .92rem; max-width: 72ch; }
+  .items { display: grid; gap: 12px; }
+  .item { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--line); border-radius: 10px; padding: 14px 16px 14px 14px; display: grid; gap: 10px; }
+  .item[data-state="ok"] { border-left-color: var(--ok); }
+  .item[data-state="issue"] { border-left-color: var(--issue); }
+  .item[data-state="skip"] { border-left-color: var(--skip); opacity: .8; }
+  .head { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .tag { font: 600 .78rem var(--font-mono); color: #111; background: var(--amber); border-radius: 5px; padding: 1px 7px; }
+  .item h3 { margin: 0; font: 600 1.05rem var(--font-text); flex: 1 1 200px; }
+  .drive { display: flex; flex-wrap: wrap; gap: 8px; }
+  .drive button, .tries button {
+    font: 600 .88rem var(--font-text); border-radius: 7px; padding: 7px 13px; cursor: pointer;
+    background: var(--screen); color: var(--ink); border: 1px solid var(--line);
+  }
+  .drive .play { background: var(--teal); color: #08201c; border-color: var(--teal); }
+  .drive button:hover, .tries button:hover { border-color: var(--muted); }
+  .drive button:disabled, .tries button:disabled { opacity: .45; cursor: wait; }
+  .tries { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tries button { font-weight: 500; padding: 5px 10px; font-size: .84rem; }
+  .tries button[data-last="true"] { border-color: var(--teal); }
+  .label { font: 600 .72rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+  .knobs { display: grid; gap: 4px; }
+  .knob { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: baseline; background: var(--screen); border: 1px solid var(--line); border-radius: 7px; padding: 6px 10px; }
+  .where { font: .84rem var(--font-mono); color: var(--muted); white-space: nowrap; }
+  .where b { color: var(--amber); font-weight: 600; }
+  .what { min-width: 0; }
+  .what b { color: var(--ink); }
+  .what span { color: var(--muted); }
+  ul { margin: 0; padding-left: 1.2em; display: grid; gap: 3px; }
+  .keys { font: .86rem var(--font-mono); color: var(--teal); }
+  .result { font: .82rem var(--font-mono); color: var(--muted); min-height: 1.2em; overflow-wrap: anywhere; }
+  .result[data-kind="error"] { color: var(--issue); }
+  .result[data-kind="busy"] { color: var(--amber); }
+  .pre { font-size: .84rem; color: var(--muted); border-top: 1px dashed var(--line); padding-top: 8px; }
+  .pre b { color: var(--teal); font-weight: 600; }
+  .verdict { display: flex; flex-wrap: wrap; gap: 8px; }
+  .verdict button { font: 600 .86rem var(--font-text); border-radius: 7px; padding: 6px 12px; cursor: pointer; background: var(--screen); color: var(--ink); border: 1px solid var(--line); }
+  .verdict button[data-v="ok"][aria-pressed="true"] { background: var(--ok); color: #0d1a12; border-color: var(--ok); }
+  .verdict button[data-v="issue"][aria-pressed="true"] { background: var(--issue); color: #1d0c09; border-color: var(--issue); }
+  .verdict button[data-v="skip"][aria-pressed="true"] { background: var(--skip); color: #111; border-color: var(--skip); }
+  .verdict textarea { flex: 1 1 100%; min-height: 2.4em; resize: vertical; background: var(--screen); color: var(--ink); border: 1px solid var(--line); border-radius: 7px; padding: 6px 9px; font: .92rem var(--font-text); }
+  button:focus-visible, textarea:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .how { background: var(--screen); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; font-size: .93rem; }
+  .how p { margin: 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 id="title">CoolSynth Listening Pass</h1>
+  <p class="sub" id="intro"></p>
+  <div class="how">
+    <p><b>Set up</b> builds the sound in CoolSynth and brings the right knob page onto the panel. <b>▶ Play</b>: I play it. The small buttons each set one thing and play it again.</p>
+    <p>To turn a knob yourself, the card says where: the pad, the page (knob 5 turns the pages), and the knob's number, as on the panel and the MiniLab.</p>
+    <p>Then mark it. Marks and notes are saved to a file I read back when you say you're done.</p>
+  </div>
+  <div class="status">
+    <span class="app" id="app" data-ok="">checking CoolSynth…</span>
+    <div class="bar" aria-hidden="true"><span id="bar"></span></div>
+    <div class="counts" id="counts"></div>
+    <div class="filters" role="group" aria-label="Show">
+      <button type="button" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-filter="todo" aria-pressed="false">To do</button>
+      <button type="button" data-filter="issue" aria-pressed="false">Off</button>
+    </div>
+  </div>
+  <main id="groups"></main>
+</div>
+<script>
+(async function () {
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const data = await (await fetch("/items")).json();
+  let marks = {};
+  try { marks = await (await fetch("/marks")).json(); } catch (e) {}
+  let filter = "all";
+  let busy = false;
+
+  document.getElementById("intro").textContent = data.intro;
+
+  function setBusy(on) {
+    busy = on;
+    for (const b of document.querySelectorAll(".drive button, .tries button")) b.disabled = on;
+  }
+
+  async function post(path, body) {
+    const r = await fetch(path, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    return r.json();
+  }
+
+  function summary(lines) {
+    // "Played C4 (60) for 1.00 s: loudest while held -24.7 dBFS, ..." -> the levels only
+    return lines.map(l => {
+      const m = l.match(/^Played (.+?) for .*?loudest while held (\S+) dBFS/);
+      return m ? m[1] + " " + m[2] + " dBFS" : l;
+    }).join(" · ");
+  }
+
+  async function run(it, card, path, body, label) {
+    if (busy) return;
+    const out = card.querySelector(".result");
+    setBusy(true);
+    out.dataset.kind = "busy";
+    out.textContent = label + "…";
+    try {
+      const r = await post(path, body);
+      if (!r.ok) { out.dataset.kind = "error"; out.textContent = r.error || "Something went wrong."; }
+      else {
+        out.dataset.kind = "";
+        const parts = [];
+        if (r.heard && r.heard.length) parts.push("Heard: " + summary(r.heard));
+        else parts.push(label + ": ready on the panel.");
+        if (r.problems && r.problems.length) parts.push("Did not take: " + r.problems.join("; "));
+        out.textContent = parts.join("  ");
+        if (r.problems && r.problems.length) out.dataset.kind = "error";
+      }
+    } catch (e) {
+      out.dataset.kind = "error";
+      out.textContent = "The local server is not answering.";
+    }
+    setBusy(false);
+  }
+
+  function card(it) {
+    const s = marks[it.id] || { v: "", note: "" };
+    const c = el("article", "item");
+    c.id = "item-" + it.id;
+    c.dataset.state = s.v || "";
+    const head = el("div", "head");
+    head.appendChild(el("span", "tag", it.id));
+    head.appendChild(el("h3", null, it.title));
+    c.appendChild(head);
+
+    if (it.play && it.play.length) {
+      const drive = el("div", "drive");
+      const setup = el("button", null, "Set up");
+      setup.type = "button";
+      setup.addEventListener("click", () => run(it, c, "/setup", { id: it.id }, "Setting up"));
+      const play = el("button", "play", "▶ Play");
+      play.type = "button";
+      play.addEventListener("click", () => run(it, c, "/play", { id: it.id }, "Playing"));
+      const both = el("button", null, "Set up and play");
+      both.type = "button";
+      both.addEventListener("click", async () => { await run(it, c, "/setup", { id: it.id }, "Setting up"); await run(it, c, "/play", { id: it.id }, "Playing"); });
+      drive.append(setup, play, both);
+      c.appendChild(drive);
+    }
+    if (it.tries && it.tries.length) {
+      const tw = el("div");
+      tw.appendChild(el("div", "label", "Try (sets it from the start, then plays)"));
+      const tries = el("div", "tries");
+      it.tries.forEach((t, i) => {
+        const b = el("button", null, "▶ " + t.label);
+        b.type = "button";
+        b.addEventListener("click", () => {
+          for (const x of tries.children) x.dataset.last = "false";
+          b.dataset.last = "true";
+          run(it, c, "/play", { id: it.id, try: i }, t.label);
+        });
+        tries.appendChild(b);
+      });
+      tw.appendChild(tries);
+      c.appendChild(tw);
+    }
+    if (it.knobs && it.knobs.length) {
+      const kw = el("div");
+      kw.appendChild(el("div", "label", "Turn yourself"));
+      const ks = el("div", "knobs");
+      for (const k of it.knobs) {
+        const row = el("div", "knob");
+        const where = el("div", "where");
+        where.append("Pad ", el("b", null, k.pad), " › page ", el("b", null, k.page), " › ", el("b", null, "knob " + k.knob));
+        const what = el("div", "what");
+        what.appendChild(el("b", null, k.name));
+        if (k.listen) what.appendChild(el("span", null, ": " + k.listen));
+        row.append(where, what);
+        ks.appendChild(row);
+      }
+      kw.appendChild(ks);
+      c.appendChild(kw);
+    }
+    const lw = el("div");
+    lw.appendChild(el("div", "label", "Listen for"));
+    const ul = el("ul");
+    for (const l of it.listen) ul.appendChild(el("li", null, l));
+    lw.appendChild(ul);
+    if (it.keys) { const k = el("div", "keys", "Your keys: " + it.keys); k.style.marginTop = "6px"; lw.appendChild(k); }
+    c.appendChild(lw);
+
+    c.appendChild(el("div", "result", ""));
+
+    const v = el("div", "verdict");
+    for (const [key, label] of [["ok", "✓ Sounds right"], ["issue", "✗ Something's off"], ["skip", "Skip"]]) {
+      const b = el("button", null, label);
+      b.type = "button";
+      b.dataset.v = key;
+      b.setAttribute("aria-pressed", s.v === key ? "true" : "false");
+      b.addEventListener("click", () => mark(it.id, (marks[it.id] || {}).v === key ? "" : key, null));
+      v.appendChild(b);
+    }
+    const ta = el("textarea");
+    ta.placeholder = "A note: what's off, what to change";
+    ta.setAttribute("aria-label", it.id + " note");
+    ta.value = s.note || "";
+    let t = null;
+    ta.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => mark(it.id, null, ta.value), 800); });
+    ta.addEventListener("blur", () => { clearTimeout(t); mark(it.id, null, ta.value); });
+    v.appendChild(ta);
+    c.appendChild(v);
+
+    const pre = el("div", "pre");
+    pre.append(el("b", null, "Pre-checked through MCP: "), it.pre);
+    c.appendChild(pre);
+    return c;
+  }
+
+  async function mark(id, v, note) {
+    const cur = Object.assign({ v: "", note: "" }, marks[id]);
+    if (v !== null) cur.v = v;
+    if (note !== null) { if (cur.note === note && v === null) return; cur.note = note; }
+    marks[id] = cur;
+    const c = document.getElementById("item-" + id);
+    c.dataset.state = cur.v || "";
+    for (const b of c.querySelectorAll(".verdict button")) b.setAttribute("aria-pressed", b.dataset.v === cur.v ? "true" : "false");
+    counts();
+    applyFilter();
+    try { await post("/marks", { id, v: cur.v, note: cur.note }); } catch (e) {}
+  }
+
+  function counts() {
+    let ok = 0, issue = 0, skip = 0;
+    for (const it of data.items) { const v = (marks[it.id] || {}).v; if (v === "ok") ok++; else if (v === "issue") issue++; else if (v === "skip") skip++; }
+    const done = ok + issue + skip, n = data.items.length;
+    document.getElementById("bar").style.width = (100 * done / n) + "%";
+    const box = document.getElementById("counts");
+    box.textContent = "";
+    for (const [num, text] of [[done, "of " + n + " marked"], [ok, "right"], [issue, "off"], [skip, "skipped"]]) {
+      const s = el("span"); s.append(el("b", null, String(num)), " " + text); box.appendChild(s);
+    }
+  }
+
+  function applyFilter() {
+    for (const it of data.items) {
+      const c = document.getElementById("item-" + it.id);
+      const v = (marks[it.id] || {}).v;
+      c.hidden = filter === "todo" ? !!v : filter === "issue" ? v !== "issue" : false;
+    }
+    for (const b of document.querySelectorAll(".filters button")) b.setAttribute("aria-pressed", b.dataset.filter === filter ? "true" : "false");
+  }
+  for (const b of document.querySelectorAll(".filters button")) b.addEventListener("click", () => { filter = b.dataset.filter; applyFilter(); });
+
+  const main = document.getElementById("groups");
+  for (const g of data.groups) {
+    const sec = el("section");
+    sec.appendChild(el("h2", null, g.title));
+    sec.appendChild(el("p", null, g.intro));
+    const list = el("div", "items");
+    for (const it of data.items.filter(i => i.group === g.key)) list.appendChild(card(it));
+    sec.appendChild(list);
+    main.appendChild(sec);
+  }
+  counts();
+  applyFilter();
+
+  async function appStatus() {
+    if (busy) return;
+    const pill = document.getElementById("app");
+    try {
+      const r = await (await fetch("/app")).json();
+      pill.dataset.ok = r.ok ? "true" : "false";
+      pill.textContent = r.ok ? "CoolSynth: " + r.sound : "CoolSynth is not answering (Prefs › Claude (MCP))";
+    } catch (e) { pill.dataset.ok = "false"; pill.textContent = "The local server stopped"; }
+  }
+  appStatus();
+  setInterval(appStatus, 5000);
+})();
+</script>
+</body>
+</html>

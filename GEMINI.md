@@ -28,6 +28,8 @@ the current state.
   for this project with `claude mcp add --transport http coolsynth http://127.0.0.1:47613/mcp`. Use it to read and set
   the running app while guiding a test, instead of asking the user to turn knobs. `read_screen` gives the panel as
   text and `click` works it by name (D227); check anything visible that way, and ask the user only for ears and hands.
+  For a listening pass, `tools/listening-pass` (its items in `items.json`) serves a local page whose buttons set
+  each sound up through that server, play it and name the knobs to turn; the user's marks go to a JSON file.
 - Output is deterministic (D224): every random source restarts from its seed at a reset and when the host's
   transport starts, a bounce waits for sounds to load, and a voice cap by measured cost (`src/synth/v3/VoiceCost.h`)
   keeps a sound within half a block; `tests/DeterminismTests.cpp` holds every preset to it bit for bit.
