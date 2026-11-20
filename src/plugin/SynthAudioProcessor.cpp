@@ -52,7 +52,8 @@ namespace
     // 13: the Layers page's balance, detune and spread (D196; a 12 gets them at their defaults)
     // 15: Brown noise (D221). 16: the arps' New Patterns and the Master Boost (D224, D225): a state of 15 or before gets
     // them at their defaults; a state must name every parameter, so a new one always raises the version.
-    inline constexpr int processorStateFormatVersion = 16;
+    // 17: the SVF's seven modes, Morph and Character (D233): a 16 or before has its SVF modes rescaled.
+    inline constexpr int processorStateFormatVersion = 17;
     inline constexpr char processorStateProductProperty[] = "product";
     inline constexpr char processorStateStateTypeProperty[] = "stateType";
     inline constexpr char processorStatePatchNameProperty[] = "patchName";
@@ -1368,6 +1369,8 @@ void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
             coolsynth::presets::migrateSampleSlices(parameterStateXml); // a Sample slot's slice values at their defaults (D207)
         if (version <= coolsynth::presets::processorStateVersionBeforeBrownNoise)
             coolsynth::presets::migrateNoiseTypes(parameterStateXml); // a Noise slot's Type over five choices (D221)
+        if (version <= coolsynth::presets::processorStateVersionBeforeSvfModes)
+            coolsynth::presets::migrateSvfModes(parameterStateXml); // an SVF slot's Mode over seven choices (D233)
         if (version != processorStateFormatVersion)
             addMissingParameters(parameterStateXml); // what the older version did not have, at its default
 

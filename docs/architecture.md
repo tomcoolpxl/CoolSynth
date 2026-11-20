@@ -82,7 +82,8 @@ Per voice:
    the TR-808 as a struck resonator, the 909 and a modern one.
 2. The generators are summed into **three processor slots in series**, P1 to P3. Each holds any of 7
    processor types (Ladder, SVF, Comb, Formant, Folder, Crusher, Drive). Generator 3 can modulate the ladder's
-   cutoff at audio rate.
+   cutoff at audio rate. The SVF also morphs from low-pass to high-pass as the Oberheim SEM does, and takes the
+   C64 SID's 6581 and 8580 characters (`SvfProcessor.h`, D233).
 3. **The amplifier**, with pan.
 
 A slot has a type and twelve generic values, named and ranged by its type's descriptor
@@ -242,9 +243,9 @@ sources but no longer used.
 - **Parameters** are a JUCE `AudioProcessorValueTreeState`, laid out in `src/parameters`
   (`ParameterLayout`, and in `src/parameters/v3` the per-layer and per-slot parameters).
 - **The processor state**, which a host saves in its project, is XML with the root `COOLSYNTH_PROCESSOR_STATE`,
-  at format version 16. It holds the parameters, the sound's name and file, and the player's files a slot uses.
+  at format version 17. It holds the parameters, the sound's name and file, and the player's files a slot uses.
   The controller setup is not in it: it is the computer's (D211).
-- **A patch file** (`.cspatch`, `src/presets/PatchState.h`) holds one sound, at format version 15. The player's
+- **A patch file** (`.cspatch`, `src/presets/PatchState.h`) holds one sound, at format version 16. The player's
   own sounds are patch files in `Documents\CoolSynth\My Sounds` (`src/presets/MySounds.h`).
 - **The factory presets** are text bank files, `resources/presets/*.csbank`, one per room, read by
   `src/presets/BankFile` and compiled into the binary.

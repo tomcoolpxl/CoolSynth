@@ -56,6 +56,8 @@ namespace coolsynth::presets
             migrateSampleSlices(*result.parameterStateXml); // a Sample slot's slice values at their defaults (D207)
         if (version <= patchVersionBeforeBrownNoise)
             migrateNoiseTypes(*result.parameterStateXml); // a Noise slot's Type over five choices (D221)
+        if (version <= patchVersionBeforeSvfModes)
+            migrateSvfModes(*result.parameterStateXml); // an SVF slot's Mode over seven choices (D233)
         result.migrated = version != patchFormatVersion;
         return result;
     }

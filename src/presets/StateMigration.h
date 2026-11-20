@@ -75,4 +75,15 @@ namespace coolsynth::presets
         its kind. The sound is the same.
     */
     void migrateNoiseTypes(juce::XmlElement& parameterState);
+
+    /** The format versions before the SVF had seven modes (the SEM's LP>HP and the SID's LP+BP and BP+HP, D233). */
+    inline constexpr int processorStateVersionBeforeSvfModes = 16;
+    inline constexpr int patchVersionBeforeSvfModes = 15;
+
+    /**
+        Rewrites a parameter state from before D233 in place: an SVF slot's Mode ran over four choices (LP, HP, BP,
+        Notch) and runs over seven now, the new ones at the end; its stored value is rescaled, so each slot keeps its
+        mode. The new Morph and Character start at 0 (Clean), the sound as it was.
+    */
+    void migrateSvfModes(juce::XmlElement& parameterState);
 }

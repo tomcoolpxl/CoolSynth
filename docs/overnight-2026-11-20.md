@@ -216,6 +216,58 @@ Question: a click test flagged Polyrhythm Pad, a preset I did not touch. The Bri
 
 Taken: the test's rule.
 
+### The SVF: the SEM morph and the SID characters (D233)
+
+You chose the SEM's morph on the SVF (D229) and the SID's filter as an SVF character (D230). The research is in docs/research/svf-sem-sid.md.
+
+Question: how to add the SEM morph?
+
+- A new mode at the end of the list, LP>HP, with a new Morph knob (Recommended)
+  - Morph runs from the low-pass through the notch to the high-pass, as the SEM's mode knob does; both ends stay at 0 dB, the middle is today's notch.
+  - Saved sounds and DAW projects need a conversion (as for Brown noise, D221): done in the loader, format versions 17 and 16. A DAW's automation of an SVF's Mode, if any, would need redrawing.
+- Mode itself turns into a continuous knob
+  - No conversion; but the in-between shapes are not the SEM's, and the knob shows numbers instead of names.
+- An SEM character with the SEM's own colour
+  - More than you asked for; it can come later on top.
+
+Taken: the LP>HP mode and Morph. The SID's two other sums, LP+BP and BP+HP, joined the list in the same step, so one conversion covers all three.
+
+Question: how to add the SID?
+
+- A Character knob, Clean, SID 6581, SID 8580, and a Curve knob from dark to bright (Recommended)
+  - The names match the Chip generator's; Clean is today's filter to the bit (a test checks every sample).
+- One SID character with a 6581 or 8580 switch
+  - Two knobs for one choice, and a switch that means nothing in Clean.
+- A SID processor of its own
+  - Closest to the chip; repeats the SVF's code, and you chose a character (D230).
+
+Taken: Character and Curve.
+
+Question: how should the 6581 read the Cutoff knob?
+
+- As the register an 8580 would need, then through the 6581's measured curve (reSID's points: 220 Hz at the bottom, the drop from 6 kHz to 4.6 kHz at the middle, 18 kHz at the top) (Recommended)
+  - Sweeps have the 6581's dead bottom and its kink; the knob's Hz is the 8580's.
+- Keep the knob's Hz and only add the 6581's floor
+  - Honest readings; loses the kink and the dead bottom.
+
+Taken: through the measured curve.
+
+Question: the 6581's top resonance step?
+
+- Held at Q 16, a long ring that still decays, as D38 keeps every SVF (Recommended)
+- Let it sing at whatever level the clipping allows
+
+Taken: held at Q 16.
+
+Question: its place in the voice cap?
+
+- A cost of its own for the 6581 (0.40, measured), Clean and the 8580 at today's 0.17 (Recommended)
+  - Polyphony falls only for sounds that use the 6581.
+- One cost for every SVF at the 6581's price
+  - Every sound with an SVF would lose voices.
+
+Taken: a cost of its own.
+
 ### Something to know: a download without your OK
 
 The research helper for the SVF read PDFs and source files to the scratchpad to read their text, and once fetched a PDF with curl without asking you first.

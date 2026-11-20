@@ -32,6 +32,7 @@ namespace coolsynth::synth::v3::voiceCost
         std::array<float, 8> processor {};                     // by processorType
         std::array<float, insertType::count> effect {};        // by insertType, once for the sound
         float spectralPitch = 0.0f;                            // Pitch in its spectral mode, instead of its heads
+        float svf6581 = 0.0f;                                  // the SVF in its SID 6581 character, instead of Clean's
     };
 
     // Measured on 2026-11-19 (D224). Wavetable's five copies cost alike, so one copy and each more are a fifth of
@@ -46,6 +47,7 @@ namespace coolsynth::synth::v3::voiceCost
         //  Off   Drive LoFi  Phaser Flanger Chorus Delay Reverb Comp  EQ    Pump  Grain Room  Pitch Stutter
         { 0.0f, 0.80f, 0.65f, 0.53f, 0.45f, 0.28f, 0.39f, 0.77f, 0.23f, 0.10f, 0.10f, 0.40f, 0.86f, 3.79f, 0.36f },
         5.54f,
+        0.40f, // the SVF's 6581: measured 2026-11-20 (D233), 0.42 against the clean SVF's 0.20 in the same run
     };
 
     /** The Grain effect's grains at once, density times size, each this much (its densest, 40 at once, took 7.1). */
@@ -74,7 +76,13 @@ namespace coolsynth::synth::v3::voiceCost
                 cost += c.wavetableCopy * static_cast<float>(detail::unisonOf(g, WavetableGenerator::descriptor(), WavetableGenerator::unison) - 1);
         }
         for (const auto& p : part.voice.processors)
-            cost += c.processor[static_cast<std::size_t>(std::clamp(p.type, 0, static_cast<int>(c.processor.size()) - 1))];
+        {
+            const int type = std::clamp(p.type, 0, static_cast<int>(c.processor.size()) - 1);
+            const bool sid6581 = type == processorType::svf
+                                 && std::lround(descriptorToUnits(SvfProcessor::descriptor().params[SvfProcessor::character], p.p[SvfProcessor::character]))
+                                        == static_cast<long>(SvfProcessor::Character::sid6581);
+            cost += sid6581 ? c.svf6581 : c.processor[static_cast<std::size_t>(type)];
+        }
         return cost;
     }
 

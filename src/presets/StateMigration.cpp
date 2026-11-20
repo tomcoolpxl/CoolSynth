@@ -226,6 +226,33 @@ namespace coolsynth::presets
             }
     }
 
+    void migrateSvfModes(juce::XmlElement& parameterState)
+    {
+        namespace sv3 = coolsynth::synth::v3;
+        auto find = [&](const juce::String& id) -> juce::XmlElement*
+        {
+            for (auto* child : parameterState.getChildWithTagNameIterator(parameterTag))
+                if (child->getStringAttribute(idAttribute) == id)
+                    return child;
+            return nullptr;
+        };
+        for (const char* layer : { "pA", "pB" })
+            for (int slot = 1; slot <= 3; ++slot)
+            {
+                const juce::String path = juce::String(layer) + ".p" + juce::String(slot) + ".";
+                const auto* type = find(path + "type");
+                if (type == nullptr || juce::roundToInt(type->getDoubleAttribute(valueAttribute)) != sv3::processorType::svf)
+                    continue;
+                // Mode is the fifth value: 0..1 meant 0..3 and means 0..6 now.
+                if (auto* value = find(path + "p" + juce::String(sv3::SvfProcessor::mode + 1)); value != nullptr)
+                    value->setAttribute(valueAttribute, value->getDoubleAttribute(valueAttribute) * 3.0 / 6.0);
+                // Morph, Character and Curve were unused: Clean with no morph is the sound as it was.
+                for (const int index : { static_cast<int>(sv3::SvfProcessor::morph), static_cast<int>(sv3::SvfProcessor::character) })
+                    if (auto* value = find(path + "p" + juce::String(index + 1)); value != nullptr)
+                        value->setAttribute(valueAttribute, 0.0);
+            }
+    }
+
     void migrateSampleSlices(juce::XmlElement& parameterState)
     {
         namespace sv3 = coolsynth::synth::v3;

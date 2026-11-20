@@ -304,6 +304,16 @@ public:
             s.voice.processors[0] = processorOf(type);
             line(label, measure(s), saw);
         }
+        {
+            // The SVF's SID 6581 character, priced on its own (D233).
+            auto s = base();
+            s.voice.generators[0] = generators.front().second;
+            s.voice.processors[0] = processorOf(processorType::svf);
+            const auto& d = SvfProcessor::descriptor();
+            s.voice.processors[0].p[SvfProcessor::character] = unitsToNormalised(d.params[SvfProcessor::character], 1.0f);
+            s.voice.processors[0].p[SvfProcessor::resonance] = unitsToNormalised(d.params[SvfProcessor::resonance], 1.0f);
+            line("VA saw + SVF 6581", measure(s), saw);
+        }
 
         // Each effect once for the sound, at its defaults, on a loud stereo signal; Pitch in both modes.
         beginTest("worst_case_of_each_effect");

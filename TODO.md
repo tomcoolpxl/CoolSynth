@@ -86,13 +86,12 @@ J2. macOS, for the user's Mac (the user comes back to it): AU, VST3 and CLAP on 
     with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
     Brown). Left: the user's ear on the presets with hiss or crackle (Bedroom, Basement, Night Bus), with the
     listening pass (item 3).
-20. Chip sounds and chiptune. The Chip generator is built (D230, D231). Left: the user's ears on it (each chip's
-    waves, the drums and arpeggios, the named waves, which are my own recipes), Arcade revoiced with it, and the SID
-    filter as an SVF character.
-21. Parked (the user, 2026-11-19): presets for the legendary ARP and Oberheim sounds. Do we need presets of their
-    own (the ARP 2600, which the user remembered as "2700 or something", and the Odyssey; the Oberheim SEM and the
-    OB-X family), or are the instruments and sounds already researched and in the bank close enough (OB Strings,
-    the Museum's sources)? Check online what their famous sounds are and compare with what the bank has.
+20. Chip sounds and chiptune. The Chip generator is built (D230, D231), Arcade revoiced with it, and the SID's
+    filter is an SVF character (D233). Left: the user's ears on all of it (each chip's waves, the drums and
+    arpeggios, the named waves, which are my own recipes, the 6581 and 8580 filters, how hard the 6581 distorts).
+21. The ARP and Oberheim sounds (D229): the SVF's SEM morph is built (D233). Left: the Museum set (OB-Xa Jump, OB-X
+    stabs, an SEM notch pad, the Odyssey's Chameleon bass, an Odyssey sync lead), made as every Museum sound is,
+    fitted against reference recordings the user approves; how is in `docs/overnight-2026-11-20.md`.
 22. Parked (the user, 2026-11-19): presets that use the whole engine. Most presets use a few slots; few fill both
     layers, every generator and processor slot, the effect chains and the macros. Check online how other synths'
     factory banks show what the engine can do (a category of their own, or spread through the bank), count how far
