@@ -4629,3 +4629,14 @@ Researched online for each item (TODO 20, 21, 22, 30), then the user's choices:
 - Whole-engine presets (22). Six of 139 presets use both layers, none more than six of the eighteen effect slots; other banks spread deep sounds through their categories (Omnisphere, Serum 2, modwave). Options: six deep presets in the rooms, recommended and chosen; a showcase room; upgrade existing presets; not needed.
 - The Succession kick (30). Britell confirms TR-808s, tuned to the C minor bass, at 140 BPM; no source gives the settings. Options: a sound-alike preset from 808 Boom, recommended; the user's own 808 sample; a kick generator, chosen; leave it.
 - The order, the user's choice (options: small to large, recommended; the Chip generator first, chosen; presets first): the Chip generator, then the kick generator, the SEM morph, then the presets (the Museum set, the Succession kick, Arcade revoiced, the six deep presets), each designed with the user before it is built.
+
+## D230. The Chip generator, designed (2026-11-20)
+
+The user's choices for TODO 20 (D229: a dedicated Chip generator), after online research (nesdev.org, gbdev, Wikipedia's MOS 6581 page, the oxyron SID reference, the reSID envelope code, GoatTracker's tables, Furnace's macros, Magical 8bit Plug, Plogue chipsynth C64, Tweakbench Peach and Toad, inSIDious). The SID compared, as the user asked: CoolSynth had its triangle, saw, pulse with PWM, sync, ring, a 12 dB multimode filter and modulation; it lacked the combined waveforms, the 23-bit noise, the stepped envelope with the hard restart, the test bit, the 6581 and 8580 filters, per-voice filter routing and the frame tables.
+
+- Which chips (several chosen of four offered): all: NES 2A03, C64 SID (6581 and 8580), Game Boy, AY-3-8910 and YM2149 with the SCC.
+- Frame tables (options: named tables with knobs, recommended and chosen; the step modulator as lanes; editable tables with the real interface).
+- Aliasing (options: band-limited with a Raw switch, recommended and chosen; band-limited only; raw only).
+- The SID filter (options: a new character of the SVF for any sound, recommended and chosen; inside the Chip generator; none).
+- The twelve knobs (`docs/design/CHIP_GENERATOR.md`; options: build it as designed, recommended and chosen; NES and Game Boy first; change the knobs): Chip, Wave, Duty, Table, Sequence, Speed, Depth, Decay, Sweep, Frame, Output, Raw.
+- The user went to sleep after this: decisions from here on are taken as recommended and logged with every option, for the morning; a one-time task at 06:15 continues the work if the usage limit stops this session.
