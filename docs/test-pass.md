@@ -156,6 +156,18 @@ Found on the way: Supersaw's undertone is its sub, by design (on the listening p
 - The MiniLab's fader 4 now reaches the Master Boost (0 dB at four fifths, +12 dB at its top): the app's log has it
   up to +12 dB and back; the user heard it louder at the top and smooth through 0 dB.
 
+## The listening pass, priority sounds first (2026-11-20)
+
+Each sound set up and played by Claude through the MCP server; the user listened. All passed:
+- Supersaw: its sub (layer B, a sine an octave under the lowest key) stays, the user's choice after hearing it twice.
+- The new hiss and crackle in Vinyl Choir, Concrete Pad and Pirate Radio: like tape and records, at the right level,
+  and silent once the sound has died away (Pirate Radio measured silent 2.5 s after the release).
+- The stutter presets Cut-Up Chords, Wheel Stutter and Glitch Pad: in time, clean. Cut-Up Chords sounded too loud
+  from four keys, each playing its minor ninth chord; with one key, as it is levelled (the levelling tool: -19.5
+  LUFS against -20), it is in line, and it stays.
+- Siren, the ladder at full resonance on its own: a clean tone, the same level low and high.
+- The full bank by ear is still to do (TODO 3).
+
 ## Then the release (TODO J3)
 
 - The version number is your choice; the release notes go in `docs/releases/`; then the tag.
