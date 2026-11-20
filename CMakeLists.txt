@@ -237,6 +237,7 @@ if(BUILD_TESTING)
             tests/V3ModuleCostReport.cpp
             tests/V3LiveGrainTests.cpp
             tests/V3BankTests.cpp
+            tests/HostedPluginTests.cpp
             ${COOLSYNTH_SHARED_SOURCES})
 
     target_include_directories(CoolSynthMidiLearnTests
@@ -250,9 +251,15 @@ if(BUILD_TESTING)
     target_compile_definitions(CoolSynthMidiLearnTests
         PRIVATE
             COOLSYNTH_BUILD_VERSION="${PROJECT_VERSION}"
-            COOLSYNTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
+            COOLSYNTH_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+            # The test program hosts the built VST3 as a DAW does (D228, tests/HostedPluginTests.cpp).
+            JUCE_PLUGINHOST_VST3=1
+            COOLSYNTH_VST3_BUNDLE="${CMAKE_BINARY_DIR}/CoolSynth_artefacts/$<CONFIG>/VST3/CoolSynth.vst3")
 
     add_dependencies(CoolSynthMidiLearnTests UpdateBuildInfo)
+    if(TARGET CoolSynth_VST3)
+        add_dependencies(CoolSynthMidiLearnTests CoolSynth_VST3) # the plugin it hosts is today's
+    endif()
 
     target_link_libraries(CoolSynthMidiLearnTests
         PRIVATE

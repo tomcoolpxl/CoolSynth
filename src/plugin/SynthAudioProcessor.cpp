@@ -1234,8 +1234,10 @@ void SynthAudioProcessor::emptyLayer(int layer)
 
 void SynthAudioProcessor::startFlightRecorderIfWanted()
 {
-    // The standalone app and the plugin record; tools and tests only when asked (COOLSYNTH_FLIGHT_LOG).
-    if (madeByHostOrApp() || juce::SystemStats::getEnvironmentVariable("COOLSYNTH_FLIGHT_LOG", {}).isNotEmpty())
+    // The standalone app and the plugin record; tools and tests only when asked (COOLSYNTH_FLIGHT_LOG). A plugin in a
+    // test program's host (COOLSYNTH_TEST_HOST, D228) does not, so the player's own logs are not crowded out.
+    const bool testHost = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_TEST_HOST", {}).isNotEmpty();
+    if ((madeByHostOrApp() && ! testHost) || juce::SystemStats::getEnvironmentVariable("COOLSYNTH_FLIGHT_LOG", {}).isNotEmpty())
     {
         auto& recorder = coolsynth::diag::FlightRecorder::instance();
         const bool first = ! recorder.running();
@@ -1880,7 +1882,8 @@ void SynthAudioProcessor::startMiniLabDriver()
     if (miniLabStarted)
         return;
     miniLabStarted = true;
-    if (inDaw())
+    // A test program hosting the plugin (COOLSYNTH_TEST_HOST, D228) leaves the player's MiniLab alone.
+    if (inDaw() && juce::SystemStats::getEnvironmentVariable("COOLSYNTH_TEST_HOST", {}).isEmpty())
         miniLab = std::make_unique<coolsynth::ui::MiniLab3Driver>(getInterfaceModel(), *this, nullptr);
 }
 

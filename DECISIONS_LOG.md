@@ -4603,3 +4603,12 @@ The user, after being asked to watch a knob run through file names: "You can do 
 - `screenshot` takes an area (the main screen, the layer screen, knobs, faders, pads, keys, the left column, or x,y,w,h) and a zoom of 1 to 3.
 - Tested on a panel (`tests/McpServerTests.cpp`) and on the running app.
 - Accessibility, the user's choice (options: with the real interface, recommended; the real controls now, chosen; all of it now): knobs 1-8 and the main knob are sliders with their name and value ("Knob 6: Glide", "0.0 ms"; a changed value is announced) and a press; the pads are buttons ("Pad 2: Sound", lit or not) and a press; the faders read their level in dB with the Master's boost; Prefs, Hold and Oct had theirs. Checked with Windows UI Automation (`tools/uia-check.ps1`): every name and value read, a pad pressed by it. The screens' drawn rows, slots, cards and chain blocks wait for the redesign (TODO 31).
+
+## D228. Plugin checks a program makes, not the player (2026-11-20)
+
+The user, after the DAW round needed their hands for every step: "why am I doing your job". FL Studio's reopen failure was its trial (Image-Line's manual: the trial saves projects but does not reopen them); Ableton Live reopened CoolSynth. The user's choices (all three offered): a host of my own, recommended; pluginval and clap-validator; Zrythm by computer control.
+
+- `tests/HostedPluginTests.cpp`: the test program hosts the built VST3 through JUCE's own VST3 hosting (`JUCE_PLUGINHOST_VST3` in the test program only), as a DAW does: found in its bundle as an instrument, made, played, a parameter moved by the host, bounced twice the same, its state given to a second one that sounds the same bit for bit, its panel opened. The test program now builds the VST3 first.
+- `COOLSYNTH_TEST_HOST`: a plugin in a test host starts no MiniLab driver and writes no flight log, so tests leave the player's MiniLab and logs alone; it uses the tests' small sample library (`COOLSYNTH_LIBRARY`).
+- This JUCE (9.0.5) hosts VST3, VST2, LV2 and AU, not CLAP: the CLAP is checked by clap-validator.
+- The hands-on checks left (the CLAP in FL Studio, Zrythm) go to a session with computer control: this one started before the user switched Computer use on.

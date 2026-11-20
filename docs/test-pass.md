@@ -131,7 +131,9 @@ Found on the way: Supersaw's undertone is its sub, by design (on the listening p
     Reopening is FL's limit, not CoolSynth's: the save-and-reopen check moves to Ableton Live.
 - Two FL Studio crashes at 00:49 (combase.dll, fail-fast) were Claude's attempts to open the project from outside
   while FL ran, not the user's FL.
-- Not done yet: the CLAP in FL Studio; Ableton Live 12 Lite (VST3; Live loads no CLAP); Reaper is not installed.
+- Ableton Live 12 Lite, VST3: found after a rescan, played the MiniLab's keys and knob 1; the set saved, closed and
+  opened again, CoolSynth started again and played (its log: two sessions, 01:03 and 01:05).
+- Not done yet: the CLAP in FL Studio (Live loads no CLAP); Reaper is not installed.
 
 ## Then the release (TODO J3)
 
