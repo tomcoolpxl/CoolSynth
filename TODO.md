@@ -4,6 +4,10 @@ Open work only. Chosen by the user on 2026-11-19 (D215): items 1-7 and 9-17 exce
 Order since then: the controller redesign (C1-C6, D216), JUCE 9 (J1, D217), then the next release (J3). What is done,
 and why, is in `DECISIONS_LOG.md` and the git history; decisions taken while the user was away are there too, each
 with every option: review them.
+After 0.4.0 (the user's choice, 2026-11-20; options: the full bank by ear, the real interface, the parked sound
+items, sounds of one's own and tempo): the parked sound items first, each researched online before options: chip
+sounds (20), the ARP and Oberheim presets (21), whole-engine presets (22), the Succession bass drum (30). The full
+bank by ear (3), the interface (26, 27, 29, 31) and items 24 and 25 wait.
 
 ## Before or right after the first release (0.3.0)
 
