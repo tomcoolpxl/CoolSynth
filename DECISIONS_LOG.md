@@ -4700,3 +4700,28 @@ The user wants Mac support and will port it in a Claude Code session on their ow
 - Audio-thread checks (options: RealtimeSanitizer in a separate build, recommended; port today's watch with fishhook, chosen).
 - CI (options: GitHub's hosted Apple Silicon runner, recommended and chosen; the user's Mac, self-hosted).
 
+## D235. The night's waiting questions, answered (2026-11-20)
+
+The user went through `docs/overnight-2026-11-20.md`, accepted the night's decisions but one, and had the waiting ones asked again as pick lists. The tempo question was checked online again: besides the report's findings (Arturia's apps keep one tempo in their settings and do not follow clock, Vital is fixed at 120, Serum and u-he have no app), Apple's MainStage follows MIDI clock and keeps the last tempo when the clock stops ([MainStage guide](https://help.apple.com/mainstage/mac/3.1/en.lproj/mstga6bb0cb5.html)), and Roland's V-Stage takes its tempo from the system or from each scene ([V-Stage reference](https://static.roland.com/manuals/v-stage_reference_v111/en-US/204879243.html)). The user's concern: CoolSynth pulls in features from a DAW, yet it must work without one.
+
+- The 808 (changed from the night's struck resonator, D232): Werner's full circuit model in wave digital filters is wanted; researched online in `docs/research/kick-808-wdf.md` (the DAFx 2014 paper, Werner's 2016 thesis and the papers it rests on, the service notes' values, chowdsp_wdf, ChowKick, RT-WDF, ngspice). No open model of the whole drum was found. The user's choices:
+  - the library (options: chowdsp_wdf with our own nonlinear root, recommended and chosen; all our own code; RT-WDF, GPL);
+  - where it goes (options: a fourth Model, 808 Circuit, recommended; replace today's 808, chosen; a generator of its own): Succession 808 will change, and every sound using the 808 will cost more (estimated 1.5 to 3 % of a block a voice against 0.33);
+  - how far (options: the full circuit with the envelope generator as transistors, recommended and chosen; the thesis's four sub-circuits with a behavioural envelope; the resonator alone);
+  - key tracking (options: C41 and C42 scaled with the note, as the tuning mod, recommended and chosen; the whole circuit scaled in time; a fixed pitch with a Tune knob);
+  - the reference (options: ngspice renders of a netlist from the schematic, plus Michael Fischer's 1994 sample set for analysis only, recommended and chosen; LTspice; the paper's figures only);
+  - downloads, all four allowed by the user: chowdsp_wdf as a submodule, ngspice into tools/ (outside git), Werner's thesis PDF and Fischer's samples (outside git).
+- Tempo in the app (options: tempo and tap, recommended; that plus MIDI clock in, chosen; that plus clock out and a metronome; Ableton Link).
+- The clock's beat (options: tempo and beat, Start, Stop, Continue and Song Position, switchable, recommended and chosen; tempo only).
+- Whose tempo (options: the app's, a sound may opt in, recommended and chosen; each sound's as now; the app's only).
+- Your own sounds (options: a small complete flow, recommended; that plus favourites and search; a full browser, chosen; banks for sharing).
+- Your own samples (options: a Sampler sound and a drop, recommended; a sampler view; one browser shared with the sounds, chosen; a pad view later).
+- Your samples' loudness (options: levelled by default by a stored gain, switchable, recommended and chosen; as recorded; peak).
+- Context menus (options: one menu for controls and slots, recommended; controls only; the full set, chosen; the DAW's items and reset now).
+- Back once right click opens menus (options: right click on empty space and the chip, recommended; a Back item in every menu, chosen; the main knob only).
+- The clipboard (options: the system's, as text, recommended and chosen; CoolSynth's own).
+- Copy and modulation (options: Copy and Copy with modulation as two items, recommended and chosen; always with; never with).
+- The Museum's ARP and Oberheim set (options: as every Museum sound, fitted against recordings the user approves, recommended and chosen; drafts from settings alone; in another room).
+- Six deep presets (options: with the user one at a time, recommended and chosen; drafted together; not now).
+- Profiling (options: Windows Performance Recorder, recommended and chosen; Visual Studio's profilers; Tracy; AMD uProf), CPU first (recommended and chosen; memory first; both), before the Mac port (recommended and chosen; now; only when a sound hits the cap).
+

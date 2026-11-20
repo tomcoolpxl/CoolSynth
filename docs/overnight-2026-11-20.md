@@ -280,6 +280,8 @@ It deleted the file without opening it; nothing it downloaded is left. Downloads
 
 ## Waiting for you
 
+Answered by you the next day (D235), asked again as pick lists with more detail: a full browser, one browser for sounds and samples, samples levelled by default, the full set of context menus with Back in every menu, tempo and tap plus MIDI clock in following tempo and beat, the app's tempo with sounds able to opt in, the Museum set the Museum's way, the deep presets with you one at a time, profiling with WPR, CPU first, before the Mac port. You also changed one night decision: the 808 is to become Werner's full circuit model (docs/research/kick-808-wdf.md).
+
 These come from the research reports written tonight (in docs/research). Each needs a proper discussion, as most of them touch the interface, so nothing was decided.
 
 ### Your own sounds (TODO 24, docs/research/own-sounds.md)

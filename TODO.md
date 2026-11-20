@@ -8,9 +8,10 @@ After 0.4.0 (the user's choice, 2026-11-20; options: the full bank by ear, the r
 items, sounds of one's own and tempo): the parked sound items first. Researched and chosen (D229), in this order:
 a dedicated Chip generator (20), a kick generator (30), the SEM morph on the SVF and a Museum set of ARP and
 Oberheim presets (21), then the presets: the Succession kick, Arcade revoiced, six deep presets in the rooms (22).
-Each is designed with the user (options) before it is built. The full bank by ear (3), the interface (26, 27, 29,
-31) and items 24 and 25 wait; research reports for 23 to 27 and 29 are in `docs/research/`, their options in
-`docs/overnight-2026-11-20.md`.
+Each is designed with the user (options) before it is built. Built on the night of 2026-11-20: the Chip generator,
+the Kick generator, the SVF's SEM morph and SID characters, Arcade revoiced, Succession 808 (D231 to D233). The
+user's answers to the waiting questions (D235): items 21 to 25, 27, 29 and 30 say what was chosen. Still waiting:
+the full bank by ear (3), the interface (24, 26, 27, 29, 31), the Mac (J2).
 
 ## Before or right after the first release (0.3.0)
 
@@ -92,10 +93,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 21. The ARP and Oberheim sounds (D229): the SVF's SEM morph is built (D233). Left: the Museum set (OB-Xa Jump, OB-X
     stabs, an SEM notch pad, the Odyssey's Chameleon bass, an Odyssey sync lead), made as every Museum sound is,
     fitted against reference recordings the user approves; how is in `docs/overnight-2026-11-20.md`.
-22. Parked (the user, 2026-11-19): presets that use the whole engine. Most presets use a few slots; few fill both
-    layers, every generator and processor slot, the effect chains and the macros. Check online how other synths'
-    factory banks show what the engine can do (a category of their own, or spread through the bank), count how far
-    the current presets go, and propose whether a set or a category is wanted.
+22. Six deep presets in the rooms (D229), made with the user one at a time (D235): I propose a sound with its idea
+    and settings, the user hears it, we adjust, then the next.
 
 ## Engine
 
@@ -109,14 +108,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     watches the heap, locks, waits, sleeps and files in audio blocks; the worst-case cost test, the voice cap shown
     on the screen and the live emergency. Left: the user's hands on the cap and the emergency (a heavy preset, a
     slow block size), and multi-core by layer if a single sound ever needs more than its share.
-23. Parked (the user, 2026-11-19): profile the heaviest sound there can be and optimise. Build a patch that fills
-    everything (both layers, every generator and processor slot at its costliest settings, sixteen voices, every
-    effect slot), run it under a profiler for CPU and memory, and find where the time and the memory go and what
-    can be faster or smaller without changing the sound. The worst-case cost test of item 19 gives the numbers
-    to start from. With proper tools, compared first: melatonin_perfetto (a JUCE module that traces marked code
-    into Google's Perfetto; the markers compile away when off), Intel VTune (hot functions, threads; inside
-    Visual Studio), Visual Studio's own CPU and memory profilers, Windows' event tracing (ETW) with its
-    Performance Analyzer, and others the research turns up (Superluminal, Tracy).
+23. Profile the heaviest sound there can be and optimise (`docs/research/profiling.md`). The user's choices (D235):
+    Windows Performance Recorder and Analyzer, CPU first, before the Mac port so the Mac has a Windows baseline.
+    A patch that fills everything (both layers, every slot at its costliest, sixteen voices, every effect slot),
+    run by the test program calling `Part` and `InsertSlot` directly; faster without changing the sound, checked
+    bit for bit.
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).
@@ -127,20 +123,16 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 
 ## Interface and code
 
-24. Parked (the user, 2026-11-19): making and keeping your own sounds. How easy is it today to start a sound,
-    save it, name it, find it again, sort and share it (My Sounds, the bank files)? Check online what hardware
-    synths do (an init sound, Compare against the saved one, categories and favourites, librarians, banks on a
-    stick) and above all what other plugins do (browsers, tags, search, favourites, files you can share). Keep it
-    simple: plugins are the model, not hardware's limits, which would only make it more confusing. Then propose
-    what to improve, the same in the plugin and the standalone app. With the real interface (UI last).
+24. Your own sounds (`docs/research/own-sounds.md`). The user's choice (D235): a full browser, filter columns,
+    ratings, audio preview, My Sounds in the DAW's program list and CLAP preset discovery, one browser for sounds
+    and samples (with 26 and 27). Mostly the real interface; the file work (Save versus Save as, an edited mark,
+    Compare, metadata in the file) can come first.
 26. From the user's test pass (2026-11-19): the sample selection wants a better interface (choosing an instrument
     or a file of your own by turning one knob through the whole list is slow); and clicking the LED (the panel's
-    lit value) should let you set the value too. With the real interface (UI last).
-27. Parked (the user, 2026-11-19), a big discussion: playing your own samples. In the test pass the user had to load
-    a normal instrument (Basic Saw) into layer A to get a sample playing at all, then find the Sample type inside
-    the G1-G3 chain. Seeing every element of the chain is advanced and wanted, but samples (a loop, slices, a kit)
-    may need a level of their own: a simpler way in, a sampler view, a starting sound. Research how other synths
-    and samplers present it, then options to choose from. Goes with items 24 and 26.
+    lit value) should let you set the value too. With the real interface: the one browser of item 24.
+27. Your own samples (`docs/research/own-samples.md`). The user's choices (D235): one browser shared with your own
+    sounds (folders, instruments by kind, your files, recents, favourites, preview, search), with the real
+    interface; your files levelled by default to the bank's loudness by a gain stored in the sound, switchable.
 28. Started on 2026-11-19 (D225): the app's MCP server, switched on in Prefs, registered with Claude Code. Left: a
     tool that moves a controller (the mod wheel, for Wheel Stutter's timing), saving a sound, perhaps the plugins.
     The user's request: an MCP server in CoolSynth, so Claude can read and set the running
@@ -148,17 +140,24 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     instead of closing the app to edit its saved state. Off by default, this computer only (localhost), probably the
     app and test builds only. Check online how others expose a running program to MCP (a local HTTP or stdio server,
     JUCE examples, security), then options to choose from.
-25. Parked (the user, 2026-11-19): tempo. Today the arps' internal tempo (the info row's BPM) drives the arps and
-    the synced effects when no host plays, and a DAW's tempo when one does. Missing, perhaps: setting it on the
-    panel, tap tempo, a metronome, MIDI clock in and out in the standalone app. Decide together with the recorder
-    and a sequencer or editor (item 12); check online what other synths and plugins offer.
-29. Parked (the user, 2026-11-19): context menus. Many things on the panel can be clicked (the layer screen's
-    chain blocks, the slots, the list rows, the knobs, the pads); design right-click menus where they make sense,
-    with what each item can do (copy, paste, clear, swap, choose a type, learn, reset to default). Today only the
-    layer panels (copy, swap, solo) and the controls (Learn) have one. Check online how other plugins and synths do
-    it, then options to choose from. With the real interface (UI last).
-30. The Succession bass drum. The Kick generator is built (D232) and Succession 808 drafted in Engine Room. Left:
-    the user's ears on it and on the three models; Werner's full circuit model if the ears want more of the 808.
+25. Tempo (`docs/research/tempo.md`). The user's choices (D235): a tempo set in the app with tap (a click, a pad,
+    the MiniLab's Tap button) and the info row showing the tempo used (fixed); MIDI clock in with an Auto mode
+    (its own tempo until clock arrives, the last tempo kept when it stops) following the tempo and the beat
+    (Start, Stop, Continue, Song Position) as a DAW's transport does, the transport part switchable in Prefs; the
+    tempo is the app's, kept through sound changes, a sound marked to bring its own (a format change). No clock
+    out or Link for now: they wait for the app's own transport (item 12). In a DAW the host's tempo still wins.
+29. Context menus (`docs/research/context-menus.md`). The user's choices (D235): the full set. On knobs and faders:
+    Reset to default, Enter value, Learn, the DAW's items. On a slot: choose type, Copy, Copy with modulation,
+    Paste, Clear, Swap with, Reset. On list rows: Load into A or B; on your sounds Rename, Delete (with a
+    confirmation), Show in folder. Lock a setting through sound changes; copy a layer between CoolSynths. Copies go
+    to the system clipboard as text. Right click always opens a menu, Back is an item in every menu. Opened by right
+    click, long press and Shift+F10; each change one undo step.
+30. The Succession bass drum. The Kick generator is built (D232) and Succession 808 drafted in Engine Room. The
+    user changed the night's choice (D235): Werner's full circuit model of the 808 in wave digital filters replaces
+    today's 808, the full circuit with its envelope generator, on chowdsp_wdf with our own Newton root for Q43 and
+    D52, the resonator's capacitors scaled with the key, checked against ngspice renders and Fischer's samples. Plan
+    and phases: `docs/research/kick-808-wdf.md`; the four downloads are allowed. Left also: the user's ears on the
+    909 and Modern models.
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.
