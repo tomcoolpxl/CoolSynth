@@ -68,6 +68,13 @@ namespace coolsynth::synth::v3::wdf
             nonlinearPort[static_cast<std::size_t>(d.slot[0])] = d.port[0];
         }
 
+        /** Two diodes back to back between two nodes (a soft clipper), as one port: Is (e^(v / VT) - e^(-v / VT)). */
+        void addDiodePair(int n1, int n2, double saturation, double thermal, double portOhms = 1000.0)
+        {
+            addDiode(n1, n2, saturation, thermal, portOhms);
+            devices[static_cast<std::size_t>(deviceCount - 1)].isPair = true;
+        }
+
         /** An NPN transistor (Ebers-Moll, transport form), as two ports: base-emitter and collector-emitter. */
         void addTransistor(int collector, int base, int emitter, double saturation, double betaF, double betaR, double thermal)
         {
@@ -84,6 +91,13 @@ namespace coolsynth::synth::v3::wdf
             d.slot[1] = nonlinearCount++;
             nonlinearPort[static_cast<std::size_t>(d.slot[0])] = d.port[0];
             nonlinearPort[static_cast<std::size_t>(d.slot[1])] = d.port[1];
+        }
+
+        /** A PNP transistor: the NPN's equations with every voltage and current turned round. */
+        void addPnpTransistor(int collector, int base, int emitter, double saturation, double betaF, double betaR, double thermal)
+        {
+            addTransistor(collector, base, emitter, saturation, betaF, betaR, thermal);
+            devices[static_cast<std::size_t>(deviceCount - 1)].polarity = -1.0;
         }
 
         int addProbe(int node)
@@ -113,6 +127,15 @@ namespace coolsynth::synth::v3::wdf
         }
 
         void setSource(int port, double volts) noexcept { ports[static_cast<std::size_t>(port)].volts = volts; }
+
+        /** A capacitor charged to a voltage and still, as settle() leaves it: for handing a state from elsewhere. */
+        void setCapacitorVoltage(int port, double volts) noexcept
+        {
+            auto& p = ports[static_cast<std::size_t>(port)];
+            p.toRoot = volts;
+            p.fromRoot = volts;
+            p.alphaState = volts;
+        }
         void setInput(int input, double volts) noexcept { inputs[static_cast<std::size_t>(input)] = volts; }
 
         void setSampleRate(double rate) noexcept
@@ -207,7 +230,10 @@ namespace coolsynth::synth::v3::wdf
         }
 
         /** One sample. */
-        void process() noexcept { step(maxNewtonSteps); }
+        void process() noexcept { step(newtonLimit); }
+
+        /** The most Newton iterations a sample may take: 12 by default; circuits that switch hard on an edge need more. */
+        void setNewtonLimit(int limit) noexcept { newtonLimit = std::max(1, limit); }
 
         [[nodiscard]] double probe(int index) const noexcept { return probes[static_cast<std::size_t>(index)]; }
         [[nodiscard]] double portVoltage(int port) const noexcept
@@ -244,7 +270,8 @@ namespace coolsynth::synth::v3::wdf
 
         struct Device
         {
-            bool isTransistor = false;
+            bool isTransistor = false, isPair = false;
+            double polarity = 1.0; // -1 for a PNP: its junction voltages and currents are the NPN's turned round
             double saturation = 1.0e-14, betaF = 100.0, betaR = 1.0, thermal = 0.02585;
             int port[2] {}, slot[2] {};
             // Derived once, for the solver: 1 / VT, 1 / betaF, 1 / betaR, 1 + 1 / betaR, pnjlim's critical voltage.
@@ -536,7 +563,7 @@ namespace coolsynth::synth::v3::wdf
 
         // ---- One sample ----------------------------------------------------------------------------------------
 
-        void step(int newtonLimit) noexcept
+        void step(int iterationLimit) noexcept
         {
             if (dirty)
                 analyse();
@@ -584,7 +611,7 @@ namespace coolsynth::synth::v3::wdf
                         sum += row[c] * x[c];
                     p[r] = sum;
                 }
-                solveDevices(p, newtonLimit);
+                solveDevices(p, iterationLimit);
                 // The waves the devices send back: a = v - R i.
                 const int* devicePort = nonlinearPort.data();
                 const double* v = voltage.data();
@@ -631,6 +658,15 @@ namespace coolsynth::synth::v3::wdf
             {
                 const Device& dev = device[d];
                 const int s0 = dev.slot[0];
+                if (dev.isPair)
+                {
+                    // Two diodes back to back: Is (e^(v / VT) - e^(-v / VT)).
+                    const double up = std::exp(std::min(v[s0] * dev.inverseThermal, 80.0));
+                    const double down = std::exp(std::min(-v[s0] * dev.inverseThermal, 80.0));
+                    i[s0] = dev.saturation * (up - down);
+                    g[s0][s0] = dev.saturation * (up + down) * dev.inverseThermal;
+                    continue;
+                }
                 if (! dev.isTransistor)
                 {
                     const double e = std::exp(std::min(v[s0] * dev.inverseThermal, 80.0));
@@ -639,14 +675,15 @@ namespace coolsynth::synth::v3::wdf
                     continue;
                 }
                 const int s1 = dev.slot[1];
-                const double vbe = v[s0], vce = v[s1], vbc = vbe - vce;
+                const double sign = dev.polarity; // a PNP's: i = -f(-v), so di/dv = f'(-v)
+                const double vbe = sign * v[s0], vce = sign * v[s1], vbc = vbe - vce;
                 const double ef = std::exp(std::min(vbe * dev.inverseThermal, 80.0));
                 const double er = std::exp(std::min(vbc * dev.inverseThermal, 80.0));
                 const double iF = dev.saturation * (ef - 1.0), iR = dev.saturation * (er - 1.0);
                 const double gF = dev.saturation * ef * dev.inverseThermal, gR = dev.saturation * er * dev.inverseThermal;
                 // Base current iF / bF + iR / bR, collector current iF - iR (1 + 1 / bR).
-                i[s0] = iF * dev.inverseBetaF + iR * dev.inverseBetaR;
-                i[s1] = iF - iR * dev.reverseFactor;
+                i[s0] = sign * (iF * dev.inverseBetaF + iR * dev.inverseBetaR);
+                i[s1] = sign * (iF - iR * dev.reverseFactor);
                 // d/dvbe and d/dvce, with dvbc/dvbe = 1 and dvbc/dvce = -1.
                 g[s0][s0] = gF * dev.inverseBetaF + gR * dev.inverseBetaR;
                 g[s0][s1] = -gR * dev.inverseBetaR;
@@ -670,6 +707,14 @@ namespace coolsynth::synth::v3::wdf
             return vNew;
         }
 
+        /** A diode's or a diode pair's port voltage limited as a junction's (the pair's in whichever way it conducts). */
+        static double limitPort(double vNew, double vOld, const Device& dev) noexcept
+        {
+            if (! dev.isPair)
+                return limitJunction(vNew, vOld, dev);
+            return vNew >= 0.0 ? limitJunction(vNew, vOld, dev) : -limitJunction(-vNew, -vOld, dev);
+        }
+
         /** Newton's method on v = p + K f(v), from the last sample's voltages. */
         void solveDevices(const double* p, int limit) noexcept
         {
@@ -685,8 +730,8 @@ namespace coolsynth::synth::v3::wdf
 
             // The start. While every junction is below its knee (much of the drum's tail), one fixed-point step,
             // v = p + K i with the last sample's currents: then exact, so the check below usually ends the solve at
-            // once. With a junction conducting such a step can overshoot, so after a sample that solved at once or
-            // nearly, the last three samples' voltages carried on in a parabola, each junction limited as a Newton
+            // once. With a junction conducting such a step can overshoot, so after a sample that solved in a few steps
+            // (three at most), the last three samples' voltages carried on in a parabola, each junction limited as a Newton
             // step is: close enough that one step usually ends it. Where the circuit turns sharply (a trigger's edge)
             // a parabola overshoots too: there the last voltages.
             double* before = previousVoltage.data();
@@ -698,8 +743,8 @@ namespace coolsynth::synth::v3::wdf
             for (int d = 0; d < deviceCount && allOff; ++d)
             {
                 const Device& dev = device[d];
-                const double v0 = v[dev.slot[0]];
-                allOff = v0 < 0.4 && (! dev.isTransistor || v0 - v[dev.slot[1]] < 0.4);
+                const double v0 = dev.isPair ? std::abs(v[dev.slot[0]]) : dev.polarity * v[dev.slot[0]];
+                allOff = v0 < 0.4 && (! dev.isTransistor || v0 - dev.polarity * v[dev.slot[1]] < 0.4);
             }
             bool guessed = false;
             if (allOff && ! openCapacitors)
@@ -718,8 +763,8 @@ namespace coolsynth::synth::v3::wdf
                 for (int d = 0; d < deviceCount && stillOff; ++d)
                 {
                     const Device& dev = device[d];
-                    const double g0 = guess[dev.slot[0]];
-                    stillOff = g0 < 0.4 && (! dev.isTransistor || g0 - guess[dev.slot[1]] < 0.4);
+                    const double g0 = dev.isPair ? std::abs(guess[dev.slot[0]]) : dev.polarity * guess[dev.slot[0]];
+                    stillOff = g0 < 0.4 && (! dev.isTransistor || g0 - dev.polarity * guess[dev.slot[1]] < 0.4);
                 }
                 if (stillOff)
                 {
@@ -728,22 +773,26 @@ namespace coolsynth::synth::v3::wdf
                     guessed = true;
                 }
             }
-            if (! guessed && ! openCapacitors && newtonSteps <= 1)
+            if (! guessed && ! openCapacitors && newtonSteps <= 3)
                 for (int d = 0; d < deviceCount; ++d)
                 {
                     const Device& dev = device[d];
                     const int s0 = dev.slot[0];
-                    const double vbe = limitJunction(3.0 * (last[s0] - before[s0]) + earlier[s0], last[s0], dev);
+                    const double vbe = limitPort(3.0 * (last[s0] - before[s0]) + earlier[s0], last[s0], dev);
                     if (! dev.isTransistor)
                     {
                         v[s0] = vbe;
                         continue;
                     }
+                    // A transistor's junctions in its own sense (a PNP's turned round).
                     const int s1 = dev.slot[1];
-                    const double vbcLast = last[s0] - last[s1], vbcBefore = before[s0] - before[s1], vbcEarlier = earlier[s0] - earlier[s1];
-                    const double vbc = limitJunction(3.0 * (vbcLast - vbcBefore) + vbcEarlier, vbcLast, dev);
-                    v[s0] = vbe;
-                    v[s1] = vbe - vbc;
+                    const double sign = dev.polarity;
+                    const double l0 = sign * last[s0], b0 = sign * before[s0], e0 = sign * earlier[s0];
+                    const double ube = limitJunction(3.0 * (l0 - b0) + e0, l0, dev);
+                    const double vbcLast = l0 - sign * last[s1], vbcBefore = b0 - sign * before[s1], vbcEarlier = e0 - sign * earlier[s1];
+                    const double ubc = limitJunction(3.0 * (vbcLast - vbcBefore) + vbcEarlier, vbcLast, dev);
+                    v[s0] = sign * ube;
+                    v[s1] = sign * (ube - ubc);
                 }
             for (int r = 0; r < m; ++r)
             {
@@ -751,126 +800,156 @@ namespace coolsynth::synth::v3::wdf
                 before[r] = last[r];
             }
 
-            newtonSteps = 0;
-            bool converged = false;
-            for (int it = 0; it < limit; ++it)
+            // Newton from the voltages as they are toward a set of the linear part's inputs: true once converged.
+            auto iterate = [&](const double* target) -> bool
             {
-                deviceCurrents(v, f, g);
-                double worst = 0.0;
-                for (int r = 0; r < m; ++r)
+                for (int it = 0; it < limit; ++it)
                 {
-                    double kf = 0.0;
-                    for (int c = 0; c < m; ++c)
-                        kf += k[r][c] * f[c];
-                    residual[r] = v[r] - p[r] - kf;
-                    worst = std::max(worst, std::abs(residual[r]));
-                }
-                if (worst < 1.0e-7) // 100 nV: some -150 dB under the drum's volts
-                {
-                    converged = true; // f is the current at these voltages
-                    break;
-                }
-                // The Jacobian I - K G, G block diagonal by device: each column has a device's one or two terms.
-                for (int d = 0; d < deviceCount; ++d)
-                {
-                    const Device& dev = device[d];
-                    const int s0 = dev.slot[0];
-                    if (! dev.isTransistor)
-                    {
-                        const double g00 = g[s0][s0];
-                        for (int r = 0; r < m; ++r)
-                            jac[r][s0] = (r == s0 ? 1.0 : 0.0) - k[r][s0] * g00;
-                        continue;
-                    }
-                    const int s1 = dev.slot[1];
-                    const double g00 = g[s0][s0], g01 = g[s0][s1], g10 = g[s1][s0], g11 = g[s1][s1];
+                    deviceCurrents(v, f, g);
+                    double worst = 0.0;
                     for (int r = 0; r < m; ++r)
                     {
-                        const double k0 = k[r][s0], k1 = k[r][s1];
-                        jac[r][s0] = (r == s0 ? 1.0 : 0.0) - (k0 * g00 + k1 * g10);
-                        jac[r][s1] = (r == s1 ? 1.0 : 0.0) - (k0 * g01 + k1 * g11);
+                        double kf = 0.0;
+                        for (int c = 0; c < m; ++c)
+                            kf += k[r][c] * f[c];
+                        residual[r] = v[r] - target[r] - kf;
+                        worst = std::max(worst, std::abs(residual[r]));
                     }
-                }
-                // delta = jac^-1 residual, by elimination with partial pivoting (rows swapped as pointers).
-                double* row[maxDevicePorts];
-                for (int r = 0; r < m; ++r)
-                {
-                    row[r] = jac[r];
-                    delta[r] = residual[r];
-                }
-                for (int col = 0; col < m; ++col)
-                {
-                    int pivot = col;
-                    for (int r = col + 1; r < m; ++r)
-                        if (std::abs(row[r][col]) > std::abs(row[pivot][col]))
-                            pivot = r;
-                    std::swap(row[pivot], row[col]);
-                    std::swap(delta[pivot], delta[col]);
-                    const double d = row[col][col];
-                    if (std::abs(d) < 1.0e-300)
-                        continue;
-                    for (int r = col + 1; r < m; ++r)
+                    if (worst < 1.0e-7) // 100 nV: some -150 dB under the drum's volts
                     {
-                        const double fct = row[r][col] / d;
-                        for (int c = col; c < m; ++c)
-                            row[r][c] -= fct * row[col][c];
-                        delta[r] -= fct * delta[col];
+                        return true; // f is the current at these voltages
                     }
-                }
-                for (int col = m - 1; col >= 0; --col)
-                {
-                    double s = delta[col];
-                    for (int c = col + 1; c < m; ++c)
-                        s -= row[col][c] * delta[c];
-                    const double d = row[col][col];
-                    delta[col] = std::abs(d) < 1.0e-300 ? 0.0 : s / d;
-                }
-                // A step this small leaves the answer within some 10 nV (Newton's error goes as the step squared
-                // over twice VT): take it, the currents carried along their slopes, without evaluating the junctions
-                // again, as SPICE's step tolerance ends its iterations.
-                double largest = 0.0;
-                for (int r = 0; r < m; ++r)
-                    largest = std::max(largest, std::abs(delta[r]));
-                if (largest < 2.0e-5)
-                {
-                    for (int r = 0; r < m; ++r)
-                        v[r] -= delta[r];
+                    // The Jacobian I - K G, G block diagonal by device: each column has a device's one or two terms.
                     for (int d = 0; d < deviceCount; ++d)
                     {
                         const Device& dev = device[d];
                         const int s0 = dev.slot[0];
                         if (! dev.isTransistor)
                         {
-                            f[s0] -= g[s0][s0] * delta[s0];
+                            const double g00 = g[s0][s0];
+                            for (int r = 0; r < m; ++r)
+                                jac[r][s0] = (r == s0 ? 1.0 : 0.0) - k[r][s0] * g00;
                             continue;
                         }
                         const int s1 = dev.slot[1];
-                        const double d0 = delta[s0], d1 = delta[s1];
-                        f[s0] -= g[s0][s0] * d0 + g[s0][s1] * d1;
-                        f[s1] -= g[s1][s0] * d0 + g[s1][s1] * d1;
+                        const double g00 = g[s0][s0], g01 = g[s0][s1], g10 = g[s1][s0], g11 = g[s1][s1];
+                        for (int r = 0; r < m; ++r)
+                        {
+                            const double k0 = k[r][s0], k1 = k[r][s1];
+                            jac[r][s0] = (r == s0 ? 1.0 : 0.0) - (k0 * g00 + k1 * g10);
+                            jac[r][s1] = (r == s1 ? 1.0 : 0.0) - (k0 * g01 + k1 * g11);
+                        }
+                    }
+                    // delta = jac^-1 residual, by elimination with partial pivoting (rows swapped as pointers).
+                    double* row[maxDevicePorts];
+                    for (int r = 0; r < m; ++r)
+                    {
+                        row[r] = jac[r];
+                        delta[r] = residual[r];
+                    }
+                    for (int col = 0; col < m; ++col)
+                    {
+                        int pivot = col;
+                        for (int r = col + 1; r < m; ++r)
+                            if (std::abs(row[r][col]) > std::abs(row[pivot][col]))
+                                pivot = r;
+                        std::swap(row[pivot], row[col]);
+                        std::swap(delta[pivot], delta[col]);
+                        const double d = row[col][col];
+                        if (std::abs(d) < 1.0e-300)
+                            continue;
+                        for (int r = col + 1; r < m; ++r)
+                        {
+                            const double fct = row[r][col] / d;
+                            for (int c = col; c < m; ++c)
+                                row[r][c] -= fct * row[col][c];
+                            delta[r] -= fct * delta[col];
+                        }
+                    }
+                    for (int col = m - 1; col >= 0; --col)
+                    {
+                        double s = delta[col];
+                        for (int c = col + 1; c < m; ++c)
+                            s -= row[col][c] * delta[c];
+                        const double d = row[col][col];
+                        delta[col] = std::abs(d) < 1.0e-300 ? 0.0 : s / d;
+                    }
+                    // A step this small leaves the answer within some 10 nV (Newton's error goes as the step squared
+                    // over twice VT): take it, the currents carried along their slopes, without evaluating the junctions
+                    // again, as SPICE's step tolerance ends its iterations.
+                    double largest = 0.0;
+                    for (int r = 0; r < m; ++r)
+                        largest = std::max(largest, std::abs(delta[r]));
+                    if (largest < 2.0e-5)
+                    {
+                        for (int r = 0; r < m; ++r)
+                            v[r] -= delta[r];
+                        for (int d = 0; d < deviceCount; ++d)
+                        {
+                            const Device& dev = device[d];
+                            const int s0 = dev.slot[0];
+                            if (! dev.isTransistor)
+                            {
+                                f[s0] -= g[s0][s0] * delta[s0];
+                                continue;
+                            }
+                            const int s1 = dev.slot[1];
+                            const double d0 = delta[s0], d1 = delta[s1];
+                            f[s0] -= g[s0][s0] * d0 + g[s0][s1] * d1;
+                            f[s1] -= g[s1][s0] * d0 + g[s1][s1] * d1;
+                        }
+                        ++newtonSteps;
+                        return true;
+                    }
+                    // The step, its junctions limited as SPICE limits them.
+                    for (int d = 0; d < deviceCount; ++d)
+                    {
+                        const Device& dev = device[d];
+                        const int s0 = dev.slot[0];
+                        if (! dev.isTransistor)
+                        {
+                            v[s0] = limitPort(v[s0] - delta[s0], v[s0], dev);
+                            continue;
+                        }
+                        const int s1 = dev.slot[1];
+                        const double sign = dev.polarity;
+                        const double vbeOld = sign * v[s0], vbcOld = sign * (v[s0] - v[s1]);
+                        const double vbeNew = sign * (v[s0] - delta[s0]), vceNew = sign * (v[s1] - delta[s1]);
+                        const double vbe = limitJunction(vbeNew, vbeOld, dev);
+                        const double vbc = limitJunction(vbeNew - vceNew, vbcOld, dev);
+                        v[s0] = sign * vbe;
+                        v[s1] = sign * (vbe - vbc);
                     }
                     ++newtonSteps;
-                    converged = true;
-                    break;
                 }
-                // The step, its junctions limited as SPICE limits them.
-                for (int d = 0; d < deviceCount; ++d)
+                return false;
+            };
+
+            newtonSteps = 0;
+            bool converged = iterate(p);
+            if (! converged)
+            {
+                // Source stepping, as SPICE finds a hard operating point: the linear part's pull on the junctions
+                // walked from the last sample's (v = p + K i there, so p = v - K i) to this one's in stages, each
+                // solved from the one before. Only a sample whose solve failed pays for it (a hard edge).
+                double lastP[maxDevicePorts], staged[maxDevicePorts];
+                const double* i = current.data();
+                for (int r = 0; r < m; ++r)
                 {
-                    const Device& dev = device[d];
-                    const int s0 = dev.slot[0];
-                    if (! dev.isTransistor)
-                    {
-                        v[s0] = limitJunction(v[s0] - delta[s0], v[s0], dev);
-                        continue;
-                    }
-                    const int s1 = dev.slot[1];
-                    const double vbeOld = v[s0], vbcOld = v[s0] - v[s1];
-                    const double vbe = limitJunction(vbeOld - delta[s0], vbeOld, dev);
-                    const double vbc = limitJunction((vbeOld - delta[s0]) - (v[s1] - delta[s1]), vbcOld, dev);
-                    v[s0] = vbe;
-                    v[s1] = vbe - vbc;
+                    double ki = 0.0;
+                    for (int c = 0; c < m; ++c)
+                        ki += k[r][c] * i[c];
+                    lastP[r] = last[r] - ki;
+                    v[r] = last[r];
                 }
-                ++newtonSteps;
+                constexpr int stages = 16;
+                for (int s = 1; s <= stages; ++s)
+                {
+                    const double w = static_cast<double>(s) / stages;
+                    for (int r = 0; r < m; ++r)
+                        staged[r] = lastP[r] + w * (p[r] - lastP[r]);
+                    converged = iterate(staged);
+                }
             }
             double* i = current.data();
             if (converged)
@@ -913,7 +992,7 @@ namespace coolsynth::synth::v3::wdf
         std::array<std::array<double, MaxNonlinear>, MaxNonlinear> K {};
 
         int portCount = 0, inputCount = 0, nullorCount = 0, deviceCount = 0, nonlinearCount = 0, probeCount = 0;
-        int newtonSteps = 0;
+        int newtonSteps = 0, newtonLimit = maxNewtonSteps;
         double sampleRate = 96000.0;
         bool dirty = true, openCapacitors = false;
     };

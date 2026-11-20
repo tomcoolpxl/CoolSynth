@@ -158,10 +158,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     the resonator's capacitors scaled with the key, within 2.5 % of ngspice renders and close to Fischer's
     recordings; Succession 808 levelled again. Left: the user's ears on the 808 circuit, Succession 808 and the 909
     and Modern models; the open questions in D236 (short decays, oversampling for the hardest Shape, the model's
-    first 20 ms duller than the recordings'). The 909 to become its circuit too (D237), engine first, researched in
-    `docs/research/kick-909-circuit.md`: replacing today's 909, the whole drum, the oscillator as an exact triangle
-    flipped at its true crossing beside the circuit solver, stock values then the unknowns fitted to the Rob Roy
-    (and, terms permitting, AudioRealism) recordings, C14 scaled with the key, each knob on its part.
+    first 20 ms duller than the recordings'). The 909 is its circuit too (D237, built D238): the whole drum from the
+    service notes, within 1 % of ngspice stage by stage, its decay fitted to Rob Roy's recordings by C11's leak.
+    Next, the user's choices in D238: the click, which two real units strike more sharply after a quieter trigger,
+    investigated around C11; the 909 made cheaper, then priced. Left: the user's ears on both circuits, Succession
+    808 and Modern.
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.

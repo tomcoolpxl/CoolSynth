@@ -12,9 +12,10 @@
 #include "DspMath.h"
 #include "Module.h"
 #include "Tr808BassDrum.h"
+#include "Tr909BassDrum.h"
 
 /*
-    The Kick generator (docs/research/kick-generator.md, D229, D232, D235): a kick drum in one slot, tuned to the key,
+    The Kick generator (docs/research/kick-generator.md, D229, D232, D235, D238): a kick drum in one slot, tuned to the key,
     with three models behind one set of knobs, as the Chip generator's chips share theirs.
 
     808: the TR-808 bass drum's circuit (Tr808BassDrum.h, Werner's thesis in wave digital filters): the trigger
@@ -25,10 +26,15 @@
     the trigger's width, Punch the attack shift (R166), Punch Time the envelope (C38), Sigh the leakage (R161), Shape
     the op-amps' rails. The key tunes it by the bridged-T's capacitors, as the 808's tuning mod does.
 
-    909 and Modern: an oscillator thrown up in pitch and falling to the note (Punch, Punch Time), the 909's shaped
-    towards a rounded square (Shape) with its attack pulse and noise burst, Modern a pure sine with a short bright
-    transient. Each has its own decay; a new hit restarts the pitch and the level from where the tail is, without a
-    step.
+    909: the TR-909 bass drum's circuit (Tr909BassDrum.h, from the service notes): a triangle oscillator swept by its
+    pitch envelope, rounded by a diode pair, through a transistor VCA held for some 60 ms and then let fall, with an
+    attack of a ringing click and filtered noise. The knobs reach its parts: Punch Time is TUNE (the sweep's fall, as
+    a time constant), Punch the sweep's depth (R26), Decay is DECAY (VR5, read through a table measured on the model),
+    Click is ATTACK (VR3), Accent moves the accent DAC between 2 and 4 V with the velocity, Shape the drive mod
+    (R52), Noise the noise branch (R10). The key tunes it by the oscillator's capacitor.
+
+    Modern: an oscillator thrown up in pitch and falling to the note (Punch, Punch Time), a pure sine with a short
+    bright transient; a new hit restarts the pitch and the level from where the tail is, without a step.
 
     All three: Decay (to -60 dB), Click, Noise, Tone (a low-pass on the whole drum), Drive (a cubic soft clip with
     first-order antiderivative anti-aliasing) and Trigger: One Shot plays the tail out after the key is let go, Gate
@@ -48,6 +54,7 @@ namespace coolsynth::synth::v3
         static constexpr float level = 0.8f;          // a full hit's body peaks near here
         static constexpr double silentLevel = 1.0e-4; // -80 dB: the tail has ended
         static constexpr double circuitVoltsToLevel = 0.18; // the circuit's volts to the slot's level: an accent of half at full velocity peaks near 0.8
+        static constexpr double circuit909VoltsToLevel = 0.15; // likewise the 909's, its LEVEL full
 
         static const ModuleDescriptor& descriptor()
         {
@@ -81,6 +88,9 @@ namespace coolsynth::synth::v3
             rng = rngStart;
             circuit.prepare(sampleRate);
             circuit.setLevel(0.99);
+            drum909.prepare(sampleRate);
+            drum909.setLevelOhms(100.0e3);
+            drum909.setNoiseSeed(rngStart);
             reset();
         }
 
@@ -90,6 +100,8 @@ namespace coolsynth::synth::v3
         void reset() noexcept
         {
             circuit.rest();
+            drum909.rest();
+            blockIn909 = blockOut909 = 0.0;
             oscillator = { 1.0, 0.0 };
             turn = { 1.0, 0.0 };
             controlCountdown = 0;
@@ -101,7 +113,6 @@ namespace coolsynth::synth::v3
             ring.fill(0.0f);
             cursor = 0;
             toneState = 0.0f;
-            clickLow = 0.0f;
             driveLast = 0.0f;
             driveLastF = 0.0;
             rampsPrimed = false;
@@ -144,37 +155,37 @@ namespace coolsynth::synth::v3
             const double punchFall = std::exp(-1.0 / (punchSeconds * fs));
             const double sighFall = std::exp(-1.0 / ((decaySeconds / 3.0) * fs));
             const double clickFall = std::exp(-1.0 / (0.004 * fs)); // the attack's own short decay
-            const double noiseFall = std::exp(-1.0 / ((kind == Model::tr909 ? 0.03 : 0.015) * fs));
+            const double noiseFall = std::exp(-1.0 / (0.015 * fs));
             const double toneHz = std::min(0.45 * fs, 80.0 * std::pow(250.0, static_cast<double>(toneAmount)));
             const float toneG = static_cast<float>(std::tan(juce::MathConstants<double>::pi * toneHz / fs));
             const float toneCoefficient = toneG / (1.0f + toneG);
             const bool toneOn = toneAmount < 0.999f;
-            // Drive and Shape glide across the block, so a macro that throws them does not click.
+            // Drive glides across the block, so a macro that throws it does not click.
             const float driveTarget = std::pow(10.0f, driveDb / 20.0f);
             const float driveMixTarget = juce::jlimit(0.0f, 1.0f, driveDb / 3.0f); // eased in over the first 3 dB
             if (! rampsPrimed)
             {
                 driveNow = driveTarget;
                 driveMixNow = driveMixTarget;
-                shapeNow = shapeAmount;
                 rampsPrimed = true;
             }
             const float rampScale = 1.0f / static_cast<float>(std::max(1, numSamples));
             const float driveStep = (driveTarget - driveNow) * rampScale;
             const float driveMixStep = (driveMixTarget - driveMixNow) * rampScale;
-            const float shapeStep = (shapeAmount - shapeNow) * rampScale;
             const bool driven = driveMixTarget > 0.0f || driveMixNow > 0.0f;
-            const bool shaped = shapeAmount > 0.0f || shapeNow > 0.0f;
-            const float clickLowCoefficient = coefficient(1500.0);
 
             const float amount = juce::jlimit(0.0f, 1.0f, params.combineAmount);
             const bool useRing = params.combine == Combine::ring && input.signal != nullptr;
             const bool useAm = params.combine == Combine::am && input.signal != nullptr;
 
-            const bool circuitModel = kind == Model::tr808;
-            if (circuitModel)
+            const bool circuit808 = kind == Model::tr808, circuit909 = kind == Model::tr909;
+            const bool circuitModel = circuit808 || circuit909;
+            if (circuit808)
                 configureCircuit(decaySeconds, punchSemis, punchSeconds, sighSemis, shapeAmount, toneAmount, note);
-            const double follow = std::exp(-1.0 / (0.02 * fs)); // the 808's level follower, for its end
+            if (circuit909)
+                configure909(decaySeconds, punchSemis, punchSeconds, clickAmount, noiseAmount, shapeAmount, note);
+            const double follow = std::exp(-1.0 / (0.02 * fs)); // the circuits' level follower, for their end
+            const double block909 = std::exp(-juce::MathConstants<double>::twoPi * 10.0 / fs); // the 909's DC block
 
             for (int s = 0; s < numSamples; ++s)
             {
@@ -188,8 +199,10 @@ namespace coolsynth::synth::v3
                     sighEnvelope = 1.0;
                     clickEnvelope = 1.0;
                     noiseEnvelope = 1.0;
-                    if (circuitModel)
+                    if (circuit808)
                         circuit.trigger(4.0 + 10.0 * static_cast<double>(accentAmount * lastVelocity), triggerWidth(clickAmount));
+                    else if (circuit909)
+                        drum909.trigger(2.0 + 2.0 * static_cast<double>(accentAmount * lastVelocity)); // the accent DAC, volts
                     else
                     {
                         if (bodyLevel <= silentLevel)
@@ -214,7 +227,6 @@ namespace coolsynth::synth::v3
 
                 driveNow += driveStep;
                 driveMixNow += driveMixStep;
-                shapeNow += shapeStep;
 
                 float drum = 0.0f;
                 if (circuitModel)
@@ -222,7 +234,18 @@ namespace coolsynth::synth::v3
                     // The circuit runs from a hit until it has rung down; then it rests (and costs nothing).
                     if (sinceHit < 0.05 * fs || bodyLevel > silentLevel)
                     {
-                        const double y = circuit.process() * circuitVoltsToLevel;
+                        double y = 0.0;
+                        if (circuit808)
+                            y = circuit.process() * circuitVoltsToLevel;
+                        else
+                        {
+                            // The mixer's output carries Q12's base current as a slow offset: blocked at 10 Hz, as the
+                            // drum leaves the machine through a capacitor.
+                            const double raw = drum909.process();
+                            blockOut909 = raw - blockIn909 + block909 * blockOut909;
+                            blockIn909 = raw;
+                            y = blockOut909 * circuit909VoltsToLevel;
+                        }
                         bodyLevel = std::max(std::abs(y), bodyLevel * follow);
                         drum = static_cast<float>(y) / level;
                     }
@@ -240,42 +263,23 @@ namespace coolsynth::synth::v3
                     else
                         bodyLevel *= fall;
                     const float sine = static_cast<float>(oscillator.imag());
-                    drum = (kind == Model::tr909 && shaped ? shapeOf(sine) : sine) * static_cast<float>(bodyLevel);
+                    drum = sine * static_cast<float>(bodyLevel);
                 }
 
-                // The attack: the 808's trigger pulse leaking through, the 909's attack pulse, Modern's bright transient.
+                // Modern's bright transient (the 808's and the 909's attacks are their circuits' own).
                 float attack = 0.0f;
-                if (! circuitModel && clickAmount > 0.0f && clickEnvelope > 1.0e-4) // the 808's click is its circuit's own
+                if (! circuitModel && clickAmount > 0.0f && clickEnvelope > 1.0e-4)
                 {
                     const double t = sinceHit / fs;
-                    float pulse = 0.0f;
-                    if (kind == Model::modern)
-                        pulse = static_cast<float>(std::sin(juce::MathConstants<double>::twoPi * 3200.0 * t) * clickEnvelope);
-                    else
-                    {
-                        // The 1 ms trigger pulse with soft edges, through a high-pass: its edges are the click. The
-                        // 808's pulse shaper clips the falling edge to about a diode drop.
-                        const double width = 0.001, edge = 0.00012;
-                        double p = 0.0;
-                        if (t < edge)
-                            p = 0.5 - 0.5 * std::cos(juce::MathConstants<double>::pi * t / edge);
-                        else if (t < width)
-                            p = 1.0;
-                        else if (t < width + edge)
-                            p = 0.5 + 0.5 * std::cos(juce::MathConstants<double>::pi * (t - width) / edge);
-                        const float x = static_cast<float>(p);
-                        pulse = x - onePole(clickLow, x, clickLowCoefficient);
-                        if (kind == Model::tr808)
-                            pulse = std::max(pulse, -0.25f);
-                    }
+                    const float pulse = static_cast<float>(std::sin(juce::MathConstants<double>::twoPi * 3200.0 * t) * clickEnvelope);
                     attack = 0.6f * clickAmount * hitLevel * pulse;
                 }
                 float hiss = 0.0f;
-                if (noiseAmount > 0.0f && noiseEnvelope > 1.0e-4)
+                if (! circuit909 && noiseAmount > 0.0f && noiseEnvelope > 1.0e-4) // the 909's noise is its circuit's
                     hiss = 0.5f * noiseAmount * hitLevel * static_cast<float>(noiseEnvelope) * nextNoise();
 
                 float value = level * drum + attack + hiss;
-                if (toneOn && ! circuitModel) // the 808's Tone is its circuit's VR5
+                if (toneOn && ! circuit808) // the 808's Tone is its circuit's VR5
                     value = onePole(toneState, value, toneCoefficient);
                 if (driven)
                 {
@@ -342,6 +346,53 @@ namespace coolsynth::synth::v3
             circuit.setDecay(decayForSeconds(decaySeconds / circuit.currentTuning()));
         }
 
+        /**
+            The 909 circuit's parts from the knobs, once a block; each knob's default is the stock drum. A change of a
+            resistor makes that circuit analyse again; the key only scales the oscillator's capacitor, outside them.
+        */
+        void configure909(double decaySeconds, double punchSemis, double punchSeconds, float clickAmount, float noiseAmount,
+                          float shapeAmount, double note) noexcept
+        {
+            // Punch: the sweep's depth by R26 (C9's pull on the control voltage), 330 kOhm at the default 12.
+            const double r26 = 330.0e3 * std::pow(2.0, (12.0 - punchSemis) / 12.0);
+            drum909.setSweepOhms(r26);
+            // Punch Time: the sweep's time constant, C9 ((R57 + TUNE) || R26): TUNE fully down (6.8 ms) at the default.
+            const double c9 = 0.33e-6, r57 = 22.0e3;
+            const double conductance = c9 / punchSeconds - 1.0 / r26;
+            drum909.setTuneOhms(conductance > 1.0e-9 ? juce::jlimit(0.0, 10.0e6, 1.0 / conductance - r57) : 10.0e6);
+            drum909.setDecayOhms(decay909ForSeconds(decaySeconds));
+            drum909.setAttackOhms(500.0 * (1.0 - static_cast<double>(clickAmount))); // Click: ATTACK turned up
+            drum909.setNoiseOhms(12.0e3 / (1.0 + 9.0 * static_cast<double>(noiseAmount))); // Noise: R10, stock at 0
+            drum909.setShaperOhms(10.0e3 * (1.0 - 0.9 * static_cast<double>(shapeAmount))); // Shape: the drive mod, stock at 0
+            // The settled pitch on the note: C14 scaled (the sweep scales with it).
+            const double scale = drum909.restHz(1.0) / std::max(5.0, note);
+            if (std::abs(scale / drum909.currentTuning() - 1.0) > 1.0e-4)
+                drum909.setTuning(scale);
+        }
+
+        /**
+            DECAY (VR5) for a time to -60 dB: measured on the circuit model (tests/V3Tr909Tests.cpp, COOLSYNTH_909_TABLES),
+            read between points on a log scale. The circuit's shortest is 0.15 s, its stock longest 0.5 s (1 MOhm); past
+            that VR5 is a bend up to 10 MOhm, 1.05 s, where C8's other paths (R54 into Q12, C11's leak) take over: a
+            longer Decay stays there.
+        */
+        static double decay909ForSeconds(double seconds) noexcept
+        {
+            static constexpr std::array<double, 17> ohms { 1.0, 10.0e3, 30.0e3, 60.0e3, 100.0e3, 150.0e3, 220.0e3, 330.0e3, 470.0e3,
+                                                           680.0e3, 1.0e6, 1.5e6, 2.2e6, 3.3e6, 4.7e6, 6.8e6, 10.0e6 };
+            static constexpr std::array<double, 17> t60 { 0.150, 0.160, 0.170, 0.200, 0.220, 0.260, 0.280, 0.330, 0.370,
+                                                          0.420, 0.500, 0.590, 0.690, 0.780, 0.880, 0.960, 1.050 };
+            if (seconds <= t60.front())
+                return ohms.front();
+            for (std::size_t i = 1; i < t60.size(); ++i)
+                if (seconds <= t60[i])
+                {
+                    const double w = std::log(seconds / t60[i - 1]) / std::log(t60[i] / t60[i - 1]);
+                    return ohms[i - 1] + w * (ohms[i] - ohms[i - 1]);
+                }
+            return ohms.back();
+        }
+
         /** Click: the trigger's width, 0.1 ms at 0, the stock 1 ms at the default 0.3, 10 ms at 1 (a bend). */
         static double triggerWidth(float click) noexcept
         {
@@ -386,14 +437,6 @@ namespace coolsynth::synth::v3
             const float y = v + z;
             z = y + v;
             return y;
-        }
-
-        /** Shape: the drum through a tanh, mixed in by Shape's amount, so no Shape is the drum untouched. */
-        [[nodiscard]] float shapeOf(float v) const noexcept
-        {
-            const float gain = 1.0f + 6.0f * shapeNow;
-            const float clipped = dsp::fastTanh(v * gain) / dsp::fastTanh(gain);
-            return v + shapeNow * (clipped - v);
         }
 
         /** A cubic soft clip of slope 1 at 0, flat at +-1 past 1.5 (1.5 clip(u / 1.5)), with first-order
@@ -443,15 +486,17 @@ namespace coolsynth::synth::v3
         static constexpr int controlInterval = 4;
         std::complex<double> oscillator { 1.0, 0.0 }, turn { 1.0, 0.0 };
         Tr808BassDrum circuit;
+        Tr909BassDrum drum909;
+        double blockIn909 = 0.0, blockOut909 = 0.0;
         int controlCountdown = 0;
         double bodyLevel = 0.0, sinceHit = 1.0e9;
         double punchEnvelope = 0.0, sighEnvelope = 0.0, clickEnvelope = 0.0, noiseEnvelope = 0.0;
         float lastVelocity = 1.0f, hitLevel = 0.0f;
         int riseRemaining = 0;
         bool hitPending = false, oneShot = true;
-        float toneState = 0.0f, clickLow = 0.0f, driveLast = 0.0f;
+        float toneState = 0.0f, driveLast = 0.0f;
         double driveLastF = 0.0;
-        float driveNow = 1.0f, driveMixNow = 0.0f, shapeNow = 0.0f;
+        float driveNow = 1.0f, driveMixNow = 0.0f;
         bool rampsPrimed = false;
         std::array<float, 4> ring {};
         unsigned int cursor = 0;

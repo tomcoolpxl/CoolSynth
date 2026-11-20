@@ -112,7 +112,7 @@ public:
 
         beginTest("decay_is_the_time_to_minus_60_dB");
         {
-            for (const auto model : { Kick::Model::tr808, Kick::Model::tr909, Kick::Model::modern })
+            for (const auto model : { Kick::Model::tr808, Kick::Model::modern })
             {
                 auto rig = makeKick();
                 auto p = kickParams(model, 60.0f);
@@ -124,6 +124,28 @@ public:
                 const double start = rms(out, 4800, 9600), half = rms(out, 4800 + 24000, 9600 + 24000);
                 const double dbPerHalf = 20.0 * std::log10(half / start); // 250 ms on: -30 dB
                 expectWithinAbsoluteError(dbPerHalf, -30.0, 2.0, "model " + juce::String(static_cast<int>(model)));
+            }
+            // The 909 holds for some 60 ms, then falls faster and faster through its transistor VCA: its Decay is the
+            // time from the hit to -60 dB under its peak (by the peaks over 10 ms), as the table was measured.
+            for (const float decayMs : { 200.0f, 400.0f, 900.0f })
+            {
+                auto rig = makeKick();
+                auto p = kickParams(Kick::Model::tr909, 50.0f);
+                p.p[Kick::decay] = decayMs;
+                p.p[Kick::click] = 0.0f;
+                const auto out = render(rig->generator, p, static_cast<int>(3.0 * kVoiceRate));
+                std::vector<double> peaks;
+                for (std::size_t i = 0; i + 960 <= out.size(); i += 960)
+                    peaks.push_back(std::abs(static_cast<double>(*std::max_element(out.begin() + static_cast<long>(i), out.begin() + static_cast<long>(i + 960),
+                                                                                  [](float a, float b) { return std::abs(a) < std::abs(b); }))));
+                const double top = *std::max_element(peaks.begin(), peaks.end());
+                std::size_t end = 0;
+                for (std::size_t w = 0; w < peaks.size(); ++w)
+                    if (peaks[w] > top * 0.001)
+                        end = w + 1;
+                const double seconds = 0.01 * static_cast<double>(end);
+                logMessage("909, Decay " + juce::String(decayMs, 0) + " ms: " + juce::String(1000.0 * seconds, 0) + " ms to -60 dB");
+                expectWithinAbsoluteError(seconds, 0.001 * decayMs, 0.2 * 0.001 * decayMs, "909 at " + juce::String(decayMs, 0) + " ms");
             }
         }
 

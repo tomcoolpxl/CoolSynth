@@ -222,7 +222,7 @@ SPICE:
 Recordings:
 - Rob Roy Recordings, 1995 ([Aminet](https://wup.aminet.net/package/mods/smpl/tr-909), read): one 909, 44.1 kHz mono 16-bit, 24 bass drums named by knob: TUNE 0, 3, 7, 10, ATTACK 0 and 10, DECAY 0, 3, 7, 10 (`bt3a0d7.wav` and so on).
   - Terms: "This sample set is FREE", copy freely, do not change it, "You may not distribute these samples for profit!!" Fit for analysis, never for shipping. mw909 notes they are normalised, so only pitch and timing compare.
-- AudioRealism, 2025, by mw909's account: one original unit, 96 kHz 24-bit, individual outputs, part level 50 %, TUNE, ATTACK and DECAY each at 0, 25, 50, 75, 100 %; "free for personal & commercial use" but "may not be distributed". I could not find the pack's own page, so its existence and terms are unconfirmed by me.
+- AudioRealism, 2025, by mw909's account: one original unit, 96 kHz 24-bit, individual outputs, part level 50 %, TUNE, ATTACK and DECAY each at 0, 25, 50, 75, 100 %; "free for personal & commercial use" but "may not be distributed". Confirmed later on its own page (https://www.audiorealism.se/TR-909-SamplePack.html) and in its Readme, which adds 32-bit float at 96 kHz, eleven accent levels and the eight flam modes; downloaded for analysis only, outside git.
 - Whittle's demo of his modded 909 (a 107 MB FLAC on his page) is a modified machine, not a reference.
 - No CC0 recording of an original 909 with per-knob coverage exists, as mw909 also concluded.
 
@@ -253,6 +253,42 @@ What is easy:
 - The diode pair is a classic WDF one-port pair; chowdsp_wdf solves it in closed form by the Wright omega function ([chowdsp_wdf](https://github.com/Chowdhury-DSP/chowdsp_wdf)); our own root solves it by Newton.
 - Nothing is very stiff: the shortest time constants are the reset (73 µs) and the click's filter (about 3.7 kHz), both comfortable at 96 kHz.
 - The content is low: the sweep peaks near 300 Hz; the shaper and the click are the only bright parts, and the click is a band-limited filter's output.
+
+## Built (D238): what the model found
+
+The model is `src/synth/v3/Tr909BassDrum.h`, checked against `tools/kick909/bassdrum.cir` (the schematic read from the service notes' page 11 at 1200 dpi) and against Rob Roy's recordings.
+
+Readings the research had to correct:
+- Q10 is a PNP: the oscillator only runs if the comparator's low state switches the ±1 stage. The schematic's default note ("all PNP transistors 2SA1115") covers it; operator's notes say the same.
+- The trigger's +15 V pulse is 2.36 ms long in SPICE, not stretched by C1.
+- D8's clamp is soft: R36 and R22 have 8.2 kOhm behind them, so C8 charges to about 6.5 V at a mid accent, not 2.6 V.
+- R8, Q9's emitter resistor, returns to Q4's collector (the hold's accent), as drawn. After the hold, C11 (0.47 µF, charged to the accent at Q9's emitter) feeds C8 through R8, R35 and D9, and as drawn that doubles the decay's time constant.
+
+Against SPICE (TI's RC4558 for the M5218L op-amps), stage by stage, within 1 %: the pulse, C9 and the control voltage, C8, C12, Q9's emitter; the sweep within 0.12 semitones; the output's envelope within 1 dB.
+
+Against Rob Roy's 909:
+- The sweep's shape in semitones above the settled pitch matches at TUNE full (23.0, 19.2, 12.2 at 10, 20, 40 ms against 23.6, 19.6, 12.6).
+- At TUNE fully down the model's sweep falls a little faster (6.8 ms against 7.6 measured): a real pot keeps a few kOhm at its end.
+- The settled pitch: 57.7 Hz in SPICE (58.8 with ideal op-amps), 49.4 Hz on both real units. Nothing in the drawing accounts for it; with C14 following the key it only sets the sweep's depth in semitones, which agrees within the units' spread.
+- The decay: as drawn, 1.85 times the recording's. C11 is an electrolytic whose + is on R44's side, so the feed holds it reverse-biased by some 7 V, and reverse-biased electrolytics leak. A leak of 330 kOhm across C11 brings the times to -20 dB within 0 to 10 % and to -40 dB within 5 to 10 % at every Decay.
+- The hold needs no fit: the model's time to -10 dB matches at every Decay.
+- The click: the model's first 2 ms against its body is 0.6 (ATTACK 0) to 0.9 (full); the recordings show 1.0 to 1.2. Left open.
+
+Against AudioRealism's 909 (a second unit, `COOLSYNTH_909_AUDIOREALISM` in `tests/V3Tr909Tests.cpp`):
+- Settled at 49.3 Hz (TUNE 0) to 49.9 Hz (full), like Rob Roy's; read through a 300 Hz low-pass, as the raw crossings near the files' gated ends read high.
+- The sweep at TUNE full, 24.9, 20.7 and 13.3 semitones at 10, 20 and 40 ms: the model's 23.6, 19.6 and 12.6 sit between the two units. At TUNE 0 its sweep is slower than both (about 9.5 ms against the model's 6.8 and Rob Roy's 7.6): the units' spread, which Punch Time sets in the Kick anyway.
+- The decay confirms the C11 leak fitted on Rob Roy's: at TUNE 0 and ATTACK 0, from Decay 0 to full, the times to -20 dB are 95, 135, 170, 195 and 275 ms recorded against 100, 120, 155, 205 and 255 modelled, to -40 dB 150, 195, 225, 285 and 470 against 130, 165, 220, 295 and 410.
+- The accent, accent 0 to 100 at full knobs: the body (10 to 60 ms) rises 6.8 dB and stops rising from 90 %, the peak 6.0 dB from 60 %. The model's DAC from 2 to 4 V gives 7.8 dB on the body (8.2 at most, from 4.2 V) and 9.3 dB on the peak, its click growing more with the accent. Whether accent 0 is a normal hit is not stated.
+- The first 6 ms say where the click goes wrong. Both units stay within -0.15 of the body's peak during the 2 ms trigger (5 V for 2 ms, the service notes' page 5), then strike: -1.1 at ATTACK 0, a spike of -1.9 at full. The model, as SPICE, ramps to -0.4 (ATTACK 0) and -0.7 (full) during the trigger and strikes -1.2 and -1.4; its slow pull also halves the first positive lobe (+0.4 against +0.7).
+- The ramp comes from R8, which holds Q9's emitter at the hold's accent (e1, about 6 V), so C11 passes that step into the attack's VCA. The drawing is unambiguous at 800 dpi: R8 joins the line to R35. As a test, SPICE with R8 to ground matches the units' quiet trigger and their decay with no leak fitted (Decay full: 280 and 420 ms to -20 and -40 dB against 275 and 470), but ATTACK then does nothing. So the real units differ around C11, an electrolytic held reverse-biased by that accent; how is open.
+
+For the solver (`CircuitWdf.h`):
+- PNP transistors: the NPN's equations with signs turned.
+- A diode pair as one port (D10, D11).
+- Source stepping when a sample's Newton fails (a hard edge).
+- Nodes that meet only junctions (Q7's collector with Q11's base and D12) need a path to ground: a 10 MOhm leak, as SPICE's gmin.
+
+Cost: about 28 % of real time a voice at 96 kHz for the first 20 ms (the front with the trigger), about 20 % to 70 ms (the hold and click circuits), about 9 % after. In the worst-case cost report, sixteen voices struck together: 33.3 % of a block a voice at the 99th percentile, 10.7 % on average (the 808's: 6.8 and 3.2).
 
 ## Decisions for the user
 
