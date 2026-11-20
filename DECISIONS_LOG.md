@@ -4747,3 +4747,19 @@ Against Fischer's 25 recorded bass drums (analysis only, `COOLSYNTH_808_FISCHER`
 
 Also: the rest state is solved once for the process (`Tr808BassDrum::warmUp`, from `Part::prepare`), so a slot switching to the Kick on the audio thread only copies it; the per-sample loops run on plain pointers, as checked indexing cost more than the arithmetic in the Debug build the cap is measured in. Succession 808 levelled again (master 0.5 to 2.0 dB). Left for the user's ears: the 808 circuit, Succession 808, the 909 and Modern.
 
+## D237. The 909 to become its circuit too (2026-11-20)
+
+The user asked whether the Kick's 909 is built on the 808. It is not: D232's 909 is a behavioural model (a sine with a pitch envelope, Shape bending it toward a square, a click pulse and a noise burst), and the real TR-909 kick is not 808-based either: Roland built it as a small analog voice, a triangle VCO swept by a pitch envelope, a shaper toward a sine, a VCA with its own decay, an attack of a pulse and filtered noise ([Roland](https://www.roland.com/id/products/rc_tr-909/features/), [CDM](https://cdm.link/2020/05/make-a-909-kick-on-the-make-noise-0-coast-and-more-drum-modeling-fun/), [Tiptop BD909](https://www.kraftmusic.com/tiptop-audio-bd909-analog-bass-drum-module.html)). Today's Shape is also the wrong way round: a sine pushed toward a square, where the 909 rounds a triangle toward a sine.
+
+- The 909 engine (options: its circuit stage by stage as the 808, checked against SPICE and a real 909's recordings, recommended and chosen; a behavioural model from its stages, a triangle through a fitted shaper; keep it until heard). The user: engine work first, and check online implementations before designing. The research is `docs/research/kick-909-circuit.md`: no paper models any 909 voice; operator (Rust, AGPL) is the one circuit-level model, mw909 (JUCE, AGPL) the best write-up with measurements; real machines measure 49.5 Hz and a 62 ms hold where the schematic gives 56 Hz and 47 to 50 ms.
+
+The user's choices on the research's questions:
+- Where (options: replace today's 909, recommended and chosen; a fourth Model, 909 Circuit). No factory preset uses the 909.
+- The oscillator (options: a hybrid, the analog blocks in `CircuitWdf.h` and the integrator and comparator as an exact triangle flipped at the true crossing with polyBLAMP corners, recommended and chosen; everything in the WDF solver, two states switched at the nearest sample, oversampled; a behavioural phase counter).
+- How far (options: the whole drum, recommended and chosen: pitch envelope, oscillator, diode shaper with Q12, decay envelope with its hold and accent clamp, the attack's click and noise, the accent buffer; the body only; the oscillator and shaper only).
+- Calibration (options: stock values, then only the uncertain parts fitted to recordings, recommended and chosen; stock only; fitted freely).
+- Key tracking (options: C14 scaled with the note, recommended and chosen; the offset R27; none).
+- References and downloads, all outside git and for analysis only (options, several allowed: the Rob Roy 1995 set, recommended and chosen; an RC4558 SPICE macromodel, recommended and chosen; the service notes PDF and Whittle's and Fraser's mod notes, chosen; the AudioRealism set, chosen once its terms are confirmed).
+- Licences (options: facts only from the AGPL and GPL projects, MIT code credited where useful, recommended and chosen; our own code throughout).
+- The knobs (options: each on its part, recommended and chosen, each default the stock 909: Punch Time on TUNE, Punch on the sweep's depth, Decay on VR5 through a measured table, Click on ATTACK, Accent on the accent voltage, Shape on the drive mod at R52, Noise on the noise branch; Tone stays the low-pass after the drum, Sigh has no 909 part; the 909's own knobs only).
+

@@ -134,7 +134,7 @@ mod = src=macro4 dst=lfo1.rate amount=0.36
 [Succession 808]
 room = Engine Room
 # The TR-808 under the Succession theme, as a sound-alike: no source gives its settings (D232).
-# The Kick generator's 808: a struck resonator whose attack jumps up for 6 ms and then sighs down
+# The Kick generator's 808, its circuit (D236): the attack jumps up for 6 ms and then sighs down
 # almost three semitones onto the note. Played at C4 it rings on C2, the theme's C minor root;
 # Ab, F and G play its other roots. Mono, so each hit strikes the drum still ringing; harder
 # hits punch and sigh more. A boom of 1.3 s, about three beats at 140 BPM, darkened and driven.
