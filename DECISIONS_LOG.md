@@ -4882,3 +4882,20 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
 - Not yet seen: the first ID with both scripts claiming it. FL keeps learned IDs where they could not be found (not
   its registry keys, not its files), and the MiniLab's other ports do not answer identity requests. To check on a
   fresh FL. The README tells users who used the MiniLab in FL before to pick CoolSynth MiniLab 3 once.
+
+## D247. Ableton Live loads the MiniLab's control surface by itself (2026-11-21)
+
+- The user asked for the same in Ableton. Live loads a control surface by itself when its script's
+  `get_capabilities` names the device (USB vendor and product IDs, model name) and sets `auto_load`; read from Live's
+  own scripts (`_Framework/Capabilities`, `MiniLab_3`: vendor 7285, product 8715, "Minilab3"). Ours had none.
+- Found in Live 12.4.16 here: the MiniLab is product 0x020B (523) under Arturia's USB MIDI driver; 0x220B (8715) is
+  the other ID in that driver's list and the only one Live's MiniLab_3 claims. Claiming 8715 alone, Live loaded
+  nothing at startup or after the user replugged the MiniLab. With both, Live put CoolSynth_MiniLab in an empty slot
+  at startup.
+- A script that claims a device starts only after Live has asked it for its identity through the slot's output: with
+  output None it was assigned but never created. So the script now has an output port too (`SCRIPT` only: no track
+  MIDI goes there, and the script sends nothing; CoolSynth's driver ignores the MiniLab's identity answer).
+- Of two scripts claiming the MiniLab, Live loaded one, the first by name (tried with throwaway scripts named before
+  and after ours). Ours sorts before MiniLab_3; whether Live's own scripts sort with the user's is not known, and on
+  this computer no built-in script matches the MiniLab to try it. Where the MiniLab is 0x220B (likely the Mac), to
+  check. The README tells users with an earlier control surface on the MiniLab to choose ours once.

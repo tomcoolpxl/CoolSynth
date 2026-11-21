@@ -36,6 +36,10 @@ C4. The FL script linking by itself (D246). Found in FL on 2026-11-21: the first
     where it could not be found (not in its registry keys or files) and the MiniLab's other ports do not answer. To
     check on a fresh FL (a new Windows account or a clean computer). Also to try: FL's own "Forward CCs to current
     plugin Port 10" script, which hands knobs to a plugin on port 10 without putting the controller on a port.
+    Ableton (D247): Live now loads our control surface by itself, seen on 2026-11-21 with the slot emptied. Not seen:
+    a MiniLab on product 0x220B (without Arturia's driver, likely on the Mac), where Live's own MiniLab_3 claims it
+    too; of two user scripts Live took the first by name, and ours sorts before MiniLab_3, but whether Live's own
+    scripts share that order is not known. Also not pressed again by hand: the pads with the output port now set.
 C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, tested by the suite, not yet in a DAW.
     - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
       `build/CoolSynth_artefacts/<config>/CLAP/CoolSynth.clap`.

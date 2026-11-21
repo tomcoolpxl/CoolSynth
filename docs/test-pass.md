@@ -204,6 +204,10 @@ Each sound set up and played by Claude through the MCP server; the user listened
 - Why FL had picked Arturia's script (later that day, D246): an identity request sent from FL's script console moved
   the MiniLab from ours to Arturia's at once ("Loaded MIDI script for Arturia MiniLab 3"), the first time FL learned
   its ID. Ours now claims that ID too; with it, ours stayed linked through restarts and repeated ID answers.
+- Ableton (D247): with slot 1 emptied, Live loaded CoolSynth_MiniLab by itself at startup, input and output
+  Minilab3 MIDI, and the script started ("Initializing..." in Live's log). Claiming only product 0x220B, as Live's
+  own MiniLab_3 does, Live loaded nothing, even after the user replugged the MiniLab: this one is 0x020B under
+  Arturia's USB MIDI driver.
 - The guided controller setup: tried by the user; it works but wants a redesign (TODO C7). The user's own setup was
   backed up first and put back afterwards, the MiniLab driver on.
 - Scaling: everything today ran at the user's Windows scale of 175 %, and the app, Ableton's VST3 and FL's CLAP showed

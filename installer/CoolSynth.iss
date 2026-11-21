@@ -65,8 +65,8 @@ Source: "..\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreve
 Source: "..\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; The MiniLab 3 scripts (D211). They belong in the player's own Documents, where FL Studio and Ableton Live look for
 ; them, but an elevated installer's {userdocs} is the administrator's: so they go in the install folder first and
-; Install-MiniLabScripts.ps1 copies them on as the player who started the installer ([Run] below). FL links its script
-; to the MiniLab by itself; in Live it is chosen once as a control surface. Harmless without a MiniLab.
+; Install-MiniLabScripts.ps1 copies them on as the player who started the installer ([Run] below). FL and Live both
+; link their script to the MiniLab by themselves (D246, D247). Harmless without a MiniLab.
 Source: "..\resources\daw-scripts\fl-studio\CoolSynth MiniLab\*.py"; DestDir: "{app}\DAW scripts\fl-studio\CoolSynth MiniLab"; Components: minilab; Flags: ignoreversion
 Source: "..\resources\daw-scripts\ableton\CoolSynth_MiniLab\*.py"; DestDir: "{app}\DAW scripts\ableton\CoolSynth_MiniLab"; Components: minilab; Flags: ignoreversion
 Source: "Install-MiniLabScripts.ps1"; DestDir: "{app}\DAW scripts"; Components: minilab; Flags: ignoreversion
