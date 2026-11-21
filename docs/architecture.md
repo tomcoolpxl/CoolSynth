@@ -235,7 +235,8 @@ and read it back:
   never the sound.
 - **In a DAW** (D216, [design/CONTROLLERS.md](design/CONTROLLERS.md)) the host's own mapping comes first: the
   first eight parameters are the panel's Home knobs, and the CLAP publishes remote control pages that follow
-  the panel's page (`src/plugin/RemoteControlPages.h`).
+  the panel's page (`src/plugin/RemoteControlPages.h`). The macros' host names follow the playing sound
+  (`MacroParameter`, D248).
 
 The interface is specified in [interface-v3.md](interface-v3.md), and the MiniLab 3 protocol, as tested on the
 device, in [minilab3-screen.md](minilab3-screen.md). `AuditionEditor` is an older editor that is still in the

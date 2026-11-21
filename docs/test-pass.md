@@ -210,6 +210,9 @@ Each sound set up and played by Claude through the MCP server; the user listened
   Arturia's USB MIDI driver. With it loaded, the user's pads switched sections and played no note, and the keys
   played once the track was armed; the script now arms the selected MIDI track itself (seen: the arm follows the
   selection, audio tracks are left alone).
+- Macro names in hosts (D248): Live's panel shows "A1 Bite", "A2 Detune" and follows a new sound ("A1 Bright",
+  "A2 Squelch" for Pluck Drop); FL's CLAP lists "Controls/A1 Bite" and its hint bar says "A1 Bright" after the
+  switch, though its open parameter list kept the old names.
 - The guided controller setup: tried by the user; it works but wants a redesign (TODO C7). The user's own setup was
   backed up first and put back afterwards, the MiniLab driver on.
 - Scaling: everything today ran at the user's Windows scale of 175 %, and the app, Ableton's VST3 and FL's CLAP showed

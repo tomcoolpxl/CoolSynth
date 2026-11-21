@@ -432,11 +432,42 @@ namespace coolsynth::parameters::v3
         return id.startsWith("pA.") || id.startsWith("pB.");
     }
 
+    MacroParameter::MacroParameter(const juce::ParameterID& parameterId, const juce::String& fixedName, juce::String layerPrefix)
+        : coolsynth::parameters::FloatParameter(parameterId, fixedName, juce::NormalisableRange<float>(0.0f, 1.0f), 0.0f,
+                                                percentAttributes()),
+          prefix(std::move(layerPrefix))
+    {
+    }
+
+    bool MacroParameter::setSoundName(const juce::String& name)
+    {
+        const auto trimmed = name.trim();
+        const juce::SpinLock::ScopedLockType lock(nameLock);
+        if (trimmed == soundName)
+            return false;
+        soundName = trimmed;
+        return true;
+    }
+
+    juce::String MacroParameter::getName(int maximumStringLength) const
+    {
+        juce::String name;
+        {
+            const juce::SpinLock::ScopedLockType lock(nameLock);
+            name = soundName;
+        }
+        if (name.isEmpty())
+            return coolsynth::parameters::FloatParameter::getName(maximumStringLength);
+        return (prefix + name).substring(0, maximumStringLength);
+    }
+
     std::unique_ptr<juce::AudioParameterFloat> makeMacroParameter(Part part, int oneBasedMacro)
     {
-        return floatParameter(macroParameterId(part, oneBasedMacro),
-                              juce::String(part == Part::a ? "A" : "B") + " Macro " + juce::String(oneBasedMacro),
-                              { 0.0f, 1.0f }, 0.0f, percentAttributes());
+        // "A1 Bite": the number stays, as in Surge XT's macros, so a host's lane is still known when the sound changes.
+        const juce::String layer(part == Part::a ? "A" : "B");
+        return std::make_unique<MacroParameter>(makeId(macroParameterId(part, oneBasedMacro)),
+                                                layer + " Macro " + juce::String(oneBasedMacro),
+                                                layer + juce::String(oneBasedMacro) + " ");
     }
 
     std::unique_ptr<juce::AudioParameterFloat> makeGlideParameter(Part part)

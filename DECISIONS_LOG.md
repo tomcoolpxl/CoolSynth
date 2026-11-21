@@ -4911,3 +4911,22 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
   first macro and Brightness came in). Live lists no VST3 presets in its browser (only VST2 and AU ones), so the
   sounds are chosen in CoolSynth's own panel there. The macros reach Live as "A Macro 1" to "A Macro 4"; the user
   chose to give hosts the sounds' macro names (D248).
+
+## D248. Hosts see the sounds' macro names (2026-11-21)
+
+- The user's choice (options: to the to-do list, recommended; research and do it now, chosen; leave it).
+- Researched: VST3 renames through `restartComponent(kParamTitlesChanged)`, CLAP through a parameter-info rescan;
+  JUCE 9.0.5 sends the first for changed titles only and clap-juce-extensions the second, both from
+  `updateHostDisplay(...withParameterInfoChanged(true))`, already used for slot names (D228). Hosts: REAPER clears
+  its parameter info on the VST3 notice (its changelog, 6.57); Ableton Live follows renames at run time but ignores
+  them inside `setState` (Steinberg developer forum, 2025; Serum 2's 2.0.21 notes a workaround for Live); Studio One
+  follows them; Bitwig's remote controls keep static names; FL Studio and current Cubase are not documented. Surge
+  XT does the same for its macros, keeping the number ("M1: ...").
+- Built: `MacroParameter` names itself "A1 Bite" from the playing layer's sound, "A Macro 1" for an empty layer or a
+  sound without names; the plugin's 100 Hz timer sets the names and tells the host. A loaded state tells a CLAP host
+  at once and a VST3 host from the timer, after the load, so Live takes the names of a reopened project (the slot
+  names of D228 now go the same way).
+- Seen in the DAWs: Ableton Live 12.4 (VST3) shows "A1 Bite" and "A2 Detune" on its panel and turns them into "A1
+  Bright" and "A2 Squelch" when the panel loads Pluck Drop. FL Studio 2025 (CLAP) lists "Controls/A1 Bite" and,
+  after the switch, names the knob "Controls/A1 Bright" in its hint bar; its parameter list kept the old names on
+  screen. Not seen: a reopened project in Live (saving is off in this Live), FL's VST3, Bitwig, Reaper, Cubase.

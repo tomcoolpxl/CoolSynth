@@ -7,6 +7,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 
 #include "SlotParameters.h"
+#include "parameters/TextToValue.h"
 #include "synth/v3/Inserts.h"
 #include "synth/v3/Part.h"
 
@@ -93,6 +94,22 @@ namespace coolsynth::parameters::v3
     /** A layer's parameters. withControls false leaves out its macros and Glide: layer A's are first in the list, in
         the Controls group, for DAWs that map a controller's first eight knobs (D216). */
     [[nodiscard]] std::unique_ptr<juce::AudioProcessorParameterGroup> makePartGroup(Part part, bool withControls = true);
+
+    /** A macro whose host name is the playing sound's name for it, "A1 Bite" (D248), or "A Macro 1" without one. The
+        processor sets the name on the message thread and tells the host (JUCE's parameter-info notice, as D228). */
+    class MacroParameter final : public coolsynth::parameters::FloatParameter
+    {
+    public:
+        MacroParameter(const juce::ParameterID& parameterId, const juce::String& fixedName, juce::String layerPrefix);
+        /** The sound's name for this macro, or empty for the fixed name. True when the name changed. */
+        bool setSoundName(const juce::String& soundName);
+        juce::String getName(int maximumStringLength) const override;
+
+    private:
+        const juce::String prefix; // "A1 " .. "B4 "
+        mutable juce::SpinLock nameLock; // hosts may ask for names from any thread
+        juce::String soundName;
+    };
     [[nodiscard]] std::unique_ptr<juce::AudioParameterFloat> makeMacroParameter(Part part, int oneBasedMacro);
     [[nodiscard]] std::unique_ptr<juce::AudioParameterFloat> makeGlideParameter(Part part);
     /** What belongs to the patch as a whole: the part mode. */

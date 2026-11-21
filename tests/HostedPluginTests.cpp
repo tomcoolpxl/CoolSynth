@@ -8,6 +8,7 @@
 
 #include <juce_audio_processors/juce_audio_processors.h>
 
+#include "presets/FactoryPresets.h"
 #include "synth/v3/SampleLibrary.h"
 
 namespace
@@ -107,11 +108,15 @@ public:
         const auto plain = render(*first);
         logMessage("Reese's chord: loudest " + juce::String(juce::Decibels::gainToDecibels(plain.getMagnitude(0, plain.getNumSamples())), 1) + " dBFS");
         expectGreaterThan(plain.getMagnitude(0, plain.getNumSamples()), 0.001f, "it plays");
-        juce::AudioProcessorParameter* macro = nullptr;
-        for (auto* parameter : first->getParameters())
-            if (parameter->getName(64) == "A Macro 1")
-                macro = parameter;
-        expect(macro != nullptr, "the host sees 'A Macro 1'");
+        // The first parameter is layer A's first macro (D216), named after the start sound's macro (D248).
+        juce::String reeseMacro;
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
+            if (coolsynth::presets::getFactoryPreset(i).name == "Reese")
+                reeseMacro = coolsynth::presets::getFactoryPreset(i).macroNames[0][0];
+        expect(reeseMacro.isNotEmpty(), "Reese names its macros");
+        auto* macro = first->getParameters().isEmpty() ? nullptr : first->getParameters()[0];
+        expect(macro != nullptr && macro->getName(64) == "A1 " + reeseMacro,
+               "the host sees 'A1 " + reeseMacro + "', not '" + (macro != nullptr ? macro->getName(64) : juce::String()) + "'");
         if (macro != nullptr)
             macro->setValueNotifyingHost(0.8f);
 

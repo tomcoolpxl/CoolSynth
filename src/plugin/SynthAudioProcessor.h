@@ -55,6 +55,9 @@ public:
     /** Message thread, CLAP only: rebuilds the pages when the panel's layer or a slot's type changed, and tells the
         host which page the panel shows. */
     void followRemoteControls();
+    /** Message thread (the plugin's timer): each macro's host name follows its layer's sound, "A Bite" (D248); a
+        change is told to the host with the other new names. */
+    void followMacroNames();
 
     const juce::String getName() const override { return "CoolSynth"; }
     bool acceptsMidi() const override { return true; }
@@ -326,6 +329,7 @@ private:
             if (ticks < 100 && ++ticks == 100)
                 owner.startMiniLabDriver();
             owner.followRemoteControls(); // CLAP: the pages follow the panel (D216)
+            owner.followMacroNames();     // the macros' host names follow the sounds (D248)
             // A slot's type changed: its generic parameters have new names, which the host is told (D228; the VST3
             // wrapper sends the titles again, the CLAP's asks the host to rescan them).
             if (owner.parameterNamesChanged.exchange(false, std::memory_order_acq_rel))
@@ -428,6 +432,7 @@ private:
     coolsynth::synth::GlobalParameterPointers parameterValues;
     juce::StringArray knownParameterIds; // every parameter, for patch and state validation
     std::vector<bool> slotTypeParameter;           // by index: a slot's type, whose change renames its parameters (D228)
+    std::array<std::array<coolsynth::parameters::v3::MacroParameter*, 4>, 2> macroParameters {}; // layer, macro (D248)
     std::atomic<bool> parameterNamesChanged { false }; // set on any thread, told to the host on the message thread
 public:
     /** True when the host is still to be told that parameter names changed (D228); for tests. */

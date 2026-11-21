@@ -456,6 +456,46 @@ public:
             expectEquals(all[0]->getName(32), juce::String("A Macro 1"));
         }
 
+        beginTest("a host sees the playing sound's macro names (D248)");
+        {
+            auto processor = std::make_unique<SynthAudioProcessor>();
+            auto* macroA1 = processor->getParameters()[0];
+            auto* macroB2 = processor->getValueTreeState().getParameter("pB.macro2");
+            int named = -1;
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount() && named < 0; ++i)
+                if (const auto& p = coolsynth::presets::getFactoryPreset(i); p.macroNames[0][0].isNotEmpty() && ! p.macroNames[1][0].isNotEmpty())
+                    named = i;
+            expect(named >= 0, "a single-layer sound that names its macros");
+            if (named >= 0 && macroB2 != nullptr)
+            {
+                const auto& preset = coolsynth::presets::getFactoryPreset(named);
+                processor->loadSoundIntoLayer(named, 0);
+                processor->followMacroNames();
+                expectEquals(macroA1->getName(64), "A1 " + preset.macroNames[0][0], preset.name);
+                expect(processor->hostToHearOfNewNames(), "the host is told");
+                expectEquals(macroB2->getName(64), juce::String("B Macro 2"), "an empty layer keeps the plain names");
+                expectEquals(macroA1->getName(8), ("A1 " + preset.macroNames[0][0]).substring(0, 8), "cut to the host's length");
+
+                processor->loadSoundIntoLayer(named, 1);
+                processor->followMacroNames();
+                expectEquals(macroB2->getName(64), "B2 " + preset.macroNames[0][1], "layer B takes the sound's names");
+                // A project reopened: the names come back with the state, and a VST3 host hears of them after the load
+                // (from the timer), not inside it, where Ableton Live ignores them.
+                processor->loadSoundIntoLayer(named, 0);
+                processor->emptyLayer(1);
+                juce::MemoryBlock state;
+                processor->getStateInformation(state);
+                auto reopened = std::make_unique<SynthAudioProcessor>();
+                reopened->setStateInformation(state.getData(), static_cast<int>(state.getSize()));
+                expectEquals(reopened->getParameters()[0]->getName(64), "A1 " + preset.macroNames[0][0], "the reopened project's names");
+                expect(reopened->hostToHearOfNewNames(), "a VST3 host is told after the load");
+
+                processor->emptyLayer(0);
+                processor->followMacroNames();
+                expectEquals(macroA1->getName(64), juce::String("A Macro 1"), "an emptied layer goes back to the plain names");
+            }
+        }
+
         beginTest("the MiniLab 3's ready setup answers in its Arturia and its DAW program");
         {
             const auto* ml = readyProfile("arturia.minilab3");

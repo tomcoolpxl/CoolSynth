@@ -41,6 +41,8 @@ C4. The FL script linking by itself (D246). Found in FL on 2026-11-21: the first
     too; of two user scripts Live took the first by name, and ours sorts before MiniLab_3, but whether Live's own
     scripts share that order is not known. The pads with the output port set: checked by the user's hands. The
     script now arms the selected MIDI track by itself, as Live's own controller scripts do.
+    Macro names in hosts (D248): seen in Live (VST3) and FL (CLAP). Not seen: a reopened project in Live (needs a
+    Live that saves), FL's VST3, Bitwig, Reaper, Cubase.
 C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, tested by the suite, not yet in a DAW.
     - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
       `build/CoolSynth_artefacts/<config>/CLAP/CoolSynth.clap`.

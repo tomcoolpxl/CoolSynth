@@ -206,6 +206,12 @@ SynthAudioProcessor::SynthAudioProcessor()
     }
     for (auto& handle : userSoundHandles)
         handle.store(-1);
+    for (int layer = 0; layer < 2; ++layer)
+        for (int m = 0; m < 4; ++m)
+            macroParameters[static_cast<std::size_t>(layer)][static_cast<std::size_t>(m)] =
+                dynamic_cast<coolsynth::parameters::v3::MacroParameter*>(parameters.getParameter(
+                    coolsynth::parameters::v3::macroParameterId(layer == 0 ? coolsynth::parameters::v3::Part::a
+                                                                           : coolsynth::parameters::v3::Part::b, m + 1)));
     parameters.state.addListener(this);
     keyboardState.addListener(this);
 
@@ -226,6 +232,9 @@ SynthAudioProcessor::SynthAudioProcessor()
     if (madeByHostOrApp())
         if (const int start = startSoundIndex(); start >= 0)
             setCurrentProgram(start);
+    // A host reads the names as soon as the plugin is made: the start sound's macro names are there from the start.
+    followMacroNames();
+    parameterNamesChanged.store(false, std::memory_order_release);
 }
 
 int SynthAudioProcessor::startSoundIndex()
@@ -1295,6 +1304,22 @@ bool SynthAudioProcessor::remoteControlsPageFill(uint32_t pageIndex, juce::Strin
     return true;
 }
 
+void SynthAudioProcessor::followMacroNames()
+{
+    // An empty layer's macros do nothing (D192): they keep their plain names, as a sound without macro names does.
+    bool changed = false;
+    for (int layer = 0; layer < 2; ++layer)
+    {
+        const bool sounding = layerHasSound(layer);
+        const auto names = macroNames(layer);
+        for (std::size_t m = 0; m < names.size(); ++m)
+            if (auto* macro = macroParameters[static_cast<std::size_t>(layer)][m])
+                changed = macro->setSoundName(sounding ? names[m] : juce::String()) || changed;
+    }
+    if (changed)
+        parameterNamesChanged.store(true, std::memory_order_release);
+}
+
 void SynthAudioProcessor::followRemoteControls()
 {
     // Only a CLAP host reads the pages; and only when the panel changed (it counts its changes).
@@ -1328,12 +1353,16 @@ void SynthAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 
 void SynthAudioProcessor::setStateInformation(const void* data, int sizeInBytes)
 {
-    // A whole sound: the host reads every name again (D228), at once when it loads on the message thread, as a CLAP
-    // host checks right after the load; from any other thread the timer tells it.
+    // A whole sound: the host reads every name again (D228), the macros' too (D248). A CLAP host is told at once when
+    // the state loads on the message thread, as it checks right after the load. A VST3 host hears it from the timer,
+    // after the load: Ableton Live ignores renamed titles told from inside setState (Steinberg forum, 2025; Serum 2
+    // works around the same).
     parameterNamesChanged.store(true, std::memory_order_release);
     const juce::ScopeGuard tellHost { [this]
     {
-        if (juce::MessageManager::existsAndIsCurrentThread() && parameterNamesChanged.exchange(false, std::memory_order_acq_rel))
+        followMacroNames();
+        if (is_clap && juce::MessageManager::existsAndIsCurrentThread()
+            && parameterNamesChanged.exchange(false, std::memory_order_acq_rel))
             updateHostDisplay(juce::AudioProcessorListener::ChangeDetails().withParameterInfoChanged(true));
     } };
     if (auto xml = getXmlFromBinary(data, sizeInBytes))

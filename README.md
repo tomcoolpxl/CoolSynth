@@ -79,7 +79,7 @@ Set your keyboard's size in **Prefs > Your keyboard** to see its keys marked on 
 
 In the app, **Prefs > Claude (MCP)** lets Claude Code read and set the sound, play notes, read and click the panel while it helps you; it is off until you switch it on, and only this computer can reach it.
 
-In a DAW, the simplest way to put your controller's knobs on CoolSynth is the DAW's own mapping: MIDI Map in Ableton Live, Link to controller in FL Studio, Quick Controls in Cubase, or the learn function of Bitwig or Reaper. CoolSynth lists its four macros, Glide, Brightness, Space and the master volume first, so DAWs that give a controller a plugin's first eight controls start there.
+In a DAW, the simplest way to put your controller's knobs on CoolSynth is the DAW's own mapping: MIDI Map in Ableton Live, Link to controller in FL Studio, Quick Controls in Cubase, or the learn function of Bitwig or Reaper. CoolSynth lists its four macros, Glide, Brightness, Space and the master volume first, so DAWs that give a controller a plugin's first eight controls start there. The macros carry the playing sound's names for them, such as "A1 Bite".
 
 CoolSynth can also learn your controller itself, so its knobs, faders and pads work the panel the way the MiniLab does, following the page you're on:
 

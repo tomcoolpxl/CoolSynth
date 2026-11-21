@@ -125,7 +125,7 @@ namespace coolsynth::parameters
     }
 
     /** A float parameter whose typed values read back as it shows them (D228). */
-    class FloatParameter final : public juce::AudioParameterFloat
+    class FloatParameter : public juce::AudioParameterFloat
     {
     public:
         using juce::AudioParameterFloat::AudioParameterFloat;
