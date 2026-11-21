@@ -4899,3 +4899,15 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
   and after ours). Ours sorts before MiniLab_3; whether Live's own scripts sort with the user's is not known, and on
   this computer no built-in script matches the MiniLab to try it. Where the MiniLab is 0x220B (likely the Mac), to
   check. The README tells users with an earlier control surface on the MiniLab to choose ours once.
+- Checked by the user's hands afterwards: the pads switch sections and play no note, the keys play. But only once
+  the track was armed: Live arms the selected track by itself only when a control surface does it (Live's own
+  MiniLab_3 does, ours did not, and with ours stopped Live did not either). Options: add auto-arm, recommended and
+  chosen; leave it to the player. Ours now does what Live's own `ableton.v2` AutoArmComponent does: the selected
+  MIDI track gets `implicit_arm`; not while a Push app runs, and not while Exclusive Arm is on and another track is
+  armed by hand; again whenever tracks, their arm, input or freezing change. Seen in Live: the arm follows the
+  selected MIDI track, an audio track is left alone.
+- Also found: Live shows a plugin's parameters on its panel by itself only up to 64 (Live manual, "Using
+  Plug-Ins"); CoolSynth has many more, so its panel starts empty and Configure adds what is turned (checked: the
+  first macro and Brightness came in). Live lists no VST3 presets in its browser (only VST2 and AU ones), so the
+  sounds are chosen in CoolSynth's own panel there. The macros reach Live as "A Macro 1" to "A Macro 4"; the user
+  chose to give hosts the sounds' macro names (D248).

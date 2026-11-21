@@ -39,7 +39,8 @@ C4. The FL script linking by itself (D246). Found in FL on 2026-11-21: the first
     Ableton (D247): Live now loads our control surface by itself, seen on 2026-11-21 with the slot emptied. Not seen:
     a MiniLab on product 0x220B (without Arturia's driver, likely on the Mac), where Live's own MiniLab_3 claims it
     too; of two user scripts Live took the first by name, and ours sorts before MiniLab_3, but whether Live's own
-    scripts share that order is not known. Also not pressed again by hand: the pads with the output port now set.
+    scripts share that order is not known. The pads with the output port set: checked by the user's hands. The
+    script now arms the selected MIDI track by itself, as Live's own controller scripts do.
 C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, tested by the suite, not yet in a DAW.
     - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
       `build/CoolSynth_artefacts/<config>/CLAP/CoolSynth.clap`.
