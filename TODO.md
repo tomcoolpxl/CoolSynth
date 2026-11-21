@@ -187,6 +187,13 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     cowbell, cymbal and hats; the clap and maracas), as generators and as a kit. Aimed at house use; researched:
     `docs/research/tr-808-voices.md`. Paused by the user (D243), with the 909's cost work (30); its fidelity and
     order to be put to the user when it resumes. Then the 909 made cheaper and priced (30).
+34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
+    MIDI keyboard. The notes only, not the panel's navigation. The usual layout: a row of letters for the white
+    keys, the row above for the black ones, keys for the octave and the velocity (Ableton's computer MIDI
+    keyboard, Mixcraft's and Cherry Audio's Musical Typing Keyboard). Typed keys have no velocity, and many
+    computer keyboards take only about three keys at once. It must stay clear of the keys the panel already uses
+    (the arrows, Enter, Escape, Backspace, 1 to 8 for the pads), and in a DAW the host's own typing keyboard plays.
+    To be designed with the user (options) before it is built.
 
 
 ## Standing notes
