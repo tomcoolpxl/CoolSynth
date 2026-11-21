@@ -1,0 +1,21 @@
+{
+ "title": "CoolSynth Listening Pass, Ladder Chords' Drive",
+ "intro": "Before 0.5.0: Ladder Chords' Drive macro made it 7 dB louder at the top, over the bank's 4 dB rule for macros. Now the level comes down 3.6 dB as Drive rises; the grit is the same.",
+ "covers": [],
+ "bases": {},
+ "groups": [
+  {"key": "drive", "title": "Ladder Chords", "intro": "▶ Play is full Drive with the trim; the first try is full Drive as you heard it before."}
+ ],
+ "items": [
+  {"id": "L1", "group": "drive", "title": "Ladder Chords at full Drive, levelled",
+   "setup": [["load_preset", {"name": "Ladder Chords"}],
+             ["set_values", {"values": {"pA.mod5.src": "Macro 1", "pA.mod5.dst": "VCA", "pA.mod5.amount": "-0.340", "pA.macro1": "100 %"}}]],
+   "view": {}, "phrase": "keys",
+   "tries": [{"label": "Before: full Drive, no trim", "values": {"pA.mod5.amount": "0.000"}},
+             {"label": "Drive 50 %", "values": {"pA.macro1": "50 %"}},
+             {"label": "Drive 0 %, as it starts", "values": {"pA.macro1": "0 %"}}],
+   "choices": ["Keep", "Something's off"], "knobs": [],
+   "listen": ["The same chords at full Drive, 3.6 dB quieter than before; the grit should be the same. Drive at 0 % is unchanged."],
+   "keys": "Its macros: pad Home, page Macros, knob 1 is Drive", "pre": ""}
+ ]
+}

@@ -172,7 +172,8 @@ fx = src=macro3 dst=i1.feedback amount=0.2
 room = Studio 1982
 # Kept from the listening pass at the user's word (2026-11-21): one saw through the ladder at 800 Hz with
 # a little resonance, the key opening it as you play higher, nothing else; chords come out warm and round.
-# Drive is the first macro, clean at zero as heard, up to 24 dB of the ladder's own grit.
+# Drive is the first macro, clean at zero as heard, up to 24 dB of the ladder's own grit; the level
+# comes down 3.6 dB as it rises, so full Drive is under 4 dB louder (the bank's macro rule, D177).
 g1 = VA shape=saw level=0.8
 p1 = Ladder cutoff=800 res=0.3 key=0.5 bass=0.5
 env1 = attack=2 decay=300 sustain=1 release=150
@@ -181,6 +182,7 @@ mix = level=-11
 master = 3
 macros = names=Drive,Cutoff,Resonance,Release
 mod = src=macro1 dst=p1.drive amount=1
+mod = src=macro1 dst=vca amount=-0.34
 mod = src=macro2 dst=p1.cutoff amount=0.3
 mod = src=macro3 dst=p1.res amount=0.5
 mod = src=macro4 dst=env1.time amount=0.75

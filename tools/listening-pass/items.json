@@ -1,172 +1,57 @@
 {
- "title": "CoolSynth Listening Pass, the kicks",
- "intro": "Before 0.5.0: the Kick generator and Succession 808, which you haven't heard yet. Each model plays on its own at its defaults, all four cards at about the same peak; each try turns one knob. Write in the box what you would change.",
- "bases": {
-  "kick": [
-   [
-    "load_preset",
-    {
-     "name": "Basic Saw"
-    }
-   ],
-   [
-    "set_slot_type",
-    {
-     "slot": "pA.p1",
-     "type": "Off"
-    }
-   ],
-   [
-    "set_slot_type",
-    {
-     "slot": "pA.g1",
-     "type": "Kick"
-    }
-   ],
-   [
-    "set_values",
-    {
-     "values": {
-      "pA.env1.attack": "0.5 ms"
-     }
-    }
-   ]
-  ]
- },
+ "title": "CoolSynth Listening Pass, Ladder Chords' Drive",
+ "intro": "Before 0.5.0: Ladder Chords' Drive macro made it 7 dB louder at the top, over the bank's 4 dB rule for macros. Now the level comes down 3.6 dB as Drive rises; the grit is the same.",
+ "bases": {},
  "groups": [
   {
-   "key": "kicks",
-   "title": "The kicks",
-   "intro": "The Kick generator holds three models behind one set of knobs: the TR-808's and the TR-909's bass drum circuits, and a modern kick. The key tunes them: these play C2 and A1."
+   "key": "drive",
+   "title": "Ladder Chords",
+   "intro": "▶ Play is full Drive with the trim; the first try is full Drive as you heard it before."
   }
  ],
  "items": [
   {
-   "id": "K1",
-   "group": "kicks",
-   "title": "Succession 808",
+   "id": "L1",
+   "group": "drive",
+   "title": "Ladder Chords at full Drive, levelled",
    "setup": [
     [
      "load_preset",
      {
-      "name": "Succession 808"
+      "name": "Ladder Chords"
+     }
+    ],
+    [
+     "set_values",
+     {
+      "values": {
+       "pA.mod5.src": "Macro 1",
+       "pA.mod5.dst": "VCA",
+       "pA.mod5.amount": "-0.340",
+       "pA.macro1": "100 %"
+      }
      }
     ]
    ],
    "view": {},
-   "play": [
-    {
-     "seq": [
-      [
-       60,
-       0.0,
-       0.25,
-       110
-      ],
-      [
-       60,
-       1.071,
-       0.25,
-       90
-      ],
-      [
-       56,
-       1.714,
-       0.25,
-       110
-      ],
-      [
-       56,
-       2.786,
-       0.25,
-       90
-      ],
-      [
-       53,
-       3.429,
-       0.25,
-       110
-      ],
-      [
-       53,
-       4.5,
-       0.25,
-       90
-      ],
-      [
-       55,
-       5.143,
-       0.25,
-       110
-      ],
-      [
-       55,
-       6.214,
-       0.25,
-       90
-      ]
-     ],
-     "rel": 1.6
-    }
-   ],
    "tries": [
     {
-     "label": "Tone 100 %",
+     "label": "Before: full Drive, no trim",
      "values": {
-      "pA.macro1": "100 %"
+      "pA.mod5.amount": "0.000"
      }
     },
     {
-     "label": "Punch 100 %",
+     "label": "Drive 50 %",
      "values": {
-      "pA.macro2": "100 %"
+      "pA.macro1": "50 %"
      }
     },
     {
-     "label": "Boom 100 %",
+     "label": "Drive 0 %, as it starts",
      "values": {
-      "pA.macro3": "100 %"
+      "pA.macro1": "0 %"
      }
-    },
-    {
-     "label": "Grit 100 %",
-     "values": {
-      "pA.macro4": "100 %"
-     }
-    },
-    {
-     "label": "Soft hits",
-     "play": [
-      {
-       "seq": [
-        [
-         60,
-         0.0,
-         0.25,
-         60
-        ],
-        [
-         60,
-         1.071,
-         0.25,
-         60
-        ],
-        [
-         56,
-         1.714,
-         0.25,
-         60
-        ],
-        [
-         56,
-         2.786,
-         0.25,
-         60
-        ]
-       ],
-       "rel": 1.6
-      }
-     ]
     }
    ],
    "choices": [
@@ -175,366 +60,87 @@
    ],
    "knobs": [],
    "listen": [
-    "The 808 under a Succession-style theme, a sound-alike: mono, so each hit strikes the drum still ringing; a 1.3 s boom, darkened and driven. Four bars at 140 BPM on its roots C, Ab, F and G. Its macros: Tone, Punch, Boom, Grit."
+    "The same chords at full Drive, 3.6 dB quieter than before; the grit should be the same. Drive at 0 % is unchanged."
    ],
-   "keys": "Its macros: pad Home, page Macros, knobs 1 to 4",
-   "pre": ""
-  },
-  {
-   "id": "K2",
-   "group": "kicks",
-   "title": "Kick: the 808",
-   "base": "kick",
-   "setup": [
-    [
-     "set_values",
-     {
-      "values": {
-       "pA.g1.p1": "808",
-       "pA.mix.level": "2.0 dB"
-      }
-     }
-    ]
-   ],
-   "view": {
-    "slot": "G1",
-    "page": 0
-   },
-   "tries": [
-    {
-     "label": "Soft hits",
-     "play": [
-      {
-       "seq": [
-        [
-         36,
-         0.0,
-         0.3,
-         50
-        ],
-        [
-         36,
-         0.5,
-         0.3,
-         50
-        ],
-        [
-         36,
-         1.0,
-         0.3,
-         50
-        ],
-        [
-         36,
-         1.5,
-         0.3,
-         50
-        ]
-       ],
-       "rel": 0.8
-      }
-     ]
-    },
-    {
-     "label": "Decay 50 ms, the shortest",
-     "values": {
-      "pA.g1.p2": "50 ms"
-     }
-    },
-    {
-     "label": "Decay 2 s",
-     "values": {
-      "pA.g1.p2": "2.00 s"
-     }
-    },
-    {
-     "label": "Click 0 %",
-     "values": {
-      "pA.g1.p6": "0 %"
-     }
-    },
-    {
-     "label": "Click 100 %",
-     "values": {
-      "pA.g1.p6": "100 %"
-     }
-    }
-   ],
-   "choices": [
-    "Right",
-    "Attack too dull",
-    "Click too weak",
-    "Something else"
-   ],
-   "knobs": [],
-   "listen": [
-    "The 808's bass drum as its circuit. Against two real 808s I measured its attack a little dull, its click 3 to 6 dB weak, and the real one's shortest Decay out of reach. Does it sound like an 808 to you?"
-   ],
-   "keys": "",
+   "keys": "Its macros: pad Home, page Macros, knob 1 is Drive",
    "pre": "",
    "play": [
     {
      "seq": [
       [
-       36,
+       48,
        0,
-       0.3,
+       0.9,
        100
       ],
       [
-       36,
-       0.5,
-       0.3,
+       52,
+       0,
+       0.9,
        100
       ],
       [
-       36,
+       55,
+       0,
+       0.9,
+       100
+      ],
+      [
+       59,
+       0,
+       0.9,
+       100
+      ],
+      [
+       45,
        1.0,
-       0.3,
+       0.9,
        100
       ],
       [
-       36,
-       1.5,
-       0.3,
+       52,
+       1.0,
+       0.9,
        100
       ],
       [
-       33,
+       55,
+       1.0,
+       0.9,
+       100
+      ],
+      [
+       60,
+       1.0,
+       0.9,
+       100
+      ],
+      [
+       53,
        2.0,
-       0.8,
+       1.6,
+       100
+      ],
+      [
+       57,
+       2.0,
+       1.6,
+       100
+      ],
+      [
+       60,
+       2.0,
+       1.6,
+       100
+      ],
+      [
+       64,
+       2.0,
+       1.6,
        100
       ]
      ],
-     "rel": 0.8
-    }
-   ]
-  },
-  {
-   "id": "K3",
-   "group": "kicks",
-   "title": "Kick: the 909",
-   "base": "kick",
-   "setup": [
-    [
-     "set_values",
-     {
-      "values": {
-       "pA.g1.p1": "909",
-       "pA.mix.level": "5.3 dB"
-      }
-     }
-    ]
-   ],
-   "view": {
-    "slot": "G1",
-    "page": 0
-   },
-   "tries": [
-    {
-     "label": "Soft hits",
-     "play": [
-      {
-       "seq": [
-        [
-         36,
-         0.0,
-         0.3,
-         50
-        ],
-        [
-         36,
-         0.5,
-         0.3,
-         50
-        ],
-        [
-         36,
-         1.0,
-         0.3,
-         50
-        ],
-        [
-         36,
-         1.5,
-         0.3,
-         50
-        ]
-       ],
-       "rel": 0.8
-      }
-     ]
-    },
-    {
-     "label": "Decay 50 ms",
-     "values": {
-      "pA.g1.p2": "50 ms"
-     }
-    },
-    {
-     "label": "Decay 2 s",
-     "values": {
-      "pA.g1.p2": "2.00 s"
-     }
-    },
-    {
-     "label": "Click 0 %",
-     "values": {
-      "pA.g1.p6": "0 %"
-     }
-    },
-    {
-     "label": "Click 100 %",
-     "values": {
-      "pA.g1.p6": "100 %"
-     }
-    },
-    {
-     "label": "Punch Time 30 ms, a slower sweep",
-     "values": {
-      "pA.g1.p4": "30 ms"
-     }
-    }
-   ],
-   "choices": [
-    "Right",
-    "Something's off"
-   ],
-   "knobs": [],
-   "listen": [
-    "The 909's bass drum from its service notes: a swept triangle with its click and a little noise. Measured against real units: its second harmonic 6 dB strong. Click is the 909's ATTACK knob, Punch Time its TUNE."
-   ],
-   "keys": "",
-   "pre": "",
-   "play": [
-    {
-     "seq": [
-      [
-       36,
-       0,
-       0.3,
-       100
-      ],
-      [
-       36,
-       0.5,
-       0.3,
-       100
-      ],
-      [
-       36,
-       1.0,
-       0.3,
-       100
-      ],
-      [
-       36,
-       1.5,
-       0.3,
-       100
-      ],
-      [
-       33,
-       2.0,
-       0.8,
-       100
-      ]
-     ],
-     "rel": 0.8
-    }
-   ]
-  },
-  {
-   "id": "K4",
-   "group": "kicks",
-   "title": "Kick: Modern",
-   "base": "kick",
-   "setup": [
-    [
-     "set_values",
-     {
-      "values": {
-       "pA.g1.p1": "Modern",
-       "pA.mix.level": "3.0 dB"
-      }
-     }
-    ]
-   ],
-   "view": {
-    "slot": "G1",
-    "page": 0
-   },
-   "tries": [
-    {
-     "label": "Punch 24 st",
-     "values": {
-      "pA.g1.p3": "24.0 st"
-     }
-    },
-    {
-     "label": "Punch Time 30 ms",
-     "values": {
-      "pA.g1.p4": "30 ms"
-     }
-    },
-    {
-     "label": "Decay 2 s",
-     "values": {
-      "pA.g1.p2": "2.00 s"
-     }
-    },
-    {
-     "label": "Click 100 %",
-     "values": {
-      "pA.g1.p6": "100 %"
-     }
-    }
-   ],
-   "choices": [
-    "Right",
-    "Something's off"
-   ],
-   "knobs": [],
-   "listen": [
-    "A clean modern kick: a sine thrown up in pitch and falling to the note, with a short bright click. A new hit picks up from the ringing tail without a step."
-   ],
-   "keys": "",
-   "pre": "",
-   "play": [
-    {
-     "seq": [
-      [
-       36,
-       0,
-       0.3,
-       100
-      ],
-      [
-       36,
-       0.5,
-       0.3,
-       100
-      ],
-      [
-       36,
-       1.0,
-       0.3,
-       100
-      ],
-      [
-       36,
-       1.5,
-       0.3,
-       100
-      ],
-      [
-       33,
-       2.0,
-       0.8,
-       100
-      ]
-     ],
-     "rel": 0.8
+     "rel": 1.2
     }
    ]
   }
