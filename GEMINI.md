@@ -11,7 +11,9 @@ the current state.
   publishes remote control pages that follow the panel (`src/plugin/RemoteControlPages`). macOS is planned (J2).
 - Version 0.3.0 was released on 2026-11-19 (D208, D209, D213): installer, VST3 and app zips on GitHub Releases;
   the recorded instruments as zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`. Version 0.4.0
-  followed on 2026-11-20 (J3, the CLAP, the stutter, D221 to D228); the instruments are still the 0.3.0 zips.
+  followed on 2026-11-20 (J3, the CLAP, the stutter, D221 to D228), and 0.5.0 on 2026-11-21 (the Chip, Kick and
+  TB-303 generators, the MiniLab scripts for Ableton, Bitwig and FL, D229 to D249); the instruments are still the
+  0.3.0 zips.
 - The V3 engine (`src/synth/v3/`): two layers, each with three generator slots, three processor slots, its own
   arpeggiator and six effect slots (I1-I6); six master effect slots (F1-F6) at the end, any of 14 effect types. 138 presets in 14 rooms
   (`resources/presets/*.csbank`), including the recorded instruments of the Conservatory and the Museum's rebuilt
@@ -61,7 +63,7 @@ the current state.
 - No backward compatibility is required anywhere unless the user explicitly asks for it.
 - Patch and processor-state formats are not kept backward compatible by default: when the parameter contract
   changes, bump the format. Where a migration already exists (older states carried over), keep it working.
-- 0.4.0 is out now: before a change that would stop a saved project from loading, ask the user.
+- 0.5.0 is out now: before a change that would stop a saved project from loading, ask the user.
 
 ## Project rules
 

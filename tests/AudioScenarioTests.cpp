@@ -274,6 +274,9 @@ public:
             float worstRise = -100.0f;
             juce::String worstName;
             juce::StringArray tooLoud;
+            // Louder by the user's choice: Ladder Chords' Drive, the ladder's full 24 dB of grit at the level the
+            // user approved, about 7 dB up (2026-11-21).
+            const juce::StringArray louderByChoice { "Ladder Chords" };
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
             {
                 const auto play = [&](float macro, std::uint64_t* hash, int only = 0)
@@ -334,6 +337,11 @@ public:
                         logMessage(title + " varies from run to run (a random arpeggio): its level is not compared");
                         continue;
                     }
+                }
+                if (louderByChoice.contains(title))
+                {
+                    logMessage(title + " rises " + juce::String(rise, 1) + " dB, louder by the user's choice");
+                    continue;
                 }
                 if (rise > worstRise)
                 {

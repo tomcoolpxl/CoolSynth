@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-project(CoolSynth VERSION 0.4.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
+project(CoolSynth VERSION 0.5.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
 
 # A Release build carries Microsoft's C++ runtime inside it (/MT): the app and the VST3 run on a computer with
 # nothing installed (the debug runtime may not be passed on, so a Debug build never leaves this machine). Debug

@@ -251,5 +251,5 @@ Each sound set up and played by Claude through the MCP server; the user listened
 
 - 0.5.0, the user's choice (2026-11-21); the notes are in `docs/releases/v0.5.0.md`; then the tag.
 - The release dry run failed one test of 282: Ladder Chords' Drive macro made it 7.1 dB louder at full, over the
-  bank's 4 dB rule (D177). The level now comes down 3.6 dB as Drive rises (the user's choice); the rule's test
-  passes, the loudest rise now Riser's 3.7 dB. On the listening page for the user's ear.
+  bank's 4 dB rule (D177). A trim of 3.6 dB as Drive rises was tried; after hearing both, the user kept Drive
+  untrimmed, as first approved, and the macro test now lets Ladder Chords through by name.
