@@ -193,6 +193,21 @@ Each sound set up and played by Claude through the MCP server; the user listened
   TB-303, the Ladder questions and the six noise presets not judged yet; every card pre-checked through the MCP
   server (all set up as asked, none silent or clipping once the sampled instruments load before the notes).
 
+## The listening page, round 1 (2026-11-21): all 134 cards answered
+
+- Kept as they are: 117 bank presets, the TB-303's Acid line, its accent ("clear and right") and its slide ("glides
+  right"), Cassette Keys, Blanket Pad, Dusty Mallet and Sea Pad's noise ("right"), the SCC tables.
+- The Ladder by ear (TODO 13): drive headroom right, Bass stays 50 % by default, the four modes even enough, the
+  self-oscillation's level right. The drive card itself, "beautiful": kept as Ladder Chords in Studio 1982.
+- Removed at the user's word: Tape Flute, High Voice, Four-Track House ("wrong kind of noise").
+- Washed Poly's noise "slightly less, not much less": crackle and hiss down by a quarter.
+- Bedroom Bass "very silent": nearly all of it under 60 Hz (and the page played it low); opened to 700 Hz with less
+  deep sub, levelled again.
+- Clicks in Vibraphone and Granular Sky: a key struck again while its recording rang jumped back to the start. Now
+  the old ring fades out over 5 ms under the new strike, which rises over 2 ms, and a re-struck envelope climbs back
+  over at least 2 ms; tested on Vibraphone, Granular Sky, Steinway Grand and Glockenspiel.
+- Round 2 on the page: the fixes, each against how it was.
+
 ## Then the release (TODO J3)
 
 - The version number is your choice; the release notes go in `docs/releases/`; then the tag.

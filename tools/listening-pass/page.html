@@ -136,6 +136,7 @@
     : (!it.choices && v === DEFAULT_CHOICES[1]) || /off|too |drop|wrong|can't|jumps|harsh|change/i.test(v) ? "issue" : "ok";
 
   document.getElementById("intro").textContent = data.intro;
+  if (data.title) { document.getElementById("title").textContent = data.title; document.title = data.title; }
 
   function setBusy(on) {
     busy = on;

@@ -58,7 +58,8 @@
     into it. It fades in over 1 ms and out over its last 4 ms, so no cut clicks. A key outside the
     pieces is silent.
 
-    Output is two samples late like every generator; a retriggered voice starts again.
+    Output is two samples late like every generator; a retriggered voice starts again, what was sounding fading out
+    under the new start over 5 ms while the new start rises over 2 ms (captureTail), so a repeated key never clicks.
 */
 namespace coolsynth::synth::v3
 {
@@ -180,7 +181,14 @@ namespace coolsynth::synth::v3
             return to > from;
         }
 
-        static std::size_t memoryFloats(double, int maxSubBlock) { return static_cast<std::size_t>(std::max(1, maxSubBlock)); }
+        static constexpr double tailSeconds = 0.005; // a strike on a sounding recording fades the old out over 5 ms
+        static constexpr double riseSeconds = 0.002; // and the new start rises over 2 ms, as a fresh note's attack
+        static constexpr int tailCapacity = 1024;     // 5 ms up to 192 kHz
+
+        static std::size_t memoryFloats(double, int maxSubBlock)
+        {
+            return static_cast<std::size_t>(std::max(1, maxSubBlock)) + 2 * static_cast<std::size_t>(tailCapacity);
+        }
 
         void prepare(double newSampleRate, int maxSubBlock, SlotMemory& memory) noexcept
         {
@@ -188,6 +196,8 @@ namespace coolsynth::synth::v3
             bank = &SampleBank::instance();
             kernels = &SincKernels::instance();
             signalTrack = memory.take(static_cast<std::size_t>(std::max(1, maxSubBlock)));
+            tailLeft = memory.take(static_cast<std::size_t>(tailCapacity));
+            tailRight = memory.take(static_cast<std::size_t>(tailCapacity));
             reset();
         }
 
@@ -211,6 +221,11 @@ namespace coolsynth::synth::v3
             cursor = 0;
             input = {};
             slicing = false;
+            tailLength = 0;
+            tailIndex = 0;
+            riseLength = 0;
+            riseIndex = 0;
+            capturing = false;
         }
 
         void noteOn(const NoteContext& context) noexcept
@@ -273,6 +288,32 @@ namespace coolsynth::synth::v3
             `valueMono` is what the next generator's combine input gets: the signal before panning. */
         void emit(float* left, float* right, int s, float valueLeft, float valueRight, float valueMono, const SlotParams& params) noexcept
         {
+            if (capturing)
+            {
+                // Reading ahead for captureTail: the plain values, nothing delayed or combined.
+                left[s] = valueLeft;
+                right[s] = valueRight;
+                return;
+            }
+            if (riseIndex < riseLength)
+            {
+                // The new start after a strike rises as a fresh note's 2 ms attack would: the voice's envelope is open.
+                const float x = (static_cast<float>(riseIndex++) + 0.5f) / static_cast<float>(riseLength);
+                const float h = 0.5f - 0.5f * std::cos(juce::MathConstants<float>::pi * x);
+                valueLeft *= h;
+                valueRight *= h;
+                valueMono *= h;
+            }
+            if (tailIndex < tailLength)
+            {
+                // What was sounding before a strike, fading out under the new start (a raised cosine).
+                const float x = (static_cast<float>(tailIndex) + 0.5f) / static_cast<float>(tailLength);
+                const float g = 0.5f + 0.5f * std::cos(juce::MathConstants<float>::pi * x);
+                const auto i = static_cast<std::size_t>(tailIndex++);
+                valueLeft += tailLeft[i] * g;
+                valueRight += tailRight[i] * g;
+                valueMono += 0.5f * (tailLeft[i] + tailRight[i]) * g;
+            }
             const unsigned int now = cursor & 3u;
             ringLeft[now] = valueLeft;
             ringRight[now] = valueRight;
@@ -320,6 +361,8 @@ namespace coolsynth::synth::v3
 
             if (startPending)
             {
+                if (! finished && zone == nullptr)
+                    captureTail(params); // a strike while it sounds: what was playing fades out under the new start
                 position = juce::jlimit(0.0, frames - 1.0, static_cast<double>(params.p[start]) * frames);
                 finished = false;
                 startPending = false;
@@ -377,6 +420,55 @@ namespace coolsynth::synth::v3
             }
         }
 
+        /** The next few milliseconds of what is sounding, read ahead before a strike starts the recording over, so emit()
+            fades it out under the new start instead of cutting it (repeated keys clicked: the user's listening pass,
+            2026-11-21). The playing state is left as it was. */
+        void captureTail(const SlotParams& params) noexcept
+        {
+            tailLength = 0;
+            tailIndex = 0;
+            const int frames = std::min(tailCapacity, std::max(1, static_cast<int>(std::lround(tailSeconds * sampleRate))));
+            if (tailLeft.size() < static_cast<std::size_t>(frames) || tailRight.size() < static_cast<std::size_t>(frames))
+                return; // not prepared
+            const double savedPosition = position, savedPlayed = played;
+            const bool savedFinished = finished;
+            capturing = true;
+            const bool savedStart = startPending;
+            startPending = false;
+            if (zone != nullptr)
+            {
+                const double hz = std::max(1.0, static_cast<double>(params.frequencyHz));
+                const float pan = juce::jlimit(-1.0f, 1.0f, params.pan);
+                const float gainLeft = velocityLevel * (pan > 0.0f ? 1.0f - pan : 1.0f), gainRight = velocityLevel * (pan < 0.0f ? 1.0f + pan : 1.0f);
+                switch (zone->format)
+                {
+                    case SampleFormat::int16:
+                        renderZone(tailLeft.data(), tailRight.data(), frames, params, hz, gainLeft, gainRight, Int16Numbers { static_cast<const std::int16_t*>(zone->data) });
+                        break;
+                    case SampleFormat::int24:
+                        renderZone(tailLeft.data(), tailRight.data(), frames, params, hz, gainLeft, gainRight, Int24Numbers { static_cast<const std::uint8_t*>(zone->data) });
+                        break;
+                    case SampleFormat::float32:
+                    default:
+                        renderZone(tailLeft.data(), tailRight.data(), frames, params, hz, gainLeft, gainRight, FloatNumbers { static_cast<const float*>(zone->data) });
+                        break;
+                }
+            }
+            else
+            {
+                renderGenerated(tailLeft.data(), tailRight.data(), frames, params, std::min(std::max(0, static_cast<int>(std::lround(params.p[sample]))),
+                                                                                         SampleBank::sampleCount - 1));
+            }
+            capturing = false;
+            startPending = savedStart;
+            position = savedPosition;
+            played = savedPlayed;
+            finished = savedFinished;
+            tailLength = frames;
+            riseLength = std::max(1, static_cast<int>(std::lround(riseSeconds * sampleRate)));
+            riseIndex = 0;
+        }
+
         void renderInstrument(float* left, float* right, int numSamples, const SlotParams& params, int instrument) noexcept
         {
             // A note takes its style when it starts and keeps it to its end, whatever the slot is set to meanwhile; its
@@ -398,6 +490,11 @@ namespace coolsynth::synth::v3
 
             if (startPending)
             {
+                // A strike while the recording sounds: it fades out under the new start, read while its memory is
+                // still this note's (an instrument's held style, or the user's file the slot still names).
+                if (! finished && zone != nullptr && playingStyle != nullptr
+                    && (held ? heldStyle.style == playingStyle : loaded == playingStyle))
+                    captureTail(params);
                 startPending = false;
                 hold(held ? loaded : nullptr);
                 playingStyle = loaded;
@@ -639,6 +736,11 @@ namespace coolsynth::synth::v3
         unsigned int cursor = 0;
         std::span<float> signalTrack;
         GeneratorLink input {};
+        // A strike's fade (captureTail): what was sounding, read ahead, and how far emit() has faded it out.
+        std::span<float> tailLeft, tailRight;
+        int tailLength = 0, tailIndex = 0;
+        int riseLength = 0, riseIndex = 0;
+        bool capturing = false;
     };
 
     static_assert(Module<SampleGenerator>);

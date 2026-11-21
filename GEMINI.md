@@ -13,7 +13,7 @@ the current state.
   the recorded instruments as zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`. Version 0.4.0
   followed on 2026-11-20 (J3, the CLAP, the stutter, D221 to D228); the instruments are still the 0.3.0 zips.
 - The V3 engine (`src/synth/v3/`): two layers, each with three generator slots, three processor slots, its own
-  arpeggiator and six effect slots (I1-I6); six master effect slots (F1-F6) at the end, any of 14 effect types. 140 presets in 14 rooms
+  arpeggiator and six effect slots (I1-I6); six master effect slots (F1-F6) at the end, any of 14 effect types. 138 presets in 14 rooms
   (`resources/presets/*.csbank`), including the recorded instruments of the Conservatory and the Museum's rebuilt
   classic synths.
 - The panel (`src/plugin/PanelEditor`, `src/interface/InterfaceModel`) copies and drives the Arturia MiniLab 3
@@ -30,8 +30,8 @@ the current state.
   text and `click` works it by name (D227); check anything visible that way, and ask the user only for ears and hands.
   For a listening pass, `tools/listening-pass` serves a local page whose buttons set each sound up through that
   server and play it, a reference and its before-and-after tries; the user's answers go to `marks.json` there.
-  `make_items.py` writes `items.json` from `special.json` and a card per bank preset; `server.py --precheck` plays
-  every card first. Only what needs ears and has a reference goes on it (DAW and display checks are Claude's).
+  `make_items.py` writes `items.json` from `special.json` and a card per bank preset (a follow-up round from its
+  own file with `--no-bank`); `server.py --precheck` plays every card first. Only what needs ears and has a reference goes on it (DAW and display checks are Claude's).
   `play` takes a `sequence` of timed, overlapping keys for lines with slides.
 - Output is deterministic (D224): every random source restarts from its seed at a reset and when the host's
   transport starts, a bounce waits for sounds to load, and a voice cap by measured cost (`src/synth/v3/VoiceCost.h`)

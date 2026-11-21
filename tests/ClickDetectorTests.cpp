@@ -10,6 +10,7 @@
 #include <tuple>
 #include <vector>
 
+#include <juce_audio_formats/juce_audio_formats.h>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_core/juce_core.h>
 
@@ -527,3 +528,129 @@ public:
 };
 
 static ClickDetectorTests clickDetectorTests;
+
+/** A key struck again while its recording still rings (the user's listening pass, 2026-11-21: Vibraphone and Granular
+    Sky clicked): the sounding recording fades out under the new start instead of jumping to it. Judged against the
+    same strike on a silent voice. The test program holds only each recording's first quarter second, so all of it
+    happens inside that. */
+class RepeatedKeyClickTests final : public juce::UnitTest
+{
+public:
+    RepeatedKeyClickTests() : juce::UnitTest("Click detector: a repeated key on a sampled instrument", "Audio") {}
+
+    void runTest() override
+    {
+        for (const char* name : { "Vibraphone", "Granular Sky", "Steinway Grand", "Glockenspiel" })
+        {
+            int index = -1;
+            for (int i = 0; i < coolsynth::presets::getFactoryPresetCount() && index < 0; ++i)
+                if (presetName(i) == name)
+                    index = i;
+            beginTest(juce::String(name) + ": struck again while it rings, no click");
+            expect(index >= 0, "no preset " + juce::String(name));
+            if (index < 0)
+                continue;
+            const auto render = [index](bool first)
+            {
+                auto r = std::make_unique<Recorder>();
+                r->loadPreset(index);
+                r->play(0.05);
+                if (first)
+                    r->note(67, true);
+                r->play(0.06);
+                if (first)
+                    r->note(67, false);
+                r->play(0.04);
+                const auto at = r->now();
+                r->note(67, true);
+                r->play(0.08);
+                return std::make_pair(std::move(r), at);
+            };
+            const auto [again, at] = render(true);
+            const auto [fresh, freshAt] = render(false);
+            juce::ignoreUnused(freshAt);
+            const auto window = samplesFor(0.012); // the 5 ms fade, the new strike's start, and some
+            const Finding f { again->roughness(at, at + window),
+                              std::max(again->roughness(at - samplesFor(0.03), at), fresh->roughness(at, at + window)) };
+            expect(! clicks(f), "roughness " + juce::String(f.during, 4) + " against its own " + juce::String(f.own, 4)
+                                    + " (" + juce::String(f.ratio(), 2) + "x)");
+        }
+    }
+};
+
+static RepeatedKeyClickTests repeatedKeyClickTests;
+
+/** Opt-in, to study a sound the ear flagged: COOLSYNTH_RENDER_PRESET (a factory preset's name) playing
+    COOLSYNTH_RENDER_NOTES ("note:at:length:velocity,..." in seconds, as the listening page's phrases) for
+    COOLSYNTH_RENDER_SECONDS, written as a 32-bit float stereo WAV to COOLSYNTH_RENDER_OUT, at 48 kHz in 256-sample
+    blocks, each key landing on its own sample. */
+class PresetRenderTool final : public juce::UnitTest
+{
+public:
+    PresetRenderTool() : juce::UnitTest("Preset render to a file (opt-in)", "Audio") {}
+
+    void runTest() override
+    {
+        const auto name = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_RENDER_PRESET", {});
+        const auto out = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_RENDER_OUT", {});
+        if (name.isEmpty() || out.isEmpty())
+            return;
+        beginTest("render " + name);
+        int index = -1;
+        for (int i = 0; i < coolsynth::presets::getFactoryPresetCount() && index < 0; ++i)
+            if (presetName(i).equalsIgnoreCase(name))
+                index = i;
+        expect(index >= 0, "no preset " + name);
+        if (index < 0)
+            return;
+
+        struct Key { std::size_t at; int note; int velocity; bool down; };
+        std::vector<Key> keys;
+        for (const auto& step : juce::StringArray::fromTokens(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_RENDER_NOTES", "60:0:1:100"), ",", {}))
+        {
+            const auto parts = juce::StringArray::fromTokens(step, ":", {});
+            if (parts.size() < 3)
+                continue;
+            const auto at = samplesFor(parts[1].getDoubleValue());
+            keys.push_back({ at, parts[0].getIntValue(), parts.size() > 3 ? parts[3].getIntValue() : 100, true });
+            keys.push_back({ at + samplesFor(parts[2].getDoubleValue()), parts[0].getIntValue(), 0, false });
+        }
+        std::sort(keys.begin(), keys.end(), [](const Key& a, const Key& b) { return a.at < b.at || (a.at == b.at && ! a.down && b.down); });
+
+        auto r = std::make_unique<Recorder>();
+        r->loadPreset(index);
+        // The sample library may still be finishing in the background: give it the time a player would.
+        juce::Thread::sleep(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_RENDER_WAIT_MS", "3000").getIntValue());
+        r->play(0.1);
+        r->left.clear();
+        r->right.clear();
+        const auto total = samplesFor(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_RENDER_SECONDS", "6").getDoubleValue());
+        std::size_t next = 0;
+        while (r->now() < total)
+        {
+            const auto start = r->now();
+            for (; next < keys.size() && keys[next].at < start + blockSize; ++next)
+            {
+                const auto offset = static_cast<int>(keys[next].at - std::min(keys[next].at, start));
+                r->midi.addEvent(keys[next].down ? juce::MidiMessage::noteOn(1, keys[next].note, static_cast<juce::uint8>(keys[next].velocity))
+                                                 : juce::MidiMessage::noteOff(1, keys[next].note), offset);
+            }
+            r->play(static_cast<double>(blockSize) / sampleRate);
+        }
+
+        juce::File file(out);
+        file.deleteFile();
+        std::unique_ptr<juce::OutputStream> stream = std::make_unique<juce::FileOutputStream>(file);
+        juce::WavAudioFormat wav;
+        auto writer = wav.createWriterFor(stream, juce::AudioFormatWriterOptions {}.withSampleRate(sampleRate).withNumChannels(2).withBitsPerSample(32)
+                                                      .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint));
+        expect(writer != nullptr);
+        if (writer == nullptr)
+            return;
+        const float* channels[] { r->left.data(), r->right.data() };
+        writer->writeFromFloatArrays(channels, 2, static_cast<int>(r->left.size()));
+        logMessage("wrote " + juce::String(static_cast<int>(r->left.size())) + " samples to " + out);
+    }
+};
+
+static PresetRenderTool presetRenderTool;

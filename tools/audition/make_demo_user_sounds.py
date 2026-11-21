@@ -31,7 +31,7 @@ HITS = [
     ("04 Static.wav", "Static Hit", 60, 0.4),
     ("05 Pluck.wav", "Crystal Pluck", 72, 0.9),
     ("06 Bell.wav", "Glass Bell", 72, 1.5),
-    ("07 Chord.wav", "Four-Track House", 57, 0.6),
+    ("07 Chord.wav", "Future Chord", 57, 0.6),
     ("08 Bass.wav", "Square Grit", 36, 0.6),
 ]
 

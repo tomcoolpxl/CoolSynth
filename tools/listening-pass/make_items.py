@@ -2,7 +2,9 @@
 Writes items.json for the listening pass: the hand-written cards in special.json, then a card for every preset of the
 bank (resources/presets/*.csbank) that no special card or earlier pass already covers.
 
-    python -I tools/listening-pass/make_items.py
+    python -I tools/listening-pass/make_items.py [special.json] [--no-bank]
+
+A follow-up round (special-round2.json, --no-bank) lists only its own cards.
 
 Each bank card loads its preset, plays a phrase that suits it (a bass line, a chord, a melody in the instrument's
 range), and offers before-and-after tries: each macro turned to 100 %, a soft and a hard touch. Its idea is the
@@ -11,6 +13,7 @@ preset's own description, the reference the user judges it against. Standard lib
 import json
 import os
 import re
+import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PRESETS = os.path.join(HERE, "..", "..", "resources", "presets")
@@ -71,6 +74,8 @@ def acid(accents=True, slides=True):
     return [{"seq": out, "rel": 0.6}]
 
 
+PHRASES["bass_up"] = [{"seq": [[n + 12, at, length, vel] for n, at, length, vel in PHRASES["bass"][0]["seq"]], "rel": 0.6}]
+PHRASES["repeat"] = seq(*[(67, 0.18 * i, 0.12) for i in range(8)], (72, 1.44, 0.12), (72, 1.62, 0.12), (67, 1.8, 1.0), rel=1.5)
 PHRASES["acid"] = acid()
 PHRASES["acid_flat"] = acid(accents=False)
 PHRASES["acid_noslide"] = acid(slides=False)
@@ -89,7 +94,7 @@ def resolve(item):
 KIND = {
     "Basic Saw": "lead", "Basic Pulse": "lead", "Basic Sine": "lead", "Basic Arp": "hold", "Basic Noise": "fx",
     "Basic FM": "keys", "Basic Wavetable": "pad",
-    "Tape Flute": "melody_hi", "Vinyl Choir": "pad", "Cassette Keys": "keys", "Blanket Pad": "pad",
+    "Vinyl Choir": "pad", "Cassette Keys": "keys", "Blanket Pad": "pad",
     "Bedroom Bass": "bass", "Dusty Mallet": "pluck", "Static Hit": "hit",
     "Neon Brass": "keys", "Gated Pad": "pad", "Night Drive": "hold", "Laser Lead": "lead", "Sunset Strings": "strings",
     "Grid Keys": "keys",
@@ -99,7 +104,7 @@ KIND = {
     "Marimba": "pluck",
     "Rust Bass": "bass", "Metal Hit": "hit", "Furnace Drone": "drone", "Concrete Pad": "pad", "Siren": "fx",
     "Juno Pad": "pad", "Prophet Brass": "keys", "OB Strings": "strings", "Moog Bass": "bass", "Clav Keys": "keys",
-    "Sync Lead": "lead",
+    "Sync Lead": "lead", "Ladder Chords": "keys",
     "Reese": "bass", "Supersaw": "keys", "Riser": "fx", "Pluck Drop": "pluck", "Hyper Lead": "lead",
     "Neuro Growl": "bass", "Future Chord": "keys",
     "Pure Sub": "sub", "808 Boom": "kick", "Wobble": "bass", "FM Knock": "bass", "Donk": "bass", "Fat Analog": "bass",
@@ -116,8 +121,8 @@ KIND = {
     "DX7 E.PIANO 1": "piano", "DX7 BASS 1": "bass", "Prophet-5 Sync II": "lead", "Prophet-5 Brass": "keys",
     "Minimoog Fat Bass": "bass", "TX81Z LatelyBass": "bass", "Minimoog Trilogy Lead": "lead",
     "Washed Poly": "keys", "Tine Clav": "keys", "Buzz Drop": "bass", "Square Grit": "lead", "Whisper Air": "pad",
-    "Fizz Melody": "lead", "Pirate Radio": "keys", "Vocal Mask": "pad", "High Voice": "melody_hi",
-    "Four-Track House": "keys", "Spiral FM": "keys", "Trance Glass": "hold", "Bowed Haze": "pad", "Sea Pad": "pad",
+    "Fizz Melody": "lead", "Pirate Radio": "keys", "Vocal Mask": "pad", 
+    "Spiral FM": "keys", "Trance Glass": "hold", "Bowed Haze": "pad", "Sea Pad": "pad",
 }
 ROOM_DEFAULT = {"Clock Tower": "hold", "Museum": "keys", "Conservatory": "piano"}
 
@@ -209,10 +214,12 @@ def bank_cards(special_names):
 
 
 def main():
-    with open(os.path.join(HERE, "special.json"), encoding="utf-8") as f:
+    # make_items.py [special file] [--no-bank]: a follow-up round lists only its own cards.
+    args = [a for a in sys.argv[1:] if not a.startswith("--")]
+    with open(os.path.join(HERE, args[0] if args else "special.json"), encoding="utf-8") as f:
         special = json.load(f)
     covered = set(special.get("covers", []))
-    groups, items = bank_cards(covered)
+    groups, items = ([], []) if "--no-bank" in sys.argv else bank_cards(covered)
     out = {"title": special["title"], "intro": special["intro"], "bases": special["bases"],
            "groups": special["groups"] + groups, "items": [resolve(i) for i in special["items"]] + items}
     with open(os.path.join(HERE, "items.json"), "w", encoding="utf-8") as f:

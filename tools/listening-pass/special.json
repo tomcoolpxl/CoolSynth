@@ -1,933 +1,890 @@
 {
-  "title": "CoolSynth Listening Pass",
-  "intro": "Only what needs your ears, each with something to judge it against: ▶ Play against a try (a before and after), or a plain question with a few answers. What you passed on the 19th and 20th is left out (Chip, Arcade, the SVF, the stutter drafts, three noise presets). The kicks are mine first, measured against the real 808 and 909 recordings; the DAW checks are mine too.",
-  "covers": [
-    "Acid",
-    "Succession 808",
-    "Cut-Up Chords",
-    "Wheel Stutter",
-    "Glitch Pad",
-    "Vinyl Choir",
-    "Cassette Keys",
-    "Blanket Pad",
-    "Dusty Mallet",
-    "Concrete Pad",
-    "Washed Poly",
-    "Pirate Radio",
-    "Four-Track House",
-    "Sea Pad"
-  ],
-  "bases": {
-    "plain": [
-      [
-        "load_preset",
-        {
-          "name": "Basic Saw"
-        }
-      ],
-      [
-        "set_slot_type",
-        {
-          "slot": "pA.p1",
-          "type": "Off"
-        }
-      ]
-    ],
-    "ladder": [
-      [
-        "load_preset",
-        {
-          "name": "Basic Saw"
-        }
-      ],
-      [
-        "set_slot_type",
-        {
-          "slot": "pA.p1",
-          "type": "Ladder"
-        }
-      ],
-      [
-        "set_values",
-        {
-          "values": {
-            "pA.voice.env2ToP1": "0 %",
-            "pA.p1.p1": "800.0 Hz"
-          }
-        }
-      ]
-    ]
-  },
-  "groups": [
+ "title": "CoolSynth Listening Pass",
+ "intro": "Only what needs your ears, each with something to judge it against: ▶ Play against a try (a before and after), or a plain question with a few answers. What you passed on the 19th and 20th is left out (Chip, Arcade, the SVF, the stutter drafts, three noise presets). The kicks are mine first, measured against the real 808 and 909 recordings; the DAW checks are mine too.",
+ "covers": [
+  "Acid",
+  "Succession 808",
+  "Cut-Up Chords",
+  "Wheel Stutter",
+  "Glitch Pad",
+  "Vinyl Choir",
+  "Cassette Keys",
+  "Blanket Pad",
+  "Dusty Mallet",
+  "Concrete Pad",
+  "Washed Poly",
+  "Pirate Radio",
+  "Sea Pad"
+ ],
+ "bases": {
+  "plain": [
+   [
+    "load_preset",
     {
-      "key": "tb303",
-      "title": "The TB-303",
-      "intro": "Built on the 20th from Open303's engine (D242). Fixed today: Acid had a hidden Ladder filter after the 303 (its bank entry named no P1); it now plays the 303 alone, levelled again. Notes at velocity 100 or more are accented; overlapping notes slide."
-    },
-    {
-      "key": "ladder",
-      "title": "The Ladder by ear",
-      "intro": "Item 13: four questions the measurements can't settle. Basic Saw through the Ladder at 800 Hz, nothing else moving it."
-    },
-    {
-      "key": "noise",
-      "title": "The added hiss and crackle",
-      "intro": "Item 18: the presets with tape hiss or record crackle you haven't judged yet (Vinyl Choir, Concrete Pad and Pirate Radio passed on the 20th), each against itself with both at zero. Built on the 19th (D221): a steady level that mutes in silence."
-    },
-    {
-      "key": "chip",
-      "title": "Chip: the card left from the 20th",
-      "intro": "You passed the rest of Chip, Arcade and the SVF on the 20th. This one was left unmarked."
+     "name": "Basic Saw"
     }
-  ],
-  "items": [
+   ],
+   [
+    "set_slot_type",
     {
-      "id": "T1",
-      "group": "tb303",
-      "title": "Acid: a 303 line",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Acid"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "acid",
-      "tries": [
-        {
-          "label": "Square wave",
-          "values": {
-            "pA.g1.p1": "100 %"
-          }
-        },
-        {
-          "label": "Cutoff macro 100 %",
-          "values": {
-            "pA.macro1": "100 %"
-          }
-        },
-        {
-          "label": "Squelch macro 100 %",
-          "values": {
-            "pA.macro2": "100 %"
-          }
-        },
-        {
-          "label": "Decay macro 100 %",
-          "values": {
-            "pA.macro3": "100 %"
-          }
-        },
-        {
-          "label": "Wobble macro 100 %",
-          "values": {
-            "pA.macro4": "100 %"
-          }
-        }
-      ],
-      "knobs": [
-        {
-          "pad": "Home",
-          "page": "Macros",
-          "knob": 1,
-          "name": "Cutoff",
-          "listen": ""
-        },
-        {
-          "pad": "Home",
-          "page": "Macros",
-          "knob": 2,
-          "name": "Squelch",
-          "listen": "resonance and env mod"
-        },
-        {
-          "pad": "Home",
-          "page": "Macros",
-          "knob": 3,
-          "name": "Decay",
-          "listen": ""
-        },
-        {
-          "pad": "Home",
-          "page": "Macros",
-          "knob": 4,
-          "name": "Wobble",
-          "listen": "an LFO on the cutoff"
-        }
-      ],
-      "listen": [
-        "A sixteen-step acid line, twice, at 125 BPM: accents on the louder steps, slides where notes overlap.",
-        "Is it an acid bass you'd keep? Anything ugly: clicks between notes, harsh resonance, a level jump?"
-      ],
-      "keys": "C2 to C3 (the preset plays an octave down)",
-      "pre": ""
-    },
-    {
-      "id": "T2",
-      "group": "tb303",
-      "title": "Accent: with against without",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Acid"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "acid",
-      "tries": [
-        {
-          "label": "Without accents (all at 90)",
-          "phrase": "acid_flat"
-        }
-      ],
-      "choices": [
-        "Clear and right",
-        "Too subtle",
-        "Too much"
-      ],
-      "knobs": [
-        {
-          "pad": "Sound",
-          "page": "2",
-          "knob": 2,
-          "name": "Accent",
-          "listen": "how hard an accent hits"
-        }
-      ],
-      "listen": [
-        "▶ Play has accents on six of the sixteen steps; the try plays every step at the same velocity.",
-        "On a 303 an accent is louder and sweeps the filter higher: a 'wow' on the note."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "T3",
-      "group": "tb303",
-      "title": "Slide: with against without",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Acid"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "acid",
-      "tries": [
-        {
-          "label": "Without slides (no overlaps)",
-          "phrase": "acid_noslide"
-        }
-      ],
-      "choices": [
-        "Glides right",
-        "Too slow",
-        "Too fast",
-        "Can't hear it"
-      ],
-      "knobs": [
-        {
-          "pad": "Sound",
-          "page": "2",
-          "knob": 3,
-          "name": "Slide",
-          "listen": "the glide time"
-        }
-      ],
-      "listen": [
-        "▶ Play overlaps four pairs of notes, so the pitch glides between them in about 22 ms, as the 303's slide does; the try plays the same notes apart."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "T4",
-      "group": "tb303",
-      "title": "The 303's knobs at their ends",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Acid"
-          }
-        ]
-      ],
-      "view": {
-        "slot": "G1",
-        "page": 0
-      },
-      "phrase": "acid",
-      "tries": [
-        {
-          "label": "Cutoff lowest",
-          "values": {
-            "pA.g1.p2": "314.0 Hz"
-          }
-        },
-        {
-          "label": "Cutoff highest",
-          "values": {
-            "pA.g1.p2": "2.39 kHz"
-          }
-        },
-        {
-          "label": "Resonance 0 %",
-          "values": {
-            "pA.g1.p3": "0 %"
-          }
-        },
-        {
-          "label": "Resonance 100 %",
-          "values": {
-            "pA.g1.p3": "100 %"
-          }
-        },
-        {
-          "label": "Env Mod 0 %",
-          "values": {
-            "pA.g1.p4": "0 %"
-          }
-        },
-        {
-          "label": "Env Mod 100 %",
-          "values": {
-            "pA.g1.p4": "100 %"
-          }
-        },
-        {
-          "label": "Decay shortest",
-          "values": {
-            "pA.g1.p5": "200 ms"
-          }
-        },
-        {
-          "label": "Decay longest",
-          "values": {
-            "pA.g1.p5": "2.00 s"
-          }
-        },
-        {
-          "label": "Accent 0 %",
-          "values": {
-            "pA.g1.p6": "0 %"
-          }
-        },
-        {
-          "label": "Accent 100 %",
-          "values": {
-            "pA.g1.p6": "100 %"
-          }
-        }
-      ],
-      "knobs": [
-        {
-          "pad": "Sound",
-          "page": "1",
-          "knob": 1,
-          "name": "Waveform, Cutoff, Resonance, Env Mod (page 1); Decay, Accent, Slide (page 2)",
-          "listen": "the 303's own knobs, in its order"
-        }
-      ],
-      "listen": [
-        "Each try is one knob at one end, against ▶ Play (the preset).",
-        "Is every end useful, with nothing ugly (a whistle, a click, a level jump)? The ranges are the 303's own: no self-oscillation, by design."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "L1",
-      "group": "ladder",
-      "title": "Drive headroom",
-      "base": "ladder",
-      "setup": [
-        [
-          "set_values",
-          {
-            "values": {
-              "pA.p1.p2": "30 %",
-              "pA.p1.p3": "0.0 dB"
-            }
-          }
-        ]
-      ],
-      "view": {
-        "slot": "P1",
-        "page": 0
-      },
-      "phrase": "keys",
-      "tries": [
-        {
-          "label": "Drive 6 dB",
-          "values": {
-            "pA.p1.p3": "6.0 dB"
-          }
-        },
-        {
-          "label": "Drive 12 dB",
-          "values": {
-            "pA.p1.p3": "12.0 dB"
-          }
-        },
-        {
-          "label": "Drive 18 dB",
-          "values": {
-            "pA.p1.p3": "18.0 dB"
-          }
-        },
-        {
-          "label": "Drive 24 dB",
-          "values": {
-            "pA.p1.p3": "24.0 dB"
-          }
-        }
-      ],
-      "choices": [
-        "Right",
-        "Too loud at the top",
-        "Harsh at the top",
-        "Too little change"
-      ],
-      "knobs": [
-        {
-          "pad": "Shape",
-          "page": "1",
-          "knob": 3,
-          "name": "Drive",
-          "listen": ""
-        }
-      ],
-      "listen": [
-        "Chords through the Ladder, Drive 0 dB in ▶ Play, then up in steps. More drive should mean more warmth and grit without a big jump in level."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "L2",
-      "group": "ladder",
-      "title": "The Bass knob at high resonance",
-      "base": "ladder",
-      "setup": [
-        [
-          "set_values",
-          {
-            "values": {
-              "pA.p1.p2": "85 %",
-              "pA.p1.p6": "50 %"
-            }
-          }
-        ]
-      ],
-      "view": {
-        "slot": "P1",
-        "page": 1
-      },
-      "phrase": "bass",
-      "tries": [
-        {
-          "label": "Bass 0 %",
-          "values": {
-            "pA.p1.p6": "0 %"
-          }
-        },
-        {
-          "label": "Bass 100 %",
-          "values": {
-            "pA.p1.p6": "100 %"
-          }
-        }
-      ],
-      "choices": [
-        "0 % as the default",
-        "50 % (now) as the default",
-        "100 % as the default"
-      ],
-      "knobs": [
-        {
-          "pad": "Shape",
-          "page": "2",
-          "knob": 2,
-          "name": "Bass",
-          "listen": "how much low end the resonance keeps"
-        }
-      ],
-      "listen": [
-        "A ladder thins the low end as its resonance rises; Bass puts it back. ▶ Play is the default, 50 %, at Resonance 85 %. Which should a new Ladder start at?"
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "L3",
-      "group": "ladder",
-      "title": "The four modes, level against level",
-      "base": "ladder",
-      "setup": [
-        [
-          "set_values",
-          {
-            "values": {
-              "pA.p1.p2": "40 %",
-              "pA.p1.p5": "LP24"
-            }
-          }
-        ]
-      ],
-      "view": {
-        "slot": "P1",
-        "page": 1
-      },
-      "phrase": "keys",
-      "tries": [
-        {
-          "label": "LP12",
-          "values": {
-            "pA.p1.p5": "LP12"
-          }
-        },
-        {
-          "label": "BP",
-          "values": {
-            "pA.p1.p5": "BP"
-          }
-        },
-        {
-          "label": "HP12",
-          "values": {
-            "pA.p1.p5": "HP12"
-          }
-        }
-      ],
-      "choices": [
-        "Even enough",
-        "One jumps out (say which)"
-      ],
-      "knobs": [
-        {
-          "pad": "Shape",
-          "page": "2",
-          "knob": 1,
-          "name": "Mode",
-          "listen": ""
-        }
-      ],
-      "listen": [
-        "▶ Play is LP24. Switching modes changes the colour, of course; does any one sound much louder or quieter than the others?"
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "L4",
-      "group": "ladder",
-      "title": "The whistle at full resonance",
-      "base": "ladder",
-      "setup": [
-        [
-          "set_values",
-          {
-            "values": {
-              "pA.p1.p2": "0 %"
-            }
-          }
-        ]
-      ],
-      "view": {
-        "slot": "P1",
-        "page": 0
-      },
-      "phrase": "lead",
-      "tries": [
-        {
-          "label": "Resonance 100 %",
-          "values": {
-            "pA.p1.p2": "100 %"
-          }
-        }
-      ],
-      "choices": [
-        "Whistle too quiet",
-        "Right",
-        "Whistle too loud"
-      ],
-      "knobs": [
-        {
-          "pad": "Shape",
-          "page": "1",
-          "knob": 2,
-          "name": "Resonance",
-          "listen": ""
-        }
-      ],
-      "listen": [
-        "At full resonance the Ladder whistles at the cutoff (it self-oscillates). Its level beside the plain saw: should it be lifted, left, or lowered?"
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "N2",
-      "group": "noise",
-      "title": "Cassette Keys",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Cassette Keys"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "keys",
-      "tries": [
-        {
-          "label": "Hiss at 0",
-          "values": {
-            "pA.i1.p3": "0 %",
-            "pA.i1.p4": "0 %"
-          }
-        },
-        {
-          "label": "Its hiss macro 100 %",
-          "values": {
-            "pA.macro2": "100 %"
-          }
-        }
-      ],
-      "choices": [
-        "Too much",
-        "Right",
-        "Too little",
-        "Wrong kind of noise"
-      ],
-      "knobs": [],
-      "listen": [
-        "Keys off a cassette: wow, flutter and hiss, a narrow top."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "N3",
-      "group": "noise",
-      "title": "Blanket Pad",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Blanket Pad"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "pad",
-      "tries": [
-        {
-          "label": "Hiss at 0",
-          "values": {
-            "pA.i1.p3": "0 %",
-            "pA.i1.p4": "0 %"
-          }
-        }
-      ],
-      "choices": [
-        "Too much",
-        "Right",
-        "Too little",
-        "Wrong kind of noise"
-      ],
-      "knobs": [],
-      "listen": [
-        "A soft pad with a faint tape hiss."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "N4",
-      "group": "noise",
-      "title": "Dusty Mallet",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Dusty Mallet"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "pluck",
-      "tries": [
-        {
-          "label": "Hiss and crackle at 0",
-          "values": {
-            "pA.i1.p3": "0 %",
-            "pA.i1.p4": "0 %"
-          }
-        }
-      ],
-      "choices": [
-        "Too much",
-        "Right",
-        "Too little",
-        "Wrong kind of noise"
-      ],
-      "knobs": [],
-      "listen": [
-        "Half kalimba, half music box, off a dusty record: crackle, a slow wow, hiss."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "N6",
-      "group": "noise",
-      "title": "Washed Poly",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Washed Poly"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "keys",
-      "tries": [
-        {
-          "label": "Hiss and crackle at 0",
-          "values": {
-            "pA.i1.p3": "0 %",
-            "pA.i1.p4": "0 %"
-          }
-        },
-        {
-          "label": "Crackle macro 100 %",
-          "values": {
-            "pA.macro4": "100 %"
-          }
-        }
-      ],
-      "choices": [
-        "Too much",
-        "Right",
-        "Too little",
-        "Wrong kind of noise"
-      ],
-      "knobs": [],
-      "listen": [
-        "A washed-out poly with a little crackle under it all."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "N8",
-      "group": "noise",
-      "title": "Four-Track House",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Four-Track House"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "keys",
-      "tries": [
-        {
-          "label": "Hiss at 0",
-          "values": {
-            "pA.i2.p3": "0 %",
-            "pA.i2.p4": "0 %"
-          }
-        },
-        {
-          "label": "Its tape macro 100 %",
-          "values": {
-            "pA.macro2": "100 %"
-          }
-        }
-      ],
-      "choices": [
-        "Too much",
-        "Right",
-        "Too little",
-        "Wrong kind of noise"
-      ],
-      "knobs": [],
-      "listen": [
-        "House chords off a four-track: a low filter, the tape's top gone and its hiss up, a pump on each beat."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "N9",
-      "group": "noise",
-      "title": "Sea Pad",
-      "setup": [
-        [
-          "load_preset",
-          {
-            "name": "Sea Pad"
-          }
-        ]
-      ],
-      "view": {},
-      "phrase": "pad",
-      "tries": [
-        {
-          "label": "Hiss at 0",
-          "values": {
-            "pA.i1.p3": "0 %",
-            "pA.i1.p4": "0 %"
-          }
-        }
-      ],
-      "choices": [
-        "Too much",
-        "Right",
-        "Too little",
-        "Wrong kind of noise"
-      ],
-      "knobs": [],
-      "listen": [
-        "A pad with a lo-fi top and a little hiss."
-      ],
-      "keys": "",
-      "pre": ""
-    },
-    {
-      "id": "C7",
-      "group": "chip",
-      "title": "SCC tables",
-      "base": "plain",
-      "setup": [
-        [
-          "set_slot_type",
-          {
-            "slot": "pA.g1",
-            "type": "Chip"
-          }
-        ],
-        [
-          "set_values",
-          {
-            "values": {
-              "pA.g1.p1": "SCC",
-              "pA.g1.p2": "Table",
-              "pA.g1.p4": "Brass"
-            }
-          }
-        ]
-      ],
-      "view": {
-        "slot": "G1",
-        "page": 0
-      },
-      "play": [
-        {
-          "notes": [
-            67
-          ],
-          "hold": 0.3
-        },
-        {
-          "notes": [
-            72
-          ],
-          "hold": 0.3
-        },
-        {
-          "notes": [
-            71
-          ],
-          "hold": 0.3
-        },
-        {
-          "notes": [
-            67
-          ],
-          "hold": 0.8,
-          "rel": 0.2
-        }
-      ],
-      "tries": [
-        {
-          "label": "Strings",
-          "values": {
-            "pA.g1.p4": "Strings"
-          }
-        },
-        {
-          "label": "Bell",
-          "values": {
-            "pA.g1.p4": "Bell"
-          }
-        },
-        {
-          "label": "Bass",
-          "values": {
-            "pA.g1.p4": "Bass"
-          },
-          "play": [
-            {
-              "notes": [
-                36
-              ],
-              "hold": 0.4
-            },
-            {
-              "notes": [
-                43
-              ],
-              "hold": 0.4
-            },
-            {
-              "notes": [
-                48
-              ],
-              "hold": 0.7,
-              "rel": 0.2
-            }
-          ]
-        },
-        {
-          "label": "Voice",
-          "values": {
-            "pA.g1.p4": "Voice"
-          }
-        },
-        {
-          "label": "Organ",
-          "values": {
-            "pA.g1.p4": "Organ"
-          }
-        }
-      ],
-      "knobs": [
-        {
-          "pad": "Sound",
-          "page": "Chip",
-          "knob": 4,
-          "name": "Table",
-          "listen": "the SCC's 8-bit waves, smoother than the Game Boy's"
-        }
-      ],
-      "listen": [
-        "The SCC's waves (the MSX's Konami sound): does each sound like its name? They are my own recipes; say which need redrawing."
-      ],
-      "keys": "",
-      "pre": ""
+     "slot": "pA.p1",
+     "type": "Off"
     }
+   ]
+  ],
+  "ladder": [
+   [
+    "load_preset",
+    {
+     "name": "Basic Saw"
+    }
+   ],
+   [
+    "set_slot_type",
+    {
+     "slot": "pA.p1",
+     "type": "Ladder"
+    }
+   ],
+   [
+    "set_values",
+    {
+     "values": {
+      "pA.voice.env2ToP1": "0 %",
+      "pA.p1.p1": "800.0 Hz"
+     }
+    }
+   ]
   ]
+ },
+ "groups": [
+  {
+   "key": "tb303",
+   "title": "The TB-303",
+   "intro": "Built on the 20th from Open303's engine (D242). Fixed today: Acid had a hidden Ladder filter after the 303 (its bank entry named no P1); it now plays the 303 alone, levelled again. Notes at velocity 100 or more are accented; overlapping notes slide."
+  },
+  {
+   "key": "ladder",
+   "title": "The Ladder by ear",
+   "intro": "Item 13: four questions the measurements can't settle. Basic Saw through the Ladder at 800 Hz, nothing else moving it."
+  },
+  {
+   "key": "noise",
+   "title": "The added hiss and crackle",
+   "intro": "Item 18: the presets with tape hiss or record crackle you haven't judged yet (Vinyl Choir, Concrete Pad and Pirate Radio passed on the 20th), each against itself with both at zero. Built on the 19th (D221): a steady level that mutes in silence."
+  },
+  {
+   "key": "chip",
+   "title": "Chip: the card left from the 20th",
+   "intro": "You passed the rest of Chip, Arcade and the SVF on the 20th. This one was left unmarked."
+  }
+ ],
+ "items": [
+  {
+   "id": "T1",
+   "group": "tb303",
+   "title": "Acid: a 303 line",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Acid"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "acid",
+   "tries": [
+    {
+     "label": "Square wave",
+     "values": {
+      "pA.g1.p1": "100 %"
+     }
+    },
+    {
+     "label": "Cutoff macro 100 %",
+     "values": {
+      "pA.macro1": "100 %"
+     }
+    },
+    {
+     "label": "Squelch macro 100 %",
+     "values": {
+      "pA.macro2": "100 %"
+     }
+    },
+    {
+     "label": "Decay macro 100 %",
+     "values": {
+      "pA.macro3": "100 %"
+     }
+    },
+    {
+     "label": "Wobble macro 100 %",
+     "values": {
+      "pA.macro4": "100 %"
+     }
+    }
+   ],
+   "knobs": [
+    {
+     "pad": "Home",
+     "page": "Macros",
+     "knob": 1,
+     "name": "Cutoff",
+     "listen": ""
+    },
+    {
+     "pad": "Home",
+     "page": "Macros",
+     "knob": 2,
+     "name": "Squelch",
+     "listen": "resonance and env mod"
+    },
+    {
+     "pad": "Home",
+     "page": "Macros",
+     "knob": 3,
+     "name": "Decay",
+     "listen": ""
+    },
+    {
+     "pad": "Home",
+     "page": "Macros",
+     "knob": 4,
+     "name": "Wobble",
+     "listen": "an LFO on the cutoff"
+    }
+   ],
+   "listen": [
+    "A sixteen-step acid line, twice, at 125 BPM: accents on the louder steps, slides where notes overlap.",
+    "Is it an acid bass you'd keep? Anything ugly: clicks between notes, harsh resonance, a level jump?"
+   ],
+   "keys": "C2 to C3 (the preset plays an octave down)",
+   "pre": ""
+  },
+  {
+   "id": "T2",
+   "group": "tb303",
+   "title": "Accent: with against without",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Acid"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "acid",
+   "tries": [
+    {
+     "label": "Without accents (all at 90)",
+     "phrase": "acid_flat"
+    }
+   ],
+   "choices": [
+    "Clear and right",
+    "Too subtle",
+    "Too much"
+   ],
+   "knobs": [
+    {
+     "pad": "Sound",
+     "page": "2",
+     "knob": 2,
+     "name": "Accent",
+     "listen": "how hard an accent hits"
+    }
+   ],
+   "listen": [
+    "▶ Play has accents on six of the sixteen steps; the try plays every step at the same velocity.",
+    "On a 303 an accent is louder and sweeps the filter higher: a 'wow' on the note."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "T3",
+   "group": "tb303",
+   "title": "Slide: with against without",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Acid"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "acid",
+   "tries": [
+    {
+     "label": "Without slides (no overlaps)",
+     "phrase": "acid_noslide"
+    }
+   ],
+   "choices": [
+    "Glides right",
+    "Too slow",
+    "Too fast",
+    "Can't hear it"
+   ],
+   "knobs": [
+    {
+     "pad": "Sound",
+     "page": "2",
+     "knob": 3,
+     "name": "Slide",
+     "listen": "the glide time"
+    }
+   ],
+   "listen": [
+    "▶ Play overlaps four pairs of notes, so the pitch glides between them in about 22 ms, as the 303's slide does; the try plays the same notes apart."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "T4",
+   "group": "tb303",
+   "title": "The 303's knobs at their ends",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Acid"
+     }
+    ]
+   ],
+   "view": {
+    "slot": "G1",
+    "page": 0
+   },
+   "phrase": "acid",
+   "tries": [
+    {
+     "label": "Cutoff lowest",
+     "values": {
+      "pA.g1.p2": "314.0 Hz"
+     }
+    },
+    {
+     "label": "Cutoff highest",
+     "values": {
+      "pA.g1.p2": "2.39 kHz"
+     }
+    },
+    {
+     "label": "Resonance 0 %",
+     "values": {
+      "pA.g1.p3": "0 %"
+     }
+    },
+    {
+     "label": "Resonance 100 %",
+     "values": {
+      "pA.g1.p3": "100 %"
+     }
+    },
+    {
+     "label": "Env Mod 0 %",
+     "values": {
+      "pA.g1.p4": "0 %"
+     }
+    },
+    {
+     "label": "Env Mod 100 %",
+     "values": {
+      "pA.g1.p4": "100 %"
+     }
+    },
+    {
+     "label": "Decay shortest",
+     "values": {
+      "pA.g1.p5": "200 ms"
+     }
+    },
+    {
+     "label": "Decay longest",
+     "values": {
+      "pA.g1.p5": "2.00 s"
+     }
+    },
+    {
+     "label": "Accent 0 %",
+     "values": {
+      "pA.g1.p6": "0 %"
+     }
+    },
+    {
+     "label": "Accent 100 %",
+     "values": {
+      "pA.g1.p6": "100 %"
+     }
+    }
+   ],
+   "knobs": [
+    {
+     "pad": "Sound",
+     "page": "1",
+     "knob": 1,
+     "name": "Waveform, Cutoff, Resonance, Env Mod (page 1); Decay, Accent, Slide (page 2)",
+     "listen": "the 303's own knobs, in its order"
+    }
+   ],
+   "listen": [
+    "Each try is one knob at one end, against ▶ Play (the preset).",
+    "Is every end useful, with nothing ugly (a whistle, a click, a level jump)? The ranges are the 303's own: no self-oscillation, by design."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "L1",
+   "group": "ladder",
+   "title": "Drive headroom",
+   "base": "ladder",
+   "setup": [
+    [
+     "set_values",
+     {
+      "values": {
+       "pA.p1.p2": "30 %",
+       "pA.p1.p3": "0.0 dB"
+      }
+     }
+    ]
+   ],
+   "view": {
+    "slot": "P1",
+    "page": 0
+   },
+   "phrase": "keys",
+   "tries": [
+    {
+     "label": "Drive 6 dB",
+     "values": {
+      "pA.p1.p3": "6.0 dB"
+     }
+    },
+    {
+     "label": "Drive 12 dB",
+     "values": {
+      "pA.p1.p3": "12.0 dB"
+     }
+    },
+    {
+     "label": "Drive 18 dB",
+     "values": {
+      "pA.p1.p3": "18.0 dB"
+     }
+    },
+    {
+     "label": "Drive 24 dB",
+     "values": {
+      "pA.p1.p3": "24.0 dB"
+     }
+    }
+   ],
+   "choices": [
+    "Right",
+    "Too loud at the top",
+    "Harsh at the top",
+    "Too little change"
+   ],
+   "knobs": [
+    {
+     "pad": "Shape",
+     "page": "1",
+     "knob": 3,
+     "name": "Drive",
+     "listen": ""
+    }
+   ],
+   "listen": [
+    "Chords through the Ladder, Drive 0 dB in ▶ Play, then up in steps. More drive should mean more warmth and grit without a big jump in level."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "L2",
+   "group": "ladder",
+   "title": "The Bass knob at high resonance",
+   "base": "ladder",
+   "setup": [
+    [
+     "set_values",
+     {
+      "values": {
+       "pA.p1.p2": "85 %",
+       "pA.p1.p6": "50 %"
+      }
+     }
+    ]
+   ],
+   "view": {
+    "slot": "P1",
+    "page": 1
+   },
+   "phrase": "bass",
+   "tries": [
+    {
+     "label": "Bass 0 %",
+     "values": {
+      "pA.p1.p6": "0 %"
+     }
+    },
+    {
+     "label": "Bass 100 %",
+     "values": {
+      "pA.p1.p6": "100 %"
+     }
+    }
+   ],
+   "choices": [
+    "0 % as the default",
+    "50 % (now) as the default",
+    "100 % as the default"
+   ],
+   "knobs": [
+    {
+     "pad": "Shape",
+     "page": "2",
+     "knob": 2,
+     "name": "Bass",
+     "listen": "how much low end the resonance keeps"
+    }
+   ],
+   "listen": [
+    "A ladder thins the low end as its resonance rises; Bass puts it back. ▶ Play is the default, 50 %, at Resonance 85 %. Which should a new Ladder start at?"
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "L3",
+   "group": "ladder",
+   "title": "The four modes, level against level",
+   "base": "ladder",
+   "setup": [
+    [
+     "set_values",
+     {
+      "values": {
+       "pA.p1.p2": "40 %",
+       "pA.p1.p5": "LP24"
+      }
+     }
+    ]
+   ],
+   "view": {
+    "slot": "P1",
+    "page": 1
+   },
+   "phrase": "keys",
+   "tries": [
+    {
+     "label": "LP12",
+     "values": {
+      "pA.p1.p5": "LP12"
+     }
+    },
+    {
+     "label": "BP",
+     "values": {
+      "pA.p1.p5": "BP"
+     }
+    },
+    {
+     "label": "HP12",
+     "values": {
+      "pA.p1.p5": "HP12"
+     }
+    }
+   ],
+   "choices": [
+    "Even enough",
+    "One jumps out (say which)"
+   ],
+   "knobs": [
+    {
+     "pad": "Shape",
+     "page": "2",
+     "knob": 1,
+     "name": "Mode",
+     "listen": ""
+    }
+   ],
+   "listen": [
+    "▶ Play is LP24. Switching modes changes the colour, of course; does any one sound much louder or quieter than the others?"
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "L4",
+   "group": "ladder",
+   "title": "The whistle at full resonance",
+   "base": "ladder",
+   "setup": [
+    [
+     "set_values",
+     {
+      "values": {
+       "pA.p1.p2": "0 %"
+      }
+     }
+    ]
+   ],
+   "view": {
+    "slot": "P1",
+    "page": 0
+   },
+   "phrase": "lead",
+   "tries": [
+    {
+     "label": "Resonance 100 %",
+     "values": {
+      "pA.p1.p2": "100 %"
+     }
+    }
+   ],
+   "choices": [
+    "Whistle too quiet",
+    "Right",
+    "Whistle too loud"
+   ],
+   "knobs": [
+    {
+     "pad": "Shape",
+     "page": "1",
+     "knob": 2,
+     "name": "Resonance",
+     "listen": ""
+    }
+   ],
+   "listen": [
+    "At full resonance the Ladder whistles at the cutoff (it self-oscillates). Its level beside the plain saw: should it be lifted, left, or lowered?"
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "N2",
+   "group": "noise",
+   "title": "Cassette Keys",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Cassette Keys"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "keys",
+   "tries": [
+    {
+     "label": "Hiss at 0",
+     "values": {
+      "pA.i1.p3": "0 %",
+      "pA.i1.p4": "0 %"
+     }
+    },
+    {
+     "label": "Its hiss macro 100 %",
+     "values": {
+      "pA.macro2": "100 %"
+     }
+    }
+   ],
+   "choices": [
+    "Too much",
+    "Right",
+    "Too little",
+    "Wrong kind of noise"
+   ],
+   "knobs": [],
+   "listen": [
+    "Keys off a cassette: wow, flutter and hiss, a narrow top."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "N3",
+   "group": "noise",
+   "title": "Blanket Pad",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Blanket Pad"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "pad",
+   "tries": [
+    {
+     "label": "Hiss at 0",
+     "values": {
+      "pA.i1.p3": "0 %",
+      "pA.i1.p4": "0 %"
+     }
+    }
+   ],
+   "choices": [
+    "Too much",
+    "Right",
+    "Too little",
+    "Wrong kind of noise"
+   ],
+   "knobs": [],
+   "listen": [
+    "A soft pad with a faint tape hiss."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "N4",
+   "group": "noise",
+   "title": "Dusty Mallet",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Dusty Mallet"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "pluck",
+   "tries": [
+    {
+     "label": "Hiss and crackle at 0",
+     "values": {
+      "pA.i1.p3": "0 %",
+      "pA.i1.p4": "0 %"
+     }
+    }
+   ],
+   "choices": [
+    "Too much",
+    "Right",
+    "Too little",
+    "Wrong kind of noise"
+   ],
+   "knobs": [],
+   "listen": [
+    "Half kalimba, half music box, off a dusty record: crackle, a slow wow, hiss."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "N6",
+   "group": "noise",
+   "title": "Washed Poly",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Washed Poly"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "keys",
+   "tries": [
+    {
+     "label": "Hiss and crackle at 0",
+     "values": {
+      "pA.i1.p3": "0 %",
+      "pA.i1.p4": "0 %"
+     }
+    },
+    {
+     "label": "Crackle macro 100 %",
+     "values": {
+      "pA.macro4": "100 %"
+     }
+    }
+   ],
+   "choices": [
+    "Too much",
+    "Right",
+    "Too little",
+    "Wrong kind of noise"
+   ],
+   "knobs": [],
+   "listen": [
+    "A washed-out poly with a little crackle under it all."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "N9",
+   "group": "noise",
+   "title": "Sea Pad",
+   "setup": [
+    [
+     "load_preset",
+     {
+      "name": "Sea Pad"
+     }
+    ]
+   ],
+   "view": {},
+   "phrase": "pad",
+   "tries": [
+    {
+     "label": "Hiss at 0",
+     "values": {
+      "pA.i1.p3": "0 %",
+      "pA.i1.p4": "0 %"
+     }
+    }
+   ],
+   "choices": [
+    "Too much",
+    "Right",
+    "Too little",
+    "Wrong kind of noise"
+   ],
+   "knobs": [],
+   "listen": [
+    "A pad with a lo-fi top and a little hiss."
+   ],
+   "keys": "",
+   "pre": ""
+  },
+  {
+   "id": "C7",
+   "group": "chip",
+   "title": "SCC tables",
+   "base": "plain",
+   "setup": [
+    [
+     "set_slot_type",
+     {
+      "slot": "pA.g1",
+      "type": "Chip"
+     }
+    ],
+    [
+     "set_values",
+     {
+      "values": {
+       "pA.g1.p1": "SCC",
+       "pA.g1.p2": "Table",
+       "pA.g1.p4": "Brass"
+      }
+     }
+    ]
+   ],
+   "view": {
+    "slot": "G1",
+    "page": 0
+   },
+   "play": [
+    {
+     "notes": [
+      67
+     ],
+     "hold": 0.3
+    },
+    {
+     "notes": [
+      72
+     ],
+     "hold": 0.3
+    },
+    {
+     "notes": [
+      71
+     ],
+     "hold": 0.3
+    },
+    {
+     "notes": [
+      67
+     ],
+     "hold": 0.8,
+     "rel": 0.2
+    }
+   ],
+   "tries": [
+    {
+     "label": "Strings",
+     "values": {
+      "pA.g1.p4": "Strings"
+     }
+    },
+    {
+     "label": "Bell",
+     "values": {
+      "pA.g1.p4": "Bell"
+     }
+    },
+    {
+     "label": "Bass",
+     "values": {
+      "pA.g1.p4": "Bass"
+     },
+     "play": [
+      {
+       "notes": [
+        36
+       ],
+       "hold": 0.4
+      },
+      {
+       "notes": [
+        43
+       ],
+       "hold": 0.4
+      },
+      {
+       "notes": [
+        48
+       ],
+       "hold": 0.7,
+       "rel": 0.2
+      }
+     ]
+    },
+    {
+     "label": "Voice",
+     "values": {
+      "pA.g1.p4": "Voice"
+     }
+    },
+    {
+     "label": "Organ",
+     "values": {
+      "pA.g1.p4": "Organ"
+     }
+    }
+   ],
+   "knobs": [
+    {
+     "pad": "Sound",
+     "page": "Chip",
+     "knob": 4,
+     "name": "Table",
+     "listen": "the SCC's 8-bit waves, smoother than the Game Boy's"
+    }
+   ],
+   "listen": [
+    "The SCC's waves (the MSX's Konami sound): does each sound like its name? They are my own recipes; say which need redrawing."
+   ],
+   "keys": "",
+   "pre": ""
+  }
+ ]
 }

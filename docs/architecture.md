@@ -172,7 +172,7 @@ no corner where a fade begins or ends.
 
 ## Sounds, and how they are checked
 
-There are 140 factory presets in 14 rooms: Workshop, Bedroom, Arcade, Outrun, Observatory, Greenhouse,
+There are 138 factory presets in 14 rooms: Workshop, Bedroom, Arcade, Outrun, Observatory, Greenhouse,
 Basement, Studio 1982, Main Stage, Engine Room, Clock Tower, Conservatory, Museum and Night Bus. The player's
 own sounds appear as one more room, My Sounds, first in the browser.
 

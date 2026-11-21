@@ -65,14 +65,15 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 
 ## The user's ear and hands
 
-3. A listening pass over the whole bank, a card per preset on the page in `tools/listening-pass` (2026-11-21):
-   every preset and its macros (D177) by ear. Mine, through the MCP server and in DAWs: levels, the glow and
-   click-to-load, sounds ringing on after a change, the engine pills, Preferences. On the hands list: the velocity
-   curves, Brightness and Space on the MiniLab. Retune what the ear flags, then rerun the loudness tool, which is not in the default build:
+3. A listening pass over the whole bank, a card per preset on the page in `tools/listening-pass`: round 1 done on
+   2026-11-21, every card answered (`docs/test-pass.md`); round 2, the fixes against how they were, waits for the
+   user's ear. Mine, through the MCP server and in DAWs: levels, the glow and click-to-load, sounds ringing on after
+   a change, the engine pills, Preferences. On the hands list: the velocity curves, Brightness and Space on the
+   MiniLab. Retune what the ear flags, then rerun the loudness tool, which is not in the default build:
    `cmake --build build --config Debug --target CoolSynthPresetNormalizer`, then from `build` run
    `CoolSynthPresetNormalizer_artefacts/Debug/CoolSynthPresetNormalizer.exe --apply`.
-4. The user's verdicts on the sampled instruments (the audition page, `audition/index.html`; start the
-   `audition` preview server) and on the Night Bus presets (`tools/audition/make_nightbus.py` renders them).
+4. The sampled instruments and the Night Bus presets: all kept on the listening page (2026-11-21), but for High
+   Voice and Four-Track House, removed; Vibraphone's click on repeated keys fixed (round 2).
 
 ## Sounds and effects
 
@@ -86,8 +87,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 7. The wine glasses as a source for the Grain generator.
 18. The added noise (D221, `docs/research/noise-modelling.md`): built on 2026-11-19 as the user chose (a steady level
     with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
-    Brown). Vinyl Choir, Concrete Pad and Pirate Radio passed the user's ear on 2026-11-20; the other six with hiss
-    or crackle are on the listening page (item 3).
+    Brown). All passed the user's ear (2026-11-20 and 21); Washed Poly's turned down by a quarter, its after on round 2.
 20. Chip sounds and chiptune. The Chip generator is built (D230, D231), Arcade revoiced with it, and the SID's
     filter is an SVF character (D233). Left: the user's ears on all of it (each chip's waves, the drums and
     arpeggios, the named waves, which are my own recipes, the 6581 and 8580 filters, how hard the 6581 distorts).
@@ -117,8 +117,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 11. Streaming from disk, for libraries bigger than the memory. Not chosen on 2026-11-19 (D215).
 12. Not chosen on 2026-11-19 (D215). The recorder: the Play and Record pads (Stop ends every sound since D212). Its memory rules:
     `docs/sample-memory-and-tracks.md` (D162).
-13. Ladder by ear: drive headroom, the bass default, the mode level matching, and whether the self-oscillation
-    level (rms 0.15 at full resonance) wants an output lift.
+13. Ladder by ear: done on 2026-11-21, all right as they are (drive headroom, Bass 50 % by default, the modes'
+    levels, the self-oscillation's level).
 14. If the saw's -79 dB alias floor at A7 ever shows in a mix: a 6-point (quintic B-spline) BLEP, about another
     25 dB for two more samples of latency.
 
@@ -175,7 +175,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     accent on at velocity 100, slide by legato notes at the 303's 22 ms; the Acid preset on it (its hidden default
     Ladder taken out on 2026-11-21, so the 303 plays alone). Checked against
     published figures: Stinchcombe's filter response within 0.1 dB, the slide's RC, the square's duty, no
-    self-oscillation. Left: the user's ears; a check against a real 303's recordings when an owner's turn up;
+    self-oscillation. The user's ear passed Acid, its accent and its slide (2026-11-21). Left: a check against a
+    real 303's recordings when an owner's turn up;
     whether the 303's own step sequencer (accent and slide per step) comes into the layer's.
 33. The whole TR-808 (D241, after the 303): its voices beyond the bass drum, about five circuit families (the
     bridged-T toms, congas, rim and claves on the bass drum's machinery; the snare; the six-oscillator bank for

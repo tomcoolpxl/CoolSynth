@@ -370,15 +370,15 @@ loudness-normalised):
 | --- | --- | --- |
 | Workshop | Basic Saw, Basic Pulse, Basic Sine, Basic Arp, Basic Noise, Basic FM, Basic Wavetable | none |
 | Basement | Acid, Rust Bass, Metal Hit, Furnace Drone, Concrete Pad, Siren | none |
-| Studio 1982 | Juno Pad (two layers), Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead | none |
+| Studio 1982 | Juno Pad (two layers), Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead, Ladder Chords (the user's pick from the listening pass, 2026-11-21) | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
-| Bedroom | Cassette Keys, Blanket Pad, Dusty Mallet, Bedroom Bass, Tape Flute, Vinyl Choir | none |
+| Bedroom | Cassette Keys, Blanket Pad, Dusty Mallet, Bedroom Bass, Vinyl Choir (Tape Flute removed by the user, 2026-11-21) | none |
 | Arcade | Coin Pulse, Boss Bass, Power-Up, Chip Chord, Static Hit, SCC Lead | none |
 | Greenhouse | Glass Bell, Marimba, Kalimba, Rain Chime, Crystal Pluck, Harp String | none |
 | Observatory | Solar Wind, Nebula Pad, Shimmer Drone, Satellite Ping, Deep Field (two layers), Granular Sky | none |
 | Clock Tower | Euclid Pulse, Ratchet Run, Step Filter, Random Walk, Polyrhythm Pad, Chord Trigger | none |
 | Main Stage | Reese, Supersaw (with its sub part), Future Chord, Neuro Growl, Riser, Pluck Drop, Hyper Lead | none |
-| Night Bus | Washed Poly, Tine Clav, Buzz Drop, Square Grit, Whisper Air, Fizz Melody, Pirate Radio, Stutter Chords, Vocal Mask, High Voice, Four-Track House, Spiral FM, Trance Glass, Bowed Haze, Stepped Lead, Sea Pad (D206) | the user's ear (the audition page) |
+| Night Bus | Washed Poly, Tine Clav, Buzz Drop, Square Grit, Whisper Air, Fizz Melody, Pirate Radio, Stutter Chords, Vocal Mask, Spiral FM, Trance Glass, Bowed Haze, Stepped Lead, Sea Pad (D206; High Voice and Four-Track House removed by the user, 2026-11-21) | the user's ear (the audition page) |
 | Conservatory | 40 recorded instruments in seven families, one plain preset each, playing styles as a switch (decisions D96 to D100). Keys: Steinway Grand, Yamaha Upright, Old Upright, Flemish Harpsichord, Italian Harpsichord, FM Keys. Strings: Violins, Violas, Cellos, Double Bass, Solo Violin. Plucked: Folk Harp, Dan Tranh, Kalimba. Brass: Horn, Trumpet, Tuba, Trombone, Old Trombone. Winds: Flute, Clarinet, Bassoon, Saxello, Tenor Sax, Recorders, Ocarina, Harmonica, Didgeridoo. Organs: Pipe Organ, Renaissance Organ. Mallets and Bells: Marimba, Vibraphone, Xylophone, Balafon, Glockenspiel, Tubular Bells, Tubular Glock, Hand Chimes, Wine Glasses, Timpani | the user's ear (demonstrations on the audition page) |
 | Museum | DX7 E.PIANO 1, rebuilt from the voice's published data and admitted by the user in a side-by-side against a reference recording (decisions D104, D107) | the other sounds chosen in D103: DX7 BASS 1, Prophet-5 sync lead and brass, Minimoog bass and lead, hoover, LatelyBass, Juno-106 |

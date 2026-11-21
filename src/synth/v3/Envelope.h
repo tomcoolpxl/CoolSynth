@@ -100,7 +100,7 @@ namespace coolsynth::synth::v3
                 remaining = samplesFor(parameters.delay);
                 return;
             }
-            startAttack();
+            startAttack(true);
         }
 
         void noteOff() noexcept
@@ -214,7 +214,9 @@ namespace coolsynth::synth::v3
 
         [[nodiscard]] bool segmentDone() const noexcept { return segmentIndex >= segmentLength; }
 
-        void startAttack() noexcept
+        static constexpr float reattackFloorSeconds = 0.002f;
+
+        void startAttack(bool restrike = false) noexcept
         {
             if (value >= peak)
             {
@@ -229,7 +231,13 @@ namespace coolsynth::synth::v3
                 return;
             }
             const float remainingShare = peak > 0.0f ? (peak - value) / peak : 1.0f;
-            startSegment(Stage::attack, parameters.attack * remainingShare, parameters.attackCurve);
+            float seconds = parameters.attack * remainingShare;
+            // A key struck again while the note still sounds climbs back from where it is: over its share of the
+            // attack, but never faster than the attack's first 2 ms, or a released note jumps back up in a fraction
+            // of a millisecond and ticks (a repeated piano key, the user's listening pass, 2026-11-21).
+            if (restrike && value > kSilent)
+                seconds = std::max(seconds, std::min(parameters.attack, reattackFloorSeconds));
+            startSegment(Stage::attack, seconds, parameters.attackCurve);
         }
 
         void startHold() noexcept

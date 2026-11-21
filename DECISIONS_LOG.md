@@ -4856,3 +4856,12 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
 - The listening (options: one page with every ear item, recommended and chosen; one page per topic; the bank only): `tools/listening-pass` grows a card per bank preset (`make_items.py`), the hand-written cards in `special.json`, a pre-check of every card through the MCP server, answer buttons per card and keys. Only what needs ears and has a reference goes on it: a before and after, or a plain question; the kicks are measured against real recordings instead.
 - The DAW round (options: every installed host, the hands-only steps listed at the end, recommended and chosen; Ableton only; FL only): Ableton Live 12 Intro and FL Studio 2025, the only DAWs installed; results in `docs/test-pass.md`.
 - Found on the way and fixed: Acid had a hidden Ladder after the 303 (its bank entry named no P1, and a missing P1 is a Ladder), now `p1 = Off` and levelled again (master 4.5 to 2.5 dB); the MCP `load_preset` waits for a sampled instrument to load, so notes played next are heard; the MCP `play` takes a timed `sequence`, so lines can overlap and slide.
+
+## D245. The listening pass's first answers: three presets out, one in, the repeated-key click (2026-11-21)
+
+- Removed at the user's word: Tape Flute, High Voice, Four-Track House. The bank has 138 presets.
+- A repeated key on a sampled instrument (options: crossfade in place, recommended and chosen; fade then restart, 5 ms late; a new voice per repeat, as Kontakt does): the Sample generator reads the sounding recording 5 ms ahead and fades it out under the new start, which rises over 2 ms as a fresh note's attack; a re-struck envelope climbs back over at least 2 ms (a released piano key ticked otherwise). The bank's one voice per key stays.
+- The Ladder card kept as a preset (options: Studio 1982, recommended and chosen; Workshop; Outrun): Ladder Chords, as heard, with Drive, Cutoff, Resonance and Release macros, levelled (+3 dB).
+- Bedroom Bass "very silent" (options: brighter at the same loudness, recommended and chosen; louder than the bank; kept and played higher): the ladder from 350 to 700 Hz, the sub from 60 to 35 %, levelled (+1.5 dB).
+- Washed Poly's noise "slightly less, not much less": crackle and hiss down by a quarter.
+- The 808 kick (options: the glide then the attack, recommended; only the glide; all four differences; left for now, chosen): left as it is.
