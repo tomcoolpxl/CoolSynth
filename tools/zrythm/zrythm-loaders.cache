@@ -1,0 +1,39 @@
+"E:\\Program Files\\Zrythm-trial\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\pixbufloader_svg.dll"
+"svg" 6 "gdk-pixbuf" "Scalable Vector Graphics" "LGPL"
+"image/svg+xml" "image/svg" "image/svg-xml" "image/vnd.adobe.svg+xml" "text/xml-svg" "image/svg+xml-compressed" ""
+"svg" "svgz" "svg.gz" ""
+" <svg" "*    " 100
+" <!DOCTYPE svg" "*             " 100
+
+"E:\\Program Files\\Zrythm-trial\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\libpixbufloader-jpeg.dll"
+"jpeg" 5 "gdk-pixbuf" "JPEG" "LGPL"
+"image/jpeg" ""
+"jpeg" "jpe" "jpg" ""
+"\377\330" "" 100
+
+"E:\\Program Files\\Zrythm-trial\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\libpixbufloader-gif.dll"
+"gif" 4 "gdk-pixbuf" "GIF" "LGPL"
+"image/gif" ""
+"gif" ""
+"GIF8" "" 100
+
+"E:\\Program Files\\Zrythm-trial\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\libpixbufloader-bmp.dll"
+"bmp" 5 "gdk-pixbuf" "BMP" "LGPL"
+"image/bmp" "image/x-bmp" "image/x-MS-bmp" ""
+"bmp" ""
+"BM" "" 100
+
+"E:\\Program Files\\Zrythm-trial\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\libpixbufloader-tiff.dll"
+"tiff" 5 "gdk-pixbuf" "TIFF" "LGPL"
+"image/tiff" ""
+"tiff" "tif" ""
+"MM *" "  z " 100
+"II* " "   z" 100
+"II* \020   CR\002 " "   z zzz   z" 0
+
+"E:\\Program Files\\Zrythm-trial\\lib\\gdk-pixbuf-2.0\\2.10.0\\loaders\\libpixbufloader-png.dll"
+"png" 5 "gdk-pixbuf" "PNG" "LGPL"
+"image/png" ""
+"png" ""
+"\211PNG\r\n\032\n" "" 100
+
