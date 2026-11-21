@@ -197,6 +197,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     self-oscillation. The user's ear passed Acid, its accent and its slide (2026-11-21). Left: a check against a
     real 303's recordings when an owner's turn up;
     whether the 303's own step sequencer (accent and slide per step) comes into the layer's.
+    Its code made cheaper (the user, 2026-11-21), with the 909's cost pass after the whole 808: priced at 1.36 % a
+    voice but never optimised. First bit for bit (the quarter-band filter's 12 states by a ring index, not shifted
+    each core sample; work fixed within a block lifted out), then whether a polyphase half-band in place of the
+    twelfth-order elliptic is worth its slightly different sound.
 33. The whole TR-808 (D241, D250), resumed after 0.5.0: all sixteen sounds from its eleven circuits, aimed at
     house use, each its full circuit as the bass drum is (ngspice stage by stage, then Fischer's recordings);
     researched: `docs/research/tr-808-voices.md`. Three family generators that fill one layer's three slots:
@@ -205,7 +209,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     each, struck while it rings; the closed hat cuts the open.
     First: the bass drum's gaps (30), as the drums share its trigger. Then the rest of 808 Drums, then 808 Metal
     (cowbell, hats, cymbal), then 808 Snare & Clap (snare, clap, maracas); a stock 808 Kit preset in Studio 1982.
-    Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30).
+    Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30), and
+    the 303's code made cheaper (32).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
     MIDI keyboard. The notes only, not the panel's navigation. The usual layout: a row of letters for the white
     keys, the row above for the black ones, keys for the octave and the velocity (Ableton's computer MIDI
