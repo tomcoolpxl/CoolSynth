@@ -66,14 +66,13 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 ## The user's ear and hands
 
 3. A listening pass over the whole bank, a card per preset on the page in `tools/listening-pass`: round 1 done on
-   2026-11-21, every card answered (`docs/test-pass.md`); round 2, the fixes against how they were, waits for the
-   user's ear. Mine, through the MCP server and in DAWs: levels, the glow and click-to-load, sounds ringing on after
+   2026-11-21, every card answered (`docs/test-pass.md`); round 2, the fixes against how they were, all passed. Mine, through the MCP server and in DAWs: levels, the glow and click-to-load, sounds ringing on after
    a change, the engine pills, Preferences. On the hands list: the velocity curves, Brightness and Space on the
    MiniLab. Retune what the ear flags, then rerun the loudness tool, which is not in the default build:
    `cmake --build build --config Debug --target CoolSynthPresetNormalizer`, then from `build` run
    `CoolSynthPresetNormalizer_artefacts/Debug/CoolSynthPresetNormalizer.exe --apply`.
 4. The sampled instruments and the Night Bus presets: all kept on the listening page (2026-11-21), but for High
-   Voice and Four-Track House, removed; Vibraphone's click on repeated keys fixed (round 2).
+   Voice and Four-Track House, removed; Vibraphone's click on repeated keys fixed and passed (round 2).
 
 ## Sounds and effects
 
@@ -87,7 +86,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 7. The wine glasses as a source for the Grain generator.
 18. The added noise (D221, `docs/research/noise-modelling.md`): built on 2026-11-19 as the user chose (a steady level
     with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
-    Brown). All passed the user's ear (2026-11-20 and 21); Washed Poly's turned down by a quarter, its after on round 2.
+    Brown). All passed the user's ear (2026-11-20 and 21); Washed Poly's turned down by a quarter and passed again.
 20. Chip sounds and chiptune. The Chip generator is built (D230, D231), Arcade revoiced with it, and the SID's
     filter is an SVF character (D233). Left: the user's ears on all of it (each chip's waves, the drums and
     arpeggios, the named waves, which are my own recipes, the 6581 and 8580 filters, how hard the 6581 distorts).

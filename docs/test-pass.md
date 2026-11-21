@@ -206,7 +206,8 @@ Each sound set up and played by Claude through the MCP server; the user listened
 - Clicks in Vibraphone and Granular Sky: a key struck again while its recording rang jumped back to the start. Now
   the old ring fades out over 5 ms under the new strike, which rises over 2 ms, and a re-struck envelope climbs back
   over at least 2 ms; tested on Vibraphone, Granular Sky, Steinway Grand and Glockenspiel.
-- Round 2 on the page: the fixes, each against how it was.
+- Round 2 on the page, the fixes each against how it was: all passed (2026-11-21). Vibraphone, Granular Sky and
+  Steinway Grand clean on repeated keys; Bedroom Bass and Washed Poly right now; Ladder Chords kept.
 
 ## Then the release (TODO J3)
 
