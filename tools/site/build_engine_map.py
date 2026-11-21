@@ -181,7 +181,7 @@ c.text(24, 50, [R("CoolSynth V3", w=700, f="ink", s=30), R("engine architecture"
 c.text(24, 76, "Signal flow of one patch, left to right. Every slot takes any module of its kind; "
                "the choices are listed underneath.", size=13, fill="ink2")
 c.text(1576, 44, "2 layers · 16 voices · 3 generator + 3 processor slots per voice · "
-                 "24 modulation routings per layer · 136 factory presets",
+                 "24 modulation routings per layer · 138 factory presets",
        size=12.5, weight=600, fill="ink", anchor="end")
 
 legend = [("note", "notes"), ("audio", "audio"), ("mod", "modulation"), ("planned", "planned, not built yet")]
@@ -439,7 +439,7 @@ c.text(CMID, 504, "SOFT CLIPPER", size=10.5, weight=700, fill="ink", anchor="mid
 c.arrow([(CMID, 514), (CMID, 540)], head=7)
 c.rect(1460, 540, 102, 30, "ink", None, rx=15, sw=0)
 c.text(CMID, 560, "STEREO OUT", size=10.5, weight=700, fill="bg", anchor="middle", ls=0.6)
-for j, s in enumerate(["Any of the 13 effects", "in any master slot,", "in slot order."]):
+for j, s in enumerate(["Any of the 14 effects", "in any master slot,", "in slot order."]):
     c.text(CMID, 594 + j * 14, s, size=10.5, fill="ink2", anchor="middle", maxw=CW - 8)
 
 # =============================================================== the three type lists
@@ -498,12 +498,19 @@ GEN_ROWS = [
                "cut into slices (equal, or at its attacks) or a folder as a kit, one per key."),
     ("Grain", "A cloud of up to 12 grains per voice from a sample, or live from the generator before it: "
               "position, scan (0 freezes it), size, density, spray, pitch spray."),
+    ("Chip", "The NES, Game Boy, C64 SID (6581, 8580), AY, YM and Konami’s SCC: their waves and noise, with "
+             "frame-rate arpeggios and drum sequences."),
+    ("Kick", "A tuned kick drum: the TR-808’s and TR-909’s bass drum circuits in wave digital filters, checked "
+             "against ngspice, or a modern kick."),
+    ("TB-303", "The 303’s voice, rewritten from Open303: its coupled ladder, accent at velocity 100, a 22 ms "
+               "slide between legato notes."),
 ]
 PROC_ROWS = [
     ("Ladder", "4-pole transistor ladder with saturation in every stage. LP24, LP12, BP, HP12. Self-oscillates "
                "from its own noise floor, within 3.3 cents of the cutoff (250 Hz to 4 kHz). Generator 3 can "
                "modulate the cutoff at audio rate, up to 3 octaves either way."),
-    ("SVF", "2-pole state-variable filter: low-pass, high-pass, band-pass, notch. Q from 0.5 to 40, drive."),
+    ("SVF", "2-pole state-variable filter: low-pass, high-pass, band-pass, notch. Q from 0.5 to 40, drive. "
+            "Morphs low-pass to high-pass as the Oberheim SEM; the C64 SID’s 6581 and 8580 characters."),
     ("Comb", "Feedback comb tuned to the key: tune, damping, either polarity."),
     ("Formant", "Three band-passes on the vowels a, e, i, o, u, with morph and throat size."),
     ("Folder", "Sine wavefolder with up to 30 dB of drive and symmetry; anti-aliased."),
@@ -522,9 +529,10 @@ FX_ROWS = [
     ("Grain", "replays the last 4 seconds as a cloud of up to 32 grains; freeze."),
     ("Pitch", "up to two octaves either way: delay-line heads with correlation-matched splices, or a "
               "peak-shifting phase vocoder; spread, and a delay whose feedback steps each repeat."),
+    ("Stutter", "catches a slice on the beat and repeats it, each repeat shorter, lower, quieter or backwards."),
 ]
 panels = [
-    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 9 types · any type in any of the 3 slots",
+    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 12 types · any type in any of the 3 slots",
          rows=GEN_ROWS, namew=84,
          note=[R("Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots.")], italic=True),
     dict(x=634, w=462, kind="proc", head="PROCESSOR SLOT", sub="one of 7 types · per voice",
@@ -532,7 +540,7 @@ panels = [
          note=[R("Three in series, per voice: a chord is filtered, folded and driven note by note, before the "
                  "notes are summed.")],
          italic=False),
-    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 13 effects · 6 slots per layer · 6 master slots",
+    dict(x=1112, w=464, kind="fx", head="EFFECT SLOT", sub="one of 14 effects · 6 slots per layer · 6 master slots",
          rows=FX_ROWS, namew=100,
          note=[R("Master section: six slots, F1 to F6, any effect in any order, then gain and a soft clipper. "
                  "Each layer sets what share of it passes through them.")],
@@ -616,7 +624,7 @@ for cd in cards:
 
 # =============================================================== the rooms
 ROOM_Y = CARD_Y + card_h + 30
-c.text(24, ROOM_Y, [R("136 FACTORY PRESETS IN 14 ROOMS", w=700, f="ink", ls=0.8),
+c.text(24, ROOM_Y, [R("138 FACTORY PRESETS IN 14 ROOMS", w=700, f="ink", ls=0.8),
                     R("Workshop · Bedroom · Arcade · Outrun · Observatory · Greenhouse · Basement · Studio 1982 · "
                       "Main Stage · Engine Room · Clock Tower · Conservatory · Museum · Night Bus", f="ink2", dx=12)],
        size=11.5, maxw=1552)
@@ -723,8 +731,8 @@ ARIA = ("CoolSynth V3 engine architecture. Keys and MIDI feed two layers, each a
         "chord memory, its own arpeggiator and play mode; per voice three generator slots that can sync, ring, FM "
         "or AM one another, three processor slots in series and an amplifier; then six insert effects. Modulation "
         "sources and a 24-routing matrix feed the voice from below. Both layers are mixed into six master effect "
-        "slots, gain, soft clipper and stereo out. Three lists give the 9 generator types, 7 processor types "
-        "and 13 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.")
+        "slots, gain, soft clipper and stereo out. Three lists give the 12 generator types, 7 processor types "
+        "and 14 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.")
 
 svg_open_standalone = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" '
                        'font-family="sans-serif" role="img" aria-label="%s">' % (W, H, W, H, escape(ARIA)))

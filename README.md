@@ -121,4 +121,4 @@ How the engine works is described in [docs/architecture.md](docs/architecture.md
 
 ## License
 
-CoolSynth's own code is MIT licensed (see `LICENSE`). It's built with [JUCE](https://juce.com) 8 under the free [Starter licence](https://juce.com/legal/juce-8-licence/). The sampled instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community Sample Library, both CC0. The TB-303 generator is rewritten from [Open303](https://github.com/RobinSchmidt/Open303) by Robin Schmidt, MIT licensed; its notice is in `THIRD_PARTY_NOTICES.txt`, which the installer ships beside `LICENSE`.
+CoolSynth's own code is MIT licensed (see `LICENSE`). It's built with [JUCE](https://juce.com) 9 under the free [Starter licence](https://juce.com/legal/juce-9-licence/). The sampled instruments come from Versilian Studios' VSCO 2 Community Edition and the Versilian Community Sample Library, both CC0. The TB-303 generator is rewritten from [Open303](https://github.com/RobinSchmidt/Open303) by Robin Schmidt, MIT licensed; its notice is in `THIRD_PARTY_NOTICES.txt`, which the installer ships beside `LICENSE`.

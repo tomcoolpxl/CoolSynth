@@ -61,7 +61,7 @@ Keeping the pads off the DAW track, in three layers:
 
 - In the plugin, every message the driver owns is dropped from the DAW's input: the DAW program's knob, fader, encoder and Shift controllers, and pad notes 36-51 on channel 10. Exactly, by message, not by timing.
 - Where the DAW merges channels (Ableton), CoolSynth tells the player once to set the track's MIDI input to channel 1: the keys play on channel 1 and the pads on channel 10.
-- The FL Studio and Ableton scripts stay as an optional extra. The FL script must link to the MiniLab by itself; on this computer FL had fallen back to its generic controller, which has to be fixed.
+- The FL Studio, Ableton and Bitwig scripts take the pads off the track in those DAWs. FL and Live link theirs to the MiniLab by themselves (D246, D247); in Bitwig ours is chosen once in place of Bitwig's own (D249).
 
 With the driver switched Off:
 

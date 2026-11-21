@@ -75,7 +75,7 @@ the sampled instruments and the player's own sounds to load.
 
 Per voice:
 
-1. **Three generator slots**, G1 to G3. Each holds any of 13 generator types (VA, Noise, FM2, FM4, Wavetable,
+1. **Three generator slots**, G1 to G3. Each holds any of 12 generator types (VA, Noise, FM2, FM4, Wavetable,
    String, Modal, Sample, Grain, Chip, Kick, TB-303). A generator can sync, ring-modulate, frequency-modulate or
    amplitude-modulate the next one. Chip (`ChipGenerator.h`, D231) plays the NES, Game Boy, SID, AY, YM and SCC
    with their frame tables (`docs/design/CHIP_GENERATOR.md`); Kick (`KickGenerator.h`, D232) is a tuned kick drum:
@@ -269,7 +269,7 @@ sources but no longer used.
 | `src/midi` | The controller map, ready setups and the computer's setup; the MiniLab 3 protocol; V2's mapping and the MIDI monitor, still used by the app's settings store |
 | `src/standalone` | The standalone app, its MIDI input and settings, the MiniLab driver |
 | `src/diagnostics` | The flight recorder and the audio thread's allocation alarm |
-| `resources` | The preset banks, the instrument catalogue, the controller profile, images |
+| `resources` | The preset banks, the instrument catalogue, the controller profile, the MiniLab scripts for Ableton, Bitwig and FL Studio, images |
 | `tests` | The test program's sources |
 | `tools` | The command-line tools and the Python scripts |
 
@@ -313,6 +313,10 @@ Rebuild `CoolSynthRender` and `CoolSynthPresetNormalizer` after any change to a 
 
 - `tools/audition` builds the listening pages and does the measuring and fitting behind the Museum and the
   Conservatory.
+- `tools/listening-pass` is a local page that sets each sound up in the running app, through its MCP server, and
+  plays it for the ear.
+- `tools/kick808` and `tools/kick909` render the kick circuits in ngspice, the references the Kick's models are
+  checked against.
 - `tools/release/package_library.py` packs the instrument library into one zip per family for download.
 - `tools/site/build_engine_map.py` draws the map at the top of this page.
 
