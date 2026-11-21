@@ -56,6 +56,36 @@ Hardware clones: the Yocto kit (a wiki notes R108 and R111 swapped in its cymbal
 - Michael Fischer's set, 1994: 116 WAVs, 16-bit 44.1 kHz, from serial 103852, each voice's own output, LEVEL full, the knobs at 0, 2.5, 5, 7.5 and 10 (25 files each for bass drum, snare and cymbal; 5 for toms, congas and open hat; one for the rest); "absolutely free", mirrored as CC0-1.0 at https://github.com/tidalcycles/sounds-tr808-fischer. No accent variations.
 - Other packs are processed or of unclear settings and terms.
 
+## How others model them, and at what cost (2026-11-21)
+
+Searched again before the direction was put to the user (D250). Nobody publishes a cost per voice, and nobody open checks a voice beyond the bass drum against a real 808 with numbers.
+
+Papers:
+- Only three voices have one: the bass drum (DAFx 2014, the thesis), the cymbal (ICMC 2014, open) and the cowbell ([AES 137th, paper 9207](https://www.aes.org/e-lib/browse.cfm?elib=17530), $33 for non-members; its band-pass worked by Mason's gain formula, "physical and behavioral models of each sub-circuit").
+- None on the toms, congas, rim shot, claves, snare, clap, maracas or hats; the hats share the cymbal paper's oscillators and VCAs.
+
+Commercial:
+- Roland's ACB (TR-8, TR-8S, TR-08, the TR-808 plug-in) models "each analog circuit, right down to the component level" ([TR-08](https://www.roland.com/uk/products/tr-08/)); nothing more is published. Roland's engineers told Computer Music they recreated what they "believe to be the ideal" 808 and 909 by knowledge and ear, as no two units sound alike ([Computer Music, 2019](https://www.pressreader.com/australia/computer-music/20190220/282432760417112)).
+  - The plug-in plays 11 voices ([Roland](https://www.roland.com/uk/products/rc_tr-808/)); one user measured 1.1 to 2.5 % of an i7-4790K, the same however many voices played ([KVR](https://kvraudio.com/forum/viewtopic.php?p=7291556)): every voice computed all the time.
+- D16's Nepheton 2: no method or per-voice cost published; users find its effects, not its voices, the cost ([KVR](https://www.kvraudio.com/forum/viewtopic.php?p=8810752), [CDM review](https://cdm.link/2023/12/nephaton2-808-plugin-review/)).
+- AudioRealism's ADM: 25 generators "modeled after the classics' analog circuits" and 4 PCM players; its 909 a hybrid of model and samples ([manual](https://www.scribd.com/document/370622048/Audiorealism-ADM-Manual-pdf), [MusicRadar](https://musicradar.com/reviews/tech/audio-realism-adm-121891)).
+- Tactile Sounds' TS-808 (free, Windows): SPICE simulations from the service notes, then tuned until waveforms and spectra matched Goldbaby's Tape808 samples ([Synthtopia](https://www.synthtopia.com/content/2010/04/24/free-virtual-roland-tr-808-drum-machine-ts-808/), [KVR](https://www.kvraudio.com/product/ts_808_by_tactile_sounds)).
+  - Its cowbell: the schematic's 540 and 800 Hz, the samples' 565 and 849 Hz, shipped at 523.25 and 783.99 Hz, a fifth in tune.
+- Cherry Audio's Transistor 808 modules (Misfit Audio, Voltage Modular): every voice a module; the hats keep the 808's separate envelopes and filters per oscillator group; the kick a sine with a pitch envelope and a transient, so behavioural ([hats](https://docs.cherryaudio.com/misfit-audio/transistor-808-hats), [cymbal](https://docs.cherryaudio.com/misfit-audio/transistor-808-cymbal), [kick](https://docs.cherryaudio.com/misfit-audio/transistor-808-kick)).
+- Hora's Treasure (VCV Rack): the voices in 7 modules, each in a Vult DSP and a VCV DSP version; no costs published ([gearnews](https://www.gearnews.com/treasure-tr-808-emulation-vcv-rack-virtual-modular-software)).
+- WDR-8's snare (chowdsp_wdf) took its author over a year and needed updates to cut its CPU ([VCV forum](https://community.vcvrack.com/t/the-acid-kit-new-modules-for-the-rack-x0x-crowd/18600)).
+- Plaits: its hat six squares into a clocked-noise mix, a high-pass and a transistor VCA ([Tidal's Plaits reference](https://tidalcycles.org/docs/reference/mi-ugens-plaits)); its snare "an 808 snare model, revisited" ([source mirror](https://cadlab.io/project/1344/master/files/plaits/dsp/drums/analog_snare_drum.h)).
+
+So the field splits three ways: component models with nothing published (ACB, ADM); SPICE or circuit reading tuned to samples (TS-808, Mz808, WDR-8); and behavioural sound-alikes (Plaits, Cherry Audio, iO-808). CoolSynth's bass drum is the only one checked stage by stage against SPICE and then against two real units.
+
+What the circuits need, from the service notes and secondary write-ups, to check against the schematic:
+- Toms and congas: one bridged-T split in two, both halves for the tom, one bypassed for the conga; the diodes shorten the time constant early in each hit, the pitch drop ([808 Tom Synthesis](https://baratatronix.squarespace.com/blog/808-tom-synthesis), [service notes p. 6](https://www.manualslib.com/manual/1294765/Roland-Tr-808.html?page=6)). Which tom D80 and D81 belong to: the sources disagree.
+- Cowbell: two squares near 1 : 1.44, two VCAs, one envelope, a band-pass, a buffer; small detunings "largely destroy the cowbell illusion" ([Sound On Sound](https://www.soundonsound.com/techniques/synthesizing-cowbells-claves), [Hackaday](https://hackaday.com/2022/05/12/how-the-roland-808-cowbell-worked), [a rebuild](https://frisnit.com/?p=919)).
+- Clap: the generating cycle through Q73 and IC23 is in the service notes; the "reverb" is not detailed ([KVR](https://www.kvraudio.com/forum/viewtopic.php?p=8606994)). Bursts about 11 ms apart (KVR) against three within 30 ms (above): to settle from the schematic and Fischer's clap.
+- Maracas: noise gated by Q65 into IC19 through the filter Q68, the envelope from Q66 and Q67 (service notes p. 6).
+
+Cost, estimated here and not measured: the Kick's 808 circuit takes 3.1 % of a block a voice on average and 6.6 % at its 99th percentile, its behavioural predecessor 0.33. Full circuits of the other voices would take some 2 to 7 % each while they ring and nothing at rest; all eleven ringing at once could pass a sound's 50 % budget.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Plaits and Peaks (MIT), iO-808 (MIT), chowdsp_wdf (BSD-3); the cymbal paper's equations (CC BY 3.0).
@@ -65,4 +95,4 @@ Hardware clones: the Yocto kit (a wiki notes R108 and R111 swapped in its cymbal
   - Cowbell: the same oscillators (the fifth and sixth) and the page-13 schematic.
   - Snare: the schematic, with WDR-8 and Mz808 as other readings; neither is calibrated.
   - Toms, congas, rim shot, claves, clap, maracas: no good open model; the schematic, the page-6 text and the page-14 table, checked against Fischer's recordings. New work, but on the bass drum's machinery for the bridged-T voices.
-- To put to the user when the stage starts: the fidelity per voice (circuit with SPICE and recordings at house's settings, a full audit, or behavioural) and the order (house's voices first, or by shared circuit).
+- Chosen by the user (D250): every voice as its full circuit, all sixteen sounds, as three family generators (808 Drums, 808 Snare & Clap, 808 Metal) that fill one layer; the bass drum's gaps first, then outward by shared circuit; a stock 808 Kit preset.

@@ -4954,3 +4954,43 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
   showed Arp) and list every page. The Arp page's four knobs all read "Layer A ..." there, the names cut before the
   part that tells them apart. Options: shorten them, recommended and chosen; leave them. The arp's parameters are now
   "A Arp Rate", "B Arp Gate" and so on, as "A Glide" is; their IDs stay, so projects and automation keep working.
+
+## D250. The whole 808: its direction (2026-11-21)
+
+The whole TR-808 (TODO 33) resumes after 0.5.0, now that the kicks passed the user's ears, with its direction
+chosen first as D241 and D243 asked. Searched online again (`docs/research/tr-808-voices.md`, "How others model
+them"): papers exist for the bass drum, the cymbal and the cowbell only; Roland's ACB and AudioRealism's ADM claim
+component models and publish nothing; TS-808, Mz808 and WDR-8 read the circuits and tune them to samples; Plaits,
+Cherry Audio's Transistor 808 and iO-808 are behavioural. Nobody publishes a cost per voice, and nothing open is
+checked against a real 808 beyond the bass drum. The user's choices, each the recommended option:
+
+- Fidelity (options: every voice its full circuit as the bass drum, each stage against ngspice and then Fischer's
+  recordings, recommended and chosen; full circuits with the six-oscillator bank by Werner's block method; block
+  models for every voice, as Werner's papers; behavioural sound-alikes fitted to the recordings).
+  - Estimated, not measured: 2 to 7 % of a block per instrument while it rings, nothing at rest. A whole kit ringing
+    at once could pass a sound's 50 % budget, so each circuit rests between hits and the kit's price is measured.
+- The voices (options: all sixteen sounds from the eleven circuits, recommended and chosen; the house set only, the
+  clap, hats, cowbell, congas, rim shot and claves).
+- The kit in a layer (options: three family generators that fill one layer's three slots, recommended and chosen;
+  one Kit generator past the slot's 12 knobs; a kit where each hit is its own voice, as the Sample generator's kits;
+  separate generators only, kits as sounds of layers).
+  - 808 Drums (bass drum, toms and congas, rim shot and claves), 808 Snare & Clap (snare, clap, maracas), 808 Metal
+    (cowbell, cymbal and hats on six oscillators that run all the time).
+  - Each instrument at its General MIDI drum key, one circuit each (a tom and its conga share one, as on the
+    machine), struck while it rings; the closed hat cuts the open. The 808's 22 knobs fit the slots' 36.
+  - Each family also plays alone: D241's kit and separate generators at once. The engine needs a generator that
+    reads keys as instruments; layer B stays free.
+- The kit preset (options: one stock 808 Kit in Studio 1982, every knob at 12 o'clock where the service notes' page
+  14 measures each voice, macros Tone, Decay, Tune and Accent, recommended and chosen; a stock and a house kit; none
+  yet).
+- The order (options: out from the bass drum, recommended and chosen; house's voices first; the published models
+  first): the bass drum's gaps, the rest of 808 Drums (toms, congas, rim shot, claves), 808 Metal (cowbell, hats,
+  cymbal), then 808 Snare & Clap (snare, clap, maracas).
+- The bass drum's gaps (options: first, recommended and chosen; with the toms; after the kit; leave them): the attack
+  dull with its click 3 to 6 dB weak, Decay 0 out of reach, the sigh settling too fast, Punch Time's glide past
+  6 ms. The toms, congas, rim shot and claves take the same kind of trigger into a bridged-T, so a fault there would
+  carry into them.
+- The 909's open work (options: after the 808 as D241 ordered, recommended and chosen; before the 808; after the 808,
+  its cost only): made cheaper and priced, then its second harmonic.
+
+Each voice is still designed with the user (its knobs, bends and checks as options) before it is built.
