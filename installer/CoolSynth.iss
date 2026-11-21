@@ -37,7 +37,7 @@ MinVersion=10.0
 ; .zip needs the full extraction method (Inno Setup 6.5).
 ArchiveExtraction=full
 UninstallDisplayName=CoolSynth
-; Uninstalling removes the MiniLab scripts from Documents (FL Studio and Ableton read them there): an admin install
+; Uninstalling removes the MiniLab scripts from Documents (FL Studio, Ableton and Bitwig read them there): an admin install
 ; touching a user's folder is what this warning is about, and it is meant.
 UsedUserAreasWarning=no
 SetupIconFile=CoolSynth.ico
@@ -54,7 +54,7 @@ Name: "custom"; Description: "Choose"; Flags: iscustom
 Name: "vst3"; Description: "VST3 plugin, to play CoolSynth in your music software (DAW)"; Types: full compact custom
 Name: "clap"; Description: "CLAP plugin, for DAWs that support it: Bitwig, Reaper, FL Studio, Studio One"; Types: full compact custom
 Name: "app"; Description: "Standalone app"; Types: full compact custom
-Name: "minilab"; Description: "Arturia MiniLab 3 support in FL Studio and Ableton Live"; Types: full compact custom
+Name: "minilab"; Description: "Arturia MiniLab 3 support in FL Studio, Ableton Live and Bitwig Studio"; Types: full compact custom
 
 [Files]
 Source: "{#BuildDir}\VST3\CoolSynth.vst3\*"; DestDir: "{commoncf64}\VST3\CoolSynth.vst3"; Components: vst3; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -66,9 +66,11 @@ Source: "..\THIRD_PARTY_NOTICES.txt"; DestDir: "{app}"; Flags: ignoreversion
 ; The MiniLab 3 scripts (D211). They belong in the player's own Documents, where FL Studio and Ableton Live look for
 ; them, but an elevated installer's {userdocs} is the administrator's: so they go in the install folder first and
 ; Install-MiniLabScripts.ps1 copies them on as the player who started the installer ([Run] below). FL and Live both
-; link their script to the MiniLab by themselves (D246, D247). Harmless without a MiniLab.
+; link their script to the MiniLab by themselves (D246, D247); Bitwig offers it beside its own (D249). Harmless
+; without a MiniLab.
 Source: "..\resources\daw-scripts\fl-studio\CoolSynth MiniLab\*.py"; DestDir: "{app}\DAW scripts\fl-studio\CoolSynth MiniLab"; Components: minilab; Flags: ignoreversion
 Source: "..\resources\daw-scripts\ableton\CoolSynth_MiniLab\*.py"; DestDir: "{app}\DAW scripts\ableton\CoolSynth_MiniLab"; Components: minilab; Flags: ignoreversion
+Source: "..\resources\daw-scripts\bitwig\CoolSynth\*.control.js"; DestDir: "{app}\DAW scripts\bitwig\CoolSynth"; Components: minilab; Flags: ignoreversion
 Source: "Install-MiniLabScripts.ps1"; DestDir: "{app}\DAW scripts"; Components: minilab; Flags: ignoreversion
 
 [InstallDelete]
@@ -83,10 +85,11 @@ Name: "{autoprograms}\CoolSynth"; Filename: "{app}\CoolSynth.exe"; Components: a
 ; that approved it: the player's own on a home PC, where they are one and the same.
 Type: filesandordirs; Name: "{userdocs}\Image-Line\FL Studio\Settings\Hardware\CoolSynth MiniLab"
 Type: filesandordirs; Name: "{userdocs}\Ableton\User Library\Remote Scripts\CoolSynth_MiniLab"
+Type: filesandordirs; Name: "{userdocs}\Bitwig Studio\Controller Scripts\CoolSynth"
 
 [Run]
 ; Not a postinstall choice: part of installing the MiniLab support, as the player who started the installer.
-Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\DAW scripts\Install-MiniLabScripts.ps1"""; StatusMsg: "Setting up the MiniLab 3 for FL Studio and Ableton Live..."; Components: minilab; Flags: runasoriginaluser runhidden waituntilterminated
+Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; Parameters: "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File ""{app}\DAW scripts\Install-MiniLabScripts.ps1"""; StatusMsg: "Setting up the MiniLab 3 for FL Studio, Ableton Live and Bitwig Studio..."; Components: minilab; Flags: runasoriginaluser runhidden waituntilterminated
 Filename: "{app}\CoolSynth.exe"; Description: "Start CoolSynth"; Components: app; Flags: nowait postinstall skipifsilent
 ; The guide on the web, where it shows as a page (a README in a text editor is markdown, not help).
 Filename: "https://github.com/tomcoolpxl/CoolSynth#readme"; Description: "Open CoolSynth's guide on the web (setting up your keyboard and DAW)"; Flags: shellexec nowait postinstall skipifsilent unchecked

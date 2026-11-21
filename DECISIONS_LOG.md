@@ -4929,4 +4929,27 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
 - Seen in the DAWs: Ableton Live 12.4 (VST3) shows "A1 Bite" and "A2 Detune" on its panel and turns them into "A1
   Bright" and "A2 Squelch" when the panel loads Pluck Drop. FL Studio 2025 (CLAP) lists "Controls/A1 Bite" and,
   after the switch, names the knob "Controls/A1 Bright" in its hint bar; its parameter list kept the old names on
-  screen. Not seen: a reopened project in Live (saving is off in this Live), FL's VST3, Bitwig, Reaper, Cubase.
+  screen. Not seen: a reopened project in Live (saving is off in this Live), FL's VST3, Reaper, Cubase.
+- Bitwig Studio 6.1 (CLAP), the same day: its remote controls and parameter list show "A1 Bite" and turn into "A1
+  Bright" after the switch, within a moment. Zrythm 1.0 (CLAP and VST3): a new CoolSynth lists "A1 Bite", but the
+  names stay as loaded after a switch, and a project keeps the names it was saved with (the 20 November project
+  still says "A Macro 1"): Zrythm reads names once.
+
+## D249. Bitwig: a CoolSynth MiniLab 3 controller script (2026-11-21)
+
+- Found when the user installed Bitwig Studio 6.1 (trial): Bitwig set up its own Arturia MiniLab 3 controller by
+  itself (its Controllers extension finds the MiniLab by the port name "Minilab3 MIDI"). Keys played, the pads
+  switched CoolSynth's sections and the screen stayed CoolSynth's, but that script launches clips with the pads: one
+  press had started the transport and recorded a clip into the armed track, unseen.
+- Options: our own Bitwig script, recommended and chosen; the README telling users to remove Bitwig's; leave it.
+- Built: `resources/daw-scripts/bitwig/CoolSynth/CoolSynthMiniLab3.control.js`, a JavaScript controller script (API
+  17) on the MiniLab's input only, found by the same port name. Its note input takes every message but channel 10's
+  notes (the pads), so the keys, knobs, bend, wheel and pedal reach the tracks and the pads do not; it sends nothing.
+  The installer copies it to `Documents\Bitwig Studio\Controller Scripts\CoolSynth`.
+- Seen: with both scripts installed Bitwig sets up neither by itself and offers both under the detected MiniLab, also
+  after a restart; with ours chosen, the user's keys played, the pads switched sections, and Bitwig neither started
+  nor recorded anything. Not seen: what Bitwig does on a computer that never had its own set up (it may still take
+  its own); the README says to choose ours there.
+- Also seen in Bitwig: the CLAP's remote control pages (D216) follow the panel (Macros, then Arp when the panel
+  showed Arp) and list every page. The Arp page's four knobs all read "Layer A ..." there, the names cut before the
+  part that tells them apart.

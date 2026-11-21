@@ -96,8 +96,8 @@ Each step ends in something that runs; the research's phases have the detail.
 - Speed: sse2neon for the SSE paths, the helper threads on macOS joined to the host's audio workgroup, the voice cap's
   costs measured on the Mac.
 - The audio-thread watch ported with fishhook.
-- The MiniLab: its port names, the screen, the pads and knobs, several instances, notes arriving twice, the FL and
-  Ableton scripts in their Mac folders. Which control surface Live loads by itself there: without Arturia's Windows
+- The MiniLab: its port names, the screen, the pads and knobs, several instances, notes arriving twice, the FL,
+  Ableton and Bitwig scripts in their Mac folders. Which control surface Live loads by itself there: without Arturia's Windows
   driver the MiniLab is likely product 0x220B, which Live's own MiniLab_3 claims too (D247).
 - The installer: an unsigned .pkg into `~/Library`, the instruments downloaded by it; tested on a clean user account
   after a browser download; the README's Mac install with the Open Anyway step.

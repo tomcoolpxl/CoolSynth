@@ -41,9 +41,13 @@ C4. The FL script linking by itself (D246). Found in FL on 2026-11-21: the first
     too; of two user scripts Live took the first by name, and ours sorts before MiniLab_3, but whether Live's own
     scripts share that order is not known. The pads with the output port set: checked by the user's hands. The
     script now arms the selected MIDI track by itself, as Live's own controller scripts do.
-    Macro names in hosts (D248): seen in Live (VST3) and FL (CLAP). Not seen: a reopened project in Live (needs a
-    Live that saves), FL's VST3, Bitwig, Reaper, Cubase.
-C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, tested by the suite, not yet in a DAW.
+    Macro names in hosts (D248): follow the sound in Live (VST3), FL (CLAP) and Bitwig (CLAP); Zrythm reads them
+    once. Not seen: a reopened project in Live (needs a Live that saves), FL's VST3, Reaper, Cubase.
+    Bitwig (D249): our own controller script takes the pads; with Bitwig's own MiniLab 3 script they launched and
+    recorded clips. Not seen: which one Bitwig sets up by itself on a computer that never had its own.
+C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9; seen in Bitwig on 2026-11-21 (every
+    page listed, the open page following the panel). Left: the Arp page's knobs all read "Layer A ..." in Bitwig,
+    their names cut before the part that tells them apart.
     - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
       `build/CoolSynth_artefacts/<config>/CLAP/CoolSynth.clap`.
     - The pages (`src/plugin/RemoteControlPages`): one per panel page, its four knobs, then Glide, Brightness, Space
@@ -52,8 +56,9 @@ C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, test
     - The installer puts it in `C:\Program Files\Common Files\CLAP` (its own tick box); the release has a CLAP zip.
 C6. Test per DAW: done on 2026-11-20 and 21 in Ableton Live and FL Studio (`docs/test-pass.md`): the duplicate
     filter, the stopped host's tempo, the layer menu at the panel, the MiniLab replugged, the MiniLab in FL with our
-    script, the guided setup (C7), the panel at 175 % in both DAWs and at 125 and 150 % as drawn. Left, for want of
-    hosts: the CLAP pages (Bitwig or Reaper), which hosts call `IMidiMapping` (a logging build, Reaper above all).
+    script, the guided setup (C7), the panel at 175 % in both DAWs and at 125 and 150 % as drawn. Bitwig on
+    2026-11-21: the CLAP pages, the macro names, the MiniLab with our script (D249). Left, for want of a host: which
+    hosts call `IMidiMapping` (a logging build, Reaper above all).
 C7. The guided controller setup, redesigned with the real interface (the user, 2026-11-21: it works, the flow is
     wrong). Back and Next on every step. Ask first what the controller has and what the player wants: a row of four
     knobs, a page knob, faders, pads (explain what the pads do here; they may not want them). Say what each control

@@ -98,6 +98,7 @@ With CoolSynth on several tracks, the window you opened last gets the MiniLab. U
 The MiniLab sends its pads on MIDI channel 10 and its keys on channel 1. To keep the pads from also playing notes in your DAW:
 
 - In Ableton Live, the installer adds the CoolSynth_MiniLab control surface and Live loads it by itself. It also arms the MIDI track you select, so the keys play it. If **Settings > Link, Tempo & MIDI** shows another control surface on the MiniLab (set up before CoolSynth was installed), choose CoolSynth_MiniLab there instead, with input and output Minilab3 MIDI. Or set the CoolSynth track's **MIDI From** channel to **Ch. 1**.
+- In Bitwig Studio, the installer adds a CoolSynth MiniLab 3 controller script. Bitwig's own MiniLab 3 controller launches clips with the pads: in **Settings > Controllers**, remove the Arturia MiniLab 3 controller if Bitwig set it up, and add CoolSynth MiniLab 3 under the detected MiniLab.
 - In FL Studio, the installer adds the CoolSynth MiniLab 3 script and FL picks it for the MiniLab by itself. If you used the MiniLab in FL before, FL keeps your earlier choice: in **Options > MIDI settings**, set the MiniLab's controller type to CoolSynth MiniLab 3 once.
 
 To use the MiniLab as an ordinary MIDI controller instead, turn off **Prefs > Controller setup > MiniLab 3 driver**. It then works in its Arturia program and in its DAW program.

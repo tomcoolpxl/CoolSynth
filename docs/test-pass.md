@@ -213,6 +213,12 @@ Each sound set up and played by Claude through the MCP server; the user listened
 - Macro names in hosts (D248): Live's panel shows "A1 Bite", "A2 Detune" and follows a new sound ("A1 Bright",
   "A2 Squelch" for Pluck Drop); FL's CLAP lists "Controls/A1 Bite" and its hint bar says "A1 Bright" after the
   switch, though its open parameter list kept the old names.
+- Bitwig Studio 6.1 trial, installed by the user (D249): the CLAP loads and plays; its remote control pages list every
+  page and follow the panel (Macros, Arp); the macro names follow a new sound. Bitwig had set up its own Arturia
+  MiniLab 3 script, which turned a pad press into a launched and recorded clip on the armed track; with our script
+  chosen instead, the user's keys played, the pads switched sections, and Bitwig started and recorded nothing.
+- Zrythm 1.0 trial (started with the image-loader fix of 20 November): a new CoolSynth CLAP or VST3 lists "A1 Bite";
+  Zrythm keeps the names it loaded, through a sound change and in a saved project.
 - The guided controller setup: tried by the user; it works but wants a redesign (TODO C7). The user's own setup was
   backed up first and put back afterwards, the MiniLab driver on.
 - Scaling: everything today ran at the user's Windows scale of 175 %, and the app, Ableton's VST3 and FL's CLAP showed
