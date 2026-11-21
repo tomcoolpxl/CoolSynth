@@ -114,8 +114,11 @@ public:
         {
             beginTest(juce::String("every preset gives the same output twice") + (offline ? ", bouncing" : ""));
             juce::StringArray freshDiffer, resetDiffer, resetsDiffer;
+            const auto only = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_PRESET_ONLY", {}); // one preset by name
             for (int preset = 0; preset < presets; ++preset)
             {
+                if (only.isNotEmpty() && ! coolsynth::presets::getFactoryPreset(preset).name.containsIgnoreCase(only))
+                    continue;
                 // Two fresh processors, then the second again after a reset: a defined start.
                 auto first = makeSynth(offline);
                 auto second = makeSynth(offline);

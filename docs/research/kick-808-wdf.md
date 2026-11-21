@@ -61,6 +61,10 @@ From the paper's Figure 1, which redraws Roland's service notes; the service not
 - Feedback buffer: R164 47 k, R168 22 k, R169 47 k, VR6 500 k, C43 33 µF.
 - Output: R171 220, R172 10 k, VR5 10 k, C45 0.1 µF, C47 and C49 0.47 µF, VR4, R176 100 k, Q44, R173 6.8 k.
 
+Corrected since, against two real units (D251, `kick-808-recordings.md`): the diodes are the standard 1N4148 with
+its emission coefficient (1.752), the trigger reaches the drum through Q32 and the PNP switch Q40 rather than an ideal
+source, and C39 sits 20 % up, the top of its tolerance.
+
 A check: the paper's centre frequency is 1 / (2π √(R_eff R167 C41 C42)), with R_eff = R161 ∥ (R165 + R166) ∥ R170 = 46 k; that gives 49.4 Hz.
 With R165 shorted, R_eff falls to 6.7 k and the centre to about 130 Hz: the attack shift.
 The paper adds that the parts' tolerances are wide (20 % capacitors, 5 % resistors), which is why no two 808s sound alike; the voice's seed (D222) could give each voice its own spread.

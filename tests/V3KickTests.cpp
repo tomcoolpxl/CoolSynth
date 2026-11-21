@@ -117,8 +117,13 @@ public:
                 auto p = kickParams(model, 60.0f);
                 p.p[Kick::decay] = 500.0f;
                 p.p[Kick::click] = 0.0f;
-                p.p[Kick::punch] = 0.0f;
-                p.p[Kick::sigh] = 0.0f;
+                if (model == Kick::Model::modern)
+                {
+                    p.p[Kick::punch] = 0.0f;
+                    p.p[Kick::sigh] = 0.0f;
+                }
+                // The 808's table is measured on the stock circuit: its Sigh moves R161, part of the bridged-T's
+                // damping, so it keeps the stock Sigh and Punch here (D251).
                 const auto out = render(rig->generator, p, static_cast<int>(0.6 * kVoiceRate));
                 const double start = rms(out, 4800, 9600), half = rms(out, 4800 + 24000, 9600 + 24000);
                 const double dbPerHalf = 20.0 * std::log10(half / start); // 250 ms on: -30 dB
@@ -237,6 +242,68 @@ public:
                 expectLessThan(peak, 1.5f, "model " + juce::String(static_cast<int>(model)));
                 expect(a == b, "the same hit twice");
             }
+        }
+
+        beginTest("after_a_reset_a_hit_is_a_fresh_kicks_bit_for_bit");
+        {
+            // The determinism rule (D224) for the 808 circuit through the generator, at Succession 808's settings.
+            // (The 909's hit after a reset still differs from its first sample: TODO 30.)
+            for (const auto model : { Kick::Model::tr808 })
+            {
+                auto p = kickParams(model, 65.4f);
+                p.p[Kick::decay] = 1300.0f;
+                p.p[Kick::sigh] = 2.7f;
+                p.p[Kick::click] = 0.2f;
+                p.p[Kick::shape] = 0.2f;
+                p.p[Kick::accent] = 0.6f;
+                p.p[Kick::drive] = 6.0f;
+                p.p[Kick::tone] = 0.17f;
+                auto fresh = makeKick(0.8f), used = makeKick(0.8f);
+                render(used->generator, p, 96000);
+                used->generator.reset();
+                NoteContext note;
+                note.velocity = 0.8f;
+                used->generator.noteOn(note);
+                const auto a = render(fresh->generator, p, 48000), b = render(used->generator, p, 48000);
+                int first = -1;
+                for (std::size_t i = 0; i < a.size() && first < 0; ++i)
+                    if (a[i] != b[i])
+                        first = static_cast<int>(i);
+                expectEquals(first, -1, "model " + juce::String(static_cast<int>(model)) + ": the first sample that differs");
+            }
+        }
+
+        beginTest("the_circuits_open_the_voice_at_once_from_silence");
+        {
+            // The 808's and the 909's circuits start each note at rest, so the voice need not fade its amplifier in
+            // (D251); Modern's oscillator and every other generator keep the guard.
+            for (const auto model : { Kick::Model::tr808, Kick::Model::tr909, Kick::Model::modern })
+            {
+                const auto p = kickParams(model, 50.0f);
+                expect(GeneratorSlot::startsFromRest(generatorType::kick, p.p.data()) == (model != Kick::Model::modern),
+                       "model " + juce::String(static_cast<int>(model)));
+            }
+            std::array<float, maxSlotParameters> none {};
+            expect(! GeneratorSlot::startsFromRest(1, none.data()), "a VA oscillator does not");
+
+            // From silence the amplifier opens on the first sample; struck again while it sounds, the guard stays.
+            Envelope e;
+            e.setSampleRate(kVoiceRate);
+            Envelope::Parameters ep;
+            ep.attack = Voice::minAmpAttackSeconds;
+            ep.attackFromSilence = 0.0f;
+            ep.sustain = 1.0f;
+            ep.release = 0.1f;
+            e.setParameters(ep);
+            e.noteOn(1.0f);
+            expectGreaterThan(e.getNextSample(), 0.99f, "open at once");
+            e.noteOff();
+            for (int i = 0; i < 4800; ++i)
+                e.getNextSample();
+            const float released = e.getValue();
+            e.noteOn(1.0f);
+            const float next = e.getNextSample();
+            expectLessThan(next, 0.5f * (1.0f + released), "struck again, it climbs back over the guard's time");
         }
     }
 };

@@ -27,6 +27,9 @@ namespace coolsynth::synth::v3::wdf
     template <int MaxNodes, int MaxPorts, int MaxInputs, int MaxNullors, int MaxNonlinear, int MaxProbes>
     class Circuit final
     {
+        template <int, int, int, int, int, int>
+        friend class Circuit; // takeSharedState reads another variant's state
+
     public:
         static constexpr int maxUnknowns = MaxNodes + MaxInputs + MaxNullors;
         static constexpr int maxColumns = MaxPorts + MaxInputs;
@@ -215,6 +218,32 @@ namespace coolsynth::synth::v3::wdf
             return s;
         }
 
+        /**
+            Takes another circuit's state for the ports and devices both have, when the other was built first in the
+            same order (a variant with parts added at the end, D251); the rest start at rest.
+        */
+        template <class Other>
+        void takeSharedState(const Other& other) noexcept
+        {
+            for (int k = 0; k < portCount; ++k)
+            {
+                auto& p = ports[static_cast<std::size_t>(k)];
+                const bool shared = k < other.portCount;
+                p.toRoot = shared ? other.ports[static_cast<std::size_t>(k)].toRoot : 0.0;
+                p.fromRoot = shared ? other.ports[static_cast<std::size_t>(k)].fromRoot : 0.0;
+                p.alphaState = shared ? other.ports[static_cast<std::size_t>(k)].alphaState : 0.0;
+            }
+            for (int m = 0; m < nonlinearCount; ++m)
+            {
+                const bool shared = m < other.nonlinearCount;
+                const auto i = static_cast<std::size_t>(m);
+                voltage[i] = shared ? other.voltage[i] : 0.0;
+                current[i] = shared ? other.current[i] : 0.0;
+                previousVoltage[i] = shared ? other.previousVoltage[i] : 0.0;
+                earlierVoltage[i] = shared ? other.earlierVoltage[i] : 0.0;
+            }
+        }
+
         void restore(const Snapshot& s) noexcept
         {
             for (int k = 0; k < portCount; ++k)
@@ -227,6 +256,8 @@ namespace coolsynth::synth::v3::wdf
             voltage = s.voltage;
             previousVoltage = earlierVoltage = s.voltage; // a rest state is still
             current = s.current;
+            newtonSteps = 0; // as a fresh circuit, so a restored one solves its next sample the same way
+            solved = true;
         }
 
         /** One sample. */
@@ -242,6 +273,8 @@ namespace coolsynth::synth::v3::wdf
             return 0.5 * (p.toRoot + p.fromRoot);
         }
         [[nodiscard]] int lastNewtonSteps() const noexcept { return newtonSteps; }
+        /** False when the last sample's devices did not converge, even by source stepping. */
+        [[nodiscard]] bool lastSolveConverged() const noexcept { return solved; }
 
         static constexpr int maxNewtonSteps = 12;
 
@@ -951,6 +984,7 @@ namespace coolsynth::synth::v3::wdf
                     converged = iterate(staged);
                 }
             }
+            solved = converged;
             double* i = current.data();
             if (converged)
                 for (int r = 0; r < m; ++r)
@@ -993,6 +1027,7 @@ namespace coolsynth::synth::v3::wdf
 
         int portCount = 0, inputCount = 0, nullorCount = 0, deviceCount = 0, nonlinearCount = 0, probeCount = 0;
         int newtonSteps = 0, newtonLimit = maxNewtonSteps;
+        bool solved = true;
         double sampleRate = 96000.0;
         bool dirty = true, openCapacitors = false;
     };

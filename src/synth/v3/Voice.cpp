@@ -340,12 +340,28 @@ namespace coolsynth::synth::v3
             if (modDestination::isEnvelopeTime(settings.matrix.slots[static_cast<std::size_t>(i)].destination))
                 noteSlots[static_cast<std::size_t>(noteSlotCount++)] = settings.matrix.slots[static_cast<std::size_t>(i)];
 
+        // A voice whose generators all start each note from silence by themselves (the kicks' circuits) need not fade
+        // its amplifier in: that guard would fade in their click (D251). An empty slot is silent.
+        bool fromRest = false;
+        for (std::size_t i = 0; i < generators.size(); ++i)
+        {
+            const auto& s = settings.generators[i];
+            const int type = std::clamp(s.type, 0, GeneratorSlot::typeCount - 1);
+            if (type == generatorType::off)
+                continue;
+            fromRest = GeneratorSlot::startsFromRest(type, s.p.data());
+            if (! fromRest)
+                break;
+        }
+
         for (std::size_t i = 0; i < envelopes.size(); ++i)
         {
             auto parameters = settings.envelopes[i];
             if (i == 0)
             {
-                // The amplifier never switches on or off in less than a click-free time.
+                // The amplifier never switches on or off in less than a click-free time, but for a note from silence
+                // on generators that start from rest: there the attack knob's bottom (its 0.5 ms) is at once.
+                parameters.attackFromSilence = fromRest ? (parameters.attack <= minAmpAttackSeconds ? 0.0f : parameters.attack) : -1.0f;
                 parameters.attack = std::max(parameters.attack, minAmpAttackSeconds);
                 parameters.release = std::max(parameters.release, minAmpReleaseSeconds);
             }

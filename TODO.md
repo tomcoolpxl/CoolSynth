@@ -177,16 +177,19 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     (D236): the full circuit with its envelope generator, our own root for every element (chowdsp_wdf not needed),
     the resonator's capacitors scaled with the key, within 2.5 % of ngspice renders and close to Fischer's
     recordings; Succession 808 levelled again. The user's ears passed the 808, the 909, Modern and Succession 808
-    (2026-11-21, "amazingly good"). Left: the open questions in D236 (short decays, oversampling for the hardest Shape, the model's
-    first 20 ms duller than the recordings'). The 909 is its circuit too (D237, built D238): the whole drum from the
-    service notes, within 1 % of ngspice stage by stage, R8 read to -15 V (D239), checked against shoreline and
+    (2026-11-21, "amazingly good"). Left from D236: oversampling for the hardest Shape. The 909 is its circuit too
+    (D237, built D238): the whole drum from the service notes, within 1 % of ngspice stage by stage, R8 read to -15 V (D239), checked against shoreline and
     mw909 (D240): Q8 a PNP switch and R495 give the real click, the triangle fitted near 4.9 V the real pitch and
     harmonics. The 909 made cheaper, then priced: postponed by the user until after the whole 808 (D241, kept
     in D250); its 33.3 % price stands. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
-    though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock. The 808
-    against two real units (`docs/research/kick-808-recordings.md`, 2026-11-20): the attack dull and its click 3 to
-    6 dB weak, DECAY 0 out of reach, the sigh settling too fast. Left: those fixes, the whole 808's first step (D250, 33), and Punch Time's glide past the
-    stock 6 ms (the user's choice; it beeps now); whether a model is right is measured, not asked of the user.
+    though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock, and a 909 hit
+    after a reset differs from a fresh one from its first sample (found 2026-11-21 by `V3KickTests`; no preset uses
+    the 909, so the determinism tests do not see it). The 808's
+    gaps against two real units closed (D251, `docs/research/kick-808-recordings.md`): the trigger stage as drawn,
+    the standard 1N4148, the voice's amp opening at once for the circuits, Decay down to VR6 = 0, Punch Time's glide
+    (a bend beside Q43), C39 and the TONE taper fitted, made cheaper, Succession 808 kept and levelled. Left open
+    there: both ends of TONE about 1 dB darker than the units, Audiorealism's slower and shallower sigh, Fischer's
+    DECAY 0 shorter than the circuit's floor. Whether a model is right is measured, not asked of the user.
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.
@@ -207,7 +210,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     808 Drums (bass drum, toms and congas, rim shot and claves), 808 Snare & Clap (snare, clap, maracas), 808 Metal
     (cowbell, cymbal and hats on six running oscillators). Each instrument at its General MIDI key, one circuit
     each, struck while it rings; the closed hat cuts the open.
-    First: the bass drum's gaps (30), as the drums share its trigger. Then the rest of 808 Drums, then 808 Metal
+    The bass drum's gaps: done (D251); its trigger stage as drawn is what the other drums take. Next the rest of 808
+    Drums, designed (D252): a kit voice (a layer mode, each note strikes its instrument in one voice), knobs the
+    808's own ten plus Accent and Punch Time, GM keys with the TR-8S's alternates, each circuit checked against
+    ngspice, both units and page 14. Then 808 Metal
     (cowbell, hats, cymbal), then 808 Snare & Clap (snare, clap, maracas); a stock 808 Kit preset in Studio 1982.
     Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30), and
     the 303's code made cheaper (32).

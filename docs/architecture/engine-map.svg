@@ -333,7 +333,7 @@
 <polyline points="36,1062.5 606,1062.5" fill="none" stroke="#3B4753" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="40" y="1080.5" font-size="12.5" font-weight="700" fill="#F2BC5E">Kick</text>
 <text x="124" y="1080.5" font-size="11.5" fill="#E8EDF2">A tuned kick drum: the TR-808’s and TR-909’s bass drum circuits in wave digital filters,</text>
-<text x="124" y="1095" font-size="11.5" fill="#E8EDF2">checked against ngspice, or a modern kick.</text>
+<text x="124" y="1095" font-size="11.5" fill="#E8EDF2">checked against ngspice and real units’ recordings, or a modern kick.</text>
 <polyline points="36,1102.5 606,1102.5" fill="none" stroke="#3B4753" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="40" y="1120.5" font-size="12.5" font-weight="700" fill="#F2BC5E">TB-303</text>
 <text x="124" y="1120.5" font-size="11.5" fill="#E8EDF2">The Bass Line’s voice: saw to square into its diode ladder of four coupled stages, a decay</text>

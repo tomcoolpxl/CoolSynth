@@ -26,6 +26,7 @@ namespace coolsynth::synth::v3
         {
             float delay = 0.0f;   // seconds before the attack; from silence only
             float attack = 0.005f;
+            float attackFromSilence = -1.0f; // an attack that starts from silence takes this, when 0 or more (D251)
             float hold = 0.0f;    // seconds at the peak
             float decay = 0.2f;
             float sustain = 1.0f; // share of the peak
@@ -231,7 +232,8 @@ namespace coolsynth::synth::v3
                 return;
             }
             const float remainingShare = peak > 0.0f ? (peak - value) / peak : 1.0f;
-            float seconds = parameters.attack * remainingShare;
+            const bool fromSilence = value <= kSilent && parameters.attackFromSilence >= 0.0f;
+            float seconds = (fromSilence ? parameters.attackFromSilence : parameters.attack) * remainingShare;
             // A key struck again while the note still sounds climbs back from where it is: over its share of the
             // attack, but never faster than the attack's first 2 ms, or a released note jumps back up in a fraction
             // of a millisecond and ticks (a repeated piano key, the user's listening pass, 2026-11-21).

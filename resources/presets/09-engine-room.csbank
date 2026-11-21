@@ -138,15 +138,15 @@ room = Engine Room
 # almost three semitones onto the note. Played at C4 it rings on C2, the theme's C minor root;
 # Ab, F and G play its other roots. Mono, so each hit strikes the drum still ringing; harder
 # hits punch and sigh more. A boom of 1.3 s, about three beats at 140 BPM, darkened and driven.
-# Drafted 2026-11-20 for the user's ears.
-g1 = Kick model=808 decay=1300 punch=12 ptime=6 sigh=2.7 click=0.2 noise=0 shape=0.2 accent=0.6 drive=6 tone=0.35 trig=oneshot oct=-2 level=0.9
+# Drafted 2026-11-20 for the user's ears. Tone 0.17 since D251, where the refitted taper leaves VR5 as 0.35 did.
+g1 = Kick model=808 decay=1300 punch=12 ptime=6 sigh=2.7 click=0.2 noise=0 shape=0.2 accent=0.6 drive=6 tone=0.17 trig=oneshot oct=-2 level=0.9
 p1 = Off
 env1 = attack=0.5 decay=1 sustain=1 release=40 velocity=0
 voice = env2ToP1=0
 play = mode=mono
 i1 = Drive amount=0.25 mix=0.4
 mix = level=-8
-master = 2
+master = 2.5
 # Macros (drafted 2026-11-20 for the user's review, in the bank's order: tone, character, time, movement): Tone, Punch, Boom, Grit
 macros = names=Tone,Punch,Boom,Grit
 mod = src=macro1 dst=g1.tone amount=0.4

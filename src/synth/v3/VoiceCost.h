@@ -51,7 +51,8 @@ namespace coolsynth::synth::v3::voiceCost
         { 0.0f, 0.80f, 0.65f, 0.53f, 0.45f, 0.28f, 0.39f, 0.77f, 0.23f, 0.10f, 0.10f, 0.40f, 0.86f, 3.79f, 0.36f },
         5.54f,
         0.40f, // the SVF's 6581: measured 2026-11-20 (D233), 0.42 against the clean SVF's 0.20 in the same run
-        6.60f, // the 808 circuit (D236): measured 2026-11-20 at its 99th percentile; its average was 3.07, Modern's 0.41
+        11.0f, // the 808 circuit (D236, D251): measured 2026-11-21 at its 99th percentile with its trigger stage and the
+               // glide bend on; its average was 6.3 (the 909 at 34.2 in the same run)
         33.3f, // the 909 circuit (D238): measured 2026-11-20 at its 99th percentile; its average was 10.7
     };
 

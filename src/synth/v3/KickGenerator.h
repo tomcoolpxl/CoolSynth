@@ -78,6 +78,10 @@ namespace coolsynth::synth::v3
 
         static std::size_t memoryFloats(double, int maxSubBlock) { return static_cast<std::size_t>(std::max(1, maxSubBlock)); }
 
+        /** The 808's and the 909's circuits start every note from rest, silent by themselves: the voice may open its
+            amplifier at once, so their click is not faded in (D251). Modern's oscillator does not. */
+        static bool startsFromRest(const float* p) noexcept { return std::lround(p[model]) <= 1; }
+
         void prepare(double newSampleRate, int maxSubBlock, SlotMemory& memory) noexcept
         {
             sampleRate = std::max(1000.0, newSampleRate);
@@ -100,6 +104,7 @@ namespace coolsynth::synth::v3
         void reset() noexcept
         {
             circuit.rest();
+            circuit.setTuning(1.0); // as a fresh circuit: the next block tunes it to the note exactly (D224)
             drum909.rest();
             blockIn909 = blockOut909 = 0.0;
             oscillator = { 1.0, 0.0 };
@@ -332,7 +337,10 @@ namespace coolsynth::synth::v3
                               float toneAmount, double note) noexcept
         {
             circuit.setAttackResistor(6.8e3 * std::pow(4.0, (12.0 - punchSemis) / 12.0)); // Punch 12: the stock R166
-            circuit.setEnvelopeScale(punchSeconds / 0.006);                                 // Punch Time 6 ms: the stock C38
+            // Punch Time: up to the stock 6 ms, C38 shorter (the attack shift ends sooner); past it the glide bend
+            // (D251), so the raised pitch glides onto the note instead of holding there.
+            circuit.setEnvelopeScale(std::min(1.0, punchSeconds / 0.006));
+            circuit.setGlide(glideScaleFor(punchSeconds));
             circuit.setLeakResistor(1.0e6 * 2.4 / std::max(0.05, sighSemis));             // Sigh 2.4: the stock R161
             circuit.setRails(15.0 - 11.0 * static_cast<double>(shapeAmount));             // Shape 0: the stock 15 V rails
             circuit.setTone(Tr808BassDrum::toneForKnob(static_cast<double>(toneAmount))); // the knob through VR5's taper
@@ -393,6 +401,26 @@ namespace coolsynth::synth::v3
             return ohms.back();
         }
 
+        /**
+            The glide bend's size for a Punch Time: none up to the stock 6 ms; past it, the size at which the attack's
+            pitch comes halfway down (in semitones, from its peak to the note) in 7.8 ms times Punch Time over 6 ms, as
+            the stock drum does in 7.8 ms. Measured on the circuit model (tests/V3Tr808Tests.cpp, COOLSYNTH_808_JOBS).
+        */
+        static double glideScaleFor(double seconds) noexcept
+        {
+            if (seconds <= 0.006 * 1.0001) // the knob's 6 ms arrives a hair over it: still the stock drum
+                return 0.0;
+            static constexpr std::array<double, 14> size { 0.0, 0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0 };
+            static constexpr std::array<double, 14> halfway { 0.0078, 0.0090, 0.0209, 0.0255, 0.0300, 0.0371, 0.0382, 0.0473,
+                                                              0.0567, 0.0766, 0.0978, 0.1835, 0.3176, 0.5118 };
+            const double target = 0.0078 * seconds / 0.006;
+            for (std::size_t i = 1; i < size.size(); ++i)
+                if (target <= halfway[i])
+                    return size[i - 1] + (size[i] - size[i - 1]) * std::log(target / halfway[i - 1]) / std::log(halfway[i] / halfway[i - 1]);
+            const double past = std::log(target / halfway.back()) / std::log(halfway.back() / halfway[halfway.size() - 2]);
+            return std::min(32.0, size.back() + (size.back() - size[size.size() - 2]) * past);
+        }
+
         /** Click: the trigger's width, 0.1 ms at 0, the stock 1 ms at the default 0.3, 10 ms at 1 (a bend). */
         static double triggerWidth(float click) noexcept
         {
@@ -402,19 +430,21 @@ namespace coolsynth::synth::v3
 
         /**
             The Decay setting (VR6 over its stock 500 kOhm) for a time to -60 dB, at the stock tuning: measured on the
-            circuit model (tests/V3Tr808Tests.cpp, COOLSYNTH_808_DECAY_TABLE), read between points on a log scale.
-            The circuit's shortest is 0.17 s; past 2.7 s it is the extended-decay bend.
+            circuit model (tests/V3Tr808Tests.cpp, COOLSYNTH_808_DECAY_TABLE), read between points on a log scale, from
+            VR6 at 0 (the real pot's end, the 808's own DECAY 0) in steps of 25 kOhm. Under 25 kOhm the drum's last 20 dB
+            are a slow low component's (C43's), so the time to -60 dB stays near 0.18 s while the body shortens: VR6 at 0
+            stands at its body's time to -40 dB scaled to 60 dB, 0.117 s (D251). Past 2.85 s it is the extended-decay bend.
         */
         static double decayForSeconds(double seconds) noexcept
         {
-            static constexpr std::array<double, 29> t60 { 0.167, 0.237, 0.298, 0.363, 0.450, 0.523, 0.610, 0.702, 0.801, 0.907,
-                                                           1.021, 1.146, 1.281, 1.429, 1.592, 1.771, 1.969, 2.190, 2.453, 2.733,
-                                                           3.052, 3.418, 3.843, 4.357, 4.951, 5.670, 6.567, 7.710, 9.213 };
+            static constexpr std::array<double, 30> t60 { 0.117, 0.161, 0.225, 0.296, 0.357, 0.430, 0.519, 0.605, 0.697, 0.798,
+                                                           0.910, 1.037, 1.169, 1.310, 1.465, 1.636, 1.826, 2.038, 2.275, 2.543,
+                                                           2.849, 3.215, 3.623, 4.099, 4.668, 5.373, 6.232, 7.331, 8.756, 10.749 };
             if (seconds <= t60.front())
-                return 0.05;
+                return 0.0;
             for (std::size_t i = 1; i < t60.size(); ++i)
                 if (seconds <= t60[i])
-                    return 0.05 * static_cast<double>(i) + 0.05 * std::log(seconds / t60[i - 1]) / std::log(t60[i] / t60[i - 1]);
+                    return 0.05 * static_cast<double>(i - 1) + 0.05 * std::log(seconds / t60[i - 1]) / std::log(t60[i] / t60[i - 1]);
             return std::min(1.48, 1.45 + 0.05 * std::log(seconds / t60.back()) / std::log(t60.back() / t60[t60.size() - 2]));
         }
 

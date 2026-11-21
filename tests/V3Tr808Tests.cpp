@@ -203,6 +203,26 @@ public:
                            + juce::String(model[static_cast<std::size_t>(0.018 * ref.rate)], 3) + "/" + juce::String(spice[static_cast<std::size_t>(0.018 * ref.rate)], 3));
                 return err / std::max(1.0e-9, level);
             };
+            if (const auto dump = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_DUMP", {}); dump.isNotEmpty())
+            {
+                // The model's stages sample by sample, to set beside the SPICE render (D251).
+                auto again = std::make_unique<Tr808BassDrum>();
+                again->prepare(ref.rate);
+                again->setDecay(0.4);
+                again->setTone(0.99);
+                again->setLevel(0.99);
+                again->settle();
+                again->trigger(4.0);
+                juce::String text = "vin,npulse,neg,nout,vout\n";
+                for (int i = 0; i < 2000; ++i)
+                {
+                    const double v = again->process();
+                    text << juce::String(again->triggerNodeVolts(), 6) << "," << juce::String(again->pulseVolts(), 6) << ","
+                         << juce::String(again->envelopeVolts(), 6) << "," << juce::String(again->resonatorVolts(), 6) << ","
+                         << juce::String(v, 6) << "\n";
+                }
+                juce::File(dump).replaceWithText(text);
+            }
             const double pulseError = report("pulse shaper", npulse, ref.npulse);
             const double envelopeError = report("envelope", neg, ref.neg);
             const double resonatorError = report("resonator", nout, ref.nout);
@@ -225,6 +245,28 @@ public:
             expectLessThan(outputError, 0.03, "output");
         }
 
+        beginTest("after_rest_a_hit_is_the_fresh_drums_bit_for_bit");
+        {
+            // The determinism tests' rule (D224) at the drum: a hit after rest() is a fresh drum's hit.
+            auto fresh = std::make_unique<Tr808BassDrum>(), used = std::make_unique<Tr808BassDrum>();
+            for (auto* d : { fresh.get(), used.get() })
+            {
+                d->prepare(96000.0);
+                d->setDecay(0.4);
+            }
+            used->trigger(9.0);
+            for (int i = 0; i < 20000; ++i)
+                used->process();
+            used->rest();
+            fresh->trigger(4.0);
+            used->trigger(4.0);
+            int first = -1;
+            for (int i = 0; i < 48000 && first < 0; ++i)
+                if (fresh->process() != used->process())
+                    first = i;
+            expectEquals(first, -1, "the first sample that differs");
+        }
+
         beginTest("newton_stays_short_under_the_hardest_settings");
         {
             // A wide trigger (Click full), the strongest accent, the longest decay: the solver's iterations a sample.
@@ -235,7 +277,7 @@ public:
             drum->settle();
             drum->trigger(14.0, 0.01);
             long long total = 0;
-            int worst = 0, atLimit = 0;
+            int worst = 0, atLimit = 0, failed = 0;
             const int samples = 96000;
             for (int i = 0; i < samples; ++i)
             {
@@ -244,12 +286,15 @@ public:
                 total += n;
                 worst = std::max(worst, n);
                 atLimit += n >= 12 ? 1 : 0;
+                failed += drum->lastSolveConverged() ? 0 : 1;
                 if (i == 48000)
                     drum->trigger(14.0, 0.01); // and a hit on the ringing drum
             }
             logMessage("Newton: " + juce::String(static_cast<double>(total) / samples, 3) + " steps a sample on average, at most "
-                       + juce::String(worst) + ", " + juce::String(atLimit) + " samples at the limit");
-            expectEquals(atLimit, 0, "never at the limit");
+                       + juce::String(worst) + ", " + juce::String(atLimit) + " samples over 12 steps, " + juce::String(failed) + " unsolved");
+            // The trigger's edges, in the front and in the envelope generator, may take more (D251); nothing else does.
+            expectLessOrEqual(atLimit, 6, "only the two hits' edges take more than 12 steps");
+            expectEquals(failed, 0, "every sample solves");
         }
 
         if (juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_PROFILE", {}).isNotEmpty())
@@ -261,6 +306,7 @@ public:
             drum->setDecay(1.48);
             drum->setRails(4.0);
             drum->setTone(0.5);
+            drum->setGlide(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_PROFILE", {}).getDoubleValue()); // the glide's size
             drum->rest();
             drum->trigger(14.0, 0.01);
             const int window = 960; // 10 ms
@@ -268,22 +314,21 @@ public:
             double sink = 0.0;
             for (int w = 0; w < 300; ++w)
             {
-                long long envelopeSteps = 0, resonatorSteps = 0;
-                int envelopeRunning = 0, pulseRunning = 0;
+                long long frontSteps = 0, resonatorSteps = 0;
+                int frontRunning = 0;
                 const auto start = juce::Time::getHighResolutionTicks();
                 for (int i = 0; i < window; ++i)
                 {
                     sink += drum->process();
-                    envelopeSteps += drum->envelopeNewtonSteps();
+                    frontSteps += drum->frontNewtonSteps();
                     resonatorSteps += drum->resonatorNewtonSteps();
-                    envelopeRunning += drum->envelopeIsResting() ? 0 : 1;
-                    pulseRunning += drum->pulseIsResting() ? 0 : 1;
+                    frontRunning += drum->frontIsResting() ? 0 : 1;
                 }
                 const double seconds = juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start);
                 if (w < 8 || w % 25 == 0)
-                    report << "\n  " << juce::String(w * 10) << " ms: " << juce::String(100.0 * seconds / 0.01, 2) << " % of real time, envelope on "
-                           << juce::String(envelopeRunning) << " (" << juce::String(static_cast<double>(envelopeSteps) / window, 2) << " steps), pulse on "
-                           << juce::String(pulseRunning) << ", resonator " << juce::String(static_cast<double>(resonatorSteps) / window, 2) << " steps";
+                    report << "\n  " << juce::String(w * 10) << " ms: " << juce::String(100.0 * seconds / 0.01, 2) << " % of real time, front on "
+                           << juce::String(frontRunning) << " (" << juce::String(static_cast<double>(frontSteps) / window, 2) << " steps), resonator "
+                           << juce::String(static_cast<double>(resonatorSteps) / window, 2) << " steps";
             }
             logMessage("profile:" + report + "\n  (" + juce::String(sink, 1) + ")");
         }
@@ -331,13 +376,59 @@ public:
             logMessage("recorded/model:" + table);
         }
 
+        if (const auto jobs = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_JOBS", {}); jobs.isNotEmpty())
+        {
+            // Hits of the bare circuit written as WAV files, for fitting against recordings (D251). Each line of the
+            // file: out.wav tone decay volts tuning c39scale glideFarads width seconds rate [c38scale]
+            beginTest("render_jobs");
+            juce::StringArray lines;
+            juce::File(jobs).readLines(lines);
+            int written = 0;
+            for (const auto& line : lines)
+            {
+                const auto f = juce::StringArray::fromTokens(line, " ", "\"");
+                if (f.size() < 10)
+                    continue;
+                const double rate = f[9].getDoubleValue();
+                auto drum = std::make_unique<Tr808BassDrum>();
+                drum->prepare(rate);
+                drum->setTone(f[1].getDoubleValue());
+                drum->setDecay(f[2].getDoubleValue());
+                drum->setTuning(f[4].getDoubleValue());
+                drum->setRetriggerScale(f[5].getDoubleValue());
+                drum->setGlide(f[6].getDoubleValue());
+                if (f.size() > 10)
+                    drum->setEnvelopeScale(f[10].getDoubleValue());
+                drum->setLevel(0.99);
+                drum->rest();
+                drum->trigger(f[3].getDoubleValue(), f[7].getDoubleValue());
+                const int n = static_cast<int>(f[8].getDoubleValue() * rate);
+                juce::AudioBuffer<float> buffer(1, n);
+                for (int i = 0; i < n; ++i)
+                    buffer.setSample(0, i, static_cast<float>(drum->process() * 0.1));
+                const juce::File out(f[0]);
+                out.deleteFile();
+                juce::WavAudioFormat wav;
+                std::unique_ptr<juce::OutputStream> stream = std::make_unique<juce::FileOutputStream>(out);
+                if (auto writer = wav.createWriterFor(stream, juce::AudioFormatWriterOptions {}.withSampleRate(rate).withNumChannels(1).withBitsPerSample(32)
+                                                                  .withSampleFormat(juce::AudioFormatWriterOptions::SampleFormat::floatingPoint)))
+                {
+                    writer->writeFromAudioSampleBuffer(buffer, 0, n);
+                    ++written;
+                }
+            }
+            logMessage("rendered " + juce::String(written) + " hits");
+        }
+
         if (juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_DECAY_TABLE", {}).isNotEmpty())
         {
             beginTest("decay_table");
             juce::String table;
-            for (int step = 0; step <= 29; ++step)
+            std::vector<double> settings { 0.0, 0.01, 0.02, 0.03, 0.04 };
+            for (int step = 1; step <= 29; ++step)
+                settings.push_back(0.05 * step);
+            for (const double d : settings)
             {
-                const double d = 0.05 * step;
                 auto drum = std::make_unique<Tr808BassDrum>();
                 drum->prepare(96000.0);
                 drum->setDecay(d);
@@ -358,7 +449,13 @@ public:
                 while (end + 1 < peaks.size() && peaks[end] > start * 0.01)
                     ++end;
                 const double dbPerSecond = 20.0 * std::log10(peaks[end] / start) / (static_cast<double>(end - 6) * 0.01);
-                table << juce::String(d, 2) << ":" << juce::String(-60.0 / dbPerSecond, 3) << " ";
+                // and directly: until the peaks stay 60 dB under the hit's top
+                const double top = *std::max_element(peaks.begin(), peaks.end());
+                std::size_t last = 0;
+                for (std::size_t w = 0; w < peaks.size(); ++w)
+                    if (peaks[w] > top * 0.001)
+                        last = w + 1;
+                table << juce::String(d, 2) << ":" << juce::String(-60.0 / dbPerSecond, 3) << "/" << juce::String(0.01 * static_cast<double>(last), 2) << " ";
             }
             logMessage("decay -> T60 s: " + table);
         }
@@ -386,15 +483,20 @@ public:
 
         beginTest("the_sigh_and_the_decay_follow_spice");
         {
-            // From the ngspice renders (tools/kick808): the pitch by upward zero crossings settles from about 59 Hz to
-            // 49.4 Hz, slower when accented; the tail falls 85.7 dB/s at Decay 0.4 and 33.9 dB/s at 0.8.
-            struct Case { double volts, decay, at, hz; };
-            for (const auto& c : { Case { 4.0, 0.4, 0.0147, 58.89 }, Case { 4.0, 0.4, 0.0511, 51.82 }, Case { 4.0, 0.4, 0.1516, 49.39 },
-                                   Case { 14.0, 0.4, 0.0507, 55.78 }, Case { 14.0, 0.4, 0.1061, 51.68 }, Case { 14.0, 0.4, 0.2068, 49.42 } })
+            // From the ngspice renders (tools/kick808, C39 at its fitted 1.2): the pitch by upward zero crossings settles
+            // from about 59 Hz to 49.4 Hz, slower when accented; with the glide bend at size 1 it comes down from 100 Hz
+            // in some 120 ms; the tail falls 84.4 dB/s at Decay 0.4 and 33.3 dB/s at 0.8.
+            struct Case { double volts, decay, glide, at, hz, within; };
+            for (const auto& c : { Case { 4.0, 0.4, 0.0, 0.0142, 59.11, 0.25 }, Case { 4.0, 0.4, 0.0, 0.0501, 52.56, 0.25 },
+                                   Case { 4.0, 0.4, 0.0, 0.1503, 49.39, 0.25 }, Case { 14.0, 0.4, 0.0, 0.0503, 55.67, 0.25 },
+                                   Case { 14.0, 0.4, 0.0, 0.1065, 51.09, 0.25 }, Case { 14.0, 0.4, 0.0, 0.2071, 49.41, 0.25 },
+                                   Case { 4.0, 0.4, 1.0, 0.0214, 85.79, 1.0 }, Case { 4.0, 0.4, 1.0, 0.0620, 63.01, 1.0 },
+                                   Case { 4.0, 0.4, 1.0, 0.1174, 49.90, 0.5 } })
             {
                 auto drum = std::make_unique<Tr808BassDrum>();
                 drum->prepare(96000.0);
                 drum->setDecay(c.decay);
+                drum->setGlide(c.glide);
                 drum->settle();
                 drum->trigger(c.volts);
                 std::vector<double> v(static_cast<std::size_t>(0.3 * 96000.0));
@@ -407,9 +509,10 @@ public:
                         nearest = std::abs(t - c.at);
                         heard = hz;
                     }
-                expectWithinAbsoluteError(heard, c.hz, 0.25, juce::String(c.volts) + " V at " + juce::String(c.at * 1000.0, 0) + " ms");
+                expectWithinAbsoluteError(heard, c.hz, c.within, juce::String(c.volts) + " V, glide " + juce::String(c.glide) + ", at "
+                                                                      + juce::String(c.at * 1000.0, 0) + " ms");
             }
-            for (const auto& [decay, dbPerSecond] : { std::pair { 0.4, -85.7 }, std::pair { 0.8, -33.9 } })
+            for (const auto& [decay, dbPerSecond] : { std::pair { 0.4, -84.4 }, std::pair { 0.8, -33.3 } })
             {
                 auto drum = std::make_unique<Tr808BassDrum>();
                 drum->prepare(96000.0);

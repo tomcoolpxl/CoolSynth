@@ -501,7 +501,7 @@ GEN_ROWS = [
     ("Chip", "The NES, Game Boy, C64 SID (6581, 8580), AY, YM and Konami’s SCC: their waves and noise, with "
              "frame-rate arpeggios and drum sequences."),
     ("Kick", "A tuned kick drum: the TR-808’s and TR-909’s bass drum circuits in wave digital filters, checked "
-             "against ngspice, or a modern kick."),
+             "against ngspice and real units’ recordings, or a modern kick."),
     ("TB-303", "The Bass Line’s voice: saw to square into its diode ladder of four coupled stages, a decay "
                "envelope, accent at velocity 100, the slide between legato notes."),
 ]

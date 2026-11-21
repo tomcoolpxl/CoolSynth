@@ -192,7 +192,31 @@ namespace coolsynth::synth::v3
                 emplaceImpl(variant, index, std::index_sequence_for<Ts...> {});
             }
 
+            /** True when the type, with these knob values, starts every note from silence by itself (a circuit at
+                rest), so the voice may open its amplifier at once (D251). Types that do not say do not. */
+            static bool startsFromRest(int index, const float* params) noexcept
+            {
+                return startsFromRestImpl(index, params, std::index_sequence_for<Ts...> {});
+            }
+
         private:
+            template <typename T>
+            static bool startsFromRestOf(const float* params) noexcept
+            {
+                if constexpr (requires { T::startsFromRest(params); })
+                    return T::startsFromRest(params);
+                else
+                    return false;
+            }
+
+            template <std::size_t... I>
+            static bool startsFromRestImpl(int index, const float* params, std::index_sequence<I...>) noexcept
+            {
+                bool result = false;
+                ((static_cast<int>(I) == index ? static_cast<void>(result = startsFromRestOf<Ts>(params)) : void()), ...);
+                return result;
+            }
+
             template <std::size_t... I>
             static void emplaceImpl(std::variant<Ts...>& variant, int index, std::index_sequence<I...>) noexcept
             {
@@ -221,6 +245,8 @@ namespace coolsynth::synth::v3
 
         static const ModuleDescriptor& descriptorFor(int typeIndex) { return Types::descriptor(typeIndex); }
         static SlotTypeTable typeTable() noexcept { return { typeCount, &Types::descriptor }; }
+        /** The type with these knob values starts every note from silence by itself (D251). */
+        static bool startsFromRest(int typeIndex, const float* params) noexcept { return Types::startsFromRest(typeIndex, params); }
 
         /** Message thread. Sizes both arenas and the scratch, applies a pending type at once, prepares the active module. */
         void prepare(double newSampleRate, int newMaxSubBlock, std::uint32_t seed = 0)

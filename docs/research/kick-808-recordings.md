@@ -1,4 +1,71 @@
-# The Kick's 808 against two real TR-808s (2026-11-20)
+# The Kick's 808 against two real TR-808s (2026-11-20, again 2026-11-21)
+
+## After the fixes (D251, 2026-11-21)
+
+Each gap of the first comparison (below) traced to its cause in SPICE and the model, fixed as the user chose, then
+measured again through the plugin itself (CoolSynthRender, the voice included) on all 25 settings of each unit, matched
+as before. The scripts are `fit808.py`, `tonefit.py`, `glidemap.py` and the earlier pipeline, run on the bare circuit
+through the test program's `COOLSYNTH_808_JOBS` mode and on the plugin through CoolSynthRender.
+
+Why the attack was dull, three causes on our side, in order of size:
+- The voice's amp envelope opened over at least 0.5 ms (a click guard), fading in the 808's click and its fast first
+  swing: 3.7 dB of click at TONE full in SPICE. The patch's attack knob bottoms out at that 0.5 ms too.
+  - The circuits start each note at rest and cannot click, so a voice whose generators all start from rest now opens
+    at once from silence (the knob's bottom means at once); struck again while it sounds, the guard stays.
+- The trigger. The thesis drives the pulse shaper from an ideal source with edges ramped over 91 us, to ease its
+  solver. The service notes (pp. 4, 8, 9) give the real path: IC6's 1 ms pulse lets Q32, an emitter follower, put
+  about 4 V on the TRIG line (4 to 14 V accented), which R113 holds down when Q32 lets go; the bass drum takes it
+  through Q40, a PNP switch that can only push current, while Q39 holds its instrument data.
+  - When the pulse ends, the trigger node is not pulled to zero but drains through Q41's base divider and C40 into
+    D53, so the shaped pulse stays clamped negative some 0.3 ms longer and pulls the first lobe back sooner.
+  - Microsecond edges alone add only 1 dB of click; the stage as drawn adds 1.8 dB and ends the first lobe 0.17 ms
+    sooner.
+- The diodes. The thesis takes the 1N4148's saturation current (2.52 nA) without its emission coefficient (1.752), so
+  D52 and D53 turn on at about 0.3 V instead of 0.6. D53 clamps the trigger's falling edge: about 1 dB of click and
+  another 0.12 ms off the first lobe.
+- The model's own solver aids went with the ramp: the thesis's 6.8 nF C0 at Q41's base (the envelope a sample late)
+  and C40's alpha transform (the spike 7 % low). The trigger's step now falls between two samples, and the ngspice
+  netlist (`tools/kick808/bassdrum.cir`) has the stage as drawn, the standard 1N4148, single-pole 3 MHz op-amps (an
+  ideal one cannot pass the edge) and junction capacitances for its solver.
+
+DECAY 0 was only the knob: its table stopped at VR6 = 25 kOhm. VR6 at 0, as the real pot reaches, gives the units'
+short hit. Under 25 kOhm the last 20 dB are a slow low component's (C43's), so the time to -60 dB stays near 0.18 s
+while the body shortens; the table places VR6 at 0 by its body's time to -40 dB scaled to 60 dB, 0.117 s.
+
+The sigh was partly the matching: with the dull attack the decays were matched slightly long, and the sigh in this
+circuit lengthens with the decay. What remained, C39 fitted within its tolerance as the user chose: at 1.2 times, the
+top of it, the sigh settles slowest and, without being aimed at, the body's 2nd and 3rd harmonics land within 0.1 dB
+of both units (they were 1.6 to 3.3 dB low). No single part within tolerance (C39, Q43's saturation current or
+reverse gain, R159) keeps the pitch up at 80 to 130 ms as both units do; no published model of the 2SC945 gives its
+reverse gain.
+
+The TONE taper fitted again on both units after the fixes: about 7 % of VR5 left at mid-travel (b = 190 in the
+curve 1 - (b^(1-t) - 1) / (b - 1); the old fit, made while the attack was dull, left 26 %). A textbook C taper leaves
+about 10 %.
+
+Measured again, model against unit (Fischer's, then Audiorealism's), medians over the five marks of the other knob:
+- The click: -1.2 to +2.4 dB and -0.9 to +0.7 dB by TONE mark (before 3.2 to 6.2 dB weak at every mark). The units
+  differ from each other by up to 3.1 dB.
+- The level above 500 Hz in the first 20 ms: -0.7 to +2.1 dB and -1.2 to +0.3 dB.
+- The first 20 ms's centroid: within 2 to 3 Hz from TONE 2.5 to 7.5; at TONE full 8 and 5 Hz low (before 18 to
+  25 Hz), at TONE 0 7 and 3 Hz low. At both ends of the pot the model is about 1 dB darker than the units: left open.
+- The first lobe: within 0.17 and 0.05 ms (before 0.2 to 0.4 ms long). The first peak against the body: within 0.2 dB.
+- DECAY 0: -10 dB at 24.1 ms (units 24.5 and 26.2), -40 dB at 94 ms (units 77 and 98; before 131 to 135). The other
+  marks within 1 to 6 % at -10 and -40 dB.
+- The sigh's time constant: within 0.3 to 1.6 ms of Fischer's unit at every mark (before 11 to 30 % fast);
+  Audiorealism's settles 3 to 11 ms slower than the model, the most at DECAY 10. Its depth: 0.2 semitones under
+  Fischer's unit, 0.6 over Audiorealism's (the units differ by 0.8). The pitch at 100 ms within 0.03 to 0.11 semitones.
+- The body's 2nd and 3rd harmonics within 0 to 1.7 dB from DECAY 2.5 up; at DECAY 0 1.5 and 3 to 4 dB low.
+
+Punch Time's glide (the user's choice: past 6 ms, a glide, not the held beep) is a bend beside Q43: a second
+transistor across R165 whose base capacitor the 1 ms trigger charges through a diode and drains through its own base
+and 1 MOhm, its capacitor up and its charging resistor down with its size. Q43, the envelope and the first millisecond
+stay stock at every size. In SPICE a first try on Q43's own base pulled Q42's collector from 11 to 5 V for the whole
+envelope (halving the retrigger) and reshaped the first lobe even at the smallest capacitor; a charge-packet try still
+reshaped it. The model's glide comes halfway down (in semitones) in 7.8 ms times Punch Time over 6 ms, up to some
+0.65 s; no recording of an 808 so bent exists.
+
+## The first comparison (2026-11-20)
 
 An independent comparison of the circuit model (D236) with two real units, at matched settings and equal loudness.
 The "spread" is the difference between the two units; no published part tolerances were found, so it rests on two

@@ -4994,3 +4994,93 @@ checked against a real 808 beyond the bass drum. The user's choices, each the re
   its cost only): made cheaper and priced, then its second harmonic.
 
 Each voice is still designed with the user (its knobs, bends and checks as options) before it is built.
+
+
+## D251. The 808 bass drum's gaps, found and closed (2026-11-21)
+
+The whole 808's first step (D250): the bass drum's gaps against two real units (TODO 30,
+`docs/research/kick-808-recordings.md`). Each traced in ngspice and the model, the service notes read for the trigger
+(the user's PDF, pp. 4, 8, 9), searched online first (Werner's thesis ramps the trigger's edges only to ease its
+solver; ChowKick and Mz808 drive an ideal step; the 808's parts are 2SC945(P), 2SA733(P) and 1S2473, with no
+published model of the 2SC945's reverse gain). The user's choices:
+
+- The trigger stage (options: as drawn, Q32's follower and R113, Q40's PNP switch with R154, R155 and Q39 letting go
+  after the pulse, with the pulse shaper and the envelope's input, recommended and chosen; Q40 alone behind an ideal
+  line; an ideal one-way source; steeper edges only). The trigger node drains slowly when the pulse ends instead of
+  being driven to zero, which pulls the first lobe back as the units do.
+- The diodes (options: the standard 1N4148, Is 2.52 nA with its emission coefficient 1.752, recommended and chosen;
+  the thesis's, which keeps the Is without the coefficient and turns on at 0.3 V; fitted to the recordings).
+- The voice's amp guard (options: a voice whose generators all start each note at rest opens at once from silence,
+  recommended and chosen; keep the 0.5 ms guard, which faded in 3.7 dB of the click; a shorter guard for every sound).
+  The Kick's 808 and 909 say so (`startsFromRest`); the attack knob's bottom (0.5 ms) then means at once, a longer
+  attack is kept, and a key struck again while the voice sounds keeps the guard.
+- DECAY 0 (options: the Decay table measured again from VR6 = 0, recommended and chosen; keep its stop at 25 kOhm;
+  also a fade below). Under 25 kOhm the last 20 dB are C43's slow component, so VR6 = 0 stands in the table at its
+  body's time to -40 dB scaled to 60 dB, 0.117 s.
+- Punch Time past 6 ms (the user's earlier choice: a glide, not the held beep). Options first: a capacitor on Q43's
+  base charged through a diode and 10 kOhm, recommended and chosen; the same with C38 longer; keep the plateau. In
+  SPICE that bend held Q42's collector at 5 V instead of 11 for the whole envelope (halving the retrigger) and
+  reshaped the first lobe at any size, so it was put again (options: a bend beside Q43, a second transistor across
+  R165 whose base capacitor the trigger charges through a diode and drains through its base and 1 MOhm, recommended
+  and chosen; Q43's base charged by one packet, which still reshaped the first lobe; keep the plateau for now). Its
+  size scales the capacitor up and the charging resistor down; the glide comes halfway down in 7.8 ms times Punch
+  Time over 6 ms, up to some 0.65 s. A fixed capacitor with a longer drain stopped at 35 ms (Q43B's own base current
+  drains it first).
+- The TONE taper (options: fitted again to both units after the fixes, recommended and chosen; keep the old fit;
+  a textbook C taper): about 7 % of VR5 left at mid-travel (b = 190), against the old fit's 26 %.
+- The sigh, if still faster than both units after the fixes (options: record it, recommended; fit C39 within its
+  tolerance, chosen; investigate further). C39 at 1.2 times, the top of its tolerance: the slowest sigh, and the
+  body's 2nd and 3rd harmonics within 0.1 dB of both units (they were 1.6 to 3.3 dB low). Tried and not enough on
+  their own: Q43's saturation current and reverse gain, R159.
+- The price (options: made cheaper first, then priced, recommended and chosen; priced at once at 14.3 % a voice; at
+  its 6.2 % average). Cheaper without changing the sound: a stock resonator without the glide's devices, the bent one
+  running only past 6 ms (the ringing state passed across as the knob crosses), and the envelope generator split out
+  of the front again, Q41's base the front's load as a diode (in saturation its base current is Is (1 / betaF +
+  1 / betaR) e^(vbe / VT)). The hit's first 30 ms went from 16 to 18 % of real time to 4.5 to 9.7, the tail from 4.6
+  to 5 % to 2 to 3.8. Priced at its 99th percentile at its hardest (glide on): 11.0 % of a block a voice, its average
+  6.3 (before: 6.6 and 3.1; with the trigger stage before the split, 14.3).
+- Succession 808 (options: Tone 0.35 to 0.17, which leaves VR5 as the user passed it, recommended and chosen; keep
+  0.35, about twice as bright in its tone corner under the new taper; revoice it by ear). Levelled again.
+
+Taken on the way, each by the codebase's rules or as the only way:
+- The ngspice netlist (`tools/kick808/bassdrum.cir`) has the trigger stage as drawn, the standard 1N4148, the glide
+  bend (absent at 0), C39 and C38 as parameters, single-pole 3 MHz op-amps (an ideal one cannot pass the edge) and
+  junction capacitances for its solver; its trigger rises half a sample in, where the model's step falls.
+- The model drops the thesis's solver aids: C0 at Q41's base (the envelope a sample late) and C40's alpha transform
+  (the spike 7 % low). Q44 loads its base as the real one does, (betaF + 1)(R173 || R174). Every stage within 1.5 %
+  of ngspice (the accented hit 0.7 %); the trigger's edges may take up to 75 Newton steps, every sample solves.
+- The Kick test of the 808's decay keeps the stock Sigh: Sigh moves R161, part of the bridged-T's damping.
+- Found by the determinism tests: the Punch Time knob's 6 ms arrives as 6.0000005 ms, which had switched the glide
+  on at a vanishing size, so the default drum ran the bent resonator; within 0.01 % of 6 ms is now stock. A rest
+  starts from the stock resonator and the stock tuning, as a fresh drum does. A 909 hit after a reset still differs
+  from a fresh one (TODO 30; no preset uses the 909).
+- Recordings: Audiorealism's 808 pack copied into `tools/references/audiorealism-808` and the service notes into
+  `tools/references/tr808-service` (both git-ignored, analysis only).
+
+Measured again through the plugin on all 25 settings of each unit: the click within -1.2 to +2.4 dB of Fischer's and
+0.9 dB of Audiorealism's (before 3.2 to 6.2 dB weak), the first lobe within 0.17 ms, DECAY 0 at 94 ms to -40 dB
+(units 77 and 98), the sigh within 2 ms of Fischer's unit. Left open: both ends of TONE about 1 dB darker than the
+units, Audiorealism's slower and shallower sigh, Fischer's DECAY 0 shorter than the circuit's floor.
+
+
+## D252. 808 Drums: its design (2026-11-21)
+
+The second family of the whole 808 (D250): the bass drum, the low, mid and high tom or conga (one circuit a pair, as
+on the machine, its SW8-like switch set by the key), the rim shot or claves. Read from the service notes (p. 6, the
+circuit text; p. 9, the drawing; p. 14, each voice's frequencies and decay at three TUNING positions: LT 80 to
+100 Hz, MT 120 to 160, HT 165 to 220, MC 250 to 310, HC 370 to 455, claves 2.5 kHz, rim shot 455 and 1667 Hz; the
+low conga's row repeats the high tom's). The toms and congas take the bass drum's kind of trigger (a PNP switch,
+Q51 for the low pair) into a multi-feedback bridged-T whose pitch drop comes from the diode pair D80, D81 beside the
+TUNING pot; the low tom adds pink noise. The user's choices:
+
+- How notes reach the circuits (options: a kit voice, a layer mode where one voice holds the family generators,
+  each note strikes its instrument in that voice, note-offs are ignored and nothing is stolen, recommended and
+  chosen; the layer's mono mode through the strike hooks; a voice per key).
+- The two knobs past the 808's own ten (bass drum Level, Tone, Decay; each pair's Level and Tuning; rim shot/claves
+  Level) (options: Accent and a kit Tune, recommended; Accent and Punch Time, the bass drum's glide, chosen; Accent and
+  a decay bend for the toms). Accent moves each hit's trigger between 4 and 14 V with its velocity, as the Kick's.
+- The keys (options: General MIDI with Roland's TR-8S alternates, recommended and chosen: BD 36 and 35, RS 37, LT 43
+  and 41, MT 47 and 45, HT 50 and 48, LC 64, MC 63, HC 62, claves 75; one key each).
+  [TR-8S MIDI implementation chart](https://static.roland.com/assets/media/pdf/TR-8S_MIDIImpleChart_eng02_W.pdf).
+- The checks (options: each circuit stage by stage against ngspice, then Fischer's and Audiorealism's recordings and
+  page 14, recommended and chosen; ngspice and page 14 only).
