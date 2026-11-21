@@ -28,11 +28,14 @@ panel's Home, the user's choice; gestures were already right), C3 (the duplicate
 drop, the channel-1 hint, the ready setup for both programs, the disconnect, the device-change notifications and the
 busy-port fallback.
 
-C4. Left of the MiniLab work: the FL script linking by itself. Arturia's own FL script claims the MiniLab by its
-    hardware ID (`supportedHardwareIds=00 20 6B 02 00 04 04`), ours by port name. On 2026-11-21 FL had linked
-    Arturia's, so the pads played notes in CoolSynth; chosen by hand (Options > MIDI settings), ours works: the pads
-    switch sections and play no notes. FL documents no rule for which wins. Also to try: FL's own "Forward CCs to current plugin
-    Port 10" script, which hands knobs to a plugin on port 10 without putting the controller on a port.
+C4. The FL script linking by itself (D246). Found in FL on 2026-11-21: the first time FL learns the MiniLab's
+    hardware ID (its answer to an identity request), it moves the MiniLab to a script that claims that ID, even from
+    a script chosen by hand, and Arturia's own script claims it. Ours now claims the same ID besides the port name.
+    Seen: ours stays linked across restarts and repeated ID answers; a choice stored in FL (generic, Arturia's, ours)
+    is never changed at startup. Not seen: the first ID with both scripts claiming it, as FL keeps the learned ID
+    where it could not be found (not in its registry keys or files) and the MiniLab's other ports do not answer. To
+    check on a fresh FL (a new Windows account or a clean computer). Also to try: FL's own "Forward CCs to current
+    plugin Port 10" script, which hands knobs to a plugin on port 10 without putting the controller on a port.
 C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, tested by the suite, not yet in a DAW.
     - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
       `build/CoolSynth_artefacts/<config>/CLAP/CoolSynth.clap`.

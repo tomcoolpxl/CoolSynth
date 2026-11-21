@@ -201,6 +201,9 @@ Each sound set up and played by Claude through the MCP server; the user listened
 - FL Studio with the CLAP and the MiniLab: FL had linked the MiniLab to Arturia's own script, not ours (TODO C4), so
   the pads reached CoolSynth as notes 36 and up; keys played once each and knob 1 worked through CoolSynth's driver.
   With FL's controller type switched to CoolSynth MiniLab 3 (kept in FL), the pads switch sections and play no notes.
+- Why FL had picked Arturia's script (later that day, D246): an identity request sent from FL's script console moved
+  the MiniLab from ours to Arturia's at once ("Loaded MIDI script for Arturia MiniLab 3"), the first time FL learned
+  its ID. Ours now claims that ID too; with it, ours stayed linked through restarts and repeated ID answers.
 - The guided controller setup: tried by the user; it works but wants a redesign (TODO C7). The user's own setup was
   backed up first and put back afterwards, the MiniLab driver on.
 - Scaling: everything today ran at the user's Windows scale of 175 %, and the app, Ableton's VST3 and FL's CLAP showed

@@ -4865,3 +4865,20 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
 - Bedroom Bass "very silent" (options: brighter at the same loudness, recommended and chosen; louder than the bank; kept and played higher): the ladder from 350 to 700 Hz, the sub from 60 to 35 %, levelled (+1.5 dB).
 - Washed Poly's noise "slightly less, not much less": crackle and hiss down by a quarter.
 - The 808 kick (options: the glide then the attack, recommended; only the glide; all four differences; left for now, chosen): left as it is.
+
+## D246. FL Studio links the MiniLab to our script by itself: the script claims the MiniLab's hardware ID (2026-11-21)
+
+- The user asked for FL to pick our MiniLab script by itself (TODO C4). FL's documentation (the scripting API's
+  script metadata, the MIDI settings page) says a script is linked by a matching device name or hardware ID, and
+  nothing on which of two matching scripts wins.
+- Found in FL Studio 2025 with the MiniLab: FL linked ours by the port name while it did not know the MiniLab's ID.
+  The moment it first learned the ID (the MiniLab's answer to an identity request, sent here from FL's script
+  console), it loaded Arturia's own MiniLab 3 script in place of ours, which had been chosen by hand. Once FL knows
+  the ID, a stored choice stays: generic, Arturia's or ours, through restarts and repeated answers. Identity
+  requests from outside FL changed nothing.
+- Done: our script's header claims the same ID (`supportedHardwareIds=00 20 6B 02 00 04 04`, Arturia's family and
+  model bytes, the firmware left out) beside the port names. It cannot do worse than before: without it, the first ID
+  always handed the MiniLab to Arturia's.
+- Not yet seen: the first ID with both scripts claiming it. FL keeps learned IDs where they could not be found (not
+  its registry keys, not its files), and the MiniLab's other ports do not answer identity requests. To check on a
+  fresh FL. The README tells users who used the MiniLab in FL before to pick CoolSynth MiniLab 3 once.
