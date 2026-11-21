@@ -502,8 +502,8 @@ GEN_ROWS = [
              "frame-rate arpeggios and drum sequences."),
     ("Kick", "A tuned kick drum: the TR-808’s and TR-909’s bass drum circuits in wave digital filters, checked "
              "against ngspice, or a modern kick."),
-    ("TB-303", "The 303’s voice, rewritten from Open303: its coupled ladder, accent at velocity 100, a 22 ms "
-               "slide between legato notes."),
+    ("TB-303", "The Bass Line’s voice: saw to square into its diode ladder of four coupled stages, a decay "
+               "envelope, accent at velocity 100, the slide between legato notes."),
 ]
 PROC_ROWS = [
     ("Ladder", "4-pole transistor ladder with saturation in every stage. LP24, LP12, BP, HP12. Self-oscillates "

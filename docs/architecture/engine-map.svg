@@ -336,8 +336,8 @@
 <text x="124" y="1095" font-size="11.5" fill="#E8EDF2">checked against ngspice, or a modern kick.</text>
 <polyline points="36,1102.5 606,1102.5" fill="none" stroke="#3B4753" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="40" y="1120.5" font-size="12.5" font-weight="700" fill="#F2BC5E">TB-303</text>
-<text x="124" y="1120.5" font-size="11.5" fill="#E8EDF2">The 303’s voice, rewritten from Open303: its coupled ladder, accent at velocity 100, a 22 ms</text>
-<text x="124" y="1135" font-size="11.5" fill="#E8EDF2">slide between legato notes.</text>
+<text x="124" y="1120.5" font-size="11.5" fill="#E8EDF2">The Bass Line’s voice: saw to square into its diode ladder of four coupled stages, a decay</text>
+<text x="124" y="1135" font-size="11.5" fill="#E8EDF2">envelope, accent at velocity 100, the slide between legato notes.</text>
 <polyline points="36,1157 606,1157" fill="none" stroke="#3B4753" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round"/>
 <text x="40" y="1173" font-size="11" font-style="italic" fill="#B4C0CB">Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots.</text>
 <rect x="634" y="674" width="462" height="32" rx="8" fill="#0F302C"/>

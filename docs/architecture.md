@@ -80,9 +80,9 @@ Per voice:
    amplitude-modulate the next one. Chip (`ChipGenerator.h`, D231) plays the NES, Game Boy, SID, AY, YM and SCC
    with their frame tables (`docs/design/CHIP_GENERATOR.md`); Kick (`KickGenerator.h`, D232) is a tuned kick drum:
    the TR-808 and the TR-909 as their circuits in wave digital filters (`Tr808BassDrum.h` and `Tr909BassDrum.h` on
-   `CircuitWdf.h`, D236, D238), and a modern one. TB-303 (`Tb303Generator.h`, D242) is the 303's voice rewritten from
-   Open303 (MIT): its coupled ladder, accent and slide; a legato note slides to the key and hears its accent through
-   the slot's legato hook.
+   `CircuitWdf.h`, D236, D238), and a modern one. TB-303 (`Tb303Generator.h`, D242) is the Bass Line's voice: saw to
+   square into its diode ladder of four coupled stages, a decay envelope, accent and slide; a legato note slides to
+   the key and hears its accent through the slot's legato hook.
 2. The generators are summed into **three processor slots in series**, P1 to P3. Each holds any of 7
    processor types (Ladder, SVF, Comb, Formant, Folder, Crusher, Drive). Generator 3 can modulate the ladder's
    cutoff at audio rate. The SVF also morphs from low-pass to high-pass as the Oberheim SEM does, and takes the
