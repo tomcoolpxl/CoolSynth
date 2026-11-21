@@ -109,8 +109,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
     Brown). All passed the user's ear (2026-11-20 and 21); Washed Poly's turned down by a quarter and passed again.
 20. Chip sounds and chiptune. The Chip generator is built (D230, D231), Arcade revoiced with it, and the SID's
-    filter is an SVF character (D233). Left: the user's ears on all of it (each chip's waves, the drums and
-    arpeggios, the named waves, which are my own recipes, the 6581 and 8580 filters, how hard the 6581 distorts).
+    filter is an SVF character (D233). All of it passed the user's ears (2026-11-20, the SCC tables on the 21st).
 21. The ARP and Oberheim sounds (D229): the SVF's SEM morph is built (D233). Left: the Museum set (OB-Xa Jump, OB-X
     stabs, an SEM notch pad, the Odyssey's Chameleon bass, an Odyssey sync lead), made as every Museum sound is,
     fitted against reference recordings the user approves; how is in `docs/overnight-2026-11-20.md`.
@@ -177,8 +176,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     user changed the night's choice (D235): Werner's full circuit model of the 808 in wave digital filters. Built
     (D236): the full circuit with its envelope generator, our own root for every element (chowdsp_wdf not needed),
     the resonator's capacitors scaled with the key, within 2.5 % of ngspice renders and close to Fischer's
-    recordings; Succession 808 levelled again. Left: the user's ears on the 808 circuit, Succession 808 and the 909
-    and Modern models; the open questions in D236 (short decays, oversampling for the hardest Shape, the model's
+    recordings; Succession 808 levelled again. The user's ears passed the 808, the 909, Modern and Succession 808
+    (2026-11-21, "amazingly good"). Left: the open questions in D236 (short decays, oversampling for the hardest Shape, the model's
     first 20 ms duller than the recordings'). The 909 is its circuit too (D237, built D238): the whole drum from the
     service notes, within 1 % of ngspice stage by stage, R8 read to -15 V (D239), checked against shoreline and
     mw909 (D240): Q8 a PNP switch and R495 give the real click, the triangle fitted near 4.9 V the real pitch and
@@ -201,8 +200,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 33. The whole TR-808 (D241, after the 303): its voices beyond the bass drum, about five circuit families (the
     bridged-T toms, congas, rim and claves on the bass drum's machinery; the snare; the six-oscillator bank for
     cowbell, cymbal and hats; the clap and maracas), as generators and as a kit. Aimed at house use; researched:
-    `docs/research/tr-808-voices.md`. Paused by the user (D243), with the 909's cost work (30); its fidelity and
-    order to be put to the user when it resumes. Then the 909 made cheaper and priced (30).
+    `docs/research/tr-808-voices.md`. Paused by the user (D243), with the 909's cost work (30); to resume right
+    after 0.5.0 (the user, 2026-11-21, once the kicks passed), with a direction chosen first: its fidelity, scope
+    and order put to the user as options. Then the 909 made cheaper and priced (30).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
     MIDI keyboard. The notes only, not the panel's navigation. The usual layout: a row of letters for the white
     keys, the row above for the black ones, keys for the octave and the velocity (Ableton's computer MIDI

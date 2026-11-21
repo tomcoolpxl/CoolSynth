@@ -242,6 +242,11 @@ Each sound set up and played by Claude through the MCP server; the user listened
 - Round 2 on the page, the fixes each against how it was: all passed (2026-11-21). Vibraphone, Granular Sky and
   Steinway Grand clean on repeated keys; Bedroom Bass and Washed Poly right now; Ladder Chords kept.
 
-## Then the release (TODO J3)
+## The kicks (2026-11-21)
 
-- The version number is your choice; the release notes go in `docs/releases/`; then the tag.
+- On the listening page, each with its tries, level-matched: Succession 808 and the Kick's 808, 909 and Modern.
+  All passed, "amazingly good" (the user).
+
+## Then the release
+
+- 0.5.0, the user's choice (2026-11-21); the notes are in `docs/releases/v0.5.0.md`; then the tag.
