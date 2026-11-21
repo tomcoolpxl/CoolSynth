@@ -5128,3 +5128,7 @@ germanium pair is not), with no recording at a known accent level to judge it by
 Priced (`VoiceCost.h`): in the Kit mode the whole kit in its one voice, 54.5 % of a block at its 99th percentile
 with every instrument struck at once (average 18.4 %); in the other modes a voice holds one instrument, priced at
 the dearest, the rim shot and claves, 16.1 % (the toms 9.4 to 9.6 %, the bass drum 8.4 %).
+
+- The accent's top, found while checking (options: keep the 4 to 14 V trigger the service notes give and the
+  circuits as drawn, the gap recorded, recommended and chosen; cap the accent at 12 V, where the bass drum meets
+  page 14, for every 808 sound; find an accented recording at a stated AC LEVEL first).
