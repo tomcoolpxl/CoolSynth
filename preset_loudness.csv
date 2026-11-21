@@ -1,0 +1,2 @@
+preset,old_master_db,new_master_db,delta_db,integrated_lufs,momentary_max_lufs,chord_peak_db,range_peak_db,range_peak_root,loudest_possible_lufs,limited_by
+"Acid",0,4.5,4.5,-26.0849,-24.6367,-13.9822,-12.617,96,-18.5945,loudness
