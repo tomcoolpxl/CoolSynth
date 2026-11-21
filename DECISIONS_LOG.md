@@ -5132,3 +5132,28 @@ the dearest, the rim shot and claves, 16.1 % (the toms 9.4 to 9.6 %, the bass dr
 - The accent's top, found while checking (options: keep the 4 to 14 V trigger the service notes give and the
   circuits as drawn, the gap recorded, recommended and chosen; cap the accent at 12 V, where the bass drum meets
   page 14, for every 808 sound; find an accented recording at a stated AC LEVEL first).
+
+## D254. 808 Metal: its design (2026-11-22)
+
+The third family of the whole 808 (D250): the cowbell, the cymbal, the open hat and the closed hat, read from the
+service notes (p. 6, the circuit text; p. 13, the voicing board; p. 14, the table). All four share one bank of six
+square-wave oscillators on an HD14584 Schmitt trigger (about 205, 304, 370 and 523 Hz as drawn, the cowbell's two
+set by TM1 and TM2 to 540 and 800 Hz; the cymbal paper's figures,
+[Werner, Abel, Smith, ICMC-SMC 2014](https://speech.di.uoa.gr/ICMC-SMC-2014/images/VOL_2/1453.pdf)). The cowbell
+gates its two through Q14 and Q15 into IC2's band-pass, its envelope falling abruptly after the attack (R82 and C34
+beside C9); the cymbal splits all six into three bands by IC3's filters, the highest gated by Q16 and short, the
+next by Q17 with the Decay, mixed by the Tone (VR4); the open hat gates IC3's high band through Q27 into the
+high-pass Q26, the closed hat the same source through Q30 into Q31, and the closed hat cuts the open through Q23
+and R173. The voicing board narrows the trigger to 7 to 14 V (IC2, pins 1 to 3). The user's choices:
+
+- The keys (options: General MIDI with Roland's TR-8S alternates, recommended and chosen: closed hat 42 and 44,
+  open hat 46, cymbal 49, 51 and 57, cowbell 56; one key each).
+- The five knobs past the 808's own seven (cowbell Level; cymbal Level, Tone, Decay; open hat Level, Decay; closed
+  hat Level) (options: Accent, Tune of the six oscillators together, the cowbell's pitch by its trimmers, the closed
+  hat's and the cowbell's decay, recommended and chosen; Accent and four decay and tone bends, the oscillators at the
+  808's pitch; Accent and Tune only).
+- Where the oscillators start when the kit's voice starts from silence (options: phases from the voice's seeded
+  random numbers, then running freely across every hit, recommended and chosen; fixed phases, then free; reset at
+  every hit).
+- The checks (options: each circuit stage by stage against ngspice, then Fischer's and Audiorealism's recordings and
+  page 14, any fit put to the user first, recommended and chosen; ngspice and page 14 only).

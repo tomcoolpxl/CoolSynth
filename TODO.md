@@ -214,8 +214,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     rim shot and claves as their circuits, within 2 % of ngspice (the rim shot 4 to 7 %) and of both units' pitch
     and decay (`docs/research/808-drums.md`). Left open there: at full accent every voice runs 1.1 to 4.5 dB over
     page 14's accented amplitude, the toms' pitch drop larger than Audiorealism's accented hits; no recording at a
-    known accent level to judge it by; kept as drawn (the user, D253). Then 808 Metal
-    (cowbell, hats, cymbal), then 808 Snare & Clap (snare, clap, maracas); a stock 808 Kit preset in Studio 1982.
+    known accent level to judge it by; kept as drawn (the user, D253). Next 808 Metal, designed (D254): the cowbell,
+    cymbal, open and closed hat on one bank of six oscillators (seeded phases at a start from silence, then free),
+    GM keys with the TR-8S's alternates, knobs the 808's own seven plus Accent, Tune, the cowbell's pitch and the
+    closed hat's and cowbell's decay, each circuit checked against ngspice, both units and page 14. Then 808 Snare
+    & Clap (snare, clap, maracas); a stock 808 Kit preset in Studio 1982.
     Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30), and
     the 303's code made cheaper (32).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
