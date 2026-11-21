@@ -210,10 +210,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     808 Drums (bass drum, toms and congas, rim shot and claves), 808 Snare & Clap (snare, clap, maracas), 808 Metal
     (cowbell, cymbal and hats on six running oscillators). Each instrument at its General MIDI key, one circuit
     each, struck while it rings; the closed hat cuts the open.
-    The bass drum's gaps: done (D251); its trigger stage as drawn is what the other drums take. Next the rest of 808
-    Drums, designed (D252): a kit voice (a layer mode, each note strikes its instrument in one voice), knobs the
-    808's own ten plus Accent and Punch Time, GM keys with the TR-8S's alternates, each circuit checked against
-    ngspice, both units and page 14. Then 808 Metal
+    The bass drum's gaps: done (D251). 808 Drums: built (D252, D253), the Kit play mode, the toms and congas and the
+    rim shot and claves as their circuits, within 2 % of ngspice (the rim shot 4 to 7 %) and of both units' pitch
+    and decay (`docs/research/808-drums.md`). Left open there: at full accent every voice runs 1.1 to 4.5 dB over
+    page 14's accented amplitude, the toms' pitch drop larger than Audiorealism's accented hits; no recording at a
+    known accent level to judge it by. Then 808 Metal
     (cowbell, hats, cymbal), then 808 Snare & Clap (snare, clap, maracas); a stock 808 Kit preset in Studio 1982.
     Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30), and
     the 303's code made cheaper (32).

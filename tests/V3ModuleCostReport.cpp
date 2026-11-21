@@ -320,6 +320,77 @@ public:
             s.voice.processors[0].p[SvfProcessor::resonance] = unitsToNormalised(d.params[SvfProcessor::resonance], 1.0f);
             line("VA saw + SVF 6581", measure(s), saw);
         }
+        {
+            // The 808 Drums in the Kit play mode (D252): one voice holds the kit, so its price is that voice's whole
+            // cost, at its 99th percentile, as the Kick's circuits. Its hardest: every instrument struck at once at
+            // full accent with the bass drum's glide at its longest, then the other of each pair (congas, claves)
+            // while the first ring, then the first again. In the other play modes a voice holds the one instrument
+            // its key strikes: each alone, the dearest its price there.
+            auto kitCost = [&](const std::vector<int>& firstNotes, const std::vector<int>& secondNotes)
+            {
+                BlockCost best { 1.0e9, 1.0e9, 1.0e9 };
+                for (int run = 0; run < 3; ++run)
+                {
+                    constexpr double rate = 48000.0;
+                    constexpr int block = 256;
+                    constexpr int blocks = static_cast<int>(3.0 * rate) / block;
+                    auto s = base();
+                    s.playMode = PlayMode::kit;
+                    s.voice.generators[0] = generatorOf(generatorType::drums808, { { Tr808DrumsGenerator::accent, 1.0f },
+                                                                                   { Tr808DrumsGenerator::punchTime, 500.0f },
+                                                                                   { Tr808DrumsGenerator::bdDecay, 1.0f } });
+                    auto part = std::make_unique<Part>();
+                    part->prepare(rate, block, 7);
+                    std::vector<float> left(block), right(block);
+                    auto hits = [](const std::vector<int>& notes)
+                    {
+                        std::vector<coolsynth::synth::EngineMidiEvent> events;
+                        for (const int note : notes)
+                        {
+                            coolsynth::synth::EngineMidiEvent e;
+                            e.type = coolsynth::synth::EngineMidiEventType::noteOn;
+                            e.noteNumber = static_cast<uint8_t>(note);
+                            e.value = 1.0f;
+                            events.push_back(e);
+                        }
+                        return events;
+                    };
+                    const auto first = hits(firstNotes), second = hits(secondNotes);
+                    std::vector<double> shares;
+                    for (int b = 0; b < blocks; ++b)
+                    {
+                        std::fill(left.begin(), left.end(), 0.0f);
+                        std::fill(right.begin(), right.end(), 0.0f);
+                        const auto& events = b == blocks / 3 ? second : first;
+                        const bool strike = b == 0 || b == blocks / 3 || b == 2 * blocks / 3;
+                        const auto start = juce::Time::getHighResolutionTicks();
+                        part->render(left.data(), right.data(), block,
+                                     strike ? std::span<const coolsynth::synth::EngineMidiEvent>(events) : std::span<const coolsynth::synth::EngineMidiEvent>(),
+                                     s, {});
+                        shares.push_back(100.0 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start) / (block / rate));
+                    }
+                    const auto c = costOf(std::move(shares));
+                    best.average = std::min(best.average, c.average);
+                    best.p99 = std::min(best.p99, c.p99);
+                    best.worst = std::min(best.worst, c.worst);
+                }
+                return best;
+            };
+            const struct { const char* label; std::vector<int> first, second; } sets[] = {
+                { "808 Drums, kit, all struck", { 36, 37, 43, 47, 50 }, { 35, 75, 64, 63, 62 } },
+                { "808 Drums, bass drum alone", { 36 }, { 35 } },
+                { "808 Drums, low tom, conga", { 43 }, { 64 } },
+                { "808 Drums, mid tom, conga", { 47 }, { 63 } },
+                { "808 Drums, high tom, conga", { 50 }, { 62 } },
+                { "808 Drums, rim shot, claves", { 37 }, { 75 } },
+            };
+            for (const auto& set : sets)
+            {
+                const auto best = kitCost(set.first, set.second);
+                logMessage(juce::String(set.label).paddedRight(' ', 30) + "average " + juce::String(best.average, 2) + " %, p99 "
+                           + juce::String(best.p99, 2) + " %, slowest " + juce::String(best.worst, 2) + " % (one voice)");
+            }
+        }
 
         // Each effect once for the sound, at its defaults, on a loud stereo signal; Pitch in both modes.
         beginTest("worst_case_of_each_effect");

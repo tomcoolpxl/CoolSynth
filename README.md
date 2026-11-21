@@ -39,6 +39,7 @@ What the engine has:
   - sound chips: the NES, Game Boy, C64 SID, AY and YM, Konami's SCC, with their frame-rate arpeggios and drums
   - a tuned kick drum: the TR-808 and the TR-909 as their circuits, and a modern kick
   - the TB-303 bass line: saw to square through its diode ladder, with its accent and slide
+  - the TR-808's bass drum, toms or congas and rim shot or claves as their circuits, played as a kit on one voice
 - Filters and shapers
   - ladder and state-variable filters; the state-variable one also morphs as the Oberheim SEM and has the C64 SID's 6581 and 8580 characters
   - bit crusher

@@ -119,13 +119,14 @@ namespace coolsynth::synth::v3
         }
         [[nodiscard]] const InsertSlot& masterSlot(int slot) const noexcept { return (*masterSlots)[static_cast<std::size_t>(slot)]; }
 
-        /** The voices a part's patch asks for: its polyphony, one for mono and legato, its unison count. */
+        /** The voices a part's patch asks for: its polyphony, one for mono, legato and kit, its unison count. */
         [[nodiscard]] static int voicesWanted(const PartSettings& settings) noexcept
         {
             switch (settings.playMode)
             {
                 case PlayMode::mono:
-                case PlayMode::legato: return 1;
+                case PlayMode::legato:
+                case PlayMode::kit:    return 1; // the kit's one voice holds every instrument (D252)
                 case PlayMode::unison: return std::clamp(settings.unisonVoices, 2, Part::maxUnisonVoices);
                 case PlayMode::poly:
                 default:               return std::clamp(settings.polyphony, 1, Part::maxVoices);

@@ -212,6 +212,26 @@ namespace coolsynth::synth::v3
                 resonator.takeSharedState(bentResonator);
             bent = wanted;
         }
+        /**
+            The glide bend's size for a Punch Time: none up to the stock 6 ms; past it, the size at which the attack's
+            pitch comes halfway down (in semitones, from its peak to the note) in 7.8 ms times Punch Time over 6 ms, as
+            the stock drum does in 7.8 ms. Measured on the circuit model (tests/V3Tr808Tests.cpp, COOLSYNTH_808_JOBS). The
+            Kick's and the 808 Drums' Punch Time.
+        */
+        [[nodiscard]] static double glideScaleFor(double seconds) noexcept
+        {
+            if (seconds <= 0.006 * 1.0001) // the knob's 6 ms arrives a hair over it: still the stock drum
+                return 0.0;
+            static constexpr std::array<double, 14> size { 0.0, 0.1, 0.25, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 12.0, 16.0, 24.0 };
+            static constexpr std::array<double, 14> halfway { 0.0078, 0.0090, 0.0209, 0.0255, 0.0300, 0.0371, 0.0382, 0.0473,
+                                                              0.0567, 0.0766, 0.0978, 0.1835, 0.3176, 0.5118 };
+            const double target = 0.0078 * seconds / 0.006;
+            for (std::size_t i = 1; i < size.size(); ++i)
+                if (target <= halfway[i])
+                    return size[i - 1] + (size[i] - size[i - 1]) * std::log(target / halfway[i - 1]) / std::log(halfway[i] / halfway[i - 1]);
+            const double past = std::log(target / halfway.back()) / std::log(halfway.back() / halfway[halfway.size() - 2]);
+            return std::min(32.0, size.back() + (size.back() - size[size.size() - 2]) * past);
+        }
         /** R161, the leakage that makes the sigh: smaller, more sigh. Stock 1 MOhm. */
         void setLeakResistor(double ohms) noexcept
         {

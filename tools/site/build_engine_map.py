@@ -246,8 +246,8 @@ c.text(188, 184, "NOTE LAYER", size=10.5, weight=700, fill="ink2", ls=0.8)
 notebox(188, 118, "Chord memory", ["12 chord types", "+ a learned chord", "of up to 6 notes;", "strum up or down"])
 notebox(320, 126, "Arpeggiator", ["11 patterns", "Euclidean rhythms", "ratchets ×2 to ×4", "chance, accent,",
                                    "swing, latch"])
-notebox(460, 126, "Play mode", ["poly · mono · legato", "unison: 2 to 8 voices", "glide, key priority",
-                                 "voice spread: each", "voice has its place"])
+notebox(460, 126, "Play mode", ["poly · mono · legato", "unison: 2 to 8 voices", "kit: each key a drum",
+                                 "glide, key priority", "voice spread"])
 
 c.arrow([(KX + KW, MIDY), (188, MIDY)], **NW)
 c.arrow([(160, MIDY), (160, BY), (188, BY)], **NW)
@@ -502,6 +502,8 @@ GEN_ROWS = [
              "frame-rate arpeggios and drum sequences."),
     ("Kick", "A tuned kick drum: the TR-808’s and TR-909’s bass drum circuits in wave digital filters, checked "
              "against ngspice and real units’ recordings, or a modern kick."),
+    ("808 Drums", "The TR-808’s bass drum, toms or congas and rim shot or claves, each its own circuit, checked "
+                  "against ngspice, two real units and the service notes; a kit on one voice, General MIDI’s keys."),
     ("TB-303", "The Bass Line’s voice: saw to square into its diode ladder of four coupled stages, a decay "
                "envelope, accent at velocity 100, the slide between legato notes."),
 ]
@@ -532,7 +534,7 @@ FX_ROWS = [
     ("Stutter", "catches a slice on the beat and repeats it, each repeat shorter, lower, quieter or backwards."),
 ]
 panels = [
-    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 12 types · any type in any of the 3 slots",
+    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 13 types · any type in any of the 3 slots",
          rows=GEN_ROWS, namew=84,
          note=[R("Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots.")], italic=True),
     dict(x=634, w=462, kind="proc", head="PROCESSOR SLOT", sub="one of 7 types · per voice",
@@ -731,7 +733,7 @@ ARIA = ("CoolSynth V3 engine architecture. Keys and MIDI feed two layers, each a
         "chord memory, its own arpeggiator and play mode; per voice three generator slots that can sync, ring, FM "
         "or AM one another, three processor slots in series and an amplifier; then six insert effects. Modulation "
         "sources and a 24-routing matrix feed the voice from below. Both layers are mixed into six master effect "
-        "slots, gain, soft clipper and stereo out. Three lists give the 12 generator types, 7 processor types "
+        "slots, gain, soft clipper and stereo out. Three lists give the 13 generator types, 7 processor types "
         "and 14 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.")
 
 svg_open_standalone = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" '

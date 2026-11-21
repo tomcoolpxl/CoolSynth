@@ -513,7 +513,7 @@ namespace coolsynth::parameters::v3
 
         auto play = std::make_unique<juce::AudioProcessorParameterGroup>(partPrefix(part) + ".play", "Play", "|");
         play->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(playParameterId(part, "mode")), "Play Mode",
-                                                                    juce::StringArray { "Poly", "Mono", "Legato", "Unison" }, 0));
+                                                                    juce::StringArray { "Poly", "Mono", "Legato", "Unison", "Kit" }, 0));
         play->addChild(std::make_unique<juce::AudioParameterChoice>(makeId(playParameterId(part, "priority")), "Key Priority",
                                                                     juce::StringArray { "Last", "Low", "High" }, 0));
         play->addChild(std::make_unique<juce::AudioParameterInt>(makeId(playParameterId(part, "voices")), "Voices", 1,
@@ -805,7 +805,7 @@ namespace coolsynth::parameters::v3
         settings.voice.glideDownFactor = load(pointers.glideDown, 1.0f);
         settings.voice.driftCents = load(pointers.drift, 0.0f);
 
-        settings.playMode = static_cast<sv3::PlayMode>(juce::jlimit(0, 3, loadInt(pointers.mode, 0)));
+        settings.playMode = static_cast<sv3::PlayMode>(juce::jlimit(0, 4, loadInt(pointers.mode, 0)));
         settings.keyPriority = static_cast<sv3::KeyPriority>(juce::jlimit(0, 2, loadInt(pointers.priority, 0)));
         settings.polyphony = loadInt(pointers.voices, sv3::Part::maxVoices);
         settings.unisonVoices = loadInt(pointers.unison, 4);

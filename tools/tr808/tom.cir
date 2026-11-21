@@ -1,0 +1,131 @@
+* Roland TR-808 low, mid and high tom / conga, from the service notes (pp. 6, 9; D252). One netlist for the three
+* pairs, their values as parameters (render.py --pair low|mid|high sets them). The reference for the 808 Drums
+* generator's tom circuits.
+* Transistors as the bass drum's (the 2N3904 stand-in for the 2SC945(P), a PNP like it for the 2SA733(P)), the
+* 1S2473 as the standard 1N4148, the 1S188FM germanium pair as a germanium small-signal diode; single-pole 3 MHz
+* op-amps (uPC4558) and junction capacitances so the solver passes the trigger's edges.
+*
+* Parameters: amp (TRIG volts, 4 to 14), conga (0 tom, 1 conga: SW8, SW9, SW10), tune (the TUNING knob 0..1),
+* lev (the LEVEL knob 0..1, a 100k audio pot), rail (the resonator's op-amps' output swing, volts), pn (the pink noise bus: 0 off, else a sine of that amplitude at 150 Hz,
+* for checking the noise gate deterministically), tend, width, tedge, geis and gen (the germanium pair's saturation
+* current and emission coefficient), cgbw (the op-amps' pole capacitor, 53.05p for 3 MHz), rfb (R230, R259, R286: printed 820k, fitted per pair to both
+* units' tom and conga decays, render.py sets them); and the pair's values: cin, cout, ctom
+* (across cout for the tom), cintom (across cin for the tom: the mid pair's C89), cpulse (C73, C86, C99),
+* rbias (R225, R254, R281), rconga (R224, R253, R280), cenv (C72, C85, C100), cn1 (C74, C87, C101), cn2 (C75, C88,
+* C102), cmix (C81, C96, C108).
+.param rail=14 amp=4 conga=0 tune=0.5 lev=0.8 pn=0 tend=0.6 width=1m tedge=5.2u geis=2u gen=1.3 cgbw=53.05p rfb=865k
+.param cin=56n cout=12n ctom=47n cintom=1p cpulse=6.8n rbias=4.7k rconga=1.5k cenv=39n cn1=47n cn2=18n cmix=47n
+.param base={amp+0.68}
+.param rtb={max((1-tune)*500, 0.01)} rta={max(tune*500, 0.01)}
+.param vr={max(100k*(pow(10, 2*lev)-1)/99, 1)}
+.param ctomon={conga > 0.5 ? 1p : ctom} cintomon={conga > 0.5 ? 1p : cintom} rcongaon={conga > 0.5 ? rconga : 1G}
+.param rnoise={conga > 0.5 ? 1G : 100k}
+
+.model QEM NPN(IS=10f BF=300 BR=4 CJE=8p CJC=4p)
+.model QPM PNP(IS=10f BF=300 BR=4 CJE=8p CJC=4p)
+.model DEM D(IS=2.52n N=1.752 RS=0.568 CJO=2p)
+* A germanium small-signal diode for the 1S188FM (no published model; a 1N34A-like germanium point-contact).
+.model DGE D(IS={geis} N={gen} RS=10 CJO=1p)
+* The resonator's op-amps' output swing (uPC4558: +-14 V typical on +-15 V rails): clamp diodes on their inner nodes.
+.model DCL D(IS=1e-12 N=1)
+
+VB4 vcc 0 15
+VNB4 vee 0 -15
+
+* The trigger, as the bass drum's: IC6's pulse through Q31 and Q32 onto the TRIG line (R113 holding it down), the
+* pair's PNP switch (Q51, Q54, Q57) with R214 (R243, R269) and R213 (R242, R268) through the instrument line's
+* transistor (Q50, Q53, Q56), and R215 (R251, R270) as its load.
+V6 n6 0 PWL(0 5 {tedge-0.5u} 5 {tedge+0.5u} 0 {tedge+width-0.5u} 0 {tedge+width+0.5u} 5)
+R117 n6 nb31 47k
+Q31 nb32 nb31 0 QEM
+VX nx 0 {base}
+R120 nx nb32 4.7k
+Q32 vcc nb32 trig QEM
+R113 trig 0 4.7k
+VLT nlt 0 PWL(0 5 {tedge+width+20u} 5 {tedge+width+21u} 0)
+R211 nlt nb50 22k
+R212 nb50 0 10k
+Q50 nc50 nb50 0 QEM
+R214 trig nb51 4.7k
+R213 nb51 nc50 10k
+Q51 vt nb51 trig QPM
+R215 vt 0 4.7k
+
+* The pulse into the resonator: C73, D56 clamping its falling edge, R226 into the + input with R225, and for the
+* conga R224 across it too (its level).
+C73 vt na {cpulse}
+D56 0 na DEM
+R226 na np 22k
+R225 np 0 {rbias}
+R224 np 0 {rcongaon}
+
+* The noise envelope and gate (the toms only): R219, D55 charging C72, R218 2.2M onto the gate's base node, the
+* pink noise bus through R216 and R217 and C71, Q52 the gate (R220 into its base, R221 its collector load), then
+* C74, R223, R222, C75 to the mixer through R232 (grounded for the conga).
+R219 vt nd 4.7k
+D55 nd nev DEM
+C72 nev 0 {cenv}
+R218 nev nq 2.2Meg
+VPN npn 0 SIN(0 {pn} 150)
+R216 npn nw 15k
+R217 nw 0 3.3k
+C71 nw nq 47n
+R220 nq nb52 33k
+Q52 nc52 nb52 0 QEM
+R221 vcc nc52 4.7k
+C74 nc52 nh {cn1}
+R223 nh 0 22k
+R222 nh nfl 22k
+C75 nfl 0 {cn2}
+R232 nfl nsum {rnoise}
+
+* The resonator: a bridged-T around IC15a (IC17a, IC18a): cin from its minus input to the middle node, cout from
+* the middle to its output (ctom across it for the tom, and for the mid pair cintom across cin), R228 820k across;
+* the middle node to ground through R231 1k and the TUNING pot (500 ohm B), the germanium pair D80 and D81 across
+* R231 and the pot's other part; IC15b inverts (R229, R227 33k) and R230 820k feeds back to the middle node.
+GA 0 ia np ninv 1m
+RIA ia 0 1e8
+CIA ia 0 {cgbw}
+BA no1 0 V=v(ia)
+C76 ninv nm {cin}
+CINT ninv nm {cintomon}
+C78 nm no1 {cout}
+C77 nm no1 {ctomon}
+R228 ninv no1 820k
+R231 nm nwip 1k
+RVB nwip 0 {rtb}
+RVA nv1 nwip {rta}
+D80 nm nv1 DGE
+D81 nv1 nm DGE
+R229 no1 nin2 33k
+R227 nin2 no2 33k
+GB 0 ib 0 nin2 1m
+RIB ib 0 1e8
+CIB ib 0 {cgbw}
+BB no2 0 V=v(ib)
+DCPA ia ncpA DCL
+VCPA ncpA 0 {rail-0.55}
+DCNA ncnA ia DCL
+VCNA ncnA 0 {-rail+0.55}
+DCPB ib ncpB DCL
+VCPB ncpB 0 {rail-0.55}
+DCNB ncnB ib DCL
+VCNB ncnB 0 {-rail+0.55}
+R230 no2 nm {rfb}
+
+* The mixer: IC13 (IC16) sums the tone (R233, cmix) and the noise (R232); its feedback is R235 470k, C83 1n and the
+* LEVEL pot (100k A) with C82 33u.
+R233 no2 nc81 100k
+C81 nc81 nsum {cmix}
+GM 0 im 0 nsum 1m
+RIM im 0 1e8
+CIM im 0 {cgbw}
+BM vout 0 V=v(im)
+R235 nsum vout 470k
+C83 nsum vout 1n
+RVR10 nsum nvr {vr}
+C82 nvr vout 33u
+
+.options method=trap reltol=1e-5 abstol=1e-12 vntol=1e-7
+.tran 0.5u {tend} 0 0.5u
+.end

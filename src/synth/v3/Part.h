@@ -28,8 +28,10 @@
     above the polyphony limit finish what they play and are not used again. Mono and legato play
     one voice from a note stack with last, low or high priority and return to a held key on
     release; legato keeps the envelopes running across overlapping keys. Unison stacks 2 to 8
-    voices on one note, spread in pitch and across the stereo field. Glide can be limited to
-    overlapping keys.
+    voices on one note, spread in pitch and across the stereo field. Kit (D252) plays a drum kit on
+    one voice, the one that holds the kit's generators (the 808 Drums): each note strikes its
+    instrument in it, note-offs are ignored and nothing is stolen, and the voice lets go once every
+    instrument has rung out. Glide can be limited to overlapping keys.
 
     The global LFOs, the step modulator, the chaos source and the smoothed macros run whether or
     not anything sounds, one value per voice sub-block; the LFOs and the step modulator restart
@@ -47,7 +49,7 @@ namespace coolsynth::synth::v3
     using coolsynth::synth::EngineMidiEventType;
     using coolsynth::synth::EngineTransportInfo;
 
-    enum class PlayMode : int { poly = 0, mono, legato, unison };
+    enum class PlayMode : int { poly = 0, mono, legato, unison, kit }; // new modes only at the end
     enum class KeyPriority : int { last = 0, low, high };
     /** When the global envelope starts: at the first key of a phrase (none other held), or at every key. */
     enum class GenvTrigger : int { firstNote = 0, everyNote };
@@ -205,6 +207,7 @@ namespace coolsynth::synth::v3
         void monoNoteOn(int note, float velocity, bool fromArp, const PartSettings& settings) noexcept;
         void monoNoteOff(int note, float releaseVelocity, const PartSettings& settings) noexcept;
         void playMono(int note, float velocity, float gain, bool overlapping, bool fromArp, const PartSettings& settings) noexcept;
+        void kitNoteOn(int note, float velocity, bool fromArp) noexcept;
         [[nodiscard]] int pickVoice(int limit) const noexcept;
 
     public:

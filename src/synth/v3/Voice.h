@@ -29,6 +29,7 @@
 #include "StringGenerator.h"
 #include "SvfProcessor.h"
 #include "Tb303Generator.h"
+#include "Tr808DrumsGenerator.h"
 #include "VaGenerator.h"
 #include "WavetableGenerator.h"
 
@@ -64,7 +65,7 @@ namespace coolsynth::synth::v3
 {
     using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator, WavetableGenerator,
                                         StringGenerator, ModalGenerator, SampleGenerator, GrainGenerator, ChipGenerator,
-                                        KickGenerator, Tb303Generator>; // new types only at the end
+                                        KickGenerator, Tb303Generator, Tr808DrumsGenerator>; // new types only at the end
     using ProcessorTypes = std::variant<OffProcessor, LadderProcessor, SvfProcessor, CrusherProcessor, FolderProcessor, DriveProcessor,
                                         FormantProcessor, CombProcessor>; // new types only at the end
     using GeneratorSlot = Slot<GeneratorTypes>;
@@ -85,6 +86,7 @@ namespace coolsynth::synth::v3
         inline constexpr int chip = 10; // D230
         inline constexpr int kick = 11; // D232
         inline constexpr int tb303 = 12; // D242
+        inline constexpr int drums808 = 13; // D252
     }
     namespace processorType
     {
@@ -109,6 +111,7 @@ namespace coolsynth::synth::v3
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::chip, GeneratorTypes>, ChipGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::kick, GeneratorTypes>, KickGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::tb303, GeneratorTypes>, Tb303Generator>);
+    static_assert(std::is_same_v<std::variant_alternative_t<generatorType::drums808, GeneratorTypes>, Tr808DrumsGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::ladder, ProcessorTypes>, LadderProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::svf, ProcessorTypes>, SvfProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::folder, ProcessorTypes>, FolderProcessor>);
@@ -231,6 +234,11 @@ namespace coolsynth::synth::v3
         void retrigger(const NoteStart& note) noexcept;
         /** Pitch only, envelopes carry on; glides like retrigger(). */
         void legato(const NoteStart& note) noexcept;
+        /**
+            The kit play mode (D252): another instrument struck in the voice that holds the kit. A silent voice starts,
+            a sounding one is retriggered; a strike while a note waits to start (two hits in one block) waits with it.
+        */
+        void strikeKit(const NoteStart& note) noexcept;
         void release(float releaseVelocity = 0.5f) noexcept;
         /** Out over the steal fade and then free, the live emergency's way (D222): a note that is sounding and
             not already fading. */
@@ -310,6 +318,10 @@ namespace coolsynth::synth::v3
         ModSources sources;
 
         NoteStart note, pendingNote;
+        /** The kit's strikes that came while a note waited to start, played right after it starts (D252). */
+        static constexpr int maxQueuedStrikes = 8;
+        std::array<NoteStart, maxQueuedStrikes> queuedStrikes {};
+        int queuedStrikeCount = 0;
         bool pending = false;
         bool pendingReleased = false;
         bool released = false;

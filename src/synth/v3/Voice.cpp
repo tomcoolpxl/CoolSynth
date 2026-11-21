@@ -77,6 +77,7 @@ namespace coolsynth::synth::v3
             l.reset();
         lfoRestartPending = false;
         pending = false;
+        queuedStrikeCount = 0;
         pendingReleased = false;
         released = false;
         releaseWaiting = false;
@@ -119,6 +120,7 @@ namespace coolsynth::synth::v3
             stealRemaining = stealTotal;
         pendingNote = start;
         pending = true;
+        queuedStrikeCount = 0;
         pendingReleased = false;
         fadingOut = false;
     }
@@ -138,6 +140,14 @@ namespace coolsynth::synth::v3
                 base.set(trackedGlobalSources[k], globals.frames[0].values[k]);
         beginNote(pendingNote, base);
         snapToSettings();
+        // The kit's strikes that came while the note waited (D252): every instrument they name is struck with it.
+        for (int k = 0; k < queuedStrikeCount; ++k)
+            for (auto& g : generators)
+            {
+                g.slot.noteChanged(queuedStrikes[static_cast<std::size_t>(k)].note);
+                g.slot.strike(queuedStrikes[static_cast<std::size_t>(k)].velocity);
+            }
+        queuedStrikeCount = 0;
         if (pendingReleased)
         {
             pendingReleased = false;
@@ -164,6 +174,24 @@ namespace coolsynth::synth::v3
         }
         retarget(start.note, start.detuneCents, start.glideFrom >= 0);
         startEnvelopes(envelopeTimeFactors(sources, start, noteRandom)); // this voice's sources are current
+    }
+
+    void Voice::strikeKit(const NoteStart& start) noexcept
+    {
+        if (! isActive())
+        {
+            Voice::start(start);
+            return;
+        }
+        if (pending || stealRemaining > 0)
+        {
+            // The voice starts its note at the next render: this strike waits with it, so two hits in one block both
+            // sound (the start resets the modules, which would forget a strike given now).
+            if (queuedStrikeCount < maxQueuedStrikes)
+                queuedStrikes[static_cast<std::size_t>(queuedStrikeCount++)] = start;
+            return;
+        }
+        retrigger(start);
     }
 
     std::array<float, envelopeCount> Voice::envelopeTimeFactors(const ModSources& base, const NoteStart& start, float random) const noexcept

@@ -5084,3 +5084,47 @@ TUNING pot; the low tom adds pink noise. The user's choices:
   [TR-8S MIDI implementation chart](https://static.roland.com/assets/media/pdf/TR-8S_MIDIImpleChart_eng02_W.pdf).
 - The checks (options: each circuit stage by stage against ngspice, then Fischer's and Audiorealism's recordings and
   page 14, recommended and chosen; ngspice and page 14 only).
+
+## D253. 808 Drums: built (2026-11-21)
+
+Built as designed (D252): the Kit play mode (`Part.h`), the 808 Drums generator (`Tr808DrumsGenerator.h`) on the
+bass drum's circuit and two new ones, the toms and congas (`Tr808Tom.h`) and the rim shot and claves
+(`Tr808RimShot.h`), each checked stage by stage against ngspice (`tools/tr808`, `tests/V3Tr808DrumsTests.cpp`),
+then against Fischer's and Audiorealism's recordings and page 14 (`docs/research/808-drums.md`). The user's
+choices while building:
+
+- The claves as drawn ring on: R313 (390 kOhm) feeds back past the point of oscillation (options: fit R313 to both
+  units' decay, recommended and chosen, 500 kOhm; fit R312 instead, which moves the rim shot too; keep 390 kOhm).
+- The toms and congas rang 3 to 28 % longer than both units (options: fit each pair's feedback resistor to both
+  units' tom and conga decays, recommended and chosen, R230 865 kOhm, R259 865k, R286 880k; keep 820 kOhm; look
+  for the cause first).
+- R324, which the service notes leave unprinted (options: fit it to the units' rim shot over their claves,
+  recommended and chosen, 130 kOhm; a builder's 220 kOhm).
+- The 1S188FM germanium pair, with no published model (options: a typical germanium diode, Is 2 uA, emission 1.3,
+  10 Ohm, recommended and chosen; fit it to both units; a silicon 1N4148).
+
+Found while building, each the circuit as drawn or its parts' own data, so no choice:
+
+- The resonators' op-amps keep their gain-bandwidth, a single pole at 3 MHz as in the references: with ideal
+  op-amps the high conga was 14 % off its reference and the rim shot 10 %. `CircuitWdf.h` gained a
+  transconductance and `addOpAmp`.
+- And their output swing, +-14 V, the uPC4558's typical into 10 kOhm: at full accent the rim shot's and the
+  claves' bridged-Ts would otherwise swing past the +-15 V rails. The references clamp each op-amp's inner node, the
+  model the same (`addClampPair`, a diode pair past an offset).
+- The pink noise bus at 130 mV rms over the later boards' band (C202 across R130), through IC24b's 273 Hz low-pass.
+- In the Kit mode a strike that lands while the voice's note waits to start (two hits in one block) waits with it;
+  each instrument has its own copy of the common trigger stage, so hits at once do not load each other.
+- The key does not tune the drums, nor do the slot's pitch and the bend (the Kick is where tuning lives, D252).
+- All three toms take the pink noise through their gates (Q52, Q55, Q58); D252 named only the low tom's.
+
+Checked: the toms and congas within 2 % of ngspice at every stage, accented too; the rim shot within 4 % (9 % at
+full accent, its swing VCA switching inside a sample in the first 3 ms); the claves 3 cents under their reference
+(the bilinear transform's warping at 2.5 kHz). Against both units the pitch lies within 1 to 4 % at the TUNING's
+ends and middle, the decays within some 6 %, the unaccented pitch drop as theirs; page 14's unaccented amplitudes
+from 20 % under (mid conga) to 27 % over (mid tom). Left open: at full accent every voice runs 1.1 to 4.5 dB over
+page 14's accented amplitudes (the service notes' text says each voice is in proportion to its trigger; the toms'
+germanium pair is not), with no recording at a known accent level to judge it by.
+
+Priced (`VoiceCost.h`): in the Kit mode the whole kit in its one voice, 54.5 % of a block at its 99th percentile
+with every instrument struck at once (average 18.4 %); in the other modes a voice holds one instrument, priced at
+the dearest, the rim shot and claves, 16.1 % (the toms 9.4 to 9.6 %, the bass drum 8.4 %).

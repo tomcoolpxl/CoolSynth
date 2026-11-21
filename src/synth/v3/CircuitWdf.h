@@ -58,6 +58,29 @@ namespace coolsynth::synth::v3::wdf
             nullors[static_cast<std::size_t>(nullorCount++)] = { plus, minus, out };
         }
 
+        /** A voltage-controlled current source: siemens times (V(plus) - V(minus)) into node out. At most one an op-amp. */
+        void addTransconductance(int plus, int minus, int out, double siemens)
+        {
+            gains[static_cast<std::size_t>(gainCount++)] = { plus, minus, out, siemens };
+        }
+
+        /**
+            An op-amp of finite gain-bandwidth, as the SPICE references' single-pole macro (D252): 1 mS into the node
+            inner, held there by 100 MOhm (a DC gain of 100 dB) and the pole's capacitor, then an ideal follower to out.
+            It takes a node, two ports and a nullor; with railVolts, also a clamp pair (one more port, a nonlinear one)
+            on the inner node that holds the output inside that swing, as the references' clamp diodes (1 pA each, into
+            sources 0.55 V inside it).
+        */
+        void addOpAmp(int plus, int minus, int out, int inner, double gainBandwidthHz, double railVolts = 0.0)
+        {
+            addTransconductance(plus, minus, inner, 1.0e-3);
+            addResistor(inner, 0, 1.0e8);
+            addCapacitor(inner, 0, 1.0e-3 / (6.283185307179586 * gainBandwidthHz));
+            addNullor(inner, out, out);
+            if (railVolts > 0.0)
+                addClampPair(inner, 0, railVolts - 0.55, 1.0e-12, 0.02585);
+        }
+
         /** A junction diode from anode to cathode (Shockley), its port seen through portOhms. */
         void addDiode(int anode, int cathode, double saturation, double thermal, double portOhms = 1000.0)
         {
@@ -76,6 +99,17 @@ namespace coolsynth::synth::v3::wdf
         {
             addDiode(n1, n2, saturation, thermal, portOhms);
             devices[static_cast<std::size_t>(deviceCount - 1)].isPair = true;
+        }
+
+        /**
+            An op-amp's output swing (D252): a diode pair from n1 to n2 that conducts only past volts either way, as two
+            diodes into a source of volts each, Is (e^((v - volts) / VT) - e^((-v - volts) / VT)). On an op-amp's inner
+            node (addOpAmp) it holds the output inside its rails as the reference's clamp diodes do.
+        */
+        void addClampPair(int n1, int n2, double volts, double saturation, double thermal, double portOhms = 1000.0)
+        {
+            addDiodePair(n1, n2, saturation, thermal, portOhms);
+            devices[static_cast<std::size_t>(deviceCount - 1)].offset = volts;
         }
 
         /** An NPN transistor (Ebers-Moll, transport form), as two ports: base-emitter and collector-emitter. */
@@ -301,10 +335,17 @@ namespace coolsynth::synth::v3::wdf
             int plus = 0, minus = 0, out = 0;
         };
 
+        struct Gain
+        {
+            int plus = 0, minus = 0, out = 0;
+            double siemens = 0.0;
+        };
+
         struct Device
         {
             bool isTransistor = false, isPair = false;
             double polarity = 1.0; // -1 for a PNP: its junction voltages and currents are the NPN's turned round
+            double offset = 0.0;   // a clamp pair's: each diode conducts only past this many volts
             double saturation = 1.0e-14, betaF = 100.0, betaR = 1.0, thermal = 0.02585;
             int port[2] {}, slot[2] {};
             // Derived once, for the solver: 1 / VT, 1 / betaF, 1 / betaR, 1 + 1 / betaR, pnjlim's critical voltage.
@@ -421,6 +462,13 @@ namespace coolsynth::synth::v3::wdf
                 if (o.minus > 0)
                     Y[static_cast<std::size_t>(row)][static_cast<std::size_t>(o.minus - 1)] -= 1.0;
                 Y[static_cast<std::size_t>(o.out - 1)][static_cast<std::size_t>(row)] -= 1.0;
+            }
+            // Transconductances: g (V(plus) - V(minus)) into out, moved to the left of out's KCL row.
+            for (int j = 0; j < gainCount; ++j)
+            {
+                const auto& t = gains[static_cast<std::size_t>(j)];
+                stampY(t.out, t.plus, -t.siemens);
+                stampY(t.out, t.minus, t.siemens);
             }
 
             // Solve Y X = [Ja Ju] by Gaussian elimination with partial pivoting, all columns at once.
@@ -693,9 +741,9 @@ namespace coolsynth::synth::v3::wdf
                 const int s0 = dev.slot[0];
                 if (dev.isPair)
                 {
-                    // Two diodes back to back: Is (e^(v / VT) - e^(-v / VT)).
-                    const double up = std::exp(std::min(v[s0] * dev.inverseThermal, 80.0));
-                    const double down = std::exp(std::min(-v[s0] * dev.inverseThermal, 80.0));
+                    // Two diodes back to back: Is (e^(v / VT) - e^(-v / VT)), each past its offset (a clamp's).
+                    const double up = std::exp(std::min((v[s0] - dev.offset) * dev.inverseThermal, 80.0));
+                    const double down = std::exp(std::min((-v[s0] - dev.offset) * dev.inverseThermal, 80.0));
                     i[s0] = dev.saturation * (up - down);
                     g[s0][s0] = dev.saturation * (up + down) * dev.inverseThermal;
                     continue;
@@ -745,7 +793,8 @@ namespace coolsynth::synth::v3::wdf
         {
             if (! dev.isPair)
                 return limitJunction(vNew, vOld, dev);
-            return vNew >= 0.0 ? limitJunction(vNew, vOld, dev) : -limitJunction(-vNew, -vOld, dev);
+            const double o = dev.offset; // a clamp's junctions sit past their offset
+            return vNew >= 0.0 ? o + limitJunction(vNew - o, vOld - o, dev) : -(o + limitJunction(-vNew - o, -vOld - o, dev));
         }
 
         /** Newton's method on v = p + K f(v), from the last sample's voltages. */
@@ -776,7 +825,7 @@ namespace coolsynth::synth::v3::wdf
             for (int d = 0; d < deviceCount && allOff; ++d)
             {
                 const Device& dev = device[d];
-                const double v0 = dev.isPair ? std::abs(v[dev.slot[0]]) : dev.polarity * v[dev.slot[0]];
+                const double v0 = dev.isPair ? std::abs(v[dev.slot[0]]) - dev.offset : dev.polarity * v[dev.slot[0]];
                 allOff = v0 < 0.4 && (! dev.isTransistor || v0 - dev.polarity * v[dev.slot[1]] < 0.4);
             }
             bool guessed = false;
@@ -796,7 +845,7 @@ namespace coolsynth::synth::v3::wdf
                 for (int d = 0; d < deviceCount && stillOff; ++d)
                 {
                     const Device& dev = device[d];
-                    const double g0 = dev.isPair ? std::abs(guess[dev.slot[0]]) : dev.polarity * guess[dev.slot[0]];
+                    const double g0 = dev.isPair ? std::abs(guess[dev.slot[0]]) - dev.offset : dev.polarity * guess[dev.slot[0]];
                     stillOff = g0 < 0.4 && (! dev.isTransistor || g0 - dev.polarity * guess[dev.slot[1]] < 0.4);
                 }
                 if (stillOff)
@@ -1008,6 +1057,7 @@ namespace coolsynth::synth::v3::wdf
 
         std::array<Port, MaxPorts> ports {};
         std::array<Nullor, MaxNullors> nullors {};
+        std::array<Gain, MaxNullors> gains {}; // transconductances, one at most an op-amp
         std::array<Device, (MaxNonlinear > 0 ? MaxNonlinear : 1)> devices {};
         std::array<int, MaxInputs> inputNode {};
         std::array<double, MaxInputs> inputs {};
@@ -1025,7 +1075,7 @@ namespace coolsynth::synth::v3::wdf
 
         std::array<std::array<double, MaxNonlinear>, MaxNonlinear> K {};
 
-        int portCount = 0, inputCount = 0, nullorCount = 0, deviceCount = 0, nonlinearCount = 0, probeCount = 0;
+        int portCount = 0, inputCount = 0, nullorCount = 0, gainCount = 0, deviceCount = 0, nonlinearCount = 0, probeCount = 0;
         int newtonSteps = 0, newtonLimit = maxNewtonSteps;
         bool solved = true;
         double sampleRate = 96000.0;

@@ -16,6 +16,8 @@ namespace coolsynth::synth::v3
         SampleLibrary::instance(); // and the sampled instruments' library (it reads its folder and starts its loader)
         Tr808BassDrum::warmUp();   // and the Kick's 808 circuit at rest, solved once
         Tr909BassDrum::warmUp();   // and its 909's
+        Tr808Tom::warmUp();        // and the 808 Drums' toms and congas
+        Tr808RimShot::warmUp();    // and their rim shot and claves
         Tb303Generator::warmUp();  // and the TB-303's band-limited waves
 
         const double voiceRate = hostRate * oversampleFactor;
@@ -498,6 +500,8 @@ namespace coolsynth::synth::v3
                 startGain = event.gain; // its share in a velocity split (D190); 1 otherwise
                 if (settings.playMode == PlayMode::poly)
                     polyNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp, settings);
+                else if (settings.playMode == PlayMode::kit)
+                    kitNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp);
                 else
                     monoNoteOn(note, std::clamp(event.value, 0.0f, 1.0f), event.fromArp, settings);
                 startGain = 1.0f; // a note the part starts on its own (a held key coming back) plays whole
@@ -506,6 +510,8 @@ namespace coolsynth::synth::v3
             case EngineMidiEventType::noteOff:
                 if (settings.playMode == PlayMode::poly)
                     polyNoteOff(note, std::clamp(event.value, 0.0f, 1.0f));
+                else if (settings.playMode == PlayMode::kit)
+                    break; // a drum rings its own length: the key's end means nothing to it
                 else
                     monoNoteOff(note, std::clamp(event.value, 0.0f, 1.0f), settings);
                 break;
@@ -763,6 +769,22 @@ namespace coolsynth::synth::v3
             state[static_cast<std::size_t>(i)] = { note, true, false, order };
         }
         monoNote = note;
+        lastNote = note;
+    }
+
+    void Part::kitNoteOn(int note, float velocity, bool fromArp) noexcept
+    {
+        // One voice holds the kit: the note strikes its instrument there, and the voice is let go at once, to end
+        // when every instrument has rung out (the kit's generators hold the release while one rings).
+        NoteStart start;
+        start.note = note;
+        start.velocity = velocity;
+        start.gain = startGain;
+        start.fromArp = fromArp;
+        auto& v = voices[0];
+        v.strikeKit(start);
+        v.release(0.0f);
+        state[0] = { note, false, false, ++counter };
         lastNote = note;
     }
 
