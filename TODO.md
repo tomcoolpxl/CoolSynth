@@ -29,8 +29,9 @@ drop, the channel-1 hint, the ready setup for both programs, the disconnect, the
 busy-port fallback.
 
 C4. Left of the MiniLab work: the FL script linking by itself. Arturia's own FL script claims the MiniLab by its
-    hardware ID (`supportedHardwareIds=00 20 6B 02 00 04 04`), ours by port name, and FL had fallen back to its
-    generic controller; FL documents no rule for which wins. Also to try: FL's own "Forward CCs to current plugin
+    hardware ID (`supportedHardwareIds=00 20 6B 02 00 04 04`), ours by port name. On 2026-11-21 FL had linked
+    Arturia's, so the pads played notes in CoolSynth; chosen by hand (Options > MIDI settings), ours works: the pads
+    switch sections and play no notes. FL documents no rule for which wins. Also to try: FL's own "Forward CCs to current plugin
     Port 10" script, which hands knobs to a plugin on port 10 without putting the controller on a port.
 C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, tested by the suite, not yet in a DAW.
     - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
@@ -39,12 +40,16 @@ C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9, test
       and the master volume; the host is told the open page, and told again when a slot's type or the layer changes
       the pages. An empty slot has no page.
     - The installer puts it in `C:\Program Files\Common Files\CLAP` (its own tick box); the release has a CLAP zip.
-C6. Test per DAW (Ableton, FL Studio, Reaper, and Bitwig or Studio One if available): which hosts call `IMidiMapping`
-    (a logging build), the duplicate filter, the channel-1 setting, the guided setup step by step (never tested by
-    hand yet), the MiniLab in both programs, and the CLAP pages. From J1b: unplug and replug the MiniLab (its screen
-    should let go at once), the layer menu (a right click on a layer panel) opening at the panel in two DAWs, and the
-    panel at Windows scaling 125 % and 150 % in the app and in a DAW (the CLAP's editor too: clap-juce-extensions
-    has an open report of a clipped editor at such scaling). The user chose on 2026-11-19 to do this later, after
+C6. Test per DAW: done on 2026-11-20 and 21 in Ableton Live and FL Studio (`docs/test-pass.md`): the duplicate
+    filter, the stopped host's tempo, the layer menu at the panel, the MiniLab replugged, the MiniLab in FL with our
+    script, the guided setup (C7), the panel at 175 % in both DAWs and at 125 and 150 % as drawn. Left, for want of
+    hosts: the CLAP pages (Bitwig or Reaper), which hosts call `IMidiMapping` (a logging build, Reaper above all).
+C7. The guided controller setup, redesigned with the real interface (the user, 2026-11-21: it works, the flow is
+    wrong). Back and Next on every step. Ask first what the controller has and what the player wants: a row of four
+    knobs, a page knob, faders, pads (explain what the pads do here; they may not want them). Say what each control
+    is for: knob 5 turns the pages, the most important for getting around the panel. Show a small drawing of the
+    panel with the control being asked for marked (a red ring), and say where to look on the controller ("a row of
+    four knobs"). The user chose on 2026-11-19 to do this later, after
     the coding left (D217). To try a build in a DAW without a release, make a
     test installer from the Debug build (from `installer`):
     `iscc /DAppVersion=0.3.0 /DBuildDir=..\build\CoolSynth_artefacts\Debug /O<folder> CoolSynth.iss`.

@@ -193,6 +193,21 @@ Each sound set up and played by Claude through the MCP server; the user listened
   TB-303, the Ladder questions and the six noise presets not judged yet; every card pre-checked through the MCP
   server (all set up as asked, none silent or clipping once the sampled instruments load before the notes).
 
+## The hands round (2026-11-21, today's build installed in Common Files)
+
+- Ableton loads the installed VST3 of today's build: Ladder Chords is in Studio 1982.
+- The MiniLab unplugged and plugged back in while the app ran: the log has "unplugged", then "connected" 4 s later;
+  the user saw the sound's name and the pad colours come back, and the keys played at once.
+- FL Studio with the CLAP and the MiniLab: FL had linked the MiniLab to Arturia's own script, not ours (TODO C4), so
+  the pads reached CoolSynth as notes 36 and up; keys played once each and knob 1 worked through CoolSynth's driver.
+  With FL's controller type switched to CoolSynth MiniLab 3 (kept in FL), the pads switch sections and play no notes.
+- The guided controller setup: tried by the user; it works but wants a redesign (TODO C7). The user's own setup was
+  backed up first and put back afterwards, the MiniLab driver on.
+- Scaling: everything today ran at the user's Windows scale of 175 %, and the app, Ableton's VST3 and FL's CLAP showed
+  the panel whole and sharp, the CLAP's editor not clipped. The whole panel drawn by the app at 125 % and 150 % (its
+  MCP screenshot): every label, row and caption whole, nothing overlapping. Windows itself was not switched to 125 or
+  150 %: that is a Windows setting Claude may not change.
+
 ## The listening page, round 1 (2026-11-21): all 134 cards answered
 
 - Kept as they are: 117 bank presets, the TB-303's Acid line, its accent ("clear and right") and its slide ("glides
