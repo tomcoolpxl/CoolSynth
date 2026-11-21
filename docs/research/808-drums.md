@@ -101,3 +101,20 @@ the claves (held by the rails) 1.9 dB.
   (its readme), at an accent level it does not give, and drop no more than Fischer's.
 - No recording of an accented tom or rim shot at a known accent level is at hand to say which is right: the page's
   figures are "typical and variable", and the accent's top is the AC LEVEL knob each player sets.
+
+Recordings that document the accent (found 2026-11-22, with the user's help), none of them stating the AC LEVEL:
+
+- Samples From Mars' 808 From Mars ($39): the toms and congas at 11 tunings and the rim shot, claves and cowbell at
+  two accent levels (none, accent), clean through an API 1608 console, "group normalized per voice" (its guide), so a
+  voice's accented and unaccented hits keep their ratio.
+- silent5's RR-808 ($15): the bass drum at no, half and full accent, 8 round-robins each, accented toms and congas
+  named AC; normalisation not stated.
+- A free pack on audio.com ("Roland TR-808 Sample Pack", by Drum Machine): the three toms accented and not, labelled
+  by a "Decay" the toms do not have; nothing on how they were recorded.
+- Sonic Couture's Electro-Acoustic: every 808 voice normal and accented at line level, but the accent is a separate
+  layer whose level the instrument sets (its user guide); the setting is not given.
+- Audiorealism's own page: individual outs, 96 kHz; every hit accented (its readme), the level not given.
+
+Without the AC LEVEL a voice's accented-over-unaccented amplitude ratio still tests the model, through its pitch
+bend: the model ties the two together, so a real ratio with the bend the model predicts at that ratio would confirm
+it, and a ratio with less bend would not. 808 From Mars is the one source here that keeps that ratio.
