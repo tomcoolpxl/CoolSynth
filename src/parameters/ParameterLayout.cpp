@@ -136,7 +136,8 @@ namespace
         using namespace coolsynth::parameters::ids;
         const auto L = [layer](const char* layerAId) { return juce::String(arpOfLayer(layer, layerAId)); };
         const auto makeV2ParameterId = [](const juce::String& id) { return juce::ParameterID { id, parameterVersionHint }; };
-        const juce::String layerName = layer == 0 ? "Layer A" : "Layer B";
+        // "A Arp Rate", as "A Glide": a host's short label still tells the knobs apart (Bitwig showed "Layer A ...").
+        const juce::String layerName = layer == 0 ? "A" : "B";
         const auto makeBoolParameter = [](const juce::String& id, int hint, const juce::String& name, bool on)
         {
             return std::make_unique<juce::AudioParameterBool>(juce::ParameterID { id, hint }, name, on);
@@ -147,7 +148,8 @@ namespace
                                                                juce::NormalisableRange<float>(0.0f, 1.0f), value, percentAttributes());
         };
 
-        auto group = std::make_unique<juce::AudioProcessorParameterGroup>(layer == 0 ? "pA.arp" : "pB.arp", layerName + " Arpeggiator", " / ");
+        auto group = std::make_unique<juce::AudioProcessorParameterGroup>(layer == 0 ? "pA.arp" : "pB.arp",
+                                                                          "Layer " + layerName + " Arpeggiator", " / ");
         group->addChild(makeBoolParameter(L(arpEnabled), parameterVersionHint, layerName + " Arp", false));
         group->addChild(std::make_unique<juce::AudioParameterChoice>(
             makeV2ParameterId(L(arpRateDivision)),

@@ -4952,4 +4952,5 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
   its own); the README says to choose ours there.
 - Also seen in Bitwig: the CLAP's remote control pages (D216) follow the panel (Macros, then Arp when the panel
   showed Arp) and list every page. The Arp page's four knobs all read "Layer A ..." there, the names cut before the
-  part that tells them apart.
+  part that tells them apart. Options: shorten them, recommended and chosen; leave them. The arp's parameters are now
+  "A Arp Rate", "B Arp Gate" and so on, as "A Glide" is; their IDs stay, so projects and automation keep working.

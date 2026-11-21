@@ -46,8 +46,9 @@ C4. The FL script linking by itself (D246). Found in FL on 2026-11-21: the first
     Bitwig (D249): our own controller script takes the pads; with Bitwig's own MiniLab 3 script they launched and
     recorded clips. Not seen: which one Bitwig sets up by itself on a computer that never had its own.
 C5. The CLAP build with remote control pages: done on 2026-11-19 on JUCE 9; seen in Bitwig on 2026-11-21 (every
-    page listed, the open page following the panel). Left: the Arp page's knobs all read "Layer A ..." in Bitwig,
-    their names cut before the part that tells them apart.
+    page listed, the open page following the panel). The Arp page's knobs read "Layer A ..." there: the arp's
+    parameters are now named "A Arp Rate" and so on, like "A Glide" (the IDs unchanged; not looked at again in
+    Bitwig, the user's choice).
     - clap-juce-extensions in `external/`, pinned at 6bde108 (2026-11-06, with its JUCE 9 support); the CLAP is
       `build/CoolSynth_artefacts/<config>/CLAP/CoolSynth.clap`.
     - The pages (`src/plugin/RemoteControlPages`): one per panel page, its four knobs, then Glide, Brightness, Space
