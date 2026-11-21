@@ -84,3 +84,7 @@ tools/validators/
 # The 808 circuit model's references (D235): ngspice, Werner's thesis, Fischer's TR-808 samples; never shipped
 tools/ngspice/
 tools/references/
+
+# The listening pass's answers and pre-check results (tools/listening-pass), read back by Claude
+/tools/listening-pass/marks.json
+/tools/listening-pass/precheck.json

@@ -156,6 +156,29 @@ Found on the way: Supersaw's undertone is its sub, by design (on the listening p
 - The MiniLab's fader 4 now reaches the Master Boost (0 dB at four fifths, +12 dB at its top): the app's log has it
   up to +12 dB and back; the user heard it louder at the top and smooth through 0 dB.
 
+## The DAW round, by Claude driving the DAWs (2026-11-21, build of 2026-11-20 23:15)
+
+- Ableton Live 12 Intro 12.4.16, VST3: loaded from Plug-Ins on a MIDI track.
+  - Transport stopped, the tempo typed from 120 to 90: the info row went from 120 to 90 BPM.
+  - A right click on layer A opened its menu at the click, on the panel.
+  - Reese held: "1 of 1 voices", a mono sound.
+  - Live runs unauthorised here now, with saving and exporting off, so the bounces moved to FL Studio.
+- FL Studio 2025 (trial), CLAP:
+  - Transport stopped at 130, then 90 BPM: the info row followed both.
+  - The layer menu opened at the click.
+  - Satellite Ping (a random arp), two notes over four bars from the piano roll, bounced twice: identical,
+    0 of 2,337,300 samples differ.
+  - Steinway Grand bounced at once after loading it: its first note at 0.1 ms, identical to a bounce made once it
+    had loaded.
+- Not done, and why:
+  - New Patterns in a DAW, and the live emergency at a tiny buffer: one CoolSynth does not reach the 90 % load that
+    starts the emergency here; the test program covers both (D224, D228).
+  - The CLAP's knob pages: no host here shows them (Live has no CLAP, FL shows no remote pages); Bitwig and Reaper
+    are not installed.
+  - Which hosts call `IMidiMapping`: it needs a logging build, and Reaper above all.
+  - Windows scaling at 125 % and 150 %, the MiniLab, the channel-1 hint and the guided setup: they need the user's
+    hands or a Windows setting.
+
 ## The listening pass, priority sounds first (2026-11-20)
 
 Each sound set up and played by Claude through the MCP server; the user listened. All passed:
@@ -166,7 +189,9 @@ Each sound set up and played by Claude through the MCP server; the user listened
   from four keys, each playing its minor ninth chord; with one key, as it is levelled (the levelling tool: -19.5
   LUFS against -20), it is in line, and it stays.
 - Siren, the ladder at full resonance on its own: a clean tone, the same level low and high.
-- The full bank by ear is still to do (TODO 3).
+- The full bank by ear is still to do (TODO 3): from 2026-11-21 on the listening page, a card per preset, with the
+  TB-303, the Ladder questions and the six noise presets not judged yet; every card pre-checked through the MCP
+  server (all set up as asked, none silent or clipping once the sampled instruments load before the notes).
 
 ## Then the release (TODO J3)
 

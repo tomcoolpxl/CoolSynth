@@ -3,16 +3,22 @@ The listening pass: a page of checks for the user's ears, each with buttons that
 CoolSynth and play it, through the app's MCP server (Prefs > Claude (MCP), http://127.0.0.1:47613/mcp).
 
     python -I tools/listening-pass/server.py [--port 47620] [--items items.json] [--marks marks.json]
+    python -I tools/listening-pass/server.py --precheck [ids or groups] [--full]
 
-Serves page.html and the items on 127.0.0.1 only, and answers the page's buttons:
-    POST /setup {"id"}            the item's sound, built and shown on the panel's page its knobs are on
-    POST /play  {"id", "try"?}    the item's notes, or one of its tries (values set from the item's sound, then notes)
-    GET  /marks, POST /marks {"id", "v", "note"}   the user's marks, kept in a JSON file Claude reads back
+Serves page.html and the items (written by make_items.py) on 127.0.0.1 only, and answers the page's buttons:
+    POST /setup {"id"}                  the item's sound, built and shown on the panel's page its knobs are on
+    POST /play  {"id", "fresh"?, "try"?} the item's notes (built again first if fresh), or one of its tries (the
+                                        item's sound, the try's own set-up steps and values, then its notes or touch)
+    GET  /marks, POST /marks {"id", "v", "note"}   the user's answers, kept in a JSON file Claude reads back
+    GET  /precheck                      what --precheck found: each card's levels and anything that did not take
+A card's notes are plain steps ({"notes", "vel", "hold", "rel"}) or timed sequences ({"seq": [[note, at, length,
+velocity]], "rel", "controllers"}) played by the app's play tool in one go, so notes can overlap (slides).
 Standard library only.
 """
 import argparse
 import json
 import os
+import re
 import threading
 import urllib.error
 import urllib.request
@@ -70,30 +76,59 @@ def show(view):
         call("panel", {"control": "knob", "number": 5, "action": "turn", "steps": view["page"]})
 
 
-def build(items, item, values=None, view=None):
-    """The item's sound from scratch, then any extra values; returns what did not take."""
+def build(items, item, values=None, view=None, extra=None, shown=True):
+    """The item's sound from scratch, then a try's own set-up steps and values; returns what did not take."""
     problems = []
-    actions = (items["bases"][item["base"]] if item.get("base") else []) + item.get("setup", [])
+    actions = (items["bases"][item["base"]] if item.get("base") else []) + item.get("setup", []) + (extra or [])
     for name, arguments in actions:
         answer = call(name, arguments)
         if answer.startswith("ERROR"):
-            problems.append(name + ": " + answer)
+            problems.append(name + ": " + answer.strip())
+        elif name == "set_values":
+            problems += unmatched(arguments["values"], answer)
     if values:
-        answer = call("set_values", {"values": values})
-        for key, value in values.items():
-            if value not in answer:
-                problems.append(key + " asked " + value + ": " + answer.strip().replace("\n", "; "))
-    show(view or item.get("view", {}))
+        problems += unmatched(values, call("set_values", {"values": values}))
+    if shown:
+        show(view or item.get("view", {}))
     return problems
 
 
-def play(steps):
+def unmatched(values, answer):
+    """The values set_values did not set as asked (its answer gives each as it then is)."""
+    out = []
+    for key, value in values.items():
+        if (key + " = " + value) not in answer:
+            out.append(key + " asked " + value + ": " + answer.strip().replace("\n", "; "))
+    return out
+
+
+def play(steps, velocity=None):
+    """Plain steps (notes held together) or timed sequences (notes at their own times, overlapping or not)."""
     heard = []
     for step in steps:
-        answer = call("play", {"notes": step["notes"], "velocity": step.get("vel", 100),
-                               "seconds": step.get("hold", 1.0), "release": step.get("rel", 0.0)})
-        heard.append(answer.strip())
+        if "seq" in step:
+            arguments = {"sequence": [{"note": n, "at": at, "length": length, "velocity": velocity or vel}
+                                      for n, at, length, vel in step["seq"]],
+                         "release": step.get("rel", 0.5)}
+            if step.get("controllers"):
+                arguments["controllers"] = step["controllers"]
+        else:
+            arguments = {"notes": step["notes"], "velocity": velocity or step.get("vel", 100),
+                         "seconds": step.get("hold", 1.0), "release": step.get("rel", 0.0)}
+        heard.append(call("play", arguments).strip())
     return heard
+
+
+def run_try(items, item, index):
+    """One of an item's tries: its own sound (or another preset) and its own notes or touch."""
+    attempt = item["tries"][index]
+    if attempt.get("preset"):  # another sound to compare with
+        call("load_preset", {"name": attempt["preset"]})
+        show(attempt.get("view", {}))
+        problems = []
+    else:
+        problems = build(items, item, attempt.get("values"), attempt.get("view"), attempt.get("setup"))
+    return play(attempt.get("play", item["play"]), attempt.get("vel")), problems
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -121,6 +156,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, load_items())
         if self.path == "/marks":
             return self.reply(200, read_marks())
+        if self.path == "/precheck":
+            return self.reply(200, read_json(ARGS.precheck))
         if self.path == "/app":
             try:
                 with LOCK:
@@ -148,16 +185,13 @@ class Handler(BaseHTTPRequestHandler):
                 if self.path == "/play":
                     index = request.get("try")
                     if index is None:
+                        if request.get("fresh"):  # set up again first: a try may have left the sound changed
+                            problems = build(items, item)
+                        else:
+                            problems = []
                         heard = play(item["play"])
-                        return self.reply(200, {"ok": True, "heard": heard, "problems": []})
-                    attempt = item["tries"][index]
-                    if attempt.get("preset"):  # another sound to compare with
-                        call("load_preset", {"name": attempt["preset"]})
-                        show(attempt.get("view", {}))
-                        problems = []
-                    else:
-                        problems = build(items, item, attempt.get("values"), attempt.get("view"))
-                    heard = play(attempt.get("play", item["play"]))
+                        return self.reply(200, {"ok": True, "heard": heard, "problems": problems})
+                    heard, problems = run_try(items, item, index)
                     return self.reply(200, {"ok": True, "heard": heard, "problems": problems})
             self.reply(404, {"error": "not found"})
         except AppNotAnswering:
@@ -167,11 +201,65 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def read_marks():
+    return read_json(ARGS.marks)
+
+
+def read_json(path):
     try:
-        with open(ARGS.marks, encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, ValueError):
         return {}
+
+
+LEVEL = re.compile(r"loudest while held (\S+)(?: dBFS)?, after letting go (\S+)(?: dBFS)?, at most (\d+) voices")
+
+
+def verdict(heard):
+    """The levels of a play's answers, and what looks wrong: silence, a peak near full scale."""
+    flags, levels = [], []
+    for line in heard:
+        m = LEVEL.search(line)
+        if not m:
+            flags.append("no answer: " + line[:120])
+            continue
+        held = m.group(1)
+        levels.append(held + " dBFS, " + m.group(3) + " voices")
+        if held == "silence":
+            flags.append("silent")
+        elif float(held) > -1.0:
+            flags.append("peak " + held + " dBFS")
+    return "; ".join(levels), flags
+
+
+def precheck(only):
+    """Every card set up and played through the app, each try set up (its values checked) and, with --full, played."""
+    items = load_items()
+    results = read_json(ARGS.precheck)
+    for item in items["items"]:
+        if only and item["id"] not in only and item["group"] not in only:
+            continue
+        entry = {"problems": [], "tries": []}
+        with LOCK:
+            entry["problems"] += build(items, item, shown=False)
+            if item.get("play"):
+                entry["levels"], flags = verdict(play(item["play"]))
+                entry["problems"] += flags
+            for index, attempt in enumerate(item.get("tries", [])):
+                if ARGS.full:
+                    heard, problems = run_try(items, item, index)
+                    levels, flags = verdict(heard)
+                    entry["tries"].append({"label": attempt["label"], "levels": levels})
+                    problems += flags
+                elif attempt.get("preset"):
+                    problems = [] if not call("load_preset", {"name": attempt["preset"]}).startswith("ERROR") else ["no preset"]
+                else:
+                    problems = build(items, item, attempt.get("values"), attempt.get("view"), attempt.get("setup"), shown=False)
+                entry["problems"] += [attempt["label"] + ": " + p for p in problems]
+        results[item["id"]] = entry
+        with open(ARGS.precheck, "w", encoding="utf-8") as f:
+            json.dump(results, f, indent=1, ensure_ascii=False)
+        print(item["id"], item["title"], "|", entry.get("levels", ""), "|", "; ".join(entry["problems"]) or "ok", flush=True)
 
 
 def main():
@@ -180,10 +268,18 @@ def main():
     parser.add_argument("--port", type=int, default=47620)
     parser.add_argument("--items", default=os.path.join(HERE, "items.json"))
     parser.add_argument("--marks", default=os.path.join(HERE, "marks.json"))
+    parser.add_argument("--precheck-file", dest="precheck", default=os.path.join(HERE, "precheck.json"))
+    parser.add_argument("--precheck", dest="run_precheck", nargs="*", default=None,
+                        help="Pre-check the cards (all, or these ids and groups) through the app, then exit")
+    parser.add_argument("--full", action="store_true", help="With --precheck: play every try too")
     ARGS = parser.parse_args()
+    if ARGS.run_precheck is not None:
+        precheck(set(ARGS.run_precheck))
+        return
     server = ThreadingHTTPServer(("127.0.0.1", ARGS.port), Handler)
     print("Listening pass on http://127.0.0.1:%d" % ARGS.port, flush=True)
     server.serve_forever()
 
 
-main()
+if __name__ == "__main__":
+    main()

@@ -65,9 +65,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 
 ## The user's ear and hands
 
-3. A listening pass over the whole bank: levels, the glow and click-to-load, sounds ringing on after a change,
-   the engine pills, Preferences, the velocity curves, Brightness and Space, every preset's macros (D177), on the
-   MiniLab too. Retune what the ear flags, then rerun the loudness tool, which is not in the default build:
+3. A listening pass over the whole bank, a card per preset on the page in `tools/listening-pass` (2026-11-21):
+   every preset and its macros (D177) by ear. Mine, through the MCP server and in DAWs: levels, the glow and
+   click-to-load, sounds ringing on after a change, the engine pills, Preferences. On the hands list: the velocity
+   curves, Brightness and Space on the MiniLab. Retune what the ear flags, then rerun the loudness tool, which is not in the default build:
    `cmake --build build --config Debug --target CoolSynthPresetNormalizer`, then from `build` run
    `CoolSynthPresetNormalizer_artefacts/Debug/CoolSynthPresetNormalizer.exe --apply`.
 4. The user's verdicts on the sampled instruments (the audition page, `audition/index.html`; start the
@@ -77,7 +78,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 
 5. Next from the research on the user's reference artists (`docs/research/sound-references.md`): the Pitch effect's
    Tune mode and formant control. The stutter effect is built (D220); its three draft presets in Night Bus (Cut-Up
-   Chords, Wheel Stutter, Glitch Pad) wait for the user's ear, with the listening pass (item 3).
+   Chords, Wheel Stutter, Glitch Pad) passed the user's ear on 2026-11-20.
 6. The Museum: the hoover's source is found (D223): the Alpha Juno's factory tone "What the", decoded from Roland's
    bulk dump with the manual's table (`resources/museum-candidates/sources/alpha-juno-what-the.txt`). Next: the
    candidate, converted from these numbers (D104), then the user's side-by-side. The Juno-106 patches still have no
@@ -85,8 +86,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 7. The wine glasses as a source for the Grain generator.
 18. The added noise (D221, `docs/research/noise-modelling.md`): built on 2026-11-19 as the user chose (a steady level
     with a mute in silence, tape-shaped hiss before Bandwidth, the crackle model, a seed per slot, modulation noise,
-    Brown). Left: the user's ear on the presets with hiss or crackle (Bedroom, Basement, Night Bus), with the
-    listening pass (item 3).
+    Brown). Vinyl Choir, Concrete Pad and Pirate Radio passed the user's ear on 2026-11-20; the other six with hiss
+    or crackle are on the listening page (item 3).
 20. Chip sounds and chiptune. The Chip generator is built (D230, D231), Arcade revoiced with it, and the SID's
     filter is an SVF character (D233). Left: the user's ears on all of it (each chip's waves, the drums and
     arpeggios, the named waves, which are my own recipes, the 6581 and 8580 filters, how hard the 6581 distorts).
@@ -163,13 +164,16 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     mw909 (D240): Q8 a PNP switch and R495 give the real click, the triangle fitted near 4.9 V the real pitch and
     harmonics. The 909 made cheaper, then priced: postponed by the user until after the whole 808 (D241), both
     now paused (D243); its 33.3 % price stands. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
-    though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock. Left: the
-    user's ears on both circuits, Succession 808 and Modern.
+    though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock. The 808
+    against two real units (`docs/research/kick-808-recordings.md`, 2026-11-20): the attack dull and its click 3 to
+    6 dB weak, DECAY 0 out of reach, the sigh settling too fast. Left: those fixes, and Punch Time's glide past the
+    stock 6 ms (the user's choice; it beeps now); whether a model is right is measured, not asked of the user.
 31. With the real interface (D227, the user's choice): accessibility for what the screens draw (list rows, slots,
     page tabs, cards, the layer screen's chain blocks), so Windows Narrator and UI Automation read and work the whole
     panel, as the knobs, faders, pads and buttons already are. Check with `tools/uia-check.ps1`.
 32. The TB-303 (D241, D242): built as a generator, rewritten from Open303 (the user's choice over our own circuit),
-    accent on at velocity 100, slide by legato notes at the 303's 22 ms; the Acid preset on it. Checked against
+    accent on at velocity 100, slide by legato notes at the 303's 22 ms; the Acid preset on it (its hidden default
+    Ladder taken out on 2026-11-21, so the 303 plays alone). Checked against
     published figures: Stinchcombe's filter response within 0.1 dB, the slide's RC, the square's duty, no
     self-oscillation. Left: the user's ears; a check against a real 303's recordings when an owner's turn up;
     whether the 303's own step sequencer (accent and slide per step) comes into the layer's.

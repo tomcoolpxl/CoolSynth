@@ -4849,3 +4849,10 @@ Left: the user's ears; a check against a real 303's recordings when an owner's t
 - The MIT notice for the shipped app (options: a third-party notices file, recommended and chosen; appended to LICENSE; left in the source and README only): Open303's licence asks that its notice go with every copy, binaries included. `THIRD_PARTY_NOTICES.txt` at the repository's root holds it, with room for later ones; the installer copies it beside `LICENSE.txt`; the README points to it.
 - The whole 808 (TODO 33) and the 909's cost work (TODO 30): paused by the user. The 808's fidelity and order, asked as it was to begin, go to the user again when it resumes.
 
+
+## D244. The listening page for every ear item, and the DAW round driven by Claude (2026-11-21)
+
+- The stopped session's leftovers (options: taken over here, recommended and chosen; left for that session; dropped): Ableton closed without saving, the build's VST3 and CLAP installed with one admin copy, the stopped-host tempo test committed, the tempo checked in a real Ableton and FL Studio.
+- The listening (options: one page with every ear item, recommended and chosen; one page per topic; the bank only): `tools/listening-pass` grows a card per bank preset (`make_items.py`), the hand-written cards in `special.json`, a pre-check of every card through the MCP server, answer buttons per card and keys. Only what needs ears and has a reference goes on it: a before and after, or a plain question; the kicks are measured against real recordings instead.
+- The DAW round (options: every installed host, the hands-only steps listed at the end, recommended and chosen; Ableton only; FL only): Ableton Live 12 Intro and FL Studio 2025, the only DAWs installed; results in `docs/test-pass.md`.
+- Found on the way and fixed: Acid had a hidden Ladder after the 303 (its bank entry named no P1, and a missing P1 is a Ladder), now `p1 = Off` and levelled again (master 4.5 to 2.5 dB); the MCP `load_preset` waits for a sampled instrument to load, so notes played next are heard; the MCP `play` takes a timed `sequence`, so lines can overlap and slide.

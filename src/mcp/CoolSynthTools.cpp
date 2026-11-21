@@ -252,7 +252,16 @@ namespace coolsynth::mcp
                               if (index < 0 || index >= coolsynth::presets::getFactoryPresetCount())
                                   return textResult("No such preset.", true);
                               synth.setCurrentProgram(index);
-                              return textResult("Loaded " + juce::String(index) + ": " + coolsynth::presets::getFactoryPreset(index).name);
+                              // A sampled instrument is read in after the preset loads, and the audio thread raises the flag
+                              // a block later: wait for it, so notes played next are heard (at most 20 s).
+                              juce::Thread::sleep(80);
+                              const auto started = juce::Time::getMillisecondCounter();
+                              while (synth.isLoadingInstrument() && juce::Time::getMillisecondCounter() - started < 20000)
+                                  juce::Thread::sleep(20);
+                              const auto waited = juce::Time::getMillisecondCounter() - started;
+                              return textResult("Loaded " + juce::String(index) + ": " + coolsynth::presets::getFactoryPreset(index).name
+                                                + (waited >= 40 ? " (its samples took " + juce::String(waited / 1000.0, 1) + " s to load)" : juce::String())
+                                                + (synth.isLoadingInstrument() ? "; still loading" : juce::String()));
                           } });
 
         tools.push_back({ "list_files",
@@ -286,25 +295,54 @@ namespace coolsynth::mcp
                           "Plays notes (MIDI numbers, 60 is C4 here, the MiniLab's leftmost key at its normal octave is 48 = C3) "
                           "as if keys were held for a time, then let go, and tells the loudest output and the most voices meanwhile. "
                           "Controllers can move while the keys are held (the mod wheel is controller 1), and a trace gives the "
-                          "loudest level of every 50 ms, to see when something starts or stops.",
+                          "loudest level of every 50 ms, to see when something starts or stops. Instead of notes, a sequence "
+                          "plays keys at their own times, overlapping or not (a legato line, an accented 303 line).",
                           objectSchema({ { "notes", typeSchema("array", "MIDI note numbers, e.g. [48, 52, 55]") },
                                          { "velocity", typeSchema("integer", "1 to 127, 100 by default") },
                                          { "seconds", typeSchema("number", "How long the keys are held, 1 by default, at most 10") },
                                          { "release", typeSchema("number", "Seconds listened to after letting go, 0.5 by default, at most 10") },
+                                         { "sequence", typeSchema("array", "Instead of notes: [{\"note\": 36, \"at\": 0.0, \"length\": 0.1, \"velocity\": 120}], "
+                                                                              "at and length in seconds, velocity 100 by default; the last key up at most 20 s in") },
                                          { "controllers", typeSchema("array", "Moves while held: [{\"at\": 1.0, \"number\": 1, \"value\": 100}], "
                                                                                  "at in seconds from the keys going down, value 0 to 127") },
-                                         { "trace", typeSchema("boolean", "Also the loudest level of every 50 ms, in dBFS") } },
-                                       { "notes" }),
+                                         { "trace", typeSchema("boolean", "Also the loudest level of every 50 ms, in dBFS") } }),
                           [&synth, runner, sendMidi](const juce::var& args)
                           {
+                              // Every key as a press and a release in time; plain notes go down together and up at `seconds`.
+                              struct Key { double at; int note; float velocity; bool down; };
+                              std::vector<Key> events;
                               juce::Array<int> notes;
-                              if (const auto* list = args["notes"].getArray())
+                              const float velocity = juce::jlimit(1, 127, args.hasProperty("velocity") ? static_cast<int>(args["velocity"]) : 100) / 127.0f;
+                              double held = juce::jlimit(0.01, 10.0, args.hasProperty("seconds") ? static_cast<double>(args["seconds"]) : 1.0);
+                              if (const auto* steps = args["sequence"].getArray())
+                              {
+                                  held = 0.0;
+                                  for (const auto& step : *steps)
+                                  {
+                                      const int note = juce::jlimit(0, 127, static_cast<int>(step["note"]));
+                                      const double at = juce::jlimit(0.0, 20.0, static_cast<double>(step["at"]));
+                                      const double length = juce::jlimit(0.005, 20.0 - at, step.hasProperty("length") ? static_cast<double>(step["length"]) : 0.25);
+                                      const float v = juce::jlimit(1, 127, step.hasProperty("velocity") ? static_cast<int>(step["velocity"]) : 100) / 127.0f;
+                                      events.push_back({ at, note, v, true });
+                                      events.push_back({ at + length, note, 0.5f, false });
+                                      held = std::max(held, at + length);
+                                      notes.addIfNotAlreadyThere(note);
+                                  }
+                              }
+                              else if (const auto* list = args["notes"].getArray())
+                              {
                                   for (const auto& n : *list)
                                       notes.add(juce::jlimit(0, 127, static_cast<int>(n)));
+                                  for (const int n : notes)
+                                      events.push_back({ 0.0, n, velocity, true });
+                                  for (const int n : notes)
+                                      events.push_back({ held, n, 0.5f, false });
+                              }
                               if (notes.isEmpty())
                                   return textResult("No notes given.", true);
-                              const float velocity = juce::jlimit(1, 127, args.hasProperty("velocity") ? static_cast<int>(args["velocity"]) : 100) / 127.0f;
-                              const double held = juce::jlimit(0.01, 10.0, args.hasProperty("seconds") ? static_cast<double>(args["seconds"]) : 1.0);
+                              // In time order; at the same moment a release before a press, so a repeated key strikes again.
+                              std::stable_sort(events.begin(), events.end(), [](const Key& a, const Key& b)
+                                               { return a.at < b.at || (a.at == b.at && ! a.down && b.down); });
                               const double after = juce::jlimit(0.0, 10.0, args.hasProperty("release") ? static_cast<double>(args["release"]) : 0.5);
                               auto& keys = synth.getKeyboardState();
                               const auto onMessageThread = [&runner](std::function<void()> job) { if (runner) runner(std::move(job)); else job(); };
@@ -325,13 +363,25 @@ namespace coolsynth::mcp
                               double nextWindow = 0.05;
                               std::size_t nextMove = 0;
                               const auto db = [](float g) { return g > 0.0f ? juce::String(juce::Decibels::gainToDecibels(g), 1) + " dBFS" : juce::String("silence"); };
-                              // Keys down, then in 10 ms steps: due controller moves, each 50 ms window's loudest; keys up at `held`.
+                              // In 1 ms steps: due keys and controller moves, each 50 ms window's loudest; the last key up at `held`.
                               const double started = juce::Time::getMillisecondCounterHiRes() * 0.001;
-                              onMessageThread([notes, velocity, &keys] { for (const int n : notes) keys.noteOn(1, n, velocity); });
+                              std::size_t nextKey = 0;
                               bool keysUp = false;
                               for (;;)
                               {
                                   const double now = juce::Time::getMillisecondCounterHiRes() * 0.001 - started;
+                                  if (nextKey < events.size() && events[nextKey].at <= now)
+                                  {
+                                      std::vector<Key> due;
+                                      while (nextKey < events.size() && events[nextKey].at <= now)
+                                          due.push_back(events[nextKey++]);
+                                      onMessageThread([due, &keys]
+                                                      {
+                                                          for (const auto& k : due)
+                                                              if (k.down) keys.noteOn(1, k.note, k.velocity);
+                                                              else keys.noteOff(1, k.note, k.velocity);
+                                                      });
+                                  }
                                   while (nextMove < moves.size() && moves[nextMove].at <= now)
                                   {
                                       sendMidi(juce::MidiMessage::controllerEvent(1, moves[nextMove].number, moves[nextMove].value)
@@ -347,14 +397,11 @@ namespace coolsynth::mcp
                                           traceLines.add(juce::String(nextWindow, 2) + " s " + db(window));
                                       nextWindow += 0.05;
                                   }
-                                  if (! keysUp && now >= held)
-                                  {
+                                  if (! keysUp && nextKey >= events.size())
                                       keysUp = true;
-                                      onMessageThread([notes, &keys] { for (const int n : notes) keys.noteOff(1, n, 0.5f); });
-                                  }
-                                  if (now >= held + after)
+                                  if (keysUp && now >= held + after)
                                       break;
-                                  juce::Thread::sleep(10);
+                                  juce::Thread::sleep(1);
                               }
                               (void) synth.takeLoudest();
                               const int voices = synth.takeMostVoices();

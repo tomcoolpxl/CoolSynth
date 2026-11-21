@@ -28,8 +28,11 @@ the current state.
   for this project with `claude mcp add --transport http coolsynth http://127.0.0.1:47613/mcp`. Use it to read and set
   the running app while guiding a test, instead of asking the user to turn knobs. `read_screen` gives the panel as
   text and `click` works it by name (D227); check anything visible that way, and ask the user only for ears and hands.
-  For a listening pass, `tools/listening-pass` (its items in `items.json`) serves a local page whose buttons set
-  each sound up through that server, play it and name the knobs to turn; the user's marks go to a JSON file.
+  For a listening pass, `tools/listening-pass` serves a local page whose buttons set each sound up through that
+  server and play it, a reference and its before-and-after tries; the user's answers go to `marks.json` there.
+  `make_items.py` writes `items.json` from `special.json` and a card per bank preset; `server.py --precheck` plays
+  every card first. Only what needs ears and has a reference goes on it (DAW and display checks are Claude's).
+  `play` takes a `sequence` of timed, overlapping keys for lines with slides.
 - Output is deterministic (D224): every random source restarts from its seed at a reset and when the host's
   transport starts, a bounce waits for sounds to load, and a voice cap by measured cost (`src/synth/v3/VoiceCost.h`)
   keeps a sound within half a block; `tests/DeterminismTests.cpp` holds every preset to it bit for bit.

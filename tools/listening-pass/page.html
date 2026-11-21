@@ -87,6 +87,13 @@
   button:focus-visible, textarea:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
   .how { background: var(--screen); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; display: grid; gap: 4px; font-size: .93rem; }
   .how p { margin: 0; }
+  .toc { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+  .toc a { font: 500 .8rem var(--font-text); color: var(--muted); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px; }
+  .toc a:hover { color: var(--ink); border-color: var(--muted); }
+  .toc a b { color: var(--ink); font-weight: 600; }
+  .item[data-current="true"] { box-shadow: 0 0 0 2px var(--teal); }
+  .pre[data-flag="true"] b { color: var(--issue); }
+  kbd { font: .78rem var(--font-mono); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 4px; color: var(--ink); }
 </style>
 </head>
 <body>
@@ -94,10 +101,11 @@
   <h1 id="title">CoolSynth Listening Pass</h1>
   <p class="sub" id="intro"></p>
   <div class="how">
-    <p><b>Set up</b> builds the sound in CoolSynth and brings the right knob page onto the panel. <b>▶ Play</b>: I play it. The small buttons each set one thing and play it again.</p>
-    <p>To turn a knob yourself, the card says where: the pad, the page (knob 5 turns the pages), and the knob's number, as on the panel and the MiniLab.</p>
-    <p>Then mark it. Marks and notes are saved to a file I read back when you say you're done.</p>
+    <p><b>▶ Play</b> builds the sound fresh in CoolSynth and plays it: that is the reference. Each <b>try</b> changes one thing and plays the same notes: the before and after.</p>
+    <p>Then answer with a button, and type a note only if you want to. Everything is saved at once to a file I read back.</p>
+    <p>Keys: <kbd>Space</kbd> play the current card, <kbd>1</kbd>–<kbd>9</kbd> its tries, <kbd>J</kbd> / <kbd>K</kbd> next and previous card, <kbd>Shift</kbd>+<kbd>1</kbd>–<kbd>4</kbd> the answers. To play it yourself, <b>Set up</b> leaves the sound on the panel; the card says which pad, page and knob.</p>
   </div>
+  <nav class="toc" id="toc" aria-label="Groups"></nav>
   <div class="status">
     <span class="app" id="app" data-ok="">checking CoolSynth…</span>
     <div class="bar" aria-hidden="true"><span id="bar"></span></div>
@@ -116,8 +124,16 @@
   const data = await (await fetch("/items")).json();
   let marks = {};
   try { marks = await (await fetch("/marks")).json(); } catch (e) {}
+  let checks = {};
+  try { checks = await (await fetch("/precheck")).json(); } catch (e) {}
   let filter = "all";
   let busy = false;
+  let current = null;
+  const DEFAULT_CHOICES = ["✓ Keep as it is", "✗ Something's off"];
+  const answersOf = it => it.choices || DEFAULT_CHOICES;
+  // A mark's value: the answer's text, or "skip"; "ok" and "issue" from the first pass still read as before.
+  const kindOf = (it, v) => !v ? "" : v === "skip" ? "skip" : v === "ok" ? "ok" : v === "issue" ? "issue"
+    : (!it.choices && v === DEFAULT_CHOICES[1]) || /off|too |drop|wrong|can't|jumps|harsh|change/i.test(v) ? "issue" : "ok";
 
   document.getElementById("intro").textContent = data.intro;
 
@@ -164,11 +180,33 @@
     setBusy(false);
   }
 
+  function setCurrent(c) {
+    if (current) current.dataset.current = "false";
+    current = c;
+    if (c) c.dataset.current = "true";
+  }
+
+  function playMain(it, c) {
+    setCurrent(c);
+    for (const x of c.querySelectorAll(".tries button")) x.dataset.last = "false";
+    return run(it, c, "/play", { id: it.id, fresh: true }, "Playing");
+  }
+
+  function playTry(it, c, i) {
+    setCurrent(c);
+    const buttons = c.querySelectorAll(".tries button");
+    if (!buttons[i]) return;
+    for (const x of buttons) x.dataset.last = "false";
+    buttons[i].dataset.last = "true";
+    return run(it, c, "/play", { id: it.id, try: i }, it.tries[i].label);
+  }
+
   function card(it) {
     const s = marks[it.id] || { v: "", note: "" };
     const c = el("article", "item");
     c.id = "item-" + it.id;
-    c.dataset.state = s.v || "";
+    c.dataset.state = kindOf(it, s.v);
+    c.addEventListener("click", () => setCurrent(c));
     const head = el("div", "head");
     head.appendChild(el("span", "tag", it.id));
     head.appendChild(el("h3", null, it.title));
@@ -176,30 +214,23 @@
 
     if (it.play && it.play.length) {
       const drive = el("div", "drive");
-      const setup = el("button", null, "Set up");
-      setup.type = "button";
-      setup.addEventListener("click", () => run(it, c, "/setup", { id: it.id }, "Setting up"));
       const play = el("button", "play", "▶ Play");
       play.type = "button";
-      play.addEventListener("click", () => run(it, c, "/play", { id: it.id }, "Playing"));
-      const both = el("button", null, "Set up and play");
-      both.type = "button";
-      both.addEventListener("click", async () => { await run(it, c, "/setup", { id: it.id }, "Setting up"); await run(it, c, "/play", { id: it.id }, "Playing"); });
-      drive.append(setup, play, both);
+      play.addEventListener("click", e => { e.stopPropagation(); playMain(it, c); });
+      const setup = el("button", null, "Set up");
+      setup.type = "button";
+      setup.addEventListener("click", e => { e.stopPropagation(); setCurrent(c); run(it, c, "/setup", { id: it.id }, "Setting up"); });
+      drive.append(play, setup);
       c.appendChild(drive);
     }
     if (it.tries && it.tries.length) {
       const tw = el("div");
-      tw.appendChild(el("div", "label", "Try (sets it from the start, then plays)"));
+      tw.appendChild(el("div", "label", "Tries: each against ▶ Play"));
       const tries = el("div", "tries");
       it.tries.forEach((t, i) => {
-        const b = el("button", null, "▶ " + t.label);
+        const b = el("button", null, (i < 9 ? (i + 1) + " ▶ " : "▶ ") + t.label);
         b.type = "button";
-        b.addEventListener("click", () => {
-          for (const x of tries.children) x.dataset.last = "false";
-          b.dataset.last = "true";
-          run(it, c, "/play", { id: it.id, try: i }, t.label);
-        });
+        b.addEventListener("click", e => { e.stopPropagation(); playTry(it, c, i); });
         tries.appendChild(b);
       });
       tw.appendChild(tries);
@@ -233,12 +264,14 @@
     c.appendChild(el("div", "result", ""));
 
     const v = el("div", "verdict");
-    for (const [key, label] of [["ok", "✓ Sounds right"], ["issue", "✗ Something's off"], ["skip", "Skip"]]) {
+    for (const label of answersOf(it).concat(["Skip"])) {
+      const key = label === "Skip" ? "skip" : label;
       const b = el("button", null, label);
       b.type = "button";
-      b.dataset.v = key;
+      b.dataset.v = kindOf(it, key);
+      b.dataset.answer = key;
       b.setAttribute("aria-pressed", s.v === key ? "true" : "false");
-      b.addEventListener("click", () => mark(it.id, (marks[it.id] || {}).v === key ? "" : key, null));
+      b.addEventListener("click", e => { e.stopPropagation(); setCurrent(c); mark(it.id, (marks[it.id] || {}).v === key ? "" : key, null); });
       v.appendChild(b);
     }
     const ta = el("textarea");
@@ -252,7 +285,15 @@
     c.appendChild(v);
 
     const pre = el("div", "pre");
-    pre.append(el("b", null, "Pre-checked through MCP: "), it.pre);
+    const check = checks[it.id];
+    if (check) {
+      const flagged = check.problems && check.problems.length;
+      pre.dataset.flag = flagged ? "true" : "false";
+      pre.append(el("b", null, flagged ? "Pre-check found: " : "Pre-checked through MCP: "),
+                 (check.levels ? "▶ Play peaks " + check.levels + ". " : "") + (flagged ? check.problems.join("; ") : "Every try set up as asked."));
+    } else {
+      pre.append(el("b", null, "Pre-check: "), it.pre || "not run yet.");
+    }
     c.appendChild(pre);
     return c;
   }
@@ -263,8 +304,9 @@
     if (note !== null) { if (cur.note === note && v === null) return; cur.note = note; }
     marks[id] = cur;
     const c = document.getElementById("item-" + id);
-    c.dataset.state = cur.v || "";
-    for (const b of c.querySelectorAll(".verdict button")) b.setAttribute("aria-pressed", b.dataset.v === cur.v ? "true" : "false");
+    const it = data.items.find(i => i.id === id);
+    c.dataset.state = kindOf(it, cur.v);
+    for (const b of c.querySelectorAll(".verdict button")) b.setAttribute("aria-pressed", b.dataset.answer === cur.v ? "true" : "false");
     counts();
     applyFilter();
     try { await post("/marks", { id, v: cur.v, note: cur.note }); } catch (e) {}
@@ -272,7 +314,15 @@
 
   function counts() {
     let ok = 0, issue = 0, skip = 0;
-    for (const it of data.items) { const v = (marks[it.id] || {}).v; if (v === "ok") ok++; else if (v === "issue") issue++; else if (v === "skip") skip++; }
+    for (const it of data.items) { const k = kindOf(it, (marks[it.id] || {}).v); if (k === "ok") ok++; else if (k === "issue") issue++; else if (k === "skip") skip++; }
+    for (const g of data.groups) {
+      const link = document.getElementById("toc-" + g.key);
+      if (!link) continue;
+      const list = data.items.filter(i => i.group === g.key);
+      const done = list.filter(i => (marks[i.id] || {}).v).length;
+      link.textContent = "";
+      link.append(g.title + " ", el("b", null, done + "/" + list.length));
+    }
     const done = ok + issue + skip, n = data.items.length;
     document.getElementById("bar").style.width = (100 * done / n) + "%";
     const box = document.getElementById("counts");
@@ -286,15 +336,22 @@
     for (const it of data.items) {
       const c = document.getElementById("item-" + it.id);
       const v = (marks[it.id] || {}).v;
-      c.hidden = filter === "todo" ? !!v : filter === "issue" ? v !== "issue" : false;
+      c.hidden = filter === "todo" ? !!v : filter === "issue" ? kindOf(it, v) !== "issue" : false;
     }
     for (const b of document.querySelectorAll(".filters button")) b.setAttribute("aria-pressed", b.dataset.filter === filter ? "true" : "false");
   }
   for (const b of document.querySelectorAll(".filters button")) b.addEventListener("click", () => { filter = b.dataset.filter; applyFilter(); });
 
   const main = document.getElementById("groups");
+  const toc = document.getElementById("toc");
   for (const g of data.groups) {
+    if (!data.items.some(i => i.group === g.key)) continue;
+    const link = el("a");
+    link.href = "#group-" + g.key;
+    link.id = "toc-" + g.key;
+    toc.appendChild(link);
     const sec = el("section");
+    sec.id = "group-" + g.key;
     sec.appendChild(el("h2", null, g.title));
     sec.appendChild(el("p", null, g.intro));
     const list = el("div", "items");
@@ -304,6 +361,35 @@
   }
   counts();
   applyFilter();
+
+  // The keys: the current card is the one last clicked, played or moved to.
+  const visible = () => [...document.querySelectorAll(".item")].filter(c => !c.hidden);
+  function move(step) {
+    const list = visible();
+    if (!list.length) return;
+    const at = current ? list.indexOf(current) : -1;
+    const next = list[Math.max(0, Math.min(list.length - 1, at + step))];
+    setCurrent(next);
+    next.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+  document.addEventListener("keydown", e => {
+    if (e.target.closest && e.target.closest("textarea, input")) return;
+    if (e.ctrlKey || e.altKey || e.metaKey) return;
+    const it = current ? data.items.find(i => "item-" + i.id === current.id) : null;
+    if (e.key === "j" || e.key === "J") { e.preventDefault(); move(1); return; }
+    if (e.key === "k" || e.key === "K") { e.preventDefault(); move(-1); return; }
+    if (!it) return;
+    if (e.key === " ") { e.preventDefault(); if (!busy && it.play && it.play.length) playMain(it, current); return; }
+    const digit = e.code && e.code.startsWith("Digit") ? parseInt(e.code.slice(5), 10) : NaN;
+    if (!(digit >= 1 && digit <= 9)) return;
+    e.preventDefault();
+    if (e.shiftKey) {
+      const answers = answersOf(it);
+      if (digit <= answers.length) mark(it.id, (marks[it.id] || {}).v === answers[digit - 1] ? "" : answers[digit - 1], null);
+    } else if (!busy && it.tries && digit <= it.tries.length) {
+      playTry(it, current, digit - 1);
+    }
+  });
 
   async function appStatus() {
     if (busy) return;

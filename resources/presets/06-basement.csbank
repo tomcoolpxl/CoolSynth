@@ -7,12 +7,13 @@ room = Basement
 # down. Notes at velocity 100 or more are accented (louder, the filter swept higher); overlapping notes
 # slide, at the 303's 22 ms.
 g1 = TB-303 cutoff=520 res=0.85 envmod=0.6 decay=380 accent=0.8 oct=-1 level=0.9
+p1 = Off
 env1 = attack=0 decay=200 sustain=1 release=8
 voice = glide=0
 play = mode=legato
 i1 = Drive amount=0.3 mix=0.7
 mix = level=-10.5
-master = 4.5
+master = 2.5
 # Macros: Cutoff, Squelch (resonance and env mod), Decay, Wobble (an LFO on the cutoff)
 macros = names=Cutoff,Squelch,Decay,Wobble
 mod = src=macro1 dst=g1.cutoff amount=0.3
