@@ -235,8 +235,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     2.8 dB over page 14 settled by the accent's top. The stock 808 Kit in Studio 1982: done (D260), every knob at
     12 o'clock and every Level full as page 14 measures, its macros Tone, Tune, Decay and Accent starting halfway.
     Found there: the whole kit's worst block 92 % of real time at 48 kHz in the Debug build during a dense fill (35 %
-    on average), so live a fill may shed its quietest drum: the 808 kits' strike blocks to be made cheaper. Under
-    way (D262): the solver's analysis on plain pointers, the same bits and a sixth of the time.
+    on average), so live a fill may shed its quietest drum: the 808 kits' strike blocks to be made cheaper. Done
+    (D262): the solver's analysis on plain pointers (the same bits, a sixth of the time) and the hats and cymbal on
+    their tails 0.25 ms after the trigger, as the user chose; what a strike still adds is its pulse on the full
+    circuits. Sixteen drums ringing at once stay over a block, struck or not (the overload rule's case).
     Each voice designed with the user (options) before it is built. The 808 Metal at 96 kHz: done (D259), the voices
     near 96 kHz at any host, so it costs there what it does at 48 kHz (29 % of real time, was 46); its five VCAs kept
     running and its cowbell at 100 nV, as the user chose. Then the 909 made cheaper and priced (30), and the 303's

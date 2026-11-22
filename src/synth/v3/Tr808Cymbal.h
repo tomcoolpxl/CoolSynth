@@ -55,8 +55,9 @@ namespace coolsynth::synth::v3
             cymbal at rest, the band's side less the base's: their mean (measured on the model, V3Tr808MetalTests with
             COOLSYNTH_808_COUPLING; ngspice's are -0.524 and -0.515 V). */
         static constexpr double highCouplingRest = -0.526, lowCouplingRest = -0.514;
-        /** After a hit's pulse and switch, this long before the envelopes drop the trigger's parts. */
-        static constexpr double triggerSettle = 0.002;
+        /** After a hit's pulse and switch, this long before the envelopes drop the trigger's parts: 0.25 ms matches
+            the full circuit run throughout as 2 ms did, within -94 dB of it (D262). */
+        static constexpr double triggerSettle = 0.00025;
 
         Tr808Cymbal()
         {

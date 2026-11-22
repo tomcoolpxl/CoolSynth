@@ -50,7 +50,9 @@ namespace coolsynth::synth::v3
         static constexpr double openPeak = 8157.0, closedPeak = 12246.0;
         /** C67's and C71's voltage with the bank running and the hats at rest (as Tr808Cymbal's C42). */
         static constexpr double couplingRest = Tr808Cymbal::highCouplingRest;
-        static constexpr double triggerSettle = 0.002;
+        /** After a hit's pulse and switch, this long before an envelope drops the trigger's parts (D262, as the
+            cymbal's). */
+        static constexpr double triggerSettle = 0.00025;
         static constexpr double c63 = 0.47e-6;
         /** C60 (printed 10 uF) and R134 (printed 100 kOhm), fitted to both units' open hat across OH DECAY (D258). */
         static constexpr double c60Farads = 8.0e-6, r134Ohms = 82.0e3;

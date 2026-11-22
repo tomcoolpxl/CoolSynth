@@ -5511,7 +5511,16 @@ user's choices (options, the recommended first):
   `CircuitWdf::analyse` and `invert` swap rows as pointers. Every render of the 808 Kit is the same bits as before
   (the demo beat, each drum struck soft then accented, all sixteen at once), and an analysis costs about a sixth: a
   repeat strike's open hat 210 to 33 us, the clap 428 to 68, a tom 60 to 14. Every circuit model gains (the Kick's
-  808 and 909, every knob move).
+  808 and 909, every knob move). Checked to the bit as well: the old and the new solver on the open hat's full
+  envelope and a hat's VCA (strikes, switches, a knob, a capacitor changed), 0 of 240,000 probe values differ.
+- The hand-over from a hat's or the cymbal's full circuit to its tail (options: 0.25 ms after the pulse and switch;
+  2 ms as built): 0.25 ms. Against the full circuit run throughout (`V3Tr808SettleCheck`), it matches as 2 ms did:
+  the closed hat within -182 dB, the open hat within -150 dB at 4.7 V, the cymbal 76 to 87 dB under its peak either
+  way (94 to 116 dB from the 2 ms one). The SPICE checks stand to four decimals (but the open hat at 14 V, whose
+  output error went from 0.343 to 0.309) and so does the open hat's fit (76 to 550 ms, D258). In the 808 Kit's
+  renders the closed hat moves 123 dB under its peak and the cymbal 91; the open hat's waveform moves as its chaos
+  (below) lets it, its 10 ms levels within 0.19 dB in the demo beat. A repeat strike's first 768 samples at 96 kHz:
+  the open hat 3580 us before D262, 2720 now; the cymbal 3171 and 2786; the closed hat 2109 and 1949.
 - Each switch state's analysis kept (options: skip it; build it): skipped. Bit-exact, but after the pointers it
   would save 10 to 70 us a strike, and the 808 Metal is already the largest generator, so every generator slot
   would grow with it (a voice from 795 to about 950 KB).

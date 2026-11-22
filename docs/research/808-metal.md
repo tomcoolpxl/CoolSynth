@@ -48,7 +48,8 @@ The bank, IC3 and the five swing VCAs on IC3's bands run while any instrument so
 coupling capacitor follows the bands as on the machine. A start from silence draws the oscillators' places from the
 voice's seeded random numbers, runs IC3 for 2 ms and starts each coupling capacitor where the running bank holds it
 (measured on the model: -0.390 V for C32 and C33, -0.526 V on the high band, -0.514 V on the low; ngspice -0.524 and
--0.515). Each envelope runs with its trigger's parts only around a hit, then without them, the state passed across.
+-0.515). Each envelope runs with its trigger's parts only around a hit (the pulse, the hold and 0.25 ms after,
+D262), then without them, the state passed across.
 
 ## Against SPICE
 
@@ -125,3 +126,6 @@ cymbal 2.2 and 5.4 (3.5, 7), open hat 2.7 and 7.0 (3.5, 7), closed hat 1.9 to 2.
   dearest, the cowbell. At a 96 kHz host it costs the same since D259 (the voices near 96 kHz at any host; before,
   192 kHz there): an open hat then a cymbal 29 % of real time. Profiled at 96 kHz, in us a sample: the bank 0.12, the
   five VCAs at rest 1.95, the open hat's envelope 0.41, the cowbell 1.62 while it rings.
+- At full accent the open hat is chaotic in the model: its high band 1 pV higher at one sample moves its waveform by
+  up to 3.5 to 4.5 dB under its peak within 50 ms, its level within 0.4 dB in every 10 ms (D262). At 4.7 V, and in
+  the cymbal and closed hat, the same nudge stays near -230 dB. Whether the machine does the same is not known.
