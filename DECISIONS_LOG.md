@@ -5465,3 +5465,25 @@ The user's ears passed the demo beat (2026-11-22: "demo is good").
 The macros all four full together (D177's test, from where each preset starts them: changed so, at 0 in every other
 preset): +6.2 dB, each alone within 4 dB (Tone -0.1, Tune +2.8, Decay 0, Accent +3.3). The user's choice (options:
 louder by the user's choice, beside Ladder Chords; Accent and Tune narrower): louder by choice.
+
+## D261. Brightness smoothed, and the click detector on every preset at milestones (2026-11-22)
+
+Found when the 808 Kit (D260) shifted the click detector's every-third-preset sample: Neuro Growl (Main Stage)
+clicked at 1.79x when Brightness was swept end to end while a chord rang, an old fault the sample had skipped.
+Brightness (knob 7, D176) reached the filters unsmoothed: a jump moved every Ladder and SVF cutoff three octaves
+within one sub-block, and behind Neuro Growl's 18 dB of tube drive its resonant low-pass threw the driven top end
+open at once (the first 2 ms 15 times as rough as without the sweep). Found how others do it: a one-pole smoother
+on the parameter before the filter's coefficients, tuned by ear (musicdsp's 1-pole LPF for parameter changes, KVR).
+The user's choices (options, the recommended first):
+- The smoothing (options: as the macros, a 10 ms one-pole; 20 ms): as the macros. The part smooths it once per
+  sub-block beside them and hands it to the voices in their frame (`GlobalFrame::brightness`); at the middle it
+  stays exactly 0, every preset bit for bit as before.
+- The click test's sample (options: every preset; every third chosen by name): the user, "every preset every
+  release, and big feature, and now". `COOLSYNTH_CLICK_ALL` runs the sweep on every preset (and
+  `COOLSYNTH_CLICK_ONLY` never skips the named one); GEMINI.md makes it a step of every release and every big
+  feature; run now (below).
+
+Run now, every click test on every preset (COOLSYNTH_CLICK_ALL): all pass. The worst, against the 1.5x line: a
+preset change 1.00x, an effect type change 1.24x (Neon Brass), Brightness and Space swept 1.40x (Frozen Pluck;
+Neuro Growl no longer the worst), all four macros 1.46x (Bowed Haze), the Time macro at a note's start 1.11x
+(Power-Up), a sampled instrument loading 1.00x, a steal 1.31x (Harp String).

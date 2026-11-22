@@ -82,10 +82,13 @@ the current state.
   --output-on-failure` for the whole suite; `COOLSYNTH_TEST_ONLY=<part of a test's name>` runs a subset). The Debug
   configuration is compiled optimised (`coolsynth_config_flags`), so it plays in real time; keep JUCE's recommended
   config flags off CoolSynth targets.
+- At every release and after every big feature, run the click detector on every preset: `COOLSYNTH_CLICK_ALL=1
+  COOLSYNTH_TEST_ONLY="Click detector"` (its Brightness and Space sweep otherwise samples every third preset; D261).
 - `CoolSynthRender` and `CoolSynthPresetNormalizer` are not in the `build-debug` preset: rebuild them by target
   after any change to a bank file or the engine.
 - Commit on `main` and push to `origin` after each verified chunk; no branches, no pull requests.
-- A release: set the version in `CMakeLists.txt` (`project(CoolSynth VERSION ...)`; Preferences shows it), write
+- A release: run the every-preset click check above first; set the version in `CMakeLists.txt`
+  (`project(CoolSynth VERSION ...)`; Preferences shows it), write
   `docs/releases/v<version>.md` (one line per paragraph and per bullet: the release page shows every line break),
   then push the tag `v<version>`. `.github/workflows/windows-release.yml` builds, tests, packages and publishes.
 - Keep terminal commands profile-free (PowerShell `-NoProfile`) to avoid profile noise.

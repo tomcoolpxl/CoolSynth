@@ -123,6 +123,16 @@ namespace
         return only.isEmpty() || presetName(index).containsIgnoreCase(only);
     }
 
+    /** The sweeps that sample the bank take every third preset; COOLSYNTH_CLICK_ALL (now, at every release and after
+        every big feature, D261) or COOLSYNTH_CLICK_ONLY takes every one, so a new preset cannot shift a fault out of view. */
+    int sampleStep()
+    {
+        return juce::SystemStats::getEnvironmentVariable("COOLSYNTH_CLICK_ALL", {}).isNotEmpty()
+                       || juce::SystemStats::getEnvironmentVariable("COOLSYNTH_CLICK_ONLY", {}).isNotEmpty()
+                   ? 1
+                   : 3;
+    }
+
     /** With COOLSYNTH_CLICK_PROFILE set: the roughness and the peak level in 2 ms frames from 10 ms before an event
         to 80 ms after, for the event's render and the reference, to tell a click from the sound's own change. */
     juce::String profile(const Recorder& event, std::size_t at, const Recorder& reference, std::size_t referenceAt)
@@ -286,7 +296,7 @@ public:
         beginTest("Brightness and Space swept end to end at once while a chord rings do not click (D176)");
         {
             Tally tally;
-            for (int i = 0; i < presets; i += 3)
+            for (int i = 0; i < presets; i += sampleStep())
                 for (const char* knob : { coolsynth::parameters::ids::brightness, coolsynth::parameters::ids::space })
                 {
                     if (! wanted(i))

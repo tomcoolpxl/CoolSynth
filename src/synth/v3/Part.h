@@ -261,6 +261,7 @@ namespace coolsynth::synth::v3
         StepModulator stepModulator;
         ChaosSource chaos;
         std::array<float, macroCount> macroValues {};
+        float brightnessValue = 0.0f; // knob 7, smoothed as the macros (D261)
         bool macrosPrimed = false;
         float startGain = 1.0f; // the note-on being started: its share in a velocity split (D190)
         float arpGain = 1.0f;   // the share of the last key given to the arp, for its steps

@@ -142,6 +142,7 @@ namespace coolsynth::synth::v3
     struct GlobalFrame
     {
         std::array<float, trackedGlobalSources.size()> values {};
+        float brightness = 0.0f; // knob 7, smoothed by the part as the macros are (D176, D261)
     };
 
     /** One generator slot as the patch sets it. Generic values are normalised 0..1. */

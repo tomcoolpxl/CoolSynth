@@ -436,6 +436,7 @@ namespace coolsynth::synth::v3
         if (! macrosPrimed)
         {
             macroValues = settings.macros;
+            brightnessValue = settings.voice.brightness;
             macrosPrimed = true;
         }
         const float macroCoefficient = 1.0f - std::exp(-static_cast<float>(Voice::maxSubBlock) / (0.01f * static_cast<float>(hostRate * oversampleFactor)));
@@ -463,6 +464,10 @@ namespace coolsynth::synth::v3
                 value += (std::clamp(settings.macros[static_cast<std::size_t>(k)], 0.0f, 1.0f) - value) * macroCoefficient;
                 frame.values[static_cast<std::size_t>(5 + k)] = value;
             }
+            // Brightness (knob 7) as the macros: a jump end to end moves every cutoff three octaves, which unsmoothed
+            // clicked behind a driven filter (Neuro Growl, D261). At the middle it stays exactly 0.
+            brightnessValue += (settings.voice.brightness - brightnessValue) * macroCoefficient;
+            frame.brightness = brightnessValue;
         }
         // Where the part-wide sources stand at the end of this chunk: the effect routes read them (D179).
         if (frameCount > 0)

@@ -538,11 +538,13 @@ namespace coolsynth::synth::v3
 
         // Sources: the part's, its per-sub-block frame, then this voice's own.
         sources = globals.sources;
+        float brightness = settings.brightness;
         if (globals.frames != nullptr && globals.frameCount > 0)
         {
             const auto& frame = globals.frames[std::min(offset / maxSubBlock, globals.frameCount - 1)];
             for (std::size_t k = 0; k < trackedGlobalSources.size(); ++k)
                 sources.set(trackedGlobalSources[k], frame.values[k]);
+            brightness = frame.brightness; // smoothed by the part, so a jump of the knob cannot click (D261)
         }
 
         LfoClock clock = globals.clock;
@@ -647,7 +649,7 @@ namespace coolsynth::synth::v3
             // Brightness opens or closes every filter of the sound together (D176); both filters' cutoff is their
             // first parameter, and they ramp it per sample.
             if (const int type = settings.processors[j].type; type == processorType::ladder || type == processorType::svf)
-                offsets.p[0] += settings.brightness;
+                offsets.p[0] += brightness;
             SlotParams params = buildSlotParams(p.slot.descriptor(), p.base, offsets);
             params.frequencyHz = noteHz;
             params.modulator = generators.back().slot.link().signal; // generator 3, for a filter that it shakes
