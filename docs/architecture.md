@@ -75,9 +75,9 @@ the sampled instruments and the player's own sounds to load.
 
 Per voice:
 
-1. **Three generator slots**, G1 to G3. Each holds any of 14 generator types (VA, Noise, FM2, FM4, Wavetable,
-   String, Modal, Sample, Grain, Chip, Kick, TB-303, 808 Drums, 808 Metal). A generator can sync, ring-modulate,
-   frequency-modulate or amplitude-modulate the next one. Chip (`ChipGenerator.h`, D231) plays the NES, Game Boy, SID, AY, YM and SCC
+1. **Three generator slots**, G1 to G3. Each holds any of 15 generator types (VA, Noise, FM2, FM4, Wavetable,
+   String, Modal, Sample, Grain, Chip, Kick, TB-303, 808 Drums, 808 Metal, 808 Snare & Clap). A generator can sync,
+   ring-modulate, frequency-modulate or amplitude-modulate the next one. Chip (`ChipGenerator.h`, D231) plays the NES, Game Boy, SID, AY, YM and SCC
    with their frame tables (`docs/design/CHIP_GENERATOR.md`); Kick (`KickGenerator.h`, D232) is a tuned kick drum:
    the TR-808 and the TR-909 as their circuits in wave digital filters (`Tr808BassDrum.h` and `Tr909BassDrum.h` on
    `CircuitWdf.h`, D236, D238, D251), and a modern one. The circuits start each note at rest, so a voice of them opens
@@ -89,7 +89,9 @@ Per voice:
    3 MHz bandwidth and their rails (`addOpAmp` in `CircuitWdf.h`). It is played in the Kit play mode, as is 808
    Metal (`Tr808MetalGenerator.h`, D254, D255): the cowbell, cymbal and both hats (`Tr808Cowbell.h`,
    `Tr808Cymbal.h`, `Tr808Hats.h`) on the voicing board's six oscillators and IC3's two bands
-   (`Tr808MetalBank.h`), which run, with the five swing VCAs on them, while any of the four sounds.
+   (`Tr808MetalBank.h`), which run, with the five swing VCAs on them, while any of the four sounds; and 808 Snare &
+   Clap (`Tr808SnareClapGenerator.h`, D256, D257): the snare (`Tr808Snare.h`) and the clap or maracas
+   (`Tr808Clap.h`, IC23's comparators as switches, the BA662 as its transconductance).
 2. The generators are summed into **three processor slots in series**, P1 to P3. Each holds any of 7
    processor types (Ladder, SVF, Comb, Formant, Folder, Crusher, Drive). Generator 3 can modulate the ladder's
    cutoff at audio rate. The SVF also morphs from low-pass to high-pass as the Oberheim SEM does, and takes the
@@ -325,8 +327,8 @@ Rebuild `CoolSynthRender` and `CoolSynthPresetNormalizer` after any change to a 
 - `tools/listening-pass` is a local page that sets each sound up in the running app, through its MCP server, and
   plays it for the ear.
 - `tools/kick808` and `tools/kick909` render the kick circuits in ngspice, the references the Kick's models are
-  checked against; `tools/tr808` does the same for the 808 Drums' toms, congas, rim shot and claves and the 808
-  Metal's voicing board (`metal.cir`).
+  checked against; `tools/tr808` does the same for the 808 Drums' toms, congas, rim shot and claves, the 808
+  Metal's voicing board (`metal.cir`) and the snare, clap and maracas (`snare.cir`, `clap.cir`).
 - `tools/release/package_library.py` packs the instrument library into one zip per family for download.
 - `tools/site/build_engine_map.py` draws the map at the top of this page.
 

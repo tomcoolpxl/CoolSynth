@@ -5244,3 +5244,64 @@ Kurt Werner's figures). The user's choices:
   Accent and three bends; Accent only).
 - The checks (options: each circuit stage by stage against ngspice, then Fischer's and Audiorealism's recordings and
   page 14, any fit put to the user first, recommended and chosen; ngspice and page 14 only).
+
+## D257. 808 Snare & Clap: built (2026-11-22)
+
+Built as designed (D256): the 808 Snare & Clap generator (`Tr808SnareClapGenerator.h`, generator type 15) on two
+circuits, the snare in its changed version (`Tr808Snare.h`) and the clap or maracas with SW12 (`Tr808Clap.h`), each
+checked stage by stage against ngspice (`tools/tr808/snare.cir`, `clap.cir`, `tests/V3Tr808SnareClapTests.cpp`), then
+against Fischer's and Audiorealism's recordings and page 14 (`docs/research/808-snare-clap.md`). The parts the notes do
+not describe come from their makers' data or their clones': the AN6912 as LM339-like open-collector comparators
+(Panasonic's AN1339/AN6912N sheet), the BA662, whose Rohm sheet is not online, as Open Music Labs' reverse-engineered
+schematic and Alfa's AS662D clone draw it, a standard transconductance amplifier. The user's choices while building:
+
+- IC23's timing capacitor C140, printed 0.0027 uF (options: 0.027 uF, page 6's 30 ms window and Fig. 13's three claps
+  and a fourth, the fourth at 30.7 ms as both units' at 30.7 to 31.5, recommended and chosen; 0.0027 uF as printed, a
+  4 ms window, one clap and a smeared second; 0.021 uF, a hobby model's fit to one recording).
+- The sawtooth's C144, drawn 0.47 uF (options: 0.39 uF, inside an electrolytic's 20 %, the claps every 11.1 ms, the
+  mean of Audiorealism's 10.5 and Fischer's 11.6, recommended and chosen; 0.47 uF as drawn, every 13 ms; 0.36 uF,
+  Audiorealism's unit alone).
+- The C.P. OFFSET trimmer TM3 (options: the service notes' adjustment, each clap falling from 6 to 0.5 Vpp before
+  the next, 0.62 of its travel, recommended and chosen; fitted to both units' depth, some 0.61; the trimmer's middle,
+  each clap falling 7 dB, the claps smearing).
+- IC21's band-pass, as drawn 3 to 8 dB brighter than both units above 2 kHz in the claps and the tail alike and
+  centred at 1.27 kHz against their 0.93 to 1.19, while the snappy and the maracas on the same noise bus and output
+  match both within 1 to 2 dB (options: C127 0.82 nF (drawn 1.8) and C128, C129 5.2 nF (+10 %), every octave from
+  500 Hz to 16 kHz within about 1 dB of both units, centred at 1.14 kHz, recommended and chosen; C127 alone at 0.68
+  nF, 1.6 dB rms, the centre left high; IC21 as drawn).
+
+Found while building, each the circuit as drawn, its reference's own model or the method's limit, so no choice:
+
+- The snare as changed needed no fit: both shells within 0.3 % of both units' pitch, their decays within 4 %, the
+  TONE pot's balance (linear) within about 1 dB at all five marks.
+- At rest Q70's base sits at the C.P. OFFSET's voltage, which D68 and D69 reach near no bias: the clap is silent
+  between hits and its reverb dies away toward it over seconds, as both units' (-59 dB at a second, -67 to -72 at
+  two). The model keeps both diodes once the trigger has passed.
+- Q72's collector, R374 and the BA662's mirror tie their currents: Q72's junction capacitance, as the reference has
+  it, unties them (`isWellPosed`, D255).
+- The capacitors a diode or a switch charges within a sample (C139, C143, C135, C140, C141) and the small junction
+  capacitances take the backward Euler rule: the bilinear transform overshot (C139 to 4.9 V against 2.8) and the
+  diode held the overshoot. The rest state solves R348's chain open: it carries no current at rest, and passed back
+  and forth a sample apart it crept by leakage.
+- IC23's switches change at the sample where their inputs cross, the sample solved again with the new switch; a
+  millivolt's lean toward on keeps pins 2 and 13 low at rest, as page 6 has them.
+- Q68's high-pass is prewarped to its 10.6 kHz resonance (3.7 % low at 96 kHz otherwise); the maracas' peak then lies
+  at 10.4 kHz against the units' 10.5 to 10.7.
+- Made cheaper without changing the sound: the maracas split in two circuits joined at Q66's base (its base current,
+  a few uA into C134's 33 nF, a sample late), 59 to 36 % of a block alone; a quiet part stops being solved and holds
+  its last output, so nothing steps at the mixer, and a part rung down by the generator's -80 dB starts its next hit
+  from rest.
+
+Checked: the snare within 1.5 % of ngspice at every stage unaccented (the snappy's high-pass 6 %), the clap within
+4 % (IC23's pins 2 and 5, switching inside a sample, 5.4 %), the maracas within 1.6 % up to Q68's high-pass; the nodes
+after a switch inside a sample (the accented snappy, the maracas' high-pass) by their envelopes, within 3 to 7 %.
+Against both units: the claps at 0.8 to 1.8, 11.8 to 12.8, 22.8 to 24 and 31 to 33 ms (Fischer 0.7, 12.0, 23.9, 31.4;
+Audiorealism 0.5, 9.5 to 10.8, 21.2 to 22, 31.2 to 32.8), down 40 dB 92 to 123 ms after the peak (the units 100 to
+149); the snappy over the shells within about 2 dB of both from SNAPPY's middle up, between them at its quarter; the
+maracas' peak and decay as theirs. Page 14 at full level: the snare 3.0 Vpp (3), the clap 5.4 (6), the maracas 4.5
+(3). Left open: the clap's late tail 4 to 12 dB under both units after 120 ms and the accented snare 2.8 dB over page
+14, both waiting for the accent check (TODO 33); neither recording set gives its accent level.
+
+Priced (`VoiceCost.h`): in the Kit mode the whole kit in its one voice, 49.0 % of a block at its 99th percentile (51.5
+and 47.3 in two runs; average 26.4 %); in the other modes a voice holds one instrument, priced at the dearest, the
+maracas, 32.1 %. The generator is 92 kB, under the 808 Drums' 122.

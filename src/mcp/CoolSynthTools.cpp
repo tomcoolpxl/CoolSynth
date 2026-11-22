@@ -201,7 +201,7 @@ namespace coolsynth::mcp
 
         tools.push_back({ "set_slot_type",
                           "Gives a slot a type (e.g. slot 'pA.g1', type 'Sample'), with that type's own defaults, as the panel's "
-                          "type list does. Types: generators Off, VA, Noise, FM2, FM4, Wavetable, String, Modal, Sample, Grain, Chip, Kick, TB-303, 808 Drums, 808 Metal; "
+                          "type list does. Types: generators Off, VA, Noise, FM2, FM4, Wavetable, String, Modal, Sample, Grain, Chip, Kick, TB-303, 808 Drums, 808 Metal, 808 Snare & Clap; "
                           "processors Off, Ladder, SVF, Crusher, Folder, Drive, Formant, Comb; effects by their names.",
                           objectSchema({ { "slot", typeSchema("string", "e.g. 'pA.g1', 'pB.p2', 'pA.i3', 'f1'") },
                                          { "type", typeSchema("string", "The type's name as the screen shows it") } },

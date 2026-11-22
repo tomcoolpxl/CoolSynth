@@ -41,6 +41,7 @@ What the engine has:
   - the TB-303 bass line: saw to square through its diode ladder, with its accent and slide
   - the TR-808's bass drum, toms or congas and rim shot or claves as their circuits, played as a kit on one voice
   - the TR-808's cowbell, cymbal and open and closed hi-hats as their circuits, on its six shared oscillators
+  - the TR-808's snare, hand clap and maracas as their circuits, the clap's four claps and its reverb tail
 - Filters and shapers
   - ladder and state-variable filters; the state-variable one also morphs as the Oberheim SEM and has the C64 SID's 6581 and 8580 characters
   - bit crusher

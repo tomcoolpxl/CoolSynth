@@ -12,6 +12,9 @@ metal.cir (D254) takes its hits and oscillators from here:
   python -I tools/tr808/render.py metal.cir --hit oh:0 --hit ch:0.05 --phases 0.1,0.37,0.62,0.05,0.81,0.44 --out o.csv
 --hit instrument:seconds strikes cb, cy, oh or ch (all at the netlist's amp); --phases gives each oscillator's place
 in its cycle at time 0 (0 a rising edge; high for the first 47.98 %), as Tr808MetalBank's setPhases.
+
+snare.cir and clap.cir (D256, D257) take the white noise bus as two test sines (--set wn=0.1) or as random noise
+(--set wnrms=0.267); clap.cir plays the maracas with --set ma=1 (their nodes: vout, vt, n135, nb67, nb66, nm3, ne68).
 """
 import argparse
 import math
@@ -35,7 +38,10 @@ PAIRS = {
 }
 NODES = {"tom.cir": ["vout", "vt", "np", "nm", "no1", "no2", "nev", "nq", "nfl"],
          "rimclave.cir": ["vout", "vt", "nenv", "nf", "no21", "no20a", "no20b", "ns", "ne63"],
-         "metal.cir": ["vcb", "vcy", "voh", "vch", "nv2", "nsum", "nhb", "nlb", "ncbe", "ncbo", "nj", "nv", "ne1", "nce"]}
+         "metal.cir": ["vcb", "vcy", "voh", "vch", "nv2", "nsum", "nhb", "nlb", "ncbe", "ncbo", "nj", "nv", "ne1", "nce"],
+         "snare.cir": ["vout", "vt", "np1", "np2", "no1", "no2", "ne47", "n52", "nsn", "nc48", "ne49"],
+         "clap.cir": ["vout", "vt", "n8", "n139", "n143", "no21", "n138", "nb70", "nc70", "n14", "n1", "n13", "n144", "n2",
+                      "n5", "nb72", "nh", "nc72", "np1", "np6"]}
 
 # The HD14584 at 5 V as Werner, Abel and Smith take it (ICMC-SMC 2014): VT+ 2.7 V, VT- 2.1 V, its output 0 or 5 V.
 SCHMITT_HIGH = math.log((5.0 - 2.1) / (5.0 - 2.7))  # the high time over RC

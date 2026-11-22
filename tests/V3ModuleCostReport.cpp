@@ -383,6 +383,15 @@ public:
                                                                       { Tr808MetalGenerator::ohDecay, 1.0f },
                                                                       { Tr808MetalGenerator::cbDecay, 4.0f },
                                                                       { Tr808MetalGenerator::chDecay, 4.0f } });
+            // The 808 Snare & Clap (D257) likewise: the snare and the clap at once at full accent, then the snare again
+            // with the maracas over the clap's tail; the snappy at its loudest, every decay at its longest.
+            const auto snareClap = generatorOf(generatorType::snareClap808, { { Tr808SnareClapGenerator::accent, 1.0f },
+                                                                             { Tr808SnareClapGenerator::sdSnappy, 1.0f },
+                                                                             { Tr808SnareClapGenerator::sdDecay, 1.0f },
+                                                                             { Tr808SnareClapGenerator::snappyDecay, 1.0f },
+                                                                             { Tr808SnareClapGenerator::cpDecay, 1.0f },
+                                                                             { Tr808SnareClapGenerator::cpSpread, 1.0f },
+                                                                             { Tr808SnareClapGenerator::maDecay, 1.0f } });
             const struct { const char* label; const GeneratorSettings* generator; std::vector<int> first, second; } sets[] = {
                 { "808 Drums, kit, all struck", &drums, { 36, 37, 43, 47, 50 }, { 35, 75, 64, 63, 62 } },
                 { "808 Drums, bass drum alone", &drums, { 36 }, { 35 } },
@@ -395,6 +404,10 @@ public:
                 { "808 Metal, cymbal alone", &metal, { 49 }, { 51 } },
                 { "808 Metal, open hat alone", &metal, { 46 }, { 46 } },
                 { "808 Metal, closed hat alone", &metal, { 42 }, { 44 } },
+                { "808 Snare & Clap, kit, all", &snareClap, { 38, 39 }, { 40, 70 } },
+                { "808 Snare & Clap, snare alone", &snareClap, { 38 }, { 40 } },
+                { "808 Snare & Clap, clap alone", &snareClap, { 39 }, { 39 } },
+                { "808 Snare & Clap, maracas alone", &snareClap, { 70 }, { 70 } },
             };
             for (const auto& set : sets)
             {

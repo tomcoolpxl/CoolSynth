@@ -1,0 +1,215 @@
+* Roland TR-808 hand clap / maracas, from the service notes (pp. 6, 9, Fig. 13; D256), with page 9's change (10k from
+* the -15 V line to Q70's emitter). The reference for the 808 Snare & Clap generator's clap and maracas circuit.
+* Transistors and the 1S2473 diodes as in the bass drum's netlist; single-pole 3 MHz op-amps (uPC4558), IC21's with
+* its +-14 V swing; IC23 (AN6912, open-collector comparators on the -15 V supply) as four switches to -15 V;
+* IC22 (BA662, an OTA and a buffer) as its control input's diode, Iabc tanh(vd / 2 VT) into pin 6 and a follower.
+*
+* Parameters: amp (TRIG volts, 4 to 14), ma (0 clap, 1 maracas: SW12), lev (the LEVEL knob VR17 0..1, a 100k audio
+* pot), tm3 (the C.P. OFFSET trimmer 0..1 from ground toward -15 V: 0.62, the service notes' adjustment, each clap
+* falling from 6 to 0.5 Vpp), c140 (IC23's timing capacitor: printed 0.0027u, 0.027u as the text's 30 ms, Fig. 13 and
+* both units have it), c144 (the sawtooth's: drawn 0.47u, 0.39u fitted to both units' clap spacing; D257), r200 (the
+* change: 10k from -15 V to Q70's emitter; 1G for the early boards), rail, cgbw, wn (the white noise bus as two sines of
+* that amplitude at fwa and fwb, for checking deterministically; 0 off), wnrms (the bus as random white noise of that
+* rms per wnstep, through C202's 7.2 kHz pole; 0 off), tend, width, tedge; ron (the comparators' saturated outputs,
+* ohms: the AN6912's 0.2 V at 3 mA); c127, c128 (IC21's C127 and C128 = C129: drawn 1.8n and 4.7n, fitted to both units'
+* spectrum, D257).
+.param rail=14 amp=4 ma=0 lev=0.8 tm3=0.62 c140=27n r200=10k wn=0 fwa=1.1k fwb=2.3k tend=0.4 width=1m tedge=5.2u
+.param cgbw=53.05p ron=67 c144=0.39u wnrms=0 wnstep=10.4167u c127=0.82n c128=5.17n
+.param base={amp+0.68}
+.param vr={max(100k*(pow(10, 2*lev)-1)/99, 1)}
+.param tma={max(10k*tm3, 1)} tmb={max(10k*(1-tm3), 1)}
+.param rcp={ma > 0.5 ? 1G : 1} rma={ma > 0.5 ? 1 : 1G}
+
+.model QEM NPN(IS=10f BF=300 BR=4 CJE=8p CJC=4p)
+.model QPM PNP(IS=10f BF=300 BR=4 CJE=8p CJC=4p)
+.model DEM D(IS=2.52n N=1.752 RS=0.568 CJO=2p)
+.model DCL D(IS=1e-12 N=1)
+* The BA662's control input: a Wilson mirror, one junction and its emitter resistors (about 400 ohms) above -15 V.
+.model DMIR D(IS=10f N=1 RS=400)
+* An AN6912 comparator's open-collector output: on (to -15 V) while its - input is above its + input (1 mV favouring
+* on, so the outputs whose inputs rest together, pins 4 and 5, rest on as the service notes say).
+.model SWC SW(VT=-1m VH=0.1m RON={ron} ROFF=1G)
+
+VB8 vcc 0 15
+VNB8 vee 0 -15
+
+* The trigger, as the bass drum's: Q32 onto the TRIG line, the PNP switch Q29 (R105, R106 through Q28, whose base the
+* CP instrument line drives through R103 with R104); its collector also drives the CP trigger out (page 8's Q30
+* through R109, R110).
+V6 n6 0 PWL(0 5 {tedge-0.5u} 5 {tedge+0.5u} 0 {tedge+width-0.5u} 0 {tedge+width+0.5u} 5)
+R117 n6 nb31 47k
+Q31 nb32 nb31 0 QEM
+VX nx 0 {base}
+R120 nx nb32 4.7k
+Q32 vcc nb32 trig QEM
+R113 trig 0 4.7k
+VCP ncpd 0 PWL(0 5 {tedge+width+20u} 5 {tedge+width+21u} 0)
+R103 ncpd nb28 22k
+R104 nb28 0 10k
+Q28 nc28 nb28 0 QEM
+R105 trig nb29 4.7k
+R106 nb29 nc28 10k
+Q29 vt nb29 trig QPM
+R109 vt nb30 33k
+R110 nb30 0 10k
+Q30 nc30 nb30 0 QEM
+R111 vcc nc30 33k
+
+* SW12: the clap's or the maracas' side.
+RSWC vt ncp {rcp}
+RSWM vt nma {rma}
+
+* The clap's envelopes: Q69 follows the trigger; through D69 it charges C139, given up through R348 to C138 and
+* through R349 to Q70's base (the reverb's envelope); through D68 it charges C143, the accent, given up through
+* R362 to Q71's base with the C.P. OFFSET (TM3 through R370) and R364. R360 and R361 bring the trigger to IC23's
+* pin 8.
+Q69 vcc ncp ne69 QEM
+D69 ne69 n139 DEM
+C139 n139 0 18n
+R348 n139 n138 1Meg
+C138 n138 0 47n
+R349 n138 nb70 1Meg
+D68 ne69 n143 DEM
+C143 n143 0 1u
+R362 n143 nh 330k
+RTMA 0 ntm {tma}
+RTMB ntm vee {tmb}
+R370 ntm nh 47k
+R364 nh 0 2.2k
+R360 ncp n8 27k
+R361 n8 vee 22k
+
+* IC21: a multiple-feedback band-pass on the white noise: R332 with C127 across it, R333 to ground, C128 to the
+* - input, C129 to the output, R334 back.
+VWC nwc 0 TRNOISE({wnrms} {wnstep} 0 0)
+RWC nwc nwd 1k
+CWC nwd 0 22n
+EWN nwn nwa nwd 0 1
+VWA nwa nwb SIN(0 {wn} {fwa})
+VWB nwb 0 SIN(0 {wn} {fwb})
+R332 nwn nbp 27k
+C127 nwn nbp {c127}
+R333 nbp 0 10k
+C128 nbp nm21 {c128}
+C129 nbp no21 {c128}
+R334 no21 nm21 100k
+G21 0 i21 0 nm21 1m
+RI21 i21 0 1e8
+CI21 i21 0 {cgbw}
+B21 no21 0 V=v(i21)
+DCP21 i21 ncp21 DCL
+VCP21 ncp21 0 {rail-0.55}
+DCN21 ncn21 i21 DCL
+VCN21 ncn21 0 {-rail+0.55}
+
+* Q70, the reverb's VCA: the band-passed noise through R342 over R346 and C137 into its base; R369 in its emitter
+* (and the change's 10k from -15 V), R363 its collector's load, C146 across it, C152 and R376 into IC19.
+R342 no21 nx70 15k
+R346 nx70 0 680
+C137 nx70 nb70 33n
+Q70 nc70 nb70 ne70 QEM
+R369 ne70 0 330
+R200 ne70 vee {r200}
+R363 vcc nc70 10k
+C146 nc70 0 18n
+C152 nc70 n152 4.7n
+R376 n152 nsum 47k
+
+* IC23 (AN6912): A compares the trigger (pin 8) with -10 V (pin 9) and holds C140 at -15 V while it stands; R350
+* gives C140 up; B holds pin 1 low while C140 is under -5 V (pins 6 and 11: R353, R352, R351 from ground to -15 V);
+* C, on pin 1, lets C144 charge through R365 and D71 while pin 1 is low; D, comparing C144 (through R356, C142 its
+* positive feedback) with pin 1's share (R355, R354), fires Q73 through R358, which empties C144 through R367. C141
+* and D70 pass pin 1's rise to Q73 through R357.
+R353 0 n6r 4.7k
+R352 n6r n9r 4.7k
+R351 n9r vee 4.7k
+SA n14 vee n8 n9r SWC
+R350 n14 0 1Meg
+C140 n14 0 {c140}
+SB n1 vee n6r n14 SWC
+R355 n1 n4 2.7k
+R354 n4 0 5.6k
+SC n13 vee n1 n6r SWC
+R365 0 n13 82k
+D71 n13 n144 DEM
+C144 n144 0 {c144}
+R356 n144 n5 1Meg
+SD n2 vee n4 n5 SWC
+C142 n5 n2 220p
+R359 n2 0 10k
+R358 n2 nb73 68k
+C141 n1 n141 1n
+D70 vee n141 DEM
+R357 n141 nb73 68k
+Q73 nc73 nb73 vee QEM
+R367 n144 nc73 330
+
+* Q72 and Q71, the exponential converter: their emitters fed through R366, Q72's base from C144 (R367, R368 over
+* R371), Q71's from the offset and the accent; Q72's collector into IC22's control input (pin 1) through R374.
+R368 nc73 nb72 470k
+R371 nb72 0 15k
+R366 vcc ne7 15k
+Q72 nc72 nb72 ne7 QPM
+Q71 vee nh ne7 QPM
+R374 nc72 np1 10k
+
+* IC22 (BA662): the noise from IC21 through C136 and R372 to pin 2 (R382 to ground), pin 3 over R381; the control
+* current from pin 1 into a diode to -15 V; Iabc tanh(vd / 2 VT) into pin 6 (R383 to ground); the buffer to pin 8,
+* through C150 and R378 into IC19.
+C136 no21 n136 22n
+R372 n136 np2 39k
+R382 np2 0 1k
+R381 np3 0 1k
+VABC np1 nabc 0
+DABC nabc vee DMIR
+B22 0 np6 I={i(VABC) * tanh((v(np3) - v(np2)) / 0.0517)}
+R383 np6 0 82k
+B22B np8 0 V=v(np6)
+C150 np8 n150 1n
+R378 n150 nsum 100k
+
+* The maracas: the trigger through D67 charges C135 (R345 below it), which through R344 turns Q67 on; C134 then gives
+* up its charge through R341 (refilled through D66 when Q67 lets go) and Q66 follows it; Q65, its base on the white
+* noise through R335 and C130 (R336 from ground), feeds Q66's emitter through D65 and R337; that node through C131
+* (R338 to ground) into Q68's high-pass (C132, C133, R339 back from its emitter, R340), R347 to the negative supply,
+* through C151 and R377 into IC19.
+D67 nma n135 DEM
+C135 n135 0 0.1u
+R345 n135 0 150k
+R344 n135 nb67 220k
+Q67 nc67 nb67 0 QEM
+R343 vcc nc67 100k
+R341 nc67 nb66 470k
+D66 nc67 nb66 DEM
+C134 nb66 0 33n
+Q66 0 nb66 ne66 QPM
+R337 ne66 nm3 10k
+D65 nc65 nm3 DEM
+Q65 nc65 nb65 vcc QPM
+R336 nb65 0 1Meg
+C130 nb65 n130 47n
+R335 n130 nwn 6.8k
+C131 nm3 n338 10n
+R338 n338 0 15k
+C132 n338 nm68 1n
+R339 nm68 ne68 3.3k
+C133 nm68 nb68 1n
+R340 nb68 0 68k
+Q68 vcc nb68 ne68 QEM
+R347 ne68 vee 22k
+C151 ne68 n151 10n
+R377 n151 nsum 100k
+
+* IC19: the mixer, R375 470k, C149 220p and the LEVEL pot (100k A) with C145 in its feedback; R373 to its + input.
+G19 0 i19 0 nsum 1m
+RI19 i19 0 1e8
+CI19 i19 0 {cgbw}
+B19 vout 0 V=v(i19)
+R375 nsum vout 470k
+C149 nsum vout 220p
+RVR17 nsum nvr {vr}
+C145 nvr vout 33u
+
+.options method=trap reltol=1e-5 abstol=1e-12 vntol=1e-7
+.tran 0.5u {tend} 0 0.5u
+.end

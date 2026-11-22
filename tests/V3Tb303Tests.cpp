@@ -109,7 +109,7 @@ public:
     {
         beginTest("tb303_is_generator_type_twelve_with_the_303s_knobs");
         {
-            expectEquals(GeneratorSlot::typeCount, 15); // the 808 Drums and the 808 Metal came after it (D253, D255)
+            expectEquals(GeneratorSlot::typeCount, 16); // the 808 Drums, the 808 Metal and the 808 Snare & Clap came after it (D253, D255, D257)
             expectEquals(juce::String(GeneratorSlot::descriptorFor(generatorType::tb303).name), juce::String("TB-303"));
             expectEquals(Tb::descriptor().usedParams, 7);
         }

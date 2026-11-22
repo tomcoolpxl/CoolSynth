@@ -413,7 +413,7 @@ public:
     {
         beginTest("the_808_drums_is_generator_type_thirteen_with_twelve_knobs");
         {
-            expectEquals(GeneratorSlot::typeCount, 15); // the 808 Metal came after it (D255)
+            expectEquals(GeneratorSlot::typeCount, 16); // the 808 Metal and the 808 Snare & Clap came after it (D255, D257)
             expectEquals(juce::String(GeneratorSlot::descriptorFor(generatorType::drums808).name), juce::String("808 Drums"));
             expectEquals(Tr808DrumsGenerator::descriptor().usedParams, 12);
             bool other = false;

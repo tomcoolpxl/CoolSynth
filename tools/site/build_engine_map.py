@@ -506,6 +506,8 @@ GEN_ROWS = [
                   "against ngspice, two real units and the service notes; a kit on one voice, General MIDI’s keys."),
     ("808 Metal", "The TR-808’s cowbell, cymbal, open and closed hi-hat on its six shared square-wave oscillators, "
                   "each its own circuit, checked against ngspice and two real units; the closed hat cuts the open one."),
+    ("808 Snare & Clap", "The TR-808’s snare (two shells and the snappy’s noise) and its hand clap or maracas: four claps "
+                         "from the AN6912’s sawtooth and a reverb tail, checked against ngspice and two real units."),
     ("TB-303", "The Bass Line’s voice: saw to square into its diode ladder of four coupled stages, a decay "
                "envelope, accent at velocity 100, the slide between legato notes."),
 ]
@@ -536,8 +538,8 @@ FX_ROWS = [
     ("Stutter", "catches a slice on the beat and repeats it, each repeat shorter, lower, quieter or backwards."),
 ]
 panels = [
-    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 14 types · any type in any of the 3 slots",
-         rows=GEN_ROWS, namew=84,
+    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 15 types · any type in any of the 3 slots",
+         rows=GEN_ROWS, namew=112,
          note=[R("Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots.")], italic=True),
     dict(x=634, w=462, kind="proc", head="PROCESSOR SLOT", sub="one of 7 types · per voice",
          rows=PROC_ROWS, namew=70,

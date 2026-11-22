@@ -223,10 +223,12 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     unaccented every voice is some 20 to 35 % under page 14's amplitude. Next, the user's idea (2026-11-22): deduce
     each recording set's accent from what the accent does that no recording gain can (the bass drum's click against
     its body, a tom's pitch drop, a swing VCA's spectrum), on voices we trust, then judge the accented gaps of all
-    three families at it (the open hat's decay, the 808 Drums' accented amplitude). Then 808 Snare
-    & Clap, designed (D256): the snare in its changed version (about 173 and 336 Hz, as both units), the clap and
-    maracas on their shared circuit, GM keys with alternates, Accent and six bends past the 808's four knobs, checked
-    as the others; a stock 808 Kit preset in Studio 1982.
+    three families at it (the open hat's decay, the 808 Drums' accented amplitude, and below). 808 Snare & Clap:
+    built (D256, D257), the snare as changed (173 and 334 Hz, as both units, no fit), the clap's four claps from
+    IC23 and its reverb, the maracas; within 4 % of ngspice (the switching nodes by their envelopes) and of both
+    units' timing and spectra (`docs/research/808-snare-clap.md`), with C140, C144, TM3 and IC21 as the user chose.
+    Left open there: the clap's late tail 4 to 12 dB under both units after 120 ms and the accented snare 2.8 dB
+    over page 14, both for the accent check above. Then a stock 808 Kit preset in Studio 1982.
     Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30), and
     the 303's code made cheaper (32).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
