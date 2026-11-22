@@ -273,6 +273,7 @@ X6B n6bp n6bm vcy oa
 * through R131 and R130. Q24 charges C62, which R139 drains slowly; Q21 empties C60, which then charges again
 * through R132 and OH DECAY (VR3) until Q22 (through R133) drains C62 through R134; the closed hat's envelope does the
 * same through R173 and Q23. Q29 follows C62 into the VCA through R144.
+* C60 (printed 10u) and R134 (printed 100k) as fitted to both units' decays across OH DECAY (D258).
 R131 noh7 ny1 22k
 R130 ny1 0 10k
 Q21 ng2 ny1 0 QEM
@@ -283,11 +284,11 @@ C61 n61 0 47u
 R136 vcc n61 100
 C62 ne1 0 0.47u
 R139 ne1 0 1Meg
-R134 ne1 nqc 100k
+R134 ne1 nqc 82k
 Q22 nqc nb22 0 QEM
 Q23 nqc nb23 0 QEM
 R133 ng2 nb22 10k
-C60 ng2 0 10u
+C60 ng2 0 8u
 R132 n132 ng2 100k
 RVR3 vcc n132 {vr3}
 R173 nce nb23 330k

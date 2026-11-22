@@ -866,3 +866,122 @@ public:
 };
 
 static V3Tr808MetalKitTests v3Tr808MetalKitTests;
+
+/*
+    The open hat's decay against both units (D258), opt-in: with COOLSYNTH_808_OH_FIT set, the open hat alone at
+    OH DECAY 0, 25, 50, 75 and 100 % (OH LEVEL 0.8, an unaccented 4 V hit, 96 kHz, the bank at render.py's phases and
+    run in as the generator runs it) for C60, R134 and R139 each scaled over a grid, the others as drawn; each hit's time
+    from its onset to where a 2 ms rms envelope last stands at a tenth of its peak (the measure 808-metal.md's figures
+    use). Logged, nothing asserted: the fit is read off and set in Tr808Hats.h.
+*/
+class V3Tr808OpenHatFit final : public juce::UnitTest
+{
+public:
+    V3Tr808OpenHatFit() : juce::UnitTest("V3 TR-808 open hat fit (opt-in)", "V3") {}
+
+    static double tenthMs(const std::vector<double>& x, double rate)
+    {
+        const int k = std::max(3, static_cast<int>(0.002 * rate));
+        double peakAbs = 0.0;
+        for (const double v : x)
+            peakAbs = std::max(peakAbs, std::abs(v));
+        int onset = 0;
+        while (onset < static_cast<int>(x.size()) && std::abs(x[static_cast<std::size_t>(onset)]) <= 0.02 * peakAbs)
+            ++onset;
+        std::vector<double> env(x.size(), 0.0);
+        double sum = 0.0;
+        for (std::size_t i = 0; i < x.size(); ++i)
+        {
+            sum += x[i] * x[i];
+            if (i >= static_cast<std::size_t>(k))
+                sum -= x[i - static_cast<std::size_t>(k)] * x[i - static_cast<std::size_t>(k)];
+            // centred, as numpy's 'same' convolution
+            const std::size_t c = i >= static_cast<std::size_t>(k / 2) ? i - static_cast<std::size_t>(k / 2) : 0;
+            env[c] = std::sqrt(std::max(0.0, sum) / k);
+        }
+        std::size_t ipk = 0;
+        for (std::size_t i = 0; i < env.size(); ++i)
+            if (env[i] > env[ipk])
+                ipk = i;
+        std::size_t last = ipk;
+        for (std::size_t i = ipk; i < env.size(); ++i)
+            if (env[i] >= 0.1 * env[ipk])
+                last = i;
+        return 1000.0 * (static_cast<double>(last) - onset) / rate;
+    }
+
+    static double render(double decayTurn, double c60, double r134, double r139)
+    {
+        const double rate = 96000.0;
+        auto bank = std::make_unique<Tr808MetalBank>();
+        auto hats = std::make_unique<Tr808Hats>();
+        auto buffer = std::make_unique<Tr808MetalTriggerBuffer>();
+        bank->prepare(rate);
+        bank->setTiming(1.0, 0.0);
+        hats->prepare(rate);
+        hats->setLevel(Tr808Hats::open, 0.8);
+        hats->setOpenDecay(decayTurn);
+        hats->setOpenEnvelopeParts(c60, r134, r139);
+        bank->start(referencePhases);
+        for (int s = 0; s < static_cast<int>(0.002 * rate); ++s)
+            bank->process();
+        hats->rest();
+        hats->trigger(Tr808Hats::open, buffer->volts(4.0));
+        std::vector<double> y(static_cast<std::size_t>(1.2 * rate));
+        for (auto& v : y)
+        {
+            bank->process();
+            hats->processEnvelope(Tr808Hats::open);
+            hats->processVcas(bank->high());
+            v = hats->processOutput(Tr808Hats::open);
+        }
+        return tenthMs(y, rate);
+    }
+
+    void runTest() override
+    {
+        const auto grid = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_OH_FIT", {});
+        if (grid.isEmpty())
+            return;
+        beginTest("open_hat_decay_grid");
+        // Fischer's and Audiorealism's, by the same measure (2 ms window): OH DECAY 0, 25, 50, 75, 100 %.
+        const double units[2][5] = { { 77, 190, 339, 481, 529 }, { 71, 216, 344, 464, 530 } };
+        const double marks[5] = { 0.0, 0.25, 0.5, 0.75, 1.0 };
+        // "1": each part alone over a grid; otherwise the scales to try, "c60:r134:r139" separated by spaces.
+        std::vector<std::array<double, 3>> trials;
+        if (grid == "1")
+        {
+            for (const double s : { 1.0, 0.95, 0.9, 0.85, 0.8, 0.75, 0.7, 0.65, 0.6 })
+                trials.push_back({ s, 1.0, 1.0 });
+            for (const double s : { 0.9, 0.8, 0.7, 0.6, 0.5, 0.4 })
+                trials.push_back({ 1.0, s, 1.0 });
+            for (const double s : { 0.97, 0.94, 0.91, 0.88, 0.85 })
+                trials.push_back({ 1.0, 1.0, s });
+        }
+        else
+            for (const auto& t : juce::StringArray::fromTokens(grid, " ", ""))
+            {
+                const auto v = juce::StringArray::fromTokens(t, ":", "");
+                if (v.size() == 3)
+                    trials.push_back({ v[0].getDoubleValue(), v[1].getDoubleValue(), v[2].getDoubleValue() });
+            }
+        for (const auto& s : trials)
+            {
+                const double c60 = 10.0e-6 * s[0], r134 = 100.0e3 * s[1], r139 = 1.0e6 * s[2];
+                juce::String line = "C60 x" + juce::String(s[0], 3) + " R134 x" + juce::String(s[1], 3) + " R139 x"
+                                    + juce::String(s[2], 3) + ":";
+                double err = 0.0;
+                for (int m = 0; m < 5; ++m)
+                {
+                    const double t = render(marks[m], c60, r134, r139);
+                    line << " " << juce::String(t, 0);
+                    for (int u = 0; u < 2; ++u)
+                        err += std::pow(std::log(t / units[u][m]), 2.0);
+                }
+                line << " ms | rms log error " << juce::String(100.0 * std::sqrt(err / 10.0), 1) << " %";
+                logMessage(line);
+            }
+    }
+};
+
+static V3Tr808OpenHatFit v3Tr808OpenHatFit;

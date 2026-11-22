@@ -65,8 +65,8 @@ Page 14's accented over normal amplitude is met by the model at (the page's rati
 - Low conga 10.6, low tom 10.3, mid conga 10.6, high tom 10.7 (all 3.43 or 3.33); mid tom 11.5 (3.67), high conga 11.6
   (3.43).
 - Rim shot 9.1 (3.33).
-- The metal voices' ratio flattens past 10 V near 2.4 to 2.6 against the page's 2; the cowbell's at 2.35 against 3.43
-  (IC2b's swing, D255). The maracas' and the clap's (the page's 2 Vpp accented) do not read as a trigger.
+- The metal voices, the maracas and the clap are not read here: their renders were cut short by the engine's overload
+  rule (below). The cowbell's accented 6.0 Vpp against the page's 12 stands from D255 (IC2b's swing).
 
 Two measures that share nothing, a real 808's drop at its top accent and page 14's amplitude ratios, put the AC
 LEVEL's top at about 11.5 V in these circuits, not 14. At 11.5 V the drums lie within -0.5 to +1.2 dB of page 14's
@@ -89,7 +89,9 @@ pot's own range, would both do it; the voices themselves are not the cause, sinc
 ## The gaps, judged at it
 
 - The open hat's decay, 6 to 32 % longer than both units across OH DECAY (D255): both units are as good as
-  unaccented, and the model is already long at 4 V, so the accent does not explain it.
+  unaccented, and the model is already long at 4 V, so the accent does not explain it. Fitted (the user): C60 8 uF
+  and R134 82 kOhm, swept in the test runner on the circuits themselves (`COOLSYNTH_808_OH_FIT`), the ngspice
+  netlist and its open hat references with them (`808-metal.md`).
 - The clap's late tail, 4 to 12 dB under both units after 120 ms (D257): the same; at the units' 4.5 to 5 V the tail
   is still under.
 - The accented amplitude over page 14 (D253, D257): the AC LEVEL's top, above.
@@ -101,3 +103,10 @@ pot's own range, would both do it; the voices themselves are not the cause, sinc
   toward IC20; ngspice draws it as the model does.
 - The claves carry a low thump, lines from 51 to 141 Hz some 37 dB under the ring, that Fischer's do not (68 dB
   under).
+- The engine's overload rule (D222) cuts Kit-mode voices. CoolSynthRender reads the load as a live host does (it
+  never says it renders offline), and a Kit voice counts as released from its strike, so under load the whole kit
+  gives way first: with eight renders at once and a build running, claps stopped after 7 to 445 ms by the run. The
+  808 Metal is cut at 96 kHz even alone on a quiet machine: the block it is struck in takes 3.4 ms of its 2.67 (the
+  Debug build), so an open hat stops after 6 ms where at 48 kHz it sounds its 446. One render crashed (an access
+  violation) under load. The tom and conga grid (396 renders), the rim shot's and the Kick's were not cut
+  (checked render by render); the fits run on the circuits in the test runner, which the rule does not reach.

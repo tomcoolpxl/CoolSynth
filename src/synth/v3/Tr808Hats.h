@@ -52,6 +52,8 @@ namespace coolsynth::synth::v3
         static constexpr double couplingRest = Tr808Cymbal::highCouplingRest;
         static constexpr double triggerSettle = 0.002;
         static constexpr double c63 = 0.47e-6;
+        /** C60 (printed 10 uF) and R134 (printed 100 kOhm), fitted to both units' open hat across OH DECAY (D258). */
+        static constexpr double c60Farads = 8.0e-6, r134Ohms = 82.0e3;
 
         enum Hat : int { open = 0, closed = 1 };
 
@@ -212,6 +214,20 @@ namespace coolsynth::synth::v3
             const double ohms = std::max(0.01, 2.0e6 * std::clamp(turn, 0.0, 1.0));
             openFull.setResistance(vr3, ohms);
             openTail.setResistance(vr3, ohms);
+        }
+
+        /** For fitting the open hat's decay (tests only, D258): C60, R134 and R139. The rest is not solved again: C60
+            and R139 leave it as it is, R134 moves C62's by microvolts (Q22's leakage). */
+        void setOpenEnvelopeParts(double c60, double r134, double r139) noexcept
+        {
+            const auto set = [&](auto& c)
+            {
+                c.setCapacitance(c60Port, c60);
+                c.setResistance(r134Port, r134);
+                c.setResistance(r139Port, r139);
+            };
+            set(openFull);
+            set(openTail);
         }
 
         /** The CH Decay bend: C63 scaled (1 as drawn). */
@@ -431,11 +447,11 @@ namespace coolsynth::synth::v3
         {
             const int s = c.addInput(1);
             c.addCapacitor(2, 0, 0.47e-6);                                                // C62
-            c.addResistor(2, 0, 1.0e6);                                                   // R139
-            c.addResistor(2, 3, 100.0e3);                                                 // R134
+            r139Port = c.addResistor(2, 0, 1.0e6);                                        // R139
+            r134Port = c.addResistor(2, 3, r134Ohms);                                     // R134
             c.addTransistor(3, 4, 0, transistorSaturation, betaF, betaR, thermal);        // Q22
             c.addResistor(5, 4, 10.0e3);                                                  // R133
-            c.addCapacitor(5, 0, 10.0e-6);                                                // C60
+            c60Port = c.addCapacitor(5, 0, c60Farads);                                    // C60
             c.addResistor(6, 5, 100.0e3);                                                 // R132
             vr3 = c.addResistor(1, 6, 1.0e6);                                             // OH DECAY
             c.addTransistor(3, 7, 0, transistorSaturation, betaF, betaR, thermal);        // Q23
@@ -587,6 +603,7 @@ namespace coolsynth::synth::v3
         double openGateVolts = 0.0, closedGateVolts = 0.0;
 
         int openFullSupply = 0, openTailSupply = 0, openDrive = 0, openSwitch = 0, vr3 = 0, r173Open = 0, r144Env = 0;
+        int c60Port = 0, r134Port = 0, r139Port = 0;
         int e1Probe = 0, oenvProbe = 0, g2Probe = 0, b23Probe = 0;
         int closedFullSupply = 0, closedDrive = 0, closedSwitch = 0, c63Port = 0, r142Env = 0, ceProbe = 0, b23cProbe = 0;
         Gate openGate, closedGate;

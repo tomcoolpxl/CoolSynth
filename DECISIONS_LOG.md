@@ -5341,3 +5341,14 @@ Asked by the user: were earlier fits made for what the accent explains? Checked 
 the toms' and congas' decays move 1.2 % at most between 4 and 4.7 V (D252's resistors moved them 10 to 30 %), the
 claves' 1 % (R313), the rim shot over the claves 0.6 dB (R324, still between the units), the clap's claps not at all
 from 4 to 8 V (C140, C144).
+
+The open hat, fitted on the circuits in the test runner (`COOLSYNTH_808_OH_FIT`): C60 brings the middle marks onto the
+units, R134 the shortest, R139 only the longest. The user's choice (options: C60 8 uF and R134 82 kOhm, log error
+4.6 %; C60 alone at 8 uF, 7.6 %, the shortest 14 % long): both. 76, 209, 339, 457, 550 ms against the units' 71 to 77,
+190 to 216, 339 to 344, 464 to 481, 529 to 530 (as drawn 93, 251, 406, 541, 568). `tools/tr808/metal.cir` takes the
+same values and its open hat references were rendered again.
+
+Found while fitting: the engine's overload rule (D222) cuts Kit-mode voices, which count as released from their
+strike. CoolSynthRender reads the load as a live host does; at 96 kHz the 808 Metal's strike block takes 3.4 ms of
+its 2.67 even alone, so its hits stop after 6 ms (at 48 kHz they ring out); under load claps stopped after 7 to 445
+ms, and one render crashed. Not fixed here: a task of its own.

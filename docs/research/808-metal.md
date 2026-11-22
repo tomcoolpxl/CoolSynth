@@ -91,8 +91,10 @@ Decays to a tenth, unaccented (model; Fischer, Audiorealism; page 14):
 
 - Cowbell: 106 to 126 ms over four oscillator phasings (147 accented); 83 and 106 to 129; page 50.
 - Closed hat: 39 to 43 ms (49 accented); 45 and 42 to 47; page 50.
-- Open hat at OH DECAY 0, 25, 50, 75, 100 %: 89, 253, 403, 533, 551 ms; 77, 189, 339, 482, 529 and 70, 216, 344, 471,
-  531; page 90, 450, 600 at short, mid and long. Steady across phasings (405 to 407 ms at 50 %), so 6 to 32 % long.
+- Open hat at OH DECAY 0, 25, 50, 75, 100 %: as drawn 89, 253, 403, 533, 551 ms; 77, 189, 339, 482, 529 and 70, 216,
+  344, 471, 531; page 90, 450, 600 at short, mid and long. Steady across phasings (405 to 407 ms at 50 %), so 6 to 32 %
+  long. Fitted (D258): C60 8 uF (printed 10) and R134 82 kOhm (printed 100k), 76, 209, 339, 457, 550 ms (the open hat
+  alone at render.py's phases: as drawn 93, 251, 406, 541, 568); C60 alone at 8 uF left the shortest 14 % long.
 - Cymbal at TONE and DECAY 50 %: 493 to 656 ms over five phasings (1070 accented); 527 and 546; page 800. Across the
   grid the model lies with the units, longer at the dark end (TONE 0: 339, 656, 981, 1188, 1400 ms against 373 to
   395, 584 to 764, 848 to 881, 1067 to 1397, 1193 to 1628), a little shorter at the bright end (TONE 100: 168 to 210
@@ -112,10 +114,10 @@ cymbal 2.2 and 5.4 (3.5, 7), open hat 2.7 and 7.0 (3.5, 7), closed hat 1.9 to 2.
 
 ## Left open
 
-- The open hat's decay, 6 to 32 % longer than both units across OH DECAY, and longer still at full accent. Kept as
-  drawn until each recording set's accent is known (the user, D255): Audiorealism's readme has every hit accented,
-  without the AC LEVEL; Fischer's says nothing. Deduced in D258 (`808-accent.md`): both sets were struck at 4.5 to
-  5 V, as good as unaccented, so the accent does not explain the gap.
+- The open hat's decay, 6 to 32 % longer than both units across OH DECAY: kept as drawn until each recording set's
+  accent was known (the user, D255). Deduced in D258 (`808-accent.md`): both sets were struck at 4.5 to 5 V, as good
+  as unaccented, so the accent did not explain it; fitted there (C60, R134, above), within 1 to 5 % of the units'
+  range at every mark.
 - Unaccented, every voice is 20 to 35 % under page 14's amplitude; accented, the cowbell is at half of the page's 12
   Vpp, which IC2b's swing could not give at the drawing's divider.
 - The price: the whole kit 70 % of a block at its 99th percentile with every instrument struck at once (52 % on
