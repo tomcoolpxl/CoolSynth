@@ -345,9 +345,8 @@ namespace
 
     /** A part playing these hits (note-ons, or note-offs), host-rate mono out; the part's voices active at the end. */
     std::vector<float> play(const PartSettings& settings, const std::vector<Hit>& hits, double seconds, int* activeAtEnd = nullptr,
-                            int shedAtBlock = -1, float* shedLevel = nullptr)
+                            int shedAtBlock = -1, float* shedLevel = nullptr, double rate = 48000.0)
     {
-        constexpr double rate = 48000.0;
         constexpr int block = 256;
         auto part = std::make_unique<Part>();
         part->prepare(rate, block, 11);
@@ -493,6 +492,29 @@ public:
             const double clavesHz = crossingHz(claves, 48000.0, 0.005, 0.02);
             logMessage("claves " + juce::String(clavesHz, 1) + " Hz");
             expectWithinAbsoluteError(clavesHz, 2412.0, 30.0);
+        }
+
+        beginTest("at_a_96_kHz_host_the_voices_run_at_96_kHz_not_192");
+        {
+            // D258: twice the host's rate up to 48 kHz, the host's own from 88.2 kHz. The low tom rings at its pitch
+            // at either host, and at 96 kHz the part has no decimator's delay.
+            auto plain = kitOf();
+            plain.voice.generators[0] = drumsOf({ { Tr808DrumsGenerator::accent, 0.0f } });
+            const auto at48 = play(plain, { { 0, 43 } }, 0.3);
+            const auto at96 = play(plain, { { 0, 43 } }, 0.3, nullptr, -1, nullptr, 96000.0);
+            const double hz48 = crossingHz(at48, 48000.0, 0.03, 0.09), hz96 = crossingHz(at96, 96000.0, 0.03, 0.09);
+            logMessage("low tom at a 48 kHz host " + juce::String(hz48, 2) + " Hz, at 96 kHz " + juce::String(hz96, 2));
+            expectWithinAbsoluteError(hz96, hz48, 0.5);
+            expectEquals(Part::oversampleFor(44100.0), 2);
+            expectEquals(Part::oversampleFor(48000.0), 2);
+            expectEquals(Part::oversampleFor(88200.0), 1);
+            expectEquals(Part::oversampleFor(96000.0), 1);
+            auto p48 = std::make_unique<Part>();
+            auto p96 = std::make_unique<Part>();
+            p48->prepare(48000.0, 256, 11);
+            p96->prepare(96000.0, 256, 11);
+            logMessage("latency " + juce::String(p48->latencySamples()) + " samples at 48 kHz, " + juce::String(p96->latencySamples()) + " at 96");
+            expectLessThan(p96->latencySamples(), p48->latencySamples(), "no decimator at the host's own rate");
         }
 
         beginTest("the_overloads_emergency_sheds_the_kits_quietest_drum_not_the_kit");

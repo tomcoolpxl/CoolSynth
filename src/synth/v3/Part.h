@@ -107,7 +107,9 @@ namespace coolsynth::synth::v3
     public:
         static constexpr int maxVoices = 16;
         static constexpr int maxUnisonVoices = 8;
-        static constexpr int oversampleFactor = 2;
+        /** The voices run near 96 kHz whatever the host's rate (D258): twice the host's up to 48 kHz, the host's own
+            from 88.2 kHz, where twice would only double the work. */
+        [[nodiscard]] static constexpr int oversampleFor(double hostSampleRate) noexcept { return hostSampleRate < 70000.0 ? 2 : 1; }
         static constexpr float voiceHeadroom = 0.5f;
 
         /** Message thread. Allocates the voice bus for blocks up to maxBlockSize; longer blocks are split. */
@@ -282,6 +284,7 @@ namespace coolsynth::synth::v3
         float expressionPedal = 0.0f; // the expression pedal, 0..1 (0 until it moves)
         double hostRate = 48000.0;
         int maxBlock = 512;
+        int oversampleFactor = 2; // oversampleFor(hostRate), set in prepare
         int decimatorLatency = 0;
         int generatorLatency = 1;
     };

@@ -17,7 +17,8 @@
     and so are the Kick's 808 and 909 circuits', whose work is mostly in each hit, and the 808 Drums', 808 Metal's and
     808 Snare & Clap's (D253, D255, D257): in the Kit play mode the whole kit in its one voice, in the others the
     dearest instrument a voice can hold.
-    At other rates the costs scale with the rate, as the voices run at twice the host's. The effects come off the
+    At other rates the effects' costs scale with the host's rate and the voices' with their own, twice the host's up to
+    48 kHz and the host's from 88.2 kHz (Part::oversampleFor, D258). The effects come off the
     budget first, once per sound; the layers then share what is left in proportion to what they ask for, never
     below one voice. A slower computer is the live emergency's (EngineV3::emergencyShare), never a bounce's.
 */
@@ -151,7 +152,11 @@ namespace coolsynth::synth::v3::voiceCost
                                                          const std::array<int, partCount>& wanted, double hostRate,
                                                          const Costs& c = measured, float budget = budgetPercent) noexcept
     {
-        const float scale = static_cast<float>(std::max(1000.0, hostRate) / 48000.0);
+        // The effects run at the host's rate, the voices at theirs (twice the host's up to 48 kHz, D258): each cost was
+        // measured at a 48 kHz host, its voices at 96 kHz.
+        const double host = std::max(1000.0, hostRate);
+        const float scale = static_cast<float>(host / 48000.0);
+        const float voiceScale = static_cast<float>(host * Part::oversampleFor(host) / 96000.0);
         float effects = 0.0f;
         for (int p = 0; p < partCount; ++p)
             if (active[static_cast<std::size_t>(p)])
@@ -169,7 +174,7 @@ namespace coolsynth::synth::v3::voiceCost
             const auto i = static_cast<std::size_t>(p);
             if (! active[i])
                 continue;
-            perVoice[i] = ofVoice(settings.parts[i], c) * scale;
+            perVoice[i] = ofVoice(settings.parts[i], c) * voiceScale;
             total += perVoice[i] * static_cast<float>(wanted[i]);
         }
         if (total <= forVoices || total <= 0.0f)

@@ -22,6 +22,7 @@ namespace coolsynth::synth::v3
         Tr808SnareClapGenerator::warmUp(); // and the 808 Snare & Clap's snare, clap and maracas
         Tb303Generator::warmUp();  // and the TB-303's band-limited waves
 
+        oversampleFactor = oversampleFor(hostRate);
         const double voiceRate = hostRate * oversampleFactor;
         for (std::size_t i = 0; i < voices.size(); ++i)
             voices[i].prepare(voiceRate, seed + static_cast<std::uint32_t>(i) * 7919u);
@@ -42,16 +43,21 @@ namespace coolsynth::synth::v3
         chordEvents.assign(chordCapacity, {});
         chordInputsBefore.assign(chordCapacity, 0);
 
-        // The polyphase decimator has a short, fixed group delay: measure it once with an impulse.
-        HalfBandDecimator2x probe;
-        float peak = 0.0f;
-        for (int i = 0; i < 64; ++i)
+        // The polyphase decimator has a short, fixed group delay: measure it once with an impulse. At the host's own
+        // rate there is none.
+        decimatorLatency = 0;
+        if (oversampleFactor == 2)
         {
-            const float out = std::abs(probe.process(i == 0 ? 1.0f : 0.0f, 0.0f));
-            if (out > peak)
+            HalfBandDecimator2x probe;
+            float peak = 0.0f;
+            for (int i = 0; i < 64; ++i)
             {
-                peak = out;
-                decimatorLatency = i;
+                const float out = std::abs(probe.process(i == 0 ? 1.0f : 0.0f, 0.0f));
+                if (out > peak)
+                {
+                    peak = out;
+                    decimatorLatency = i;
+                }
             }
         }
         generatorLatency = (VaGenerator::latencySamples + oversampleFactor - 1) / oversampleFactor;
@@ -409,8 +415,16 @@ namespace coolsynth::synth::v3
             bl[i] *= voiceHeadroom;
             br[i] *= voiceHeadroom;
         }
-        decimatorLeft.processBlock(bl, left, n);
-        decimatorRight.processBlock(br, right, n);
+        if (oversampleFactor == 2)
+        {
+            decimatorLeft.processBlock(bl, left, n);
+            decimatorRight.processBlock(br, right, n);
+        }
+        else
+        {
+            std::copy(bl, bl + n, left);
+            std::copy(br, br + n, right);
+        }
     }
 
     void Part::renderSpan(int start, int count, const PartSettings& settings) noexcept

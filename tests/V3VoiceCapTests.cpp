@@ -96,11 +96,12 @@ public:
             expectEquals(voiceCost::cap(s, onlyA, sixteen, kRate, costs)[0], 3);
         }
 
-        beginTest("at twice the rate a voice costs twice as much; never fewer than one voice");
+        beginTest("a voice costs as its own rate does: as at 48 kHz at 96 (no oversampling there), twice at 192; never fewer than one voice");
         {
             EngineSettings s;
             s.parts[0] = vaPart(1);
-            expectEquals(voiceCost::cap(s, onlyA, sixteen, 2.0 * kRate, costs)[0], 8);
+            expectEquals(voiceCost::cap(s, onlyA, sixteen, 2.0 * kRate, costs)[0], 16);
+            expectEquals(voiceCost::cap(s, onlyA, sixteen, 4.0 * kRate, costs)[0], 8);
             voiceCost::Costs heavy = costs;
             heavy.voice = 1000.0f;
             expectEquals(voiceCost::cap(s, onlyA, sixteen, kRate, heavy)[0], 1);

@@ -5397,3 +5397,21 @@ Roland's part priority, the JUCE forum). The user's choices (options, the recomm
 - The 808 Metal's cost at 96 kHz (options: profile and cut it; leave it): a task of its own (TODO 33).
 - A render that hung at exit under heavy load, its file whole, in Windows' own exit (options: note it; end without
   teardown): noted.
+
+## D259. The 808 Metal made cheaper, and the voices near 96 kHz at any host (2026-11-22)
+
+The 808 Metal at a 96 kHz host took 46 % of real time on average while it rang and 87 to 126 % at a strike (D258).
+Profiled at 96 kHz, in us a sample: the bank 0.12; the five swing VCAs at rest 1.95 (the cymbal's three 1.2, the
+hats' two 0.75), each some two Newton steps; the open hat's envelope 0.41; the cowbell 1.62 while it rings. And a
+96 kHz host ran the voices at 192 kHz: the Part oversampled every host twice. Found how others choose it: a minimum
+internal rate rather than a fixed factor, a fixed one wasting work at high host rates (KVR); the solver already
+runs Newton on the junctions alone, the linear part reduced once, as the literature advises (Proverbio, Bernardini,
+Sarti, EUSIPCO 2020).
+
+The user's choices (options, the recommended first; several could be taken): the voices near 96 kHz at any host;
+the swing VCAs cheaper at rest; a pass over the cowbell. All three.
+
+- The voices: twice the host's rate up to 48 kHz as before, the host's own from 88.2 kHz (`Part::oversampleFor`),
+  no decimator there. The voice cap's voices scale with their own rate, the effects with the host's. At a 96 kHz
+  host the 808 Metal's open hat then cymbal took 29 % of real time on average (46 before), its worst block 61 %
+  (87); at 48 kHz unchanged. The whole test suite passes; nothing at 44.1 or 48 kHz moved.

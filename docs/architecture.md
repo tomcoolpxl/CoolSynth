@@ -48,7 +48,8 @@ and legato, its unison count), is sure of 8, and gets more when the other layer 
 fit half a block on the development machine, by each module's measured worst case, so the count depends on the
 patch alone, the same live and bounced (`src/synth/v3/VoiceCost.h`, D222); the screen shows it. A released voice
 whose one-shot recording has ended frees itself once it has been silent for 100 ms, instead of running out its
-release (`Voice::canEndEarly`). Live and short of time, the quietest released voice fades out (D222); a Kit voice,
+release (`Voice::canEndEarly`). The voices run near 96 kHz: at twice a host's rate up to 48 kHz, at its own from
+88.2 kHz (`Part::oversampleFor`, D258). Live and short of time, the quietest released voice fades out (D222); a Kit voice,
 let go at every strike, offers its quietest ringing drum instead, and only that drum fades (D258).
 
 In the code a layer is a `Part` (`src/synth/v3/Part.h`), and a whole sound, both layers with their inserts,
