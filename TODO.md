@@ -184,7 +184,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     in D250); its 33.3 % price stands. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
     though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock, and a 909 hit
     after a reset differs from a fresh one from its first sample (found 2026-11-21 by `V3KickTests`; no preset uses
-    the 909, so the determinism tests do not see it). The 808's
+    the 909, so the determinism tests do not see it). For those checks, a third 909 the user found (2026-11-22): one
+    unit's long takes per voice in a REAPER session from 2020, the kick also as its own accented take, knob settings
+    not noted; filed (local, not in git) at `tools/references/tr909-reaper/TR909Sampled.7z`. The 808's
     gaps against two real units closed (D251, `docs/research/kick-808-recordings.md`): the trigger stage as drawn,
     the standard 1N4148, the voice's amp opening at once for the circuits, Decay down to VR6 = 0, Punch Time's glide
     (a bend beside Q43), C39 and the TONE taper fitted, made cheaper, Succession 808 kept and levelled. Left open
