@@ -253,9 +253,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
 35. CoolSynth 808 (D263): the 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and
     shuffle per drum, MIDI drag, per-step locks, flams and sub-steps, chance and conditions; a panel whose step row
     opens into a lane per drum, and Under the Lid (the live circuit, with the classic mods as trimmers) as the
-    second view; own colours, four themes for the vector panel. Now: mockups in `docs/design/mockups/`, the vector
-    panel with its lanes first, then the realistic panel and Under the Lid. Nothing is built yet: no sequencer, no
-    plugin target. Before a release: the name in the trademark registries, and the line that says whose mark
+    second view; own colours, four themes for the vector panel. Mockups: `docs/design/mockups/coolsynth-808.html`
+    holds the vector panel, its lanes and Under the Lid in the four themes (no sound; its scope traces are drawn,
+    not the engine's); the realistic panel is still to draw, and the user's notes on both views are awaited.
+    Nothing is built yet: no sequencer, no plugin target. Before a release: the name in the trademark registries, and the line that says whose mark
     TR-808 is.
 
 

@@ -5570,4 +5570,10 @@ The user's choices (options, the recommended first):
   trademark registry was searched: to do before a release. "808" in the name is the choice with the most exposure
   towards Roland; the user was told so.
 
-Mockups follow, the vector panel with its lanes first (`docs/design/mockups/`).
+Mockups (`docs/design/mockups/coolsynth-808.html`, no sound): the vector panel with its lanes first, then Under the
+Lid, which the user chose to see next (options: Under the Lid; the realistic panel; revise the first; stop). Under
+the Lid there lifts the panel's knob columns away and shows each drum's circuit under its own column, the signal
+running downward from the trigger line to the mix, its stages and part names taken from the circuit headers
+(`src/synth/v3/Tr808*.h`), the panel's pots drawn at the stage they sit in. The mods it lists are marked as in the
+circuit code already (the kick's and snare's tuning, the snappy's decay, the clap's spread and tail, the maracas'
+decay, the cowbell's trimmers) or to build (the kick's decay past its top, the noise level).
