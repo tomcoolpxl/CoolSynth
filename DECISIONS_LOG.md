@@ -5588,3 +5588,14 @@ sound, thicker for more current, the oscillators and the noise always thin and r
 and filter details, the power rails, the tom or conga and the other pairs' second side. The currents are drawn by
 hand; the plugin would take each branch's current from the solver, on a logarithmic scale, since a trigger's
 milliamps and a resonator's tens of microamps differ a hundredfold and more.
+
+The user's choices on seeing it (options, the recommended first):
+- The direction (options: refine this one; keep both as two depths; not yet, try another): refine the schematic
+  sheet. The first try stays in the file as a record.
+- Its detail (options: as now plus a complete drum on a click; the whole board only; more abstract with bigger
+  symbols): the reduced board, and each drum complete on a click. Drawn so far: the bass drum, every part of
+  `tools/kick808/bassdrum.cir` with its value and name, but the glide bend (the engine's own, not on a real 808)
+  and the netlist's solver aids. The other ten are still to draw.
+- What the electricity shows (options: as it is; voltage as colour too; glowing wires without dots): voltage as a
+  tint on the wire as well, one colour above ground and one below (Falstad's green and red, a blue for below in
+  the Paper theme, whose red is already its accent), so a charged capacitor shows while no current moves.

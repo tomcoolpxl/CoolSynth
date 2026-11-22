@@ -8,22 +8,22 @@
   /* Every colour is a named role, so a theme is only this list. */
   [data-theme="studio"] {
     --desk:#171615; --panel:#2d2b28; --ink:#ece4d2; --dim:#9a927f; --line:#4a463f;
-    --strip:#e8742a; --on:#e8742a; --on-ink:#1a1512; --lit:#ffc36b; --flow:#ffa04a;
+    --strip:#e8742a; --on:#e8742a; --on-ink:#1a1512; --lit:#ffc36b; --flow:#ffa04a; --vpos:#8fd694; --vneg:#e8685a;
     --g1:#4b463e; --g2:#5b554b; --g3:#6c6558; --g4:#7e7666; --grid:transparent;
   }
   [data-theme="paper"] {
     --desk:#d8d1bf; --panel:#f3ecdb; --ink:#1d1c1a; --dim:#7b7566; --line:#c9c0aa;
-    --strip:#c8372d; --on:#1d1c1a; --on-ink:#f3ecdb; --lit:#c8372d; --flow:#c8372d;
+    --strip:#c8372d; --on:#1d1c1a; --on-ink:#f3ecdb; --lit:#c8372d; --flow:#c8372d; --vpos:#2f8f4e; --vneg:#2b5fb3;
     --g1:#e6dec9; --g2:#dbd2bb; --g3:#cfc5ac; --g4:#c3b89d; --grid:transparent;
   }
   [data-theme="night"] {
     --desk:#000000; --panel:#101012; --ink:#c9c5bb; --dim:#6d6a63; --line:#2a2a2f;
-    --strip:#ffb000; --on:#ffb000; --on-ink:#141000; --lit:#ffd266; --flow:#ffb000;
+    --strip:#ffb000; --on:#ffb000; --on-ink:#141000; --lit:#ffd266; --flow:#ffb000; --vpos:#7bd88f; --vneg:#ff6b5e;
     --g1:#1b1b1f; --g2:#232329; --g3:#2c2c33; --g4:#35353e; --grid:transparent;
   }
   [data-theme="blueprint"] {
     --desk:#0b2444; --panel:#133d70; --ink:#eaf3ff; --dim:#8fb1dc; --line:#3d6aa6;
-    --strip:#eaf3ff; --on:#eaf3ff; --on-ink:#133d70; --lit:#9fe3ff; --flow:#9fe3ff;
+    --strip:#eaf3ff; --on:#eaf3ff; --on-ink:#133d70; --lit:#9fe3ff; --flow:#9fe3ff; --vpos:#b6f5a0; --vneg:#ffb3a0;
     --g1:#1b4b87; --g2:#235799; --g3:#2b63ab; --g4:#346fbd; --grid:rgba(234,243,255,.07);
   }
 
@@ -191,6 +191,11 @@
   .sch .gl { fill:none; stroke:var(--ink); stroke-width:1; }
   .sch text { font-size:6.5px; letter-spacing:.08em; fill:var(--dim); pointer-events:none; }
   .sch text.pl { fill:var(--ink); font-weight:700; }
+  .sch .vt { fill:none; stroke-width:2.8; stroke-linecap:round; stroke-linejoin:round; opacity:0; pointer-events:none; }
+  .sch text.nm { font-size:5.6px; letter-spacing:.02em; fill:var(--dim); }
+  .sw { display:inline-block; width:14px; height:3px; margin:0 3px 0 5px; border-radius:2px; vertical-align:middle; }
+  .sw.pos { background:var(--vpos); } .sw.neg { background:var(--vneg); }
+  .sheetbar { display:flex; align-items:center; gap:14px; margin-top:8px; font-size:10.5px; color:var(--dim); }
   .sch .fl { fill:none; stroke:var(--flow); stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:0.1 6.5; opacity:0; pointer-events:none; }
   .legend { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:10px; padding-top:12px; border-top:1px solid var(--line); min-height:64px; }
   .legend h4 { margin:0 0 5px; font-size:13px; } .legend p { margin:0; font-size:11.5px; line-height:1.45; color:var(--dim); }
@@ -227,9 +232,11 @@
     <div class="lid2view">
       <div class="board" id="codes2"></div>
       <div id="sch"></div>
+      <div id="schFull" hidden></div>
+      <div class="sheetbar"><div class="seg" id="sheetSeg"></div><span>Only the bass drum is drawn complete so far; the other ten follow the same way.</span></div>
       <div class="legend">
         <div id="part2"></div>
-        <div><h4>Reading the current</h4><p>Dots that travel are a pulse or a charge. Dots that shake are sound: current going back and forth. Thicker means more current. The six oscillators and the noise never stop; a strike only lets them through. The currents here are drawn by hand for the mockup; the plugin would draw the solver's own.</p></div>
+        <div><h4>Reading the current</h4><p>Dots that travel are a pulse or a charge. Dots that shake are sound: current going back and forth. Thicker means more current. A wire's tint is its voltage:<i class="sw pos"></i>above ground,<i class="sw neg"></i>below. The six oscillators and the noise never stop; a strike only lets them through. The currents here are drawn by hand for the mockup; the plugin would draw the solver's own.</p></div>
       </div>
     </div>
     <div class="strip"></div>
@@ -678,7 +685,7 @@ function fit() {
 // tools/tr808/*.cir and the circuit headers, reduced to what makes each sound; the currents are drawn by hand.
 const G2 = { Y0:96, TRIG:10, MIX:446, NW:44, NP:52, SUM:58, HI:76, LO:84, H:462 };
 const flows2 = [];
-function buildLid2() {
+function schKit() {
   const wires = [], parts = [], flowDefs = [];
   const n1 = v => +v.toFixed(1);
   const P = pts => pts.map(p => n1(p[0]) + ',' + n1(p[1])).join(' ');
@@ -692,12 +699,17 @@ function buildLid2() {
       g,
       w: (...pts) => wires.push(`<polyline points="${P(pts.map(g))}"/>`),
       f: (key, kind, pts, o) => flowDefs.push(Object.assign({ key, kind, pts:pts.map(g) }, o)),
+      v: (key, mode, pts, o) => flowDefs.push(Object.assign({ key, kind:'v', mode, pts:pts.map(g) }, o)),
       dot: (x, y) => wires.push(`<circle class="dot" cx="${X(x)}" cy="${Y(y)}" r="1.7"/>`),
       tx: (x, y, str, anchor, cls) => parts.push(`<text x="${X(x)}" y="${Y(y)}" text-anchor="${anchor || 'middle'}"${cls ? ` class="${cls}"` : ''}>${esc(str)}</text>`),
       glyph: pts => parts.push(`<polyline class="gl" points="${P(pts.map(g))}"/>`),
       R: (x, y, o, L, name) => add(name, zig(X(x), Y(y), o, L)),
       C: (x, y, o, L, name) => { const a = n1((L - 3) / 2), gx = X(x), gy = Y(y); add(name, o === 'h' ? `M${gx} ${gy}h${a}m0 -4v8m3 -8v8m0 -4h${a}` : `M${gx} ${gy}v${a}m-4 0h8m-8 3h8m-4 0v${a}`); },
-      D: (x, y, o, L, name) => { const a = (L - 6) / 2, gx = X(x), gy = Y(y); add(name, `M${gx} ${gy}H${gx + a}M${gx + a} ${gy - 3.5}L${gx + a + 6} ${gy}L${gx + a} ${gy + 3.5}ZM${gx + a + 6} ${gy - 3.5}V${gy + 3.5}M${gx + a + 6} ${gy}H${gx + L}`); },
+      D: (x, y, o, L, name) => {   // 'h' anode on the left, 'v' anode on top, 'u' anode at the bottom
+        const a = (L - 6) / 2, gx = X(x), gy = Y(y), k = o === 'u' ? -1 : 1;
+        add(name, o === 'h' ? `M${gx} ${gy}H${gx + a}M${gx + a} ${gy - 3.5}L${gx + a + 6} ${gy}L${gx + a} ${gy + 3.5}ZM${gx + a + 6} ${gy - 3.5}V${gy + 3.5}M${gx + a + 6} ${gy}H${gx + L}`
+          : `M${gx} ${gy}V${gy + k * a}M${gx - 3.5} ${gy + k * a}L${gx} ${gy + k * (a + 6)}L${gx + 3.5} ${gy + k * a}ZM${gx - 3.5} ${gy + k * (a + 6)}H${gx + 3.5}M${gx} ${gy + k * (a + 6)}V${gy + k * L}`);
+      },
       POT: (x, y, o, L, name, label) => {
         const gx = X(x), gy = Y(y), m = L / 2;
         const [fx, fy, ax, ay] = o === 'h' ? [gx + m - 6, gy + 6, gx + m + 6, gy - 6] : [gx - 6, gy + m + 6, gx + 6, gy + m - 6];
@@ -716,6 +728,26 @@ function buildLid2() {
     };
     return s;
   }
+  return { wires, parts, flowDefs, sheet, P };
+}
+// Puts a drawn sheet on the page: its wires, the voltage tints, the parts, then the current.
+function mountSheet(hostId, kit, w, h) {
+  const host = $(hostId), ns = 'http://www.w3.org/2000/svg';
+  host.innerHTML = `<svg class="sch" viewBox="0 0 ${w} ${h}"><g class="w">${kit.wires.join('')}</g><g class="vl"></g><g>${kit.parts.join('')}</g><g class="fl-layer"></g></svg>`;
+  for (const def of kit.flowDefs) {
+    const e = document.createElementNS(ns, 'polyline'); e.setAttribute('class', def.kind === 'v' ? 'vt' : 'fl'); e.setAttribute('points', kit.P(def.pts));
+    host.querySelector(def.kind === 'v' ? '.vl' : '.fl-layer').append(e);
+    flows2.push(Object.assign({ el:e, t0:null, d:300, off:Math.random() * 6.5, ph:Math.random() * 6.5, vis:false }, def));
+  }
+  host.onclick = e => {
+    const p = e.target.closest('.pt'); if (!p) return;
+    document.querySelectorAll('.sch .pt.sel').forEach(x => x.classList.remove('sel')); p.classList.add('sel');
+    const [first, ...rest] = p.dataset.n.split(' · '), ins = INS.find(i => i.id === p.dataset.v), out = $('part2'); out.innerHTML = '';
+    out.append(el('h4', '', (ins ? laneName(ins) + ': ' : '') + first), el('p', '', rest.join(' · ') || 'One of the parts this drum is made of.'));
+  };
+}
+function buildLid2() {
+  const { wires, parts, flowDefs, sheet, P } = schKit();
 
   const MIXL = G2.MIX - G2.Y0;
   // One drum's strip: the trigger enters at the top through its switch and runs down the left rail; the sound leaves down the right rail to the mix.
@@ -744,6 +776,7 @@ function buildLid2() {
         s.f(id + ':ring', 'ac', [[55, y + 28], [55, y + 10], [24, y + 10]], { lvl:0.3, fd:o.fd });
         if (o.fb) s.f(id + ':ring', 'ac', [[80, y + 28], [80, y + 10], [55, y + 10]], { lvl:0.3, fd:o.fd });
         s.f(id + ':ring', 'ac', [[80, y + 64], [94, y + 64]], { lvl:0.4, fd:o.fd });
+        s.v(id + ':ring', 'ac', [[80, y + 28], [80, y + 64], [68, y + 64]], { fd:o.fd }); s.v(id + ':ring', 'ac', [[80, y + 64], [94, y + 64]], { fd:o.fd });
         if (!o.noJoin) { railTop = railTop === null ? y + 64 : Math.min(railTop, y + 64); s.dot(94, y + 64); }
       },
       // A swing VCA: an envelope on the transistor's collector lets the signal on its base through.
@@ -767,6 +800,7 @@ function buildLid2() {
           s.w(...lane); s.dot(o.tap[0], ty); s.f(id + ':idle', o.sig, lane, { idle:0.06, fd:o.fd });
         }
         s.f(id + ':env', o.burst ? 'burst' : 'env', [[10, y + 14], [60, y + 14]]);
+        s.v(id + ':env', o.burst ? 'burst' : 'env', [[24, y + 14], [60, y + 14]]); if (o.cap) s.v(id + ':env', 'env', [[26, y + 14], [26, y + 20]]);
         s.f(id + ':sig', o.sig, [[76, y + 26], [64, y + 26], [60, y + 38], [60, y + 46], [94, y + 46]], { lvl:0.45, fd:o.fd, env:o.burst ? 'burst' : '' });
         if (!o.noJoin) { railTop = railTop === null ? y + 46 : Math.min(railTop, y + 46); s.dot(94, y + 46); }
       },
@@ -779,6 +813,8 @@ function buildLid2() {
     for (const [a, b] of cuts) { if (a > y) s.w([94, y], [94, a]); y = Math.max(y, b); }
     s.w([94, y], [94, MIXL]); s.dot(94, MIXL);
     flowDefs.push({ key:id + ':trig', kind:'pulse', pts:[[64, G2.TRIG], [col * 100 + 50, G2.TRIG], ...[[50, 30], [10, 30], [10, leftEnd]].map(s.g)] });
+    flowDefs.push({ key:id + ':trig', kind:'v', mode:'pulse', pts:[[col * 100 + 50, G2.TRIG], ...[[50, 30], [10, 30], [10, leftEnd]].map(s.g)] });
+    flowDefs.push({ key:id + ':out', kind:'v', mode:'ac', fd:v.fd || 17, pts:[[94, railTop], [94, MIXL]].map(s.g) });
     flowDefs.push({ key:id + ':out', kind:v.fd ? 'ac' : 'nz', lvl:0.4, fd:v.fd, pts:[...[[94, railTop], [94, MIXL]].map(s.g), [1188, G2.MIX]] });
   }
 
@@ -852,7 +888,8 @@ function buildLid2() {
   a.glyph([[15, 115], [18, 115], [18, 109], [22, 109], [22, 115], [25, 115]]);
   a.w([20, 103.5], [20, 92]); a.POT(20, 70, 'v', 22, 'VR3 · Accent: the height of the trigger, up to 11.5 V'); a.tx(29, 84, 'ACCENT', 'start', 'pl');
   a.w([20, 70], [20, 40], [34, 40]); a.Q(50, 40, 1, false, 'Q32 · a follower that puts the pulse on the trigger line');
-  a.w([50, 28], [50, 22]); a.tx(50, 19, '+15 V');
+  a.w([50, 28], [50, 22]); a.tx(50, 19, '+15 V'); a.v('idle:v', 'dc', [[50, 28], [50, 22]], { idle:0.8 });
+  a.v('AC:src', 'pulse', [[50, 52], [64, 52], [64, G2.TRIG]]);
   a.w([50, 52], [64, 52], [64, G2.TRIG], [1150, G2.TRIG]); a.tx(70, 7, 'TRIGGER LINE', 'start');
   a.f('AC:src', 'pulse', [[20, 103], [20, 40], [34, 40]]); a.f('AC:src', 'pulse', [[50, 52], [64, 52], [64, G2.TRIG]]);
 
@@ -874,21 +911,96 @@ function buildLid2() {
 
   a.w([194, G2.MIX], [1188, G2.MIX]); parts.push(`<path class="ar" d="M1197 ${G2.MIX}l-8 -3.5v7z"/>`); a.tx(1186, 458, 'MIX OUT', 'end');
 
-  $('sch').innerHTML = `<svg class="sch" viewBox="0 0 1200 ${G2.H}"><g class="w">${wires.join('')}</g><g>${parts.join('')}</g><g id="flowLayer"></g></svg>`;
-  const layer = $('flowLayer');
-  for (const def of flowDefs) {
-    const e = document.createElementNS('http://www.w3.org/2000/svg', 'polyline'); e.setAttribute('class', 'fl'); e.setAttribute('points', P(def.pts)); layer.append(e);
-    flows2.push(Object.assign({ el:e, t0:null, d:300, off:Math.random() * 6.5, ph:Math.random() * 6.5, vis:false }, def));
-  }
-  const showPart = (n, vId) => {
-    const [first, ...rest] = n.split(' · '), ins = INS.find(i => i.id === vId), host = $('part2'); host.innerHTML = '';
-    host.append(el('h4', '', (ins ? laneName(ins) + ': ' : '') + first), el('p', '', rest.join(' · ') || 'One of the parts this drum is made of.'));
-  };
-  $('sch').onclick = e => {
-    const p = e.target.closest('.pt'); if (!p) return;
-    document.querySelectorAll('.sch .pt.sel').forEach(x => x.classList.remove('sel')); p.classList.add('sel'); showPart(p.dataset.n, p.dataset.v);
-  };
+  mountSheet('sch', { wires, parts, flowDefs, P }, 1200, G2.H);
   $('part2').append(el('h4', '', 'The whole board'), el('p', '', "Every drum's circuit, reduced to the parts that make its sound: bias, coupling and filter details are left out. Click a part to read it, a drum's name to strike it, or press play."));
+}
+
+// The bass drum complete: every part of tools/kick808/bassdrum.cir with its value, left to right as the signal runs.
+// Left out: the glide bend (the engine's own, not on a real 808) and the netlist's solver aids.
+function buildFullBD() {
+  const kit = schKit(), a = kit.sheet(0, 0, 'BD'), { parts } = kit;
+  const term = (x, y, label, lx, ly, anchor) => { parts.push(`<circle class="gl" cx="${x}" cy="${y}" r="2"/>`); a.tx(lx, ly, label, anchor); };
+  a.w([92, 12], [620, 12]); a.tx(100, 8, '+15 V', 'start'); a.v('idle:v', 'dc', [[92, 12], [620, 12]], { idle:0.8 });
+
+  // The common trigger
+  parts.push(`<g class="pt" data-n="The step's pulse · 1 ms, from the sequencer" data-v="BD"><title>The step's pulse</title><circle cx="18" cy="150" r="8.5"/></g>`);
+  a.glyph([[13, 153], [16, 153], [16, 147], [20, 147], [20, 153], [23, 153]]);
+  a.w([26.5, 150], [28, 150]); a.R(28, 150, 'h', 22, 'R117 · 47 k'); a.Q(66, 150, 1, false, 'Q31 · turns off for the pulse, letting Q32 rise'); a.G(66, 162);
+  a.w([66, 138], [66, 106]); a.dot(66, 110); a.R(66, 84, 'v', 22, 'R120 · 4.7 k'); term(66, 81, 'ACCENT, 5 TO 15 V', 71, 79, 'start');
+  a.w([66, 110], [76, 110]); a.Q(92, 110, 1, false, 'Q32 · the follower onto the trigger line'); a.w([92, 98], [92, 12]); a.dot(92, 12);
+  a.w([92, 122], [92, 130]); a.dot(92, 130); a.R(92, 130, 'v', 22, 'R113 · 4.7 k, holds the line down'); a.G(92, 152);
+  a.w([92, 130], [110, 130], [110, 112], [150, 112], [150, 118]);
+  // The bass drum's switch
+  a.dot(122, 112); a.R(122, 112, 'v', 18, 'R155 · 4.7 k'); a.dot(122, 130); a.w([122, 130], [134, 130]);
+  a.Q(150, 130, 1, true, 'Q40 · a PNP switch: it can only push current into the drum');
+  a.R(122, 130, 'v', 26, 'R154 · 10 k'); a.w([122, 156], [122, 160]); a.Q(122, 172, 1, false, "Q39 · on while the bass drum's step data stands"); a.G(122, 184);
+  term(72, 172, 'BD ON', 72, 181); a.w([74, 172], [76, 172]); a.R(76, 172, 'h', 22, 'R152 · 22 k'); a.w([98, 172], [106, 172]); a.dot(102, 172); a.R(102, 172, 'v', 18, 'R153 · 10 k'); a.G(102, 190);
+  a.w([150, 142], [150, 200], [170, 200]); a.dot(150, 150); a.w([150, 150], [162, 150], [162, 84], [166, 84]);
+  // The pulse shaper
+  a.dot(166, 200); a.w([166, 200], [166, 188], [170, 188]); a.R(170, 188, 'h', 22, 'R163 · 100 k'); a.w([192, 188], [196, 188], [196, 200]);
+  a.C(170, 200, 'h', 22, 'C40 · 0.015 uF'); a.w([192, 200], [388, 200], [388, 156], [404, 156]); a.dot(196, 200); a.dot(212, 200);
+  a.R(196, 200, 'v', 22, 'R162 · 4.7 k'); a.G(196, 222); a.D(212, 224, 'u', 24, 'D53 · clamps the falling edge'); a.G(212, 224);
+  // The envelope generator
+  a.R(166, 84, 'h', 22, 'R157 · 8.2 k'); a.w([188, 84], [198, 84]); a.dot(192, 84); a.R(192, 84, 'v', 20, 'R158 · 2.7 k'); a.G(192, 104);
+  a.Q(214, 84, 1, false, 'Q41 · with Q42, holds Q43 on for some 5 ms'); a.G(214, 96); a.w([214, 72], [214, 44]); a.dot(214, 60);
+  a.R(214, 20, 'v', 24, 'R156 · 1 M'); a.w([214, 12], [214, 20]); a.dot(214, 12);
+  a.w([214, 60], [242, 60]); a.dot(232, 60); a.C(232, 60, 'v', 14, 'C38 · 0.1 uF'); a.G(232, 74);
+  a.Q(258, 60, 1, false, 'Q42'); a.G(258, 72); a.w([258, 48], [258, 38]); a.dot(258, 40); a.R(258, 16, 'v', 22, 'R160 · 22 k'); a.w([258, 12], [258, 16]); a.dot(258, 12);
+  // The retrigger network and the attack transistor
+  a.w([258, 40], [272, 40]); a.dot(266, 40); a.C(272, 40, 'h', 14, 'C39 · 0.033 uF: the retrigger pulse, the sigh after the attack'); a.w([286, 40], [300, 40]); a.dot(292, 40);
+  a.D(292, 40, 'v', 20, 'D52'); a.G(292, 60); a.R(300, 40, 'h', 22, 'R161 · 1 M'); a.w([322, 40], [400, 40], [400, 110]);
+  a.w([266, 40], [266, 140], [280, 140]); a.R(280, 140, 'h', 22, 'R159 · 100 k'); a.w([302, 140], [314, 140]);
+  a.Q(330, 140, 1, false, 'Q43 · shorts R165 in the attack: the higher pitch of the first 5 ms'); a.G(330, 152);
+  a.w([330, 128], [330, 112]); a.dot(330, 120); a.w([330, 120], [346, 120]); a.R(346, 120, 'v', 22, 'R165 · 47 k'); a.G(346, 142);
+  a.R(330, 90, 'v', 22, 'R166 · 6.8 k'); a.w([330, 90], [330, 84], [400, 84]); a.dot(400, 84);
+  // The bridged-T around the first op-amp
+  a.w([404, 144], [376, 144], [376, 110], [382, 110]); a.C(382, 110, 'h', 14, 'C41 · 0.015 uF'); a.w([396, 110], [404, 110]); a.dot(400, 110);
+  a.C(404, 110, 'h', 14, 'C42 · 0.015 uF'); a.w([418, 110], [440, 110], [440, 214], [452, 214]);
+  a.dot(376, 124); a.w([376, 124], [396, 124]); a.R(396, 124, 'h', 22, 'R167 · 1 M'); a.w([418, 124], [440, 124]); a.dot(440, 124);
+  a.OP(404, 138, 'The first op-amp · half a uPC4558: the resonator'); a.w([430, 150], [452, 150]); a.dot(440, 150);
+  // The feedback buffer: the Decay
+  a.R(452, 150, 'h', 22, 'R164 · 47 k'); a.w([474, 150], [492, 150]); a.dot(480, 150); a.OP(492, 144, 'The second op-amp · the feedback buffer');
+  a.w([492, 162], [486, 162], [486, 170]); a.R(486, 170, 'v', 20, 'R168 · 22 k'); a.G(486, 190);
+  a.w([480, 150], [480, 104], [482, 104]); a.dot(480, 124); a.w([480, 124], [488, 124]); a.R(488, 124, 'h', 22, 'R169 · 47 k'); a.w([510, 124], [526, 124]); a.dot(526, 124);
+  a.POT(482, 104, 'h', 22, 'VR6 · Decay, 500 k', 'DECAY'); a.w([504, 104], [506, 104]); a.C(506, 104, 'h', 14, 'C43 · 33 uF'); a.w([520, 104], [526, 104]);
+  a.w([518, 156], [526, 156], [526, 70], [470, 70]); a.dot(526, 104); a.R(448, 70, 'h', 22, 'R170 · 470 k, back into the bridged-T'); a.w([448, 70], [400, 70]); a.dot(400, 70);
+  // The output filter: tone, level, the follower
+  a.R(452, 214, 'h', 22, 'R171 · 220'); a.w([474, 214], [484, 214]); a.dot(478, 214); a.R(484, 214, 'h', 22, 'R172 · 10 k'); a.w([506, 214], [540, 214]); a.dot(512, 214); a.dot(524, 214);
+  a.w([478, 214], [478, 230], [484, 230]); a.POT(484, 230, 'h', 22, 'VR5 · Tone, 10 k'); a.tx(495, 244, 'TONE', 'middle', 'pl'); a.w([506, 230], [512, 230], [512, 214]);
+  a.C(524, 214, 'v', 14, 'C45 · 0.1 uF'); a.G(524, 228); a.C(540, 214, 'h', 14, 'C47 · 0.47 uF'); a.w([554, 214], [560, 214]);
+  a.POT(560, 214, 'v', 22, 'VR4 · Level, 100 k'); a.tx(560, 207, 'LEVEL', 'middle', 'pl'); a.G(560, 236);
+  a.w([566, 219], [574, 219]); a.C(574, 219, 'h', 14, 'C49 · 0.47 uF'); a.w([588, 219], [596, 219], [596, 178]);
+  a.R(596, 156, 'v', 22, 'R177 · 82 k'); a.w([596, 156], [596, 150], [604, 150]); a.dot(596, 150); a.w([596, 150], [580, 150]); a.R(580, 150, 'v', 22, 'R176 · 100 k'); a.G(580, 172);
+  a.Q(620, 150, 1, false, 'Q44 · the output follower'); a.w([620, 138], [620, 12]); a.dot(620, 12);
+  a.w([620, 162], [620, 166], [636, 166]); a.dot(620, 166); a.dot(628, 166); a.R(620, 166, 'v', 22, 'R173 · 6.8 k'); a.tx(620, 197, '-15 V');
+  a.C(628, 166, 'v', 14, 'C48 · 220 pF'); a.G(628, 180); a.C(636, 166, 'h', 14, 'C50 · 1 uF'); a.w([650, 166], [668, 166]); a.dot(656, 166);
+  a.R(656, 166, 'v', 22, 'R174 · 100 k'); a.G(656, 188); parts.push('<path class="ar" d="M676 166l-8 -3.5v7z"/>'); a.tx(668, 160, 'OUT', 'end');
+
+  // The current and the voltage, drawn by hand as on the board.
+  const pulse = pts => a.f('BD:trig', 'pulse', pts), ring = (pts, lvl) => a.f('BD:ring', 'ac', pts, { lvl, fd:5 });
+  pulse([[18, 141], [18, 150], [50, 150]]); pulse([[92, 122], [92, 130], [110, 130], [110, 112], [150, 112], [150, 118]]);
+  pulse([[150, 142], [150, 200], [388, 200], [388, 156], [404, 156]]); pulse([[150, 150], [162, 150], [162, 84], [198, 84]]);
+  a.f('BD:env', 'env', [[258, 48], [258, 40], [272, 40]]); a.f('BD:env', 'env', [[286, 40], [400, 40], [400, 110]]); a.f('BD:env', 'env', [[266, 40], [266, 140], [314, 140]]);
+  ring([[404, 144], [376, 144], [376, 110], [440, 110], [440, 150], [430, 150]], 0.55); ring([[376, 124], [440, 124]], 0.3);
+  ring([[400, 110], [400, 84], [330, 84], [330, 120], [346, 120], [346, 142]], 0.3); ring([[440, 150], [492, 150]], 0.35);
+  ring([[480, 150], [480, 104], [526, 104], [526, 156], [518, 156]], 0.3); ring([[526, 104], [526, 70], [400, 70]], 0.3);
+  a.f('BD:out', 'ac', [[440, 150], [440, 214], [560, 214]], { lvl:0.4, fd:5 }); a.f('BD:out', 'ac', [[566, 219], [596, 219], [596, 150], [604, 150]], { lvl:0.35, fd:5 });
+  a.f('BD:out', 'ac', [[620, 162], [620, 166], [668, 166]], { lvl:0.4, fd:5 });
+  a.v('BD:trig', 'pulse', [[92, 130], [110, 130], [110, 112], [150, 112]]); a.v('BD:trig', 'pulse', [[150, 150], [150, 200], [170, 200]]);
+  a.v('BD:env', 'env', [[214, 60], [242, 60]]); a.v('BD:env', 'env', [[258, 40], [272, 40]]);
+  a.v('BD:ring', 'ac', [[430, 150], [452, 150]], { fd:5 }); a.v('BD:ring', 'ac', [[440, 110], [440, 214], [452, 214]], { fd:5 });
+  a.v('BD:out', 'ac', [[620, 166], [636, 166]], { fd:5 });
+  mountSheet('schFull', kit, 680, 248);
+}
+// Writes each part's name beside it, once the sheet is on screen and its parts can be measured.
+function labelSheet(hostId) {
+  const svg = $(hostId).querySelector('svg'); if (!svg || svg.dataset.named) return; svg.dataset.named = 1;
+  for (const g of svg.querySelectorAll('.pt')) {
+    const b = g.getBBox(), t = document.createElementNS('http://www.w3.org/2000/svg', 'text'), tall = b.height > b.width + 2;
+    t.setAttribute('class', 'nm'); t.textContent = g.dataset.n.split(' · ')[0].replace(/^The (first|second) op-amp$/, 'IC').replace(/^The step's pulse$/, '');
+    t.setAttribute('x', tall ? b.x + b.width + 2 : b.x + b.width / 2); t.setAttribute('y', tall ? b.y + b.height / 2 + 2 : b.y - 1.5);
+    t.setAttribute('text-anchor', tall ? 'start' : 'middle'); g.parentNode.append(t);
+  }
 }
 function buildCodes2() {
   const host = $('codes2'); host.innerHTML = '';
@@ -913,6 +1025,21 @@ function frame2(now) {
   if (!$('plug').classList.contains('lid2')) return;
   const dt = Math.min(50, now - last2) / 1000; last2 = now;
   for (const f of flows2) {
+    if (f.kind === 'v') {
+      let v = f.idle || 0;
+      if (f.t0 !== null) {
+        const t = now - f.t0, tau = f.d / 2;
+        if (f.mode === 'pulse') v = t < 140 ? 1 : 0;
+        else if (f.mode === 'burst') v = t < 120 ? 0.9 : 0.8 * Math.exp(-(t - 120) / tau);
+        else if (f.mode === 'ac') v = Math.sin(now / 1000 * 2 * Math.PI * (f.fd || 8) + f.ph) * 0.9 * Math.exp(-t / tau);
+        else v = 0.9 * Math.exp(-t / tau);
+        if (t > f.d * 3 + 200) f.t0 = null;
+      }
+      const m = Math.abs(v);
+      if (m < 0.03) { if (f.vis) { f.el.style.opacity = 0; f.vis = false; } continue; }
+      f.vis = true; f.el.style.opacity = Math.min(0.9, m).toFixed(2); f.el.style.stroke = v > 0 ? 'var(--vpos)' : 'var(--vneg)';
+      continue;
+    }
     let a = f.idle || 0;
     if (f.t0 !== null) {
       const t = now - f.t0, tau = f.d / 3; let e;
@@ -941,7 +1068,10 @@ for (const [id, name] of THEMES) {
 }
 buildSound(); buildSeq(); buildLanes();
 nameRefresh.push(() => { buildBoard(); renderDetail(); });
-buildLid2(); nameRefresh.push(buildCodes2); requestAnimationFrame(frame2);
+buildLid2(); buildFullBD(); nameRefresh.push(buildCodes2); requestAnimationFrame(frame2);
+state.sheet = 'board';
+segmented($('sheetSeg'), [['board', 'Whole board'], ['BD', 'Bass drum, complete']], () => state.sheet,
+          v => { state.sheet = v; $('sch').hidden = v !== 'board'; $('schFull').hidden = v === 'board'; if (v !== 'board') labelSheet('schFull'); fit(); });
 nameRefresh.forEach(f => f()); state.selStep = { id:'BD', i:10 };
 refreshSelection(); renderSteps(); renderInspector(); fit();
 window.addEventListener('resize', fit);
