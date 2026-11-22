@@ -22,7 +22,7 @@
     pulse through the pulse shaper rings the bridged-T, the envelope generator's transistor shifts it up for the
     attack, the leakage makes its sigh, the feedback buffer its decay, the output filter its tone. The knobs reach
     the circuit's own controls and bends: Decay is VR6 (read through a table measured on the model, so it still
-    means seconds to -60 dB), Tone is VR5, Accent moves the trigger between 4 and 11.5 V with the velocity (D258), Click is
+    means seconds to -60 dB), Tone is VR5, Accent moves the trigger between 4.7 and 11.5 V with the velocity (D258), Click is
     the trigger's width, Punch the attack shift (R166), Punch Time the envelope (C38), Sigh the leakage (R161), Shape
     the op-amps' rails. The key tunes it by the bridged-T's capacitors, as the 808's tuning mod does.
 

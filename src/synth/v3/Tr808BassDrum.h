@@ -213,14 +213,15 @@ namespace coolsynth::synth::v3
             bent = wanted;
         }
         /**
-            The common trigger's volts for a hit of the 808 family generators (D258): 4 V unaccented; Accent times the
-            velocity lifts it to 11.5 V, where a real 808's AC LEVEL at its top acts in these circuits (808 From Mars's
-            toms and congas by their pitch drop, page 14's accented over normal amplitudes). The service notes' text
-            gives 4 to 14 V.
+            The common trigger's volts for a hit of the 808 family generators (D258): 4.7 V unaccented, where three real
+            808s' unaccented hits act in these circuits (their toms' and congas' pitch drop, the bass drum's sigh, the
+            rim shot's swing VCA); Accent times the velocity lifts it to 11.5 V, where a real 808's AC LEVEL at its top
+            acts (808 From Mars's toms and congas, page 14's accented over normal amplitudes). The service notes' text
+            gives 4 V and 4 to 14 V.
         */
         [[nodiscard]] static constexpr double triggerFor(double accentTimesVelocity) noexcept
         {
-            return 4.0 + 7.5 * accentTimesVelocity;
+            return 4.7 + 6.8 * accentTimesVelocity;
         }
 
         /**

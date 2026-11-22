@@ -100,7 +100,7 @@ What it gives: the real 808 behaviour, including the circuit bends Werner's pape
 Knobs:
 - Decay: 0.05 to 10 s (log), default 0.6 s: the feedback buffer, past stock to near self-oscillation.
 - Tone: 0 to 100 %, default 50 %: the passive low-pass.
-- Accent: 0 to 100 %, default 50 %: how far velocity moves the trigger between 4 and 11.5 V (D258).
+- Accent: 0 to 100 %, default 50 %: how far velocity moves the trigger between 4.7 and 11.5 V (D258).
 - Attack Shift: 0 to 200 %, default 100 %: the Q43 path's strength.
 - Attack Time: 1 to 30 ms (log), default 6 ms: the envelope generator (C38).
 - Sigh: 0 to 300 %, default 100 %: the leakage through R161.

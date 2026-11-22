@@ -22,7 +22,7 @@
     clap's tail ringing, and the other way round.
 
     The knobs are the 808's own four (the snare's Level, Tone and Snappy; the clap's and maracas' Level) with its pots'
-    tapers (levels audio, Tone and Snappy linear), then Accent, which moves each hit's trigger between 4 and 11.5 V
+    tapers (levels audio, Tone and Snappy linear), then Accent, which moves each hit's trigger between 4.7 and 11.5 V
     with its velocity (D258), and six bends, each at the machine's own value at 12 o'clock: the snare's Tune (its shells'
     capacitors, an octave either way) and Decay (its shells' damping, a quarter to four times), Snappy Decay (its
     envelope's capacitors), the clap's Decay (its reverb's envelope), Spread (its claps' timing, half to twice) and the

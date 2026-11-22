@@ -136,7 +136,7 @@ Delay-free loops:
 A fourth Model, "808 Circuit", beside 808, 909 and Modern, keeps today's 808 (cheap, already in Succession 808) and the shared knobs:
 - Decay: VR6, read through a table so the knob still means seconds to -60 dB; past the stock range the extended-decay bend.
 - Tone: VR5 itself.
-- Accent: how far velocity moves the trigger between 4 and 11.5 V (D258; the service notes' text gives 14 V); the
+- Accent: how far velocity moves the trigger between 4.7 and 11.5 V (D258; the service notes' text gives 4 and 14 V); the
   circuit then changes attack and sigh on its own.
 - Punch: the attack shift's depth, as R166 (the resistor left when Q43 shorts R165).
 - Punch Time: C38, the envelope's length.

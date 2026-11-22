@@ -77,11 +77,12 @@ pot's own range, would both do it; the voices themselves are not the cause, sinc
 
 ## Chosen (the user, D258)
 
-- The Accent knob's top at 11.5 V in the 808 Drums, the 808 Snare & Clap, the 808 Metal and the Kick's 808: the
-  trigger 4 + 7.5 x Accent x velocity volts, `Tr808BassDrum::triggerFor`. The Kick's full Accent over none is 2.42 at
-  its own defaults, the 808 Drums' bass drum at 12 o'clock 2.69, page 14 2.86.
-- The bottom stays at 4 V. Succession 808's Accent 0.6 became 0.8, the same 4 + 6 x velocity volts it was passed at;
-  the Kick's level calibration stays, so its default hit (Accent half, full velocity) peaks some 0.86 times as high.
+- The Accent knob's top at 11.5 V in the 808 Drums, the 808 Snare & Clap, the 808 Metal and the Kick's 808,
+  `Tr808BassDrum::triggerFor`. The Kick's full Accent over none is 2.42 at its own defaults, the 808 Drums' bass
+  drum at 12 o'clock 2.69, page 14 2.86 (both against the 4 V bottom this was read at).
+- The bottom first stayed at 4 V; raised to 4.7 V later (below, the rim shot), so the trigger is 4.7 + 6.8 x Accent
+  x velocity volts. Succession 808's Accent 0.6 became 0.78, its top at full velocity the 10 V it was passed at, its
+  softest hits 0.7 V hotter; the Kick's level calibration stays.
 - The earlier fits, checked against the units' 4.5 to 5 V: none was a level effect. Between 4 and 4.7 V the toms'
   and congas' decays move 1.2 % at most (D252's resistors moved them 10 to 30 %), the claves' 1 %, the rim shot over
   the claves 0.6 dB (3.9 against the units' 2.1 and 4.9); the clap's claps not at all from 4 to 8 V (C140, C144).
@@ -96,6 +97,24 @@ pot's own range, would both do it; the voices themselves are not the cause, sinc
   is still under. Fitted (the user): C139 39 nF, swept through the generator in the test runner
   (`COOLSYNTH_808_CLAP_FIT`), the ngspice netlist and its clap references with it (`808-snare-clap.md`).
 - The accented amplitude over page 14 (D253, D257): the AC LEVEL's top, above.
+
+## The rim shot, and the bottom raised to 4.7 V
+
+The rim shot's two rings, by trigger, against both units (5 ms frames, dB under the 1.7 kHz band's first frame; its
+decay to a tenth by a 0.5 ms rms envelope):
+
+- The units: decay 9.71 to 9.75 ms; the 455 Hz ring at 10 to 15 ms -30.9 dB (Fischer) and -23 (Audiorealism, three
+  shots within 0.4 dB); the 1.7 kHz ring at 5 to 10 ms -19.0 and -18.0.
+- The model at 4 V: 8.48 ms, -36.0, -14.9. At 4.71 V: 9.58 ms, -27.2, -13.1. At 5 V: 9.76 ms, -25.3, -12.5.
+
+So at the units' own 4.7 V the rim shot's decay and its 455 Hz ring are theirs with no fit, and most of the 6 dB
+"off balance" was the trigger: the swing VCA makes the rim shot the voice where the bottom shows. What remains is the
+1.7 kHz ring falling some 5 dB too slowly over its first 10 ms.
+
+The user's choice (options: a 4.7 V bottom; keep 4 V and fit the rim shot's envelope and balance; keep 4 V and leave
+it): 4.7 V. The fits made at 4 V move little at it, measured: the open hat's decays 74, 207, 339, 460, 537 ms
+against 72, 207, 336, 452, 533 (within 2 %, inside the units' range), the clap's tail 0.6 to 1 dB louder (still
+within some 2 dB of the units), the toms' and congas' decays under 1.2 %.
 
 ## Found on the way
 

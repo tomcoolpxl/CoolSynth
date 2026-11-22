@@ -139,8 +139,8 @@ room = Engine Room
 # Ab, F and G play its other roots. Mono, so each hit strikes the drum still ringing; harder
 # hits punch and sigh more. A boom of 1.3 s, about three beats at 140 BPM, darkened and driven.
 # Drafted 2026-11-20 for the user's ears. Tone 0.17 since D251, where the refitted taper leaves VR5 as 0.35 did.
-# Accent 0.8 since D258 (the top at 11.5 V): the trigger it passed with, 4 + 6 x velocity volts.
-g1 = Kick model=808 decay=1300 punch=12 ptime=6 sigh=2.7 click=0.2 noise=0 shape=0.2 accent=0.8 drive=6 tone=0.17 trig=oneshot oct=-2 level=0.9
+# Accent 0.78 since D258 (the trigger 4.7 to 11.5 V): its top at full velocity stays the 10 V it was passed at.
+g1 = Kick model=808 decay=1300 punch=12 ptime=6 sigh=2.7 click=0.2 noise=0 shape=0.2 accent=0.78 drive=6 tone=0.17 trig=oneshot oct=-2 level=0.9
 p1 = Off
 env1 = attack=0.5 decay=1 sustain=1 release=40 velocity=0
 voice = env2ToP1=0

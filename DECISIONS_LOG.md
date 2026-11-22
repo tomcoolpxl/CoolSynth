@@ -5366,3 +5366,11 @@ input the claves take at another DC. Fixed in `Tr808RimShot.h`: each SW11 positi
 switch moves while the drum rests (while it rings, it moves as on the machine). The thump is 97 dB under; the claves'
 peak 2.3 dB lower through the generator, the rim shot over them 3.65 dB, so D252's R313 and R324, fitted on the
 circuit, stand. The congas' switch, checked alike, needed nothing.
+
+The rim shot's balance, looked at by trigger: at 4.7 V its decay to a tenth (9.58 ms) and its 455 Hz ring are both
+units' (9.71 to 9.75 ms) with no fit, where at 4 V the decay is 13 % short; only the 1.7 kHz ring's first 10 ms stay
+some 5 dB strong. The user's choice (options: the unaccented trigger at 4.7 V, where all three units' unaccented hits
+read; keep 4 V and fit the rim shot's envelope and balance; keep 4 V and leave it): 4.7 V. The trigger is 4.7 + 6.8 x
+Accent x velocity volts in all four 808 generators; Succession 808's Accent 0.78 keeps its top at 10 V. The fits made
+at 4 V, measured at 4.7 V: the open hat within 2 %, the clap's tail 0.6 to 1 dB louder, the toms' decays under 1.2 %,
+all still within the units.
