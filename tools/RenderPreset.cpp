@@ -15,7 +15,8 @@
 //           player brings in a vibrato
 // --list    print the built-in preset names and exit
 //
-// Used to put a preset next to a reference recording, and a change next to what it replaces.
+// Used to put a preset next to a reference recording, and a change next to what it replaces. It renders offline, as a
+// DAW's bounce does: no sound gives way to the CPU load (D258); --background-load keeps a live device's rules.
 
 #include <algorithm>
 #include <cmath>
@@ -198,6 +199,9 @@ int main(int argc, char* argv[])
 
     SynthAudioProcessor processor;
     processor.setPlayConfigDetails(0, 2, kSampleRate, kBlockSize);
+    // Offline, as a DAW's bounce (D258): no sound gives way to the load, so a render is the same on a busy machine.
+    // --background-load measures what a live device's blocks see, so it keeps the live rules.
+    processor.setNonRealtime(backgroundInstrument < 0);
     processor.prepareToPlay(kSampleRate, kBlockSize);
 
     // --history "A;B;C": play these presets first through the same running engine (a chord held, then let go),
