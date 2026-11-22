@@ -5577,3 +5577,14 @@ running downward from the trigger line to the mix, its stages and part names tak
 (`src/synth/v3/Tr808*.h`), the panel's pots drawn at the stage they sit in. The mods it lists are marked as in the
 circuit code already (the kick's and snare's tuning, the snappy's decay, the clap's spread and tail, the maracas'
 decay, the cowbell's trimmers) or to build (the kick's decay past its top, the noise level).
+
+Under the Lid 2, a second try beside the first (the user, on seeing it: too abstract, no connections and no
+electricity to see; the whole board, abstracted further if it does not fit): one schematic sheet with real symbols
+and wires, each drum reduced to the parts that make its sound (its switch, its bridged-T resonators and swing VCAs
+with their envelopes, its pots), under the shared trigger line, noise, six oscillators and mix, after
+`tools/kick808/bassdrum.cir`, `tools/tr808/*.cir` and the circuit headers. The current is drawn on the wires as
+dots, as Falstad's simulator does (lushprojects.com/circuitjs): travelling for a pulse or a charge, shaking for
+sound, thicker for more current, the oscillators and the noise always thin and running. Left out: bias, coupling
+and filter details, the power rails, the tom or conga and the other pairs' second side. The currents are drawn by
+hand; the plugin would take each branch's current from the solver, on a logarithmic scale, since a trigger's
+milliamps and a resonator's tens of microamps differ a hundredfold and more.

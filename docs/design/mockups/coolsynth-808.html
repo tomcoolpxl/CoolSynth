@@ -8,22 +8,22 @@
   /* Every colour is a named role, so a theme is only this list. */
   [data-theme="studio"] {
     --desk:#171615; --panel:#2d2b28; --ink:#ece4d2; --dim:#9a927f; --line:#4a463f;
-    --strip:#e8742a; --on:#e8742a; --on-ink:#1a1512; --lit:#ffc36b;
+    --strip:#e8742a; --on:#e8742a; --on-ink:#1a1512; --lit:#ffc36b; --flow:#ffa04a;
     --g1:#4b463e; --g2:#5b554b; --g3:#6c6558; --g4:#7e7666; --grid:transparent;
   }
   [data-theme="paper"] {
     --desk:#d8d1bf; --panel:#f3ecdb; --ink:#1d1c1a; --dim:#7b7566; --line:#c9c0aa;
-    --strip:#c8372d; --on:#1d1c1a; --on-ink:#f3ecdb; --lit:#c8372d;
+    --strip:#c8372d; --on:#1d1c1a; --on-ink:#f3ecdb; --lit:#c8372d; --flow:#c8372d;
     --g1:#e6dec9; --g2:#dbd2bb; --g3:#cfc5ac; --g4:#c3b89d; --grid:transparent;
   }
   [data-theme="night"] {
     --desk:#000000; --panel:#101012; --ink:#c9c5bb; --dim:#6d6a63; --line:#2a2a2f;
-    --strip:#ffb000; --on:#ffb000; --on-ink:#141000; --lit:#ffd266;
+    --strip:#ffb000; --on:#ffb000; --on-ink:#141000; --lit:#ffd266; --flow:#ffb000;
     --g1:#1b1b1f; --g2:#232329; --g3:#2c2c33; --g4:#35353e; --grid:transparent;
   }
   [data-theme="blueprint"] {
     --desk:#0b2444; --panel:#133d70; --ink:#eaf3ff; --dim:#8fb1dc; --line:#3d6aa6;
-    --strip:#eaf3ff; --on:#eaf3ff; --on-ink:#133d70; --lit:#9fe3ff;
+    --strip:#eaf3ff; --on:#eaf3ff; --on-ink:#133d70; --lit:#9fe3ff; --flow:#9fe3ff;
     --g1:#1b4b87; --g2:#235799; --g3:#2b63ab; --g4:#346fbd; --grid:rgba(234,243,255,.07);
   }
 
@@ -175,13 +175,32 @@
   .trims > small { margin:0; letter-spacing:.12em; text-transform:uppercase; }
   .trim { display:grid; grid-template-columns:34px 1fr; gap:9px; align-items:center; font-size:11.5px; font-weight:600; }
   .trim small { display:block; margin-top:2px; font-size:10px; font-weight:400; line-height:1.3; color:var(--dim); }
+  /* Under the Lid 2: the whole board as one schematic sheet, the current drawn on its wires. */
+  .lid2view { display:none; padding:4px 16px 14px; }
+  .plug.lid2 .sound { display:none; } .plug.lid2 .lid2view { display:block; }
+  .sch { display:block; width:100%; height:auto; margin-top:2px; }
+  .sch .w polyline { fill:none; stroke:var(--dim); stroke-width:1; }
+  .sch .pt { cursor:pointer; }
+  .sch .pt path, .sch .pt circle, .sch .pt rect { fill:none; stroke:var(--ink); stroke-width:1.2; stroke-linejoin:round; stroke-linecap:round; }
+  .sch .pt rect { fill:var(--panel); }
+  .sch .pt .hb { stroke:transparent; stroke-width:9; }
+  .sch .pt:hover path:not(.hb), .sch .pt.sel path:not(.hb), .sch .pt:hover circle, .sch .pt.sel circle, .sch .pt:hover rect, .sch .pt.sel rect { stroke:var(--flow); }
+  .sch .pt .ar { fill:var(--ink); stroke:none; }
+  .sch .dot { fill:var(--dim); }
+  .sch .ar { fill:var(--ink); }
+  .sch .gl { fill:none; stroke:var(--ink); stroke-width:1; }
+  .sch text { font-size:6.5px; letter-spacing:.08em; fill:var(--dim); pointer-events:none; }
+  .sch text.pl { fill:var(--ink); font-weight:700; }
+  .sch .fl { fill:none; stroke:var(--flow); stroke-linecap:round; stroke-linejoin:round; stroke-dasharray:0.1 6.5; opacity:0; pointer-events:none; }
+  .legend { display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:10px; padding-top:12px; border-top:1px solid var(--line); min-height:64px; }
+  .legend h4 { margin:0 0 5px; font-size:13px; } .legend p { margin:0; font-size:11.5px; line-height:1.45; color:var(--dim); }
   .trim em { margin-left:6px; padding:1px 4px; border:1px solid var(--line); border-radius:3px; font-size:8.5px; font-style:normal; font-weight:400; letter-spacing:.1em; text-transform:uppercase; color:var(--dim); }
 </style>
 </head>
 <body>
 
 <div class="mock-bar">
-  <span>Mockup: the vector panel, its lanes and Under the Lid. No sound.</span>
+  <span>Mockup: the vector panel, its lanes and two tries at Under the Lid. No sound.</span>
   <span class="themes" id="themes"></span>
   <span>Drag a knob or a number up and down. Click a step to switch it; right-click selects it without switching. Under the Lid: click a drum's name to strike it, a part to read it.</span>
 </div>
@@ -196,6 +215,7 @@
       <div class="views">
         <button class="is" id="panelTab">Panel</button>
         <button id="lidTab">Under the Lid</button>
+        <button id="lid2Tab">Under the Lid 2</button>
       </div>
     </div>
 
@@ -203,6 +223,14 @@
     <div class="lidview">
       <div class="board" id="board"></div>
       <div class="detail" id="detail"></div>
+    </div>
+    <div class="lid2view">
+      <div class="board" id="codes2"></div>
+      <div id="sch"></div>
+      <div class="legend">
+        <div id="part2"></div>
+        <div><h4>Reading the current</h4><p>Dots that travel are a pulse or a charge. Dots that shake are sound: current going back and forth. Thicker means more current. The six oscillators and the noise never stop; a strike only lets them through. The currents here are drawn by hand for the mockup; the plugin would draw the solver's own.</p></div>
+      </div>
     </div>
     <div class="strip"></div>
 
@@ -384,8 +412,8 @@ function buildSeq() {
   const handleText = () => $('handle').textContent = $('plug').classList.contains('open') ? 'Close the lanes' : 'Open the lanes';
   $('handle').onclick = () => { $('plug').classList.toggle('open'); handleText(); fit(); }; handleText();
   $('play').onclick = () => state.playing ? stop() : start();
-  const view = lid => { $('plug').classList.toggle('lid', lid); $('lidTab').classList.toggle('is', lid); $('panelTab').classList.toggle('is', !lid); fit(); drawScope(); };
-  $('panelTab').onclick = () => view(false); $('lidTab').onclick = () => view(true);
+  const view = v => { for (const [name, tab] of [['', 'panelTab'], ['lid', 'lidTab'], ['lid2', 'lid2Tab']]) { if (name) $('plug').classList.toggle(name, v === name); $(tab).classList.toggle('is', v === name); } fit(); drawScope(); };
+  $('panelTab').onclick = () => view(''); $('lidTab').onclick = () => view('lid'); $('lid2Tab').onclick = () => view('lid2');
 }
 
 function buildLanes() {
@@ -440,7 +468,7 @@ function showPlayheads() {
   if (state.tick < 0) return;
   for (const ins of INS) { const pos = state.tick % state.lanes[ins.id].len; cells[ins.id][pos].classList.add('play'); if (ins.id === state.sel) panelCells[pos].classList.add('play'); }
 }
-function flash(id) { for (const l of leds[id]) { l.classList.add('on'); setTimeout(() => l.classList.remove('on'), 90); } strikeLid(id); }
+function flash(id) { for (const l of leds[id]) { l.classList.add('on'); setTimeout(() => l.classList.remove('on'), 90); } strikeLid(id); strikeLid2(id); }
 
 // ---- Under the Lid. Stages and parts as the engine's circuit headers describe them (src/synth/v3/Tr808*.h).
 const S = (l, kind, t, o) => Object.assign({ l, kind, t }, o);
@@ -646,6 +674,266 @@ function fit() {
   $('plug').style.transform = `scale(${s})`; $('holder').style.height = $('plug').offsetHeight * s + 'px';
 }
 
+// ---- Under the Lid 2: the whole board as one abstracted schematic. Parts and nets after tools/kick808/bassdrum.cir,
+// tools/tr808/*.cir and the circuit headers, reduced to what makes each sound; the currents are drawn by hand.
+const G2 = { Y0:96, TRIG:10, MIX:446, NW:44, NP:52, SUM:58, HI:76, LO:84, H:462 };
+const flows2 = [];
+function buildLid2() {
+  const wires = [], parts = [], flowDefs = [];
+  const n1 = v => +v.toFixed(1);
+  const P = pts => pts.map(p => n1(p[0]) + ',' + n1(p[1])).join(' ');
+  const esc = t => t.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  const head = (tx, ty, fx, fy) => { const dx = tx - fx, dy = ty - fy, l = Math.hypot(dx, dy), ux = dx / l, uy = dy / l; return `<path class="ar" d="M${n1(tx)} ${n1(ty)}L${n1(tx - ux * 4 - uy * 1.8)} ${n1(ty - uy * 4 + ux * 1.8)}L${n1(tx - ux * 4 + uy * 1.8)} ${n1(ty - uy * 4 - ux * 1.8)}Z"/>`; };
+  const zig = (x, y, o, L) => { const a = n1((L - 12) / 2); return o === 'h' ? `M${x} ${y}h${a}l1.5 -3l3 6l3 -6l3 6l1.5 -3h${a}` : `M${x} ${y}v${a}l-3 1.5l6 3l-6 3l6 3l-3 1.5v${a}`; };
+  function sheet(ox, oy, voiceId) {
+    const X = x => ox + x, Y = y => oy + y, g = p => [ox + p[0], oy + p[1]];
+    const add = (name, d, extra) => parts.push(`<g class="pt" data-n="${esc(name)}" data-v="${voiceId}"><title>${esc(name)}</title><path class="hb" d="${d}"/><path d="${d}"/>${extra || ''}</g>`);
+    const s = {
+      g,
+      w: (...pts) => wires.push(`<polyline points="${P(pts.map(g))}"/>`),
+      f: (key, kind, pts, o) => flowDefs.push(Object.assign({ key, kind, pts:pts.map(g) }, o)),
+      dot: (x, y) => wires.push(`<circle class="dot" cx="${X(x)}" cy="${Y(y)}" r="1.7"/>`),
+      tx: (x, y, str, anchor, cls) => parts.push(`<text x="${X(x)}" y="${Y(y)}" text-anchor="${anchor || 'middle'}"${cls ? ` class="${cls}"` : ''}>${esc(str)}</text>`),
+      glyph: pts => parts.push(`<polyline class="gl" points="${P(pts.map(g))}"/>`),
+      R: (x, y, o, L, name) => add(name, zig(X(x), Y(y), o, L)),
+      C: (x, y, o, L, name) => { const a = n1((L - 3) / 2), gx = X(x), gy = Y(y); add(name, o === 'h' ? `M${gx} ${gy}h${a}m0 -4v8m3 -8v8m0 -4h${a}` : `M${gx} ${gy}v${a}m-4 0h8m-8 3h8m-4 0v${a}`); },
+      D: (x, y, o, L, name) => { const a = (L - 6) / 2, gx = X(x), gy = Y(y); add(name, `M${gx} ${gy}H${gx + a}M${gx + a} ${gy - 3.5}L${gx + a + 6} ${gy}L${gx + a} ${gy + 3.5}ZM${gx + a + 6} ${gy - 3.5}V${gy + 3.5}M${gx + a + 6} ${gy}H${gx + L}`); },
+      POT: (x, y, o, L, name, label) => {
+        const gx = X(x), gy = Y(y), m = L / 2;
+        const [fx, fy, ax, ay] = o === 'h' ? [gx + m - 6, gy + 6, gx + m + 6, gy - 6] : [gx - 6, gy + m + 6, gx + 6, gy + m - 6];
+        add(name, zig(gx, gy, o, L) + `M${fx} ${fy}L${ax} ${ay}`, head(ax, ay, fx, fy));
+        if (label) { if (o === 'h') s.tx(x + m, y - 9, label, 'middle', 'pl'); else s.tx(x - 9, y + m + 2, label, 'end', 'pl'); }
+      },
+      // A transistor with its two current leads at x, 12 above and below cy; its base to the left for m = 1, to the right for m = -1.
+      Q: (x, cy, m, pnp, name) => {
+        const gx = X(x), gy = Y(cy), cx = gx - 4 * m, bx = cx - 3 * m;
+        add(name, `M${bx} ${gy - 5}V${gy + 5}M${cx - 12 * m} ${gy}H${bx}M${bx} ${gy - 2.5}L${gx} ${gy - 7}V${gy - 12}M${bx} ${gy + 2.5}L${gx} ${gy + 7}V${gy + 12}`,
+            `<circle cx="${cx}" cy="${gy}" r="8.5"/>` + (pnp ? head(bx, gy - 2.5, gx, gy - 7) : head(gx, gy + 7, bx, gy + 2.5)));
+      },
+      OP: (x, y, name) => { const gx = X(x), gy = Y(y); add(name, `M${gx} ${gy}V${gy + 24}L${gx + 26} ${gy + 12}ZM${gx + 3} ${gy + 6}h4M${gx + 3} ${gy + 18}h4M${gx + 5} ${gy + 16}v4`); },
+      G: (x, y) => { const gx = X(x), gy = Y(y); for (const [a, b, c] of [[0, 0, 3], [-4, 4, 3], [-2.5, 2.5, 5], [-1, 1, 7]]) wires.push(`<polyline points="${a === 0 && b === 0 ? P([[gx, gy], [gx, gy + c]]) : P([[gx + a, gy + c], [gx + b, gy + c]])}"/>`); },
+      BOX: (x, y, w, h, name, label) => { parts.push(`<g class="pt" data-n="${esc(name)}" data-v="${voiceId}"><title>${esc(name)}</title><rect x="${X(x)}" y="${Y(y)}" width="${w}" height="${h}" rx="1.5"/></g>`); if (label) s.tx(x + w / 2, y + h / 2 + 2.3, label); },
+    };
+    return s;
+  }
+
+  const MIXL = G2.MIX - G2.Y0;
+  // One drum's strip: the trigger enters at the top through its switch and runs down the left rail; the sound leaves down the right rail to the mix.
+  function voice(col, id, build) {
+    const s = sheet(col * 100, G2.Y0, id), cuts = []; let railTop = null, leftEnd = 30;
+    const v = {
+      s, fd:0,
+      sw(name) {
+        s.w([50, G2.TRIG - G2.Y0], [50, 2]); s.dot(50, G2.TRIG - G2.Y0);
+        s.Q(50, 14, 1, true, name); s.w([34, 14], [30, 14]); s.dot(28.5, 14);
+        s.w([50, 26], [50, 30], [10, 30]);
+      },
+      // A bridged-T resonator around an op-amp: two capacitors in series from its minus input to its output, a resistor across both, their middle to ground.
+      res(y, o) {
+        leftEnd = Math.max(leftEnd, y + 70); s.dot(10, y + 70); s.w([10, y + 70], [14, y + 70]);
+        (o.inR ? s.R : s.C)(14, y + 70, 'h', 22, o.inName); s.w([36, y + 70], [42, y + 70]);
+        s.OP(42, y + 52, o.op);
+        s.w([42, y + 58], [30, y + 58], [30, y + 28], [32, y + 28]); s.C(32, y + 28, 'h', 14, o.c1); s.w([46, y + 28], [64, y + 28]); s.C(64, y + 28, 'h', 14, o.c2); s.w([78, y + 28], [80, y + 28], [80, y + 64]);
+        s.dot(55, y + 28); s.dot(30, y + 42); s.dot(80, y + 42); s.dot(80, y + 64);
+        s.w([30, y + 42], [44, y + 42]); s.R(44, y + 42, 'h', 22, o.r); s.w([66, y + 42], [80, y + 42]);
+        s.w([68, y + 64], [94, y + 64]);
+        s.w([55, y + 28], [55, y + 10], [50, y + 10]); (o.gndPot ? s.POT : s.R)(28, y + 10, 'h', 22, o.gnd, o.gndLabel); s.w([28, y + 10], [24, y + 10]); s.G(24, y + 10);
+        if (o.fb) { s.dot(55, y + 10); s.w([55, y + 10], [58, y + 10]); (o.fbPot ? s.POT : s.R)(58, y + 10, 'h', 22, o.fb, o.fbLabel); s.w([80, y + 10], [80, y + 28]); s.dot(80, y + 28); }
+        s.f(id + ':trig', 'pulse', [[10, y + 70], [42, y + 70]]);
+        s.f(id + ':ring', 'ac', [[42, y + 58], [30, y + 58], [30, y + 28], [80, y + 28], [80, y + 64], [68, y + 64]], { lvl:0.55, fd:o.fd });
+        s.f(id + ':ring', 'ac', [[55, y + 28], [55, y + 10], [24, y + 10]], { lvl:0.3, fd:o.fd });
+        if (o.fb) s.f(id + ':ring', 'ac', [[80, y + 28], [80, y + 10], [55, y + 10]], { lvl:0.3, fd:o.fd });
+        s.f(id + ':ring', 'ac', [[80, y + 64], [94, y + 64]], { lvl:0.4, fd:o.fd });
+        if (!o.noJoin) { railTop = railTop === null ? y + 64 : Math.min(railTop, y + 64); s.dot(94, y + 64); }
+      },
+      // A swing VCA: an envelope on the transistor's collector lets the signal on its base through.
+      gate(y, o) {
+        leftEnd = Math.max(leftEnd, y + 14); s.dot(10, y + 14); s.w([10, y + 14], [12, y + 14]);
+        if (o.feed === 'POT') s.POT(12, y + 14, 'h', 12, o.feedName, o.feedLabel);
+        else if (o.feed === 'BOX') s.BOX(11, y + 8, 14, 12, o.feedName, o.feedLabel);
+        else if (o.feed === 'W') s.w([12, y + 14], [24, y + 14]);
+        else s.D(12, y + 14, 'h', 12, o.feedName);
+        s.w([24, y + 14], [26, y + 14]);
+        if (o.cap) { s.dot(26, y + 14); s.C(26, y + 14, 'v', 14, o.cap); s.G(26, y + 28); }
+        if (o.decay) {
+          s.w([26, y + 14], [42, y + 14]); s.dot(38, y + 14); s.POT(38, y + 14, 'v', 18, o.decay[0]); s.G(38, y + 32);
+          const at = o.decay[2] || [38, y + 45, 'middle']; s.tx(at[0], at[1], o.decay[1], at[2], 'pl');
+          s.R(42, y + 14, 'h', 16, o.r); s.w([58, y + 14], [60, y + 14]);
+        } else { s.w([26, y + 14], [34, y + 14]); s.R(34, y + 14, 'h', 22, o.r); s.w([56, y + 14], [60, y + 14]); }
+        s.Q(60, y + 26, -1, false, o.q);
+        s.w([60, y + 38], [60, y + 46], [94, y + 46]);
+        if (o.tap) {
+          const ty = o.tap[1] - G2.Y0, lane = [[o.tap[0], ty], [o.tap[0], y + 26], [76, y + 26]];
+          s.w(...lane); s.dot(o.tap[0], ty); s.f(id + ':idle', o.sig, lane, { idle:0.06, fd:o.fd });
+        }
+        s.f(id + ':env', o.burst ? 'burst' : 'env', [[10, y + 14], [60, y + 14]]);
+        s.f(id + ':sig', o.sig, [[76, y + 26], [64, y + 26], [60, y + 38], [60, y + 46], [94, y + 46]], { lvl:0.45, fd:o.fd, env:o.burst ? 'burst' : '' });
+        if (!o.noJoin) { railTop = railTop === null ? y + 46 : Math.min(railTop, y + 46); s.dot(94, y + 46); }
+      },
+      hp(y, cName, rName) { s.C(94, y, 'v', 14, cName); s.w([94, y + 14], [94, y + 18]); s.dot(94, y + 18); s.R(72, y + 18, 'h', 22, rName); s.G(72, y + 18); cuts.push([y, y + 14]); },
+      pot(y, name, label) { s.POT(94, y, 'v', 22, name, label); cuts.push([y, y + 22]); },
+    };
+    build(v);
+    s.w([10, 30], [10, leftEnd]);
+    cuts.sort((a, b) => a[0] - b[0]); let y = railTop;
+    for (const [a, b] of cuts) { if (a > y) s.w([94, y], [94, a]); y = Math.max(y, b); }
+    s.w([94, y], [94, MIXL]); s.dot(94, MIXL);
+    flowDefs.push({ key:id + ':trig', kind:'pulse', pts:[[64, G2.TRIG], [col * 100 + 50, G2.TRIG], ...[[50, 30], [10, 30], [10, leftEnd]].map(s.g)] });
+    flowDefs.push({ key:id + ':out', kind:v.fd ? 'ac' : 'nz', lvl:0.4, fd:v.fd, pts:[...[[94, railTop], [94, MIXL]].map(s.g), [1188, G2.MIX]] });
+  }
+
+  voice(1, 'BD', v => {
+    v.fd = 5; v.sw('Q40 · lets the trigger in');
+    v.res(40, { inName:'C40 · the pulse shaper, with R162, R163 and D53', op:"The resonator's op-amp", c1:'C41', c2:'C42', r:'R167', fd:5,
+                gnd:'R165, R166 · to ground. Q43 shorts R165 for the first 5 ms: the higher pitch of the attack',
+                fb:'VR6 · Decay: the feedback through R164, C43 and a second op-amp', fbPot:true, fbLabel:'DECAY' });
+    v.pot(150, 'VR5 · Tone, with R171 and R172', 'TONE'); v.s.dot(94, 176); v.s.C(80, 176, 'h', 14, 'C45'); v.s.G(80, 176);
+    v.pot(200, 'VR4 · Level, then the buffer Q44', 'LEVEL');
+  });
+  voice(2, 'SD', v => {
+    v.fd = 11; v.sw('Q46 · lets the trigger in');
+    v.gate(34, { tap:[78, G2.NW], feed:'POT', feedName:'VR9 · Snappy: how far the trigger opens the noise', feedLabel:'SNAPPY', cap:'C51 · the snappy envelope', r:'R184', q:'Q48 · the swing VCA on the white noise', sig:'nz' });
+    v.res(96, { inR:true, inName:'R189', op:'IC14a · the lower shell, 173 Hz', c1:'C58', c2:'C59', r:'R197', gnd:'R196', fd:9 });
+    v.res(178, { inR:true, inName:'R191', op:'IC14b · the upper shell, 334 Hz', c1:'C60', c2:'C61', r:'R198', gnd:'R195', fd:13 });
+    v.pot(268, 'VR8 · Tone: the balance of the two shells', 'TONE'); v.pot(298, 'VR7 · Level', 'LEVEL');
+  });
+  [[3, 'LT', 'Q51', 6], [4, 'MT', 'Q54', 8], [5, 'HT', 'Q57', 10]].forEach(([col, id, q, fd]) => voice(col, id, v => {
+    v.fd = fd; v.sw(q + ' · lets the trigger in');
+    v.gate(34, { tap:[78, G2.NP], feed:'D', feedName:'D55 · charges the noise envelope', cap:'C72 · the noise envelope', r:'R218', q:'Q52 · the gate on the pink noise. The conga leaves it out', sig:'nz' });
+    v.res(110, { inName:'C73 · passes the pulse', op:"The resonator's op-amp", c1:'C76', c2:'C78', r:'R228', fd,
+                 gnd:'TUNING · with the germanium pair D80, D81: the pitch drops as it rings', gndPot:true, gndLabel:'TUNING', fb:"R230 · fitted to both real units' decay" });
+    v.pot(292, 'LEVEL · in the mixer', 'LEVEL');
+  }));
+  voice(6, 'RS', v => {
+    v.fd = 15; v.sw('Q60 · lets the trigger in');
+    v.res(40, { inR:true, inName:'R301', op:'IC21 · 455 Hz', c1:'C116', c2:'C115', r:'R316', gnd:'R315', fd:14, noJoin:true });
+    v.res(122, { inR:true, inName:'R310', op:'IC20 · 1.7 kHz for the rim shot, 2.5 kHz for the claves', c1:'C119', c2:'C117', r:'R308', gnd:'R312', fd:18, noJoin:true });
+    const pre = [[94, 104], [94, 200], [84, 200], [84, 238], [76, 238]];
+    v.s.w(...pre); v.s.dot(94, 186); v.s.f('RS:ring', 'ac', pre, { lvl:0.4, fd:15 });
+    v.gate(212, { feed:'D', feedName:'D61 · charges the envelope', cap:'C24 · the envelope', r:'R108', q:'Q62 · the swing VCA: chops the two rings together', sig:'ac', fd:15 });
+    v.pot(292, 'LEVEL · in the mixer', 'LEVEL');
+  });
+  voice(7, 'CP', v => {
+    v.sw('Q29 · lets the trigger in');
+    v.gate(34, { tap:[78, G2.NW], feed:'BOX', feedName:'IC23 · four switches that time the four claps', feedLabel:'x4', r:'R374', q:'IC22 · the BA662 amplifier the claps open', sig:'nz', burst:true });
+    v.gate(110, { tap:[78, G2.Y0 + 60], feed:'D', feedName:'D69 · charges the reverb envelope', cap:'C139 · the reverb envelope', r:'R348', q:"Q70 · the reverb: the noise under C139's slow envelope", sig:'nz' });
+    v.pot(292, 'LEVEL · in the mixer', 'LEVEL');
+  });
+  voice(8, 'CB', v => {
+    v.fd = 12; v.sw('Q5 · lets the trigger in');
+    v.gate(34, { tap:[78, 40], feed:'D', feedName:'D2 · charges the envelope', cap:'C9 · the envelope. R82 and C34 take part of it at once: the abrupt fall', r:'R28', q:'Q15 · lets the 554 Hz oscillator through', sig:'ac', fd:11 });
+    v.gate(100, { tap:[86, 34], feed:'W', r:'R29', q:'Q14 · lets the 825 Hz oscillator through', sig:'ac', fd:16 });
+    v.hp(176, 'C28, C29 · IC2b, the band-pass at 870 Hz', 'R24, R25'); v.pot(292, 'VR5 · Level', 'LEVEL');
+  });
+  voice(9, 'CY', v => {
+    v.sw('Q6 · lets the trigger in. Q19 then charges three envelopes at once');
+    v.gate(34, { tap:[78, G2.HI], feed:'D', feedName:'D6', cap:"C38 · the top band's envelope", r:'R94', q:"Q16 · the swing VCA on the high band, then IC5a's high-pass", sig:'nz' });
+    v.gate(100, { tap:[78, G2.Y0 + 60], feed:'D', feedName:'D7', cap:"C40 · the middle band's envelope", r:'R90', q:"Q17 · the swing VCA on the high band again, then IC5b's high-pass", sig:'nz' });
+    v.gate(166, { tap:[86, G2.LO], feed:'D', feedName:'D8', cap:"C41 · the low band's envelope", decay:['VR2 · Decay: drains C41', 'DECAY'], r:'R104', q:"Q18 · the swing VCA on the low band, then Q25's high-pass", sig:'nz' });
+    v.pot(240, 'VR4 · Tone: the top band against the others', 'TONE'); v.pot(292, 'VR6 · Level', 'LEVEL');
+  });
+  voice(10, 'OH', v => {
+    v.sw('Q7 · lets the trigger in');
+    v.gate(34, { tap:[78, G2.HI], feed:'D', feedName:'Q24 · charges the envelope', cap:'C62 · the envelope', decay:['VR3 · Decay: sets when Q22 drains C62', 'DECAY', [44, 74, 'start']], r:'R144', q:'Q27 · the swing VCA on the high band', sig:'nz' });
+    v.s.dot(32, 48); v.s.w([32, 48], [32, 80]); v.s.Q(32, 92, -1, false, 'Q23 · drains the open hat the moment the closed hat plays'); v.s.G(32, 104);
+    v.s.w([48, 92], [60, 92]); v.s.R(60, 92, 'h', 22, "R173 · from the closed hat's envelope"); v.s.w([82, 92], [100, 92]);
+    v.hp(116, 'The high-pass around Q26, at 8.2 kHz', 'Its resistor to ground'); v.pot(292, 'VR7 · Level', 'LEVEL');
+  });
+  voice(11, 'CH', v => {
+    v.sw('Q8 · lets the trigger in');
+    v.gate(34, { tap:[78, G2.HI], feed:'D', feedName:'Q28 · charges the envelope', cap:'C63 · the envelope', r:'R142', q:'Q30 · the swing VCA on the high band', sig:'nz' });
+    v.s.dot(31, 48); v.s.w([31, 48], [31, 92], [0, 92]); v.s.f('CH:cut', 'env', [[31, 48], [31, 92], [-52, 92]]);
+    v.hp(116, 'The high-pass around Q31, at 12.2 kHz', 'Its resistor to ground'); v.pot(292, 'VR8 · Level', 'LEVEL');
+  });
+
+  // What every drum shares: the trigger, the noise, the six oscillators and the mix.
+  const a = sheet(0, 0, '');
+  parts.push(`<g class="pt" data-n="The step's pulse · from the sequencer, one for every drum that plays on this step" data-v=""><title>The step's pulse</title><circle cx="20" cy="112" r="8.5"/></g>`);
+  a.glyph([[15, 115], [18, 115], [18, 109], [22, 109], [22, 115], [25, 115]]);
+  a.w([20, 103.5], [20, 92]); a.POT(20, 70, 'v', 22, 'VR3 · Accent: the height of the trigger, up to 11.5 V'); a.tx(29, 84, 'ACCENT', 'start', 'pl');
+  a.w([20, 70], [20, 40], [34, 40]); a.Q(50, 40, 1, false, 'Q32 · a follower that puts the pulse on the trigger line');
+  a.w([50, 28], [50, 22]); a.tx(50, 19, '+15 V');
+  a.w([50, 52], [64, 52], [64, G2.TRIG], [1150, G2.TRIG]); a.tx(70, 7, 'TRIGGER LINE', 'start');
+  a.f('AC:src', 'pulse', [[20, 103], [20, 40], [34, 40]]); a.f('AC:src', 'pulse', [[50, 52], [64, 52], [64, G2.TRIG]]);
+
+  a.BOX(208, 24, 14, 12, 'The noise source · one hiss for the whole machine'); a.glyph([[210, 31], [212, 27], [214, 33], [216, 28], [218, 32], [220, 29]]); a.tx(226, 32, 'NOISE', 'start');
+  a.w([215, 36], [215, G2.NW], [778, G2.NW]); a.dot(296, G2.NW); a.w([296, G2.NW], [296, G2.NP]);
+  a.R(296, G2.NP, 'h', 22, 'The pink filter · the toms take the noise through it'); a.w([318, G2.NP], [578, G2.NP]); a.tx(322, 62, 'PINK', 'start');
+  a.f('idle:nz', 'nz', [[215, 36], [215, G2.NW], [778, G2.NW]], { idle:0.06 }); a.f('idle:nz', 'nz', [[296, G2.NW], [296, G2.NP], [578, G2.NP]], { idle:0.05 });
+
+  [[862, "554 Hz · the cowbell's, set by TM1"], [886, "825 Hz · the cowbell's, set by TM2"], [915, '205 Hz'], [932, '304 Hz'], [968, '370 Hz'], [985, '523 Hz']].forEach(([x, name], i) => {
+    a.BOX(x - 7, 22, 14, 12, name + ' · a Schmitt-trigger oscillator that never stops'); a.glyph([[x - 5, 31], [x - 5, 26], [x, 26], [x, 31], [x + 5, 31], [x + 5, 26]]);
+    if (i === 0) a.w([862, 34], [862, 40], [878, 40], [878, G2.SUM]); else a.w([x, 34], [x, G2.SUM]);
+    a.dot(i === 0 ? 878 : x, G2.SUM);
+  });
+  a.w([878, G2.SUM], [1069, G2.SUM]); a.tx(1060, 31, 'SIX OSCILLATORS', 'start');
+  a.BOX(1020, 62, 26, 11, 'IC3 · a band-pass at 7.09 kHz: the high band', '7.1k'); a.dot(1033, G2.SUM); a.w([1033, G2.SUM], [1033, 62]); a.w([1033, 73], [1033, G2.HI]); a.dot(1033, G2.HI);
+  a.BOX(1056, 62, 26, 11, 'IC3 · a band-pass at 3.43 kHz: the low band', '3.4k'); a.w([1069, G2.SUM], [1069, 62]); a.w([1069, 73], [1069, G2.LO]);
+  a.w([978, G2.HI], [1178, G2.HI]); a.w([986, G2.LO], [1069, G2.LO]);
+  a.f('idle:osc', 'ac', [[878, G2.SUM], [1069, G2.SUM]], { idle:0.07, fd:9 }); a.f('idle:osc', 'ac', [[978, G2.HI], [1178, G2.HI]], { idle:0.07, fd:13 }); a.f('idle:osc', 'ac', [[986, G2.LO], [1069, G2.LO]], { idle:0.07, fd:7 });
+
+  a.w([194, G2.MIX], [1188, G2.MIX]); parts.push(`<path class="ar" d="M1197 ${G2.MIX}l-8 -3.5v7z"/>`); a.tx(1186, 458, 'MIX OUT', 'end');
+
+  $('sch').innerHTML = `<svg class="sch" viewBox="0 0 1200 ${G2.H}"><g class="w">${wires.join('')}</g><g>${parts.join('')}</g><g id="flowLayer"></g></svg>`;
+  const layer = $('flowLayer');
+  for (const def of flowDefs) {
+    const e = document.createElementNS('http://www.w3.org/2000/svg', 'polyline'); e.setAttribute('class', 'fl'); e.setAttribute('points', P(def.pts)); layer.append(e);
+    flows2.push(Object.assign({ el:e, t0:null, d:300, off:Math.random() * 6.5, ph:Math.random() * 6.5, vis:false }, def));
+  }
+  const showPart = (n, vId) => {
+    const [first, ...rest] = n.split(' · '), ins = INS.find(i => i.id === vId), host = $('part2'); host.innerHTML = '';
+    host.append(el('h4', '', (ins ? laneName(ins) + ': ' : '') + first), el('p', '', rest.join(' · ') || 'One of the parts this drum is made of.'));
+  };
+  $('sch').onclick = e => {
+    const p = e.target.closest('.pt'); if (!p) return;
+    document.querySelectorAll('.sch .pt.sel').forEach(x => x.classList.remove('sel')); p.classList.add('sel'); showPart(p.dataset.n, p.dataset.v);
+  };
+  $('part2').append(el('h4', '', 'The whole board'), el('p', '', "Every drum's circuit, reduced to the parts that make its sound: bias, coupling and filter details are left out. Click a part to read it, a drum's name to strike it, or press play."));
+}
+function buildCodes2() {
+  const host = $('codes2'); host.innerHTML = '';
+  for (const ins of INS) {
+    const c = el('div', 'bcode'); c.dataset.id = ins.id; c.innerHTML = `${laneCode(ins)}<small>${laneName(ins)}</small>`; c.title = 'Strike';
+    c.onclick = () => { select(ins.id); flash(ins.id); }; host.append(c);
+  }
+  refreshSelection();
+}
+function strikeLid2(id) {
+  if (!$('plug').classList.contains('lid2')) return;
+  const now = performance.now(), d = Math.max(280, voiceDur(id));
+  for (const f of flows2) {
+    if (f.key.endsWith(':idle')) continue;
+    if (f.key === 'AC:src' || f.key.startsWith(id + ':')) { f.t0 = now; f.d = d; }
+    else if (id === 'CH' && f.key.startsWith('OH:') && !f.key.endsWith(':trig')) f.t0 = null;   // the closed hat cuts the open one
+  }
+}
+let last2 = 0;
+function frame2(now) {
+  requestAnimationFrame(frame2);
+  if (!$('plug').classList.contains('lid2')) return;
+  const dt = Math.min(50, now - last2) / 1000; last2 = now;
+  for (const f of flows2) {
+    let a = f.idle || 0;
+    if (f.t0 !== null) {
+      const t = now - f.t0, tau = f.d / 3; let e;
+      if (f.kind === 'pulse') e = t < 140 ? 1 : 0;
+      else if (f.kind === 'burst' || f.env === 'burst') e = (t < 22 || (t > 40 && t < 62) || (t > 80 && t < 102)) ? 0.7 : t > 120 ? 0.55 * Math.exp(-(t - 120) / tau) : 0.04;
+      else if (f.kind === 'env') e = 0.6 * Math.exp(-t / tau);
+      else e = (f.lvl || 0.4) * Math.exp(-t / tau);
+      if (t > f.d * 2 + 200) f.t0 = null;
+      a = Math.max(a, e);
+    }
+    if (a < 0.012) { if (f.vis) { f.el.style.opacity = 0; f.vis = false; } continue; }
+    f.vis = true;
+    if (f.kind === 'ac') f.off = f.ph + 3 * Math.sin(now / 1000 * 2 * Math.PI * (f.fd || 8));   // sound: back and forth
+    else if (f.kind === 'nz') f.off += (Math.random() - 0.5) * 5;                               // noise: jitter
+    else f.off -= (50 + 120 * a) * dt;                                                          // a pulse or a charge: it travels
+    f.el.style.opacity = Math.min(1, 0.4 + a * 2);
+    f.el.style.strokeWidth = (1.2 + 3.6 * Math.sqrt(a)).toFixed(2);
+    f.el.style.strokeDashoffset = f.off.toFixed(1);
+  }
+}
+
 for (const [id, name] of THEMES) {
   const b = el('button', id === 'studio' ? 'is' : '', name);
   b.onclick = () => { document.documentElement.dataset.theme = id; document.querySelectorAll('#themes button').forEach(x => x.classList.toggle('is', x === b)); drawScope(); };
@@ -653,6 +941,7 @@ for (const [id, name] of THEMES) {
 }
 buildSound(); buildSeq(); buildLanes();
 nameRefresh.push(() => { buildBoard(); renderDetail(); });
+buildLid2(); nameRefresh.push(buildCodes2); requestAnimationFrame(frame2);
 nameRefresh.forEach(f => f()); state.selStep = { id:'BD', i:10 };
 refreshSelection(); renderSteps(); renderInspector(); fit();
 window.addEventListener('resize', fit);
