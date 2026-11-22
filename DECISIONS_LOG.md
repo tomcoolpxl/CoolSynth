@@ -5359,3 +5359,10 @@ worse; C139 and C138 together, as CP Decay scales them, leave 4 dB at 150 ms). T
 39 nF; 36 nF; C139 and C138 times 1.74): 39 nF, the tail from 150 ms to a second within about 2 dB of both (rms 1.7
 dB, 7.0 as drawn), the claps and the first 100 ms unmoved. `tools/tr808/clap.cir` takes it; the clap's references were
 rendered again, the maracas' unchanged by it.
+
+The claves' low thump (37 dB under the ring; Fischer's 68): a bug in the generator, not the circuit. The rim shot's
+rest was solved in the rim shot's position only, and a claves hit from it recharged the mixer's coupling, whose
+input the claves take at another DC. Fixed in `Tr808RimShot.h`: each SW11 position its own rest, restored when the
+switch moves while the drum rests (while it rings, it moves as on the machine). The thump is 97 dB under; the claves'
+peak 2.3 dB lower through the generator, the rim shot over them 3.65 dB, so D252's R313 and R324, fitted on the
+circuit, stand. The congas' switch, checked alike, needed nothing.

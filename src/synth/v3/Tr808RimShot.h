@@ -74,12 +74,13 @@ namespace coolsynth::synth::v3
             vca.setSampleRate(rate);
             mixer.setSampleRate(rate);
             rest();
+            restoreOnSwitch = true; // from here a switch at rest restores its rest (the solving of it does not)
         }
 
         /** Back to rest: a copy of the solved rest state, no solving. */
         void rest() noexcept
         {
-            const RestState& r = restState();
+            const RestState& r = restState(isClaves);
             front.setResistance(r298, switchOff);
             front.restore(r.front);
             low.restore(r.low);
@@ -96,7 +97,11 @@ namespace coolsynth::synth::v3
         }
 
         /** The rest state, solved on first use and kept for the process: call it off the audio thread. */
-        static void warmUp() noexcept { (void) restState(); }
+        static void warmUp() noexcept
+        {
+            (void) restState(false);
+            (void) restState(true);
+        }
 
         /** Back to the circuit at rest by solving it: capacitors charged as they are with no trigger. */
         void settle() noexcept
@@ -137,7 +142,8 @@ namespace coolsynth::synth::v3
             front.setResistance(r298, 10.0e3); // the instrument data stands: Q59 on
         }
 
-        /** SW11: the claves take C118 out, R313 in, and the mixer's input from IC20b instead of Q63. */
+        /** SW11: the claves take C118 out, R313 in, and the mixer's input from IC20b instead of Q63. Thrown while the
+            drum rests, it starts from that position's own rest; while it rings, from where the ring is. */
         void setClaves(bool claves) noexcept
         {
             isClaves = claves;
@@ -146,6 +152,8 @@ namespace coolsynth::synth::v3
             vca.setResistance(r324Vca, claves ? switchOff : r324Ohms);
             mixer.setResistance(r324Mixer, claves ? switchOff : r324Ohms);
             mixer.setResistance(r319, claves ? 220.0e3 : switchOff);
+            if (restoreOnSwitch && triggerSample < 0 && frontResting && vcaResting)
+                rest();
         }
         [[nodiscard]] bool claves() const noexcept { return isClaves; }
 
@@ -369,11 +377,14 @@ namespace coolsynth::synth::v3
             double envelopeVolts = 0.0, feedVolts = 0.0, followerVolts = 0.0;
         };
 
-        static const RestState& restState() noexcept
+        /** The rest in each SW11 position (D258): the claves take the mixer's input from IC20b, at another DC than Q63's,
+            so a claves hit from the rim shot's rest would recharge the mixer's coupling over tens of milliseconds. */
+        static const RestState& restState(bool clavesSide) noexcept
         {
-            static const RestState state = []
+            static const auto solve = [](bool claves)
             {
                 auto drum = std::make_unique<Tr808RimShot>();
+                drum->setClaves(claves);
                 drum->settle();
                 RestState s;
                 s.front = drum->front.snapshot();
@@ -385,14 +396,16 @@ namespace coolsynth::synth::v3
                 s.feedVolts = drum->lastFeed;
                 s.followerVolts = drum->lastFollower;
                 return s;
-            }();
-            return state;
+            };
+            static const RestState rimSide = solve(false);
+            static const RestState clavesSide2 = solve(true);
+            return clavesSide ? clavesSide2 : rimSide;
         }
 
         double sampleRate = 96000.0;
         double triggerVolts = 4.0, triggerWidth = 0.001;
         int triggerSample = -1; // samples since the hit, -1 between hits
-        bool frontResting = true, vcaResting = true, isClaves = false;
+        bool frontResting = true, vcaResting = true, isClaves = false, restoreOnSwitch = false;
         double lastEnvelope = 0.0, lastFeed = 0.0, lastFollower = 0.0;
         int stillSamples = 0, vcaStill = 0;
 

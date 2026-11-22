@@ -103,7 +103,11 @@ pot's own range, would both do it; the voices themselves are not the cause, sinc
   weaker than both units' (Fischer's and Audiorealism's agree within 1 dB), so the balance between them lies some 6 dB
   toward IC20; ngspice draws it as the model does.
 - The claves carry a low thump, lines from 51 to 141 Hz some 37 dB under the ring, that Fischer's do not (68 dB
-  under).
+  under). Not the circuit's (alone it is ngspice's, 93 dB under) but the generator's: the rim shot's rest was solved
+  in the rim shot's position only, and the claves take the mixer's input at another DC, so every claves hit
+  recharged the mixer's coupling. Fixed: each SW11 position has its own rest, which a switch at rest restores; the
+  thump is 97 dB under and the claves' peak 2.3 dB lower, the rim shot now 3.65 dB over them (D252's 3.3 on the
+  circuit; the units 2.1 and 4.9). The congas' switch was checked alike: their low end is ngspice's.
 - The engine's overload rule (D222) cuts Kit-mode voices. CoolSynthRender reads the load as a live host does (it
   never says it renders offline), and a Kit voice counts as released from its strike, so under load the whole kit
   gives way first: with eight renders at once and a build running, claps stopped after 7 to 445 ms by the run. The
