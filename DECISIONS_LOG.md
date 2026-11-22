@@ -5644,3 +5644,11 @@ The first step (options: a short specification; the sequencer core; the panel on
 16 steps, A/B, intro and fill-in, pre-scale of 3, 6, 4 or 8 steps a beat, rhythm tracks) are from the service
 notes, Sound On Sound's 1993 hands-on and a programming walkthrough; the original owner's manual was not found
 online.
+
+The specification's open questions, the user's choices (options, the recommended first):
+- The sequencer's home (options: the engine repository; CoolSynth 808 only): the engine repository.
+- The repositories (options: both public under MIT; the engine public and the 808 private; both private):
+  `tomcoolpxl/coolsynth-engine` and `tomcoolpxl/CoolSynth808`, public, MIT, as CoolSynth (public, MIT) is.
+- The standalone's clock (options: MIDI clock in and out; its own tempo only): MIDI clock in and out.
+- A pattern set's size (options: banks of 16 with A and B; the original's one bank, fixed): banks of sixteen,
+  A and B, four fill-ins a bank, banks and tracks unlimited.

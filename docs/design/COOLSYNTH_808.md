@@ -2,7 +2,7 @@
 
 A standalone drum machine app built on CoolSynth's circuit-level TR-808 (D263). This is the specification draft:
 what the app does, how it is built, and in which order.
-Nothing here is built yet. The open questions at the end go to the user as options before work starts.
+Nothing here is built yet. The draft's open questions are answered at the end; the user approves it before work starts.
 
 ## What is decided
 
@@ -88,9 +88,12 @@ The 1980 machine's sequencer, with modern additions on the lanes.
 - Under the Lid: the taps, then the reduced board, then each drum complete.
 - The installer and the first release; the plugin formats after.
 
-## Open questions
+## Answered (D264)
 
-- Where the sequencer lives: in the engine repository, or in CoolSynth 808 only.
-- The repositories' names, and public or private.
-- Whether CoolSynth 808 follows MIDI clock or a host transport when standalone.
-- How many patterns a set holds, and how many tracks.
+- The sequencer lives in the engine repository, general enough for CoolSynth's layers to use later.
+- The repositories: `tomcoolpxl/coolsynth-engine` and `tomcoolpxl/CoolSynth808`, both public under the MIT licence,
+  as CoolSynth is. CoolSynth's public builds can then fetch the engine without credentials.
+- Standalone, CoolSynth 808 follows incoming MIDI clock and start and stop when there is one, and sends its own
+  otherwise, as hardware drum machines do. The computer's MIDI timing is smoothed, with tests.
+- A pattern set holds banks of sixteen patterns, each with A and B, chosen on the step keys in a pattern mode as
+  the hardware does; four fill-ins a bank; as many banks and tracks as wanted.
