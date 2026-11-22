@@ -148,3 +148,9 @@ rim shot and claves references were rendered again.
   Debug build), so an open hat stops after 6 ms where at 48 kHz it sounds its 446. One render crashed (an access
   violation) under load. The tom and conga grid (396 renders), the rim shot's and the Kick's were not cut
   (checked render by render); the fits run on the circuits in the test runner, which the rule does not reach.
+  As the user chose: the emergency now takes a kit's quietest ringing drum, not the kit (`Part::fadeOutVoice`,
+  each 808 kit's `shedQuietestInstrument`); CoolSynthRender renders offline, as a bounce (sixteen at once then give
+  every clap its full 1325 ms); the 808 Metal's cost at 96 kHz (46 % of real time on average while it rings in the
+  Debug build) is a task of its own. The access violation did not come back in 48 renders under load; once a
+  render hung at exit after its file was whole, a Windows thread-pool worker starting while the process ended (the
+  engine's threads already stopped), left as it is.

@@ -119,7 +119,13 @@ namespace coolsynth::synth::v3
             const auto& v = voices[i];
             if (! v.isActive() || v.isFadingOut() || state[i].keyDown || state[i].sustained)
                 continue;
-            if (const float l = v.ampLevel(); l < level)
+            // A kit's voice is let go at every strike, yet its drums ring on: it offers its quietest ringing
+            // instrument, not itself (D258).
+            float l = v.ampLevel();
+            if (currentMode == PlayMode::kit)
+                if (const float instrument = v.quietestInstrumentLevel(); instrument >= 0.0f)
+                    l = instrument;
+            if (l < level)
             {
                 level = l;
                 best = static_cast<int>(i);
@@ -130,8 +136,12 @@ namespace coolsynth::synth::v3
 
     void Part::fadeOutVoice(int index) noexcept
     {
-        if (index >= 0 && index < static_cast<int>(voices.size()))
-            voices[static_cast<std::size_t>(index)].fadeOut();
+        if (index < 0 || index >= static_cast<int>(voices.size()))
+            return;
+        auto& v = voices[static_cast<std::size_t>(index)];
+        if (currentMode == PlayMode::kit && v.shedQuietestInstrument())
+            return; // the kit's quietest drum fades, the rest ring on
+        v.fadeOut();
     }
 
     bool Part::anyVoiceActive() const noexcept

@@ -361,6 +361,32 @@ namespace coolsynth::synth::v3
             }, instances[active].module);
         }
 
+        /** The kit types (the 808 families): their quietest ringing instrument's level, -1 when none rings or the type
+            is no kit. Asked by the overload's emergency (D222, D258). */
+        [[nodiscard]] float quietestInstrumentLevel() const noexcept
+        {
+            return std::visit([](const auto& module)
+            {
+                if constexpr (requires { module.quietestInstrumentLevel(); })
+                    return module.quietestInstrumentLevel();
+                else
+                    return -1.0f;
+            }, instances[active].module);
+        }
+
+        /** The kit types: their quietest ringing instrument fades out over the steal fade, the others ring on (D258).
+            False when none rings or the type is no kit. */
+        bool shedQuietestInstrument() noexcept
+        {
+            return std::visit([](auto& module)
+            {
+                if constexpr (requires { module.shedQuietestInstrument(); })
+                    return module.shedQuietestInstrument();
+                else
+                    return false;
+            }, instances[active].module);
+        }
+
         /** Generator slots: true when the module can make no sound until a new note (a one-shot recording that has
             ended, an empty slot) and no other type is on its way in. Types that do not say are never silent. */
         [[nodiscard]] bool silentUntilNextNote() const noexcept

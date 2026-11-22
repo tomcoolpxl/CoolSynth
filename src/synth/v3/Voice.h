@@ -251,6 +251,10 @@ namespace coolsynth::synth::v3
             not already fading. */
         void fadeOut() noexcept;
         [[nodiscard]] bool isFadingOut() const noexcept { return fadingOut; }
+        /** A kit voice (D258): the level of the quietest instrument ringing in any of its generators, -1 if none. */
+        [[nodiscard]] float quietestInstrumentLevel() const noexcept;
+        /** A kit voice: that instrument fades out, the voice and its other instruments ring on (D258). */
+        bool shedQuietestInstrument() noexcept;
         void kill() noexcept { reset(); }
         /** Let go and waiting for a slice to end before releasing (D207). */
         [[nodiscard]] bool isReleaseWaiting() const noexcept { return releaseWaiting; }

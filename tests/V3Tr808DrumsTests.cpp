@@ -344,7 +344,8 @@ namespace
     };
 
     /** A part playing these hits (note-ons, or note-offs), host-rate mono out; the part's voices active at the end. */
-    std::vector<float> play(const PartSettings& settings, const std::vector<Hit>& hits, double seconds, int* activeAtEnd = nullptr)
+    std::vector<float> play(const PartSettings& settings, const std::vector<Hit>& hits, double seconds, int* activeAtEnd = nullptr,
+                            int shedAtBlock = -1, float* shedLevel = nullptr)
     {
         constexpr double rate = 48000.0;
         constexpr int block = 256;
@@ -354,6 +355,15 @@ namespace
         std::vector<float> out, left(block), right(block);
         for (int b = 0; b < blocks; ++b)
         {
+            if (b == shedAtBlock)
+            {
+                // The overload's emergency, as SoundUnit::shedQuietestReleased asks it (D222, D258).
+                float level = -1.0f;
+                if (const int v = part->quietestReleased(level); v >= 0)
+                    part->fadeOutVoice(v);
+                if (shedLevel != nullptr)
+                    *shedLevel = level;
+            }
             std::vector<coolsynth::synth::EngineMidiEvent> events;
             for (const auto& h : hits)
                 if (h.sample >= b * block && h.sample < (b + 1) * block)
@@ -483,6 +493,29 @@ public:
             const double clavesHz = crossingHz(claves, 48000.0, 0.005, 0.02);
             logMessage("claves " + juce::String(clavesHz, 1) + " Hz");
             expectWithinAbsoluteError(clavesHz, 2412.0, 30.0);
+        }
+
+        beginTest("the_overloads_emergency_sheds_the_kits_quietest_drum_not_the_kit");
+        {
+            // D258: the Kit voice is let go at every strike, but the emergency (D222) takes its quietest ringing drum,
+            // not the whole kit. The bass drum and the rim shot together; 80 ms in (each drum's level a peak follower
+            // of 20 ms, so earlier the rim shot's still reads the louder), the rim shot is the quieter: it fades over
+            // the steal fade, and from then on the kit is the bass drum alone, sample for sample (separate circuits,
+            // no shared noise), its voice still sounding.
+            const auto settings = kitOf();
+            float level = -1.0f;
+            int active = 0;
+            const auto both = play(settings, { { 0, 36 }, { 0, 37 } }, 0.3, &active, 3840 / 256, &level);
+            const auto bassAlone = play(settings, { { 0, 36 } }, 0.3);
+            logMessage("shed at " + juce::String(level, 6) + "; voices sounding at the end " + juce::String(active));
+            expectGreaterThan(level, 0.0f, "a drum rang when the emergency asked");
+            expectEquals(active, 1, "the kit's voice is not shed: the bass drum still rings");
+            double worst = 0.0;
+            for (std::size_t i = 6000; i < both.size(); ++i) // from 125 ms: well past the fade and the latency
+                worst = std::max(worst, static_cast<double>(std::abs(both[i] - bassAlone[i])));
+            logMessage("after the rim shot's fade, against the bass drum alone: " + juce::String(worst, 9));
+            expectLessThan(worst, 1.0e-6, "the rim shot faded, the bass drum rang on as alone");
+            expectGreaterThan(peakOf(both, 6000), 0.01f, "and it still sounds");
         }
 
         beginTest("after_reset_a_hit_is_the_fresh_kits_bit_for_bit");

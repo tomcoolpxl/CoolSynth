@@ -5381,3 +5381,19 @@ claves' decay unchanged; R308, R312 and R320 for the rim shot's pitch, early dec
 claves' decay and needs R313 again; keep): R312 1.07 kOhm, the rim shot 1725 Hz (units 1723 to 1726), the claves 2412
 (2410 to 2422), the rings' balance within 0.5 dB. Left: the 1.7 kHz ring's first 5 ms drop 11.7 dB against 17 to 18.
 `tools/tr808/rimclave.cir` takes it; its references were rendered again.
+
+The overload rule and the Kit voices (asked by the user to be done here). The live emergency (D222, over 90 % of a
+block) fades the playing sound's quietest released voice, and a Kit voice is let go at every strike, so a busy
+machine cut whole kits mid-ring: sixteen renders at once stopped claps after 5 to 645 ms, and the 808 Metal at 96 kHz
+was cut after 6 ms even alone (its strike block 3.4 ms of 2.67 in the Debug build; ringing, 46 % on average). Found
+how others do it: voices in their release go first, and a one-shot drum has no release to go by (HALion, Renoise,
+Roland's part priority, the JUCE forum). The user's choices (options, the recommended first, all taken):
+- A Kit voice under the emergency (options: shed its quietest ringing instrument; never shed a ringing kit; keep):
+  its quietest instrument, by each instrument's level follower, fades over the steal fade and rests; the others ring
+  on (`GeneratorSlot::shedQuietestInstrument`, `Voice`, `Part::fadeOutVoice`, the three 808 kits). Tested: a bass
+  drum and a rim shot, the rim shot shed at 80 ms, the kit then the bass drum alone sample for sample.
+- CoolSynthRender (options: render offline; keep live-like): offline, as a DAW's bounce; --background-load keeps a live
+  device's rules.
+- The 808 Metal's cost at 96 kHz (options: profile and cut it; leave it): a task of its own (TODO 33).
+- A render that hung at exit under heavy load, its file whole, in Windows' own exit (options: note it; end without
+  teardown): noted.

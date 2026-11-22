@@ -118,7 +118,8 @@ namespace coolsynth::synth::v3
         /** Every random number of the layer back to where prepare left it: a defined start (D222). */
         void reseed() noexcept;
         /** The live emergency (D222): the quietest voice whose key is up and not held by the pedal, and its level;
-            -1 if there is none. fadeOutVoice lets it go over the steal fade. */
+            -1 if there is none. fadeOutVoice lets it go over the steal fade. In the Kit mode the voice offers its
+            quietest ringing instrument instead, and only that instrument fades (D258). */
         [[nodiscard]] int quietestReleased(float& level) const noexcept;
         void fadeOutVoice(int index) noexcept;
 

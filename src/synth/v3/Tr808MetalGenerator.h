@@ -46,6 +46,7 @@ namespace coolsynth::synth::v3
         static constexpr int latencySamples = generatorLatencySamples;
         static constexpr double circuitVoltsToLevel = 0.18; // as the 808 Drums: the circuits' volts to the slot's level
         static constexpr double silentLevel = 1.0e-4;       // -80 dB: an instrument has rung down
+        static constexpr double shedFadeSeconds = 0.005;    // a shed instrument's fade: the voice's steal fade (D170)
         static constexpr double prerollSeconds = 0.002;     // IC3 settling before a start from silence
 
         static const ModuleDescriptor& descriptor()
@@ -118,6 +119,8 @@ namespace coolsynth::synth::v3
             pendingVelocity.fill(1.0f);
             running.fill(false);
             level.fill(0.0);
+            shedding.fill(false);
+            shedGain.fill(1.0);
             sinceHit.fill(1.0e9);
             bankRunning = false;
             startPending = false;
@@ -159,6 +162,21 @@ namespace coolsynth::synth::v3
 
         /** The voice waits for every instrument to ring down before it releases. */
         [[nodiscard]] bool holdsRelease() const noexcept { return anyPending() || anyRunning(); }
+        /** The overload's emergency (D222, D258): the quietest ringing instrument's level, -1 with none ringing. */
+        [[nodiscard]] float quietestInstrumentLevel() const noexcept
+        {
+            const int k = quietestRinging();
+            return k < 0 ? -1.0f : static_cast<float>(level[static_cast<std::size_t>(k)]);
+        }
+        /** ... and it fades out over the steal fade, the other instruments ringing on. */
+        bool shedQuietestInstrument() noexcept
+        {
+            const int k = quietestRinging();
+            if (k < 0)
+                return false;
+            shedding[static_cast<std::size_t>(k)] = true;
+            return true;
+        }
         [[nodiscard]] bool silentUntilNextNote() const noexcept { return ! anyPending() && ! anyRunning(); }
 
         void process(float* left, float* right, int numSamples, const SlotParams& params) noexcept
@@ -169,6 +187,7 @@ namespace coolsynth::synth::v3
             const float accentAmount = juce::jlimit(0.0f, 1.0f, params.p[accent]);
             const double follow = std::exp(-1.0 / (0.02 * sampleRate)); // each instrument's level follower, for its end
             const double settleSamples = 0.05 * sampleRate;             // a hit runs at least this long
+            const double shedStep = 1.0 / (shedFadeSeconds * sampleRate); // a shed instrument's fade a sample
             const float amount = juce::jlimit(0.0f, 1.0f, params.combineAmount);
             const bool useRing = params.combine == Combine::ring && input.signal != nullptr;
             const bool useAm = params.combine == Combine::am && input.signal != nullptr;
@@ -200,6 +219,8 @@ namespace coolsynth::synth::v3
                     else
                         hats.trigger(k == openHat ? Tr808Hats::open : Tr808Hats::closed, volts);
                     running[i] = true;
+                    shedding[i] = false;
+                    shedGain[i] = 1.0;
                     bankRunning = true;
                     sinceHit[i] = 0.0;
                 }
@@ -229,6 +250,19 @@ namespace coolsynth::synth::v3
                         else
                             y = hats.processOutput(k == openHat ? Tr808Hats::open : Tr808Hats::closed);
                         y *= circuitVoltsToLevel;
+                        if (shedding[i])
+                        {
+                            // Shed by the overload's emergency (D258): out over the steal fade; its next hit starts
+                            // from rest, as after it rings down.
+                            shedGain[i] = std::max(0.0, shedGain[i] - shedStep);
+                            y *= shedGain[i];
+                            if (shedGain[i] <= 0.0)
+                            {
+                                shedding[i] = false;
+                                running[i] = false;
+                                continue;
+                            }
+                        }
                         level[i] = std::max(std::abs(y), level[i] * follow);
                         sinceHit[i] += 1.0;
                         if (level[i] <= silentLevel && sinceHit[i] > settleSamples)
@@ -319,6 +353,8 @@ namespace coolsynth::synth::v3
             hats.rest();
             running.fill(false);
             level.fill(0.0);
+            shedding.fill(false);
+            shedGain.fill(1.0);
         }
 
         void hit(int note, float velocity) noexcept
@@ -333,6 +369,17 @@ namespace coolsynth::synth::v3
 
         [[nodiscard]] bool anyPending() const noexcept { return std::any_of(pending.begin(), pending.end(), [](bool p) { return p; }); }
         [[nodiscard]] bool anyRunning() const noexcept { return std::any_of(running.begin(), running.end(), [](bool r) { return r; }); }
+        [[nodiscard]] int quietestRinging() const noexcept
+        {
+            int best = -1;
+            for (int k = 0; k < instrumentCount; ++k)
+            {
+                const auto i = static_cast<std::size_t>(k);
+                if (running[i] && ! shedding[i] && ! pending[i] && (best < 0 || level[i] < level[static_cast<std::size_t>(best)]))
+                    best = k;
+            }
+            return best;
+        }
 
         double sampleRate = 96000.0;
         Tr808MetalBank bank;
@@ -343,6 +390,8 @@ namespace coolsynth::synth::v3
         std::array<bool, instrumentCount> pending {}, running {};
         std::array<float, instrumentCount> pendingVelocity {};
         std::array<double, instrumentCount> level {}, sinceHit {};
+        std::array<bool, instrumentCount> shedding {}; // the overload's emergency fades it out (D258)
+        std::array<double, instrumentCount> shedGain {};
         std::array<double, Tr808MetalBank::oscillatorCount> startPhases {};
         std::array<float, paramCount> applied {};
         bool bankRunning = false, startPending = false;

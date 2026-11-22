@@ -256,6 +256,28 @@ namespace coolsynth::synth::v3
         fadingOut = true;
     }
 
+    float Voice::quietestInstrumentLevel() const noexcept
+    {
+        float quietest = -1.0f;
+        for (const auto& g : generators)
+            if (const float l = g.slot.quietestInstrumentLevel(); l >= 0.0f && (quietest < 0.0f || l < quietest))
+                quietest = l;
+        return quietest;
+    }
+
+    bool Voice::shedQuietestInstrument() noexcept
+    {
+        GeneratorState* best = nullptr;
+        float quietest = -1.0f;
+        for (auto& g : generators)
+            if (const float l = g.slot.quietestInstrumentLevel(); l >= 0.0f && (quietest < 0.0f || l < quietest))
+            {
+                quietest = l;
+                best = &g;
+            }
+        return best != nullptr && best->slot.shedQuietestInstrument();
+    }
+
     void Voice::release(float velocity) noexcept
     {
         if (pending)

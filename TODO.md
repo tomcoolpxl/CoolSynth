@@ -226,15 +226,17 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     effect. The open hat's decay fitted to both units (C60 8 uF, R134 82 kOhm), the clap's tail (C139 39 nF), the
     claves' low thump fixed (their own rest), the unaccented trigger raised to 4.7 V (where the units' read, and
     the rim shot's decay with them), IC20 fitted to both units' rim shot and claves pitch (R312 1.07 kOhm; the 1.7
-    kHz ring's first 5 ms stay some 5 dB slow). Found: the
-    overload rule cuts Kit voices (the 808 Metal at 96 kHz after 6 ms; one crash under load), a task of its own. 808 Snare & Clap:
+    kHz ring's first 5 ms stay some 5 dB slow). Found and fixed: the overload rule cut whole Kit voices; it now
+    takes a kit's quietest ringing drum, and CoolSynthRender renders offline (D258). 808 Snare & Clap:
     built (D256, D257), the snare as changed (173 and 334 Hz, as both units, no fit), the clap's four claps from
     IC23 and its reverb, the maracas; within 4 % of ngspice (the switching nodes by their envelopes) and of both
     units' timing and spectra (`docs/research/808-snare-clap.md`), with C140, C144, TM3 and IC21 as the user chose.
     Left open there: the clap's late tail 4 to 12 dB under both units after 120 ms (above); the accented snare's
     2.8 dB over page 14 settled by the accent's top. Then a stock 808 Kit preset in Studio 1982.
-    Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30), and
-    the 303's code made cheaper (32).
+    Each voice designed with the user (options) before it is built. The 808 Metal made cheaper at 96 kHz without
+    changing its sound (D258: 46 % of real time on average while it rings, strikes 87 to 126 %, in the Debug build;
+    profile the bank's start from silence, IC2a's trigger solve and the five VCAs first). Then the 909 made cheaper
+    and priced (30), and the 303's code made cheaper (32).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
     MIDI keyboard. The notes only, not the panel's navigation. The usual layout: a row of letters for the white
     keys, the row above for the black ones, keys for the octave and the velocity (Ableton's computer MIDI
