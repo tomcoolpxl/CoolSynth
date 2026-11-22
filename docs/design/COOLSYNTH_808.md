@@ -69,6 +69,27 @@ The 1980 machine's sequencer, with modern additions on the lanes.
 - A pattern set: the patterns, their variations and fills, and the tracks.
 - A project file holds one kit and one pattern set; the app reopens the last one.
 
+## To design with the user: the pattern library and keeping your own
+
+Asked for by the user (2026-11-22), to be designed with options before it is built.
+
+- A built-in library of the classic beats the 808 made famous: electro, early hip hop, Miami bass, acid house,
+  Detroit techno and others.
+  - What the research found so far: under US law a rhythm on its own is generally not protected, though a
+    collection's selection and arrangement can be, and a test case is pending (Loyola's IP Bytes, Klemchuk,
+    Mondaq's "Beats Me", Bangor University on the reggaeton case). Rules elsewhere may differ.
+  - So each beat is written down here from the records themselves or several descriptions, never copied from one
+    pattern book or from Roland's own paid packs (Egyptian Lover's, Modern Hip-Hop Beats).
+  - Open: naming them after the record, after the style and year, or both; how many; who checks them by ear.
+- How the library is shown: ideas from others to weigh.
+  - Collections, categories, favourites and recently used, with drag and drop to import (Cherry Audio's CR-78).
+  - Searchable tags (Future Drummer).
+  - A kit with each pattern or one kit for a project (Patterning 3, DM10).
+- Keeping your own patterns, which matters more without a DAW to save the project:
+  - where they are kept on disk, naming, duplicating, deleting and undoing a delete;
+  - importing and exporting single patterns, sets and kits, and MIDI files in and out;
+  - how the library's beats and your own sit side by side, and whether a library beat can be overwritten.
+
 ## Under the Lid in the app
 
 - The engine's circuits are wave digital filters, so each part's voltage and current follow from its waves at

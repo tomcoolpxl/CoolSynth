@@ -252,7 +252,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     To be designed with the user (options) before it is built.
 35. CoolSynth 808 (D263, D264): decided as a standalone app first, on the mockup's panel and Under the Lid, the
     engine moved to its own repository for both apps. Now: the specification `docs/design/COOLSYNTH_808.md`
-    waits for the user's answers and approval; nothing is built. The history below is the mockups' round.
+    is approved; the engine repository is being made. Still to design with the user (options) before it is built:
+    the library of classic beats, how it is shown, and keeping and managing your own patterns
+    (`COOLSYNTH_808.md`, "To design with the user"). The history below is the mockups' round.
     The 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and
     shuffle per drum, MIDI drag, per-step locks, flams and sub-steps, chance and conditions; a panel whose step row
     opens into a lane per drum, and Under the Lid (the live circuit, with the classic mods as trimmers) as the
