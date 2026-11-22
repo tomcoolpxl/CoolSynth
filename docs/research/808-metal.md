@@ -122,4 +122,6 @@ cymbal 2.2 and 5.4 (3.5, 7), open hat 2.7 and 7.0 (3.5, 7), closed hat 1.9 to 2.
   Vpp, which IC2b's swing could not give at the drawing's divider.
 - The price: the whole kit 70 % of a block at its 99th percentile with every instrument struck at once (52 % on
   average); outside the Kit mode a voice holds one instrument but runs the bank and all five VCAs, 49 % for the
-  dearest, the cowbell.
+  dearest, the cowbell. At a 96 kHz host it costs the same since D259 (the voices near 96 kHz at any host; before,
+  192 kHz there): an open hat then a cymbal 29 % of real time. Profiled at 96 kHz, in us a sample: the bank 0.12, the
+  five VCAs at rest 1.95, the open hat's envelope 0.41, the cowbell 1.62 while it rings.

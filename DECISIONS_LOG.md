@@ -5415,3 +5415,16 @@ the swing VCAs cheaper at rest; a pass over the cowbell. All three.
   no decimator there. The voice cap's voices scale with their own rate, the effects with the host's. At a 96 kHz
   host the 808 Metal's open hat then cymbal took 29 % of real time on average (46 before), its worst block 61 %
   (87); at 48 kHz unchanged. The whole test suite passes; nothing at 44.1 or 48 kHz moved.
+- The swing VCAs (corrected: they are not linear at rest; each transistor is biased on and its base junction
+  rectifying the band is how its coupling capacitor follows the bank; options: keep all five running, as D255
+  chose; each only while its drum sounds, D255's other option, an open hat alone some 60 % cheaper and the closed
+  hat 0.4 dB quieter from 1 to 5 ms): all five kept.
+- The cowbell (no exact cut: its VCAs join the band-pass through 10 kOhm and 2.2 nF, two samples at 96 kHz; the
+  solver already scatters only into the capacitors, by plain pointers): a looser Newton tolerance, measured
+  (`setNewtonTolerance`, a circuit's own; COOLSYNTH_808_PROFILE): 1 uV 2.67 Newton steps a sample against 2.79
+  and some 2 % off, within the timer's noise; 3 uV 7 %; 10 uV 10 %, the output 1.5 uV from 100 nV's (-120 dB). The
+  user's choice (options: keep 100 nV; 10 uV; 3 uV): 100 nV, the cowbell bit for bit as it was; the setting stays,
+  unused, its default unchanged.
+
+So the 808 Metal at a 96 kHz host costs what it does at 48 kHz, 28 to 29 % of real time for an open hat then a
+cymbal in the Debug build; its prices, measured at 48 kHz, stand.

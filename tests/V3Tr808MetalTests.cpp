@@ -275,6 +275,33 @@ public:
             tHatVca = time([&] { for (int i = 0; i < n; ++i) hats->processVcas(hb[(size_t) i]); });
             tHatOut = time([&] { for (int i = 0; i < n; ++i) hats->processOutput(Tr808Hats::open); });
             tBell = time([&] { for (int i = 0; i < n; ++i) bell->process(o1[(size_t) i], o2[(size_t) i]); });
+            {
+                // The cowbell's solve at 100 nV against 1, 3 and 10 uV (D259): its time and how far its output moves.
+                for (const double tolerance : { 1.0e-7, 1.0e-6, 3.0e-6, 1.0e-5 })
+                {
+                    auto a = std::make_unique<Tr808Cowbell>();
+                    auto b = std::make_unique<Tr808Cowbell>();
+                    a->prepare(96000.0);
+                    b->prepare(96000.0);
+                    b->setNewtonTolerance(tolerance);
+                    a->trigger(buffer.volts(4.7));
+                    b->trigger(buffer.volts(4.7));
+                    std::vector<double> ya(n), yb(n);
+                    long steps = 0;
+                    const double tA = time([&] { for (int i = 0; i < n; ++i) ya[(size_t) i] = a->process(o1[(size_t) i], o2[(size_t) i]); });
+                    const double tB = time([&] { for (int i = 0; i < n; ++i) { yb[(size_t) i] = b->process(o1[(size_t) i], o2[(size_t) i]); steps += b->vcaNewtonStepsForTesting(); } });
+                    double worst = 0.0, peak = 0.0;
+                    for (int i = 0; i < n; ++i)
+                    {
+                        worst = std::max(worst, std::abs(ya[(size_t) i] - yb[(size_t) i]));
+                        peak = std::max(peak, std::abs(ya[(size_t) i]));
+                    }
+                    logMessage("cowbell at " + juce::String(tolerance * 1.0e6, 1) + " uV: " + juce::String(tB, 3) + " us a sample against "
+                               + juce::String(tA, 3) + " at 100 nV, " + juce::String(static_cast<double>(steps) / n, 2)
+                               + " VCA Newton steps a sample, its output at most " + juce::String(worst * 1.0e6, 3) + " uV from 100 nV's ("
+                               + juce::String(20.0 * std::log10(std::max(worst, 1.0e-30) / peak), 1) + " dB under its peak)");
+                }
+            }
             logMessage("us a sample at 96 kHz: bank " + juce::String(tBank, 3) + ", cymbal VCAs at rest " + juce::String(tCymVcaRest, 3)
                        + ", hat VCAs at rest " + juce::String(tHatVcaRest, 3) + "; sounding: cymbal envelope " + juce::String(tCymEnv, 3)
                        + ", its VCAs " + juce::String(tCymVca, 3) + ", its mix " + juce::String(tCymMix, 3) + ", open hat envelope "

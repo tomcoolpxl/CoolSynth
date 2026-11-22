@@ -233,10 +233,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     units' timing and spectra (`docs/research/808-snare-clap.md`), with C140, C144, TM3 and IC21 as the user chose.
     Left open there: the clap's late tail 4 to 12 dB under both units after 120 ms (above); the accented snare's
     2.8 dB over page 14 settled by the accent's top. Then a stock 808 Kit preset in Studio 1982.
-    Each voice designed with the user (options) before it is built. The 808 Metal made cheaper at 96 kHz without
-    changing its sound (D258: 46 % of real time on average while it rings, strikes 87 to 126 %, in the Debug build;
-    profile the bank's start from silence, IC2a's trigger solve and the five VCAs first). Then the 909 made cheaper
-    and priced (30), and the 303's code made cheaper (32).
+    Each voice designed with the user (options) before it is built. The 808 Metal at 96 kHz: done (D259), the voices
+    near 96 kHz at any host, so it costs there what it does at 48 kHz (29 % of real time, was 46); its five VCAs kept
+    running and its cowbell at 100 nV, as the user chose. Then the 909 made cheaper and priced (30), and the 303's
+    code made cheaper (32).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
     MIDI keyboard. The notes only, not the panel's navigation. The usual layout: a row of letters for the white
     keys, the row above for the black ones, keys for the octave and the velocity (Ableton's computer MIDI

@@ -328,6 +328,13 @@ namespace coolsynth::synth::v3::wdf
 
         /** The most Newton iterations a sample may take: 12 by default; circuits that switch hard on an edge need more. */
         void setNewtonLimit(int limit) noexcept { newtonLimit = std::max(1, limit); }
+        /** Where a sample's solve ends: 100 nV of residual by default (D259). The step that ends it early scales
+            with it, Newton's error going as the step squared (2e-5 V at 100 nV leaves some 10 nV). */
+        void setNewtonTolerance(double volts) noexcept
+        {
+            residualTolerance = std::max(1.0e-12, volts);
+            stepTolerance = 2.0e-5 * std::sqrt(residualTolerance / 1.0e-7);
+        }
 
         [[nodiscard]] double probe(int index) const noexcept { return probes[static_cast<std::size_t>(index)]; }
         [[nodiscard]] double portVoltage(int port) const noexcept
@@ -943,7 +950,7 @@ namespace coolsynth::synth::v3::wdf
                         residual[r] = v[r] - target[r] - kf;
                         worst = std::max(worst, std::abs(residual[r]));
                     }
-                    if (worst < 1.0e-7) // 100 nV: some -150 dB under the drum's volts
+                    if (worst < residualTolerance) // 100 nV by default: some -150 dB under the drum's volts
                     {
                         return true; // f is the current at these voltages
                     }
@@ -1008,7 +1015,7 @@ namespace coolsynth::synth::v3::wdf
                     double largest = 0.0;
                     for (int r = 0; r < m; ++r)
                         largest = std::max(largest, std::abs(delta[r]));
-                    if (largest < 2.0e-5)
+                    if (largest < stepTolerance)
                     {
                         for (int r = 0; r < m; ++r)
                             v[r] -= delta[r];
@@ -1123,6 +1130,7 @@ namespace coolsynth::synth::v3::wdf
 
         int portCount = 0, inputCount = 0, nullorCount = 0, gainCount = 0, deviceCount = 0, nonlinearCount = 0, probeCount = 0;
         int newtonSteps = 0, newtonLimit = maxNewtonSteps;
+        double residualTolerance = 1.0e-7, stepTolerance = 2.0e-5; // setNewtonTolerance
         bool solved = true;
         bool wellPosed = true;
         double sampleRate = 96000.0;

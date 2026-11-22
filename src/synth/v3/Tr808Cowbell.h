@@ -123,6 +123,15 @@ namespace coolsynth::synth::v3
             output.setResistance(vr5Lower, std::max(0.01, 5.0e3 * share));
         }
 
+        /** Where each sample's Newton ends in the envelope and the VCAs (D259): 100 nV by default, as every circuit. */
+        void setNewtonTolerance(double volts) noexcept
+        {
+            front.setNewtonTolerance(volts);
+            vca.setNewtonTolerance(volts);
+        }
+
+        [[nodiscard]] int vcaNewtonStepsForTesting() const noexcept { return vca.lastNewtonSteps(); }
+
         /** The CB Decay bend: C9 and C34 scaled together (1 as drawn). */
         void setDecayScale(double scale) noexcept
         {
