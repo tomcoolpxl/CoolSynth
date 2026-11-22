@@ -1,0 +1,91 @@
+# The 808's accent: what the recordings were struck at, and what the AC LEVEL's top does (2026-11-22)
+
+TODO 33's accent check, the user's idea: deduce each recording set's accent from what the accent does that no
+recording gain can, on voices we trust, then judge the gaps left open in the three families at it.
+
+The model's trigger is 4 V unaccented and 4 + 10 x Accent x velocity volts accented, page 6's 4 to 14 V.
+
+## The sources
+
+- Fischer's and Audiorealism's sets, as in the families' write-ups. Fischer's says nothing of the accent;
+  Audiorealism's readme has every hit accented, the AC LEVEL not given.
+- A real 808 at three accent levels: 808 From Mars (paid, not bought here), measured by the gf180-parasynth project,
+  whose per-file results are public: the three toms at no accent, accent and "more accent", the congas at no accent
+  and accent, each at eleven TUNING marks
+  ([PR 110](https://github.com/2AMLogic/gf180-parasynth/pull/110),
+  [its results](https://github.com/2AMLogic/gf180-parasynth/blob/0bdf44f/docs/tom-pitch-drop-results.json)).
+  Its files are each level-normalised, so they carry the pitch drop but not the amplitude.
+- Page 14's table ([the service notes](https://www.manualslib.com/manual/1294765/Roland-Tr-808.html?page=14)), which
+  says how it was read: the AC LEVEL fully counter-clockwise for "normal", then fully clockwise for "accent", the
+  voice's LEVEL fully clockwise, its other knobs at 12 o'clock. Each voice's accented over normal amplitude is free of
+  any gain.
+- Checked and set aside: a "Roland TR-808 Rhythm Composer Samples" set the user found is Fischer's, all 116 files
+  identical.
+
+## How
+
+- The toms' and congas' pitch drop is the germanium pair's: it grows with the drum's swing, which the trigger sets,
+  and no gain moves it. Measured as gf180-parasynth measures it (its `tom_pitch_probe.py`, read and reimplemented):
+  each full period's frequency from same-direction zero crossings behind a Schmitt trigger, unfiltered, over the
+  settled frequency; the first period's ratio, the second's, and an exponential fitted back to the onset. Validated
+  on a resonator with a known sweep: x1.2 read as x1.19999.
+- The model's toms and congas rendered through CoolSynthRender at the eleven TUNING marks and 4, 6, 8, 10, 12 and
+  14 V, as recordings (-6 dBFS, a -90 dBFS floor, 24-bit steps), measured alike. Each recorded hit then reads as the
+  trigger at which the model, at the hit's own settled pitch, drops as far.
+- The bass drum's accent-bound measures (the first half cycles' pitch, the sigh's time, the 2nd and 3rd harmonics, the
+  body against the click), at three DECAY marks per unit, against the model at 4 to 14 V.
+- Every voice's accented over normal Vpp through its generator, the LEVEL at full and the other knobs at 12 o'clock,
+  at 4 to 14 V, against page 14's.
+
+## What the recordings were struck at
+
+The drop's reading, the fitted onset ratio's median (the first and second period's agree within about 1 V but where
+noted):
+
+- 808 From Mars, the toms: no accent 4.7 V, accent 8.2 V, more accent 11.7 V (quartiles 11.5 to 12.0). Each level
+  reads the same on all three toms and across all eleven TUNING marks (the low tom's more accent 11.0 to 11.6 V from
+  82 to 101 Hz), so the model's drop follows the TUNING as the real one does.
+- 808 From Mars, the congas: no accent 4 V or under, accent 11.7 V (11.1 to 13.0). Recorded at two levels only, their
+  "accent" reads as the toms' "more accent": both the AC LEVEL's top, as the reading has it.
+- Fischer's: the toms 4.9 V by the first period, 4.2 V by the second; the congas 4.3 to 4.5 V. Unaccented.
+- Audiorealism's: the toms 4.6 and 4.5 V, the congas 4.4 V (but its low conga, 6 to 9 V). Accented with the AC LEVEL
+  at or near its bottom: as good as unaccented.
+- The bass drum agrees: both units' half cycles, sigh times and harmonics fit 4 to 5 V at every DECAY mark, as D251
+  found for Audiorealism's before its fixes.
+
+So the units read 4.5 to 5 V unaccented where the model has 4 V: their toms drop a little more (the low tom's first
+period x1.08 at its top against the model's x1.063).
+
+## What the AC LEVEL's top does
+
+Page 14's accented over normal amplitude is met by the model at (the page's ratio in brackets):
+
+- Bass drum 12.2 V (2.86), snare 11.0 (3.33), claves 10.8 (3.20).
+- Low conga 10.6, low tom 10.3, mid conga 10.6, high tom 10.7 (all 3.43 or 3.33); mid tom 11.5 (3.67), high conga 11.6
+  (3.43).
+- Rim shot 9.1 (3.33).
+- The metal voices' ratio flattens past 10 V near 2.4 to 2.6 against the page's 2; the cowbell's at 2.35 against 3.43
+  (IC2b's swing, D255). The maracas' and the clap's (the page's 2 Vpp accented) do not read as a trigger.
+
+Two measures that share nothing, a real 808's drop at its top accent and page 14's amplitude ratios, put the AC
+LEVEL's top at about 11.5 V in these circuits, not 14. At 11.5 V the drums lie within -0.5 to +1.2 dB of page 14's
+ratio (the rim shot +2.4); at 14 V they run +0.8 to +3.3 dB over, the gap D253 and D257 left open.
+
+Why the real top lies lower is not settled here: the TRIG line under the load of every voice's input, or the AC LEVEL
+pot's own range, would both do it; the voices themselves are not the cause, since the drop and the amplitude agree.
+
+## The gaps, judged at it
+
+- The open hat's decay, 6 to 32 % longer than both units across OH DECAY (D255): both units are as good as
+  unaccented, and the model is already long at 4 V, so the accent does not explain it.
+- The clap's late tail, 4 to 12 dB under both units after 120 ms (D257): the same; at the units' 4.5 to 5 V the tail
+  is still under.
+- The accented amplitude over page 14 (D253, D257): the AC LEVEL's top, above.
+
+## Found on the way
+
+- The rim shot's two rings: from 5 to 10 ms the 1.7 kHz ring is some 3.5 dB stronger and the 455 Hz ring some 3 dB
+  weaker than both units' (Fischer's and Audiorealism's agree within 1 dB), so the balance between them lies some 6 dB
+  toward IC20; ngspice draws it as the model does.
+- The claves carry a low thump, lines from 51 to 141 Hz some 37 dB under the ring, that Fischer's do not (68 dB
+  under).
