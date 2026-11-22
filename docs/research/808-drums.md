@@ -119,6 +119,11 @@ Without the AC LEVEL a voice's accented-over-unaccented amplitude ratio still te
 bend: the model ties the two together, so a real ratio with the bend the model predicts at that ratio would confirm
 it, and a ratio with less bend would not. 808 From Mars is the one source here that keeps that ratio.
 
+Settled in D258 (`808-accent.md`): a real 808's full accent bends the toms and congas as the model does at about
+11.5 V, and page 14's ratios agree, so the Accent knob's top is 11.5 V; there the drums lie within -0.5 to +1.2 dB of
+page 14's ratios (the rim shot +2.4). The two sets here were struck at 4.5 to 5 V, Audiorealism's AC LEVEL near its
+bottom.
+
 The user buys no references (2026-11-22), so the paid packs are out and the model stays as drawn until a free
 recording of an accented tom or rim shot, at a known accent level or beside its unaccented twin at the same gain,
 turns up. Free sets checked and found not to settle it: Fischer's (no accent; also on hyperreal.org and in a

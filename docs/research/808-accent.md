@@ -3,7 +3,8 @@
 TODO 33's accent check, the user's idea: deduce each recording set's accent from what the accent does that no
 recording gain can, on voices we trust, then judge the gaps left open in the three families at it.
 
-The model's trigger is 4 V unaccented and 4 + 10 x Accent x velocity volts accented, page 6's 4 to 14 V.
+The model's trigger was 4 V unaccented and 4 + 10 x Accent x velocity volts accented, page 6's 4 to 14 V; since
+D258 it is 4 + 7.5 x Accent x velocity, a top of 11.5 V (below).
 
 ## The sources
 
@@ -73,6 +74,17 @@ ratio (the rim shot +2.4); at 14 V they run +0.8 to +3.3 dB over, the gap D253 a
 
 Why the real top lies lower is not settled here: the TRIG line under the load of every voice's input, or the AC LEVEL
 pot's own range, would both do it; the voices themselves are not the cause, since the drop and the amplitude agree.
+
+## Chosen (the user, D258)
+
+- The Accent knob's top at 11.5 V in the 808 Drums, the 808 Snare & Clap, the 808 Metal and the Kick's 808: the
+  trigger 4 + 7.5 x Accent x velocity volts, `Tr808BassDrum::triggerFor`. The Kick's full Accent over none is 2.42 at
+  its own defaults, the 808 Drums' bass drum at 12 o'clock 2.69, page 14 2.86.
+- The bottom stays at 4 V. Succession 808's Accent 0.6 became 0.8, the same 4 + 6 x velocity volts it was passed at;
+  the Kick's level calibration stays, so its default hit (Accent half, full velocity) peaks some 0.86 times as high.
+- The earlier fits, checked against the units' 4.5 to 5 V: none was a level effect. Between 4 and 4.7 V the toms'
+  and congas' decays move 1.2 % at most (D252's resistors moved them 10 to 30 %), the claves' 1 %, the rim shot over
+  the claves 0.6 dB (3.9 against the units' 2.1 and 4.9); the clap's claps not at all from 4 to 8 V (C140, C144).
 
 ## The gaps, judged at it
 

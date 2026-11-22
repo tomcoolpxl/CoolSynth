@@ -114,8 +114,8 @@ cymbal 2.2 and 5.4 (3.5, 7), open hat 2.7 and 7.0 (3.5, 7), closed hat 1.9 to 2.
 
 - The open hat's decay, 6 to 32 % longer than both units across OH DECAY, and longer still at full accent. Kept as
   drawn until each recording set's accent is known (the user, D255): Audiorealism's readme has every hit accented,
-  without the AC LEVEL; Fischer's says nothing. The accent can be deduced from what it does that a recording's gain
-  cannot (the user's idea, TODO 33).
+  without the AC LEVEL; Fischer's says nothing. Deduced in D258 (`808-accent.md`): both sets were struck at 4.5 to
+  5 V, as good as unaccented, so the accent does not explain the gap.
 - Unaccented, every voice is 20 to 35 % under page 14's amplitude; accented, the cowbell is at half of the page's 12
   Vpp, which IC2b's swing could not give at the drawing's divider.
 - The price: the whole kit 70 % of a block at its 99th percentile with every instrument struck at once (52 % on

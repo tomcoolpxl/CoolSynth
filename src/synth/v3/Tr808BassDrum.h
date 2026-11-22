@@ -213,6 +213,17 @@ namespace coolsynth::synth::v3
             bent = wanted;
         }
         /**
+            The common trigger's volts for a hit of the 808 family generators (D258): 4 V unaccented; Accent times the
+            velocity lifts it to 11.5 V, where a real 808's AC LEVEL at its top acts in these circuits (808 From Mars's
+            toms and congas by their pitch drop, page 14's accented over normal amplitudes). The service notes' text
+            gives 4 to 14 V.
+        */
+        [[nodiscard]] static constexpr double triggerFor(double accentTimesVelocity) noexcept
+        {
+            return 4.0 + 7.5 * accentTimesVelocity;
+        }
+
+        /**
             The glide bend's size for a Punch Time: none up to the stock 6 ms; past it, the size at which the attack's
             pitch comes halfway down (in semitones, from its peak to the note) in 7.8 ms times Punch Time over 6 ms, as
             the stock drum does in 7.8 ms. Measured on the circuit model (tests/V3Tr808Tests.cpp, COOLSYNTH_808_JOBS). The

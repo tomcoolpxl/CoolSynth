@@ -98,6 +98,8 @@ machines.
 - The accent is unresolved: at 9 to 14 V the model's sigh is 1.6 to 3 times slower and up to 1.4 semitones deeper,
   its 2nd harmonic 10 to 14 dB up. The accented Audiorealism hits match the model at 4 V instead: either that unit's
   ACCENT knob was low, or the accent is too strong (ngspice says the schematic slows the sigh when accented).
+  Settled in D258 (`808-accent.md`): that unit's AC LEVEL was at or near its bottom (its toms and congas read 4.5 V),
+  and a real 808's top accent acts as 11.5 V here, now the Accent knob's top.
 
 ## Where it matches
 

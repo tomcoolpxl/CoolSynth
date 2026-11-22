@@ -22,7 +22,7 @@
     pulse through the pulse shaper rings the bridged-T, the envelope generator's transistor shifts it up for the
     attack, the leakage makes its sigh, the feedback buffer its decay, the output filter its tone. The knobs reach
     the circuit's own controls and bends: Decay is VR6 (read through a table measured on the model, so it still
-    means seconds to -60 dB), Tone is VR5, Accent moves the trigger between 4 and 14 V with the velocity, Click is
+    means seconds to -60 dB), Tone is VR5, Accent moves the trigger between 4 and 11.5 V with the velocity (D258), Click is
     the trigger's width, Punch the attack shift (R166), Punch Time the envelope (C38), Sigh the leakage (R161), Shape
     the op-amps' rails. The key tunes it by the bridged-T's capacitors, as the 808's tuning mod does.
 
@@ -53,7 +53,7 @@ namespace coolsynth::synth::v3
         static constexpr int latencySamples = generatorLatencySamples;
         static constexpr float level = 0.8f;          // a full hit's body peaks near here
         static constexpr double silentLevel = 1.0e-4; // -80 dB: the tail has ended
-        static constexpr double circuitVoltsToLevel = 0.18; // the circuit's volts to the slot's level: an accent of half at full velocity peaks near 0.8
+        static constexpr double circuitVoltsToLevel = 0.18; // the circuit's volts to the slot's level: an accent of half at full velocity peaks near 0.7 (0.8 at the 14 V top before D258)
         static constexpr double circuit909VoltsToLevel = 0.15; // likewise the 909's, its LEVEL full
 
         static const ModuleDescriptor& descriptor()
@@ -205,7 +205,7 @@ namespace coolsynth::synth::v3
                     clickEnvelope = 1.0;
                     noiseEnvelope = 1.0;
                     if (circuit808)
-                        circuit.trigger(4.0 + 10.0 * static_cast<double>(accentAmount * lastVelocity), triggerWidth(clickAmount));
+                        circuit.trigger(Tr808BassDrum::triggerFor(static_cast<double>(accentAmount * lastVelocity)), triggerWidth(clickAmount));
                     else if (circuit909)
                         drum909.trigger(2.0 + 2.0 * static_cast<double>(accentAmount * lastVelocity)); // the accent DAC, volts
                     else

@@ -25,7 +25,7 @@
 
     The knobs are the 808's own ten (the bass drum's Level, Tone and Decay; each pair's Level and Tuning; the rim
     shot's Level) with its pots' tapers (levels audio, tunings and Decay linear, Tone the C taper fitted to two units),
-    then Accent, which moves each hit's trigger between 4 and 14 V with its velocity, and Punch Time, the bass drum's
+    then Accent, which moves each hit's trigger between 4 and 11.5 V with its velocity (D258), and Punch Time, the bass drum's
     glide past its stock 6 ms (the Kick's knob). The toms share the machine's pink noise bus: white noise at the 130 mV
     rms the service notes set at TP4, over the later boards' band (C202, 22 pF across R130), through IC24b's Sallen-Key
     low-pass (273 Hz). Each circuit has its own copy of the common trigger stage, so hits at once do not load each
@@ -177,7 +177,7 @@ namespace coolsynth::synth::v3
                     if (! pending[i])
                         continue;
                     pending[i] = false;
-                    const double volts = 4.0 + 10.0 * static_cast<double>(accentAmount * pendingVelocity[i]);
+                    const double volts = Tr808BassDrum::triggerFor(static_cast<double>(accentAmount * pendingVelocity[i]));
                     if (k == bassDrum)
                         bass.trigger(volts);
                     else if (k == rimPair)

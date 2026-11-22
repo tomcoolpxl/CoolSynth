@@ -5305,3 +5305,39 @@ maracas' peak and decay as theirs. Page 14 at full level: the snare 3.0 Vpp (3),
 Priced (`VoiceCost.h`): in the Kit mode the whole kit in its one voice, 49.0 % of a block at its 99th percentile (51.5
 and 47.3 in two runs; average 26.4 %); in the other modes a voice holds one instrument, priced at the dearest, the
 maracas, 32.1 %. The generator is 92 kB, under the 808 Drums' 122.
+
+## D258. The 808's accent: what the recordings were struck at, and the AC LEVEL's top (2026-11-22)
+
+TODO 33's accent check, the user's idea: each recording set's accent deduced from what the accent does that no gain
+can (`docs/research/808-accent.md`). The toms' and congas' pitch drop, measured as the gf180-parasynth project
+measures it (its published per-file results for 808 From Mars, a real 808 at three accent levels; its method read and
+reimplemented), read through the model at the hit's own pitch; the bass drum's half cycles, sigh and harmonics; every
+voice's accented over normal amplitude against page 14, which states its settings (AC LEVEL fully counter-clockwise,
+then ACCENT fully clockwise).
+
+Found:
+- Fischer's and Audiorealism's hits read 4.5 to 5 V on the toms, congas and bass drum alike: Audiorealism's "accented"
+  hits were struck with the AC LEVEL near its bottom.
+- 808 From Mars's three levels read 4.7, 8.2 and 11.7 V on all three toms across eleven TUNING marks; its congas'
+  only accented level 11.7 V. The model's drop follows the TUNING and the accent as the real one does.
+- Page 14's ratios are met at 10.3 to 12.2 V by the bass drum, snare, toms, congas and claves (the rim shot 9.1 V).
+- So a real 808's top accent acts as about 11.5 V in these circuits, not the 14 V of the service notes' text. The
+  open hat's decay (D255) and the clap's tail (D257) are no accent effect: the units are as good as unaccented.
+- On the way: the rim shot's two rings some 6 dB off balance against both units, and a low thump in the claves.
+
+The user's choices (options, the recommended first, all taken):
+- The Accent knob's top (options: 11.5 V; keep 14 V as drawn; 11.5 V and the bottom raised to 4.5 V): 11.5 V, in the
+  808 Drums, 808 Snare & Clap and 808 Metal, and the Kick's 808 the same (the user: "that should be the same as the
+  rest"). The trigger is 4 + 7.5 x Accent x velocity volts (`Tr808BassDrum::triggerFor`). There the drums lie within
+  -0.5 to +1.2 dB of page 14's ratios, against +0.8 to +3.3 dB at 14 V.
+- Succession 808 (options: its Accent to 0.8, the trigger it was passed at; keep 0.6, softer hard hits): 0.8. The
+  Kick's level calibration stays; its default hit peaks some 0.86 times as high.
+- The open hat's decay (options: fit a part to both units; keep as drawn): fit.
+- The clap's tail (options: fit the reverb to both units; keep as drawn): fit.
+- The rim shot's balance and the claves' thump (options: look into both and fit; note them for later; keep): look
+  into both and fit.
+
+Asked by the user: were earlier fits made for what the accent explains? Checked at the units' 4.5 to 5 V, none was:
+the toms' and congas' decays move 1.2 % at most between 4 and 4.7 V (D252's resistors moved them 10 to 30 %), the
+claves' 1 % (R313), the rim shot over the claves 0.6 dB (R324, still between the units), the clap's claps not at all
+from 4 to 8 V (C140, C144).

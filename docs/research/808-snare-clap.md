@@ -116,8 +116,8 @@ clap's timing and the snare's pitch come through the generator itself (the test'
 
 ## Left open
 
-- The accented snare runs 2.8 dB over page 14, as the 808 Drums' voices do (D253): the circuits as drawn are not in
-  proportion to their trigger, and no recording at a known accent level settles it.
+- The accented snare runs 2.8 dB over page 14, as the 808 Drums' voices do (D253). Settled in D258: the Accent's top
+  is 11.5 V, where the snare's ratio lies 0.6 dB over the page's.
 - The clap's late tail, 4 to 12 dB under both units after 120 ms unaccented: neither recording gives its accent level,
   and the circuit's tail rises with it.
 - The maracas unaccented, 3.5 dB over page 14's 3 Vpp.

@@ -23,7 +23,7 @@
     The keys are General MIDI's with Roland's TR-8S alternates: closed hat 42 and 44, open hat 46, cymbal 49, 51 and
     57, cowbell 56. The knobs are the 808's own seven (CB Level; CY Level, Tone and Decay; OH Level and Decay; CH
     Level) with its pots' tapers (levels audio, the rest linear), then Accent, which moves each hit's trigger between
-    4 and 14 V with its velocity before IC2a narrows it; Tune, the six oscillators' capacitors together, in semitones;
+    4 and 11.5 V with its velocity (D258) before IC2a narrows it; Tune, the six oscillators' capacitors together, in semitones;
     CB Pitch, the cowbell's two trimmers together, in semitones from 554 and 825 Hz (both units' tuning; the service
     notes' 540 and 800 Hz lie half a semitone down) as far as both reach (-12 to +2);
     CH Decay and CB Decay, bends that scale C63 and C9 with C34 (a quarter to four times as drawn).
@@ -181,7 +181,7 @@ namespace coolsynth::synth::v3
                     if (! pending[i])
                         continue;
                     pending[i] = false;
-                    const double trig = 4.0 + 10.0 * static_cast<double>(accentAmount * pendingVelocity[i]);
+                    const double trig = Tr808BassDrum::triggerFor(static_cast<double>(accentAmount * pendingVelocity[i]));
                     const double volts = buffer.volts(trig);
                     if (! running[i])
                     {
