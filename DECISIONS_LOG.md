@@ -5599,3 +5599,22 @@ The user's choices on seeing it (options, the recommended first):
 - What the electricity shows (options: as it is; voltage as colour too; glowing wires without dots): voltage as a
   tint on the wire as well, one colour above ground and one below (Falstad's green and red, a blue for below in
   the Paper theme, whose red is already its accent), so a charged capacitor shows while no current moves.
+
+The complete bass drum's current made true (the user, on seeing it: the current does not flow everywhere and it
+does not look connected everywhere). Found: the wiring matched the netlist, but only 16 hand-picked paths of 133
+wire strokes carried dots; the trigger's flash lasted 140 ms; the standing currents were missing; and ground drawn
+as symbols leaves every loop open to the eye. The user's choices (options, the recommended first):
+- The current (options: ngspice's own on every branch; hand-drawn on every branch; left as it was with a note):
+  ngspice's own. `tools/kick808/mockup_currents.py` runs `bassdrum.cir` (8 V on the trigger line, Decay 0.6, Tone
+  0.5, Level 0.8), records 103 series (every part's current, every node's voltage) at 762 moments, every 40 us of
+  the first 8 ms and every 0.52 ms to 300 ms, and writes them into the page. The page works each wire's current
+  out from the parts on it (Kirchhoff, walking each net from its source) and checks its own drawing against the
+  netlist: one node per net, one net per node, no part forgotten. The check found one mistake in the first
+  redraw (the first op-amp's output in two pieces), since fixed: 35 nets and 53 parts, all matching.
+  Measured there: 0.68 mA stand in R160 and Q42 and 2.0 mA in Q44 and R173 in silence; the trigger moves up to
+  2.5 mA, the resonator 6.7 uA, so thickness and speed follow the logarithm of the current.
+- Ground and the supplies (options: rails with the return current; symbols as before): rails, +15 V along the
+  top and ground along the bottom, each ending in a pin, so every loop closes on the sheet. The op-amps' supply
+  pins stay undrawn, so their output current does not show on the rails.
+- Time (options: slow motion with a time bar; live only): a time bar over the recorded hit, played in 16 s or
+  dragged to any moment; the dots keep moving while it stands still, as the current at that moment.

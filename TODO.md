@@ -257,9 +257,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     holds the vector panel, its lanes and two tries at Under the Lid in the four themes (no sound; its scope traces
     and currents are drawn, not the engine's): the first as boxes per stage, the second, asked for by the user, the
     whole board as one reduced schematic with the current moving on its wires and their voltage as a tint. The
-    user chose the second to refine, with each drum complete on a click: the bass drum is drawn from its netlist,
-    the other ten are still to draw (from `tools/tr808/*.cir`; their part labels collide in places). The realistic
-    panel is still to draw, and the user's notes on the views are awaited.
+    user chose the second to refine, with each drum complete on a click: the bass drum is drawn from its netlist
+    with rails, ngspice's own currents and voltages on every wire (`tools/kick808/mockup_currents.py`), a time bar
+    and a check of the drawing against the netlist. The other ten are still to draw the same way (from
+    `tools/tr808/*.cir`, each needing its own recording); the reduced board still shows hand-drawn currents; part
+    labels collide in places. The realistic panel is still to draw, and the user's notes on the views are awaited.
     Nothing is built yet: no sequencer, no plugin target. Before a release: the name in the trademark registries, and the line that says whose mark
     TR-808 is.
 
