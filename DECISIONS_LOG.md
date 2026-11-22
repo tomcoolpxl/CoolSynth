@@ -5618,3 +5618,29 @@ as symbols leaves every loop open to the eye. The user's choices (options, the r
   pins stay undrawn, so their output current does not show on the rails.
 - Time (options: slow motion with a time bar; live only): a time bar over the recorded hit, played in 16 s or
   dragged to any moment; the dots keep moving while it stands still, as the current at that moment.
+
+## D264. CoolSynth 808: a standalone app, its look decided, the engine to its own repository (2026-11-22)
+
+The user's decision, after the mockups: a standalone app first, on the panel with its lanes and Under the Lid as
+they are in the mockup, with colours, details and type still to fine-tune. The first Under the Lid (boxes per
+stage) is scrapped and removed from the mockup; the schematic sheet is now Under the Lid.
+
+The panel's second line, "Eleven circuits · sixteen sounds", was dropped (the user: it reads as machine-written;
+wanted instead a clear pointer to the original's Rhythm Composer). Found: Roland prints Rhythm Composer on the
+TR-808, R-8 and TR-09 (Wikipedia, roland.com), Yamaha Rhythm Programmer on its RX machines (yamaha.com). The
+user's choice (options: Beat Composer; Rhythm Arranger; Pattern Composer; none): Beat Composer. No drum machine or
+plugin of that name found by web search; no registry searched.
+
+Where the app lives. The user's wish: the engine in one place, used by CoolSynth and CoolSynth 808. Found: the
+engine (`src/synth`, `src/synth/v3`) includes only the flight recorder and `BuildInfo` from the rest of `src`;
+41 of its 74 files use JUCE; 46 of the 58 test files include it, 37 include none of the app folders. A monorepo
+is the usual advice for a small team with a library that changes often; submodules cost a pointer update per
+change (foonathan.net, slicker.me). The user's choice (options: a library in this repository; its own engine
+repository; the 808 repository taking in CoolSynth's): its own engine repository, which CoolSynth and CoolSynth
+808 each take in as a submodule; its history to come along by `git filter-repo`.
+
+The first step (options: a short specification; the sequencer core; the panel on screen): a specification,
+`docs/design/COOLSYNTH_808.md`, for the user to approve before any code. The sequencer facts in it (two parts of
+16 steps, A/B, intro and fill-in, pre-scale of 3, 6, 4 or 8 steps a beat, rhythm tracks) are from the service
+notes, Sound On Sound's 1993 hands-on and a programming walkthrough; the original owner's manual was not found
+online.

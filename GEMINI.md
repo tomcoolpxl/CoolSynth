@@ -51,7 +51,7 @@ the current state.
 
 - `README.md`: the player's guide. `docs/architecture.md`: the architecture as built, with the engine map.
 - `docs/design/`: the V3 engine's specification (`DESIGN_V3.md`, `REQUIREMENTS_V3.md`, `IMPLEMENTATION_PLAN_V3.md`,
-  `SOUND_BANK_V3.md`). `docs/interface-v3.md`: the interface specification. `docs/minilab3-screen.md`: the MiniLab
+  `SOUND_BANK_V3.md`). `COOLSYNTH_808.md`: the planned standalone 808 app and the engine's own repository (D264). `docs/interface-v3.md`: the interface specification. `docs/minilab3-screen.md`: the MiniLab
   3 protocol as tested on the device.
 - `TODO.md`: open work only. `DECISIONS_LOG.md`: every decision, with the options and the reason.
 - `docs/releases/<tag>.md`: the release notes of each version.
