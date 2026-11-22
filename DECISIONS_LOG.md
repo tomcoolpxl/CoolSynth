@@ -5652,3 +5652,27 @@ The specification's open questions, the user's choices (options, the recommended
 - The standalone's clock (options: MIDI clock in and out; its own tempo only): MIDI clock in and out.
 - A pattern set's size (options: banks of 16 with A and B; the original's one bank, fixed): banks of sixteen,
   A and B, four fill-ins a bank, banks and tracks unlimited.
+
+## D265. The engine moves to its own repository, coolsynth-engine (2026-11-23)
+
+The user approved the specification (D264) and its first step: the engine in its own repository, which CoolSynth and
+CoolSynth 808 take in as a submodule. Done in four steps, each built and tested on its own: the engine's links to
+the rest of CoolSynth cut; the engine drawn as its own target inside this repository; the new repository cut out
+with its history; CoolSynth moved onto it.
+
+Found first: the engine (`src/synth`, `src/synth/v3`, `src/diagnostics`, `src/FullPath.h`) reached the rest of
+CoolSynth only through `synth/SynthParameters.h`, which included the parameter IDs for the arpeggiator's five choice
+lists and for the functions binding the engine's pointers to CoolSynth's parameters; and through the instrument
+catalogue's embedded data. With that cut, 23 test files and the allocation alarm need only the engine; the other 34
+need presets, the plugin or MIDI and stay in CoolSynth, the determinism and click tests among them.
+
+- The cut: the five choice lists moved unchanged, names and namespace kept (122 uses, none edited), into
+  `synth/ArpChoices.h`, which `parameters/ParameterIDs.h` includes; the binding functions moved to
+  `parameters/GlobalParameterBindings.h`. No code that runs changed; the whole suite passed (950 s).
+- The engine's build target is an INTERFACE target handing its sources to each program: JUCE's modules are compiled
+  once per program, and a compiled library linking them too builds them twice (the JUCE forum's threads on linking
+  a library that contains JUCE modules). Each program builds the engine as before, with its own flags.
+- The documents the engine's code cites (59 places, mostly `docs/design/DESIGN_V3.md` and `REQUIREMENTS_V3.md`) stay
+  in CoolSynth; the engine's README says where they are.
+- The history (options: install git filter-repo; Git's own filter-branch; no history): git filter-repo 2.47.0 from
+  PyPI, for the user (github.com/newren/git-filter-repo).

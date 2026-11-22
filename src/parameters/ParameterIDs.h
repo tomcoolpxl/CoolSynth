@@ -4,6 +4,8 @@
 #include <string_view>
 #include <utility>
 
+#include "synth/ArpChoices.h" // the arpeggiator's choices live with the engine (D265)
+
 /*
     IDs of the parameters outside a V3 part's slot paths: the two layers' arpeggiators (D194), the tempo and the output. A part's own
     parameters (generator and processor slots, envelopes, voice and play settings) and the master
@@ -109,53 +111,6 @@ namespace coolsynth::parameters::ids
 
 namespace coolsynth::parameters
 {
-    enum class ArpRateChoice : int
-    {
-        quarter = 0,
-        eighth = 1,
-        eighthTriplet = 2,
-        sixteenth = 3,
-        sixteenthTriplet = 4,
-        thirtySecond = 5,
-    };
-
-    enum class ArpPatternChoice : int
-    {
-        up = 0,
-        down = 1,
-        upDown = 2,
-        asPlayed = 3,
-        converge = 4,
-        diverge = 5,
-        inside = 6,
-        outside = 7,
-        random = 8,
-        randomWalk = 9,
-        chord = 10,
-    };
-
-    enum class ArpRatchetChoice : int
-    {
-        off = 0,
-        x2 = 1,
-        x3 = 2,
-        x4 = 3,
-    };
-
-    enum class ArpRhythmChoice : int
-    {
-        straight = 0,
-        euclidean = 1,
-    };
-
-    enum class ArpAccentEveryChoice : int
-    {
-        off = 0,
-        every2 = 1,
-        every3 = 2,
-        every4 = 3,
-    };
-
     inline constexpr auto allParameterIds = std::to_array<const char*>({
         ids::arpEnabled,
         ids::arpRateDivision,

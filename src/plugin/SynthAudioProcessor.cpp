@@ -13,6 +13,7 @@
 #include "interface/MiniLab3Driver.h"
 #include "midi/ControllerSetup.h"
 #include "midi/MiniLab3Protocol.h"
+#include "parameters/GlobalParameterBindings.h"
 #include "parameters/ParameterIDs.h"
 #include "parameters/ParameterLayout.h"
 #include "BuildInfo.h"
