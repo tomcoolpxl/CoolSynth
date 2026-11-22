@@ -131,6 +131,7 @@ namespace coolsynth::synth::v3
         }
 
         [[nodiscard]] int vcaNewtonStepsForTesting() const noexcept { return vca.lastNewtonSteps(); }
+        [[nodiscard]] int frontNewtonStepsForTesting() const noexcept { return front.lastNewtonSteps(); }
 
         /** The CB Decay bend: C9 and C34 scaled together (1 as drawn). */
         void setDecayScale(double scale) noexcept

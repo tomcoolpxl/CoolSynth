@@ -206,6 +206,9 @@ namespace coolsynth::synth::v3
             readVcas();
         }
 
+        /** How long the full circuit runs after the pulse and switch, for the settle check (tests only, D262). */
+        void setTriggerSettleForTesting(double seconds) noexcept { settleSeconds = seconds; }
+
         /** The envelopes, one sample (before processVcas), while the cymbal sounds. */
         void processEnvelope() noexcept
         {
@@ -230,7 +233,7 @@ namespace coolsynth::synth::v3
                 setEnvelopeSources(full);
                 full.process();
                 readEnvelope(full);
-                const int pulse = static_cast<int>(std::lround((pulseWidth + instrumentHold + triggerSettle) * sampleRate));
+                const int pulse = static_cast<int>(std::lround((pulseWidth + instrumentHold + settleSeconds) * sampleRate));
                 if (triggerSample < 0 && sinceHit > pulse)
                 {
                     tail.adoptSharedState(full); // the hit has passed: the trigger's parts are off
@@ -542,6 +545,7 @@ namespace coolsynth::synth::v3
 
         double sampleRate = 96000.0;
         double pulseVolts = 7.0, pulseWidth = 0.001;
+        double settleSeconds = triggerSettle; // setTriggerSettleForTesting
         int triggerSample = -1, sinceHit = 1 << 30;
         bool usingFull = false;
         double envJ = 0.0, envM = 0.0, envN = 0.0, envT = 0.0, envV = 0.0, envK = 0.0; // the envelopes' nodes this sample

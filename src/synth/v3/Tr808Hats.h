@@ -248,6 +248,9 @@ namespace coolsynth::synth::v3
                 closedOutput.setResistance(closedOut.level, ohms);
         }
 
+        /** How long the full circuits run after the pulse and switch, for the settle check (tests only, D262). */
+        void setTriggerSettleForTesting(double seconds) noexcept { settleSeconds = seconds; }
+
         /** A hat's envelope, one sample (before processVcas), while it sounds. */
         void processEnvelope(int hat) noexcept
         {
@@ -270,7 +273,7 @@ namespace coolsynth::synth::v3
                     ++s.triggerSample;
             }
             ++s.sinceHit;
-            const int pulse = static_cast<int>(std::lround((s.pulseWidth + instrumentHold + triggerSettle) * sampleRate));
+            const int pulse = static_cast<int>(std::lround((s.pulseWidth + instrumentHold + settleSeconds) * sampleRate));
             const bool handOver = s.usingFull && s.triggerSample < 0 && s.sinceHit > pulse;
             if (hat == open)
             {
@@ -359,6 +362,13 @@ namespace coolsynth::synth::v3
         [[nodiscard]] bool usingTriggerParts(int hat) const noexcept { return state[static_cast<std::size_t>(hat)].usingFull; }
         /** A hat's VCA's last Newton steps, for the cost tests. */
         [[nodiscard]] int vcaNewtonSteps(int hat) const noexcept { return hat == open ? openVca.lastNewtonSteps() : closedVca.lastNewtonSteps(); }
+        /** A hat's envelope's last Newton steps (the full circuit's while the trigger stands), for the cost tests. */
+        [[nodiscard]] int envelopeNewtonSteps(int hat) const noexcept
+        {
+            const bool full = state[static_cast<std::size_t>(hat)].usingFull;
+            return hat == open ? (full ? openFull.lastNewtonSteps() : openTail.lastNewtonSteps())
+                               : (full ? closedFull.lastNewtonSteps() : closedTail.lastNewtonSteps());
+        }
         [[nodiscard]] bool lastSolveConverged() const noexcept
         {
             return (state[0].usingFull ? openFull.lastSolveConverged() : openTail.lastSolveConverged())
@@ -597,6 +607,7 @@ namespace coolsynth::synth::v3
         }
 
         double sampleRate = 96000.0;
+        double settleSeconds = triggerSettle; // setTriggerSettleForTesting
         std::array<HatState, 2> state {};
         double openEnvelopeC62 = 0.0, openEnvelopeOut = 0.0, openTimer = 0.0, openChokeBase = 0.0;
         double closedEnvelope = 0.0, closedChokeBase = 0.0;

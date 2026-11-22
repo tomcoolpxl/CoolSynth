@@ -5487,3 +5487,36 @@ Run now, every click test on every preset (COOLSYNTH_CLICK_ALL): all pass. The w
 preset change 1.00x, an effect type change 1.24x (Neon Brass), Brightness and Space swept 1.40x (Frozen Pluck;
 Neuro Growl no longer the worst), all four macros 1.46x (Bowed Haze), the Time macro at a note's start 1.11x
 (Power-Up), a sampled instrument loading 1.00x, a steal 1.31x (Harp String).
+
+## D262. The 808 kits' strikes made cheaper (2026-11-22)
+
+Asked for in D260, where a dense fill reached 92 % of real time at 48 kHz in the Debug build. Measured first where a
+strike's extra time goes (`V3Tr808StrikeProfile`, opt-in with `COOLSYNTH_808_STRIKE_PROFILE`: each drum struck in its
+generator at 96 kHz, each block's time and its root analyses). About half of a repeat strike's extra went to the
+circuit solver's analyses, half to the hats' and cymbal's full circuits while the trigger stands:
+- Every 808 front has a trigger switch, closed at the strike and opened about 1 ms later, and each change solves the
+  root's nodal analysis again; the clap's bursts do so whenever IC23's comparators flip. A resting drum's circuits
+  also wait for their strike to take up a knob's move (the Metal's first strike its bank and five VCAs as well);
+  the Kit mode plays every strike on one voice, so that happens once per drum per move.
+- In the Debug build an analysis spent most of its time in checked `std::array` indexing.
+- The hats' and cymbal's full circuits (12 and 9 devices) take the same two Newton steps a sample as their tails,
+  each 3 to 4 times dearer, for the pulse, the hold and 2 ms after. The VCAs cost the same struck as at rest.
+- The renderer's worst block is often not a strike's: the open hat's slow blocks fall in its ring, and sixteen
+  drums ringing cost 5.8 to 6.3 ms a block, struck or not (the overload rule's case, D258).
+
+Found how others do it: Holters and Zölzer (DAFx-11) update the system for a varying part by the Woodbury identity,
+equal to a full solve to rounding; PLECS keeps each switch combination's state-space matrices once computed. The
+user's choices (options, the recommended first):
+- The analysis (options: plain pointers, the same arithmetic in the same order; as it was): plain pointers.
+  `CircuitWdf::analyse` and `invert` swap rows as pointers. Every render of the 808 Kit is the same bits as before
+  (the demo beat, each drum struck soft then accented, all sixteen at once), and an analysis costs about a sixth: a
+  repeat strike's open hat 210 to 33 us, the clap 428 to 68, a tom 60 to 14. Every circuit model gains (the Kick's
+  808 and 909, every knob move).
+- Each switch state's analysis kept (options: skip it; build it): skipped. Bit-exact, but after the pointers it
+  would save 10 to 70 us a strike, and the 808 Metal is already the largest generator, so every generator slot
+  would grow with it (a voice from 795 to about 950 KB).
+
+Found on the way: the open hat at full accent is chaotic in the model. Its high band 1 pV higher at one sample moves
+its waveform by up to 3.5 to 4.5 dB under its peak within 50 ms, its level within 0.4 dB in every 10 ms; at 4.7 V
+the same nudge stays at -233 dB, and the cymbal and closed hat stay at -230 dB (`V3Tr808SettleCheck`, opt-in with
+`COOLSYNTH_808_SETTLE`).

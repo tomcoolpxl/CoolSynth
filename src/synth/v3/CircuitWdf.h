@@ -23,6 +23,9 @@
 */
 namespace coolsynth::synth::v3::wdf
 {
+    /** How many root analyses this thread has run, every circuit together: for the cost tests (D262). */
+    inline thread_local long analysesOnThisThread = 0;
+
     /** Limits of one circuit: nodes besides ground, ports, ideal inputs, op-amps, nonlinear ports, probes. */
     template <int MaxNodes, int MaxPorts, int MaxInputs, int MaxNullors, int MaxNonlinear, int MaxProbes>
     class Circuit final
@@ -449,36 +452,38 @@ namespace coolsynth::synth::v3::wdf
             std::array<std::array<double, MaxPorts>, MaxPorts> S {};
             std::array<std::array<double, MaxInputs>, MaxPorts> Q {};
             std::array<std::array<double, maxColumns>, MaxProbes> W {};
-            std::array<std::array<double, (MaxNonlinear > 0 ? MaxNonlinear : 1)>, (MaxNonlinear > 0 ? MaxNonlinear : 1)> M {};
         };
 
         void analyse() noexcept
         {
             static thread_local Scratch scratchSpace;
-            auto& Y = scratchSpace.Y;
-            auto& X = scratchSpace.X;
-            auto& S = scratchSpace.S;
-            auto& Q = scratchSpace.Q;
-            auto& W = scratchSpace.W;
-            auto& M = scratchSpace.M;
+            ++analysesOnThisThread;
             const int unknowns = nodeCount() + inputCount + nullorCount;
             const int columns = portCount + inputCount;
+            // Plain pointers, as a sample's loops (step): in the Debug build a checked index costs more than the
+            // arithmetic (D262). Rows are swapped as pointers; every operation and its order are as they were with
+            // indices, so the matrices come out the same bits.
+            double* Y[maxUnknowns];
+            double* X[maxUnknowns];
             for (int r = 0; r < unknowns; ++r)
             {
+                Y[r] = scratchSpace.Y[static_cast<std::size_t>(r)].data();
+                X[r] = scratchSpace.X[static_cast<std::size_t>(r)].data();
                 for (int c = 0; c < unknowns; ++c)
-                    Y[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = 0.0;
+                    Y[r][c] = 0.0;
                 for (int c = 0; c < columns; ++c)
-                    X[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = 0.0;
+                    X[r][c] = 0.0;
             }
-            auto stampY = [&](int row, int col, double v)
+            auto stampY = [&Y](int row, int col, double v)
             {
                 if (row > 0 && col > 0)
-                    Y[static_cast<std::size_t>(row - 1)][static_cast<std::size_t>(col - 1)] += v;
+                    Y[row - 1][col - 1] += v;
             };
+            Port* port = ports.data();
             // Each port as its Norton equivalent: a conductance and a current a/R into n1.
             for (int k = 0; k < portCount; ++k)
             {
-                auto& p = ports[static_cast<std::size_t>(k)];
+                Port& p = port[k];
                 p.resistance = portResistance(p);
                 const double g = 1.0 / p.resistance;
                 stampY(p.n1, p.n1, g);
@@ -486,9 +491,9 @@ namespace coolsynth::synth::v3::wdf
                 stampY(p.n1, p.n2, -g);
                 stampY(p.n2, p.n1, -g);
                 if (p.n1 > 0)
-                    X[static_cast<std::size_t>(p.n1 - 1)][static_cast<std::size_t>(k)] += g;
+                    X[p.n1 - 1][k] += g;
                 if (p.n2 > 0)
-                    X[static_cast<std::size_t>(p.n2 - 1)][static_cast<std::size_t>(k)] -= g;
+                    X[p.n2 - 1][k] -= g;
             }
             const int n = nodeCount();
             // Ideal inputs: V(node) = u, their current an unknown.
@@ -496,9 +501,9 @@ namespace coolsynth::synth::v3::wdf
             {
                 const int row = n + j;
                 const int node = inputNode[static_cast<std::size_t>(j)];
-                Y[static_cast<std::size_t>(row)][static_cast<std::size_t>(node - 1)] = 1.0;
-                Y[static_cast<std::size_t>(node - 1)][static_cast<std::size_t>(row)] -= 1.0;
-                X[static_cast<std::size_t>(row)][static_cast<std::size_t>(portCount + j)] = 1.0;
+                Y[row][node - 1] = 1.0;
+                Y[node - 1][row] -= 1.0;
+                X[row][portCount + j] = 1.0;
             }
             // Op-amps: V(plus) - V(minus) = 0, the output's current an unknown.
             for (int j = 0; j < nullorCount; ++j)
@@ -506,10 +511,10 @@ namespace coolsynth::synth::v3::wdf
                 const int row = n + inputCount + j;
                 const auto& o = nullors[static_cast<std::size_t>(j)];
                 if (o.plus > 0)
-                    Y[static_cast<std::size_t>(row)][static_cast<std::size_t>(o.plus - 1)] += 1.0;
+                    Y[row][o.plus - 1] += 1.0;
                 if (o.minus > 0)
-                    Y[static_cast<std::size_t>(row)][static_cast<std::size_t>(o.minus - 1)] -= 1.0;
-                Y[static_cast<std::size_t>(o.out - 1)][static_cast<std::size_t>(row)] -= 1.0;
+                    Y[row][o.minus - 1] -= 1.0;
+                Y[o.out - 1][row] -= 1.0;
             }
             // Transconductances: g (V(plus) - V(minus)) into out, moved to the left of out's KCL row.
             for (int j = 0; j < gainCount; ++j)
@@ -524,171 +529,199 @@ namespace coolsynth::synth::v3::wdf
             {
                 int pivot = col;
                 for (int r = col + 1; r < unknowns; ++r)
-                    if (std::abs(Y[static_cast<std::size_t>(r)][static_cast<std::size_t>(col)]) > std::abs(Y[static_cast<std::size_t>(pivot)][static_cast<std::size_t>(col)]))
+                    if (std::abs(Y[r][col]) > std::abs(Y[pivot][col]))
                         pivot = r;
                 if (pivot != col)
                 {
-                    std::swap(Y[static_cast<std::size_t>(pivot)], Y[static_cast<std::size_t>(col)]);
-                    std::swap(X[static_cast<std::size_t>(pivot)], X[static_cast<std::size_t>(col)]);
+                    std::swap(Y[pivot], Y[col]);
+                    std::swap(X[pivot], X[col]);
                 }
-                const double d = Y[static_cast<std::size_t>(col)][static_cast<std::size_t>(col)];
+                const double* yc = Y[col];
+                const double* xc = X[col];
+                const double d = yc[col];
                 if (std::abs(d) < 1.0e-300)
                     continue;
                 for (int r = col + 1; r < unknowns; ++r)
                 {
-                    const double f = Y[static_cast<std::size_t>(r)][static_cast<std::size_t>(col)] / d;
+                    double* yr = Y[r];
+                    const double f = yr[col] / d;
                     if (f == 0.0)
                         continue;
                     for (int c = col; c < unknowns; ++c)
-                        Y[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] -= f * Y[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)];
+                        yr[c] -= f * yc[c];
+                    double* xr = X[r];
                     for (int c = 0; c < columns; ++c)
-                        X[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] -= f * X[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)];
+                        xr[c] -= f * xc[c];
                 }
             }
             for (int col = unknowns - 1; col >= 0; --col)
             {
-                const double d = Y[static_cast<std::size_t>(col)][static_cast<std::size_t>(col)];
+                const double* yc = Y[col];
+                double* xc = X[col];
+                const double d = yc[col];
                 for (int c = 0; c < columns; ++c)
                 {
-                    double v = X[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)];
+                    double v = xc[c];
                     for (int k = col + 1; k < unknowns; ++k)
-                        v -= Y[static_cast<std::size_t>(col)][static_cast<std::size_t>(k)] * X[static_cast<std::size_t>(k)][static_cast<std::size_t>(c)];
-                    X[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)] = std::abs(d) < 1.0e-300 ? 0.0 : v / d;
+                        v -= yc[k] * X[k][c];
+                    xc[c] = std::abs(d) < 1.0e-300 ? 0.0 : v / d;
                 }
             }
 
             // Port voltages: v = A [a; u]; b = 2v - a, so S = 2A_a - I and Q = 2A_u. Probes read X's node rows.
-            auto nodeRow = [&](int node, int c) { return node > 0 ? X[static_cast<std::size_t>(node - 1)][static_cast<std::size_t>(c)] : 0.0; };
+            auto nodeRow = [&X](int node, int c) { return node > 0 ? X[node - 1][c] : 0.0; };
+            double* S[MaxPorts];
+            double* Q[MaxPorts];
             for (int k = 0; k < portCount; ++k)
             {
-                const auto& p = ports[static_cast<std::size_t>(k)];
+                S[k] = scratchSpace.S[static_cast<std::size_t>(k)].data();
+                Q[k] = scratchSpace.Q[static_cast<std::size_t>(k)].data();
+                const Port& p = port[k];
                 for (int c = 0; c < columns; ++c)
                 {
                     const double v = nodeRow(p.n1, c) - nodeRow(p.n2, c);
                     if (c < portCount)
-                        S[static_cast<std::size_t>(k)][static_cast<std::size_t>(c)] = 2.0 * v - (c == k ? 1.0 : 0.0);
+                        S[k][c] = 2.0 * v - (c == k ? 1.0 : 0.0);
                     else
-                        Q[static_cast<std::size_t>(k)][static_cast<std::size_t>(c - portCount)] = 2.0 * v;
+                        Q[k][c - portCount] = 2.0 * v;
                 }
             }
+            double* W[MaxProbes > 0 ? MaxProbes : 1];
             for (int j = 0; j < probeCount; ++j)
+            {
+                W[j] = scratchSpace.W[static_cast<std::size_t>(j)].data();
+                const int node = probeNode[static_cast<std::size_t>(j)];
                 for (int c = 0; c < columns; ++c)
-                    W[static_cast<std::size_t>(j)][static_cast<std::size_t>(c)] = nodeRow(probeNode[static_cast<std::size_t>(j)], c);
+                    W[j][c] = nodeRow(node, c);
+            }
 
             // Which ports send a wave into the root (capacitors, sources, devices) and which keep one (capacitors).
             // The linear senders come first in `sending`, the devices after them.
+            int* send = sending.data();
+            int* keeper = capacitorPort.data();
             sendingCount = capacitorCount = 0;
             for (int k = 0; k < portCount; ++k)
             {
-                const auto kind = ports[static_cast<std::size_t>(k)].kind;
+                const auto kind = port[k].kind;
                 if (kind == Kind::capacitor || kind == Kind::source)
-                    sending[static_cast<std::size_t>(sendingCount++)] = k;
+                    send[sendingCount++] = k;
                 if (kind == Kind::capacitor)
-                    capacitorPort[static_cast<std::size_t>(capacitorCount++)] = k;
+                    keeper[capacitorCount++] = k;
             }
             linearSendingCount = sendingCount;
             for (int k = 0; k < portCount; ++k)
-                if (ports[static_cast<std::size_t>(k)].kind == Kind::nonlinear)
-                    sending[static_cast<std::size_t>(sendingCount++)] = k;
+                if (port[k].kind == Kind::nonlinear)
+                    send[sendingCount++] = k;
 
             // The nonlinear ports' part: b_N = c + S_NN a_N; with a_N = b_N - 2 R i, v = b_N - R i:
             // v = p + K i, where p = M c, M = (I - S_NN)^-1, K = -(2 M S_NN + I) R.
             const int m = nonlinearCount;
-            std::array<std::array<double, MaxNonlinear>, MaxNonlinear> A {};
-            std::array<std::array<double, MaxNonlinear>, MaxNonlinear> inv {};
+            const int* np = nonlinearPort.data();
+            double A[maxDevicePorts][maxDevicePorts], inv[maxDevicePorts][maxDevicePorts];
             for (int r = 0; r < m; ++r)
                 for (int c = 0; c < m; ++c)
                 {
-                    A[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = (r == c ? 1.0 : 0.0) - S[static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(r)])][static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(c)])];
-                    inv[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = r == c ? 1.0 : 0.0;
+                    A[r][c] = (r == c ? 1.0 : 0.0) - S[np[r]][np[c]];
+                    inv[r][c] = r == c ? 1.0 : 0.0;
                 }
-            wellPosed = invert(A, inv, m);
+            double* M[maxDevicePorts]; // the inverse's rows, as invert leaves them
+            wellPosed = invert(A, inv, m, M);
             for (int r = 0; r < m; ++r)
-                for (int c = 0; c < m; ++c)
-                    M[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = inv[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)];
-            for (int r = 0; r < m; ++r)
+            {
+                double* kr = K[static_cast<std::size_t>(r)].data();
                 for (int c = 0; c < m; ++c)
                 {
                     double ms = 0.0;
                     for (int k = 0; k < m; ++k)
-                        ms += M[static_cast<std::size_t>(r)][static_cast<std::size_t>(k)] * S[static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(k)])][static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(c)])];
-                    const double rc = ports[static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(c)])].resistance;
-                    K[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = -(2.0 * ms + (r == c ? 1.0 : 0.0)) * rc;
+                        ms += M[r][k] * S[np[k]][np[c]];
+                    const double rc = port[np[c]].resistance;
+                    kr[c] = -(2.0 * ms + (r == c ? 1.0 : 0.0)) * rc;
                 }
+            }
 
             // The matrices a sample uses, packed in the order its waves are: linear senders, inputs, devices.
             const int linear = linearSendingCount + inputCount;
-            auto entry = [&](auto&& rowOfS, auto&& rowOfQ, int c) -> double
+            const int linearSenders = linearSendingCount;
+            // A row of S (and its Q) at a packed column.
+            auto entry = [send, np, linear, linearSenders](const double* rowOfS, const double* rowOfQ, int c) -> double
             {
-                if (c < linearSendingCount)
-                    return rowOfS(sending[static_cast<std::size_t>(c)]);
+                if (c < linearSenders)
+                    return rowOfS[send[c]];
                 if (c < linear)
-                    return rowOfQ(c - linearSendingCount);
-                return rowOfS(nonlinearPort[static_cast<std::size_t>(c - linear)]);
+                    return rowOfQ[c - linearSenders];
+                return rowOfS[np[c - linear]];
             };
             for (int r = 0; r < m; ++r)
+            {
+                double* out = toDevices[static_cast<std::size_t>(r)].data();
                 for (int c = 0; c < linear; ++c)
                 {
                     double sum = 0.0;
                     for (int k = 0; k < m; ++k)
-                    {
-                        const auto row = static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(k)]);
-                        sum += M[static_cast<std::size_t>(r)][static_cast<std::size_t>(k)]
-                               * entry([&](int col) { return S[row][static_cast<std::size_t>(col)]; },
-                                       [&](int in) { return Q[row][static_cast<std::size_t>(in)]; }, c);
-                    }
-                    toDevices[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = sum;
+                        sum += M[r][k] * entry(S[np[k]], Q[np[k]], c);
+                    out[c] = sum;
                 }
+            }
             for (int r = 0; r < capacitorCount; ++r)
             {
-                const auto row = static_cast<std::size_t>(capacitorPort[static_cast<std::size_t>(r)]);
+                double* out = toCapacitors[static_cast<std::size_t>(r)].data();
+                const int row = keeper[r];
                 for (int c = 0; c < linear + m; ++c)
-                    toCapacitors[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)]
-                        = entry([&](int col) { return S[row][static_cast<std::size_t>(col)]; },
-                                [&](int in) { return Q[row][static_cast<std::size_t>(in)]; }, c);
+                    out[c] = entry(S[row], Q[row], c);
             }
             for (int j = 0; j < probeCount; ++j)
+            {
+                double* out = toProbes[static_cast<std::size_t>(j)].data();
                 for (int c = 0; c < linear + m; ++c)
-                    toProbes[static_cast<std::size_t>(j)][static_cast<std::size_t>(c)]
-                        = entry([&](int col) { return W[static_cast<std::size_t>(j)][static_cast<std::size_t>(col)]; },
-                                [&](int in) { return W[static_cast<std::size_t>(j)][static_cast<std::size_t>(portCount + in)]; }, c);
+                    out[c] = entry(W[j], W[j] + portCount, c);
+            }
             dirty = false;
         }
 
-        /** Gauss-Jordan; false when a pivot vanishes (the nonlinear ports' currents tied by the linear part alone). */
-        static bool invert(std::array<std::array<double, MaxNonlinear>, MaxNonlinear>& a,
-                           std::array<std::array<double, MaxNonlinear>, MaxNonlinear>& out, int m) noexcept
+        /** Gauss-Jordan; false when a pivot vanishes (the nonlinear ports' currents tied by the linear part alone).
+            Rows are swapped as pointers: rows[r] is the inverse's row r. */
+        static bool invert(double (*a)[maxDevicePorts], double (*out)[maxDevicePorts], int m, double** rows) noexcept
         {
+            double* ar[maxDevicePorts];
+            for (int r = 0; r < m; ++r)
+            {
+                ar[r] = a[r];
+                rows[r] = out[r];
+            }
             bool regular = true;
             for (int col = 0; col < m; ++col)
             {
                 int pivot = col;
                 for (int r = col + 1; r < m; ++r)
-                    if (std::abs(a[static_cast<std::size_t>(r)][static_cast<std::size_t>(col)]) > std::abs(a[static_cast<std::size_t>(pivot)][static_cast<std::size_t>(col)]))
+                    if (std::abs(ar[r][col]) > std::abs(ar[pivot][col]))
                         pivot = r;
-                std::swap(a[static_cast<std::size_t>(pivot)], a[static_cast<std::size_t>(col)]);
-                std::swap(out[static_cast<std::size_t>(pivot)], out[static_cast<std::size_t>(col)]);
-                const double d = a[static_cast<std::size_t>(col)][static_cast<std::size_t>(col)];
+                std::swap(ar[pivot], ar[col]);
+                std::swap(rows[pivot], rows[col]);
+                double* ac = ar[col];
+                double* oc = rows[col];
+                const double d = ac[col];
                 if (std::abs(d) < 1.0e-9) // its entries are of order one: a pivot this small is a singular matrix
                     regular = false;
                 if (std::abs(d) < 1.0e-300)
                     continue;
                 for (int c = 0; c < m; ++c)
                 {
-                    a[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)] /= d;
-                    out[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)] /= d;
+                    ac[c] /= d;
+                    oc[c] /= d;
                 }
                 for (int r = 0; r < m; ++r)
                 {
                     if (r == col)
                         continue;
-                    const double f = a[static_cast<std::size_t>(r)][static_cast<std::size_t>(col)];
+                    double* a2 = ar[r];
+                    double* o2 = rows[r];
+                    const double f = a2[col];
                     if (f == 0.0)
                         continue;
                     for (int c = 0; c < m; ++c)
                     {
-                        a[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] -= f * a[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)];
-                        out[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] -= f * out[static_cast<std::size_t>(col)][static_cast<std::size_t>(c)];
+                        a2[c] -= f * ac[c];
+                        o2[c] -= f * oc[c];
                     }
                 }
             }

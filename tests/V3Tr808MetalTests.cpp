@@ -14,6 +14,8 @@
 #include "synth/v3/Tr808Hats.h"
 #include "synth/v3/Tr808MetalBank.h"
 #include "synth/v3/Tr808MetalGenerator.h"
+#include "synth/v3/Tr808DrumsGenerator.h"
+#include "synth/v3/Tr808SnareClapGenerator.h"
 
 /*
     The 808 Metal's circuits (D254, D255) against ngspice renders of the voicing board (tools/tr808/metal.cir, rendered
@@ -275,6 +277,100 @@ public:
             tHatVca = time([&] { for (int i = 0; i < n; ++i) hats->processVcas(hb[(size_t) i]); });
             tHatOut = time([&] { for (int i = 0; i < n; ++i) hats->processOutput(Tr808Hats::open); });
             tBell = time([&] { for (int i = 0; i < n; ++i) bell->process(o1[(size_t) i], o2[(size_t) i]); });
+            {
+                // An open hat struck again, as in a pattern (its circuits analysed, the bank running), sample by sample
+                // (D262): each 32-sample stretch's time in the envelope and in the VCAs, and their Newton steps.
+                auto h = std::make_unique<Tr808Hats>();
+                h->prepare(96000.0);
+                for (int pass = 0; pass < 2; ++pass)
+                {
+                    h->trigger(Tr808Hats::open, buffer.volts(11.5));
+                    const int length = pass == 0 ? 48000 : 640;
+                    std::vector<double> envUs((size_t) length), vcaUs((size_t) length);
+                    std::vector<int> envSteps((size_t) length), vcaSteps((size_t) length);
+                    for (int i = 0; i < length; ++i)
+                    {
+                        const auto t0 = juce::Time::getHighResolutionTicks();
+                        h->processEnvelope(Tr808Hats::open);
+                        const auto t1 = juce::Time::getHighResolutionTicks();
+                        h->processVcas(hb[(size_t) i]);
+                        const auto t2 = juce::Time::getHighResolutionTicks();
+                        (void) h->processOutput(Tr808Hats::open);
+                        envUs[(size_t) i] = 1.0e6 * juce::Time::highResolutionTicksToSeconds(t1 - t0);
+                        vcaUs[(size_t) i] = 1.0e6 * juce::Time::highResolutionTicksToSeconds(t2 - t1);
+                        envSteps[(size_t) i] = h->envelopeNewtonSteps(Tr808Hats::open);
+                        vcaSteps[(size_t) i] = h->vcaNewtonSteps(Tr808Hats::open);
+                    }
+                    if (pass == 0)
+                        continue;
+                    juce::String line = "open hat struck again, per 32 samples: envelope us (steps) / VCAs us (open VCA's steps):";
+                    for (int a = 0; a < length; a += 32)
+                    {
+                        double e = 0.0, v = 0.0;
+                        int es = 0, vs = 0;
+                        for (int i = a; i < a + 32; ++i)
+                        {
+                            e += envUs[(size_t) i];
+                            v += vcaUs[(size_t) i];
+                            es += envSteps[(size_t) i];
+                            vs += vcaSteps[(size_t) i];
+                        }
+                        line << " | " << a << ": " << juce::String(e, 0) << " (" << es << ") / " << juce::String(v, 0) << " (" << vs << ")";
+                    }
+                    logMessage(line);
+                }
+            }
+            {
+                // An open hat's envelope from a strike at rest, sample by sample (D262): the full circuit while the
+                // trigger stands and settles, then the tail.
+                auto h = std::make_unique<Tr808Hats>();
+                h->prepare(96000.0);
+                h->trigger(Tr808Hats::open, buffer.volts(4.7));
+                std::vector<double> us(800);
+                for (int i = 0; i < 800; ++i)
+                {
+                    const auto start = juce::Time::getHighResolutionTicks();
+                    h->processEnvelope(Tr808Hats::open);
+                    us[(size_t) i] = 1.0e6 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start);
+                }
+                const auto sum = [&](int a, int b) { double t = 0.0; for (int i = a; i < b; ++i) t += us[(size_t) i]; return t; };
+                juce::String line = "open hat envelope from a strike, us: samples 0-99 " + juce::String(sum(0, 100), 0) + ", 100-199 "
+                                    + juce::String(sum(100, 200), 0) + ", 200-299 " + juce::String(sum(200, 300), 0) + ", 300-399 "
+                                    + juce::String(sum(300, 400), 0) + ", 400-499 " + juce::String(sum(400, 500), 0) + ", 700-799 "
+                                    + juce::String(sum(700, 800), 0) + "; the dearest samples:";
+                std::vector<int> order(800);
+                for (int i = 0; i < 800; ++i)
+                    order[(size_t) i] = i;
+                std::sort(order.begin(), order.end(), [&](int a, int b) { return us[(size_t) a] > us[(size_t) b]; });
+                for (int k = 0; k < 8; ++k)
+                    line << " [" << order[(size_t) k] << ": " << juce::String(us[(size_t) order[(size_t) k]], 1) << "]";
+                logMessage(line);
+            }
+            {
+                // A cowbell's strike from rest, sample by sample (D262): where the strike block's time goes.
+                auto s = std::make_unique<Tr808Cowbell>();
+                s->prepare(96000.0);
+                s->trigger(buffer.volts(4.7));
+                struct Sample { int index; double us; int front, vca; };
+                std::vector<Sample> trace;
+                double first512 = 0.0, later512 = 0.0;
+                for (int i = 0; i < 2000; ++i)
+                {
+                    const auto start = juce::Time::getHighResolutionTicks();
+                    (void) s->process(o1[(size_t) i], o2[(size_t) i]);
+                    const double us = 1.0e6 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start);
+                    trace.push_back({ i, us, s->frontNewtonStepsForTesting(), s->vcaNewtonStepsForTesting() });
+                    (i < 512 ? first512 : later512) += i < 512 || i >= 1488 ? us : 0.0;
+                }
+                auto sorted = trace;
+                std::sort(sorted.begin(), sorted.end(), [](const Sample& a, const Sample& b) { return a.us > b.us; });
+                juce::String line = "cowbell strike: the first 512 samples " + juce::String(first512, 1) + " us, the last 512 of 2000 "
+                                    + juce::String(later512, 1) + " us; the dearest:";
+                for (int k = 0; k < 12; ++k)
+                    line << " [" << sorted[(size_t) k].index << ": " << juce::String(sorted[(size_t) k].us, 1) << " us, front "
+                         << sorted[(size_t) k].front << ", vca " << sorted[(size_t) k].vca << "]";
+                logMessage(line);
+            }
             {
                 // The cowbell's solve at 100 nV against 1, 3 and 10 uV (D259): its time and how far its output moves.
                 for (const double tolerance : { 1.0e-7, 1.0e-6, 3.0e-6, 1.0e-5 })
@@ -1012,3 +1108,251 @@ public:
 };
 
 static V3Tr808OpenHatFit v3Tr808OpenHatFit;
+
+/*
+    Where an 808 strike's blocks go (D262), opt-in: with COOLSYNTH_808_STRIKE_PROFILE set, each family's generator at
+    96 kHz in 64-sample blocks, run a while with its knobs applied, then each of its drums struck at full accent. Each
+    block's time in us (five runs, the median) and how many root analyses it ran (a resistance or capacitance changed:
+    a trigger's switch, say), the strike's block and the eleven after it.
+*/
+class V3Tr808StrikeProfile final : public juce::UnitTest
+{
+public:
+    V3Tr808StrikeProfile() : juce::UnitTest("V3 TR-808 strike profile (opt-in)", "V3") {}
+
+    void runTest() override
+    {
+        using namespace coolsynth::synth::v3;
+        if (juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_STRIKE_PROFILE", {}).isEmpty())
+            return;
+        beginTest("strike_blocks");
+        profile<Tr808DrumsGenerator>({ { 36, "bass drum" }, { 37, "rim shot" }, { 75, "claves" }, { 43, "low tom" }, { 47, "mid tom" },
+                                       { 50, "high tom" }, { 62, "high conga" }, { 64, "low conga" } });
+        profile<Tr808SnareClapGenerator>({ { 38, "snare" }, { 39, "clap" }, { 70, "maracas" } });
+        profile<Tr808MetalGenerator>({ { 42, "closed hat" }, { 46, "open hat" }, { 49, "cymbal" }, { 56, "cowbell" } });
+    }
+
+private:
+    template <class Generator>
+    void profile(std::initializer_list<std::pair<int, const char*>> drums)
+    {
+        using namespace coolsynth::synth::v3;
+        constexpr double rate = 96000.0;
+        constexpr int block = 64, blocks = 12;
+        for (const auto& [key, name] : drums)
+        {
+            // Per run, per strike (the first from the generator's start, the second half a second later), per block:
+            // its time and its analyses.
+            struct Block { double us = 0.0; long analyses = 0; };
+            std::vector<std::array<std::vector<Block>, 2>> runs;
+            for (int run = 0; run < 5; ++run)
+            {
+                SlotMemory memory;
+                memory.allocate(Generator::memoryFloats(rate, block));
+                memory.setSeed(3);
+                auto g = std::make_unique<Generator>();
+                g->prepare(rate, block, memory);
+                SlotParams params;
+                const auto& d = Generator::descriptor();
+                for (int i = 0; i < d.usedParams; ++i)
+                    params.p[static_cast<std::size_t>(i)] = d.params[static_cast<std::size_t>(i)].def;
+                std::array<float, block> l {}, r {};
+                for (int b = 0; b < 20; ++b)
+                    g->process(l.data(), r.data(), block, params);
+                std::array<std::vector<Block>, 2> strikes;
+                for (int strike = 0; strike < 2; ++strike)
+                {
+                    NoteContext note;
+                    note.noteNumber = key;
+                    note.velocity = 1.0f;
+                    g->noteOn(note);
+                    for (int b = 0; b < blocks; ++b)
+                    {
+                        const long before = wdf::analysesOnThisThread;
+                        const auto start = juce::Time::getHighResolutionTicks();
+                        g->process(l.data(), r.data(), block, params);
+                        Block k;
+                        k.us = 1.0e6 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - start);
+                        k.analyses = wdf::analysesOnThisThread - before;
+                        strikes[static_cast<std::size_t>(strike)].push_back(k);
+                    }
+                    if (strike == 0)
+                        for (int b = blocks; b < 750; ++b)
+                            g->process(l.data(), r.data(), block, params);
+                }
+                runs.push_back(strikes);
+            }
+            for (int strike = 0; strike < 2; ++strike)
+            {
+                juce::String line = juce::String(name) + (strike == 0 ? ", first strike" : ", again 0.5 s later")
+                                    + ", us per 64-sample block [its analyses]:";
+                double total = 0.0;
+                for (int b = 0; b < blocks; ++b)
+                {
+                    std::vector<double> v;
+                    for (const auto& run : runs)
+                        v.push_back(run[static_cast<std::size_t>(strike)][static_cast<std::size_t>(b)].us);
+                    std::sort(v.begin(), v.end());
+                    total += v[2];
+                    line << " " << juce::String(v[2], 0);
+                    const long count = runs[0][static_cast<std::size_t>(strike)][static_cast<std::size_t>(b)].analyses;
+                    if (count > 0)
+                        line << " [" << count << "]";
+                }
+                line << "; the 768 samples " << juce::String(total, 0) << " us";
+                logMessage(line);
+            }
+        }
+    }
+};
+
+static V3Tr808StrikeProfile v3Tr808StrikeProfile;
+
+/*
+    How far the hand-over from the trigger's full circuit to the tail moves the hats and the cymbal (D262), opt-in:
+    with COOLSYNTH_808_SETTLE set, each struck at 4.7 and 11.5 V and rendered 1.5 s at 96 kHz with the bank running,
+    the full circuit kept 2, 1, 0.5 and 0.25 ms (the built one) after the pulse and switch, each against the full
+    circuit run throughout: the largest difference in its output (dB under the peak) and in its envelope, and the time
+    the envelope costs over the strike's first 1000 samples. Beside them, the full circuit with its high band 1 pV
+    higher at one sample: what a difference that small grows to (the open hat at full accent amplifies it as much as
+    any hand-over). Also the generators' and a voice's sizes.
+*/
+class V3Tr808SettleCheck final : public juce::UnitTest
+{
+public:
+    V3Tr808SettleCheck() : juce::UnitTest("V3 TR-808 trigger settle check (opt-in)", "V3") {}
+
+    void runTest() override
+    {
+        using namespace coolsynth::synth::v3;
+        if (juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_SETTLE", {}).isEmpty())
+            return;
+        beginTest("settle");
+        logMessage("sizes: 808 Snare & Clap " + juce::String((int) sizeof(Tr808SnareClapGenerator)) + " bytes, 808 Metal "
+                   + juce::String((int) sizeof(Tr808MetalGenerator)) + ", 808 Drums " + juce::String((int) sizeof(Tr808DrumsGenerator))
+                   + ", the generator variant " + juce::String((int) sizeof(GeneratorTypes)) + ", a voice " + juce::String((int) sizeof(Voice)));
+        constexpr double rate = 96000.0;
+        constexpr int n = 144000;
+        auto bank = referenceBank(rate);
+        std::vector<double> hb(n), lb(n);
+        for (int i = 0; i < n; ++i)
+        {
+            bank->process();
+            hb[(size_t) i] = bank->high();
+            lb[(size_t) i] = bank->low();
+        }
+        Tr808MetalTriggerBuffer buffer;
+        // One render: the instrument (0 open hat, 1 closed hat, 2 cymbal) at a knob, the settle, the trigger volts.
+        std::vector<double> env((size_t) n);
+        int failed = 0; // samples whose solve did not converge, in the last render
+        double nudge = 0.0; // added to the high band at sample 100: how sensitive the output is to a tiny difference
+        const auto render = [&](int which, double knob, double settle, double trig, double& firstUs)
+        {
+            hb[100] += nudge;
+            std::vector<double> y((size_t) n);
+            firstUs = 0.0;
+            failed = 0;
+            if (which < 2)
+            {
+                auto h = std::make_unique<Tr808Hats>();
+                h->prepare(rate);
+                h->setOpenDecay(knob);
+                h->setTriggerSettleForTesting(settle);
+                const int hat = which == 0 ? Tr808Hats::open : Tr808Hats::closed;
+                for (int i = 0; i < 4800; ++i) // the bank running a while, the hats at rest (their circuits analysed)
+                    h->processVcas(hb[(size_t) i]);
+                h->trigger(hat, buffer.volts(trig));
+                for (int i = 0; i < n; ++i)
+                {
+                    const auto t0 = juce::Time::getHighResolutionTicks();
+                    h->processEnvelope(hat);
+                    if (i < 1000)
+                        firstUs += 1.0e6 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - t0);
+                    h->processVcas(hb[(size_t) i]);
+                    y[(size_t) i] = h->processOutput(hat);
+                    env[(size_t) i] = hat == Tr808Hats::open ? h->openEnvelopeVolts() : h->closedEnvelopeVolts();
+                    failed += h->lastSolveConverged() ? 0 : 1;
+                }
+            }
+            else
+            {
+                auto c = std::make_unique<Tr808Cymbal>();
+                c->prepare(rate);
+                c->setDecay(knob);
+                c->setTone(0.5);
+                c->setTriggerSettleForTesting(settle);
+                for (int i = 0; i < 4800; ++i)
+                    c->processVcas(hb[(size_t) i], lb[(size_t) i]);
+                c->trigger(buffer.volts(trig));
+                for (int i = 0; i < n; ++i)
+                {
+                    const auto t0 = juce::Time::getHighResolutionTicks();
+                    c->processEnvelope();
+                    if (i < 1000)
+                        firstUs += 1.0e6 * juce::Time::highResolutionTicksToSeconds(juce::Time::getHighResolutionTicks() - t0);
+                    c->processVcas(hb[(size_t) i], lb[(size_t) i]);
+                    y[(size_t) i] = c->processMix();
+                    env[(size_t) i] = c->envelopeVolts(0);
+                    failed += c->lastSolveConverged() ? 0 : 1;
+                }
+            }
+            hb[100] -= nudge;
+            return y;
+        };
+        const char* names[] = { "open hat", "closed hat", "cymbal" };
+        for (int which = 0; which < 3; ++which)
+            for (const double knob : { 0.0, 0.5, 1.0 })
+            {
+                if (which == 1 && knob != 0.5)
+                    continue; // the closed hat has no decay knob here
+                for (const double trig : { 4.7, 11.5 })
+                {
+                    // The reference: the full circuit throughout, never handed over.
+                    double refUs = 0.0;
+                    const auto ref = render(which, knob, 10.0, trig, refUs);
+                    const auto refEnv = env;
+                    const int refFailed = failed;
+                    double peak = 0.0;
+                    for (const double v : ref)
+                        peak = std::max(peak, std::abs(v));
+                    juce::String line = juce::String(names[which]) + " knob " + juce::String(knob, 1) + " at " + juce::String(trig, 1)
+                                        + " V, against the full circuit throughout (" + juce::String(refUs, 0) + " us over the first 1000 samples, "
+                                        + juce::String(refFailed) + " unconverged samples):";
+                    {
+                        // The full circuit again, its high band 1 pV higher at one sample.
+                        double us = 0.0;
+                        nudge = 1.0e-12;
+                        const auto y = render(which, knob, 10.0, trig, us);
+                        nudge = 0.0;
+                        double worst = 0.0;
+                        for (int i = 0; i < n; ++i)
+                            worst = std::max(worst, std::abs(y[(size_t) i] - ref[(size_t) i]));
+                        line << " the full circuit with 1 pV more at one sample: the output at most "
+                             << juce::String(20.0 * std::log10(std::max(worst, 1.0e-30) / peak), 1) << " dB under the peak;";
+                    }
+                    for (const double settle : { 0.002, 0.001, 0.0005, 0.00025 })
+                    {
+                        double us = 0.0;
+                        const auto y = render(which, knob, settle, trig, us);
+                        double worst = 0.0, worstEnv = 0.0;
+                        int at = 0;
+                        for (int i = 0; i < n; ++i)
+                        {
+                            if (std::abs(y[(size_t) i] - ref[(size_t) i]) > worst)
+                            {
+                                worst = std::abs(y[(size_t) i] - ref[(size_t) i]);
+                                at = i;
+                            }
+                            worstEnv = std::max(worstEnv, std::abs(env[(size_t) i] - refEnv[(size_t) i]));
+                        }
+                        line << " " << juce::String(settle * 1000.0, 2) << " ms: " << juce::String(us, 0) << " us, the output at most "
+                             << juce::String(20.0 * std::log10(std::max(worst, 1.0e-30) / peak), 1) << " dB under the peak (sample "
+                             << at << "), the envelope " << juce::String(worstEnv * 1.0e3, 4) << " mV, " << failed << " unconverged;";
+                    }
+                    logMessage(line);
+                }
+            }
+    }
+};
+
+static V3Tr808SettleCheck v3Tr808SettleCheck;
