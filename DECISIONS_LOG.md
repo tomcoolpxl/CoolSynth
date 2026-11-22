@@ -5521,6 +5521,9 @@ user's choices (options, the recommended first):
   renders the closed hat moves 123 dB under its peak and the cymbal 91; the open hat's waveform moves as its chaos
   (below) lets it, its 10 ms levels within 0.19 dB in the demo beat. A repeat strike's first 768 samples at 96 kHz:
   the open hat 3580 us before D262, 2720 now; the cymbal 3171 and 2786; the closed hat 2109 and 1949.
+- The three kits' prices (options: measured again; kept): measured again, two runs each, their mean less the voice's
+  own (`VoiceCost.h`): the 808 Drums' kit 54.5 to 52.2 % of a block at its 99th percentile, the 808 Metal's 70.1 to
+  64.9, the 808 Snare & Clap's 49.0 to 43.1; their averages as they were (the ringing, not the strikes).
 - Each switch state's analysis kept (options: skip it; build it): skipped. Bit-exact, but after the pointers it
   would save 10 to 70 us a strike, and the 808 Metal is already the largest generator, so every generator slot
   would grow with it (a voice from 795 to about 950 KB).

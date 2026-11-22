@@ -67,13 +67,13 @@ namespace coolsynth::synth::v3::voiceCost
         11.0f, // the 808 circuit (D236, D251): measured 2026-11-21 at its 99th percentile with its trigger stage and the
                // glide bend on; its average was 6.3 (the 909 at 34.2 in the same run)
         33.3f, // the 909 circuit (D238): measured 2026-11-20 at its 99th percentile; its average was 10.7
-        54.5f, // the 808 Drums' kit (D253): measured 2026-11-22 at its 99th percentile with every instrument struck at once,
-               // less the voice's own; its average was 18.4
-        70.1f, // the 808 Metal's kit (D255): measured 2026-11-22 at its 99th percentile with every instrument struck at once,
-               // 68.5 and 72.4 in two runs, their mean less the voice's own; its average was 52
-        49.0f, // the 808 Snare & Clap's kit (D257): measured 2026-11-22 at its 99th percentile, the snare and the clap struck
-               // at once at full accent, then the snare and the maracas over the clap's tail, 51.5 and 47.3 in two runs,
-               // their mean less the voice's own; its average was 26.4
+        52.2f, // the 808 Drums' kit (D253, D262): measured 2026-11-22 at its 99th percentile with every instrument struck at
+               // once, 59.9 and 56.7 in two runs, their mean less the voice's own (6.1); its average was 19.4 (54.5 before D262)
+        64.9f, // the 808 Metal's kit (D255, D262): measured 2026-11-22 at its 99th percentile with every instrument struck at
+               // once, 73.5 and 68.5 in two runs, their mean less the voice's own; its average was 52.4 (70.1 before D262)
+        43.1f, // the 808 Snare & Clap's kit (D257, D262): measured 2026-11-22 at its 99th percentile, the snare and the clap
+               // struck at once at full accent, then the snare and the maracas over the clap's tail, 49.6 and 48.9 in two
+               // runs, their mean less the voice's own; its average was 27.2 (49.0 before D262)
     };
 
     /** The Grain effect's grains at once, density times size, each this much (its densest, 40 at once, took 7.1). */
