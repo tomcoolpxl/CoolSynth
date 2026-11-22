@@ -2,47 +2,11 @@ cmake_minimum_required(VERSION 3.22)
 
 project(CoolSynth VERSION 0.5.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
 
-# A Release build carries Microsoft's C++ runtime inside it (/MT): the app and the VST3 run on a computer with
-# nothing installed (the debug runtime may not be passed on, so a Debug build never leaves this machine). Debug
-# keeps the runtime DLLs, as before. Set before any target exists, so JUCE's modules link the same way.
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:DebugDLL>")
+include(cmake/CoolSynthFlags.cmake)
 
 add_subdirectory(external/JUCE)
 # CLAP beside the VST3 (D216): free-audio/clap-juce-extensions, pinned in external/.
 add_subdirectory(external/clap-juce-extensions EXCLUDE_FROM_ALL)
-
-# Debug is the everyday build, and the plugin it installs must play in real time: compile it
-# optimised, with debug info and JUCE's assertions still on. CMake's /RTC1 cannot be combined
-# with optimisation, and JUCE's recommended config flags force /Od in Debug, so CoolSynth targets
-# use this flags target instead of the juce_recommended_config_flags target.
-add_library(coolsynth_config_flags INTERFACE)
-if(MSVC)
-    foreach(flagVariable CMAKE_CXX_FLAGS_DEBUG CMAKE_C_FLAGS_DEBUG)
-        string(REPLACE "/RTC1" "" ${flagVariable} "${${flagVariable}}")
-        string(REPLACE "/Ob0" "" ${flagVariable} "${${flagVariable}}")
-        string(REPLACE "/Od" "" ${flagVariable} "${${flagVariable}}")
-        # Debug info comes from coolsynth_config_flags on the targets that have code; the data-only
-        # libraries (the embedded bank, the controller profiles) need none.
-        string(REPLACE "/Zi" "" ${flagVariable} "${${flagVariable}}")
-    endforeach()
-    # No incremental linking: when a new bank file added a member to the embedded bank library,
-    # the stale incremental-link databases made the linker reject the library (LNK1236), and an
-    # optimised Debug build gains little from linking incrementally.
-    foreach(linkerVariable CMAKE_EXE_LINKER_FLAGS_DEBUG CMAKE_SHARED_LINKER_FLAGS_DEBUG CMAKE_MODULE_LINKER_FLAGS_DEBUG)
-        string(REPLACE "/INCREMENTAL:NO" "" ${linkerVariable} "${${linkerVariable}}")
-        string(REPLACE "/INCREMENTAL" "" ${linkerVariable} "${${linkerVariable}}")
-        string(APPEND ${linkerVariable} " /INCREMENTAL:NO")
-    endforeach()
-    # Release keeps its symbols in a .pdb beside the binary (not inside it), so a crash in a shipped build can be
-    # traced; /OPT:REF and /OPT:ICF keep the binary as lean as without them.
-    target_compile_options(coolsynth_config_flags INTERFACE
-        $<IF:$<CONFIG:Debug>,/O2 /Ob2 /Zi,/Ox /Zi> /MP /EHsc)
-    target_link_options(coolsynth_config_flags INTERFACE
-        $<$<NOT:$<CONFIG:Debug>>:/DEBUG /OPT:REF /OPT:ICF>)
-else()
-    target_compile_options(coolsynth_config_flags INTERFACE
-        $<IF:$<CONFIG:Debug>,-O2 -g,-O3>)
-endif()
 
 file(GLOB COOLSYNTH_BANK_FILES CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/resources/presets/*.csbank)
 juce_add_binary_data(CoolSynthFactoryBank
@@ -50,14 +14,13 @@ juce_add_binary_data(CoolSynthFactoryBank
     NAMESPACE FactoryBankData
     SOURCES ${COOLSYNTH_BANK_FILES})
 
-juce_add_binary_data(CoolSynthInstrumentData
-    HEADER_NAME InstrumentData.h
-    NAMESPACE InstrumentData
-    SOURCES resources/instruments/catalogue.txt)
-
 juce_add_binary_data(CoolSynthImages
     SOURCES
         resources/icon/coolsynth-icon-512.png) # the icon beside the version in Preferences
+
+include(CTest)
+# The engine (D265): its sources, its data and its own test program.
+include(cmake/CoolSynthEngine.cmake)
 
 option(COOLSYNTH_ENABLE_VST3_USER_INSTALL
     "Copy CoolSynth.vst3 to the per-user Windows VST3 folder after build"
@@ -104,9 +67,8 @@ add_custom_target(UpdateBuildInfo ALL
     BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/GeneratedBuildInfo.h
 )
 
-# Engine, MIDI, preset, UI and standalone sources shared by the plugin, the test
-# runner and the preset normalizer. Kept in one list so the three targets cannot
-# drift apart.
+# MIDI, preset, UI and standalone sources shared by the plugin, the test runner and the tools; the engine's come
+# with coolsynth_engine. Kept in one list so the targets cannot drift apart.
 set(COOLSYNTH_SHARED_SOURCES
     src/BuildInfo.cpp
     src/presets/BankFile.cpp
@@ -119,19 +81,6 @@ set(COOLSYNTH_SHARED_SOURCES
     src/parameters/ParameterLayout.cpp
     src/parameters/v3/SlotParameters.cpp
     src/parameters/v3/PartParameters.cpp
-    src/synth/v3/Voice.cpp
-    src/synth/v3/Part.cpp
-    src/synth/v3/Wavetables.cpp
-    src/synth/v3/ChipWaves.cpp
-    src/synth/v3/Samples.cpp
-    src/synth/v3/InstrumentCatalogue.cpp
-    src/synth/v3/SampleLibrary.cpp
-    src/synth/v3/UserLibrary.cpp
-    src/synth/v3/EngineV3.cpp
-    src/synth/v3/SoundUnit.cpp
-    src/synth/v3/SampleMemory.cpp
-    src/synth/v3/SamplePack.cpp
-    src/synth/v3/AudioWorkers.cpp
     src/interface/InterfaceModel.cpp
     src/interface/ControllerInput.cpp
     src/plugin/AuditionEditor.cpp
@@ -142,14 +91,8 @@ set(COOLSYNTH_SHARED_SOURCES
     src/standalone/SettingsStore.cpp
     src/standalone/StandaloneAudioSupport.cpp
     src/interface/MiniLab3Driver.cpp
-    src/diagnostics/FlightRecorder.cpp
     src/mcp/McpServer.cpp
-    src/mcp/CoolSynthTools.cpp
-    src/synth/Arpeggiator.cpp
-    src/synth/GlobalDelay.cpp
-    src/synth/GlobalFxRack.cpp
-    src/synth/Phaser.cpp
-    src/synth/Compressor.cpp)
+    src/mcp/CoolSynthTools.cpp)
 
 target_sources(CoolSynth PRIVATE ${COOLSYNTH_SHARED_SOURCES})
 
@@ -180,11 +123,10 @@ target_link_libraries(CoolSynth
         CoolSynthImages
         clap_juce_extensions
         CoolSynthFactoryBank
-        CoolSynthInstrumentData
+        coolsynth_engine
         coolsynth_config_flags
         juce::juce_recommended_warning_flags)
 
-include(CTest)
 if(BUILD_TESTING)
     juce_add_console_app(CoolSynthMidiLearnTests)
 
@@ -199,37 +141,18 @@ if(BUILD_TESTING)
             tests/InterfaceModelTests.cpp
             tests/PatchStateTests.cpp
             tests/StabilityAndDisconnectTests.cpp
-            tests/V3ModuleTests.cpp
-            tests/V3ModulationTests.cpp
             tests/V3ParameterTests.cpp
-            tests/V3GeneratorTests.cpp
-            tests/V3ProcessorTests.cpp
             tests/V3LfoTests.cpp
             tests/V3MatrixTests.cpp
             tests/V3GlobalModulatorTests.cpp
             tests/V3DelayTests.cpp
-            tests/V3NoiseTests.cpp
-            tests/V3FmTests.cpp
             tests/V3WavetableTests.cpp
-            tests/V3ChipTests.cpp
-            tests/V3KickTests.cpp
-            tests/V3Tr808Tests.cpp
-            tests/V3Tr808DrumsTests.cpp
-            tests/V3Tr808MetalTests.cpp
-            tests/V3Tr808SnareClapTests.cpp
-            tests/V3Tr909Tests.cpp
-            tests/V3Tb303Tests.cpp
             tests/V3SvfTests.cpp
-            tests/V3ShaperTests.cpp
-            tests/V3ResonatorTests.cpp
             tests/V3ReverbTests.cpp
             tests/V3LoFiTests.cpp
             tests/V3ModernFxTests.cpp
-            tests/V3StringTests.cpp
-            tests/V3ModalTests.cpp
             tests/V3ChordTests.cpp
             tests/V3PartsTests.cpp
-            tests/V3SampleTests.cpp
             tests/V3InsertTests.cpp
             tests/V3RoomTests.cpp
             tests/V3PitchTests.cpp
@@ -238,13 +161,9 @@ if(BUILD_TESTING)
             tests/V3VoiceCapTests.cpp
             tests/McpServerTests.cpp
             tests/V3InstrumentTests.cpp
-            tests/V3VoiceTests.cpp
-            tests/V3PartTests.cpp
             tests/V3PressureTests.cpp
             tests/V3UserSoundTests.cpp
             tests/V3SliceTests.cpp
-            tests/V3ModuleCostReport.cpp
-            tests/V3LiveGrainTests.cpp
             tests/V3BankTests.cpp
             tests/HostedPluginTests.cpp
             tests/ParameterRoundTripTests.cpp
@@ -283,8 +202,7 @@ if(BUILD_TESTING)
             CoolSynthImages
             clap_juce_extensions
             CoolSynthFactoryBank
-            CoolSynthInstrumentData
-        CoolSynthInstrumentData
+            coolsynth_engine
             coolsynth_config_flags
             juce::juce_recommended_warning_flags
     )
@@ -327,7 +245,7 @@ target_link_libraries(CoolSynthRender
         CoolSynthImages
         clap_juce_extensions
         CoolSynthFactoryBank
-        CoolSynthInstrumentData
+        coolsynth_engine
         coolsynth_config_flags
         juce::juce_recommended_warning_flags)
 
@@ -366,7 +284,7 @@ target_link_libraries(CoolSynthPresetNormalizer
         CoolSynthImages
         clap_juce_extensions
         CoolSynthFactoryBank
-        CoolSynthInstrumentData
+        coolsynth_engine
         coolsynth_config_flags
         juce::juce_recommended_warning_flags)
 
@@ -391,6 +309,6 @@ target_link_libraries(CoolSynthPackLibrary
         CoolSynthImages
         clap_juce_extensions
         CoolSynthFactoryBank
-        CoolSynthInstrumentData
+        coolsynth_engine
         coolsynth_config_flags
         juce::juce_recommended_warning_flags)

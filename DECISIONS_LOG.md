@@ -5672,6 +5672,10 @@ need presets, the plugin or MIDI and stay in CoolSynth, the determinism and clic
 - The engine's build target is an INTERFACE target handing its sources to each program: JUCE's modules are compiled
   once per program, and a compiled library linking them too builds them twice (the JUCE forum's threads on linking
   a library that contains JUCE modules). Each program builds the engine as before, with its own flags.
+- The boundary drawn here first: `cmake/CoolSynthEngine.cmake` defines `coolsynth_engine`, the catalogue's data and
+  the engine's own test program `CoolSynthEngineTests` (23 test files, 227 test groups, 10 s); the shared build
+  settings moved to `cmake/CoolSynthFlags.cmake`, which the engine carries. Everything built, the three tools by
+  name too, and both programs passed (the app's 980 s, mostly its every-preset tests).
 - The documents the engine's code cites (59 places, mostly `docs/design/DESIGN_V3.md` and `REQUIREMENTS_V3.md`) stay
   in CoolSynth; the engine's README says where they are.
 - The history (options: install git filter-repo; Git's own filter-branch; no history): git filter-repo 2.47.0 from
