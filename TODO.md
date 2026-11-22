@@ -232,7 +232,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     IC23 and its reverb, the maracas; within 4 % of ngspice (the switching nodes by their envelopes) and of both
     units' timing and spectra (`docs/research/808-snare-clap.md`), with C140, C144, TM3 and IC21 as the user chose.
     Left open there: the clap's late tail 4 to 12 dB under both units after 120 ms (above); the accented snare's
-    2.8 dB over page 14 settled by the accent's top. Then a stock 808 Kit preset in Studio 1982.
+    2.8 dB over page 14 settled by the accent's top. The stock 808 Kit in Studio 1982: done (D260), every knob at
+    12 o'clock and every Level full as page 14 measures, its macros Tone, Tune, Decay and Accent starting halfway.
+    Found there: the whole kit's worst block 92 % of real time at 48 kHz in the Debug build during a dense fill (35 %
+    on average), so live a fill may shed its quietest drum: the 808 kits' strike blocks to be made cheaper.
     Each voice designed with the user (options) before it is built. The 808 Metal at 96 kHz: done (D259), the voices
     near 96 kHz at any host, so it costs there what it does at 48 kHz (29 % of real time, was 46); its five VCAs kept
     running and its cowbell at 100 nV, as the user chose. Then the 909 made cheaper and priced (30), and the 303's

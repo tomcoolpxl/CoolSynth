@@ -185,3 +185,35 @@ mod = src=macro1 dst=p1.drive amount=1
 mod = src=macro2 dst=p1.cutoff amount=0.3
 mod = src=macro3 dst=p1.res amount=0.5
 mod = src=macro4 dst=env1.time amount=0.75
+
+[808 Kit]
+room = Studio 1982
+# The stock TR-808 (D252, D258): its three circuit families in one layer, played in the Kit mode, set as page 14
+# of the service notes measures each voice: every knob at 12 o'clock and every Level fully clockwise, so the drums
+# keep Roland's own balance. General MIDI keys: bass drum 36 and 35, rim shot 37, snare 38 and 40, clap 39, closed hat 42,
+# open hat 46, cymbal 49, cowbell 56, toms 41 to 50, congas 64, 63, 62, maracas 70, claves 75. Velocity moves
+# each hit's trigger from the unaccented 4.7 V toward the accent's 11.5 V, as far as Accent is turned. Dry.
+# The four macros start in the middle, where every knob they move is at 12 o'clock, and sweep each knob's
+# whole range: Tone (the bass drum's, snare's and cymbal's), Tune (the low, mid and high tuning), Decay (the
+# bass drum's, cymbal's and open hat's) and Accent (all three families'). Only what a real 808 has.
+g1 = 808Drums bdLevel=1 bdTone=0 bdDecay=0 ltLevel=1 ltTune=0 mtLevel=1 mtTune=0 htLevel=1 htTune=0 rsLevel=1 accent=0 ptime=6 level=0.8
+g2 = 808Snare&Clap sdLevel=1 sdTone=0 sdSnappy=0.5 cpLevel=1 accent=0 level=0.8
+g3 = 808Metal cbLevel=1 cyLevel=1 cyTone=0 cyDecay=0 ohLevel=1 ohDecay=0 chLevel=1 accent=0 level=0.8
+p1 = Off
+env1 = attack=0 decay=1 sustain=1 release=10 velocity=0
+voice = env2ToP1=0
+play = mode=kit
+master = 3.5
+macros = names=Tone,Tune,Decay,Accent macro1=0.5 macro2=0.5 macro3=0.5 macro4=0.5
+mod = src=macro1 dst=g1.bdTone amount=1
+mod = src=macro1 dst=g2.sdTone amount=1
+mod = src=macro1 dst=g3.cyTone amount=1
+mod = src=macro2 dst=g1.ltTune amount=1
+mod = src=macro2 dst=g1.mtTune amount=1
+mod = src=macro2 dst=g1.htTune amount=1
+mod = src=macro3 dst=g1.bdDecay amount=1
+mod = src=macro3 dst=g3.cyDecay amount=1
+mod = src=macro3 dst=g3.ohDecay amount=1
+mod = src=macro4 dst=g1.accent amount=1
+mod = src=macro4 dst=g2.accent amount=1
+mod = src=macro4 dst=g3.accent amount=1

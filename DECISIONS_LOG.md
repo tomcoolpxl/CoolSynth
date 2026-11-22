@@ -5428,3 +5428,40 @@ the swing VCAs cheaper at rest; a pass over the cowbell. All three.
 
 So the 808 Metal at a 96 kHz host costs what it does at 48 kHz, 28 to 29 % of real time for an open hat then a
 cymbal in the Debug build; its prices, measured at 48 kHz, stand.
+
+## D260. The stock 808 Kit preset in Studio 1982 (2026-11-22)
+
+As D252 chose: one stock 808 Kit, every knob at 12 o'clock where the service notes' page 14 measures each voice,
+macros Tone, Decay, Tune and Accent. The three families in one layer (808 Drums, 808 Snare & Clap, 808 Metal) in the
+Kit mode, dry. Found how others do it: the TR-8S has Tune and Decay per instrument and no kit-wide control (changes
+across the kit are its motion recording's), so the kit-wide macros are this preset's own. The user's choices (options,
+the recommended first, all taken but the second ask on the Levels):
+- The Levels (options: all at 12 o'clock, Roland's balance; balanced to equal loudness): at 12 o'clock first; then,
+  as the audio taper leaves them 21 dB down and the layer and master (+6 dB each) could bring the kit only to -32.5
+  LUFS, asked again (options: all fully clockwise, as page 14 measures amplitude; all at the generators' 0.8; keep
+  12 o'clock): fully clockwise. The balance between the drums is the same at any equal Level.
+- The macros' start (options: the middle, sweeping both ways; zero, as every preset): the middle. The first preset
+  whose macros start other than at zero: each knob a macro moves is stored at 0 and reached at 12 o'clock with its
+  macro at half, the macro sweeping its whole range. In D177's order: Tone, Tune, Decay, Accent.
+- What they move (options: the 808's own knobs; with the bends too): its own. Tone the bass drum's, snare's and
+  cymbal's Tone; Tune the low, mid and high Tuning; Decay the bass drum's, cymbal's and open hat's; Accent all three.
+- The levelling (options: teach the tool kits; by hand): `tools/NormalizePresets.cpp` plays a kit's downbeat (36, 38,
+  42 at velocity 100) for the loudest 400 ms and, for the ceiling, the downbeat and every General MIDI drum key alone
+  at full velocity. The kit: master +3.5 dB, -24.0 LUFS, as loud as the downbeat's 6 dB of peak room allows (its
+  rim shot at full velocity -5.9 dBFS); applied with --only, no other preset moved.
+
+Checked: every key from 35 to 75 sounds, the low tom at its 12 o'clock 91.9 Hz with the macros at half; each macro
+at 0 and 1 against half (loudest 400 ms): Tone +0.1 and +0.2 dB, Tune -1.6 and +2.8, Decay -6.3 and +3.8, Accent
+-2.5 and +2.0, inside D177's +4 dB; with Accent and Decay full, the loudest drum at full velocity (the rim shot)
+peaks at -2.6 dBFS, under the clipper's bend.
+
+Found while rendering a demo beat (`audition/808-kit`, not in git): with all three families in one kit, a busy
+pattern at 48 kHz took 35 % of real time on average in the Debug build, its worst block (a tom fill under a crash)
+92 %, over the emergency's 90 %. The voice cap cannot help a kit (one voice), so live, a dense fill may shed the
+quietest drum. Left for a task of its own: the 808 kits' strike blocks made cheaper (TODO 33).
+
+The user's ears passed the demo beat (2026-11-22: "demo is good").
+
+The macros all four full together (D177's test, from where each preset starts them: changed so, at 0 in every other
+preset): +6.2 dB, each alone within 4 dB (Tone -0.1, Tune +2.8, Decay 0, Accent +3.3). The user's choice (options:
+louder by the user's choice, beside Ladder Chords; Accent and Tune narrower): louder by choice.

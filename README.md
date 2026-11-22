@@ -21,7 +21,7 @@ CoolSynth runs on 64-bit Windows 10 or 11 for now; macOS is planned.
 
 ## Sounds
 
-There are 138 presets in 14 rooms: synthwave, techno, ambient, lo-fi, classic synths rebuilt in the Museum, and 40 sampled acoustic instruments in the Conservatory.
+There are 139 presets in 14 rooms: synthwave, techno, ambient, lo-fi, classic synths rebuilt in the Museum, a stock TR-808 kit, and 40 sampled acoustic instruments in the Conservatory.
 
 CoolSynth is **bi-timbral**. A preset can use layer A and layer B, stacked on every key, split across the keyboard, or switched by velocity. Right-click a layer on the screen to copy, swap or double it.
 

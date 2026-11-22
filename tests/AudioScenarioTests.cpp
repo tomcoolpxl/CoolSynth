@@ -267,7 +267,8 @@ public:
 
         beginTest("Every preset with all four macros full up stays sound, and not much louder (D177)");
         {
-            // A chord, then all macros of both parts to full; the level against the same chord with them at 0.
+            // A chord, then all macros of both parts to full; the level against the same chord with them where the preset
+            // starts them: at 0 in every preset but the 808 Kit, whose macros start halfway (D260).
             // COOLSYNTH_RENDER_HASHES=file writes a hash of each preset's render at rest, to compare two builds.
             const auto hashFile = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_RENDER_HASHES", {});
             juce::StringArray hashes;
@@ -275,18 +276,19 @@ public:
             juce::String worstName;
             juce::StringArray tooLoud;
             // Louder by the user's choice: Ladder Chords' Drive, the ladder's full 24 dB of grit at the level the
-            // user approved, about 7 dB up (2026-11-21).
-            const juce::StringArray louderByChoice { "Ladder Chords" };
+            // user approved, about 7 dB up (2026-11-21); the 808 Kit's four macros, each a knob's whole range from
+            // 12 o'clock, each within 4 dB alone and some 6 dB up all together (D260).
+            const juce::StringArray louderByChoice { "Ladder Chords", "808 Kit" };
             for (int i = 0; i < coolsynth::presets::getFactoryPresetCount(); ++i)
             {
-                const auto play = [&](float macro, std::uint64_t* hash, int only = 0)
+                const auto play = [&](float macro, std::uint64_t* hash, int only = 0) // macro < 0: as the preset sets them
                 {
                     auto rig = std::make_unique<Rig>();
                     rig->loadPreset(i);
                     auto& state = rig->synth->getValueTreeState();
                     for (const char* part : { "pA", "pB" })
                         for (int m = 1; m <= 4; ++m)
-                            if (auto* p = state.getParameter(juce::String(part) + ".macro" + juce::String(m)); p != nullptr && (only == 0 || only == m))
+                            if (auto* p = state.getParameter(juce::String(part) + ".macro" + juce::String(m)); p != nullptr && macro >= 0.0f && (only == 0 || only == m))
                                 p->setValueNotifyingHost(macro);
                     rig->play(0.05);
                     rig->chord(57, true);
@@ -322,7 +324,7 @@ public:
                     return std::sqrt(loudest / (10.0 * preparedBlock));
                 };
                 std::uint64_t restHash = 0;
-                const double rest = play(0.0f, &restHash);
+                const double rest = play(-1.0f, &restHash);
                 const double full = play(1.0f, nullptr);
                 const auto& title = coolsynth::presets::getFactoryPreset(i).name;
                 hashes.add(title + " " + juce::String::toHexString(static_cast<juce::int64>(restHash)));
@@ -331,7 +333,7 @@ public:
                 {
                     // An arpeggio with random patterns plays differently each time (D168): no level to compare.
                     std::uint64_t again = 0;
-                    play(0.0f, &again);
+                    play(-1.0f, &again);
                     if (again != restHash)
                     {
                         logMessage(title + " varies from run to run (a random arpeggio): its level is not compared");

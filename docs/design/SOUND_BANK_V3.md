@@ -370,7 +370,7 @@ loudness-normalised):
 | --- | --- | --- |
 | Workshop | Basic Saw, Basic Pulse, Basic Sine, Basic Arp, Basic Noise, Basic FM, Basic Wavetable | none |
 | Basement | Acid, Rust Bass, Metal Hit, Furnace Drone, Concrete Pad, Siren | none |
-| Studio 1982 | Juno Pad (two layers), Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead, Ladder Chords (the user's pick from the listening pass, 2026-11-21) | none |
+| Studio 1982 | Juno Pad (two layers), Prophet Brass, OB Strings, Moog Bass, Clav Keys, Sync Lead, Ladder Chords (the user's pick from the listening pass, 2026-11-21), 808 Kit (the stock TR-808 in the Kit mode, D260) | none |
 | Engine Room | 808 Boom, Wobble, FM Knock, Pure Sub, Donk, Fat Analog | none |
 | Outrun | Neon Brass, Gated Pad, Night Drive, Laser Lead, Grid Keys, Sunset Strings | none |
 | Bedroom | Cassette Keys, Blanket Pad, Dusty Mallet, Bedroom Bass, Vinyl Choir (Tape Flute removed by the user, 2026-11-21) | none |

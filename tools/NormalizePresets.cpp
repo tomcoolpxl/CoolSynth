@@ -2,7 +2,9 @@
 //
 // Renders each factory preset through the real plugin signal path and gives every preset one loudness:
 // the loudest 400 ms of its test chord (BS.1770 momentary loudness, K-weighted), so a struck piano chord
-// and a held pad are judged by how loud they sound when played, not by an average over the decay.
+// and a held pad are judged by how loud they sound when played, not by an average over the decay. A kit (the Kit
+// play mode) plays its downbeat instead, the bass drum, snare and closed hat at once, and every drum key alone at
+// full velocity for the ceiling (D258).
 // Two limits keep chords clean: the test chord (velocity 100) peaks at least 6 dB under the output's
 // soft clipper, and a chord at full velocity anywhere in the preset's range stays under the clipper.
 // Writes a CSV; with --apply it also writes each corrected master line back into the bank files in
@@ -220,6 +222,20 @@ namespace
         return entry == nullptr || entry->text.trim().equalsIgnoreCase("poly");
     }
 
+    /** True if part A plays in the Kit mode (D252): its keys are drums, not pitches. */
+    bool lookupKitMode(const coolsynth::presets::FactoryPreset& preset)
+    {
+        const auto* entry = findEntry(preset, "pA.play.mode");
+        return entry != nullptr && entry->text.trim().equalsIgnoreCase("kit");
+    }
+
+    /** A kit's downbeat (D258): the bass drum, the snare and the closed hat at once, General MIDI's 36, 38, 42. */
+    const std::vector<int>& kitDownbeat()
+    {
+        static const std::vector<int> keys { 36, 38, 42 };
+        return keys;
+    }
+
     bool lookupArpEnabled(const coolsynth::presets::FactoryPreset& preset)
     {
         const auto* entry = findEntry(preset, coolsynth::parameters::ids::arpEnabled);
@@ -306,7 +322,13 @@ namespace
         // Poly with arp: single held note; arp generates the steps internally.
         // Poly with chord memory: single held note; the key plays the chord.
         const juce::uint8 velocity = 100;
-        if (isPoly && ! isArp && ! lookupChordMemory(preset))
+        if (lookupKitMode(preset))
+        {
+            // A kit: its downbeat, as a played chord is a pitched sound's.
+            for (int key : kitDownbeat())
+                midi.addEvent(juce::MidiMessage::noteOn(1, key, velocity), 0);
+        }
+        else if (isPoly && ! isArp && ! lookupChordMemory(preset))
         {
             for (int interval : { 0, 3, 7, 12 })
                 midi.addEvent(juce::MidiMessage::noteOn(1, root + interval, velocity), 0);
@@ -392,41 +414,57 @@ namespace
         const double lift = setProbeMaster(processor, preset);
         processor.loadSampledInstrumentsNow();
 
-        const bool chord = lookupPolyMode(preset) && ! lookupArpEnabled(preset) && ! lookupChordMemory(preset);
-        const std::vector<int> intervals = chord ? std::vector<int> { 0, 3, 7, 12 } : std::vector<int> { 0 };
-        int lowest = 36, highest = 96;
-        if (! processor.sampledInstrumentRange(lowest, highest))
+        // Each place: the notes struck together there. A pitched sound: its stimulus at six roots over its range. A kit
+        // (D258): its downbeat, then every General MIDI drum key alone, at full velocity.
+        std::vector<std::vector<int>> places;
+        if (lookupKitMode(preset))
         {
-            lowest = 36;
-            highest = 96;
+            places.push_back(kitDownbeat());
+            for (int key = 35; key <= 81; ++key)
+                places.push_back({ key });
         }
-        const int from = lowest, to = std::max(lowest, highest - intervals.back());
-        std::vector<int> roots;
-        for (int k = 0; k < 6; ++k)
+        else
         {
-            const int root = from + (to - from) * k / 5;
-            if (roots.empty() || roots.back() != root)
-                roots.push_back(root);
+            const bool chord = lookupPolyMode(preset) && ! lookupArpEnabled(preset) && ! lookupChordMemory(preset);
+            const std::vector<int> intervals = chord ? std::vector<int> { 0, 3, 7, 12 } : std::vector<int> { 0 };
+            int lowest = 36, highest = 96;
+            if (! processor.sampledInstrumentRange(lowest, highest))
+            {
+                lowest = 36;
+                highest = 96;
+            }
+            const int from = lowest, to = std::max(lowest, highest - intervals.back());
+            for (int k = 0; k < 6; ++k)
+            {
+                const int root = from + (to - from) * k / 5;
+                if (! places.empty() && places.back().front() == root)
+                    continue;
+                std::vector<int> notes;
+                for (const int interval : intervals)
+                    notes.push_back(root + interval);
+                places.push_back(notes);
+            }
         }
 
         const int holdSamples = static_cast<int>((1.5 + globalEnvelopeRiseSeconds(processor.getValueTreeState())) * kSampleRate);
         const int segmentSamples = holdSamples + static_cast<int>(1.0 * kSampleRate);
         juce::AudioBuffer<float> block(2, kBlockSize);
         double worst = 0.0;
-        worstRoot = roots.front();
-        for (const int root : roots)
+        worstRoot = places.front().front();
+        for (const auto& notes : places)
         {
+            const int root = notes.front();
             double peak = 0.0;
             for (int rendered = 0; rendered < segmentSamples; rendered += kBlockSize)
             {
                 const int n = std::min(kBlockSize, segmentSamples - rendered);
                 juce::MidiBuffer midi;
-                for (const int interval : intervals)
+                for (const int note : notes)
                 {
                     if (rendered == 0)
-                        midi.addEvent(juce::MidiMessage::noteOn(1, root + interval, static_cast<juce::uint8>(127)), 0);
+                        midi.addEvent(juce::MidiMessage::noteOn(1, note, static_cast<juce::uint8>(127)), 0);
                     if (rendered <= holdSamples && holdSamples < rendered + n)
-                        midi.addEvent(juce::MidiMessage::noteOff(1, root + interval), holdSamples - rendered);
+                        midi.addEvent(juce::MidiMessage::noteOff(1, note), holdSamples - rendered);
                 }
                 block.setSize(2, n, false, false, true);
                 block.clear();
