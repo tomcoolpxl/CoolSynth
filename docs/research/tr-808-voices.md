@@ -83,6 +83,10 @@ What the circuits need, from the service notes and secondary write-ups, to check
 - Cowbell: two squares near 1 : 1.44, two VCAs, one envelope, a band-pass, a buffer; small detunings "largely destroy the cowbell illusion" ([Sound On Sound](https://www.soundonsound.com/techniques/synthesizing-cowbells-claves), [Hackaday](https://hackaday.com/2022/05/12/how-the-roland-808-cowbell-worked), [a rebuild](https://frisnit.com/?p=919)).
 - Clap: the generating cycle through Q73 and IC23 is in the service notes; the "reverb" is not detailed ([KVR](https://www.kvraudio.com/forum/viewtopic.php?p=8606994)). Bursts about 11 ms apart (KVR) against three within 30 ms (above): to settle from the schematic and Fischer's clap.
 - Maracas: noise gated by Q65 into IC19 through the filter Q68, the envelope from Q66 and Q67 (service notes p. 6).
+- Snare: two versions. Page 9's "portion changed" (C58, C61, R191, R200) takes the shells from about 250 and 500 Hz to
+  173 and 336 Hz; Fischer's and Audiorealism's units ring at 172 and 332 to 340 Hz, the changed one, as do Roland's ACB
+  remakes and most 808s; early units (Planet Rock's, 244 and 486 Hz) the drawn one
+  ([Norgatronics](https://norgatronics.blogspot.com/2021/11/808-snare-mutations.html)). Page 14 still gives the drawn one.
 
 Cost, estimated here and not measured: the Kick's 808 circuit takes 3.1 % of a block a voice on average and 6.6 % at its 99th percentile, its behavioural predecessor 0.33. Full circuits of the other voices would take some 2 to 7 % each while they ring and nothing at rest; all eleven ringing at once could pass a sound's 50 % budget.
 

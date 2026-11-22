@@ -5157,3 +5157,31 @@ and R173. The voicing board narrows the trigger to 7 to 14 V (IC2, pins 1 to 3).
   every hit).
 - The checks (options: each circuit stage by stage against ngspice, then Fischer's and Audiorealism's recordings and
   page 14, any fit put to the user first, recommended and chosen; ngspice and page 14 only).
+
+## D256. 808 Snare & Clap: its design (2026-11-22)
+
+The last family of the whole 808 (D250): the snare, the hand clap and the maracas (D255 is kept for 808 Metal's
+build). Read from the service notes (p. 6, the circuit text and the clap's generating cycle, Fig. 13; p. 9, the
+drawing; p. 14, the table). The snare: two bridged-Ts around IC14 rung by the trigger through Q46, their balance on
+VR8 (TONE), and the snappy, white noise through a swing VCA (Q48) whose envelope Q47 and VR9 (SNAPPY) set, a
+high-pass (C66, C67, Q49), all mixed in IC13 with VR7 (LEVEL). The clap: white noise through IC21's band-pass into
+two VCAs, a long "reverb" envelope through Q70 and IC23's (AN6912) sawtooth envelope of short bursts into IC22
+(BA662), mixed in IC19; the maracas share the circuit through SW12, the noise gated by Q65 into the high-pass Q68.
+Page 9's "portion changed" lowers the snare: C58 0.027 to 0.056 uF and C61 0.0068 to 0.015 uF (one capacitor of
+each bridged-T), R191 8.2 to 10 kOhm, R200 47 kOhm to a link; and on the clap a 10 kOhm from the -15 V line to Q70's
+emitter. As drawn the snare rings near 250 and 500 Hz (page 14's 238 and 476), changed near 173 and 336 Hz; both
+units here ring at 172 Hz and 332 to 340 Hz, so they carry the change, as do Roland's ACB remakes and most 808s; early
+units (to about mid-1981) ring high
+([Norgatronics, 808 Snare - Mutations](https://norgatronics.blogspot.com/2021/11/808-snare-mutations.html), after
+Kurt Werner's figures). The user's choices:
+
+- The snare (options: the changed values, recommended and chosen; both as a two-way knob; the early values as
+  drawn).
+- The keys (options: General MIDI with alternates, recommended and chosen: snare 38 and 40, clap 39, maracas 70;
+  one key each). The clap's and maracas' key sets SW12, as a conga's sets its pair's switch.
+- The knobs past the 808's own four (snare Level, Tone, Snappy; clap/maracas Level) (options: Accent and six
+  bends, recommended and chosen: snare Tune (both shells' capacitors together), snare Decay (the shells' damping),
+  Snappy Decay, clap Decay (the reverb envelope), clap Spread (the bursts' timing), maracas Decay, one knob free;
+  Accent and three bends; Accent only).
+- The checks (options: each circuit stage by stage against ngspice, then Fischer's and Audiorealism's recordings and
+  page 14, any fit put to the user first, recommended and chosen; ngspice and page 14 only).

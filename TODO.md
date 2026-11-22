@@ -220,7 +220,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     cymbal, open and closed hat on one bank of six oscillators (seeded phases at a start from silence, then free),
     GM keys with the TR-8S's alternates, knobs the 808's own seven plus Accent, Tune, the cowbell's pitch and the
     closed hat's and cowbell's decay, each circuit checked against ngspice, both units and page 14. Then 808 Snare
-    & Clap (snare, clap, maracas); a stock 808 Kit preset in Studio 1982.
+    & Clap, designed (D256): the snare in its changed version (about 173 and 336 Hz, as both units), the clap and
+    maracas on their shared circuit, GM keys with alternates, Accent and six bends past the 808's four knobs, checked
+    as the others; a stock 808 Kit preset in Studio 1982.
     Each voice designed with the user (options) before it is built. Then the 909 made cheaper and priced (30), and
     the 303's code made cheaper (32).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
