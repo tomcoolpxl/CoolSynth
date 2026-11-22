@@ -75,8 +75,8 @@ the sampled instruments and the player's own sounds to load.
 
 Per voice:
 
-1. **Three generator slots**, G1 to G3. Each holds any of 13 generator types (VA, Noise, FM2, FM4, Wavetable,
-   String, Modal, Sample, Grain, Chip, Kick, TB-303, 808 Drums). A generator can sync, ring-modulate,
+1. **Three generator slots**, G1 to G3. Each holds any of 14 generator types (VA, Noise, FM2, FM4, Wavetable,
+   String, Modal, Sample, Grain, Chip, Kick, TB-303, 808 Drums, 808 Metal). A generator can sync, ring-modulate,
    frequency-modulate or amplitude-modulate the next one. Chip (`ChipGenerator.h`, D231) plays the NES, Game Boy, SID, AY, YM and SCC
    with their frame tables (`docs/design/CHIP_GENERATOR.md`); Kick (`KickGenerator.h`, D232) is a tuned kick drum:
    the TR-808 and the TR-909 as their circuits in wave digital filters (`Tr808BassDrum.h` and `Tr909BassDrum.h` on
@@ -86,7 +86,10 @@ Per voice:
    the key and hears its accent through the slot's legato hook. 808 Drums (`Tr808DrumsGenerator.h`, D252, D253)
    holds the TR-808's bass drum, its three tom or conga pairs (`Tr808Tom.h`) and its rim shot or claves
    (`Tr808RimShot.h`), each its own circuit, struck by General MIDI's keys; the resonators' op-amps keep their
-   3 MHz bandwidth and their rails (`addOpAmp` in `CircuitWdf.h`). It is played in the Kit play mode.
+   3 MHz bandwidth and their rails (`addOpAmp` in `CircuitWdf.h`). It is played in the Kit play mode, as is 808
+   Metal (`Tr808MetalGenerator.h`, D254, D255): the cowbell, cymbal and both hats (`Tr808Cowbell.h`,
+   `Tr808Cymbal.h`, `Tr808Hats.h`) on the voicing board's six oscillators and IC3's two bands
+   (`Tr808MetalBank.h`), which run, with the five swing VCAs on them, while any of the four sounds.
 2. The generators are summed into **three processor slots in series**, P1 to P3. Each holds any of 7
    processor types (Ladder, SVF, Comb, Formant, Folder, Crusher, Drive). Generator 3 can modulate the ladder's
    cutoff at audio rate. The SVF also morphs from low-pass to high-pass as the Oberheim SEM does, and takes the
@@ -322,7 +325,8 @@ Rebuild `CoolSynthRender` and `CoolSynthPresetNormalizer` after any change to a 
 - `tools/listening-pass` is a local page that sets each sound up in the running app, through its MCP server, and
   plays it for the ear.
 - `tools/kick808` and `tools/kick909` render the kick circuits in ngspice, the references the Kick's models are
-  checked against; `tools/tr808` does the same for the 808 Drums' toms, congas, rim shot and claves.
+  checked against; `tools/tr808` does the same for the 808 Drums' toms, congas, rim shot and claves and the 808
+  Metal's voicing board (`metal.cir`).
 - `tools/release/package_library.py` packs the instrument library into one zip per family for download.
 - `tools/site/build_engine_map.py` draws the map at the top of this page.
 

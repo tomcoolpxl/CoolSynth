@@ -1,0 +1,358 @@
+* Roland TR-808 cowbell, cymbal, open and closed hi-hat: the voicing board (service notes pp. 6, 13; D254). The
+* reference for the 808 Metal generator's circuits. render.py writes the hits and the oscillators where the markers
+* stand: the common trigger (IC6's pulse through Q31 and Q32, as tom.cir) at each hit, each instrument's data line
+* (J5 CB, J6 CY, J7 OH, J8 CH) high from its hit to 20 us past its pulse, and the six HD14584 oscillators as exact
+* square waves (0 to 5 V, 100 ns edges) from their RC and the thresholds Werner, Abel and Smith take from the
+* datasheet (VT+ 2.7 V, VT- 2.1 V at 5 V: duty 47.98 %).
+* Transistors as the bass drum's (the 2N3904 stand-in for the 2SC945(P), a PNP like it for the 2SA733(P)), the
+* diodes as the 1S2473 (the standard 1N4148); every op-amp (uPC4558) the single-pole 3 MHz macro with clamp diodes on
+* its inner node at the rails; junction capacitances so the solver passes the edges.
+*
+* Parameters: amp (TRIG volts, 4 to 14), tend, width, tedge; f1, f2 (the cowbell's oscillators as TM1 and TM2 set
+* them: 554 and 825 Hz as both real units have them, D255; the service notes give 540 and 800), cs (the six timing
+* capacitors' scale: the Tune), tone (CY TONE, VR4 20k B, 1 bright), cyd (CY DECAY, VR2 2M B as a rheostat, 0 to
+* 1), ohd (OH DECAY, VR3 likewise), cbl, cyl, ohl, chl (the levels: VR5 5k A as a divider, VR6, VR7, VR8 100k A in
+* the mixers' feedback), cbc (C9 and C34's scale, the CB Decay bend), chc (C63's, the CH Decay bend), rail (the
+* op-amps' swing), cgbw (their pole capacitor, 53.05p for 3 MHz).
+.param amp=4 tend=0.3 width=1m tedge=5.2u f1=554 f2=825 cs=1 tone=0.5 cyd=0.5 ohd=0.5
+.param cbl=0.8 cyl=0.8 ohl=0.8 chl=0.8 cbc=1 chc=1 rail=14 cgbw=53.05p
+.param base={amp+0.68}
+.param a5={(pow(10, 2*cbl)-1)/99}
+.param vr5a={max(5k*(1-a5), 0.01)} vr5b={max(5k*a5, 0.01)}
+.param vr6={max(100k*(pow(10, 2*cyl)-1)/99, 1)} vr7={max(100k*(pow(10, 2*ohl)-1)/99, 1)}
+.param vr8={max(100k*(pow(10, 2*chl)-1)/99, 1)}
+.param vr4a={max(20k*tone, 0.01)} vr4b={max(20k*(1-tone), 0.01)}
+.param vr2={max(2Meg*cyd, 0.01)} vr3={max(2Meg*ohd, 0.01)}
+
+.model QEM NPN(IS=10f BF=300 BR=4 CJE=8p CJC=4p)
+.model QPM PNP(IS=10f BF=300 BR=4 CJE=8p CJC=4p)
+.model DEM D(IS=2.52n N=1.752 RS=0.568 CJO=2p)
+.model DCL D(IS=1e-12 N=1)
+
+* The op-amp: 1 mS into an inner node held by 100 MOhm and the pole's capacitor, an ideal follower to the output,
+* and clamp diodes on the inner node 0.55 V inside the rails.
+.subckt oa inp inm out
+G1 0 ia inp inm 1m
+R1 ia 0 1e8
+C1 ia 0 {cgbw}
+B1 out 0 V=v(ia)
+D1 ia ncp DCL
+V1 ncp 0 {rail-0.55}
+D2 ncn ia DCL
+V2 ncn 0 {-rail+0.55}
+.ends
+
+VB vcc 0 15
+VNB vee 0 -15
+VDD vdd 0 5
+
+* The common trigger, as tom.cir's (the main board's parts named with a T): IC6's pulse through Q31 and Q32 onto the
+* TRIG line, R113 holding it down.
+RT117 n6 nt31 47k
+QT31 nt32 nt31 0 QEM
+VX nx 0 {base}
+RT120 nx nt32 4.7k
+QT32 vcc nt32 trig QEM
+RT113 trig 0 4.7k
+* @TRIGGERS@
+
+* IC2a narrows the trigger to some 7 to 14 V: TRIG into its plus input through R19 and, clamped by D1, R18 and R20;
+* a gain of 31 (R23 over R22).
+R18 trig ny 3.3k
+D1 ny 0 DEM
+R19 trig nz 100k
+R20 ny nz 15k
+R21 nz 0 3.3k
+R22 n2m 0 3.3k
+R23 n2m nv2 100k
+X2A nz n2m nv2 oa
+
+* Each instrument's switch, as the toms': its data line turns Q1 (Q2, Q3, Q4) on, which turns the PNP Q5 (Q6, Q7,
+* Q8) on, passing IC2a's output.
+R4 jcb nb1 22k
+R5 nb1 0 10k
+Q1 nc1 nb1 0 QEM
+R9 nb5 nc1 22k
+R14 nv2 nb5 4.7k
+Q5 ncb5 nb5 nv2 QPM
+R3 jcy nb2 22k
+R6 nb2 0 10k
+Q2 nc2 nb2 0 QEM
+R10 nb6 nc2 22k
+R15 nv2 nb6 4.7k
+Q6 ncy6 nb6 nv2 QPM
+R1 joh nb3 22k
+R8 nb3 0 10k
+Q3 nc3 nb3 0 QEM
+R12 nb7 nc3 22k
+R17 nv2 nb7 4.7k
+Q7 noh7 nb7 nv2 QPM
+R2 jch nb4 22k
+R7 nb4 0 10k
+Q4 nc4 nb4 0 QEM
+R11 nb8 nc4 22k
+R16 nv2 nb8 4.7k
+Q8 nch8 nb8 nv2 QPM
+
+* The oscillators (IC1, HD14584): no1 TM1 + R44 with C6 (the cowbell's 540 Hz), no2 TM2 + R45 with C5 (800 Hz),
+* no3 R43 220k C4 18n, no4 R42 680k C3 10n, no5 R41 560k C2 10n, no6 R40 560k C1 18n.
+* @OSCILLATORS@
+
+* Their mix (each through 120k into R53) and IC3's two band-passes: a bridged-T in each op-amp's feedback.
+R50 no1 nsum 120k
+R48 no2 nsum 120k
+R46 no3 nsum 120k
+R39 no4 nsum 120k
+R37 no5 nsum 120k
+R35 no6 nsum 120k
+R53 nsum 0 1k
+C11 nsum n11 1n
+R55 n11 n3bm 22k
+C15 n3bm n3bt 3.3n
+C16 n3bt nhb 3.3n
+R58 n3bt 0 560
+R59 n3bm nhb 82k
+X3B 0 n3bm nhb oa
+C10 nsum n10 3.3n
+R52 n10 n3am 33k
+C13 n3am n3at 6.8n
+C14 n3at nlb 6.8n
+R56 n3at 0 560
+R57 n3am nlb 82k
+X3A 0 n3am nlb oa
+
+* The cowbell. Its envelope: Q5 through R122 and D2 charges C9; R82 and C34 take its first charge away (the abrupt
+* fall after the attack); R28 and R29 feed the two swing VCAs, Q15 gating the 540 Hz oscillator (through R62, R63
+* and C32 onto its base, R30 its bias), Q14 the 800 Hz one, each through its diode (D3, D4). IC2b's band-pass mixes
+* them (R26, R27 10k with C30, C31; R24, C28, C29, R25), then C75, R116 and CB LEVEL (VR5) into IC6a's follower.
+R122 ncb5 nd2 1k
+D2 nd2 ncbe DEM
+C9 ncbe 0 {0.47u*cbc}
+R82 ncbe n34 33k
+C34 n34 0 {1u*cbc}
+R28 ncbe np1 100k
+R29 ncbe np2 100k
+R62 no1 n62 33k
+R63 n62 0 2.2k
+C32 n62 nb15 10u
+R30 vcc nb15 470k
+Q15 nc15 nb15 ne15 QEM
+R31 ne15 0 100
+D3 np1 nc15 DEM
+R64 no2 n64 33k
+R65 n64 0 2.2k
+C33 n64 nb14 10u
+R32 vcc nb14 470k
+Q14 nc14 nb14 ne14 QEM
+R33 ne14 0 100
+D4 np2 nc14 DEM
+R26 np1 n30 10k
+C30 n30 nf 2.2n
+R27 np2 n31 10k
+C31 n31 nf 2.2n
+R24 nf 0 2.2k
+C28 nf n2bm 10n
+C29 nf ncbo 3.3n
+R25 n2bm ncbo 470k
+X2B 0 n2bm ncbo oa
+C75 ncbo n75 1u
+R116 n75 nvr5 8.2k
+RVR5A nvr5 nw5 {vr5a}
+RVR5B nw5 0 {vr5b}
+C76 nw5 n6ap 22n
+R117 n6ap 0 22k
+X6A n6ap vcb vcb oa
+
+* The cymbal's envelopes: Q6 through R84 into Q19's base (R83 its load), Q19's collector fed through R85 and R86
+* with C35; its emitter charges three envelopes through D6, D7, D8. C38 (with R87, C37) feeds Q16's VCA through
+* R94; C40, R88, C39 feed Q17's through R90; C41 discharges through R93 and CY DECAY (VR2), and Q20 follows it into
+* Q18's (R105, C45, R104) and into Q17's again (R92, R89, R91).
+R83 ncy6 0 22k
+R84 ncy6 nb19 10k
+Q19 nc19 nb19 nk QEM
+R85 nc19 n35 100
+C35 n35 0 47u
+R86 vcc n35 100
+D6 nk nj DEM
+D7 nk nl DEM
+D8 nk nv DEM
+C38 nj 0 1u
+R87 nj n37 22k
+C37 n37 0 2.2u
+R94 nj nh1 39k
+C40 nl 0 1u
+R88 nl nm 33k
+C39 nm 0 0.47u
+R90 nm nh2 33k
+C41 nv 0 1u
+R93 nv n93 470k
+RVR2 n93 0 {vr2}
+Q20 vcc nv ns QEM
+R105 ns nt 33k
+C45 nt 0 2.2u
+R104 nt nu 22k
+R92 ns nn 33k
+R89 nn 0 10k
+R91 nh2 nn 33k
+
+* Its three swing VCAs, each a transistor whose base IC3 drives through 22n (2 MOhm its bias) and whose collector
+* pulls its envelope down through a diode: Q16 (D5, C36, C47) and Q17 (D11, C43, C50) on the high band, Q18 (D12)
+* on the low.
+C42 nhb nb16 22n
+R96 vcc n96 1Meg
+R97 n96 nb16 1Meg
+Q16 nc16 nb16 ne16 QEM
+R95 ne16 0 100
+C36 nc16 0 1.5n
+D5 nh1 nc16 DEM
+C47 nh1 0 1.5n
+C44 nhb nb17 22n
+R100 vcc n100 1Meg
+R99 n100 nb17 1Meg
+Q17 nc17 nb17 ne17 QEM
+R98 ne17 0 100
+C43 nc17 0 1.5n
+D11 nh2 nc17 DEM
+C50 nh2 0 1.5n
+C46 nlb nb18 22n
+R102 vcc n102 1Meg
+R103 n102 nb18 1Meg
+Q18 nc18 nb18 ne18 QEM
+R101 ne18 0 100
+D12 nu nc18 DEM
+
+* The high-passes: IC5a, third order (C49, R106, then a Sallen-Key with a gain of 2.77); IC5b, second order (gain
+* 2); Q25, a Sallen-Key around an emitter follower, then C58, R123 and C57.
+C49 nh1 nx1 3.3n
+R106 nx1 0 6.8k
+C53 nx1 np5 1n
+C54 np5 n5ap 1n
+R109 n5ap 0 18k
+R108 np5 nhpa 18k
+R111 n5am 0 22k
+R110 n5am nhpa 39k
+X5A n5ap n5am nhpa oa
+C51 nh2 n51 1n
+C52 n51 n5bp 1n
+R113 n5bp 0 18k
+R107 n51 nhpb 18k
+R115 n5bm 0 39k
+R114 n5bm nhpb 39k
+X5B n5bp n5bm nhpb oa
+C48 nu nw 1.5n
+R124 nw nhp3 22k
+C59 nw nb25 1.5n
+R127 nb25 0 82k
+Q25 vcc nb25 nhp3 QEM
+R126 nhp3 vee 22k
+C58 nhp3 n58 10n
+R123 n58 nx3 100k
+C57 nx3 0 3.3n
+R121 nx3 nb1n 10k
+
+* CY TONE (VR4, its wiper grounded, between the top band's R112 and the others' R125) and IC6b's mix, CY LEVEL (VR6)
+* with C78 in its feedback.
+C55 nhpa n55 10n
+R112 n55 na1 22k
+R119 na1 nmx 22k
+RVR4A na1 0 {vr4a}
+RVR4B 0 n125 {vr4b}
+R125 n125 nb1n 2.2k
+C56 nhpb n56 10n
+R120 n56 nb1n 10k
+R129 nb1n nmx 15k
+C90 nmx n6bm 10n
+R118 n6bp 0 47k
+R128 n6bm vcy 470k
+C77 n6bm vcy 220p
+C78 n6bm n78 33u
+RVR6 n78 vcy {vr6}
+X6B n6bp n6bm vcy oa
+
+* The open hat's envelope: Q7 drives Q24 through R135 (its collector fed through R137 and R136 with C61) and Q21
+* through R131 and R130. Q24 charges C62, which R139 drains slowly; Q21 empties C60, which then charges again
+* through R132 and OH DECAY (VR3) until Q22 (through R133) drains C62 through R134; the closed hat's envelope does the
+* same through R173 and Q23. Q29 follows C62 into the VCA through R144.
+R131 noh7 ny1 22k
+R130 ny1 0 10k
+Q21 ng2 ny1 0 QEM
+R135 noh7 nb24 10k
+Q24 nc24 nb24 ne1 QEM
+R137 nc24 n61 470
+C61 n61 0 47u
+R136 vcc n61 100
+C62 ne1 0 0.47u
+R139 ne1 0 1Meg
+R134 ne1 nqc 100k
+Q22 nqc nb22 0 QEM
+Q23 nqc nb23 0 QEM
+R133 ng2 nb22 10k
+C60 ng2 0 10u
+R132 n132 ng2 100k
+RVR3 vcc n132 {vr3}
+R173 nce nb23 330k
+R140 ne1 nb29 33k
+Q29 vcc nb29 noenv QEM
+R143 noenv 0 33k
+R144 noenv nv1 33k
+
+* Its VCA (Q27 on the high band, D13, C65, C64), the high-pass Q26 (a Sallen-Key around an emitter follower) and
+* IC7a with OH LEVEL (VR7).
+C67 nhb nb27 22n
+R148 vcc n148 1Meg
+R149 n148 nb27 1Meg
+Q27 nc27 nb27 ne27 QEM
+R145 ne27 0 100
+C65 nc27 0 1.5n
+D13 nv1 nc27 DEM
+C64 nv1 0 1.5n
+C66 nv1 n66 1.5n
+R147 n66 nhpo 2.7k
+C68 n66 nb26 1.5n
+R146 nb26 0 68k
+Q26 vcc nb26 nhpo QEM
+R156 nhpo vee 22k
+C80 nhpo n80 470p
+R160 n80 n7am 39k
+R158 n7ap 0 47k
+R159 n7am voh 470k
+C79 n7am voh 220p
+C81 n7am n81 33u
+RVR7 n81 voh {vr7}
+X7A n7ap n7am voh oa
+
+* The closed hat: Q8 drives Q28 through R141 (R13 its load; its collector fed through R138 from C61); Q28 charges
+* C63, which feeds the VCA (Q30, D14, C70, C69) through R142 and Q23 through R173; the high-pass Q31 and IC7b with CH
+* LEVEL (VR8).
+R13 nch8 0 22k
+R141 nch8 nb28 33k
+Q28 nc28 nb28 nce QEM
+R138 n61 nc28 470
+C63 nce 0 {0.47u*chc}
+R142 nce nv2c 33k
+C71 nhb nb30 22n
+R151 vcc n151 1Meg
+R150 n151 nb30 1Meg
+Q30 nc30 nb30 ne30 QEM
+R152 ne30 0 100
+C70 nc30 0 1.5n
+D14 nv2c nc30 DEM
+C69 nv2c 0 1.5n
+C72 nv2c n72 1n
+R153 n72 nhpc 2.7k
+C73 n72 nb31 1n
+R155 nb31 0 68k
+Q31 vcc nb31 nhpc QEM
+R154 nhpc vee 22k
+C74 nhpc n74 470p
+R162 n74 n7bm 33k
+R157 n7bp 0 47k
+R161 n7bm vch 470k
+C82 n7bm vch 220p
+C83 n7bm n83 33u
+RVR8 n83 vch {vr8}
+X7B n7bp n7bm vch oa
+
+.options method=trap reltol=1e-5 abstol=1e-12 vntol=1e-7
+.tran 0.5u {tend} 0 0.5u
+.end

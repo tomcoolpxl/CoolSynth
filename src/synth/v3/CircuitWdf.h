@@ -278,6 +278,35 @@ namespace coolsynth::synth::v3::wdf
             }
         }
 
+        /**
+            As takeSharedState, but the ports and devices only this circuit has keep their state: a variant with parts
+            added at the end taking over from the plain one while its own parts stay as they were (at rest, say: the
+            808 Metal's envelopes, D255).
+        */
+        template <class Other>
+        void adoptSharedState(const Other& other) noexcept
+        {
+            const int sharedPorts = std::min(portCount, other.portCount);
+            for (int k = 0; k < sharedPorts; ++k)
+            {
+                auto& p = ports[static_cast<std::size_t>(k)];
+                const auto& o = other.ports[static_cast<std::size_t>(k)];
+                p.toRoot = o.toRoot;
+                p.fromRoot = o.fromRoot;
+                p.alphaState = o.alphaState;
+            }
+            const int shared = std::min(nonlinearCount, other.nonlinearCount);
+            for (int m = 0; m < shared; ++m)
+            {
+                const auto i = static_cast<std::size_t>(m);
+                voltage[i] = other.voltage[i];
+                current[i] = other.current[i];
+                previousVoltage[i] = other.previousVoltage[i];
+                earlierVoltage[i] = other.earlierVoltage[i];
+            }
+            newtonSteps = 0;
+        }
+
         void restore(const Snapshot& s) noexcept
         {
             for (int k = 0; k < portCount; ++k)
@@ -307,6 +336,18 @@ namespace coolsynth::synth::v3::wdf
             return 0.5 * (p.toRoot + p.fromRoot);
         }
         [[nodiscard]] int lastNewtonSteps() const noexcept { return newtonSteps; }
+        /**
+            False when the nonlinear ports' currents are tied by the linear part alone (two devices in series with
+            nothing else at the node between them, say): the root's solve is then meaningless. A junction's own
+            capacitance, as SPICE has it, unties them.
+        */
+        [[nodiscard]] bool isWellPosed() noexcept
+        {
+            if (dirty)
+                analyse();
+            return wellPosed;
+        }
+
         /** False when the last sample's devices did not converge, even by source stepping. */
         [[nodiscard]] bool lastSolveConverged() const noexcept { return solved; }
 
@@ -554,7 +595,7 @@ namespace coolsynth::synth::v3::wdf
                     A[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = (r == c ? 1.0 : 0.0) - S[static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(r)])][static_cast<std::size_t>(nonlinearPort[static_cast<std::size_t>(c)])];
                     inv[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = r == c ? 1.0 : 0.0;
                 }
-            invert(A, inv, m);
+            wellPosed = invert(A, inv, m);
             for (int r = 0; r < m; ++r)
                 for (int c = 0; c < m; ++c)
                     M[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)] = inv[static_cast<std::size_t>(r)][static_cast<std::size_t>(c)];
@@ -607,9 +648,11 @@ namespace coolsynth::synth::v3::wdf
             dirty = false;
         }
 
-        static void invert(std::array<std::array<double, MaxNonlinear>, MaxNonlinear>& a,
+        /** Gauss-Jordan; false when a pivot vanishes (the nonlinear ports' currents tied by the linear part alone). */
+        static bool invert(std::array<std::array<double, MaxNonlinear>, MaxNonlinear>& a,
                            std::array<std::array<double, MaxNonlinear>, MaxNonlinear>& out, int m) noexcept
         {
+            bool regular = true;
             for (int col = 0; col < m; ++col)
             {
                 int pivot = col;
@@ -619,6 +662,8 @@ namespace coolsynth::synth::v3::wdf
                 std::swap(a[static_cast<std::size_t>(pivot)], a[static_cast<std::size_t>(col)]);
                 std::swap(out[static_cast<std::size_t>(pivot)], out[static_cast<std::size_t>(col)]);
                 const double d = a[static_cast<std::size_t>(col)][static_cast<std::size_t>(col)];
+                if (std::abs(d) < 1.0e-9) // its entries are of order one: a pivot this small is a singular matrix
+                    regular = false;
                 if (std::abs(d) < 1.0e-300)
                     continue;
                 for (int c = 0; c < m; ++c)
@@ -640,6 +685,7 @@ namespace coolsynth::synth::v3::wdf
                     }
                 }
             }
+            return regular;
         }
 
         // ---- One sample ----------------------------------------------------------------------------------------
@@ -1078,6 +1124,7 @@ namespace coolsynth::synth::v3::wdf
         int portCount = 0, inputCount = 0, nullorCount = 0, gainCount = 0, deviceCount = 0, nonlinearCount = 0, probeCount = 0;
         int newtonSteps = 0, newtonLimit = maxNewtonSteps;
         bool solved = true;
+        bool wellPosed = true;
         double sampleRate = 96000.0;
         bool dirty = true, openCapacitors = false;
     };

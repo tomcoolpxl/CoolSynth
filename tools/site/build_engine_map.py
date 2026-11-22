@@ -504,6 +504,8 @@ GEN_ROWS = [
              "against ngspice and real units’ recordings, or a modern kick."),
     ("808 Drums", "The TR-808’s bass drum, toms or congas and rim shot or claves, each its own circuit, checked "
                   "against ngspice, two real units and the service notes; a kit on one voice, General MIDI’s keys."),
+    ("808 Metal", "The TR-808’s cowbell, cymbal, open and closed hi-hat on its six shared square-wave oscillators, "
+                  "each its own circuit, checked against ngspice and two real units; the closed hat cuts the open one."),
     ("TB-303", "The Bass Line’s voice: saw to square into its diode ladder of four coupled stages, a decay "
                "envelope, accent at velocity 100, the slide between legato notes."),
 ]
@@ -534,7 +536,7 @@ FX_ROWS = [
     ("Stutter", "catches a slice on the beat and repeats it, each repeat shorter, lower, quieter or backwards."),
 ]
 panels = [
-    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 13 types · any type in any of the 3 slots",
+    dict(x=24, w=594, kind="gen", head="GENERATOR SLOT", sub="one of 14 types · any type in any of the 3 slots",
          rows=GEN_ROWS, namew=84,
          note=[R("Your own wavetables and samples: files from a User folder, in the Wavetable, Sample and Grain slots.")], italic=True),
     dict(x=634, w=462, kind="proc", head="PROCESSOR SLOT", sub="one of 7 types · per voice",
@@ -733,7 +735,7 @@ ARIA = ("CoolSynth V3 engine architecture. Keys and MIDI feed two layers, each a
         "chord memory, its own arpeggiator and play mode; per voice three generator slots that can sync, ring, FM "
         "or AM one another, three processor slots in series and an amplifier; then six insert effects. Modulation "
         "sources and a 24-routing matrix feed the voice from below. Both layers are mixed into six master effect "
-        "slots, gain, soft clipper and stereo out. Three lists give the 13 generator types, 7 processor types "
+        "slots, gain, soft clipper and stereo out. Three lists give the 14 generator types, 7 processor types "
         "and 14 effects a slot can hold; three notes describe the Museum, the Conservatory and 2x voices.")
 
 svg_open_standalone = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 %d %d" width="%d" height="%d" '

@@ -30,6 +30,7 @@
 #include "SvfProcessor.h"
 #include "Tb303Generator.h"
 #include "Tr808DrumsGenerator.h"
+#include "Tr808MetalGenerator.h"
 #include "VaGenerator.h"
 #include "WavetableGenerator.h"
 
@@ -65,7 +66,7 @@ namespace coolsynth::synth::v3
 {
     using GeneratorTypes = std::variant<OffGenerator, VaGenerator, NoiseGenerator, FmGenerator, Fm4Generator, WavetableGenerator,
                                         StringGenerator, ModalGenerator, SampleGenerator, GrainGenerator, ChipGenerator,
-                                        KickGenerator, Tb303Generator, Tr808DrumsGenerator>; // new types only at the end
+                                        KickGenerator, Tb303Generator, Tr808DrumsGenerator, Tr808MetalGenerator>; // new types only at the end
     using ProcessorTypes = std::variant<OffProcessor, LadderProcessor, SvfProcessor, CrusherProcessor, FolderProcessor, DriveProcessor,
                                         FormantProcessor, CombProcessor>; // new types only at the end
     using GeneratorSlot = Slot<GeneratorTypes>;
@@ -87,6 +88,7 @@ namespace coolsynth::synth::v3
         inline constexpr int kick = 11; // D232
         inline constexpr int tb303 = 12; // D242
         inline constexpr int drums808 = 13; // D252
+        inline constexpr int metal808 = 14; // D254
     }
     namespace processorType
     {
@@ -112,6 +114,7 @@ namespace coolsynth::synth::v3
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::kick, GeneratorTypes>, KickGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::tb303, GeneratorTypes>, Tb303Generator>);
     static_assert(std::is_same_v<std::variant_alternative_t<generatorType::drums808, GeneratorTypes>, Tr808DrumsGenerator>);
+    static_assert(std::is_same_v<std::variant_alternative_t<generatorType::metal808, GeneratorTypes>, Tr808MetalGenerator>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::ladder, ProcessorTypes>, LadderProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::svf, ProcessorTypes>, SvfProcessor>);
     static_assert(std::is_same_v<std::variant_alternative_t<processorType::folder, ProcessorTypes>, FolderProcessor>);

@@ -216,10 +216,14 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     rim shot and claves as their circuits, within 2 % of ngspice (the rim shot 4 to 7 %) and of both units' pitch
     and decay (`docs/research/808-drums.md`). Left open there: at full accent every voice runs 1.1 to 4.5 dB over
     page 14's accented amplitude, the toms' pitch drop larger than Audiorealism's accented hits; no recording at a
-    known accent level to judge it by; kept as drawn (the user, D253). Next 808 Metal, designed (D254): the cowbell,
-    cymbal, open and closed hat on one bank of six oscillators (seeded phases at a start from silence, then free),
-    GM keys with the TR-8S's alternates, knobs the 808's own seven plus Accent, Tune, the cowbell's pitch and the
-    closed hat's and cowbell's decay, each circuit checked against ngspice, both units and page 14. Then 808 Snare
+    known accent level to judge it by; kept as drawn (the user, D253). 808 Metal: built (D254, D255), the cowbell,
+    cymbal, open and closed hat on one bank of six oscillators, their envelopes within 3 % of ngspice and their
+    spectra within about 1 dB (`docs/research/808-metal.md`); the cowbell tuned as both units (554 and 825 Hz).
+    Left open there: the open hat rings 6 to 32 % longer than both units, waiting for the accent check below;
+    unaccented every voice is some 20 to 35 % under page 14's amplitude. Next, the user's idea (2026-11-22): deduce
+    each recording set's accent from what the accent does that no recording gain can (the bass drum's click against
+    its body, a tom's pitch drop, a swing VCA's spectrum), on voices we trust, then judge the accented gaps of all
+    three families at it (the open hat's decay, the 808 Drums' accented amplitude). Then 808 Snare
     & Clap, designed (D256): the snare in its changed version (about 173 and 336 Hz, as both units), the clap and
     maracas on their shared circuit, GM keys with alternates, Accent and six bends past the 808's four knobs, checked
     as the others; a stock 808 Kit preset in Studio 1982.

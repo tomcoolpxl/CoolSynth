@@ -14,8 +14,9 @@
     percent of a 256-sample block at 48 kHz: each module at its hardest settings in sixteen voices, struck twice,
     the best of three runs. A voice's share is the average over the voices, as the 99th percentile divided by
     sixteen is lost in the timer's noise; an effect's is its 99th percentile, as some spike (spectral Pitch's frames),
-    and so are the Kick's 808 and 909 circuits', whose work is mostly in each hit, and the 808 Drums' (D253): in the Kit
-    play mode the whole kit in its one voice, in the others the dearest instrument a voice can hold.
+    and so are the Kick's 808 and 909 circuits', whose work is mostly in each hit, and the 808 Drums' and 808 Metal's
+    (D253, D255): in the Kit play mode the whole kit in its one voice, in the others the dearest instrument a voice
+    can hold.
     At other rates the costs scale with the rate, as the voices run at twice the host's. The effects come off the
     budget first, once per sound; the layers then share what is left in proportion to what they ask for, never
     below one voice. A slower computer is the live emergency's (EngineV3::emergencyShare), never a bounce's.
@@ -29,7 +30,7 @@ namespace coolsynth::synth::v3::voiceCost
     struct Costs
     {
         float voice = 0.0f;                                    // an empty voice: envelopes, matrix, the decimator
-        std::array<float, 14> generator {};                    // by generatorType, one copy
+        std::array<float, 15> generator {};                    // by generatorType, one copy
         float vaCopy = 0.0f, wavetableCopy = 0.0f;             // each unison copy past the first
         std::array<float, 8> processor {};                     // by processorType
         std::array<float, insertType::count> effect {};        // by insertType, once for the sound
@@ -38,16 +39,20 @@ namespace coolsynth::synth::v3::voiceCost
         float kick808 = 0.0f;                                  // the Kick's 808 circuit, instead of its other models
         float kick909 = 0.0f;                                  // the Kick's 909 circuit, likewise
         float drums808Kit = 0.0f;                              // the 808 Drums in the Kit mode: the whole kit in one voice
+        float metal808Kit = 0.0f;                              // the 808 Metal in the Kit mode, likewise
     };
 
     // Measured on 2026-11-19 (D224). Wavetable's five copies cost alike, so one copy and each more are a fifth of
     // them; the VA's copies include the sub. Grain's effect is priced by its grains at once (grainEffect).
     inline constexpr Costs measured {
         0.35f, // the voice itself
-        //  Off   VA    Noise FM2   FM4   Wave  String Modal Sample Grain Chip  Kick   TB-303 808 Drums
-        { 0.0f, 0.19f, 0.05f, 0.30f, 0.86f, 0.12f, 0.38f, 0.15f, 0.13f, 0.85f, 0.33f, 0.41f, 1.36f, 16.1f }, // Chip, Kick, TB-303: 2026-11-20 (the TB-303's hardest: 1.69 at its p99, D242)
+        //  Off   VA    Noise FM2   FM4   Wave  String Modal Sample Grain Chip  Kick   TB-303 808 Drums 808 Metal
+        { 0.0f, 0.19f, 0.05f, 0.30f, 0.86f, 0.12f, 0.38f, 0.15f, 0.13f, 0.85f, 0.33f, 0.41f, 1.36f, 16.1f, 48.6f }, // Chip, Kick, TB-303: 2026-11-20 (the TB-303's hardest: 1.69 at its p99, D242)
         // 808 Drums outside the Kit mode, a voice one instrument: its dearest, the rim shot and claves, at its 99th
         // percentile alone in a voice, less the voice's own (2026-11-22, D253; the toms 9.4 to 9.6, the bass drum 8.4).
+        // 808 Metal likewise (D255): its dearest alone, the cowbell, 43.2 and 54.7 in two runs, their mean less the
+        // voice's own; a voice runs the oscillator bank and the five swing VCAs on IC3's bands whatever it holds (the
+        // cymbal 34.1 and 44.5, the open hat 39.7 and 49.0, the closed hat 28.3).
         0.04f, 0.12f,
         //  Off   Ladder SVF  Crush Folder Drive Formant Comb
         { 0.0f, 0.56f, 0.17f, 0.04f, 0.23f, 0.48f, 0.23f, 0.28f },
@@ -60,6 +65,8 @@ namespace coolsynth::synth::v3::voiceCost
         33.3f, // the 909 circuit (D238): measured 2026-11-20 at its 99th percentile; its average was 10.7
         54.5f, // the 808 Drums' kit (D253): measured 2026-11-22 at its 99th percentile with every instrument struck at once,
                // less the voice's own; its average was 18.4
+        70.1f, // the 808 Metal's kit (D255): measured 2026-11-22 at its 99th percentile with every instrument struck at once,
+               // 68.5 and 72.4 in two runs, their mean less the voice's own; its average was 52
     };
 
     /** The Grain effect's grains at once, density times size, each this much (its densest, 40 at once, took 7.1). */
@@ -86,6 +93,8 @@ namespace coolsynth::synth::v3::voiceCost
                                        : -1;
             if (type == generatorType::drums808 && part.playMode == PlayMode::kit)
                 cost += c.drums808Kit; // the whole kit in the voice; in the other modes a voice holds one instrument
+            else if (type == generatorType::metal808 && part.playMode == PlayMode::kit)
+                cost += c.metal808Kit;
             else if (kickModel == static_cast<long>(KickGenerator::Model::tr808))
                 cost += c.kick808;
             else if (kickModel == static_cast<long>(KickGenerator::Model::tr909))

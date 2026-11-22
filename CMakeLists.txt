@@ -215,6 +215,7 @@ if(BUILD_TESTING)
             tests/V3KickTests.cpp
             tests/V3Tr808Tests.cpp
             tests/V3Tr808DrumsTests.cpp
+            tests/V3Tr808MetalTests.cpp
             tests/V3Tr909Tests.cpp
             tests/V3Tb303Tests.cpp
             tests/V3SvfTests.cpp

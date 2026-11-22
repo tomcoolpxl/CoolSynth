@@ -18,6 +18,7 @@ namespace coolsynth::synth::v3
         Tr909BassDrum::warmUp();   // and its 909's
         Tr808Tom::warmUp();        // and the 808 Drums' toms and congas
         Tr808RimShot::warmUp();    // and their rim shot and claves
+        Tr808MetalGenerator::warmUp(); // and the 808 Metal's cowbell, cymbal and hats
         Tb303Generator::warmUp();  // and the TB-303's band-limited waves
 
         const double voiceRate = hostRate * oversampleFactor;

@@ -326,7 +326,7 @@ public:
             // full accent with the bass drum's glide at its longest, then the other of each pair (congas, claves)
             // while the first ring, then the first again. In the other play modes a voice holds the one instrument
             // its key strikes: each alone, the dearest its price there.
-            auto kitCost = [&](const std::vector<int>& firstNotes, const std::vector<int>& secondNotes)
+            auto kitCost = [&](const GeneratorSettings& generator, const std::vector<int>& firstNotes, const std::vector<int>& secondNotes)
             {
                 BlockCost best { 1.0e9, 1.0e9, 1.0e9 };
                 for (int run = 0; run < 3; ++run)
@@ -336,9 +336,7 @@ public:
                     constexpr int blocks = static_cast<int>(3.0 * rate) / block;
                     auto s = base();
                     s.playMode = PlayMode::kit;
-                    s.voice.generators[0] = generatorOf(generatorType::drums808, { { Tr808DrumsGenerator::accent, 1.0f },
-                                                                                   { Tr808DrumsGenerator::punchTime, 500.0f },
-                                                                                   { Tr808DrumsGenerator::bdDecay, 1.0f } });
+                    s.voice.generators[0] = generator;
                     auto part = std::make_unique<Part>();
                     part->prepare(rate, block, 7);
                     std::vector<float> left(block), right(block);
@@ -376,17 +374,31 @@ public:
                 }
                 return best;
             };
-            const struct { const char* label; std::vector<int> first, second; } sets[] = {
-                { "808 Drums, kit, all struck", { 36, 37, 43, 47, 50 }, { 35, 75, 64, 63, 62 } },
-                { "808 Drums, bass drum alone", { 36 }, { 35 } },
-                { "808 Drums, low tom, conga", { 43 }, { 64 } },
-                { "808 Drums, mid tom, conga", { 47 }, { 63 } },
-                { "808 Drums, high tom, conga", { 50 }, { 62 } },
-                { "808 Drums, rim shot, claves", { 37 }, { 75 } },
+            const auto drums = generatorOf(generatorType::drums808, { { Tr808DrumsGenerator::accent, 1.0f },
+                                                                      { Tr808DrumsGenerator::punchTime, 500.0f },
+                                                                      { Tr808DrumsGenerator::bdDecay, 1.0f } });
+            // The 808 Metal (D255) likewise: every instrument at once at full accent, the decays at their longest.
+            const auto metal = generatorOf(generatorType::metal808, { { Tr808MetalGenerator::accent, 1.0f },
+                                                                      { Tr808MetalGenerator::cyDecay, 1.0f },
+                                                                      { Tr808MetalGenerator::ohDecay, 1.0f },
+                                                                      { Tr808MetalGenerator::cbDecay, 4.0f },
+                                                                      { Tr808MetalGenerator::chDecay, 4.0f } });
+            const struct { const char* label; const GeneratorSettings* generator; std::vector<int> first, second; } sets[] = {
+                { "808 Drums, kit, all struck", &drums, { 36, 37, 43, 47, 50 }, { 35, 75, 64, 63, 62 } },
+                { "808 Drums, bass drum alone", &drums, { 36 }, { 35 } },
+                { "808 Drums, low tom, conga", &drums, { 43 }, { 64 } },
+                { "808 Drums, mid tom, conga", &drums, { 47 }, { 63 } },
+                { "808 Drums, high tom, conga", &drums, { 50 }, { 62 } },
+                { "808 Drums, rim shot, claves", &drums, { 37 }, { 75 } },
+                { "808 Metal, kit, all struck", &metal, { 49, 46, 56, 42 }, { 51, 44, 56 } },
+                { "808 Metal, cowbell alone", &metal, { 56 }, { 56 } },
+                { "808 Metal, cymbal alone", &metal, { 49 }, { 51 } },
+                { "808 Metal, open hat alone", &metal, { 46 }, { 46 } },
+                { "808 Metal, closed hat alone", &metal, { 42 }, { 44 } },
             };
             for (const auto& set : sets)
             {
-                const auto best = kitCost(set.first, set.second);
+                const auto best = kitCost(*set.generator, set.first, set.second);
                 logMessage(juce::String(set.label).paddedRight(' ', 30) + "average " + juce::String(best.average, 2) + " %, p99 "
                            + juce::String(best.p99, 2) + " %, slowest " + juce::String(best.worst, 2) + " % (one voice)");
             }

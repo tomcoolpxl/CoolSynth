@@ -5158,6 +5158,65 @@ and R173. The voicing board narrows the trigger to 7 to 14 V (IC2, pins 1 to 3).
 - The checks (options: each circuit stage by stage against ngspice, then Fischer's and Audiorealism's recordings and
   page 14, any fit put to the user first, recommended and chosen; ngspice and page 14 only).
 
+## D255. 808 Metal: built (2026-11-22)
+
+Built as designed (D254): the 808 Metal generator (`Tr808MetalGenerator.h`, generator type 14) on the voicing
+board's shared parts (`Tr808MetalBank.h`: the six oscillators, IC3's two bands, IC2a's narrowed trigger) and three
+circuits, the cowbell (`Tr808Cowbell.h`), the cymbal (`Tr808Cymbal.h`) and both hats (`Tr808Hats.h`), each checked
+stage by stage against ngspice (`tools/tr808/metal.cir`, `tests/V3Tr808MetalTests.cpp`), then against Fischer's and
+Audiorealism's recordings and page 14 (`docs/research/808-metal.md`). The user's choices while building:
+
+- The sample rate the circuits run at (options: the voice rate, 96 kHz at a 48 kHz host, each resonant filter
+  prewarped at its peak, spectra within 0.4 dB (cowbell) to 0.8 to 1.1 dB (cymbal, hats) of ngspice and the kit at
+  67 % of a block, recommended and chosen; twice the voice rate, decimated by a short half-band keeping the two
+  samples' latency, within 0.1 to 0.35 dB but at some 120 to 135 % of a block, more than real time when all four
+  ring; the voice rate now and twice it after a cost pass).
+- When the five swing VCAs on IC3's bands run (options: all while any instrument sounds, exact, each VCA's coupling
+  capacitor following the bands as on the machine, recommended and chosen; each only while its own instrument
+  sounds, from the settled state at a hit from rest, cheaper alone (6 to 21 % against 25 to 40 % of a block) but the
+  closed hat 0.4 dB quieter from 1 to 5 ms; the kit's price is the same either way).
+- The cowbell's tuning (options: the units' 554 and 825 Hz, the mean of Fischer's 558 and 824 and Audiorealism's 550
+  and 825, recommended and chosen; the service notes' 540 and 800). TM1 and TM2 are factory trimmers; the notes' tuning
+  lies half a semitone down on CB Pitch, whose top is now +2 semitones (TM1's reach).
+- The open hat's decay, 6 to 32 % longer than both units across OH DECAY and longer at full accent (options: wait for
+  the accent check, recommended and chosen; fit C62 now as if both units were unaccented; keep as drawn for good).
+  The user asked whether the recordings' accent can be deduced from voices we trust (2026-11-22): it can, from what
+  the accent does that a recording's gain cannot; TODO 33.
+
+Found while building, each the circuit as drawn, its reference's own model or the only way, so no choice:
+
+- A transistor and a diode in series with nothing else at the node between them (Q5 into R122 and D2, Q14 and Q15
+  into D3 and D4, Q18 into D12, Q19's emitter feeding only D6 to D8) tie the nonlinear ports' currents: the root's
+  matrix is singular and its solve meaningless (the cowbell's envelope charged twenty times too slowly, the cymbal
+  diverged). Their junction capacitances, as the references have them (4 pF collector, 8 pF emitter), untie them.
+  `CircuitWdf.h` gained `isWellPosed` (the inversion used to go on silently) and `adoptSharedState`.
+- metal.cir's first version shorted the main board's trigger transistor Q31's base to the closed hat's follower
+  Q31's (one node name for both).
+- The oscillators as Werner, Abel and Smith take the HD14584 (VT+ 2.7 V, VT- 2.1 V at 5 V: a duty of 47.98 %,
+  205.3, 304.4, 369.6, 522.7 Hz), their edges exact in time and band-limited; IC2a solved at each hit's level.
+- The VCAs' coupling capacitors at a start from silence where the running bank holds them, measured on the model
+  (-0.390 V for C32 and C33 within 2 s, -0.526 V on the high band, -0.514 V on the low; ngspice -0.524 and -0.515).
+  Started instead from the circuit's operating point, a hat's first millisecond came out 1.5 dB quiet.
+- Each envelope runs with its trigger's parts (the switch, Q19 and its diodes, Q21 and Q24, Q28) only around a hit,
+  then without them, the state passed across (as the bass drum's glide, D251). Seen from the closed hat, Q23's base
+  is a saturated transistor's, as it is whenever the closed hat reaches it.
+- IC5's op-amps without their rails: at full accent they reach 6.5 V of 14. IC2b keeps them (12.5 V at full accent).
+- The emitter followers Q25, Q26, Q31 ideal: their offsets do not reach the outputs, their gain is within 0.2 %.
+
+Checked: IC2a within 0.3 % of ngspice, IC3's bands within 4 %, every envelope within 3 %, the cowbell within 2 % at
+its output; the cymbal's and the hats' outputs within 0.8 dB in level and 0.9 dB rms in third-octave bands (sample by
+sample 14 to 43 %, the swing VCAs switching a fraction of a sample apart; at 192 kHz within 1 to 9 %). The closed hat
+cuts the open one by 30 dB. Against both units: the cowbell's tones as theirs (fitted), its decay 106 to 126 ms
+against 83 and 106 to 129; the closed hat 39 to 43 ms against 42 to 47; the cymbal's decays across TONE and DECAY
+within the spread its own oscillator phasings give (some 15 %); the spectra within 1 to 5 dB, the cymbal 3 to 4 dB
+strong from 2.5 to 5 kHz. Left open: the open hat's decay (above); unaccented, every voice 20 to 35 % under page 14's
+amplitude.
+
+Priced (`VoiceCost.h`): in the Kit mode the whole kit in its one voice, 70.1 % of a block at its 99th percentile with
+every instrument struck at once (68.5 and 72.4 in two runs; average 52 %); in the other modes a voice holds one
+instrument but runs the bank and the five VCAs, priced at the dearest, the cowbell, 48.6 %. A voice grows by some 27
+kB (the 808 Metal is 131 kB, the 808 Drums 122).
+
 ## D256. 808 Snare & Clap: its design (2026-11-22)
 
 The last family of the whole 808 (D250): the snare, the hand clap and the maracas (D255 is kept for 808 Metal's

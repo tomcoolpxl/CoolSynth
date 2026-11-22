@@ -140,7 +140,7 @@ namespace coolsynth::ui
                     pill = "Kick";
                 else if (type == "TB-303")
                     pill = "TB-303";
-                else if (type == "808 Drums")
+                else if (type == "808 Drums" || type == "808 Metal")
                     pill = "808";
                 else if (type == "String" || type == "Modal")
                     pill = "Physical";
