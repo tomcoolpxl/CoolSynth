@@ -16,8 +16,11 @@ square-wave oscillators and IC3's two band-passes. Each is checked in three step
 
 The bank is an HD14584's six Schmitt-trigger inverters, each with a resistor from its output to its input and a
 capacitor to ground. Werner, Abel and Smith take the datasheet's typical thresholds at 5 V, 2.7 and 2.1 V
-([ICMC-SMC 2014](https://speech.di.uoa.gr/ICMC-SMC-2014/images/VOL_2/1453.pdf)): a duty of 47.98 % and 205.3, 304.4,
-369.6 and 522.7 Hz as drawn. The model's oscillators follow those formulas, their edges exact in time and band-limited.
+([ICMC-SMC 2014](https://speech.di.uoa.gr/ICMC-SMC-2014/images/VOL_2/1453.pdf); and for the cowbell, "More Cowbell",
+AES 137th Convention, 2014, paper 9207): a duty of 47.98 % and 205.3, 304.4, 369.6 and 522.7 Hz as drawn. Hitachi's
+HD14584B datasheet gives them so at 25 °C (VT+ 1.8 to 3.4 V, VT- 1.6 to 3.2 V, typically 2.7 and 2.1), the output 0
+or 5 V with edges of some 100 ns; its output resistance, about 450 Ohm, is left out here and in the reference (1 to
+2 % at most). The papers' own copies and the datasheet are in `tools/references/tr808-metal` (git-ignored). The model's oscillators follow those formulas, their edges exact in time and band-limited.
 All six feed R53 through 120 kOhm each; IC3 band-passes the mix twice, each a bridged-T in an op-amp's feedback, the
 high band peaking at 7.09 kHz, the low at 3.43 kHz.
 
@@ -27,7 +30,9 @@ high band peaking at 7.09 kHz, the low at 3.43 kHz.
 - The cowbell: Q5, R122 and D2 charge C9; R82 and C34 take part of the charge at once, the abrupt fall after the
   attack the text describes. Two swing VCAs: the cowbell's own oscillators through R62, R63 and C32 (C33) onto Q15
   (Q14), which pull R28's (R29's) end down through D3 (D4) while their oscillator is high; IC2b's band-pass (870 Hz)
-  mixes them, then CB LEVEL as a divider into IC6a's follower.
+  mixes them, then CB LEVEL as a divider into IC6a's follower. The base current matters: Werner, Abel and Smith find
+  the base network passes the square 28.6 dB down, not the 24.1 dB its resistors alone give; the model solves the
+  transistors, so it has that, as the reference does.
 - The cymbal: Q6 into Q19, whose emitter charges three envelopes through D6, D7, D8. The top band: the high band
   through C42 onto Q16, a swing VCA under R94 from C38, IC5a's third-order high-pass. The middle: Q17 under R90 and
   R91 (C40, C39, and Q20 following C41, which drains through R93 and CY DECAY), IC5b's high-pass. The low: the low band
@@ -75,9 +80,12 @@ level and 0.9 dB in their bands. The closed hat cuts the open one by 30 dB from 
 
 The cowbell's two tones: Audiorealism's eight shots at 550 and 825 Hz, Fischer's at 558 and 824 Hz, the service
 notes' trimmer setting 540 and 800 Hz. The user chose the units' tuning (D255): TM1 and TM2 at 554 and 825 Hz, the
-notes' within reach on CB Pitch. (Sound on Sound's often-quoted 587 and 845 Hz were measured on a CR-8000,
-[Synth Secrets](https://www.soundonsound.com/techniques/synthesizing-cowbells-claves).) The harmonics' levels agree
-within 3 dB but for the lower tone's second harmonic, some 5 dB weaker in the model.
+notes' within reach on CB Pitch. Sound on Sound's often-quoted 587 and 845 Hz were found by ear on a CR-8000
+([Synth Secrets](https://www.soundonsound.com/techniques/synthesizing-cowbells-claves)), whose own service notes set
+its cowbell's trimmers to 1.25 and 1.8 ms a cycle, 800 and 556 Hz (CR-5000/8000 service notes, p. 12): that unit ran
+some 5 % sharp, as both 808s here run 2 to 3 % sharp. The same page asks the technician to tailor the cymbal
+oscillators' R and C per unit, their neighbours 1.1 to 1.4 apart, to avoid a beating cymbal. The harmonics' levels
+agree within 3 dB but for the lower tone's second harmonic, some 5 dB weaker in the model.
 
 Decays to a tenth, unaccented (model; Fischer, Audiorealism; page 14):
 
