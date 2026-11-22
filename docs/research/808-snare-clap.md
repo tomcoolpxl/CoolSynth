@@ -102,7 +102,9 @@ The clap (six hits each). The claps' onsets: 0.8 to 1.8, 11.8 to 12.8, 22.8 to 2
 12.0, 23.9, 31.4; Audiorealism 0.5, 9.5 to 10.8, 21.2 to 22.0, 31.2 to 32.8. Down 40 dB from its peak 92 to 123 ms
 after it; the units 100 to 149. Its spectrum within about 1 dB of both units' from 500 Hz up. Its envelope matches
 theirs within about 2 dB to 100 ms; after 120 ms the units' run 4 to 12 dB above it, where the model at an 8 V trigger
-lies within 2 dB to 120 ms and 3 to 6 dB under them later. Audiorealism's hits are accented at a level it does not
+lies within 2 dB to 120 ms and 3 to 6 dB under them later. Fitted (D258, the units being as good as unaccented):
+C139 39 nF (printed 18 nF), the tail from 150 ms to a second within about 2 dB of both units (rms 1.7 dB, as drawn
+7.0), the claps and the first 100 ms as they were; C138 or R349 alone made it worse, C139 and C138 together 2.4 dB. Audiorealism's hits are accented at a level it does not
 give, Fischer's at none he gives either. All three keep a faint tail: the units -59 dB at a second, -67 to -72 at two;
 the reference -57 dB at 0.7 s.
 
@@ -118,6 +120,6 @@ clap's timing and the snare's pitch come through the generator itself (the test'
 
 - The accented snare runs 2.8 dB over page 14, as the 808 Drums' voices do (D253). Settled in D258: the Accent's top
   is 11.5 V, where the snare's ratio lies 0.6 dB over the page's.
-- The clap's late tail, 4 to 12 dB under both units after 120 ms unaccented: neither recording gives its accent level,
-  and the circuit's tail rises with it.
+- The clap's late tail, 4 to 12 dB under both units after 120 ms unaccented: fitted in D258 (C139, above), once the
+  accent check had both units as good as unaccented.
 - The maracas unaccented, 3.5 dB over page 14's 3 Vpp.

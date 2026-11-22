@@ -5352,3 +5352,10 @@ Found while fitting: the engine's overload rule (D222) cuts Kit-mode voices, whi
 strike. CoolSynthRender reads the load as a live host does; at 96 kHz the 808 Metal's strike block takes 3.4 ms of
 its 2.67 even alone, so its hits stop after 6 ms (at 48 kHz they ring out); under load claps stopped after 7 to 445
 ms, and one render crashed. Not fixed here: a task of its own.
+
+The clap's tail, fitted through the generator in the test runner (`COOLSYNTH_808_CLAP_FIT`, clear of the overload
+rule): as drawn 6 to 8 dB under both units from 150 to 500 ms at 4 V. C139 alone fits (C138 or R349 alone make it
+worse; C139 and C138 together, as CP Decay scales them, leave 4 dB at 150 ms). The user's choice (options: C139
+39 nF; 36 nF; C139 and C138 times 1.74): 39 nF, the tail from 150 ms to a second within about 2 dB of both (rms 1.7
+dB, 7.0 as drawn), the claps and the first 100 ms unmoved. `tools/tr808/clap.cir` takes it; the clap's references were
+rendered again, the maracas' unchanged by it.

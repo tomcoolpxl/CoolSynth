@@ -239,6 +239,8 @@ namespace coolsynth::synth::v3
 
         // For tests.
         [[nodiscard]] bool isRunningForTesting(int instrument) const noexcept { return running[static_cast<std::size_t>(instrument)]; }
+        /** The clap's circuit, for fitting its parts (D258). */
+        Tr808Clap& clapForTesting() noexcept { return clap; }
         [[nodiscard]] const Tr808Snare& snareForTesting() const noexcept { return snare; }
         [[nodiscard]] const Tr808Clap& clapForTesting() const noexcept { return clap; }
 

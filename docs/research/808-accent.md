@@ -93,7 +93,8 @@ pot's own range, would both do it; the voices themselves are not the cause, sinc
   and R134 82 kOhm, swept in the test runner on the circuits themselves (`COOLSYNTH_808_OH_FIT`), the ngspice
   netlist and its open hat references with them (`808-metal.md`).
 - The clap's late tail, 4 to 12 dB under both units after 120 ms (D257): the same; at the units' 4.5 to 5 V the tail
-  is still under.
+  is still under. Fitted (the user): C139 39 nF, swept through the generator in the test runner
+  (`COOLSYNTH_808_CLAP_FIT`), the ngspice netlist and its clap references with it (`808-snare-clap.md`).
 - The accented amplitude over page 14 (D253, D257): the AC LEVEL's top, above.
 
 ## Found on the way

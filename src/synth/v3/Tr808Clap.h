@@ -78,7 +78,7 @@ namespace coolsynth::synth::v3
         static constexpr double c140 = 0.027e-6, c144 = 0.39e-6; // the user's choices (D257)
         static constexpr double tm3 = 0.62;                       // the C.P. OFFSET, as the service notes adjust it
         static constexpr double c127 = 0.82e-9, c128 = 5.17e-9, c129 = 5.17e-9; // fitted to both units' spectrum (D257)
-        static constexpr double c139 = 18.0e-9, c138 = 47.0e-9, c135 = 0.1e-6, c134 = 33.0e-9;
+        static constexpr double c139 = 39.0e-9, c138 = 47.0e-9, c135 = 0.1e-6, c134 = 33.0e-9; // C139 printed 18 nF, fitted to both units' tails (D258)
         static constexpr double mirrorSaturation = 10.0e-15, mirrorOhms = 400.0;
         static constexpr double ota6Ohms = 82.0e3; // R383, IC22's load
         static constexpr double senseOhms = 1.0, injectOhms = 1.0e9; // the maracas' two circuits' join at Q66's base
@@ -271,6 +271,16 @@ namespace coolsynth::synth::v3
             front.setCapacitance(c139Front, c139 * k);
             tail.setCapacitance(c139Tail, c139 * k);
             reverb.setCapacitance(c138Reverb, c138 * k);
+        }
+
+        /** For fitting the clap's tail (tests only, D258): C139, C138 and R349. None moves the rest: R348's chain carries
+            no current there. */
+        void setReverbParts(double c139Farads, double c138Farads, double r349Ohms) noexcept
+        {
+            front.setCapacitance(c139Front, c139Farads);
+            tail.setCapacitance(c139Tail, c139Farads);
+            reverb.setCapacitance(c138Reverb, c138Farads);
+            reverb.setResistance(r349Reverb, r349Ohms);
         }
 
         /** Spread: the claps' spacing and window times this (C144 and C140). */
@@ -636,7 +646,7 @@ namespace coolsynth::synth::v3
             reverbNegative = reverb.addInput(8);
             r348Reverb = reverb.addSource(4, 0, 1.0e6);                                   // R348, from C139
             c138Reverb = reverb.addCapacitor(4, 0, c138);                                 // C138
-            reverb.addResistor(4, 3, 1.0e6);                                              // R349
+            r349Reverb = reverb.addResistor(4, 3, 1.0e6);                                 // R349
             reverb.addResistor(1, 2, 15.0e3);                                             // R342
             reverb.addResistor(2, 0, 680.0);                                              // R346
             reverb.addCapacitor(2, 3, 33.0e-9);                                           // C137
@@ -890,6 +900,7 @@ namespace coolsynth::synth::v3
         int frontDrive = 0, frontSupply = 0, frontNegative = 0, frontTrigger = 0, frontClapSide = 0, frontQ69Emitter = 0;
         int frontC139 = 0, frontC143 = 0, frontPin8 = 0, frontC135 = 0;
         int c139Front = 0, r348Front = 0, r362Front = 0, c135Front = 0, r344Front = 0, r106 = 0, sw12Clap = 0, sw12Maracas = 0;
+        int r349Reverb = 0;
         int c139Tail = 0, r348Tail = 0, r362Tail = 0, c135Tail = 0, r344Tail = 0, tailC139 = 0, tailC143 = 0, tailC135 = 0;
         int bandOut = 0, bandOta = 0;
         int reverbNoise = 0, reverbSupply = 0, reverbNegative = 0, r348Reverb = 0, c138Reverb = 0, reverbC138 = 0, reverbBase = 0, reverbCollector = 0, reverbOut = 0;

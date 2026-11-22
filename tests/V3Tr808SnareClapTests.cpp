@@ -632,3 +632,128 @@ public:
 };
 
 static V3Tr808SnareClapKitTests v3Tr808SnareClapKitTests;
+
+/*
+    The clap's tail against both units (D258), opt-in: with COOLSYNTH_808_CLAP_FIT set to CP Decay knob turns (space
+    separated; "1" for a default grid), the clap through the generator in-process (its own noise bus; no engine, so no
+    overload rule), CP Level full, an unaccented 4 V hit, 96 kHz, four seeds; a 10 ms rms envelope in dB under its peak
+    at fixed times after the onset, the seeds' median, against Fischer's CP and the median of Audiorealism's sixteen
+    shots measured alike (scratchpad clapfit.py). Logged, nothing asserted.
+*/
+class V3Tr808ClapTailFit final : public juce::UnitTest
+{
+public:
+    V3Tr808ClapTailFit() : juce::UnitTest("V3 TR-808 clap tail fit (opt-in)", "V3") {}
+
+    static constexpr int timeCount = 10;
+    static constexpr double times[timeCount] = { 0.02, 0.05, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0 };
+
+    static std::array<double, timeCount> envelopeDb(const std::vector<double>& x, double rate)
+    {
+        double peakAbs = 0.0;
+        for (const double v : x)
+            peakAbs = std::max(peakAbs, std::abs(v));
+        std::size_t onset = 0;
+        while (onset < x.size() && std::abs(x[onset]) <= 0.02 * peakAbs)
+            ++onset;
+        const std::size_t k = static_cast<std::size_t>(std::max(3, static_cast<int>(0.010 * rate)));
+        std::vector<double> env(x.size() - onset, 0.0);
+        double sum = 0.0;
+        for (std::size_t i = onset; i < x.size(); ++i)
+        {
+            sum += x[i] * x[i];
+            if (i >= onset + k)
+                sum -= x[i - k] * x[i - k];
+            const std::size_t j = i - onset;
+            if (j >= k / 2)
+                env[j - k / 2] = std::sqrt(std::max(0.0, sum) / static_cast<double>(k));
+        }
+        const double top = *std::max_element(env.begin(), env.end());
+        std::array<double, timeCount> out {};
+        for (int t = 0; t < timeCount; ++t)
+        {
+            const auto i = std::min(env.size() - 1, static_cast<std::size_t>(times[t] * rate));
+            out[static_cast<std::size_t>(t)] = 20.0 * std::log10(env[i] / top + 1.0e-12);
+        }
+        return out;
+    }
+
+    void runTest() override
+    {
+        const auto grid = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_CLAP_FIT", {});
+        if (grid.isEmpty())
+            return;
+        beginTest("clap_tail_grid");
+        using G = Tr808SnareClapGenerator;
+        const double rate = 96000.0;
+        const double fischer[timeCount] = { -7.9, -6.7, -22.2, -28.1, -32.4, -36.6, -39.8, -41.3, -46.5, -57.8 };
+        const double audiorealism[timeCount] = { -4.3, -3.3, -18.8, -27.3, -31.5, -37.3, -42.0, -45.4, -49.6, -57.2 };
+        // Each trial: a CP Decay turn (C139 and C138 together), or "c139:c138:r349", the parts' scales of the drawn ones
+        // at CP Decay's middle, set on the circuit after the generator's first block has applied the knobs.
+        struct Trial { float turn; std::array<double, 3> parts; bool byParts; };
+        std::vector<Trial> trials;
+        if (grid == "1")
+            for (const float t : { 0.5f, 0.55f, 0.6f, 0.625f, 0.65f, 0.7f, 0.75f })
+                trials.push_back({ t, { 1.0, 1.0, 1.0 }, false });
+        else
+            for (const auto& t : juce::StringArray::fromTokens(grid, " ", ""))
+            {
+                const auto v = juce::StringArray::fromTokens(t, ":", "");
+                if (v.size() == 3)
+                    trials.push_back({ 0.5f, { v[0].getDoubleValue(), v[1].getDoubleValue(), v[2].getDoubleValue() }, true });
+                else
+                    trials.push_back({ t.getFloatValue(), { 1.0, 1.0, 1.0 }, false });
+            }
+        juce::String head = "ms:";
+        for (const double t : times)
+            head << " " << juce::String(1000.0 * t, 0);
+        logMessage(head);
+        for (const auto& trial : trials)
+        {
+            const float turn = trial.turn;
+            std::array<std::array<double, timeCount>, 4> seeds {};
+            for (std::uint32_t seed = 1; seed <= 4; ++seed)
+            {
+                auto rig = std::make_unique<Rig>(rate, seed, std::initializer_list<std::pair<int, float>> { { G::cpLevel, 1.0f }, { G::accent, 0.0f }, { G::cpDecay, turn } });
+                if (trial.byParts)
+                {
+                    std::array<float, 32> l {}, r {};
+                    rig->generator->process(l.data(), r.data(), 32, rig->params);
+                    rig->generator->clapForTesting().setReverbParts(Tr808Clap::c139 * trial.parts[0], Tr808Clap::c138 * trial.parts[1],
+                                                                    1.0e6 * trial.parts[2]);
+                }
+                seeds[seed - 1] = envelopeDb(rig->render(39, 1.0f, 1.2, rate), rate);
+            }
+            juce::String line = trial.byParts ? "C139 x" + juce::String(trial.parts[0], 2) + " C138 x" + juce::String(trial.parts[1], 2)
+                                                    + " R349 x" + juce::String(trial.parts[2], 2) + ":"
+                                              : "CP Decay " + juce::String(turn, 3) + " (x" + juce::String(std::pow(4.0, 2.0 * (turn - 0.5)), 2) + "):";
+            double late = 0.0, early = 0.0;
+            int lateCount = 0;
+            for (int t = 0; t < timeCount; ++t)
+            {
+                std::array<double, 4> v {};
+                for (int s = 0; s < 4; ++s)
+                    v[static_cast<std::size_t>(s)] = seeds[static_cast<std::size_t>(s)][static_cast<std::size_t>(t)];
+                std::sort(v.begin(), v.end());
+                const double m = 0.5 * (v[1] + v[2]);
+                line << " " << juce::String(m, 1);
+                for (const double u : { fischer[t], audiorealism[t] })
+                {
+                    if (times[t] >= 0.15)
+                    {
+                        late += (m - u) * (m - u);
+                        ++lateCount;
+                    }
+                    else
+                        early = std::max(early, std::abs(m - u));
+                }
+            }
+            line << " | from 150 ms rms " << juce::String(std::sqrt(late / lateCount), 1) << " dB, before it worst "
+                 << juce::String(early, 1) << " dB";
+            logMessage(line);
+        }
+    }
+};
+
+constexpr double V3Tr808ClapTailFit::times[];
+static V3Tr808ClapTailFit v3Tr808ClapTailFit;

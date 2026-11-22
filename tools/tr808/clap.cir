@@ -62,10 +62,10 @@ RSWM vt nma {rma}
 * The clap's envelopes: Q69 follows the trigger; through D69 it charges C139, given up through R348 to C138 and
 * through R349 to Q70's base (the reverb's envelope); through D68 it charges C143, the accent, given up through
 * R362 to Q71's base with the C.P. OFFSET (TM3 through R370) and R364. R360 and R361 bring the trigger to IC23's
-* pin 8.
+* pin 8. C139 (printed 18n) as fitted to both units' tails (D258).
 Q69 vcc ncp ne69 QEM
 D69 ne69 n139 DEM
-C139 n139 0 18n
+C139 n139 0 39n
 R348 n139 n138 1Meg
 C138 n138 0 47n
 R349 n138 nb70 1Meg
