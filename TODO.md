@@ -225,7 +225,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     page 14's ratios) at 11.5 V here, now the Accent knob's top in all four 808 generators; no earlier fit was a level
     effect. The open hat's decay fitted to both units (C60 8 uF, R134 82 kOhm), the clap's tail (C139 39 nF), the
     claves' low thump fixed (their own rest), the unaccented trigger raised to 4.7 V (where the units' read, and
-    the rim shot's decay with them). Next: the rim shot's 1.7 kHz ring, some 5 dB strong over its first 10 ms. Found: the
+    the rim shot's decay with them), IC20 fitted to both units' rim shot and claves pitch (R312 1.07 kOhm; the 1.7
+    kHz ring's first 5 ms stay some 5 dB slow). Found: the
     overload rule cuts Kit voices (the 808 Metal at 96 kHz after 6 ms; one crash under load), a task of its own. 808 Snare & Clap:
     built (D256, D257), the snare as changed (173 and 334 Hz, as both units, no fit), the clap's four claps from
     IC23 and its reverb, the maracas; within 4 % of ngspice (the switching nodes by their envelopes) and of both

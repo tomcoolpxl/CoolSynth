@@ -5374,3 +5374,10 @@ read; keep 4 V and fit the rim shot's envelope and balance; keep 4 V and leave i
 Accent x velocity volts in all four 808 generators; Succession 808's Accent 0.78 keeps its top at 10 V. The fits made
 at 4 V, measured at 4.7 V: the open hat within 2 %, the clap's tail 0.6 to 1 dB louder, the toms' decays under 1.2 %,
 all still within the units.
+
+The rim shot's 1.7 kHz ring at 4.7 V, swept on the circuit in the test runner (`COOLSYNTH_808_RIM_FIT`): IC20 rings
+some 3 % sharp in both SW11 positions. The user's choice (options: R312 1.07 kOhm, both pitches on the units and the
+claves' decay unchanged; R308, R312 and R320 for the rim shot's pitch, early decay and balance, which halves the
+claves' decay and needs R313 again; keep): R312 1.07 kOhm, the rim shot 1725 Hz (units 1723 to 1726), the claves 2412
+(2410 to 2422), the rings' balance within 0.5 dB. Left: the 1.7 kHz ring's first 5 ms drop 11.7 dB against 17 to 18.
+`tools/tr808/rimclave.cir` takes it; its references were rendered again.

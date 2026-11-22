@@ -18,7 +18,7 @@
                     R300 as its load; the two resonators' pulses (C111, R307, D62, R301 over R302; C114, R306, D64,
                     R310 over R311); the envelope, C24 charged through D61 and R107, given up through R108
         IC21        a bridged-T, C116 and C115 4.7 nF, R316 1 MOhm across, R315 5.6 kOhm to ground: about 455 Hz
-        IC20        a bridged-T, C119 and C117 2.2 nF, R308 820 kOhm across, R312 1 kOhm to ground, IC20b inverting it
+        IC20        a bridged-T, C119 and C117 2.2 nF, R308 820 kOhm across, R312 to ground, IC20b inverting it
                     (R314, R309); for the rim shot C118 across C117 (about 1.7 kHz), for the claves R313 from the
                     middle node to IC20b's output (about 2.5 kHz)
         Swing VCA   IC21 through R318 and IC20b through R320 onto R317, through C120 into Q62's base (R321 2.2 MOhm
@@ -32,7 +32,9 @@
     R108 joins the front and the VCA a sample apart, each circuit holding the other's end as a source: 10 kOhm against
     C24's 0.47 uF is 4.7 ms, hundreds of samples. R313, printed 390 kOhm (with which the claves ring on), is 500 kOhm,
     fitted to both real units' claves decay; R324, which the service notes leave unprinted, is 130 kOhm, fitted to the
-    units' rim shot over their claves (D252). Transistors and diodes as the bass drum's; the resonators' op-amps of
+    units' rim shot over their claves (D252); R312, printed 1 kOhm (with which IC20 rings some 3 % sharp in both
+    positions), is 1.07 kOhm, fitted to both units' rim shot and claves pitch (D258). Transistors and diodes as the
+    bass drum's; the resonators' op-amps of
     3 MHz gain-bandwidth and a +-14 V swing, as the toms', the mixer's ideal. Volts in, volts out.
 */
 namespace coolsynth::synth::v3
@@ -51,6 +53,7 @@ namespace coolsynth::synth::v3
         static constexpr double switchOff = Tr808BassDrum::switchOff;
         static constexpr double absent = Tr808Tom::absent;
         static constexpr double r313Ohms = 500.0e3, r324Ohms = 130.0e3; // fitted (D252)
+        static constexpr double r312Ohms = 1.07e3; // printed 1 kOhm: both units' rim shot and claves pitch (D258)
 
         Tr808RimShot()
         {
@@ -156,6 +159,16 @@ namespace coolsynth::synth::v3
                 rest();
         }
         [[nodiscard]] bool claves() const noexcept { return isClaves; }
+
+        /** For fitting the rim shot's rings (tests only, D258): IC20's R308 and R312, the mix's R318 and R320. Settle
+            the drum after: R318 and R320 carry the rings' bias at rest. */
+        void setRingParts(double r308, double r312, double r318, double r320) noexcept
+        {
+            high.setResistance(r308Port, r308);
+            high.setResistance(r312Port, r312);
+            vca.setResistance(r318Port, r318);
+            vca.setResistance(r320Port, r320);
+        }
 
         /** LEVEL 0..1: the 100 kOhm audio-taper pot in IC19's feedback. */
         void setLevel(double turn) noexcept { mixer.setResistance(vr16, Tr808Tom::levelOhms(turn)); }
@@ -300,8 +313,8 @@ namespace coolsynth::synth::v3
             high.addCapacitor(2, 3, 2.2e-9);               // C119
             high.addCapacitor(3, 4, 2.2e-9);               // C117
             c118 = high.addCapacitor(3, 4, 2.2e-9);        // C118, the rim shot's
-            high.addResistor(2, 4, 820.0e3);               // R308
-            high.addResistor(3, 0, 1.0e3);                 // R312
+            r308Port = high.addResistor(2, 4, 820.0e3);    // R308
+            r312Port = high.addResistor(3, 0, r312Ohms);   // R312
             r313 = high.addResistor(3, 6, switchOff);      // R313, the claves'
             high.addResistor(4, 5, 33.0e3);                // R314
             high.addResistor(5, 6, 33.0e3);                // R309
@@ -320,8 +333,8 @@ namespace coolsynth::synth::v3
             vcaSupply = vca.addInput(5);
             vcaEnvelope = vca.addInput(6);
             vcaNegative = vca.addInput(12);
-            vca.addResistor(1, 3, 220.0e3);                                             // R318
-            vca.addResistor(2, 3, 22.0e3);                                              // R320
+            r318Port = vca.addResistor(1, 3, 220.0e3);                                  // R318
+            r320Port = vca.addResistor(2, 3, 22.0e3);                                   // R320
             vca.addResistor(3, 0, 10.0e3);                                              // R317
             vca.addCapacitor(3, 4, 10.0e-6);                                            // C120
             vca.addResistor(5, 4, 2.2e6);                                               // R321
@@ -406,6 +419,7 @@ namespace coolsynth::synth::v3
         double triggerVolts = 4.0, triggerWidth = 0.001;
         int triggerSample = -1; // samples since the hit, -1 between hits
         bool frontResting = true, vcaResting = true, isClaves = false, restoreOnSwitch = false;
+        int r308Port = 0, r312Port = 0, r318Port = 0, r320Port = 0;
         double lastEnvelope = 0.0, lastFeed = 0.0, lastFollower = 0.0;
         int stillSamples = 0, vcaStill = 0;
 

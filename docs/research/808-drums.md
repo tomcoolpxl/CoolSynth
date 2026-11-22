@@ -74,6 +74,9 @@ The settled pitch at the TUNING's bottom, middle and top (model; Fischer, Audior
 - High conga: 381.8, 420.6, 474.3 Hz; 375.1, 412.4, 466.3 and 394.4, 422.1, 475.4; page 370, 400, 455.
 - Rim shot, its first 4 ms by zero crossings: 1758 Hz against 1716 and 1721; page 1667.
 - Claves, by zero crossings, steady through the ring: 2492 Hz against 2422 and 2410; page 2500.
+- Both some 3 % sharp, one resonator (IC20) in both positions: fitted in D258, R312 1.07 kOhm (printed 1k), the rim
+  shot 1725 Hz against the units' 1723 to 1726 and the claves 2412 against 2410 to 2422 (D258's measures, at the
+  units' 4.7 V), the claves' decay unchanged.
 
 The pitch drop from the first cycles to the settled pitch at the TUNING's top, unaccented: the low tom 4.5 % (the
 units 4.4 % and 4.3 %), the mid 4.5 % (3.8, 4.5), the high 5.8 % (4.5, 6.8); the congas 0.8 % (0.9 to 2.3).

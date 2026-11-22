@@ -116,6 +116,20 @@ it): 4.7 V. The fits made at 4 V move little at it, measured: the open hat's dec
 against 72, 207, 336, 452, 533 (within 2 %, inside the units' range), the clap's tail 0.6 to 1 dB louder (still
 within some 2 dB of the units), the toms' and congas' decays under 1.2 %.
 
+Then the 1.7 kHz ring, at 4.7 V. IC20 rings some 3 % sharp in both SW11 positions (the rim shot 1774 Hz against the
+units' 1723 to 1726, the claves 2492 against 2410 to 2422), and its first 5 ms drop 12.0 dB against their 17.0 to
+17.7. Swept in the test runner on the circuit (`COOLSYNTH_808_RIM_FIT`): R308 and R312 set IC20's pitch and Q
+together (its pitch with their product, its Q with their ratio), and R320 the mix.
+
+- R312 alone at 1.07 kOhm: both pitches on the units (1725 and 2412 Hz), the rings' balance within 0.5 dB (-15.1
+  against -14.3 to -14.7), the claves' decay unchanged (22.5 ms against 22.0 and 22.3); the first 5 ms's drop stays
+  11.7 dB.
+- R308 680 kOhm, R312 1.3 kOhm and R320 16.5 kOhm: the rim shot's pitch, drop and balance all on the units, but a lower
+  Q halves the claves' decay (10.9 ms), so D252's R313 would need fitting again.
+
+The user's choice (options: R312 1.07 kOhm; the four parts; keep): R312. `tools/tr808/rimclave.cir` takes it and its
+rim shot and claves references were rendered again.
+
 ## Found on the way
 
 - The rim shot's two rings: from 5 to 10 ms the 1.7 kHz ring is some 3.5 dB stronger and the 455 Hz ring some 3 dB

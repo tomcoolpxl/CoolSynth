@@ -68,6 +68,7 @@ R315 nm21 0 5.6k
 
 * IC20a: a bridged-T, C119 and C117 2.2n with R308 820k across and R312 1k to ground (about 2.5 kHz); for the rim
 * shot SW11 puts C118 across C117 (about 1.8 kHz), for the claves R313 from the middle node to IC20b's output.
+* R312 (printed 1k) 1.07k, fitted to both units' rim shot and claves pitch, some 3 % sharp as printed (D258).
 G20A 0 i20a np20 ninv20 1m
 RI20A i20a 0 1e8
 CI20A i20a 0 {cgbw}
@@ -76,7 +77,7 @@ C119 ninv20 nm20 2.2n
 C117 nm20 no20a 2.2n
 C118 nm20 no20a {c118on}
 R308 ninv20 no20a 820k
-R312 nm20 0 1k
+R312 nm20 0 1.07k
 R313 nm20 no20b {r313on}
 
 * IC20b inverts (R314, R309 33k).

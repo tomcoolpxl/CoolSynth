@@ -467,7 +467,7 @@ public:
         beginTest("a_conga_takes_over_its_toms_circuit");
         {
             // The low tom near 90 Hz; the low conga's key switches the same circuit to near 200 Hz (D252, page 14).
-            // Accent 0: the 4 V trigger of the SPICE references, whose late pitch these are.
+            // Accent 0: the unaccented trigger (4.7 V since D258; the late pitch moves well under these limits from 4 V).
             auto plain = kitOf();
             plain.voice.generators[0] = drumsOf({ { Tr808DrumsGenerator::accent, 0.0f } });
             const auto tom = play(plain, { { 0, 43 } }, 0.3);
@@ -477,11 +477,12 @@ public:
             logMessage("low tom " + juce::String(tomHz, 1) + " Hz, then its conga " + juce::String(congaHz, 1) + " Hz");
             expectWithinAbsoluteError(tomHz, 90.3, 3.0);
             expectWithinAbsoluteError(congaHz, 200.0, 6.0);
-            // The claves' key switches the rim shot's circuit: its ring near 2.5 kHz.
+            // The claves' key switches the rim shot's circuit: its ring near 2.4 kHz, both units' 2410 to 2422 Hz since
+            // R312's fit (D258).
             const auto claves = play(plain, { { 0, 75 } }, 0.1);
             const double clavesHz = crossingHz(claves, 48000.0, 0.005, 0.02);
             logMessage("claves " + juce::String(clavesHz, 1) + " Hz");
-            expectWithinAbsoluteError(clavesHz, 2489.0, 30.0);
+            expectWithinAbsoluteError(clavesHz, 2412.0, 30.0);
         }
 
         beginTest("after_reset_a_hit_is_the_fresh_kits_bit_for_bit");
@@ -530,3 +531,50 @@ public:
 };
 
 static V3Tr808KitTests v3Tr808KitTests;
+
+/*
+    The rim shot's two rings against both units (D258), opt-in: with COOLSYNTH_808_RIM_FIT set to "r308:r312:r318:r320"
+    scales of the drawn parts (space separated) and COOLSYNTH_808_RIM_FIT_DIR to a folder, the rim shot circuit alone at
+    96 kHz, LEVEL 0.8, a 4.7 V hit (the units' unaccented), each trial's vout over 60 ms written there as CSV for
+    scratchpad rimfit.py to measure. Nothing asserted.
+*/
+class V3Tr808RimFit final : public juce::UnitTest
+{
+public:
+    V3Tr808RimFit() : juce::UnitTest("V3 TR-808 rim shot fit (opt-in)", "V3") {}
+
+    void runTest() override
+    {
+        const auto grid = juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_RIM_FIT", {});
+        const juce::File folder(juce::SystemStats::getEnvironmentVariable("COOLSYNTH_808_RIM_FIT_DIR", {}));
+        if (grid.isEmpty() || folder.getFullPathName().isEmpty())
+            return;
+        beginTest("rim_shot_grid");
+        folder.createDirectory();
+        const double rate = 96000.0;
+        for (const auto& t : juce::StringArray::fromTokens(grid, " ", ""))
+        {
+            const auto v = juce::StringArray::fromTokens(t, ":", "");
+            if (v.size() != 4)
+                continue;
+            for (const bool claves : { false, true })
+            {
+                auto drum = std::make_unique<Tr808RimShot>();
+                drum->prepare(rate);
+                drum->setClaves(claves);
+                drum->setLevel(0.8);
+                drum->setRingParts(820.0e3 * v[0].getDoubleValue(), 1.0e3 * v[1].getDoubleValue(), 220.0e3 * v[2].getDoubleValue(),
+                                   22.0e3 * v[3].getDoubleValue());
+                drum->settle();
+                drum->trigger(4.7);
+                juce::String text = "time,vout\n";
+                for (int i = 0; i < static_cast<int>((claves ? 0.1 : 0.06) * rate); ++i)
+                    text << juce::String(i / rate, 9) << "," << juce::String(drum->process(), 8) << "\n";
+                folder.getChildFile(juce::String(claves ? "cl_" : "rim_") + t.replace(":", "_") + ".csv").replaceWithText(text);
+            }
+            logMessage("rendered " + t);
+        }
+    }
+};
+
+static V3Tr808RimFit v3Tr808RimFit;
