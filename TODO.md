@@ -250,6 +250,13 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     computer keyboards take only about three keys at once. It must stay clear of the keys the panel already uses
     (the arrows, Enter, Escape, Backspace, 1 to 8 for the pads), and in a DAW the host's own typing keyboard plays.
     To be designed with the user (options) before it is built.
+35. CoolSynth 808 (D263): the 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and
+    shuffle per drum, MIDI drag, per-step locks, flams and sub-steps, chance and conditions; a panel whose step row
+    opens into a lane per drum, and Under the Lid (the live circuit, with the classic mods as trimmers) as the
+    second view; own colours, four themes for the vector panel. Now: mockups in `docs/design/mockups/`, the vector
+    panel with its lanes first, then the realistic panel and Under the Lid. Nothing is built yet: no sequencer, no
+    plugin target. Before a release: the name in the trademark registries, and the line that says whose mark
+    TR-808 is.
 
 
 ## Standing notes

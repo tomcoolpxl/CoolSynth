@@ -5532,3 +5532,42 @@ Found on the way: the open hat at full accent is chaotic in the model. Its high 
 its waveform by up to 3.5 to 4.5 dB under its peak within 50 ms, its level within 0.4 dB in every 10 ms; at 4.7 V
 the same nudge stays at -233 dB, and the cymbal and closed hat stay at -230 dB (`V3Tr808SettleCheck`, opt-in with
 `COOLSYNTH_808_SETTLE`).
+
+## D263. CoolSynth 808: a separate plugin, its interface directions and its name (2026-11-22)
+
+The user's idea: the 808 engine also as a plugin of its own, a true clone in sound, looser in its interface. Brainstormed
+as six directions before any mockup: the realistic unit, the same panel as a clean vector drawing, Under the Lid (the
+interface is the circuit drawing), Shapes (no knobs, each drum a shape), Rings (a ring of steps per drum, after
+Patterning and AudioThing's Orbita) and Lanes (a row per drum, after Roland's own plugin, Fors and Elektron).
+
+Found first: the engine has no step sequencer; Roland filed trade dress on the 808's look, named as the sequence of
+coloured step keys (Germany, and US applications; Behringer reversed the colours on its RD-8; whether granted not
+confirmed) and applied in the US for "TR-808 RHYTHM COMPOSER" for music software (serial 87769864, status not
+confirmed); forum opinion leans flat and resizable, hardware looks accepted for faithful emulations; D16 redrew
+Nepheton for version 2 because its first face was found cryptic. Sources: gearnews.com and cdm.link on the filings,
+trademarks.justia.com, roland.com (rc_tr-808 and its intellectual property page), cdm.link on Nepheton 2, Sound On
+Sound on Patterning 3, musicradar.com on Fors Opal, attackmagazine.com on the legalities of emulations.
+
+The user's choices (options, the recommended first):
+- The sequencer (options: the original's plus modern additions; the original's only; none, the DAW plays it): the
+  1980 sequencer plus a length and shuffle per drum and dragging a pattern into the DAW as MIDI.
+- Step extras (several of: per-step locks; three hit strengths per drum; flams and sub-steps; chance and
+  conditions): locks, flams and sub-steps, chance and conditions. The accent stays the original's, one for the whole
+  kit per step.
+- Likeness (options: own name and own colours; the real colours under another name; exact, never released): own
+  colours. The four beat groups of step keys are shades of one hue in every theme.
+- Views (options: a panel plus one new view; one interface; every direction a view): a panel plus one new view.
+- How they fit (options: lanes open from the panel and the Lid is the view; lanes the view; the Lid the view, no
+  lanes): the panel's row of sixteen opens downward into the lanes, and Under the Lid is the second view.
+- Under the Lid (options: show, plus the classic mods; show only; every part editable): the live circuit with a scope
+  on any node, plus the well-known hardware mods as trimmers (an endless and tunable kick, snare tuning, noise level,
+  cowbell tuning), each checked against ngspice when built.
+- The vector panel's themes (several of four): all four, Studio 1982, Paper, Night and Blueprint.
+- The name (options: CoolSynth 808; CS-808; Ringdown 808; CoolSynth Ringdown): CoolSynth 808. The user first asked
+  for CS-808; Cluster Sound released a CS-808 in 2016 (a Max for Live pack of TR-808 samples) and CS is Yamaha's
+  synth prefix. Ten other names found free of audio products by web search (Ringdown, Bridged-T, Six Squares, Eleven
+  Circuits, Service Notes, Page 14, Solder Side, Drumwright, Yaoya, Longtail); "Transistor Rhythm" is taken. No
+  trademark registry was searched: to do before a release. "808" in the name is the choice with the most exposure
+  towards Roland; the user was told so.
+
+Mockups follow, the vector panel with its lanes first (`docs/design/mockups/`).
