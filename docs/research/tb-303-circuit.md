@@ -156,7 +156,12 @@ checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusicla
     within 10 cents throughout.
   - The accent's loudness over a plain note at ACCENT full (the recordings keep one gain): +13.2 dB against the real
     unit's +13.3 dB from 30 to 80 ms, +6.9 against +7.8 dB from 80 to 150 ms; the first 25 ms 2.8 dB louder.
-  - Not yet compared: the knobs together (sets B to E), the square.
+  - These first comparisons started the note before the VCO had settled (C11 takes some 0.2 s; a real 303's VCO
+    never stops). Settled, the saw at cutoff full matches within 0.3 dB on harmonics 2 to 8; TM3 at 0.35 holds
+    (within 0.6 dB at cutoff 25, 50 and 100 %, 2.1 dB darker at 75 %). Sets A2 to A5 are to repeat settled.
+  - The square at low C: its even harmonics 3 to 5 dB low with C11 as printed (1 uF); with C11 at 0.82 uF, inside an
+    electrolytic's tolerance, harmonics 2 to 10 within 0.4 dB (Open Music Labs too changed C11 to match its 303).
+  - Not yet compared: the knobs together (sets B to E).
 
 ## What this means for CoolSynth
 
