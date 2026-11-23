@@ -310,7 +310,9 @@ board running on underneath; the patterns row, the chain and the lanes as on the
 Chosen for it (D286): one chain row that loops or plays once, no song row; the step, lane and pattern tools beside
 the lanes (D287, the user: tools, not another circuit view), and on a right-click. The fifth is the layout chosen (D287).
 
-All five, with the full-screen circuit, are in `mockups/coolsynth-808-layouts.html`: the beat runs and lights the
+A sixth (D288): the fifth's top, the sequencer below flat as the app has it now.
+
+All six, with the full-screen circuit, are in `mockups/coolsynth-808-layouts.html`: the beat runs and lights the
 circuits, with no sound. Their circuits come from a generator, not the netlists, and the drums' parts are named only
 when zoomed in.
 

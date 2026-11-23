@@ -6254,3 +6254,21 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
   - the copper cut away snugly round each knob and word, with no outlines, and no part names under the controls.
 - Found on the way: the cut-outs had only ever removed 30 % of the copper (the fill took the last colour set), on
   the fourth layout too.
+
+## D288. CoolSynth 808: keys and switches as hardware, and a sixth layout with the sequencer flat (2026-11-24)
+
+- The user on the fifth layout: the buttons, the M and S keys and the right panel looked like plain HTML buttons;
+  the switches like computer switches; the name plate had lost its faded border; the top right was wrong; the
+  power lines were fat in a large window; the rows too far apart. Asked: more realism, as the knobs have.
+- Looked at online: the 808's own voice selectors are slide switches (Roland's specification: LC-LT, MC-MT, HC-HT,
+  CL-RS, MA-CP); skeuomorphic buttons are built from a lit top edge, a shadowed bottom edge and a separate lens for
+  the light (Cloud Four, Smashing Magazine, Codrops).
+- Done in `docs/design/mockups/coolsynth-808-layouts.html`, for every layout:
+  - keys as raised plastic caps in a dark surround, a lens that lights for a toggle (M red, S green, the rest
+    orange), Stop in orange; the pattern slots and the chain's blocks the same keys in the fifth layout;
+  - the slide switch drawn as hardware: a bevelled plate, a recessed slot, a ridged thumb with its shadow;
+  - the right panel's values on small knobs with their value beneath, its actions on a grid of keys;
+  - the name plate's faded outline back; transport, Library and File on one strip of smoked glass;
+  - the circuits drawn at the window's own resolution, the buses thinner; the lanes' rows closer.
+- Asked for by the user: a sixth layout, the fifth's realistic top with the sequencer below flat, as the app has it
+  now: plain chips, filled steps, value boxes instead of knobs. Both share one piece of code.

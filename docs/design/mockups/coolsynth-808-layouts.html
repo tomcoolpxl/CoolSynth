@@ -54,16 +54,24 @@ button { font: inherit; color: inherit; }
 .key .n { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; }
 .g1 { --g: var(--g1); } .g2 { --g: var(--g2); } .g3 { --g: var(--g3); } .g4 { --g: var(--g4); }
 
-/* Hardware-style small buttons */
-.btn { display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; height: 26px; padding: 0 10px; border-radius: 3px; cursor: pointer; border: 0;
-  background: #3a3733; box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 0 rgba(0,0,0,.6);
-  font-weight: 650; font-size: 10px; font-stretch: 75%; letter-spacing: .09em; text-transform: uppercase; color: var(--ink); }
-.btn.is { background: var(--ink); color: #1a1714; }
-.btn.hot { background: var(--on); color: #1a1714; }
-.btn .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #1b1815; margin-right: 6px; vertical-align: 1px; }
-.btn.lighted .dot { background: var(--on); box-shadow: 0 0 6px var(--on); }
-.seg { display: inline-flex; gap: 2px; }
-.seg .btn { border-radius: 0; } .seg .btn:first-child { border-radius: 3px 0 0 3px; } .seg .btn:last-child { border-radius: 0 3px 3px 0; }
+/* Keys: a raised plastic cap in a dark surround, lit from above; a toggle carries a small lens that lights */
+.btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+  height: 26px; padding: 0 10px; border: 0; border-radius: 4px; cursor: pointer;
+  background: linear-gradient(#4c4842, #37342f 46%, #2c2a26 100%);
+  box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.17), inset 0 -2px 0 rgba(0,0,0,.38), 0 2px 3px rgba(0,0,0,.55);
+  font-weight: 650; font-size: 10px; font-stretch: 75%; letter-spacing: .09em; text-transform: uppercase; color: #f1ebde;
+  text-shadow: 0 -1px 0 rgba(0,0,0,.6); }
+.btn:hover { background: linear-gradient(#55514a, #3c3934 46%, #2f2d29 100%); }
+.btn:active { transform: translateY(1px); box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.5); }
+.btn.tg::before, .seg .btn::before, .btn .dot { content: ''; display: block; flex: none; width: 6px; height: 6px; margin: 0; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #6b4a33, #241710 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.7), inset 0 0 1px #000; }
+.btn.is::before, .btn.lighted .dot { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,150,60,.85); }
+.btn.mute.is::before { background: radial-gradient(circle at 35% 30%, #ffe2d6, #ff6a45 45%, #c8321a 80%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,90,50,.85); }
+.btn.solo.is::before { background: radial-gradient(circle at 35% 30%, #f6ffd8, #d4f07a 45%, #8fb83a 80%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(200,240,110,.75); }
+.btn.hot { background: linear-gradient(#f5a066, #e8742a 50%, #c3581b); color: #1a120c; text-shadow: 0 1px 0 rgba(255,255,255,.22); }
+.btn.hot:hover { background: linear-gradient(#f8aa72, #ec7c33 50%, #c95e20); }
+.seg { display: inline-flex; gap: 4px; }
 
 /* Knobs: a solid cap, a pointer, printed ticks */
 .knob { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; cursor: ns-resize; user-select: none; }
@@ -100,7 +108,7 @@ button { font: inherit; color: inherit; }
 .lane .id { font-family: var(--mono); font-weight: 600; font-size: 11px; color: var(--ink); cursor: pointer; }
 .lane .nm { cursor: pointer; overflow: hidden; white-space: nowrap; }
 .ms { display: flex; gap: 3px; }
-.ms .btn { height: 22px; width: 24px; padding: 0; }
+.ms .btn { height: 22px; width: 32px; padding: 0; gap: 5px; }
 .lvl { height: 6px; border-radius: 3px; background: #1b1815; position: relative; }
 .lvl i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--dim); }
 .ksteps { display: grid; grid-template-columns: repeat(16, 1fr); column-gap: 4px; }
@@ -172,34 +180,34 @@ canvas.board { display: block; width: 100%; height: 100%; }
 #v4 .drawer.up { transform: none; }
 
 /* ===================== 5: the etched panel with the sequencer on glass ===================== */
-#v5 { background:
+.etched5 { background:
     radial-gradient(1200px 400px at 30% 0%, rgba(255,255,255,.05), transparent 70%),
     repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 1px, rgba(0,0,0,.02) 1px 3px),
     linear-gradient(#2c2a27, #23211e); }
-#v5 > canvas.board { position: absolute; inset: 0; }
-#v5 .screw { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a857c, #3b3833 70%); box-shadow: 0 1px 1px #000; }
-#v5 .silk { position: absolute; pointer-events: none; }
-#v5 .colLabel { position: absolute; text-align: center; cursor: pointer; }
-#v5 .colLabel.sel .t13 { color: var(--lit); text-shadow: 0 0 8px rgba(255,160,74,.6); }
-#v5 .kn { position: absolute; }
-#v5 .kn .kcap { filter: drop-shadow(0 2px 2px rgba(0,0,0,.7)); }
-#v5 .glass5 { position: absolute; left: 14px; right: 14px; top: 318px; bottom: 14px; border-radius: 6px; padding: 12px 16px 10px;
+.etched5 > canvas.board { position: absolute; inset: 0; }
+.etched5 .screw { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a857c, #3b3833 70%); box-shadow: 0 1px 1px #000; }
+.etched5 .silk { position: absolute; pointer-events: none; }
+.etched5 .colLabel { position: absolute; text-align: center; cursor: pointer; }
+.etched5 .colLabel.sel .t13 { color: var(--lit); text-shadow: 0 0 8px rgba(255,160,74,.6); }
+.etched5 .kn { position: absolute; }
+.etched5 .kn .kcap { filter: drop-shadow(0 2px 2px rgba(0,0,0,.7)); }
+.etched5 .glass5 { position: absolute; left: 14px; right: 14px; top: 344px; bottom: 14px; border-radius: 6px; padding: 12px 16px 10px;
   display: flex; flex-direction: column; gap: 9px;
   background: linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,0) 30%), linear-gradient(rgba(16,15,13,.80), rgba(12,11,10,.86));
   backdrop-filter: blur(1.5px); box-shadow: inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px rgba(255,255,255,.05), 0 3px 12px rgba(0,0,0,.6); }
-#v5 .v5main { flex: 1; display: grid; grid-template-columns: 1fr 250px; column-gap: 14px; min-height: 0; margin-top: 4px; }
-#v5 .v5main.wide { grid-template-columns: 1fr 0; column-gap: 0; }
-#v5 .v5right { border-radius: 4px; background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); overflow: hidden; position: relative; display: flex; flex-direction: column; }
-#v5 .v5main.wide .v5right { display: none; }
-#v5 .key { background: color-mix(in srgb, var(--g) 88%, transparent); }
-#v5 .key.on { background: color-mix(in srgb, var(--g) 80%, #ece4d2); }
+.etched5 .v5main { flex: 1; display: grid; grid-template-columns: 1fr 250px; column-gap: 14px; min-height: 0; margin-top: 4px; }
+.etched5 .v5main.wide { grid-template-columns: 1fr 0; column-gap: 0; }
+.etched5 .v5right { border-radius: 4px; background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+.etched5 .v5main.wide .v5right { display: none; }
+.etched5 .key { background: color-mix(in srgb, var(--g) 88%, transparent); }
+.etched5 .key.on { background: color-mix(in srgb, var(--g) 80%, #ece4d2); }
 
-#v5 .kn .lbl { color: #f4efe4; }
-#v5 .lbl { color: #ddd5c3; }
-#v5 .lane .nm, #v5 .len, #v5 .status { color: #ddd5c3; }
-#v5 .tsec .trow > .lbl { color: #cfc7b3; }
-#v5 .colLabel .t13 { color: #f7f2e8; }
-#v5 .colLabel .nm { color: #e3dccb; margin-top: 3px; }
+.etched5 .kn .lbl { color: #f4efe4; }
+.etched5 .lbl { color: #ddd5c3; }
+.etched5 .lane .nm, .etched5 .len, .etched5 .status { color: #ddd5c3; }
+.etched5 .tsec .trow > .lbl { color: #cfc7b3; }
+.etched5 .colLabel .t13 { color: #f7f2e8; }
+.etched5 .colLabel .nm { color: #e3dccb; margin-top: 3px; }
 .key.pick { box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 0 0 2px var(--ink); }
 .slide { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; user-select: none; }
 .slide .lbl { color: #8f8877; } .slide .lbl.lit { color: #f4efe4; }
@@ -211,8 +219,8 @@ canvas.board { display: block; width: 100%; height: 100%; }
 .tstrip .tempo .num { color: var(--lit); text-shadow: 0 0 6px rgba(255,160,74,.45); }
 .tstrip .swing { display: flex; align-items: center; gap: 12px; padding: 0 6px 0 8px; }
 .tstrip .swing .lbl { color: #f4efe4; }
-#v5transport { gap: 8px !important; }
-#v5 .v5right { padding: 4px 14px 12px; gap: 0; }
+.etched5 .transport5 { gap: 8px !important; }
+.etched5 .v5right { padding: 4px 14px 12px; gap: 0; }
 .tsec { padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; flex-direction: column; gap: 9px; }
 .tsec:last-child { border-bottom: 0; }
 .tsec .head { color: #f4efe4; }
@@ -221,6 +229,52 @@ canvas.board { display: block; width: 100%; height: 100%; }
 .stepper { display: flex; align-items: center; gap: 4px; }
 .stepper .val { min-width: 46px; text-align: center; font-size: 12px; }
 .btn.sq { width: 26px; padding: 0; }
+
+.etched5 .lanes { align-content: start; }
+.etched5 .silk.logo { padding: 0; }
+.slide { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; user-select: none; }
+.slide svg { display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.6)); }
+.tstrip { gap: 7px; padding: 5px 8px; }
+.tstrip .tsep { width: 1px; height: 20px; background: rgba(255,255,255,.1); margin: 0 4px; }
+.tstrip .swing { gap: 10px; }
+.tknobs { display: flex; align-items: flex-start; gap: 14px; }
+.tcol { display: flex; flex-direction: column; gap: 6px; margin-left: auto; }
+.tgrid { display: grid; gap: 6px; flex: 1; }
+.tgrid .btn { padding: 0 4px; }
+.kval { font-size: 11px; color: var(--lit); margin-top: -2px; }
+.vbox { display: flex; align-items: center; gap: 6px; }
+.vbox .lbl { width: 46px; } .vbox .num { min-width: 44px; text-align: center; font-size: 12px; }
+.etched5 .tsec { gap: 8px; padding: 9px 0; }
+
+/* Layout 6: the sequencer flat, as the app has it now: plain chips, filled steps, no lights or glass */
+.flat6 .glass5 { background: #2d2b28; backdrop-filter: none; border-radius: 4px; box-shadow: 0 0 0 1px #0c0b0a, 0 6px 18px rgba(0,0,0,.55); }
+.flat6 .glass5 .btn { background: #3a3733; border: 1px solid #4a463f; box-shadow: none; text-shadow: none; border-radius: 4px; }
+.flat6 .glass5 .btn:hover { background: #45413b; }
+.flat6 .glass5 .btn:active { transform: none; }
+.flat6 .glass5 .btn::before, .flat6 .glass5 .btn .dot { content: none; display: none; }
+.flat6 .glass5 .btn.is { background: #ece4d2; border-color: #ece4d2; color: #1a1714; }
+.flat6 .glass5 .btn.mute.is { background: var(--on); border-color: var(--on); }
+.flat6 .glass5 .key { background: var(--g); border-radius: 5px; box-shadow: none; }
+.flat6 .glass5 .key::before { content: none; }
+.flat6 .glass5 .key.on { background: var(--on); }
+.flat6 .glass5 .key.ph { box-shadow: 0 0 0 2px var(--lit); }
+.flat6 .glass5 .key.pick { box-shadow: 0 0 0 2px var(--ink); }
+.flat6 .glass5 .key.end { box-shadow: 3px 0 0 -1px var(--lit); }
+.flat6 .v5right { background: #262421; box-shadow: inset 0 0 0 1px #3a3733; }
+.flat6 .tknobs { flex-direction: column; align-items: stretch; gap: 6px; }
+.flat6 .tsec { padding: 6px 0; gap: 6px; }
+.flat6 .tcol { flex-direction: row; margin-left: 0; }
+.flat6 .tcol .btn { flex: 1; }
+
+/* Layout 5: the pattern slots and the chain's blocks are keys too */
+.etched5:not(.flat6) .slot, .etched5:not(.flat6) .cblk:not(.cadd) { background: linear-gradient(#3b3833, #2c2a26); color: #b9b19f;
+  box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.5); }
+.etched5:not(.flat6) .slot.has, .etched5:not(.flat6) .cblk:not(.cadd) { background: linear-gradient(#4a4640, #34312d); color: #f1ebde; }
+.etched5:not(.flat6) .slot.edit { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 3px var(--ink), inset 0 1px 0 rgba(255,255,255,.12), 0 2px 3px rgba(0,0,0,.5); }
+.etched5:not(.flat6) .slot.play, .etched5:not(.flat6) .cblk.cur { background: linear-gradient(#f5a066, #e8742a 50%, #c3581b); color: #1a120c; }
+.etched5:not(.flat6) .cblk.cur .x { color: #3a2010; }
+.etched5:not(.flat6) .cblk.nxt { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 2px var(--lit), inset 0 1px 0 rgba(255,255,255,.12); }
+.etched5:not(.flat6) .cadd { box-shadow: 0 0 0 1px #4a463f; }
 
 /* Pop-ups on right-click: a step's tools, a pattern's menu */
 .pop { position: absolute; z-index: 40; min-width: 190px; padding: 10px; border-radius: 5px; display: flex; flex-direction: column; gap: 8px;
@@ -244,6 +298,7 @@ canvas.board { display: block; width: 100%; height: 100%; }
   <button class="tab" data-v="3">3 Open machine</button>
   <button class="tab" data-v="4">4 Etched panel</button>
   <button class="tab" data-v="5">5 Etched with glass</button>
+  <button class="tab" data-v="6">6 Etched, flat sequencer</button>
   <span id="v5opts" style="display:none;gap:6px;align-items:center;margin-left:10px">
     <span>Click a step to pick it; its tools, its lane's and the pattern's are on the right. Right-click works too.</span>
   </span>
@@ -347,18 +402,35 @@ canvas.board { display: block; width: 100%; height: 100%; }
 </section>
 
 <!-- 5: the etched panel with the sequencer on glass -->
-<section class="view" id="v5">
+<section class="view etched5" id="v5">
   <canvas class="board" id="b5"></canvas>
   <div class="screw" style="left:10px;top:10px"></div><div class="screw" style="right:10px;top:10px"></div>
-  <div class="silk logo" style="left:34px;top:9px;font-size:17px">CoolSynth <b>808</b> <span class="lbl" style="margin-left:10px">Beat composer</span></div>
-  <div id="v5transport" style="position:absolute;right:34px;top:8px;display:flex;align-items:center;gap:10px"></div>
+  <div class="silk logo" style="left:40px;top:12px;font-size:17px">CoolSynth <b>808</b> <span class="lbl" style="margin-left:10px">Beat composer</span></div>
+  <div class="transport5" id="v5transport" style="position:absolute;right:30px;top:5px;display:flex;align-items:center"></div>
   <div id="v5cols"></div>
   <div class="glass5">
     <div style="display:flex;align-items:center;gap:14px"><span class="lbl" style="width:52px">Patterns</span><div data-prow></div><span style="flex:1"></span><div data-ab></div></div>
     <div style="display:flex;align-items:center;gap:14px"><span class="lbl" style="width:52px" title="The patterns in the order they play, round and round">Chain</span><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div><span class="lbl">Change</span><div data-change></div></div>
     <div class="v5main" id="v5main">
-      <div data-lanes="22"></div>
+      <div data-lanes="24"></div>
       <div class="v5right" id="v5right"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 6: the etched panel, the sequencer flat as the app has it now -->
+<section class="view etched5 flat6" id="v6">
+  <canvas class="board" id="b6"></canvas>
+  <div class="screw" style="left:10px;top:10px"></div><div class="screw" style="right:10px;top:10px"></div>
+  <div class="silk logo" style="left:40px;top:12px;font-size:17px">CoolSynth <b>808</b> <span class="lbl" style="margin-left:10px">Beat composer</span></div>
+  <div class="transport5" id="v6transport" style="position:absolute;right:30px;top:5px;display:flex;align-items:center"></div>
+  <div id="v6cols"></div>
+  <div class="glass5">
+    <div style="display:flex;align-items:center;gap:14px"><span class="lbl" style="width:52px">Patterns</span><div data-prow></div><span style="flex:1"></span><div data-ab></div></div>
+    <div style="display:flex;align-items:center;gap:14px"><span class="lbl" style="width:52px" title="The patterns in the order they play, round and round">Chain</span><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div><span class="lbl">Change</span><div data-change></div></div>
+    <div class="v5main" id="v6main">
+      <div data-lanes="24"></div>
+      <div class="v5right" id="v6right"></div>
     </div>
   </div>
 </section>
@@ -486,14 +558,16 @@ function knobSVG(v, size, accent) {
     <line x1="${cx + r * .2 * Math.cos(a)}" y1="${cy + r * .2 * Math.sin(a)}" x2="${cx + (r - 4) * Math.cos(a)}" y2="${cy + (r - 4) * Math.sin(a)}" stroke="${accent ? '#1a1714' : '#ece4d2'}" stroke-width="2.4" stroke-linecap="round"/>
   </svg>`;
 }
-function knob(label, v, size = 40, accent = false) {
+function knob(label, v, size = 40, accent = false, opts = {}) {
   const k = el('div', 'knob');
-  const draw = () => { k.innerHTML = knobSVG(v, size, accent) + (label ? `<span class="lbl">${label}</span>` : ''); };
+  const snap = x => opts.steps ? Math.round(x * (opts.steps - 1)) / (opts.steps - 1) : x;
+  v = snap(v);
+  const draw = () => { k.innerHTML = knobSVG(v, size, accent) + (label ? `<span class="lbl">${label}</span>` : '') + (opts.fmt ? `<span class="kval num">${opts.fmt(v)}</span>` : ''); };
   draw();
   k.addEventListener('pointerdown', e => {
     const y0 = e.clientY, v0 = v; k.setPointerCapture(e.pointerId);
-    const mv = ev => { v = Math.min(1, Math.max(0, v0 + (y0 - ev.clientY) / 150)); draw(); };
-    const up = () => { k.removeEventListener('pointermove', mv); k.removeEventListener('pointerup', up); };
+    const mv = ev => { const nv = snap(Math.min(1, Math.max(0, v0 + (y0 - ev.clientY) / 150))); if (nv !== v) { v = nv; draw(); if (opts.onChange) opts.onChange(v); } };
+    const up = () => { k.removeEventListener('pointermove', mv); k.removeEventListener('pointerup', up); if (opts.onDone) opts.onDone(v); };
     k.addEventListener('pointermove', mv); k.addEventListener('pointerup', up);
   });
   return k;
@@ -551,7 +625,7 @@ function buildPatternRow(host, compact) {
   host.append(...(compact ? [] : banks), ...(compact ? [] : [gap()]));
   slots.forEach((s, i) => { if (i % 4 === 0 && i) s.style.marginLeft = '5px'; host.append(s); });
   fill.style.marginLeft = '8px'; host.append(fill);
-  const fbtn = btn('Fill', '', () => { S.fillArmed = !S.fillArmed; paintAll(); }); fbtn.style.marginLeft = '8px'; host.append(fbtn);
+  const fbtn = btn('Fill', 'tg', () => { S.fillArmed = !S.fillArmed; paintAll(); }); fbtn.style.marginLeft = '8px'; host.append(fbtn);
   painters.push(() => {
     slots.forEach((s, i) => {
       s.classList.toggle('has', !!bank[i] && bank[i].lanes.some(l => l.some(Boolean)));
@@ -564,8 +638,7 @@ function buildPatternRow(host, compact) {
     fill.classList.toggle('edit', S.editing === -1);
     fill.classList.toggle('play', S.playing && S.fillNow);
     fill.classList.toggle('queued', S.fillArmed);
-    fbtn.classList.toggle('lighted', S.fillArmed);
-    fbtn.innerHTML = '<span class="dot"></span>Fill';
+    fbtn.classList.toggle('is', S.fillArmed);
   });
 }
 function buildAB(host) {
@@ -613,7 +686,7 @@ function buildChain(host) {
     const add = el('div', 'cblk cadd', '+'); add.title = 'Add the pattern being edited';
     add.addEventListener('click', () => { if (S.editing >= 0) S.chain.push({ p: S.editing, r: 1 }); paintAll(); });
     host.append(add);
-    const loop = btn('<span class="dot"></span>Loop', S.loop ? 'lighted' : '', () => { S.loop = !S.loop; paintAll(); });
+    const loop = btn('Loop', 'tg' + (S.loop ? ' is' : ''), () => { S.loop = !S.loop; paintAll(); });
     loop.title = 'Loop on: the chain plays round and round. Off: once through, then it stops';
     loop.style.marginLeft = '6px'; host.append(loop);
     if (!S.chainOn && S.chain.length) { const back = btn('Back to chain', '', () => { S.chainOn = true; S.queued = null; S.chainPos = 0; S.repLeft = S.chain[0].r; paintAll(); }); back.style.marginLeft = '6px'; host.append(back); }
@@ -629,7 +702,7 @@ function buildLanes(host, rowH) {
     r.style.gridTemplateColumns = rowH >= 26 ? '30px 96px 54px 50px 1fr 30px' : '30px 84px 54px 40px 1fr 26px';
     const id = el('span', 'id', d.id), nm = el('span', 'nm lbl', d.name);
     id.onclick = nm.onclick = () => { S.sel = l; paintAll(); };
-    const ms = el('div', 'ms'); const m = btn('M', '', () => { S.mute[l] = !S.mute[l]; paintAll(); }); const s = btn('S', '', () => { S.solo[l] = !S.solo[l]; paintAll(); });
+    const ms = el('div', 'ms'); const m = btn('M', 'tg mute', () => { S.mute[l] = !S.mute[l]; paintAll(); }); const s = btn('S', 'tg solo', () => { S.solo[l] = !S.solo[l]; paintAll(); });
     ms.append(m, s);
     const lvl = el('div', 'lvl', `<i style="width:${S.level[l] * 100}%"></i>`);
     const ks = el('div', 'ksteps'); const keys = [];
@@ -661,7 +734,7 @@ function buildLanes(host, rowH) {
     const same = !S.fillNow && S.editing === S.hearing;
     rows.forEach((row, l) => {
       row.r.classList.toggle('sel', S.sel === l);
-      row.m.classList.toggle('hot', S.mute[l]); row.s.classList.toggle('is', S.solo[l]);
+      row.m.classList.toggle('is', S.mute[l]); row.s.classList.toggle('is', S.solo[l]);
       row.len.textContent = p.len[l];
       const head = S.playing && same ? S.count % p.len[l] : -1;
       row.keys.forEach((k, i) => {
@@ -798,7 +871,7 @@ class Board {
   }
   resize() {
     const r = this.c.getBoundingClientRect(); if (!r.width) return;
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(4, (window.devicePixelRatio || 1) * (window.stageScale || 1));
     this.W = this.c.clientWidth; this.H = this.c.clientHeight;
     this.c.width = Math.round(this.W * dpr); this.c.height = Math.round(this.H * dpr); this.dpr = dpr;
     this.build();
@@ -884,18 +957,19 @@ class Board {
       w.e = e; w.h = h;
     }
     g.lineCap = 'round'; g.lineJoin = 'round';
-    const lw = P.etched ? 2.6 : 1.1;
+    const lw = P.etched ? 2.0 : 1.1;
+    const wl = w => (w.cell ? lw : lw * .8);
     for (const w of this.wires) {
-      if (w.h > .02) { g.strokeStyle = `rgba(${P.heat.join(',')},${(P.etched ? .16 : .1) * w.h})`; g.lineWidth = lw + (P.etched ? 6 : 5); this.path(g, w.pts, P.etched); g.stroke(); }
+      if (w.h > .02) { g.strokeStyle = `rgba(${P.heat.join(',')},${(P.etched ? .14 : .1) * w.h})`; g.lineWidth = wl(w) + (P.etched ? 4 : 5); this.path(g, w.pts, P.etched); g.stroke(); }
     }
-    g.strokeStyle = P.wire; g.lineWidth = lw;
-    for (const w of this.wires) { this.path(g, w.pts, P.etched); g.stroke(); }
+    g.strokeStyle = P.wire;
+    for (const w of this.wires) { g.lineWidth = wl(w); this.path(g, w.pts, P.etched); g.stroke(); }
     // lit wires
     g.globalCompositeOperation = 'lighter';
     for (const w of this.wires) {
       if (w.e < .03) continue;
-      g.strokeStyle = `rgba(${P.flow.join(',')},${(P.etched ? .42 : .75) * w.e})`; g.lineWidth = lw + .6; this.path(g, w.pts, P.etched); g.stroke();
-      g.strokeStyle = `rgba(${P.flow.join(',')},${(P.etched ? .06 : .12) * w.e})`; g.lineWidth = lw + 7; this.path(g, w.pts, P.etched); g.stroke();
+      g.strokeStyle = `rgba(${P.flow.join(',')},${(P.etched ? .42 : .75) * w.e})`; g.lineWidth = wl(w) + .5; this.path(g, w.pts, P.etched); g.stroke();
+      g.strokeStyle = `rgba(${P.flow.join(',')},${(P.etched ? .06 : .12) * w.e})`; g.lineWidth = wl(w) + (P.etched ? 4 : 7); this.path(g, w.pts, P.etched); g.stroke();
     }
     // current: dots moving along lit wires, faster for more current
     g.fillStyle = `rgb(${P.lit.join(',')})`;
@@ -903,7 +977,7 @@ class Board {
       if (w.e < .05) continue;
       const sp = 11, off = (now * (.02 + .07 * w.e)) % sp;
       g.globalAlpha = Math.min(1, w.e * 1.3);
-      for (let dd = off; dd < w.len; dd += sp) { const [x, y] = this.at(w, dd); g.beginPath(); g.arc(x, y, P.etched ? 1.6 : 1.25, 0, 6.283); g.fill(); }
+      for (let dd = off; dd < w.len; dd += sp) { const [x, y] = this.at(w, dd); g.beginPath(); g.arc(x, y, P.etched ? (w.cell ? 1.4 : 1.15) : 1.25, 0, 6.283); g.fill(); }
     }
     g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
     // parts
@@ -921,7 +995,7 @@ class Board {
         g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000'; g.beginPath();
         if (k.r) g.arc(k.x, k.y, k.r, 0, 6.283); else g.roundRect(k.x, k.y, k.w, k.h, 4);
         g.fill(); g.globalCompositeOperation = 'source-over';
-        if (this.opts.keepoutStroke === false) continue;
+        if (this.opts.keepoutStroke === false && !k.stroke) continue;
         g.strokeStyle = 'rgba(190,150,96,.28)'; g.lineWidth = 1; g.beginPath();
         if (k.r) g.arc(k.x, k.y, k.r, 0, 6.283); else g.roundRect(k.x, k.y, k.w, k.h, 4);
         g.stroke();
@@ -1192,26 +1266,46 @@ function build4() {
   });
 }
 
-// ---------------------------------------------------------------- 5: the etched panel with the sequencer on glass
-// The sound switches as the 808 has them: each circuit plays one of two instruments.
+// ---------------------------------------------------------------- 5 and 6: the etched panel with the sequencer below
+// The sound switches as the 808 has them (its voice selectors): each circuit plays one of two instruments.
 const SWITCH = { LT: ['Tom', 'Conga'], MT: ['Tom', 'Conga'], HT: ['Tom', 'Conga'], RS: ['Rim shot', 'Claves'], CP: ['Clap', 'Maracas'] };
 const swPos = {};
+// A slide switch drawn as hardware: a bevelled plate, a recessed slot, a ridged plastic thumb with its shadow.
+function switchSVG(second) {
+  const ty = second ? 23 : 7, id = 'sw' + Math.random().toString(36).slice(2, 7);
+  const ridges = [0, 1, 2, 3].map(i => `<line x1="9" x2="19" y1="${ty + 4 + i * 2.6}" y2="${ty + 4 + i * 2.6}" stroke="rgba(0,0,0,.38)" stroke-width="1"/><line x1="9" x2="19" y1="${ty + 5 + i * 2.6}" y2="${ty + 5 + i * 2.6}" stroke="rgba(255,255,255,.45)" stroke-width=".7"/>`).join('');
+  return `<svg width="28" height="46" viewBox="0 0 28 46">
+    <defs>
+      <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4640"/><stop offset=".5" stop-color="#2f2c28"/><stop offset="1" stop-color="#1f1d1a"/></linearGradient>
+      <linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#191714"/></linearGradient>
+      <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4eee1"/><stop offset=".55" stop-color="#c9c1af"/><stop offset="1" stop-color="#8f8775"/></linearGradient>
+    </defs>
+    <rect x=".5" y=".5" width="27" height="45" rx="3.5" fill="url(#${id}p)" stroke="#0b0a09"/>
+    <rect x="1.5" y="1.5" width="25" height="43" rx="2.5" fill="none" stroke="rgba(255,255,255,.1)"/>
+    <rect x="9" y="4" width="10" height="38" rx="2" fill="url(#${id}s)" stroke="rgba(0,0,0,.8)"/>
+    <rect x="6.5" y="${ty + 2}" width="15" height="16" rx="2.5" fill="#000" opacity=".55"/>
+    <rect x="6" y="${ty}" width="16" height="16" rx="2.5" fill="url(#${id}t)" stroke="#57514a" stroke-width=".8"/>
+    <rect x="7" y="${ty + .8}" width="14" height="2" rx="1" fill="rgba(255,255,255,.55)"/>
+    ${ridges}
+  </svg>`;
+}
 function slideSwitch(id) {
   const [a, b] = SWITCH[id];
   const w = el('div', 'slide');
   const paint = () => {
     const second = !!swPos[id];
-    w.innerHTML = `<span class="lbl${second ? '' : ' lit'}">${a}</span><span class="track"><i style="top:${second ? 15 : 2}px"></i></span><span class="lbl${second ? ' lit' : ''}">${b}</span>`;
+    w.innerHTML = `<span class="lbl${second ? '' : ' lit'}">${a}</span>${switchSVG(second)}<span class="lbl${second ? ' lit' : ''}">${b}</span>`;
   };
   w.onclick = () => { swPos[id] = !swPos[id]; paint(); };
   paint();
   return w;
 }
-function build5() {
-  wireAll($('v5'));
-  // The squeezed board: twelve columns of copper with their knobs, the trigger bus under the glass's top edge, the
-  // mix along the top; the board runs on under the glass.
-  const colX0 = 34, colX1 = 1246, top = 42, bottom = 334, kY = 80, kStep = 58, kSize = 34;
+function build5(vid) {
+  const root = $(vid), q = sel => root.querySelector(sel);
+  wireAll(root);
+  // The board: twelve columns of copper with their knobs, the trigger bus just under the sequencer's top edge, the
+  // mix along the top; the board runs on under the sequencer.
+  const colX0 = 34, colX1 = 1246, top = 46, bottom = 356, kY = 84, kStep = 58, kSize = 34;
   const widths = DRUMS.map((d, l) => l === 0 ? .85 : 1); const sum = widths.reduce((a, b) => a + b, 0);
   const cols = []; let x = colX0;
   DRUMS.forEach((d, l) => { const w = (colX1 - colX0) * widths[l] / sum; cols.push({ x, w }); x += w; });
@@ -1219,29 +1313,28 @@ function build5() {
     const cells = DRUMS.map((d, l) => ({ key: d.id, owner: l === 0 ? -1 : l, kind: l === 0 ? 'trg' : KIND[d.id], label: d.name, x: cols[l].x + 4, w: cols[l].w - 8, y: top, h: bottom - top, trigTop: false }));
     // A ground ring round the board's edge, as real boards have; it carries no signal, so it never lights.
     const extra = [{ pts: [[34, bottom + 8], [22, bottom + 20], [22, 776], [38, 792], [1242, 792], [1258, 776], [1258, bottom + 20], [1246, bottom + 8]], owner: 'gnd' }];
-    for (let i = 0; i < 6; i++) extra.push({ pts: [[120 + i * 190, bottom], [120 + i * 190, bottom + 14], [130 + i * 190, bottom + 24], [200 + i * 190, bottom + 24]], owner: 'trig' });
+    for (let i = 0; i < 6; i++) extra.push({ pts: [[120 + i * 190, bottom], [120 + i * 190, bottom + 12], [130 + i * 190, bottom + 22], [200 + i * 190, bottom + 22]], owner: 'trig' });
     return { cells, trigY: bottom, outY: top, x0: colX0, x1: colX1, extra };
   };
-  // Where the controls are mounted the copper is cut away: one clear area per knob and its name, per name plate,
-  // per switch.
+  // Where the controls are mounted the copper is cut away, snug: a circle round each knob and its ticks, a box round
+  // each word and switch. The name plate keeps its faded outline.
   const keep = [];
   DRUMS.forEach((d, l) => {
     const c = cols[l], cx = c.x + c.w / 2;
-    // snug: a circle round each knob and its ticks, a box round each word
     const word = (t, y, h, per) => { const w = t.length * per + 10; keep.push({ x: cx - w / 2, y, w, h }); };
-    if (l === 0) word('Master', 52, 20, 9.5);
-    else { word(d.id, 46, 18, 11); word(d.name, 62, 14, 6.6); }
+    if (l === 0) word('Master', 56, 20, 9.5);
+    else { word(d.id, 50, 18, 11); word(d.name, 66, 14, 6.6); }
     d.knobs.forEach(([n], i) => { const y = kY + i * kStep; keep.push({ x: cx, y: y + kSize / 2, r: kSize / 2 + 9 }); word(n, y + kSize + 4, 14, 6.6); });
-    if (SWITCH[d.id]) { const [a, b2] = SWITCH[d.id], y = kY + d.knobs.length * kStep; word(a, y - 1, 14, 6.6); keep.push({ x: cx - 11, y: y + 13, w: 22, h: 34 }); word(b2, y + 46, 14, 6.6); }
+    if (SWITCH[d.id]) { const [a, b2] = SWITCH[d.id], y = kY + d.knobs.length * kStep; word(a, y - 1, 14, 6.6); keep.push({ x: cx - 16, y: y + 13, w: 32, h: 50 }); word(b2, y + 62, 14, 6.6); }
   });
-  keep.push({ x: 24, y: 4, w: 330, h: 34 }, { x: 760, y: 4, w: 500, h: 34 });
-  new Board($('b5'), layout, 'etched', { noNames: true, keepouts: () => keep, keepoutStroke: false });
-  const host = $('v5cols');
+  keep.push({ x: 26, y: 6, w: 344, h: 34, stroke: true }, { x: 690, y: 4, w: 560, h: 38 });
+  new Board($('b' + vid.slice(1)), layout, 'etched', { noNames: true, keepouts: () => keep, keepoutStroke: false });
+  const host = $(vid + 'cols');
   DRUMS.forEach((d, l) => {
     const c = cols[l];
     const name = l === 0 ? '<div class="t13">Master</div>' : `<div class="t13">${d.id}</div><div class="lbl nm">${d.name}</div>`;
     const lab = el('div', 'colLabel', name);
-    lab.style.left = c.x + 'px'; lab.style.width = c.w + 'px'; lab.style.top = l === 0 ? '55px' : '48px';
+    lab.style.left = c.x + 'px'; lab.style.width = c.w + 'px'; lab.style.top = l === 0 ? '59px' : '52px';
     lab.onclick = () => { S.sel = l; paintAll(); };
     host.append(lab);
     d.knobs.forEach(([n, v], i) => {
@@ -1249,58 +1342,66 @@ function build5() {
       k.style.left = (c.x + c.w / 2 - 30) + 'px'; k.style.width = '60px'; k.style.top = (kY + i * kStep) + 'px';
       host.append(k);
     });
-    if (SWITCH[d.id]) { const sw = slideSwitch(d.id); sw.style.cssText = `position:absolute;left:${c.x + c.w / 2 - 34}px;width:68px;top:${kY + d.knobs.length * kStep}px`; host.append(sw); }
+    if (SWITCH[d.id]) { const sw = slideSwitch(d.id); sw.style.cssText = `position:absolute;left:${c.x + c.w / 2 - 40}px;width:80px;top:${kY + d.knobs.length * kStep}px`; host.append(sw); }
   });
   painters.push(() => host.querySelectorAll('.colLabel').forEach((e, l) => e.classList.toggle('sel', S.sel === l)));
-  // The transport on a strip of the same smoked glass as the sequencer
-  const tr = $('v5transport');
+  // The transport and the files on one strip of smoked glass, mounted on the board
+  const tr = $(vid + 'transport');
   const strip = el('div', 'tstrip');
   const play = btn('Play', '', () => setPlaying(!S.playing));
   const tempo = el('div', 'tempo', `<span class="num">${S.bpm.toFixed(1)}</span><span class="lbl">BPM</span>`);
-  const sw = el('div', 'swing'); sw.append(knob('', S.swing, 22), el('span', 'lbl', 'Swing'));
-  strip.append(play, tempo, btn('Tap'), sw);
-  tr.append(strip, btn('Library'), btn('File'));
+  const sw = el('div', 'swing'); sw.append(knob('', S.swing, 18), el('span', 'lbl', 'Swing'));
+  strip.append(play, tempo, btn('Tap'), sw, el('span', 'tsep'), btn('Library'), btn('File'));
+  tr.append(strip);
   painters.push(() => { play.classList.toggle('hot', S.playing); play.textContent = S.playing ? 'Stop' : 'Play'; });
-  // The right side: the tools for the step, the lane and the pattern
-  const right = $('v5right');
+  // The right side: the tools for the picked step, its lane and the pattern; values on knobs, actions on keys
+  const right = $(vid + 'right');
   let lastKey = '';
   const paintRight = () => {
     const p = shown(), l = S.sel, d = DRUMS[l], st = S.selStep && S.selStep.l === l ? S.selStep.i : -1;
-    const x = st >= 0 ? (stepX[`${S.editing}-${l}-${st}`] || { chance: 100, hits: 1 }) : null;
-    const key = [l, st, S.editing, p.len[l], x && x.chance, x && x.hits, st >= 0 && p.lanes[IDX.AC][st], st >= 0 && p.lanes[l][st]].join('|');
+    const xk = `${S.editing}-${l}-${st}`, x = st >= 0 ? (stepX[xk] || (stepX[xk] = { chance: 100, hits: 1 })) : null;
+    const key = [l, st, S.editing, p.len[l], x && x.chance, x && x.hits, st >= 0 && p.lanes[IDX.AC][st]].join('|');
     if (key === lastKey) return; lastKey = key;
     right.innerHTML = '';
-    const sec = (title) => { const s = el('div', 'tsec'); s.append(el('div', 'lbl head', title)); right.append(s); return s; };
-    const row = (s, ...kids) => { const r = el('div', 'trow'); r.append(...kids); s.append(r); return r; };
-    const stepper = (get, set, unit, min, max, stepBy) => {
-      const v = el('span', 'num val', get() + unit);
-      const m = btn('−', 'sq', () => { set(Math.max(min, get() - stepBy)); paintAll(); });
-      const pl = btn('+', 'sq', () => { set(Math.min(max, get() + stepBy)); paintAll(); });
-      const w = el('div', 'stepper'); w.append(m, v, pl); return w;
+    const sec = title => { const s = el('div', 'tsec'); s.append(el('div', 'lbl head', title)); right.append(s); return s; };
+    const grid = (s, cols) => { const g = el('div', 'tgrid'); g.style.gridTemplateColumns = `repeat(${cols}, 1fr)`; s.append(g); return g; };
+    const done = () => paintAll();
+    // The flat sixth layout sets values in boxes, as the app does now; the fifth turns knobs.
+    const flat = root.classList.contains('flat6');
+    const value = (label, v, o) => {
+      if (!flat) return knob(label, v, 30, false, o);
+      const w = el('div', 'vbox'), n = o.steps - 1; let i = Math.round(v * n);
+      const show = el('span', 'num', o.fmt(i / n));
+      const go = d => { i = Math.max(0, Math.min(n, i + d)); show.textContent = o.fmt(i / n); o.onChange(i / n); o.onDone(); };
+      w.append(el('span', 'lbl', label), btn('−', 'sq', () => go(-1)), show, btn('+', 'sq', () => go(1)));
+      return w;
     };
     // The step
-    const s1 = sec(st >= 0 ? `Step ${st + 1} · ${d.id}` : `Step · click one in ${d.id}'s lane`);
+    const s1 = sec(st >= 0 ? `Step ${st + 1} · ${d.id}` : `Step · pick one in ${d.id}'s lane`);
+    const r1 = el('div', 'tknobs'); s1.append(r1);
     if (st >= 0) {
-      const k = `${S.editing}-${l}-${st}`;
-      const xx = stepX[k] || (stepX[k] = { chance: 100, hits: 1 });
-      row(s1, el('span', 'lbl', 'Chance'), stepper(() => xx.chance, v => { xx.chance = v; }, ' %', 5, 100, 5));
-      const seg = el('div', 'seg'); [1, 2, 3].forEach(h => seg.append(btn(h === 1 ? '1 hit' : String(h), xx.hits === h ? 'is' : '', () => { xx.hits = h; paintAll(); })));
-      row(s1, el('span', 'lbl', 'Roll'), seg);
-      const acc = btn('Accent', p.lanes[IDX.AC][st] ? 'is' : '', () => { p.lanes[IDX.AC][st] = !p.lanes[IDX.AC][st]; paintAll(); });
-      const end = btn('Lane ends here', '', () => { p.len[l] = st + 1; paintAll(); });
-      row(s1, acc, end);
+      r1.append(value('Chance', (x.chance - 5) / 95, { steps: 20, fmt: v => Math.round(v * 95 + 5) + ' %', onChange: v => { x.chance = Math.round(v * 95 + 5); }, onDone: done }));
+      r1.append(value('Roll', (x.hits - 1) / 2, { steps: 3, fmt: v => { const h = Math.round(v * 2) + 1; return h === 1 ? '1 hit' : h + ' hits'; }, onChange: v => { x.hits = Math.round(v * 2) + 1; }, onDone: done }));
+      const keys = el('div', 'tcol');
+      keys.append(btn('Accent', 'tg' + (p.lanes[IDX.AC][st] ? ' is' : ''), () => { p.lanes[IDX.AC][st] = !p.lanes[IDX.AC][st]; paintAll(); }),
+        btn('Lane ends here', '', () => { p.len[l] = st + 1; paintAll(); }));
+      r1.append(keys);
     }
     // The lane
     const s2 = sec(`Lane · ${d.name}`);
-    row(s2, el('span', 'lbl', 'Length'), stepper(() => p.len[l], v => { p.len[l] = v; }, '', 1, 16, 1));
+    const r2 = el('div', 'tknobs'); s2.append(r2);
+    r2.append(value('Length', (p.len[l] - 1) / 15, { steps: 16, fmt: v => String(Math.round(v * 15) + 1), onChange: v => { p.len[l] = Math.round(v * 15) + 1; }, onDone: done }));
+    const g2 = grid(r2, 3);
     const fill = n => () => { p.lanes[l] = p.lanes[l].map((_, i) => i % n === 0); paintAll(); };
-    row(s2, btn('Every 4', '', fill(4)), btn('Every 2', '', fill(2)), btn('Clear', '', () => { p.lanes[l] = p.lanes[l].map(() => false); paintAll(); }));
     const shift = dir => () => { const a = p.lanes[l]; p.lanes[l] = a.map((_, i) => a[(i - dir + 16) % 16]); paintAll(); };
-    row(s2, btn('◀ Shift', '', shift(-1)), btn('Shift ▶', '', shift(1)));
+    g2.append(btn('Every 4', '', fill(4)), btn('Every 2', '', fill(2)), btn('Clear', '', () => { p.lanes[l] = p.lanes[l].map(() => false); paintAll(); }),
+      btn('◀', '', shift(-1)), btn('▶', '', shift(1)));
     // The pattern
     const s3 = sec(`Pattern ${S.editing === -1 ? 'fill' : String(S.editing + 1).padStart(2, '0')}`);
-    row(s3, btn('Copy'), btn('Paste'), btn('Clear', '', () => { if (S.editing >= 0) bank[S.editing] = null; paintAll(); }));
-    row(s3, btn('Save to library'), btn('Drag MIDI'));
+    const g3 = grid(s3, 3);
+    g3.append(btn('Copy'), btn('Paste'), btn('Clear', '', () => { if (S.editing >= 0) bank[S.editing] = null; paintAll(); }));
+    const save = btn('Save to library'); save.style.gridColumn = 'span 2';
+    g3.append(save, btn('Drag MIDI'));
   };
   painters.push(paintRight);
 }
@@ -1314,10 +1415,10 @@ function buildSaver() {
 }
 
 // ---------------------------------------------------------------- start
-build1(); build2(); build3(); build4(); build5(); buildSaver();
+build1(); build2(); build3(); build4(); build5('v5'); build5('v6'); buildSaver();
 document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
   document.querySelectorAll('#chrome .tab[data-v]').forEach(x => x.classList.toggle('is', x === t));
-  $('v5opts').style.display = t.dataset.v === '5' ? 'flex' : 'none'; $('chromeNote').hidden = t.dataset.v === '5';
+  const e5 = t.dataset.v === '5' || t.dataset.v === '6'; $('v5opts').style.display = e5 ? 'flex' : 'none'; $('chromeNote').hidden = e5;
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('is', v.id === 'v' + t.dataset.v));
   for (const b of boards) b.resize();
   try { localStorage.setItem('cs808-layout', t.dataset.v); } catch (e) {}
@@ -1325,7 +1426,7 @@ document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () =>
 try { const v = localStorage.getItem('cs808-layout'); if (v) document.querySelector(`#chrome .tab[data-v="${v}"]`).click(); } catch (e) {}
 // #v5 opens a layout and #v5-play starts the beat: for screenshots taken by a headless browser.
 { const m = location.hash.match(/v(\d)/); if (m) document.querySelector(`#chrome .tab[data-v="${m[1]}"]`).click(); if (location.hash.includes('play')) setTimeout(() => setPlaying(true), 50); }
-function fit() { const vp = $('viewport'); const s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 800); $('stage').style.transform = `scale(${s})`; }
+function fit() { const vp = $('viewport'); const s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 800); $('stage').style.transform = `scale(${s})`; window.stageScale = s; for (const b of boards) b.resize(); }
 window.addEventListener('resize', fit); fit();
 document.addEventListener('keydown', e => {
   if (e.code === 'Space') { e.preventDefault(); setPlaying(!S.playing); }
