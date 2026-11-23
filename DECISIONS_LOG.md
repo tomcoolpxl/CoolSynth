@@ -6000,3 +6000,44 @@ each against a reference): audition from the next bar.
 - The engine (`9ce64a8`): `StepSequencer::setChainFrom`, a chain that begins at a given bar instead of the end of
   the pattern that plays. CoolSynth does not use the sequencer; its pointer moves with the engine.
 - CoolSynth808 `616bb93`. Not checked by ear yet.
+
+## D275. CoolSynth 303: a third app, the TB-303 as its circuit (2026-11-23)
+
+The user's wish: a third product, the TB-303, built from its circuits as the 808 was, from the service notes and the
+owner's manual. The plan is `docs/design/COOLSYNTH_303.md`; the research `docs/research/tb-303-circuit.md` (its new
+section) and `docs/research/tb-303-app.md`. The user's choices, each put as a pick list (the recommended first):
+- Where it lives (options: its own app repository with the circuit in `coolsynth-engine`, chosen; one app for the
+  303 and the 808, as ReBirth; a monorepo): `tomcoolpxl/CoolSynth303`. No separate engine: the 303 is one more
+  generator in the shared engine, on the 808's solver.
+- Today's TB-303 generator, the Open303 rewrite (options: the circuit replaces it, chosen; both kept; the circuit in
+  the app only): replaced in CoolSynth too once the circuit passes its checks, Acid levelled again, the user asked
+  before saved projects change sound in a release.
+- Which circuit (options: the stock one, the Devil Fish later as trimmers, chosen; with the Devil Fish now; stock
+  only): the 1982 service notes' circuit.
+- The name (options: CoolSynth 303, chosen; CoolSynth Acid; later): "TB-303" never on the panel; the README names
+  Roland's mark with no endorsement, as AudioRealism and D16 do. Roland's US mark 6044644 (the stylised "TB-303",
+  plug-in software among its goods) and its 2019 EU filing 018016159 (the 303's look); a registry search before
+  release.
+- The download (options: download and keep local, chosen; none): Din Sync's recordings of their TB-303 (2010), 25
+  sets at documented knob positions, the only real 303 at known settings found free. No licence stated: in
+  `tools/references/tb303-dinsync`, not in git; only numbers measured from them are committed.
+- What "right" means (options: ngspice stage by stage, then the trimmers fitted, chosen; ngspice as drawn only;
+  fitted closely to one unit): each stage within a few percent of our netlist's render, then TM3, TM4, TM5 and the
+  parts known to vary set to the Din Sync unit and the published figures. Real units' full cutoff spreads from
+  1.2 to 3 kHz.
+- The BA662 (options: its transistors, chosen; a behavioural OTA): from Open Music Labs' reverse-engineered
+  schematic. No SPICE model of it exists.
+- The gate (options: as measured, exact, chosen; with the measured wobble; plain MIDI notes): Julian Schmidt's
+  logic-analyser timing of the CPU, 3 of 6 clocks, a slide holding it high, the lag a fixed 2 ms.
+
+The user's other words, kept:
+- The interface is parked until the engine is done. When it resumes: the original's layout in CoolSynth 808's
+  style, programming completely new, after the software 303s rated best for usability.
+- A style the user loves: TAL-Vocoder 3's panel, its screenshot in `tools/references/ui-style` (TAL's image, not in
+  git), described in `docs/research/tb-303-app.md`.
+- The user's question whether ReBirth had more than the 303: it had a step-at-a-time editor, random and alter,
+  shift, transpose, swing, distortion, a pattern filter, compressor and delay, and a song mode that recorded every
+  knob (its 2.0.1 manual).
+
+Left to choose later, with numbers: the oversampling, once the circuit's aliasing and cost are measured; how the
+303 and 808 apps play together; a library of acid lines; which Devil Fish changes.

@@ -70,6 +70,42 @@ Against the published figures (`tests/V3Tb303Tests.cpp`):
 
 Not checked: a real 303's recordings at known settings (none free); the accent's sweep against a real one (Open303's 15 ms against Whittle's 47 kOhm and 1 uF).
 
+## For the circuit model of CoolSynth 303 (D275)
+
+Searched again on 2026-11-23, for a model of every stage from the service notes (`docs/design/COOLSYNTH_303.md`).
+
+The real unit:
+- Din Sync's reference recordings of their TB-303 (2010, dinsync.info): 25 WAVs, stereo, 16-bit, 44.1 kHz, 49 s
+  each, 16 low C notes a set (saw and square, plain and accented), the five knobs at 0, 25, 50, 75 and 100 % in
+  documented sets. No licence stated: kept in `tools/references/tb303-dinsync`, not in git.
+- No other real 303 at known settings is free. Lemus's recording protocol (lemusdev.org/ro-mono-303/record) is a
+  script to hand an owner, CC BY 4.0, with no takes yet.
+
+Measurements:
+- Julian Schmidt's logic analyser on the CPU (sonic-potions.com): the gate 3 of 6 clocks, 50.3 % at the slowest
+  tempo and 55 to 56 % at the fastest, 0.8 to 3.3 ms after the clock (2.06 ms mean); in triplets 5 of 8; a slide
+  never lowers the gate; accent latched for the whole step.
+- Whittle's Devil Fish manual, for a stock 303: the note's start 1 to 5 ms after the gate, its end 8 ms full then
+  8 ms falling; the filter decay 200 ms to 2 s, 200 ms on an accent; the volume's own 3 to 4 s; 32 Hz 5 dB down;
+  the highest resonant peak near 2.5 kHz; Env Mod never zero; the slide 22 ms.
+- Richie Burnett's response of a real unit at full resonance (sequencer.de): the peak from about +11 dB at 260 Hz
+  to +39 dB high up; below 100 Hz about 5 dB an octave down.
+- Units spread: full cutoff from 1.2 to 3 kHz (ro-mono-303's fit to the Din Sync set); the filter's ring 2.0 ms
+  drawn, 2.5 ms fitted.
+- The square's width about 45 % high and 71 % at the lowest notes (Olney, after Whittle).
+
+Parts and models:
+- The BA662: Open Music Labs' reverse-engineered schematic (an OTA as the CA3080 with Wilson mirrors, a buffer),
+  its offsets measured; the AS662 clone's datasheet gives its transconductance.
+- The 2SK30A: the datasheet's ranks (O 0.6 to 1.4 mA, Y 1.2 to 3 mA). The AN6562: an LM358 in effect.
+- No model and no pinout found for the 2SC1583 and 2SC2291 duals.
+- Schematics to cross-check our reading: the x0xb0x's Eagle files (MIT, github.com/a1k0n/x0xb0x), its node
+  voltages (Open Music Labs' x0xmap), Oakley's TB3030 (CC BY-SA). No complete, licensed netlist of the voice exists;
+  vibe303's is a warning (mixed sheets, its conflicts listed).
+- Doubts: C29 reversed on real units; two resistors near the ladder some call misprinted (Eddy Bergman, a claim).
+- Papers: none free on the 303's ladder in WDF or nodal form; McClellan (DAFx 2026) proves a linear diode ladder
+  stable for feedback up to 8.9 as it changes.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

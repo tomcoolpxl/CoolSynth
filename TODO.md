@@ -283,6 +283,12 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     labels collide in places. The realistic panel is still to draw, and the user's notes on the views are awaited.
     Nothing is built yet: no sequencer, no plugin target. Before a release: the name in the trademark registries, and the line that says whose mark
     TR-808 is.
+36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
+    on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
+    percent of ngspice, then the trimmers fitted to Din Sync's real unit (`tools/references/tb303-dinsync`, local)
+    and the published figures; the BA662 as its transistors; the gate as Schmidt measured. It replaces the Open303
+    generator (TODO 32) in CoolSynth once it passes. Next: the netlists read from the service notes into
+    `tools/tb303`, rendered with ngspice. The interface is parked by the user (`docs/research/tb-303-app.md`).
 
 
 ## Standing notes
