@@ -6047,10 +6047,22 @@ Left to choose later, with numbers: the oversampling, once the circuit's aliasin
 - The user listens to each beat rendered offline (CoolSynth808's `CoolSynth808Render`, WAV clips sent to them) beside
   a YouTube link to its record. Against the records they could not tell "same" under a full mix, so the pass judges
   by feel: does it groove and sound like the style.
-- 22 of the 56 beats heard. All kept except two, fixed: Just Be Good to Me had no cowbell (added, a syncopated 808
+- 18 of the 56 beats heard one by one, then the other 38 sent together. All kept except two, fixed: Just Be Good to Me had no cowbell (added, a syncopated 808
   cowbell off the quarter notes), and the new jack swing beat was weak (rewritten). Both fixes were heard and kept.
 - The user's view: a drum pattern cannot be licensed, so published transcriptions may be used directly. The one free
   library found with song patterns (808.pixll.de) is gone; the Wayback Machine keeps its pages but not its grids,
   which the site loaded separately.
-- Left: 34 beats unheard (from the Miami bass beats on). Planet Rock may want a cowbell too (a cowbell list names it).
+- The other 38 went to the user at once, to name only those that are wrong. Planet Rock may want a cowbell too (a cowbell list names it).
 - CoolSynth808 `6523165`.
+
+## D276. CoolSynth 808: starter beats for modern genres (2026-11-23)
+
+- The user asked for generic beginner beats for modern music, "not stupid Casio crap".
+- 22 starter beats on a shelf of their own, listed first: house, deep house, tech house, techno, UK garage (2-step),
+  boom bap, lo-fi hip hop, trap, UK drill, reggaeton (dembow), afrobeats, amapiano, drum and bass, dubstep, pop, R&B,
+  disco, synthwave, funk, breakbeat, Jersey club and phonk.
+- Each is two bars at its genre's usual tempo and swing, with ghost notes, rolls where the genre has them and a
+  variation in bar two, after the common grooves LANDR, Native Instruments and Splice describe. Amapiano's log
+  drum is the low tom, tuned low and long.
+- Their confidence is "style": they follow no record, and the shelf shows no transcription verdict for them.
+- CoolSynth808 `2be6dbb`. Sent to the user as clips, with the other 38 classics, to name the wrong ones.
