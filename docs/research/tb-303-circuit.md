@@ -178,6 +178,26 @@ checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusicla
 - The note's start: IC15's control current rises 4.8 ms after the gate (Whittle: 1 to 5 ms, typically 4 ms), set by
   the trigger's path through D36, R134 and C41 into Q32.
 
+## Running it in real time (D279)
+
+Searched on 2026-11-23, before putting the circuit in the engine.
+
+- TriggerFish's 303 (its v2.3.1 technical reports, BSD): the saw is a phase ramp with a polyBLEP reset (a minBLEP for
+  hard sync); only Q8 is a circuit, a 2x2 damped Newton per sample, up to 8 iterations, warm-started. 4x of the
+  host by default. Its Q8 duty against ngspice: 10 Hz 71.6 % (model 73.6), 135 Hz 45.7 %, 1 kHz 31.2 %. Cost at 4x
+  about 1.0 to 1.2 us per 48 kHz sample (5 to 6 % of a core). Its ladder is a reduced tanh model, 4 unknowns, damped
+  Newton, aliasing -36 dBc at 2x and -47.7 dBc at 4x of 48 kHz.
+- Olsen, Werner, Germain, DAFx-17: a fixed-step WDF relaxation oscillator locks its period to whole samples, its
+  pitch off by several cents even at 32x; their fix predicts the crossing, steps at 16x for three samples around it,
+  and places a polyBLEP at the sub-sample time on the output path (0.001 cent error).
+- Valimaki, Pekonen, Nam (JASA 2012): a 4-point B-spline polyBLEP saw is perceptually alias-free up to 7.8 kHz at
+  44.1 kHz; 2-point up to 2.1 kHz.
+- Zavalishin (The Art of VA Filter Design): solve a nested feedback loop as one multidimensional Newton system, and
+  oversample the whole loop.
+- Werner, Abel, Smith (DAFx-14): split where a low-impedance output drives a high-impedance input, but not inside a
+  feedback loop. Holters and Zolzer (DAFx-17): a Newton iteration costs as N squared; decomposing helps only where no
+  global feedback ties the parts.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

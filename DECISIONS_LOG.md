@@ -6103,3 +6103,23 @@ Taken on the way while writing the netlists (the user: "do not stop, continue"),
   in many places, each piece checked to have one.
 - Still to draw: the cymbal (about 97 parts) and the two hi-hats (about 70).
 - CoolSynth808 `75d093c`, `11e83fa`, `7b3e3a3`; the engine at `2363d46`.
+
+
+## D279. CoolSynth 303: how the circuit runs in the engine (2026-11-23)
+
+Research (`docs/research/tb-303-circuit.md`, its real-time section): TriggerFish's 303 runs its saw as a phase ramp with
+a band-limited reset and only Q8 as a circuit, its ladder as a reduced tanh model; a fixed-step solver can reset a
+relaxation oscillator only on sample boundaries, the pitch off by several cents even at 32x (Olsen, Werner, Germain,
+DAFx-17); the whole feedback loop must be solved together (Zavalishin). The user's choices, each put as a pick list:
+- The VCO (options: its circuits with the reset as an exact event, chosen; the whole VCO with local sub-stepping;
+  brute force at 8x): the expo converter, C33, the JFET and Q8 as circuits at 192 kHz; the thyristor's reset found at
+  its time inside the sample, a 4-point polyBLEP of the step on the output. The reset's own 0.2 us is not simulated.
+- The filter (options: the resonance loop in one solve, chosen; split at the buffers with a sample's delay): the
+  ladder, its input pair, the read-out pair and Q18 in one circuit; the slow parts apart. The costliest stage,
+  measured first.
+- The rate (options: 192 kHz then measured, chosen; 384 kHz from the start): 2x of the voice, aliasing and cost put
+  to the user with numbers before it is settled.
+
+Taken on the way (the user's "carry on"): the 12 V rail is 11.85 V (IC16: 5.333 V times 1 + 2.2k / 1.8k), in every
+netlist; it barely moves the sound. All 25 of Din Sync's sets compared: mostly within 1 dB; set B's resonance at a
+quarter turn is open.

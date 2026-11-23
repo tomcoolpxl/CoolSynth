@@ -293,8 +293,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     corrected to 22k). The envelope, the VCA (the BA662 as its transistors) and the whole voice (`voice.cir`) are
     done; against Din Sync's unit, with TM3 fitted at 0.35, each knob alone matches within about 1 to 3 dB and the
     accent's loudness within 1 dB after its first 25 ms; the square too, with C11 fitted at 0.82 uF; all 25 sets
-    mostly within 1 dB but for set B's resonance at a quarter turn (open); the rail is 11.85 V, not 12. Next: the
-    circuit in the engine, stage by stage, each against its ngspice render. The interface is parked by the user
+    mostly within 1 dB but for set B's resonance at a quarter turn (open); the rail is 11.85 V, not 12. How it runs
+    (D279): the VCO's circuits with the reset as an exact event and a polyBLEP; the filter's resonance loop in one
+    solve; 192 kHz, then aliasing and cost measured and put to the user. Next: the filter's loop in `CircuitWdf`
+    against `vcf.cir`, its cost measured first; then the VCO, the envelope, the VCA. The interface is parked by the user
     (`docs/research/tb-303-app.md`).
 
 
