@@ -287,8 +287,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
     percent of ngspice, then the trimmers fitted to Din Sync's real unit (`tools/references/tb303-dinsync`, local)
     and the published figures; the BA662 as its transistors; the gate as Schmidt measured. It replaces the Open303
-    generator (TODO 32) in CoolSynth once it passes. Next: the netlists read from the service notes into
-    `tools/tb303`, rendered with ngspice. The interface is parked by the user (`docs/research/tb-303-app.md`).
+    generator (TODO 32) in CoolSynth once it passes. The netlists in the engine's `tools/tb303`: the VCO and the
+    VCF are done and calibrated by page 7 (`docs/research/tb-303-circuit.md`, its netlists section; R110 and R111
+    corrected to 22k). Next: the envelope (R138's top and the DECAY pot's ends to trace), the accent and the VCA with
+    the BA662 as its transistors; then the circuit in the engine, stage by stage. The interface is parked by the
+    user (`docs/research/tb-303-app.md`).
 
 
 ## Standing notes

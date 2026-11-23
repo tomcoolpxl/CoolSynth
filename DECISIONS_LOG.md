@@ -6042,6 +6042,14 @@ The user's other words, kept:
 Left to choose later, with numbers: the oversampling, once the circuit's aliasing and cost are measured; how the
 303 and 808 apps play together; a library of acid lines; which Devil Fish changes.
 
+Taken on the way while writing the netlists (the user: "do not stop, continue"), each the only reading that fits:
+- R110 and R111 are 22k, not the service notes' 2.2k: the x0xb0x's schematic and Eddy Bergman's build have 22k, and
+  with 2.2k the filter cannot ring as page 7's adjustment expects.
+- The 2SC945 and 2SA733 have no published SPICE models: Fairchild's 2N3904 and 2N3906 stand in, their IS set to both
+  datasheets' typical VBE (0.62 V at 1 mA), the 2SA733(P)'s gain to its rank's middle. With the 2N3906's own IS the
+  cutoff sat 40 % high even with TM3 at its end; with the datasheets' VBE, TM3 lands at 0.17 of its travel.
+- TP6 is Q19's emitter, not C14's output: only there does page 5's sketch (5.2 to 5.8 V) hold.
+
 ## D275. CoolSynth 808: the library's listening pass, by feel (2026-11-23)
 
 - The user listens to each beat rendered offline (CoolSynth808's `CoolSynth808Render`, WAV clips sent to them) beside

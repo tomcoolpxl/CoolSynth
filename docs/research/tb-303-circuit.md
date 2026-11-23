@@ -106,6 +106,34 @@ Parts and models:
 - Papers: none free on the 303's ladder in WDF or nodal form; McClellan (DAFx 2026) proves a linear diode ladder
   stable for feedback up to 8.9 as it changes.
 
+## The netlists (D275)
+
+In the engine's `tools/tb303`, read from page 5 at 600 dpi (the scan kept locally in `tools/references/tb303-service`),
+checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusiclabs.com/wiki/x0xb0x, MIT).
+
+- `vco.cir`: the slide, the exponential converter (Q26, IC11a), the C33 saw with its thyristor reset (Q24, Q25, Q27;
+  Richie Burnett's description, synth-diy 2011), Q28 and the Q8 square.
+  - The reset lets go only through real transistors' storage and low-current gain; the 2SC945 and 2SA733 are taken as
+    Fairchild's 2N3904 and 2N3906 (their datasheets' models), IS set to both parts' typical VBE of 0.62 V at 1 mA.
+  - Calibrated by page 7 (`calibrate.py vco`): A at 110.0 Hz, 2:1 and 4.002:1. Then the pitch tracks within 1.4
+    cents from C1 to C5; the slide's time constant is 22.00 ms; the saw runs 5.6 to 11.2 V, the square 5.33 to 8.8 V.
+  - The square's duty falls from 59 % at C1 to 37 % at C5; published: about 71 % low, 45 % high. To settle against
+    the Din Sync set (C2).
+- `vcf.cir`: the ladder, Q12's drive, Q21's read-out, the resonance's feedback, the Q9/Q10/Q11 converter (page 8's
+  Fig. 2), CUTOFF, TM3, ENV MOD and the accent's C13 through the resonance pot's second gang.
+  - A misprint in the notes: R110 and R111 (Q21's loads) are 22k, not 2.2k (the x0xb0x; Eddy Bergman's build). With
+    2.2k the resonance's loop gains about 1.3 and nothing rings.
+  - TP6 is Q19's emitter: 5.7 V at rest, inside page 5's sketch of 5.2 to 5.8 V.
+  - Calibrated by page 7 (`calibrate.py vcf`): TM3 at 0.17 of its travel gives the 2.000 ms ring.
+  - Then, at full resonance: the peak from 246 Hz to 2.13 kHz over the CUTOFF knob (real units 1.2 to 3 kHz at the
+    top, Whittle about 2.5 kHz); +8 dB low to +35 dB high over the low end (Burnett: +11 dB at 260 Hz, rising); no
+    self-oscillation; the coupling capacitors' second resonance near 7 Hz (Stinchcombe).
+- The envelope, read so far: Q37 inverts the CPU's gate; Q36 passes it as GATE; C54 and R148 make Q38 a one-shot
+  that charges C62 (1 uF) through D37 and R152; Q41 and Q40 follow C62 over Q39, a 2SK30(Y) as a current sink. C62
+  discharges through R138 (68k) and DECAY (1 M): 68k gives 160 ms to 10 %, 1.07 M 2.46 s, page 5's 200 ms and 2.5 s.
+  On an accent IC12 puts the DECAY line on D28, D27 and D26 (R117 from 5.333 V), the short decay. Still to trace:
+  R138's top and the DECAY pot's ends, then the VCA (IC15 with Q31, Q32) and the BA662 itself.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).
