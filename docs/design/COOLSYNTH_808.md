@@ -114,9 +114,11 @@ Asked for by the user (2026-11-22), to be designed with options before it is bui
 - The sequencer, in the engine repository so CoolSynth's layers can use it later, with its tests. Built (D266):
   its playback; recording, the chain keys, MIDI clock and handing it edits come with the app.
 - The app's shell: a window, the audio device, the 808 Kit from the engine, MIDI in at the General MIDI keys.
-- The panel and the lanes in the four themes.
-- Saving kits, patterns and projects.
-- Under the Lid: the taps, then the reduced board, then each drum complete.
+  Built (D267), in `tomcoolpxl/CoolSynth808`.
+- The panel and the lanes in the four themes. Built (D267).
+- Saving kits, patterns and projects. Built (D267): projects, undo, and patterns kept in the library.
+- Under the Lid: the taps, then the reduced board, then each drum complete. The reduced board is built (D267), its
+  current drawn from the drums struck; the solver's taps and each drum complete are still to do.
 - The installer and the first release; the plugin formats after.
 
 ## Answered (D264)

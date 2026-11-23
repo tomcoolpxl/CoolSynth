@@ -254,7 +254,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     engine moved to its own repository for both apps. Now: the specification `docs/design/COOLSYNTH_808.md`
     is approved; the engine is its own repository, `coolsynth-engine` (D265). The sequencer is built there (D266,
     `src/synth/StepSequencer`, its playback; the app's recording, chain keys, clock and handing it edits come with
-    the app). Next in its order: the app's shell. Still to design with the user (options) before it is built:
+    the app). The app is built overnight (D267): `tomcoolpxl/CoolSynth808` at `E:\github\CoolSynth808`, the panel,
+    lanes, Under the Lid's board, projects, undo, MIDI clock in and out, recording, MIDI drag and a library of 56
+    beats, tested offline. Waiting on the user: their review of the app, the library's beats by ear (most are
+    low-confidence transcriptions, `docs/library-research.md` there), and the library's design. Still to design with
+    the user (options) before it is built:
     the library of classic beats, how it is shown, and keeping and managing your own patterns
     (`COOLSYNTH_808.md`, "To design with the user"). The history below is the mockups' round.
     The 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and

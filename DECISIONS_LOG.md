@@ -5724,6 +5724,45 @@ Built in the engine repository (`src/synth/StepSequencer`, coolsynth-engine `ad2
   while writing the tests: lanes reset at every bar would make a length per lane pointless past one bar.
 - A note-off follows each hit at half its spacing (the 808's drums play their tails out); a stop sends the rest.
   The unaccented velocity is the lowest (the 808 kit's 4.7 V trigger), the accented one full (the Accent knob's).
+
+## D267. CoolSynth 808's app, built overnight (2026-11-23)
+
+The user, going to sleep: the app's shell first, testing it all without them, then everything in between, the
+pattern library last (a quick and dirty way to keep patterns now, its management decided with them in the morning),
+then a full code review; at least 20 legendary beats across the 80s, 90s, 2000s and later, more if crucial, acid
+house among them; never stop to ask. Each choice below took the recommended option; the others are listed.
+
+- The repository (as the user chose in D264): `tomcoolpxl/CoolSynth808`, public, MIT, at `E:\github\CoolSynth808`,
+  with JUCE (CoolSynth's commit, 9.0.5) and the engine as submodules. Its decisions are logged here, in one
+  numbering, and its `GEMINI.md` says so (options: here; a log of its own).
+- The app's form (options: a JUCE audio plugin built as a Standalone only; a plain JUCE app with its own audio
+  device code): the plugin built as a Standalone. JUCE's standalone wrapper brings the audio and MIDI settings and
+  keeps the last state; VST3 and CLAP become one line of the build file.
+- The sound (options: the engine's EngineV3 with the stock 808 Kit's settings; the three 808 generators driven by
+  the app's own voice code): EngineV3, so the kit sounds exactly as CoolSynth's, oversampling, the Kit mode's one
+  voice and the overload rule included. `src/Kit.cpp` sets the three generators as the stock kit (every knob at 12
+  o'clock, every Level full, each generator at 0.8, the amplifier open and never released, +3.5 dB).
+- The knobs (options: no parameters for a host until the plugin formats, the project as the one truth; JUCE's
+  parameter tree now): the project, on the message thread, handed to the audio thread through a lock the audio thread
+  only tries, so it never waits. Undo keeps whole projects (64 steps); a knob's drag or a step's chance drag is one.
+- The lanes' notes (options: from the kit's switches; stored with each pattern): from the kit's switches, as on the
+  machine; a library beat that needs the congas, claves or maracas sets them.
+- MIDI clock in (options: the follower's own beat, bent toward the pulses; a beat set from each pulse): bent, so
+  the computer's MIDI jitter never reads as a jump to the sequencer. Out: start, stop and 24 pulses a beat while it
+  plays on its own clock; none while it follows one.
+- Recording (options: the drum on the nearest step; with its velocity as the accent): the nearest step, no accent,
+  for simplicity; a recording pass is one undo step.
+- Fill (options: a click asks for the fill while playing, a shift-click or a click while stopped edits it; a separate
+  edit key): the first, keeping the panel's keys as they are.
+- The library (options: named by style and year with the record as "after"; named after the record): by style and
+  year, the record and artist as "after", sources and a confidence per beat in the research file. A beat loads into
+  the pattern being edited, a beat of several parts into the patterns after it as a chain. Your own patterns are
+  kept as `.cs808pattern` files in `%APPDATA%\CoolSynth808\Patterns` with Keep, listed under My patterns.
+- The research for the beats ran beside the build; the user added on the way: no limit of 20 when more are crucial,
+  New Order's "Blue Monday" (an Oberheim DMX beat, played here on the 808's sounds), UK big beat (The Chemical
+  Brothers, The Prodigy, Fatboy Slim), a Squarepusher- and an Aphex Twin-inspired beat, famous jungle beats, and the
+  Neptunes' "Drop It Like It's Hot" (and "Hollaback Girl", the user's description fitting both); beats longer than A
+  and B as several chained patterns.
 - CoolSynth onto the submodule: the 39 paths (172 files) removed here, `add_subdirectory(external/coolsynth-engine)`,
   the app's test program taking the engine's allocation alarm and test helpers from the submodule. The CI
   workflows already check out submodules recursively.
