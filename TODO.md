@@ -289,10 +289,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     and the published figures; the BA662 as its transistors; the gate as Schmidt measured. It replaces the Open303
     generator (TODO 32) in CoolSynth once it passes. The netlists in the engine's `tools/tb303`: the VCO and the
     VCF are done and calibrated by page 7 (`docs/research/tb-303-circuit.md`, its netlists section; R110 and R111
-    corrected to 22k). The envelope and the VCA (the BA662 as its transistors) are done too. Next: D34 and R137's
-    far end; the whole voice in one netlist; the note's start delay and the accent's level against Whittle; the
-    Din Sync recordings (the square's duty at C2, the knobs' ranges); then the circuit in the engine, stage by
-    stage. The interface is parked by the user (`docs/research/tb-303-app.md`).
+    corrected to 22k). The envelope, the VCA (the BA662 as its transistors) and the whole voice (`voice.cir`) are
+    done; against Din Sync's unit the saw matches within about 1 dB with TM3 fitted at 0.35. Next: the other sets
+    (resonance, env mod, decay, accent, the square), the knobs' taper, D34 and R137's far end, the note's start
+    delay against Whittle; then the circuit in the engine, stage by stage. The interface is parked by the user
+    (`docs/research/tb-303-app.md`).
 
 
 ## Standing notes

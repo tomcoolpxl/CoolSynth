@@ -144,6 +144,13 @@ checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusicla
   - A note opens on the gate, holds while C42 refills through 1.5 M, and dies within about 15 ms of the gate's fall
     (Whittle: 16 ms).
   - Left out: D34 and R137, from GATE's side to a line not yet traced.
+- `voice.py` builds `voice.cir`, the whole voice from the stages; 0.3 s of a note renders in about 5 s.
+- `compare_dinsync.py` against Din Sync's real unit (SET-A1, low C saw, the other knobs at nothing):
+  - With page 7's TM3, at cutoff full: pitch within 4 cents, harmonics 2 to 8 within 2.2 dB, the circuit brighter.
+  - TM3 fitted at 0.35: harmonics 2 to 8 within 0.7 dB on average at cutoff 25, 50 and 100 %, 2.1 dB at 75 %
+    (the knob positions are approximate, and the audio taper is assumed). The unit is darker than page 7's 2 ms
+    ring, as ro-mono-303 found for it (2.5 ms).
+  - Not yet compared: resonance, env mod, decay and accent (sets A2 to E5), the square.
 
 ## What this means for CoolSynth
 
