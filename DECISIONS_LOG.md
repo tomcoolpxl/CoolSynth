@@ -6066,3 +6066,5 @@ Left to choose later, with numbers: the oversampling, once the circuit's aliasin
   drum is the low tom, tuned low and long.
 - Their confidence is "style": they follow no record, and the shelf shows no transcription verdict for them.
 - CoolSynth808 `2be6dbb`. Sent to the user as clips, with the other 38 classics, to name the wrong ones.
+- The user heard all 60 clips (the 38 classics and the 22 starters): all okay. The whole library is now heard by
+  feel; the classics' confidence labels stay, since by feel is not against the record.
