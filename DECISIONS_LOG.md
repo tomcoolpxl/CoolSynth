@@ -6173,3 +6173,23 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
   or moved on its slider stays where it is.
 - The same frames show the whole board right: the bass drum fading over about 300 ms, the closed hat cutting the open
   one at its strike.
+
+## D283. CoolSynth 808: a UX and UI review, and three layouts to try (2026-11-23)
+
+- Asked for by the user: a full UX review, then a UI review, checked against good examples online, free of the
+  808's strict layout; several views allowed. Written in `docs/design/COOLSYNTH_808_REVIEW.md`.
+- The user's frame, from their answers (options in brackets):
+  - For producers and curious learners alike, drawn in by the circuit; a simple and an advanced view feel lame
+    (producers hooked by the circuit; producers only; learners too).
+  - Both standalone and in a DAW, standalone first (mostly in a DAW; mostly standalone).
+  - The 808's spirit with a modern workflow (fully free; close to the original).
+  - The review as a document, then layouts as switchable mockup views in the app, not wired up (HTML mockups;
+    the document only).
+  - Linking knobs to circuit parts is not wanted; a full-screen circuit as a screensaver is a welcome extra.
+- Found: the step keys double as pattern keys, so what is edited, what plays and what comes next are never seen
+  together; chains are a hidden shift-click over neighbours; Fill means two things; the circuit is a page apart;
+  the type is Segoe UI in fourteen sizes, every control a box; a lit step in the fourth group is 1.5 to 1 against
+  an unlit one.
+- Three layouts to try: the beat desk (the sequencer at the centre, a live board band), the 808 and its lid (the
+  classic panel, an edit view, the circuit by zooming), the open machine (the circuit at the centre as the drum
+  selector). All with a pattern row of its own, a chain of blocks, the selected drum's knobs and one typeface.
