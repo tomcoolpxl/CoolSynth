@@ -128,11 +128,22 @@ checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusicla
   - Then, at full resonance: the peak from 246 Hz to 2.13 kHz over the CUTOFF knob (real units 1.2 to 3 kHz at the
     top, Whittle about 2.5 kHz); +8 dB low to +35 dB high over the low end (Burnett: +11 dB at 260 Hz, rising); no
     self-oscillation; the coupling capacitors' second resonance near 7 Hz (Stinchcombe).
-- The envelope, read so far: Q37 inverts the CPU's gate; Q36 passes it as GATE; C54 and R148 make Q38 a one-shot
-  that charges C62 (1 uF) through D37 and R152; Q41 and Q40 follow C62 over Q39, a 2SK30(Y) as a current sink. C62
-  discharges through R138 (68k) and DECAY (1 M): 68k gives 160 ms to 10 %, 1.07 M 2.46 s, page 5's 200 ms and 2.5 s.
-  On an accent IC12 puts the DECAY line on D28, D27 and D26 (R117 from 5.333 V), the short decay. Still to trace:
-  R138's top and the DECAY pot's ends, then the VCA (IC15 with Q31, Q32) and the BA662 itself.
+- `env.cir`: Q37 inverts the CPU's gate; Q36 passes it as GATE; C54 and R148 make Q38 a one-shot that charges C62
+  (1 uF) through D37 and R152; Q41 and Q40 follow C62 over Q39, a 2SK30(Y) as a current sink. C62 falls through
+  R138 (68k) to the DECAY line, and through DECAY (1 M A) to the diodes D28, D29 and D26 (R117 from 5.333 V); on an
+  accent IC12B shorts DECAY and IC12A passes the envelope to the ACCENT knob.
+  - 100 to 10 % in 172 ms at the least DECAY and 2.41 s at the most (page 5: 200 ms and 2.5 s).
+  - A held accent decays in 172 ms whatever DECAY says (Whittle). IC13 latches the accent for the whole step, so at
+    120 BPM it halves in 50 ms, then finishes at DECAY's rate.
+  - The envelope peaks at 10.2 V and rests at 0.02 V.
+- `vca.cir`: IC15 as Open Music Labs' reverse-engineered BA662 (a CA3080-like input mirror with its measured 500 ohm,
+  Wilson mirrors as an LM13700's, a complementary follower), Q31 and Q32 on C42, the accent through D27, with the
+  envelope's circuit so GATE and the trigger come from it.
+  - The audio comes from the filter's output (R121) and the RESONANCE wiper (R122), as the x0xb0x draws them: more
+    resonance feeds the VCA more.
+  - A note opens on the gate, holds while C42 refills through 1.5 M, and dies within about 15 ms of the gate's fall
+    (Whittle: 16 ms).
+  - Left out: D34 and R137, from GATE's side to a line not yet traced.
 
 ## What this means for CoolSynth
 
