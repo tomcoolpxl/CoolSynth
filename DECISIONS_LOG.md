@@ -6232,3 +6232,25 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
 - So the step tools move to a pop-up on the step right-clicked (chance, a roll of one to three, the lane ending
   there), and the pattern tools to a menu on the pattern right-clicked (edit without playing, copy, paste, clear,
   save to the library, drag out as MIDI, add to the chain). In `docs/design/mockups/coolsynth-808-layouts.html`.
+
+## D287. CoolSynth 808: the fifth layout chosen, and corrected after a close look (2026-11-23)
+
+- The user: the fifth layout, the etched panel with glass, is the one to go on with.
+- The right side holds the tools, not a circuit: the user asked for step tools, not another electrical view. So
+  D286's drum up close is undone: the picked step (chance, roll, accent, the lane ending there), its lane (length,
+  every 4, every 2, clear, shift) and the pattern (copy, paste, clear, save to the library, drag MIDI). A step
+  clicked is also the step picked; right-click still works.
+- From the user's list, looked at in screenshots at full resolution (headless Edge at twice the density; the
+  browser pane's are too small to judge by):
+  - knob names and tick rings near white;
+  - the first column is Master (Accent and Volume), not AC above Accent;
+  - the sound switches as slide switches named in words: Tom or Conga, Rim shot or Claves, Clap or Maracas (the
+    808's LT/LC and the like were unclear);
+  - the ring of copper round the board stays, as a ground ring real boards have, but never lights: it carries no
+    signal;
+  - the light on the copper toned down to orange;
+  - buttons with a light now hold it beside the word, not above it;
+  - the transport on a strip of the same smoked glass, the tempo smaller;
+  - the copper cut away snugly round each knob and word, with no outlines, and no part names under the controls.
+- Found on the way: the cut-outs had only ever removed 30 % of the copper (the fill took the last colour set), on
+  the fourth layout too.
