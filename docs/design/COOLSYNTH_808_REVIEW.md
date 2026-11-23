@@ -307,6 +307,9 @@ A fourth, the user's (D284): the etched panel.
 A fifth (D285): the etched panel squeezed into the top third, the sequencer below it on smoked glass with the
 board running on underneath; the patterns row, the chain and the lanes as on the beat desk, no big step row.
 
+Chosen for it (D286): one chain row that loops or plays once, no song row; the selected drum's circuit up close
+beside the lanes; the step and pattern tools on a right-click.
+
 All five, with the full-screen circuit, are in `mockups/coolsynth-808-layouts.html`: the beat runs and lights the
 circuits, with no sound. Their circuits come from a generator, not the netlists, and the drums' parts are named only
 when zoomed in.

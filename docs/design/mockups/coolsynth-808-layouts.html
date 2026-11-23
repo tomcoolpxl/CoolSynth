@@ -194,6 +194,12 @@ canvas.board { display: block; width: 100%; height: 100%; }
 #v5 .key { background: color-mix(in srgb, var(--g) 88%, transparent); }
 #v5 .key.on { background: color-mix(in srgb, var(--g) 80%, #ece4d2); }
 
+/* Pop-ups on right-click: a step's tools, a pattern's menu */
+.pop { position: absolute; z-index: 40; min-width: 190px; padding: 10px; border-radius: 5px; display: flex; flex-direction: column; gap: 8px;
+  background: rgba(30,28,25,.97); box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 0 0 1px #4a463f; }
+.pop .item { justify-content: start; width: 100%; background: transparent; box-shadow: none; }
+.pop .item:hover { background: #3a3733; }
+
 /* Full-screen circuit */
 #saver { position: fixed; inset: 0; background: #070707; z-index: 100; display: none; }
 #saver.is { display: block; }
@@ -211,10 +217,7 @@ canvas.board { display: block; width: 100%; height: 100%; }
   <button class="tab" data-v="4">4 Etched panel</button>
   <button class="tab" data-v="5">5 Etched with glass</button>
   <span id="v5opts" style="display:none;gap:6px;align-items:center;margin-left:10px">
-    <span>Right side:</span>
-    <button class="tab" data-r="none">None</button><button class="tab is" data-r="close">Drum up close</button><button class="tab" data-r="tools">Step tools</button><button class="tab" data-r="library">Library</button>
-    <span style="margin-left:8px">Song row:</span>
-    <button class="tab is" data-s="off">Off</button><button class="tab" data-s="on">On</button>
+    <span>Right-click a step or a pattern for its tools. Click a drum's name on the board to look at it up close.</span>
   </span>
   <span class="sp"></span>
   <span class="note" id="chromeNote">Mockups: the beat runs and lights the circuits, no sound. Space plays and stops.</span>
@@ -385,7 +388,7 @@ const S = {
   playing: false, bpm: 120, swing: .54, step: -1, count: 0, lastStep: 0,
   bankIx: 0, editing: 0, hearing: 0, queued: null,
   chain: [{ p: 0, r: 2 }, { p: 1, r: 1 }, { p: 0, r: 2 }, { p: 2, r: 1 }], chainPos: 0, repLeft: 2, chainOn: true,
-  fillArmed: false, fillNow: false, sel: 1, variation: 'A', change: 'bar',
+  fillArmed: false, fillNow: false, sel: 1, variation: 'A', change: 'bar', loop: true, stopNow: false,
   mute: new Array(12).fill(false), solo: new Array(12).fill(false), level: DRUMS.map(() => .8),
 };
 const hitT = new Array(12).fill(-1e9);
@@ -400,6 +403,7 @@ function stepMs() { return 60000 / S.bpm / 4; }
 function advance(now) {
   S.step = (S.step + 1) % 16; S.count++;
   if (S.step === 0) barLine();
+  if (S.stopNow) { S.stopNow = false; setPlaying(false); return; }
   stepT = now;
   const p = heard();
   let any = false;
@@ -420,7 +424,14 @@ function barLine() {
   if (S.fillArmed) { S.fillNow = true; S.fillArmed = false; return; }
   if (S.queued !== null) { S.hearing = S.queued; S.queued = null; S.chainOn = false; return; }
   if (S.chainOn && S.chain.length) {
-    if (S.count > 0) { S.repLeft--; if (S.repLeft <= 0) { S.chainPos = (S.chainPos + 1) % S.chain.length; S.repLeft = S.chain[S.chainPos].r; } }
+    if (S.count > 0) {
+      S.repLeft--;
+      if (S.repLeft <= 0) {
+        // Loop off: the chain plays once and stops at its end (D286).
+        if (!S.loop && S.chainPos === S.chain.length - 1) { S.chainPos = 0; S.repLeft = S.chain[0].r; S.stopNow = true; return; }
+        S.chainPos = (S.chainPos + 1) % S.chain.length; S.repLeft = S.chain[S.chainPos].r;
+      }
+    }
     S.hearing = S.chain[S.chainPos].p;
   }
 }
@@ -462,6 +473,20 @@ function knob(label, v, size = 40, accent = false) {
 }
 function btn(text, cls, onClick) { const b = el('button', 'btn ' + (cls || ''), text); if (onClick) b.addEventListener('click', onClick); return b; }
 
+let pop = null;
+function popover(e, build) {
+  e.preventDefault(); closePop();
+  const st = $('stage').getBoundingClientRect(), sc = st.width / 1280;
+  pop = el('div', 'pop'); build(pop); $('stage').append(pop);
+  let x = (e.clientX - st.left) / sc + 6, y = (e.clientY - st.top) / sc + 6;
+  if (x + pop.offsetWidth > 1270) x -= pop.offsetWidth + 12;
+  if (y + pop.offsetHeight > 790) y -= pop.offsetHeight + 12;
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+}
+function closePop() { if (pop) { pop.remove(); pop = null; } }
+document.addEventListener('pointerdown', e => { if (pop && !pop.contains(e.target)) closePop(); }, true);
+const stepX = {};
+
 const painters = [];
 function paintAll() { for (const p of painters) p(); }
 
@@ -482,7 +507,14 @@ function buildPatternRow(host, compact) {
     const s = el('div', 'slot', String(i + 1).padStart(2, '0'));
     if (compact) s.style.width = '30px';
     s.addEventListener('click', () => { S.editing = i; if (S.playing) S.queued = i; else { S.hearing = i; S.chainOn = false; } paintAll(); });
-    s.addEventListener('contextmenu', e => { e.preventDefault(); S.editing = i; paintAll(); });
+    s.addEventListener('contextmenu', e => popover(e, p => {
+      p.append(el('div', 'lbl', `Pattern ${String(i + 1).padStart(2, '0')}`));
+      const item = (t, act) => { const b = btn(t, 'item', () => { act(); closePop(); paintAll(); }); p.append(b); };
+      item('Edit without playing it', () => { S.editing = i; });
+      item('Copy', () => {}); item('Paste', () => {}); item('Clear', () => { bank[i] = null; });
+      item('Save to the library', () => {}); item('Drag out as MIDI', () => {});
+      item('Add to the chain', () => { S.chain.push({ p: i, r: 1 }); });
+    }));
     slots.push(s);
   }
   const fill = el('div', 'slot', 'F');
@@ -554,6 +586,9 @@ function buildChain(host) {
     const add = el('div', 'cblk cadd', '+'); add.title = 'Add the pattern being edited';
     add.addEventListener('click', () => { if (S.editing >= 0) S.chain.push({ p: S.editing, r: 1 }); paintAll(); });
     host.append(add);
+    const loop = btn('<span class="dot"></span>Loop', S.loop ? 'lighted' : '', () => { S.loop = !S.loop; paintAll(); });
+    loop.title = 'Loop on: the chain plays round and round. Off: once through, then it stops';
+    loop.style.marginLeft = '6px'; host.append(loop);
     if (!S.chainOn && S.chain.length) { const back = btn('Back to chain', '', () => { S.chainOn = true; S.queued = null; S.chainPos = 0; S.repLeft = S.chain[0].r; paintAll(); }); back.style.marginLeft = '6px'; host.append(back); }
   };
   painters.push(paint);
@@ -574,6 +609,19 @@ function buildLanes(host, rowH) {
     for (let i = 0; i < 16; i++) {
       const k = el('div', 'key small g' + (1 + (i >> 2))); k.style.height = rowH + 'px';
       k.addEventListener('click', () => { const p = shown(); p.lanes[l][i] = !p.lanes[l][i]; paintAll(); });
+      k.addEventListener('contextmenu', e => popover(e, p => {
+        const key = `${S.editing}-${l}-${i}`, x = stepX[key] || (stepX[key] = { chance: 100, hits: 1 });
+        p.append(el('div', 'lbl', `${d.id} · step ${i + 1}`));
+        const ch = el('div', ''); ch.style.cssText = 'display:flex;align-items:center;gap:8px';
+        const v = el('span', 'num', x.chance + ' %'); v.style.minWidth = '48px';
+        ch.append(el('span', 'lbl', 'Chance'), btn('−', '', () => { x.chance = Math.max(5, x.chance - 5); v.textContent = x.chance + ' %'; }), v, btn('+', '', () => { x.chance = Math.min(100, x.chance + 5); v.textContent = x.chance + ' %'; }));
+        p.append(ch);
+        const hs = el('div', ''); hs.style.cssText = 'display:flex;align-items:center;gap:8px';
+        const seg = el('div', 'seg'); [1, 2, 3].forEach(h => seg.append(btn(h === 1 ? '1 hit' : String(h), x.hits === h ? 'is' : '', ev => { x.hits = h; seg.querySelectorAll('.btn').forEach((b, j) => b.classList.toggle('is', j + 1 === h)); })));
+        hs.append(el('span', 'lbl', 'Roll'), seg); p.append(hs);
+        p.append(btn(`The lane ends here (${i + 1} steps)`, 'item', () => { shown().len[l] = i + 1; closePop(); paintAll(); }));
+        p.append(btn('Full length (16)', 'item', () => { shown().len[l] = 16; closePop(); paintAll(); }));
+      }));
       keys.push(k); ks.append(k);
     }
     const len = el('span', 'len', '16');

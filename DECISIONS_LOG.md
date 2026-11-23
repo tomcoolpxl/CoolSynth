@@ -6221,3 +6221,14 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
 - Left open, as switches in the mockup for the user to see before choosing: what the freed right side holds (none,
   the selected drum's circuit up close and live, the step tools, the library) and whether a song row sits under
   the chain. The user asked what a song adds to a chain.
+
+## D286. CoolSynth 808: one chain that loops or ends, the drum up close beside the lanes (2026-11-23)
+
+- The chain and the song (options: one row that can loop or end; a chain and a song; a chain only, always
+  looping): one row. The chain with repeats per block and a Loop switch: on, it plays round and round for
+  jamming; off, it plays once and stops. Long arrangements stay in the DAW. Roland's TR-8S works so.
+- The space right of the lanes in the fifth layout (options: the drum up close, live; the step tools; the library;
+  nothing, wider lanes): the selected drum's circuit up close and lit as it plays, a click opening the full board.
+- So the step tools move to a pop-up on the step right-clicked (chance, a roll of one to three, the lane ending
+  there), and the pattern tools to a menu on the pattern right-clicked (edit without playing, copy, paste, clear,
+  save to the library, drag out as MIDI, add to the chain). In `docs/design/mockups/coolsynth-808-layouts.html`.
