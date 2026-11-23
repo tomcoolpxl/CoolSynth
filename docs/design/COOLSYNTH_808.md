@@ -24,8 +24,8 @@ Nothing here is built yet. The draft's open questions are answered at the end; t
 
 ## The engine repository
 
-Today the engine is one flat list of sources compiled into every CoolSynth target.
-It moves to a repository of its own, which CoolSynth and CoolSynth 808 each take in as a git submodule.
+Done (D265): `tomcoolpxl/coolsynth-engine`, public under MIT, CoolSynth's submodule at `external/coolsynth-engine`.
+What follows is the plan as approved; D265 records what was found on the way.
 
 - What moves: `src/synth` and `src/synth/v3`, the flight recorder they log to (`src/diagnostics`), the circuit
   references (`tools/tr808`, `tools/kick808`, `tools/kick909`), their test data (`tests/data`) and the tests that
@@ -44,29 +44,38 @@ It moves to a repository of its own, which CoolSynth and CoolSynth 808 each take
 
 ## The sequencer
 
-The 1980 machine's sequencer, with modern additions on the lanes.
+Simplicity for the player comes first, authenticity second (the user, D266). Each feature was kept for what it adds
+against what it asks of the player, and the set was weighed as a whole: steps, patterns and chains to learn, and a
+handful of buttons.
 
-- From the original (the service notes, Sound On Sound's 1993 hands-on, a programming walkthrough):
-  - Patterns of up to 32 steps as two parts of 16, each part with its own last step.
-  - A and B variations, played as A, B or AB.
-  - Intro and fill-in patterns, started by Fill (the original's Tap).
-  - Pre-scale: three, six, four or eight steps to a beat, so triplet bars are possible.
-  - One accent per step for the whole kit, at the Accent knob's level.
-  - Rhythm tracks: a song as a list of patterns.
-  - Shuffle for the whole kit.
-- Added on the lanes:
-  - A length and a shuffle per drum.
-  - Per-step locks of a drum's tone, decay, tuning or snappy.
-  - Flams, and a step split into two or three hits.
-  - Chance, and play every second, third or fourth round.
+- The pattern:
+  - A lane per drum and an accent lane, 16 steps each, sixteenth notes.
+  - A and B variations, played as A, B or AB (A then B, alternating), as on the 808.
+  - A length per lane, 1 to 16 steps; each lane loops on its own from the pattern's start (polymeter).
+  - One accent per step for the whole kit: the drums on an accented step are struck at the Accent knob's level.
+- On a step:
+  - On or off.
+  - A chance: drag the step down to have it play less often; the step's height shows it.
+  - A roll: one, two or three hits in the step.
+- Playing:
+  - Start and stop, tempo, and one swing knob for the whole kit, 50 to 75 % (Roger Linn's swing: the even
+    sixteenths delayed; 50 % is straight). The original TR-808 had none; it came from Linn's LM-1.
+  - Sixteen patterns a bank, chosen on the step keys.
+  - Chaining: hold one pattern key and press another, and the patterns between them play in a row.
+  - Fill: plays the bank's fill pattern once, at the next bar, then goes back.
   - Mute and solo per drum.
-  - Dragging a pattern out as a MIDI file.
+  - Record: drums played on MIDI or clicked while it runs are written to the nearest step.
+  - MIDI clock in and out; dragging a pattern out as a MIDI file.
+  - Copy, paste, clear and undo.
+- Left out, for simplicity: a swing per lane (swing moves only the even sixteenths, which a kick on the beat never
+  plays), per-step locks, playing every Nth round, flams, triplets (pre-scale) and a song mode. Locks, triplets
+  and a song mode can come later without changing what is built.
 - Every random choice restarts from its seed when the transport starts, as everywhere in CoolSynth (D224).
 
 ## Saving
 
 - A kit: every knob and switch of the eleven circuits.
-- A pattern set: the patterns, their variations and fills, and the tracks.
+- A pattern set: the banks, their patterns with A and B, and their fill patterns.
 - A project file holds one kit and one pattern set; the app reopens the last one.
 
 ## To design with the user: the pattern library and keeping your own
@@ -101,8 +110,9 @@ Asked for by the user (2026-11-22), to be designed with options before it is bui
 
 ## The order of the build
 
-- The engine repository, with CoolSynth moved onto it and every test passing.
-- The sequencer, in the engine repository so CoolSynth's layers can use it later, with its tests.
+- The engine repository, with CoolSynth moved onto it and every test passing. Done (D265).
+- The sequencer, in the engine repository so CoolSynth's layers can use it later, with its tests. Built (D266):
+  its playback; recording, the chain keys, MIDI clock and handing it edits come with the app.
 - The app's shell: a window, the audio device, the 808 Kit from the engine, MIDI in at the General MIDI keys.
 - The panel and the lanes in the four themes.
 - Saving kits, patterns and projects.
@@ -117,4 +127,4 @@ Asked for by the user (2026-11-22), to be designed with options before it is bui
 - Standalone, CoolSynth 808 follows incoming MIDI clock and start and stop when there is one, and sends its own
   otherwise, as hardware drum machines do. The computer's MIDI timing is smoothed, with tests.
 - A pattern set holds banks of sixteen patterns, each with A and B, chosen on the step keys in a pattern mode as
-  the hardware does; four fill-ins a bank; as many banks and tracks as wanted.
+  the hardware does; a fill pattern a bank (D266: one, not four; chaining replaces tracks); as many banks as wanted.

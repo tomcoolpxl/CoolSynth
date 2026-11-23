@@ -14,6 +14,12 @@ the current state.
   followed on 2026-11-20 (J3, the CLAP, the stutter, D221 to D228), and 0.5.0 on 2026-11-21 (the Chip, Kick and
   TB-303 generators, the MiniLab scripts for Ableton, Bitwig and FL, D229 to D249); the instruments are still the
   0.3.0 zips.
+- The engine lives in its own public repository, `tomcoolpxl/coolsynth-engine`, a submodule at
+  `external/coolsynth-engine` (D265), shared with the planned CoolSynth 808. Its `src/synth`, `src/diagnostics`,
+  circuit netlists (`tools/tr808`, `tools/kick808`, `tools/kick909`) and its own tests are there; paths below
+  written `src/synth/...` are inside it. An engine change: commit and push it in the submodule (its `main`), then
+  commit the new submodule pointer here. Its 23 own test files run in `CoolSynthEngineTests`; everything that
+  needs presets or the plugin, the determinism and click tests among them, stays in this repository.
 - The V3 engine (`src/synth/v3/`): two layers, each with three generator slots, three processor slots, its own
   arpeggiator and six effect slots (I1-I6); six master effect slots (F1-F6) at the end, any of 14 effect types. 138 presets in 14 rooms
   (`resources/presets/*.csbank`), including the recorded instruments of the Conservatory and the Museum's rebuilt
@@ -51,7 +57,7 @@ the current state.
 
 - `README.md`: the player's guide. `docs/architecture.md`: the architecture as built, with the engine map.
 - `docs/design/`: the V3 engine's specification (`DESIGN_V3.md`, `REQUIREMENTS_V3.md`, `IMPLEMENTATION_PLAN_V3.md`,
-  `SOUND_BANK_V3.md`). `COOLSYNTH_808.md`: the planned standalone 808 app and the engine's own repository (D264). `docs/interface-v3.md`: the interface specification. `docs/minilab3-screen.md`: the MiniLab
+  `SOUND_BANK_V3.md`), kept here though the engine moved. `COOLSYNTH_808.md`: the planned standalone 808 app (D264). `docs/interface-v3.md`: the interface specification. `docs/minilab3-screen.md`: the MiniLab
   3 protocol as tested on the device.
 - `TODO.md`: open work only. `DECISIONS_LOG.md`: every decision, with the options and the reason.
 - `docs/releases/<tag>.md`: the release notes of each version.

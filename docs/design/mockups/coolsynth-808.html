@@ -224,7 +224,7 @@
         <div class="steps" id="panelSteps"></div>
       </div>
       <div class="right">
-        <div class="r"><div class="seg" id="variation"></div><button class="chip" id="fill">Fill</button></div>
+        <div class="r"><div class="seg" id="variation"></div><button class="chip" id="fill">Fill</button><button class="chip" id="rec" title="Drums played while it runs are written to the nearest step">Rec</button></div>
         <div class="r"><div id="pattern"></div><span class="chip grab" title="Drag the pattern into the DAW as MIDI">Drag MIDI</span></div>
       </div>
     </div>
@@ -269,11 +269,9 @@ for (const ins of INS) {
 const put = (id, list) => list.forEach(n => state.lanes[id].steps[n - 1].on = true);
 put('AC', [1, 9]); put('BD', [1, 5, 9, 11, 13]); put('SD', [5, 13]); put('CP', [13]); put('CB', [4, 11]);
 put('OH', [3, 7, 11, 15]); put('CH', [1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16]); put('LT', [15, 16]); put('RS', [7, 10, 13]);
-state.lanes.SD.steps[12].flam = true;
 state.lanes.CH.steps[15].split = 3;
 state.lanes.CB.steps[10].chance = 0.5;
-state.lanes.OH.steps[14].every = 2;
-state.lanes.BD.steps[10].locks.Decay = 0.9;
+state.lanes.OH.steps[14].chance = 0.4;
 state.lanes.RS.len = 12;
 
 const views = {};                      // parameter key -> redraw functions, so the panel and the lanes stay one thing
@@ -389,6 +387,7 @@ function buildSeq() {
   segmented($('variation'), [['A', 'A'], ['AB', 'AB'], ['B', 'B']], () => state.variation, v => state.variation = v);
   $('pattern').append(num({ label:'Pattern', get: () => state.pattern, set: v => state.pattern = v, min:1, max:12, per:10, text: v => String(v).padStart(2, '0'), small:true }));
   $('fill').onclick = () => { state.fill = !state.fill; $('fill').classList.toggle('is', state.fill); };
+  $('rec').onclick = () => $('rec').classList.toggle('is');
   const handleText = () => $('handle').textContent = $('plug').classList.contains('open') ? 'Close the lanes' : 'Open the lanes';
   $('handle').onclick = () => { $('plug').classList.toggle('open'); handleText(); fit(); }; handleText();
   $('play').onclick = () => state.playing ? stop() : start();
@@ -412,35 +411,21 @@ function buildLanes() {
     const steps = el('div', 'steps'); cells[ins.id] = [];
     for (let i = 0; i < 16; i++) { const c = stepCell(); wireCell(c, () => ins.id, i); cells[ins.id].push(c); steps.append(c); }
     const right = el('div', 'right');
-    right.append(num({ label:'Len', get: () => lane.len, set: v => { lane.len = v; renderSteps(); }, min:1, max:16, per:8, small:true }),
-                 num({ label:'Shf', get: () => lane.shf, set: v => lane.shf = v, min:0, max:100, per:2, small:true }));
+    right.append(num({ label:'Length', get: () => lane.len, set: v => { lane.len = v; renderSteps(); }, min:1, max:16, per:8, small:true }));
     row.append(head, steps, right); $('laneRows').append(row);
   }
 }
 
 function renderInspector() {
   const host = $('insp'); host.innerHTML = '';
-  const who = el('div', 'who'), ctl = el('div', 'ctl'), hint = el('div', 'hint', 'A line under a step means it holds its own knob value. Double-click a lock to clear it.');
+  const who = el('div', 'who'), ctl = el('div', 'ctl'), hint = el('div', 'hint', 'Drag a step down to make it play less often; its height shows the chance.');
   host.append(who, ctl, hint);
   if (!state.selStep) { who.innerHTML = 'No step selected<small>Switch a step on, or right-click one that is on</small>'; return; }
   const { id, i } = state.selStep, ins = INS.find(x => x.id === id), st = state.lanes[id].steps[i];
   who.innerHTML = `Step ${i + 1}<small>${laneName(ins)}</small>`;
   const grp = (label, ...kids) => { const g = el('div', 'grp'); g.append(el('span', 'lbl', label), ...kids); ctl.append(g); };
   grp('Chance', num({ label:'', get: () => Math.round(st.chance * 100), set: v => { st.chance = v / 100; renderSteps(); }, min:5, max:100, per:2, text: v => v + ' %', small:true }));
-  const every = el('div', 'seg'); segmented(every, [[1, 'All'], [2, '1:2'], [3, '1:3'], [4, '1:4']], () => st.every, v => { st.every = v; renderSteps(); }); grp('Plays', every);
-  const flam = el('button', 'chip' + (st.flam ? ' is' : ''), 'Flam'); flam.onclick = () => { st.flam = !st.flam; flam.classList.toggle('is', st.flam); renderSteps(); }; grp('', flam);
   const split = el('div', 'seg'); segmented(split, [[1, '1'], [2, '2'], [3, '3']], () => st.split, v => { st.split = v; renderSteps(); }); grp('Hits', split);
-  const lockable = ins.knobs.filter(k => k !== 'Level');
-  if (lockable.length) {
-    const g = el('div', 'grp'); g.append(el('span', 'lbl', 'Locks'));
-    for (const k of lockable) {
-      const key = ins.id + '.' + k;
-      const kn = knob({ size:34, label:k, get: () => st.locks[k] ?? state.params[key], set: v => { st.locks[k] = v; kn.draw(); renderSteps(); },
-                        reset: () => { delete st.locks[k]; kn.draw(); renderSteps(); }, cls: () => k in st.locks ? 'locked' : 'unset' });
-      g.append(kn);
-    }
-    ctl.append(g);
-  }
 }
 
 function showPlayheads() {
@@ -460,7 +445,7 @@ function tick() {
   const anySolo = INS.some(i => state.lanes[i.id].solo);
   for (const ins of INS) {
     const lane = state.lanes[ins.id], pos = state.tick % lane.len, round = Math.floor(state.tick / lane.len), st = lane.steps[pos];
-    if (st.on && !lane.mute && (!anySolo || lane.solo || ins.id === 'AC') && round % st.every === 0 && Math.random() < st.chance) flash(ins.id);
+    if (st.on && !lane.mute && (!anySolo || lane.solo || ins.id === 'AC') && Math.random() < st.chance) flash(ins.id);
   }
   showPlayheads();
 }

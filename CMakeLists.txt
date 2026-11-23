@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(CoolSynth VERSION 0.5.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
 
-include(cmake/CoolSynthFlags.cmake)
+# The build settings every CoolSynth program shares come with the engine (D265).
+include(external/coolsynth-engine/cmake/CoolSynthFlags.cmake)
 
 add_subdirectory(external/JUCE)
 # CLAP beside the VST3 (D216): free-audio/clap-juce-extensions, pinned in external/.
@@ -19,8 +20,8 @@ juce_add_binary_data(CoolSynthImages
         resources/icon/coolsynth-icon-512.png) # the icon beside the version in Preferences
 
 include(CTest)
-# The engine (D265): its sources, its data and its own test program.
-include(cmake/CoolSynthEngine.cmake)
+# The engine (D265), its own repository as a submodule: its sources, its data and its own test program.
+add_subdirectory(external/coolsynth-engine)
 
 option(COOLSYNTH_ENABLE_VST3_USER_INSTALL
     "Copy CoolSynth.vst3 to the per-user Windows VST3 folder after build"
@@ -134,7 +135,7 @@ if(BUILD_TESTING)
         PRIVATE
             tests/MidiLearnTests.cpp
             tests/ControllerTests.cpp
-            tests/AudioThreadAlarm.cpp
+            external/coolsynth-engine/tests/AudioThreadAlarm.cpp
             tests/AudioScenarioTests.cpp
             tests/ClickDetectorTests.cpp
             tests/V3EarlierSoundTests.cpp
@@ -172,6 +173,7 @@ if(BUILD_TESTING)
     target_include_directories(CoolSynthMidiLearnTests
         PRIVATE
             src
+            external/coolsynth-engine/tests # the engine's test helpers
             ${CMAKE_CURRENT_BINARY_DIR}
     )
 

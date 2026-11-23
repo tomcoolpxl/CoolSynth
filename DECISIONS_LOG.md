@@ -5679,4 +5679,51 @@ need presets, the plugin or MIDI and stay in CoolSynth, the determinism and clic
 - The documents the engine's code cites (59 places, mostly `docs/design/DESIGN_V3.md` and `REQUIREMENTS_V3.md`) stay
   in CoolSynth; the engine's README says where they are.
 - The history (options: install git filter-repo; Git's own filter-branch; no history): git filter-repo 2.47.0 from
-  PyPI, for the user (github.com/newren/git-filter-repo).
+  PyPI, for the user (github.com/newren/git-filter-repo). 39 paths kept, 157 of CoolSynth's commits came along.
+- The new repository, `tomcoolpxl/coolsynth-engine` (public, MIT, as the user chose in D264), at
+  `E:\github\coolsynth-engine` beside CoolSynth: JUCE's deepest paths are too long under the scratchpad. Its own
+  build file adds the shared settings, JUCE (CoolSynth's commit, 9.0.5) and CTest when built alone; it needed a
+  version of its own (0.1.0), which JUCE asks of every program and which it had borrowed from CoolSynth. The Open303
+  notice went with the TB-303 generator. Built and tested alone: 82 s, its tests in 13 s. Its CI runs its tests on
+  every push.
+- Found on the way: the four ngspice scripts looked for ngspice (installed, never committed) in their own
+  repository's `tools`; they now take `COOLSYNTH_NGSPICE`, then their own `tools/ngspice`, then the app's when
+  the engine is a submodule. Checked by recording the 808 mockup's currents again from inside CoolSynth: the same
+  bytes.
+
+## D266. CoolSynth 808's sequencer: simplicity first (2026-11-23)
+
+Before building the sequencer the user asked how the well-known sequencers are known, for the 808, and set the
+rule: simplicity for the player is key, not authenticity; how hard a feature is to build does not count. Found:
+Linn's swing on the MPC (the even sixteenths delayed, 50 % straight, 54 to 71 % the classic settings; ranked first
+by Linn for groove; the original TR-808 had no shuffle, Linn's LM-1 had it first; Attack Magazine, Melodiefabriek);
+Elektron's per-step locks and trig conditions (the most power, and forum questions on seeing what is locked);
+Roland's TR-8S and TR-808 plugin (variations A to H, fills, a last step per drum, sub-steps and flams; reviewers:
+some immediacy lost); Squarp's polyrhythms; Torso's Euclidean generation; Microtonic's per-step probability; KVR
+users asking above all for a length per track and per-step probability. The 808 kit takes the sequencer's notes as
+they are: General MIDI keys, the accent as velocity times the Accent knob (D258).
+
+The user asked for a recommendation per feature, weighed as a whole. Recommended and kept: a length per lane,
+one swing knob, chance per step, rolls of two or three, mute and solo, fill, chaining patterns, live recording,
+copy, paste and undo, sixteen patterns a bank, MIDI clock. Recommended out: a swing per lane, A and B (chaining
+covers two-bar beats), per-step locks, every Nth round, flams, triplets, song mode. The user's choice (options: the
+recommended set; it plus per-step locks; it but keeping A and B): the recommended set, keeping A and B as on the
+808. The specification's sequencer section is rewritten to it; the mockup loses the per-lane shuffle column and
+gains a record button.
+
+Built in the engine repository (`src/synth/StepSequencer`, coolsynth-engine `ad219e2`), with 15 test groups:
+- Time is the clock's beat position, as a host's ppq: every step's place is worked out from it, not counted, so the
+  notes are the same whatever the block size and follow a host that loops or jumps. A step's chance is a hash of
+  the seed, the lane and the step's place, not a running random source: the same on every play (D224).
+- Which block a note falls in is decided by its whole sample, not by comparing beats: two blocks' edges worked out
+  from two beat positions differ by a rounding, and a note on the edge fell in both or neither. At one sample the
+  order of two note-offs depended on the pending list; it is now note-offs first, then by note. Checked: the same
+  132 notes at blocks of 4096, 480, 64 and 1 sample.
+- A lane counts its steps from where its pattern began to play: while one pattern plays on, a short lane runs on
+  across the bars (as Elektron's per-track lengths); a chain of different patterns starts each one afresh. Settled
+  while writing the tests: lanes reset at every bar would make a length per lane pointless past one bar.
+- A note-off follows each hit at half its spacing (the 808's drums play their tails out); a stop sends the rest.
+  The unaccented velocity is the lowest (the 808 kit's 4.7 V trigger), the accented one full (the Accent knob's).
+- CoolSynth onto the submodule: the 39 paths (172 files) removed here, `add_subdirectory(external/coolsynth-engine)`,
+  the app's test program taking the engine's allocation alarm and test helpers from the submodule. The CI
+  workflows already check out submodules recursively.

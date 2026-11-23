@@ -271,6 +271,9 @@ sources but no longer used.
 
 ## Source map
 
+The engine (`src/synth`, `src/synth/v3`, `src/diagnostics`) is its own repository, `coolsynth-engine`, in the
+submodule `external/coolsynth-engine` (D265); its rows below are paths inside it.
+
 | Folder | What is in it |
 | --- | --- |
 | `src/plugin` | `SynthAudioProcessor` (the JUCE processor: state, MIDI in, the audio callback), `PanelEditor`, the undo history |
@@ -338,7 +341,9 @@ Rebuild `CoolSynthRender` and `CoolSynthPresetNormalizer` after any change to a 
 
 CMake with presets (`CMakePresets.json`) and Visual Studio 2022; JUCE is a submodule in `external/JUCE`. The
 `CoolSynth` target builds the VST3, the CLAP (through clap-juce-extensions, `external/clap-juce-extensions`)
-and the standalone app.
+and the standalone app. The engine comes from the submodule `external/coolsynth-engine` as `coolsynth_engine`,
+which hands its sources to each program, and brings the shared build settings (`cmake/CoolSynthFlags.cmake`) and
+its own test program, `CoolSynthEngineTests`.
 
 - **Debug** is compiled with optimisation (`/O2`), so the Debug plugin and app play in real time, and uses the
   debug runtime DLLs, which only a machine with Visual Studio has.
