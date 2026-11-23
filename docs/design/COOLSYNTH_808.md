@@ -105,7 +105,7 @@ Asked for by the user (2026-11-22), to be designed with options before it is bui
     dashed over your own pattern (as a hardware machine's pattern select).
   - Auditioning in time with the transport, from the next bar, comes from Native Instruments' pattern browser.
 - Chosen (D273): the shelf, without folders and favourites for now. The classics are read-only; your own patterns
-  can be renamed and sent to the Recycle Bin. Audition starts at once, not from the next bar.
+  can be renamed and sent to the Recycle Bin. While playing, an audition comes in on the next bar line (D274).
 
 ## Under the Lid in the app
 

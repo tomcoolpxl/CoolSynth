@@ -5979,3 +5979,24 @@ What was built (CoolSynth808 `ffaab90`):
   duplicating (the user's choice).
 - Numbered D272 at first, while the Mac's session took D272 at the same time: CoolSynth808's `ffaab90` says D272
   in its message; its comments say D273 from the next commit.
+
+## D274. CoolSynth 808: an audition comes in on the next bar line (2026-11-23)
+
+The user's choice, from the pick list after D273 (options: audition from the next bar; the library's beats by ear,
+each against a reference): audition from the next bar.
+
+- How others do it: Akai's MPC browser has a Sync switch that starts an auditioned sample at the next bar while the
+  sequence plays (the MPC X manual, Browser, Audition Warp and Sync). Ableton's browser previews follow the set's
+  tempo only while it plays. Neither starts in the middle of a bar.
+- While the transport plays, a beat auditioned on the shelf comes in on the next bar line, from its first pattern's
+  start, with its tempo, swing, variation and switches. Going back to your pattern (Stop, Esc, closing) waits for the
+  bar line too, your chain from its start. Stopped, an audition starts at once, as before.
+- The audio block with the bar line in it is split there: the part before plays what was, the part after what came,
+  with its own tempo, kit and MIDI clock. The beat's first hit falls on the bar line to the sample (a test at a
+  block size of 448).
+- Load of the beat that plays keeps it playing without a jump: what it replaced is the one undo step. Load of
+  another beat, or into the fill, works as before.
+- Heard while the fill is edited, a beat plays from the chain's first pattern: the fill alone is never heard.
+- The engine (`9ce64a8`): `StepSequencer::setChainFrom`, a chain that begins at a given bar instead of the end of
+  the pattern that plays. CoolSynth does not use the sequencer; its pointer moves with the engine.
+- CoolSynth808 `616bb93`. Not checked by ear yet.

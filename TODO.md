@@ -266,8 +266,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     first scheme after the user's sketch. A code review of it all is done and fixed (D269); from it, the engine
     now holds one layer for the 808 (D270: 150 MB instead of 707), and the controller has its own MIDI input
     (D271), still to be tried with a real controller beside a second MIDI source. The controller scheme stays as
-    built and the library is a shelf with audition, rename and the Recycle Bin (D273). Waiting on the user: their
-    review of the app, and the library's beats by ear (most are low-confidence transcriptions,
+    built and the library is a shelf with audition, rename and the Recycle Bin (D273); an audition comes in on the
+    next bar line (D274). Waiting on the user: their review of the app, and the library's beats by ear (most are low-confidence transcriptions,
     `docs/library-research.md` there). The history below is the mockups' round.
     The 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and
     shuffle per drum, MIDI drag, per-step locks, flams and sub-steps, chance and conditions; a panel whose step row
