@@ -290,6 +290,24 @@ sits at the centre.
 
 The full-screen circuit comes with any of them.
 
+A fourth, the user's (D284): the etched panel.
+
+- The instrument's whole top panel is the circuit board: traces etched into the metal, lit by the beat, and the
+  controls mounted on it where their circuits run, each drum's knobs on its own column of copper.
+  - The trigger lines come up from the sixteen keys into every column; the mix runs along the top to Out.
+  - The copper keeps a clearance ring around every knob, label and switch, as a real board does, so the labels stay
+    readable over the traces.
+  - The circuit is drawn in the spirit of the real ones, not from the netlists; it is the panel's texture and its
+    light show, not a schematic to read.
+- The precedent: Teenage Engineering's Pocket Operators shipped with no case, the bare board and its artwork the
+  look (Synthtopia's first look; Sound On Sound); DIY makers use the board as the faceplate (the Look Mum No
+  Computer forum).
+- Patterns and the chain sit in a small display and a drawer of lanes that slides up over the keys.
+
+All four, with the full-screen circuit, are in `mockups/coolsynth-808-layouts.html`: the beat runs and lights the
+circuits, with no sound. Their circuits come from a generator, not the netlists, and the drums' parts are named only
+when zoomed in.
+
 ## Sources
 
 Patterns, chains, songs and fills:

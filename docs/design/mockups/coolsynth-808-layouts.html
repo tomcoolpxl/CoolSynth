@@ -1,0 +1,1101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoolSynth 808 layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Four layouts for CoolSynth 808 to try (D283, D284). Mockups only: the beat runs and lights the circuits, no sound.
+   The circuits here are drawn by a generator in the spirit of the real ones, not from the netlists. */
+:root {
+  --desk: #121110; --panel: #2d2b28; --panel2: #24221f; --ink: #ece4d2; --dim: #a39b88; --line: #4a463f;
+  --on: #e8742a; --lit: #ffc36b; --flow: #ffa04a; --g1: #4b463e; --g2: #5b554b; --g3: #6c6558; --g4: #7e7666;
+  --sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0b0a09; color: var(--ink); font-family: var(--sans); overflow: hidden; }
+button { font: inherit; color: inherit; }
+
+/* The mockup's own bar, not part of any design */
+#chrome { position: fixed; inset: 0 0 auto 0; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 14px;
+  background: #050505; border-bottom: 1px solid #222; font: 500 12px/1 system-ui, sans-serif; color: #999; z-index: 50; }
+#chrome b { color: #ddd; font-weight: 600; margin-right: 10px; }
+#chrome .tab { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 7px 11px; cursor: pointer; color: #bbb; }
+#chrome .tab.is { background: #e8742a; border-color: #e8742a; color: #111; }
+#chrome .sp { flex: 1; }
+#chrome .note { color: #777; }
+
+#viewport { position: fixed; inset: 44px 0 0 0; display: grid; place-items: center; }
+#stage { width: 1280px; height: 800px; position: relative; transform-origin: center center; flex: none; }
+.view { position: absolute; inset: 0; display: none; overflow: hidden; }
+.view.is { display: block; }
+
+/* Type: one family, two sizes, numbers in a mono */
+.lbl { font-weight: 600; font-size: 10px; line-height: 1; font-stretch: 75%; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
+.t13 { font-weight: 650; font-size: 13px; line-height: 1; font-stretch: 87.5%; letter-spacing: .05em; text-transform: uppercase; color: var(--ink); }
+.num { font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--ink); }
+.logo { font-weight: 500; font-size: 19px; font-stretch: 100%; letter-spacing: .01em; color: var(--ink); white-space: nowrap; }
+.logo b { font-weight: 800; }
+.logo .sub { display: block; margin-top: 3px; }
+
+/* Keys: a face, an edge, a light */
+.key { position: relative; border-radius: 3px; background: var(--g); cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -2px 0 rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.6); }
+.key::before { content: ''; position: absolute; left: 50%; top: 5px; width: 36%; height: 4px; transform: translateX(-50%);
+  border-radius: 2px; background: #1b1815; box-shadow: inset 0 1px 1px rgba(0,0,0,.7); }
+.key.on::before { background: var(--on); box-shadow: 0 0 7px var(--on), inset 0 0 1px var(--lit); }
+.key.ph { box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 0 0 1px var(--lit); }
+.key.off { opacity: .38; }
+.key.small::before { top: 4px; width: 70%; height: 4px; }
+.key.on { background: color-mix(in srgb, var(--g) 80%, #ece4d2); }
+.key .n { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; }
+.g1 { --g: var(--g1); } .g2 { --g: var(--g2); } .g3 { --g: var(--g3); } .g4 { --g: var(--g4); }
+
+/* Hardware-style small buttons */
+.btn { display: inline-grid; place-items: center; height: 26px; padding: 0 10px; border-radius: 3px; cursor: pointer; border: 0;
+  background: #3a3733; box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 1px 0 rgba(0,0,0,.6);
+  font-weight: 650; font-size: 10px; font-stretch: 75%; letter-spacing: .09em; text-transform: uppercase; color: var(--ink); }
+.btn.is { background: var(--ink); color: #1a1714; }
+.btn.hot { background: var(--on); color: #1a1714; }
+.btn .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #1b1815; margin-right: 6px; vertical-align: 1px; }
+.btn.lighted .dot { background: var(--on); box-shadow: 0 0 6px var(--on); }
+.seg { display: inline-flex; gap: 2px; }
+.seg .btn { border-radius: 0; } .seg .btn:first-child { border-radius: 3px 0 0 3px; } .seg .btn:last-child { border-radius: 0 3px 3px 0; }
+
+/* Knobs: a solid cap, a pointer, printed ticks */
+.knob { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; cursor: ns-resize; user-select: none; }
+.knob svg { display: block; overflow: visible; }
+
+/* Pattern row and chain */
+.prow { display: flex; align-items: center; gap: 4px; flex: none; }
+.slot { flex: none; position: relative; width: 38px; height: 30px; border-radius: 3px; background: #23211e; cursor: pointer;
+  box-shadow: inset 0 0 0 1px #3d3a35; display: grid; place-items: center; font-family: var(--mono); font-size: 11px; color: var(--dim); }
+.slot.has { background: #35322d; color: var(--ink); }
+.slot.edit { box-shadow: inset 0 0 0 2px var(--ink); }
+.slot.play { background: var(--on); color: #1a1714; }
+.slot.play .prog { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--lit); border-radius: 0 0 0 3px; }
+.slot.queued { animation: blink .5s steps(2) infinite; }
+@keyframes blink { 0% { background: #6a3a18; } 50% { background: #35322d; } }
+.bank { width: 26px; height: 30px; }
+.status { font-family: var(--mono); font-size: 11px; color: var(--dim); white-space: nowrap; }
+.status b { color: var(--ink); font-weight: 600; }
+.status .q { color: var(--lit); }
+.chain { display: flex; align-items: center; gap: 3px; }
+.cblk { position: relative; height: 26px; min-width: 44px; padding: 0 8px; border-radius: 3px; background: #35322d; cursor: pointer;
+  display: flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 11px; color: var(--ink); overflow: hidden; }
+.cblk .x { color: var(--dim); }
+.cblk.cur { background: #5a3a20; }
+.cblk.cur .prog { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(232,116,42,.55); z-index: 0; }
+.cblk > span { position: relative; z-index: 1; }
+.cblk.nxt { box-shadow: inset 0 0 0 1px var(--lit); }
+.cadd { width: 26px; justify-content: center; min-width: 0; color: var(--dim); background: transparent; box-shadow: inset 0 0 0 1px #4a463f; }
+
+/* Lanes */
+.lanes { display: grid; }
+.lane { display: grid; align-items: center; column-gap: 8px; border-radius: 3px; }
+.lane.sel { background: rgba(236,228,210,.06); }
+.lane .id { font-family: var(--mono); font-weight: 600; font-size: 11px; color: var(--ink); cursor: pointer; }
+.lane .nm { cursor: pointer; overflow: hidden; white-space: nowrap; }
+.ms { display: flex; gap: 3px; }
+.ms .btn { height: 22px; width: 24px; padding: 0; }
+.lvl { height: 6px; border-radius: 3px; background: #1b1815; position: relative; }
+.lvl i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--dim); }
+.ksteps { display: grid; grid-template-columns: repeat(16, 1fr); column-gap: 4px; }
+.ksteps .key:nth-child(4n+1) { margin-left: 3px; }
+.ksteps .key.end { box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 3px 0 0 -1px var(--lit); }
+.len { font-family: var(--mono); font-size: 11px; color: var(--dim); text-align: right; }
+
+/* Circuits */
+canvas.board { display: block; width: 100%; height: 100%; }
+.crumbs { position: absolute; display: flex; gap: 6px; align-items: center; }
+.hint { position: absolute; }
+
+/* ===================== 1: the beat desk ===================== */
+#v1 { background: var(--panel); }
+#v1 .top { position: absolute; left: 0; right: 0; top: 0; height: 58px; display: flex; align-items: center; gap: 18px; padding: 0 20px; }
+#v1 .band { position: absolute; left: 0; right: 0; top: 58px; height: 150px; background: #1c1a18; border-top: 1px solid #000; border-bottom: 1px solid #000;
+  transition: height .35s ease; z-index: 5; cursor: zoom-in; }
+#v1 .band.open { height: 560px; cursor: default; }
+#v1 .band .hint { left: 14px; top: 9px; pointer-events: none; }
+#v1 .band .crumbs { right: 12px; top: 8px; }
+#v1 .pbar { position: absolute; left: 0; right: 0; top: 208px; height: 92px; padding: 12px 20px 0; display: grid; grid-template-columns: auto 1fr; row-gap: 10px; column-gap: 14px; border-bottom: 1px solid #000; background: #2a2825; }
+#v1 .main { position: absolute; left: 0; right: 0; top: 300px; bottom: 0; display: grid; grid-template-columns: 1fr 300px; }
+#v1 .lanesHost { padding: 12px 14px 12px 20px; }
+#v1 .side { background: #262421; border-left: 1px solid #000; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ===================== 2: the 808 and its lid ===================== */
+#v2 { background: #0d0c0b; perspective: 1600px; }
+#v2 .lidBoard { position: absolute; inset: 58px 0 0 0; }
+#v2 .lidBoard .crumbs { left: 18px; top: 12px; }
+#v2 .top { position: absolute; left: 0; right: 0; top: 0; height: 58px; display: flex; align-items: center; gap: 16px; padding: 0 20px; background: var(--panel); border-bottom: 1px solid #000; z-index: 6; }
+#v2 .face { position: absolute; inset: 58px 0 0 0; background: var(--panel); transform-origin: 50% 0; transition: transform .8s cubic-bezier(.3,.1,.2,1), opacity .8s; z-index: 4; }
+#v2.lifted .face { transform: rotateX(78deg); opacity: .0; pointer-events: none; }
+#v2 .editview { position: absolute; inset: 58px 0 0 0; background: var(--panel); z-index: 5; display: none; }
+#v2.editing .editview { display: block; }
+#v2 .cols { position: absolute; left: 0; right: 0; top: 0; height: 380px; display: grid; grid-template-columns: repeat(12, 1fr); border-bottom: 1px solid #000; }
+#v2 .col { border-right: 1px solid #1d1b19; display: flex; flex-direction: column; align-items: center; padding-top: 0; gap: 14px; }
+#v2 .col .cap { width: 100%; height: 34px; display: grid; place-items: center; border-bottom: 1px solid #1d1b19; }
+#v2 .col.sel .cap { background: var(--on); }
+#v2 .col.sel .cap .t13 { color: #1a1714; }
+#v2 .stripe { position: absolute; left: 0; right: 0; top: 380px; height: 6px; background: var(--on); }
+#v2 .deck { position: absolute; left: 0; right: 0; top: 386px; bottom: 0; padding: 26px 20px; }
+
+/* ===================== 3: the open machine ===================== */
+#v3 { background: var(--panel); }
+#v3 .top { position: absolute; left: 0; right: 0; top: 0; height: 52px; display: flex; align-items: center; gap: 16px; padding: 0 20px; }
+#v3 .open { position: absolute; left: 0; right: 0; top: 52px; height: 400px; background: #191715; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+#v3 .card { position: absolute; width: 184px; padding: 12px; border-radius: 4px; background: rgba(38,36,33,.94); box-shadow: 0 8px 24px rgba(0,0,0,.5), inset 0 0 0 1px #4a463f; display: flex; flex-direction: column; gap: 10px; transition: left .25s, top .25s; z-index: 3; }
+#v3 .open .crumbs { right: 12px; top: 10px; z-index: 4; }
+#v3 .open .hint { left: 14px; top: 11px; pointer-events: none; }
+#v3 .dock { position: absolute; left: 0; right: 0; top: 452px; bottom: 0; padding: 10px 20px; display: flex; flex-direction: column; gap: 8px; }
+
+/* ===================== 4: the etched panel ===================== */
+#v4 { background:
+    radial-gradient(1200px 500px at 30% 0%, rgba(255,255,255,.05), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 1px, rgba(0,0,0,.02) 1px 3px),
+    linear-gradient(#2c2a27, #23211e); }
+#v4 canvas.board { position: absolute; inset: 0; }
+#v4 .screw { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a857c, #3b3833 70%); box-shadow: 0 1px 1px #000; }
+#v4 .screw::after { content: ''; position: absolute; left: 3px; right: 3px; top: 6px; height: 2px; background: #2a2724; transform: rotate(35deg); }
+#v4 .silk { position: absolute; pointer-events: none; }
+#v4 .colLabel { position: absolute; text-align: center; cursor: pointer; }
+#v4 .colLabel.sel .t13 { color: var(--lit); text-shadow: 0 0 8px rgba(255,160,74,.6); }
+#v4 .kn { position: absolute; }
+#v4 .kn .kcap { filter: drop-shadow(0 3px 3px rgba(0,0,0,.7)); }
+#v4 .glass { position: absolute; border-radius: 5px; background: linear-gradient(#0d0c0b, #15130f); box-shadow: inset 0 2px 6px #000, 0 0 0 1px #3d3a35, 0 1px 0 rgba(255,255,255,.06); padding: 10px 12px; }
+#v4 .keysRow { position: absolute; display: grid; grid-template-columns: repeat(16, 1fr); column-gap: 8px; }
+#v4 .keysRow .key { height: 64px; }
+#v4 .drawer { position: absolute; left: 0; right: 0; bottom: 0; height: 330px; transform: translateY(100%); transition: transform .35s ease; background: rgba(20,19,17,.96); border-top: 1px solid #000; box-shadow: 0 -10px 30px rgba(0,0,0,.5); padding: 14px 20px; z-index: 8; }
+#v4 .drawer.up { transform: none; }
+
+/* Full-screen circuit */
+#saver { position: fixed; inset: 0; background: #070707; z-index: 100; display: none; }
+#saver.is { display: block; }
+#saver .bar { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 6px; opacity: .2; transition: opacity .3s; }
+#saver:hover .bar { opacity: 1; }
+#saver .name { position: absolute; left: 28px; bottom: 24px; opacity: .55; }
+</style>
+</head>
+<body>
+<div id="chrome">
+  <b>CoolSynth 808, layouts to try</b>
+  <button class="tab is" data-v="1">1 Beat desk</button>
+  <button class="tab" data-v="2">2 The 808 and its lid</button>
+  <button class="tab" data-v="3">3 Open machine</button>
+  <button class="tab" data-v="4">4 Etched panel</button>
+  <span class="sp"></span>
+  <span class="note">Mockups: the beat runs and lights the circuits, no sound. Space plays and stops.</span>
+  <button class="tab" id="saverBtn">Full-screen circuit</button>
+</div>
+<div id="viewport"><div id="stage">
+
+<!-- 1: the beat desk -->
+<section class="view is" id="v1">
+  <div class="top">
+    <div class="logo">CoolSynth <b>808</b><span class="lbl sub">Beat composer</span></div>
+    <div style="width:18px"></div>
+    <div class="transport" data-transport></div>
+    <span style="flex:1"></span>
+    <button class="btn">Library</button><button class="btn">File</button><button class="btn">Undo</button><button class="btn">Redo</button>
+  </div>
+  <div class="band" id="v1band">
+    <canvas class="board" id="b1"></canvas>
+    <div class="hint lbl">Under the lid, live. Click a drum to look inside</div>
+    <div class="crumbs" id="v1crumbs"></div>
+  </div>
+  <div class="pbar">
+    <span class="lbl" style="align-self:center">Patterns</span>
+    <div style="display:flex;align-items:center;gap:16px"><div data-prow></div><span style="flex:1"></span><div data-ab></div></div>
+    <span class="lbl" style="align-self:center">Chain</span>
+    <div style="display:flex;align-items:center;gap:16px"><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div><span class="lbl">Change</span><div data-change></div><button class="btn">Song</button></div>
+  </div>
+  <div class="main">
+    <div class="lanesHost"><div data-lanes="28"></div></div>
+    <div class="side" data-side></div>
+  </div>
+</section>
+
+<!-- 2: the 808 and its lid -->
+<section class="view" id="v2">
+  <div class="top">
+    <div class="logo">CoolSynth <b>808</b><span class="lbl sub">Beat composer</span></div>
+    <div style="width:10px"></div>
+    <div class="seg" id="v2tabs"><button class="btn is" data-t="panel">Panel</button><button class="btn" data-t="edit">Edit</button><button class="btn" data-t="lid">Lift the lid</button></div>
+    <span style="flex:1"></span>
+    <div class="transport" data-transport></div>
+  </div>
+  <div class="lidBoard"><canvas class="board" id="b2"></canvas><div class="crumbs" id="v2crumbs"></div></div>
+  <div class="face">
+    <div class="cols" id="v2cols"></div>
+    <div class="stripe"></div>
+    <div class="deck" id="v2deck"></div>
+  </div>
+  <div class="editview">
+    <div style="padding:14px 20px 0;display:flex;flex-direction:column;gap:10px">
+      <div style="display:flex;align-items:center;gap:16px"><span class="lbl" style="width:56px">Patterns</span><div data-prow></div><span style="flex:1"></span><div data-ab></div></div>
+      <div style="display:flex;align-items:center;gap:16px"><span class="lbl" style="width:56px">Chain</span><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div><span class="lbl">Change</span><div data-change></div></div>
+      <div style="display:flex;align-items:center;gap:16px"><span class="lbl" style="width:56px">Song</span><div id="v2song" style="display:flex;gap:6px"></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 280px;position:absolute;top:150px;left:0;right:0;bottom:0">
+      <div style="padding:10px 14px 10px 20px"><div data-lanes="30"></div></div>
+      <div class="side" data-side style="background:#262421;border-left:1px solid #000;padding:16px 18px;display:flex;flex-direction:column;gap:14px"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3: the open machine -->
+<section class="view" id="v3">
+  <div class="top">
+    <div class="logo">CoolSynth <b>808</b></div>
+    <div style="width:10px"></div>
+    <div class="transport" data-transport></div>
+    <span style="flex:1"></span>
+    <button class="btn">Library</button><button class="btn">File</button>
+  </div>
+  <div class="open">
+    <canvas class="board" id="b3"></canvas>
+    <div class="hint lbl">The machine, open. Click a drum to play with it; Look inside to zoom</div>
+    <div class="crumbs" id="v3crumbs"></div>
+    <div class="card" id="v3card"></div>
+  </div>
+  <div class="dock">
+    <div style="display:flex;align-items:center;gap:14px"><div data-prow></div><div data-ab></div><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div></div>
+    <div data-lanes="20"></div>
+  </div>
+</section>
+
+<!-- 4: the etched panel -->
+<section class="view" id="v4">
+  <canvas class="board" id="b4"></canvas>
+  <div class="screw" style="left:12px;top:12px"></div><div class="screw" style="right:12px;top:12px"></div>
+  <div class="screw" style="left:12px;bottom:12px"></div><div class="screw" style="right:12px;bottom:12px"></div>
+  <div class="silk logo" style="left:40px;top:28px">CoolSynth <b>808</b> <span class="lbl" style="margin-left:10px">Beat composer · circuit board edition</span></div>
+  <div class="silk lbl" style="right:44px;top:30px">Out ▸</div>
+  <div id="v4cols"></div>
+  <div class="glass" id="v4display" style="left:40px;top:588px;width:236px;height:150px"></div>
+  <div class="keysRow" id="v4keys" style="left:300px;top:600px;width:820px"></div>
+  <div class="silk lbl" style="left:300px;top:678px;width:820px;display:flex;justify-content:space-between" id="v4nums"></div>
+  <div id="v4right" style="position:absolute;left:1140px;top:596px;display:flex;flex-direction:column;gap:6px;width:110px"></div>
+  <div class="drawer" id="v4drawer">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px"><div data-prow></div><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div></div>
+    <div data-lanes="21"></div>
+  </div>
+</section>
+
+</div></div>
+
+<div id="saver"><canvas class="board" id="bs"></canvas>
+  <div class="name logo">CoolSynth <b>808</b> <span class="lbl">under the lid</span></div>
+  <div class="bar"><button class="btn is" data-look="schematic">Schematic</button><button class="btn" data-look="phosphor">Phosphor</button><button class="btn" data-look="etched">Etched</button><button class="btn" data-look="blueprint">Blueprint</button><button class="btn" id="saverClose">Esc closes</button></div>
+</div>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
+
+// ---------------------------------------------------------------- the kit and the beat
+const DRUMS = [
+  { id: 'AC', name: 'Accent', knobs: [['Accent', .6], ['Volume', .75]], decay: 1 },
+  { id: 'BD', name: 'Bass drum', knobs: [['Level', .8], ['Tone', .5], ['Decay', .6]], decay: 420, kind: 'ring' },
+  { id: 'SD', name: 'Snare drum', knobs: [['Level', .8], ['Tone', .5], ['Snappy', .6]], decay: 190, kind: 'noise' },
+  { id: 'LT', name: 'Low tom', knobs: [['Level', .8], ['Tuning', .5]], sw: ['LT', 'LC'], decay: 330, kind: 'ring' },
+  { id: 'MT', name: 'Mid tom', knobs: [['Level', .8], ['Tuning', .5]], sw: ['MT', 'MC'], decay: 290, kind: 'ring' },
+  { id: 'HT', name: 'High tom', knobs: [['Level', .8], ['Tuning', .5]], sw: ['HT', 'HC'], decay: 250, kind: 'ring' },
+  { id: 'RS', name: 'Rim shot', knobs: [['Level', .8]], sw: ['RS', 'CL'], decay: 70, kind: 'ring' },
+  { id: 'CP', name: 'Hand clap', knobs: [['Level', .8]], sw: ['CP', 'MA'], decay: 260, kind: 'noise' },
+  { id: 'CB', name: 'Cowbell', knobs: [['Level', .8]], decay: 200, kind: 'metalv' },
+  { id: 'CY', name: 'Cymbal', knobs: [['Level', .8], ['Tone', .5], ['Decay', .6]], decay: 900, kind: 'metalv' },
+  { id: 'OH', name: 'Open hat', knobs: [['Level', .8], ['Decay', .4]], decay: 420, kind: 'metalv' },
+  { id: 'CH', name: 'Closed hat', knobs: [['Level', .8]], decay: 70, kind: 'metalv' },
+];
+const IDX = Object.fromEntries(DRUMS.map((d, i) => [d.id, i]));
+
+function pat(name, map, lens) {
+  const lanes = DRUMS.map(() => new Array(16).fill(false));
+  for (const [k, steps] of Object.entries(map)) for (const s of steps) lanes[IDX[k]][s] = true;
+  const len = DRUMS.map(d => (lens && lens[d.id]) || 16);
+  return { name, lanes, len };
+}
+const ALL = [...Array(16).keys()], EVEN = ALL.filter(i => i % 2 === 0);
+const bank = [
+  pat('House', { AC: [4, 12], BD: [0, 4, 8, 12], CP: [4, 12], CH: [2, 6, 10, 14] }),
+  pat('House B', { AC: [4, 12], BD: [0, 4, 8, 12], SD: [4, 12], OH: [2, 6, 10, 14], CH: [0, 4, 8, 12], RS: [7, 15] }),
+  pat('Electro', { AC: [4, 12], BD: [0, 6, 10], SD: [4, 12], CH: EVEN, CB: [3, 9] }, { CB: 12 }),
+  pat('Break', { BD: [0, 7, 10], SD: [4, 9, 12, 15], CH: ALL.filter(i => i !== 14), OH: [14], LT: [13] }),
+  pat('Trap', { BD: [0, 7, 10], CP: [8], SD: [8], CH: ALL, OH: [] }),
+  pat('Miami', { BD: [0, 3, 6, 10], SD: [4, 12], CH: EVEN, CY: [0] }),
+  pat('Sparse', { BD: [0], CY: [0] }),
+];
+while (bank.length < 16) bank.push(null);
+const fillPattern = pat('Fill', { BD: [0, 8], SD: [8, 9, 10, 11, 12, 13, 14, 15], LT: [12], MT: [13], HT: [14, 15], CY: [0], AC: [8, 12] });
+
+const S = {
+  playing: false, bpm: 120, swing: .54, step: -1, count: 0, lastStep: 0,
+  bankIx: 0, editing: 0, hearing: 0, queued: null,
+  chain: [{ p: 0, r: 2 }, { p: 1, r: 1 }, { p: 0, r: 2 }, { p: 2, r: 1 }], chainPos: 0, repLeft: 2, chainOn: true,
+  fillArmed: false, fillNow: false, sel: 1, variation: 'A', change: 'bar',
+  mute: new Array(12).fill(false), solo: new Array(12).fill(false), level: DRUMS.map(() => .8),
+};
+const hitT = new Array(12).fill(-1e9);
+let stepT = -1e9;
+
+function shown() { return S.editing === -1 ? fillPattern : bank[S.editing] || (bank[S.editing] = pat('', {})); }
+function heard() { return S.fillNow ? fillPattern : bank[S.hearing] || bank[0]; }
+
+// ---------------------------------------------------------------- the clock
+let t0 = performance.now(), acc = 0;
+function stepMs() { return 60000 / S.bpm / 4; }
+function advance(now) {
+  S.step = (S.step + 1) % 16; S.count++;
+  if (S.step === 0) barLine();
+  stepT = now;
+  const p = heard();
+  let any = false;
+  for (let l = 0; l < 12; l++) {
+    const i = S.count % p.len[l];
+    if (!p.lanes[l][i]) continue;
+    const solo = S.solo.some(Boolean);
+    if (S.mute[l] || (solo && !S.solo[l])) continue;
+    hitT[l] = now; any = true;
+    if (l === IDX.CH) hitT[IDX.OH] = -1e9;
+    for (const b of boards) b.struck(l);
+  }
+  if (any) for (const b of boards) b.trigger();
+  paintAll();
+}
+function barLine() {
+  S.fillNow = false;
+  if (S.fillArmed) { S.fillNow = true; S.fillArmed = false; return; }
+  if (S.queued !== null) { S.hearing = S.queued; S.queued = null; S.chainOn = false; return; }
+  if (S.chainOn && S.chain.length) {
+    if (S.count > 0) { S.repLeft--; if (S.repLeft <= 0) { S.chainPos = (S.chainPos + 1) % S.chain.length; S.repLeft = S.chain[S.chainPos].r; } }
+    S.hearing = S.chain[S.chainPos].p;
+  }
+}
+function setPlaying(on) {
+  S.playing = on;
+  if (on) { S.step = -1; S.count = -1; acc = stepMs(); S.chainPos = 0; S.repLeft = S.chain[0] ? S.chain[0].r : 1; }
+  paintAll();
+}
+
+// ---------------------------------------------------------------- pieces of panel
+function knobSVG(v, size, accent) {
+  const r = size / 2, cx = r, cy = r, a0 = -150, a1 = 150, ticks = [];
+  for (let i = 0; i <= 10; i++) {
+    const a = (a0 + (a1 - a0) * i / 10 - 90) * Math.PI / 180, r1 = r + 3, r2 = r + (i % 5 === 0 ? 7 : 5);
+    ticks.push(`<line x1="${cx + r1 * Math.cos(a)}" y1="${cy + r1 * Math.sin(a)}" x2="${cx + r2 * Math.cos(a)}" y2="${cy + r2 * Math.sin(a)}" stroke="#8d8674" stroke-width="1"/>`);
+  }
+  const a = (a0 + (a1 - a0) * v - 90) * Math.PI / 180;
+  const id = 'k' + Math.random().toString(36).slice(2, 8);
+  return `<svg class="kcap" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <defs><radialGradient id="${id}" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="${accent ? '#f3a066' : '#4d4943'}"/><stop offset="1" stop-color="${accent ? '#b9541a' : '#1d1b18'}"/></radialGradient></defs>
+    ${ticks.join('')}
+    <circle cx="${cx}" cy="${cy + 1.5}" r="${r - 1}" fill="#000" opacity=".55"/>
+    <circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="url(#${id})" stroke="#0e0d0c" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${r * .62}" fill="none" stroke="rgba(255,255,255,.07)"/>
+    <line x1="${cx + r * .2 * Math.cos(a)}" y1="${cy + r * .2 * Math.sin(a)}" x2="${cx + (r - 4) * Math.cos(a)}" y2="${cy + (r - 4) * Math.sin(a)}" stroke="${accent ? '#1a1714' : '#ece4d2'}" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>`;
+}
+function knob(label, v, size = 40, accent = false) {
+  const k = el('div', 'knob');
+  const draw = () => { k.innerHTML = knobSVG(v, size, accent) + (label ? `<span class="lbl">${label}</span>` : ''); };
+  draw();
+  k.addEventListener('pointerdown', e => {
+    const y0 = e.clientY, v0 = v; k.setPointerCapture(e.pointerId);
+    const mv = ev => { v = Math.min(1, Math.max(0, v0 + (y0 - ev.clientY) / 150)); draw(); };
+    const up = () => { k.removeEventListener('pointermove', mv); k.removeEventListener('pointerup', up); };
+    k.addEventListener('pointermove', mv); k.addEventListener('pointerup', up);
+  });
+  return k;
+}
+function btn(text, cls, onClick) { const b = el('button', 'btn ' + (cls || ''), text); if (onClick) b.addEventListener('click', onClick); return b; }
+
+const painters = [];
+function paintAll() { for (const p of painters) p(); }
+
+function buildTransport(host) {
+  const play = btn('<span class="dot"></span>Play', '', () => setPlaying(!S.playing));
+  play.style.height = '30px'; play.style.padding = '0 14px';
+  const tempo = el('div', '', `<span class="num" style="font-size:15px">${S.bpm.toFixed(1)}</span> <span class="lbl">BPM</span>`);
+  const tap = btn('Tap');
+  host.style.display = 'flex'; host.style.alignItems = 'center'; host.style.gap = '12px';
+  host.append(play, tempo, tap, knob('', S.swing, 24), el('span', 'lbl', 'Swing'));
+  painters.push(() => { play.classList.toggle('lighted', S.playing); play.innerHTML = '<span class="dot"></span>' + (S.playing ? 'Stop' : 'Play'); });
+}
+function buildPatternRow(host, compact) {
+  host.className = 'prow';
+  const banks = ['A', 'B', 'C', 'D'].map((b, i) => { const s = el('div', 'slot bank' + (i === 0 ? ' has edit' : ''), b); return s; });
+  const slots = [];
+  for (let i = 0; i < 16; i++) {
+    const s = el('div', 'slot', String(i + 1).padStart(2, '0'));
+    if (compact) s.style.width = '30px';
+    s.addEventListener('click', () => { S.editing = i; if (S.playing) S.queued = i; else { S.hearing = i; S.chainOn = false; } paintAll(); });
+    s.addEventListener('contextmenu', e => { e.preventDefault(); S.editing = i; paintAll(); });
+    slots.push(s);
+  }
+  const fill = el('div', 'slot', 'F');
+  fill.title = 'The fill: click to edit it';
+  fill.addEventListener('click', () => { S.editing = -1; paintAll(); });
+  const gap = () => el('span', '', '');
+  host.append(...(compact ? [] : banks), ...(compact ? [] : [gap()]));
+  slots.forEach((s, i) => { if (i % 4 === 0 && i) s.style.marginLeft = '5px'; host.append(s); });
+  fill.style.marginLeft = '8px'; host.append(fill);
+  const fbtn = btn('Fill', '', () => { S.fillArmed = !S.fillArmed; paintAll(); }); fbtn.style.marginLeft = '8px'; host.append(fbtn);
+  painters.push(() => {
+    slots.forEach((s, i) => {
+      s.classList.toggle('has', !!bank[i] && bank[i].lanes.some(l => l.some(Boolean)));
+      s.classList.toggle('edit', S.editing === i);
+      const playingHere = S.playing && !S.fillNow && S.hearing === i;
+      s.classList.toggle('play', playingHere);
+      s.classList.toggle('queued', S.queued === i);
+      s.innerHTML = String(i + 1).padStart(2, '0') + (playingHere ? `<i class="prog" style="width:${(S.step + 1) / 16 * 100}%"></i>` : '');
+    });
+    fill.classList.toggle('edit', S.editing === -1);
+    fill.classList.toggle('play', S.playing && S.fillNow);
+    fill.classList.toggle('queued', S.fillArmed);
+    fbtn.classList.toggle('lighted', S.fillArmed);
+    fbtn.innerHTML = '<span class="dot"></span>Fill';
+  });
+}
+function buildAB(host) {
+  const seg = el('div', 'seg');
+  for (const v of ['A', 'AB', 'B']) seg.append(btn(v, '', () => { S.variation = v; paintAll(); }));
+  host.append(seg);
+  painters.push(() => seg.querySelectorAll('.btn').forEach(b => b.classList.toggle('is', b.textContent === S.variation)));
+}
+function buildChange(host) {
+  const seg = el('div', 'seg');
+  for (const [k, t] of [['bar', 'Next bar'], ['end', 'End of pattern']]) seg.append(btn(t, '', () => { S.change = k; paintAll(); }));
+  host.append(seg);
+  painters.push(() => seg.querySelectorAll('.btn').forEach((b, i) => b.classList.toggle('is', (i === 0) === (S.change === 'bar'))));
+}
+function buildStatus(host) {
+  painters.push(() => {
+    const name = i => i === -1 ? 'fill' : String(i + 1).padStart(2, '0');
+    let t = `Editing <b>${name(S.editing)}</b>`;
+    if (S.playing) {
+      t += S.fillNow ? ' · hearing <b>fill</b>' : ` · hearing <b>${name(S.hearing)}</b>`;
+      const next = S.fillArmed ? 'fill' : S.queued !== null ? name(S.queued) : null;
+      if (next) t += ` · <span class="q">next: ${next} in ${16 - S.step - 1} steps</span>`;
+      else if (S.chainOn) t += ' · chain';
+    } else t += ' · stopped';
+    host.innerHTML = t;
+  });
+}
+function buildChain(host) {
+  host.className = 'chain';
+  const paint = () => {
+    host.innerHTML = '';
+    S.chain.forEach((c, i) => {
+      const b = el('div', 'cblk');
+      const cur = S.playing && S.chainOn && i === S.chainPos && !S.fillNow;
+      const nxt = S.chainOn && i === (S.chainPos + (S.repLeft <= 1 ? 1 : 0)) % S.chain.length && !cur;
+      b.classList.toggle('cur', cur); b.classList.toggle('nxt', S.playing && nxt);
+      const rep = c.r > 1 ? `<span class="x">×${c.r}</span>` : '';
+      const prog = cur ? `<i class="prog" style="width:${((c.r - S.repLeft) * 16 + S.step + 1) / (c.r * 16) * 100}%"></i>` : '';
+      b.innerHTML = `${prog}<span>${String(c.p + 1).padStart(2, '0')}</span>${rep}`;
+      b.title = 'Click: more repeats. Right-click: remove';
+      b.addEventListener('click', () => { c.r = c.r >= 4 ? 1 : c.r * 2; paintAll(); });
+      b.addEventListener('contextmenu', e => { e.preventDefault(); S.chain.splice(i, 1); if (S.chainPos >= S.chain.length) S.chainPos = 0; paintAll(); });
+      host.append(b);
+    });
+    const add = el('div', 'cblk cadd', '+'); add.title = 'Add the pattern being edited';
+    add.addEventListener('click', () => { if (S.editing >= 0) S.chain.push({ p: S.editing, r: 1 }); paintAll(); });
+    host.append(add);
+    if (!S.chainOn && S.chain.length) { const back = btn('Back to chain', '', () => { S.chainOn = true; S.queued = null; S.chainPos = 0; S.repLeft = S.chain[0].r; paintAll(); }); back.style.marginLeft = '6px'; host.append(back); }
+  };
+  painters.push(paint);
+}
+function buildLanes(host, rowH) {
+  host.className = 'lanes';
+  host.style.rowGap = Math.max(2, Math.round(rowH / 7)) + 'px';
+  const rows = [];
+  DRUMS.forEach((d, l) => {
+    const r = el('div', 'lane');
+    r.style.gridTemplateColumns = rowH >= 26 ? '30px 96px 54px 50px 1fr 30px' : '30px 84px 54px 40px 1fr 26px';
+    const id = el('span', 'id', d.id), nm = el('span', 'nm lbl', d.name);
+    id.onclick = nm.onclick = () => { S.sel = l; paintAll(); };
+    const ms = el('div', 'ms'); const m = btn('M', '', () => { S.mute[l] = !S.mute[l]; paintAll(); }); const s = btn('S', '', () => { S.solo[l] = !S.solo[l]; paintAll(); });
+    ms.append(m, s);
+    const lvl = el('div', 'lvl', `<i style="width:${S.level[l] * 100}%"></i>`);
+    const ks = el('div', 'ksteps'); const keys = [];
+    for (let i = 0; i < 16; i++) {
+      const k = el('div', 'key small g' + (1 + (i >> 2))); k.style.height = rowH + 'px';
+      k.addEventListener('click', () => { const p = shown(); p.lanes[l][i] = !p.lanes[l][i]; paintAll(); });
+      keys.push(k); ks.append(k);
+    }
+    const len = el('span', 'len', '16');
+    r.append(id, nm, ms, lvl, ks, len);
+    rows.push({ r, keys, len, m, s });
+    host.append(r);
+  });
+  painters.push(() => {
+    const p = shown();
+    const same = !S.fillNow && S.editing === S.hearing;
+    rows.forEach((row, l) => {
+      row.r.classList.toggle('sel', S.sel === l);
+      row.m.classList.toggle('hot', S.mute[l]); row.s.classList.toggle('is', S.solo[l]);
+      row.len.textContent = p.len[l];
+      const head = S.playing && same ? S.count % p.len[l] : -1;
+      row.keys.forEach((k, i) => {
+        k.classList.toggle('on', p.lanes[l][i]);
+        k.classList.toggle('off', i >= p.len[l]);
+        k.classList.toggle('end', i === p.len[l] - 1 && p.len[l] < 16);
+        k.classList.toggle('ph', i === head);
+      });
+    });
+  });
+}
+function buildSide(host) {
+  const paint = () => {
+    const d = DRUMS[S.sel];
+    host.innerHTML = '';
+    const head = el('div', '', `<div class="lbl">Selected drum</div><div class="t13" style="font-size:13px;margin-top:6px">${d.id} · ${d.name}</div>`);
+    const knobs = el('div', ''); knobs.style.cssText = 'display:flex;flex-wrap:wrap;gap:18px 22px;padding:14px 4px 4px';
+    d.knobs.forEach(([n, v]) => knobs.append(knob(n, v, 46)));
+    host.append(head, knobs);
+    if (d.sw) { const sg = el('div', 'seg'); d.sw.forEach((s, i) => sg.append(btn(s, i === 0 ? 'is' : ''))); host.append(sg); }
+    const st = el('div', '', `<div class="lbl" style="margin:8px 0 8px">Step</div>`);
+    const row = el('div', ''); row.style.cssText = 'display:flex;gap:10px;align-items:center';
+    row.append(el('span', 'num', '100 %'), el('span', 'lbl', 'Chance'));
+    const hits = el('div', 'seg'); ['1', '2', '3'].forEach((h, i) => hits.append(btn(h, i === 0 ? 'is' : '')));
+    row.append(hits, el('span', 'lbl', 'Hits'));
+    st.append(row); host.append(st);
+    const ops = el('div', ''); ops.style.cssText = 'display:flex;gap:6px;margin-top:auto;flex-wrap:wrap';
+    ['Copy', 'Paste', 'Clear', 'Save to library', 'Drag MIDI'].forEach(o => ops.append(btn(o)));
+    host.append(el('div', 'lbl', 'Pattern'), ops);
+  };
+  let last = -1;
+  painters.push(() => { if (S.sel !== last) { last = S.sel; paint(); } });
+}
+function wireAll(scope) {
+  scope.querySelectorAll('[data-transport]').forEach(buildTransport);
+  scope.querySelectorAll('[data-prow]').forEach(h => buildPatternRow(h, scope.id === 'v3' || scope.id === 'v4'));
+  scope.querySelectorAll('[data-ab]').forEach(buildAB);
+  scope.querySelectorAll('[data-change]').forEach(buildChange);
+  scope.querySelectorAll('[data-status]').forEach(buildStatus);
+  scope.querySelectorAll('[data-chain]').forEach(buildChain);
+  scope.querySelectorAll('[data-lanes]').forEach(h => buildLanes(h, +h.dataset.lanes));
+  scope.querySelectorAll('[data-side]').forEach(buildSide);
+}
+
+// ---------------------------------------------------------------- the circuit generator
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// One drum's circuit in the cell's own coordinates: u across, v from the trigger (0) to the output (1).
+function genCell(kind, seed) {
+  const R = rng(seed), w = [], p = [];
+  const sx = .46 + R() * .14, tx = .16 + R() * .1;
+  if (kind === 'trg') {
+    w.push({ pts: [[.3, .2], [.3, .5], [.7, .5], [.7, 0]] }); p.push(['Q', .3, .5, 0], ['R', .5, .5, 0], ['R', .7, .25, 90]);
+    w.push({ pts: [[.3, .5], [.3, .8], [.55, .8]] }); p.push(['P', .3, .66, 90], ['S', .62, .8, 0]);
+    w.push({ pts: [[.3, .2], [.15, .2]] }); p.push(['G', .15, .23, 0]);
+    return { w, p };
+  }
+  if (kind === 'osc') {
+    for (let i = 0; i < 6; i++) {
+      const u = .2 + (i % 3) * .3, v = .22 + Math.floor(i / 3) * .3;
+      p.push(['S', u, v, 0]); w.push({ pts: [[u, v + .06], [u, .78], [.5, .78]] }); p.push(['R', u, v + .14, 90]);
+    }
+    w.push({ pts: [[.5, .78], [.5, 1]] }); p.push(['C', .5, .88, 90]);
+    return { w, p };
+  }
+  w.push({ pts: [[tx, 0], [tx, .2]] }); p.push(['R', tx, .09, 90], ['Q', tx, .22, 0]);
+  w.push({ pts: [[tx, .22], [sx, .22]] }); p.push(['R', (tx + sx) / 2 + .03, .22, 0]);
+  w.push({ pts: [[sx, .22], [sx, .74]] });
+  for (const v of [.32, .47, .62]) if (R() < .7) p.push([R() < .5 ? 'C' : 'R', sx, v, 90]);
+  const nb = 1 + Math.floor(R() * 2);
+  for (let i = 0; i < nb; i++) {
+    const v = .28 + R() * .3, ex = Math.min(.9, sx + .2 + R() * .14);
+    w.push({ pts: [[sx, v], [ex, v], [ex, v + .1]] }); p.push([R() < .5 ? 'R' : 'C', (sx + ex) / 2 + .02, v, 0], ['G', ex, v + .1, 0]);
+  }
+  if (kind === 'ring') {
+    const lx = Math.max(.07, sx - .3);
+    w.push({ pts: [[sx, .38], [lx, .38], [lx, .58], [sx, .58]] }); p.push(['C', lx, .48, 90], ['R', (lx + sx) / 2, .38, 0], ['C', (lx + sx) / 2, .58, 0]);
+  } else if (kind === 'noise') {
+    const lx = Math.max(.1, sx - .3);
+    p.push(['N', lx, .42, 0]); w.push({ pts: [[lx, .47], [lx, .62], [sx, .62]] }); p.push(['R', (lx + sx) / 2, .62, 0]);
+  } else {
+    const lx = Math.max(.1, sx - .3);
+    w.push({ pts: [[lx, .3], [lx, .55], [sx, .55]] }); p.push(['S', lx, .28, 0], ['C', lx, .44, 90], ['R', (lx + sx) / 2, .55, 0]);
+  }
+  p.push(['A', sx, .77, 90]);
+  w.push({ pts: [[sx, .8], [sx, 1]] }); p.push(['P', sx, .9, 90]);
+  const fx = Math.min(.93, sx + .22);
+  w.push({ pts: [[sx, .69], [fx, .69], [fx, .86], [sx, .86]] }); p.push(['R', fx, .775, 90]);
+  return { w, p };
+}
+
+const KIND = { BD: 'ring', SD: 'noise', LT: 'ring', MT: 'ring', HT: 'ring', RS: 'ring', CP: 'noise', CB: 'metalv', CY: 'metalv', OH: 'metalv', CH: 'metalv' };
+// The whole board: the trigger and accent, every drum, the six oscillators.
+function boardCells() {
+  const order = ['TRG', 'BD', 'SD', 'LT', 'MT', 'HT', 'RS', 'CP', 'OSC', 'CB', 'CY', 'OH', 'CH'];
+  return order.map(k => ({ key: k, owner: k === 'TRG' ? -1 : k === 'OSC' ? -2 : IDX[k], kind: k === 'TRG' ? 'trg' : k === 'OSC' ? 'osc' : KIND[k], weight: k === 'TRG' ? .7 : k === 'OSC' ? 1.25 : 1,
+    label: k === 'TRG' ? 'Trigger' : k === 'OSC' ? 'Oscillators' : DRUMS[IDX[k]].name }));
+}
+// The board in one row, or two when the space is tall; a drum is never taller than 1.7 times its width.
+function layoutRow(W, H, m) {
+  const cells = boardCells();
+  const avail = H - m.t - m.b, rows = avail > 250 ? 2 : 1;
+  const groups = rows === 2 ? [cells.slice(0, 7), cells.slice(7)] : [cells];
+  const w = W - m.x - m.r, gap = 34;
+  const cellW = Math.min(...groups.map(gr => w / gr.reduce((a, c) => a + c.weight, 0)));
+  const h = Math.min((avail - gap * (rows - 1)) / rows, cellW * 1.7);
+  const total = h * rows + gap * (rows - 1); let y = m.t + (avail - total) / 2;
+  const buses = [];
+  for (const gr of groups) {
+    const sum = gr.reduce((a, c) => a + c.weight, 0), rowW = w * Math.min(1, cellW * sum / w);
+    let x = m.x + (w - rowW) / 2;
+    for (const c of gr) { c.w = rowW * c.weight / sum; c.x = x; c.y = y; c.h = h; c.trigTop = true; x += c.w; }
+    buses.push({ trigY: y, outY: y + h, x0: gr[0].x, x1: x });
+    y += h + gap;
+  }
+  return { cells, buses, trigY: buses[0].trigY, outY: buses[buses.length - 1].outY, x0: m.x, x1: m.x + w };
+}
+const PALETTES = {
+  schematic: { bg: '#191715', wire: 'rgba(205,196,175,.42)', part: 'rgba(225,216,196,.75)', flow: [255, 160, 74], lit: [255, 195, 107], label: 'rgba(205,196,175,.55)', cell: 'rgba(236,228,210,.035)', heat: [232, 116, 42] },
+  phosphor: { bg: '#050806', wire: 'rgba(80,190,120,.25)', part: 'rgba(110,230,150,.5)', flow: [120, 255, 160], lit: [200, 255, 210], label: 'rgba(110,230,150,.5)', cell: 'rgba(110,230,150,.03)', heat: [60, 200, 110] },
+  blueprint: { bg: '#0f2a4a', wire: 'rgba(200,225,255,.4)', part: 'rgba(225,240,255,.8)', flow: [255, 255, 255], lit: [255, 255, 255], label: 'rgba(200,225,255,.6)', cell: 'rgba(255,255,255,.04)', heat: [140, 200, 255] },
+  etched: { bg: null, wire: 'rgba(176,140,92,.32)', part: 'rgba(236,228,210,.28)', flow: [255, 150, 60], lit: [255, 200, 120], label: 'rgba(236,228,210,.3)', cell: 'rgba(0,0,0,0)', heat: [232, 116, 42], etched: true },
+};
+
+const boards = [];
+class Board {
+  constructor(canvas, layout, look, opts = {}) {
+    this.c = canvas; this.layout = layout; this.look = look; this.opts = opts;
+    this.cam = { x: 0, y: 0, s: 1 }; this.target = null; this.focus = null; this.heat = {}; this.lastNow = performance.now();
+    this.trig = -1e9;
+    boards.push(this);
+    canvas.addEventListener('click', e => this.click(e));
+    new ResizeObserver(() => this.resize()).observe(canvas);
+  }
+  resize() {
+    const r = this.c.getBoundingClientRect(); if (!r.width) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    this.W = this.c.clientWidth; this.H = this.c.clientHeight;
+    this.c.width = Math.round(this.W * dpr); this.c.height = Math.round(this.H * dpr); this.dpr = dpr;
+    this.build();
+    if (!this.focus) { this.cam = { x: this.W / 2, y: this.H / 2, s: 1 }; this.target = null; }
+    else this.zoomTo(this.focus, true);
+  }
+  build() {
+    const L = this.layout(this.W, this.H); this.L = L; this.wires = []; this.parts = [];
+    let n = 1;
+    for (const c of L.cells) {
+      const g = genCell(c.kind, (c.owner + 7) * 97 + 13);
+      const map = ([u, v]) => [c.x + u * c.w, c.trigTop ? c.y + v * c.h : c.y + (1 - v) * c.h];
+      c.k = Math.max(5, Math.min(15, Math.min(c.w, c.h * .55) / 7));
+      for (const w of g.w) this.addWire(w.pts.map(map), c.owner, c);
+      for (const [t, u, v, a] of g.p) this.parts.push({ t, x: map([u, v])[0], y: map([u, v])[1], a, k: c.k, owner: c.owner, name: t === 'Q' ? 'Q' + (40 + n++) : t === 'A' ? 'IC' + (n++ % 9 + 1) : (t === 'P' ? 'VR' : t) + (100 + n++) });
+    }
+    // The buses: the trigger line along the trigger side, the mix along the output side.
+    for (const b of L.buses || [{ trigY: L.trigY, outY: L.outY, x0: L.x0, x1: L.x1 }]) {
+      this.addWire([[b.x0, b.trigY], [b.x1, b.trigY]], 'trig', null);
+      this.addWire([[b.x0 + 20, b.outY], [b.x1, b.outY]], 'out', null);
+    }
+    if (L.extra) for (const e of L.extra) this.addWire(e.pts, e.owner, null);
+  }
+  addWire(pts, owner, cell) {
+    let len = 0; const segs = [];
+    for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); segs.push(d); len += d; }
+    this.wires.push({ pts, owner, len, segs, cell });
+  }
+  energy(owner, now) {
+    if (owner === 'trig') return Math.exp(-(now - this.trig) / 70);
+    if (owner === 'out') { let m = 0; for (let i = 1; i < 12; i++) m = Math.max(m, this.energy(i, now)); return m * .75; }
+    if (owner === -1) return Math.max(.0, Math.exp(-(now - this.trig) / 90));
+    if (owner === -2) return .12 + .88 * Math.max(...[8, 9, 10, 11].map(i => this.energy(i, now)));
+    const t = hitT[owner]; if (t < 0) return 0;
+    const dt = now - t; if (dt < 0) return 0;
+    return Math.min(1, dt / 6) * Math.exp(-dt / DRUMS[owner].decay);
+  }
+  struck(l) { if (this.L && this.opts.follow && l > 0) { const c = this.L.cells.find(c => c.owner === l); if (c) { this.follow = { c, t: performance.now() }; } } }
+  trigger() { this.trig = performance.now(); }
+  cellAt(x, y) {
+    const s = this.cam.s, wx = (x - this.W / 2) / s + this.cam.x, wy = (y - this.H / 2) / s + this.cam.y;
+    return this.L.cells.find(c => wx >= c.x && wx < c.x + c.w && wy >= Math.min(c.y, c.y + c.h) - 12 && wy <= Math.max(c.y, c.y + c.h) + 12);
+  }
+  click(e) {
+    if (this.opts.onClick) { const r = this.c.getBoundingClientRect(); const sc = r.width / this.W; this.opts.onClick(this.cellAt((e.clientX - r.left) / sc, (e.clientY - r.top) / sc), e); }
+  }
+  zoomTo(cell, instant) {
+    if (cell && this.L) cell = this.L.cells.find(c => c.key === cell.key) || cell;
+    this.focus = cell;
+    let t;
+    if (!cell) t = { x: this.W / 2, y: this.H / 2, s: 1 };
+    else { const s = Math.min(this.W / (cell.w + 40), this.H / (cell.h + 60)) * .92; t = { x: cell.x + cell.w / 2, y: cell.y + cell.h / 2, s: Math.max(1, s) }; }
+    if (instant) this.cam = t; else this.target = t;
+  }
+  frame(now) {
+    if (!this.W || !this.c.offsetParent && this.c.id !== 'bs') return;
+    if (this.c.id === 'bs' && !$('saver').classList.contains('is')) return;
+    const dt = Math.min(100, now - this.lastNow); this.lastNow = now;
+    if (this.opts.follow) {
+      let t = { x: this.W / 2, y: this.H / 2, s: 1 };
+      if (this.follow && now - this.follow.t < 900) { const c = this.follow.c; t = { x: c.x + c.w / 2, y: this.H / 2, s: 1.35 }; }
+      this.target = t;
+    }
+    if (this.target) {
+      const k = 1 - Math.exp(-dt / (this.opts.follow ? 700 : 140));
+      this.cam.x += (this.target.x - this.cam.x) * k; this.cam.y += (this.target.y - this.cam.y) * k; this.cam.s += (this.target.s - this.cam.s) * k;
+    }
+    const P = PALETTES[this.look], g = this.c.getContext('2d'), d = this.dpr;
+    g.setTransform(d, 0, 0, d, 0, 0);
+    if (P.bg) { g.fillStyle = P.bg; g.fillRect(0, 0, this.W, this.H); } else g.clearRect(0, 0, this.W, this.H);
+    const s = this.cam.s;
+    g.setTransform(d * s, 0, 0, d * s, d * (this.W / 2 - this.cam.x * s), d * (this.H / 2 - this.cam.y * s));
+    if (this.look === 'blueprint') this.grid(g);
+    // the cells
+    for (const c of this.L.cells) {
+      if (P.cell !== 'rgba(0,0,0,0)') { g.fillStyle = P.cell; g.fillRect(c.x + 2, Math.min(c.y, c.y + c.h) + 8, c.w - 4, Math.abs(c.h) - 16); }
+    }
+    // heat (the afterglow of a bar)
+    for (const w of this.wires) {
+      const e = this.energy(w.owner, now); const key = String(w.owner);
+      const h = this.heat[key] = Math.max(e, (this.heat[key] || 0) * Math.exp(-dt / 1600));
+      w.e = e; w.h = h;
+    }
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    const lw = P.etched ? 2.6 : 1.1;
+    for (const w of this.wires) {
+      if (w.h > .02) { g.strokeStyle = `rgba(${P.heat.join(',')},${(P.etched ? .16 : .1) * w.h})`; g.lineWidth = lw + (P.etched ? 6 : 5); this.path(g, w.pts, P.etched); g.stroke(); }
+    }
+    g.strokeStyle = P.wire; g.lineWidth = lw;
+    for (const w of this.wires) { this.path(g, w.pts, P.etched); g.stroke(); }
+    // lit wires
+    g.globalCompositeOperation = 'lighter';
+    for (const w of this.wires) {
+      if (w.e < .03) continue;
+      g.strokeStyle = `rgba(${P.flow.join(',')},${.75 * w.e})`; g.lineWidth = lw + .6; this.path(g, w.pts, P.etched); g.stroke();
+      g.strokeStyle = `rgba(${P.flow.join(',')},${.12 * w.e})`; g.lineWidth = lw + 7; this.path(g, w.pts, P.etched); g.stroke();
+    }
+    // current: dots moving along lit wires, faster for more current
+    g.fillStyle = `rgb(${P.lit.join(',')})`;
+    for (const w of this.wires) {
+      if (w.e < .05) continue;
+      const sp = 11, off = (now * (.02 + .07 * w.e)) % sp;
+      g.globalAlpha = Math.min(1, w.e * 1.3);
+      for (let dd = off; dd < w.len; dd += sp) { const [x, y] = this.at(w, dd); g.beginPath(); g.arc(x, y, P.etched ? 1.6 : 1.25, 0, 6.283); g.fill(); }
+    }
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    // parts
+    for (const p of this.parts) this.part(g, p, P, now);
+    if (P.etched) this.pads(g, P);
+    // labels: drum names always, part names once zoomed in (semantic zoom)
+    g.fillStyle = P.label; g.textAlign = 'center';
+    if (!this.opts.noNames) {
+      g.font = `600 ${9 / Math.max(1, s * .8)}px Archivo, sans-serif`;
+      for (const c of this.L.cells) { g.save(); g.fillText(c.label.toUpperCase(), c.x + c.w / 2, Math.max(c.y, c.y + c.h) - 3 - (c.trigTop ? 0 : Math.abs(c.h) - 6)); g.restore(); }
+    }
+    // Clearance around what is mounted on the board: the copper stops short, as on a real board.
+    if (this.opts.keepouts) {
+      for (const k of this.opts.keepouts()) {
+        g.globalCompositeOperation = 'destination-out'; g.beginPath();
+        if (k.r) g.arc(k.x, k.y, k.r, 0, 6.283); else g.roundRect(k.x, k.y, k.w, k.h, 4);
+        g.fill(); g.globalCompositeOperation = 'source-over';
+        g.strokeStyle = 'rgba(190,150,96,.28)'; g.lineWidth = 1; g.beginPath();
+        if (k.r) g.arc(k.x, k.y, k.r, 0, 6.283); else g.roundRect(k.x, k.y, k.w, k.h, 4);
+        g.stroke();
+      }
+    }
+    if (s > 1.35 || P.etched) {
+      g.font = `500 ${P.etched ? 6 : 5.5}px 'IBM Plex Mono', monospace`; g.textAlign = 'left'; g.globalAlpha = P.etched ? .7 : Math.min(1, (s - 1.35) * 2);
+      for (const p of this.parts) if (p.t !== 'G') g.fillText(p.name, p.x + p.k * .9, p.y - p.k * .7);
+      g.globalAlpha = 1;
+    }
+  }
+  grid(g) {
+    g.strokeStyle = 'rgba(255,255,255,.05)'; g.lineWidth = .5;
+    for (let x = 0; x < this.W; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, this.H); g.stroke(); }
+    for (let y = 0; y < this.H; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(this.W, y); g.stroke(); }
+  }
+  path(g, pts, chamfer) {
+    g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      if (chamfer && i < pts.length - 1) {
+        const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1];
+        const d1 = Math.hypot(bx - ax, by - ay), d2 = Math.hypot(cx - bx, cy - by), r = Math.min(7, d1 / 2, d2 / 2);
+        g.lineTo(bx - (bx - ax) / d1 * r, by - (by - ay) / d1 * r); g.lineTo(bx + (cx - bx) / d2 * r, by + (cy - by) / d2 * r);
+      } else g.lineTo(pts[i][0], pts[i][1]);
+    }
+  }
+  at(w, d) {
+    for (let i = 0; i < w.segs.length; i++) {
+      if (d <= w.segs[i]) { const f = d / w.segs[i]; return [w.pts[i][0] + (w.pts[i + 1][0] - w.pts[i][0]) * f, w.pts[i][1] + (w.pts[i + 1][1] - w.pts[i][1]) * f]; }
+      d -= w.segs[i];
+    }
+    return w.pts[w.pts.length - 1];
+  }
+  pads(g, P) {
+    g.fillStyle = 'rgba(190,150,96,.55)';
+    for (const w of this.wires) for (const q of [w.pts[0], w.pts[w.pts.length - 1]]) { g.beginPath(); g.arc(q[0], q[1], 2.6, 0, 6.283); g.fill(); g.fillStyle = 'rgba(20,18,16,.9)'; g.beginPath(); g.arc(q[0], q[1], 1, 0, 6.283); g.fill(); g.fillStyle = 'rgba(190,150,96,.55)'; }
+  }
+  part(g, p, P, now) {
+    const k = p.k, e = this.energy(p.owner, now);
+    g.save(); g.translate(p.x, p.y); if (p.a === 90) g.rotate(Math.PI / 2);
+    // cut the wire under the part
+    const cut = { R: [1.25, .55], C: [.4, .7], P: [1.25, .7], Q: [1, 1], A: [1, 1], S: [.9, .9], N: [.9, .9] }[p.t];
+    if (cut) {
+      if (P.bg) { g.fillStyle = P.bg; g.fillRect(-k * cut[0], -k * cut[1], 2 * k * cut[0], 2 * k * cut[1]); }
+      else { g.globalCompositeOperation = 'destination-out'; g.fillRect(-k * cut[0], -k * cut[1], 2 * k * cut[0], 2 * k * cut[1]); g.globalCompositeOperation = 'source-over'; }
+    }
+    const lit = e > .05;
+    g.strokeStyle = lit ? `rgba(${P.lit.join(',')},${.45 + .55 * e})` : P.part; g.fillStyle = g.strokeStyle; g.lineWidth = P.etched ? 1 : 1.1;
+    if (P.etched) this.etchedPart(g, p, k, e, P);
+    else this.schemPart(g, p, k, e, P);
+    g.restore();
+  }
+  schemPart(g, p, k, e, P) {
+    const L = k * 1.25;
+    switch (p.t) {
+      case 'R': g.beginPath(); g.moveTo(-L, 0); for (let i = 0; i <= 6; i++) g.lineTo(-L * .8 + i * L * 1.6 / 6, i === 0 || i === 6 ? 0 : (i % 2 ? -1 : 1) * k * .42); g.lineTo(L, 0); g.stroke(); break;
+      case 'P': g.beginPath(); g.moveTo(-L, 0); for (let i = 0; i <= 6; i++) g.lineTo(-L * .8 + i * L * 1.6 / 6, i === 0 || i === 6 ? 0 : (i % 2 ? -1 : 1) * k * .42); g.lineTo(L, 0); g.moveTo(-k * .7, k * .8); g.lineTo(k * .7, -k * .8); g.lineTo(k * .35, -k * .7); g.stroke(); break;
+      case 'C': g.beginPath(); g.moveTo(-k * .4, 0); g.lineTo(-k * .15, 0); g.moveTo(-k * .15, -k * .65); g.lineTo(-k * .15, k * .65); g.moveTo(k * .15, -k * .65); g.lineTo(k * .15, k * .65); g.moveTo(k * .15, 0); g.lineTo(k * .4, 0); g.stroke(); break;
+      case 'Q': g.beginPath(); g.arc(0, 0, k * .9, 0, 6.283); g.stroke(); g.beginPath(); g.moveTo(-k * .3, -k * .5); g.lineTo(-k * .3, k * .5); g.moveTo(-k * .9, 0); g.lineTo(-k * .3, 0); g.moveTo(-k * .3, -k * .2); g.lineTo(k * .45, -k * .7); g.moveTo(-k * .3, k * .2); g.lineTo(k * .45, k * .7); g.stroke(); if (e > .2) { g.globalAlpha = e * .35; g.beginPath(); g.arc(0, 0, k * .9, 0, 6.283); g.fill(); g.globalAlpha = 1; } break;
+      case 'A': g.beginPath(); g.moveTo(-k, -k); g.lineTo(-k, k); g.lineTo(k, 0); g.closePath(); g.stroke(); g.font = `${k * .55}px Archivo`; g.textAlign = 'left'; g.fillText('–', -k * .8, -k * .25); g.fillText('+', -k * .8, k * .55); break;
+      case 'G': for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(-k * (.6 - i * .2), i * k * .22); g.lineTo(k * (.6 - i * .2), i * k * .22); g.stroke(); } break;
+      case 'N': g.beginPath(); g.arc(0, 0, k * .85, 0, 6.283); g.stroke(); g.beginPath(); for (let i = 0; i <= 12; i++) { const x = -k * .55 + i * k * 1.1 / 12; const y = Math.sin(i * 1.7 + now(this) * .03) * k * .3 * (i % 3 ? 1 : -1); i ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke(); break;
+      case 'S': g.strokeRect(-k * .85, -k * .85, k * 1.7, k * 1.7); g.beginPath(); g.moveTo(-k * .55, k * .3); g.lineTo(-k * .25, k * .3); g.lineTo(-k * .25, -k * .3); g.lineTo(k * .15, -k * .3); g.lineTo(k * .15, k * .3); g.lineTo(k * .55, k * .3); g.stroke(); break;
+    }
+  }
+  etchedPart(g, p, k, e, P) {
+    const pad = (x, y) => { g.save(); g.fillStyle = 'rgba(190,150,96,.6)'; g.beginPath(); g.arc(x, y, 2.4, 0, 6.283); g.fill(); g.restore(); };
+    switch (p.t) {
+      case 'R': case 'P': g.strokeRect(-k * 1.05, -k * .38, k * 2.1, k * .76); pad(-k * 1.25, 0); pad(k * 1.25, 0); if (p.t === 'P') { g.beginPath(); g.arc(0, 0, k * .3, 0, 6.283); g.stroke(); } break;
+      case 'C': g.strokeRect(-k * .32, -k * .6, k * .64, k * 1.2); pad(-k * .4, 0); pad(k * .4, 0); break;
+      case 'Q': g.beginPath(); g.arc(0, 0, k * .85, Math.PI * .15, Math.PI * 1.85); g.closePath(); g.stroke(); pad(-k * .45, 0); pad(0, 0); pad(k * .45, 0); break;
+      case 'A': g.strokeRect(-k * 1.1, -k * 1.4, k * 2.2, k * 2.8); g.beginPath(); g.arc(0, -k * 1.4, k * .3, 0, Math.PI); g.stroke(); for (let i = 0; i < 4; i++) { pad(-k * 1.1, -k * 1.05 + i * k * .7); pad(k * 1.1, -k * 1.05 + i * k * .7); } if (e > .1) { g.globalAlpha = e * .25; g.fillRect(-k * 1.1, -k * 1.4, k * 2.2, k * 2.8); g.globalAlpha = 1; } break;
+      case 'G': pad(0, 0); g.beginPath(); g.arc(0, 0, 4, 0, 6.283); g.stroke(); break;
+      case 'N': case 'S': g.strokeRect(-k * .9, -k * .9, k * 1.8, k * 1.8); pad(-k * .6, -k * .6); pad(k * .6, k * .6); break;
+    }
+    // an LED by every transistor: the board's own lights
+    if (p.t === 'Q') { g.save(); const a = .15 + .85 * e; g.fillStyle = `rgba(255,${120 + 80 * e},60,${a})`; g.beginPath(); g.arc(k * 1.4, -k * .9, 2.2, 0, 6.283); g.fill(); if (e > .1) { g.fillStyle = `rgba(255,150,60,${.25 * e})`; g.beginPath(); g.arc(k * 1.4, -k * .9, 7, 0, 6.283); g.fill(); } g.restore(); }
+  }
+}
+function now() { return performance.now(); }
+
+// ---------------------------------------------------------------- 1: the beat desk
+function build1() {
+  wireAll($('v1'));
+  const band = $('v1band');
+  const b = new Board($('b1'), (W, H) => layoutRow(W, H, { x: 14, r: 30, t: 30, b: 16 }), 'schematic', {
+    onClick: (cell, e) => {
+      if (!band.classList.contains('open')) { band.classList.add('open'); setTimeout(() => b.zoomTo(cell || null), 380); crumbs(cell); }
+      else if (cell && b.focus !== cell) { b.zoomTo(cell); crumbs(cell); }
+    },
+  });
+  const crumbs = cell => {
+    const c = $('v1crumbs'); c.innerHTML = '';
+    if (!band.classList.contains('open')) return;
+    c.append(btn('Whole board', cell ? '' : 'is', () => { b.zoomTo(null); crumbs(null); }));
+    if (cell) c.append(btn(cell.label, 'is'));
+    c.append(btn('Close', '', () => { b.zoomTo(null, true); band.classList.remove('open'); c.innerHTML = ''; }));
+  };
+}
+
+// ---------------------------------------------------------------- 2: the 808 and its lid
+function build2() {
+  wireAll($('v2'));
+  const cols = $('v2cols');
+  DRUMS.forEach((d, l) => {
+    const c = el('div', 'col'); c.dataset.l = l;
+    const cap = el('div', 'cap', `<span class="t13">${d.id}</span>`); cap.style.cursor = 'pointer'; cap.onclick = () => { S.sel = l; paintAll(); };
+    c.append(cap);
+    d.knobs.forEach(([n, v]) => c.append(knob(n, v, 52, l === 0 && n === 'Accent')));
+    if (d.sw) { const sg = el('div', 'seg'); d.sw.forEach((s, i) => sg.append(btn(s, i === 0 ? 'is' : ''))); c.append(sg); }
+    const nm = el('div', 'lbl', d.name); nm.style.marginTop = 'auto'; nm.style.marginBottom = '14px'; c.append(nm);
+    cols.append(c);
+  });
+  painters.push(() => cols.querySelectorAll('.col').forEach((c, l) => c.classList.toggle('sel', S.sel === l)));
+  // The deck: the 808's own way, a drum chosen above and its steps on the sixteen keys.
+  const deck = $('v2deck');
+  deck.innerHTML = `<div style="display:grid;grid-template-columns:170px 1fr 170px;gap:26px;height:100%">
+    <div id="v2left" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div><div id="v2keys" style="display:grid;grid-template-columns:repeat(16,1fr);column-gap:8px"></div>
+      <div id="v2nums" class="lbl" style="display:grid;grid-template-columns:repeat(16,1fr);column-gap:8px;margin-top:8px;text-align:center"></div>
+      <div style="display:flex;gap:18px;align-items:center;margin-top:26px"><div class="glass" id="v2win" style="background:#0f0e0c;border-radius:4px;padding:10px 14px;box-shadow:inset 0 2px 5px #000;min-width:340px"></div><span class="lbl" style="line-height:1.5">The sixteen keys write the selected drum, as on the 808.<br>Patterns, the chain and the lanes are on Edit.</span></div></div>
+    <div id="v2right" style="display:flex;flex-direction:column;gap:8px"></div></div>`;
+  const left = $('v2left');
+  const ab = el('div'); buildAB(ab);
+  left.append(el('div', 'lbl', 'Variation'), ab, el('div', 'lbl', 'Tempo'), knob('', .5, 54));
+  const keys = $('v2keys'), nums = $('v2nums'); const ks = [];
+  for (let i = 0; i < 16; i++) {
+    const k = el('div', 'key g' + (1 + (i >> 2))); k.style.height = '96px';
+    k.onclick = () => { const p = shown(); p.lanes[S.sel][i] = !p.lanes[S.sel][i]; paintAll(); };
+    ks.push(k); keys.append(k); nums.append(el('span', '', String(i + 1)));
+  }
+  const right = $('v2right');
+  right.append(btn('<span class="dot"></span>Start / stop', '', () => setPlaying(!S.playing)), btn('Fill'), btn('Tap'), btn('Clear'));
+  painters.push(() => {
+    const p = shown(); const same = !S.fillNow && S.editing === S.hearing;
+    ks.forEach((k, i) => { k.classList.toggle('on', p.lanes[S.sel][i]); k.classList.toggle('ph', S.playing && same && S.count % p.len[S.sel] === i); });
+    const nm = i => i === -1 ? 'FILL' : String(i + 1).padStart(2, '0');
+    $('v2win').innerHTML = `<span class="num" style="color:var(--lit)">${DRUMS[S.sel].id}</span> <span class="num" style="color:var(--dim)">·</span> <span class="num">PTN ${nm(S.editing)}</span> <span class="num" style="color:var(--dim)">${S.playing ? '▶ ' + (S.fillNow ? 'FILL' : nm(S.hearing)) : '■'}</span>`;
+    right.firstChild.classList.toggle('lighted', S.playing);
+  });
+  const song = $('v2song');
+  [['1', '01×2 02 01×2 03', 2], ['2', '04 ×4', 1], ['3', '05 ×3 · fill', 1]].forEach(([n, t, r], i) => song.append(el('div', 'cblk' + (i === 0 ? ' nxt' : ''), `<span class="x">${n}</span><span>${t}</span><span class="x">×${r}</span>`)));
+  song.append(el('div', 'cblk cadd', '+'));
+  // The lid
+  const b = new Board($('b2'), (W, H) => layoutRow(W, H, { x: 20, r: 30, t: 70, b: 40 }), 'schematic', {
+    onClick: cell => { if (cell && b.focus !== cell) { b.zoomTo(cell); crumbs(cell); } },
+  });
+  const crumbs = cell => { const c = $('v2crumbs'); c.innerHTML = ''; c.append(btn('Whole board', cell ? '' : 'is', () => { b.zoomTo(null); crumbs(null); })); if (cell) c.append(btn(cell.label, 'is')); c.append(el('span', 'lbl', cell ? 'Zoomed in, the parts are named' : 'Click a drum to zoom into it')); };
+  crumbs(null);
+  $('v2tabs').querySelectorAll('.btn').forEach(t => t.onclick = () => {
+    $('v2tabs').querySelectorAll('.btn').forEach(x => x.classList.toggle('is', x === t));
+    $('v2').classList.toggle('lifted', t.dataset.t === 'lid');
+    $('v2').classList.toggle('editing', t.dataset.t === 'edit');
+  });
+}
+
+// ---------------------------------------------------------------- 3: the open machine
+function build3() {
+  wireAll($('v3'));
+  const card = $('v3card');
+  const b = new Board($('b3'), (W, H) => layoutRow(W, H, { x: 14, r: 30, t: 40, b: 24 }), 'schematic', {
+    onClick: cell => { if (!cell || cell.owner < 1) return; S.sel = cell.owner; paintAll(); },
+  });
+  let last = -1;
+  const place = () => {
+    if (!b.L) return;
+    const c = b.L.cells.find(c => c.owner === S.sel);
+    if (!c || b.focus) { card.style.display = 'none'; return; }
+    card.style.display = 'flex';
+    const x = c.x + c.w + 6 > 1280 - 200 ? c.x - 190 : c.x + c.w + 6;
+    card.style.left = x + 'px'; card.style.top = '70px';
+  };
+  const crumbs = () => {
+    const h = $('v3crumbs'); h.innerHTML = '';
+    if (b.focus) { h.append(btn('Whole board', '', () => { b.zoomTo(null); crumbs(); place(); }), btn(b.focus.label, 'is')); }
+  };
+  painters.push(() => {
+    if (S.sel === last) return; last = S.sel;
+    const d = DRUMS[S.sel];
+    card.innerHTML = '';
+    card.append(el('div', 't13', `${d.id} · ${d.name}`));
+    const kn = el('div', ''); kn.style.cssText = 'display:flex;flex-wrap:wrap;gap:14px 16px;padding:6px 2px';
+    d.knobs.forEach(([n, v]) => kn.append(knob(n, v, 40)));
+    card.append(kn);
+    if (d.sw) { const sg = el('div', 'seg'); d.sw.forEach((s, i) => sg.append(btn(s, i === 0 ? 'is' : ''))); card.append(sg); }
+    card.append(btn('Look inside', '', () => { const c = b.L.cells.find(c => c.owner === S.sel); b.zoomTo(c); crumbs(); place(); }));
+    place();
+  });
+  new ResizeObserver(place).observe($('b3'));
+  // the selected drum framed on the board
+  const orig = b.frame.bind(b);
+  b.frame = now => {
+    orig(now);
+    if (!b.W || !b.L || b.focus || !$('b3').offsetParent) return;
+    const c = b.L.cells.find(c => c.owner === S.sel); if (!c) return;
+    const g = b.c.getContext('2d'); g.setTransform(b.dpr, 0, 0, b.dpr, 0, 0);
+    g.strokeStyle = 'rgba(236,228,210,.5)'; g.lineWidth = 1; g.setLineDash([4, 4]); g.strokeRect(c.x + 2, c.y - 14, c.w - 4, c.h + 26); g.setLineDash([]);
+  };
+}
+
+// ---------------------------------------------------------------- 4: the etched panel
+function build4() {
+  wireAll($('v4'));
+  // Twelve columns, each the drum's own circuit with its knobs on it; triggers come up from the keys, the mix runs
+  // along the top to Out.
+  const colX0 = 40, colX1 = 1240, top = 72, bottom = 584;
+  const widths = DRUMS.map((d, l) => l === 0 ? .85 : 1); const sum = widths.reduce((a, b) => a + b, 0);
+  const cols = []; let x = colX0;
+  DRUMS.forEach((d, l) => { const w = (colX1 - colX0) * widths[l] / sum; cols.push({ x, w }); x += w; });
+  const layout = (W, H) => {
+    const cells = DRUMS.map((d, l) => ({ key: d.id, owner: l === 0 ? -1 : l, kind: l === 0 ? 'trg' : KIND[d.id], label: d.name, x: cols[l].x + 4, w: cols[l].w - 8, y: top, h: bottom - top, trigTop: false }));
+    // the sequencer's lines from the keys up to the trigger bus, the mix out to the jack
+    const extra = [];
+    for (let i = 0; i < 16; i++) { const kx = 300 + 820 / 16 * (i + .5) - 4; extra.push({ pts: [[kx, 600], [kx, 592], [kx + 8, 584]], owner: 'trig' }); }
+    extra.push({ pts: [[1240, 72], [1252, 60], [1252, 44]], owner: 'out' });
+    extra.push({ pts: [[276, 664], [290, 664], [290, 600], [300, 590]], owner: 'trig' });
+    return { cells, trigY: bottom, outY: top, x0: 40, x1: 1240, extra };
+  };
+  const keep = [];
+  DRUMS.forEach((d, l) => {
+    const c = cols[l], cx = c.x + c.w / 2;
+    keep.push({ x: c.x + 8, y: 92, w: c.w - 16, h: 34 });
+    d.knobs.forEach((_, i) => { const y = 150 + i * 84; keep.push({ x: cx, y: y + 20, r: 31 }); keep.push({ x: cx - 30, y: y + 46, w: 60, h: 16 }); });
+    if (d.sw) keep.push({ x: cx - 38, y: 146 + d.knobs.length * 84, w: 76, h: 34 });
+  });
+  keep.push({ x: 30, y: 18, w: 520, h: 40 }, { x: 1200, y: 22, w: 66, h: 24 });
+  const b = new Board($('b4'), layout, 'etched', { noNames: true, keepouts: () => keep });
+  // Column names and knobs on the board
+  const host = $('v4cols');
+  DRUMS.forEach((d, l) => {
+    const c = cols[l];
+    const lab = el('div', 'colLabel', `<div class="t13">${d.id}</div><div class="lbl" style="margin-top:4px">${d.name}</div>`);
+    lab.style.left = c.x + 'px'; lab.style.width = c.w + 'px'; lab.style.top = '96px';
+    lab.onclick = () => { S.sel = l; paintAll(); };
+    host.append(lab);
+    d.knobs.forEach(([n, v], i) => {
+      const k = knob(n, v, 40, l === 0 && i === 0); k.classList.add('kn');
+      k.style.left = (c.x + c.w / 2 - 20) + 'px'; k.style.top = (150 + i * 84) + 'px';
+      host.append(k);
+    });
+    if (d.sw) { const sg = el('div', 'seg'); sg.style.cssText = `position:absolute;left:${c.x + c.w / 2 - 34}px;top:${150 + d.knobs.length * 84}px`; d.sw.forEach((s, i) => sg.append(btn(s, i === 0 ? 'is' : ''))); host.append(sg); }
+  });
+  painters.push(() => host.querySelectorAll('.colLabel').forEach((e, l) => e.classList.toggle('sel', S.sel === l)));
+  // The keys
+  const keys = $('v4keys'), ks = [];
+  for (let i = 0; i < 16; i++) {
+    const k = el('div', 'key g' + (1 + (i >> 2)));
+    k.onclick = () => { const p = shown(); p.lanes[S.sel][i] = !p.lanes[S.sel][i]; paintAll(); };
+    ks.push(k); keys.append(k); $('v4nums').append(el('span', '', String(i + 1)));
+  }
+  $('v4nums').style.paddingLeft = '20px'; $('v4nums').style.paddingRight = '20px';
+  const right = $('v4right');
+  const playB = btn('<span class="dot"></span>Start', '', () => setPlaying(!S.playing));
+  const ab = el('div'); buildAB(ab);
+  right.append(playB, ab, btn('Fill', '', () => { S.fillArmed = !S.fillArmed; paintAll(); }), btn('Lanes', '', () => $('v4drawer').classList.toggle('up')));
+  painters.push(() => {
+    const p = shown(); const same = !S.fillNow && S.editing === S.hearing;
+    ks.forEach((k, i) => { k.classList.toggle('on', p.lanes[S.sel][i]); k.classList.toggle('ph', S.playing && same && S.count % p.len[S.sel] === i); });
+    playB.classList.toggle('lighted', S.playing); playB.innerHTML = '<span class="dot"></span>' + (S.playing ? 'Stop' : 'Start');
+    const nm = i => i === -1 ? 'FILL' : String(i + 1).padStart(2, '0');
+    const chain = S.chain.map((c, i) => `<span style="color:${S.playing && S.chainOn && i === S.chainPos ? 'var(--lit)' : 'var(--dim)'}">${nm(c.p)}${c.r > 1 ? '×' + c.r : ''}</span>`).join(' ');
+    $('v4display').innerHTML = `<div class="num" style="font-size:12px;color:var(--lit);text-shadow:0 0 6px rgba(255,160,74,.5)">${S.bpm.toFixed(1)} BPM · ${DRUMS[S.sel].id}</div>
+      <div class="num" style="font-size:12px;margin-top:10px">EDIT ${nm(S.editing)} <span style="color:var(--dim)">${S.playing ? '▶ ' + (S.fillNow ? 'FILL' : nm(S.hearing)) : '■'}</span>${S.queued !== null ? ` <span style="color:var(--lit)">NEXT ${nm(S.queued)}</span>` : ''}</div>
+      <div class="num" style="font-size:11px;margin-top:10px">CHAIN ${chain}</div>
+      <div class="lbl" style="margin-top:14px">Patterns and chain on the Lanes drawer</div>`;
+  });
+}
+
+// ---------------------------------------------------------------- the full-screen circuit
+function buildSaver() {
+  const b = new Board($('bs'), (W, H) => layoutRow(W, H, { x: 40, r: 40, t: H * .2, b: H * .2 }), 'schematic', { follow: true });
+  $('saverBtn').onclick = () => { $('saver').classList.add('is'); if (!S.playing) setPlaying(true); b.resize(); };
+  $('saverClose').onclick = () => $('saver').classList.remove('is');
+  $('saver').querySelectorAll('[data-look]').forEach(x => x.onclick = () => { b.look = x.dataset.look; b.build(); $('saver').querySelectorAll('[data-look]').forEach(y => y.classList.toggle('is', y === x)); });
+}
+
+// ---------------------------------------------------------------- start
+build1(); build2(); build3(); build4(); buildSaver();
+document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
+  document.querySelectorAll('#chrome .tab[data-v]').forEach(x => x.classList.toggle('is', x === t));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('is', v.id === 'v' + t.dataset.v));
+  for (const b of boards) b.resize();
+  try { localStorage.setItem('cs808-layout', t.dataset.v); } catch (e) {}
+});
+try { const v = localStorage.getItem('cs808-layout'); if (v) document.querySelector(`#chrome .tab[data-v="${v}"]`).click(); } catch (e) {}
+function fit() { const vp = $('viewport'); const s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 800); $('stage').style.transform = `scale(${s})`; }
+window.addEventListener('resize', fit); fit();
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); setPlaying(!S.playing); }
+  if (e.code === 'Escape') $('saver').classList.remove('is');
+});
+paintAll();
+let prev = performance.now();
+function loop(t) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(250, t - prev); prev = t;
+  if (S.playing) { acc += dt; const sm = stepMs(); while (acc >= sm) { acc -= sm; advance(t); } }
+  for (const b of boards) { try { b.frame(t); } catch (e) { console.error(e); } }
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

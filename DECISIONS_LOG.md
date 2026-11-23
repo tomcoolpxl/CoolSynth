@@ -6193,3 +6193,18 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
 - Three layouts to try: the beat desk (the sequencer at the centre, a live board band), the 808 and its lid (the
   classic panel, an edit view, the circuit by zooming), the open machine (the circuit at the centre as the drum
   selector). All with a pattern row of its own, a chain of blocks, the selected drum's knobs and one typeface.
+
+## D284. CoolSynth 808: four layouts as HTML mockups (2026-11-23)
+
+- Asked for by the user: the three layouts of D283 as mockups, HTML allowed, and a fourth of their own: the
+  instrument's top panel as the circuit etched into the metal, lit and moving, with the controls on it here and
+  there.
+- In `docs/design/mockups/coolsynth-808-layouts.html`, switchable: the beat desk, the 808 and its lid (Panel, Edit
+  and Lift the lid, the panel folding up off the board), the open machine, the etched panel; and the full-screen
+  circuit with four looks (schematic, phosphor, etched, blueprint) and a camera that follows the drum struck.
+- All share the pattern row (edited, playing and queued kept apart, with a line that says them), the chain as
+  blocks with repeats, one typeface (Archivo, IBM Plex Mono for numbers), keys with a face and a light, knobs as
+  caps with ticks. The board opens and zooms into a drum, its parts named only when zoomed in.
+- The circuits come from a generator in the spirit of the real ones, not the netlists; no sound.
+- The etched panel: each drum's knobs on its own column of copper, triggers rising from the keys, the mix along
+  the top, a clearance ring round every mounted control. Precedent: the Pocket Operators' bare boards.
