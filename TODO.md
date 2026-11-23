@@ -292,9 +292,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     VCF are done and calibrated by page 7 (`docs/research/tb-303-circuit.md`, its netlists section; R110 and R111
     corrected to 22k). The envelope, the VCA (the BA662 as its transistors) and the whole voice (`voice.cir`) are
     done; against Din Sync's unit, with TM3 fitted at 0.35, each knob alone matches within about 1 to 3 dB and the
-    accent's loudness within 1 dB after its first 25 ms. Next: the knobs together (sets B to E) and the square,
-    the knobs' taper, D34 and R137's far end, the note's start delay against Whittle; then the circuit in the
-    engine, stage by stage. The interface is parked by the user
+    accent's loudness within 1 dB after its first 25 ms; the square too, with C11 fitted at 0.82 uF; all 25 sets
+    mostly within 1 dB but for set B's resonance at a quarter turn (open); the rail is 11.85 V, not 12. Next: the
+    circuit in the engine, stage by stage, each against its ngspice render. The interface is parked by the user
     (`docs/research/tb-303-app.md`).
 
 

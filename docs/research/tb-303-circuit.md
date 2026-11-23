@@ -161,7 +161,20 @@ checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusicla
     (within 0.6 dB at cutoff 25, 50 and 100 %, 2.1 dB darker at 75 %). Sets A2 to A5 are to repeat settled.
   - The square at low C: its even harmonics 3 to 5 dB low with C11 as printed (1 uF); with C11 at 0.82 uF, inside an
     electrolytic's tolerance, harmonics 2 to 10 within 0.4 dB (Open Music Labs too changed C11 to match its 303).
-  - Not yet compared: the knobs together (sets B to E).
+  - All 25 sets, settled, TM3 0.35 and C11 0.82 uF (`compare_sets.py`; plain and accented saw at each position):
+    - Sets A, C, D and E: the tone mostly within 1 dB on harmonics 2 to 8, the accent's loudness over the plain note
+      mostly within 1 dB, a few positions 2 to 3 dB off.
+    - Set A's two 75 % misfits (cutoff 2.2 dB dark, accent 2.6 dB weak) fit at about 85 %: Din Sync's positions are
+      approximate.
+    - Set B (every knob at 25 %) runs 5 to 7 dB bright whenever RESONANCE is at 25 % or more; with RESONANCE at 0 it
+      fits within 0.6 dB. Resonance at 25 % is also set A2's and C2's worst position (3 dB). Open: the resonant
+      peak's place among the low C's harmonics at a quarter turn of CUTOFF and RESONANCE (the pots' tapers are
+      assumed).
+- The 12 V rail is not 12 V: IC16 makes it from its 5.333 V times 1 + R178 / R179 (2.2k / 1.8k), 11.85 V, and TM6
+  (the CV trimmer) sets the 5.333 V itself. With 5 % resistors a unit sits anywhere from about 11.4 to 12.3 V. The
+  netlists take 11.85 V (`vcc`); the rail barely moves the sound (the accent's loudness over a plain note is the same
+  at 11.4 and 12.3 V), as the user suspected from the 808, whose accent proved to be 11.5 V, not the drawn 14 V.
+- D34 and R137 feed the GATE OUT jack from the internal gate; unplugged they carry nothing.
 
 ## What this means for CoolSynth
 
