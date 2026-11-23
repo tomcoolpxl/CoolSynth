@@ -175,6 +175,8 @@ checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusicla
   netlists take 11.85 V (`vcc`); the rail barely moves the sound (the accent's loudness over a plain note is the same
   at 11.4 and 12.3 V), as the user suspected from the 808, whose accent proved to be 11.5 V, not the drawn 14 V.
 - D34 and R137 feed the GATE OUT jack from the internal gate; unplugged they carry nothing.
+- The note's start: IC15's control current rises 4.8 ms after the gate (Whittle: 1 to 5 ms, typically 4 ms), set by
+  the trigger's path through D36, R134 and C41 into Q32.
 
 ## What this means for CoolSynth
 
