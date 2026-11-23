@@ -6041,3 +6041,16 @@ The user's other words, kept:
 
 Left to choose later, with numbers: the oversampling, once the circuit's aliasing and cost are measured; how the
 303 and 808 apps play together; a library of acid lines; which Devil Fish changes.
+
+## D275. CoolSynth 808: the library's listening pass, by feel (2026-11-23)
+
+- The user listens to each beat rendered offline (CoolSynth808's `CoolSynth808Render`, WAV clips sent to them) beside
+  a YouTube link to its record. Against the records they could not tell "same" under a full mix, so the pass judges
+  by feel: does it groove and sound like the style.
+- 22 of the 56 beats heard. All kept except two, fixed: Just Be Good to Me had no cowbell (added, a syncopated 808
+  cowbell off the quarter notes), and the new jack swing beat was weak (rewritten). Both fixes were heard and kept.
+- The user's view: a drum pattern cannot be licensed, so published transcriptions may be used directly. The one free
+  library found with song patterns (808.pixll.de) is gone; the Wayback Machine keeps its pages but not its grids,
+  which the site loaded separately.
+- Left: 34 beats unheard (from the Miami bass beats on). Planet Rock may want a cowbell too (a cowbell list names it).
+- CoolSynth808 `6523165`.
