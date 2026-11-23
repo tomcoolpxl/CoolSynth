@@ -5841,3 +5841,22 @@ against the code before it was fixed. Each choice below took the recommended opt
     does not say which one a note came from, so General MIDI drums sent from a DAW on channel 10 would play the pads'
     drums. A setting for which input is the controller would settle it.
   - Smaller: a pad hit within about 20 ms of Shift plays its first drum; Under the Lid allocates while drawing.
+
+## D270. The engine's shape: CoolSynth 808 holds one layer (2026-11-23)
+
+The user's choice, after D269: do the engine memory work first. Measured at 48 kHz in the 808's test program, the
+whole engine took 606 MB: four sound units (the sound played and the three that let earlier sounds ring on, D158),
+each of two parts of 16 voices (27 MB a part) and 18 effect slots (5 MB each). The shared tables (wavetables, chip
+waves, factory samples) took 28 MB more.
+
+- The engine takes an `EngineShape`: earlier sounds, layer B and the effects, each on or off. All on is the default,
+  and CoolSynth is unchanged. What a shape leaves out is never built or prepared, and its settings are ignored.
+  Without earlier sounds, a sound change leaves the one unit playing on with the new settings.
+- CoolSynth 808 takes `singleLayer()`: one unit, layer A, no effects. Its kit plays layer A in Kit mode with every
+  slot Off and never changes sound, so the output is the same, sample for sample. A test renders both shapes and
+  compares them, and checks that the lean shape ignores a layer B and effects that are asked for.
+- The engine now takes 33 MB instead of 606 MB. The app takes 150 MB of private memory instead of 707.
+- Options considered: one switch for "the 808's engine" (narrower, but CoolSynth's other programs could not pick
+  what they need); fewer voices in the part as well (about 13 MB more, but the Kit mode's voice handling would have
+  to be checked for a second voice during a steal fade); skipping the shared tables (28 MB, but a table first asked
+  for on the audio thread would be built there). Neither of the last two was done.

@@ -257,9 +257,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     the app). The app is built overnight (D267): `tomcoolpxl/CoolSynth808` at `E:\github\CoolSynth808`, the panel,
     lanes, Under the Lid's board, projects, undo, MIDI clock in and out, recording, MIDI drag and a library of 56
     beats, tested offline. A MIDI controller works on it with CoolSynth's controller layer, ported (D268), on a
-    first scheme after the user's sketch. A code review of it all is done and fixed (D269); open from it: the
-    engine prepares a whole CoolSynth sound for the 808 (about 707 MB, an option to prepare less would save an
-    estimated 250 to 300 MB), and which MIDI input is the controller. Waiting on the user: their review of the app, the library's beats by ear
+    first scheme after the user's sketch. A code review of it all is done and fixed (D269); from it, the engine
+    now holds one layer for the 808 (D270: 150 MB instead of 707), and which MIDI input is the controller is
+    being built. Waiting on the user: their review of the app, the library's beats by ear
     (most are low-confidence transcriptions, `docs/library-research.md` there), the controller scheme (knob 5 as
     the pattern or the drum), and the library's design: three directions in
     `docs/design/mockups/coolsynth-808-library.html` (the shelf, the wall, in the panel) for how it is shown and how
