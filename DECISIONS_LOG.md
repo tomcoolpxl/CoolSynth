@@ -6096,5 +6096,10 @@ Taken on the way while writing the netlists (the user: "do not stop, continue"),
 - The hand clap too: the 83 parts on the clap's side of SW12, IC23's four comparators drawn as comparators and the
   BA662 as a block; the maracas' side carries nothing in a clap and is left off its sheet (CoolSynth808 `8e46c89`).
 - The mid and high toms are the low tom's circuit with other values; the conga and the claves are their pairs' other
-  switch setting. Still to draw: the metal voices (the cowbell, the cymbal and the hi-hats, about 250 parts).
+  switch setting.
+- The metal board: the cowbell complete (53 parts, CoolSynth808 `1abc73f`) and the six oscillators with the two
+  band-passes the cymbal and the hats share (`0ce84ab`). The recording script writes in the board's oscillators
+  and triggers as render.py does and records one voice's parts. Ground and the supplies may now be drawn as symbols
+  in many places, each piece checked to have one.
+- Still to draw: the cymbal (about 97 parts) and the two hi-hats (about 70).
 - CoolSynth808 `75d093c`, `11e83fa`, `7b3e3a3`; the engine at `2363d46`.

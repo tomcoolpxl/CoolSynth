@@ -279,7 +279,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     whole board as one reduced schematic with the current moving on its wires and their voltage as a tint. The
     user chose the second to refine, with each drum complete on a click: the bass drum is drawn from its netlist
     with rails, ngspice's own currents and voltages on every wire (`tools/kick808/mockup_currents.py`), a time bar
-    and a check of the drawing against the netlist. The snare, the low tom, the rim shot and the clap are drawn the same way now (D278); the metal voices are still to draw (from
+    and a check of the drawing against the netlist. The snare, the low tom, the rim shot, the clap, the cowbell and the metal oscillators are drawn the same way now (D278); the cymbal and the hi-hats are still to draw (from
     `tools/tr808/*.cir`, each needing its own recording); the reduced board still shows hand-drawn currents; part
     labels collide in places. The realistic panel is still to draw, and the user's notes on the views are awaited.
     Before a release: the name in the trademark registries, and the line that says whose mark
