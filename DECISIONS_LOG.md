@@ -6079,3 +6079,20 @@ Taken on the way while writing the netlists (the user: "do not stop, continue"),
 - Numbered D275 and D276 at first, while the CoolSynth 303 session took D275 at the same time: the listening pass is
   D276 and the starter beats D277. CoolSynth808's commits `6523165` and `2be6dbb` say D275 and D276 in their
   messages; its comments say D276 and D277 from the next commit.
+
+## D278. CoolSynth 808: Under the Lid draws more drums complete (2026-11-23)
+
+- The user asked what is next and not to stop. The open item on the 808 was Under the Lid: only the bass drum was
+  drawn complete from its netlist with ngspice's own currents; the other drums were still to draw the same way.
+- The engine's `tools/tr808/lid_currents.py` records any drum netlist with ngspice into a JSON file (every drawn
+  part's current, every node's voltage, each part's nodes), as `tools/kick808/mockup_currents.py` did for the bass
+  drum alone. The op-amps' behavioural insides, the sources and the solver's aids are left out and drawn as symbols
+  and pins.
+- Drawn complete and checked against their netlists like the bass drum (one net per node, no part forgotten): the
+  snare (61 parts; the noise bus as two sines at 130 mV rms), the low tom (51 parts, the low pair's values; the
+  conga's parts drawn, switched out; the pink noise as a 20 mV sine) and the rim shot (59 parts; the claves' parts
+  drawn, switched out). Each is its own sheet beside "Whole board" and "Bass drum, complete"; striking the drum
+  plays its hit.
+- The mid and high toms are the low tom's circuit with other values; the conga and the claves are their pairs' other
+  switch setting. Still to draw: the hand clap (with the maracas' side, about 100 parts) and the metal voices.
+- CoolSynth808 `75d093c`, `11e83fa`, `7b3e3a3`; the engine at `2363d46`.
