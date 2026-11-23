@@ -198,6 +198,40 @@ Searched on 2026-11-23, before putting the circuit in the engine.
   feedback loop. Holters and Zolzer (DAFx-17): a Newton iteration costs as N squared; decomposing helps only where no
   global feedback ties the parts.
 
+## Making the filter fast enough (D281)
+
+Measured on 2026-11-23 (Ryzen 7 3700X, the optimised Debug build) with a timing program outside the test suite.
+- The filter alone took 5.1 us a sample at 192 kHz, about one core. The 150 % first reported included the test's
+  own bookkeeping: a map lookup per node per sample costs more than the filter in a Debug build.
+- 56 % of that time went to the 22 by 22 elimination, which ran on every sample, because every junction conducts.
+- AVX2 gained nothing. Neither did storing the matrices by column so the products run side by side.
+- An inline exp, within 1 ulp, came out slower than the Debug library's std::exp, so it was dropped.
+
+Searched the same day:
+- Jacobian reuse (the chord method) and SPICE3's device bypass:
+  [Holmes and van Walstijn](https://pureadmin.qub.ac.uk/ws/files/17395135/improving_the_robustness.pdf),
+  [SPICE3](https://www2.eecs.berkeley.edu/Pubs/TechRpts/1989/ERL-89-42.pdf).
+  - Holmes and van Walstijn found it fails to converge in some cases at 44.1 kHz.
+- Yeh calls one Newton step a sample the semi-implicit method
+  ([thesis](https://ccrma.stanford.edu/~dtyeh/papers/DavidYehThesisdoublesided.pdf)).
+- Shrinking the system: forward-active transistors would leave 14 ports instead of 22, but lose the Early effect and
+  saturation. Holters and Zolzer's decomposition fails where global feedback ties the parts, as the resonance does.
+- Multiple cores: no established way splits one feedback circuit.
+  - Diva spreads whole voices over cores ([manual](https://u-he.com/downloads/manuals/plugins/diva/Diva-manual-de-usuario.pdf)).
+  - The parallel wave digital method of Giampiccolo and others targets DSP chips and FPGAs
+    ([JAES 2022](https://re.public.polimi.it/bitstream/11311/1217627/1/GiampiccoloEtAl_JAES_2022.pdf)).
+  - Waveform relaxation is an offline method.
+  - CoolSynth's own pool (`AudioWorkers`, D164) already gives each sounding unit its own task in a block, so the 303
+    gets a core of its own beside the other tracks and only has to fit in that one core.
+
+The chord method, in `CircuitWdf.h` (`setJacobianReuse`, off by default):
+- The factors are kept from sample to sample.
+- A fresh factoring happens when a chord step fails to halve the one before, or after three chord steps in a sample.
+- A chord step ends the solve below 2 uV.
+- The result: 2.0 us a sample, 38 to 48 % of one core. The ngspice match is unchanged.
+- It stays within 0.2 to 3 ppm of the exact solve.
+- 0.5 to 1.3 % of the samples factor afresh.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

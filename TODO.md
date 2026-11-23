@@ -295,9 +295,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     mostly within 1 dB but for set B's resonance at a quarter turn (open); the rail is 11.85 V, not 12. How it runs
     (D279): the VCO's circuits with the reset as an exact event and a polyBLEP; the filter's resonance loop in one
     solve; 192 kHz, then aliasing and cost measured and put to the user. The filter runs in the engine
-    (`Tb303Filter.h`) within 1.5 to 5 % of ngspice, but at about 150 % of a core: next, its cost (the 1 GOhm current
-    sources force a full 22x22 solve each sample); then the VCO (drafted, `Tb303Oscillator.h`, not yet built), the
-    envelope, the VCA. The interface is parked by the user
+    (`Tb303Filter.h`) within 1.5 to 5 % of ngspice, at about 40 % of one core at 192 kHz with the chord method
+    (D281); it runs on a core of its own beside the other tracks. Next the VCO (drafted, `Tb303Oscillator.h`, not
+    yet built), the envelope, the VCA. The interface is parked by the user
     (`docs/research/tb-303-app.md`).
 
 

@@ -6141,3 +6141,24 @@ quarter turn is open.
   against the bass drum's TONE.
 - Numbered D279 in CoolSynth808's ``11945de`` while the 303's session took D279; its comments say D280 from the next
   commit.
+
+## D281. CoolSynth 303: the filter fits in real time (2026-11-23)
+
+The user: make it fast enough even at some cost in accuracy, and look at how CoolSynth uses several cores.
+- Several cores: CoolSynth's pool (D164) gives each sounding unit a task in a block. One circuit with feedback cannot
+  be split, as each sample needs the one before, and the research found no established way to do it (Diva spreads
+  voices; a parallel wave digital method targets DSP chips and FPGAs). The 303 therefore runs on a core of its own
+  beside the other tracks and must fit in that core.
+- Measured (`docs/research/tb-303-circuit.md`, its speed section): the filter alone took 5.1 us a sample at 192 kHz,
+  about one core; the 150 % reported before included the test's bookkeeping. 56 % went to the 22 by 22 elimination,
+  run every sample.
+- Options weighed:
+  - The chord method, taken. The Jacobian's factors are kept from sample to sample and factored afresh only when a
+    chord step fails to halve the one before, or after three in a sample.
+  - Forward-active transistors (14 ports, not 22): loses the Early effect and saturation.
+  - 96 kHz: halves the cost, but risks aliasing in the resonance.
+  - An inline exp, slower than the library's, and matrices stored by column, no gain: both dropped.
+- The result: 2.0 us a sample, 38 to 48 % of one core in the optimised Debug build. The ngspice match is unchanged
+  (1.5 to 4.8 %), within 0.2 to 3 ppm of the exact solve, which a test now checks. 0.5 to 1.3 % of the samples
+  factor afresh. Off by default in `CircuitWdf.h`, so the 808 and the 909 solve as before.
+- Also: the engine's test program prints a failed assertion or a crash instead of opening a window.

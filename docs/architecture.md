@@ -85,7 +85,8 @@ Per voice:
    `CircuitWdf.h`, D236, D238, D251), and a modern one. The circuits start each note at rest, so a voice of them opens
    its amplifier at once (`startsFromRest`, D251). TB-303 (`Tb303Generator.h`, D242) is the Bass Line's voice: saw to
    square into its diode ladder of four coupled stages, a decay envelope, accent and slide; a legato note slides to
-   the key and hears its accent through the slot's legato hook. 808 Drums (`Tr808DrumsGenerator.h`, D252, D253)
+   the key and hears its accent through the slot's legato hook; its circuit is being built to replace it (`Tb303Filter.h`,
+   D279, its solver keeping the Jacobian's factors between samples, D281). 808 Drums (`Tr808DrumsGenerator.h`, D252, D253)
    holds the TR-808's bass drum, its three tom or conga pairs (`Tr808Tom.h`) and its rim shot or claves
    (`Tr808RimShot.h`), each its own circuit, struck by General MIDI's keys; the resonators' op-amps keep their
    3 MHz bandwidth and their rails (`addOpAmp` in `CircuitWdf.h`). It is played in the Kit play mode, as is 808
