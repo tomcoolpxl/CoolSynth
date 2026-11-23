@@ -5949,3 +5949,33 @@ silicon only). Built with Xcode 27.2's command line tools (Apple clang 21, the m
   cut (a screenshot). JUCE's read leaves the socket non-blocking and the server wrote once; it now writes until all is
   sent, and on macOS sets `SO_NOSIGPIPE`, or a client leaving mid-answer would end the app. A test sends a megabyte
   over a real socket.
+
+## D273. CoolSynth 808: the controller scheme stays, the library is a shelf (2026-11-23)
+
+The user's choices, each from a pick list with the recommended option first:
+
+- Knob 5 (options: the pattern; the drum, like the main knob, freeing the main knob for the library; the bank): the
+  pattern, as built in D268.
+- The faders (options: the bass drum's, snare's, closed and open hat's levels; the chosen drum's level and knobs;
+  tempo, swing, volume and accent): the four levels, as built.
+- The library's direction (options: the shelf; the wall; in the panel, from
+  `docs/design/mockups/coolsynth-808-library.html`): the shelf.
+- Its management, quick and dirty (options: rename and delete your own; also folders and favourites; nothing more):
+  rename and delete your own.
+
+What was built (CoolSynth808 `ffaab90`):
+
+- Over the panel: shelves (your patterns, the classics in eight families, a decade), a search over names and records,
+  the list with a small picture of each beat's first bar, and the chosen beat in full: its family and year, the
+  record it follows, tempo, swing, length and the transcription's confidence, its grid with parts and halves, its
+  notes.
+- Audition plays the beat in place of the pattern being edited, starting the transport if it was stopped, and
+  writes nothing to undo; choosing another beat while listening switches to it; Stop, Esc or closing gives the
+  project back as it was. Load is one undo step, as before.
+- The classics are read-only: Keep a copy puts one among your patterns. Yours can be renamed (its file is renamed
+  with it) and sent to the Recycle Bin, from the buttons or a right-click.
+- In a window narrower than the panel, the overlays are laid out at the panel's width and drawn smaller with it.
+- Not done: the mockup's audition "from the next bar" (the audition starts at once); favourites, folders and
+  duplicating (the user's choice).
+- Numbered D272 at first, while the Mac's session took D272 at the same time: CoolSynth808's `ffaab90` says D272
+  in its message; its comments say D273 from the next commit.

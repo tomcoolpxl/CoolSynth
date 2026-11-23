@@ -265,12 +265,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     beats, tested offline. A MIDI controller works on it with CoolSynth's controller layer, ported (D268), on a
     first scheme after the user's sketch. A code review of it all is done and fixed (D269); from it, the engine
     now holds one layer for the 808 (D270: 150 MB instead of 707), and the controller has its own MIDI input
-    (D271), still to be tried with a real controller beside a second MIDI source. Waiting on the user: their review
-    of the app, the library's beats by ear
-    (most are low-confidence transcriptions, `docs/library-research.md` there), the controller scheme (knob 5 as
-    the pattern or the drum), and the library's design: three directions in
-    `docs/design/mockups/coolsynth-808-library.html` (the shelf, the wall, in the panel) for how it is shown and how
-    your own patterns are kept and managed (`COOLSYNTH_808.md`, "To design with the user"). The history below is the mockups' round.
+    (D271), still to be tried with a real controller beside a second MIDI source. The controller scheme stays as
+    built and the library is a shelf with audition, rename and the Recycle Bin (D273). Waiting on the user: their
+    review of the app, and the library's beats by ear (most are low-confidence transcriptions,
+    `docs/library-research.md` there). The history below is the mockups' round.
     The 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and
     shuffle per drum, MIDI drag, per-step locks, flams and sub-steps, chance and conditions; a panel whose step row
     opens into a lane per drum, and Under the Lid (the live circuit, with the classic mods as trimmers) as the
