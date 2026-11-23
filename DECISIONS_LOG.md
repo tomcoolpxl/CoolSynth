@@ -5766,3 +5766,36 @@ house among them; never stop to ask. Each choice below took the recommended opti
 - CoolSynth onto the submodule: the 39 paths (172 files) removed here, `add_subdirectory(external/coolsynth-engine)`,
   the app's test program taking the engine's allocation alarm and test helpers from the submodule. The CI
   workflows already check out submodules recursively.
+
+## D268. CoolSynth 808 takes CoolSynth's controller layer (2026-11-23)
+
+The user, in the night: port what CoolSynth has for MIDI controllers and preferences; not tied to the MiniLab 3, but
+a few knobs with a role: the clickable main knob chooses the instrument, knob 5 (Arturia's) the track, knobs 1 to 4
+follow the context, knobs 6, 7 and 8 fixed and generic, the faders, eight pads; they did not know what other drum
+machines do, so an investigation first and a first port. Each choice below took the recommended option; the others
+are listed, all to settle with the user.
+
+- The port (options: CoolSynth's `src/midi` copied into the app; moved into the engine repository and shared): copied,
+  `ControllerMap` and `ControllerSetup` unchanged but for the file and two lines of text. The engine repository is
+  sound only; sharing waits until a third program needs it. The MiniLab 3 driver (D184) is not ported.
+- The setup's file (options: its own `%APPDATA%\CoolSynth808\controller.json`; CoolSynth's own file, one setup for
+  both): its own. The places mean other things in each program, and a controller learned in one should not move
+  the other's knobs unasked.
+- The investigation (TR-8S, TR-6S, TR-08, Maschine, Push, MPC, Circuit Tracks, Digitakt, BeatStep Pro, DrumBrute):
+  everywhere the pads either play drums or enter one chosen drum's steps; a small unit's knobs follow the chosen
+  drum (TR-6S, Circuit); the chosen drum and the lane are the same thing, the accent one more lane. Three schemes
+  came out: the chosen drum with pads in two modes (the TR-6S's and Circuit's), pads that only play with a mixer
+  page of knobs, and either with your own learned setup on top. Taken: the first, with learning (CoolSynth's).
+- The scheme, after the sketch: the main knob chooses the drum (the accent row first), its press switches the pads
+  between playing and entering steps, Back plays and stops; knobs 1 to 3 the chosen drum's knobs, knob 4 its lane's
+  length; knob 5 the pattern (the sketch's "track" read as the pattern, since the drum is the main knob's; the other
+  reading, knob 5 choosing the drum too, is the question for the morning); knobs 6, 7, 8 tempo, swing, volume; the
+  faders the bass drum's, snare's, closed and open hat's levels (options: those four; the four the chosen drum
+  has; tempo, swing, volume and accent); pads bass drum, snare, clap, closed hat, open hat, low tom, rim shot,
+  cowbell, with Shift mid tom, high tom, cymbal, and steps 1 to 8 (Shift 9 to 16) entering steps.
+- A pad's strike (options: on the audio thread from a table the panel fills; through the message thread as a
+  panel click): on the audio thread, so a pad sounds at once; hit at velocity 100 or more it is accented (options:
+  that; the velocity as the accent's amount; never accented).
+- A turn of a knob is one undo step, closed when another control moves or it rests 600 ms.
+- The setup's screen: Controller in the header, a list of the places with what each does, click to learn, right-
+  click to forget, CoolSynth's ready setups to choose from. A plain one until the real UI.
