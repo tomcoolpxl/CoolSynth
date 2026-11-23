@@ -5887,3 +5887,5 @@ a MIDI callback which device each message came from.
 - Tests: a pad note from the controller strikes the pad's drum while the same note from another input plays its
   own; Auto's order of ports, the learned input, a moved identifier and an unplugged device. Not yet tried with a
   real controller and a second MIDI source.
+- Also closed from D269's smaller items: the audio thread follows Shift itself, so a pad struck just after it
+  takes its second drum; Under the Lid builds its paths and labels once instead of at every frame.
