@@ -5860,3 +5860,30 @@ waves, factory samples) took 28 MB more.
   what they need); fewer voices in the part as well (about 13 MB more, but the Kit mode's voice handling would have
   to be checked for a second voice during a steal fade); skipping the shared tables (28 MB, but a table first asked
   for on the audio thread would be built there). Neither of the last two was done.
+
+## D271. CoolSynth 808: which MIDI input is the controller (2026-11-23)
+
+Open from D269: JUCE's standalone app sends every open MIDI input to the processor as one stream, so General MIDI
+drums from a DAW on channel 10 also played the controller's pads. Live solves it per port, with its Track and
+Remote switches (Ableton's "Live's MIDI Settings" and the Live 12 manual, chapter 34); JUCE's device manager tells
+a MIDI callback which device each message came from.
+
+- The user's choices (pick lists):
+  - How the controller input is known (options: Auto with a menu; by hand only): Auto with a menu. Auto takes the
+    port of the ready setup in use, otherwise the input the links were last learned from, otherwise none, and every
+    input may be the controller as before. The Controller panel's Input menu also offers Any input and each input
+    plugged in. The choice is kept in `controller.json`.
+  - What the controller's unlinked messages do (options: play the sound; dropped): play the sound, as Live with
+    Track and Remote both on. Its keys strike drums by their notes, and its clock and Start/Stop drive the
+    transport.
+- How: `StandaloneMidiIn` takes the player's place on the device manager. A linked control from the controller's
+  input goes to the processor's own queue. That queue is placed in the block by when each message came, as JUCE's
+  collector places the sound's notes. Note-offs and everything else go on to the player. While learning, every
+  input is heard unless one device is chosen, and the input learned from is remembered.
+- In a DAW, and with Any input, nothing changes: the DAW never says where a message came from.
+- On Windows the standalone leaves MIDI inputs closed until they are switched on in its settings. The router opens
+  the controller's input itself (options: open it; leave it to the settings, as before, where a found controller's
+  pads stayed silent until switched on): it opens it.
+- Tests: a pad note from the controller strikes the pad's drum while the same note from another input plays its
+  own; Auto's order of ports, the learned input, a moved identifier and an unplugged device. Not yet tried with a
+  real controller and a second MIDI source.
