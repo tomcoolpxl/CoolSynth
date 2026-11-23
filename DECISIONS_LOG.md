@@ -6208,3 +6208,16 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
 - The circuits come from a generator in the spirit of the real ones, not the netlists; no sound.
 - The etched panel: each drum's knobs on its own column of copper, triggers rising from the keys, the mix along
   the top, a clearance ring round every mounted control. Precedent: the Pocket Operators' bare boards.
+
+## D285. CoolSynth 808: a fifth layout, the etched panel with the sequencer on glass (2026-11-23)
+
+- Asked for by the user after looking at the four of D284: start from the etched panel, squeeze it to the height of
+  the 808's own panel or less, and put the sequencer below as the beat desk and the open machine have it. The big
+  step row of the app as built goes: it repeats one lane and is unclear (the user). The patterns row on top, A, AB
+  and B on its right, the lanes below. The right panel's knobs are not needed, the knobs being on the board.
+- Built as the fifth view of `docs/design/mockups/coolsynth-808-layouts.html`: the board in the top 320 pixels,
+  twelve columns of copper with their knobs, the transport mounted on it; the sequencer on smoked glass below,
+  the board running on under it.
+- Left open, as switches in the mockup for the user to see before choosing: what the freed right side holds (none,
+  the selected drum's circuit up close and live, the step tools, the library) and whether a song row sits under
+  the chain. The user asked what a song adds to a chain.

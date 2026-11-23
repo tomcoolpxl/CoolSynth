@@ -23,7 +23,7 @@ button { font: inherit; color: inherit; }
 #chrome { position: fixed; inset: 0 0 auto 0; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 14px;
   background: #050505; border-bottom: 1px solid #222; font: 500 12px/1 system-ui, sans-serif; color: #999; z-index: 50; }
 #chrome b { color: #ddd; font-weight: 600; margin-right: 10px; }
-#chrome .tab { background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 7px 11px; cursor: pointer; color: #bbb; }
+#chrome .tab { white-space: nowrap; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; cursor: pointer; color: #bbb; }
 #chrome .tab.is { background: #e8742a; border-color: #e8742a; color: #111; }
 #chrome .sp { flex: 1; }
 #chrome .note { color: #777; }
@@ -171,6 +171,29 @@ canvas.board { display: block; width: 100%; height: 100%; }
 #v4 .drawer { position: absolute; left: 0; right: 0; bottom: 0; height: 330px; transform: translateY(100%); transition: transform .35s ease; background: rgba(20,19,17,.96); border-top: 1px solid #000; box-shadow: 0 -10px 30px rgba(0,0,0,.5); padding: 14px 20px; z-index: 8; }
 #v4 .drawer.up { transform: none; }
 
+/* ===================== 5: the etched panel with the sequencer on glass ===================== */
+#v5 { background:
+    radial-gradient(1200px 400px at 30% 0%, rgba(255,255,255,.05), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 1px, rgba(0,0,0,.02) 1px 3px),
+    linear-gradient(#2c2a27, #23211e); }
+#v5 > canvas.board { position: absolute; inset: 0; }
+#v5 .screw { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a857c, #3b3833 70%); box-shadow: 0 1px 1px #000; }
+#v5 .silk { position: absolute; pointer-events: none; }
+#v5 .colLabel { position: absolute; text-align: center; cursor: pointer; }
+#v5 .colLabel.sel .t13 { color: var(--lit); text-shadow: 0 0 8px rgba(255,160,74,.6); }
+#v5 .kn { position: absolute; }
+#v5 .kn .kcap { filter: drop-shadow(0 2px 2px rgba(0,0,0,.7)); }
+#v5 .glass5 { position: absolute; left: 14px; right: 14px; top: 318px; bottom: 14px; border-radius: 6px; padding: 12px 16px 10px;
+  display: flex; flex-direction: column; gap: 9px;
+  background: linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,0) 30%), linear-gradient(rgba(16,15,13,.80), rgba(12,11,10,.86));
+  backdrop-filter: blur(1.5px); box-shadow: inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px rgba(255,255,255,.05), 0 3px 12px rgba(0,0,0,.6); }
+#v5 .v5main { flex: 1; display: grid; grid-template-columns: 1fr 250px; column-gap: 14px; min-height: 0; margin-top: 4px; }
+#v5 .v5main.wide { grid-template-columns: 1fr 0; column-gap: 0; }
+#v5 .v5right { border-radius: 4px; background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); overflow: hidden; position: relative; display: flex; flex-direction: column; }
+#v5 .v5main.wide .v5right { display: none; }
+#v5 .key { background: color-mix(in srgb, var(--g) 88%, transparent); }
+#v5 .key.on { background: color-mix(in srgb, var(--g) 80%, #ece4d2); }
+
 /* Full-screen circuit */
 #saver { position: fixed; inset: 0; background: #070707; z-index: 100; display: none; }
 #saver.is { display: block; }
@@ -181,13 +204,20 @@ canvas.board { display: block; width: 100%; height: 100%; }
 </head>
 <body>
 <div id="chrome">
-  <b>CoolSynth 808, layouts to try</b>
+  <b>808 layouts</b>
   <button class="tab is" data-v="1">1 Beat desk</button>
   <button class="tab" data-v="2">2 The 808 and its lid</button>
   <button class="tab" data-v="3">3 Open machine</button>
   <button class="tab" data-v="4">4 Etched panel</button>
+  <button class="tab" data-v="5">5 Etched with glass</button>
+  <span id="v5opts" style="display:none;gap:6px;align-items:center;margin-left:10px">
+    <span>Right side:</span>
+    <button class="tab" data-r="none">None</button><button class="tab is" data-r="close">Drum up close</button><button class="tab" data-r="tools">Step tools</button><button class="tab" data-r="library">Library</button>
+    <span style="margin-left:8px">Song row:</span>
+    <button class="tab is" data-s="off">Off</button><button class="tab" data-s="on">On</button>
+  </span>
   <span class="sp"></span>
-  <span class="note">Mockups: the beat runs and lights the circuits, no sound. Space plays and stops.</span>
+  <span class="note" id="chromeNote">Mockups: the beat runs and lights the circuits, no sound. Space plays and stops.</span>
   <button class="tab" id="saverBtn">Full-screen circuit</button>
 </div>
 <div id="viewport"><div id="stage">
@@ -282,6 +312,24 @@ canvas.board { display: block; width: 100%; height: 100%; }
   <div class="drawer" id="v4drawer">
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px"><div data-prow></div><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div></div>
     <div data-lanes="21"></div>
+  </div>
+</section>
+
+<!-- 5: the etched panel with the sequencer on glass -->
+<section class="view" id="v5">
+  <canvas class="board" id="b5"></canvas>
+  <div class="screw" style="left:10px;top:10px"></div><div class="screw" style="right:10px;top:10px"></div>
+  <div class="silk logo" style="left:34px;top:9px;font-size:17px">CoolSynth <b>808</b> <span class="lbl" style="margin-left:10px">Beat composer</span></div>
+  <div id="v5transport" style="position:absolute;right:34px;top:8px;display:flex;align-items:center;gap:10px"></div>
+  <div id="v5cols"></div>
+  <div class="glass5">
+    <div style="display:flex;align-items:center;gap:14px"><span class="lbl" style="width:52px">Patterns</span><div data-prow></div><span style="flex:1"></span><div data-ab></div></div>
+    <div style="display:flex;align-items:center;gap:14px"><span class="lbl" style="width:52px" title="The patterns in the order they play, round and round">Chain</span><div data-chain></div><span style="flex:1"></span><div data-status class="status"></div><span class="lbl">Change</span><div data-change></div></div>
+    <div id="v5songRow" style="display:none;align-items:center;gap:14px"><span class="lbl" style="width:52px" title="Chains in order, played once: intro, verse, break">Song</span><div id="v5song" style="display:flex;gap:4px"></div></div>
+    <div class="v5main" id="v5main">
+      <div data-lanes="22"></div>
+      <div class="v5right" id="v5right"></div>
+    </div>
   </div>
 </section>
 
@@ -801,7 +849,7 @@ class Board {
         g.stroke();
       }
     }
-    if (s > 1.35 || P.etched) {
+    if (s > 1.35 || P.etched || this.opts.names) {
       g.font = `500 ${P.etched ? 6 : 5.5}px 'IBM Plex Mono', monospace`; g.textAlign = 'left'; g.globalAlpha = P.etched ? .7 : Math.min(1, (s - 1.35) * 2);
       for (const p of this.parts) if (p.t !== 'G') g.fillText(p.name, p.x + p.k * .9, p.y - p.k * .7);
       g.globalAlpha = 1;
@@ -1064,6 +1112,114 @@ function build4() {
   });
 }
 
+// ---------------------------------------------------------------- 5: the etched panel with the sequencer on glass
+const V5 = { right: 'close', song: false };
+function build5() {
+  wireAll($('v5'));
+  // The squeezed board: twelve columns of copper with their knobs, the trigger bus under the glass's top edge, the
+  // mix along the top; the board runs on under the glass.
+  const colX0 = 34, colX1 = 1246, top = 40, bottom = 334, kY = 78, kStep = 58, kSize = 34;
+  const widths = DRUMS.map((d, l) => l === 0 ? .85 : 1); const sum = widths.reduce((a, b) => a + b, 0);
+  const cols = []; let x = colX0;
+  DRUMS.forEach((d, l) => { const w = (colX1 - colX0) * widths[l] / sum; cols.push({ x, w }); x += w; });
+  const layout = () => {
+    const cells = DRUMS.map((d, l) => ({ key: d.id, owner: l === 0 ? -1 : l, kind: l === 0 ? 'trg' : KIND[d.id], label: d.name, x: cols[l].x + 4, w: cols[l].w - 8, y: top, h: bottom - top, trigTop: false }));
+    const extra = [
+      { pts: [[34, bottom], [24, bottom + 10], [24, 772], [40, 788], [640, 788]], owner: 'trig' },
+      { pts: [[1246, bottom], [1256, bottom + 10], [1256, 772], [1240, 788], [660, 788]], owner: 'out' },
+      { pts: [[1246, top], [1262, top - 16], [1262, 6]], owner: 'out' },
+    ];
+    for (let i = 0; i < 6; i++) extra.push({ pts: [[120 + i * 190, bottom], [120 + i * 190, bottom + 16], [130 + i * 190, bottom + 26], [200 + i * 190, bottom + 26]], owner: 'trig' });
+    return { cells, trigY: bottom, outY: top, x0: colX0, x1: colX1, extra };
+  };
+  const keep = [];
+  DRUMS.forEach((d, l) => {
+    const c = cols[l], cx = c.x + c.w / 2;
+    keep.push({ x: c.x + 8, y: 44, w: c.w - 16, h: 28 });
+    d.knobs.forEach((_, i) => { const y = kY + i * kStep; keep.push({ x: cx, y: y + kSize / 2, r: 25 }); keep.push({ x: cx - 26, y: y + kSize + 2, w: 52, h: 14 }); });
+    if (d.sw) keep.push({ x: cx - 36, y: kY + d.knobs.length * kStep - 4, w: 72, h: 32 });
+  });
+  keep.push({ x: 24, y: 6, w: 330, h: 30 }, { x: 830, y: 4, w: 420, h: 32 });
+  new Board($('b5'), layout, 'etched', { noNames: true, keepouts: () => keep });
+  const host = $('v5cols');
+  DRUMS.forEach((d, l) => {
+    const c = cols[l];
+    const lab = el('div', 'colLabel', `<div class="t13">${d.id}</div><div class="lbl" style="margin-top:3px">${d.name}</div>`);
+    lab.style.left = c.x + 'px'; lab.style.width = c.w + 'px'; lab.style.top = '47px';
+    lab.onclick = () => { S.sel = l; paintAll(); };
+    host.append(lab);
+    d.knobs.forEach(([n, v], i) => {
+      const k = knob(n, v, kSize, l === 0 && i === 0); k.classList.add('kn');
+      k.style.left = (c.x + c.w / 2 - kSize / 2) + 'px'; k.style.top = (kY + i * kStep) + 'px';
+      host.append(k);
+    });
+    if (d.sw) { const sg = el('div', 'seg'); sg.style.cssText = `position:absolute;left:${c.x + c.w / 2 - 32}px;top:${kY + d.knobs.length * kStep}px`; d.sw.forEach((s, i) => { const b = btn(s, i === 0 ? 'is' : ''); b.style.height = '22px'; b.style.padding = '0 7px'; sg.append(b); }); host.append(sg); }
+  });
+  painters.push(() => host.querySelectorAll('.colLabel').forEach((e, l) => e.classList.toggle('sel', S.sel === l)));
+  // Transport, mounted on the board
+  const tr = $('v5transport');
+  const play = btn('<span class="dot"></span>Play', '', () => setPlaying(!S.playing)); play.style.height = '26px';
+  const tempo = el('div', '', `<span class="num" style="color:var(--lit);text-shadow:0 0 6px rgba(255,160,74,.5)">${S.bpm.toFixed(1)}</span> <span class="lbl">BPM</span>`);
+  tempo.style.cssText = 'padding:5px 10px;border-radius:4px;background:#0d0c0b;box-shadow:inset 0 2px 4px #000,0 0 0 1px #3d3a35';
+  tr.append(play, tempo, btn('Tap'), knob('', S.swing, 22), el('span', 'lbl', 'Swing'), btn('Library'), btn('File'));
+  painters.push(() => { play.classList.toggle('lighted', S.playing); play.innerHTML = '<span class="dot"></span>' + (S.playing ? 'Stop' : 'Play'); });
+  // The song row
+  const song = $('v5song');
+  [['Intro', '01 ×4'], ['Verse', '01×2 02 01×2 03'], ['Break', '04 ×2'], ['Verse', '01×2 02 01×2 03'], ['Outro', '05 · fill']].forEach(([n, t], i) => song.append(el('div', 'cblk' + (i === 1 ? ' nxt' : ''), `<span class="x">${n}</span><span>${t}</span>`)));
+  song.append(el('div', 'cblk cadd', '+'));
+  // The right side, one of four
+  const right = $('v5right');
+  let closeBoard = null, lastSel = -1, lastMode = '';
+  const paintRight = () => {
+    if (V5.right === lastMode && (V5.right !== 'close' || S.sel === lastSel) && V5.right !== 'tools') return;
+    if (V5.right === 'tools' && lastMode === 'tools' && S.sel === lastSel) return;
+    lastMode = V5.right; lastSel = S.sel;
+    $('v5main').classList.toggle('wide', V5.right === 'none');
+    right.innerHTML = '';
+    if (closeBoard) { boards.splice(boards.indexOf(closeBoard), 1); closeBoard = null; }
+    const d = DRUMS[S.sel];
+    if (V5.right === 'close') {
+      right.append(el('div', 'lbl', `<div style="padding:10px 12px 0">${d.id} · ${d.name}, live</div>`));
+      const cv = el('canvas', 'board'); cv.style.flex = '1'; cv.style.minHeight = '0'; right.append(cv);
+      right.append(el('div', 'lbl', '<div style="padding:0 12px 10px;line-height:1.5">Its circuit as it plays. Click it to open the whole board.</div>'));
+      const owner = S.sel === 0 ? -1 : S.sel;
+      closeBoard = new Board(cv, (W, H) => {
+        const c = boardCells().find(c => c.owner === owner);
+        c.x = 22; c.y = 18; c.w = W - 44; c.h = H - 36; c.trigTop = true;
+        return { cells: [c], buses: [{ trigY: c.y, outY: c.y + c.h, x0: 10, x1: W - 10 }], trigY: c.y, outY: c.y + c.h, x0: 10, x1: W - 10 };
+      }, 'schematic', { noNames: true, names: true, onClick: () => $('saverBtn').click() });
+      closeBoard.c.style.background = 'transparent';
+      requestAnimationFrame(() => closeBoard && closeBoard.resize());
+    } else if (V5.right === 'tools') {
+      right.style.padding = '12px';
+      const box = el('div', ''); box.style.cssText = 'display:flex;flex-direction:column;gap:12px;padding:12px';
+      box.append(el('div', 'lbl', `Step · ${d.id}`));
+      const row = el('div', ''); row.style.cssText = 'display:flex;gap:10px;align-items:center';
+      row.append(el('span', 'num', '100 %'), el('span', 'lbl', 'Chance'));
+      box.append(row);
+      const hits = el('div', 'seg'); ['1 hit', '2', '3'].forEach((h, i) => hits.append(btn(h, i === 0 ? 'is' : ''))); box.append(hits);
+      box.append(el('div', 'lbl', 'Pattern'));
+      const ops = el('div', ''); ops.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap';
+      ['Copy', 'Paste', 'Clear', 'Save to library', 'Drag MIDI'].forEach(o => ops.append(btn(o)));
+      box.append(ops); right.style.padding = '0'; right.append(box);
+    } else if (V5.right === 'library') {
+      const box = el('div', ''); box.style.cssText = 'display:flex;flex-direction:column;gap:2px;padding:12px;overflow:hidden';
+      box.append(el('div', 'lbl', 'Library · House and acid'));
+      [['Chicago house 1984', '122'], ['Deep house 1985', '120'], ['Acid house 1987', '120'], ['UK acid 1988', '120'], ['Ghetto house 1995', '132'], ['Footwork 2010', '160']].forEach(([n, b], i) => {
+        const r = el('div', ''); r.style.cssText = `display:flex;justify-content:space-between;align-items:center;padding:7px 8px;border-radius:3px;${i === 0 ? 'background:rgba(236,228,210,.07)' : ''}`;
+        r.append(el('span', 't13', `<span style="font-size:11px">${n}</span>`), el('span', 'num', `<span style="font-size:11px;color:var(--dim)">${b}</span>`));
+        box.append(r);
+      });
+      const ops = el('div', ''); ops.style.cssText = 'display:flex;gap:6px;margin-top:10px';
+      ops.append(btn('Audition'), btn('Load', 'hot'));
+      box.append(ops); right.append(box);
+    }
+  };
+  painters.push(paintRight);
+  document.querySelectorAll('#v5opts [data-r]').forEach(b => b.onclick = () => { V5.right = b.dataset.r; document.querySelectorAll('#v5opts [data-r]').forEach(x => x.classList.toggle('is', x === b)); lastMode = ''; paintAll(); for (const bb of boards) bb.resize(); });
+  document.querySelectorAll('#v5opts [data-s]').forEach(b => b.onclick = () => { V5.song = b.dataset.s === 'on'; document.querySelectorAll('#v5opts [data-s]').forEach(x => x.classList.toggle('is', x === b)); $('v5songRow').style.display = V5.song ? 'flex' : 'none'; });
+}
+
 // ---------------------------------------------------------------- the full-screen circuit
 function buildSaver() {
   const b = new Board($('bs'), (W, H) => layoutRow(W, H, { x: 40, r: 40, t: H * .2, b: H * .2 }), 'schematic', { follow: true });
@@ -1073,9 +1229,10 @@ function buildSaver() {
 }
 
 // ---------------------------------------------------------------- start
-build1(); build2(); build3(); build4(); buildSaver();
+build1(); build2(); build3(); build4(); build5(); buildSaver();
 document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
   document.querySelectorAll('#chrome .tab[data-v]').forEach(x => x.classList.toggle('is', x === t));
+  $('v5opts').style.display = t.dataset.v === '5' ? 'flex' : 'none'; $('chromeNote').hidden = t.dataset.v === '5';
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('is', v.id === 'v' + t.dataset.v));
   for (const b of boards) b.resize();
   try { localStorage.setItem('cs808-layout', t.dataset.v); } catch (e) {}

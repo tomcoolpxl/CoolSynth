@@ -304,7 +304,10 @@ A fourth, the user's (D284): the etched panel.
   Computer forum).
 - Patterns and the chain sit in a small display and a drawer of lanes that slides up over the keys.
 
-All four, with the full-screen circuit, are in `mockups/coolsynth-808-layouts.html`: the beat runs and lights the
+A fifth (D285): the etched panel squeezed into the top third, the sequencer below it on smoked glass with the
+board running on underneath; the patterns row, the chain and the lanes as on the beat desk, no big step row.
+
+All five, with the full-screen circuit, are in `mockups/coolsynth-808-layouts.html`: the beat runs and lights the
 circuits, with no sound. Their circuits come from a generator, not the netlists, and the drums' parts are named only
 when zoomed in.
 
