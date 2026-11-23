@@ -6162,3 +6162,14 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
   (1.5 to 4.8 %), within 0.2 to 3 ppm of the exact solve, which a test now checks. 0.5 to 1.3 % of the samples
   factor afresh. Off by default in `CircuitWdf.h`, so the 808 and the 909 solve as before.
 - Also: the engine's test program prints a failed assertion or a crash instead of opening a window.
+
+## D282. CoolSynth 808: a complete sheet holds off strikes while its hit plays (2026-11-23)
+
+- Watched frame by frame over a bar of a plain beat (the snapshot test writes the frames with COOLSYNTH808_FRAMES):
+  a complete sheet, which plays its hit over 16 seconds, began again at every strike of its drum, so with closed
+  hats on every step the hi-hats sheet never got past the trigger pulse.
+- A strike now starts the hit only when the sheet stands at its start, not playing; strikes while it plays are
+  ignored until it is through, as an oscilloscope's trigger holdoff ignores triggers until it re-arms. A hit paused
+  or moved on its slider stays where it is.
+- The same frames show the whole board right: the bass drum fading over about 300 ms, the closed hat cutting the open
+  one at its strike.
