@@ -6093,6 +6093,8 @@ Taken on the way while writing the netlists (the user: "do not stop, continue"),
   conga's parts drawn, switched out; the pink noise as a 20 mV sine) and the rim shot (59 parts; the claves' parts
   drawn, switched out). Each is its own sheet beside "Whole board" and "Bass drum, complete"; striking the drum
   plays its hit.
+- The hand clap too: the 83 parts on the clap's side of SW12, IC23's four comparators drawn as comparators and the
+  BA662 as a block; the maracas' side carries nothing in a clap and is left off its sheet (CoolSynth808 `8e46c89`).
 - The mid and high toms are the low tom's circuit with other values; the conga and the claves are their pairs' other
-  switch setting. Still to draw: the hand clap (with the maracas' side, about 100 parts) and the metal voices.
+  switch setting. Still to draw: the metal voices (the cowbell, the cymbal and the hi-hats, about 250 parts).
 - CoolSynth808 `75d093c`, `11e83fa`, `7b3e3a3`; the engine at `2363d46`.
