@@ -16,8 +16,9 @@ the current state.
 - Version 0.3.0 was released on 2026-11-19 (D208, D209, D213): installer, VST3 and app zips on GitHub Releases;
   the recorded instruments as zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`. Version 0.4.0
   followed on 2026-11-20 (J3, the CLAP, the stutter, D221 to D228), and 0.5.0 on 2026-11-21 (the Chip, Kick and
-  TB-303 generators, the MiniLab scripts for Ableton, Bitwig and FL, D229 to D249); the instruments are still the
-  0.3.0 zips.
+  TB-303 generators, the MiniLab scripts for Ableton, Bitwig and FL, D229 to D249), and 0.6.0 on 2026-11-23 (the
+  first for the Mac, with its .pkg; the 808 drums in the Kit mode, D255 to D262, D272); the instruments are still
+  the 0.3.0 zips.
 - The engine lives in its own public repository, `tomcoolpxl/coolsynth-engine`, a submodule at
   `external/coolsynth-engine` (D265), shared with the planned CoolSynth 808. Its `src/synth`, `src/diagnostics`,
   circuit netlists (`tools/tr808`, `tools/kick808`, `tools/kick909`) and its own tests are there; paths below

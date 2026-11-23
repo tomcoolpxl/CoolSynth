@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22)
 set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "CoolSynth builds for Apple Silicon only (D234)")
 set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "The oldest macOS CoolSynth runs on (D234)")
 
-project(CoolSynth VERSION 0.5.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
+project(CoolSynth VERSION 0.6.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
 
 # The build settings every CoolSynth program shares come with the engine (D265).
 include(external/coolsynth-engine/cmake/CoolSynthFlags.cmake)
