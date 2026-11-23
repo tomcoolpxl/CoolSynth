@@ -98,6 +98,12 @@ Asked for by the user (2026-11-22), to be designed with options before it is bui
   - where they are kept on disk, naming, duplicating, deleting and undoing a delete;
   - importing and exporting single patterns, sets and kits, and MIDI files in and out;
   - how the library's beats and your own sit side by side, and whether a library beat can be overwritten.
+- Three directions to choose from, in `mockups/coolsynth-808-library.html` with the app's 56 beats:
+  - the shelf, a browser over the panel with shelves, folders and favourites (as Kontakt's and XO's);
+  - the wall, every beat a tile by family and decade, with a drawer to audition and load;
+  - in the panel, a browse line stepped through with the arrows or the controller's main knob, the beat shown
+    dashed over your own pattern (as a hardware machine's pattern select).
+  - Auditioning in time with the transport, from the next bar, comes from Native Instruments' pattern browser.
 
 ## Under the Lid in the app
 
