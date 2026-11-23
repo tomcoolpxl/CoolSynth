@@ -6126,3 +6126,18 @@ DAFx-17); the whole feedback loop must be solved together (Zavalishin). The user
 Taken on the way (the user's "carry on"): the 12 V rail is 11.85 V (IC16: 5.333 V times 1 + 2.2k / 1.8k), in every
 netlist; it barely moves the sound. All 25 of Din Sync's sets compared: mostly within 1 dB; set B's resonance at a
 quarter turn is open.
+
+## D280. CoolSynth 808: the whole board plays from the recordings (2026-11-23)
+
+- The user's choice of what is next (options: VST3 and CLAP plugins; the whole board on real currents; release checks;
+  the realistic panel): the whole board on real currents.
+- Each wire a strike lights on Under the Lid's whole board moves as the node of its drum's circuit it stands for, as
+  ngspice recorded it for the complete sheets (D278): how far it swings from rest and which way. A 60 ms afterglow
+  lets a 1 ms trigger and an audio-rate ring be seen at the screen's rate; past a recording's end the last value fades
+  as it was fading; the Bass drum, Cymbal and Open hat Decay knobs stretch the ring from the setting it was recorded
+  at. The mid and high toms and each hi-hat alone have small recordings of their own. The noise, the six oscillators
+  and the common trigger line run as the mockup drew them. A test wants every struck wire bound to a recording.
+- Three collisions on the board fixed: the open hat's DECAY label, the band-pass boxes under a trigger wire, C45
+  against the bass drum's TONE.
+- Numbered D279 in CoolSynth808's ``11945de`` while the 303's session took D279; its comments say D280 from the next
+  commit.

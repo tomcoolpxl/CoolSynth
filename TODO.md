@@ -280,8 +280,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     user chose the second to refine, with each drum complete on a click: the bass drum is drawn from its netlist
     with rails, ngspice's own currents and voltages on every wire (`tools/kick808/mockup_currents.py`), a time bar
     and a check of the drawing against the netlist. Every other drum is drawn the same way now (D278), each its own sheet (from
-    `tools/tr808/*.cir`, each needing its own recording); the reduced board still shows hand-drawn currents; part
-    labels collide in places. The realistic panel is still to draw, and the user's notes on the views are awaited.
+    `tools/tr808/*.cir`, each needing its own recording); the reduced board plays from the recordings too (D280). The realistic panel is still to draw, and the user's notes on the views are awaited.
     Before a release: the name in the trademark registries, and the line that says whose mark
     TR-808 is.
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
