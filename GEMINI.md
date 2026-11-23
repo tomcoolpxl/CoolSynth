@@ -6,9 +6,13 @@ the current state.
 
 ## What CoolSynth is now
 
-- A bi-timbral synthesizer for Windows: a VST3 plugin, a CLAP plugin and a standalone app, built with JUCE 9.0.5
-  (C++20, CMake). The CLAP comes from clap-juce-extensions (`external/clap-juce-extensions`, D216, D217) and
-  publishes remote control pages that follow the panel (`src/plugin/RemoteControlPages`). macOS is planned (J2).
+- A bi-timbral synthesizer for Windows and the Mac: a VST3 plugin, a CLAP plugin and a standalone app, built with
+  JUCE 9.0.5 (C++20, CMake). The CLAP comes from clap-juce-extensions (`external/clap-juce-extensions`, D216, D217)
+  and publishes remote control pages that follow the panel (`src/plugin/RemoteControlPages`).
+- The Mac (J2, D234, D272): Apple silicon, macOS 13 or newer. Build with `cmake --preset macos` and
+  `cmake --build --preset macos-debug` (Ninja Multi-Config in `build`, so the Windows commands below work too);
+  `scripts/ci/BuildAndTestMac.sh` is the CI build, `installer/macos/package.py` the unsigned .pkg. The rest of the
+  port (AU, NEON, the helper threads, the audio-thread watch, the MiniLab) is in TODO J2.
 - Version 0.3.0 was released on 2026-11-19 (D208, D209, D213): installer, VST3 and app zips on GitHub Releases;
   the recorded instruments as zips on the Hugging Face dataset `tomccargo/coolsynth-instruments`. Version 0.4.0
   followed on 2026-11-20 (J3, the CLAP, the stutter, D221 to D228), and 0.5.0 on 2026-11-21 (the Chip, Kick and
@@ -61,7 +65,8 @@ the current state.
   3 protocol as tested on the device.
 - `TODO.md`: open work only. `DECISIONS_LOG.md`: every decision, with the options and the reason.
 - `docs/releases/<tag>.md`: the release notes of each version.
-- `installer/`: the Inno Setup installer. `scripts/ci/` and `.github/workflows/`: validation and release builds.
+- `installer/`: the Inno Setup installer; `installer/macos/`: the Mac's. `scripts/ci/` and `.github/workflows/`:
+  validation and release builds.
 - `tools/`: the preset normalizer, the renderer, the library packer, the audition and engine-map scripts.
 
 ## Compatibility stance
@@ -96,7 +101,8 @@ the current state.
 - A release: run the every-preset click check above first; set the version in `CMakeLists.txt`
   (`project(CoolSynth VERSION ...)`; Preferences shows it), write
   `docs/releases/v<version>.md` (one line per paragraph and per bullet: the release page shows every line break),
-  then push the tag `v<version>`. `.github/workflows/windows-release.yml` builds, tests, packages and publishes.
+  then push the tag `v<version>`. `.github/workflows/release.yml` builds, tests, packages and publishes, for Windows
+  and the Mac.
 - Keep terminal commands profile-free (PowerShell `-NoProfile`) to avoid profile noise.
 - Never use heredocs (`<<'EOF'`, `<<EOF`, PowerShell here-strings) in shell commands. Write scripts, test snippets
   and commit messages to a file first and pass the file by path (`python script.py`, `git commit -F message.txt`).

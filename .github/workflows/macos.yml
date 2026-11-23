@@ -1,0 +1,74 @@
+name: macOS
+
+# The Mac build (D234): GitHub's Apple silicon runner with Xcode 27 on macOS 27, on every push to main and by hand.
+# It builds the app, the VST3 and the CLAP, runs the tests and keeps the installer and the zips as the run's
+# artifacts for a week. A version tag builds the Mac's release files in release.yml instead.
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: Build configuration
+        type: choice
+        required: true
+        default: Release
+        options:
+          - Debug
+          - Release
+      run_tests:
+        description: Run CTest
+        type: boolean
+        required: true
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-macos:
+    runs-on: xcode-27
+    timeout-minutes: 120
+    env:
+      CONFIGURATION: ${{ inputs.configuration || 'Release' }}
+      TEST_FLAG: ${{ (github.event_name == 'workflow_dispatch' && !inputs.run_tests) && '--no-tests' || '' }}
+      PACKAGE_NAME: ${{ format('{0}-{1}', github.ref_name, github.run_number) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Install Ninja
+        shell: bash
+        run: command -v ninja || brew install ninja
+
+      - name: Build, test and package
+        shell: bash
+        run: ./scripts/ci/BuildAndTestMac.sh "$CONFIGURATION" ${TEST_FLAG:+"$TEST_FLAG"} --package "$PACKAGE_NAME"
+
+      - name: Upload diagnostics
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: macos-${{ github.run_id }}-diagnostics
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            build/ci/logs/**
+            build/ci/Testing/ctest-results.xml
+
+      - name: Upload packages
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: macos-${{ github.run_id }}-packages
+          if-no-files-found: error
+          retention-days: 7
+          path: build/ci/packages/**

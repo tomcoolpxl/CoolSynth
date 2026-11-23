@@ -2,6 +2,7 @@
 // real request over a socket on this computer.
 
 #include <memory>
+#include <vector>
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_core/juce_core.h>
@@ -29,6 +30,29 @@ namespace
     juce::String firstText(const juce::var& response)
     {
         return response["result"]["content"][0]["text"].toString();
+    }
+
+    /** One message POSTed to 127.0.0.1:port as a client does: the whole HTTP answer, head and body. */
+    juce::String postOverSocket(int port, const juce::var& message)
+    {
+        juce::StreamingSocket client;
+        if (! client.connect("127.0.0.1", port, 2000))
+            return {};
+        const auto body = juce::JSON::toString(message).toStdString();
+        const auto head = ("POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nAccept: application/json, text/event-stream\r\n"
+                           "Content-Length: " + juce::String(static_cast<juce::int64>(body.size())) + "\r\n\r\n").toStdString();
+        client.write(head.data(), static_cast<int>(head.size()));
+        client.write(body.data(), static_cast<int>(body.size()));
+        juce::MemoryBlock answer;
+        char buffer[4096];
+        while (client.waitUntilReady(true, 3000) == 1)
+        {
+            const int n = client.read(buffer, sizeof(buffer), false);
+            if (n <= 0)
+                break;
+            answer.append(buffer, static_cast<std::size_t>(n));
+        }
+        return answer.toString();
     }
 }
 
@@ -105,28 +129,31 @@ public:
         {
             constexpr int port = 47699;
             expect(server.start(port), "the test port is taken");
-            juce::StreamingSocket client;
-            expect(client.connect("127.0.0.1", port, 2000));
-            const auto body = juce::JSON::toString(request(12, "initialize", json(R"({"protocolVersion":"2025-06-18"})"))).toStdString();
-            const auto head = ("POST /mcp HTTP/1.1\r\nHost: 127.0.0.1\r\nContent-Type: application/json\r\nAccept: application/json, text/event-stream\r\n"
-                               "Content-Length: " + juce::String(static_cast<juce::int64>(body.size())) + "\r\n\r\n").toStdString();
-            client.write(head.data(), static_cast<int>(head.size()));
-            client.write(body.data(), static_cast<int>(body.size()));
-            juce::MemoryBlock answer;
-            char buffer[4096];
-            while (client.waitUntilReady(true, 3000) == 1)
-            {
-                const int n = client.read(buffer, sizeof(buffer), false);
-                if (n <= 0)
-                    break;
-                answer.append(buffer, static_cast<std::size_t>(n));
-            }
-            const auto text = answer.toString();
+            const auto text = postOverSocket(port, request(12, "initialize", json(R"({"protocolVersion":"2025-06-18"})")));
             expect(text.startsWith("HTTP/1.1 200 OK"), text.substring(0, 80));
             expect(text.contains("Content-Type: application/json"));
             expectEquals(json(text.fromFirstOccurrenceOf("\r\n\r\n", false, false))["result"]["serverInfo"]["name"].toString(), juce::String("CoolSynth"));
             server.stop();
             expect(! server.listening());
+        }
+
+        beginTest("a large answer over a socket comes whole (D272)");
+        {
+            // A megabyte: more than a socket takes at once. On the Mac a screenshot's 155 KB was cut at 147 KB.
+            const auto big = juce::String::repeatedString("0123456789abcdef", 65536);
+            std::vector<coolsynth::mcp::Tool> tools;
+            tools.push_back({ "big", "A megabyte of text", coolsynth::mcp::objectSchema({}),
+                              [big](const juce::var&) { return coolsynth::mcp::textResult(big); } });
+            coolsynth::mcp::Server bigServer("CoolSynth", "test", std::move(tools), nullptr);
+            constexpr int port = 47698;
+            expect(bigServer.start(port), "the test port is taken");
+            const auto text = postOverSocket(port, request(13, "tools/call", json(R"({"name":"big","arguments":{}})")));
+            const auto body = text.fromFirstOccurrenceOf("\r\n\r\n", false, false);
+            const auto content = json(body)["result"]["content"];
+            expect(content.isArray(), "the answer came whole: " + juce::String(body.getNumBytesAsUTF8()) + " bytes");
+            if (content.isArray())
+                expectEquals(content[0]["text"].toString().length(), big.length());
+            bigServer.stop();
         }
 
         beginTest("the panel read as text, clicked by name, and one part pictured (D227)");

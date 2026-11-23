@@ -83,6 +83,12 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     downloaded by the installer, sse2neon, Clang's default floating point, the audio-thread watch ported with
     fishhook, GitHub's Mac runner. CoreMIDI shares ports, so the MiniLab is never busy but its notes can arrive twice
     (the duplicate filter); its port names must be checked against `ml::isDawPort`.
+    Done (D272): the first build (app, VST3, CLAP, both test programs), the three folders and plugin.options, the
+    whole test suite passing, the audio-thread watch (fishhook), the unsigned .pkg (`installer/macos/package.py`), CI
+    on every push (`macos.yml`) and the Mac in the release (`release.yml`). Left, in MACOS.md's order: every room
+    against Windows renders; AUv2 and auval; pluginval and clap-validator; Logic, GarageBand, FL Studio, Reaper,
+    Bitwig (Ableton's VST3 loads, plays and shows its panel); sse2neon and the helper threads in the audio workgroup; the voice cap's costs on the Mac;
+    the MiniLab; the knobs' wheel step with a Mac mouse and trackpad; the installer on a clean account.
 
 ## The user's ear and hands
 

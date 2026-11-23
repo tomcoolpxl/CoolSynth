@@ -5889,3 +5889,63 @@ a MIDI callback which device each message came from.
   real controller and a second MIDI source.
 - Also closed from D269's smaller items: the audio thread follows Shift itself, so a pad struck just after it
   takes its second drum; Under the Lid builds its paths and labels once instead of at every frame.
+
+## D272. The Mac's first build, its installer and CI, and 0.6.0 for Windows and the Mac (2026-11-23)
+
+The user's request, on their Mac: build the VST3 and the app there as the docs say (`docs/design/MACOS.md`, D234),
+then a Mac CI build, then, once CI works, a release for Windows (x64, as now; the user: no ARM) and the Mac (Apple
+silicon only). Built with Xcode 27.2's command line tools (Apple clang 21, the macOS 27 SDK), CMake 4.5 and Ninja.
+
+- The first build: Clang took the code as it was. Its warnings (2,462, most of them `-Wfloat-equal` from JUCE's
+  recommended warning flags, which MSVC does not have) are left; the one `-Wswitch` (the SVF's tap) falls through to
+  the low-pass on purpose.
+- Presets: `macos` (Ninja Multi-Config in `build`, so `--config Debug` and `ctest -C Debug` work as on Windows) and
+  `macos-ci` (`build/ci`). `CMAKE_OSX_ARCHITECTURES` arm64 and `CMAKE_OSX_DEPLOYMENT_TARGET` 13.0 are set in
+  `CMakeLists.txt` before `project()`, so any configure takes D234's choices, not only the presets.
+- The CLAP did not compile under Ninja: CMake drops a define holding a `#`, and `CLAP_MANUAL_URL` ended in `#readme`.
+  The anchor is gone on both systems; the repository's page opens on the README anyway.
+- The folders (D234's three, and a fourth found): `plugin.options` named no `osxLibrarySubFolder`, which JUCE asserts
+  on in a Mac Debug build. The settings, the controller setup and `library.path` now live in
+  `~/Library/Application Support/CoolSynth`, the logs in `~/Library/Logs/CoolSynth`, the library in
+  `~/Music/CoolSynth/Library`: D234 wrote `~/Music/CoolSynth`, the research's option was `~/Music/CoolSynth/Library`,
+  and every instrument zip holds a `Library` folder, so the zips unpack into `~/Music/CoolSynth` as into ProgramData.
+- The tests on the Mac: the engine's all passed; of the app's 410, three groups failed. One exact float (Part B's
+  level, -4 dB, a last bit off because Clang fuses the range's multiply and add, as D234 accepted) now has a
+  tolerance. The alarm's own check made a 100-byte allocation nothing read, which Clang removes (C++14 allows it,
+  MSVC never does); its address is now kept. The audio-thread watch could not run (Windows import tables): see below.
+  The determinism and click tests passed as they are, bit for bit within the Mac build.
+- The audio-thread watch on the Mac (the user's choice; options: skip its test on the Mac for this release, Windows
+  still running it, recommended; port it with fishhook now, as D234 planned): ported now. Researched first: fishhook
+  (Facebook, BSD, unchanged since 2021) still rebinds an executable linked with chained fixups (`__DATA_CONST,__got`
+  keeps its indirect symbol table), but cannot reach calls made inside Apple's shared libraries; interposing from the
+  program's own image is ignored since macOS 12 (dyld reads `__interpose` only from libraries), and from a library
+  it would also catch libdyld's own allocation for a thread-local, recursing (dyld's and libpthread's sources; Tracktion's
+  rtcheck and RealtimeSanitizer interpose from a library). So the program's own image is rebound, as on Windows: the C
+  heap, `pthread_mutex_lock`, the sleeps and `sched_yield`, the file calls, and libc++'s own entry points that wait
+  (`std::mutex::lock`, `condition_variable`'s waits, `this_thread::sleep_for`, which JUCE's sleep is) by their names.
+  Each real function is looked up first, so a thread meeting a stand-in mid-rebinding never calls a null pointer, and
+  the watch checks that its slots changed (fishhook says nothing when it cannot). `tests/fishhook` holds it unchanged.
+  Every preset's audio scenarios then passed under it: no heap, lock, wait, sleep or file call in an audio block.
+- The release (the user's choices, options with the recommended first): how the Mac files ship (zips now, the .pkg
+  later; the .pkg first): the .pkg first. The version (0.6.0; 0.5.1): 0.6.0. The Mac formats (VST3 and app; VST3, app
+  and CLAP): VST3, app and CLAP.
+- The installer (`installer/macos/package.py`): one package per choice, installed for the current user only (no
+  administrator password, D234). The app goes to `~/Applications`: an install for one user cannot write outside the
+  home folder. The VST3 and CLAP go to `~/Library/Audio/Plug-Ins`. The MiniLab scripts and each instrument family are
+  packages without a payload whose script does the work, so the installer lays no folder rights over Documents or
+  Music; the instruments are the Windows installer's zips and checksums, read from `installer/Instruments.iss`, so one
+  list serves both. The bundles are signed ad hoc whole (the linker signs only the executable), the licence and notices
+  are in the app. Installed here with the Plucked family: no password, no quarantine flag, the 81 MB download checked
+  and unpacked, the scripts in their DAW folders.
+- The README's and the release page's Mac install, cut down at the user's word to the Open Anyway step and where the
+  files go.
+- CI: `macos.yml` builds, tests and packages on every push to `main` and by hand, on GitHub's `xcode-27` runner (macOS
+  27, Xcode 27, Apple silicon; GitHub, 2026-10-15). `windows-release.yml` became `release.yml`: a Mac job beside the
+  Windows one, and the release waits for both.
+- Checked by hand on the Mac: the installed app through its MCP server (the panel read and clicked, Kalimba loaded from
+  `~/Music/CoolSynth/Library` and played, its worst block 1.7 ms of 11.6 ms); the VST3 in Ableton Live 12 Lite (Live's
+  "Use VST3 Plug-In System Folders" switched on, CoolSynth loaded on a MIDI track, its panel drawn, a key played into
+  Live's meter at -17 dB, a sound chosen in its list). Found through the MCP server: an answer over about 147 KB came
+  cut (a screenshot). JUCE's read leaves the socket non-blocking and the server wrote once; it now writes until all is
+  sent, and on macOS sets `SO_NOSIGPIPE`, or a client leaving mid-answer would end the app. A test sends a megabyte
+  over a real socket.

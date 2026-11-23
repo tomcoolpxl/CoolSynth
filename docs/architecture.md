@@ -351,5 +351,13 @@ its own test program, `CoolSynthEngineTests`.
   and writes symbols to a `.pdb` beside each binary (`/Zi`, `/DEBUG /OPT:REF /OPT:ICF`). The shipped
   binaries are the same as without symbols.
 
-GitHub Actions: `windows-release.yml` builds and publishes a release when a version tag (`v*.*.*`) is pushed;
-`windows-manual-validation.yml` builds and checks on demand.
+On macOS (D234, D272): Apple silicon only (`arm64`), macOS 13 or newer, the `macos` preset (Ninja Multi-Config in
+`build`, so the same `--config Debug` and `ctest -C Debug` commands work), Debug at `-O2 -g`. The engine renders on
+the plain paths there for now (no SSE, the helper threads start only on Windows). The settings, the controller setup
+and `library.path` live in `~/Library/Application Support/CoolSynth`, the logs in `~/Library/Logs/CoolSynth`, the
+library in `~/Music/CoolSynth/Library`. `installer/macos/package.py` signs the bundles ad hoc, zips them and builds the
+unsigned installer, one package per choice, installed for the current user only.
+
+GitHub Actions: `release.yml` builds, tests and publishes a release for Windows and the Mac when a version tag
+(`v*.*.*`) is pushed; `macos.yml` builds and tests the Mac on every push to `main`; `windows-manual-validation.yml`
+builds and checks Windows on demand.

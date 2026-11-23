@@ -11,13 +11,21 @@ It was designed around the Arturia MiniLab 3 and uses its screen, pads and knobs
 
 ## Download
 
-Get the latest `CoolSynth-Setup` installer from the [Releases page](https://github.com/tomcoolpxl/CoolSynth/releases).
+Get the latest `CoolSynth-Setup` installer from the [Releases page](https://github.com/tomcoolpxl/CoolSynth/releases): the `.exe` for Windows, the `.pkg` for a Mac.
+
+CoolSynth runs on 64-bit Windows 10 or 11, and on Macs with Apple silicon (M1 or newer) with macOS 13 Ventura or newer.
+
+### Windows
 
 Windows may warn that the publisher is unknown, because the installer isn't code-signed. Click **More info**, then **Run anyway**.
 
 The installer puts the VST3 in `C:\Program Files\Common Files\VST3`, the CLAP in `C:\Program Files\Common Files\CLAP` and the app in the Start menu. It also downloads the sampled instruments you select from the [instrument library](https://huggingface.co/datasets/tomccargo/coolsynth-instruments), 2.6 GB for all of them.
 
-CoolSynth runs on 64-bit Windows 10 or 11 for now; macOS is planned.
+### Mac
+
+Open the `.pkg`. The installer isn't signed, so macOS blocks it once: go to **System Settings > Privacy & Security** and click **Open Anyway**.
+
+It installs for your user only, without an administrator password: the app in `~/Applications`, the plugins in `~/Library/Audio/Plug-Ins`, and the instruments you select in `~/Music/CoolSynth`.
 
 ## Sounds
 
@@ -70,7 +78,7 @@ Every preset is levelled to the same loudness, with room to spare in a mix. For 
 
 ## Your own samples
 
-Put WAV files in `C:\ProgramData\CoolSynth\Library\User`. In the Sound section, set a slot to Sample and turn its first knob past the built-in instruments to find your files. Press the knob to load one.
+Put WAV files in `C:\ProgramData\CoolSynth\Library\User`, or on a Mac in `~/Music/CoolSynth/Library/User`. In the Sound section, set a slot to Sample and turn its first knob past the built-in instruments to find your files. Press the knob to load one.
 
 A sample can be sliced across the keys, in equal pieces or at its hits, on the slot's fourth page. A folder loads as a kit with one file per key.
 
@@ -96,7 +104,7 @@ In FL Studio, CoolSynth's own learning only gets your knobs through a shared MID
 
 CoolSynth takes over the MiniLab's screen, pads and knobs, both in the app and in a DAW. The screen shows the sound and the knob you're turning, and the pads open the sections.
 
-With CoolSynth on several tracks, the window you opened last gets the MiniLab. Using it inside a DAW needs Windows 11 24H2 or later.
+With CoolSynth on several tracks, the window you opened last gets the MiniLab. Using it inside a DAW needs Windows 11 24H2 or later. On a Mac, the MiniLab hasn't been tried with CoolSynth yet.
 
 The MiniLab sends its pads on MIDI channel 10 and its keys on channel 1. To keep the pads from also playing notes in your DAW:
 
@@ -108,7 +116,7 @@ To use the MiniLab as an ordinary MIDI controller instead, turn off **Prefs > Co
 
 ## Building from source
 
-You need Windows, Git, CMake 3.22 or newer, and Visual Studio 2022 or its Build Tools.
+On Windows, you need Git, CMake 3.22 or newer, and Visual Studio 2022 or its Build Tools.
 
 ```powershell
 git clone --recurse-submodules https://github.com/tomcoolpxl/CoolSynth.git
@@ -119,6 +127,18 @@ ctest --test-dir build -C Debug --output-on-failure
 ```
 
 Debug builds are optimized, so they play in real time. Use `--config Release` for a build you want to give to someone else. Add `-DCOOLSYNTH_ENABLE_VST3_USER_INSTALL=ON` to copy the VST3 into your user VST3 folder after every build.
+
+On a Mac with Apple silicon, you need the Xcode command line tools, CMake 3.22 or newer and Ninja (`brew install cmake ninja`):
+
+```bash
+git clone --recurse-submodules https://github.com/tomcoolpxl/CoolSynth.git
+cd CoolSynth
+cmake --preset macos
+cmake --build --preset macos-debug
+ctest --test-dir build -C Debug --output-on-failure
+```
+
+`scripts/ci/BuildAndTestMac.sh Release --package <name>` builds, tests and makes the installer and zips as the release does.
 
 How the engine works is described in [docs/architecture.md](docs/architecture.md).
 

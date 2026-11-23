@@ -38,7 +38,11 @@ namespace coolsynth::midi
     {
         if (testFile != juce::File())
             return testFile;
+        // %APPDATA% on Windows; on macOS JUCE's user application data is ~/Library itself, so Application Support.
         return juce::File::getSpecialLocation(juce::File::userApplicationDataDirectory)
+           #if JUCE_MAC
+            .getChildFile("Application Support")
+           #endif
             .getChildFile("CoolSynth").getChildFile("controller.json");
     }
 

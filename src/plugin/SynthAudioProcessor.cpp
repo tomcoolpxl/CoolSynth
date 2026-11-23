@@ -273,13 +273,15 @@ void SynthAudioProcessor::chooseVelocityCurve(int curve)
 
 juce::PropertiesFile& SynthAudioProcessor::pluginOptions()
 {
-    // %APPDATA%\CoolSynth\plugin.options: what the plugin remembers on this computer. Message thread.
+    // %APPDATA%\CoolSynth\plugin.options (macOS: ~/Library/Application Support/CoolSynth): what the plugin
+    // remembers on this computer. Message thread.
     static juce::PropertiesFile file = []
     {
         juce::PropertiesFile::Options options;
         options.applicationName = "plugin";
         options.filenameSuffix = ".options";
         options.folderName = "CoolSynth";
+        options.osxLibrarySubFolder = "Application Support";
         options.storageFormat = juce::PropertiesFile::storeAsXML;
         return juce::PropertiesFile(options);
     }();

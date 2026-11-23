@@ -504,7 +504,8 @@ b.mix = transpose=-12 fx=0 level=-4
             expectEquals(static_cast<int>(plain(*processor, pv3::partModeParameterId)), 0); // "layer" reads as Stack (D190)
             expectEquals(plain(*processor, "pB.mix.transpose"), -12.0f);
             expectEquals(plain(*processor, "pB.mix.fx"), 0.0f);
-            expectEquals(plain(*processor, "pB.mix.level"), -4.0f);
+            // Within a last bit: Clang fuses the range's multiply and add on the Mac (D234).
+            expectWithinAbsoluteError(plain(*processor, "pB.mix.level"), -4.0f, 1.0e-5f);
             expectEquals(static_cast<int>(plain(*processor, "pB.play.mode")), 1);
 
             juce::AudioBuffer<float> buffer(2, 256);

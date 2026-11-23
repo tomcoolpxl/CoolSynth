@@ -1,11 +1,36 @@
 #include "McpServer.h"
 
+#include <algorithm>
 #include <atomic>
+
+#if JUCE_MAC
+ #include <sys/socket.h>
+#endif
 
 namespace coolsynth::mcp
 {
     namespace
     {
+        /** Sends all of it. JUCE's read leaves the socket non-blocking, so a large answer goes out in parts once the
+            system's send buffer is full (macOS cut a screenshot's 155 KB at 147 KB, D272). A client gone away ends it at
+            once; a stalled one within about ten seconds. */
+        void writeAll(juce::StreamingSocket& client, const char* data, std::size_t size)
+        {
+            int failures = 0;
+            while (size > 0)
+            {
+                const int sent = client.write(data, static_cast<int>(std::min<std::size_t>(size, 1 << 20)));
+                if (sent > 0)
+                {
+                    data += sent;
+                    size -= static_cast<std::size_t>(sent);
+                    failures = 0;
+                }
+                else if (++failures > 50 || client.waitUntilReady(false, 200) < 0)
+                    return;
+            }
+        }
+
         juce::var object(std::initializer_list<std::pair<const char*, juce::var>> properties)
         {
             auto* o = new juce::DynamicObject();
@@ -134,6 +159,12 @@ namespace coolsynth::mcp
 
     void Server::serve(juce::StreamingSocket& client)
     {
+       #if JUCE_MAC
+        // A client that leaves before its answer is sent must not end the app: a write to its socket raises SIGPIPE on
+        // macOS otherwise (Windows sends none).
+        const int noSignal = 1;
+        setsockopt(client.getRawSocketHandle(), SOL_SOCKET, SO_NOSIGPIPE, &noSignal, sizeof(noSignal));
+       #endif
         // One request each connection, then closed (Connection: close), which HTTP/1.1 clients accept.
         juce::MemoryBlock received;
         constexpr std::size_t headerLimit = 64 * 1024, bodyLimit = 4 * 1024 * 1024;
@@ -202,9 +233,8 @@ namespace coolsynth::mcp
         response << "Content-Length: " << juce::String(static_cast<juce::int64>(bodyText.size())) << "\r\n"
                  << "Connection: close\r\n\r\n";
         const auto headText = response.toStdString();
-        client.write(headText.data(), static_cast<int>(headText.size()));
-        if (! bodyText.empty())
-            client.write(bodyText.data(), static_cast<int>(bodyText.size()));
+        writeAll(client, headText.data(), headText.size());
+        writeAll(client, bodyText.data(), bodyText.size());
         client.close();
     }
 

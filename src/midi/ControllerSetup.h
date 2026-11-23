@@ -14,7 +14,7 @@
 
 /*
     The computer's controller setup (D211): one map for the app and every CoolSynth in every host, kept in
-    %APPDATA%\CoolSynth\controller.json, as the velocity curve is the computer's (D175). With none saved, a controller
+    %APPDATA%\CoolSynth\controller.json (macOS: ~/Library/Application Support/CoolSynth), as the velocity curve is the computer's (D175). With none saved, a controller
     plugged in that CoolSynth knows brings its ready profile, and the screen says so once. Learning (the guided
     setup, a right click's Learn) listens to every CoolSynth in this process for the next control moved.
     Message thread, apart from the audio thread's two questions, which read atomics only.

@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
+# macOS (D234): Apple Silicon only, macOS 13 Ventura or newer. Set before project(), so every target takes them.
+set(CMAKE_OSX_ARCHITECTURES "arm64" CACHE STRING "CoolSynth builds for Apple Silicon only (D234)")
+set(CMAKE_OSX_DEPLOYMENT_TARGET "13.0" CACHE STRING "The oldest macOS CoolSynth runs on (D234)")
+
 project(CoolSynth VERSION 0.5.0 LANGUAGES C CXX) # C as well: JUCE 9 builds zlib, libpng, libjpeg and libflac as C
 
 # The build settings every CoolSynth program shares come with the engine (D265).
@@ -55,7 +59,9 @@ juce_add_plugin(CoolSynth
 clap_juce_extensions_plugin(TARGET CoolSynth
     CLAP_ID "com.tomcoolpxl.coolsynth"
     CLAP_FEATURES instrument synthesizer stereo
-    CLAP_MANUAL_URL "https://github.com/tomcoolpxl/CoolSynth#readme"
+    # No "#readme" anchor: a '#' in a define is dropped by the Ninja and Makefile generators (the repository's page
+    # opens on the README anyway).
+    CLAP_MANUAL_URL "https://github.com/tomcoolpxl/CoolSynth"
     CLAP_SUPPORT_URL "https://github.com/tomcoolpxl/CoolSynth/issues"
     CLAP_USE_JUCE_PARAMETER_RANGES DISCRETE)
 
@@ -176,6 +182,12 @@ if(BUILD_TESTING)
             external/coolsynth-engine/tests # the engine's test helpers
             ${CMAKE_CURRENT_BINARY_DIR}
     )
+
+    # The Mac's audio-thread watch rebinds the program's own imports with fishhook (the engine's tests/fishhook, D272).
+    if(APPLE)
+        target_sources(CoolSynthMidiLearnTests PRIVATE external/coolsynth-engine/tests/fishhook/fishhook.c)
+        set_source_files_properties(external/coolsynth-engine/tests/fishhook/fishhook.c PROPERTIES COMPILE_OPTIONS -w)
+    endif()
 
     target_compile_features(CoolSynthMidiLearnTests PUBLIC cxx_std_20)
 

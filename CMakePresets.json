@@ -59,6 +59,26 @@
         "BUILD_TESTING": "ON",
         "COOLSYNTH_ENABLE_VST3_USER_INSTALL": "OFF"
       }
+    },
+    {
+      "name": "macos",
+      "displayName": "macOS (Apple Silicon, Ninja Multi-Config)",
+      "generator": "Ninja Multi-Config",
+      "binaryDir": "${sourceDir}/build",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      }
+    },
+    {
+      "name": "macos-ci",
+      "displayName": "macOS CI",
+      "inherits": "macos",
+      "binaryDir": "${sourceDir}/build/ci",
+      "cacheVariables": {
+        "BUILD_TESTING": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -80,6 +100,26 @@
     {
       "name": "ci-build-release",
       "configurePreset": "ci-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "macos-debug",
+      "configurePreset": "macos",
+      "configuration": "Debug"
+    },
+    {
+      "name": "macos-release",
+      "configurePreset": "macos",
+      "configuration": "Release"
+    },
+    {
+      "name": "macos-ci-debug",
+      "configurePreset": "macos-ci",
+      "configuration": "Debug"
+    },
+    {
+      "name": "macos-ci-release",
+      "configurePreset": "macos-ci",
       "configuration": "Release"
     }
   ]

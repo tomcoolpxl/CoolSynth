@@ -24,6 +24,9 @@ namespace
     constexpr double sampleRate = 48000.0;
     constexpr int preparedBlock = 256;
 
+    /** Where the alarm's own test keeps its allocation's address, so the compiler must make it. */
+    void* volatile keptAllocation = nullptr;
+
     /** A processor, its buffers, and what its blocks did. */
     struct Rig
     {
@@ -118,7 +121,8 @@ public:
             {
                 const diag::AudioBlockScope block;
                 auto inside = std::make_unique<std::array<char, 100>>();
-                juce::ignoreUnused(inside);
+                // Kept in sight: Clang removes an allocation nothing reads, as C++14 allows ([expr.new]); MSVC never does.
+                keptAllocation = inside.get();
             }
             expectEquals(diag::audioAllocations.count.load(), 1, "the replaced operator new is the one in use");
             expectEquals(static_cast<int>(diag::audioAllocations.firstSizes[0].load()), 100);
