@@ -6050,7 +6050,7 @@ Taken on the way while writing the netlists (the user: "do not stop, continue"),
   cutoff sat 40 % high even with TM3 at its end; with the datasheets' VBE, TM3 lands at 0.17 of its travel.
 - TP6 is Q19's emitter, not C14's output: only there does page 5's sketch (5.2 to 5.8 V) hold.
 
-## D275. CoolSynth 808: the library's listening pass, by feel (2026-11-23)
+## D276. CoolSynth 808: the library's listening pass, by feel (2026-11-23)
 
 - The user listens to each beat rendered offline (CoolSynth808's `CoolSynth808Render`, WAV clips sent to them) beside
   a YouTube link to its record. Against the records they could not tell "same" under a full mix, so the pass judges
@@ -6063,7 +6063,7 @@ Taken on the way while writing the netlists (the user: "do not stop, continue"),
 - The other 38 went to the user at once, to name only those that are wrong. Planet Rock may want a cowbell too (a cowbell list names it).
 - CoolSynth808 `6523165`.
 
-## D276. CoolSynth 808: starter beats for modern genres (2026-11-23)
+## D277. CoolSynth 808: starter beats for modern genres (2026-11-23)
 
 - The user asked for generic beginner beats for modern music, "not stupid Casio crap".
 - 22 starter beats on a shelf of their own, listed first: house, deep house, tech house, techno, UK garage (2-step),
@@ -6076,3 +6076,6 @@ Taken on the way while writing the netlists (the user: "do not stop, continue"),
 - CoolSynth808 `2be6dbb`. Sent to the user as clips, with the other 38 classics, to name the wrong ones.
 - The user heard all 60 clips (the 38 classics and the 22 starters): all okay. The whole library is now heard by
   feel; the classics' confidence labels stay, since by feel is not against the record.
+- Numbered D275 and D276 at first, while the CoolSynth 303 session took D275 at the same time: the listening pass is
+  D276 and the starter beats D277. CoolSynth808's commits `6523165` and `2be6dbb` say D275 and D276 in their
+  messages; its comments say D276 and D277 from the next commit.

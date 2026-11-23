@@ -267,8 +267,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     now holds one layer for the 808 (D270: 150 MB instead of 707), and the controller has its own MIDI input
     (D271), still to be tried with a real controller beside a second MIDI source. The controller scheme stays as
     built and the library is a shelf with audition, rename and the Recycle Bin (D273); an audition comes in on the
-    next bar line (D274). Waiting on the user: their review of the app, and the library's beats by ear (most are low-confidence transcriptions,
-    `docs/library-research.md` there). The history below is the mockups' round.
+    next bar line (D274). The whole library is heard by ear and okay, two beats fixed (D276), and 22 starter beats
+    for modern genres are added (D277). Waiting on the user: their review of the app, and the controller input with
+    hardware. The history below is the mockups' round.
     The 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and
     shuffle per drum, MIDI drag, per-step locks, flams and sub-steps, chance and conditions; a panel whose step row
     opens into a lane per drum, and Under the Lid (the live circuit, with the classic mods as trimmers) as the
@@ -281,7 +282,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     and a check of the drawing against the netlist. The other ten are still to draw the same way (from
     `tools/tr808/*.cir`, each needing its own recording); the reduced board still shows hand-drawn currents; part
     labels collide in places. The realistic panel is still to draw, and the user's notes on the views are awaited.
-    Nothing is built yet: no sequencer, no plugin target. Before a release: the name in the trademark registries, and the line that says whose mark
+    Before a release: the name in the trademark registries, and the line that says whose mark
     TR-808 is.
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
