@@ -5799,3 +5799,45 @@ are listed, all to settle with the user.
 - A turn of a knob is one undo step, closed when another control moves or it rests 600 ms.
 - The setup's screen: Controller in the header, a list of the places with what each does, click to learn, right-
   click to forget, CoolSynth's ready setups to choose from. A plain one until the real UI.
+
+## D269. CoolSynth 808's code review of the night (2026-11-23)
+
+The user's overnight instruction: once the rest works, a full code review. Three reviewers read separately (the
+engine's sequencer; the app's processor, clock, project and controller; the interface), each finding checked
+against the code before it was fixed. Each choice below took the recommended option; the others are listed.
+
+- The sequencer (engine `76d890e`, seven new tests): a swing or tempo change between blocks played a step twice or
+  lost it; now each hit has its turn once, by its place in the bar. A fill asked again while it played cut it
+  short; a chain chosen in a pattern's last sixteenth waited a whole pattern more; a loop back to before a chain
+  switch played the old chain; a crowded block could leave a note hanging; a bad tempo from a host could run the
+  step loop away. All fixed.
+- Undo: a click that changed nothing took a step and lost redo; a controller's turn and a panel drag shared one
+  gesture; a library load took three steps; recording took one a screen refresh. Now a gesture takes its step at
+  its first edit, the controller keeps its own steps, and a load or a recording pass is one step.
+- Opening a project (options: a fresh history, as most programs do; keeping the history and restoring the file name
+  with each undo): a fresh history, for New too. Before, an undo after Open and then Save wrote the old project
+  into the opened file.
+- Loading a beat while editing the fill (options: the beat's first part into the fill; into pattern 1 as before;
+  not at all): into the fill.
+- Volume (options: a Volume knob under the Accent, as the 808 has; leaving knob 8 without a panel control; a number
+  box in the transport): the knob. A controller's knob 8 could silence the kit with nothing on the panel to show it.
+- MIDI clock out went in one burst a block; JUCE's standalone sends at each message's sample only with the output's
+  own thread, which the app now keeps running.
+- MIDI clock in: the follower ran on while the master was stopped and came back up to half a beat early; it now
+  holds still, snaps to the pulses on Continue and Song Position, and starts on the first pulse after Start. A clock
+  that disappears while it plays (options: stop; carry on with its own clock): stop. A clock that comes in while the
+  808 leads sends Stop downstream.
+- Also fixed: the overlays were deleted from inside their own callback; a failed Save was silent; Save As proposed
+  Untitled and could replace a file without asking once the extension was added; the window's height did not
+  follow its width; leaving the fill always went back to pattern 1; a step's press could land on another drum if a
+  controller moved the selection meanwhile; the panel was drawn whole 30 times a second; panel strikes took a lock
+  on the audio thread; a file could ask for any number of banks (now 64 at most); a dragged MIDI file could be
+  appended to.
+- Left for the user, not fixed:
+  - Memory: the app takes about 707 MB, nearly all the engine preparing a whole CoolSynth sound (four units of two
+    parts of 16 voices with their buffers, and every insert slot's effects), of which the 808 uses one part. An
+    engine option to prepare only what a program uses would save an estimated 250 to 300 MB.
+  - A ready profile's pads listen to their notes from every MIDI input: the standalone app merges its inputs and
+    does not say which one a note came from, so General MIDI drums sent from a DAW on channel 10 would play the pads'
+    drums. A setting for which input is the controller would settle it.
+  - Smaller: a pad hit within about 20 ms of Shift plays its first drum; Under the Lid allocates while drawing.
