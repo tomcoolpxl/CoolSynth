@@ -256,11 +256,12 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     `src/synth/StepSequencer`, its playback; the app's recording, chain keys, clock and handing it edits come with
     the app). The app is built overnight (D267): `tomcoolpxl/CoolSynth808` at `E:\github\CoolSynth808`, the panel,
     lanes, Under the Lid's board, projects, undo, MIDI clock in and out, recording, MIDI drag and a library of 56
-    beats, tested offline. Waiting on the user: their review of the app, the library's beats by ear (most are
-    low-confidence transcriptions, `docs/library-research.md` there), and the library's design. Still to design with
-    the user (options) before it is built:
-    the library of classic beats, how it is shown, and keeping and managing your own patterns
-    (`COOLSYNTH_808.md`, "To design with the user"). The history below is the mockups' round.
+    beats, tested offline. A MIDI controller works on it with CoolSynth's controller layer, ported (D268), on a
+    first scheme after the user's sketch. Waiting on the user: their review of the app, the library's beats by ear
+    (most are low-confidence transcriptions, `docs/library-research.md` there), the controller scheme (knob 5 as
+    the pattern or the drum), and the library's design: three directions in
+    `docs/design/mockups/coolsynth-808-library.html` (the shelf, the wall, in the panel) for how it is shown and how
+    your own patterns are kept and managed (`COOLSYNTH_808.md`, "To design with the user"). The history below is the mockups' round.
     The 808 engine as a plugin of its own. Chosen: the 1980 sequencer plus a length and
     shuffle per drum, MIDI drag, per-step locks, flams and sub-steps, chance and conditions; a panel whose step row
     opens into a lane per drum, and Under the Lid (the live circuit, with the classic mods as trimmers) as the
