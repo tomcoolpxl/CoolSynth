@@ -150,7 +150,13 @@ checked against the x0xb0x's schematic as Open Music Labs redrew it (openmusicla
   - TM3 fitted at 0.35: harmonics 2 to 8 within 0.7 dB on average at cutoff 25, 50 and 100 %, 2.1 dB at 75 %
     (the knob positions are approximate, and the audio taper is assumed). The unit is darker than page 7's 2 ms
     ring, as ro-mono-303 found for it (2.5 ms).
-  - Not yet compared: resonance, env mod, decay and accent (sets A2 to E5), the square.
+  - With TM3 at 0.35, each knob alone at 25 to 100 % (the others at nothing), harmonics 2 to 8 on average:
+    RESONANCE (A2) within 0.3 to 1.6 dB, 2.8 dB at 25 %; ENV MOD (A3) within 0.2 to 1.1 dB, 2.3 dB at 75 %; DECAY
+    (A4, from 150 ms into the note) within 0.1 to 1.0 dB; ACCENT (A5, accented notes) within 0.3 to 1.1 dB. Pitch
+    within 10 cents throughout.
+  - The accent's loudness over a plain note at ACCENT full (the recordings keep one gain): +13.2 dB against the real
+    unit's +13.3 dB from 30 to 80 ms, +6.9 against +7.8 dB from 80 to 150 ms; the first 25 ms 2.8 dB louder.
+  - Not yet compared: the knobs together (sets B to E), the square.
 
 ## What this means for CoolSynth
 
