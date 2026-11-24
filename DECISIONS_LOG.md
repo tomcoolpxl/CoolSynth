@@ -7011,7 +7011,12 @@ Still alone, as D304; each with what else it could have been.
   screenshot. The standalone serves it on 127.0.0.1:47633 from its start (CoolSynth's is 47613); the plugin opens no
   port. Registered for this project as coolsynth303. Its first recording found the user's Devil Fish settings
   (Overdrive full, Filter FM 0.77) peaking at +0.9 dBFS.
-- The Release build optimised as a whole, as the 808's D327 (/GL with /LTCG); AVX2 left out. Timed below.
+- The Release build optimised as a whole, as the 808's D327 (/GL with /LTCG); AVX2 left out. Timed with and without:
+  the same speed (73.7 to 76.0 % of real time against 72.4 to 76.0 %), the voice's hot code already inlined from
+  its headers; kept to match the 808.
+- The clipping: the user wondered whether clipping is sometimes wanted. Analogue overdrive is; the sound card's flat
+  digital cut is not. Picked from three (a soft analogue saturation at the output; as it was; the Overdrive levelled):
+  the saturation, untouched to -3 dBFS, a tanh toward full scale above. CoolSynth303 `3427911`.
 
 ## D333. CoolSynth 808: an MCP server in the app (2026-11-24)
 
