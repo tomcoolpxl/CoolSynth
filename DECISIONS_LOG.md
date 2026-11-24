@@ -6462,3 +6462,9 @@ two is kept as it was. Screenshots `2.1-charcoal-key-buttons.png` and `2.2-charc
   - Move (◀ ▶), Pitch (− +), Length, Undo and Redo.
 - The status line moved into the sequencer's caption (editing, hearing, chain); the tab bar's note got shorter.
 - Options for the keys (buttons, piano) are both built for the user to compare.
+
+## D301. CoolSynth 303: the charcoal layout's keyboard is the piano (2026-11-24)
+
+Asked as a pick list after D300: the piano (2.2) or the square key buttons (2.1). The user picked the piano.
+- The charcoal layout carries its octave as a piano, as in `2.2-charcoal-piano.png`.
+- 2.1 stays in the mockup file as the option not taken.
