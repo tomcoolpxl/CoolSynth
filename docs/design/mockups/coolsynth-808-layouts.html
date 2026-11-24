@@ -47,7 +47,16 @@ button { font: inherit; color: inherit; }
 .key::before { content: ''; position: absolute; left: 50%; top: 5px; width: 36%; height: 4px; transform: translateX(-50%);
   border-radius: 2px; background: #1b1815; box-shadow: inset 0 1px 1px rgba(0,0,0,.7); }
 .key.on::before { background: var(--on); box-shadow: 0 0 7px var(--on), inset 0 0 1px var(--lit); }
-.key.ph { box-shadow: inset 0 1px 0 rgba(255,255,255,.13), 0 0 0 1px var(--lit); }
+.key.ph { box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -2px 0 rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.6); }
+.key.ph.on::before { background: #ffd9a8; box-shadow: 0 0 10px 2px var(--flow), inset 0 0 1px #fff; }
+.key.ph.on { background: color-mix(in srgb, var(--g) 62%, #ece4d2); }
+.lhead { height: 14px; }
+.lamp { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; height: 14px; }
+.ksteps .lamp:nth-child(4n+1) { margin-left: 3px; }
+.lamp i { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.lamp span { font-family: var(--mono); font-size: 9px; color: #8f8877; }
+.lamp.cur i { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,150,60,.85); }
+.lamp.cur span { color: #f4efe4; }
 .key.off { opacity: .38; }
 .key.small::before { top: 4px; width: 70%; height: 4px; }
 .key.on { background: color-mix(in srgb, var(--g) 80%, #ece4d2); }
@@ -104,7 +113,9 @@ button { font: inherit; color: inherit; }
 /* Lanes */
 .lanes { display: grid; }
 .lane { display: grid; align-items: center; column-gap: 8px; border-radius: 3px; }
-.lane.sel { background: rgba(236,228,210,.06); }
+.lane.sel { background: linear-gradient(90deg, rgba(232,116,42,.20), rgba(236,228,210,.07) 30%, rgba(236,228,210,.05)); box-shadow: inset 3px 0 0 var(--on); }
+.lane.sel .id, .lane.sel .nm { color: var(--lit) !important; }
+.lane .id { padding-left: 8px; }
 .lane .id { font-family: var(--mono); font-weight: 600; font-size: 11px; color: var(--ink); cursor: pointer; }
 .lane .nm { cursor: pointer; overflow: hidden; white-space: nowrap; }
 .ms { display: flex; gap: 3px; }
@@ -257,7 +268,9 @@ canvas.board { display: block; width: 100%; height: 100%; }
 .flat6 .glass5 .key { background: var(--g); border-radius: 5px; box-shadow: none; }
 .flat6 .glass5 .key::before { content: none; }
 .flat6 .glass5 .key.on { background: var(--on); }
-.flat6 .glass5 .key.ph { box-shadow: 0 0 0 2px var(--lit); }
+.flat6 .glass5 .key.ph { box-shadow: none; }
+.flat6 .glass5 .key.ph.on { background: #ffa04a; }
+.flat6 .lamp i { border-radius: 1px; width: 10px; height: 3px; }
 .flat6 .glass5 .key.pick { box-shadow: 0 0 0 2px var(--ink); }
 .flat6 .glass5 .key.end { box-shadow: 3px 0 0 -1px var(--lit); }
 .flat6 .v5right { background: #262421; box-shadow: inset 0 0 0 1px #3a3733; }
@@ -275,6 +288,8 @@ canvas.board { display: block; width: 100%; height: 100%; }
 .etched5:not(.flat6) .cblk.cur .x { color: #3a2010; }
 .etched5:not(.flat6) .cblk.nxt { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 2px var(--lit), inset 0 1px 0 rgba(255,255,255,.12); }
 .etched5:not(.flat6) .cadd { box-shadow: 0 0 0 1px #4a463f; }
+
+.thint { line-height: 1.5; padding: 10px 0 2px; color: #b9b19f !important; text-transform: none; letter-spacing: .02em; font-size: 11px; }
 
 /* Pop-ups on right-click: a step's tools, a pattern's menu */
 .pop { position: absolute; z-index: 40; min-width: 190px; padding: 10px; border-radius: 5px; display: flex; flex-direction: column; gap: 8px;
@@ -300,7 +315,7 @@ canvas.board { display: block; width: 100%; height: 100%; }
   <button class="tab" data-v="5">5 Etched with glass</button>
   <button class="tab" data-v="6">6 Etched, flat sequencer</button>
   <span id="v5opts" style="display:none;gap:6px;align-items:center;margin-left:10px">
-    <span>Click a step to pick it; its tools, its lane's and the pattern's are on the right. Right-click works too.</span>
+    <span>Click a step to set it and pick its lane; right-click it for its chance, roll and accent.</span>
   </span>
   <span class="sp"></span>
   <span class="note" id="chromeNote">Mockups: the beat runs and lights the circuits, no sound. Space plays and stops.</span>
@@ -697,6 +712,14 @@ function buildLanes(host, rowH) {
   host.className = 'lanes';
   host.style.rowGap = Math.max(2, Math.round(rowH / 7)) + 'px';
   const rows = [];
+  // The step lights: where the bar is, one light running along, as on the hardware
+  const head = el('div', 'lane lhead');
+  head.style.gridTemplateColumns = rowH >= 26 ? '30px 96px 54px 50px 1fr 30px' : '30px 84px 54px 40px 1fr 26px';
+  const lights = el('div', 'ksteps'), lamps = [];
+  for (let i = 0; i < 16; i++) { const c = el('div', 'lamp g' + (1 + (i >> 2)), `<i></i><span>${i + 1}</span>`); lamps.push(c); lights.append(c); }
+  head.append(el('span'), el('span'), el('span'), el('span'), lights, el('span'));
+  host.append(head);
+  painters.push(() => lamps.forEach((c, i) => c.classList.toggle('cur', S.playing && S.step === i)));
   DRUMS.forEach((d, l) => {
     const r = el('div', 'lane');
     r.style.gridTemplateColumns = rowH >= 26 ? '30px 96px 54px 50px 1fr 30px' : '30px 84px 54px 40px 1fr 26px';
@@ -708,7 +731,7 @@ function buildLanes(host, rowH) {
     const ks = el('div', 'ksteps'); const keys = [];
     for (let i = 0; i < 16; i++) {
       const k = el('div', 'key small g' + (1 + (i >> 2))); k.style.height = rowH + 'px';
-      k.addEventListener('click', () => { const p = shown(); p.lanes[l][i] = !p.lanes[l][i]; S.sel = l; S.selStep = { l, i }; paintAll(); });
+      k.addEventListener('click', () => { const p = shown(); p.lanes[l][i] = !p.lanes[l][i]; S.sel = l; paintAll(); });
       k.addEventListener('contextmenu', e => popover(e, p => {
         const key = `${S.editing}-${l}-${i}`, x = stepX[key] || (stepX[key] = { chance: 100, hits: 1 });
         p.append(el('div', 'lbl', `${d.id} · step ${i + 1}`));
@@ -742,7 +765,6 @@ function buildLanes(host, rowH) {
         k.classList.toggle('off', i >= p.len[l]);
         k.classList.toggle('end', i === p.len[l] - 1 && p.len[l] < 16);
         k.classList.toggle('ph', i === head);
-        k.classList.toggle('pick', !!S.selStep && S.selStep.l === l && S.selStep.i === i);
       });
     });
   });
@@ -1004,8 +1026,23 @@ class Board {
     if (s > 1.35 || P.etched || this.opts.names) {
       g.font = `500 ${P.etched ? 6 : 5.5}px 'IBM Plex Mono', monospace`; g.textAlign = 'left'; g.globalAlpha = P.etched ? .7 : Math.min(1, (s - 1.35) * 2);
       const ko = this.opts.keepouts ? this.opts.keepouts() : [];
-      const under = (x, y) => ko.some(k => k.r ? Math.hypot(x - k.x, y - k.y) < k.r + 16 : x > k.x - 26 && x < k.x + k.w + 6 && y > k.y - 6 && y < k.y + k.h + 10);
-      for (const p of this.parts) if (p.t !== 'G' && !under(p.x + p.k * .9, p.y - p.k * .7)) g.fillText(p.name, p.x + p.k * .9, p.y - p.k * .7);
+      g.fillStyle = P.etched ? 'rgba(222,200,160,.72)' : P.label; g.textBaseline = 'alphabetic';
+      // every part's box, and the boxes of the names already set: a name goes where it touches none of them
+      const box = p => { const w = (p.t === 'A' ? 1.2 : p.t === 'R' || p.t === 'P' ? 1.35 : 1) * p.k, h = (p.t === 'A' ? 1.5 : p.t === 'R' || p.t === 'P' ? .55 : 1) * p.k;
+        return p.a === 90 ? [p.x - h, p.y - w, p.x + h, p.y + w] : [p.x - w, p.y - h, p.x + w, p.y + h]; };
+      const boxes = this.parts.map(box);
+      for (const k of ko) boxes.push(k.r ? [k.x - k.r, k.y - k.r, k.x + k.r, k.y + k.r] : [k.x, k.y, k.x + k.w, k.y + k.h]);
+      const hit = r => boxes.some(b => r[0] < b[2] && r[2] > b[0] && r[1] < b[3] && r[3] > b[1]);
+      const fs = P.etched ? 6 : 5.5;
+      for (const p of this.parts) {
+        if (p.t === 'G') continue;
+        const w = p.name.length * fs * .6 + 1, [x0, y0, x1, y1] = box(p), gap = 2;
+        const spots = [[x1 + gap, (y0 + y1) / 2 + fs * .35], [x0 - gap - w, (y0 + y1) / 2 + fs * .35], [(x0 + x1) / 2 - w / 2, y0 - gap], [(x0 + x1) / 2 - w / 2, y1 + gap + fs]];
+        for (const [lx, ly] of spots) {
+          const r = [lx - .5, ly - fs, lx + w + .5, ly + 1];
+          if (!hit(r)) { g.fillText(p.name, lx, ly); boxes.push(r); break; }
+        }
+      }
       g.globalAlpha = 1;
     }
   }
@@ -1360,7 +1397,7 @@ function build5(vid) {
   const paintRight = () => {
     const p = shown(), l = S.sel, d = DRUMS[l], st = S.selStep && S.selStep.l === l ? S.selStep.i : -1;
     const xk = `${S.editing}-${l}-${st}`, x = st >= 0 ? (stepX[xk] || (stepX[xk] = { chance: 100, hits: 1 })) : null;
-    const key = [l, st, S.editing, p.len[l], x && x.chance, x && x.hits, st >= 0 && p.lanes[IDX.AC][st]].join('|');
+    const key = [l, S.editing, p.len[l]].join('|');
     if (key === lastKey) return; lastKey = key;
     right.innerHTML = '';
     const sec = title => { const s = el('div', 'tsec'); s.append(el('div', 'lbl head', title)); right.append(s); return s; };
@@ -1376,17 +1413,8 @@ function build5(vid) {
       w.append(el('span', 'lbl', label), btn('−', 'sq', () => go(-1)), show, btn('+', 'sq', () => go(1)));
       return w;
     };
-    // The step
-    const s1 = sec(st >= 0 ? `Step ${st + 1} · ${d.id}` : `Step · pick one in ${d.id}'s lane`);
-    const r1 = el('div', 'tknobs'); s1.append(r1);
-    if (st >= 0) {
-      r1.append(value('Chance', (x.chance - 5) / 95, { steps: 20, fmt: v => Math.round(v * 95 + 5) + ' %', onChange: v => { x.chance = Math.round(v * 95 + 5); }, onDone: done }));
-      r1.append(value('Roll', (x.hits - 1) / 2, { steps: 3, fmt: v => { const h = Math.round(v * 2) + 1; return h === 1 ? '1 hit' : h + ' hits'; }, onChange: v => { x.hits = Math.round(v * 2) + 1; }, onDone: done }));
-      const keys = el('div', 'tcol');
-      keys.append(btn('Accent', 'tg' + (p.lanes[IDX.AC][st] ? ' is' : ''), () => { p.lanes[IDX.AC][st] = !p.lanes[IDX.AC][st]; paintAll(); }),
-        btn('Lane ends here', '', () => { p.len[l] = st + 1; paintAll(); }));
-      r1.append(keys);
-    }
+    // A step's own settings (chance, roll, accent) are on its right-click
+    const hint = el('div', 'lbl thint', 'Right-click a step for its chance, roll and accent.'); right.append(hint);
     // The lane
     const s2 = sec(`Lane · ${d.name}`);
     const r2 = el('div', 'tknobs'); s2.append(r2);

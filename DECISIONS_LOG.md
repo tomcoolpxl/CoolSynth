@@ -6272,3 +6272,17 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
   - the circuits drawn at the window's own resolution, the buses thinner; the lanes' rows closer.
 - Asked for by the user: a sixth layout, the fifth's realistic top with the sequencer below flat, as the app has it
   now: plain chips, filled steps, value boxes instead of knobs. Both share one piece of code.
+
+## D289. CoolSynth 808: a click picks the lane, step lights replace the moving column (2026-11-24)
+
+- The user on the fifth and sixth layouts: the part names on the board were near black and printed over parts;
+  picking a single cell (it turned white) was of no clear use, a lane is what to pick; the playhead lit a whole
+  column of cells running right, which was ugly; the picked lane was hard to see.
+- So, in `docs/design/mockups/coolsynth-808-layouts.html`:
+  - the part names in a light silkscreen colour (they had taken the black of the cut-outs), each set beside its
+    part where it touches no part, name or control, or left out;
+  - a click sets the step and picks its lane; a step's chance, roll and accent stay on its right-click, and the
+    right side holds the lane's and the pattern's tools;
+  - a row of step lights above the lanes, one running along as the hardware's does; the steps that sound flash
+    where they are; no column is framed;
+  - the picked lane marked by an orange edge, a lit row and its name in orange.
