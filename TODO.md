@@ -327,7 +327,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     started with a 118 % load spike. The rest's settle taken out of the note's first block (D340); left, each note's
     attack (85 to 90 % of a block, the first after rest some 105 %) on a steady 75 %. The user's pick: both, the
     same sound made faster first (the gate's edge, then the steady hot spots), then an accuracy setting as the
-    808's. The Devil Fish further by ear if the user wants (it is ours, the name stays).
+    808's. Done so far (D341): the solver's products the same bits and faster, the follower warm-started, the voice
+    76 % to some 62 %; a research pass on how others cut the cost (for the 808 and CoolSynth too) to come. Found on
+    the way: against a reference solved to 10 pV the voice is -90.5 dB rms off, -55.6 dB at the worst sample; to look
+    into (where it comes from, whether it is heard). The Devil Fish further by ear if the user wants (it is ours, the
+    name stays).
 
 
 ## Standing notes
