@@ -7347,8 +7347,8 @@ Still alone, as D304; each with what else it could have been.
     picked key warm, the sounding one orange.
   - The options window, the library and the title bar follow through Theme's colours.
 - Checked: the app beside the mockup (`303-redesign/app-built.png`), playing (the step's lamp, the slot, the motion),
-  the options window and the library on screen; the Editor and Options tests pass, the Mods panel's among them. The
-  Mods panel itself was not seen on screen: something over the screen's top right took the clicks there.
+  the options window, the library and the Mods panel on screen; the Editor and Options tests pass. The first clicks
+  at the screen's right missed while the user worked in another window there.
 
 ## D349. CoolSynth 303: an accuracy setting, in an options window of its own (2026-11-25)
 

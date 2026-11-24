@@ -348,7 +348,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     is ours, the name stays). The look (D348): the app found a bit bland; seven mockups on one page
     (`docs/design/mockups/coolsynth-303-redesign.html`): the app now, a redesign, the 808's four skins, and an
     all-silver TB-303 face with the 808's knobs; the layout kept. The user picked 2, the redesign, one look (no skins
-    yet). Built in the app as mockup 2, straight from the mockup; the Mods panel not yet seen on screen.
+    yet). Built in the app as mockup 2, straight from the mockup; checked on screen, the Mods panel too.
 
 
 ## Standing notes
