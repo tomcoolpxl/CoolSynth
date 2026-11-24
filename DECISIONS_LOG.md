@@ -6935,3 +6935,11 @@ Still alone, as D304; each with what else it could have been.
 - The user: the drum sheets played a hit slowed down, with a Play key, a time slider and the output's graph under
   them; nobody wants that. All gone from every sheet: a hit lights its sheet as it plays, in real time, as the lifted
   lid does, with the same short afterglow; then the sheet rests until the next hit.
+
+## D327. CoolSynth 808: the Release build optimised as a whole (2026-11-24)
+
+- The user asked whether the release uses every optimisation. It used /Ox with /OPT:REF and /OPT:ICF; not
+  whole-program optimisation, AVX2 or fast maths. Picked from three (whole-program only; with AVX2; as it was):
+  whole-program optimisation in Release (/GL with /LTCG, the engine's and JUCE's code too), the sound unchanged.
+  The user recalled AVX2 tested without benefit: CoolSynth's test found it bit for bit the same and no faster
+  (7.21 % of real time against 7.17 %), so it stays out. The everyday Debug build is not touched.
