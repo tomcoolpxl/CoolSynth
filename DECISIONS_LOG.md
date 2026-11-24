@@ -6642,3 +6642,16 @@ Still alone, as D304; each with what else it could have been.
   (`docs/design/mockups/coolsynth-303-accent-button.html`): a flat red key, a grey key with a lamp, a flat round
   button, a red cap in a dark well, a charcoal key with a red word, a red cap in a metal ring. Picked: the red cap
   in a flat silver ring, the word under it, as on Whittle's panel without the shine.
+
+## D310. CoolSynth 303: Under the Lid, its choices and a mockup first (2026-11-24)
+
+- The user picked the lid next. CoolSynth 808's lid (D263, D280) is the model: a schematic sheet with the current
+  as moving dots and the voltage as a tint, from ngspice recordings. No 303 plugin found that shows its circuit so
+  (DW-303 models the circuit stage by stage but shows no schematic).
+- Picked from three (live from the engine, ngspice recordings as the 808's, both): live from the engine. The 303's
+  voice is solved live, so the view can show what the circuit does as it plays, knobs and the Devil Fish included.
+- Picked from three (the voice reduced with each stage complete on a click, everything on one sheet, the reduced
+  sheet only): everything on one sheet, zoomed and panned.
+- Picked from two (live plus a slow replay, live only): live, plus a slow replay of the last notes on a time bar.
+- Picked from two (a mockup first, straight into the app): a mockup first, its currents from ngspice recordings of
+  `voice.cir` (`docs/design/mockups/coolsynth-303-lid.html`).
