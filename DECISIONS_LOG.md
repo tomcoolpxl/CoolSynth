@@ -6303,3 +6303,13 @@ The VCO in the engine (`Tb303Oscillator.h`) against vco.cir at low C, A, high C 
   - 8x: -76, -84, -92 dB; 48 %, the voice near a whole core.
 - The cost of the 4x: the outputs come band-limited through a Kaiser sinc, their peaks ringing by up to 0.35 V,
   which ngspice's unfiltered render does not show. The saw's aliasing is 90 dB down at high C at every rate.
+
+## D291. CoolSynth 808: layout 5, a step that is on is an orange cap (2026-11-24)
+
+- The user leans to layout 5 for its look, but reads the beat faster in layout 6, whose steps that are on are
+  large orange squares; in layout 5 only a thin light showed it.
+- Five step keys drawn side by side in the mockup (its Step key options view): a backlit key glowing orange as the
+  TR-8S's pads; a wide light window across the top half; an orange plastic cap, unlit, like the Accent knob; a lit
+  orange frame; a big round lens.
+- Chosen: the orange cap. A step that is on is an orange key, with no light bar; the step sounding brightens; the
+  row of step lights above the lanes shows where the bar is.

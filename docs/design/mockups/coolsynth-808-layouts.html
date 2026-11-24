@@ -288,6 +288,11 @@ canvas.board { display: block; width: 100%; height: 100%; }
 .etched5:not(.flat6) .cblk.cur .x { color: #3a2010; }
 .etched5:not(.flat6) .cblk.nxt { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 2px var(--lit), inset 0 1px 0 rgba(255,255,255,.12); }
 .etched5:not(.flat6) .cadd { box-shadow: 0 0 0 1px #4a463f; }
+/* Layout 5's steps: a step that is on is an orange plastic cap, as the Accent knob (option C, D291); the one sounding brightens */
+.etched5:not(.flat6) .ksteps .key::before { content: none; }
+.etched5:not(.flat6) .ksteps .key.on { background: linear-gradient(#f5a066, #e8742a 50%, #c3581b);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(90,30,0,.45), 0 1px 0 rgba(0,0,0,.6); }
+.etched5:not(.flat6) .ksteps .key.ph.on { background: linear-gradient(#ffc08e, #f59346 50%, #d86a28); }
 
 .thint { line-height: 1.5; padding: 10px 0 2px; color: #b9b19f !important; text-transform: none; letter-spacing: .02em; font-size: 11px; }
 
