@@ -6655,3 +6655,29 @@ Still alone, as D304; each with what else it could have been.
 - Picked from two (live plus a slow replay, live only): live, plus a slow replay of the last notes on a time bar.
 - Picked from two (a mockup first, straight into the app): a mockup first, its currents from ngspice recordings of
   `voice.cir` (`docs/design/mockups/coolsynth-303-lid.html`).
+
+## D311. CoolSynth 808: its own options window, JUCE's bar in the theme; the DAW plan (2026-11-24)
+
+- The user: no JUCE Options button, our own options key and window in the theme. Researched (JUCE 9's
+  juce_StandaloneFilterWindow.h, the JUCE forum, comparable standalones) and picked, option by option:
+  - The window's frame: JUCE's bar in the theme (not Windows' own bar, not a frameless window). Our own app
+    (JUCE_USE_CUSTOM_PLUGIN_STANDALONE_APP) keeps JUCE's holder and window, draws the bar in the board's metal and
+    ink, and hides JUCE's Options button by its name, as CoolSynth's D187 does: JUCE gives no other way.
+  - The options: a window of its own (not a card over the panel), kept above the 808's window and not above other
+    apps (on Windows the 808's window is its owner: JUCE cannot set one, so Windows' own call does), its place
+    remembered; Escape, its close key or the Options key close it.
+  - The key: Options, after File on the transport strip, its lens lit while the window is open.
+  - What it holds: the audio device (driver, output, sample rate, buffer or the ASIO control panel, the latency, CPU,
+    a test tone), the MIDI inputs and output and two clock switches (follow an incoming clock, send our own; both
+    on as before), the theme and the window's size (75 to 200 %), and Controller setup. Theme and Controller setup
+    left the File menu. In a plugin the audio and MIDI port parts will be left out.
+  - Drivers: Windows Audio, its Low Latency mode and ASIO; not Exclusive mode nor DirectSound. ASIO is built in when
+    Steinberg's ASIO SDK is found (ASIO_SDK_DIR, or SDKs/asio beside the repositories; 2.3.4 fetched there).
+- The theme setting is now kept as panelTheme: the older key held Silver from before Roland became the default.
+- For the DAWs (Ableton, FL Studio, Bitwig), researched and picked, after this window:
+  - A VST3 that works both ways: its own patterns locked to the host's tempo and playhead, the step worked out from
+    the host's position each block, and the host's piano-roll notes playing the drums. A switch stops the pattern
+    following the host's Play (Roland's Position Lock, HALion's Sync to Host).
+  - Separate outputs per drum later, once the VST3 works.
+  - Then: knobs automatable in the host, rendering stems, and learnable drum notes. Not now: exporting the drums as
+    samples.
