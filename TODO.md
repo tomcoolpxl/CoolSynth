@@ -324,7 +324,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     transport (D305); the Devil Fish, on or off in the Mods panel (D309); Under the Lid, the whole voice live (D310).
     The listening pass against Din Sync's unit (D324): the note's start, RESONANCE's track and its loop fitted.
     To come there: the library, a try in FL Studio, and the Devil Fish tuned by ear to whatever sounds best (the
-    user's word: it is ours, the name stays).
+    user's word: it is ours, the name stays). Asked on 2026-11-24, in this order: an MCP server in the app as
+    CoolSynth's (D225), so Claude drives and hears it; then the Devil Fish's tuning through it; the Release build
+    optimised as a whole, as the 808's (D327: /GL with /LTCG, timed), AVX2 left out (CoolSynth's test: bit for bit
+    the same, 7.21 % of real time against 7.17 %).
 
 
 ## Standing notes
