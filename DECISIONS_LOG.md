@@ -7281,3 +7281,7 @@ Still alone, as D304; each with what else it could have been.
   branching, limiting and pivoting that stays per lane; an estimate, not measured, of some 10 % more for two toms.
 - Picked (each with options): land it as it is (over the Newton solve in lanes too, or keeping it on its branch);
   rebased onto main and pushed (over pull requests).
+
+## D348. CoolSynth 303: its look redrawn, seven mockups to choose from (2026-11-24)
+
+- Claimed for the 303 redesign mockups; written in full when they land.
