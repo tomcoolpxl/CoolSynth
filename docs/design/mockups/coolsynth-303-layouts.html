@@ -302,7 +302,14 @@ canvas.board { display: block; position: absolute; }
 .tal .piano.three .pw.oc { background: linear-gradient(#f6f6f4, #d6d7d9); }
 .tal .octcap { position: absolute; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8c8e93; text-align: center;
   border-top: 1px solid #55575c; padding-top: 3px; }
+.tal .tval { font-family: var(--mono); font-size: 11px; color: #e8742a; }
 #v6 .main { grid-template-columns: 1fr 150px; }
+#v6 .side .tknobs { margin-top: 8px; }
+#v6 .pcol .nn { display: none; }
+.tal .nrow { margin-bottom: -3px; }
+.tal .nrow span { text-align: center; font-family: var(--mono); font-size: 10px; color: #f1ebde; line-height: 12px; height: 12px; }
+.tal .nrow span sup { font-size: 8px; color: var(--lit); vertical-align: 0; position: relative; top: -3px; line-height: 0; }
+.tal .nrow span.off { opacity: .35; }
 #v6 .grid { grid-template-columns: 108px 1fr; }
 #v6 .side .tknobs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 6px; justify-items: center; }
 .tal .pnames { position: relative; width: 30px; flex: none; align-self: stretch; margin-left: auto; border-radius: 2px; overflow: hidden; box-shadow: 0 0 0 1px #111; }
@@ -796,8 +803,14 @@ function buildGrid(host, rowH = 22, pitchH = 150, motionH = 40, names = false) {
   }
   const plbl = el('div', '', '<div class="lbl" style="color:#ddd5c3">Pitch</div><div class="lbl" style="margin-top:6px;text-transform:none;letter-spacing:.02em;line-height:1.4;color:#9d9583">Drag up or down,<br>or wheel</div>');
   // 2.3: the lane's notes down its left edge, as a piano roll's keys; the picked step's note lit
-  let nameCells = null;
+  let nameCells = null, nrowCells = null;
   if (names) {
+    // each step's note and octave in a row of its own above the lane, out of the lane's top row
+    const nrow = el('div', 'cols16 nrow'); nrowCells = [];
+    for (let i = 0; i < 16; i++) { const s = el('span', ''); nrowCells.push(s); nrow.append(s); }
+    host.append(el('div', 'rl'), nrow);
+    painters.push(() => { const p = shown(); nrowCells.forEach((s, i) => { const x = p.steps[i];
+      s.innerHTML = x.g === 'rest' ? '·' : NAMES[x.n12 ? 12 : x.n] + (x.n12 ? '′' : '') + (x.o > 0 ? '<sup>+</sup>' : x.o < 0 ? '<sup>−</sup>' : ''); s.classList.toggle('off', i >= p.len); }); });
     const wrap = el('div', ''); wrap.style.cssText = 'display:flex;align-self:stretch;width:100%;gap:6px';
     const strip = el('div', 'pnames'); nameCells = [];
     for (let n = 0; n <= 12; n++) { const s = el('span', [1, 3, 6, 8, 10].includes(n) ? 's' : '', NAMES[n] + (n === 12 ? '′' : '')); s.style.bottom = `calc(${n} * 100% / 13)`; nameCells.push(s); strip.append(s); }
@@ -837,6 +850,8 @@ function buildGrid(host, rowH = 22, pitchH = 150, motionH = 40, names = false) {
     cols.forEach((c, i) => {
       const x = p.steps[i];
       c.querySelector('.cap').style.bottom = `calc(${(x.n12 ? 12 : x.n) / 13 * 100}% - 1px)`;
+      // the slide's mark at the note's own height, leading to the next step
+      { const sl = c.querySelector('.sl'); sl.style.top = 'auto'; sl.style.bottom = `calc(${((x.n12 ? 12 : x.n) + .5) / 13 * 100}% - 1px)`; }
       c.querySelector('.nn').innerHTML = x.g === 'rest' ? '·' : NAMES[x.n12 ? 12 : x.n] + (x.o > 0 ? '<sup>+</sup>' : x.o < 0 ? '<sup>−</sup>' : '');
       c.classList.toggle('acc', x.a); c.classList.toggle('slide', x.s && x.g !== 'rest');
       c.classList.toggle('tie', x.g === 'tie'); c.classList.toggle('rest', x.g === 'rest');
@@ -1196,7 +1211,9 @@ function build2(vid = 'v2') {
   const s6 = sect('Delay', 996, 214);
   at(s6, talBtn('On', 'delayOn'), 14, 120);
   const times = ['1/16', '1/8', '3/16', '1/4'];
-  at(s6, kt('Time', 'time', 40, { live: false, fmt: v => times[Math.round(v * 3)] }), 10, 36);
+  at(s6, kt('Time', 'time', 40, { live: false }), 10, 36);
+  // the time's note value beside the On key, clear of its lamp
+  { const tv = el('span', 'tval'); tv.title = 'The delay\'s time, in notes'; at(s6, tv, 62, 132); painters.push(() => { tv.textContent = times[Math.round(S.k.time * 3)]; }); }
   at(s6, fader('Feedback', 'fb'), 96, 18); at(s6, fader('Mix', 'mix'), 150, 18);
   new Board($('b' + vid.slice(1)), rowLayout(20, 1190, 24, 166, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
   buildMods($(vid + 'mods'), 'tal');
@@ -1218,7 +1235,7 @@ function talMarkup(vid, kind) {
     <div class="row"><div data-prow></div><div data-ab></div><span class="lbl" style="margin-left:12px">Chain</span><div data-chain></div></div>
     <div data-tools2></div>
     <div class="main">${kind === 'three'
-      ? '<div data-grid="114" data-rowh="20" data-motion="36" data-names></div><div class="side" data-side="locks"></div>'
+      ? '<div data-grid="100" data-rowh="20" data-motion="36" data-names></div><div class="side" data-side="locks"></div>'
       : '<div data-grid="114" data-rowh="20" data-motion="36"></div><div class="side" data-side="compact"></div>'}</div>
   </div>
   <div class="foot">CoolSynth 303 · CoolSynth · mockup</div>`;
@@ -1370,7 +1387,8 @@ function buildKeys3(vid) {
     write.classList.toggle('is', !S.transposeMode); trans.classList.toggle('is', S.transposeMode);
     note.innerHTML = S.transposeMode
       ? `<b>Transpose:</b> a key shifts the running pattern; the middle C plays it as written.`
-      : `<b>Write:</b> a key sets step ${S.pick + 1}'s note and octave, then moves on. Z to comma: the middle octave.`;
+      : `<b>Write:</b> a key sets step ${S.pick + 1}'s note and octave, then moves on.`;
+    note.title = 'The computer\'s keys Z to comma play the middle octave';
     const sounding = S.playing ? heard().steps[S.count % heard().len] : null;
     keys.forEach(key => {
       const k = +key.dataset.k;
