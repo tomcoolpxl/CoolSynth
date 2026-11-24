@@ -291,6 +291,45 @@ canvas.board { display: block; width: 100%; height: 100%; }
 
 .thint { line-height: 1.5; padding: 10px 0 2px; color: #b9b19f !important; text-transform: none; letter-spacing: .02em; font-size: 11px; }
 
+/* Step key options (view 7) */
+#v7 { background: linear-gradient(#2c2a27, #23211e); }
+.glass7 { position: absolute; inset: 20px; border-radius: 6px; padding: 18px 24px; display: flex; flex-direction: column; gap: 14px;
+  background: linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,0) 30%), linear-gradient(rgba(16,15,13,.82), rgba(12,11,10,.88));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.09), 0 3px 12px rgba(0,0,0,.6); }
+.opt7 { display: grid; grid-template-columns: 210px 1fr; column-gap: 20px; align-items: center; }
+.opt7 .t13 { font-size: 13px; } .opt7 .lbl { margin-top: 6px; line-height: 1.45; text-transform: none; letter-spacing: .02em; font-size: 11px; color: #b9b19f; }
+.rows7 { display: flex; flex-direction: column; gap: 4px; }
+.row7 { display: grid; grid-template-columns: repeat(16, 1fr); column-gap: 4px; }
+.row7 .k:nth-child(4n+1) { margin-left: 3px; }
+.k { position: relative; height: 26px; border-radius: 3px; background: var(--g);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -2px 0 rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.6); }
+/* A: backlit cap, the whole key glows when on */
+.vA.on { background: radial-gradient(ellipse at 50% 35%, #ffc58a, #f08a3c 55%, #c95b1d);
+  box-shadow: inset 0 1px 0 rgba(255,235,210,.6), inset 0 -2px 0 rgba(120,40,0,.45), 0 0 10px rgba(255,130,40,.45), 0 1px 0 rgba(0,0,0,.6); }
+.vA.on.hit { background: radial-gradient(ellipse at 50% 35%, #fff0dc, #ffb067 55%, #e8742a); box-shadow: inset 0 1px 0 #fff, 0 0 16px rgba(255,160,70,.8); }
+/* B: a wide light window across the upper half */
+.vB::before { content: ''; position: absolute; left: 8%; right: 8%; top: 4px; height: 42%; border-radius: 2px; background: #1b1815; box-shadow: inset 0 1px 2px rgba(0,0,0,.8); }
+.vB.on::before { background: linear-gradient(#ffd09a, #ff9a45 60%, #e8742a); box-shadow: 0 0 9px rgba(255,140,50,.75), inset 0 1px 0 rgba(255,255,255,.6); }
+.vB.on.hit::before { background: #fff1dc; box-shadow: 0 0 14px 2px rgba(255,170,90,.9); }
+/* C: an orange plastic cap, unlit, like the Accent knob */
+.vC.on { background: linear-gradient(#f5a066, #e8742a 50%, #c3581b); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(90,30,0,.45), 0 1px 0 rgba(0,0,0,.6); }
+.vC.on.hit { background: linear-gradient(#ffc08e, #f59346 50%, #d86a28); }
+/* D: the key keeps its colour; a lit orange frame and light */
+.vD::before { content: ''; position: absolute; left: 50%; top: 4px; width: 40%; height: 4px; transform: translateX(-50%); border-radius: 2px; background: #1b1815; }
+.vD.on { box-shadow: inset 0 0 0 2px #ff9a45, 0 0 8px rgba(255,140,50,.55), 0 1px 0 rgba(0,0,0,.6); }
+.vD.on::before { background: var(--on); box-shadow: 0 0 7px var(--on); }
+.vD.on.hit { box-shadow: inset 0 0 0 2px #ffd6a8, 0 0 14px rgba(255,170,90,.85); }
+/* E: a big round lens in the middle of the key */
+.vE::before { content: ''; position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.vE.on::before { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 9px 2px rgba(255,150,60,.85); }
+.vE.on.hit::before { width: 15px; height: 15px; }
+/* Now: layout 5 as it is */
+.vN::before { content: ''; position: absolute; left: 50%; top: 4px; width: 70%; height: 4px; transform: translateX(-50%); border-radius: 2px; background: #1b1815; }
+.vN.on { background: color-mix(in srgb, var(--g) 80%, #ece4d2); }
+.vN.on::before { background: var(--on); box-shadow: 0 0 7px var(--on); }
+.vN.on.hit::before { background: #ffd9a8; box-shadow: 0 0 10px 2px var(--flow); }
+
 /* Pop-ups on right-click: a step's tools, a pattern's menu */
 .pop { position: absolute; z-index: 40; min-width: 190px; padding: 10px; border-radius: 5px; display: flex; flex-direction: column; gap: 8px;
   background: rgba(30,28,25,.97); box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 0 0 1px #4a463f; }
@@ -314,6 +353,7 @@ canvas.board { display: block; width: 100%; height: 100%; }
   <button class="tab" data-v="4">4 Etched panel</button>
   <button class="tab" data-v="5">5 Etched with glass</button>
   <button class="tab" data-v="6">6 Etched, flat sequencer</button>
+  <button class="tab" data-v="7">Step key options</button>
   <span id="v5opts" style="display:none;gap:6px;align-items:center;margin-left:10px">
     <span>Click a step to set it and pick its lane; right-click it for its chance, roll and accent.</span>
   </span>
@@ -431,6 +471,11 @@ canvas.board { display: block; width: 100%; height: 100%; }
       <div class="v5right" id="v5right"></div>
     </div>
   </div>
+</section>
+
+<!-- 7: step key options for layout 5, side by side, playing the same beat -->
+<section class="view" id="v7">
+  <div class="glass7" id="v7rows"></div>
 </section>
 
 <!-- 6: the etched panel, the sequencer flat as the app has it now -->
@@ -1434,6 +1479,40 @@ function build5(vid) {
   painters.push(paintRight);
 }
 
+// ---------------------------------------------------------------- 7: step key options
+function build7() {
+  const host = $('v7rows');
+  const opts = [
+    ['vN', 'Now', 'Layout 5 as it is: a thin light on a pale key.'],
+    ['vA', 'A · Backlit key', 'The whole key glows orange from inside, as lit pads do on the TR-8S. Bevel and edge kept.'],
+    ['vB', 'B · Light window', 'A wide window across the top half of the key lights up; the key below keeps its group colour.'],
+    ['vC', 'C · Orange cap', 'The key itself turns to orange plastic, unlit, like the Accent knob; a hit brightens it.'],
+    ['vD', 'D · Lit frame', 'The key keeps its colour; an orange frame and its light glow round it.'],
+    ['vE', 'E · Round lens', 'A big round lamp in the middle of each key, lit when on.'],
+  ];
+  const lanes = [IDX.BD, IDX.SD, IDX.CH];
+  const all = [];
+  for (const [cls, name, note] of opts) {
+    const o = el('div', 'opt7');
+    o.append(el('div', '', `<div class="t13">${name}</div><div class="lbl">${note}</div>`));
+    const rows = el('div', 'rows7');
+    for (const l of lanes) {
+      const r = el('div', 'row7');
+      for (let i = 0; i < 16; i++) { const k = el('div', `k ${cls} g${1 + (i >> 2)}`); k.dataset.l = l; k.dataset.i = i; r.append(k); all.push(k); }
+      rows.append(r);
+    }
+    o.append(rows); host.append(o);
+  }
+  painters.push(() => {
+    const p = bank[1];
+    for (const k of all) {
+      const l = +k.dataset.l, i = +k.dataset.i, on = p.lanes[l][i];
+      k.classList.toggle('on', on);
+      k.classList.toggle('hit', on && S.playing && S.step === i);
+    }
+  });
+}
+
 // ---------------------------------------------------------------- the full-screen circuit
 function buildSaver() {
   const b = new Board($('bs'), (W, H) => layoutRow(W, H, { x: 40, r: 40, t: H * .2, b: H * .2 }), 'schematic', { follow: true });
@@ -1443,7 +1522,7 @@ function buildSaver() {
 }
 
 // ---------------------------------------------------------------- start
-build1(); build2(); build3(); build4(); build5('v5'); build5('v6'); buildSaver();
+build1(); build2(); build3(); build4(); build5('v5'); build5('v6'); build7(); buildSaver();
 document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
   document.querySelectorAll('#chrome .tab[data-v]').forEach(x => x.classList.toggle('is', x === t));
   const e5 = t.dataset.v === '5' || t.dataset.v === '6'; $('v5opts').style.display = e5 ? 'flex' : 'none'; $('chromeNote').hidden = e5;
