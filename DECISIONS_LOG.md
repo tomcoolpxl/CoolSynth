@@ -6762,3 +6762,19 @@ Still alone, as D304; each with what else it could have been.
     the instrument lines glowing softly.
 - Still to come: the schematic sheets restyled to match the board, a sheet of the CPU section, and their currents
   live from the engine.
+
+## D316. CoolSynth 808: the schematic sheets etched like the board (2026-11-24)
+
+- A sheet is the full schematic a click on a column opens with the lid lifted (every part named, the hit played
+  slowly; the whole board's sheet holds every drum reduced). They were the old flat grey drawing.
+- Picked from four (etched like the board; a lab bench with probes; a storyboard of stages; leave them): etched like
+  the board. From three (warm and cool; green and red as now; one colour): green and red, as now. From two (sheets
+  first; the VST3 first): the sheets first.
+- Each sheet's drawing stays where it was; its look is the board's: the theme's brushed metal behind it, the wires
+  in copper with a pad at every joint, the parts in silkscreen and their names in the board's mono type, the
+  current as the board's glowing dots, the voltage tints green and red.
+- No label lies on another: each part's name goes above, below, right or left of it, wherever it touches no other
+  part, name or printed word; the printed words (the rails, the inputs, the pots' names) move off the wires.
+- The empty foot of a sheet shows the drum's output over the whole hit, the moment now marked: vout, the cymbal's
+  vcy, the open hat's voh, the cowbell's ncbo, the metal bands' n10 (not the j* nodes: those are trigger jacks).
+- The time slider takes the board's light.
