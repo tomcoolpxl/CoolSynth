@@ -7090,3 +7090,16 @@ Still alone, as D304; each with what else it could have been.
 - The export dialog kept as drawn (over mockups first).
 - Options opens on the page last shown (over always the first); the MIDI list scrolls past eight inputs (over a
   growing window); the help lines under Host and Controller removed (as the mockup), the drum notes' line kept.
+
+## D338. CoolSynth 303: the library's content (2026-11-24)
+
+- Asked what is next on the 303; picked from four (the library; a try in FL Studio; the 303 voice into CoolSynth; the
+  Devil Fish by ear): the library.
+- Researched: no free readable transcriptions of the famous lines (the few, Acid Tracks among them, are pictures,
+  others 'reconstructed from memory'); a bass line is melody, a grey area unlike a drum beat (US Copyright Office on
+  short phrases, Skidmore v. Led Zeppelin, the Ice Ice Baby settlement); commercial 303s name presets generically,
+  Roland names records only in collections made with the artists; Roland and Arturia keep lines and sounds apart,
+  ABL3 stores the knobs with each pattern.
+- Picked: original lines in each classic style, named our own way (over transcriptions of the records, or both);
+  lines and sounds on separate shelves (over each line with its sound, or both); about 40 entries (over 20, or 64
+  or more). A mockup next.
