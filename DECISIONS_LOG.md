@@ -7397,4 +7397,5 @@ Still alone, as D304; each with what else it could have been.
   selector apart from its pattern views), a guide to step sequencer UIs (keep the pattern, its length, the
   playhead and what is edited apart; an inspector follows the selection while the grid stays), Logic's step
   sequencer (less used actions in a menu).
-- Open: the user's pick.
+- Picked (each with options): B, the inspector column (over A tidied in place, C the keyboard and patterns, or another
+  round mixing them). Next: B in the app.
