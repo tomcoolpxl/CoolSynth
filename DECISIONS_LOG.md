@@ -6367,3 +6367,19 @@ The user's choice of how the voice fits one core, put with the measurements (`do
 Done: the shaper's factor follows the voice's rate (768 kHz over the rate), the envelope's divider too (48 kHz); the
 tests run at 96 kHz against the same renders. Measured there, every check passing: filter 21 %, oscillator 23 to 28 %,
 VCA 15 to 20 %, envelope 10 % of a core; the voice about 73 %. D279's 192 kHz is replaced.
+
+## D295. CoolSynth 303: the whole voice wired, against voice.cir and the real unit (2026-11-24)
+
+`Tb303Voice.h` wires the four stages as voice.cir does (`docs/research/tb-303-circuit.md`, its voice section).
+- Two couplings carried over: the RESONANCE wiper loaded by the VCA's C22 and R122 (a tenth of its drive), and the
+  current the filter's D24 draws from the ACCENT wiper (up to some 100 uA from a 50 kOhm pot), handed back to the
+  envelope a step late.
+- The thyristor's threshold now from nine notes, not three: the notes between them had run 0.3 to 0.6 cents sharp;
+  now every half octave within 0.001 cents of vco.cir.
+- Against voice.cir (a plain saw, an accented square, a resonant saw at low C): pitch within 0.01 cents, the
+  loudness over the note 0.3 to 0.6 dB rms, harmonics 2 to 12 within 0.6 dB on the saw and 1.2 dB on the square.
+  What is left is the filter's own residual (1.5 to 5 % against vcf.cir); the same at 192 kHz.
+- Against Din Sync's real unit (sets C1 to C5, `compare_sets.py --model`): within 0.1 to 0.3 dB of what ngspice's
+  own voice.cir scores, the accent's loudness within 0.1 dB of it. The engine is as close to the real 303 as the
+  circuit in SPICE; the gaps that remain (set C2's resonance at a quarter turn, 3.5 dB bright) are the circuit's.
+- About 70 % of one core at 96 kHz. Not yet in CoolSynth: the step sequencer's notes, the app.

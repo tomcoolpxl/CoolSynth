@@ -285,6 +285,23 @@ The voice's cost and its rate, measured the same day:
 - The user chose 96 kHz for the voice (D294). There every check passes as at 192 kHz: filter 21 %, oscillator 23 to
   28 %, VCA 15 to 20 %, envelope 10 % of a core, the voice about 73 %.
 
+## The whole voice in the engine (D295)
+
+Measured on 2026-11-24, `Tb303Voice.h` at 96 kHz against voice.cir rendered at 96 kHz (ngspice's step 0.2 us; at
+1 us its thyristor resets late enough to shift the pitch).
+- voice.py wires two couplings the stage netlists leave out: the RESONANCE wiper also feeds the VCA (C22, R122), and
+  the ACCENT wiper feeds the filter's D24. Both are in the voice: the first in the filter's circuit, the second as a
+  current handed back to the envelope.
+- Pitch: first 0.49 cents sharp at low C (2 V), which sat between the threshold's three measured notes. Nine notes
+  by half octaves now set it; each within 0.001 cents of vco.cir, the voice within 0.01 cents of voice.cir.
+- As heard, at low C with every knob at half: the loudness in 5 ms blocks 0.32 dB rms, harmonics 2 to 12 within
+  0.56 dB. Accented square: 0.63 dB rms, within 1.2 dB. Resonant saw: 0.42 dB rms, within 1.14 dB.
+- The waveform into the filter matches within 0.04 dB; the filter's output already carries the differences, the
+  VCA adds 0.2 dB. The same at 192 kHz, so it is the filter's own residual.
+- Against Din Sync's sets C1 to C5 (`compare_sets.py --model`), the engine's figures and ngspice's voice.cir's side
+  by side: within 0.1 to 0.3 dB of each other at every position, the accent's loudness within 0.1 dB, the pitch the
+  same 5 to 6 cents under the unit.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

@@ -300,8 +300,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     pitch within 0.1 cent of ngspice, the saw's and square's harmonics within 0.3 dB, the square's shaper at 4x
     (aliases 72 dB down at the top note), about 25 % of a core. The envelope and the VCA run too
     (`Tb303Envelope.h`, `Tb303Vca.h`, D293): the VCA's output within 0.6 % of ngspice's. The voice runs at 96 kHz
-    (D294, the user's choice), every stage as accurate as at 192 kHz, about 73 % of one core. Next the whole voice
-    wired together against `voice.cir` and Din Sync's unit.
+    (D294, the user's choice), every stage as accurate as at 192 kHz, about 73 % of one core. The whole voice is
+    wired (`Tb303Voice.h`, D295): within 0.01 cents and about 0.5 dB of `voice.cir`, and as close to Din Sync's unit
+    as `voice.cir` itself. Next: the voice played by the step sequencer in CoolSynth (in place of Open303), then the
+    app. Open: the filter's 1.5 to 5 % against `vcf.cir`; set C2's resonance at a quarter turn.
     The interface is parked by the user
     (`docs/research/tb-303-app.md`).
 
