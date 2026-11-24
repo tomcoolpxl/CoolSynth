@@ -7050,3 +7050,16 @@ Still alone, as D304; each with what else it could have been.
 - Ring out: on until every render has been under -100 dB for 0.25 s, 20 s at most; every file as long as the longest.
 - Checked: tests for each end's length, the loop's start, the files adding up to the mix, the open hat's file
   choked, the files written (24-bit, stereo, the rate); the export dialog's snapshot.
+
+## D335. CoolSynth 808: Options in pages (2026-11-24)
+
+- The user: the Options window is way too big (600 by 1120, five sections in one column); it needs pages and better
+  UX and UI. Looked at Ableton's Settings (a page per tab down the left: Audio, Link Tempo & MIDI, Theme...) and
+  Bitwig's Dashboard (Settings pages: Audio, Controllers, Shortcuts...). Mockup
+  `docs/design/mockups/options/options-layouts.png` in CoolSynth808.
+- Picked A, the pages listed down the left (over B, the same five as tabs along the top, and C, three tabs with audio
+  and MIDI side by side): Audio, MIDI, Drum notes, Panel, Controller; in a plugin, Host in place of Audio and MIDI.
+  600 by 400, every page without scrolling; it opens on the page last shown.
+- And the pages tightened (over pages only): the MIDI inputs one tick list (it scrolls past eight), the window size
+  a drop-down, the clock Follow incoming and Send, Electricity Animated or Still, the drum sets General MIDI, From 36
+  and From 60, a line of help under the drum notes, the controller and the host switch.
