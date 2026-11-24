@@ -6791,3 +6791,24 @@ Still alone, as D304; each with what else it could have been.
 - The empty foot of a sheet shows the drum's output over the whole hit, the moment now marked: vout, the cymbal's
   vcy, the open hat's voh, the cowbell's ncbo, the metal bands' n10 (not the j* nodes: those are trigger jacks).
 - The time slider takes the board's light.
+
+## D317. CoolSynth 808: the bass drum's sheet live from the engine's circuit (2026-11-24)
+
+- Picked from four (a CPU sheet; live currents in the sheets; the VST3; stop): live currents in the sheets. Built
+  for the bass drum first, checked against its recording, before the other drums one by one.
+- In the engine (a3ccc18): the bass drum's four stages are Tapped circuits, the way the 303's session made its
+  voice live (D310) on the solver; a first version of mine kept the nodes' rows in storage the app handed over and
+  was dropped for theirs, so the solver has one way. tap() reads the 86 node voltages and part currents the
+  recording names, signed as ngspice signs them, each from the stage the part really sits in. A sheet names the
+  drum it shows; at each of its hits the generator writes frames over 300 ms (every 4 samples for 8 ms, then every
+  0.5 ms, the recordings' grid) into the watch the app owns.
+- In the app: shown, the bass drum's sheet has the engine capture it; a whole capture replaces the recording, each
+  series set on the recording's standing value (its rest plus how far the engine moved from its own), as the engine
+  draws some stages from ideal sources and returns R173 to ground, not to -15 V. The parts the engine leaves out
+  keep their recording: Q31, R117, R152, R153, Q39, and R120 with its node nx (the engine drives Q32's base itself,
+  so its R120 carries another current: the test caught it, turned round). The caption says live or recorded.
+- Checked: the sound is bit-identical while captured; Ohm's law holds in the frames to 1e-7; the envelope peaks at
+  12.35 V against ngspice's 12.37 V; at the recording's settings 77 of the 79 series that move follow their
+  recording (r > 0.6) and none is turned round. The two that follow weakly, C38's and Q41's collector currents
+  (micro-amps in the envelope), show the engine's own envelope.
+- Next: the other drums' sheets, then the whole board's.
