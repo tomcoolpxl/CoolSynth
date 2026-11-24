@@ -7377,4 +7377,24 @@ Still alone, as D304; each with what else it could have been.
 
 ## D350. CoolSynth 303: its lower half laid out again, three mockups to choose from (2026-11-25)
 
-- Claimed for the 303 relayout mockups; written in full when they land.
+- The user, on the built look (D348): a little wonky here and there; fix that first, then lay it out again in a
+  cheap mockup, one to three options. The synth's sections stay (iconic); the keyboard bar in doubt, its keys too;
+  the step grid loved, its two top rows (the pattern row and the tools) not the best they could be.
+- Fixed in the app first (CoolSynth303 319b78c), seen in a full-resolution capture: every knob's name on one line
+  (Tuning, Drive's and Delay's knobs were higher), the delay's division beside TIME in place of squeezed between its
+  On key and FEEDBACK, Drag MIDI no longer cut at the row's end, the motion's knob box clear of the screen's edge.
+- Mockups in `docs/design/mockups/coolsynth-303-relayout.html` (source `.src.html`, fonts inlined by
+  `303-redesign/inline_fonts.py coolsynth-303-relayout`), screenshots at twice the size in `303-relayout/`:
+  - A, tidied in place: every row where it is; the picked step shown at the keyboard's left over its Accent and
+    Slide; the entry keys in two even rows; Write and Transpose one switch with the hint under it; the pattern bank,
+    A and B, the chain and the length each in a bay; the tools in named bays, Undo, Redo and Drag MIDI at the end.
+  - B, inspector column: the keyboard as A; the tools leave their row for a column with two tabs, Locks (the picked
+    step) and Line (what changes the whole line); the grid a row taller, its pitch lanes a third taller; Undo, Redo
+    and Drag MIDI small in the sequencer's head.
+  - C, keyboard and patterns: as the TB-303 itself, the pattern bank on the keyboard's plate (two rows of eight with
+    A and B, the chain under them), the piano's keys narrower; one row of tools in bays; the grid taller as in B.
+- Looked at: Phoscyon's manual (its keyboard also picks patterns, as the TB-303's), ABL3's manual (a pattern
+  selector apart from its pattern views), a guide to step sequencer UIs (keep the pattern, its length, the
+  playhead and what is edited apart; an inspector follows the selection while the grid stays), Logic's step
+  sequencer (less used actions in a menu).
+- Open: the user's pick.
