@@ -6318,3 +6318,21 @@ The VCO in the engine (`Tb303Oscillator.h`) against vco.cir at low C, A, high C 
 - And an orange cap that sounds lights up from inside, as the backlit key does, then falls back to the plain cap.
 - The red step light made brighter, at its own size: a white-hot centre and a stronger glow.
 - The Loop light and the Next bar and End of pattern lights the same, in orange.
+
+## D292. CoolSynth 808: the fifth layout goes into the app, its type and hardware first (2026-11-24)
+
+- The user: the fifth layout of the mockups is the winner; the real app now changes to it. The library's shelf stays
+  as it is (the user likes how it browses), restyled to match.
+- The user's choices (options, the recommended first):
+  - the etched board on top (a generated board lit by the real hits, as the mockup; the real circuits rearranged
+    into columns): a generated board, lit by the drums as they are struck, the exact schematics staying in Under
+    the Lid;
+  - Under the Lid (behind a button, over the whole window; a click on a drum's column; both): behind a button on
+    the top strip, over the whole window, as the mockup's full-screen circuit.
+- The order, each built, tested and committed: the type and the hardware drawing; the new layout (the board on
+  top, the sequencer on glass); the etched board; the engine's part (a chain in any order with repeats, Loop off,
+  changing at the end of a pattern); Under the Lid behind its button; the library restyled.
+- Done first (CoolSynth808): Archivo (condensed for labels) and IBM Plex Mono for numbers embedded, in place of
+  Segoe UI; keys drawn as raised caps with a lens for toggles, knobs as caps with printed ticks, the slide switch,
+  all in `src/ui/Hardware`, and the existing keys and knobs drawn with them. The snapshots are taken at twice the
+  density.
