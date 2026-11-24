@@ -6882,3 +6882,9 @@ Still alone, as D304; each with what else it could have been.
 - Its foot: a timing diagram of the step, as teaching tools pair one with a schematic: the interrupt clock, the four
   scan lines, the memory's enable, PI-2, the common trigger, the accent and the drums' data lines, the time marked
   (over the common trigger alone, or nothing).
+
+## D322. CoolSynth 808: the CPU sheet without its timing diagram; the glass's hint halved (2026-11-24)
+
+- The user: opening the CPU sheet froze the app for seconds, then the timing diagram crawled in; nobody reads it.
+  The diagram is gone (D321's foot), and the step's frames are four times fewer (0.1 ms past its first 1.6 ms).
+- The user: with the lid closed, the CPU board under the frosted glass half as bright.
