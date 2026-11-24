@@ -288,10 +288,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     learnable drum notes. Parked, the user's asides and what was left, so none is lost (2026-11-24):
     - The VST3 in Ableton Live and Bitwig (FL Studio done, D328).
     - Separate outputs per drum, the knobs automatable in the host, stems rendered (D311's order).
-    - The lifted lid's CPU board to the service notes: R104 to R107 by the accent, IC5 marked MC14001 (no type
-      given), Q33's role (found in D321; the VST3 was picked first).
     - The CPU board under the lid in green and red, as the drums' copper (offered after D320, not picked).
-    - The toms' sheet to show the struck tom's own circuit and values, live from each (D339; the hats' done).
     - The Release build's run-time cost against the Debug build's, not yet measured (D327; built in 183 s, D339).
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few

@@ -7170,3 +7170,21 @@ Still alone, as D304; each with what else it could have been.
   the worst sample, the same to three figures), so it costs no measurable accuracy.
 - Found on the way: the solver's own tolerances leave the voice -90.5 dB rms and -55.6 dB at the worst sample from
   that tighter reference; parked in TODO to look into.
+
+## D342. CoolSynth 808: the toms' sheet for all six; the CPU board and sheet to the service notes (2026-11-24)
+
+- The toms' sheet (D339's pick: the struck tom's own circuit and values). Asked further: a conga shows as the conga
+  (over toms only for now); the sheet called "Toms, complete" (over three entries); it opens on the tom or conga
+  struck last (over always the low tom). Built: ngspice recordings of the mid and high tom and the three congas
+  (tools/tr808/lid_currents.py with each pair's values, conga=1 for the congas); every label's reference and value
+  per pair from page 9 (R214 as R243 and R269, C76 as C90 and C103, IC15 as IC17 and IC18, and so on); the engine's
+  capture for that sheet taken at any tom, and run on at rest when a drum rings down before the recording's end;
+  the sheet takes a capture that stops growing for 120 ms (a mid tom alone ends its voice early). Each of the six
+  checked against the netlist and against its recording.
+- The lifted lid's CPU board against page 8: IC6 a TC4011BCP, IC3 a TC4001BCP (the keys' NOR gates), IC5 an
+  MC14051BCP, Q18/Q23/Q24 with R59, R69, R71. Asked: IC12 "TC4013BP" is not on the board, Q13, Q14 and Q16 in its
+  place (over leaving the space); IC11 an AN6912 making the CB and AC trigger outputs to JACK-A, lit with them (over
+  removing it); the accent's four places each transistor's base resistor, R117, R120, R119, R122, and the
+  invented decoupling C1 to C6 dropped (over all nine accent resistors, or keeping the capacitors unnamed).
+- The CPU sheet (picked: add them, over only the label): IC5 labelled MC14051BCP with its pull-ups R95, R96, R98,
+  R99 to BU; Q33 with R118, R119, R123 and Q34's R122, as page 8 draws them, in the sheet's model too.
