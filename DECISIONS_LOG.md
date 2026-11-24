@@ -7334,6 +7334,21 @@ Still alone, as D304; each with what else it could have been.
 - Picked (each with options): 2, the redesign (over the 808's Roland or Silver skin, or the TB-303 Silver face); one
   look first (over the 808's four skins as a choice in Options, or Steel or Olive as the main look). Next: the JUCE
   app drawn as mockup 2, the layout as it is.
+- The user: no further mockup, build it straight in the app, in this session. Built in `tomcoolpxl/CoolSynth303`,
+  every control where it was, D349's Options key and window included:
+  - Theme.h and Theme.cpp hold the look: the brushed graphite ground, the plates with their head bands and numbers,
+    keys with a lens (a key that can be on carries one; Generate is the one orange key), lenses for the lamps,
+    displays behind glass, the dark screens, the grid's cells.
+  - The knob: a knurled skirt, a turned aluminium cap, the value as a lit arc (the 0 and 10 dropped, the arc shows
+    it). JUCE has no conic gradient (its forum's answer is to draw the sweep in slices), so the cap's turning is drawn
+    in 72 wedges.
+  - The waveform: two keys in a bay with the saw and the square drawn on them, their names under it. The signal path
+    runs through the section heads in place of the arrows. The piano in ivory and gloss black on a dark bed; the
+    picked key warm, the sounding one orange.
+  - The options window, the library and the title bar follow through Theme's colours.
+- Checked: the app beside the mockup (`303-redesign/app-built.png`), playing (the step's lamp, the slot, the motion),
+  the options window and the library on screen; the Editor and Options tests pass, the Mods panel's among them. The
+  Mods panel itself was not seen on screen: something over the screen's top right took the clicks there.
 
 ## D349. CoolSynth 303: an accuracy setting, in an options window of its own (2026-11-25)
 

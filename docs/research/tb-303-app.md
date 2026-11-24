@@ -46,6 +46,7 @@ How the answers fall across the three:
 Built (D299): `docs/design/mockups/coolsynth-303-layouts.html`, screenshots in `docs/design/mockups/303-layouts`.
 Then the charcoal with the silver face's keyboard, as buttons (2.1) or a piano (2.2), and a plainer tool row (D300); the user picked the piano (D301). 2.3: the piano over three octaves, the step panel down to its locks, note names
 down the pitch lane (D302). Built as the app's panel in `tomcoolpxl/CoolSynth303` (D304).
+Later found a bit bland, the look was redrawn on the same layout (D348, `docs/design/mockups/coolsynth-303-redesign.html`): the user picked the redesign, graphite plates, knurled knobs with a lit value arc, keys with lenses, amber displays.
 
 ## What the user wants
 
