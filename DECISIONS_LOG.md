@@ -6834,3 +6834,21 @@ Still alone, as D304; each with what else it could have been.
   six squares in pitch. The rest are noise-fed (ngspice stood two sines in for the noise) or the oscillators'
   mixes, whose phase is their own. The sound is unchanged; the sheets were looked at live.
 - Next: the whole board's sheet live, then the CPU sheet.
+
+## D319. CoolSynth 808: finding and leaving the sheets, and the lifted lid's colours (2026-11-24)
+
+- The user could not find the whole board's sheet (only the MASTER column, the CPU board and the Sheet menu
+  opened it, none marked), found the Back to the board button ugly and badly aligned, and asked for the lifted
+  lid's electricity in the sheets' green and red. Four picks, each from three:
+- What opens: a faint frame round each area that opens, bright under the mouse, with the pointing hand (over a
+  hover-only frame, or a frame with a label). Research on clickable diagram areas found most people never click
+  when the only hint is a hover effect.
+- Leaving a sheet: a click on the sheet's empty space goes back, a click on a part still reads it, Escape goes back,
+  a footer line says so, and the button goes (over any click going back with parts read on hover, or keeping a
+  realigned button).
+- The lifted lid's colours: as the whole board's sheet, each drum's copper tied to nodes of its circuit (trigger,
+  envelope, output), green as a node rises from rest and red as it falls, with the current's dots; from the
+  recordings, then live with the whole board (over absolute voltage, which lights the supplies at rest, or amber
+  with dots).
+- The whole board opens from the MASTER column, where the drums meet in the mix (over a key in the strip, or the
+  Sheet menu only). The CPU board keeps its click for its own sheet, next after the whole board live.
