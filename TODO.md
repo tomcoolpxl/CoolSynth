@@ -305,7 +305,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     as `voice.cir` itself. Next: the voice played by the step sequencer in CoolSynth (in place of Open303), then the
     app. Open: the filter's 1.5 to 5 % against `vcf.cir`; set C2's resonance at a quarter turn. The interface:
     three layouts as mockups for the user to choose from (D296, D299, `docs/design/mockups/coolsynth-303-layouts.html`;
-    the frame in `docs/research/tb-303-app.md`); the charcoal with the keyboard as buttons or a piano (2.1, 2.2, D300); its keyboard is the piano (D301).
+    the frame in `docs/research/tb-303-app.md`); the charcoal with the keyboard as buttons or a piano (2.1, 2.2, D300); its keyboard is the piano (D301); 2.3 spans three octaves, the step panel down to its locks (D302).
 
 
 ## Standing notes

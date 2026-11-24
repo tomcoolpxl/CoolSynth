@@ -6468,3 +6468,17 @@ two is kept as it was. Screenshots `2.1-charcoal-key-buttons.png` and `2.2-charc
 Asked as a pick list after D300: the piano (2.2) or the square key buttons (2.1). The user picked the piano.
 - The charcoal layout carries its octave as a piano, as in `2.2-charcoal-piano.png`.
 - 2.1 stays in the mockup file as the option not taken.
+
+## D302. CoolSynth 303: 2.3, the piano over three octaves, the step panel down to its locks (2026-11-24)
+
+The user chose to iterate on 2.2 and picked three of four changes from a pick list, built as 2.3 beside 2.2 (their
+choice over changing 2.2 in place). Screenshots `2.3-charcoal-three-octaves.png` and its `-playing` one.
+- The piano spans the 303's three octaves, C an octave down to the C two octaves up (37 keys), captioned Octave
+  down, As written and Octave up; a key gives the step its note and octave at once, so Down and Up are gone.
+  - Transpose takes the middle C as the pattern as written; the computer's keys Z to comma play the middle octave.
+- The step panel on the right keeps only the picked step's locks (four knobs and Clear) in a strip 150 px wide;
+  note, octave, accent, slide and gate are set from the keyboard section and the grid's rows. The grid is wider.
+- The pitch lane has its notes down its left edge, as a piano roll's keys, the picked step's note lit; the names
+  above each column stay, since they carry the octave.
+- Not picked: a shorter keyboard section with the hint in tooltips only.
+- Inspired by the piano-roll sequencers reviewers rate easiest, Phoscyon 2's among them (MusicTech, Gearnews).

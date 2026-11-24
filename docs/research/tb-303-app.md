@@ -44,7 +44,8 @@ How the answers fall across the three:
 - All three: the pattern row and chain, the effects, the Mods panel closed and open, the full-screen circuit.
 
 Built (D299): `docs/design/mockups/coolsynth-303-layouts.html`, screenshots in `docs/design/mockups/303-layouts`.
-Then the charcoal with the silver face's keyboard, as buttons (2.1) or a piano (2.2), and a plainer tool row (D300); the user picked the piano (D301).
+Then the charcoal with the silver face's keyboard, as buttons (2.1) or a piano (2.2), and a plainer tool row (D300); the user picked the piano (D301). 2.3: the piano over three octaves, the step panel down to its locks, note names
+down the pitch lane (D302).
 
 ## What the user wants
 

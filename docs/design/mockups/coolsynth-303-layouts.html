@@ -294,6 +294,22 @@ canvas.board { display: block; position: absolute; }
 .tal .piano .cur { box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 0 0 1px #111, inset 0 0 0 2px #e8742a; }
 .tal .kbnote { position: absolute; font-size: 11px; line-height: 1.45; color: #9fa1a5; letter-spacing: .02em; }
 .tal .kbnote b { color: #e9e9e6; font-weight: 600; }
+/* 2.3: the piano over the 303's three octaves, the step panel down to its locks, note names down the pitch lane */
+.tal .piano.three .pw { width: 29px; height: 80px; }
+.tal .piano.three .pb { width: 18px; height: 50px; }
+.tal .piano.three .pw span { font-size: 9px; bottom: 5px; }
+.tal .piano.three .pb span { display: none; }
+.tal .piano.three .pw.oc { background: linear-gradient(#f6f6f4, #d6d7d9); }
+.tal .octcap { position: absolute; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8c8e93; text-align: center;
+  border-top: 1px solid #55575c; padding-top: 3px; }
+#v6 .main { grid-template-columns: 1fr 150px; }
+#v6 .grid { grid-template-columns: 108px 1fr; }
+#v6 .side .tknobs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 6px; justify-items: center; }
+.tal .pnames { position: relative; width: 30px; flex: none; align-self: stretch; margin-left: auto; border-radius: 2px; overflow: hidden; box-shadow: 0 0 0 1px #111; }
+.tal .pnames span { position: absolute; left: 0; right: 0; height: calc(100%/13); display: flex; align-items: center; justify-content: flex-end; padding-right: 3px;
+  font-family: var(--mono); font-size: 8px; line-height: 1; background: #d9d9d6; color: #2a2b2e; box-shadow: inset 0 -1px 0 rgba(0,0,0,.25); }
+.tal .pnames span.s { background: #232427; color: #a9abaf; }
+.tal .pnames span.cur { background: #e8742a; color: #1a120c; }
 /* the plainer tool row of 2.1 and 2.2: groups, each named */
 .tools2 { display: flex; align-items: center; gap: 6px; }
 .tools2 .grp { display: flex; align-items: center; gap: 5px; padding-right: 10px; margin-right: 4px; border-right: 1px solid #45474c; }
@@ -368,6 +384,7 @@ canvas.board { display: block; position: absolute; }
   <button class="tab" data-v="2">2 Charcoal</button>
   <button class="tab" data-v="4">2.1 Charcoal, key buttons</button>
   <button class="tab" data-v="5">2.2 Charcoal, piano</button>
+  <button class="tab" data-v="6">2.3 Three octaves</button>
   <button class="tab" data-v="3">3 The silver face</button>
   <span class="sp"></span>
   <span class="note">No sound · Space plays and stops</span>
@@ -410,6 +427,7 @@ canvas.board { display: block; position: absolute; }
 <!-- 2.1 and 2.2: the charcoal layout with the silver face's keyboard, as buttons and as a piano (filled by talMarkup) -->
 <section class="view tal" id="v4"></section>
 <section class="view tal" id="v5"></section>
+<section class="view tal" id="v6"></section>
 
 <!-- 3: the original's silver face -->
 <section class="view" id="v3">
@@ -746,7 +764,7 @@ function buildTools(host, opts = {}) {
   painters.push(() => { scale.textContent = S.scale; root.textContent = NAMES[S.root]; len.textContent = p().len + ' st'; un.style.opacity = undo.length ? 1 : .45; re.style.opacity = redo.length ? 1 : .45; });
 }
 // The grid: the step lights, the pitch lane, octave, accent, slide, the gate, and one knob's motion
-function buildGrid(host, rowH = 22, pitchH = 150, motionH = 40) {
+function buildGrid(host, rowH = 22, pitchH = 150, motionH = 40, names = false) {
   host.className = 'grid';
   const row = (label, content) => { const l = el('div', 'rl'); if (typeof label === 'string') l.append(el('span', 'lbl', label)); else l.append(label); host.append(l, content); return content; };
   // lights
@@ -777,7 +795,16 @@ function buildGrid(host, rowH = 22, pitchH = 150, motionH = 40) {
     cols.push(c); pitch.append(c);
   }
   const plbl = el('div', '', '<div class="lbl" style="color:#ddd5c3">Pitch</div><div class="lbl" style="margin-top:6px;text-transform:none;letter-spacing:.02em;line-height:1.4;color:#9d9583">Drag up or down,<br>or wheel</div>');
-  row(plbl, pitch);
+  // 2.3: the lane's notes down its left edge, as a piano roll's keys; the picked step's note lit
+  let nameCells = null;
+  if (names) {
+    const wrap = el('div', ''); wrap.style.cssText = 'display:flex;align-self:stretch;width:100%;gap:6px';
+    const strip = el('div', 'pnames'); nameCells = [];
+    for (let n = 0; n <= 12; n++) { const s = el('span', [1, 3, 6, 8, 10].includes(n) ? 's' : '', NAMES[n] + (n === 12 ? '′' : '')); s.style.bottom = `calc(${n} * 100% / 13)`; nameCells.push(s); strip.append(s); }
+    plbl.style.alignSelf = 'center'; wrap.append(plbl, strip);
+    row(wrap, pitch);
+    painters.push(() => { const x = shown().steps[S.pick]; nameCells.forEach((s, n) => s.classList.toggle('cur', x.g !== 'rest' && n === (x.n12 ? 12 : x.n))); });
+  } else row(plbl, pitch);
   // rows of keys
   const keyRow = (label, kind, onClick, paint) => {
     const r = el('div', 'cols16'), ks = [];
@@ -850,6 +877,18 @@ function buildSide(host, pickOf = () => S.pick, compact = false) {
     gseg.querySelectorAll('.btn').forEach((b, j) => b.classList.toggle('is', ['note', 'tie', 'rest'][j] === x.g));
   });
 }
+// 2.3: the step panel down to the picked step's locks, a narrow strip; note, octave, accent, slide and gate are
+// set from the keyboard section and the grid's rows
+function buildLocks(host) {
+  const sec = el('div', 'tsec'), head = el('div', 'lbl head');
+  const lk = el('div', 'tknobs'); LOCKABLE.forEach(([key, name]) => lk.append(knob(name, key, 28, { lockStep: () => S.pick, accent: key === 'accent' })));
+  const clear = btn('Clear', '', () => { snapshot(); shown().steps[S.pick].lock = {}; paintAll(); });
+  clear.title = 'Clears this step\'s locks';
+  sec.append(head, lk, clear);
+  host.append(sec);
+  host.title = 'Turn a knob here to hold its value on this step';
+  painters.push(() => { head.textContent = `Locks · step ${S.pick + 1}`; });
+}
 // The Mods panel: the Devil Fish's controls and the trimmers, each a knob; closed by default
 function buildMods(host, style) {
   const o = { style };
@@ -878,8 +917,8 @@ function wireAll(scope) {
   scope.querySelectorAll('[data-chain]').forEach(buildChain);
   scope.querySelectorAll('[data-transpose]').forEach(buildTranspose);
   scope.querySelectorAll('[data-tools]').forEach(h => buildTools(h));
-  scope.querySelectorAll('[data-grid]').forEach(h => buildGrid(h, +h.dataset.rowh || 22, +h.dataset.grid || 150, +h.dataset.motion || 40));
-  scope.querySelectorAll('[data-side]').forEach(h => buildSide(h, undefined, h.dataset.side === 'compact'));
+  scope.querySelectorAll('[data-grid]').forEach(h => buildGrid(h, +h.dataset.rowh || 22, +h.dataset.grid || 150, +h.dataset.motion || 40, 'names' in h.dataset));
+  scope.querySelectorAll('[data-side]').forEach(h => h.dataset.side === 'locks' ? buildLocks(h) : buildSide(h, undefined, h.dataset.side === 'compact'));
   scope.querySelectorAll('[data-tools2]').forEach(buildTools2);
   scope.querySelectorAll('[data-capstatus]').forEach(buildCapStatus);
 }
@@ -1178,7 +1217,9 @@ function talMarkup(vid, kind) {
     <span class="cap" data-capstatus>Sequencer</span>
     <div class="row"><div data-prow></div><div data-ab></div><span class="lbl" style="margin-left:12px">Chain</span><div data-chain></div></div>
     <div data-tools2></div>
-    <div class="main"><div data-grid="114" data-rowh="20" data-motion="36"></div><div class="side" data-side="compact"></div></div>
+    <div class="main">${kind === 'three'
+      ? '<div data-grid="114" data-rowh="20" data-motion="36" data-names></div><div class="side" data-side="locks"></div>'
+      : '<div data-grid="114" data-rowh="20" data-motion="36"></div><div class="side" data-side="compact"></div>'}</div>
   </div>
   <div class="foot">CoolSynth 303 · CoolSynth · mockup</div>`;
 }
@@ -1289,10 +1330,67 @@ function buildKeys(vid, kind) {
     });
   });
 }
+// 2.3: the piano over the 303's three octaves (C an octave down to the C two octaves up), so a key gives the note
+// and its octave at once; Down and Up are gone. Keys 0 to 36: 0-11 octave down, 12-23 as written, 24-36 octave up.
+const keyOf = x => (x.o + 1) * 12 + (x.n12 ? 12 : x.n);
+function buildKeys3(vid) {
+  const host = $(vid + 'keys');
+  const at = (node, x, y) => { node.classList.add('kk'); node.style.left = x + 'px'; node.style.top = y + 'px'; host.append(node); return node; };
+  const tb = (t, f) => { const b = el('button', 'tbtn', t); b.style.minWidth = '62px'; b.onclick = f; return b; };
+  const accent = at(tb('Accent', () => toggleAt('a', 'pick')), 18, 28);
+  const slide = at(tb('Slide', () => toggleAt('s', 'pick')), 18, 76);
+  const keys = [], w = 29, kx = 104, white = [0, 2, 4, 5, 7, 9, 11];
+  const piano = el('div', 'piano three');
+  let wi = 0;
+  for (let k = 0; k <= 36; k++) {
+    const n = k % 12, isWhite = white.includes(n);
+    const key = el('div', isWhite ? 'pw' + (n === 0 ? ' oc' : '') : 'pb', `<span>${NAMES[n]}</span>`);
+    key.dataset.k = k; key.onclick = () => playKey3(k);
+    key.title = NAMES[n] + (k < 12 ? ', octave down' : k < 24 ? '' : ', octave up') + (k === 36 ? ' (the top C)' : '');
+    if (isWhite) { key.style.left = (wi * w) + 'px'; wi++; } else key.style.left = (wi * w - 9) + 'px';
+    piano.append(key); keys.push(key);
+  }
+  piano.style.width = (wi * w) + 'px';
+  at(piano, kx, 16);
+  // which octave is which, under the keys
+  [['Octave down', 0, 7], ['As written', 7, 7], ['Octave up', 14, 8]].forEach(([t, from, n]) => {
+    const c = el('div', 'octcap', t); c.style.width = (n * w - 6) + 'px'; at(c, kx + from * w + 3, 100);
+  });
+  const rx = kx + wi * w + 34;
+  at(tb('Back', () => { S.pick = (S.pick + 15) % 16; paintAll(); }), rx, 28);
+  at(tb('Step', () => { S.pick = (S.pick + 1) % 16; paintAll(); }), rx + 70, 28);
+  at(tb('Tie', () => setGate('tie', 'pick')), rx, 76);
+  at(tb('Rest', () => setGate('rest', 'pick')), rx + 70, 76);
+  const write = at(tb('Write', () => { S.transposeMode = false; paintAll(); }), rx + 160, 28);
+  const trans = at(tb('Transpose', () => { S.transposeMode = true; paintAll(); }), rx + 160, 76);
+  trans.style.minWidth = '86px'; write.style.minWidth = '86px';
+  const note = el('div', 'kbnote'); note.style.width = (1196 - (rx + 266)) + 'px'; at(note, rx + 266, 24);
+  painters.push(() => {
+    const x = shown().steps[S.pick]; accent.classList.toggle('is', x.a); slide.classList.toggle('is', x.s);
+    write.classList.toggle('is', !S.transposeMode); trans.classList.toggle('is', S.transposeMode);
+    note.innerHTML = S.transposeMode
+      ? `<b>Transpose:</b> a key shifts the running pattern; the middle C plays it as written.`
+      : `<b>Write:</b> a key sets step ${S.pick + 1}'s note and octave, then moves on. Z to comma: the middle octave.`;
+    const sounding = S.playing ? heard().steps[S.count % heard().len] : null;
+    keys.forEach(key => {
+      const k = +key.dataset.k;
+      const hit = S.transposeMode ? k === 12 + S.transpose : sounding ? sounding.g !== 'rest' && k === keyOf(sounding) : false;
+      const cur = !S.playing && !S.transposeMode && x.g !== 'rest' && k === keyOf(x);
+      key.classList.toggle('hit', hit); key.classList.toggle('cur', cur);
+    });
+  });
+}
+function playKey3(k) {
+  if (S.transposeMode) { S.transpose = k - 12; paintAll(); return; }
+  snapshot();
+  const x = shown().steps[S.pick], o = k < 12 ? -1 : k < 24 ? 0 : 1, n = k - (o + 1) * 12;
+  x.n = n % 12; x.n12 = n === 12; x.o = o; x.g = 'note';
+  S.pick = (S.pick + 1) % shown().len; paintAll();
+}
 function buildTal(vid, kind) {
   talMarkup(vid, kind);
   build2(vid);
-  buildKeys(vid, kind);
+  if (kind === 'three') buildKeys3(vid); else buildKeys(vid, kind);
 }
 
 // ---------------------------------------------------------------- 3: the original's silver face
@@ -1402,7 +1500,7 @@ function buildSaver() {
 }
 
 // ---------------------------------------------------------------- start
-build1(); build2(); buildTal('v4', 'buttons'); buildTal('v5', 'piano'); build3(); buildSaver();
+build1(); build2(); buildTal('v4', 'buttons'); buildTal('v5', 'piano'); buildTal('v6', 'three'); build3(); buildSaver();
 $('modsBtn').onclick = () => { S.mods = !S.mods; paintAll(); };
 painters.push(() => $('modsBtn').classList.toggle('is', S.mods));
 document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
@@ -1427,6 +1525,7 @@ document.addEventListener('keydown', e => {
   if (KEYMAP[e.code] !== undefined && !e.repeat) {
     if ($('v3').classList.contains('is')) playKey(KEYMAP[e.code]);
     else if ($('v4').classList.contains('is') || $('v5').classList.contains('is')) playKey(KEYMAP[e.code], 'pick');
+    else if ($('v6').classList.contains('is')) playKey3(12 + KEYMAP[e.code]);
     else { S.transpose = KEYMAP[e.code]; paintAll(); }
   }
   if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); restore(e.shiftKey ? redo : undo, e.shiftKey ? undo : redo); }
