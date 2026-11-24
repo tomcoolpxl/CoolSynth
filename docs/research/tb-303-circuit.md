@@ -302,6 +302,27 @@ Measured on 2026-11-24, `Tb303Voice.h` at 96 kHz against voice.cir rendered at 9
   by side: within 0.1 to 0.3 dB of each other at every position, the accent's loudness within 0.1 dB, the pitch the
   same 5 to 6 cents under the unit.
 
+## Against Din Sync's unit by ear (D324)
+
+Measured on 2026-11-24 with CoolSynth303's `tools/listening-pass` (every set rendered as Din Sync recorded it, one
+level fitted across all 400 notes). The user heard the real notes start a little plucked, ours like brass.
+- Din Sync's recordings are inverted against the circuit's output; the waveforms match once one is turned over.
+- The steady tone matches: harmonics 1 to 40 within 0.3 dB on the saw. The difference is the first two cycles.
+  Measured a whole cycle at a time (each window one period, so the phase cancels), over the 64 notes whose filter
+  stands still (sets A1, A2, A4, A5): the real unit's first two cycles equally loud and its brightness falling from
+  the first; ours 1.6 dB quieter in the first and brighter in the second, a swell.
+- The swell: Q31 starts each note saturated, pin 1 0.07 V under its emitter, and comes out as C42 refills; pin 1
+  climbs from 0.635 to 0.659 V over 10 ms, some 8 dB of gain. Lemus fitted the same unit with pin 1 80 mV lower
+  against Q31 (ro-mono-303's docs/circuit.md); the BA662's input pair at 22 times its other transistors' area does
+  that, and the first cycle then comes within 0.2 dB of the unit's brightness on sets A1, A2 and A4. In the engine
+  (`Tb303Envelope::chipInputArea`) and the netlists (`q1area`, 1 as drawn, the references rendered at 22).
+- Not the cause: C72 (the gate's delay; smaller opens faster but in two steps), a DC step from the chip's offset
+  (none under the notes), the oscillator's start.
+- RESONANCE: Din Sync's marks fall on our linear pot at about 0.10 to 0.15 (25 %), 0.42 to 0.50 (50 %), 0.88
+  (75 %) and 1.0 on sets A, C, D and E: an S-shaped track, Whittle's "log curve at both ends" of replacement pots.
+  Set B (every knob at 25 %) is the cutoff's quarter-turn residual, as Lemus's (the resonant peak some 250 cents
+  high there), not the pot's.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

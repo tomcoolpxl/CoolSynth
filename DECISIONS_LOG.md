@@ -6902,7 +6902,14 @@ Still alone, as D304; each with what else it could have been.
 - The user picked a listening pass with a real reference, then found the page too much to click through; the one
   note they marked (an accented square's start) and their ear (the real note a little plucked, ours like brass) set the work.
 - To fix, as the user picked: the note's start, RESONANCE at a quarter turn, and RESONANCE at full with CUTOFF high,
-  each fitted to Din Sync's 25 sets and kept only where it brings them closer. Entry completed with the results.
+  each fitted to Din Sync's 25 sets and kept only where it brings them closer.
+- The note's start, done: measured a whole cycle at a time, ours swelled (the first cycle 1.6 dB under the second)
+  where the unit's first two are level; Q31 starts each note saturated. The BA662's input pair at 22 times its area
+  (pin 1 80 mV lower, Lemus's figure for the same unit) opens the VCA at once; the first cycles' brightness within
+  0.2 dB of the unit's on the sets whose filter stands still. Not the cause, tried: C72, C13, a DC step. Engine
+  `96cac22`, CoolSynth303 `9a6bbbf`; `docs/research/tb-303-circuit.md`, its section on this pass.
+- The accent's second cycle stays 1.3 dB loud on set A5 only (every other knob at 0); C5 matches within 0.4 dB. Left.
+- The pass's page (`tools/listening-pass` in CoolSynth303) is kept as a tool; the user hears clips as separate files.
 
 ## D325. CoolSynth 808: the VST3 (2026-11-24)
 
