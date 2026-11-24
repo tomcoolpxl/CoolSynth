@@ -7337,4 +7337,25 @@ Still alone, as D304; each with what else it could have been.
 
 ## D349. CoolSynth 303: an accuracy setting, in an options window of its own (2026-11-25)
 
-- Claimed; the entry follows.
+- The user's pick (D340): the same sound made faster first, then an accuracy setting as the 808's. Best is as D345
+  and D346 left it: every circuit to 10 nV, the kept inverse, the low-rank updates.
+- Measured on a 12 s pattern of both voices (paired runs, share of a core; against a circuit solved to 10 pV):
+  - Best 56.6 %, -128.6 dB rms. The tolerance is a weak lever: 100 nV everywhere 53.6 % (-90.5 dB, the pitch's
+    drift); 1 uV with the pitch kept at 10 nV 52.1 % (-106.5 dB, every third-octave band within 0.05 dB of Best);
+    10 uV so 49.8 % (-100.4 dB).
+  - The voice at 48 kHz, not 96: 38.1 % against 60.8 in the same runs, with Lighter's tolerances 34.5. The cost to
+    the sound: the stock voice's top 1 to 3.5 dB down from 8 to 16 kHz, the Devil Fish's up to 2.6 dB at 16 kHz;
+    under 4 kHz within 0.4 dB. D294's checks against ngspice and its aliasing figures hold at 96 kHz only.
+- Picked (each with options):
+  - At first three levels as the 808's. Lighter: 1 uV, the pitch kept at 10 nV (over 10 uV, or 100 nV
+    everywhere). Lightest: the host's rate with Lighter's tolerances (over the host's rate at Best's, or none).
+  - The setting app-wide, as the 808's, a host's offline render always at Best (over each song keeping its own).
+  - Where: I first offered the 808's Audio and Host pages, which the 303 did not have; asked again, the user wanted
+    an options window as the 808's, not JUCE's Options button: the 303's own standalone window, an Options key in
+    the top bar, pages Audio (devices and Accuracy), MIDI, Panel (the window's size) and Export (a placeholder for
+    the WAV export to come), Host in a plugin (over Accuracy and Export only, or without the Panel page).
+- In the app (its first line, 3 s): Best 57.2 % of real time, Lighter 54.0 %, Lightest 32.8 % and as loud. The
+  user then dropped Lighter, 3 % for a level not worth offering: two levels, Best and Light, Light the former
+  Lightest (picked over naming it Lighter or Lightest, the 808's words for other contents).
+- Built: `Tb303Voice::setLighter` (the looser solve); the app's `Processor::setAccuracy` (kept in CoolSynth303.settings beside JUCE's
+  file for the devices), the voice prepared again at the new level.

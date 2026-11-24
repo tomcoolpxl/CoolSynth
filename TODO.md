@@ -338,8 +338,12 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     across voices, the same bytes, for the 808's toms (no shipped preset plays a circuit in several voices): only 3 to
     4 % off two or three toms, the Newton solve being most of a sample; the Newton solve in lanes left for later.
     Done (D346): low-rank updates at the attack, in Best (the first block from rest 8.9 ms to 7.85, as accurate);
-    the 1-ulp SIMD exp built as a bench and kept, not used (0.7 % of the voice). Next: the accuracy levels (100 nV
-    the first lighter one). For the 808 and CoolSynth: the chord method on their circuits (they use
+    the 1-ulp SIMD exp built as a bench and kept, not used (0.7 % of the voice). Done (D349): the accuracy setting, Best
+    and Light (the host's rate and 1 uV with the pitch at 10 nV: the app's first line 57 % to 33 % of a core, the
+    top 1 to 3.5 dB down from 8 to 16 kHz), app-wide, offline renders at Best; in an options window of
+    the 303's own as the 808's (Audio, MIDI, Panel, Export a placeholder; Host in a plugin). Next: the WAV export
+    on that page. Aside: the 808's MIDI output keeper (the port's own thread, so each block's clock leaves at its
+    time, not all at once) was not ported; some 30 lines if the 303's sent clock should be tighter. For the 808 and CoolSynth: the chord method on their circuits (they use
     plain Newton), measured against their own tight references. The Devil Fish further by ear if the user wants (it
     is ours, the name stays). The look (D348): the app found a bit bland; seven mockups on one page
     (`docs/design/mockups/coolsynth-303-redesign.html`): the app now, a redesign, the 808's four skins, and an
