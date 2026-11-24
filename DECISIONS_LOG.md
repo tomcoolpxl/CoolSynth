@@ -7334,3 +7334,7 @@ Still alone, as D304; each with what else it could have been.
 - Picked (each with options): 2, the redesign (over the 808's Roland or Silver skin, or the TB-303 Silver face); one
   look first (over the 808's four skins as a choice in Options, or Steel or Olive as the main look). Next: the JUCE
   app drawn as mockup 2, the layout as it is.
+
+## D349. CoolSynth 303: an accuracy setting, in an options window of its own (2026-11-25)
+
+- Claimed; the entry follows.
