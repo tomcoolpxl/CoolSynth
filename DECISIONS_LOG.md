@@ -7374,3 +7374,7 @@ Still alone, as D304; each with what else it could have been.
   Lightest (picked over naming it Lighter or Lightest, the 808's words for other contents).
 - Built: `Tb303Voice::setLighter` (the looser solve); the app's `Processor::setAccuracy` (kept in CoolSynth303.settings beside JUCE's
   file for the devices), the voice prepared again at the new level.
+
+## D350. CoolSynth 303: its lower half laid out again, three mockups to choose from (2026-11-25)
+
+- Claimed for the 303 relayout mockups; written in full when they land.
