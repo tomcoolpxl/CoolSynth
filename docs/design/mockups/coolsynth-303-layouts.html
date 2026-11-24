@@ -226,6 +226,7 @@ canvas.board { display: block; position: absolute; }
 #v2 .arrow { position: absolute; width: 14px; height: 14px; color: #8d8f94; display: grid; place-items: center; font-size: 13px; }
 #v2 .lbl { color: #bfc0c3; }
 #v2 .knob .lbl { color: #d7d8da; }
+#v2 .face .knob { gap: 14px; } /* room for the range's 0 and 10 above the name */
 #v2 .foot { position: absolute; right: 16px; bottom: 6px; font-size: 10px; letter-spacing: .06em; color: #75777c; }
 #v2 .tbtn { position: relative; display: inline-flex; align-items: center; justify-content: center; height: 24px; min-width: 34px; padding: 0 8px; margin-top: 8px; border: 0; border-radius: 2px; cursor: pointer;
   background: #c9cacc; color: #1b1c1e; font-weight: 700; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 1px 0 #000; }
@@ -265,7 +266,7 @@ canvas.board { display: block; position: absolute; }
 #v2 .tkeys .w { background: #d9d9d6; box-shadow: 0 0 0 1px #111; }
 #v2 .tkeys .b { background: #18191b; }
 #v2 .mods { left: 60px; top: 50px; }
-#v2 .lidwrap { position: absolute; left: 60px; right: 10px; top: 52px; height: 214px; perspective: 1400px; }
+#v2 .lidwrap { position: absolute; left: 60px; right: 10px; top: 52px; height: 186px; perspective: 1400px; }
 #v2 .lidwrap canvas.board { inset: 0; width: 100%; height: 100%; background: #141416; border-radius: 9px; }
 #v2 .face { position: absolute; inset: 0; transform-origin: 50% 0; transition: transform .8s cubic-bezier(.3,.1,.2,1), opacity .8s; background: #26272a; }
 #v2.lifted .face { transform: rotateX(80deg); opacity: 0; pointer-events: none; }
@@ -315,6 +316,9 @@ canvas.board { display: block; position: absolute; }
 #v3 .cell .lk { position: absolute; right: 4px; top: 4px; width: 5px; height: 5px; border-radius: 50%; background: #ffb45c; box-shadow: 0 0 5px #ff9a3a; display: none; }
 #v3 .cell.locked .lk { display: block; }
 #v3 .glass { left: 20px; right: 20px; top: 590px; bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+/* on the glass and the transport's strip the printing is light again, the knobs dark */
+#v3 .glass .lbl, #v3 .tstrip .lbl, #v3 .glass .knob .lbl { color: #ddd5c3; }
+#v3 .glass .knob, #v3 .tstrip .knob { --knob-a: #4d4943; --knob-b: #1d1b18; --pointer: #ece4d2; --tick: #cfc7b3; }
 #v3 .row { display: flex; align-items: center; gap: 10px; }
 #v3 .mods { left: 20px; top: 214px; }
 #v3 .brand { position: absolute; }
@@ -362,12 +366,12 @@ canvas.board { display: block; position: absolute; }
   <div class="stencil"><span>COOLSYNTH <em>303</em></span></div>
   <div class="lidwrap"><canvas class="board" id="b2"></canvas><div class="face" id="v2face"></div></div>
   <div class="mods" id="v2mods"></div>
-  <div class="sect seqsect" id="v2seq" style="left:60px;right:10px;top:282px;bottom:24px">
+  <div class="sect seqsect" id="v2seq" style="left:60px;right:10px;top:252px;bottom:24px">
     <span class="cap">Sequencer</span>
     <div class="row"><div data-prow></div><div data-ab></div><span style="flex:1"></span><div data-status></div></div>
     <div class="row"><span class="lbl">Chain</span><div data-chain></div><span style="flex:1"></span><div data-transpose></div></div>
     <div data-tools></div>
-    <div class="main"><div data-grid></div><div class="side" data-side></div></div>
+    <div class="main"><div data-grid="205"></div><div class="side" data-side></div></div>
   </div>
   <div class="foot">CoolSynth 303 · CoolSynth · mockup</div>
 </section>
@@ -707,7 +711,7 @@ function buildTools(host, opts = {}) {
   painters.push(() => { scale.textContent = S.scale; root.textContent = NAMES[S.root]; len.textContent = p().len + ' st'; un.style.opacity = undo.length ? 1 : .45; re.style.opacity = redo.length ? 1 : .45; });
 }
 // The grid: the step lights, the pitch lane, octave, accent, slide, the gate, and one knob's motion
-function buildGrid(host, rowH = 22, pitchH = 116, motionH = 40) {
+function buildGrid(host, rowH = 22, pitchH = 150, motionH = 40) {
   host.className = 'grid';
   const row = (label, content) => { const l = el('div', 'rl'); if (typeof label === 'string') l.append(el('span', 'lbl', label)); else l.append(label); host.append(l, content); return content; };
   // lights
@@ -839,7 +843,7 @@ function wireAll(scope) {
   scope.querySelectorAll('[data-chain]').forEach(buildChain);
   scope.querySelectorAll('[data-transpose]').forEach(buildTranspose);
   scope.querySelectorAll('[data-tools]').forEach(h => buildTools(h));
-  scope.querySelectorAll('[data-grid]').forEach(h => buildGrid(h));
+  scope.querySelectorAll('[data-grid]').forEach(h => buildGrid(h, 22, +h.dataset.grid || 150));
   scope.querySelectorAll('[data-side]').forEach(h => buildSide(h));
 }
 
@@ -1091,15 +1095,15 @@ function build2() {
   bar.append(sp, play, tempo, el('button', 'tbtn plain', 'Tap'), rec, el('span', '', '&nbsp;'), el('button', 'tbtn plain', 'Library'), el('button', 'tbtn plain', 'File'), mods, lid);
   // The synth's sections, outlined, in the signal's order with arrows between
   const face = $('v2face');
-  const sect = (name, x, w) => { const s = el('div', 'sect'); s.style.cssText = `left:${x}px;top:10px;width:${w}px;height:196px`; s.append(el('span', 'cap', name)); face.append(s); return s; };
+  const sect = (name, x, w) => { const s = el('div', 'sect'); s.style.cssText = `left:${x}px;top:10px;width:${w}px;height:170px`; s.append(el('span', 'cap', name)); face.append(s); return s; };
   const at = (s, node, x, y) => { node.style.position = 'absolute'; node.style.left = x + 'px'; node.style.top = y + 'px'; s.append(node); return node; };
   const kt = (label, key, size = 44, opts = {}) => knob(label, key, size, { style: 'tal', ...opts });
-  const arrow = x => { const a = el('div', 'arrow', '▸'); a.style.left = x + 'px'; a.style.top = '102px'; face.append(a); };
+  const arrow = x => { const a = el('div', 'arrow', '▸'); a.style.left = x + 'px'; a.style.top = '88px'; face.append(a); };
   const s1 = sect('Oscillator', 6, 150);
   at(s1, kt('Tuning', 'tuning'), 50, 28);
   { const w = el('div', ''); w.style.cssText = 'display:flex;gap:6px'; const saw = el('button', 'tbtn', 'Saw'), sq = el('button', 'tbtn', 'Square');
     saw.onclick = () => { S.k.wave = 0; paintAll(); }; sq.onclick = () => { S.k.wave = 1; paintAll(); };
-    painters.push(() => { saw.classList.toggle('is', S.k.wave === 0); sq.classList.toggle('is', S.k.wave === 1); }); w.append(saw, sq); at(s1, w, 16, 132); }
+    painters.push(() => { saw.classList.toggle('is', S.k.wave === 0); sq.classList.toggle('is', S.k.wave === 1); }); w.append(saw, sq); at(s1, w, 16, 120); }
   arrow(160);
   const s2 = sect('Filter', 178, 280);
   at(s2, kt('Cutoff', 'cutoff', 60), 22, 34); at(s2, kt('Resonance', 'res'), 120, 40); at(s2, kt('Env mod', 'envmod'), 204, 40);
@@ -1111,14 +1115,14 @@ function build2() {
   at(s4, kt('Volume', 'volume'), 26, 40);
   arrow(786);
   const s5 = sect('Drive', 804, 170);
-  at(s5, talBtn('On', 'driveOn'), 18, 132); at(s5, kt('Amount', 'drive', 40, { live: false }), 16, 36); at(s5, kt('Tone', 'tone', 40, { live: false }), 94, 36);
+  at(s5, talBtn('On', 'driveOn'), 18, 120); at(s5, kt('Amount', 'drive', 40, { live: false }), 16, 36); at(s5, kt('Tone', 'tone', 40, { live: false }), 94, 36);
   arrow(978);
   const s6 = sect('Delay', 996, 214);
-  at(s6, talBtn('On', 'delayOn'), 14, 132);
+  at(s6, talBtn('On', 'delayOn'), 14, 120);
   const times = ['1/16', '1/8', '3/16', '1/4'];
   at(s6, kt('Time', 'time', 40, { live: false, fmt: v => times[Math.round(v * 3)] }), 10, 36);
-  at(s6, fader('Feedback', 'fb'), 96, 30); at(s6, fader('Mix', 'mix'), 150, 30);
-  new Board($('b2'), rowLayout(20, 1190, 26, 190, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
+  at(s6, fader('Feedback', 'fb'), 96, 18); at(s6, fader('Mix', 'mix'), 150, 18);
+  new Board($('b2'), rowLayout(20, 1190, 24, 166, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
   buildMods($('v2mods'), 'tal');
 }
 

@@ -43,6 +43,8 @@ How the answers fall across the three:
   transpose on the same keys; the circuit as a lid.
 - All three: the pattern row and chain, the effects, the Mods panel closed and open, the full-screen circuit.
 
+Built (D299): `docs/design/mockups/coolsynth-303-layouts.html`, screenshots in `docs/design/mockups/303-layouts`.
+
 ## What the user wants
 
 - The original's layout and controls, drawn in CoolSynth 808's style.

@@ -6421,3 +6421,26 @@ a pick list with the options, are in `docs/research/tb-303-app.md` (its frame se
 - The mockup: layout 5 in four colour themes, 5.1 Roland (the 808's own: charcoal, white and orange printing, the
   steps red, orange, yellow and white), 5.2 Steel (blue-grey metal, the same orange, the user), 5.3 Olive, 5.4
   Silver. The 808's step colours from Sound On Sound's TR-8 review and Roland's TR-8 manual.
+
+## D299. CoolSynth 303: three layouts as HTML mockups (2026-11-24)
+
+Built from D296's frame in `docs/design/mockups/coolsynth-303-layouts.html`, switchable, animated, not wired to
+sound; screenshots in `docs/design/mockups/303-layouts`.
+- One, the etched board: the voice's six stages (oscillator, filter, envelope, amplifier, drive, delay) as columns
+  of copper with their knobs mounted on them, lit as a note passes; the sequencer on smoked glass below.
+- Two, TAL-Vocoder's charcoal: outlined sections in the signal's order with arrows between, the name in stencil
+  capitals up the left edge, black knobs with an orange pointer and their range's 0 and 10, faders for the delay,
+  square keys with a red lamp; the preset between arrows in the top bar; the circuit under a lid that lifts.
+- Three, the original's silver face: the knobs in the 303's own order, one octave of keys (white below, black
+  above) with Down, Up, Accent, Slide, Back, Step, Tie, Rest and Transpose round it, writing each note at a cursor
+  in a strip of sixteen steps as ReBirth did; the circuit under a lid.
+- All three: the pattern row, A and B, the chain with Loop, the status line; Generate, Mutate (pitch, accent,
+  slide, rests), scale and root, fit to scale, shift, semitones, length, undo and redo; transpose from the keys, the
+  computer's keys or MIDI; Rec writes knob moves into the pattern, drawn as a motion lane per knob; per-step locks
+  of cutoff, env mod, decay and accent, the panel's knobs following them as the pattern plays; drive and delay; the
+  Mods panel (the Devil Fish's controls, the trimmers); the full-screen circuit in four looks.
+- One and two edit in the step grid (a pitch lane with one octave up each column, rows for octave, accent, slide
+  and gate); three in the keyboard and strip, its grid kept to the step lights and the motion lane.
+- A caution for the third: Roland's EU design filing 018016159 covers the 303's look; the mockup keeps the layout's
+  idea, not its marks or proportions (`docs/research/tb-303-app.md`).
+- The 808's session committed an early draft of the file with its own work (`be71e09`); this is the finished one.

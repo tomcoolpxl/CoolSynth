@@ -303,9 +303,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     (D294, the user's choice), every stage as accurate as at 192 kHz, about 73 % of one core. The whole voice is
     wired (`Tb303Voice.h`, D295): within 0.01 cents and about 0.5 dB of `voice.cir`, and as close to Din Sync's unit
     as `voice.cir` itself. Next: the voice played by the step sequencer in CoolSynth (in place of Open303), then the
-    app. Open: the filter's 1.5 to 5 % against `vcf.cir`; set C2's resonance at a quarter turn.
-    The interface is parked by the user
-    (`docs/research/tb-303-app.md`).
+    app. Open: the filter's 1.5 to 5 % against `vcf.cir`; set C2's resonance at a quarter turn. The interface:
+    three layouts as mockups for the user to choose from (D296, D299, `docs/design/mockups/coolsynth-303-layouts.html`;
+    the frame in `docs/research/tb-303-app.md`).
 
 
 ## Standing notes
