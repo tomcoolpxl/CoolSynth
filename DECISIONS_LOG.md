@@ -6737,3 +6737,28 @@ Still alone, as D304; each with what else it could have been.
   - Electricity: animated, or still (no light drawn at all).
   - Circuit: full, faint (all of it at 40 %, its names and still copper too) or hidden. The name plate's outline
     stays, as it is printed on the metal.
+
+## D315. CoolSynth 808: Lift the Lid, and the CPU board in the top's style (2026-11-24)
+
+- D314's Lift the Lid, built: the Lid key lifts the lid (its lens lit) and lowers it, as does Escape. The panel's top
+  stays with its circuit and electricity; the knobs and switches go, leaving their pots' and switches' footprints;
+  the glass goes, leaving its four pins' holes; and the CPU board shows whole and lit. The panel's circuit options
+  do not apply while it is lifted. A click on a drum's column opens its schematic over the board (the toms share
+  the low tom's sheet; the master and the CPU, the whole board's, until the CPU has its own); Back to the board or
+  Escape closes it.
+- The CPU board (the user: drawn as beautifully as the top, well laid out, lots of parts, nice wiring) is drawn by
+  the top's own drawer, extended with hand-placed parts: dual in-line chips with their pin counts, connectors, the
+  clock's coil, the battery, trimmers and the DIN socket. Its parts are the main board's (the service notes): the
+  uPD650C-085, the four uPD444C and their decoder, IC1's interrupt clock and IFT-1, the trigger shaper (Q27, IC6,
+  R100, R102, C23, C27) and the accent's Q31 to Q34 with VR3, the status gate and start/stop, the tempo's toggle
+  and trim, the scan's gates and inverters, the switch board's connector, DIN sync, the battery and its switches,
+  decoupling capacitors. Laid out so no two traces cross; its names keep off its copper.
+  - Its eleven instrument lines climb to the trigger bus at each drum's column and light with that drum, live
+    (D313); the trigger bus's old decorative stubs are gone.
+  - Its light, from our sequencer: the clocks a little while playing and more on each step, the CPU and the
+    memory on each step's read and each edit's write, the keys' scan turning, the playing step's group of lamps.
+    At rest it is dark copper.
+  - With the lid closed, the glass shows it as the faint hint D314 asked for: its copper and names barely there,
+    the instrument lines glowing softly.
+- Still to come: the schematic sheets restyled to match the board, a sheet of the CPU section, and their currents
+  live from the engine.
