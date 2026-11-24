@@ -6718,3 +6718,22 @@ Still alone, as D304; each with what else it could have been.
   vanished: it shows faintly on the glass itself, and what works lights there as thin bright traces with a small
   halo (the clock's tick, the playing step's lamp line, an edit written to the memory).
 - The engine moved from f7c68eb to be0abcc, bringing the 303's Tb303 commits, which the 808 does not use.
+
+## D314. CoolSynth 808: Lift the Lid as one view; the circuit's options on the panel (2026-11-24)
+
+- Under the Lid's redesign, researched (Falstad's CircuitJS, EveryCircuit, LTspice probes, Ken Shirriff's linked
+  board and schematic, visual6502, Ciechanowski's explainers, Bret Victor's ladder of abstraction, PCB art). The
+  user's own proposal, the research's "living PCB": lifting the lid keeps the panel's top as it is, its circuit
+  and its electricity, the knobs gone; the glass goes too, its four pins leaving holes, and under it the CPU
+  board is drawn in the top's own style (the user: well laid out, lots of parts, nice wiring). One view.
+  - Picked from three (click a column to open its schematic; drop the schematics; keep them as they are): a click
+    on a drum's column, or the CPU, opens its real schematic over the board, restyled to match.
+  - Picked from two (a short animation; an instant switch): an instant switch.
+  - Picked from two (a faint hint of activity; nothing under the glass): with the lid closed, a faint hint. The
+    user: the lines under the glass were awful; much fainter, the activity a soft wide glow like the top's
+    electricity, the names kept. The trigger lines moved to the tools' right edge, away from the step lengths.
+- The user: for some the circuit distracts. Two options in the options window, for the panel; with the lid lifted
+  it always shows, animated (the user):
+  - Electricity: animated, or still (no light drawn at all).
+  - Circuit: full, faint (all of it at 40 %, its names and still copper too) or hidden. The name plate's outline
+    stays, as it is printed on the metal.
