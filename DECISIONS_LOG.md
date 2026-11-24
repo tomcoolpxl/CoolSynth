@@ -6482,3 +6482,18 @@ choice over changing 2.2 in place). Screenshots `2.3-charcoal-three-octaves.png`
   above each column stay, since they carry the octave.
 - Not picked: a shorter keyboard section with the hint in tooltips only.
 - Inspired by the piano-roll sequencers reviewers rate easiest, Phoscyon 2's among them (MusicTech, Gearnews).
+
+## D303. CoolSynth 808: the panel in silver, its screws, the glass on pins, a pattern key lit at the press (2026-11-24)
+
+- The user picked the mockups' 5.4 Silver for the app: brushed aluminium, dark printing, silver knob caps, light
+  switch plates with dark thumbs, the copper darker so it shows. Silver is the first theme; the others stay in File.
+- The name plate's faded outline is back, printed dark on the metal with rounded corners.
+- The two top screws redrawn after looking at how panel screws are drawn: countersunk Phillips heads sitting flush,
+  the countersink's cone dark towards the light, turned steel with a chamfered rim, two straight square-ended slots
+  meeting in the recess's deeper square, each screw turned its own way.
+- The glass floats: a soft shadow on the metal below and around it (and a smaller one under the transport strip),
+  and four stainless standoff caps at its corners, as sign makers hold a pane: chamfered edge, turned face, a
+  reflection across it, a shadow on the glass.
+- A pattern key picked while playing lit only when its bar line came (Change at the bar hands the pick to the
+  processor then), and it lit on the release. Now it acts as it goes down and lights at once, a steady orange cap
+  until the bar line takes it; the blink is gone. With a test.
