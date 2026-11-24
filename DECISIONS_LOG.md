@@ -6286,3 +6286,20 @@ The user: make it fast enough even at some cost in accuracy, and look at how Coo
   - a row of step lights above the lanes, one running along as the hardware's does; the steps that sound flash
     where they are; no column is framed;
   - the picked lane marked by an orange edge, a lit row and its name in orange.
+
+## D290. CoolSynth 303: the oscillator runs, its square's shaper at 4x (2026-11-24)
+
+The VCO in the engine (`Tb303Oscillator.h`) against vco.cir at low C, A, high C and a slide
+(`docs/research/tb-303-circuit.md`, its oscillator section): pitch within 0.08 cents, the saw's harmonics within
+0.03 dB, the square's strong ones within 0.3 dB, the slide's CV within 0.2 mV.
+- Taken on the way: 3.8 pF of junctions on C33, fitted from a constant 0.6-cent error; the polyBLEP at the reset's
+  start; the shaper on the raw saw with a polyBLEP of each output's jump at the reset; an overfull circuit refused
+  by `CircuitWdf.h` (`fitsItsLimits`) instead of written past its end.
+- The user's choice of the square shaper's rate, put with numbers (the square's strongest alias at high C, middle C
+  and A; the oscillator's share of a core):
+  - 4x, chosen: -72, -80, -86 dB; about 23 %.
+  - 2x: -66, -74, -78 dB; 14 %.
+  - 192 kHz: -59, -68, -75 dB; 9 %.
+  - 8x: -76, -84, -92 dB; 48 %, the voice near a whole core.
+- The cost of the 4x: the outputs come band-limited through a Kaiser sinc, their peaks ringing by up to 0.35 V,
+  which ngspice's unfiltered render does not show. The saw's aliasing is 90 dB down at high C at every rate.

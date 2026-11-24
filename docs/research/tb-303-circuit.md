@@ -232,6 +232,35 @@ The chord method, in `CircuitWdf.h` (`setJacobianReuse`, off by default):
 - It stays within 0.2 to 3 ppm of the exact solve.
 - 0.5 to 1.3 % of the samples factor afresh.
 
+## The oscillator in the engine (D290)
+
+Measured on 2026-11-24 against vco.cir rendered at 192 kHz (low C, A, high C, and a slide up from A).
+- The draft had 26 parts in a circuit sized for 24: the op-amps' two hidden parts each. `CircuitWdf.h` now refuses
+  an overfull circuit (`fitsItsLimits`, silence) instead of writing past its end, and the tests check it.
+- Pitch: first 0.57 to 0.71 cents sharp at every note, a constant ratio, so a capacitance. 3.8 pF on C33, the
+  junctions ngspice gives Q26's collector, Q28's gate and Q25's emitter, brings it within 0.08 cents.
+- The thyristor's dead time now carries into the next step when it runs past one.
+- The saw's harmonics 1 to 10 match within 0.03 dB; the square's strong ones within 0.3 dB.
+
+Aliasing, the strongest component below 20 kHz that is not a harmonic, re the fundamental:
+- ngspice's own waveform sampled at 192 kHz without a filter: saw -47 dB, square -53 dB at high C.
+- The polyBLEP first sat at the reset's middle while the samples jump at its start. Placed at the start, the saw is
+  90 dB down at high C and 100 dB at A.
+- The square's falling edge is the reset's (0.24 us in ngspice), so the shaper runs on the raw saw and both outputs
+  get a polyBLEP of the jump they take there.
+- What is left is the rising edge's corners, Q8 starting to conduct and saturating. Each doubling of the shaper's
+  rate halves it. At high C, middle C and A:
+  - 192 kHz: -59, -68, -75 dB, the oscillator 9 % of a core;
+  - 2x: -66, -74, -78 dB, 14 %;
+  - 4x: -72, -80, -86 dB, 23 %, the user's choice;
+  - 8x: -76, -84, -92 dB, 48 %.
+- Tried and dropped: Q8's junction capacitance (it matches the rise time, 26 us against 25.5, but leaves the
+  aliasing and puts a one-sample spike on each reset); the jump measured over more steps (Q8 lets go within one).
+- Listening tests put the threshold for aliases at 0 to 41 dB under the harmonics at 60 dB SPL
+  ([Schimmel, Radioengineering 2012](https://www.radioeng.cz/fulltexts/2012/12_01_0056_0062.pdf);
+  [JASA 2012](https://www.pubmed.gov/23039464/)); Nam, Valimaki, Abel and Smith found a third-order B-spline
+  BLIT free of perceptible aliasing ([TASLP 2010](https://mac.kaist.ac.kr/pubs/jnam-taslp2010.pdf)).
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).
