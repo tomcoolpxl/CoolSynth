@@ -6888,3 +6888,11 @@ Still alone, as D304; each with what else it could have been.
 - The user: opening the CPU sheet froze the app for seconds, then the timing diagram crawled in; nobody reads it.
   The diagram is gone (D321's foot), and the step's frames are four times fewer (0.1 ms past its first 1.6 ms).
 - The user: with the lid closed, the CPU board under the frosted glass half as bright.
+
+## D323. CoolSynth 808: a close cross on the panels; the CPU sheet without Play or slider (2026-11-24)
+
+- The user: a dialog has no close cross at its top right. The library and the controller setup closed only with
+  Escape; each has the Options window's cross now (red under the mouse), the controller's buttons moved left of it.
+- The user: the Play key and the time slider under the CPU sheet are not wanted. Gone, with its time line; the sheet
+  follows the sequencer's steps (D321) and nothing else. The drum sheets keep theirs.
+- Picked after D322: the VST3 next (over correcting the lifted lid's CPU board to the service notes).
