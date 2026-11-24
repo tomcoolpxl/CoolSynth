@@ -6575,3 +6575,20 @@ Still alone, as D304; each with what else it could have been.
 - The glass's shadow on the metal did not show (its own was cut at its edge): it is darker and falls down and to
   the right, away from the light on the upper left.
 - First written as D304 while the 303's session took D304 and D305; renumbered.
+
+## D307. CoolSynth 808: four themes, Roland the default; no screws; Silver's current yellow (2026-11-24)
+
+- The user: lose the two screws; make the light of the current in Silver more yellow; a switchable theme, with a
+  second one in Roland's colours, no mockup needed.
+- The screws at the board's top corners are gone (D303 put them there).
+- The board's colours now come from the theme: the metal, its printing, the copper and its light, the knobs and
+  switches on it, the dark keys and the step keys that are on, per beat group.
+  - Silver keeps every colour it had, but for the current: lit copper, dots and afterglow run yellow, not orange.
+  - Roland is the mockups' 5.1: a charcoal panel printed in white and orange, dark knobs with an orange line, dark
+    switch plates with light thumbs, and the steps red, orange, yellow and white by beat, dim when off.
+- Then the user: add the other two mockups as well, and make Roland the default. So four: Roland (the default),
+  Silver, Steel (5.2: blue-grey anodised, gold traces, orange) and Olive (5.3: olive drab, brass traces, signal red,
+  its keys and Accent knob red too).
+- File > Theme lists them. The older themes (Studio 1982, Paper, Night, Blueprint) belonged to the layouts before
+  layout 5 and left its board silver, so they are gone. The choice is kept by name, as the old setting counted those.
+- The four pins holding the glass stay (the user).
