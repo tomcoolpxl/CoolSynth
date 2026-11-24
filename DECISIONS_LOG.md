@@ -6534,3 +6534,22 @@ choice with what else it could have been.
   knob's drag one step.
 - Tests: the patterns and tools, the sequencer's timing, the processor (silence, sound within full scale, the same
   twice, 44.1 kHz, MIDI clock, a held key, MIDI notes, state and undo, recording, a chain once through), the panel.
+
+## D305. CoolSynth 303 overnight, after D304: the clock, a resting circuit, Mods, Drag MIDI, a VST3 (2026-11-24)
+
+Still alone, as D304; each with what else it could have been.
+- An incoming MIDI clock runs the transport, with CoolSynth 808's follower (start, stop, continue, song position,
+  its tempo bent toward the pulses); the top bar shows CLOCK and its tempo, and no clock of its own goes out.
+- The circuit rests while stopped: after 4 s below -80 dBFS with nothing held it is not solved (0.35 % of a core
+  instead of 66 %) and settles again before the next note. Other option: solve it always, as a hardware unit runs.
+- The Mods panel opens over the synth's sections with the trimmers only: TM3, TM4, TM5 and C11, the fitted unit's
+  as Stock (D275). The engine's voice takes them now (`Tb303Voice::setTrimmers`, the engine at af9f7a4, its
+  TB-303 and sequencer tests passing). The Devil Fish's controls are not in the engine; they wait.
+- Drag MIDI on the tool row: the edited pattern as a MIDI file, a note half its step as the gate, ties held, a slide
+  overlapping the next note (how a DAW's 303s read a slide), accents at 127 and others at 100, the middle C at 36.
+  Other options: slides as a CC, or the note's full step.
+- A VST3 beside the standalone (D296's frame: standalone first, also a plugin): in a DAW the host's transport runs
+  the sequencer (it plays from where the host is, a loop back starts the pattern again, the top bar shows HOST);
+  the test program hosts the built VST3 as a DAW would. Not yet tried in FL Studio.
+- CI on GitHub as the 808's; a listening switch (`COOLSYNTH303_RENDER`) writes the chain and the first line.
+- CoolSynth's engine pointer moves to af9f7a4 (which carries the 808 session's StepSequencer loop, f7c68eb, too).

@@ -108,8 +108,9 @@ How it is solved, as the 808 is:
 - The 303's sequencer: pitch, octave, accent, slide, note, tie and rest per step, played with the measured gate.
   Built in the app (`src/Sequencer`, D304); into the engine when CoolSynth plays the circuit.
 - The app in `tomcoolpxl/CoolSynth303` (D304): the voice at twice the host's rate, the drive and delay, MIDI in,
-  MIDI clock out, the 2.3 panel. Still to come: following an incoming clock, the lid and the full-screen circuit, the
-  Mods panel, the library, MIDI export.
+  MIDI clock out, the 2.3 panel. Then (D305) an incoming clock, the Mods panel's trimmers, Drag MIDI and a VST3 run
+  by the host's transport. Still to come: the lid and the full-screen circuit, the Devil Fish's controls, the
+  library.
 - The Devil Fish's changes, as trimmers.
 
 ## Open, for later
