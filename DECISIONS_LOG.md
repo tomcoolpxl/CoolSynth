@@ -6867,3 +6867,18 @@ Still alone, as D304; each with what else it could have been.
 - Checked: each drum struck alone, 62 of 66 nodes swing the way their recording does (the rest are ringing outputs,
   whose largest swing may go either way) and 63 come within three times of its size (most at 0.6: struck without
   accent, against the recordings' 8 V trigger). The feed costs some 8 % more in the Debug build while the lid is up.
+
+## D321. CoolSynth 808: the CPU sheet (2026-11-24)
+
+- Picked by the user after D320 (over the CPU board in green and red first). Roland's program is not public, so
+  the sheet's signals come from our sequencer, equivalent to the service notes' and not cycle exact (D312).
+- What it draws: the main board's CPU section as a schematic, like the drum sheets: the uPD650C-085 with its port
+  groups as labelled pins, the four uPD444C and their decoder, the clocks (IFT-1, the 1.9 ms interrupt, the
+  tempo), the trigger shaper (Q27, IC6) and the accent (Q31 to Q34, VR3), and the lines to the drums' gates; each
+  part clickable (over a block diagram, or a block diagram opening into schematics).
+- How it moves: live while the sequencer plays, each step lighting it; Play and the time slider run the last step
+  slowed, so the interrupts and the scan, the memory read, the 10 us pulse, the 1 ms common trigger and the accent
+  are seen (over one typical step only, or live at real speed only).
+- Its foot: a timing diagram of the step, as teaching tools pair one with a schematic: the interrupt clock, the four
+  scan lines, the memory's enable, PI-2, the common trigger, the accent and the drums' data lines, the time marked
+  (over the common trigger alone, or nothing).

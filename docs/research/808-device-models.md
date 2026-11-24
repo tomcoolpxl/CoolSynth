@@ -186,3 +186,6 @@ Decay rendered and is left out.
 So the measured 2SC1815-GR card takes the bass drum's sigh, the rim shot and the clap's tail away from both units, all
 through its low-current gain; today's simpler card agrees with them. The uPC4558's slew moves the claves and snare
 within the units' own spread, so the units cannot tell it from today's single pole.
+
+The user's choices after the comparison (2026-11-24): today's transistor card kept, and today's single-pole op-amps;
+no change to the netlists, the engine or the fitted parts.
