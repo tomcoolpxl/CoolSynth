@@ -290,6 +290,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     - Separate outputs per drum, the knobs automatable in the host, stems rendered (D311's order).
     - The CPU board under the lid in green and red, as the drums' copper (offered after D320, not picked).
     - The Release build's run-time cost against the Debug build's, not yet measured (D327; built in 183 s, D339).
+    - The library's load key says "pattern 1" where the panel says "01" (seen fixing its width, D339).
+    - The WAV export's drum files could come from the engine's per-drum taps in one render instead of one render a
+      drum (D343's taps; today each drum's file is its own render with the mask).
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
     percent of ngspice, then the trimmers fitted to Din Sync's real unit (`tools/references/tb303-dinsync`, local)
