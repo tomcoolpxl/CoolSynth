@@ -7240,3 +7240,7 @@ Still alone, as D304; each with what else it could have been.
   Only the 303's circuits use the chord method, so the 808 and CoolSynth are unchanged; the chord method on their
   circuits would be a speed-up of its own, to measure.
 - The timings in this entry are paired runs; another session's builds and tests loaded the machine in bursts.
+
+## D347. SIMD across voices: same-shaped circuits solved side by side, the same bits (2026-11-24)
+
+- Claimed for the SIMD-across-voices work (the same bits as each circuit solved alone); written in full when it lands.
