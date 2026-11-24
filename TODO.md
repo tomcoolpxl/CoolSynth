@@ -307,8 +307,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     three layouts as mockups for the user to choose from (D296, D299, `docs/design/mockups/coolsynth-303-layouts.html`;
     the frame in `docs/research/tb-303-app.md`); the charcoal with the keyboard as buttons or a piano (2.1, 2.2, D300); its keyboard is the piano (D301); 2.3 spans three octaves, the step panel down to its locks (D302). The app's first working version on 2.3, in
     `tomcoolpxl/CoolSynth303` (D304); then MIDI clock in, Mods (the trimmers), Drag MIDI and a VST3 run by the host's
-    transport (D305); the Devil Fish, on or off in the Mods panel (D309). To come there: the lid and the full-screen
-    circuit, the library, a listening pass and a try in FL Studio.
+    transport (D305); the Devil Fish, on or off in the Mods panel (D309); Under the Lid, the whole voice live (D310).
+    To come there: the library, a listening pass and a try in FL Studio.
 
 
 ## Standing notes

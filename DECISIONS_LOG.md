@@ -6655,6 +6655,19 @@ Still alone, as D304; each with what else it could have been.
 - Picked from two (live plus a slow replay, live only): live, plus a slow replay of the last notes on a time bar.
 - Picked from two (a mockup first, straight into the app): a mockup first, its currents from ngspice recordings of
   `voice.cir` (`docs/design/mockups/coolsynth-303-lid.html`).
+- The first mockup was one long strip with tall empty gaps between its rails; the user: badly laid out, too small.
+  Picked from three (three bands with labelled links, two bands with every wire drawn, service-notes style without
+  rails): two bands, every wire drawn. Oscillator and filter on top, envelope, accent and VCA below, each band with
+  its own rails; four wires cross between them in a channel; ENV MOD and the accent sweep moved down beside the
+  envelope that feeds them. Every name 9 px at Fit in a 1280 by 800 window; 126 nets and 202 parts matching the
+  netlist.
+- Built into the app (CoolSynth303 8742a77): the mockup exports its sheet as data (`?export=1`), the app draws it
+  with JUCE, the still parts cached once a view. The engine's `Tb303Lid` (engine 6e39e2a) reads the 377 series from
+  the solver's own state (a Tapped `CircuitWdf`: every node's voltage and every port's current), some 8 us a call;
+  the audio thread reads it 4000 times a second while the lid is open, into a ring of two seconds. Checked against
+  ngspice: the operating point within 2 % of each series' peak but for the filter's base currents (the engine's
+  2SC945 has no base recombination: a third low) and a few nodes only leaks hold; the thyristor's currents read 0
+  (the engine treats it as an event).
 
 ## D311. CoolSynth 808: its own options window, JUCE's bar in the theme; the DAW plan (2026-11-24)
 

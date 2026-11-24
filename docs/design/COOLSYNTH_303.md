@@ -110,7 +110,8 @@ How it is solved, as the 808 is:
 - The app in `tomcoolpxl/CoolSynth303` (D304): the voice at twice the host's rate, the drive and delay, MIDI in,
   MIDI clock out, the 2.3 panel. Then (D305) an incoming clock, the Mods panel's trimmers, Drag MIDI and a VST3 run
   by the host's transport. Then (D309) the Devil Fish, on or off in the Mods panel: his part values in the circuit,
-  Soft Attack and the Muffler as stand-ins. Still to come: the lid and the full-screen circuit, the library.
+  Soft Attack and the Muffler as stand-ins. Then (D310) Under the Lid: the whole voice on one sheet, live from the
+  engine's solve, with a slow replay. Still to come: the library.
 
 ## Open, for later
 
