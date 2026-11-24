@@ -323,8 +323,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     303, kept to match the 808), AVX2 left out; the output's soft saturation (the user's pick); the Devil Fish swept
     through the server (D336): clean, Filter FM's direction turned over to brighten as Whittle's; a start-up crash
     fixed on the way. The library (D338): 30 original lines and 12 sounds on a shelf, built; the user judges them by
-    feel. To come there: a try in FL Studio; the Devil Fish further by ear if the user wants (it is ours, the name
-    stays).
+    feel. Tried in FL Studio: it loads and plays; Drag MIDI unproven (the user may try it by hand); playback
+    started with a 118 % load spike. The rest's settle taken out of the note's first block (D340); left, each note's
+    attack (85 to 90 % of a block, the first after rest some 105 %) on a steady 75 %. The user's pick: both, the
+    same sound made faster first (the gate's edge, then the steady hot spots), then an accuracy setting as the
+    808's. The Devil Fish further by ear if the user wants (it is ours, the name stays).
 
 
 ## Standing notes
