@@ -7149,3 +7149,24 @@ Still alone, as D304; each with what else it could have been.
   Woken that way it plays sample for sample as settled on the note (0.000 % apart, stock and Devil Fish).
 - Left: the attack's own Newton steps, every note's; the first after rest still takes a block to some 105 % of its
   time. Put to the user next.
+
+## D341. The circuit solver made faster: the same bits first, then the 303's follower (2026-11-24)
+
+- After D340 the user picked both: the same sound made faster, then an accuracy setting as the 808's. Asked to look
+  online first and to carry what helps over to the 808 and CoolSynth; a research pass is running. The user is wary of
+  losing accuracy: a speed-up goes in on my own only if the output stays byte for byte the same, anything else is put
+  to the user with the measured difference.
+- Profiled with Visual Studio's collector (it runs unelevated) and xperf, the 303 voice at 96 kHz: the kept factors'
+  triangular solves 19 %, the dense products 17 %, the oscillator's follower 9 %, exp 9 %, the Newton loop 18 %.
+- The dense products (CircuitWdf: toDevices, toCapacitors, toProbes, K) kept by column and run eight, four, two rows
+  at a time in registers, each row summed in its own order: byte for byte the same over 12 s of the stock voice and
+  the Devil Fish, 76 % of a core down to 68 to 70 %. Tried and dropped: SSE2 pairs and the forward solve by column
+  (no faster); the rows' sums kept in memory (slower, 88 %). The engine's 272 tests pass, the 808's included.
+- The oscillator's follower (Q28, a Newton of its own 384,000 times a second) starts from the last step's answer, the
+  user's pick when offered: 3.8 Newton steps a call against 9.0, each answer within 1.8e-15 V of the fixed start's;
+  the voice 74 % down to 62 %. The rendered output moves by -115 dB rms (-80 dB at the worst sample, in bursts, not
+  growing): the main solvers stop a step earlier or later within their tolerances. Against a reference solved to
+  10 pV with a fresh Jacobian each step, the old code and this one are equally far off (-90.5 dB rms, -55.6 dB at
+  the worst sample, the same to three figures), so it costs no measurable accuracy.
+- Found on the way: the solver's own tolerances leave the voice -90.5 dB rms and -55.6 dB at the worst sample from
+  that tighter reference; parked in TODO to look into.
