@@ -6903,3 +6903,28 @@ Still alone, as D304; each with what else it could have been.
   note they marked (an accented square's start) and their ear (the real note a little plucked, ours like brass) set the work.
 - To fix, as the user picked: the note's start, RESONANCE at a quarter turn, and RESONANCE at full with CUTOFF high,
   each fitted to Din Sync's 25 sets and kept only where it brings them closer. Entry completed with the results.
+
+## D325. CoolSynth 808: the VST3 (2026-11-24)
+
+- D311's design, built after CoolSynth 303's VST3 (D305; the app's commit e2f0a79 names it D324, which the 303's
+  session had taken): in a DAW the pattern plays while the host plays, from
+  where it is, at its tempo; a loop back is a jump the step sequencer already takes. The host's notes play the
+  drums. No MIDI clock goes out of the plugin. The tempo readout shows the host's tempo, HOST beside it while the
+  host leads, and takes no edits; Tap is off.
+- Picked from three (in Options; a key on the transport strip; both): the switch "Follow the host's Play" in the
+  Options window, in place of the clock switches the plugin does not use; on by default, kept with the DAW's
+  project. Off, the pattern waits for its own Play key, at the host's tempo still.
+- Picked from three (a link in the system folder; a copy there after each build; the user VST3 folder, which FL
+  Studio does not scan): a link in C:\Program Files\Common Files\VST3 to the build's VST3, made once with one
+  Windows admin prompt. Ableton's, Bitwig's and FL Studio's help name that folder.
+- Checked: a test hosts the built VST3 as a DAW does (found, made, played under a host transport at 125 BPM,
+  -25.6 dBFS; silent when it stops; the host's note 36 plays the bass drum; its state given back as it was), and
+  the processor follows the host, stops with it, and with the switch off waits for its own Play at 125 BPM.
+- Next: try it in Ableton, FL Studio and Bitwig; then separate outputs per drum, knobs automatable, stems, and
+  learnable drum notes.
+
+## D326. CoolSynth 808: the sheets live in real time, nothing under them (2026-11-24)
+
+- The user: the drum sheets played a hit slowed down, with a Play key, a time slider and the output's graph under
+  them; nobody wants that. All gone from every sheet: a hit lights its sheet as it plays, in real time, as the lifted
+  lid does, with the same short afterglow; then the sheet rests until the next hit.
