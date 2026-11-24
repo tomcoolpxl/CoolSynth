@@ -6852,3 +6852,18 @@ Still alone, as D304; each with what else it could have been.
   with dots).
 - The whole board opens from the MASTER column, where the drums meet in the mix (over a key in the strip, or the
   Sheet menu only). The CPU board keeps its click for its own sheet, next after the whole board live.
+
+## D320. CoolSynth 808: the whole board and the lifted lid live from the engine (2026-11-24)
+
+- Picked by the user after D318 (whole board live). With D319's colours on the lid, both follow the same nodes:
+  up to nine a drum (its trigger, envelopes, core, output), those the whole board's sheet binds to its recordings.
+- In the engine: while the lid is lifted, each generator reports after each hit (every 1/24 ms for 8 ms, so short
+  pulses are seen, then every quarter of a millisecond, for 4 s) how far each of those nodes is from its rest; the
+  largest swing since the interface last took it is kept, with its sign. The rest comes from the recordings: read
+  at the hit, a circuit struck from rest has computed no sample yet, and the test caught the tom's and clap's
+  steady nodes read whole as swings. The board nodes rest within a few millivolts of their recordings.
+- In the app: each node on its recording's scale (1 its recorded peak), with the recordings' 60 ms afterglow; live
+  while the engine plays, the recordings otherwise. A louder or quieter setting shows as it sounds.
+- Checked: each drum struck alone, 62 of 66 nodes swing the way their recording does (the rest are ringing outputs,
+  whose largest swing may go either way) and 63 come within three times of its size (most at 0.6: struck without
+  accent, against the recordings' 8 V trigger). The feed costs some 8 % more in the Debug build while the lid is up.
