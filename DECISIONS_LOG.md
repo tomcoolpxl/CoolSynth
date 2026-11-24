@@ -7109,3 +7109,26 @@ Still alone, as D304; each with what else it could have been.
 - Built (CoolSynth303 `6ce5f77`): the Library key, the shelf, audition (no undo step; stop gives yours back), Load
   (one undo step; a line brings its tempo, a sound sets only what it names), Keep a copy, rename, Recycle Bin, your
   pattern or the panel's sound kept from the Yours shelves. The 42 entries are for the user to judge by feel.
+
+## D339. CoolSynth 808: an accuracy setting; the parked fixes (2026-11-24)
+
+- The user picked from the parked list: the library's cut key, the hats' and toms' sheets live, the CPU board to
+  the service notes, the cowbell's CPU measured; then outputs per drum with automation, and the CPU board lit.
+- Measured (each drum on every step at 120 BPM, offline, share of one core, Debug build): nothing struck 6.5 %,
+  bass drum 6.5, toms 9, rim shot 11, snare 14, clap 15, closed hat 26, cymbal 33, open hat 34, cowbell 41.
+- Picked (options: profile and speed up with the same sound; an accuracy setting; both; leave it): an accuracy
+  setting, as u-he Diva's Draft to Divine. Its details picked too: two lower levels (over one: no oversampling, or
+  the VCAs only); the export always at Best (over following the setting); "Accuracy" on the Audio page, the Host
+  page in a plugin (over "Quality" on the Panel page). Built:
+  - Best as before. Lighter: the metal's five swing VCAs only while their drum sounds (D255's other way) and its
+    circuits' Newton at 10 uV (D259's setting). Lightest: that and the voices at the host's rate, not near 96 kHz.
+  - Measured again: cowbell 49 % Best, 21 Lighter, 14 Lightest; open hat 39, 17, 10; closed hat 28, 9, 6; cymbal
+    38, 25, 16; snare 15, 15, 9. Lighter against Best in rendered beats: the same peaks, at most 0.5 dB in a third of
+    an octave (the hats). Lightest: the cymbal up to 3.2 dB (6-10 kHz -2.6 dB), the hats -7 dB above 16 kHz and 2 dB
+    lower peaks, the cowbell up to 1.8 dB. Files in CoolSynth808's listening/accuracy.
+- The library's keys were measured in the plain font, drawn in the tracked capitals: measured as drawn (picked over a
+  shorter word, or both); LOAD INTO PATTERN whole.
+- The hats' sheet: a closed hat alone starts it and the engine's capture too, unless an open hat's runs (picked over
+  every hat restarting it). The toms' sheet is to show the struck tom's own circuit and values (picked over any tom
+  moving the low tom's drawing); still to build.
+- The VST3 relinked now FL Studio has let go of it; the Release build with whole-program optimisation built (183 s).
