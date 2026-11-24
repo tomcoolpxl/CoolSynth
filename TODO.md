@@ -324,14 +324,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     `tomcoolpxl/CoolSynth303` (D304); then MIDI clock in, Mods (the trimmers), Drag MIDI and a VST3 run by the host's
     transport (D305); the Devil Fish, on or off in the Mods panel (D309); Under the Lid, the whole voice live (D310).
     The listening pass against Din Sync's unit (D324): the note's start, RESONANCE's track and its loop fitted.
-    To come there: the library, a try in FL Studio, and the Devil Fish tuned by ear to whatever sounds best (the
-    user's word: it is ours, the name stays); in it, the output clipping past 0 dBFS at full Overdrive (the MCP's
-    first recording, +0.9 dBFS): the user wonders whether clipping is sometimes wanted, so the choice between an
-    analogue-like soft saturation at the output and a level that stays under full scale goes to them, measured.
-    Asked on 2026-11-24, in this order: an MCP server in the app as
-    CoolSynth's (D225), so Claude drives and hears it; then the Devil Fish's tuning through it; the Release build
-    optimised as a whole, as the 808's (D327: /GL with /LTCG, timed), AVX2 left out (CoolSynth's test: bit for bit
-    the same, 7.21 % of real time against 7.17 %).
+    Done on 2026-11-24: the MCP server (D332, port 47633); the Release build optimised as a whole (no faster for the
+    303, kept to match the 808), AVX2 left out; the output's soft saturation (the user's pick); the Devil Fish swept
+    through the server (D336): clean, Filter FM's direction turned over to brighten as Whittle's; a start-up crash
+    fixed on the way. To come there: the library, a try in FL Studio; the Devil Fish further by ear if the user
+    wants (it is ours, the name stays).
 
 
 ## Standing notes
