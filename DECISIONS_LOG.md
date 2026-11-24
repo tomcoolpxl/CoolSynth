@@ -6909,6 +6909,13 @@ Still alone, as D304; each with what else it could have been.
   0.2 dB of the unit's on the sets whose filter stands still. Not the cause, tried: C72, C13, a DC step. Engine
   `96cac22`, CoolSynth303 `9a6bbbf`; `docs/research/tb-303-circuit.md`, its section on this pass.
 - The accent's second cycle stays 1.3 dB loud on set A5 only (every other knob at 0); C5 matches within 0.4 dB. Left.
+- RESONANCE at a quarter turn, done: Din Sync's marks fall on our straight track at 0.10 to 0.15, 0.5, 0.88 and 1, an
+  S-shaped track (Whittle's "log curve at both ends"); `Tb303Voice::resonanceTrack`, t^2 / (t^2 + (1 - t)^2). A
+  quarter turn within 1.7 dB of the unit where it was 4.5 dB quiet; half and full unchanged. Engine `e327667`,
+  CoolSynth303 `a7369f3`. A cap at full resonance was tried and dropped (A2 worse, E2 no better).
+- RESONANCE at full with CUTOFF high, found: not the pot. Both units whistle above 12.8 kHz where the envelope sweeps
+  the cutoff to its top; ours 6.4 dB louder and higher (12.8 to 20 kHz -31.7 against -38.1 dBFS; 6.4 to 12.8 kHz
+  -53.1 against -47.4). Below 6.4 kHz ours is some 1.5 dB under the unit. Put to the user.
 - The pass's page (`tools/listening-pass` in CoolSynth303) is kept as a tool; the user hears clips as separate files.
 
 ## D325. CoolSynth 808: the VST3 (2026-11-24)
@@ -6943,3 +6950,13 @@ Still alone, as D304; each with what else it could have been.
   whole-program optimisation in Release (/GL with /LTCG, the engine's and JUCE's code too), the sound unchanged.
   The user recalled AVX2 tested without benefit: CoolSynth's test found it bit for bit the same and no faster
   (7.21 % of real time against 7.17 %), so it stays out. The everyday Debug build is not touched.
+
+## D328. CoolSynth 808: the VST3 tried in FL Studio 2025 (2026-11-24)
+
+- Driven on the user's screen, at the user's word: FL's Plugin Manager found CoolSynth 808 through the link in the
+  system VST3 folder (VST3, 64-bit, a synth, status ok); loaded on a channel, its panel opened whole at FL's 130 BPM.
+- FL's Play ran the 808's pattern from FL's position (its STOP key lit, FL's master meter moving) and FL's Stop
+  stopped it. In the plugin Options showed "Follow the host's Play" with no audio devices; switched off, FL played
+  and the pattern stayed stopped, and three C3 notes in FL's piano roll (MIDI 36) played the bass drum.
+- Found: the tempo readout cut HOST to HOS (sized for BPM): fixed. FL's step sequencer sends C5 (MIDI 60), which
+  the 808 maps to no drum (it takes General MIDI's notes): that waits for the learnable drum notes.
