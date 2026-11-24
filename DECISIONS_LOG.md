@@ -7076,3 +7076,17 @@ Still alone, as D304; each with what else it could have been.
   captured a constructor's local reference (`[&p]`) and kept its address. Every such capture binds the object now
   (`[&p = p]`); 0 crashes in 28 starts. A crash leaves its stack in %TEMP%\CoolSynth303\crash.txt. CoolSynth303
   `3375c5a`. The user: do not start and stop the app over and over (some 40 starts went into the hunt).
+
+## D337. CoolSynth 808: the choices I made alone in D334 and D335, put to the user (2026-11-24)
+
+- The user, angry that I had decided them myself while building. Each asked as a pick list; the answers:
+- The seamless loop played round, its last time through kept (over folding the tail in, as first picked in D331:
+  that would let an open hat ring through the closed hat that chokes it).
+- Files only for the drums that play (over all 11 always); stereo files (over mono, or a choice in the dialog);
+  Times as keys 1, 2, 4, 8, 16 (over a dragged number, or both).
+- A drum's file by the engine's mask (over the other Levels at zero, which do not add up to the mix); the ring-out
+  ending under -100 dB for 0.25 s (over -80 dB, or a fixed time); the save window at the last folder, else Music
+  (over Documents\CoolSynth 808\Exports, or beside the project); in a plugin the host's tempo (over the project's).
+- The export dialog kept as drawn (over mockups first).
+- Options opens on the page last shown (over always the first); the MIDI list scrolls past eight inputs (over a
+  growing window); the help lines under Host and Controller removed (as the mockup), the drum notes' line kept.
