@@ -212,64 +212,93 @@ canvas.board { display: block; position: absolute; }
 #v1 .mods { right: 18px; top: 52px; }
 
 /* ===================== 2: TAL-Vocoder's charcoal ===================== */
-#v2 { background: #26272a; }
-#v2 .bar { position: absolute; left: 0; right: 0; top: 0; height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 14px 0 60px;
+.tal { background: #26272a; }
+.tal .bar { position: absolute; left: 0; right: 0; top: 0; height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 14px 0 60px;
   background: #1c1d1f; border-bottom: 1px solid #111; }
-#v2 .preset { display: flex; align-items: center; gap: 6px; }
-#v2 .preset .name { min-width: 210px; height: 26px; display: grid; place-items: center; border-radius: 3px; background: #111214; box-shadow: inset 0 0 0 1px #3a3b3f; font-size: 12px; color: #e6e6e6; letter-spacing: .03em; }
-#v2 .stencil { position: absolute; left: 0; top: 42px; bottom: 0; width: 52px; display: flex; align-items: center; justify-content: center; background: #1f2023; border-right: 1px solid #111; }
-#v2 .stencil span { transform: rotate(-90deg); white-space: nowrap; font-family: var(--stencil); font-weight: 800; font-size: 40px; letter-spacing: .08em; color: #d9d9d6; }
-#v2 .stencil span em { font-style: normal; color: #e8742a; }
-#v2 .sect { position: absolute; border: 1px solid #6b6d72; border-radius: 9px; padding: 22px 12px 10px; }
-#v2 .sect > .cap { position: absolute; left: 10px; top: -1px; transform: translateY(-50%); padding: 0 6px; background: #26272a;
+.tal .preset { display: flex; align-items: center; gap: 6px; }
+.tal .preset .name { min-width: 210px; height: 26px; display: grid; place-items: center; border-radius: 3px; background: #111214; box-shadow: inset 0 0 0 1px #3a3b3f; font-size: 12px; color: #e6e6e6; letter-spacing: .03em; }
+.tal .stencil { position: absolute; left: 0; top: 42px; bottom: 0; width: 52px; display: flex; align-items: center; justify-content: center; background: #1f2023; border-right: 1px solid #111; }
+.tal .stencil span { transform: rotate(-90deg); white-space: nowrap; font-family: var(--stencil); font-weight: 800; font-size: 40px; letter-spacing: .08em; color: #d9d9d6; }
+.tal .stencil span em { font-style: normal; color: #e8742a; }
+.tal .sect { position: absolute; border: 1px solid #6b6d72; border-radius: 9px; padding: 22px 12px 10px; }
+.tal .sect > .cap { position: absolute; left: 10px; top: -1px; transform: translateY(-50%); padding: 0 6px; background: #26272a;
   font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #e9e9e6; }
-#v2 .arrow { position: absolute; width: 14px; height: 14px; color: #8d8f94; display: grid; place-items: center; font-size: 13px; }
-#v2 .lbl { color: #bfc0c3; }
-#v2 .knob .lbl { color: #d7d8da; }
-#v2 .face .knob { gap: 14px; } /* room for the range's 0 and 10 above the name */
-#v2 .foot { position: absolute; right: 16px; bottom: 6px; font-size: 10px; letter-spacing: .06em; color: #75777c; }
-#v2 .tbtn { position: relative; display: inline-flex; align-items: center; justify-content: center; height: 24px; min-width: 34px; padding: 0 8px; margin-top: 8px; border: 0; border-radius: 2px; cursor: pointer;
+.tal .arrow { position: absolute; width: 14px; height: 14px; color: #8d8f94; display: grid; place-items: center; font-size: 13px; }
+.tal .lbl { color: #bfc0c3; }
+.tal .knob .lbl { color: #d7d8da; }
+.tal .face .knob { gap: 14px; } /* room for the range's 0 and 10 above the name */
+.tal .foot { position: absolute; right: 16px; bottom: 6px; font-size: 10px; letter-spacing: .06em; color: #75777c; }
+.tal .tbtn { position: relative; display: inline-flex; align-items: center; justify-content: center; height: 24px; min-width: 34px; padding: 0 8px; margin-top: 8px; border: 0; border-radius: 2px; cursor: pointer;
   background: #c9cacc; color: #1b1c1e; font-weight: 700; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 1px 0 #000; }
-#v2 .tbtn::before { content: ''; position: absolute; top: -8px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #4a1c17; }
-#v2 .tbtn.is { background: #e8742a; color: #1a120c; }
-#v2 .tbtn.is::before { background: #ff3b28; box-shadow: 0 0 6px 1px rgba(255,60,40,.8); }
-#v2 .tbtn.plain::before { display: none; }
-#v2 .tbtn.plain { margin-top: 0; }
-#v2 .fader { display: flex; flex-direction: column; align-items: center; gap: 6px; user-select: none; cursor: ns-resize; }
-#v2 .fader .trk { position: relative; width: 26px; height: 112px;
+.tal .tbtn::before { content: ''; position: absolute; top: -8px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #4a1c17; }
+.tal .tbtn.is { background: #e8742a; color: #1a120c; }
+.tal .tbtn.is::before { background: #ff3b28; box-shadow: 0 0 6px 1px rgba(255,60,40,.8); }
+.tal .tbtn.plain::before { display: none; }
+.tal .tbtn.plain { margin-top: 0; }
+.tal .fader { display: flex; flex-direction: column; align-items: center; gap: 6px; user-select: none; cursor: ns-resize; }
+.tal .fader .trk { position: relative; width: 26px; height: 112px;
   background: repeating-linear-gradient(0deg, transparent 0 10px, #4b4d52 10px 11px), linear-gradient(90deg, transparent 11px, #0e0f10 11px 15px, transparent 15px); }
-#v2 .fader .capf { position: absolute; left: 1px; width: 24px; height: 14px; border-radius: 2px; background: linear-gradient(#3b3c40, #16171a); box-shadow: 0 2px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12); }
-#v2 .fader .capf::after { content: ''; position: absolute; left: 3px; right: 3px; top: 6px; height: 2px; background: #e8742a; }
+.tal .fader .capf { position: absolute; left: 1px; width: 24px; height: 14px; border-radius: 2px; background: linear-gradient(#3b3c40, #16171a); box-shadow: 0 2px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12); }
+.tal .fader .capf::after { content: ''; position: absolute; left: 3px; right: 3px; top: 6px; height: 2px; background: #e8742a; }
 /* the sequencer, flat, as TAL draws its controls */
-#v2 .seqsect { display: flex; flex-direction: column; gap: 8px; }
-#v2 .row { display: flex; align-items: center; gap: 10px; }
-#v2 .main { flex: 1; display: grid; grid-template-columns: 1fr 236px; column-gap: 14px; min-height: 0; }
-#v2 .btn { background: #3a3b3f; box-shadow: 0 0 0 1px #111, inset 0 1px 0 rgba(255,255,255,.08); text-shadow: none; }
-#v2 .btn.hot { background: #e8742a; color: #1a120c; }
-#v2 .seg .btn.is, #v2 .btn.tg.is { background: #c9cacc; color: #1b1c1e; }
-#v2 .slot, #v2 .cblk { background: #333438; box-shadow: 0 0 0 1px #111; color: #9fa1a5; }
-#v2 .slot.has, #v2 .cblk { background: #45474c; color: #eee; }
-#v2 .slot.edit { box-shadow: 0 0 0 2px #e9e9e6; }
-#v2 .slot.play, #v2 .cblk.cur { background: #e8742a; color: #1a120c; }
-#v2 .skey { --g: #3a3b3f; box-shadow: 0 0 0 1px #111; border-radius: 2px; color: #a5a7ab; }
-#v2 .skey.on { background: #e8742a; box-shadow: none; }
-#v2 .skey.lens.on { background: #c9cacc; color: #1b1c1e; }
-#v2 .skey.lens::before { background: #4a1c17; }
-#v2 .skey.lens.on::before { background: #ff3b28; box-shadow: 0 0 6px 1px rgba(255,60,40,.8); }
-#v2 .skey.txt.on { background: #c9cacc; color: #1b1c1e; }
-#v2 .pcol { background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 calc(100%/13), rgba(0,0,0,.18) calc(100%/13) calc(200%/13)); border-radius: 2px; }
-#v2 .pcol .cap { border-radius: 2px; background: #e8742a; box-shadow: none; }
-#v2 .pcol.acc .cap { background: #ffab6b; box-shadow: 0 0 0 1px #ffe0c4; }
-#v2 .pcol.ph .cap { background: #ffd2a6; box-shadow: 0 0 12px rgba(255,160,70,.8); }
-#v2 .side { background: transparent; box-shadow: none; border: 1px solid #6b6d72; border-radius: 9px; }
-#v2 .valbox { background: #111214; box-shadow: inset 0 0 0 1px #3a3b3f; }
-#v2 .tkeys .w { background: #d9d9d6; box-shadow: 0 0 0 1px #111; }
-#v2 .tkeys .b { background: #18191b; }
-#v2 .mods { left: 60px; top: 50px; }
-#v2 .lidwrap { position: absolute; left: 60px; right: 10px; top: 52px; height: 186px; perspective: 1400px; }
-#v2 .lidwrap canvas.board { inset: 0; width: 100%; height: 100%; background: #141416; border-radius: 9px; }
-#v2 .face { position: absolute; inset: 0; transform-origin: 50% 0; transition: transform .8s cubic-bezier(.3,.1,.2,1), opacity .8s; background: #26272a; }
-#v2.lifted .face { transform: rotateX(80deg); opacity: 0; pointer-events: none; }
+.tal .seqsect { display: flex; flex-direction: column; gap: 8px; }
+.tal .row { display: flex; align-items: center; gap: 10px; }
+.tal .main { flex: 1; display: grid; grid-template-columns: 1fr 236px; column-gap: 14px; min-height: 0; }
+.tal .btn { background: #3a3b3f; box-shadow: 0 0 0 1px #111, inset 0 1px 0 rgba(255,255,255,.08); text-shadow: none; }
+.tal .btn.hot { background: #e8742a; color: #1a120c; }
+.tal .seg .btn.is, .tal .btn.tg.is { background: #c9cacc; color: #1b1c1e; }
+.tal .slot, .tal .cblk { background: #333438; box-shadow: 0 0 0 1px #111; color: #9fa1a5; }
+.tal .slot.has, .tal .cblk { background: #45474c; color: #eee; }
+.tal .slot.edit { box-shadow: 0 0 0 2px #e9e9e6; }
+.tal .slot.play, .tal .cblk.cur { background: #e8742a; color: #1a120c; }
+.tal .skey { --g: #3a3b3f; box-shadow: 0 0 0 1px #111; border-radius: 2px; color: #a5a7ab; }
+.tal .skey.on { background: #e8742a; box-shadow: none; }
+.tal .skey.lens.on { background: #c9cacc; color: #1b1c1e; }
+.tal .skey.lens::before { background: #4a1c17; }
+.tal .skey.lens.on::before { background: #ff3b28; box-shadow: 0 0 6px 1px rgba(255,60,40,.8); }
+.tal .skey.txt.on { background: #c9cacc; color: #1b1c1e; }
+.tal .pcol { background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 calc(100%/13), rgba(0,0,0,.18) calc(100%/13) calc(200%/13)); border-radius: 2px; }
+.tal .pcol .cap { border-radius: 2px; background: #e8742a; box-shadow: none; }
+.tal .pcol.acc .cap { background: #ffab6b; box-shadow: 0 0 0 1px #ffe0c4; }
+.tal .pcol.ph .cap { background: #ffd2a6; box-shadow: 0 0 12px rgba(255,160,70,.8); }
+.tal .side { background: transparent; box-shadow: none; border: 1px solid #6b6d72; border-radius: 9px; }
+.tal .valbox { background: #111214; box-shadow: inset 0 0 0 1px #3a3b3f; }
+.tal .tkeys .w { background: #d9d9d6; box-shadow: 0 0 0 1px #111; }
+.tal .tkeys .b { background: #18191b; }
+.tal .mods { left: 60px; top: 50px; }
+.tal .lidwrap { position: absolute; left: 60px; right: 10px; top: 52px; height: 186px; perspective: 1400px; }
+.tal .lidwrap canvas.board { inset: 0; width: 100%; height: 100%; background: #141416; border-radius: 9px; }
+.tal .face { position: absolute; inset: 0; transform-origin: 50% 0; transition: transform .8s cubic-bezier(.3,.1,.2,1), opacity .8s; background: #26272a; }
+.tal.lifted .face { transform: rotateX(80deg); opacity: 0; pointer-events: none; }
+
+/* ===================== 2.1 and 2.2: the keyboard section ===================== */
+.tal .kbsect { padding: 0; }
+.tal .kbsect .kk { position: absolute; }
+/* as buttons: square keys, the sharps' row above the naturals' as the 303 lays them out */
+.tal .kbtn { position: absolute; width: 46px; height: 32px; border: 0; border-radius: 2px; cursor: pointer; display: grid; place-items: center;
+  font-weight: 700; font-size: 11px; letter-spacing: .06em; box-shadow: 0 1px 0 #000; }
+.tal .kbtn.nat { background: #c9cacc; color: #1b1c1e; }
+.tal .kbtn.sharp { background: #4a4c51; color: #e6e6e6; }
+.tal .kbtn.hit { background: #e8742a; color: #1a120c; }
+.tal .kbtn.cur { box-shadow: 0 0 0 2px #e9e9e6, 0 1px 0 #000; }
+/* as a piano: white keys and black keys */
+.tal .piano { position: absolute; height: 88px; }
+.tal .piano .pw { position: absolute; top: 0; width: 42px; height: 88px; border-radius: 0 0 4px 4px; cursor: pointer;
+  background: linear-gradient(#f1f1ef, #cfd0d2); box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 0 0 1px #111; }
+.tal .piano .pb { position: absolute; top: 0; width: 26px; height: 54px; border-radius: 0 0 3px 3px; cursor: pointer; z-index: 2;
+  background: linear-gradient(#3a3b3f, #121315); box-shadow: 0 0 0 1px #000, inset 0 -3px 0 rgba(255,255,255,.08); }
+.tal .piano .pw span, .tal .piano .pb span { position: absolute; left: 0; right: 0; bottom: 6px; text-align: center; font-weight: 700; font-size: 10px; letter-spacing: .05em; color: #4a4c51; }
+.tal .piano .pb span { color: #aeb0b4; bottom: 5px; font-size: 9px; }
+.tal .piano .hit { background: linear-gradient(#ffb67a, #e8742a) !important; }
+.tal .piano .hit span { color: #1a120c !important; }
+.tal .piano .cur { box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 0 0 1px #111, inset 0 0 0 2px #e8742a; }
+.tal .kbnote { position: absolute; font-size: 11px; line-height: 1.45; color: #9fa1a5; letter-spacing: .02em; }
+.tal .kbnote b { color: #e9e9e6; font-weight: 600; }
+/* the plainer tool row of 2.1 and 2.2: groups, each named */
+.tools2 { display: flex; align-items: center; gap: 6px; }
+.tools2 .grp { display: flex; align-items: center; gap: 5px; padding-right: 10px; margin-right: 4px; border-right: 1px solid #45474c; }
+.tools2 .grp:last-child { border-right: 0; }
+.tools2 .gl { font-weight: 700; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: #8d8f94; margin-right: 2px; }
 
 /* ===================== 3: the original's silver face ===================== */
 #v3 { background: #0f0f10; }
@@ -336,10 +365,12 @@ canvas.board { display: block; position: absolute; }
 <div id="chrome">
   <b>303 layouts</b>
   <button class="tab is" data-v="1">1 The etched board</button>
-  <button class="tab" data-v="2">2 Charcoal, as TAL draws</button>
+  <button class="tab" data-v="2">2 Charcoal</button>
+  <button class="tab" data-v="4">2.1 Charcoal, key buttons</button>
+  <button class="tab" data-v="5">2.2 Charcoal, piano</button>
   <button class="tab" data-v="3">3 The silver face</button>
   <span class="sp"></span>
-  <span class="note">Mockups: a pattern runs and lights the panel and the circuit, no sound. Space plays and stops.</span>
+  <span class="note">No sound · Space plays and stops</span>
   <button class="tab" id="modsBtn">Mods panel</button>
   <button class="tab" id="saverBtn">Full-screen circuit</button>
 </div>
@@ -361,7 +392,7 @@ canvas.board { display: block; position: absolute; }
 </section>
 
 <!-- 2: TAL-Vocoder's charcoal -->
-<section class="view" id="v2">
+<section class="view tal" id="v2">
   <div class="bar" id="v2bar"></div>
   <div class="stencil"><span>COOLSYNTH <em>303</em></span></div>
   <div class="lidwrap"><canvas class="board" id="b2"></canvas><div class="face" id="v2face"></div></div>
@@ -375,6 +406,10 @@ canvas.board { display: block; position: absolute; }
   </div>
   <div class="foot">CoolSynth 303 · CoolSynth · mockup</div>
 </section>
+
+<!-- 2.1 and 2.2: the charcoal layout with the silver face's keyboard, as buttons and as a piano (filled by talMarkup) -->
+<section class="view tal" id="v4"></section>
+<section class="view tal" id="v5"></section>
 
 <!-- 3: the original's silver face -->
 <section class="view" id="v3">
@@ -787,7 +822,7 @@ function buildGrid(host, rowH = 22, pitchH = 150, motionH = 40) {
   });
 }
 // The tools on the right: the picked step, and its locks (turn one of its knobs to lock its value on that step)
-function buildSide(host, pickOf = () => S.pick) {
+function buildSide(host, pickOf = () => S.pick, compact = false) {
   const stepSec = el('div', 'tsec'), head = el('div', 'lbl head'); stepSec.append(head);
   const noteRow = el('div', 'trow'), nv = el('span', 'valbox');
   const change = f => () => { snapshot(); f(shown().steps[pickOf()]); paintAll(); };
@@ -804,7 +839,7 @@ function buildSide(host, pickOf = () => S.pick) {
   const lockSec = el('div', 'tsec'); lockSec.append(el('div', 'lbl head', 'Locks on this step'));
   const lk = el('div', 'tknobs'); LOCKABLE.forEach(([key, name]) => lk.append(knob(name, key, 28, { lockStep: pickOf, accent: key === 'accent' })));
   lockSec.append(lk, btn('Clear locks', '', change(x => { x.lock = {}; })));
-  lockSec.append(el('div', 'lbl thint', 'Turn a knob here to hold its value on this step; the panel\'s knob shows it as the step plays.'));
+  if (!compact) lockSec.append(el('div', 'lbl thint', 'Turn a knob here to hold its value on this step; the panel\'s knob shows it as the step plays.'));
   host.append(stepSec, lockSec);
   painters.push(() => {
     const i = pickOf(), x = shown().steps[i];
@@ -843,8 +878,10 @@ function wireAll(scope) {
   scope.querySelectorAll('[data-chain]').forEach(buildChain);
   scope.querySelectorAll('[data-transpose]').forEach(buildTranspose);
   scope.querySelectorAll('[data-tools]').forEach(h => buildTools(h));
-  scope.querySelectorAll('[data-grid]').forEach(h => buildGrid(h, 22, +h.dataset.grid || 150));
-  scope.querySelectorAll('[data-side]').forEach(h => buildSide(h));
+  scope.querySelectorAll('[data-grid]').forEach(h => buildGrid(h, +h.dataset.rowh || 22, +h.dataset.grid || 150, +h.dataset.motion || 40));
+  scope.querySelectorAll('[data-side]').forEach(h => buildSide(h, undefined, h.dataset.side === 'compact'));
+  scope.querySelectorAll('[data-tools2]').forEach(buildTools2);
+  scope.querySelectorAll('[data-capstatus]').forEach(buildCapStatus);
 }
 
 // ---------------------------------------------------------------- the circuit generator (as the 808's)
@@ -1077,11 +1114,11 @@ function fader(label, key) {
   painters.push(paint); paint();
   return f;
 }
-function build2() {
-  const root = $('v2');
+function build2(vid = 'v2') {
+  const root = $(vid);
   wireAll(root);
   // The top bar: the preset between two arrows, then new, save, undo, redo; the transport at the right
-  const bar = $('v2bar');
+  const bar = $(vid + 'bar');
   const preset = el('div', 'preset'); const nm = el('div', 'name', 'Acid · Line 1');
   preset.append(talBtn('‹', null, true), nm, talBtn('›', null, true));
   const play = el('button', 'tbtn plain', 'Play'); play.onclick = () => setPlaying(!S.playing);
@@ -1094,7 +1131,7 @@ function build2() {
   const sp = el('span', ''); sp.style.flex = '1';
   bar.append(sp, play, tempo, el('button', 'tbtn plain', 'Tap'), rec, el('span', '', '&nbsp;'), el('button', 'tbtn plain', 'Library'), el('button', 'tbtn plain', 'File'), mods, lid);
   // The synth's sections, outlined, in the signal's order with arrows between
-  const face = $('v2face');
+  const face = $(vid + 'face');
   const sect = (name, x, w) => { const s = el('div', 'sect'); s.style.cssText = `left:${x}px;top:10px;width:${w}px;height:170px`; s.append(el('span', 'cap', name)); face.append(s); return s; };
   const at = (s, node, x, y) => { node.style.position = 'absolute'; node.style.left = x + 'px'; node.style.top = y + 'px'; s.append(node); return node; };
   const kt = (label, key, size = 44, opts = {}) => knob(label, key, size, { style: 'tal', ...opts });
@@ -1122,8 +1159,140 @@ function build2() {
   const times = ['1/16', '1/8', '3/16', '1/4'];
   at(s6, kt('Time', 'time', 40, { live: false, fmt: v => times[Math.round(v * 3)] }), 10, 36);
   at(s6, fader('Feedback', 'fb'), 96, 18); at(s6, fader('Mix', 'mix'), 150, 18);
-  new Board($('b2'), rowLayout(20, 1190, 24, 166, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
-  buildMods($('v2mods'), 'tal');
+  new Board($('b' + vid.slice(1)), rowLayout(20, 1190, 24, 166, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
+  buildMods($(vid + 'mods'), 'tal');
+}
+
+// ---------------------------------------------------------------- 2.1 and 2.2: charcoal with the keyboard
+// The charcoal layout with a Keyboard section between the synth and the sequencer: the silver face's keys, as square
+// buttons (2.1) or as a piano (2.2). A key writes its note at the picked step and moves on, or transposes the pattern.
+function talMarkup(vid, kind) {
+  const n = vid.slice(1);
+  $(vid).innerHTML = `
+  <div class="bar" id="${vid}bar"></div>
+  <div class="stencil"><span>COOLSYNTH <em>303</em></span></div>
+  <div class="lidwrap"><canvas class="board" id="b${n}"></canvas><div class="face" id="${vid}face"></div></div>
+  <div class="mods" id="${vid}mods"></div>
+  <div class="sect kbsect" id="${vid}keys" style="left:60px;right:10px;top:254px;height:122px"><span class="cap">Keyboard</span></div>
+  <div class="sect seqsect" style="left:60px;right:10px;top:392px;bottom:24px">
+    <span class="cap" data-capstatus>Sequencer</span>
+    <div class="row"><div data-prow></div><div data-ab></div><span class="lbl" style="margin-left:12px">Chain</span><div data-chain></div></div>
+    <div data-tools2></div>
+    <div class="main"><div data-grid="114" data-rowh="20" data-motion="36"></div><div class="side" data-side="compact"></div></div>
+  </div>
+  <div class="foot">CoolSynth 303 · CoolSynth · mockup</div>`;
+}
+// The sequencer's caption says what is edited, what plays and what comes next (the status line of the others)
+function buildCapStatus(host) {
+  const name = i => String(i + 1).padStart(2, '0');
+  painters.push(() => {
+    let t = `Sequencer · editing ${name(S.editing)}`;
+    if (S.playing) { t += ` · hearing ${name(S.hearing)}`; if (S.queued !== null) t += ` · next ${name(S.queued)} in ${16 - S.step - 1} steps`; else if (S.chainOn) t += ' · chain'; }
+    if (S.transpose) t += ` · transposed ${S.transpose > 0 ? '+' : ''}${S.transpose}`;
+    if (S.rec) t += ' · recording knob moves';
+    host.textContent = t;
+  });
+}
+// The tool row, plainer: each group named, Mutate's choices in its own small menu
+function buildTools2(host) {
+  host.className = 'tools2';
+  const act = f => () => { snapshot(); f(); paintAll(); };
+  const p = () => shown();
+  const grp = (label, ...nodes) => { const g = el('div', 'grp'); if (label) g.append(el('span', 'gl', label)); g.append(...nodes); host.append(g); return g; };
+  const tb = (t, f, cls) => { const b = el('button', 'tbtn plain' + (cls ? ' ' + cls : ''), t); b.onclick = f; return b; };
+  const gen = tb('Generate', act(() => generate(Math.random, S.scale, S.root, p())), 'is');
+  gen.title = 'A new line in the key: notes, rests, ties, accents and slides';
+  const mutate = tb('Mutate', act(() => {
+    const R = Math.random, sc = SCALES[S.scale], st = p().steps;
+    for (let k = 0; k < 4; k++) { const i = Math.floor(R() * 16), x = st[i];
+      if (S.mut.pitch && x.g !== 'rest') x.n = (sc[Math.floor(R() * sc.length)] + S.root) % 12;
+      if (S.mut.accent) x.a = R() < .3; if (S.mut.slide) x.s = R() < .25; if (S.mut.rest) x.g = R() < .2 ? 'rest' : R() < .2 ? 'tie' : 'note'; }
+  }));
+  mutate.title = 'Changes four steps at random: what may change is set in the menu beside it';
+  const what = tb('▾', ev => popover(ev, pop => {
+    pop.append(el('div', 'lbl', 'Mutate may change'));
+    [['pitch', 'Notes'], ['accent', 'Accents'], ['slide', 'Slides'], ['rest', 'Rests and ties']].forEach(([key, t]) => {
+      const b = btn(t, 'tg item' + (S.mut[key] ? ' is' : ''), () => { S.mut[key] = !S.mut[key]; b.classList.toggle('is', S.mut[key]); });
+      pop.append(b);
+    });
+  }));
+  what.style.minWidth = '24px';
+  grp('New line', gen, mutate, what);
+  const root = el('span', 'valbox'); root.style.minWidth = '34px'; root.title = 'The key\'s root: click for the next';
+  root.onclick = () => { S.root = (S.root + 1) % 12; paintAll(); };
+  const scale = el('span', 'valbox'); scale.title = 'The key\'s scale: click for the next';
+  scale.onclick = () => { const names = Object.keys(SCALES); S.scale = names[(names.indexOf(S.scale) + 1) % names.length]; paintAll(); };
+  const snap = tb('Snap to key', act(() => { const sc = SCALES[S.scale]; for (const x of p().steps) { const rel = (x.n - S.root + 12) % 12; let best = sc[0]; for (const d of sc) if (Math.abs(d - rel) < Math.abs(best - rel)) best = d; x.n = (best + S.root) % 12; } }));
+  snap.title = 'Moves every note outside the key to the nearest note in it';
+  grp('Key', root, scale, snap);
+  const shift = d => act(() => { const a = p().steps; p().steps = a.map((_, i) => a[(i - d + 16) % 16]); });
+  const l = tb('◀', shift(-1)), r = tb('▶', shift(1)); l.title = 'The whole pattern a step earlier'; r.title = 'The whole pattern a step later';
+  grp('Move', l, r);
+  const semis = d => act(() => { for (const x of p().steps) { let n = x.n + d; if (n < 0) { n += 12; x.o = Math.max(-1, x.o - 1); } if (n > 11) { n -= 12; x.o = Math.min(1, x.o + 1); } x.n = n; } });
+  const dn = tb('−', semis(-1)), up = tb('+', semis(1)); dn.title = 'Every note a semitone down'; up.title = 'Every note a semitone up';
+  grp('Pitch', dn, up);
+  const len = el('span', 'valbox'); len.style.minWidth = '64px'; len.title = 'Click: 16, 12 or 8 steps';
+  len.onclick = act(() => { p().len = p().len === 16 ? 12 : p().len === 12 ? 8 : 16; });
+  grp('Length', len);
+  const un = tb('Undo', () => restore(undo, redo)), re = tb('Redo', () => restore(redo, undo));
+  grp('', un, re);
+  painters.push(() => { root.textContent = NAMES[S.root]; scale.textContent = S.scale.toLowerCase(); len.textContent = p().len + ' steps'; un.style.opacity = undo.length ? 1 : .45; re.style.opacity = redo.length ? 1 : .45; });
+}
+// The keyboard section: Down, Up, Accent, Slide at the left; the keys; Back, Step, Tie, Rest; Write or Transpose
+function buildKeys(vid, kind) {
+  const host = $(vid + 'keys');
+  const at = (node, x, y) => { node.classList.add('kk'); node.style.left = x + 'px'; node.style.top = y + 'px'; host.append(node); return node; };
+  const tb = (t, f) => { const b = el('button', 'tbtn', t); b.style.minWidth = '62px'; b.onclick = f; return b; };
+  const down = at(tb('Down', () => { S.entryOct = S.entryOct === -1 ? 0 : -1; paintAll(); }), 18, 28);
+  const up = at(tb('Up', () => { S.entryOct = S.entryOct === 1 ? 0 : 1; paintAll(); }), 88, 28);
+  const accent = at(tb('Accent', () => toggleAt('a', 'pick')), 18, 76);
+  const slide = at(tb('Slide', () => toggleAt('s', 'pick')), 88, 76);
+  const keys = [], whites = [0, 2, 4, 5, 7, 9, 11, 12], blacks = [[1, 0], [3, 1], [6, 3], [8, 4], [10, 5]];
+  const label = n => NAMES[n] + (n === 12 ? '′' : '');
+  let kx;
+  if (kind === 'buttons') {
+    kx = 250; const pitch = 54;
+    whites.forEach((n, i) => { const b = el('button', 'kbtn nat', label(n)); b.dataset.n = n; b.onclick = () => playKey(n, 'pick'); at(b, kx + i * pitch, 74); keys.push(b); });
+    blacks.forEach(([n, after]) => { const b = el('button', 'kbtn sharp', label(n)); b.dataset.n = n; b.onclick = () => playKey(n, 'pick'); at(b, kx + after * pitch + pitch / 2, 30); keys.push(b); });
+    kx += 8 * pitch;
+  } else {
+    kx = 250; const w = 42;
+    const piano = el('div', 'piano'); piano.style.width = (8 * w) + 'px';
+    whites.forEach((n, i) => { const k = el('div', 'pw', `<span>${label(n)}</span>`); k.dataset.n = n; k.style.left = (i * w) + 'px'; k.onclick = () => playKey(n, 'pick'); piano.append(k); keys.push(k); });
+    blacks.forEach(([n, after]) => { const k = el('div', 'pb', `<span>${label(n)}</span>`); k.dataset.n = n; k.style.left = (after * w + w - 13) + 'px'; k.onclick = () => playKey(n, 'pick'); piano.append(k); keys.push(k); });
+    at(piano, kx, 20); kx += 8 * w;
+  }
+  const rx = kx + 40;
+  at(tb('Back', () => { S.pick = (S.pick + 15) % 16; paintAll(); }), rx, 28);
+  at(tb('Step', () => { S.pick = (S.pick + 1) % 16; paintAll(); }), rx + 70, 28);
+  at(tb('Tie', () => setGate('tie', 'pick')), rx, 76);
+  at(tb('Rest', () => setGate('rest', 'pick')), rx + 70, 76);
+  const write = at(tb('Write', () => { S.transposeMode = false; paintAll(); }), rx + 170, 28);
+  const trans = at(tb('Transpose', () => { S.transposeMode = true; paintAll(); }), rx + 170, 76);
+  trans.style.minWidth = '86px'; write.style.minWidth = '86px';
+  const note = el('div', 'kbnote'); note.style.width = (1190 - (rx + 280)) + 'px'; at(note, rx + 280, 26);
+  painters.push(() => {
+    down.classList.toggle('is', S.entryOct === -1); up.classList.toggle('is', S.entryOct === 1);
+    const x = shown().steps[S.pick]; accent.classList.toggle('is', x.a); slide.classList.toggle('is', x.s);
+    write.classList.toggle('is', !S.transposeMode); trans.classList.toggle('is', S.transposeMode);
+    note.innerHTML = S.transposeMode
+      ? `<b>Transpose:</b> a key shifts the running pattern, C as it was written. Also from MIDI or the computer's keys (Z to comma).`
+      : `<b>Write:</b> a key sets step ${S.pick + 1}'s note and moves on; Down and Up give the octave, Tie and Rest move on too. Also the computer's keys (Z to comma).`;
+    // lit: the note sounding while it plays; stopped, the picked step's note; in Transpose, the transposition
+    const sounding = S.playing ? heard().steps[S.count % heard().len] : null;
+    const tn = ((S.transpose % 12) + 12) % 12;
+    keys.forEach(k => {
+      const n = +k.dataset.n;
+      const hit = S.transposeMode ? n === tn && !(n === 12) : sounding ? sounding.g !== 'rest' && n === (sounding.n12 ? 12 : sounding.n) : false;
+      const cur = !S.playing && !S.transposeMode && x.g !== 'rest' && n === (x.n12 ? 12 : x.n);
+      k.classList.toggle('hit', hit); k.classList.toggle('cur', cur);
+    });
+  });
+}
+function buildTal(vid, kind) {
+  talMarkup(vid, kind);
+  build2(vid);
+  buildKeys(vid, kind);
 }
 
 // ---------------------------------------------------------------- 3: the original's silver face
@@ -1213,15 +1382,16 @@ function build3() {
   new Board($('b3'), rowLayout(40, 1240, 70, 430, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
   buildMods($('v3mods'));
 }
-function playKey(n) {
+// The keys write at a cursor: the silver face's strip cursor, or the grid's picked step (2.1 and 2.2)
+function playKey(n, at = 'cursor') {
   if (S.transposeMode) { S.transpose = n; paintAll(); return; }
   snapshot();
-  const x = shown().steps[S.cursor];
-  x.n = n % 12; x.o = n === 12 ? 1 : S.entryOct; x.g = 'note';
-  S.cursor = (S.cursor + 1) % shown().len; paintAll();
+  const x = shown().steps[S[at]];
+  x.n = n % 12; x.n12 = n === 12; x.o = n === 12 ? 1 : S.entryOct; x.g = 'note';
+  S[at] = (S[at] + 1) % shown().len; paintAll();
 }
-function toggleAt(f) { snapshot(); const x = shown().steps[S.cursor]; x[f] = !x[f]; paintAll(); }
-function setGate(g) { snapshot(); const x = shown().steps[S.cursor]; x.g = g; S.cursor = (S.cursor + 1) % shown().len; paintAll(); }
+function toggleAt(f, at = 'cursor') { snapshot(); const x = shown().steps[S[at]]; x[f] = !x[f]; paintAll(); }
+function setGate(g, at = 'cursor') { snapshot(); const x = shown().steps[S[at]]; x.g = g; S[at] = (S[at] + 1) % shown().len; paintAll(); }
 
 // ---------------------------------------------------------------- the full-screen circuit
 function buildSaver() {
@@ -1232,7 +1402,7 @@ function buildSaver() {
 }
 
 // ---------------------------------------------------------------- start
-build1(); build2(); build3(); buildSaver();
+build1(); build2(); buildTal('v4', 'buttons'); buildTal('v5', 'piano'); build3(); buildSaver();
 $('modsBtn').onclick = () => { S.mods = !S.mods; paintAll(); };
 painters.push(() => $('modsBtn').classList.toggle('is', S.mods));
 document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
@@ -1255,7 +1425,9 @@ document.addEventListener('keydown', e => {
   if (e.code === 'Space') { e.preventDefault(); setPlaying(!S.playing); }
   if (e.code === 'Escape') { $('saver').classList.remove('is'); S.mods = false; paintAll(); }
   if (KEYMAP[e.code] !== undefined && !e.repeat) {
-    if ($('v3').classList.contains('is')) playKey(KEYMAP[e.code]); else { S.transpose = KEYMAP[e.code]; paintAll(); }
+    if ($('v3').classList.contains('is')) playKey(KEYMAP[e.code]);
+    else if ($('v4').classList.contains('is') || $('v5').classList.contains('is')) playKey(KEYMAP[e.code], 'pick');
+    else { S.transpose = KEYMAP[e.code]; paintAll(); }
   }
   if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); restore(e.shiftKey ? redo : undo, e.shiftKey ? undo : redo); }
 });

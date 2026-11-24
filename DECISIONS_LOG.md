@@ -6444,3 +6444,21 @@ sound; screenshots in `docs/design/mockups/303-layouts`.
 - A caution for the third: Roland's EU design filing 018016159 covers the 303's look; the mockup keeps the layout's
   idea, not its marks or proportions (`docs/research/tb-303-app.md`).
 - The 808's session committed an early draft of the file with its own work (`be71e09`); this is the finished one.
+
+## D300. CoolSynth 303: the charcoal layout with the silver face's keyboard, 2.1 and 2.2 (2026-11-24)
+
+The user asked to iterate on two, the charcoal: a copy with the silver face's keyboard added, as buttons or as a
+piano, two possibilities in two views. Added to `docs/design/mockups/coolsynth-303-layouts.html` as 2.1 and 2.2;
+two is kept as it was. Screenshots `2.1-charcoal-key-buttons.png` and `2.2-charcoal-piano.png`.
+- A Keyboard section between the voice and the sequencer: Down, Up, Accent and Slide on the left; Back, Step,
+  Tie and Rest, then Write and Transpose on the right.
+  - 2.1 draws the octave as square buttons (sharps above, naturals below), 2.2 as a piano.
+  - Write sets the picked step's note and moves to the next; Transpose shifts the pattern from the keys.
+  - The keys light the note playing, or when stopped the picked step's note.
+- The user found the third row confusing and asked what "fit to scale" meant. The row now has named groups:
+  - New line: Generate, Mutate, and a menu of what Mutate may change;
+  - Key: root, scale and "Snap to key" (was "fit to scale": every note outside the key moves to the nearest
+    note in it);
+  - Move (◀ ▶), Pitch (− +), Length, Undo and Redo.
+- The status line moved into the sequencer's caption (editing, hearing, chain); the tab bar's note got shorter.
+- Options for the keys (buttons, piano) are both built for the user to compare.
