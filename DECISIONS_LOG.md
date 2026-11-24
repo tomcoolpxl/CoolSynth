@@ -7241,6 +7241,10 @@ Still alone, as D304; each with what else it could have been.
   circuits would be a speed-up of its own, to measure.
 - The timings in this entry are paired runs; another session's builds and tests loaded the machine in bursts.
 
+## D346. The chord method's low-rank updates at a note's attack; an exp of our own kept, not used (2026-11-24)
+
+- Claimed; the entry follows.
+
 ## D347. SIMD across voices: same-shaped circuits solved side by side, the same bits (2026-11-24)
 
 - The user: SIMD across voices keeps each voice's bits, so it goes in whenever it works; each voice byte for byte as
