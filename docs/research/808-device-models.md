@@ -141,3 +141,11 @@ both units unfitted (D258).
   retune changes its tail current, emitter and tail resistors, swing sources and input gain to Renesas's typicals.
 - 25 degrees only; one oscillator phasing on the metal board; the noise bus as test sines, its own model unchanged.
 - ngspice only: nothing here is checked against the two units, and the engine is unchanged.
+
+## The user's choices (2026-11-24)
+
+- Transistors: compare the 2SC1815-GR references with both units (the bass drum's sigh, the rim shot's decay, the
+  clap's tail) before any change to the engine or its fits.
+- Op-amps: compare the uPC4558 model's snare lower shell and claves' decay with both units first.
+- Followers: kept ideal.
+- Schmitt: kept as it is, typical thresholds and exact edges.
