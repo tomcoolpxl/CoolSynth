@@ -6557,3 +6557,21 @@ Still alone, as D304; each with what else it could have been.
   at 96 kHz it renders in 92 % of real time on one core). The app idle takes 3 % of a core.
 - New is one undo step (it had wiped the history); the window opens smaller on a smaller screen; a pattern key's
   right-click menu copies, pastes, clears, copies A to B and renames; tests click the panel as a player would.
+
+## D306. CoolSynth 808: a press shows at once, the glass's shadow visible (2026-11-24)
+
+- The user: a pattern key still showed its press late. Measured in the running window, the panel took 76 to
+  200 ms to draw, and every press drew all of it.
+- Where the time went: JUCE shapes every word each time it draws or measures it (40 to 140 us each, some three
+  hundred words a paint); every font was made anew on each use (22 us); and every key's, knob's and switch's
+  shadow was a DropShadow, a blurred image or eight gradient pieces, close to a millisecond a key in the window's
+  Direct2D renderer.
+- Now the panel's words are shaped once and kept (src/ui/Text.h, placed exactly as drawText places them, with a
+  test that they measure the same), fonts are made once, and the shadows are stacked solid shapes that look the
+  same. A whole paint went from about 145 ms to 42 ms. Both kept sets are deleted with JUCE's shutdown: as plain statics
+  they outlived JUCE's fonts and the program hung on quitting.
+- A pattern key, a step or the fill now redraws only the glass and the transport strip, about 29 ms; the board
+  and its knobs redraw only when the kit or the selected lane changes.
+- The glass's shadow on the metal did not show (its own was cut at its edge): it is darker and falls down and to
+  the right, away from the light on the upper left.
+- First written as D304 while the 303's session took D304 and D305; renumbered.
