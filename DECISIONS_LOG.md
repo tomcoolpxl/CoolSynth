@@ -6896,3 +6896,10 @@ Still alone, as D304; each with what else it could have been.
 - The user: the Play key and the time slider under the CPU sheet are not wanted. Gone, with its time line; the sheet
   follows the sequencer's steps (D321) and nothing else. The drum sheets keep theirs.
 - Picked after D322: the VST3 next (over correcting the lifted lid's CPU board to the service notes).
+
+## D324. CoolSynth 303: the listening pass against Din Sync's real unit; the note's start and the resonance pot (2026-11-24)
+
+- The user picked a listening pass with a real reference, then found the page too much to click through; the one
+  note they marked (an accented square's start) and their ear (the real note a little plucked, ours like brass) set the work.
+- To fix, as the user picked: the note's start, RESONANCE at a quarter turn, and RESONANCE at full with CUTOFF high,
+  each fitted to Din Sync's 25 sets and kept only where it brings them closer. Entry completed with the results.
