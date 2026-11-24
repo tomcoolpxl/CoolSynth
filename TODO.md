@@ -299,8 +299,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     (D281); it runs on a core of its own beside the other tracks. The VCO runs too (`Tb303Oscillator.h`, D290):
     pitch within 0.1 cent of ngspice, the saw's and square's harmonics within 0.3 dB, the square's shaper at 4x
     (aliases 72 dB down at the top note), about 25 % of a core. The envelope and the VCA run too
-    (`Tb303Envelope.h`, `Tb303Vca.h`, D293): the VCA's output within 0.6 % of ngspice's. The voice is about 108 % of a
-    core at 192 kHz, so how it fits is the next choice; then the whole voice against `voice.cir` and Din Sync's unit.
+    (`Tb303Envelope.h`, `Tb303Vca.h`, D293): the VCA's output within 0.6 % of ngspice's. The voice runs at 96 kHz
+    (D294, the user's choice), every stage as accurate as at 192 kHz, about 73 % of one core. Next the whole voice
+    wired together against `voice.cir` and Din Sync's unit.
     The interface is parked by the user
     (`docs/research/tb-303-app.md`).
 

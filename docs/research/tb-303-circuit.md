@@ -282,6 +282,8 @@ The voice's cost and its rate, measured the same day:
   above -91 dB below 20 kHz, at either rate.
 - The oscillator at 96 kHz: the saw's aliases 90 to 103 dB down. The square's depend only on the shaper's own rate:
   96 kHz times 8 gives what 192 kHz times 4 gives (-72, -79, -86 dB).
+- The user chose 96 kHz for the voice (D294). There every check passes as at 192 kHz: filter 21 %, oscillator 23 to
+  28 %, VCA 15 to 20 %, envelope 10 % of a core, the voice about 73 %.
 
 ## What this means for CoolSynth
 

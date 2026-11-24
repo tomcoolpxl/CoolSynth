@@ -6353,3 +6353,17 @@ decay (`docs/research/tb-303-circuit.md`, its envelope and VCA section).
   edge).
 - Cost at 192 kHz: envelope 10 %, VCA 33 % of a core; with the filter (40 %) and the oscillator (25 %) the voice is
   about 108 %, over one core. How it fits is put to the user next.
+
+## D294. CoolSynth 303: the voice at 96 kHz (2026-11-24)
+
+The user's choice of how the voice fits one core, put with the measurements (`docs/research/tb-303-circuit.md`):
+- 96 kHz for the whole voice, chosen: the filter matches ngspice as at 192 kHz (4.84 % against 4.81 % at worst) and
+  aliases nothing above -91 dB; the saw's aliases 90 to 103 dB down; the square's shaper at 8x, 768 kHz as before, so
+  its aliases are unchanged (-72, -79, -86 dB); the envelope still near 48 kHz.
+- 192 kHz over two cores, the oscillator and envelope on one and the filter and VCA on another: the 303 a block late
+  and a new pipelining mechanism in the engine.
+- Only the filter and VCA at 96 kHz, the oscillator at 192 kHz: two resamplers in the chain for little gain.
+
+Done: the shaper's factor follows the voice's rate (768 kHz over the rate), the envelope's divider too (48 kHz); the
+tests run at 96 kHz against the same renders. Measured there, every check passing: filter 21 %, oscillator 23 to 28 %,
+VCA 15 to 20 %, envelope 10 % of a core; the voice about 73 %. D279's 192 kHz is replaced.

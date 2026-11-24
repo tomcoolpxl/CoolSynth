@@ -91,6 +91,8 @@ How it is solved, as the 808 is:
 - Then the trimmers fitted to the Din Sync unit: cutoff, resonance, env mod, decay and accent across their sets.
 - Aliasing and cost measured before the oversampling is chosen; the numbers go to the user as options.
   - The saw's reset is the one hard edge: today's 303 runs its core at 192 kHz.
+  - Chosen (D290, D294): the voice at 96 kHz, the square's shaper at 768 kHz, the envelope near 48 kHz; about 73 % of
+    one core.
 - The determinism and click tests over every preset, as for every engine change.
 
 ## The order of the build
