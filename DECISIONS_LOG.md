@@ -6638,3 +6638,7 @@ Still alone, as D304; each with what else it could have been.
   section, its name in red as on his panel, holds On, the red Accent button (every note accented while held), seven
   knobs with their values, the three switches as keys clicked through their places, and Stock.
 - The engine's and the app's commits name this D308: the 808's session took D307 and D308 meanwhile; renumbered.
+- The Accent button was first a glossy red ball; the user found it ugly. Six mockups
+  (`docs/design/mockups/coolsynth-303-accent-button.html`): a flat red key, a grey key with a lamp, a flat round
+  button, a red cap in a dark well, a charcoal key with a red word, a red cap in a metal ring. Picked: the red cap
+  in a flat silver ring, the word under it, as on Whittle's panel without the shine.

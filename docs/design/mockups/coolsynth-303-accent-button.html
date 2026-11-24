@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>303 Accent Button</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  /* CoolSynth 303's charcoal panel (src/ui/Theme.h), the Devil Fish section's left column at 2x */
+  :root {
+    --desk: #0b0a09; --face: #26272a; --outline: #6b6d72; --caption: #e9e9e6; --label: #d7d8da; --dim: #8d8f94;
+    --key: #c9cacc; --keyInk: #1b1c1e; --orange: #e8742a; --orangeInk: #1a120c; --lampOff: #4a1c17; --lampOn: #ff3b28;
+  }
+  body { margin: 0; background: var(--desk); color: var(--caption); font-family: Archivo, sans-serif; padding: 24px; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+  p.lead { color: var(--dim); font-size: 13px; margin: 0 0 20px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 360px); gap: 20px; }
+  .card { background: var(--face); border-radius: 10px; padding: 14px 16px 16px; }
+  .card h2 { font-size: 14px; font-weight: 700; margin: 0 0 2px; color: var(--caption); }
+  .card .note { font-size: 11.5px; color: var(--dim); margin: 0 0 12px; min-height: 30px; }
+  .section { position: relative; border: 1px solid var(--outline); border-radius: 9px; height: 250px; }
+  .section .name { position: absolute; left: 14px; top: -14px; background: var(--face); padding: 0 8px;
+                   font: italic 700 26px Georgia, serif; color: #e0362a; }
+  .states { display: flex; gap: 22px; position: absolute; left: 22px; top: 32px; }
+  .col { display: flex; flex-direction: column; align-items: center; width: 116px; }
+  .tag { font-size: 10px; letter-spacing: .12em; color: var(--dim); margin-top: 10px; text-transform: uppercase; }
+  /* the panel's key: lamp above, flat body, a black 2 px shadow */
+  .lamp { width: 10px; height: 10px; border-radius: 50%; background: var(--lampOff); margin-bottom: 5px; }
+  .lamp.on { background: var(--lampOn); box-shadow: 0 0 8px 3px rgba(255,59,40,.35); }
+  .key { width: 116px; height: 48px; border-radius: 4px; display: flex; align-items: center; justify-content: center;
+         font-weight: 600; font-size: 21px; letter-spacing: .06em; box-shadow: 0 2px 0 #000; }
+  .grey { background: var(--key); color: var(--keyInk); }
+  .orange { background: var(--orange); color: var(--orangeInk); }
+  .spacer { height: 15px; }
+  .knob, .knobname { display: none; }
+  .knob { position: absolute; right: 26px; top: 40px; width: 68px; height: 68px; border-radius: 50%;
+          background: #141517; box-shadow: 0 0 0 2px #050505; }
+  .knob::after { content: ""; position: absolute; left: 32px; top: 6px; width: 4px; height: 24px; background: var(--orange); border-radius: 2px; }
+  .knobname { position: absolute; right: 12px; top: 120px; width: 96px; text-align: center; font-size: 15px;
+              font-weight: 600; letter-spacing: .06em; color: var(--label); }
+
+  /* 1 flat red key */
+  .red { background: #c8392b; color: #f6e9e4; }
+  .red.held { background: #902a20; }
+  /* 3 flat round */
+  .round { width: 64px; height: 64px; border-radius: 50%; background: #c8392b; box-shadow: 0 0 0 4px #111214, 0 3px 0 4px #000; }
+  .round.held { background: #902a20; }
+  .under { margin-top: 12px; font-size: 18px; font-weight: 600; letter-spacing: .08em; color: var(--label); }
+  /* 4 red cap in a dark well */
+  .well { width: 116px; height: 58px; border-radius: 6px; background: #111214; box-shadow: inset 0 0 0 2px #3a3b3f;
+          display: flex; align-items: center; justify-content: center; }
+  .cap { width: 96px; height: 40px; border-radius: 3px; background: #c8392b; box-shadow: 0 2px 0 #000; }
+  .cap.held { background: #902a20; box-shadow: none; transform: translateY(2px); }
+  /* 5 charcoal key, red ink */
+  .dark { background: #3a3b3f; color: #ff5a45; box-shadow: 0 2px 0 #000, inset 0 0 0 1px #4a4b50; }
+  .dark.held { background: #c8392b; color: #f6e9e4; }
+  /* 6 red cap in a metal ring */
+  .ring { width: 74px; height: 74px; border-radius: 50%; background: #9a9ca1; box-shadow: inset 0 0 0 2px #c9cacc, 0 3px 0 #000;
+          display: flex; align-items: center; justify-content: center; }
+  .ring .capr { width: 52px; height: 52px; border-radius: 50%; background: #c8392b; box-shadow: 0 0 0 2px #2a1210; }
+  .ring .capr.held { background: #902a20; }
+</style>
+</head>
+<body>
+<h1>Accent button, six ways</h1>
+<p class="lead">The Devil Fish section's left column at twice the panel's size: On above, then the Accent button, at rest and held.</p>
+<div class="grid">
+
+  <div class="card"><h2>1 · Flat red key</h2><p class="note">The panel's key, red and matte, darker while held. Built now.</p>
+    <div class="section"><span class="name">Devil Fish</span>
+      <div class="states">
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="lamp" style="visibility:hidden"></div><div class="key red">ACCENT</div><div class="tag">at rest</div></div>
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="lamp" style="visibility:hidden"></div><div class="key red held">ACCENT</div><div class="tag">held</div></div>
+      </div>
+      <div class="knob"></div><div class="knobname">OVERDRIVE</div>
+    </div></div>
+
+  <div class="card"><h2>2 · A key like the others</h2><p class="note">Grey, its red lamp lit while held; it turns orange as an on key does.</p>
+    <div class="section"><span class="name">Devil Fish</span>
+      <div class="states">
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="lamp"></div><div class="key grey">ACCENT</div><div class="tag">at rest</div></div>
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="lamp on"></div><div class="key orange">ACCENT</div><div class="tag">held</div></div>
+      </div>
+      <div class="knob"></div><div class="knobname">OVERDRIVE</div>
+    </div></div>
+
+  <div class="card"><h2>3 · Flat round button</h2><p class="note">A matte red cap in a thin dark ring, the word under it. Whittle's shape, flat.</p>
+    <div class="section"><span class="name">Devil Fish</span>
+      <div class="states">
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="round"></div><div class="under">ACCENT</div><div class="tag">at rest</div></div>
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="round held"></div><div class="under">ACCENT</div><div class="tag">held</div></div>
+      </div>
+      <div class="knob"></div><div class="knobname">OVERDRIVE</div>
+    </div></div>
+
+  <div class="card"><h2>4 · Red cap in a dark well</h2><p class="note">A square red cap sunk in a black well, as a hardware tactile switch; it drops when held.</p>
+    <div class="section"><span class="name">Devil Fish</span>
+      <div class="states">
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="well"><div class="cap"></div></div><div class="under" style="margin-top:8px">ACCENT</div><div class="tag">at rest</div></div>
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="well"><div class="cap held"></div></div><div class="under" style="margin-top:8px">ACCENT</div><div class="tag">held</div></div>
+      </div>
+      <div class="knob"></div><div class="knobname">OVERDRIVE</div>
+    </div></div>
+
+  <div class="card"><h2>5 · Charcoal key, red word</h2><p class="note">A dark key like the grid's, its word in red; red all over while held.</p>
+    <div class="section"><span class="name">Devil Fish</span>
+      <div class="states">
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="lamp" style="visibility:hidden"></div><div class="key dark">ACCENT</div><div class="tag">at rest</div></div>
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="lamp" style="visibility:hidden"></div><div class="key dark held">ACCENT</div><div class="tag">held</div></div>
+      </div>
+      <div class="knob"></div><div class="knobname">OVERDRIVE</div>
+    </div></div>
+
+  <div class="card"><h2>6 · Red cap in a metal ring</h2><p class="note">A round red cap in a flat silver ring, as on Whittle's panel, without shine.</p>
+    <div class="section"><span class="name">Devil Fish</span>
+      <div class="states">
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="ring"><div class="capr"></div></div><div class="under" style="margin-top:8px">ACCENT</div><div class="tag">at rest</div></div>
+        <div class="col"><div class="lamp on"></div><div class="key orange">ON</div><div class="spacer"></div><div class="ring"><div class="capr held"></div></div><div class="under" style="margin-top:8px">ACCENT</div><div class="tag">held</div></div>
+      </div>
+      <div class="knob"></div><div class="knobname">OVERDRIVE</div>
+    </div></div>
+
+</div>
+</body>
+</html>
