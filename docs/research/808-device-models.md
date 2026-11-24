@@ -149,3 +149,40 @@ both units unfitted (D258).
 - Op-amps: compare the uPC4558 model's snare lower shell and claves' decay with both units first.
 - Followers: kept ideal.
 - Schmitt: kept as it is, typical thresholds and exact edges.
+
+## Against the two units (2026-11-24)
+
+`tools/research/808-device-models/units.py` renders today's netlists, the 2SC1815-GR card and the uPC4558 model at the
+units' 4.7 V and measures them and both units' recordings alike (Fischer's, unaccented; Audiorealism's, its accent at
+about 4.5 V, D258). Its clap measure gives the clap-tail test's numbers for both units exactly. The clap's noise is a
+seeded generator, the same four seeds in each variant.
+
+The bass drum at TONE full, each measure read at the unit's own time to -40 dB (the model at six Decay settings,
+interpolated); the sigh in semitones over the settled tail. Fischer's DECAY 2.5 ends sooner than the model's shortest
+Decay rendered and is left out.
+
+| Unit, DECAY | Time constant (ms): unit, today, GR, uPC4558 | Depth at 30 ms (st) | At 100 ms (st) | 2nd, 3rd harmonics (dB) |
+|---|---|---|---|---|
+| Fischer 5 | 30, 32, 48, 32 | 2.41, 2.26, 1.66, 2.22 | 0.35, 0.24, 0.27, 0.21 | unit -37.2, -45.4; today -38.9, -47.2; GR -38.5, -48.6 |
+| Fischer 7.5 | 47, 45, 71, 45 | 2.48, 2.30, 1.67, 2.27 | 0.74, 0.56, 0.45, 0.53 | unit -31.6, -39.6; today -33.2, -41.3; GR -34.3, -44.0 |
+| Audiorealism 2.5 | 49, 51, 65, 52 | 1.51, 2.10, 1.61, 2.06 | 0.03, -0.01, 0.02, -0.01 | unit -45.5, -55.9; today -46.9, -56.8; GR -45.5, -57.7 |
+| Audiorealism 5 | 32, 34, 45, 34 | 1.57, 2.21, 1.64, 2.18 | 0.11, 0.05, 0.14, 0.04 | unit -41.4, -50.8; today -42.9, -51.5; GR -41.8, -52.4 |
+| Audiorealism 7.5 | 33, 32, 46, 32 | 1.59, 2.25, 1.65, 2.21 | 0.27, 0.19, 0.24, 0.17 | unit -38.1, -47.2; today -39.8, -48.1; GR -39.2, -49.4 |
+
+- The sigh's time constant: today's card lies on both units (within 2 ms); the GR card makes it 33 to 60 % slower on
+  every mark. The depth splits the units (Fischer's 2.4 semitones, Audiorealism's 1.6): today's lies near Fischer's,
+  the GR card's near Audiorealism's. The harmonics: no better either way (the GR card nearer on Audiorealism's 2nd,
+  further on Fischer's 7.5 and on every 3rd). The uPC4558 changes none of it.
+- The rim shot's decay to a tenth: the units 8.98 and 10.68 ms; today 9.52, the uPC4558 9.35, both between them; the
+  GR card 11.05, longer than both.
+- The claves' decay to a tenth: the units 22.40 and 22.72 ms; today 22.83, the uPC4558 22.19, 0.5 and 0.9 % outside, on
+  either side; the GR card 22.84.
+- The snare at Snappy 0, the lower shell over the upper (dB, 2 to 60 ms), TONE 0, 5, 10: the units +29.2 and +30.6,
+  +11.8 and +10.9, -2.4 and -4.2; today +31.2, +11.9, -2.9; the uPC4558 +30.0, +10.7, -4.2; the GR card as today.
+  The uPC4558 nearer at TONE 0, today nearer at TONE 10; the units differ by 1 to 2 dB.
+- The clap's tail from 150 ms: today 1.6 dB rms from both units, no bias; the uPC4558 the same; the GR card 6.0 dB rms,
+  5.2 dB too quiet.
+
+So the measured 2SC1815-GR card takes the bass drum's sigh, the rim shot and the clap's tail away from both units, all
+through its low-current gain; today's simpler card agrees with them. The uPC4558's slew moves the claves and snare
+within the units' own spread, so the units cannot tell it from today's single pole.

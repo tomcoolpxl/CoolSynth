@@ -298,6 +298,14 @@ def build(case, variant, options=None):
             body[at:at + 1] = render808.oscillator_lines(phases, sv(plain["f1"]), sv(plain["f2"]), sv(plain["cs"]), case["tend"])
         else:
             body[at:at + 1] = oscillator_lines(phases, sv(plain["f1"]), sv(plain["f2"]), sv(plain["cs"]), case["tend"], vtp, vtm, edge)
+    if case.get("noise"):
+        # The clap's white noise bus from a seeded generator (ngspice's TRNOISE cannot be seeded here): Gaussian samples
+        # of the given rms every wnstep, joined linearly as TRNOISE joins them, so a variant and its reference share it.
+        seed, rms = case["noise"]
+        step = sv(plain["wnstep"])
+        x = np.random.default_rng(seed).normal(0.0, rms, int(case["tend"] / step) + 2)
+        at = next(i for i, l in enumerate(body) if l.startswith("VWC "))
+        body[at] = "VWC nwc 0 PWL(" + " ".join("{:.9g} {:.6g}".format(k * step, v) for k, v in enumerate(x)) + ")"
     followers = FOLLOWERS.get(netlist, [])
     extra = []
     if variant in ("oa_ti", "oa_upc", "all"):
@@ -368,7 +376,7 @@ def run(case, variant, work, level=0):
     netlist = os.path.join(tmp, "run.cir")
     with open(netlist, "w", encoding="ascii") as f:
         f.write("\n".join(body) + "\n")
-    result = subprocess.run([NGSPICE, "-b", netlist], capture_output=True, text=True)
+    result = subprocess.run([NGSPICE, "-b", netlist], capture_output=True, text=True, cwd=tmp)
     m = re.search(r"TLAST (\S+)", result.stdout)
     reached = float(m.group(1)) if m else 0.0
     if reached < case["tend"] * (1.0 - 1e-6):
