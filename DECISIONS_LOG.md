@@ -7030,3 +7030,23 @@ Still alone, as D304; each with what else it could have been.
 - Checked: a test lists the tools, reads and sets the kit, and captures a struck bass drum; on the running app the
   handshake, get_state, and strike (BD and SD, loudest -17.1 dBFS). Registered with Claude Code for the CoolSynth and
   CoolSynth808 folders: `claude mcp add --transport http coolsynth808 http://127.0.0.1:47608/mcp`.
+
+## D334. CoolSynth 808: the WAV export built (2026-11-24)
+
+- Built as D331 picked: File, Export audio..., a small card over the panel drawn as Options is: Play (the pattern
+  shown or the chain), Times (1, 2, 4, 8, 16), End (Cut, Ring out, Seamless loop), Files (Mix, or Mix and each
+  drum); a line says the length and which drums get a file; Export asks where, then renders with a progress bar and
+  Cancel. The choices and the folder are kept.
+- Rendered by a second processor of its own, offline (no MCP port, no MIDI, no settings), from bar 0 at the tempo
+  heard, the loop on; several renders at once on the free cores, below the audio thread's priority.
+- A drum's file: first tried with every other drum's Level at zero, but the files did not add up to the mix (12 dB
+  apart at the hats): a drum at zero lets the voice end early, and the metal oscillators start with the voice. So the
+  engine's CircuitWatch got a mask of the instruments heard: every drum plays, rings and rests as in the mix, only
+  the one heard goes into its generator's output. The files now add up to the mix exactly; only drums heard in what
+  plays get one (not muted, not silenced by a solo).
+- The seamless loop: folding the ring-out into the start would let an open hat ring through the closed hat that
+  chokes it at the start. Instead the render plays the loop round (from far enough before its end) and keeps the last
+  time through, so its start holds the end's ring-out as a loop plays it, chokes included.
+- Ring out: on until every render has been under -100 dB for 0.25 s, 20 s at most; every file as long as the longest.
+- Checked: tests for each end's length, the loop's start, the files adding up to the mix, the open hat's file
+  choked, the files written (24-bit, stereo, the rate); the export dialog's snapshot.
