@@ -6700,3 +6700,21 @@ Still alone, as D304; each with what else it could have been.
   live first, then Under the Lid redesigned from mockups (its CPU section included), then its currents live in the
   new design.
 - The options window's controller row reads Setup, not Controller twice.
+
+## D313. CoolSynth 808: the panel's glow live from the circuits; the CPU section under the glass (2026-11-24)
+
+- The first stage of D312's live lights: the board's columns light from each drum's circuit as the engine plays it,
+  no longer from a recording replayed on each hit. They follow the knobs, the accent and the rolls as they sound.
+  - In the engine (coolsynth-engine be0abcc), additive: a CircuitWatch the app owns, handed down from EngineV3 through
+    each unit, part and voice to the generators' SlotParams. The three 808 generators raise each running drum's level
+    follower into it after every block, lock-free; without a watch nothing changes. The engine's TR-808 and TB-303
+    tests pass; a new one checks the sound is bit-identical with a watch and that a longer Decay holds the light.
+  - In the app: the processor owns the watch and gives the panel each lane's level 30 times a second. Brightness is
+    on the recordings' scale, 36 dB from full to dark, full at each drum's peak with the kit's defaults. The
+    recordings still light it when no engine runs. A test: each drum lights only its own lane, and the bass drum's
+    light holds 73 blocks at Decay 0.9 against 8 at 0.1.
+- D312's CPU section under the glass: the uPD650C, its four RAMs, the clock's Schmitt trigger and coil, the lamp
+  lines and the trigger lines up to the trigger bus. The glass passes about a seventh, so dim copper under it
+  vanished: it shows faintly on the glass itself, and what works lights there as thin bright traces with a small
+  halo (the clock's tick, the playing step's lamp line, an edit written to the memory).
+- The engine moved from f7c68eb to be0abcc, bringing the 303's Tb303 commits, which the 808 does not use.
