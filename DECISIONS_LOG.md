@@ -6336,3 +6336,20 @@ The VCO in the engine (`Tb303Oscillator.h`) against vco.cir at low C, A, high C 
   Segoe UI; keys drawn as raised caps with a lens for toggles, knobs as caps with printed ticks, the slide switch,
   all in `src/ui/Hardware`, and the existing keys and knobs drawn with them. The snapshots are taken at twice the
   density.
+
+## D293. CoolSynth 303: the envelope and the VCA run (2026-11-24)
+
+Against tools/tb303/vca.cir (the envelope with the VCA's control around it) at a plain note, an accented one and a long
+decay (`docs/research/tb-303-circuit.md`, its envelope and VCA section).
+- `Tb303Envelope.h`: the gate, the one-shot, C62, the buffer, the decay and the accent's switches, with the VCA's
+  control current (Q31, C42, Q32) and pin 1, one circuit at a quarter of the voice's rate. `Tb303Vca.h`: the BA662's
+  transistors, its networks, its output buffer.
+- Results: the VCA's output within 0.5 to 0.6 % of its swing; the envelope 14 to 29 mV rms, C42 7 to 14 mV, both within
+  3 mV at the end of a 1.5 s decay. The envelope is some 60 us late at the attack (its quarter rate).
+- Taken on the way: `CircuitWdf.h` gains a JFET channel (Q39, the envelope's current sink); 1 GOhm leaks on every
+  group of nodes only junctions leave, as SPICE's GMIN (without them the linear part tied those currents and the solve
+  diverged); Gummel-Poon's base recombination on the nanoamp NPNs (without it C42 refilled 13 % slow); the chord method
+  steps aside for plain Newton far from the answer and once a sample has factored afresh (it wandered at the gate's
+  edge).
+- Cost at 192 kHz: envelope 10 %, VCA 33 % of a core; with the filter (40 %) and the oscillator (25 %) the voice is
+  about 108 %, over one core. How it fits is put to the user next.

@@ -261,6 +261,28 @@ Aliasing, the strongest component below 20 kHz that is not a harmonic, re the fu
   [JASA 2012](https://www.pubmed.gov/23039464/)); Nam, Valimaki, Abel and Smith found a third-order B-spline
   BLIT free of perceptible aliasing ([TASLP 2010](https://mac.kaist.ac.kr/pubs/jnam-taslp2010.pdf)).
 
+## The envelope and the VCA in the engine (D293)
+
+Measured on 2026-11-24 against vca.cir at 96 kHz (48 kHz for a 1.5 s decay); the model at 192 kHz.
+- The envelope and the VCA's control share nodes (Q32's trigger hangs off the one-shot's collector), so they are one
+  circuit, run at a quarter of the voice's rate. The BA662's core is a second circuit, its output follower a third.
+- At rest every node matched ngspice's operating point but those floating between reverse-biased diodes, which only
+  leakage sets.
+- Three groups of nodes only junctions leave made the linear part tie their currents: Q41's emitter, pin 1, and D35's
+  chain through R133 and R131 to Q31's emitter (K reached 5e18). 1 GOhm leaks, as SPICE's GMIN, fixed it;
+  `isWellPosed` now catches such a group in the tests.
+- Q32 held C41 after a trigger and drained C42: QEM's ISE (6.7 fA, NE 1.26) is most of an NPN's base current at
+  nanoamps. As a diode across base and emitter it brings C42 from 13 % slow to within 1 mV.
+- Results: the VCA's output within 0.5 to 0.6 % of its swing; the envelope 14 to 29 mV rms; C42 7 to 14 mV.
+
+The voice's cost and its rate, measured the same day:
+- At 192 kHz: filter 40 %, oscillator 25 %, VCA 33 %, envelope 10 %: about 108 % of one core.
+- The filter at 96 kHz matches ngspice as at 192 (4.84 % against 4.81 % at worst), at half the cost.
+- The filter's own aliasing, a 1 kHz and a 3 kHz sine of 2.7 V at full resonance: nothing that is not a harmonic
+  above -91 dB below 20 kHz, at either rate.
+- The oscillator at 96 kHz: the saw's aliases 90 to 103 dB down. The square's depend only on the shaper's own rate:
+  96 kHz times 8 gives what 192 kHz times 4 gives (-72, -79, -86 dB).
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).
