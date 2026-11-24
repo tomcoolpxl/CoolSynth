@@ -7188,3 +7188,25 @@ Still alone, as D304; each with what else it could have been.
   invented decoupling C1 to C6 dropped (over all nine accent resistors, or keeping the capacitors unnamed).
 - The CPU sheet (picked: add them, over only the label): IC5 labelled MC14051BCP with its pull-ups R95, R96, R98,
   R99 to BU; Q33 with R118, R119, R123 and Q34's R122, as page 8 draws them, in the sheet's model too.
+
+## D343. CoolSynth 808: outputs per drum and automatable knobs in the VST3 (2026-11-24)
+
+- Parked in D311's order, picked by the user now. Looked at: AudioRealism ADM (11 individual unprocessed outputs
+  and a processed master pair), Roland Cloud TR-808 (a Sub Output switch per drum), UJAM (output 1 the main, the
+  kick output 2), XLN Addictive Drums 2 (mono and stereo channels mixed), and hosts that only show stereo pairs or a
+  VST3's first two outputs (Ardour, Komplete Kontrol forums).
+- Picked: the main in stereo and 11 mono outputs (over 11 stereo pairs, or stereo with a mono switch); a switch per
+  drum takes it off the main to its own output (over the main always full and the outputs copies), on the
+  plugin's Host page only (over the standalone's device outputs too), kept with the DAW's project; automatable: the
+  22 knobs, the Volume and all five voice switches as the panel has them, 28 parameters (over the knobs and Volume
+  only, or with Swing too; over one switch for the three toms); the host's automation moves the panel and writes no
+  undo steps (over an undo step each).
+- Built: the engine taps a separated drum in its generator and carries it through the same gains as the main to a
+  mono output of its own (CircuitWatch::setSeparate), so the main and the drums' outputs add up to the whole mix.
+
+## D344. CoolSynth 808: the CPU board under the lid in green and red (2026-11-24)
+
+- Offered after D320, picked now. Asked what the colours mean on logic lines; picked as the drums' copper (D319):
+  a line rising from its rest green, falling below it red, as bright as it is lit (over Logisim's bright and dark
+  green for 1 and 0, or Falstad's green by level and grey at 0 V). The memories' selects and the keys' scan rest
+  high and show red when pulled low; the clocks, the CPU's ports, the lamps, the trigger and the data lines green.
