@@ -6960,3 +6960,21 @@ Still alone, as D304; each with what else it could have been.
   and the pattern stayed stopped, and three C3 notes in FL's piano roll (MIDI 36) played the bass drum.
 - Found: the tempo readout cut HOST to HOS (sized for BPM): fixed. FL's step sequencer sends C5 (MIDI 60), which
   the 808 maps to no drum (it takes General MIDI's notes): that waits for the learnable drum notes.
+
+## D329. CoolSynth 808: learnable drum notes (2026-11-24)
+
+- After D328's finding (FL's step sequencer sends note 60, which no drum had). Four picks, each from two or three,
+  researched against Addictive Drums' and Superior Drummer's mapping windows and Logic's Drum Machine Designer:
+- Where: a Drum notes list in the Options window (over the sequencer's lanes, or both): a ready set, then the
+  sixteen drums (BD to CH, then LC, MC, HC, CL, MA) four to a row; a click learns the next note played.
+- Ready sets: General MIDI (as before, the default), in a row from 36 (as Ableton's Drum Rack lays pads out), in
+  a row from 60 (FL's step sequencer); notes shown as numbers, as DAWs name octaves differently (60 is C3 in
+  Ableton, C5 in FL). Over General MIDI only, or no sets.
+- Kept for the whole app, in its settings file, which the plugin reads too (over with the project, or both).
+- In and out the same: Drag MIDI writes the learned notes (over only the notes coming in).
+- Inside, each drum keeps its General MIDI note: a note from a DAW or a MIDI input is translated where it comes in,
+  after the controller's own; a note no drum has plays nothing; another drum on a learned note loses it. The
+  panel's strikes, the sequencer and the controller's pads are untouched. The processor reads the notes when it
+  starts, so a DAW plays them before the panel opens.
+- Checked: General MIDI's 36 plays the bass drum; with the set from 60, 36 plays nothing and 60 the bass drum, 61
+  the snare; the snare learned from 72 plays on 72 and no more on 61; Drag MIDI writes the bass drum on 60.
