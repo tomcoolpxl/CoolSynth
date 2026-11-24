@@ -286,8 +286,14 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     Since then (D307 to D329): themes, the own Options window, the panel and Under the Lid live from the engine,
     Lift the Lid with the CPU board, every sheet live in real time, the CPU sheet, the VST3 (tried in FL Studio),
     learnable drum notes. Parked, the user's asides and what was left, so none is lost (2026-11-24):
-    - WAV export from the standalone (what is played, or a loop): how other software does it, then options.
-    - The title plate: four options drawn from CoolSynth 303's title, unrotated, in its place (mockups asked for).
+    - WAV export (picked, D331 to log): the pattern shown or the chain rendered offline, a number of times; File menu,
+      Export audio..., a small dialog; the mix, one file per drum too as an option (all the same length); the ring-out
+      cut, ringing on, or folded into the start for a seamless loop; 24-bit at the app's sample rate.
+    - The title plate: option C picked (D330 to log; `docs/design/mockups/title/title-options.png`): the whole plate a
+      dark strip with a dark edge line, COOLSYNTH 808 in Archivo ExtraBold capitals, tracked 0.08, 808 in the theme's
+      orange, BEAT COMPOSER beside it; to build.
+    - An MCP server in the 808, as CoolSynth's (and the 303's, being built in its own session): for checking screens
+      and levels myself.
     - Rebuild and relink the VST3 once FL Studio lets go of it (the HOST label, the drum notes).
     - The VST3 in Ableton Live and Bitwig (FL Studio done, D328).
     - Separate outputs per drum, the knobs automatable in the host, stems rendered (D311's order).

@@ -6983,3 +6983,22 @@ Still alone, as D304; each with what else it could have been.
   starts, so a DAW plays them before the panel opens.
 - Checked: General MIDI's 36 plays the bass drum; with the set from 60, 36 plays nothing and 60 the bass drum, 61
   the snare; the snare learned from 72 plays on 72 and no more on 61; Drag MIDI writes the bass drum on 60.
+
+## D330. CoolSynth 808: the title plate after CoolSynth 303's title (2026-11-24)
+
+- The user: the 303's title is nice, but not rotated for the 808, and in its place; four options in a mockup
+  (`docs/design/mockups/title/title-options.png`): A 808 in orange; B the 303's spaced capitals; C the whole plate a
+  dark strip with its edge line; D the name in a dark tab. Picked: C. COOLSYNTH 808 in Archivo ExtraBold capitals
+  tracked 0.08, the name light grey, 808 in the theme's orange, BEAT COMPOSER beside it, on a dark shade of each
+  theme's metal with a darker edge line in place of the faded outline.
+
+## D331. CoolSynth 808: exporting audio (2026-11-24)
+
+- The user asked whether a WAV export is a good idea, and how others do it (Hydrogen exports a song to WAV, Maschine
+  has Export Audio with loop optimise, the MPC renders with a tail). Four picks, each from two or three:
+- What: the pattern shown or the chain, rendered offline a number of times, as it plays (over a recorder of what
+  plays, or both).
+- Where: File, Export audio..., a small dialog, then where to save (over a Drag audio key, or both).
+- Stems: the mix, and one file per drum as an option, all the same length (over the mix only).
+- Settings: how many times; the ring-out cut, ringing on, or folded into the start for a seamless loop; 24-bit at
+  the app's sample rate (over full control of bit depth, rate and normalising, or none).
