@@ -6681,3 +6681,22 @@ Still alone, as D304; each with what else it could have been.
   - Separate outputs per drum later, once the VST3 works.
   - Then: knobs automatable in the host, rendering stems, and learnable drum notes. Not now: exporting the drums as
     samples.
+
+## D312. CoolSynth 808: live lights, the sequencer's CPU section, and Under the Lid's redesign (2026-11-24)
+
+- The user: the lights are recordings (the panel's glow replays each drum's recorded output, Under the Lid replays
+  ngspice currents at the default knobs), yet the engine solves the 808's circuits every sample. Picked from three
+  (the panel live; the panel and Under the Lid live; keep the recordings): the panel and Under the Lid live, where
+  the engine models the part; live lights before the VST3.
+- The user: the whole-board sheet misses a big part, the sequencer. The 808's is an NEC uPD650C-085, a 4-bit
+  microcontroller (uCOM-43) with Roland's program in its mask ROM, four uPD444C 1K x 4 static RAMs on a battery, and
+  logic for the tempo clock, the key and lamp scan and the trigger latches (the service notes; MAME's TR-808 driver
+  lists the same parts). The ROM is not public (MAME's driver is a skeleton), so its firmware cannot be emulated.
+  - Picked from three (the real chips driven by our own sequencer; emulate the CPU; leave it out): the real chips
+    with our sequencer's behaviour, "not always super accurate" is fine.
+  - Picked from three (CPU copper under the glass; only in Under the Lid; neither): the CPU board's copper under the
+    glass, lit by the clock, the playing step and the memory as it is edited.
+- The user: Under the Lid's interface is poor and should be more impressive. Picked from three: the panel's glow
+  live first, then Under the Lid redesigned from mockups (its CPU section included), then its currents live in the
+  new design.
+- The options window's controller row reads Setup, not Controller twice.
