@@ -6313,3 +6313,5 @@ The VCO in the engine (`Tb303Oscillator.h`) against vco.cir at low C, A, high C 
   orange frame; a big round lens.
 - Chosen: the orange cap. A step that is on is an orange key, with no light bar; the step sounding brightens; the
   row of step lights above the lanes shows where the bar is.
+- Then, the user: the pattern playing and the chain's block playing are backlit keys (the option of the glowing
+  key), and the step lights above the lanes, only those, turn towards red.

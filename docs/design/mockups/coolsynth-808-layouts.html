@@ -55,7 +55,7 @@ button { font: inherit; color: inherit; }
 .ksteps .lamp:nth-child(4n+1) { margin-left: 3px; }
 .lamp i { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
 .lamp span { font-family: var(--mono); font-size: 9px; color: #8f8877; }
-.lamp.cur i { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,150,60,.85); }
+.lamp.cur i { background: radial-gradient(circle at 35% 30%, #ffe0d6, #ff5a3c 42%, #c8241a 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,60,40,.85); }
 .lamp.cur span { color: #f4efe4; }
 .key.off { opacity: .38; }
 .key.small::before { top: 4px; width: 70%; height: 4px; }
@@ -284,7 +284,12 @@ canvas.board { display: block; width: 100%; height: 100%; }
   box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.5); }
 .etched5:not(.flat6) .slot.has, .etched5:not(.flat6) .cblk:not(.cadd) { background: linear-gradient(#4a4640, #34312d); color: #f1ebde; }
 .etched5:not(.flat6) .slot.edit { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 3px var(--ink), inset 0 1px 0 rgba(255,255,255,.12), 0 2px 3px rgba(0,0,0,.5); }
-.etched5:not(.flat6) .slot.play, .etched5:not(.flat6) .cblk.cur { background: linear-gradient(#f5a066, #e8742a 50%, #c3581b); color: #1a120c; }
+/* the pattern playing and the chain's block playing are backlit keys, glowing from inside (option A, the user) */
+.etched5:not(.flat6) .slot.play, .etched5:not(.flat6) .cblk.cur { background: radial-gradient(ellipse at 50% 35%, #ffc58a, #f08a3c 55%, #c95b1d); color: #2a1408;
+  box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,235,210,.6), inset 0 -2px 0 rgba(120,40,0,.45), 0 0 12px rgba(255,130,40,.5); }
+.etched5:not(.flat6) .slot.play.edit { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 3px var(--ink), inset 0 1px 0 rgba(255,235,210,.6), 0 0 14px rgba(255,130,40,.55); }
+.etched5:not(.flat6) .slot.play .prog { background: rgba(255,244,228,.9); }
+.etched5:not(.flat6) .cblk.cur .prog { background: rgba(255,244,228,.28); }
 .etched5:not(.flat6) .cblk.cur .x { color: #3a2010; }
 .etched5:not(.flat6) .cblk.nxt { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 2px var(--lit), inset 0 1px 0 rgba(255,255,255,.12); }
 .etched5:not(.flat6) .cadd { box-shadow: 0 0 0 1px #4a463f; }
