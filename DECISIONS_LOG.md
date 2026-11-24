@@ -6812,3 +6812,25 @@ Still alone, as D304; each with what else it could have been.
   recording (r > 0.6) and none is turned round. The two that follow weakly, C38's and Q41's collector currents
   (micro-amps in the envelope), show the engine's own envelope.
 - Next: the other drums' sheets, then the whole board's.
+
+## D318. CoolSynth 808: every drum's sheet live from the engine's circuit (2026-11-24)
+
+- Following D317 (live currents in the sheets, picked from four), the other eight sheets: the snare, the low tom,
+  the rim shot, the hand clap, the cowbell, the metal oscillators, the cymbal and the hi-hats. Asked whether the
+  cymbal's and hats' taps matter beyond the picture, the user said only the picture does: their tail parts are
+  read with the tail's own formulas, and the followers' currents are derived from their neighbours.
+- In the engine: each instrument's stages are Tapped; its tap() reads the names its recording has, signed as
+  ngspice signs them. One CircuitCapture per generator writes the frames on the recordings' grid in time (every
+  1/24 ms for 8 ms, then every 0.5 ms; the oscillators' every 20 us), whatever rate the generator runs at, for
+  as long as each recording runs (tom and cymbal 600 ms, hats 400, snare, clap and bass drum 300, cowbell 250, rim
+  shot 150, the oscillators 30). The hats' sheet captures at the open hat, the clap's only on the clap side, the
+  oscillators' at any metal hit.
+- In the app: the oscillator-fed parts (those that still swing at the recording's end) keep the engine's own
+  value; the rest are set on the recording's standing value as for the bass drum, which corrects the few stages
+  the engine biases from ideal sources (the cymbal's and hats' VCA outputs near -0.8 V).
+- Checked at each recording's settings: none of the series is turned round. Following their recording, sample by
+  sample or in their level over 10 ms: snare 93 of 98, low tom 69 of 73, rim shot 88 of 89, clap 115 of 127,
+  cowbell 67 of 69, cymbal 140 of 154, hats 124 of 134, bass drum 81 of 81; the oscillators' 32 in size and the
+  six squares in pitch. The rest are noise-fed (ngspice stood two sines in for the noise) or the oscillators'
+  mixes, whose phase is their own. The sound is unchanged; the sheets were looked at live.
+- Next: the whole board's sheet live, then the CPU sheet.
