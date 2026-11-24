@@ -7103,3 +7103,9 @@ Still alone, as D304; each with what else it could have been.
 - Picked: original lines in each classic style, named our own way (over transcriptions of the records, or both);
   lines and sounds on separate shelves (over each line with its sound, or both); about 40 entries (over 20, or 64
   or more). A mockup next.
+- The mockup (`docs/design/mockups/coolsynth-303-library.html`, built from the app's own data): the 808's shelf in
+  the 303's look, lines and sounds on separate shelves. Picked from three (build it as shown; change things first;
+  show other directions): as shown.
+- Built (CoolSynth303 `6ce5f77`): the Library key, the shelf, audition (no undo step; stop gives yours back), Load
+  (one undo step; a line brings its tempo, a sound sets only what it names), Keep a copy, rename, Recycle Bin, your
+  pattern or the panel's sound kept from the Yours shelves. The 42 entries are for the user to judge by feel.

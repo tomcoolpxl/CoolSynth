@@ -327,8 +327,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     Done on 2026-11-24: the MCP server (D332, port 47633); the Release build optimised as a whole (no faster for the
     303, kept to match the 808), AVX2 left out; the output's soft saturation (the user's pick); the Devil Fish swept
     through the server (D336): clean, Filter FM's direction turned over to brighten as Whittle's; a start-up crash
-    fixed on the way. To come there: the library, a try in FL Studio; the Devil Fish further by ear if the user
-    wants (it is ours, the name stays).
+    fixed on the way. The library (D338): 30 original lines and 12 sounds on a shelf, built; the user judges them by
+    feel. To come there: a try in FL Studio; the Devil Fish further by ear if the user wants (it is ours, the name
+    stays).
 
 
 ## Standing notes
