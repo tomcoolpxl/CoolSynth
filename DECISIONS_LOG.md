@@ -6497,3 +6497,40 @@ choice over changing 2.2 in place). Screenshots `2.3-charcoal-three-octaves.png`
 - A pattern key picked while playing lit only when its bar line came (Change at the bar hands the pick to the
   processor then), and it lit on the release. Now it acts as it goes down and lights at once, a steady orange cap
   until the bar line takes it; the blink is gone. With a test.
+
+## D304. CoolSynth 303's first working app, in `tomcoolpxl/CoolSynth303` (2026-11-24)
+
+The user, going to sleep after 2.3 (D302): fix the mockup's misplaced text and the overlapping lamp, then build the
+whole thing as far as it goes, to a working and tested version. Decided alone, as the overnight rule says; each
+choice with what else it could have been.
+- The mockup first: the delay's time value sat on its On lamp (now beside the key); each step's note name sat in the
+  pitch lane's top row (now a row of its own); the slide mark sat at mid-height (now at the note); the locks' title
+  touched its knobs; the keyboard's hint wrapped.
+- The repository: `E:\github\CoolSynth303`, as CoolSynth 808's: JUCE 9.0.5 and the engine as submodules at the
+  808's pins (JUCE d60b7a7, the engine f7c68eb, which has the voice), a JUCE plugin built as a Standalone (D267's
+  way; VST3 one line away), MIT, Archivo and IBM Plex Mono as the 808's. Pushed to GitHub public, as D275 decided.
+- The voice: the engine's `Tb303Voice` called directly, not as an engine generator in a layer as the 808's drums
+  are (the circuit voice is not yet a generator; making it one is the engine's next step, with CoolSynth's Acid).
+  - At twice the host's rate (96 kHz at 48, 88.2 at 44.1; D294 chose 96), down through the engine's half-band
+    decimator; the drive at the voice's rate before it. Other options: a fixed 96 kHz with a resampler (exact at
+    48 kHz only by luck), or the host's rate (the circuit is checked at 96).
+  - C38's DC block (8 Hz) after the VCA; the volume's taper 2 v^3 (+6 dB at the top).
+  - Measured: the first line at 128 BPM -26.6 dBFS rms, -6.7 dBFS peak; the voice and effects take about 74 % of one
+    core while it plays. Stopped, the circuit kept solving at about 66 %: after 4 s below -80 dBFS with nothing held
+    it now rests (0.35 %) and settles again before the next note. At rest the VCA lets the oscillator through at
+    -98 dBFS, as a 303's does.
+- The sequencer: the app's own (`src/Sequencer`), as the original's CPU plays (D275): six clocks a step, on for
+  three, 2 ms behind; a slide holds the gate and switches the glide on through the next note; a tie holds the note
+  before, after a rest it is silent. A pattern asked for while playing comes in at the end of the one that plays; a
+  chain plays its patterns their times, round or once. The engine's StepSequencer is drum-shaped (no pitch, slide
+  or tie), so not used; the 303's could move into the engine when CoolSynth plays the circuit.
+- The notes: the piano's 37 keys are the ladder's volts 1 + key/12 (the middle A 2.75 V, the service notes' 110 Hz).
+  MIDI: while stopped a note plays the voice (MIDI 36 is the middle C); while playing it transposes from note 60.
+  MIDI clock out at 24 a beat with Start and Stop; following an incoming clock is left for later.
+- The panel: 2.3 as the mockup draws it, at 1280 by 800 scaled to the window. Not built yet: the lid and the
+  full-screen circuit, the Mods panel (the Devil Fish's controls are not in the engine), the library, saving the
+  pattern as MIDI. Their keys are left off the top bar rather than shown dead.
+- The state: the project as JSON (`.cs303` files, and the host's state); undo and redo of whole projects, 64 deep, a
+  knob's drag one step.
+- Tests: the patterns and tools, the sequencer's timing, the processor (silence, sound within full scale, the same
+  twice, 44.1 kHz, MIDI clock, a held key, MIDI notes, state and undo, recording, a chain once through), the panel.

@@ -2,7 +2,8 @@
 
 A standalone bass line app built on a circuit-level TB-303, the sibling of CoolSynth 808 (D275).
 This is the plan: what is decided, how the sound is built from the service notes, and in which order.
-Nothing here is built yet. The interface is parked by the user until the engine is done.
+The circuit is built in the engine (D290 to D295); the app's first working version is in `tomcoolpxl/CoolSynth303`
+(D304), its panel the layout the user picked, 2.3 (D302).
 
 ## What is decided (D275)
 
@@ -104,11 +105,11 @@ How it is solved, as the 808 is:
 - The aliasing and cost measured; the oversampling chosen with the user.
 - The trimmers fitted to the recordings and the published figures.
 - The circuit replaces the Open303 generator in CoolSynth; Acid levelled again; the user asked before a release.
-- The 303's sequencer in the engine: pitch, octave, accent, slide, note, tie and rest per step, played with the
-  measured gate. How it is programmed is designed with the user when the interface resumes.
-- The app's shell in `tomcoolpxl/CoolSynth303`: a window, the audio device, the engine with one layer, MIDI in,
-  MIDI clock in and out, as CoolSynth 808's.
-- The interface, when the user resumes it.
+- The 303's sequencer: pitch, octave, accent, slide, note, tie and rest per step, played with the measured gate.
+  Built in the app (`src/Sequencer`, D304); into the engine when CoolSynth plays the circuit.
+- The app in `tomcoolpxl/CoolSynth303` (D304): the voice at twice the host's rate, the drive and delay, MIDI in,
+  MIDI clock out, the 2.3 panel. Still to come: following an incoming clock, the lid and the full-screen circuit, the
+  Mods panel, the library, MIDI export.
 - The Devil Fish's changes, as trimmers.
 
 ## Open, for later
