@@ -283,6 +283,20 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     `tools/tr808/*.cir`, each needing its own recording); the reduced board plays from the recordings too (D280). The realistic panel is still to draw. A UX and UI review is written (D283, `docs/design/COOLSYNTH_808_REVIEW.md`); three layouts follow as mockup views in the app.
     Before a release: the name in the trademark registries, and the line that says whose mark
     TR-808 is.
+    Since then (D307 to D329): themes, the own Options window, the panel and Under the Lid live from the engine,
+    Lift the Lid with the CPU board, every sheet live in real time, the CPU sheet, the VST3 (tried in FL Studio),
+    learnable drum notes. Parked, the user's asides and what was left, so none is lost (2026-11-24):
+    - WAV export from the standalone (what is played, or a loop): how other software does it, then options.
+    - The title plate: four options drawn from CoolSynth 303's title, unrotated, in its place (mockups asked for).
+    - Rebuild and relink the VST3 once FL Studio lets go of it (the HOST label, the drum notes).
+    - The VST3 in Ableton Live and Bitwig (FL Studio done, D328).
+    - Separate outputs per drum, the knobs automatable in the host, stems rendered (D311's order).
+    - The lifted lid's CPU board to the service notes: R104 to R107 by the accent, IC5 marked MC14001 (no type
+      given), Q33's role (found in D321; the VST3 was picked first).
+    - The CPU board under the lid in green and red, as the drums' copper (offered after D320, not picked).
+    - The library's LOAD INTO PATTERN key cuts its last letters.
+    - The hats' sheet goes live only from an open hat, the toms' only from the low tom (D318).
+    - The Release build with whole-program optimisation not yet built and timed (D327).
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
     percent of ngspice, then the trimmers fitted to Din Sync's real unit (`tools/references/tb303-dinsync`, local)
