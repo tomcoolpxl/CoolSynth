@@ -6553,3 +6553,7 @@ Still alone, as D304; each with what else it could have been.
   the test program hosts the built VST3 as a DAW would. Not yet tried in FL Studio.
 - CI on GitHub as the 808's; a listening switch (`COOLSYNTH303_RENDER`) writes the chain and the first line.
 - CoolSynth's engine pointer moves to af9f7a4 (which carries the 808 session's StepSequencer loop, f7c68eb, too).
+- At a device rate of 88.2 kHz or more the voice runs at that rate, not twice it (twice 96 kHz would take two cores;
+  at 96 kHz it renders in 92 % of real time on one core). The app idle takes 3 % of a core.
+- New is one undo step (it had wiped the history); the window opens smaller on a smaller screen; a pattern key's
+  right-click menu copies, pastes, clears, copies A to B and renames; tests click the panel as a player would.
