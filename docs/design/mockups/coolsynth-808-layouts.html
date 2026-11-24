@@ -55,10 +55,12 @@ button { font: inherit; color: inherit; }
 .ksteps .lamp:nth-child(4n+1) { margin-left: 3px; }
 .lamp i { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
 .lamp span { font-family: var(--mono); font-size: 9px; color: #8f8877; }
-.btn.is.loopkey::before, .btn.is.chg::before { background: radial-gradient(circle at 40% 35%, #ffffff, #ffe2b8 22%, #ffa040 52%, #e8742a 85%);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 0 5px 2px #ff9a3a, 0 0 14px 7px rgba(255,140,40,.7), 0 0 26px 10px rgba(255,120,30,.28); }
+/* The same lamp as the red step light, in orange: the same stops, the same saturation, the same rim and glow, and a quarter less bright (the user). */
+.btn.is.loopkey::before, .btn.is.chg::before { filter: brightness(.75); }
+.btn.is.loopkey::before, .btn.is.chg::before { background: radial-gradient(circle at 40% 35%, #ffffff, #ffd6b4 22%, #ff7a28 52%, #e2560f 85%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 5px 2px #ff7a2a, 0 0 14px 7px rgba(255,110,30,.75), 0 0 26px 10px rgba(255,100,20,.3); }
 .lamp.cur i { background: radial-gradient(circle at 40% 35%, #ffffff, #ffc2b4 22%, #ff4528 52%, #e8200f 85%);
-  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 0 5px 2px #ff4a2a, 0 0 14px 7px rgba(255,50,30,.75), 0 0 26px 10px rgba(255,40,20,.3); }
+  box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 5px 2px #ff4a2a, 0 0 14px 7px rgba(255,50,30,.75), 0 0 26px 10px rgba(255,40,20,.3); }
 .lamp.cur span { color: #f4efe4; }
 .key.off { opacity: .38; }
 .key.small::before { top: 4px; width: 70%; height: 4px; }
@@ -77,6 +79,8 @@ button { font: inherit; color: inherit; }
 .btn:active { transform: translateY(1px); box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.5); }
 .btn.tg::before, .seg .btn::before, .btn .dot { content: ''; display: block; flex: none; width: 6px; height: 6px; margin: 0; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #6b4a33, #241710 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.7), inset 0 0 1px #000; }
+/* Loop and the Change keys carry the step lights' own lamp: their size, their unlit glass (the user, D291). */
+.btn.loopkey::before, .btn.chg::before { width: 5px; height: 5px; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
 .btn.is::before, .btn.lighted .dot { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%);
   box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,150,60,.85); }
 .btn.mute.is::before { background: radial-gradient(circle at 35% 30%, #ffe2d6, #ff6a45 45%, #c8321a 80%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,90,50,.85); }
@@ -385,15 +389,15 @@ canvas.board { display: block; width: 100%; height: 100%; }
   --sw-a: #555557; --sw-b: #38383a; --sw-c: #262628; --th-a: #f2f2ef; --th-b: #c9c9c4; --th-c: #8f8f8a;
   --copper: rgba(178,146,104,.30); --silk: rgba(236,236,232,.26); --silk-text: rgba(232,232,228,.62);
   --flow-rgb: 240,120,40; --lit-rgb: 255,175,100; --heat-rgb: 232,110,40; }
-/* 5.2 Steel: blue-grey anodised aluminium, gold traces, cyan where the 808 has orange. */
+/* 5.2 Steel: blue-grey anodised aluminium, gold traces, the same orange as layout 5 (the user). */
 .etched5.t2 { --metal-a: #5c6670; --metal-b: #4a535d; --sheen: .07; --glass-a: rgba(20,26,32,.80); --glass-b: rgba(15,20,25,.86);
-  --board-ink: #f5f8fa; --board-label: #e8eef3; --board-dim: #a3aeb8; --accent: #5ed8e6;
-  --cap-a: #626c77; --cap-b: #4b545e; --cap-c: #3e4650; --hot-a: #7ce3ef; --hot-b: #22b3c5; --hot-c: #138697; --hot-ink: #062228;
-  --g1: #3c4550; --g2: #454e59; --g3: #4f5965; --g4: #5a6572; --gon1: #22b3c5; --gon2: #22b3c5; --gon3: #22b3c5; --gon4: #22b3c5;
-  --knob-a: #78828c; --knob-b: #2c333a; --pointer: #f3f7fa; --tick: #dfe7ee; --acc-a: #7ce3ef; --acc-b: #138697; --acc-pointer: #062228;
+  --board-ink: #f5f8fa; --board-label: #e8eef3; --board-dim: #a3aeb8; --accent: #ffa04a;
+  --cap-a: #626c77; --cap-b: #4b545e; --cap-c: #3e4650; --hot-a: #f5a066; --hot-b: #e8742a; --hot-c: #c3581b; --hot-ink: #1a120c;
+  --g1: #3c4550; --g2: #454e59; --g3: #4f5965; --g4: #5a6572; --gon1: #e8742a; --gon2: #e8742a; --gon3: #e8742a; --gon4: #e8742a;
+  --knob-a: #78828c; --knob-b: #2c333a; --pointer: #f3f7fa; --tick: #dfe7ee; --acc-a: #f3a066; --acc-b: #b9541a;
   --sw-a: #6a747e; --sw-b: #4c5660; --sw-c: #3a434c; --th-a: #f5f8fa; --th-b: #c9d2da; --th-c: #8d98a3;
   --copper: rgba(214,182,118,.42); --silk: rgba(236,244,250,.30); --silk-text: rgba(236,244,250,.72);
-  --flow-rgb: 70,215,235; --lit-rgb: 170,240,250; --heat-rgb: 34,179,197; }
+  --flow-rgb: 235,110,35; --lit-rgb: 255,170,90; --heat-rgb: 232,116,42; }
 /* 5.3 Olive: olive drab, brass traces, signal red. */
 .etched5.t3 { --metal-a: #646650; --metal-b: #50523e; --sheen: .06; --glass-a: rgba(24,25,17,.80); --glass-b: rgba(18,19,13,.86);
   --board-ink: #f7f4e8; --board-label: #eeead6; --board-dim: #aaa78f; --accent: #ff6a43;

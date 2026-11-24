@@ -1,0 +1,1269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoolSynth 303 layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=IBM+Plex+Mono:wght@400;500;600&family=Big+Shoulders+Stencil+Display:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* Three layouts for CoolSynth 303 to try (D296). Mockups only: a pattern runs and lights the panel and the circuit,
+   no sound. The circuits are drawn by a generator in the spirit of the real one, not from the netlists. */
+:root {
+  --ink: #ece4d2; --dim: #a39b88; --on: #e8742a; --lit: #ffc36b; --flow: #ffa04a;
+  --g1: #4b463e; --g2: #5b554b; --g3: #6c6558; --g4: #7e7666;
+  --sans: 'Archivo', 'Helvetica Neue', Arial, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --stencil: 'Big Shoulders Stencil Display', 'Archivo', sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0b0a09; color: var(--ink); font-family: var(--sans); overflow: hidden; }
+button { font: inherit; color: inherit; }
+
+/* The mockup's own bar, not part of any design */
+#chrome { position: fixed; inset: 0 0 auto 0; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 14px;
+  background: #050505; border-bottom: 1px solid #222; font: 500 12px/1 system-ui, sans-serif; color: #999; z-index: 50; }
+#chrome b { color: #ddd; font-weight: 600; margin-right: 10px; }
+#chrome .tab { white-space: nowrap; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; cursor: pointer; color: #bbb; }
+#chrome .tab.is { background: #e8742a; border-color: #e8742a; color: #111; }
+#chrome .sp { flex: 1; }
+#chrome .note { color: #777; }
+#viewport { position: fixed; inset: 44px 0 0 0; display: grid; place-items: center; }
+#stage { width: 1280px; height: 800px; position: relative; transform-origin: center center; flex: none; }
+.view { position: absolute; inset: 0; display: none; overflow: hidden; }
+.view.is { display: block; }
+
+/* Type: one family, two sizes, numbers in a mono */
+.lbl { font-weight: 600; font-size: 10px; line-height: 1; font-stretch: 75%; letter-spacing: .09em; text-transform: uppercase; color: var(--dim); }
+.t13 { font-weight: 650; font-size: 13px; line-height: 1; font-stretch: 87.5%; letter-spacing: .05em; text-transform: uppercase; color: var(--ink); }
+.num { font-family: var(--mono); font-weight: 500; font-size: 13px; color: var(--ink); }
+.logo { font-weight: 500; font-size: 19px; letter-spacing: .01em; color: var(--ink); white-space: nowrap; }
+.logo b { font-weight: 800; }
+.logo .sub { display: block; margin-top: 4px; }
+
+/* Keys: a raised plastic cap in a dark surround; a toggle carries a small lens that lights */
+.btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+  height: 26px; padding: 0 10px; border: 0; border-radius: 4px; cursor: pointer;
+  background: linear-gradient(#4c4842, #37342f 46%, #2c2a26 100%);
+  box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.17), inset 0 -2px 0 rgba(0,0,0,.38), 0 2px 3px rgba(0,0,0,.55);
+  font-weight: 650; font-size: 10px; font-stretch: 75%; letter-spacing: .09em; text-transform: uppercase; color: #f1ebde;
+  text-shadow: 0 -1px 0 rgba(0,0,0,.6); }
+.btn:hover { filter: brightness(1.1); }
+.btn:active { transform: translateY(1px); box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 3px rgba(0,0,0,.55), 0 1px 1px rgba(0,0,0,.5); }
+.btn.tg::before { content: ''; display: block; flex: none; width: 6px; height: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #6b4a33, #241710 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.7), inset 0 0 1px #000; }
+.btn.tg.is::before { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,150,60,.85); }
+.btn.rec.is::before { background: radial-gradient(circle at 35% 30%, #ffe2d6, #ff6a45 45%, #c8321a 80%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 8px 2px rgba(255,80,40,.9); }
+.btn.hot { background: linear-gradient(#f5a066, #e8742a 50%, #c3581b); color: #1a120c; text-shadow: 0 1px 0 rgba(255,255,255,.22); }
+.btn.sq { width: 26px; padding: 0; }
+.seg { display: inline-flex; gap: 4px; }
+.seg .btn.is { background: linear-gradient(#6a655c, #4f4b44 46%, #3e3b35); color: #fff; }
+
+/* Knobs: a solid cap, a pointer, printed ticks */
+.knob { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; cursor: ns-resize; user-select: none; position: relative; }
+.knob svg { display: block; overflow: visible; }
+.knob .kval { font-family: var(--mono); font-size: 10px; color: var(--lit); margin-top: -2px; }
+.knob.locked::after { content: ''; position: absolute; right: -2px; top: -2px; width: 6px; height: 6px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%); box-shadow: 0 0 6px 1px rgba(255,150,60,.8); }
+.knob.moving .kcap { filter: drop-shadow(0 0 5px rgba(255,150,60,.55)); }
+
+/* Slide switch, as hardware */
+.slide { display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; user-select: none; }
+.slide .lbl { color: #8f8877; } .slide .lbl.lit { color: #f4efe4; }
+.slide svg { display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.6)); }
+
+/* Pattern row, chain, status */
+.prow { display: flex; align-items: center; gap: 4px; flex: none; }
+.slot { flex: none; position: relative; width: 30px; height: 26px; border-radius: 3px; cursor: pointer; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 11px; color: #b9b19f;
+  background: linear-gradient(#3b3833, #2c2a26); box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.12), inset 0 -2px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.5); }
+.slot.has { background: linear-gradient(#4a4640, #34312d); color: #f1ebde; }
+.slot.edit { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 3px var(--ink), inset 0 1px 0 rgba(255,255,255,.12); }
+.slot.play { background: radial-gradient(ellipse at 50% 35%, #ffc58a, #f08a3c 55%, #c95b1d); color: #2a1408; }
+.slot.play .prog { position: absolute; left: 0; bottom: 0; height: 3px; background: rgba(255,244,228,.9); border-radius: 0 0 0 3px; }
+.slot.queued { animation: blink .5s steps(2) infinite; }
+@keyframes blink { 0% { filter: brightness(1.6) sepia(1) hue-rotate(-20deg); } 50% { filter: none; } }
+.status { font-family: var(--mono); font-size: 11px; color: #ddd5c3; white-space: nowrap; }
+.status b { color: var(--ink); font-weight: 600; } .status .q { color: var(--lit); }
+.chain { display: flex; align-items: center; gap: 3px; }
+.cblk { position: relative; height: 24px; min-width: 40px; padding: 0 8px; border-radius: 3px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  font-family: var(--mono); font-size: 11px; color: #f1ebde; overflow: hidden;
+  background: linear-gradient(#4a4640, #34312d); box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.12), 0 2px 3px rgba(0,0,0,.5); }
+.cblk .x { color: #b9b19f; }
+.cblk.cur { background: radial-gradient(ellipse at 50% 35%, #ffc58a, #f08a3c 55%, #c95b1d); color: #2a1408; }
+.cblk.cur .x { color: #3a2010; }
+.cblk.cur .prog { position: absolute; left: 0; top: 0; bottom: 0; background: rgba(255,244,228,.28); z-index: 0; }
+.cblk > span { position: relative; z-index: 1; }
+.cblk.nxt { box-shadow: 0 0 0 1px #0b0a09, 0 0 0 2px var(--lit); }
+.cadd { width: 24px; justify-content: center; min-width: 0; color: var(--dim); background: transparent !important; box-shadow: 0 0 0 1px #4a463f !important; }
+
+/* Transpose keys: one octave, played from the mouse, the computer's keys or MIDI */
+.tkeys { position: relative; height: 26px; display: flex; }
+.tkeys .w { width: 15px; height: 26px; border-radius: 0 0 2px 2px; background: linear-gradient(#e9e3d6, #bdb6a6); box-shadow: inset 0 -2px 0 rgba(0,0,0,.25), 0 0 0 1px #0b0a09; cursor: pointer; }
+.tkeys .b { position: absolute; top: 0; width: 10px; height: 16px; border-radius: 0 0 2px 2px; background: linear-gradient(#3b3833, #151412); box-shadow: 0 0 0 1px #000; cursor: pointer; z-index: 1; }
+.tkeys .is { background: radial-gradient(ellipse at 50% 30%, #ffd9b0, #f08a3c 60%, #c95b1d) !important; }
+
+/* The grid: lanes under one row of step lights */
+.grid { display: grid; grid-template-columns: 74px 1fr; row-gap: 5px; align-content: start; user-select: none; }
+.grid .rl { display: flex; align-items: center; gap: 4px; padding-left: 2px; }
+.grid .rl .lbl { color: #ddd5c3; }
+.cols16 { display: grid; grid-template-columns: repeat(16, 1fr); column-gap: 4px; }
+.cols16 > *:nth-child(4n+1) { margin-left: 3px; }
+.lamp { display: flex; align-items: center; justify-content: center; gap: 4px; height: 14px; }
+.lamp i { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.lamp span { font-family: var(--mono); font-size: 9px; color: #8f8877; }
+.lamp.cur i { background: radial-gradient(circle at 40% 35%, #ffffff, #ffc2b4 22%, #ff4528 52%, #e8200f 85%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 0 5px 2px #ff4a2a, 0 0 14px 7px rgba(255,50,30,.75); }
+.lamp.cur span { color: #f4efe4; }
+/* the pitch lane: one octave up the column, the note a cap at its height */
+.pcol { position: relative; border-radius: 3px; cursor: ns-resize;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 calc(100%/13), rgba(0,0,0,.12) calc(100%/13) calc(200%/13));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); }
+.pcol.pick { box-shadow: inset 0 0 0 2px var(--ink); }
+.pcol.off { opacity: .35; }
+.pcol .cap { position: absolute; left: 3px; right: 3px; height: calc(100%/13 + 2px); border-radius: 3px;
+  background: linear-gradient(#f5a066, #e8742a 50%, #c3581b); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(90,30,0,.45), 0 1px 2px rgba(0,0,0,.6); }
+.pcol.acc .cap { background: linear-gradient(#ffc08e, #f59346 50%, #d86a28); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px #ffd9b0, 0 1px 2px rgba(0,0,0,.6); }
+.pcol.tie .cap { left: -6px; border-top-left-radius: 0; border-bottom-left-radius: 0; opacity: .8; }
+.pcol.rest .cap { display: none; }
+.pcol.ph .cap { background: radial-gradient(ellipse at 50% 35%, #fff0dc, #ffb067 55%, #e8742a); box-shadow: inset 0 1px 0 #fff, 0 0 14px rgba(255,160,70,.85); }
+.pcol .nn { position: absolute; left: 0; right: 0; top: 3px; text-align: center; font-family: var(--mono); font-size: 10px; color: #f1ebde; pointer-events: none; }
+.pcol .nn sup { font-size: 8px; color: var(--lit); }
+.pcol .lk { position: absolute; right: 3px; bottom: 3px; width: 5px; height: 5px; border-radius: 50%; background: #ffb45c; box-shadow: 0 0 5px #ff9a3a; display: none; }
+.pcol.locked .lk { display: block; }
+.pcol .sl { position: absolute; top: 50%; right: -7px; width: 10px; height: 2px; background: var(--lit); display: none; box-shadow: 0 0 4px var(--flow); }
+.pcol.slide .sl { display: block; }
+/* the rows of keys under it */
+.skey { position: relative; height: 22px; border-radius: 3px; cursor: pointer; display: grid; place-items: center;
+  font-family: var(--mono); font-size: 10px; color: #b9b19f;
+  background: var(--g); box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -2px 0 rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.6); }
+.skey.off { opacity: .35; }
+.skey.on { background: linear-gradient(#f5a066, #e8742a 50%, #c3581b); color: #1a120c;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.35), inset 0 -2px 0 rgba(90,30,0,.45), 0 1px 0 rgba(0,0,0,.6); }
+.skey.lens::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6b4a33, #241710 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.7); }
+.skey.lens.on { background: var(--g); color: #b9b19f; }
+.skey.lens.on::before { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px rgba(255,150,60,.85); }
+.skey.txt.on { background: color-mix(in srgb, var(--g) 70%, #ece4d2); color: #1a1714; }
+.g1 { --g: var(--g1); } .g2 { --g: var(--g2); } .g3 { --g: var(--g3); } .g4 { --g: var(--g4); }
+/* motion: a knob's moves over the pattern, a bar a step */
+.mcol { position: relative; border-radius: 2px; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); cursor: crosshair; }
+.mcol i { position: absolute; left: 2px; right: 2px; bottom: 2px; border-radius: 2px; background: linear-gradient(#ffcf9a, #e8742a); opacity: .85; }
+.mcol.ph i { background: linear-gradient(#fff3e0, #ffb067); box-shadow: 0 0 10px rgba(255,160,70,.7); }
+
+/* Tools on the right: the picked step, its locks */
+.side { border-radius: 4px; background: rgba(0,0,0,.25); box-shadow: inset 0 0 0 1px rgba(255,255,255,.05); padding: 4px 14px 10px; display: flex; flex-direction: column; overflow: hidden; }
+.tsec { padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.07); display: flex; flex-direction: column; gap: 8px; }
+.tsec:last-child { border-bottom: 0; }
+.tsec .head { color: #f4efe4; }
+.trow { display: flex; align-items: center; gap: 6px; }
+.trow > .lbl { width: 46px; color: #cfc7b3; }
+.tknobs { display: flex; gap: 12px; flex-wrap: wrap; }
+.thint { line-height: 1.45; color: #b9b19f !important; text-transform: none; letter-spacing: .02em; font-size: 11px; }
+.toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; }
+.toolbar .sepv { width: 1px; height: 18px; background: rgba(255,255,255,.1); margin: 0 3px; }
+.valbox { min-width: 64px; height: 26px; display: inline-flex; align-items: center; justify-content: center; padding: 0 8px; border-radius: 3px;
+  background: #0d0c0b; box-shadow: inset 0 1px 2px #000, 0 0 0 1px #3d3a35; font-family: var(--mono); font-size: 11px; color: var(--lit); cursor: pointer; }
+
+/* Smoked glass, as the 808 app's */
+.glass { position: absolute; border-radius: 6px; padding: 10px 14px;
+  background: linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,0) 30%), linear-gradient(rgba(16,15,13,.82), rgba(12,11,10,.88));
+  backdrop-filter: blur(1.5px); box-shadow: inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px rgba(255,255,255,.05), 0 3px 12px rgba(0,0,0,.6); }
+.tstrip { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 5px;
+  background: linear-gradient(rgba(16,15,13,.85), rgba(12,11,10,.9)); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.5); }
+.tstrip .tempo { display: flex; align-items: baseline; gap: 5px; padding: 0 6px; }
+.tstrip .tempo .num { color: var(--lit); text-shadow: 0 0 6px rgba(255,160,74,.45); }
+.tstrip .tsep { width: 1px; height: 20px; background: rgba(255,255,255,.1); margin: 0 3px; }
+.tstrip .swing { display: flex; align-items: center; gap: 8px; padding: 0 4px; }
+.tstrip .swing .lbl { color: #f4efe4; }
+
+/* The Mods panel: the Devil Fish's controls and the trimmers, closed by default */
+.mods { position: absolute; z-index: 20; border-radius: 6px; padding: 12px 16px; display: none; gap: 18px;
+  background: linear-gradient(rgba(24,22,20,.97), rgba(16,15,13,.98)); box-shadow: 0 12px 30px rgba(0,0,0,.65), inset 0 0 0 1px #4a463f; }
+.mods.open { display: flex; }
+.mods .mgrp { display: flex; flex-direction: column; gap: 10px; }
+.mods .mknobs { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+.mods .mhead { color: #f4efe4; }
+.mods .mnote { color: #b9b19f; text-transform: none; letter-spacing: .02em; font-size: 11px; line-height: 1.4; max-width: 260px; }
+
+/* Pop-ups */
+.pop { position: absolute; z-index: 40; min-width: 180px; padding: 10px; border-radius: 5px; display: flex; flex-direction: column; gap: 6px;
+  background: rgba(30,28,25,.97); box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 0 0 1px #4a463f; }
+.pop .item { justify-content: start; width: 100%; background: transparent; box-shadow: none; }
+.pop .item:hover { background: #3a3733; }
+
+canvas.board { display: block; position: absolute; }
+
+/* ===================== 1: the etched board ===================== */
+#v1 { background:
+    radial-gradient(1200px 400px at 30% 0%, rgba(255,255,255,.05), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 1px, rgba(0,0,0,.02) 1px 3px),
+    linear-gradient(#2c2a27, #23211e); }
+#v1 > canvas.board { inset: 0; width: 100%; height: 100%; }
+#v1 .kn { position: absolute; }
+#v1 .kn .kcap { filter: drop-shadow(0 2px 2px rgba(0,0,0,.7)); }
+#v1 .kn .lbl { color: #f4efe4; }
+#v1 .secLabel { position: absolute; text-align: center; }
+#v1 .secLabel .t13 { color: #f7f2e8; }
+#v1 .secLabel .lbl { color: #e3dccb; margin-top: 3px; }
+#v1 .secLabel.live .t13 { color: var(--lit); text-shadow: 0 0 8px rgba(255,160,74,.6); }
+#v1 .glass { left: 14px; right: 14px; top: 330px; bottom: 14px; display: flex; flex-direction: column; gap: 8px; }
+#v1 .row { display: flex; align-items: center; gap: 10px; }
+#v1 .main { flex: 1; display: grid; grid-template-columns: 1fr 236px; column-gap: 14px; min-height: 0; }
+#v1 .mods { right: 18px; top: 52px; }
+
+/* ===================== 2: TAL-Vocoder's charcoal ===================== */
+#v2 { background: #26272a; }
+#v2 .bar { position: absolute; left: 0; right: 0; top: 0; height: 42px; display: flex; align-items: center; gap: 8px; padding: 0 14px 0 60px;
+  background: #1c1d1f; border-bottom: 1px solid #111; }
+#v2 .preset { display: flex; align-items: center; gap: 6px; }
+#v2 .preset .name { min-width: 210px; height: 26px; display: grid; place-items: center; border-radius: 3px; background: #111214; box-shadow: inset 0 0 0 1px #3a3b3f; font-size: 12px; color: #e6e6e6; letter-spacing: .03em; }
+#v2 .stencil { position: absolute; left: 0; top: 42px; bottom: 0; width: 52px; display: flex; align-items: center; justify-content: center; background: #1f2023; border-right: 1px solid #111; }
+#v2 .stencil span { transform: rotate(-90deg); white-space: nowrap; font-family: var(--stencil); font-weight: 800; font-size: 40px; letter-spacing: .08em; color: #d9d9d6; }
+#v2 .stencil span em { font-style: normal; color: #e8742a; }
+#v2 .sect { position: absolute; border: 1px solid #6b6d72; border-radius: 9px; padding: 22px 12px 10px; }
+#v2 .sect > .cap { position: absolute; left: 10px; top: -1px; transform: translateY(-50%); padding: 0 6px; background: #26272a;
+  font-weight: 700; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #e9e9e6; }
+#v2 .arrow { position: absolute; width: 14px; height: 14px; color: #8d8f94; display: grid; place-items: center; font-size: 13px; }
+#v2 .lbl { color: #bfc0c3; }
+#v2 .knob .lbl { color: #d7d8da; }
+#v2 .foot { position: absolute; right: 16px; bottom: 6px; font-size: 10px; letter-spacing: .06em; color: #75777c; }
+#v2 .tbtn { position: relative; display: inline-flex; align-items: center; justify-content: center; height: 24px; min-width: 34px; padding: 0 8px; margin-top: 8px; border: 0; border-radius: 2px; cursor: pointer;
+  background: #c9cacc; color: #1b1c1e; font-weight: 700; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; box-shadow: 0 1px 0 #000; }
+#v2 .tbtn::before { content: ''; position: absolute; top: -8px; left: 50%; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: #4a1c17; }
+#v2 .tbtn.is { background: #e8742a; color: #1a120c; }
+#v2 .tbtn.is::before { background: #ff3b28; box-shadow: 0 0 6px 1px rgba(255,60,40,.8); }
+#v2 .tbtn.plain::before { display: none; }
+#v2 .tbtn.plain { margin-top: 0; }
+#v2 .fader { display: flex; flex-direction: column; align-items: center; gap: 6px; user-select: none; cursor: ns-resize; }
+#v2 .fader .trk { position: relative; width: 26px; height: 112px;
+  background: repeating-linear-gradient(0deg, transparent 0 10px, #4b4d52 10px 11px), linear-gradient(90deg, transparent 11px, #0e0f10 11px 15px, transparent 15px); }
+#v2 .fader .capf { position: absolute; left: 1px; width: 24px; height: 14px; border-radius: 2px; background: linear-gradient(#3b3c40, #16171a); box-shadow: 0 2px 3px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.12); }
+#v2 .fader .capf::after { content: ''; position: absolute; left: 3px; right: 3px; top: 6px; height: 2px; background: #e8742a; }
+/* the sequencer, flat, as TAL draws its controls */
+#v2 .seqsect { display: flex; flex-direction: column; gap: 8px; }
+#v2 .row { display: flex; align-items: center; gap: 10px; }
+#v2 .main { flex: 1; display: grid; grid-template-columns: 1fr 236px; column-gap: 14px; min-height: 0; }
+#v2 .btn { background: #3a3b3f; box-shadow: 0 0 0 1px #111, inset 0 1px 0 rgba(255,255,255,.08); text-shadow: none; }
+#v2 .btn.hot { background: #e8742a; color: #1a120c; }
+#v2 .seg .btn.is, #v2 .btn.tg.is { background: #c9cacc; color: #1b1c1e; }
+#v2 .slot, #v2 .cblk { background: #333438; box-shadow: 0 0 0 1px #111; color: #9fa1a5; }
+#v2 .slot.has, #v2 .cblk { background: #45474c; color: #eee; }
+#v2 .slot.edit { box-shadow: 0 0 0 2px #e9e9e6; }
+#v2 .slot.play, #v2 .cblk.cur { background: #e8742a; color: #1a120c; }
+#v2 .skey { --g: #3a3b3f; box-shadow: 0 0 0 1px #111; border-radius: 2px; color: #a5a7ab; }
+#v2 .skey.on { background: #e8742a; box-shadow: none; }
+#v2 .skey.lens.on { background: #c9cacc; color: #1b1c1e; }
+#v2 .skey.lens::before { background: #4a1c17; }
+#v2 .skey.lens.on::before { background: #ff3b28; box-shadow: 0 0 6px 1px rgba(255,60,40,.8); }
+#v2 .skey.txt.on { background: #c9cacc; color: #1b1c1e; }
+#v2 .pcol { background: repeating-linear-gradient(0deg, rgba(255,255,255,.03) 0 calc(100%/13), rgba(0,0,0,.18) calc(100%/13) calc(200%/13)); border-radius: 2px; }
+#v2 .pcol .cap { border-radius: 2px; background: #e8742a; box-shadow: none; }
+#v2 .pcol.acc .cap { background: #ffab6b; box-shadow: 0 0 0 1px #ffe0c4; }
+#v2 .pcol.ph .cap { background: #ffd2a6; box-shadow: 0 0 12px rgba(255,160,70,.8); }
+#v2 .side { background: transparent; box-shadow: none; border: 1px solid #6b6d72; border-radius: 9px; }
+#v2 .valbox { background: #111214; box-shadow: inset 0 0 0 1px #3a3b3f; }
+#v2 .tkeys .w { background: #d9d9d6; box-shadow: 0 0 0 1px #111; }
+#v2 .tkeys .b { background: #18191b; }
+#v2 .mods { left: 60px; top: 50px; }
+#v2 .lidwrap { position: absolute; left: 60px; right: 10px; top: 52px; height: 214px; perspective: 1400px; }
+#v2 .lidwrap canvas.board { inset: 0; width: 100%; height: 100%; background: #141416; border-radius: 9px; }
+#v2 .face { position: absolute; inset: 0; transform-origin: 50% 0; transition: transform .8s cubic-bezier(.3,.1,.2,1), opacity .8s; background: #26272a; }
+#v2.lifted .face { transform: rotateX(80deg); opacity: 0; pointer-events: none; }
+
+/* ===================== 3: the original's silver face ===================== */
+#v3 { background: #0f0f10; }
+#v3 .metal { position: absolute; left: 0; right: 0; top: 0; height: 468px;
+  background: radial-gradient(1000px 300px at 30% 0%, rgba(255,255,255,.22), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.03) 1px 2px), linear-gradient(#cfd2d5, #a9adb1);
+  box-shadow: inset 0 -2px 0 rgba(0,0,0,.35); perspective: 1400px; }
+#v3 .face { position: absolute; inset: 0; transform-origin: 50% 0; transition: transform .8s cubic-bezier(.3,.1,.2,1), opacity .8s;
+  background: inherit; }
+#v3.lifted .face { transform: rotateX(80deg); opacity: 0; pointer-events: none; }
+#v3 .metal canvas.board { inset: 0; width: 100%; height: 100%; background: #1a1917; }
+#v3 .ink { color: #1d2024; }
+#v3 .lbl { color: #2a2e33; }
+#v3 .knob .lbl { color: #1d2024; }
+#v3 .knob { --knob-a: #3a3b3d; --knob-b: #0f1011; --pointer: #f2f2f0; --tick: #2a2e33; }
+#v3 .knob.acc { --acc-a: #f8a066; --acc-b: #bf4f12; }
+#v3 .plate { position: absolute; border-radius: 4px; background: linear-gradient(#24262a, #17181b); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 1px 0 rgba(255,255,255,.5), 0 -1px 0 rgba(0,0,0,.4); padding: 10px 12px; }
+#v3 .plate .lbl, #v3 .plate .knob .lbl { color: #e9e7e1; }
+#v3 .plate .knob { --knob-a: #6a6a6c; --knob-b: #242426; --pointer: #f28a2c; --tick: #dcdcd8; }
+#v3 .rule { position: absolute; height: 2px; background: #1d2024; opacity: .75; }
+#v3 .hk { position: absolute; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#v3 .hk .cap { width: 46px; height: 46px; border-radius: 4px; cursor: pointer;
+  background: linear-gradient(#5b5f64, #3a3d41 50%, #2a2c30); box-shadow: 0 0 0 1px #0e0f11, inset 0 1px 0 rgba(255,255,255,.2), inset 0 -3px 0 rgba(0,0,0,.4), 0 3px 4px rgba(0,0,0,.45); }
+#v3 .hk.white .cap { background: linear-gradient(#f2efe8, #d6d1c5 50%, #b9b3a5); box-shadow: 0 0 0 1px #3c3f44, inset 0 1px 0 #fff, inset 0 -3px 0 rgba(0,0,0,.18), 0 3px 4px rgba(0,0,0,.4); }
+#v3 .hk .cap:active { transform: translateY(1px); }
+#v3 .hk.lens .cap::after { content: ''; display: block; margin: 8px auto 0; width: 7px; height: 7px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6b4a33, #241710 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.7); }
+#v3 .hk.lens.is .cap::after { background: radial-gradient(circle at 35% 30%, #fff3dc, #ffb45c 42%, #e8742a 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 8px 2px rgba(255,150,60,.85); }
+#v3 .hk.hit .cap { filter: brightness(1.25) sepia(.5); }
+#v3 .hk .lbl { color: #1d2024; white-space: nowrap; }
+#v3 .window { position: absolute; left: 20px; right: 20px; top: 486px; height: 92px; border-radius: 6px; padding: 10px 12px;
+  background: linear-gradient(#0b0c0d, #141517); box-shadow: inset 0 2px 8px #000, 0 0 0 1px #2c2e31; display: grid; grid-template-columns: repeat(16, 1fr); column-gap: 6px; }
+#v3 .cell { position: relative; border-radius: 4px; background: rgba(255,255,255,.035); box-shadow: inset 0 0 0 1px rgba(255,255,255,.06); cursor: pointer; padding: 6px 4px; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+#v3 .cell:nth-child(4n+1) { margin-left: 4px; }
+#v3 .cell .nn { font-family: var(--mono); font-size: 18px; font-weight: 600; color: #f1ebde; line-height: 1; }
+#v3 .cell .nn sup { font-size: 10px; color: var(--lit); }
+#v3 .cell .flags { display: flex; gap: 4px; font-family: var(--mono); font-size: 9px; }
+#v3 .cell .flags b { width: 15px; height: 14px; display: grid; place-items: center; border-radius: 2px; color: #6e6a62; background: rgba(255,255,255,.05); font-weight: 600; }
+#v3 .cell .flags b.on { background: var(--on); color: #1a120c; }
+#v3 .cell .gate { font-family: var(--mono); font-size: 9px; color: #8f8877; letter-spacing: .05em; }
+#v3 .cell.cursor { box-shadow: inset 0 0 0 2px #f1ebde; }
+#v3 .cell.ph { background: rgba(255,150,60,.22); box-shadow: inset 0 0 0 1px rgba(255,170,90,.6), 0 0 14px rgba(255,140,40,.35); }
+#v3 .cell.off { opacity: .35; }
+#v3 .cell.rest .nn { color: #5e5a52; }
+#v3 .cell .lk { position: absolute; right: 4px; top: 4px; width: 5px; height: 5px; border-radius: 50%; background: #ffb45c; box-shadow: 0 0 5px #ff9a3a; display: none; }
+#v3 .cell.locked .lk { display: block; }
+#v3 .glass { left: 20px; right: 20px; top: 590px; bottom: 12px; display: flex; flex-direction: column; gap: 8px; }
+#v3 .row { display: flex; align-items: center; gap: 10px; }
+#v3 .mods { left: 20px; top: 214px; }
+#v3 .brand { position: absolute; }
+
+/* Full-screen circuit */
+#saver { position: fixed; inset: 0; background: #070707; z-index: 100; display: none; }
+#saver.is { display: block; }
+#saver canvas.board { inset: 0; width: 100%; height: 100%; }
+#saver .bar { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: flex; gap: 6px; opacity: .25; transition: opacity .3s; }
+#saver:hover .bar { opacity: 1; }
+#saver .name { position: absolute; left: 28px; bottom: 24px; opacity: .55; }
+</style>
+</head>
+<body>
+<div id="chrome">
+  <b>303 layouts</b>
+  <button class="tab is" data-v="1">1 The etched board</button>
+  <button class="tab" data-v="2">2 Charcoal, as TAL draws</button>
+  <button class="tab" data-v="3">3 The silver face</button>
+  <span class="sp"></span>
+  <span class="note">Mockups: a pattern runs and lights the panel and the circuit, no sound. Space plays and stops.</span>
+  <button class="tab" id="modsBtn">Mods panel</button>
+  <button class="tab" id="saverBtn">Full-screen circuit</button>
+</div>
+<div id="viewport"><div id="stage">
+
+<!-- 1: the etched board -->
+<section class="view is" id="v1">
+  <canvas class="board" id="b1"></canvas>
+  <div class="logo" style="position:absolute;left:30px;top:14px"><b>CoolSynth</b> 303<span class="sub lbl" style="color:#e3dccb">Bass line · its circuit</span></div>
+  <div id="v1transport" style="position:absolute;right:18px;top:10px"></div>
+  <div id="v1knobs"></div>
+  <div class="mods" id="v1mods"></div>
+  <div class="glass">
+    <div class="row"><div data-prow></div><div data-ab></div><span style="flex:1"></span><div data-status></div></div>
+    <div class="row"><span class="lbl" style="color:#ddd5c3">Chain</span><div data-chain></div><span style="flex:1"></span><div data-transpose></div></div>
+    <div data-tools></div>
+    <div class="main"><div data-grid></div><div class="side" data-side></div></div>
+  </div>
+</section>
+
+<!-- 2: TAL-Vocoder's charcoal -->
+<section class="view" id="v2">
+  <div class="bar" id="v2bar"></div>
+  <div class="stencil"><span>COOLSYNTH <em>303</em></span></div>
+  <div class="lidwrap"><canvas class="board" id="b2"></canvas><div class="face" id="v2face"></div></div>
+  <div class="mods" id="v2mods"></div>
+  <div class="sect seqsect" id="v2seq" style="left:60px;right:10px;top:282px;bottom:24px">
+    <span class="cap">Sequencer</span>
+    <div class="row"><div data-prow></div><div data-ab></div><span style="flex:1"></span><div data-status></div></div>
+    <div class="row"><span class="lbl">Chain</span><div data-chain></div><span style="flex:1"></span><div data-transpose></div></div>
+    <div data-tools></div>
+    <div class="main"><div data-grid></div><div class="side" data-side></div></div>
+  </div>
+  <div class="foot">CoolSynth 303 · CoolSynth · mockup</div>
+</section>
+
+<!-- 3: the original's silver face -->
+<section class="view" id="v3">
+  <div class="metal"><canvas class="board" id="b3"></canvas><div class="face" id="v3face"></div></div>
+  <div class="mods" id="v3mods"></div>
+  <div class="window" id="v3strip"></div>
+  <div class="glass">
+    <div class="row"><div data-prow></div><div data-ab></div><span style="flex:1"></span><div data-status></div></div>
+    <div class="row"><span class="lbl" style="color:#ddd5c3">Chain</span><div data-chain></div></div>
+    <div data-tools></div>
+    <div class="row" id="v3motion" style="align-items:stretch;flex:1;min-height:0"></div>
+  </div>
+</section>
+
+</div></div>
+<div id="saver"><canvas class="board" id="bs"></canvas>
+  <div class="name logo"><b>CoolSynth</b> 303</div>
+  <div class="bar"><button class="btn" data-look="schematic">Schematic</button><button class="btn" data-look="etched">Etched</button><button class="btn" data-look="phosphor">Phosphor</button><button class="btn" data-look="blueprint">Blueprint</button><button class="btn" id="saverClose">Close</button></div>
+</div>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const el = (tag, cls, html) => { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; };
+
+// ---------------------------------------------------------------- the patterns
+const NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C'];
+const SCALES = { Minor: [0, 2, 3, 5, 7, 8, 10, 12], Phrygian: [0, 1, 3, 5, 7, 8, 10, 12], Dorian: [0, 2, 3, 5, 7, 9, 10, 12], Chromatic: [...Array(13).keys()] };
+const LOCKABLE = [['cutoff', 'Cutoff'], ['envmod', 'Env mod'], ['decay', 'Decay'], ['accent', 'Accent']];
+const MOTIONABLE = [['cutoff', 'Cutoff'], ['res', 'Resonance'], ['envmod', 'Env mod'], ['decay', 'Decay'], ['accent', 'Accent']];
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function blankStep() { return { n: 0, o: 0, a: false, s: false, g: 'rest', lock: {} }; }
+// An acid line in a scale: mostly notes, some rests and ties, the root weighted, a few accents and slides. Drawn by
+// the generator, so no line from a record is copied.
+function generate(R, scale, root, into) {
+  const sc = SCALES[scale], steps = [];
+  for (let i = 0; i < 16; i++) {
+    const r = R(), g = i === 0 ? 'note' : r < .68 ? 'note' : r < .84 ? 'rest' : 'tie';
+    const deg = R() < .35 ? 0 : sc[Math.floor(R() * sc.length)];
+    const o = R() < .16 ? 1 : R() < .12 ? -1 : 0;
+    steps.push({ n: (deg + root) % 12, o, a: g === 'note' && R() < .27, s: g !== 'rest' && R() < .2, g, lock: {} });
+  }
+  if (into) into.steps = steps;
+  return steps;
+}
+function newPattern(name, seed) {
+  const p = { name, len: 16, steps: generate(rng(seed), 'Minor', 0), motion: {} };
+  return p;
+}
+const bank = [newPattern('Line 1', 11), newPattern('Line 2', 23), newPattern('Line 3', 37), newPattern('Line 4', 52), newPattern('Line 5', 71)];
+bank[0].motion.cutoff = [...Array(16)].map((_, i) => .25 + .5 * (.5 - .5 * Math.cos(i / 15 * Math.PI)));
+bank[0].steps[6].lock = { decay: .15 }; bank[0].steps[12].lock = { cutoff: .85, accent: .9 };
+while (bank.length < 16) bank.push(null);
+
+const S = {
+  playing: false, bpm: 128, swing: .52, step: -1, count: 0,
+  editing: 0, hearing: 0, queued: null, chain: [{ p: 0, r: 2 }, { p: 1, r: 1 }, { p: 0, r: 2 }, { p: 2, r: 1 }], chainPos: 0, repLeft: 2, chainOn: true,
+  loop: true, variation: 'A', pick: 4, cursor: 0, transpose: 0, rec: false, mods: false, entryOct: 0, transposeMode: false,
+  scale: 'Minor', root: 0, mut: { pitch: true, accent: true, slide: true, rest: false }, motionKnob: 'cutoff',
+  k: { tuning: .5, cutoff: .42, res: .72, envmod: .55, decay: .48, accent: .62, volume: .78, wave: 0,
+    driveOn: true, drive: .35, tone: .55, delayOn: true, time: .4, fb: .38, mix: .22,
+    overdrive: 0, ndecay: .5, adecay: .2, soft: 0, slidet: .3, track: 0, ffm: 0, sweep: 0, muffler: 0, tm3: .35, tm4: .57, tm5: .74, c11: .5 },
+};
+const undo = [], redo = [];
+function shown() { return bank[S.editing] || (bank[S.editing] = { name: '', len: 16, steps: [...Array(16)].map(blankStep), motion: {} }); }
+function heard() { return bank[S.hearing] || bank[0]; }
+function snapshot() { undo.push(JSON.stringify({ i: S.editing, p: shown() })); if (undo.length > 100) undo.shift(); redo.length = 0; }
+function restore(from, to) { const x = from.pop(); if (!x) return; const o = JSON.parse(x); to.push(JSON.stringify({ i: o.i, p: bank[o.i] })); bank[o.i] = o.p; S.editing = o.i; paintAll(); }
+
+// ---------------------------------------------------------------- the clock and the sound's stand-ins
+let noteT = -1e9, noteAcc = false, gateOn = false, slideOn = false, echoT = [];
+let acc = 0;
+function stepMs() { return 60000 / S.bpm / 4; }
+function eff(key) {
+  // a knob's value now: the step's lock, else the pattern's motion, else the knob
+  const p = heard(), i = S.step >= 0 ? S.count % p.len : -1;
+  if (S.playing && i >= 0) {
+    if (p.steps[i].lock[key] !== undefined) return p.steps[i].lock[key];
+    if (p.motion[key] && p.motion[key][i] !== null && p.motion[key][i] !== undefined) return p.motion[key][i];
+  }
+  return S.k[key];
+}
+function advance(now) {
+  S.step = (S.step + 1) % 16; S.count++;
+  if (S.step === 0) barLine();
+  const p = heard(), i = S.count % p.len, st = p.steps[i];
+  if (st.g === 'note') { noteT = now; noteAcc = st.a; gateOn = true; if (S.k.delayOn) echoT = [now + stepMs() * 3 * (1 + S.k.time)]; }
+  else if (st.g === 'rest') gateOn = false;
+  slideOn = st.s;
+  paintAll();
+}
+function barLine() {
+  if (S.queued !== null) { S.hearing = S.queued; S.queued = null; S.chainOn = false; return; }
+  if (S.chainOn && S.chain.length) {
+    if (S.count > 0) {
+      S.repLeft--;
+      if (S.repLeft <= 0) {
+        if (!S.loop && S.chainPos === S.chain.length - 1) { S.chainPos = 0; S.repLeft = S.chain[0].r; setPlaying(false); return; }
+        S.chainPos = (S.chainPos + 1) % S.chain.length; S.repLeft = S.chain[S.chainPos].r;
+      }
+    }
+    S.hearing = S.chain[S.chainPos].p;
+  }
+}
+function setPlaying(on) {
+  S.playing = on;
+  if (on) { S.step = -1; S.count = -1; acc = stepMs(); S.chainPos = 0; S.repLeft = S.chain[0] ? S.chain[0].r : 1; }
+  else gateOn = false;
+  paintAll();
+}
+// The envelope's and the VCA's level now, for the lights
+function envNow(now) {
+  const dt = now - noteT; if (dt < 0) return 0;
+  const decay = noteAcc ? 200 : 200 + eff('decay') * 2300;
+  return (noteAcc ? 1 : .72) * Math.exp(-dt / decay) * Math.min(1, dt / 4);
+}
+function vcaNow(now) { return (gateOn || slideOn) ? Math.max(.25, envNow(now) * 1.1) * (.6 + .4 * S.k.volume) : envNow(now) * .3; }
+
+// ---------------------------------------------------------------- pieces of panel
+const knobs = [];
+function knobSVG(v, size, accent, style) {
+  const r = size / 2, cx = r, cy = r, a0 = -150, a1 = 150, ticks = [];
+  for (let i = 0; i <= 10; i++) {
+    const a = (a0 + (a1 - a0) * i / 10 - 90) * Math.PI / 180, r1 = r + 3, r2 = r + (i % 5 === 0 ? 7 : 5);
+    ticks.push(`<line x1="${cx + r1 * Math.cos(a)}" y1="${cy + r1 * Math.sin(a)}" x2="${cx + r2 * Math.cos(a)}" y2="${cy + r2 * Math.sin(a)}" style="stroke:var(--tick,#cfc7b3)" stroke-width="1.1"/>`);
+  }
+  let ends = '';
+  if (style === 'tal') {
+    const ae = a => (a - 90) * Math.PI / 180, rr = r + 13;
+    ends = `<text x="${cx + rr * Math.cos(ae(a0))}" y="${cy + rr * Math.sin(ae(a0)) + 3}" font-size="8" fill="#8d8f94" text-anchor="middle" font-family="IBM Plex Mono">0</text>
+            <text x="${cx + rr * Math.cos(ae(a1))}" y="${cy + rr * Math.sin(ae(a1)) + 3}" font-size="8" fill="#8d8f94" text-anchor="middle" font-family="IBM Plex Mono">10</text>`;
+  }
+  const a = (a0 + (a1 - a0) * v - 90) * Math.PI / 180, id = 'k' + Math.random().toString(36).slice(2, 8);
+  const capA = style === 'tal' ? '#2a2b2e' : accent ? 'var(--acc-a,#f3a066)' : 'var(--knob-a,#4d4943)';
+  const capB = style === 'tal' ? '#0c0c0d' : accent ? 'var(--acc-b,#b9541a)' : 'var(--knob-b,#1d1b18)';
+  const ptr = style === 'tal' ? '#e8742a' : accent ? 'var(--acc-pointer,#1a1714)' : 'var(--pointer,#ece4d2)';
+  return `<svg class="kcap" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+    <defs><radialGradient id="${id}" cx="40%" cy="30%" r="80%"><stop offset="0" style="stop-color:${capA}"/><stop offset="1" style="stop-color:${capB}"/></radialGradient></defs>
+    ${ticks.join('')}${ends}
+    <circle cx="${cx}" cy="${cy + 1.5}" r="${r - 1}" fill="#000" opacity=".55"/>
+    <circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="url(#${id})" stroke="#0e0d0c" stroke-width="1"/>
+    <circle cx="${cx}" cy="${cy}" r="${r * .62}" fill="none" stroke="rgba(255,255,255,.07)"/>
+    <line x1="${cx + r * .2 * Math.cos(a)}" y1="${cy + r * .2 * Math.sin(a)}" x2="${cx + (r - 4) * Math.cos(a)}" y2="${cy + (r - 4) * Math.sin(a)}" style="stroke:${ptr}" stroke-width="2.4" stroke-linecap="round"/>
+  </svg>`;
+}
+// A knob bound to S.k[key]: it shows the value the pattern plays (its motion, a step's lock) while it runs.
+function knob(label, key, size = 40, opts = {}) {
+  const k = el('div', 'knob' + (opts.cls ? ' ' + opts.cls : ''));
+  const get = () => opts.lockStep !== undefined ? (shown().steps[opts.lockStep()].lock[key] ?? S.k[key]) : (opts.live === false ? S.k[key] : eff(key));
+  let shownV = -1;
+  const draw = () => {
+    const v = get(); if (Math.abs(v - shownV) < .004 && k.firstChild) return; shownV = v;
+    k.innerHTML = knobSVG(v, size, opts.accent, opts.style) + (label ? `<span class="lbl">${label}</span>` : '') + (opts.fmt ? `<span class="kval">${opts.fmt(v)}</span>` : '');
+  };
+  k.draw = () => { draw(); if (opts.lockStep !== undefined) k.classList.toggle('locked', shown().steps[opts.lockStep()].lock[key] !== undefined);
+    else k.classList.toggle('moving', S.playing && Math.abs(eff(key) - S.k[key]) > .01); };
+  k.addEventListener('pointerdown', e => {
+    const y0 = e.clientY, v0 = get(); k.setPointerCapture(e.pointerId);
+    const mv = ev => {
+      const nv = Math.min(1, Math.max(0, v0 + (y0 - ev.clientY) / 150));
+      if (opts.lockStep !== undefined) shown().steps[opts.lockStep()].lock[key] = nv;
+      else {
+        S.k[key] = nv;
+        // Recording: a knob turned while the pattern plays writes its value into the pattern's motion, at this step
+        const p = heard();
+        if (S.rec && S.playing && MOTIONABLE.some(m => m[0] === key)) { const i = S.count % p.len; (p.motion[key] || (p.motion[key] = new Array(16).fill(null)))[i] = nv; }
+      }
+      shownV = -1; draw(); paintAll();
+    };
+    const up = () => { k.removeEventListener('pointermove', mv); k.removeEventListener('pointerup', up); };
+    k.addEventListener('pointermove', mv); k.addEventListener('pointerup', up);
+  });
+  knobs.push(k); k.draw();
+  return k;
+}
+function btn(text, cls, onClick) { const b = el('button', 'btn ' + (cls || ''), text); if (onClick) b.addEventListener('click', onClick); return b; }
+function switchSVG(second) {
+  const ty = second ? 23 : 7, id = 'sw' + Math.random().toString(36).slice(2, 7);
+  const ridges = [0, 1, 2, 3].map(i => `<line x1="9" x2="19" y1="${ty + 4 + i * 2.6}" y2="${ty + 4 + i * 2.6}" stroke="rgba(0,0,0,.38)" stroke-width="1"/><line x1="9" x2="19" y1="${ty + 5 + i * 2.6}" y2="${ty + 5 + i * 2.6}" stroke="rgba(255,255,255,.45)" stroke-width=".7"/>`).join('');
+  return `<svg width="28" height="46" viewBox="0 0 28 46"><defs>
+      <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sw-a,#4a4640)"/><stop offset=".5" style="stop-color:var(--sw-b,#2f2c28)"/><stop offset="1" style="stop-color:var(--sw-c,#1f1d1a)"/></linearGradient>
+      <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4eee1"/><stop offset=".55" stop-color="#c9c1af"/><stop offset="1" stop-color="#8f8775"/></linearGradient></defs>
+    <rect x=".5" y=".5" width="27" height="45" rx="3.5" fill="url(#${id}p)" stroke="#0b0a09"/>
+    <rect x="9" y="4" width="10" height="38" rx="2" fill="#050505" stroke="rgba(0,0,0,.8)"/>
+    <rect x="6.5" y="${ty + 2}" width="15" height="16" rx="2.5" fill="#000" opacity=".55"/>
+    <rect x="6" y="${ty}" width="16" height="16" rx="2.5" fill="url(#${id}t)" stroke="#57514a" stroke-width=".8"/>
+    <rect x="7" y="${ty + .8}" width="14" height="2" rx="1" fill="rgba(255,255,255,.55)"/>${ridges}</svg>`;
+}
+// The WAVEFORM switch: saw or square
+function waveSwitch(darkText) {
+  const w = el('div', 'slide');
+  const paint = () => { const sq = S.k.wave === 1; w.innerHTML = `<span class="lbl${sq ? '' : ' lit'}"${darkText ? ' style="color:#1d2024"' : ''}>Saw</span>${switchSVG(sq)}<span class="lbl${sq ? ' lit' : ''}"${darkText ? ' style="color:#1d2024"' : ''}>Square</span>`; };
+  w.onclick = () => { S.k.wave = 1 - S.k.wave; paintAll(); };
+  painters.push(paint); paint();
+  return w;
+}
+
+let pop = null;
+function popover(e, build) {
+  e.preventDefault(); closePop();
+  const st = $('stage').getBoundingClientRect(), sc = st.width / 1280;
+  pop = el('div', 'pop'); build(pop); $('stage').append(pop);
+  let x = (e.clientX - st.left) / sc + 6, y = (e.clientY - st.top) / sc + 6;
+  if (x + pop.offsetWidth > 1270) x -= pop.offsetWidth + 12;
+  if (y + pop.offsetHeight > 790) y -= pop.offsetHeight + 12;
+  pop.style.left = x + 'px'; pop.style.top = y + 'px';
+}
+function closePop() { if (pop) { pop.remove(); pop = null; } }
+document.addEventListener('pointerdown', e => { if (pop && !pop.contains(e.target)) closePop(); }, true);
+
+const painters = [];
+function paintAll() { for (const p of painters) p(); for (const k of knobs) k.draw(); }
+
+function buildTransport(host, extra) {
+  const strip = el('div', 'tstrip');
+  const play = btn('Play', '', () => setPlaying(!S.playing));
+  const tempo = el('div', 'tempo', `<span class="num">${S.bpm.toFixed(1)}</span><span class="lbl">BPM</span>`);
+  const sw = el('div', 'swing'); sw.append(knob('', 'swingK', 18, { live: false }), el('span', 'lbl', 'Swing'));
+  const rec = btn('Rec', 'tg rec', () => { S.rec = !S.rec; paintAll(); }); rec.title = 'Record knob moves into the pattern while it plays';
+  strip.append(play, tempo, btn('Tap'), sw, rec, el('span', 'tsep'), btn('Library'), btn('File'), ...(extra || []));
+  host.append(strip);
+  painters.push(() => { play.classList.toggle('hot', S.playing); play.textContent = S.playing ? 'Stop' : 'Play'; rec.classList.toggle('is', S.rec); });
+}
+S.k.swingK = S.swing;
+function buildPatternRow(host) {
+  host.className = 'prow';
+  const slots = [];
+  for (let i = 0; i < 16; i++) {
+    const s = el('div', 'slot', String(i + 1).padStart(2, '0'));
+    s.addEventListener('click', () => { S.editing = i; if (S.playing) S.queued = i; else { S.hearing = i; S.chainOn = false; } paintAll(); });
+    s.addEventListener('contextmenu', e => popover(e, p => {
+      p.append(el('div', 'lbl', `Pattern ${String(i + 1).padStart(2, '0')}`));
+      const item = (t, act) => p.append(btn(t, 'item', () => { act(); closePop(); paintAll(); }));
+      item('Edit without playing it', () => { S.editing = i; });
+      item('Copy', () => {}); item('Paste', () => {}); item('Clear', () => { bank[i] = null; });
+      item('Save to the library', () => {}); item('Drag out as MIDI', () => {});
+      item('Add to the chain', () => { S.chain.push({ p: i, r: 1 }); });
+    }));
+    if (i % 4 === 0 && i) s.style.marginLeft = '5px';
+    slots.push(s); host.append(s);
+  }
+  painters.push(() => slots.forEach((s, i) => {
+    s.classList.toggle('has', !!bank[i]);
+    s.classList.toggle('edit', S.editing === i);
+    const here = S.playing && S.hearing === i;
+    s.classList.toggle('play', here); s.classList.toggle('queued', S.queued === i);
+    s.innerHTML = String(i + 1).padStart(2, '0') + (here ? `<i class="prog" style="width:${(S.step + 1) / 16 * 100}%"></i>` : '');
+  }));
+}
+function buildAB(host) {
+  const seg = el('div', 'seg');
+  for (const v of ['A', 'B']) seg.append(btn(v, '', () => { S.variation = v; paintAll(); }));
+  host.append(seg);
+  painters.push(() => seg.querySelectorAll('.btn').forEach(b => b.classList.toggle('is', b.textContent === S.variation)));
+}
+function buildStatus(host) {
+  host.className = 'status';
+  painters.push(() => {
+    const name = i => String(i + 1).padStart(2, '0');
+    let t = `Editing <b>${name(S.editing)}</b>`;
+    if (S.playing) { t += ` · hearing <b>${name(S.hearing)}</b>`; if (S.queued !== null) t += ` · <span class="q">next: ${name(S.queued)} in ${16 - S.step - 1} steps</span>`; else if (S.chainOn) t += ' · chain'; }
+    else t += ' · stopped';
+    if (S.transpose) t += ` · transposed <b>${S.transpose > 0 ? '+' : ''}${S.transpose}</b>`;
+    if (S.rec) t += ' · <span class="q">recording knob moves</span>';
+    host.innerHTML = t;
+  });
+}
+function buildChain(host) {
+  host.className = 'chain';
+  painters.push(() => {
+    host.innerHTML = '';
+    S.chain.forEach((c, i) => {
+      const b = el('div', 'cblk'), cur = S.playing && S.chainOn && i === S.chainPos;
+      const nxt = S.chainOn && i === (S.chainPos + (S.repLeft <= 1 ? 1 : 0)) % S.chain.length && !cur;
+      b.classList.toggle('cur', cur); b.classList.toggle('nxt', S.playing && nxt);
+      const prog = cur ? `<i class="prog" style="width:${((c.r - S.repLeft) * 16 + S.step + 1) / (c.r * 16) * 100}%"></i>` : '';
+      b.innerHTML = `${prog}<span>${String(c.p + 1).padStart(2, '0')}</span>${c.r > 1 ? `<span class="x">×${c.r}</span>` : ''}`;
+      b.title = 'Click: more repeats. Right-click: remove';
+      b.onclick = () => { c.r = c.r >= 4 ? 1 : c.r * 2; paintAll(); };
+      b.oncontextmenu = e => { e.preventDefault(); S.chain.splice(i, 1); if (S.chainPos >= S.chain.length) S.chainPos = 0; paintAll(); };
+      host.append(b);
+    });
+    const add = el('div', 'cblk cadd', '+'); add.title = 'Add the pattern being edited';
+    add.onclick = () => { S.chain.push({ p: S.editing, r: 1 }); paintAll(); };
+    host.append(add);
+    const loop = btn('Loop', 'tg' + (S.loop ? ' is' : ''), () => { S.loop = !S.loop; paintAll(); }); loop.style.marginLeft = '6px'; host.append(loop);
+    if (!S.chainOn) { const back = btn('Back to chain', '', () => { S.chainOn = true; S.queued = null; S.chainPos = 0; S.repLeft = S.chain[0].r; paintAll(); }); back.style.marginLeft = '6px'; host.append(back); }
+  });
+}
+// Transpose from one octave of keys (the mouse, the computer's keys or MIDI), as the 303's Transpose
+function buildTranspose(host) {
+  host.style.cssText = 'display:flex;align-items:center;gap:8px';
+  const keys = el('div', 'tkeys'), whites = [0, 2, 4, 5, 7, 9, 11, 12], blacks = [[1, 0], [3, 1], [6, 3], [8, 4], [10, 5]], all = [];
+  whites.forEach(n => { const k = el('div', 'w'); k.dataset.n = n; keys.append(k); all.push(k); });
+  blacks.forEach(([n, after]) => { const k = el('div', 'b'); k.dataset.n = n; k.style.left = (after * 15 + 10) + 'px'; keys.append(k); all.push(k); });
+  all.forEach(k => k.onclick = () => { S.transpose = +k.dataset.n; paintAll(); });
+  const val = el('span', 'valbox', '');
+  host.append(el('span', 'lbl', 'Transpose'), keys, btn('−12', 'sq', () => { S.transpose = Math.max(-12, S.transpose - 12); paintAll(); }), val, btn('+12', 'sq', () => { S.transpose = Math.min(12, S.transpose + 12); paintAll(); }));
+  val.title = 'From the keys, the computer keyboard or MIDI; click to reset';
+  val.onclick = () => { S.transpose = 0; paintAll(); };
+  painters.push(() => {
+    const t = S.transpose, n = ((t % 12) + 12) % 12;
+    all.forEach(k => k.classList.toggle('is', +k.dataset.n === n && !(n === 0 && t !== 0 && +k.dataset.n === 12)));
+    val.textContent = (t > 0 ? '+' : '') + t + ' · ' + NAMES[n];
+  });
+}
+// The generators: every action undoable
+function buildTools(host, opts = {}) {
+  host.className = 'toolbar';
+  const act = f => () => { snapshot(); f(); paintAll(); };
+  const p = () => shown();
+  const gen = btn('Generate', 'hot', act(() => generate(Math.random, S.scale, S.root, p())));
+  const mutate = btn('Mutate', '', act(() => {
+    const R = Math.random, sc = SCALES[S.scale], st = p().steps;
+    for (let k = 0; k < 4; k++) {
+      const i = Math.floor(R() * 16), x = st[i];
+      if (S.mut.pitch && x.g !== 'rest') { x.n = (sc[Math.floor(R() * sc.length)] + S.root) % 12; if (R() < .2) x.o = [-1, 0, 1][Math.floor(R() * 3)]; }
+      if (S.mut.accent) x.a = R() < .3;
+      if (S.mut.slide) x.s = R() < .25;
+      if (S.mut.rest) x.g = R() < .2 ? 'rest' : R() < .2 ? 'tie' : 'note';
+    }
+  }));
+  const tg = (label, key) => { const b = btn(label, 'tg', () => { S.mut[key] = !S.mut[key]; paintAll(); }); painters.push(() => b.classList.toggle('is', S.mut[key])); return b; };
+  const scale = el('span', 'valbox'); scale.title = 'Click: the next scale'; scale.onclick = () => { const names = Object.keys(SCALES); S.scale = names[(names.indexOf(S.scale) + 1) % names.length]; paintAll(); };
+  const root = el('span', 'valbox'); root.style.minWidth = '34px'; root.onclick = () => { S.root = (S.root + 1) % 12; paintAll(); };
+  const fit = btn('Fit to scale', '', act(() => { const sc = SCALES[S.scale]; for (const x of p().steps) { const rel = (x.n - S.root + 12) % 12; let best = sc[0]; for (const d of sc) if (Math.abs(d - rel) < Math.abs(best - rel)) best = d; x.n = (best + S.root) % 12; } }));
+  const shift = d => act(() => { const a = p().steps; p().steps = a.map((_, i) => a[(i - d + 16) % 16]); });
+  const semis = d => act(() => { for (const x of p().steps) { let n = x.n + d; if (n < 0) { n += 12; x.o = Math.max(-1, x.o - 1); } if (n > 11) { n -= 12; x.o = Math.min(1, x.o + 1); } x.n = n; } });
+  const len = el('span', 'valbox'); len.style.minWidth = '44px'; len.title = 'The pattern\'s length: click, or wheel';
+  len.onclick = act(() => { p().len = p().len === 16 ? 12 : p().len === 12 ? 8 : 16; });
+  const un = btn('Undo', '', () => restore(undo, redo)), re = btn('Redo', '', () => restore(redo, undo));
+  host.append(gen, mutate, tg('Pitch', 'pitch'), tg('Accent', 'accent'), tg('Slide', 'slide'), tg('Rests', 'rest'), el('span', 'sepv'),
+    el('span', 'lbl', 'Scale'), scale, root, fit, el('span', 'sepv'), btn('◀', 'sq', shift(-1)), btn('▶', 'sq', shift(1)),
+    btn('−1', 'sq', semis(-1)), btn('+1', 'sq', semis(1)), el('span', 'lbl', 'Length'), len, el('span', 'sepv'), un, re);
+  painters.push(() => { scale.textContent = S.scale; root.textContent = NAMES[S.root]; len.textContent = p().len + ' st'; un.style.opacity = undo.length ? 1 : .45; re.style.opacity = redo.length ? 1 : .45; });
+}
+// The grid: the step lights, the pitch lane, octave, accent, slide, the gate, and one knob's motion
+function buildGrid(host, rowH = 22, pitchH = 116, motionH = 40) {
+  host.className = 'grid';
+  const row = (label, content) => { const l = el('div', 'rl'); if (typeof label === 'string') l.append(el('span', 'lbl', label)); else l.append(label); host.append(l, content); return content; };
+  // lights
+  const lights = el('div', 'cols16'), lamps = [];
+  for (let i = 0; i < 16; i++) { const c = el('div', 'lamp', `<i></i><span>${i + 1}</span>`); lamps.push(c); lights.append(c); }
+  row('', lights);
+  // pitch
+  const pitch = el('div', 'cols16'); pitch.style.height = pitchH + 'px';
+  const cols = [];
+  for (let i = 0; i < 16; i++) {
+    const c = el('div', 'pcol', '<div class="cap"></div><span class="nn"></span><span class="lk"></span><span class="sl"></span>');
+    // the lane's top row is the C above: the note C an octave up
+    const setFromY = ev => { const r = c.getBoundingClientRect(); const f = 1 - (ev.clientY - r.top) / r.height; const n = Math.max(0, Math.min(12, Math.floor(f * 13)));
+      const x = shown().steps[i]; x.n12 = n === 12; x.n = n % 12; if (x.n12) x.o = 1; if (x.g === 'rest') x.g = 'note'; };
+    c.addEventListener('pointerdown', ev => { if (ev.button !== 0) return; snapshot(); S.pick = i; setFromY(ev); c.setPointerCapture(ev.pointerId); paintAll();
+      const mv = e2 => { setFromY(e2); paintAll(); }; const up = () => { c.removeEventListener('pointermove', mv); c.removeEventListener('pointerup', up); };
+      c.addEventListener('pointermove', mv); c.addEventListener('pointerup', up); });
+    c.addEventListener('wheel', ev => { ev.preventDefault(); const x = shown().steps[i]; x.n = (x.n + (ev.deltaY < 0 ? 1 : 11)) % 12; S.pick = i; paintAll(); }, { passive: false });
+    c.addEventListener('contextmenu', ev => popover(ev, p => {
+      const x = shown().steps[i];
+      p.append(el('div', 'lbl', `Step ${i + 1} · ${NAMES[x.n]}`));
+      const item = (t, f) => p.append(btn(t, 'item', () => { snapshot(); f(x); closePop(); paintAll(); }));
+      item('Copy to every 4th step', x0 => { const s = shown().steps; for (let j = i % 4; j < 16; j += 4) s[j] = JSON.parse(JSON.stringify(x0)); });
+      item('Clear its locks', x0 => { x0.lock = {}; });
+      item('Rest', x0 => { x0.g = 'rest'; });
+      item(`The pattern ends here (${i + 1} steps)`, () => { shown().len = i + 1; });
+    }));
+    cols.push(c); pitch.append(c);
+  }
+  const plbl = el('div', '', '<div class="lbl" style="color:#ddd5c3">Pitch</div><div class="lbl" style="margin-top:6px;text-transform:none;letter-spacing:.02em;line-height:1.4;color:#9d9583">Drag up or down,<br>or wheel</div>');
+  row(plbl, pitch);
+  // rows of keys
+  const keyRow = (label, kind, onClick, paint) => {
+    const r = el('div', 'cols16'), ks = [];
+    for (let i = 0; i < 16; i++) { const k = el('div', 'skey g' + (1 + (i >> 2)) + (kind ? ' ' + kind : '')); k.style.height = rowH + 'px'; k.onclick = () => { snapshot(); S.pick = i; onClick(shown().steps[i], i); paintAll(); }; ks.push(k); r.append(k); }
+    row(label, r); painters.push(() => { const p = shown(); ks.forEach((k, i) => { paint(k, p.steps[i], i); k.classList.toggle('off', i >= p.len); }); });
+  };
+  keyRow('Octave', 'txt', x => { x.o = x.o === 0 ? 1 : x.o === 1 ? -1 : 0; }, (k, x) => { k.textContent = x.o > 0 ? 'Up' : x.o < 0 ? 'Down' : ''; k.classList.toggle('on', x.o !== 0); });
+  keyRow('Accent', '', x => { x.a = !x.a; }, (k, x) => k.classList.toggle('on', x.a));
+  keyRow('Slide', 'lens', x => { x.s = !x.s; }, (k, x) => k.classList.toggle('on', x.s));
+  keyRow('Gate', 'txt', x => { x.g = x.g === 'note' ? 'tie' : x.g === 'tie' ? 'rest' : 'note'; }, (k, x) => { k.textContent = x.g === 'note' ? 'Note' : x.g === 'tie' ? 'Tie' : 'Rest'; k.classList.toggle('on', x.g === 'note'); });
+  // motion
+  const mlbl = el('div', ''); mlbl.style.cssText = 'display:flex;flex-direction:column;gap:5px';
+  const which = el('span', 'valbox'); which.style.cssText = 'min-width:68px;height:20px;font-size:10px';
+  which.title = 'Which knob\'s moves: click for the next';
+  which.onclick = () => { const i = MOTIONABLE.findIndex(m => m[0] === S.motionKnob); S.motionKnob = MOTIONABLE[(i + 1) % MOTIONABLE.length][0]; paintAll(); };
+  mlbl.append(el('span', 'lbl', 'Motion'), which);
+  const mot = el('div', 'cols16'); mot.style.height = motionH + 'px';
+  const bars = [];
+  for (let i = 0; i < 16; i++) {
+    const c = el('div', 'mcol', '<i></i>');
+    const set = ev => { const r = c.getBoundingClientRect(); const v = Math.max(0, Math.min(1, 1 - (ev.clientY - r.top) / r.height)); const p = shown(); (p.motion[S.motionKnob] || (p.motion[S.motionKnob] = new Array(16).fill(null)))[i] = v; paintAll(); };
+    c.addEventListener('pointerdown', ev => { if (ev.button !== 0) return; snapshot(); set(ev); c.setPointerCapture(ev.pointerId); const mv = e2 => { const r = mot.getBoundingClientRect(); const j = Math.floor((e2.clientX - r.left) / r.width * 16); if (bars[j]) { const rr = bars[j].getBoundingClientRect(); const v = Math.max(0, Math.min(1, 1 - (e2.clientY - rr.top) / rr.height)); const p = shown(); p.motion[S.motionKnob][j] = v; paintAll(); } }; const up = () => { c.removeEventListener('pointermove', mv); c.removeEventListener('pointerup', up); }; c.addEventListener('pointermove', mv); c.addEventListener('pointerup', up); });
+    c.addEventListener('contextmenu', ev => { ev.preventDefault(); const p = shown(); if (p.motion[S.motionKnob]) p.motion[S.motionKnob][i] = null; paintAll(); });
+    bars.push(c); mot.append(c);
+  }
+  row(mlbl, mot);
+  painters.push(() => {
+    const p = shown(), same = S.playing && S.editing === S.hearing, head = same ? S.count % p.len : -1;
+    lamps.forEach((c, i) => c.classList.toggle('cur', S.playing && S.step === i));
+    cols.forEach((c, i) => {
+      const x = p.steps[i];
+      c.querySelector('.cap').style.bottom = `calc(${(x.n12 ? 12 : x.n) / 13 * 100}% - 1px)`;
+      c.querySelector('.nn').innerHTML = x.g === 'rest' ? '·' : NAMES[x.n12 ? 12 : x.n] + (x.o > 0 ? '<sup>+</sup>' : x.o < 0 ? '<sup>−</sup>' : '');
+      c.classList.toggle('acc', x.a); c.classList.toggle('slide', x.s && x.g !== 'rest');
+      c.classList.toggle('tie', x.g === 'tie'); c.classList.toggle('rest', x.g === 'rest');
+      c.classList.toggle('pick', S.pick === i); c.classList.toggle('off', i >= p.len);
+      c.classList.toggle('ph', i === head && x.g !== 'rest'); c.classList.toggle('locked', Object.keys(x.lock).length > 0);
+    });
+    which.textContent = MOTIONABLE.find(m => m[0] === S.motionKnob)[1];
+    const m = p.motion[S.motionKnob];
+    bars.forEach((c, i) => { const v = m ? m[i] : null; const bar = c.firstChild; bar.style.display = v === null || v === undefined ? 'none' : 'block'; bar.style.top = v === null || v === undefined ? '' : `calc(${(1 - v) * 100}% + 2px)`; c.classList.toggle('ph', i === head); });
+  });
+}
+// The tools on the right: the picked step, and its locks (turn one of its knobs to lock its value on that step)
+function buildSide(host, pickOf = () => S.pick) {
+  const stepSec = el('div', 'tsec'), head = el('div', 'lbl head'); stepSec.append(head);
+  const noteRow = el('div', 'trow'), nv = el('span', 'valbox');
+  const change = f => () => { snapshot(); f(shown().steps[pickOf()]); paintAll(); };
+  noteRow.append(el('span', 'lbl', 'Note'), btn('−', 'sq', change(x => { x.n = (x.n + 11) % 12; })), nv, btn('+', 'sq', change(x => { x.n = (x.n + 1) % 12; })));
+  const octRow = el('div', 'trow'), oseg = el('div', 'seg');
+  [['Down', -1], ['0', 0], ['Up', 1]].forEach(([t, o]) => oseg.append(btn(t, '', change(x => { x.o = o; }))));
+  octRow.append(el('span', 'lbl', 'Octave'), oseg);
+  const fl = el('div', 'trow'), acc = btn('Accent', 'tg', change(x => { x.a = !x.a; })), sl = btn('Slide', 'tg', change(x => { x.s = !x.s; }));
+  fl.append(el('span', 'lbl', ''), acc, sl);
+  const gRow = el('div', 'trow'), gseg = el('div', 'seg');
+  [['Note', 'note'], ['Tie', 'tie'], ['Rest', 'rest']].forEach(([t, g]) => gseg.append(btn(t, '', change(x => { x.g = g; }))));
+  gRow.append(el('span', 'lbl', 'Gate'), gseg);
+  stepSec.append(noteRow, octRow, fl, gRow);
+  const lockSec = el('div', 'tsec'); lockSec.append(el('div', 'lbl head', 'Locks on this step'));
+  const lk = el('div', 'tknobs'); LOCKABLE.forEach(([key, name]) => lk.append(knob(name, key, 28, { lockStep: pickOf, accent: key === 'accent' })));
+  lockSec.append(lk, btn('Clear locks', '', change(x => { x.lock = {}; })));
+  lockSec.append(el('div', 'lbl thint', 'Turn a knob here to hold its value on this step; the panel\'s knob shows it as the step plays.'));
+  host.append(stepSec, lockSec);
+  painters.push(() => {
+    const i = pickOf(), x = shown().steps[i];
+    head.textContent = `Step ${i + 1} · ${x.g === 'rest' ? 'rest' : NAMES[x.n] + (x.o > 0 ? ' up' : x.o < 0 ? ' down' : '')}`;
+    nv.textContent = NAMES[x.n];
+    oseg.querySelectorAll('.btn').forEach((b, j) => b.classList.toggle('is', [-1, 0, 1][j] === x.o));
+    acc.classList.toggle('is', x.a); sl.classList.toggle('is', x.s);
+    gseg.querySelectorAll('.btn').forEach((b, j) => b.classList.toggle('is', ['note', 'tie', 'rest'][j] === x.g));
+  });
+}
+// The Mods panel: the Devil Fish's controls and the trimmers, each a knob; closed by default
+function buildMods(host, style) {
+  const o = { style };
+  const g1 = el('div', 'mgrp'); g1.append(el('div', 'lbl mhead', 'Devil Fish'));
+  const k1 = el('div', 'mknobs');
+  [['Overdrive', 'overdrive'], ['Normal decay', 'ndecay'], ['Accent decay', 'adecay'], ['Soft attack', 'soft'], ['Slide time', 'slidet'], ['Filter track', 'track'], ['Filter FM', 'ffm']]
+    .forEach(([n, key]) => k1.append(knob(n, key, 30, { ...o, live: false })));
+  const sweep = el('div', 'seg'); ['Normal', 'Fast', 'Slow'].forEach((t, i) => sweep.append(btn(t, i === 0 ? 'is' : '', ev => { sweep.querySelectorAll('.btn').forEach(b => b.classList.toggle('is', b === ev.currentTarget)); })));
+  const muf = el('div', 'seg'); ['Off', 'Soft', 'Hard'].forEach((t, i) => muf.append(btn(t, i === 0 ? 'is' : '', ev => { muf.querySelectorAll('.btn').forEach(b => b.classList.toggle('is', b === ev.currentTarget)); })));
+  g1.append(k1, el('div', 'trow', ''), el('div', '', ''));
+  const r1 = el('div', 'trow'); r1.append(el('span', 'lbl', 'Accent sweep'), sweep); const r2 = el('div', 'trow'); r2.append(el('span', 'lbl', 'Muffler'), muf);
+  g1.append(r1, r2);
+  const g2 = el('div', 'mgrp'); g2.append(el('div', 'lbl mhead', 'Trimmers'));
+  const k2 = el('div', 'mknobs');
+  [['TM3 range', 'tm3'], ['TM4 tune', 'tm4'], ['TM5 width', 'tm5'], ['C11', 'c11']].forEach(([n, key]) => k2.append(knob(n, key, 30, { ...o, live: false })));
+  g2.append(k2, el('div', 'lbl mnote', 'Stock as fitted to a real unit (TM3 0.35, C11 0.82 µF). The Devil Fish knobs at their stock positions make a stock 303, as its manual gives them.'));
+  const close = btn('Close', '', () => { S.mods = false; paintAll(); });
+  const g3 = el('div', 'mgrp'); g3.style.justifyContent = 'flex-end'; g3.append(close);
+  host.append(g1, g2, g3);
+  painters.push(() => host.classList.toggle('open', S.mods));
+}
+function wireAll(scope) {
+  scope.querySelectorAll('[data-prow]').forEach(buildPatternRow);
+  scope.querySelectorAll('[data-ab]').forEach(buildAB);
+  scope.querySelectorAll('[data-status]').forEach(buildStatus);
+  scope.querySelectorAll('[data-chain]').forEach(buildChain);
+  scope.querySelectorAll('[data-transpose]').forEach(buildTranspose);
+  scope.querySelectorAll('[data-tools]').forEach(h => buildTools(h));
+  scope.querySelectorAll('[data-grid]').forEach(h => buildGrid(h));
+  scope.querySelectorAll('[data-side]').forEach(h => buildSide(h));
+}
+
+// ---------------------------------------------------------------- the circuit generator (as the 808's)
+function genCell(kind, seed) {
+  const R = rng(seed), w = [], p = [];
+  const sx = .46 + R() * .14, tx = .16 + R() * .1;
+  if (kind === 'trg') {
+    w.push({ pts: [[.3, .2], [.3, .5], [.7, .5], [.7, 0]] }); p.push(['Q', .3, .5, 0], ['R', .5, .5, 0], ['R', .7, .25, 90]);
+    w.push({ pts: [[.3, .5], [.3, .8], [.55, .8]] }); p.push(['C', .3, .66, 90], ['Q', .62, .8, 0]);
+    w.push({ pts: [[.3, .2], [.15, .2]] }); p.push(['G', .15, .23, 0]);
+    return { w, p };
+  }
+  if (kind === 'ladder') {
+    // four rungs between two rails, the 303's filter in spirit
+    for (const u of [.32, .68]) w.push({ pts: [[u, .1], [u, .82]] });
+    for (let i = 0; i < 4; i++) { const v = .2 + i * .16; w.push({ pts: [[.32, v], [.68, v]] }); p.push(['C', .5, v, 0], ['Q', .32, v + .08, 90], ['Q', .68, v + .08, 90]); }
+    w.push({ pts: [[.32, .82], [.5, .9], [.68, .82]] }); p.push(['Q', .5, .92, 0]);
+    w.push({ pts: [[.68, .3], [.88, .3], [.88, .7], [.68, .7]] }); p.push(['P', .88, .5, 90]);
+    return { w, p };
+  }
+  w.push({ pts: [[tx, 0], [tx, .2]] }); p.push(['R', tx, .09, 90], ['Q', tx, .22, 0]);
+  w.push({ pts: [[tx, .22], [sx, .22]] }); p.push(['R', (tx + sx) / 2 + .03, .22, 0]);
+  w.push({ pts: [[sx, .22], [sx, .74]] });
+  for (const v of [.32, .47, .62]) if (R() < .7) p.push([R() < .5 ? 'C' : 'R', sx, v, 90]);
+  const nb = 1 + Math.floor(R() * 2);
+  for (let i = 0; i < nb; i++) { const v = .28 + R() * .3, ex = Math.min(.9, sx + .2 + R() * .14); w.push({ pts: [[sx, v], [ex, v], [ex, v + .1]] }); p.push([R() < .5 ? 'R' : 'C', (sx + ex) / 2 + .02, v, 0], ['G', ex, v + .1, 0]); }
+  const lx = Math.max(.08, sx - .3);
+  if (kind === 'ring') { w.push({ pts: [[sx, .38], [lx, .38], [lx, .58], [sx, .58]] }); p.push(['C', lx, .48, 90], ['R', (lx + sx) / 2, .38, 0], ['C', (lx + sx) / 2, .58, 0]); }
+  else if (kind === 'saw') { w.push({ pts: [[lx, .3], [lx, .55], [sx, .55]] }); p.push(['C', lx, .44, 90], ['Q', (lx + sx) / 2, .3, 0], ['Q', (lx + sx) / 2, .55, 0]); }
+  else { w.push({ pts: [[lx, .3], [lx, .55], [sx, .55]] }); p.push(['N', lx, .28, 0], ['C', lx, .44, 90], ['R', (lx + sx) / 2, .55, 0]); }
+  p.push(['A', sx, .77, 90]);
+  w.push({ pts: [[sx, .8], [sx, 1]] }); p.push(['P', sx, .9, 90]);
+  const fx = Math.min(.93, sx + .22);
+  w.push({ pts: [[sx, .69], [fx, .69], [fx, .86], [sx, .86]] }); p.push(['R', fx, .775, 90]);
+  return { w, p };
+}
+// The voice's stages, in the signal's order; the effects after them
+const STAGES = [
+  { key: 'VCO', label: 'Oscillator', kind: 'saw', w: 1 }, { key: 'VCF', label: 'Filter', kind: 'ladder', w: 1.45 },
+  { key: 'ENV', label: 'Envelope', kind: 'trg', w: 1 }, { key: 'VCA', label: 'Amplifier', kind: 'ring', w: .8 },
+  { key: 'DRV', label: 'Drive', kind: 'noise', w: 1 }, { key: 'DLY', label: 'Delay', kind: 'ring', w: 1.25 },
+];
+const PALETTES = {
+  schematic: { bg: '#191715', wire: 'rgba(205,196,175,.42)', part: 'rgba(225,216,196,.75)', flow: [255, 160, 74], lit: [255, 195, 107], label: 'rgba(205,196,175,.55)', heat: [232, 116, 42] },
+  phosphor: { bg: '#050806', wire: 'rgba(80,190,120,.25)', part: 'rgba(110,230,150,.5)', flow: [120, 255, 160], lit: [200, 255, 210], label: 'rgba(110,230,150,.5)', heat: [60, 200, 110] },
+  blueprint: { bg: '#0f2a4a', wire: 'rgba(200,225,255,.4)', part: 'rgba(225,240,255,.8)', flow: [255, 255, 255], lit: [255, 255, 255], label: 'rgba(200,225,255,.6)', heat: [140, 200, 255] },
+  etched: { bg: null, wire: 'rgba(176,140,92,.32)', part: 'rgba(236,228,210,.28)', flow: [235, 110, 35], lit: [255, 170, 90], label: 'rgba(236,228,210,.3)', heat: [232, 116, 42], etched: true },
+  etchedDark: { bg: '#141413', wire: 'rgba(176,140,92,.36)', part: 'rgba(236,228,210,.32)', flow: [235, 110, 35], lit: [255, 170, 90], label: 'rgba(236,228,210,.45)', heat: [232, 116, 42], etched: true },
+};
+function stageEnergy(owner, now) {
+  const env = envNow(now), vca = vcaNow(now);
+  switch (owner) {
+    case 'trig': return Math.exp(-(now - noteT) / 60);
+    case 'out': return Math.max(vca, S.k.delayOn ? echoNow(now) : 0) * .8;
+    case 'gnd': return 0;
+    case 0: return S.playing ? .35 + .4 * vca : .18;      // the VCO never stops
+    case 1: return Math.min(1, env * (.6 + .6 * eff('envmod')) + .25 * vca);
+    case 2: return env;
+    case 3: return vca;
+    case 4: return S.k.driveOn ? vca * (.5 + .5 * S.k.drive) : 0;
+    case 5: return S.k.delayOn ? Math.max(vca * .7, echoNow(now)) : 0;
+  }
+  return 0;
+}
+function echoNow(now) { let m = 0; for (const t of echoT) { const dt = now - t; if (dt > 0) m = Math.max(m, .6 * S.k.fb * Math.exp(-dt / 220) + .2 * Math.exp(-dt / 120)); } return m; }
+const boards = [];
+class Board {
+  constructor(canvas, layout, look, opts = {}) {
+    this.c = canvas; this.layout = layout; this.look = look; this.opts = opts; this.heat = {}; this.lastNow = performance.now();
+    this.cam = { x: 0, y: 0, s: 1 }; boards.push(this);
+    new ResizeObserver(() => this.resize()).observe(canvas);
+  }
+  resize() {
+    const r = this.c.getBoundingClientRect(); if (!r.width) return;
+    const dpr = Math.min(4, (window.devicePixelRatio || 1) * (window.stageScale || 1));
+    this.W = this.c.clientWidth; this.H = this.c.clientHeight;
+    this.c.width = Math.round(this.W * dpr); this.c.height = Math.round(this.H * dpr); this.dpr = dpr;
+    this.build(); this.cam = { x: this.W / 2, y: this.H / 2, s: 1 };
+  }
+  build() {
+    const L = this.layout(this.W, this.H); this.L = L; this.wires = []; this.parts = []; let n = 1;
+    for (const c of L.cells) {
+      const g = genCell(c.kind, (c.owner + 7) * 97 + 13);
+      const map = ([u, v]) => [c.x + u * c.w, c.trigTop ? c.y + v * c.h : c.y + (1 - v) * c.h];
+      c.k = Math.max(5, Math.min(14, Math.min(c.w, c.h * .55) / 7));
+      for (const w of g.w) this.addWire(w.pts.map(map), c.owner, c);
+      for (const [t, u, v, a] of g.p) this.parts.push({ t, x: map([u, v])[0], y: map([u, v])[1], a, k: c.k, owner: c.owner, name: t === 'Q' ? 'Q' + (10 + n++) : t === 'A' ? 'IC' + (n++ % 9 + 1) : (t === 'P' ? 'VR' : t) + (100 + n++) });
+    }
+    for (const b of L.buses) { this.addWire([[b.x0, b.trigY], [b.x1, b.trigY]], 'trig', null); this.addWire([[b.x0 + 20, b.outY], [b.x1, b.outY]], 'out', null); }
+    if (L.extra) for (const e of L.extra) this.addWire(e.pts, e.owner, null);
+  }
+  addWire(pts, owner, cell) {
+    let len = 0; const segs = [];
+    for (let i = 1; i < pts.length; i++) { const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); segs.push(d); len += d; }
+    this.wires.push({ pts, owner, len, segs, cell });
+  }
+  frame(now) {
+    if (!this.W || !this.c.offsetParent && this.c.id !== 'bs') return;
+    if (this.c.id === 'bs' && !$('saver').classList.contains('is')) return;
+    if (this.opts.visible && !this.opts.visible()) return;
+    const dt = Math.min(100, now - this.lastNow); this.lastNow = now;
+    const P = PALETTES[this.look], g = this.c.getContext('2d'), d = this.dpr;
+    g.setTransform(d, 0, 0, d, 0, 0);
+    if (P.bg) { g.fillStyle = P.bg; g.fillRect(0, 0, this.W, this.H); } else g.clearRect(0, 0, this.W, this.H);
+    if (this.look === 'blueprint') { g.strokeStyle = 'rgba(255,255,255,.05)'; g.lineWidth = .5; for (let x = 0; x < this.W; x += 16) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, this.H); g.stroke(); } for (let y = 0; y < this.H; y += 16) { g.beginPath(); g.moveTo(0, y); g.lineTo(this.W, y); g.stroke(); } }
+    for (const w of this.wires) { const e = stageEnergy(w.owner, now), key = String(w.owner); const h = this.heat[key] = Math.max(e, (this.heat[key] || 0) * Math.exp(-dt / 1600)); w.e = e; w.h = h; }
+    g.lineCap = 'round'; g.lineJoin = 'round';
+    const lw = P.etched ? 2.0 : 1.1, wl = w => (w.cell ? lw : lw * .8);
+    for (const w of this.wires) if (w.h > .02) { g.strokeStyle = `rgba(${P.heat.join(',')},${(P.etched ? .14 : .1) * w.h})`; g.lineWidth = wl(w) + (P.etched ? 4 : 5); this.path(g, w.pts, P.etched); g.stroke(); }
+    g.strokeStyle = P.wire; for (const w of this.wires) { g.lineWidth = wl(w); this.path(g, w.pts, P.etched); g.stroke(); }
+    g.globalCompositeOperation = 'lighter';
+    for (const w of this.wires) { if (w.e < .03) continue;
+      g.strokeStyle = `rgba(${P.flow.join(',')},${(P.etched ? .42 : .75) * w.e})`; g.lineWidth = wl(w) + .5; this.path(g, w.pts, P.etched); g.stroke();
+      g.strokeStyle = `rgba(${P.flow.join(',')},${(P.etched ? .06 : .12) * w.e})`; g.lineWidth = wl(w) + (P.etched ? 4 : 7); this.path(g, w.pts, P.etched); g.stroke(); }
+    g.fillStyle = `rgb(${P.lit.join(',')})`;
+    for (const w of this.wires) { if (w.e < .05) continue; const sp = 11, off = (now * (.02 + .07 * w.e)) % sp; g.globalAlpha = Math.min(1, w.e * 1.3);
+      for (let dd = off; dd < w.len; dd += sp) { const [x, y] = this.at(w, dd); g.beginPath(); g.arc(x, y, P.etched ? (w.cell ? 1.4 : 1.15) : 1.25, 0, 6.283); g.fill(); } }
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-over';
+    for (const p of this.parts) this.part(g, p, P, now);
+    if (P.etched) this.pads(g);
+    if (!this.opts.noNames) { g.fillStyle = P.label; g.textAlign = 'center'; g.font = '600 9px Archivo, sans-serif'; for (const c of this.L.cells) g.fillText(c.label.toUpperCase(), c.x + c.w / 2, c.trigTop ? c.y + c.h + 14 : c.y - 6); }
+    if (this.opts.keepouts) for (const k of this.opts.keepouts()) { g.globalCompositeOperation = 'destination-out'; g.fillStyle = '#000'; g.beginPath(); if (k.r) g.arc(k.x, k.y, k.r, 0, 6.283); else g.roundRect(k.x, k.y, k.w, k.h, 4); g.fill(); g.globalCompositeOperation = 'source-over'; }
+  }
+  path(g, pts, chamfer) {
+    g.beginPath(); g.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      if (chamfer && i < pts.length - 1) { const [ax, ay] = pts[i - 1], [bx, by] = pts[i], [cx, cy] = pts[i + 1]; const d1 = Math.hypot(bx - ax, by - ay), d2 = Math.hypot(cx - bx, cy - by), r = Math.min(7, d1 / 2, d2 / 2);
+        g.lineTo(bx - (bx - ax) / d1 * r, by - (by - ay) / d1 * r); g.lineTo(bx + (cx - bx) / d2 * r, by + (cy - by) / d2 * r); }
+      else g.lineTo(pts[i][0], pts[i][1]);
+    }
+  }
+  at(w, d) { for (let i = 0; i < w.segs.length; i++) { if (d <= w.segs[i]) { const f = d / w.segs[i]; return [w.pts[i][0] + (w.pts[i + 1][0] - w.pts[i][0]) * f, w.pts[i][1] + (w.pts[i + 1][1] - w.pts[i][1]) * f]; } d -= w.segs[i]; } return w.pts[w.pts.length - 1]; }
+  pads(g) { for (const w of this.wires) for (const q of [w.pts[0], w.pts[w.pts.length - 1]]) { g.fillStyle = 'rgba(190,150,96,.55)'; g.beginPath(); g.arc(q[0], q[1], 2.6, 0, 6.283); g.fill(); g.fillStyle = 'rgba(20,18,16,.9)'; g.beginPath(); g.arc(q[0], q[1], 1, 0, 6.283); g.fill(); } }
+  part(g, p, P, now) {
+    const k = p.k, e = stageEnergy(p.owner, now);
+    g.save(); g.translate(p.x, p.y); if (p.a === 90) g.rotate(Math.PI / 2);
+    const cut = { R: [1.25, .55], C: [.4, .7], P: [1.25, .7], Q: [1, 1], A: [1, 1], S: [.9, .9], N: [.9, .9] }[p.t];
+    if (cut) { if (P.bg) { g.fillStyle = P.bg; g.fillRect(-k * cut[0], -k * cut[1], 2 * k * cut[0], 2 * k * cut[1]); } else { g.globalCompositeOperation = 'destination-out'; g.fillRect(-k * cut[0], -k * cut[1], 2 * k * cut[0], 2 * k * cut[1]); g.globalCompositeOperation = 'source-over'; } }
+    g.strokeStyle = e > .05 ? `rgba(${P.lit.join(',')},${.45 + .55 * e})` : P.part; g.fillStyle = g.strokeStyle; g.lineWidth = P.etched ? 1 : 1.1;
+    const pad = (x, y) => { g.save(); g.fillStyle = 'rgba(190,150,96,.6)'; g.beginPath(); g.arc(x, y, 2.4, 0, 6.283); g.fill(); g.restore(); };
+    const L = k * 1.25;
+    if (P.etched) switch (p.t) {
+      case 'R': case 'P': g.strokeRect(-k * 1.05, -k * .38, k * 2.1, k * .76); pad(-k * 1.25, 0); pad(k * 1.25, 0); if (p.t === 'P') { g.beginPath(); g.arc(0, 0, k * .3, 0, 6.283); g.stroke(); } break;
+      case 'C': g.strokeRect(-k * .32, -k * .6, k * .64, k * 1.2); pad(-k * .4, 0); pad(k * .4, 0); break;
+      case 'Q': g.beginPath(); g.arc(0, 0, k * .85, Math.PI * .15, Math.PI * 1.85); g.closePath(); g.stroke(); pad(-k * .45, 0); pad(0, 0); pad(k * .45, 0);
+        { const a = .15 + .85 * e; g.fillStyle = `rgba(255,${120 + 80 * e},60,${a})`; g.beginPath(); g.arc(k * 1.4, -k * .9, 2.2, 0, 6.283); g.fill(); } break;
+      case 'A': g.strokeRect(-k * 1.1, -k * 1.4, k * 2.2, k * 2.8); for (let i = 0; i < 4; i++) { pad(-k * 1.1, -k * 1.05 + i * k * .7); pad(k * 1.1, -k * 1.05 + i * k * .7); } if (e > .1) { g.globalAlpha = e * .25; g.fillRect(-k * 1.1, -k * 1.4, k * 2.2, k * 2.8); g.globalAlpha = 1; } break;
+      case 'G': pad(0, 0); g.beginPath(); g.arc(0, 0, 4, 0, 6.283); g.stroke(); break;
+      case 'N': case 'S': g.strokeRect(-k * .9, -k * .9, k * 1.8, k * 1.8); pad(-k * .6, -k * .6); pad(k * .6, k * .6); break;
+    } else switch (p.t) {
+      case 'R': case 'P': g.beginPath(); g.moveTo(-L, 0); for (let i = 0; i <= 6; i++) g.lineTo(-L * .8 + i * L * 1.6 / 6, i === 0 || i === 6 ? 0 : (i % 2 ? -1 : 1) * k * .42); g.lineTo(L, 0); if (p.t === 'P') { g.moveTo(-k * .7, k * .8); g.lineTo(k * .7, -k * .8); } g.stroke(); break;
+      case 'C': g.beginPath(); g.moveTo(-k * .4, 0); g.lineTo(-k * .15, 0); g.moveTo(-k * .15, -k * .65); g.lineTo(-k * .15, k * .65); g.moveTo(k * .15, -k * .65); g.lineTo(k * .15, k * .65); g.moveTo(k * .15, 0); g.lineTo(k * .4, 0); g.stroke(); break;
+      case 'Q': g.beginPath(); g.arc(0, 0, k * .9, 0, 6.283); g.stroke(); g.beginPath(); g.moveTo(-k * .3, -k * .5); g.lineTo(-k * .3, k * .5); g.moveTo(-k * .9, 0); g.lineTo(-k * .3, 0); g.moveTo(-k * .3, -k * .2); g.lineTo(k * .45, -k * .7); g.moveTo(-k * .3, k * .2); g.lineTo(k * .45, k * .7); g.stroke(); if (e > .2) { g.globalAlpha = e * .35; g.beginPath(); g.arc(0, 0, k * .9, 0, 6.283); g.fill(); g.globalAlpha = 1; } break;
+      case 'A': g.beginPath(); g.moveTo(-k, -k); g.lineTo(-k, k); g.lineTo(k, 0); g.closePath(); g.stroke(); break;
+      case 'G': for (let i = 0; i < 3; i++) { g.beginPath(); g.moveTo(-k * (.6 - i * .2), i * k * .22); g.lineTo(k * (.6 - i * .2), i * k * .22); g.stroke(); } break;
+      case 'N': g.beginPath(); g.arc(0, 0, k * .85, 0, 6.283); g.stroke(); break;
+      case 'S': g.strokeRect(-k * .85, -k * .85, k * 1.7, k * 1.7); break;
+    }
+    g.restore();
+  }
+}
+// The stages in one row across a box, the gate bus along the top, the audio along the bottom
+function rowLayout(x0, x1, top, bottom, trigTop = true) {
+  return () => {
+    const sum = STAGES.reduce((a, s) => a + s.w, 0); let x = x0; const cells = [];
+    STAGES.forEach((s, i) => { const w = (x1 - x0) * s.w / sum; cells.push({ key: s.key, owner: i, kind: s.kind, label: s.label, x: x + 4, w: w - 8, y: top, h: bottom - top, trigTop }); x += w; });
+    return { cells, buses: [{ trigY: trigTop ? top : bottom, outY: trigTop ? bottom : top, x0, x1 }] };
+  };
+}
+
+// ---------------------------------------------------------------- 1: the etched board
+function build1() {
+  const root = $('v1');
+  wireAll(root);
+  const host = $('v1knobs');
+  // The sections across the board, each a column of copper with its knobs mounted on it
+  const x0 = 30, x1 = 1250, top = 60, bottom = 318, sum = STAGES.reduce((a, s) => a + s.w, 0);
+  const cols = []; let x = x0; STAGES.forEach(s => { const w = (x1 - x0) * s.w / sum; cols.push({ x, w, cx: x + w / 2 }); x += w; });
+  const keep = [];
+  const place = (k, cx, y, size) => { k.classList.add('kn'); k.style.left = (cx - 34) + 'px'; k.style.width = '68px'; k.style.top = y + 'px'; host.append(k); keep.push({ x: cx, y: y + size / 2, r: size / 2 + 10 }); keep.push({ x: cx - 34, y: y + size + 2, w: 68, h: 14 }); };
+  const word = (t, cx, y, sub) => { const d = el('div', 'secLabel', `<div class="t13">${t}</div>${sub ? `<div class="lbl">${sub}</div>` : ''}`); d.style.left = (cx - 80) + 'px'; d.style.width = '160px'; d.style.top = y + 'px'; host.append(d); keep.push({ x: cx - t.length * 5 - 8, y: y - 3, w: t.length * 10 + 16, h: sub ? 32 : 18 }); return d; };
+  const sec = (i, t, sub) => word(t, cols[i].cx, 64, sub);
+  const lab = [sec(0, 'Oscillator', 'VCO'), sec(1, 'Filter', 'VCF'), sec(2, 'Envelope', 'MEG'), sec(3, 'Amplifier', 'VCA'), sec(4, 'Drive'), sec(5, 'Delay')];
+  const r1 = 108, r2 = 210;
+  place(knob('Tuning', 'tuning', 40), cols[0].cx, r1, 40);
+  { const w = waveSwitch(); w.style.cssText = `position:absolute;left:${cols[0].cx - 30}px;width:60px;top:${r2 - 6}px`; host.append(w); keep.push({ x: cols[0].cx - 22, y: r2 - 8, w: 44, h: 84 }); }
+  place(knob('Cutoff', 'cutoff', 50), cols[1].cx - 56, r1 - 4, 50);
+  place(knob('Resonance', 'res', 40), cols[1].cx + 56, r1, 40);
+  place(knob('Env mod', 'envmod', 40), cols[1].cx, r2, 40);
+  place(knob('Decay', 'decay', 40), cols[2].cx, r1, 40);
+  place(knob('Accent', 'accent', 40, { accent: true }), cols[2].cx, r2, 40);
+  place(knob('Volume', 'volume', 40), cols[3].cx, r1, 40);
+  const onKey = (key, cx, y) => { const b = btn('On', 'tg', () => { S.k[key] = !S.k[key]; paintAll(); }); b.style.cssText = `position:absolute;left:${cx - 22}px;top:${y}px;width:44px`; host.append(b); keep.push({ x: cx - 26, y: y - 3, w: 52, h: 32 }); painters.push(() => b.classList.toggle('is', S.k[key])); };
+  onKey('driveOn', cols[4].cx, 92);
+  place(knob('Amount', 'drive', 36, { live: false }), cols[4].cx - 40, r1 + 22, 36);
+  place(knob('Tone', 'tone', 36, { live: false }), cols[4].cx + 40, r1 + 22, 36);
+  onKey('delayOn', cols[5].cx, 92);
+  const times = ['1/16', '1/8', '3/16', '1/4'];
+  place(knob('Time', 'time', 36, { live: false, fmt: v => times[Math.round(v * 3)] }), cols[5].cx - 70, r1 + 22, 36);
+  place(knob('Feedback', 'fb', 36, { live: false }), cols[5].cx, r1 + 22, 36);
+  place(knob('Mix', 'mix', 36, { live: false }), cols[5].cx + 70, r1 + 22, 36);
+  keep.push({ x: 22, y: 8, w: 210, h: 44 }, { x: 640, y: 4, w: 630, h: 46 });
+  // The board: the six stages as copper columns, the gate bus along the top, the audio running under the glass
+  const layout = () => {
+    const L = rowLayout(x0, x1, top + 8, bottom + 6, true)();
+    L.extra = [{ pts: [[34, bottom + 14], [22, bottom + 26], [22, 776], [38, 792], [1242, 792], [1258, 776], [1258, bottom + 26], [1246, bottom + 14]], owner: 'gnd' }];
+    return L;
+  };
+  new Board($('b1'), layout, 'etched', { noNames: true, keepouts: () => keep });
+  painters.push(() => lab.forEach((d, i) => d.classList.toggle('live', S.playing && stageEnergy(i, performance.now()) > .45)));
+  buildTransport($('v1transport'), [btn('Mods', 'tg', () => { S.mods = !S.mods; paintAll(); })]);
+  painters.push(() => $('v1transport').querySelectorAll('.btn').forEach(b => { if (b.textContent === 'Mods') b.classList.toggle('is', S.mods); }));
+  buildMods($('v1mods'));
+}
+
+// ---------------------------------------------------------------- 2: TAL-Vocoder's charcoal
+function talBtn(text, key, plain) {
+  const b = el('button', 'tbtn' + (plain ? ' plain' : ''), text);
+  b.onclick = () => { if (key) S.k[key] = typeof S.k[key] === 'boolean' ? !S.k[key] : S.k[key]; paintAll(); };
+  if (key) painters.push(() => b.classList.toggle('is', !!S.k[key]));
+  return b;
+}
+function fader(label, key) {
+  const f = el('div', 'fader'), trk = el('div', 'trk'), cap = el('div', 'capf'); trk.append(cap);
+  f.append(trk, el('span', 'lbl', label));
+  const paint = () => { cap.style.top = ((1 - S.k[key]) * (112 - 14)) + 'px'; };
+  f.addEventListener('pointerdown', e => { const y0 = e.clientY, v0 = S.k[key]; f.setPointerCapture(e.pointerId);
+    const mv = ev => { S.k[key] = Math.min(1, Math.max(0, v0 + (y0 - ev.clientY) / 100)); paint(); }; const up = () => { f.removeEventListener('pointermove', mv); f.removeEventListener('pointerup', up); };
+    f.addEventListener('pointermove', mv); f.addEventListener('pointerup', up); });
+  painters.push(paint); paint();
+  return f;
+}
+function build2() {
+  const root = $('v2');
+  wireAll(root);
+  // The top bar: the preset between two arrows, then new, save, undo, redo; the transport at the right
+  const bar = $('v2bar');
+  const preset = el('div', 'preset'); const nm = el('div', 'name', 'Acid · Line 1');
+  preset.append(talBtn('‹', null, true), nm, talBtn('›', null, true));
+  const play = el('button', 'tbtn plain', 'Play'); play.onclick = () => setPlaying(!S.playing);
+  painters.push(() => { play.classList.toggle('is', S.playing); play.textContent = S.playing ? 'Stop' : 'Play'; nm.textContent = 'Acid · ' + (bank[S.editing] ? bank[S.editing].name || 'Pattern ' + (S.editing + 1) : 'empty'); });
+  const tempo = el('div', '', `<span class="num" style="color:#e8742a">${S.bpm.toFixed(1)}</span> <span class="lbl">BPM</span>`);
+  const rec = el('button', 'tbtn plain', 'Rec'); rec.onclick = () => { S.rec = !S.rec; paintAll(); }; painters.push(() => rec.classList.toggle('is', S.rec));
+  const mods = el('button', 'tbtn plain', 'Mods'); mods.onclick = () => { S.mods = !S.mods; paintAll(); }; painters.push(() => mods.classList.toggle('is', S.mods));
+  const lid = el('button', 'tbtn plain', 'Lift the lid'); lid.onclick = () => { root.classList.toggle('lifted'); lid.classList.toggle('is', root.classList.contains('lifted')); for (const b of boards) b.resize(); };
+  bar.append(preset, el('button', 'tbtn plain', 'New'), el('button', 'tbtn plain', 'Save'), el('span', '', ''), el('span', 'sp', ''));
+  const sp = el('span', ''); sp.style.flex = '1';
+  bar.append(sp, play, tempo, el('button', 'tbtn plain', 'Tap'), rec, el('span', '', '&nbsp;'), el('button', 'tbtn plain', 'Library'), el('button', 'tbtn plain', 'File'), mods, lid);
+  // The synth's sections, outlined, in the signal's order with arrows between
+  const face = $('v2face');
+  const sect = (name, x, w) => { const s = el('div', 'sect'); s.style.cssText = `left:${x}px;top:10px;width:${w}px;height:196px`; s.append(el('span', 'cap', name)); face.append(s); return s; };
+  const at = (s, node, x, y) => { node.style.position = 'absolute'; node.style.left = x + 'px'; node.style.top = y + 'px'; s.append(node); return node; };
+  const kt = (label, key, size = 44, opts = {}) => knob(label, key, size, { style: 'tal', ...opts });
+  const arrow = x => { const a = el('div', 'arrow', '▸'); a.style.left = x + 'px'; a.style.top = '102px'; face.append(a); };
+  const s1 = sect('Oscillator', 6, 150);
+  at(s1, kt('Tuning', 'tuning'), 50, 28);
+  { const w = el('div', ''); w.style.cssText = 'display:flex;gap:6px'; const saw = el('button', 'tbtn', 'Saw'), sq = el('button', 'tbtn', 'Square');
+    saw.onclick = () => { S.k.wave = 0; paintAll(); }; sq.onclick = () => { S.k.wave = 1; paintAll(); };
+    painters.push(() => { saw.classList.toggle('is', S.k.wave === 0); sq.classList.toggle('is', S.k.wave === 1); }); w.append(saw, sq); at(s1, w, 16, 132); }
+  arrow(160);
+  const s2 = sect('Filter', 178, 280);
+  at(s2, kt('Cutoff', 'cutoff', 60), 22, 34); at(s2, kt('Resonance', 'res'), 120, 40); at(s2, kt('Env mod', 'envmod'), 204, 40);
+  arrow(462);
+  const s3 = sect('Envelope', 480, 176);
+  at(s3, kt('Decay', 'decay'), 20, 40); at(s3, kt('Accent', 'accent', 44, { accent: false }), 100, 40);
+  arrow(660);
+  const s4 = sect('Amplifier', 678, 104);
+  at(s4, kt('Volume', 'volume'), 26, 40);
+  arrow(786);
+  const s5 = sect('Drive', 804, 170);
+  at(s5, talBtn('On', 'driveOn'), 18, 132); at(s5, kt('Amount', 'drive', 40, { live: false }), 16, 36); at(s5, kt('Tone', 'tone', 40, { live: false }), 94, 36);
+  arrow(978);
+  const s6 = sect('Delay', 996, 214);
+  at(s6, talBtn('On', 'delayOn'), 14, 132);
+  const times = ['1/16', '1/8', '3/16', '1/4'];
+  at(s6, kt('Time', 'time', 40, { live: false, fmt: v => times[Math.round(v * 3)] }), 10, 36);
+  at(s6, fader('Feedback', 'fb'), 96, 30); at(s6, fader('Mix', 'mix'), 150, 30);
+  new Board($('b2'), rowLayout(20, 1190, 26, 190, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
+  buildMods($('v2mods'), 'tal');
+}
+
+// ---------------------------------------------------------------- 3: the original's silver face
+function build3() {
+  const root = $('v3');
+  wireAll(root);
+  const face = $('v3face');
+  const at = (node, x, y) => { node.style.position = 'absolute'; node.style.left = x + 'px'; node.style.top = y + 'px'; face.append(node); return node; };
+  at(el('div', 'logo ink', '<b style="color:#1d2024">CoolSynth</b> <span style="color:#1d2024">303</span><span class="sub lbl">Circuit bass line</span>'), 26, 18);
+  // the transport on a strip of smoked glass, mounted on the metal
+  const tr = el('div', ''); at(tr, 620, 12);
+  const lid = btn('Lift the lid', 'tg', () => { root.classList.toggle('lifted'); lid.classList.toggle('is', root.classList.contains('lifted')); for (const b of boards) b.resize(); });
+  const mods = btn('Mods', 'tg', () => { S.mods = !S.mods; paintAll(); }); painters.push(() => mods.classList.toggle('is', S.mods));
+  buildTransport(tr, [mods, lid]);
+  // the knobs in the original's order, its printed rules between the groups
+  const kr = 92, ks = 46;
+  const row = [['Tuning', 'tuning'], ['Cutoff freq', 'cutoff'], ['Resonance', 'res'], ['Env mod', 'envmod'], ['Decay', 'decay'], ['Accent', 'accent']];
+  at(knob('Volume', 'volume', ks), 34, kr);
+  row.forEach(([n, key], i) => at(knob(n, key, ks, { accent: key === 'accent', cls: key === 'accent' ? 'acc' : '' }), 150 + i * 92, kr));
+  { const w = waveSwitch(true); at(w, 712, kr - 6); at(el('div', 'lbl', 'Waveform'), 704, kr + 82); }
+  at(el('div', 'rule'), 130, 76).style.width = '560px';
+  // the effects on a dark plate at the right
+  const plate = el('div', 'plate'); plate.style.cssText += 'left:790px;top:70px;width:466px;height:128px'; face.append(plate);
+  const pat = (node, x, y) => { node.style.position = 'absolute'; node.style.left = x + 'px'; node.style.top = y + 'px'; plate.append(node); return node; };
+  pat(el('div', 'lbl', 'Drive'), 12, 10); pat(el('div', 'lbl', 'Delay'), 196, 10);
+  const on = (key, x) => { const b = btn('On', 'tg', () => { S.k[key] = !S.k[key]; paintAll(); }); painters.push(() => b.classList.toggle('is', S.k[key])); pat(b, x, 92); };
+  on('driveOn', 12); pat(knob('Amount', 'drive', 34, { live: false }), 64, 30); pat(knob('Tone', 'tone', 34, { live: false }), 124, 30);
+  on('delayOn', 196);
+  const times = ['1/16', '1/8', '3/16', '1/4'];
+  pat(knob('Time', 'time', 34, { live: false, fmt: v => times[Math.round(v * 3)] }), 250, 30); pat(knob('Feedback', 'fb', 34, { live: false }), 316, 30); pat(knob('Mix', 'mix', 34, { live: false }), 390, 30);
+  // the keyboard: one octave, the white keys below and the black above as the original lays them out, with the
+  // entry keys either side; a key writes its note at the cursor and moves on (ReBirth's way), or transposes
+  at(el('div', 'rule'), 20, 216).style.width = '1240px';
+  const keysX = 360, wW = 64;
+  const whites = [0, 2, 4, 5, 7, 9, 11, 12], blacks = [[1, 0], [3, 1], [6, 3], [8, 4], [10, 5]];
+  const allKeys = [];
+  const hk = (label, x, y, cls, onClick) => { const h = el('div', 'hk ' + (cls || ''), `<div class="cap"></div><span class="lbl">${label}</span>`); h.querySelector('.cap').onclick = onClick; at(h, x, y); return h; };
+  whites.forEach((n, i) => { const h = hk(NAMES[n] + (n === 12 ? '′' : ''), keysX + i * wW, 340, 'white', () => playKey(n)); h.dataset.n = n; allKeys.push(h); });
+  blacks.forEach(([n, after]) => { const h = hk(NAMES[n], keysX + after * wW + wW / 2, 244, '', () => playKey(n)); h.dataset.n = n; allKeys.push(h); });
+  const left = [['Down', () => { S.entryOct = S.entryOct === -1 ? 0 : -1; paintAll(); }, 'down'], ['Up', () => { S.entryOct = S.entryOct === 1 ? 0 : 1; paintAll(); }, 'up'],
+    ['Accent', () => toggleAt('a'), 'acc'], ['Slide', () => toggleAt('s'), 'sl']];
+  const fk = {};
+  left.forEach(([t, f, id], i) => { fk[id] = hk(t, 40 + (i % 2) * 74, i < 2 ? 244 : 340, 'lens', f); });
+  const right = [['Back', () => { S.cursor = (S.cursor + 15) % 16; paintAll(); }], ['Step', () => { S.cursor = (S.cursor + 1) % 16; paintAll(); }],
+    ['Tie', () => setGate('tie')], ['Rest', () => setGate('rest')]];
+  right.forEach(([t, f], i) => hk(t, 930 + (i % 2) * 74, i < 2 ? 244 : 340, '', f));
+  fk.tr = hk('Transpose', 1150, 292, 'lens', () => { S.transposeMode = !S.transposeMode; paintAll(); });
+  at(el('div', 'lbl', 'Write: a key writes its note at the cursor and steps on · Transpose: the keys shift the running pattern'), 360, 430).style.cssText += 'text-transform:none;letter-spacing:.02em;font-size:11px;color:#2a2e33';
+  painters.push(() => {
+    fk.down.classList.toggle('is', S.entryOct === -1); fk.up.classList.toggle('is', S.entryOct === 1);
+    const x = shown().steps[S.cursor]; fk.acc.classList.toggle('is', x.a); fk.sl.classList.toggle('is', x.s);
+    fk.tr.classList.toggle('is', S.transposeMode);
+    const sounding = S.playing ? heard().steps[S.count % heard().len] : null;
+    allKeys.forEach(h => h.classList.toggle('hit', S.transposeMode ? +h.dataset.n === ((S.transpose % 12) + 12) % 12 : !!sounding && sounding.g !== 'rest' && +h.dataset.n === sounding.n && h.dataset.n !== '12'));
+  });
+  // the step strip in a dark window: every step's note, octave, accent, slide and gate; the cursor where the keys write
+  const strip = $('v3strip'), cells = [];
+  for (let i = 0; i < 16; i++) {
+    const c = el('div', 'cell', '<span class="nn"></span><span class="flags"><b>A</b><b>S</b></span><span class="gate"></span><span class="lk"></span>');
+    c.onclick = () => { S.cursor = i; paintAll(); };
+    c.addEventListener('wheel', ev => { ev.preventDefault(); const x = shown().steps[i]; x.n = (x.n + (ev.deltaY < 0 ? 1 : 11)) % 12; S.cursor = i; paintAll(); }, { passive: false });
+    cells.push(c); strip.append(c);
+  }
+  painters.push(() => {
+    const p = shown(), head = S.playing && S.editing === S.hearing ? S.count % p.len : -1;
+    cells.forEach((c, i) => {
+      const x = p.steps[i];
+      c.querySelector('.nn').innerHTML = x.g === 'rest' ? '—' : NAMES[x.n] + (x.o > 0 ? '<sup>▲</sup>' : x.o < 0 ? '<sup>▼</sup>' : '');
+      const f = c.querySelectorAll('.flags b'); f[0].classList.toggle('on', x.a); f[1].classList.toggle('on', x.s);
+      c.querySelector('.gate').textContent = x.g === 'note' ? 'NOTE' : x.g === 'tie' ? 'TIE' : 'REST';
+      c.classList.toggle('cursor', S.cursor === i); c.classList.toggle('ph', i === head); c.classList.toggle('off', i >= p.len);
+      c.classList.toggle('rest', x.g === 'rest'); c.classList.toggle('locked', Object.keys(x.lock).length > 0);
+    });
+  });
+  // under the glass: one knob's motion over the pattern, and the cursor step's locks
+  const mh = $('v3motion');
+  const mg = el('div', ''); mg.style.cssText = 'flex:1;min-width:0'; buildGrid(mg, 0, 0, 52);
+  // keep only the lights and the motion lane of the grid here: the strip above is the editor
+  [...mg.children].forEach((ch, i) => { if (i >= 2 && i < 12) ch.style.display = 'none'; });
+  const side = el('div', 'side'); side.style.cssText = 'width:420px;flex-direction:row;gap:14px;align-items:center;padding:8px 14px';
+  const lk = el('div', 'tknobs'); LOCKABLE.forEach(([key, name]) => lk.append(knob(name, key, 28, { lockStep: () => S.cursor, accent: key === 'accent' })));
+  const lhead = el('div', 'lbl', ''); lhead.style.color = '#f4efe4';
+  side.append(el('div', '', ''), lk); side.firstChild.append(lhead, btn('Clear locks', '', () => { snapshot(); shown().steps[S.cursor].lock = {}; paintAll(); }));
+  side.firstChild.style.cssText = 'display:flex;flex-direction:column;gap:8px';
+  painters.push(() => { lhead.textContent = `Locks · step ${S.cursor + 1}`; });
+  mh.append(mg, side);
+  new Board($('b3'), rowLayout(40, 1240, 70, 430, true), 'etchedDark', { visible: () => root.classList.contains('lifted') });
+  buildMods($('v3mods'));
+}
+function playKey(n) {
+  if (S.transposeMode) { S.transpose = n; paintAll(); return; }
+  snapshot();
+  const x = shown().steps[S.cursor];
+  x.n = n % 12; x.o = n === 12 ? 1 : S.entryOct; x.g = 'note';
+  S.cursor = (S.cursor + 1) % shown().len; paintAll();
+}
+function toggleAt(f) { snapshot(); const x = shown().steps[S.cursor]; x[f] = !x[f]; paintAll(); }
+function setGate(g) { snapshot(); const x = shown().steps[S.cursor]; x.g = g; S.cursor = (S.cursor + 1) % shown().len; paintAll(); }
+
+// ---------------------------------------------------------------- the full-screen circuit
+function buildSaver() {
+  const b = new Board($('bs'), (W, H) => rowLayout(60, W - 60, H * .25, H * .72, true)(), 'schematic');
+  $('saverBtn').onclick = () => { $('saver').classList.add('is'); if (!S.playing) setPlaying(true); b.resize(); };
+  $('saverClose').onclick = () => $('saver').classList.remove('is');
+  $('saver').querySelectorAll('[data-look]').forEach(x => x.onclick = () => { b.look = x.dataset.look; $('saver').querySelectorAll('[data-look]').forEach(y => y.classList.toggle('is', y === x)); });
+}
+
+// ---------------------------------------------------------------- start
+build1(); build2(); build3(); buildSaver();
+$('modsBtn').onclick = () => { S.mods = !S.mods; paintAll(); };
+painters.push(() => $('modsBtn').classList.toggle('is', S.mods));
+document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
+  document.querySelectorAll('#chrome .tab[data-v]').forEach(x => x.classList.toggle('is', x === t));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('is', v.id === 'v' + t.dataset.v));
+  for (const b of boards) b.resize();
+  try { localStorage.setItem('cs303-layout', t.dataset.v); } catch (e) {}
+});
+try { const v = localStorage.getItem('cs303-layout'); if (v) document.querySelector(`#chrome .tab[data-v="${v}"]`).click(); } catch (e) {}
+// #v2 opens a layout, #play starts the pattern, #mods opens the Mods panel, #lid lifts the lid: for screenshots
+{ const m = location.hash.match(/v(\d)/); if (m) document.querySelector(`#chrome .tab[data-v="${m[1]}"]`).click();
+  if (location.hash.includes('play')) setTimeout(() => setPlaying(true), 50);
+  if (location.hash.includes('mods')) { S.mods = true; }
+  if (location.hash.includes('lid')) setTimeout(() => document.querySelectorAll('.view.is .tbtn, .view.is .btn').forEach(b => { if (b.textContent === 'Lift the lid') b.click(); }), 80); }
+function fit() { const vp = $('viewport'); const s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 800); $('stage').style.transform = `scale(${s})`; window.stageScale = s; for (const b of boards) b.resize(); }
+window.addEventListener('resize', fit); fit();
+// The computer's keys: z s x d c v g b h n j m , play one octave (they write, or transpose in Transpose mode)
+const KEYMAP = { KeyZ: 0, KeyS: 1, KeyX: 2, KeyD: 3, KeyC: 4, KeyV: 5, KeyG: 6, KeyB: 7, KeyH: 8, KeyN: 9, KeyJ: 10, KeyM: 11, Comma: 12 };
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space') { e.preventDefault(); setPlaying(!S.playing); }
+  if (e.code === 'Escape') { $('saver').classList.remove('is'); S.mods = false; paintAll(); }
+  if (KEYMAP[e.code] !== undefined && !e.repeat) {
+    if ($('v3').classList.contains('is')) playKey(KEYMAP[e.code]); else { S.transpose = KEYMAP[e.code]; paintAll(); }
+  }
+  if ((e.ctrlKey || e.metaKey) && e.code === 'KeyZ') { e.preventDefault(); restore(e.shiftKey ? redo : undo, e.shiftKey ? undo : redo); }
+});
+paintAll();
+let prev = performance.now();
+function loop(t) {
+  requestAnimationFrame(loop);
+  const dt = Math.min(250, t - prev); prev = t;
+  if (S.playing) { acc += dt; const sm = stepMs(); while (acc >= sm) { acc -= sm; advance(t); } }
+  for (const b of boards) { try { b.frame(t); } catch (e) { console.error(e); } }
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

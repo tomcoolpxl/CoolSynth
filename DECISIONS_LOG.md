@@ -6394,3 +6394,30 @@ a pick list with the options, are in `docs/research/tb-303-app.md` (its frame se
 - Distortion and delay, switchable; the circuit shown as in the 808 app; the Devil Fish in a Mods panel.
 - Live: transpose, knob moves recorded per pattern, per-step locks.
 - One HTML file with switchable views, animated, not wired.
+
+## D297. CoolSynth 808: a chain that loops or plays once, and when a picked pattern comes in (2026-11-24)
+
+- From D286 (one chain row that loops or ends): the engine's sequencer takes a loop setting; with it off, past the
+  chain's last bar it plays nothing and says it has ended (coolsynth-engine `b5211b6`, `f7c68eb`, with a test).
+  The app keeps Loop and the change moment in the project, and its own transport stops at the chain's end (with a
+  test). A chain in any order with repeats was already the engine's.
+- Change (the mockup's keys): a pattern picked while playing comes in at the next bar line (through the audition's
+  atNextBar, D274) or at the end of the pattern that plays.
+- First written as D293 while the 303's session took it; renumbered.
+
+## D298. CoolSynth 808: the fifth layout in the app, its etched circuit lit by the recordings (2026-11-24)
+
+- The panel rebuilt as the fifth layout (CoolSynth808): the board on top with each drum's knobs on its column and
+  slide switches for the second instruments, the transport strip on smoked glass, the sequencer on smoked glass
+  (patterns, chain with Loop and Change, step lights, lanes, the lane's and the pattern's tools). Pattern mode,
+  the big step row, the step inspector and the knob columns' drum keys are gone. No Under the Lid key: the user
+  asked for layout 5 and nothing more (my mistake in D292's choices, an answer the user had not understood).
+- The etched circuit: the mockup's generator, the board's copper cut round every control; each drum's column lights
+  as the output of its ngspice recording does after a strike (resources/lid/board_envelopes.json, by
+  tools/board_envelopes.py; the cowbell's and cymbal's outputs are ncbo and nhpa, jcb and jcy being only the
+  select lines), the level in decibels so a tail still glows.
+- The user: the Loop and Change lights are the red step light's lamp in orange, its size and drawing, a quarter
+  less bright; done in the app and the mockup.
+- The mockup: layout 5 in four colour themes, 5.1 Roland (the 808's own: charcoal, white and orange printing, the
+  steps red, orange, yellow and white), 5.2 Steel (blue-grey metal, the same orange, the user), 5.3 Olive, 5.4
+  Silver. The 808's step colours from Sound On Sound's TR-8 review and Roland's TR-8 manual.
