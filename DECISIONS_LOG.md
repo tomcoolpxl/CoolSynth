@@ -7243,4 +7243,41 @@ Still alone, as D304; each with what else it could have been.
 
 ## D347. SIMD across voices: same-shaped circuits solved side by side, the same bits (2026-11-24)
 
-- Claimed for the SIMD-across-voices work (the same bits as each circuit solved alone); written in full when it lands.
+- The user: SIMD across voices keeps each voice's bits, so it goes in whenever it works; each voice byte for byte as
+  solved alone, SSE2 only (AVX2 stays off), a plain path for the Mac.
+- The pool (D164) gives each sounding unit a task in a block; the lanes sit inside one unit's work, on its own core,
+  so they do not compete with it.
+- Where circuits of one shape sound at once:
+  - No shipped CoolSynth preset plays a circuit instrument in several voices: Acid and 808 Boom are legato,
+    Succession 808 mono, the 808 Kit one Kit voice. Voices are also rendered one after another, a block each, so
+    lanes across voices would need the voice loop rebuilt; not done.
+  - Inside the 808 Drums (CoolSynth's 808 Kit and the 808 app alike): the low, mid and high toms (and their congas)
+    are one circuit with other values, ringing together in a fill. The snare's two bridged-T oscillators and the
+    hats' two VCAs are pairs too, but tiny (one device each), and the hats choke one another.
+- Built: `wdf::CircuitPair` in `CircuitWdf.h`, two circuits of one build in the two double lanes of an SSE2 register
+  (Surge XT puts four voices in one register, but in floats). The sample's three products (the linear part's pull on
+  the devices, the waves back to the capacitors, the probes) run in the lanes, from copies of both circuits' matrices
+  side by side, made again after either is analysed again.
+  - Each circuit keeps its own Newton solve, scalar: a lane that has converged is never touched by the other, and
+    std::exp stays as it was.
+  - Every sum keeps its order and nothing is fused. MSVC makes no multiply-add without AVX2; Clang on the Mac fuses by
+    default, so its plain path is written as the scalar sums are and the test shows whether both fused alike.
+  - `Tr808Tom::processPair`: the tom's sample split into its stages, each stage in the lanes when both toms run it.
+    The 808 Drums pairs the first two toms ringing, a third alone. The pairs add 22 kB to the 808 Drums, which stays
+    below the largest generator type, so a voice is no bigger.
+- Byte for byte:
+  - `V3CircuitLanesTests`: two clippers driven so their solves differ (120,827 Newton steps), with a resistance
+    change half-way, against each alone; 0 values differ. 3.2 s of a tom fill at 96 kHz (two and three at once,
+    congas, tunings moved while ringing): the output and every tom's stage voltages the same bytes.
+  - CoolSynthRender before and after: the 808 Kit's fill at 44.1, 48 and 96 kHz, Acid, Succession 808 and 808 Boom
+    give the same WAV files.
+  - The engine's tests pass, and CoolSynth's Determinism tests (every preset bit for bit); the rest of CoolSynth's
+    suite does not reach the toms.
+- Measured, medians of 15 paired runs interleaved, the kit alone at 96 kHz: two toms ringing 134.4 ms to 129.0 (4 %
+  less), three 200.4 to 194.4 (3 %), the fill 548.0 to 537.5 (2 %), one tom unchanged. Small, because the circuits
+  are: a tom's sample spends some 7 % in the products the lanes share and some 70 % in the Newton solve, its exps
+  only a fifth of that; the rest is branching over two to six device voltages.
+- What would gain more: the Newton solve itself in lockstep, each lane masked once it converges. Most of it is
+  branching, limiting and pivoting that stays per lane; an estimate, not measured, of some 10 % more for two toms.
+- Picked (each with options): land it as it is (over the Newton solve in lanes too, or keeping it on its branch);
+  rebased onto main and pushed (over pull requests).

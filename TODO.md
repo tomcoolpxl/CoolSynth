@@ -334,9 +334,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     throw a speed-up away; one that costs accuracy becomes a level of the accuracy setting, for all three apps; SIMD
     across voices (the same bits) goes in whenever it works. Done (D345): the -90.5 dB found against the reference
     was the pitch circuit's 100 nV (a 0.0005-cent drift); every 303 circuit now at 10 nV (-128.5 dB rms), the chord
-    method's kept inverse on; the app plays the first line at 57.5 % of a core (74 % that morning). Next: low-rank
-    updates at the attack, the 1-ulp SIMD exp, SIMD across voices after a look at CoolSynth's pool, then the accuracy
-    levels (100 nV the first lighter one). For the 808 and CoolSynth: the chord method on their circuits (they use
+    method's kept inverse on; the app plays the first line at 57.5 % of a core (74 % that morning). Done (D347): SIMD
+    across voices, the same bytes, for the 808's toms (no shipped preset plays a circuit in several voices): only 3 to
+    4 % off two or three toms, the Newton solve being most of a sample; the Newton solve in lanes left for later.
+    Next: low-rank updates at the attack, the 1-ulp SIMD exp, then the accuracy levels (100 nV the first lighter one). For the 808 and CoolSynth: the chord method on their circuits (they use
     plain Newton), measured against their own tight references. The Devil Fish further by ear if the user wants (it
     is ours, the name stays).
 
