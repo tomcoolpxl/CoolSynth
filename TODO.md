@@ -287,8 +287,6 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     Lift the Lid with the CPU board, every sheet live in real time, the CPU sheet, the VST3 (tried in FL Studio),
     learnable drum notes. Parked, the user's asides and what was left, so none is lost (2026-11-24):
     - The VST3 in Ableton Live and Bitwig (FL Studio done, D328).
-    - Separate outputs per drum, the knobs automatable in the host, stems rendered (D311's order).
-    - The CPU board under the lid in green and red, as the drums' copper (offered after D320, not picked).
     - The Release build's run-time cost against the Debug build's, not yet measured (D327; built in 183 s, D339).
     - The library's load key says "pattern 1" where the panel says "01" (seen fixing its width, D339).
     - The WAV export's drum files could come from the engine's per-drum taps in one render instead of one render a
