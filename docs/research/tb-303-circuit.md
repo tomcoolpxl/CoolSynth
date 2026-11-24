@@ -325,7 +325,10 @@ level fitted across all 400 notes). The user heard the real notes start a little
   0.90, 1): a quarter turn within 1.7 dB of the unit where it was up to 4.5 dB quiet.
 - RESONANCE full with CUTOFF and ENV MOD high (set E): ours 3 to 5 dB loud over the note's first 80 ms. Not the pot
   (a cap at 0.88 makes A2 worse and E2 no better): both whistle above 12.8 kHz where the envelope sweeps the cutoff
-  to its top, ours 6.4 dB louder and higher. Open.
+  to its top, ours 6.4 dB louder and higher. ngspice's voice.cir whistles as the engine does, so it is the unit's
+  loop that falls short of the schematic's (Lemus: 98 %, the losses the generic transistor models leave out).
+  `Tb303Voice::resonanceLoop`, 0.96 of the pot's share: the whistle within 1 dB, set E within about 1 dB.
+- Left: the accent's second cycle 1.3 dB loud on set A5 (every other knob at 0), C13 tried from 0.68 to 2.2 uF.
 
 ## What this means for CoolSynth
 

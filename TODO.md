@@ -322,7 +322,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     the frame in `docs/research/tb-303-app.md`); the charcoal with the keyboard as buttons or a piano (2.1, 2.2, D300); its keyboard is the piano (D301); 2.3 spans three octaves, the step panel down to its locks (D302). The app's first working version on 2.3, in
     `tomcoolpxl/CoolSynth303` (D304); then MIDI clock in, Mods (the trimmers), Drag MIDI and a VST3 run by the host's
     transport (D305); the Devil Fish, on or off in the Mods panel (D309); Under the Lid, the whole voice live (D310).
-    To come there: the library, a listening pass and a try in FL Studio.
+    The listening pass against Din Sync's unit (D324): the note's start, RESONANCE's track and its loop fitted.
+    To come there: the library, a try in FL Studio, and the Devil Fish tuned by ear to whatever sounds best (the
+    user's word: it is ours, the name stays).
 
 
 ## Standing notes

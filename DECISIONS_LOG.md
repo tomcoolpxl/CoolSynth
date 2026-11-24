@@ -6915,7 +6915,12 @@ Still alone, as D304; each with what else it could have been.
   CoolSynth303 `a7369f3`. A cap at full resonance was tried and dropped (A2 worse, E2 no better).
 - RESONANCE at full with CUTOFF high, found: not the pot. Both units whistle above 12.8 kHz where the envelope sweeps
   the cutoff to its top; ours 6.4 dB louder and higher (12.8 to 20 kHz -31.7 against -38.1 dBFS; 6.4 to 12.8 kHz
-  -53.1 against -47.4). Below 6.4 kHz ours is some 1.5 dB under the unit. Put to the user.
+  -53.1 against -47.4). Below 6.4 kHz ours is some 1.5 dB under the unit. Put to the user, who picked fitting it.
+- ngspice's voice.cir whistles as the engine does (higher, as loud), so the unit's loop falls short of the schematic's
+  (Lemus: 98 %). `Tb303Voice::resonanceLoop` 0.96 of the pot's share: the whistle within 1 dB of the unit's, set E
+  within about 1 dB in level and decay (E4 from 3.8 and 3.9 dB), A2 and C2 unchanged; at 0.88 the whistle stops,
+  which the unit's does not. Engine `e0015dd`, CoolSynth303 `2fcbceb`.
+- The user, after: the Devil Fish may be tuned by ear to whatever sounds best, its name kept; put on the list.
 - The pass's page (`tools/listening-pass` in CoolSynth303) is kept as a tool; the user hears clips as separate files.
 
 ## D325. CoolSynth 808: the VST3 (2026-11-24)
