@@ -328,11 +328,15 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     808's. Done so far (D341): the solver's products the same bits and faster, the follower warm-started, the voice
     76 % to some 62 %. The research is in `docs/research/solver-speed.md`; the user picked all four offered (the
     explicit inverse, low-rank updates at the attack, a 1-ulp SIMD exp, SIMD across voices), each to be measured
-    against the 10 pV reference, and warned that CoolSynth already has some parallelism. On hold: the user is
-    dictating more before I start. Found on
-    the way: against a reference solved to 10 pV the voice is -90.5 dB rms off, -55.6 dB at the worst sample; to look
-    into (where it comes from, whether it is heard). The Devil Fish further by ear if the user wants (it is ours, the
-    name stays).
+    against the 10 pV reference, and warned that CoolSynth already has some parallelism. The user's rule: never
+    throw a speed-up away; one that costs accuracy becomes a level of the accuracy setting, for all three apps; SIMD
+    across voices (the same bits) goes in whenever it works. Done (D345): the -90.5 dB found against the reference
+    was the pitch circuit's 100 nV (a 0.0005-cent drift); every 303 circuit now at 10 nV (-128.5 dB rms), the chord
+    method's kept inverse on; the app plays the first line at 57.5 % of a core (74 % that morning). Next: low-rank
+    updates at the attack, the 1-ulp SIMD exp, SIMD across voices after a look at CoolSynth's pool, then the accuracy
+    levels (100 nV the first lighter one). For the 808 and CoolSynth: the chord method on their circuits (they use
+    plain Newton), measured against their own tight references. The Devil Fish further by ear if the user wants (it
+    is ours, the name stays).
 
 
 ## Standing notes
