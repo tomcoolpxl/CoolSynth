@@ -321,7 +321,11 @@ level fitted across all 400 notes). The user heard the real notes start a little
 - RESONANCE: Din Sync's marks fall on our linear pot at about 0.10 to 0.15 (25 %), 0.42 to 0.50 (50 %), 0.88
   (75 %) and 1.0 on sets A, C, D and E: an S-shaped track, Whittle's "log curve at both ends" of replacement pots.
   Set B (every knob at 25 %) is the cutoff's quarter-turn residual, as Lemus's (the resonant peak some 250 cents
-  high there), not the pot's.
+  high there), not the pot's. `Tb303Voice::resonanceTrack` maps the knob as t^2 / (t^2 + (1 - t)^2) (0.10, 0.5,
+  0.90, 1): a quarter turn within 1.7 dB of the unit where it was up to 4.5 dB quiet.
+- RESONANCE full with CUTOFF and ENV MOD high (set E): ours 3 to 5 dB loud over the note's first 80 ms. Not the pot
+  (a cap at 0.88 makes A2 worse and E2 no better): both whistle above 12.8 kHz where the envelope sweeps the cutoff
+  to its top, ours 6.4 dB louder and higher. Open.
 
 ## What this means for CoolSynth
 
