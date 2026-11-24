@@ -6315,3 +6315,4 @@ The VCO in the engine (`Tb303Oscillator.h`) against vco.cir at low C, A, high C 
   row of step lights above the lanes shows where the bar is.
 - Then, the user: the pattern playing and the chain's block playing are backlit keys (the option of the glowing
   key), and the step lights above the lanes, only those, turn towards red.
+- And an orange cap that sounds lights up from inside, as the backlit key does, then falls back to the plain cap.
