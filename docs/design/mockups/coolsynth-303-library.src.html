@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoolSynth 303 Library</title>
+<!-- CoolSynth 303's library as a shelf over the panel (D338): lines and sounds on separate shelves, the user's own
+     beside them. Built from the app's own data (CoolSynth303 resources/library/library303.json, inlined below by
+     tools in CoolSynth303: python -I tools/library/inline_mockup.py). -->
+<style>
+  :root { --bg:#141517; --panel:#232427; --shelf:#1c1d20; --line:#34363b; --text:#e6e4df; --dim:#9a9890;
+          --orange:#e8742a; --orangeInk:#1b1a17; --key:#d9d9d6; --keyInk:#1d1e21; --row:#2b2c30; --pick:#3a3326; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:13px/1.4 "Archivo", system-ui, sans-serif; }
+  .stage { position:relative; width:1281px; height:800px; margin:20px auto; background:url(303-library/panel.png) no-repeat; }
+  .veil { position:absolute; inset:0; background:rgba(10,10,12,.62); }
+  .shelf { position:absolute; left:70px; top:64px; width:1150px; height:690px; background:var(--panel); border:1px solid var(--line);
+           border-radius:10px; display:grid; grid-template-columns:200px 400px 1fr; grid-template-rows:52px 1fr; overflow:hidden;
+           box-shadow:0 20px 60px rgba(0,0,0,.55); }
+  .top { grid-column:1 / 4; display:flex; align-items:center; gap:12px; padding:0 14px; border-bottom:1px solid var(--line); background:#1f2023; }
+  .top h1 { font-size:13px; letter-spacing:.14em; margin:0 12px 0 0; font-weight:700; }
+  .top h1 b { color:var(--orange); }
+  .search { flex:0 0 280px; background:var(--bg); border:1px solid var(--line); border-radius:6px; color:var(--text); padding:7px 10px; font:inherit; }
+  .grow { flex:1; }
+  .cross { width:28px; height:28px; border-radius:6px; border:1px solid var(--line); display:grid; place-items:center; color:var(--dim); cursor:pointer; }
+  .cross:hover { background:#b8382d; color:#fff; border-color:#b8382d; }
+  .side { background:var(--shelf); border-right:1px solid var(--line); padding:10px 0; overflow:auto; }
+  .side h2 { font-size:10px; letter-spacing:.16em; color:var(--dim); margin:14px 16px 6px; font-weight:600; }
+  .side h2:first-child { margin-top:4px; }
+  .side div { padding:6px 16px; cursor:pointer; display:flex; justify-content:space-between; color:#cfcdc7; }
+  .side div span { color:var(--dim); font:11px "IBM Plex Mono", monospace; }
+  .side div.on { background:var(--pick); color:#fff; box-shadow:inset 3px 0 0 var(--orange); }
+  .side div:hover:not(.on) { background:#25262a; }
+  .list { border-right:1px solid var(--line); overflow:auto; padding:6px 0; }
+  .row { display:grid; grid-template-columns:1fr 132px; gap:10px; align-items:center; padding:8px 14px; cursor:pointer; border-bottom:1px solid #2a2b2f; }
+  .row:hover { background:#28292d; }
+  .row.on { background:var(--pick); box-shadow:inset 3px 0 0 var(--orange); }
+  .row .n { font-weight:600; }
+  .row .m { color:var(--dim); font:11px "IBM Plex Mono", monospace; margin-top:2px; }
+  .thumb { width:132px; height:30px; }
+  .detail { padding:18px 22px; overflow:auto; }
+  .detail h3 { margin:0; font-size:20px; letter-spacing:.02em; }
+  .meta { display:flex; flex-wrap:wrap; gap:6px 18px; margin:8px 0 14px; color:var(--dim); font:12px "IBM Plex Mono", monospace; }
+  .meta b { color:var(--text); font-weight:500; }
+  .about { color:#cfcdc7; margin:0 0 16px; max-width:460px; }
+  .keys { display:flex; gap:8px; margin:16px 0 6px; flex-wrap:wrap; }
+  .btn { background:var(--key); color:var(--keyInk); border-radius:6px; padding:8px 14px; font-weight:600; font-size:12px; cursor:pointer; border:0; }
+  .btn.orange { background:var(--orange); color:var(--orangeInk); }
+  .btn.dark { background:#3a3b3f; color:#e0dfdb; }
+  .hint { color:var(--dim); font-size:12px; margin-top:6px; }
+  .grid { background:#1c1d20; border:1px solid var(--line); border-radius:8px; padding:10px 10px 6px; }
+  .knobs { display:grid; grid-template-columns:repeat(5, 1fr); gap:10px; margin:6px 0 10px; }
+  .knob { text-align:center; font-size:10px; letter-spacing:.1em; color:var(--dim); }
+  .knob svg { display:block; margin:0 auto 4px; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:4px; }
+  .chip { border:1px solid var(--line); border-radius:999px; padding:3px 10px; font:11px "IBM Plex Mono", monospace; color:#d6d4ce; }
+  .chip.red { border-color:#b8382d; color:#f09a90; }
+  .playing { outline:2px solid var(--orange); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="veil"></div>
+  <div class="shelf">
+    <div class="top">
+      <h1>COOLSYNTH <b>303</b> &middot; LIBRARY</h1>
+      <input class="search" id="search" placeholder="Search lines and sounds">
+      <div class="grow"></div>
+      <div class="cross" title="Close (Esc)">&#x2715;</div>
+    </div>
+    <div class="side" id="side"></div>
+    <div class="list" id="list"></div>
+    <div class="detail" id="detail"></div>
+  </div>
+</div>
+<script id="data" type="application/json">/*LIBRARY*/</script>
+<script>
+const LIB = JSON.parse(document.getElementById('data').textContent);
+const NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B','C'];
+let shelf = 'lines:all', picked = null, query = '', auditioning = false;
+const $ = id => document.getElementById(id);
+
+function shelves() {
+  const styles = [...new Set(LIB.lines.map(l => l.style))];
+  const families = [...new Set(LIB.sounds.map(s => s.family))];
+  let h = '<h2>LINES</h2>' + item('lines:all', 'All lines', LIB.lines.length);
+  for (const s of styles) h += item('lines:' + s, s, LIB.lines.filter(l => l.style === s).length);
+  h += '<h2>SOUNDS</h2>' + item('sounds:all', 'All sounds', LIB.sounds.length);
+  for (const f of families) h += item('sounds:' + f, f, LIB.sounds.filter(s => s.family === f).length);
+  h += '<h2>YOURS</h2>' + item('mine:lines', 'My lines', 0) + item('mine:sounds', 'My sounds', 0);
+  $('side').innerHTML = h;
+  for (const d of $('side').querySelectorAll('div')) d.onclick = () => { shelf = d.dataset.k; picked = null; draw(); };
+}
+function item(k, label, n) { return `<div data-k="${k}" class="${shelf === k ? 'on' : ''}">${label}<span>${n}</span></div>`; }
+
+function entries() {
+  const [kind, which] = shelf.split(':');
+  let list = kind === 'lines' ? LIB.lines.filter(l => which === 'all' || l.style === which).map(l => ({ kind: 'line', e: l }))
+           : kind === 'sounds' ? LIB.sounds.filter(s => which === 'all' || s.family === which).map(s => ({ kind: 'sound', e: s }))
+           : [];
+  if (query) {
+    const q = query.toLowerCase();
+    list = [...LIB.lines.map(l => ({ kind: 'line', e: l })), ...LIB.sounds.map(s => ({ kind: 'sound', e: s }))]
+      .filter(x => (x.e.name + ' ' + (x.e.style || x.e.family) + ' ' + x.e.about).toLowerCase().includes(q));
+  }
+  return list;
+}
+
+function lineThumb(l, w = 132, h = 30) {
+  const st = l.pattern.steps.slice(0, l.pattern.length), cw = w / 16;
+  let s = `<svg class="thumb" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}"><rect width="${w}" height="${h}" rx="4" fill="#1a1b1e"/>`;
+  st.forEach((p, i) => {
+    if (p.gate === 'rest') return;
+    const key = (p.octave + 1) * 12 + p.note, y = h - 4 - (key / 36) * (h - 8);
+    const col = p.gate === 'tie' ? '#b65a20' : (p.accent ? '#ffb070' : '#e8742a');
+    s += `<rect x="${i * cw + 1}" y="${y - 2}" width="${cw - 2}" height="3" rx="1" fill="${col}"/>`;
+    if (p.slide) s += `<line x1="${i * cw + cw - 1}" y1="${y}" x2="${i * cw + cw + 1}" y2="${y}" stroke="#ffd0a8" stroke-width="2"/>`;
+  });
+  for (let i = l.pattern.length; i < 16; i++) s += `<rect x="${i * cw}" y="0" width="${cw}" height="${h}" fill="#141517" opacity=".75"/>`;
+  return s + '</svg>';
+}
+
+function soundThumb(s) {
+  const p = s.panel, ks = ['cutoff', 'resonance', 'envMod', 'decay', 'accent'];
+  let svg = '<svg class="thumb" viewBox="0 0 132 30" width="132" height="30"><rect width="132" height="30" rx="4" fill="#1a1b1e"/>';
+  ks.forEach((k, i) => { const v = p[k] ?? 0.5, x = 10 + i * 24; svg += `<rect x="${x}" y="6" width="14" height="18" rx="2" fill="#2c2d31"/><rect x="${x}" y="${24 - 18 * v}" width="14" height="${18 * v}" rx="2" fill="${p.devilFish ? '#d2453a' : '#e8742a'}"/>`; });
+  return svg + '</svg>';
+}
+
+function listDraw() {
+  const list = entries();
+  if (!picked || !list.some(x => x.e === picked.e)) picked = list[0] || null;
+  $('list').innerHTML = list.length ? list.map((x, i) => {
+    const e = x.e, meta = x.kind === 'line' ? `${e.style} · ${e.bpm} BPM · ${e.pattern.length} steps` : `${e.family}${e.panel.square ? ' · square' : ' · saw'}`;
+    return `<div class="row ${picked && picked.e === e ? 'on' : ''}" data-i="${i}"><div><div class="n">${e.name}</div><div class="m">${meta}</div></div>${x.kind === 'line' ? lineThumb(e) : soundThumb(e)}</div>`;
+  }).join('') : `<div class="hint" style="padding:18px">Nothing here yet: Keep a copy of a line or a sound, or save one from the panel, and it shows here.</div>`;
+  for (const r of $('list').querySelectorAll('.row')) r.onclick = () => { picked = list[+r.dataset.i]; auditioning = false; draw(); };
+}
+
+function bigGrid(l) {
+  const w = 620, cw = w / 16, h = 150;
+  let s = `<svg viewBox="0 0 ${w} ${h + 54}" width="100%"><rect width="${w}" height="${h}" fill="#1a1b1e"/>`;
+  for (let k = 0; k <= 36; k += 12) { const y = h - 6 - (k / 36) * (h - 12); s += `<line x1="0" x2="${w}" y1="${y}" y2="${y}" stroke="#2c2d31"/>`; }
+  l.pattern.steps.forEach((p, i) => {
+    const off = i >= l.pattern.length;
+    if (!off && p.gate !== 'rest') {
+      const key = (p.octave + 1) * 12 + p.note, y = h - 6 - (key / 36) * (h - 12);
+      const col = p.gate === 'tie' ? '#b65a20' : '#e8742a';
+      s += `<rect x="${i * cw + 3}" y="${y - 5}" width="${cw - 6}" height="10" rx="2" fill="${col}"/>`;
+      if (p.gate !== 'tie') s += `<text x="${i * cw + cw / 2}" y="${y - 9}" fill="#cfcdc7" font-size="10" text-anchor="middle" font-family="IBM Plex Mono">${NAMES[p.note]}${p.octave > 0 ? '+' : p.octave < 0 ? '-' : ''}</text>`;
+    }
+    const rowY = h + 6;
+    s += `<rect x="${i * cw + 3}" y="${rowY}" width="${cw - 6}" height="18" rx="3" fill="${off ? '#18191b' : p.accent ? '#e8742a' : '#2c2d31'}"/>`;
+    s += `<rect x="${i * cw + 3}" y="${rowY + 24}" width="${cw - 6}" height="18" rx="3" fill="${off ? '#18191b' : '#2c2d31'}"/>`;
+    if (!off && p.slide) s += `<circle cx="${i * cw + cw / 2}" cy="${rowY + 33}" r="4" fill="#e8742a"/>`;
+    if (off) s += `<rect x="${i * cw}" y="0" width="${cw}" height="${h}" fill="#141517" opacity=".7"/>`;
+  });
+  return s + '</svg>';
+}
+
+function knobSvg(v, red) {
+  const a0 = -135, a = a0 + 270 * v, r = 16, cx = 20, cy = 20, rad = d => (d - 90) * Math.PI / 180;
+  const x = cx + r * Math.cos(rad(a)), y = cy + r * Math.sin(rad(a));
+  return `<svg width="40" height="40"><circle cx="20" cy="20" r="17" fill="#111214" stroke="#3a3b3f"/><line x1="20" y1="20" x2="${x}" y2="${y}" stroke="${red ? '#e0554a' : '#e8742a'}" stroke-width="3" stroke-linecap="round"/></svg>`;
+}
+
+function detailDraw() {
+  if (!picked) { $('detail').innerHTML = ''; return; }
+  const e = picked.e;
+  if (picked.kind === 'line') {
+    $('detail').innerHTML = `<h3>${e.name}</h3>
+      <div class="meta"><span>Style <b>${e.style}</b></span><span>Tempo <b>${e.bpm} BPM</b></span><span>Length <b>${e.pattern.length} steps</b></span><span>Written for <b>${e.sound}</b></span></div>
+      <p class="about">${e.about}</p>
+      <div class="grid ${auditioning ? 'playing' : ''}">${bigGrid(e)}</div>
+      <div class="keys"><button class="btn orange" id="aud">${auditioning ? '■ Stop' : '▶ Audition'}</button><button class="btn">Load into 01A</button><button class="btn dark">Keep a copy</button></div>
+      <div class="hint">Audition plays it in place of the pattern you are editing, with the sound on the panel; Load puts it there, one undo step. The sound it was written for is on the Sounds shelf.</div>`;
+  } else {
+    const p = e.panel, ks = [['cutoff', 'CUTOFF'], ['resonance', 'RESONANCE'], ['envMod', 'ENV MOD'], ['decay', 'DECAY'], ['accent', 'ACCENT']];
+    const chips = [p.square ? 'Square' : 'Saw', p.driveOn ? `Drive ${Math.round(p.drive * 10)}` : 'Drive off', p.delayOn ? `Delay mix ${Math.round(p.mix * 10)}` : 'Delay off'];
+    const fish = p.devilFish ? ['overdrive', 'slideTime', 'softAttack', 'normalDecay', 'accentDecay', 'tracking', 'filterFm'].filter(k => p[k] !== undefined).map(k => `${k.replace(/([A-Z])/g, ' $1').toLowerCase()} ${Math.round(p[k] * 10)}`)
+      .concat(p.muffler ? [`muffler ${['off', 'soft', 'hard'][p.muffler]}`] : []).concat(p.accentSweep === 1 ? ['accent sweep: high res'] : []) : [];
+    $('detail').innerHTML = `<h3>${e.name}</h3>
+      <div class="meta"><span>Family <b>${e.family}</b></span></div>
+      <p class="about">${e.about}</p>
+      <div class="grid ${auditioning ? 'playing' : ''}"><div class="knobs">${ks.map(([k, n]) => `<div class="knob">${knobSvg(p[k] ?? 0.5, p.devilFish)}${n}</div>`).join('')}</div>
+      <div class="chips">${chips.map(c => `<span class="chip">${c}</span>`).join('')}${fish.map(c => `<span class="chip red">${c}</span>`).join('')}</div></div>
+      <div class="keys"><button class="btn orange" id="aud">${auditioning ? '■ Stop' : '▶ Audition'}</button><button class="btn">Load the sound</button><button class="btn dark">Keep a copy</button></div>
+      <div class="hint">Audition plays the pattern you are editing with this sound; Load sets the panel, one undo step.${p.devilFish ? ' It turns the Devil Fish on.' : ''}</div>`;
+  }
+  $('aud').onclick = () => { auditioning = !auditioning; detailDraw(); };
+}
+
+function draw() { shelves(); listDraw(); detailDraw(); }
+$('search').oninput = e => { query = e.target.value.trim(); picked = null; draw(); };
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  const list = entries(), i = list.findIndex(x => picked && x.e === picked.e);
+  if (e.key === 'ArrowDown' && i + 1 < list.length) { picked = list[i + 1]; draw(); e.preventDefault(); }
+  if (e.key === 'ArrowUp' && i > 0) { picked = list[i - 1]; draw(); e.preventDefault(); }
+  if (e.key === ' ') { auditioning = !auditioning; detailDraw(); e.preventDefault(); }
+});
+draw();
+</script>
+</body>
+</html>
