@@ -301,6 +301,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     - The library's LOAD INTO PATTERN key cuts its last letters.
     - The hats' sheet goes live only from an open hat, the toms' only from the low tom (D318).
     - The Release build with whole-program optimisation not yet built and timed (D327).
+    - The cowbell is heavy on the CPU (the user heard the app struggle on it while the machine was busy): measure
+      what the metal generator costs per drum; then, if worth it, options: a cheaper cowbell, or an Options setting
+      trading accuracy for CPU (high or extreme), or leave it.
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
     percent of ngspice, then the trimmers fitted to Din Sync's real unit (`tools/references/tb303-dinsync`, local)
