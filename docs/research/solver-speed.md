@@ -40,6 +40,8 @@ Skipping K's exact zeros, or code generated per circuit with m fixed
 An explicit inverse of the kept Jacobian in place of its LU factors
 - Each chord step one product, no chain of dependent steps; building it some 3 times a factorisation.
 - Perhaps half the triangular solves' 19 %. All three apps.
+- Built (D345), late: made once the factors have lasted 32 uses (made at every factoring, the attack got dearer). A
+  10 ms block 6.2 ms to 5.3, as accurate.
 
 Splitting the system into independent blocks (block-triangular form)
 - As circuit simulators do before factoring ([Davis and Natarajan, KLU](https://www.springerprofessional.de/en/sparse-matrix-methods-for-circuit-simulation-problems/3690150));
@@ -50,6 +52,7 @@ Low-rank updates of the kept inverse at a note's attack
 - Only the columns of devices whose conductance moved change: rank one a diode, two a transistor
   (Sherman-Morrison; SPICE's bypass is the same idea, [Berkeley EE219](https://people.eecs.berkeley.edu/~newton/Classes/EE219fa98/ee219a3_2/tsld012.htm)).
 - Aimed at the 303's note-start spike.
+- Built (D346), on by default: the first block from rest 8.9 ms to 7.85, a steady block 5.30 to 4.97, as accurate.
 
 Better starts at hard edges
 - Holters' solution cache ([ACME.jl](https://github.com/HSU-ANT/ACME.jl)): on an SD-1 clone samples needing over 15
@@ -61,6 +64,8 @@ Better starts at hard edges
 A vectorised exp of 1-ulp accuracy
 - [SLEEF](https://sleef.org/x86.xhtml): a junction moves some 1e-16 of VT, far under 100 nV. Perhaps two thirds of
   exp's 9 %. A cruder fast exp (1e-3) moves a junction 26 uV: past the tolerance.
+- Built as a bench (D346): within 1 ulp, but 3.9 ns a value against MSVC's 4.25, some 0.7 % of the voice. Kept,
+  not used, until the devices' arguments are gathered into lanes.
 
 The kept factors in float, everything else in double
 - Iterative refinement ([Baboulin et al.](https://arxiv.org/pdf/0808.2794)); reported from 1.25 times faster to

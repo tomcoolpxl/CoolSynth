@@ -337,7 +337,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     method's kept inverse on; the app plays the first line at 57.5 % of a core (74 % that morning). Done (D347): SIMD
     across voices, the same bytes, for the 808's toms (no shipped preset plays a circuit in several voices): only 3 to
     4 % off two or three toms, the Newton solve being most of a sample; the Newton solve in lanes left for later.
-    Next: low-rank updates at the attack, the 1-ulp SIMD exp, then the accuracy levels (100 nV the first lighter one). For the 808 and CoolSynth: the chord method on their circuits (they use
+    Done (D346): low-rank updates at the attack, in Best (the first block from rest 8.9 ms to 7.85, as accurate);
+    the 1-ulp SIMD exp built as a bench and kept, not used (0.7 % of the voice). Next: the accuracy levels (100 nV
+    the first lighter one). For the 808 and CoolSynth: the chord method on their circuits (they use
     plain Newton), measured against their own tight references. The Devil Fish further by ear if the user wants (it
     is ours, the name stays). The look (D348): the app found a bit bland; seven mockups on one page
     (`docs/design/mockups/coolsynth-303-redesign.html`): the app now, a redesign, the 808's four skins, and an

@@ -7243,7 +7243,26 @@ Still alone, as D304; each with what else it could have been.
 
 ## D346. The chord method's low-rank updates at a note's attack; an exp of our own kept, not used (2026-11-24)
 
-- Claimed; the entry follows.
+- From the research for the load spike (`docs/research/solver-speed.md`): where the chord method would factor
+  afresh, correct the kept factors for the few devices that moved instead (Woodbury; SPICE's bypass is the same idea).
+- How few move: at each fresh factoring, by more than 2 % of their conductance, 2.6 of the envelope's 19 devices and
+  4.2 of the chip's 12 on average.
+- Built: `CircuitWdf::setLowRankUpdates`, `updatedStep`. Per factoring the columns J0^-1 K of the moved devices'
+  ports are kept; a step solves a small system of their size.
+  - It falls back to factoring afresh when the moved ports are over a third of the circuit's, the small system is
+    near singular, or updated steps stop halving the error.
+  - Updated steps end at the chord method's tolerance. The 1, 5 and 10 % thresholds measured much as 2 %; 2 % kept.
+- Against the voice solved to 10 pV: -128.6 dB rms, the worst sample -96.3 dB (-128.5 and -96.0 without). As
+  accurate, not the same bits.
+- Paired runs: the first block from rest 8.9 ms of 10 to 7.85, a later note's 7.57 to 7.16, a steady block 5.30 to
+  4.97.
+- Picked by the user: into Best, on by default (over a lighter level only). Only the 303's circuits use the chord
+  method, so the 808 and CoolSynth are unchanged.
+- An exp of our own, after SLEEF's method (the user's pick, SLEEF read, nothing of it built in): two SSE2 lanes,
+  within 1 ulp of std::exp over 20 million arguments (8.7 % of results 1 ulp off). 3.9 ns a value against 4.25:
+  some 0.7 % of the voice. Kept as `tools/bench/exp_sse2.cpp`, not used; worth it only once the devices' arguments
+  are gathered into lanes.
+- SIMD across voices went to a session of its own (D347).
 
 ## D347. SIMD across voices: same-shaped circuits solved side by side, the same bits (2026-11-24)
 
