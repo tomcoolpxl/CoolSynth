@@ -6317,3 +6317,4 @@ The VCO in the engine (`Tb303Oscillator.h`) against vco.cir at low C, A, high C 
   key), and the step lights above the lanes, only those, turn towards red.
 - And an orange cap that sounds lights up from inside, as the backlit key does, then falls back to the plain cap.
 - The red step light made brighter, at its own size: a white-hot centre and a stronger glow.
+- The Loop light and the Next bar and End of pattern lights the same, in orange.

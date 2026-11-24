@@ -55,6 +55,8 @@ button { font: inherit; color: inherit; }
 .ksteps .lamp:nth-child(4n+1) { margin-left: 3px; }
 .lamp i { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
 .lamp span { font-family: var(--mono); font-size: 9px; color: #8f8877; }
+.btn.is.loopkey::before, .btn.is.chg::before { background: radial-gradient(circle at 40% 35%, #ffffff, #ffe2b8 22%, #ffa040 52%, #e8742a 85%);
+  box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 0 5px 2px #ff9a3a, 0 0 14px 7px rgba(255,140,40,.7), 0 0 26px 10px rgba(255,120,30,.28); }
 .lamp.cur i { background: radial-gradient(circle at 40% 35%, #ffffff, #ffc2b4 22%, #ff4528 52%, #e8200f 85%);
   box-shadow: 0 0 0 1px rgba(0,0,0,.35), 0 0 5px 2px #ff4a2a, 0 0 14px 7px rgba(255,50,30,.75), 0 0 26px 10px rgba(255,40,20,.3); }
 .lamp.cur span { color: #f4efe4; }
@@ -721,7 +723,7 @@ function buildAB(host) {
 }
 function buildChange(host) {
   const seg = el('div', 'seg');
-  for (const [k, t] of [['bar', 'Next bar'], ['end', 'End of pattern']]) seg.append(btn(t, '', () => { S.change = k; paintAll(); }));
+  for (const [k, t] of [['bar', 'Next bar'], ['end', 'End of pattern']]) seg.append(btn(t, 'chg', () => { S.change = k; paintAll(); }));
   host.append(seg);
   painters.push(() => seg.querySelectorAll('.btn').forEach((b, i) => b.classList.toggle('is', (i === 0) === (S.change === 'bar'))));
 }
@@ -758,7 +760,7 @@ function buildChain(host) {
     const add = el('div', 'cblk cadd', '+'); add.title = 'Add the pattern being edited';
     add.addEventListener('click', () => { if (S.editing >= 0) S.chain.push({ p: S.editing, r: 1 }); paintAll(); });
     host.append(add);
-    const loop = btn('Loop', 'tg' + (S.loop ? ' is' : ''), () => { S.loop = !S.loop; paintAll(); });
+    const loop = btn('Loop', 'tg loopkey' + (S.loop ? ' is' : ''), () => { S.loop = !S.loop; paintAll(); });
     loop.title = 'Loop on: the chain plays round and round. Off: once through, then it stops';
     loop.style.marginLeft = '6px'; host.append(loop);
     if (!S.chainOn && S.chain.length) { const back = btn('Back to chain', '', () => { S.chainOn = true; S.queued = null; S.chainPos = 0; S.repLeft = S.chain[0].r; paintAll(); }); back.style.marginLeft = '6px'; host.append(back); }
