@@ -291,6 +291,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     - The library's load key says "pattern 1" where the panel says "01" (seen fixing its width, D339).
     - The WAV export's drum files could come from the engine's per-drum taps in one render instead of one render a
       drum (D343's taps; today each drum's file is its own render with the mask).
+    - FL Studio lists a long run of "MIDI CC #0..." parameters after the VST3's 28 (JUCE's VST3 MIDI CC emulation,
+      seen trying D343 in FL); hiding them may stop host CCs reaching the controller layer, so it needs a look first.
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
     percent of ngspice, then the trimmers fitted to Din Sync's real unit (`tools/references/tb303-dinsync`, local)
