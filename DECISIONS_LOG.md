@@ -7210,3 +7210,33 @@ Still alone, as D304; each with what else it could have been.
   a line rising from its rest green, falling below it red, as bright as it is lit (over Logisim's bright and dark
   green for 1 and 0, or Falstad's green by level and grey at 0 V). The memories' selects and the keys' scan rest
   high and show red when pulled low; the clocks, the CPU's ports, the lamps, the trigger and the data lines green.
+
+## D345. The TB-303's solve to 10 nV; the chord method's kept inverse (2026-11-24)
+
+- The user: never throw a speed-up away; one that costs accuracy becomes a level of the accuracy setting, Best the
+  most accurate, for the 303, the 808 and CoolSynth alike. Check the normal tolerances, and that none was set on
+  purpose to fix something else.
+- Where they came from: 100 nV from the 808's bass drum (D236: half the hit's work, its SPICE comparison unchanged),
+  taken over by the 303 unmeasured; the chord method for speed (D281); the envelope at half the voice's rate by the
+  user's choice (D294). None was set to fix another problem; the one fix near them (D293, plain Newton at the gate's
+  edge) is about stability.
+- Against the voice solved to 10 pV with a fresh Jacobian each step (itself within -158 dB rms of 1 pV), 12 s of the
+  stock voice and the Devil Fish:
+  - As it ran: -90.5 dB rms, the worst sample -55.6 dB. The chord method costs nothing (the same off). Each circuit
+    tightened alone: only the oscillator's pitch moves it, to -117.2 dB; its 100 nV left the pitch 0.0001 to 0.0005
+    cents off (8 uHz), whose drift over a note moves the edges.
+  - The pitch at 10 nV: -117.5 dB, the worst sample -85 dB, no cost measured. Every circuit at 10 nV: -128.5 dB, the
+    worst sample -96, some 6 points of a core more; at 1 nV -137 and -103.5, some 11 more.
+  - D341's follower checked again with the pitch tight (the drift had hidden the rest): the old start -117.5 dB, the
+    warm one -117.2; the worst samples -84.5 and -85.2. As accurate.
+- The chord method's inverse: made from the factors once they have lasted 32 uses, a product in place of the two
+  triangular solves. Made at every factoring it cost the attack dear (the first block from rest 8.6 ms to 13.2), so
+  late. As accurate (-117.4 dB against -117.5), not the same bits; a 10 ms block 6.2 ms to 5.3, the first block from
+  rest 8.6 to 7.9, a later note's 7.7 to 7.0.
+- Picked (each with options): the pitch to 10 nV in Best (over keeping 100 nV); the inverse in Best for all three apps
+  (over the 303 only, or a lighter level only); every 303 circuit to 10 nV (over 1 nV, or keeping 100 nV). 100 nV
+  becomes a lighter level.
+- Built: `Tb303Filter::newtonTolerance` (10 nV) set in all four stages; `CircuitWdf::setChordInverse`, on by default.
+  Only the 303's circuits use the chord method, so the 808 and CoolSynth are unchanged; the chord method on their
+  circuits would be a speed-up of its own, to measure.
+- The timings in this entry are paired runs; another session's builds and tests loaded the machine in bursts.
