@@ -26,6 +26,9 @@ SIMD across voices or across same-shaped circuits
 - Urs Heckmann: a vector Newton beats one stage at a time "by a magnitude"
   ([KVR](https://www.kvraudio.com/forum/viewtopic.php?p=6421715)).
 - For CoolSynth's voices and the 808's look-alike drums; nothing for the mono 303. Lanes wait for the slowest.
+- Built for the 808's toms (D347): doubles, so two lanes in SSE2. The same bytes, but only 3 to 4 % off two or
+  three toms ringing: their circuits are small (m 2 to 6), the products the lanes share some 7 % of a sample, the
+  Newton solve some 70 %. No shipped CoolSynth preset plays a circuit instrument in several voices at once.
 
 Skipping K's exact zeros, or code generated per circuit with m fixed
 - [Chowdhury and Rau, DAFx26](https://www.dafx.de/paper-archive/2026/papers/DAFx26_paper_23.pdf): the reduced

@@ -81,6 +81,8 @@ chose another.
   - Tests that compare two code paths bit for bit in one build (the SVF's Clean path against the old code, D233; the
     VA fingerprint) may now differ between the paths: check them first, and give them a tolerance or keep the two
     paths fused alike.
+  - The circuit lanes (`wdf::CircuitPair`, D347) take a plain path on ARM written as the scalar solver's sums are;
+    `V3CircuitLanesTests` holds them to the scalar path bit for bit, so it shows at once whether Clang fused both alike.
 - Audio-thread checks: port today's watch to macOS by rebinding the same calls (fishhook) (recommended was
   RealtimeSanitizer in a separate build).
 - CI: GitHub's hosted Apple Silicon runner, on every push and on tags (recommended).
