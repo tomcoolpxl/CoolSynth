@@ -7132,3 +7132,20 @@ Still alone, as D304; each with what else it could have been.
   every hat restarting it). The toms' sheet is to show the struck tom's own circuit and values (picked over any tom
   moving the low tom's drawing); still to build.
 - The VST3 relinked now FL Studio has let go of it; the Release build with whole-program optimisation built (183 s).
+
+## D340. CoolSynth 303: the load spike at the start of playback (2026-11-24)
+
+- In FL Studio playback started with a 118 % load spike; the user picked it over checking Drag MIDI by hand.
+- Measured (optimised Debug build; Release with whole-program optimisation costs the same, 74.5 % of a core
+  playing the first line):
+  - A 10 ms block costs 7 to 7.8 ms playing; a note's first block 8.5 to 9; the first note after rest 10.2 to 10.7.
+  - The rest's wake settled the whole circuit on the note: 1 ms (the filter 0.57, the VCA 0.22, the envelope 0.09,
+    the oscillator 0.02) on top of the attack.
+  - The attack's work, in 0.5 ms slices: at the gate's edge the envelope and filter take 3 to 5 Newton steps a
+    sample with fresh Jacobians (1.3 ms for the first slice against 0.3 steady); some 5 ms in, the VCA's chip takes
+    2 to 3 a sample as it opens. About 3 ms in all over the first 6 ms; a later note's about 1.5 ms.
+- Built: the voice settles whole while it rests (on resting, and again after any change from the panel), where that
+  costs nothing, and the next note only wakes it (Tb303Voice::wake: the oscillator settled at the note's pitch).
+  Woken that way it plays sample for sample as settled on the note (0.000 % apart, stock and Devil Fish).
+- Left: the attack's own Newton steps, every note's; the first after rest still takes a block to some 105 % of its
+  time. Put to the user next.
