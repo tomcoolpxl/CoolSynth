@@ -6592,3 +6592,16 @@ Still alone, as D304; each with what else it could have been.
 - File > Theme lists them. The older themes (Studio 1982, Paper, Night, Blueprint) belonged to the layouts before
   layout 5 and left its board silver, so they are gone. The choice is kept by name, as the old setting counted those.
 - The four pins holding the glass stay (the user).
+
+## D308. CoolSynth 808: the current's dots glow; Under the Lid has a key again (2026-11-24)
+
+- The user: the current on the board is not always easy to see. Picked from four (bigger dots with a soft glow, a
+  dark rim on light metal, a longer afterglow, leave it): bigger dots with a soft glow.
+  - Each dot is a little bigger (1.8 px in a column, 1.5 on the buses, from 1.4 and 1.15) with two faint wider
+    discs of its own colour under it, solid fills as D306 keeps them.
+- The user remembered colours for the current's direction: those were Under the Lid's, green above zero and red
+  below, from the recordings. Picked from three (keep one colour on the panel, bring back Under the Lid, invent
+  direction colours on the panel): bring back Under the Lid, which D292 had left without a key.
+  - A Lid key on the transport strip, before Library, opens it over the whole window; Back to the panel or Escape
+    closes it.
+- Where the theme choice lives waits for the user (File > Theme today).
