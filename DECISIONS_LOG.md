@@ -7012,3 +7012,16 @@ Still alone, as D304; each with what else it could have been.
   port. Registered for this project as coolsynth303. Its first recording found the user's Devil Fish settings
   (Overdrive full, Filter FM 0.77) peaking at +0.9 dBFS.
 - The Release build optimised as a whole, as the 808's D327 (/GL with /LTCG); AVX2 left out. Timed below.
+
+## D333. CoolSynth 808: an MCP server in the app (2026-11-24)
+
+- The user: build in an MCP server, as CoolSynth's (D225, D227), which the 303's session is doing too. Built as
+  those were decided: inside the app with no library (CoolSynth's server, as the 303 copied it), in the standalone
+  app only (a plugin in a DAW opens no port), on 127.0.0.1:47608 (CoolSynth's 47613, the 303's 47633).
+- Its tools: get_state (every knob by its id, the switched drums, volume, tempo, swing, transport, the drums' notes,
+  the host switch, the output's level, the views), set_values, transport, strike (drums in turn, the loudest output
+  during and after), record (the output to a 24-bit WAV, with play or strikes), screenshot, and view (the lid, a
+  sheet, Options).
+- Checked: a test lists the tools, reads and sets the kit, and captures a struck bass drum; on the running app the
+  handshake, get_state, and strike (BD and SD, loudest -17.1 dBFS). Registered with Claude Code for the CoolSynth and
+  CoolSynth808 folders: `claude mcp add --transport http coolsynth808 http://127.0.0.1:47608/mcp`.
