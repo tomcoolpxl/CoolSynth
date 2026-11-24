@@ -7002,3 +7002,13 @@ Still alone, as D304; each with what else it could have been.
 - Stems: the mix, and one file per drum as an option, all the same length (over the mix only).
 - Settings: how many times; the ring-out cut, ringing on, or folded into the start for a seamless loop; 24-bit at
   the app's sample rate (over full control of bit depth, rate and normalising, or none).
+
+## D332. CoolSynth 303: an MCP server in the app; the Release build optimised as a whole (2026-11-24)
+
+- The user: build an MCP server in, as CoolSynth's, so Claude drives and hears the app itself. CoolSynth's server
+  core (D225) copied as it is; the 303's own tools: get_sound and set_values (every panel value by name, the Devil
+  Fish's and the trimmers too), transport, play (keys held in turn), record (the output into a WAV file, its level),
+  screenshot. The standalone serves it on 127.0.0.1:47633 from its start (CoolSynth's is 47613); the plugin opens no
+  port. Registered for this project as coolsynth303. Its first recording found the user's Devil Fish settings
+  (Overdrive full, Filter FM 0.77) peaking at +0.9 dBFS.
+- The Release build optimised as a whole, as the 808's D327 (/GL with /LTCG); AVX2 left out. Timed below.
