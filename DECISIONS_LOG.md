@@ -7063,3 +7063,16 @@ Still alone, as D304; each with what else it could have been.
 - And the pages tightened (over pages only): the MIDI inputs one tick list (it scrolls past eight), the window size
   a drop-down, the clock Follow incoming and Send, Electricity Animated or Still, the drum sets General MIDI, From 36
   and From 60, a line of help under the drum notes, the controller and the host switch.
+
+## D336. CoolSynth 303: the Devil Fish tuned through the app's MCP server; Filter FM's direction; the start-up crash (2026-11-24)
+
+- The user: tune the Devil Fish to whatever sounds best, the name kept. Each control swept on a held note in the
+  running app through its MCP server (D332), measured: no aliasing or grit (0.1 to 0.2 % of the power off the
+  harmonics), no clicks, Tracking 4 times brighter at the top note, Overdrive louder and fuller as Whittle says.
+- Filter FM darkened the note where Whittle's heavy FM (rw13, rw10, downloaded from firstpr.com.au with the user's
+  yes, kept out of git) spreads it bright and gritty: it fed the VCA's own output back, where the 303's jack gives it
+  turned over (Din Sync's recordings are inverted against it). Turned over: full FM 2.62 times brighter, a test holds it.
+- Found on the way: the standalone crashed at start-up about half the time, in the panel's first paint: lambdas
+  captured a constructor's local reference (`[&p]`) and kept its address. Every such capture binds the object now
+  (`[&p = p]`); 0 crashes in 28 starts. A crash leaves its stack in %TEMP%\CoolSynth303\crash.txt. CoolSynth303
+  `3375c5a`. The user: do not start and stop the app over and over (some 40 starts went into the hunt).
