@@ -292,7 +292,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
       given), Q33's role (found in D321; the VST3 was picked first).
     - The CPU board under the lid in green and red, as the drums' copper (offered after D320, not picked).
     - The toms' sheet to show the struck tom's own circuit and values, live from each (D339; the hats' done).
-    - The Release builds run-time cost against the Debug builds, not yet measured (D327; built in 183 s, D339).
+    - The Release build's run-time cost against the Debug build's, not yet measured (D327; built in 183 s, D339).
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
     on the 808's solver; the plan is `docs/design/COOLSYNTH_303.md`. The stock 1982 circuit, each stage within a few
     percent of ngspice, then the trimmers fitted to Din Sync's real unit (`tools/references/tb303-dinsync`, local)
