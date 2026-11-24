@@ -7308,4 +7308,6 @@ Still alone, as D304; each with what else it could have been.
   (gearnews.com, 2019); the plug-ins (MusicRadar on the TB-303 against its emulations: Roland Cloud's TB-303 closest
   to the hardware; bonedo.de on Phoscyon 2, drawn for the screen); on hardware looks in software, uxdesign.cc and
   LANDR's blog (a hardware look suits a model of a known machine; small type and knobs cost use).
-- Open: the user's pick.
+- Picked (each with options): 2, the redesign (over the 808's Roland or Silver skin, or the TB-303 Silver face); one
+  look first (over the 808's four skins as a choice in Options, or Steel or Olive as the main look). Next: the JUCE
+  app drawn as mockup 2, the layout as it is.
