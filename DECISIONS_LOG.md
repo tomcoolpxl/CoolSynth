@@ -6383,3 +6383,14 @@ VCA 15 to 20 %, envelope 10 % of a core; the voice about 73 %. D279's 192 kHz is
   own voice.cir scores, the accent's loudness within 0.1 dB of it. The engine is as close to the real 303 as the
   circuit in SPICE; the gaps that remain (set C2's resonance at a quarter turn, 3.5 dB bright) are the circuit's.
 - About 70 % of one core at 96 kHz. Not yet in CoolSynth: the step sequencer's notes, the app.
+
+## D296. CoolSynth 303: the interface unparked, the frame for three mockups (2026-11-24)
+
+The user unparked the interface and asked to be questioned until three mockups could be made. Their answers, each
+a pick list with the options, are in `docs/research/tb-303-app.md` (its frame section):
+- Standalone first and a plugin; one 303 a window; the 808 app's size; patterns and chain as the 808 app.
+- One look per mockup: the etched board, TAL-Vocoder's charcoal, the original's silver face.
+- Notes in a step grid with lanes, and on a keyboard into a step strip; a tool bar of generators with undo.
+- Distortion and delay, switchable; the circuit shown as in the 808 app; the Devil Fish in a Mods panel.
+- Live: transpose, knob moves recorded per pattern, per-step locks.
+- One HTML file with switchable views, animated, not wired.

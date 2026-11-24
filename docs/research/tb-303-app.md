@@ -1,7 +1,47 @@
-# CoolSynth 303: the app and its interface (parked)
+# CoolSynth 303: the app and its interface
 
-Research for CoolSynth 303 (D275), on 2026-11-23. The interface is parked by the user until the engine is done;
-this file keeps what was found and what the user asked for, so the design can start from it.
+Research for CoolSynth 303 (D275), on 2026-11-23. The interface was parked by the user until the engine was done;
+on 2026-11-24 the user unparked it and set the frame for three mockups (D296, below).
+
+## The frame for the three mockups (D296)
+
+The user's answers, each put as a pick list (the options in brackets):
+- Standalone first, also a plugin in a DAW, as the 808 app (mostly in a DAW; mostly standalone).
+- One panel look per mockup: the 303's circuit etched in copper with the knobs on it, as the 808 app's chosen
+  layout; TAL-Vocoder 3's flat charcoal with outlined sections; the original's silver panel redrawn in the 808
+  app's hardware style (all etched; all TAL; all the original).
+- Notes written in a step grid with lanes (a pitch lane, rows for octave, accent, slide, rest and tie) and as a
+  keyboard with a step strip, ReBirth's way (a mini piano roll; the original's pitch and time modes).
+- Generate, Mutate (choosing what changes), Scale and Transpose on a tool bar beside the grid, every action undoable
+  (in a menu; a big generator panel; none).
+- Patterns as the 808 app: the pattern row (edited, playing, queued apart), A and B, the chain with repeats and Loop
+  (the 303's 64 patterns and 7 tracks; a clip launcher).
+- Distortion and a tempo-synced delay after the voice, each switchable (distortion only; none).
+- The circuit as the 808 app shows it: the panel itself in the etched mockup, a lid to lift and a full-screen view
+  in the others (a screensaver only; not shown).
+- The Devil Fish's controls and the trimmers in a Mods panel that opens beside the stock face (always on the panel;
+  left out).
+- One 303 a window; two lines in two windows or two plugin instances (two side by side; one with room for a second).
+- Live: transpose from the keys or MIDI, knob moves recorded per pattern, and per-step locks of a knob's value
+  (none beyond play, stop and switching patterns).
+- The mockups as one HTML file with switchable views, animated, not wired to sound, as the 808's (inside the app;
+  static images).
+- The window at the 808 app's size and scaling, resizable.
+
+Searched again on 2026-11-24: Arturia's Acid V (scale-based patterns, arpeggiation) and Kreuzberg Audio's KA-303
+(spring 2026) are new since the first research; no review compares their sequencers' workflow
+([MusicRadar](https://www.musicradar.com/news/roland-tb-303-vs-software-emulations),
+[Integraudio](https://integraudio.com/8-best-303-vst-plugins/)). Step grids hold the 303's one note a step; hybrids
+add a pitch lane ([Audiotool's Bassline](https://help.audiotool.com/manuals/plugins/synthesizer/bassline.html)).
+
+How the answers fall across the three:
+- One, the etched board: the 303's board as the panel, its knobs mounted on the copper, lit as it plays; the
+  sequencer on smoked glass below as a step grid with lanes, the tool bar, motion and lock lanes.
+- Two, TAL-Vocoder's charcoal: outlined sections in the signal's order (VCO, VCF, envelope, VCA, effects) with
+  arrows between; the step grid with lanes beside or under it; the circuit as a lid.
+- Three, the original's silver face: its layout and its keyboard, playing notes into a step strip as ReBirth did;
+  transpose on the same keys; the circuit as a lid.
+- All three: the pattern row and chain, the effects, the Mods panel closed and open, the full-screen circuit.
 
 ## What the user wants
 
