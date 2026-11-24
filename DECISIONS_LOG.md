@@ -7284,4 +7284,28 @@ Still alone, as D304; each with what else it could have been.
 
 ## D348. CoolSynth 303: its look redrawn, seven mockups to choose from (2026-11-24)
 
-- Claimed for the 303 redesign mockups; written in full when they land.
+- The user: the 303 looks a bit bland; the 808's knobs and style are much nicer. Keep the rotated title as it is and
+  the layout (that comes later); keep the controls where they are, only a redesign may move them a little.
+- Mockups in `docs/design/mockups/coolsynth-303-redesign.html` (its source `.src.html`, the app's fonts inlined by
+  `303-redesign/inline_fonts.py`), screenshots in `303-redesign/`. One description of the panel, taken from the app's
+  code (Panel.cpp, Keyboard.cpp, SequencerView.cpp, Widgets.cpp), drawn by each skin, so the controls sit where the
+  app puts them:
+  - 0, the app now: a screenshot of the running standalone; 1, the same drawn in HTML, checked against it with an
+    overlay slider.
+  - 2, a redesign: graphite plates on a brushed panel, the signal path printed through the section heads in place of
+    the small arrows, knurled knobs with an aluminium cap and a lit value arc, keys with lenses, amber displays, the
+    sequencer under a dark screen, the waveform as two keys with its symbols.
+  - 3 to 6, the 808's four skins as its Theme.h has them (Roland, Silver, Steel, Olive; the user remembered three):
+    the sections printed on the metal with etched copper, the keyboard and sequencer under glass, the 808's knobs,
+    keys with lenses, its slide switch for the waveform, the step rows in its beat-group colours.
+  - 7, TB-303 Silver: the original's face, silver all over with black printing and black boxes, grey keys, red LEDs,
+    the waveform as a slide switch as on the TB-303; the 808's knob and key construction, the knobs in machined
+    aluminium. It is not the 808's Silver: that one is silver above only, with dark glass, copper and orange below.
+- The title keeps its text, font, size and place in all of them; its strip takes the skin's name-plate colour, and
+  in the 808 skins the 303 takes the skin's signal colour (Olive's red).
+- Looked at: the TB-303's panel (Wikimedia Commons, Roland_TB-303_Panel.jpg) and Roland's 303 story
+  (roland.com/global/promos/303day); Behringer's TD-3 in silver after the original, and in colours
+  (gearnews.com, 2019); the plug-ins (MusicRadar on the TB-303 against its emulations: Roland Cloud's TB-303 closest
+  to the hardware; bonedo.de on Phoscyon 2, drawn for the screen); on hardware looks in software, uxdesign.cc and
+  LANDR's blog (a hardware look suits a model of a known machine; small type and knobs cost use).
+- Open: the user's pick.

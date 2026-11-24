@@ -339,7 +339,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     4 % off two or three toms, the Newton solve being most of a sample; the Newton solve in lanes left for later.
     Next: low-rank updates at the attack, the 1-ulp SIMD exp, then the accuracy levels (100 nV the first lighter one). For the 808 and CoolSynth: the chord method on their circuits (they use
     plain Newton), measured against their own tight references. The Devil Fish further by ear if the user wants (it
-    is ours, the name stays).
+    is ours, the name stays). The look (D348): the app found a bit bland; seven mockups on one page
+    (`docs/design/mockups/coolsynth-303-redesign.html`): the app now, a redesign, the 808's four skins, and an
+    all-silver TB-303 face with the 808's knobs; the layout kept. The user's pick open; then the JUCE app.
 
 
 ## Standing notes
