@@ -344,6 +344,78 @@ canvas.board { display: block; width: 100%; height: 100%; }
 .vN.on::before { background: var(--on); box-shadow: 0 0 7px var(--on); }
 .vN.on.hit::before { background: #ffd9a8; box-shadow: 0 0 10px 2px var(--flow); }
 
+/* ===================== Layout 5's colour themes (5.1 to 5.4) ===================== */
+/* What a theme changes, all through variables: the metal, the glass, the printing on the board, the key caps, the
+   orange (or its stand-in), the steps' four groups off and on, the knobs, the switches and the copper. */
+.etched5.themed { background:
+    radial-gradient(1200px 400px at 30% 0%, rgba(255,255,255,var(--sheen,.05)), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.012) 0 1px, rgba(0,0,0,.02) 1px 3px),
+    linear-gradient(var(--metal-a), var(--metal-b)); }
+.etched5.themed .glass5 { background: linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,0) 30%), linear-gradient(var(--glass-a), var(--glass-b)); }
+.etched5.themed .tstrip { background: linear-gradient(var(--glass-a), var(--glass-b)); }
+.etched5.themed .silk.logo, .etched5.themed .colLabel .t13 { color: var(--board-ink); }
+.etched5.themed .silk .lbl, .etched5.themed .colLabel .nm, .etched5.themed .kn .lbl, .etched5.themed .slide .lbl.lit { color: var(--board-label) !important; }
+.etched5.themed .slide .lbl { color: var(--board-dim); }
+.etched5.themed .colLabel.sel .t13 { color: var(--accent); text-shadow: none; }
+.etched5.themed .btn { background: linear-gradient(var(--cap-a), var(--cap-b) 46%, var(--cap-c)); }
+.etched5.themed .btn:hover { filter: brightness(1.08); }
+.etched5.themed .btn.is { background: linear-gradient(var(--cap-a), var(--cap-b) 48%, var(--cap-c)); filter: brightness(1.15); }
+.etched5.themed .btn.hot { background: linear-gradient(var(--hot-a), var(--hot-b) 50%, var(--hot-c)); color: var(--hot-ink); }
+.etched5.themed:not(.flat6) .slot, .etched5.themed:not(.flat6) .cblk:not(.cadd) { background: linear-gradient(var(--cap-b), var(--cap-c)); }
+.etched5.themed:not(.flat6) .slot.has, .etched5.themed:not(.flat6) .cblk:not(.cadd) { background: linear-gradient(var(--cap-a), var(--cap-b)); }
+.etched5.themed:not(.flat6) .slot.play, .etched5.themed:not(.flat6) .cblk.cur {
+  background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--hot-b) 45%, white), var(--hot-b) 55%, var(--hot-c)); color: var(--hot-ink);
+  box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.55), 0 0 12px color-mix(in srgb, var(--hot-b) 55%, transparent); }
+.etched5.themed .g1 { --gon: var(--gon1); } .etched5.themed .g2 { --gon: var(--gon2); }
+.etched5.themed .g3 { --gon: var(--gon3); } .etched5.themed .g4 { --gon: var(--gon4); }
+.etched5.themed:not(.flat6) .ksteps .key.on { background: linear-gradient(color-mix(in srgb, var(--gon) 72%, white), var(--gon) 50%, color-mix(in srgb, var(--gon) 75%, black)); }
+.etched5.themed:not(.flat6) .ksteps .key.ph.on { background: radial-gradient(ellipse at 50% 35%, color-mix(in srgb, var(--gon) 22%, white), color-mix(in srgb, var(--gon) 70%, white) 55%, var(--gon));
+  box-shadow: inset 0 1px 0 #fff, 0 0 16px color-mix(in srgb, var(--gon) 80%, transparent), 0 1px 0 rgba(0,0,0,.6); }
+.etched5.themed .lane.sel { background: linear-gradient(90deg, color-mix(in srgb, var(--hot-b) 22%, transparent), rgba(236,228,210,.07) 30%, rgba(236,228,210,.05)); box-shadow: inset 3px 0 0 var(--hot-b); }
+.etched5.themed .lane.sel .id, .etched5.themed .lane.sel .nm, .etched5.themed .tstrip .tempo .num, .etched5.themed .kval { color: var(--accent) !important; }
+.etched5.themed .tstrip .tempo .num { text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* 5.1 Roland: the 808's own colours. A charcoal panel printed in white and orange, grey knobs with an orange line,
+   the steps in red, orange, yellow and white, dim when off and full when on. */
+.etched5.t1 { --metal-a: #333334; --metal-b: #242425; --sheen: .06; --glass-a: rgba(16,16,17,.80); --glass-b: rgba(11,11,12,.86);
+  --board-ink: #f4f4f2; --board-label: #ecebe6; --board-dim: #8d8c88; --accent: #f28a2c;
+  --cap-a: #505052; --cap-b: #39393b; --cap-c: #2c2c2e; --hot-a: #f6a25a; --hot-b: #ee7d28; --hot-c: #c45a16; --hot-ink: #1c120a;
+  --g1: #6d2c27; --g2: #79492a; --g3: #7a6a35; --g4: #77746c; --gon1: #d8362c; --gon2: #ee7d28; --gon3: #f1c63c; --gon4: #ece7d6;
+  --knob-a: #6a6a6c; --knob-b: #242426; --pointer: #f28a2c; --tick: #dcdcd8; --acc-a: #f6a25a; --acc-b: #c45a16;
+  --sw-a: #555557; --sw-b: #38383a; --sw-c: #262628; --th-a: #f2f2ef; --th-b: #c9c9c4; --th-c: #8f8f8a;
+  --copper: rgba(178,146,104,.30); --silk: rgba(236,236,232,.26); --silk-text: rgba(232,232,228,.62);
+  --flow-rgb: 240,120,40; --lit-rgb: 255,175,100; --heat-rgb: 232,110,40; }
+/* 5.2 Steel: blue-grey anodised aluminium, gold traces, cyan where the 808 has orange. */
+.etched5.t2 { --metal-a: #5c6670; --metal-b: #4a535d; --sheen: .07; --glass-a: rgba(20,26,32,.80); --glass-b: rgba(15,20,25,.86);
+  --board-ink: #f5f8fa; --board-label: #e8eef3; --board-dim: #a3aeb8; --accent: #5ed8e6;
+  --cap-a: #626c77; --cap-b: #4b545e; --cap-c: #3e4650; --hot-a: #7ce3ef; --hot-b: #22b3c5; --hot-c: #138697; --hot-ink: #062228;
+  --g1: #3c4550; --g2: #454e59; --g3: #4f5965; --g4: #5a6572; --gon1: #22b3c5; --gon2: #22b3c5; --gon3: #22b3c5; --gon4: #22b3c5;
+  --knob-a: #78828c; --knob-b: #2c333a; --pointer: #f3f7fa; --tick: #dfe7ee; --acc-a: #7ce3ef; --acc-b: #138697; --acc-pointer: #062228;
+  --sw-a: #6a747e; --sw-b: #4c5660; --sw-c: #3a434c; --th-a: #f5f8fa; --th-b: #c9d2da; --th-c: #8d98a3;
+  --copper: rgba(214,182,118,.42); --silk: rgba(236,244,250,.30); --silk-text: rgba(236,244,250,.72);
+  --flow-rgb: 70,215,235; --lit-rgb: 170,240,250; --heat-rgb: 34,179,197; }
+/* 5.3 Olive: olive drab, brass traces, signal red. */
+.etched5.t3 { --metal-a: #646650; --metal-b: #50523e; --sheen: .06; --glass-a: rgba(24,25,17,.80); --glass-b: rgba(18,19,13,.86);
+  --board-ink: #f7f4e8; --board-label: #eeead6; --board-dim: #aaa78f; --accent: #ff6a43;
+  --cap-a: #6a6c55; --cap-b: #535540; --cap-c: #464835; --hot-a: #f68866; --hot-b: #e2512b; --hot-c: #b33a1a; --hot-ink: #230b04;
+  --g1: #45473a; --g2: #4e5042; --g3: #585a4b; --g4: #636555; --gon1: #e2512b; --gon2: #e2512b; --gon3: #e2512b; --gon4: #e2512b;
+  --knob-a: #76785f; --knob-b: #2b2c21; --pointer: #f7f4e8; --tick: #e6e2cd; --acc-a: #f68866; --acc-b: #b33a1a;
+  --sw-a: #6c6e57; --sw-b: #505240; --sw-c: #3c3e2f; --th-a: #f7f4e8; --th-b: #d2cdb6; --th-c: #969179;
+  --copper: rgba(222,186,122,.40); --silk: rgba(244,240,222,.30); --silk-text: rgba(244,240,222,.72);
+  --flow-rgb: 255,110,70; --lit-rgb: 255,175,135; --heat-rgb: 226,81,43; }
+/* 5.4 Silver: brushed aluminium, dark printing, darker keys on it as hardware has, orange. */
+.etched5.t4 { --metal-a: #c6c9cc; --metal-b: #a9adb1; --sheen: .18; --glass-a: rgba(26,27,30,.84); --glass-b: rgba(20,21,24,.9);
+  --board-ink: #1d2024; --board-label: #2a2e33; --board-dim: #6c7178; --accent: #ff7a2e;
+  --cap-a: #5c6065; --cap-b: #45494e; --cap-c: #393c40; --hot-a: #f8a066; --hot-b: #ef6b21; --hot-c: #bf4f12; --hot-ink: #1f0e04;
+  --g1: #464a50; --g2: #51555b; --g3: #5c6066; --g4: #686c72; --gon1: #ef6b21; --gon2: #ef6b21; --gon3: #ef6b21; --gon4: #ef6b21;
+  --acc-a: #f8a066; --acc-b: #bf4f12;
+  --sw-a: #e4e6e8; --sw-b: #c2c5c8; --sw-c: #a2a6aa; --th-a: #2c2f33; --th-b: #1d2023; --th-c: #111315;
+  --copper: rgba(150,104,52,.48); --silk: rgba(30,32,36,.42); --silk-text: rgba(30,32,36,.78);
+  --flow-rgb: 239,100,25; --lit-rgb: 255,140,60; --heat-rgb: 239,107,33; }
+
+/* 5.4's silver knobs are mounted on the board only; the knobs on the glass keep their dark caps. */
+.etched5.t4 .kn { --knob-a: #f4f4f4; --knob-b: #a2a6ab; --pointer: #1d2024; --tick: #2a2e33; }
+
 /* Pop-ups on right-click: a step's tools, a pattern's menu */
 .pop { position: absolute; z-index: 40; min-width: 190px; padding: 10px; border-radius: 5px; display: flex; flex-direction: column; gap: 8px;
   background: rgba(30,28,25,.97); box-shadow: 0 10px 30px rgba(0,0,0,.6), inset 0 0 0 1px #4a463f; }
@@ -367,9 +439,13 @@ canvas.board { display: block; width: 100%; height: 100%; }
   <button class="tab" data-v="4">4 Etched panel</button>
   <button class="tab" data-v="5">5 Etched with glass</button>
   <button class="tab" data-v="6">6 Etched, flat sequencer</button>
+  <button class="tab" data-v="5" data-t="1">5.1 Roland</button>
+  <button class="tab" data-v="5" data-t="2">5.2 Steel</button>
+  <button class="tab" data-v="5" data-t="3">5.3 Olive</button>
+  <button class="tab" data-v="5" data-t="4">5.4 Silver</button>
   <button class="tab" data-v="7">Step key options</button>
   <span id="v5opts" style="display:none;gap:6px;align-items:center;margin-left:10px">
-    <span>Click a step to set it and pick its lane; right-click it for its chance, roll and accent.</span>
+    
   </span>
   <span class="sp"></span>
   <span class="note" id="chromeNote">Mockups: the beat runs and lights the circuits, no sound. Space plays and stops.</span>
@@ -619,17 +695,17 @@ function knobSVG(v, size, accent) {
   const r = size / 2, cx = r, cy = r, a0 = -150, a1 = 150, ticks = [];
   for (let i = 0; i <= 10; i++) {
     const a = (a0 + (a1 - a0) * i / 10 - 90) * Math.PI / 180, r1 = r + 3, r2 = r + (i % 5 === 0 ? 7 : 5);
-    ticks.push(`<line x1="${cx + r1 * Math.cos(a)}" y1="${cy + r1 * Math.sin(a)}" x2="${cx + r2 * Math.cos(a)}" y2="${cy + r2 * Math.sin(a)}" stroke="#cfc7b3" stroke-width="1.1"/>`);
+    ticks.push(`<line x1="${cx + r1 * Math.cos(a)}" y1="${cy + r1 * Math.sin(a)}" x2="${cx + r2 * Math.cos(a)}" y2="${cy + r2 * Math.sin(a)}" style="stroke:var(--tick,#cfc7b3)" stroke-width="1.1"/>`);
   }
   const a = (a0 + (a1 - a0) * v - 90) * Math.PI / 180;
   const id = 'k' + Math.random().toString(36).slice(2, 8);
   return `<svg class="kcap" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <defs><radialGradient id="${id}" cx="40%" cy="30%" r="80%"><stop offset="0" stop-color="${accent ? '#f3a066' : '#4d4943'}"/><stop offset="1" stop-color="${accent ? '#b9541a' : '#1d1b18'}"/></radialGradient></defs>
+    <defs><radialGradient id="${id}" cx="40%" cy="30%" r="80%"><stop offset="0" style="stop-color:${accent ? 'var(--acc-a,#f3a066)' : 'var(--knob-a,#4d4943)'}"/><stop offset="1" style="stop-color:${accent ? 'var(--acc-b,#b9541a)' : 'var(--knob-b,#1d1b18)'}"/></radialGradient></defs>
     ${ticks.join('')}
     <circle cx="${cx}" cy="${cy + 1.5}" r="${r - 1}" fill="#000" opacity=".55"/>
     <circle cx="${cx}" cy="${cy}" r="${r - 1}" fill="url(#${id})" stroke="#0e0d0c" stroke-width="1"/>
     <circle cx="${cx}" cy="${cy}" r="${r * .62}" fill="none" stroke="rgba(255,255,255,.07)"/>
-    <line x1="${cx + r * .2 * Math.cos(a)}" y1="${cy + r * .2 * Math.sin(a)}" x2="${cx + (r - 4) * Math.cos(a)}" y2="${cy + (r - 4) * Math.sin(a)}" stroke="${accent ? '#1a1714' : '#ece4d2'}" stroke-width="2.4" stroke-linecap="round"/>
+    <line x1="${cx + r * .2 * Math.cos(a)}" y1="${cy + r * .2 * Math.sin(a)}" x2="${cx + (r - 4) * Math.cos(a)}" y2="${cy + (r - 4) * Math.sin(a)}" style="stroke:${accent ? 'var(--acc-pointer,#1a1714)' : 'var(--pointer,#ece4d2)'}" stroke-width="2.4" stroke-linecap="round"/>
   </svg>`;
 }
 function knob(label, v, size = 40, accent = false, opts = {}) {
@@ -941,6 +1017,12 @@ const PALETTES = {
 };
 
 const boards = [];
+// A theme's copper, read from its CSS variables (the 5.x themes of layout 5)
+function themePalette(el) {
+  const cs = getComputedStyle(el), v = n => cs.getPropertyValue(n).trim(), rgb = n => v(n).split(',').map(Number);
+  if (!v('--copper')) return null;
+  return { ...PALETTES.etched, wire: v('--copper'), part: v('--silk'), names: v('--silk-text'), flow: rgb('--flow-rgb'), lit: rgb('--lit-rgb'), heat: rgb('--heat-rgb') };
+}
 class Board {
   constructor(canvas, layout, look, opts = {}) {
     this.c = canvas; this.layout = layout; this.look = look; this.opts = opts;
@@ -1021,7 +1103,7 @@ class Board {
       const k = 1 - Math.exp(-dt / (this.opts.follow ? 700 : 140));
       this.cam.x += (this.target.x - this.cam.x) * k; this.cam.y += (this.target.y - this.cam.y) * k; this.cam.s += (this.target.s - this.cam.s) * k;
     }
-    const P = PALETTES[this.look], g = this.c.getContext('2d'), d = this.dpr;
+    const P = this.look === 'etched' && this.theme ? this.theme : PALETTES[this.look], g = this.c.getContext('2d'), d = this.dpr;
     g.setTransform(d, 0, 0, d, 0, 0);
     if (P.bg) { g.fillStyle = P.bg; g.fillRect(0, 0, this.W, this.H); } else g.clearRect(0, 0, this.W, this.H);
     const s = this.cam.s;
@@ -1085,7 +1167,7 @@ class Board {
     if (s > 1.35 || P.etched || this.opts.names) {
       g.font = `500 ${P.etched ? 6 : 5.5}px 'IBM Plex Mono', monospace`; g.textAlign = 'left'; g.globalAlpha = P.etched ? .7 : Math.min(1, (s - 1.35) * 2);
       const ko = this.opts.keepouts ? this.opts.keepouts() : [];
-      g.fillStyle = P.etched ? 'rgba(222,200,160,.72)' : P.label; g.textBaseline = 'alphabetic';
+      g.fillStyle = P.etched ? (P.names || 'rgba(222,200,160,.72)') : P.label; g.textBaseline = 'alphabetic';
       // every part's box, and the boxes of the names already set: a name goes where it touches none of them
       const box = p => { const w = (p.t === 'A' ? 1.2 : p.t === 'R' || p.t === 'P' ? 1.35 : 1) * p.k, h = (p.t === 'A' ? 1.5 : p.t === 'R' || p.t === 'P' ? .55 : 1) * p.k;
         return p.a === 90 ? [p.x - h, p.y - w, p.x + h, p.y + w] : [p.x - w, p.y - h, p.x + w, p.y + h]; };
@@ -1372,9 +1454,9 @@ function switchSVG(second) {
   const ridges = [0, 1, 2, 3].map(i => `<line x1="9" x2="19" y1="${ty + 4 + i * 2.6}" y2="${ty + 4 + i * 2.6}" stroke="rgba(0,0,0,.38)" stroke-width="1"/><line x1="9" x2="19" y1="${ty + 5 + i * 2.6}" y2="${ty + 5 + i * 2.6}" stroke="rgba(255,255,255,.45)" stroke-width=".7"/>`).join('');
   return `<svg width="28" height="46" viewBox="0 0 28 46">
     <defs>
-      <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a4640"/><stop offset=".5" stop-color="#2f2c28"/><stop offset="1" stop-color="#1f1d1a"/></linearGradient>
+      <linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--sw-a,#4a4640)"/><stop offset=".5" style="stop-color:var(--sw-b,#2f2c28)"/><stop offset="1" style="stop-color:var(--sw-c,#1f1d1a)"/></linearGradient>
       <linearGradient id="${id}s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#191714"/></linearGradient>
-      <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4eee1"/><stop offset=".55" stop-color="#c9c1af"/><stop offset="1" stop-color="#8f8775"/></linearGradient>
+      <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--th-a,#f4eee1)"/><stop offset=".55" style="stop-color:var(--th-b,#c9c1af)"/><stop offset="1" style="stop-color:var(--th-c,#8f8775)"/></linearGradient>
     </defs>
     <rect x=".5" y=".5" width="27" height="45" rx="3.5" fill="url(#${id}p)" stroke="#0b0a09"/>
     <rect x="1.5" y="1.5" width="25" height="43" rx="2.5" fill="none" stroke="rgba(255,255,255,.1)"/>
@@ -1537,8 +1619,18 @@ function buildSaver() {
 
 // ---------------------------------------------------------------- start
 build1(); build2(); build3(); build4(); build5('v5'); build5('v6'); build7(); buildSaver();
+// The colour themes of layout 5 (5.1 to 5.4): a class on the view; the board re-reads its copper
+function applyTheme(t) {
+  const v5 = $('v5');
+  v5.classList.remove('themed', 't1', 't2', 't3', 't4');
+  if (t) v5.classList.add('themed', 't' + t);
+  const b = boards.find(b => b.c.id === 'b5');
+  if (b) b.theme = t ? themePalette(v5) : null;
+  paintAll();
+}
 document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () => {
   document.querySelectorAll('#chrome .tab[data-v]').forEach(x => x.classList.toggle('is', x === t));
+  applyTheme(t.dataset.t || null);
   const e5 = t.dataset.v === '5' || t.dataset.v === '6'; $('v5opts').style.display = e5 ? 'flex' : 'none'; $('chromeNote').hidden = e5;
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('is', v.id === 'v' + t.dataset.v));
   for (const b of boards) b.resize();
@@ -1546,7 +1638,7 @@ document.querySelectorAll('#chrome .tab[data-v]').forEach(t => t.onclick = () =>
 });
 try { const v = localStorage.getItem('cs808-layout'); if (v) document.querySelector(`#chrome .tab[data-v="${v}"]`).click(); } catch (e) {}
 // #v5 opens a layout and #v5-play starts the beat: for screenshots taken by a headless browser.
-{ const m = location.hash.match(/v(\d)/); if (m) document.querySelector(`#chrome .tab[data-v="${m[1]}"]`).click(); if (location.hash.includes('play')) setTimeout(() => setPlaying(true), 50); }
+{ const m = location.hash.match(/v(\d)/), t = location.hash.match(/t(\d)/); if (m) document.querySelector(t ? `#chrome .tab[data-v="${m[1]}"][data-t="${t[1]}"]` : `#chrome .tab[data-v="${m[1]}"]:not([data-t])`).click(); if (location.hash.includes('play')) setTimeout(() => setPlaying(true), 50); }
 function fit() { const vp = $('viewport'); const s = Math.min(vp.clientWidth / 1280, vp.clientHeight / 800); $('stage').style.transform = `scale(${s})`; window.stageScale = s; for (const b of boards) b.resize(); }
 window.addEventListener('resize', fit); fit();
 document.addEventListener('keydown', e => {
