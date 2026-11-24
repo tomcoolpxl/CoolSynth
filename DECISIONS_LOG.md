@@ -6605,3 +6605,36 @@ Still alone, as D304; each with what else it could have been.
   - A Lid key on the transport strip, before Library, opens it over the whole window; Back to the panel or Escape
     closes it.
 - Where the theme choice lives waits for the user (File > Theme today).
+
+## D309. CoolSynth 303: the Devil Fish, on or off in the Mods panel (2026-11-24)
+
+- The user picked the Devil Fish next (over the lid). Robin Whittle's mod is rare as hardware (his own counts in
+  owners' memories run to a dozen or so units), but its controls are what "a 303 with more knobs" means now: the
+  TD-3-MO copies them, and 303 plugins add the like. So the user wanted no exact copy: a switch keeping the stock 303
+  untouched, and approximations where they are much easier.
+- Picked from three ways (part values plus stand-ins, all DSP around the circuit, all circuit): part values plus
+  stand-ins. Most of the mod changes parts the model already has, which costs nothing.
+  - Overdrive is R62 (none, the stock level at 0.2 of the knob, 66.6 times at full).
+  - Slide Time is the ladder's resistance (3.3k and a 500k pot in series; measured 68 ms to 398 ms, his 60 to 360).
+  - Normal and Accent Decay are the decay resistance, switched by the accent where the stock one shorts DECAY
+    (30 ms to 3 s by his manual; R138 at 4.7k).
+  - DECAY moves to the volume envelope: R123 from 16 ms to 3.5 s in its first half; past half, C42 refills toward a
+    lower voltage, holding the note from silence to full.
+  - Sweep Speed is C13 (0.22, 1, 3.3 uF; slow also R46 at 22k); the Acc Sweep switch keeps IC12A open and doubles
+    the loop's gain (R97 at 5.1k), so the filter oscillates on its own.
+  - The wider ranges are fixed in a Devil Fish, as in his: Env Mod from zero (R61 shorted) to three times (100k across
+    R63); Cut Off an octave higher (R73 at 33k, TM3 at half its resistance: +0.93 octave measured) and some 2.4
+    octaves lower (4.7k across R47); the fuller bass (C21 at 0.1 uF).
+  - Filter Tracking and Filter FM are a current into Q10's base: tracking from the CV after the slide (exponential, up
+    to 1.5 octaves a volt, C at 2 V unmoved; his is linear in hertz), FM from the output a sample back through 0.1 uF
+    and 20k as the x0xb0x mod guide wires it.
+  - Soft Attack (0.3 to 30 ms on plain notes) and the Muffler (the part above 100 Hz soft-clipped, the bass passed;
+    soft and hard) are stand-ins after the VCA, as he never published their circuits.
+- Picked from two (a switch, always modified): a switch. The engine builds the voice either way (`Tb303Voice(true)`,
+  engine 1c8dc5c); the stock build is part for part as before and still matches SPICE as it did. The app keeps both
+  and plays the one the panel picks. The Devil Fish at its stock-like settings plays the first line at -29.0 dBFS
+  rms against the stock's -29.2.
+- Picked from two (the Mods panel, a face of its own): the Mods panel. The trimmers move left; the Devil Fish's
+  section, its name in red as on his panel, holds On, the red Accent button (every note accented while held), seven
+  knobs with their values, the three switches as keys clicked through their places, and Stock.
+- The engine's and the app's commits name this D308: the 808's session took D307 and D308 meanwhile; renumbered.

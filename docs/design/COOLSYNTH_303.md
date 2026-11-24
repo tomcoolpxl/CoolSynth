@@ -19,7 +19,7 @@ The circuit is built in the engine (D290 to D295); the app's first working versi
     018016159 covers the 303's panel look. The panel's design has to keep clear of that look.
   - A trademark search before the first release, as for the 808.
 - The stock 1982 circuit first, from the service notes.
-  - The Devil Fish's changes come later, as trimmers and switches that start at the stock setting.
+  - The Devil Fish came later (D309): a switch between the stock circuit and a build with Whittle's changes.
 - The circuit replaces today's TB-303 generator (the Open303 rewrite, D242) in CoolSynth too, once it passes its
   checks.
   - CoolSynth's Acid preset is levelled again on it.
@@ -109,9 +109,8 @@ How it is solved, as the 808 is:
   Built in the app (`src/Sequencer`, D304); into the engine when CoolSynth plays the circuit.
 - The app in `tomcoolpxl/CoolSynth303` (D304): the voice at twice the host's rate, the drive and delay, MIDI in,
   MIDI clock out, the 2.3 panel. Then (D305) an incoming clock, the Mods panel's trimmers, Drag MIDI and a VST3 run
-  by the host's transport. Still to come: the lid and the full-screen circuit, the Devil Fish's controls, the
-  library.
-- The Devil Fish's changes, as trimmers.
+  by the host's transport. Then (D309) the Devil Fish, on or off in the Mods panel: his part values in the circuit,
+  Soft Attack and the Muffler as stand-ins. Still to come: the lid and the full-screen circuit, the library.
 
 ## Open, for later
 
@@ -119,4 +118,3 @@ How it is solved, as the 808 is:
   - Windows 11's MIDI Services give every app loopback ports; Ableton Link is GPL, so shipping it would put the
     app's binaries under the GPL.
 - A library of acid lines: products ship their own or "in the style of" patterns, not named transcriptions.
-- Which Devil Fish changes, and how they are shown.
