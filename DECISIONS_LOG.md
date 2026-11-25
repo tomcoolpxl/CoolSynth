@@ -7462,6 +7462,15 @@ Still alone, as D304; each with what else it could have been.
   Silver now and the rest later); text held to 4.5:1, the keys only clearly visible (over WCAG AA for both, or
   APCA). Built: every Silver text pair now 4.5:1 or more, the empty cells 4.2:1 off the screen.
 - The motion lane's knob well sits on the grid's foot, its bottom level with the screen's (the user).
+- Then (the user): in every theme the empty cells, the side column's keys and the hover still barely stood off the
+  glass; tweak it without losing the lights, show options. Three contrast steps rendered by the app itself for every
+  theme, measured from their pixels (`303-themes/contrast-steps-*.png`): Gentle (empty cells 1.6:1), Clear (2.2:1),
+  Strong (3:1, WCAG's floor for a control). Picked (each with options): Strong, for all four. Built into every theme
+  (`strengthen` in `src/ui/Theme.cpp`): empty keys 3:1 off the screen, half-lit 4:1, lit 5.5:1, the screens' keys
+  3:1, each lifted in its own hue; the pitch and motion lanes' slots, the hover light and the displays' rims several
+  times stronger; every ink on them 4.5:1, pure white or near black where a theme's own ink cannot get there (so
+  Graphite's edited pattern number prints white, its orange outline still marking it). `tools/contrast.py` measures
+  the result.
 
 ## D353. CoolSynth 303: a hint line at the foot, and controls that light under the mouse (2026-11-25)
 
