@@ -7594,4 +7594,27 @@ Still alone, as D304; each with what else it could have been.
 
 ## D359. The 303 and the 808 together by MIDI clock, measured (2026-11-25)
 
-- Claimed; written as the work lands.
+- From the 303's to-do list the user picked four: the filter's gap (under way), the 303 and 808 together, the 808's
+  MIDI output keeper and the two 96 kHz Rate keys. The keys: at 96 kHz the export's Rate row shows one key. The
+  keeper: the 303's standalone keeps its MIDI output's own sending thread running, as the 808's, so each clock tick
+  leaves at its own sample.
+- Together, the options: MIDI clock as it is, measured (picked); a local sync of our own; Ableton Link (GPL 2 or
+  later, or Ableton's proprietary licence on request); both in one app.
+- The loopback, the options: Windows MIDI Services (picked; its Tools preview 14 installed by the user, a basic
+  loopback needs the Transports package too, so a two-way pair "CoolSynth Clock (A)/(B)" made with `midi loopback
+  create`, not saved, gone when the service restarts); loopMIDI; a MIDI cable through the UMC204HD; the user's own.
+- Measured with `midi endpoint monitor -r -t -f csv` on the receiving side, both apps on Windows Audio at 44.1 kHz,
+  a 441-sample block, 125 BPM. The 303 leading: its tempo 0.02 % from the system clock, each tick 1.5 ms off a steady
+  line (8.5 ms at worst). The 808 leading, the 303 following: steady at 125 for 68 s; then, with the Claude window in
+  front (its processes about one core), the 808 missed audio blocks and its clock ran 2 to 5 % slow in bursts. The
+  303 followed every dip. The 808 took about 1.8 cores, the 303 0.7.
+- The follower (the 808's, the 303's a copy) replayed offline with the ticks as captured: a spread of 0.7 ms (1.8 at
+  worst), but 9.1 ms behind its leader, as JUCE's standalone player hands MIDI to the next block. Fixed in both apps:
+  in the standalone it aims a block further on (0.9 ms ahead, the spread the same; a test: 10.00 ms behind before,
+  0.00 after). A plugin and the tests unchanged. Lighter smoothing (0.1) narrowed the spread to 0.5 ms but follows a
+  tempo change more slowly: left at 0.25.
+- The 808's stutter beside a busy program, the options: find and cheapen its worst blocks; a bigger default buffer
+  (1024 samples); Release builds (about 10 % less); leave it and write it down (picked). Both READMEs say how to play
+  the two together and that a busy program can make the 808 stutter.
+- Asides: the 303's MCP `playing` reads false while it follows a clock; its MIDI output's help says it carries the
+  sequencer's notes, but only the clock goes out.
