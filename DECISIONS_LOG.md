@@ -7493,3 +7493,7 @@ Still alone, as D304; each with what else it could have been.
 - The pitch lane's hover lights the note's slot under the mouse, not the whole column (the user).
 - Parked: the DSP load going past 100 % now and then on the Devil Fish sounds (the user: later); the 808's library
   has the same audition fault (its session).
+
+## D355. CoolSynth 303: a WAV export (2026-11-25)
+
+- Claimed; the entry follows.
