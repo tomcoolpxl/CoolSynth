@@ -7446,9 +7446,13 @@ Still alone, as D304; each with what else it could have been.
   screens', so on Silver the plates print dark and the screens stay light; the library, Options and the pop-up menus
   stay dark glass in every theme. A Theme row on Options' Panel page, kept in the app's settings; chosen, the whole
   panel redraws at once. The tests' pictures cover every theme (`303-themes/app-*.png`).
-- Then (the user): Silver's black strip and top bar against its light plates were too hard a step, Steel reads better.
-  Silver's frame (the name's strip, the top bar, the desk) is now a mid grey of its own; Options' page list a shade
-  under the dialog's glass in every theme, so it stays dark.
+- Then (the user): on Silver the black strip, top bar, grid and side column against the light plates were too hard a
+  step, Steel reads better; check every part, the dialogs too. Silver's frame, screens, bays, cells and dialogs are now
+  a smoked mid grey of their own, the displays a little darker for their amber; the grid's quieter inks (step numbers,
+  a tie's or rest's gate, a held octave, a slot's number) became roles, so they lift with it (Graphite's values kept).
+  The library's list and search field take a theme's change while open, and its chosen row is the dialog's ground
+  warmed by the theme's orange. Options' page list a shade under the dialog's ground in every theme. The tests now
+  also picture the library and Options' pages in every theme.
 
 ## D353. CoolSynth 303: a hint line at the foot, and controls that light under the mouse (2026-11-25)
 
