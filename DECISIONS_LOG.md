@@ -7427,3 +7427,7 @@ Still alone, as D304; each with what else it could have been.
   Line tab's "These change the whole line", the library's how-to lines under its keys; kept, the Devil Fish note's
   "the bass is fuller". The gaps closed: the Line tab's groups spread down the column, the library's keys under
   its preview.
+
+## D352. CoolSynth 303: themes, Silver after the TB-303, the 808's Steel and Olive (2026-11-25)
+
+- Claimed; written in full when it lands.
