@@ -7588,3 +7588,7 @@ Still alone, as D304; each with what else it could have been.
   closes the library on a click outside its box, and took the list's clicks, their positions in a row's own place,
   for clicks on the veil. Fixed: mouseUp acts only on a click on the shelf itself; a test clicks a row and checks the
   library stays open. The 808's library has no such listener.
+
+## D359. The 303 and the 808 together by MIDI clock, measured (2026-11-25)
+
+- Claimed; written as the work lands.
