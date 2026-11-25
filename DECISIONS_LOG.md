@@ -7725,3 +7725,13 @@ Still alone, as D304; each with what else it could have been.
 ## D364. The 303's CUTOFF and ENV MOD knob curves against Din Sync's unit (2026-11-25)
 
 - Claimed; written as the work lands.
+
+## D365. CoolSynth's own 303, 808 and kick engines: kept, the 909 out of the menu (2026-11-25)
+
+- The user asked what CoolSynth still holds of the 303, 808 and 909, unsure they fit, liking their sound. In it: the
+  Open303-based TB-303 (about 1.4 % of a core a voice; Acid), the three full TR-808 drum engines (808 Kit), the Kick
+  engine's 808, 909 and modern models (808 Boom and Succession 808 on the 808; no preset on the 909). An engine costs
+  only while a sound plays it, and the circuits are in the shared engine for the 303 and 808 apps anyway.
+- The user's picks: the TB-303 kept as it is (over the 303 app's circuit, some 60 % of a core a voice, or removing
+  it); the 808 drum engines kept (over removing them); the Kick's 909 out of CoolSynth's menu, the 808 and modern
+  kept (over keeping all three). The 909's code stays, so a sound saved with it still loads and plays.
