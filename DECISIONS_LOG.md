@@ -7755,3 +7755,15 @@ Still alone, as D304; each with what else it could have been.
   (over a search by Claude in EUIPO, BOIP, WIPO and the USPTO, or releasing without one).
 - Signing: unsigned, as CoolSynth (over the SignPath Foundation's free signing for open-source projects, about one
   to two weeks and not sure to be granted, the foundation named as publisher; Microsoft lists it among its options).
+
+## D367. CLAP for the 303 and the 808, as CoolSynth's; the Mac paused (2026-11-25)
+
+- The user asked whether the 303 and 808 have CLAP as CoolSynth does: they had Standalone and VST3 only. The options:
+  both, as CoolSynth (picked); with CoolSynth's Bitwig remote-control pages too; not now. Through clap-juce-extensions
+  at CoolSynth's pinned commit, the installer's CLAP folder with its own tick box, a CLAP zip in each release. The
+  303's 0.1.0 (published today, v0.1.0) went out without it; its next release carries it.
+- The Mac paused by the user until a later release: CoolSynth's macOS CI runs by hand only, its release Windows
+  only (its Mac job off). The Mac run had failed the determinism test 'after a reset: Succession 808'; the Windows
+  validation is run before CoolSynth's next release.
+- The release mechanism, the same in the three apps: a version tag builds, tests in Release, packages and
+  publishes, the notes from docs/releases/<tag>.md where written.
