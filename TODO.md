@@ -349,7 +349,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     (`docs/design/mockups/coolsynth-303-redesign.html`): the app now, a redesign, the 808's four skins, and an
     all-silver TB-303 face with the 808's knobs; the layout kept. The user picked 2, the redesign, one look (no skins
     yet). Built in the app as mockup 2, straight from the mockup; checked on screen, the Mods panel too. Then (D350)
-    its wonky spots fixed, and three layouts of the lower half mocked up (`coolsynth-303-relayout.html`); the user picked B, the inspector column.
+    its wonky spots fixed, and three layouts of the lower half mocked up (`coolsynth-303-relayout.html`); the user picked B, the inspector column, built. A press drawn as fast as the 808's (D351); the tagline and developer notes gone; a hint line and hover lights (D353). Themes mocked up (D352: Silver, Steel, Olive), the app's port waiting on the user's view.
 
 
 ## Standing notes
