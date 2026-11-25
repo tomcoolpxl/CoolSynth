@@ -7446,6 +7446,9 @@ Still alone, as D304; each with what else it could have been.
   screens', so on Silver the plates print dark and the screens stay light; the library, Options and the pop-up menus
   stay dark glass in every theme. A Theme row on Options' Panel page, kept in the app's settings; chosen, the whole
   panel redraws at once. The tests' pictures cover every theme (`303-themes/app-*.png`).
+- Then (the user): Silver's black strip and top bar against its light plates were too hard a step, Steel reads better.
+  Silver's frame (the name's strip, the top bar, the desk) is now a mid grey of its own; Options' page list a shade
+  under the dialog's glass in every theme, so it stays dark.
 
 ## D353. CoolSynth 303: a hint line at the foot, and controls that light under the mouse (2026-11-25)
 
@@ -7496,4 +7499,19 @@ Still alone, as D304; each with what else it could have been.
 
 ## D355. CoolSynth 303: a WAV export (2026-11-25)
 
-- Claimed; the entry follows.
+- The user: look at the 808's (D331) and start; its place is the Options window's Export page (D349's placeholder),
+  built last, once the redesign's session has finished with the window.
+- No 303 clone's own export found; the usual way is the DAW's bounce, and Roland's SP-404MK2 bounces a pattern to
+  WAV. Picked (each with options):
+  - What: as the 808's: the pattern shown or the chain, 1 to 16 times, the end cut, ringing on, or a seamless loop
+    (over once through with its ring-out always).
+  - Files: the mix, the dry voice as an option, the same length (over the mix only, or the mix, the dry voice and
+    the effects alone).
+  - Rate: the app's or 96 kHz, the voice's own, which skips the filter down (over the app's only); 24-bit.
+- Built (`src/AudioExport.h`): each render by a processor of its own, at Best (a host's offline render, D349), the
+  mix and the dry voice side by side on low-priority threads. The dry voice is the same render with Drive and Delay
+  off. The 303's sequencer plays only from the start, so a seamless loop is played round until 10 s have passed and
+  the next time through kept (the 808 jumps to 10 s before the end).
+- Tested: the lengths (a pattern, a chain by its repeats, 96 kHz), the ring-out ending quiet, the dry voice the
+  same samples as the mix with Drive and Delay off, the seamless loop the same samples as a plain render's sixth
+  time through, the 24-bit file read back. Next: the Export page.
