@@ -7409,7 +7409,7 @@ Still alone, as D304; each with what else it could have been.
 - The 303 had the same: every edit redrew the whole panel, and while playing each step redrew the whole grid, every
   key and every knob; the machined look (D348) made each redraw dearer. Measured with the software renderer at the
   window's scale (EditorTests' what_a_paint_costs): a whole paint 134 ms, a step key's area 30 ms, a knob's 11 ms.
-- Now: the 808's kept words (, the 808's own) and fonts made once; the still parts drawn once into
+- Now: the 808's kept words (`src/ui/Text.h`, the 808's own) and fonts made once; the still parts drawn once into
   images at the scale shown (the brushed ground, each knob's skirt and cap); the grid paints only the columns the
   repaint reaches. A whole paint 34 ms, a step key 2.4 ms, a knob 2.6 ms.
 - And less redrawn: an edit redraws the synth's knobs and the Mods panel only when the panel's values changed (each
@@ -7422,3 +7422,8 @@ Still alone, as D304; each with what else it could have been.
 - Alignment, seen in a full-resolution capture, case by case: the pattern bank's bay moved 10 px to stand on the
   grid screen's edge, PATTERN on the row names' line; kept as they are: the faders' names below the knobs' (taller
   controls), the cutoff's name lower (the big knob).
+- The user, on the footer "CoolSynth 303 · a bass line from its circuit": cheesy, gone; is there more? Picked from
+  a list (each with options): gone too, the lid's "checked against the netlist" note (the tests keep the check), the
+  Line tab's "These change the whole line", the library's how-to lines under its keys; kept, the Devil Fish note's
+  "the bass is fuller". The gaps closed: the Line tab's groups spread down the column, the library's keys under
+  its preview.
