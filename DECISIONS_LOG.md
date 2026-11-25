@@ -7638,3 +7638,17 @@ Still alone, as D304; each with what else it could have been.
   about 250 cents high. The options: leave the circuit and note it as the recording's knob (picked); a compromise
   cutoff taper; calibrated takes from an owner.
 - Building it: under way.
+
+## D361. A beat sync of our own, built into the engine (2026-11-25)
+
+- The user asked how two standalone apps play together, and picked a network beat sync of our own, wire-compatible
+  with the protocol DAWs and apps already speak, written from scratch in the engine (`src/sync`), MIT, no outside
+  names in the code or docs. Over the options: a Sync row in Options for MIDI clock; an existing library (GPL); a
+  local sync between our apps only; MIDI clock set up by hand.
+- The study and design: `docs/research/beat-sync-protocol.md`. A first version: IPv4, discovery, measurement,
+  sessions, the timeline and play state; no IPv6, no audio sharing, no shared song position. About 2,700 lines in the
+  engine, 1,500 of tests, a few hundred per app.
+- The user's picks: on by default with Play and Stop shared (over sync on with play separate, or both off); while the
+  sync has peers it wins and incoming MIDI clock is ignored (over the clock winning); aligned on one bar of 4 beats
+  (over each pattern's own length); a SYNC key beside the tempo with the peer count, start/stop sharing in Options
+  (over Options only).
