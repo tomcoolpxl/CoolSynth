@@ -7721,3 +7721,7 @@ Still alone, as D304; each with what else it could have been.
   number. Each size drawn on its own, 16 to 512 px, the knob alone at 32 px and under; in the apps and VST3s (303
   `ae6b398`, 808 `cea185f`), the 303's installer, the 808's .ico ready for its round; `tools/icon` in the 303 redraws
   them.
+
+## D364. The 303's CUTOFF and ENV MOD knob curves against Din Sync's unit (2026-11-25)
+
+- Claimed; written as the work lands.
