@@ -7774,3 +7774,7 @@ Still alone, as D304; each with what else it could have been.
   validation is run before CoolSynth's next release.
 - The release mechanism, the same in the three apps: a version tag builds, tests in Release, packages and
   publishes, the notes from docs/releases/<tag>.md where written.
+- Released on 2026-11-25, each on a tested commit after the user's go: CoolSynth 303 0.1.0 (v0.1.0, without CLAP),
+  CoolSynth 808 0.1.0 (v0.1.0 on 896436e, with CLAP, without ASIO: Steinberg's SDK is GPLv3 or their signed
+  licence, neither fits a JUCE Starter binary) and CoolSynth 0.7.0 (v0.7.0 on b0b64cd, Windows only, Succession
+  808's reset check set aside by the user, TODO 19). CoolSynth's notices now list everything it ships (37e0794).
