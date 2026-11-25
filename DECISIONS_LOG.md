@@ -7715,3 +7715,9 @@ Still alone, as D304; each with what else it could have been.
 - The user's picks: the 303 first (over both together, recommended, and the 808 first); the 808's theme renamed only,
   its colours kept (over a rename with colours of our own, recommended, and keeping it); the MCP server off by
   default with a switch in Options, as CoolSynth's; Windows asks about the firewall itself (over an installer rule).
+- The icons (the user: very important, theirs to decide; a subagent's unasked icon was removed). Four mockups each
+  on one page; the user picked the 303's knob (knurled black skirt, turned aluminium cap, orange pointer) over "303"
+  on the silver plate, and the 808's orange accent knob over "808" on charcoal, with more room between knob and
+  number. Each size drawn on its own, 16 to 512 px, the knob alone at 32 px and under; in the apps and VST3s (303
+  `ae6b398`, 808 `cea185f`), the 303's installer, the 808's .ico ready for its round; `tools/icon` in the 303 redraws
+  them.
