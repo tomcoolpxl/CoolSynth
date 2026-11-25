@@ -285,6 +285,28 @@ The voice's cost and its rate, measured the same day:
 - The user chose 96 kHz for the voice (D294). There every check passes as at 192 kHz: filter 21 %, oscillator 23 to
   28 %, VCA 15 to 20 %, envelope 10 % of a core, the voice about 73 %.
 
+The filter's last gap to vcf.cir (D360), measured on 2026-11-25:
+- The engine's filter sat 1.7 to 4.8 % off vcf.cir on the test's three cases, and 10.4 % at cutoff 0.9 with full
+  resonance (TM3 0.35), the ring up to 15 cents sharp.
+- Two things the netlist has and the engine left out made it. The 2N3904 stand-in's base recombination (ISE 6.7 fA,
+  NE 1.26) nearly doubles a base current at the few uA these transistors carry: most on Q11, the current source,
+  then Q20's tail and the followers Q19 and Q18. And Q21's collector-base capacitance (CJC 2.5 pF, about 1.54 pF at
+  its bias), which the pair's gain of about 225 multiplies.
+- The fix puts the recombination into the engine's own diode and transistor (a second base term, off by default, so
+  every other circuit renders the same bytes), on the six rungs, Q11, Q18, Q19, and Q20's tail. Q20 is now solved
+  from the bias divider as the loop loads it with Q21's base currents. Q21 gets two fixed 1.54 pF capacitors.
+- After it: 0.43, 0.36 and 1.05 % on the three cases, TP6's level within 1.2 to 3.2 mV (31 mV low before).
+- Over the knobs (cutoff 0.1 to 0.9, resonance 0 to 1): at worst 0.81 % of the swing, harmonics within 0.03 dB
+  (2.16 dB before), the ring within 0.4 cents.
+- The whole voice against voice.cir: harmonics 2 to 12 within 0.27, 1.03 and 0.51 dB (0.55, 1.18, 1.18 before);
+  the loudness much as before, 0.35 to 0.7 dB rms, which is the other stages' residual.
+- Against all 25 Din Sync sets nothing moved more than 0.3 dB (the mean 0.93 to 0.91 dB), so nothing was refitted.
+- The cost: the filter alone about 17 % more (1.5 to 1.78 us a sample at 96 kHz, optimised); the voice in the app's
+  test about 57 to 58 % of a core before and 59 to 63 % after at Best, 32 % and 34 to 37 % at Light.
+- Din Sync's row B (every knob at 25 %) stays 3 to 4 dB brighter than the recording, in the engine and in ngspice
+  alike. It reads as the recording's CUTOFF sitting lower than written, about 300 cents of cutoff. Five takes agree
+  within 0.3 dB, and Din Sync notes that the knob positions are approximate, so row B is left as it is.
+
 ## The whole voice in the engine (D295)
 
 Measured on 2026-11-24, `Tb303Voice.h` at 96 kHz against voice.cir rendered at 96 kHz (ngspice's step 0.2 us; at

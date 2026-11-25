@@ -7637,7 +7637,19 @@ Still alone, as D304; each with what else it could have been.
   five takes agree within 0.3 dB, Din Sync calls the positions approximate, another modelling found the same sets
   about 250 cents high. The options: leave the circuit and note it as the recording's knob (picked); a compromise
   cutoff taper; calibrated takes from an owner.
-- Building it: under way.
+- Built (engine `5573773`, CoolSynth303 `52a0ff2`): `CircuitWdf.h`'s diode and transistors take an optional
+  recombination term, zero by default and skipped then; every other circuit (the 808's, the 909's bass drum, the 303's
+  oscillator, envelopes and VCA) renders the same bytes. On the six rungs, Q11, Q18 and Q19; Q20 solved with its Early
+  effect and recombination from the bias divider as loaded, Q21's base currents included; Q21's CJC as 1.5415 and
+  1.5478 pF, ngspice's own values at rest. The lid reads the rungs' split and Q20's base current from the filter.
+- Against `vcf.cir`: 0.43, 0.36 and 1.05 % (was 4.8, 2.3, 1.7), TP6 within 3.2 mV (was 31 mV low); over the knob sweep
+  the worst 0.81 % (was 10.4), harmonics within 0.03 dB, the ring within 0.4 cents. The voice against `voice.cir`:
+  harmonics 0.27, 1.03, 0.51 dB (was 0.55, 1.18, 1.18); its loudness 0.35 to 0.69 dB rms, unchanged, so that gap is in
+  the other stages. Din Sync's 25 sets: 0.906 dB on average (was 0.927), none moved over 0.3 dB, nothing refitted.
+- The cost: the filter some 17 % more; the voice in Best about 57 to 60 % of a core, in Light about 34 %.
+- Tests tightened: the filter's limit 5 % to 2 % and TP6 within 5 mV, the voice's harmonics 1.75 to 1.3 dB. One lid
+  limit looser: C14's side at 150 ms into the accented ring 26.8 % against 25 %, given 32 %, the filter alone within
+  1.1 % there. Left out: Q21's base-emitter and transit charge (small, per the study), its CJC fixed at rest.
 
 ## D361. A beat sync of our own, built into the engine (2026-11-25)
 
