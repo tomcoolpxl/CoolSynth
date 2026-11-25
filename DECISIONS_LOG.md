@@ -7399,3 +7399,7 @@ Still alone, as D304; each with what else it could have been.
   sequencer (less used actions in a menu).
 - Picked (each with options): B, the inspector column (over A tidied in place, C the keyboard and patterns, or another
   round mixing them). Next: B in the app.
+
+## D351. CoolSynth 303: a press shows at once, as the 808 after D306; the library and pop-ups in the look (2026-11-25)
+
+- Claimed; written in full when it lands.
