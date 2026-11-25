@@ -7442,3 +7442,7 @@ Still alone, as D304; each with what else it could have been.
     the 808's orange.
   - Olive: the 808's olive drab, cream printing, the glass tinted green, signal red for orange, the title's 303 too.
 - Open: the user's view of them; then the app (colours as roles, a Theme row on Options' Panel page).
+
+## D353. CoolSynth 303: a hint line at the foot, and controls that light under the mouse (2026-11-25)
+
+- Claimed; written in full when it lands.
