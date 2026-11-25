@@ -7664,6 +7664,22 @@ Still alone, as D304; each with what else it could have been.
   sync has peers it wins and incoming MIDI clock is ignored (over the clock winning); aligned on one bar of 4 beats
   (over each pattern's own length); a SYNC key beside the tempo with the peer count, start/stop sharing in Options
   (over Options only).
+- Built in the engine (`7c95e2a` to `76116a8`, `src/sync`, a console probe in `tools/beatsync-probe`): 27 tests, the
+  byte examples exact, two peers on the loopback meeting in about 50 ms, their grids within 1 us, tempo and start/stop
+  crossing in 2 to 38 ms on the same bar line; no allocation or lock on the audio thread. Left to decide later: the
+  measurement keeps the plain median (75 us rms under 0 to 2 ms of random delay; the quickest round trips only would
+  be tighter).
+- The 808 (`423632e`, `567ea09`) and the 303 (`0d7ac8e`, `7bb19e6`): standalone only (the plugins and the WAV
+  exports' offline Processors never open sockets), a play head of our own into each app's DAW path, Play counting in
+  to the next bar line and starting on its sample, another peer's tempo taken into the panel (the first block with
+  peers keeps the session's), MIDI clock out still sent on the session's grid, the MCP servers report and switch it.
+  Steps within a sample of a peer's grid. The 808 has no hint line, so its keys got tooltips (its Close (Esc)
+  tooltips now show too).
+- Tried live: the 303 and the 808 together, tempo and Play and Stop both ways; the 808 with a DAW on this computer
+  (Live 12, its driver set to ASIO at the user's choice, as its sync needs), tempo and Play and Stop both ways. Not
+  measured: how close their sound lines up (Live on ASIO, ours on Windows Audio; for the user's sanity listen).
+- The network tests stepped aside (`459922d`, `5ed7625`): with another program in a session on this computer they
+  skip instead of failing on its count. CoolSynth's own app is not wired yet (TODO).
 
 ## D362. The 303's accent against Din Sync's unit: the recordings clip at the output stage (2026-11-25)
 

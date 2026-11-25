@@ -360,6 +360,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     its wonky spots fixed, and three layouts of the lower half mocked up (`coolsynth-303-relayout.html`); the user picked B, the inspector column, built. A press drawn as fast as the 808's (D351); the tagline and developer notes gone; a hint line and hover lights (D353). Themes (D352: Graphite, Silver, Steel, Olive) in the app, chosen in Options; an Init key; the library's audition fixed, ties drawn with their note (D354). Hover lights and hint lines in the dialogs too. Parked: the DSP load past 100 % now and then on the Devil Fish sounds (the user: later); the 808's library had the same audition fault as the 303's (D354): fixed in the 808 the same way (2026-11-25).
 
 
+37. The beat sync (D361): in the engine, the 303 and the 808. Left: CoolSynth's own app (its standalone, through the
+    same play-head path; its arps and synced LFOs follow); the Mac path compiled and tried; how close the sound lines
+    up with a DAW (a cable loop from the outputs back in, or the user's sanity listen); the measurement's method (the
+    plain median, or the quickest round trips).
+
 ## Standing notes
 
 - Adding a bank file used to make the link fail (LNK1236 on the embedded bank library) because of stale
