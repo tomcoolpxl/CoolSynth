@@ -132,7 +132,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     2026-11-19 as the user chose. Every preset renders the same bits fresh and after a reset, live and bounced;
     bouncing waits for sounds to load and never fades for load; the arps' New Patterns switch; the test build
     watches the heap, locks, waits, sleeps and files in audio blocks; the worst-case cost test, the voice cap shown
-    on the screen and the live emergency. Left: the user's hands on the cap and the emergency (a heavy preset, a
+    on the screen and the live emergency. Set aside by the user for 0.7.0 (2026-11-25): Succession 808 after a reset
+    differs from a fresh render from sample 18, by 0.0047 (the Kick's 808 circuit; likely solver state D341 to D347
+    left behind); the determinism test skips its reset checks until it is fixed. A first look was stopped unfinished:
+    its uncommitted FreshRenderDump test and CMake change sit in E:\github\coolsynth-engine. Left: the user's hands on the cap and the emergency (a heavy preset, a
     slow block size), and multi-core by layer if a single sound ever needs more than its share.
 23. Profile the heaviest sound there can be and optimise (`docs/research/profiling.md`). The user's choices (D235):
     Windows Performance Recorder and Analyzer, CPU first, before the Mac port so the Mac has a Windows baseline.

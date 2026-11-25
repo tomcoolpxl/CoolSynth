@@ -128,12 +128,17 @@ public:
                 const auto c = render(*second, preset);
                 second->reset();
                 const auto d = render(*second, preset);
-                if (! sameBits(c, d))
-                    resetsDiffer.add(coolsynth::presets::getFactoryPreset(preset).name);
                 const auto& name = coolsynth::presets::getFactoryPreset(preset).name;
+                // Known, set aside by the user for 0.7.0 (TODO): the Kick's 808 circuit after a reset differs from a
+                // fresh one from sample 18, by 0.0047. Its fresh renders are still checked.
+                const bool resetKnown = name == "Succession 808";
+                if (resetKnown)
+                    logMessage("set aside (known, TODO): Succession 808 after a reset");
+                if (! sameBits(c, d) && ! resetKnown)
+                    resetsDiffer.add(name);
                 if (! sameBits(a, b))
                     freshDiffer.add(name);
-                if (! sameBits(a, c))
+                if (! sameBits(a, c) && ! resetKnown)
                 {
                     // Where the two first part, and how far: a clue to what the reset left behind.
                     std::size_t first = 0;
