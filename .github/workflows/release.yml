@@ -63,7 +63,9 @@ jobs:
           path: build/ci-release/packages/**
 
   # The Mac: GitHub's Apple silicon runner with Xcode 27. The installer is an unsigned .pkg (D234).
+  # Paused (the user, 2026-11-25): the Mac comes back in a later release; releases are Windows only until then.
   build-macos-assets:
+    if: ${{ false }}
     runs-on: xcode-27
     timeout-minutes: 120
     steps:
@@ -101,7 +103,7 @@ jobs:
           path: build/ci/packages/**
 
   publish-release:
-    needs: [build-release-assets, build-macos-assets]
+    needs: [build-release-assets] # build-macos-assets too, when the Mac comes back
     runs-on: windows-2022
     steps:
       # The release notes, written per version in docs/releases/<tag>.md, one line per paragraph and per bullet
@@ -116,12 +118,6 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: windows-release-${{ github.ref_name }}-packages
-          path: release-bundle
-
-      - name: Download Mac package bundle
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: macos-release-${{ github.ref_name }}-packages
           path: release-bundle
 
       - name: Name the release
@@ -146,8 +142,6 @@ jobs:
 
             Windows may warn that the installer comes from an unknown publisher, because it is not code-signed: choose **More info**, then **Run anyway**.
 
-            On a Mac with Apple silicon and macOS 13 or newer: open **CoolSynth-Setup-${{ github.ref_name }}.pkg**. It isn't signed, so macOS blocks it once: go to **System Settings > Privacy & Security** and click **Open Anyway**.
-
             Without the installer: the zips below hold the VST3, the CLAP and the app, and the instruments are on the [instrument library's page](https://huggingface.co/datasets/tomccargo/coolsynth-instruments).
 
             Setting up your keyboard, an Arturia MiniLab 3, or FL Studio: see [the guide](https://github.com/tomcoolpxl/CoolSynth#readme).
@@ -160,8 +154,3 @@ jobs:
             release-bundle/CoolSynth-windows-x64-vst3-${{ github.ref_name }}.zip
             release-bundle/CoolSynth-windows-x64-clap-${{ github.ref_name }}.zip
             release-bundle/CoolSynth-windows-x64-sha256-${{ github.ref_name }}.txt
-            release-bundle/CoolSynth-Setup-${{ github.ref_name }}.pkg
-            release-bundle/CoolSynth-macos-arm64-standalone-${{ github.ref_name }}.zip
-            release-bundle/CoolSynth-macos-arm64-vst3-${{ github.ref_name }}.zip
-            release-bundle/CoolSynth-macos-arm64-clap-${{ github.ref_name }}.zip
-            release-bundle/CoolSynth-macos-arm64-sha256-${{ github.ref_name }}.txt

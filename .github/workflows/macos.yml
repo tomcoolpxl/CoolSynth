@@ -4,10 +4,8 @@ name: macOS
 # It builds the app, the VST3 and the CLAP, runs the tests and keeps the installer and the zips as the run's
 # artifacts for a week. A version tag builds the Mac's release files in release.yml instead.
 
+# Paused on pushes (the user, 2026-11-25): the Mac comes back in a later release; it still runs by hand.
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       configuration:
