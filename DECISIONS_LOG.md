@@ -7536,7 +7536,12 @@ Still alone, as D304; each with what else it could have been.
   the next time through kept (the 808 jumps to 10 s before the end).
 - Tested: the lengths (a pattern, a chain by its repeats, 96 kHz), the ring-out ending quiet, the dry voice the
   same samples as the mix with Drive and Delay off, the seamless loop the same samples as a plain render's sixth
-  time through, the 24-bit file read back. Next: the Export page.
+  time through, the 24-bit file read back.
+- The Export page, once the redesign was done: rows What (the pattern shown or the chain), Times, End, Files, Rate
+  as keys with lenses, as Accuracy's; a line naming the file to come (24-bit, the rate, its length, its end), as the
+  808's dialog has; Export asks where, then a progress bar and Cancel; the status names what was written. Choices
+  and the folder kept in CoolSynth303.settings. Cancelled or closed while it renders, no file is left. Tested: the
+  keys make the job, an export writes both files 24-bit and the length expected, a cancel leaves nothing.
 
 ## D356. CoolSynth 808: every circuit solved to 1 nV in Best; the chord method left off (2026-11-25)
 
