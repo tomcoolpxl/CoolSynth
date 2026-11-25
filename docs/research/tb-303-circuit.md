@@ -352,6 +352,37 @@ level fitted across all 400 notes). The user heard the real notes start a little
   `Tb303Voice::resonanceLoop`, 0.96 of the pot's share: the whistle within 1 dB, set E within about 1 dB.
 - Left: the accent's second cycle 1.3 dB loud on set A5 (every other knob at 0), C13 tried from 0.68 to 2.2 uF.
 
+## The accent's loudness against Din Sync's unit (D362)
+
+Measured on 2026-11-25: the accented saw against the plain one, 30 to 80 ms into the note, all 25 sets, for the
+unit, the engine and ngspice's voice.cir (RESONANCE through the engine's track in both).
+- The engine and voice.cir agree within 0.1 dB at every position, so the gap is the circuit as drawn, not the code.
+  compare_sets.py's mean of ngspice's samples weighs the fast edges, where its steps crowd; time-weighted, the two
+  agree on row E too, where the plain mean put voice.cir 1.7 dB under the engine.
+- Ours runs louder than the unit by 0.7 dB on row C, 0.3 on D and 1.3 on E, up to 3 dB on E2 at a quarter turn.
+  The excess is in the accented notes; the plain ones sit within about 1 dB.
+- Din Sync's recordings clip. Every loud note's downward peaks stop at the same level, about 12,500 counts, in all 25
+  sets, while the upward ones reach 17,000. The flat floor shows on the accented notes of row E and of A5 and B5 at
+  full ACCENT; ours goes 3 to 8 dB past it there.
+- The likely clipper is the 303's own mixer after VOLUME (Q34 and Q33): it pulls its output down only through R160,
+  10k, against its load, so into a recorder's 10 to 16k input it can fall only about 2.3 to 2.8 V under its 5.3 V
+  rest. That matches the floor with VOLUME full. The x0xb0x wiki notes the same distortion at high volume and accent,
+  cured by turning VOLUME down. Lemus fitted the same unit's flattened accents as the BA662 saturating at a fifth of
+  its swing, cause unknown.
+- voice.cir with the mixer, VOLUME full, into 10k, on the 11 sets that reach the floor: row E's excess from 1.3 to
+  0.2 dB, D's from 0.4 to -0.1; E2's quarter turn 3.3 dB (unit 3.6, ours 6.6), A5 at full ACCENT 13.0 (13.3, ours
+  14.0). But every knob full drops to 6.2 (unit 6.9, ours 7.2) and B5 at full ACCENT goes 1 dB further off. Into 16k:
+  every knob full 6.6, A5 13.3. Row C stays under the floor and does not move, but for C5 at full ACCENT (within
+  0.1 dB with it, 1 dB loud without).
+- The floor's level rests on VOLUME and on the recorder's input, neither of which is known, so it is one fitted
+  number.
+- What clipping leaves is a mid-ACCENT excess: 0.5 dB at a quarter turn, 0.75 at half (row C), little at three
+  quarters. Din Sync's five takes at every knob half give 1.2 to 2.2 dB, ours 2.4. An ACCENT track at 43 % at half
+  turn brings rows B to D within 0.2 dB but A5 and B5 at three quarters, already 2.5 to 3 dB quiet, 0.5 to 0.8 dB
+  further off, so no knob law brings every set closer.
+- Nothing was changed. Adding the output stage is open, with VOLUME before it and an assumed load; with it,
+  `Tb303Voice::resonanceLoop` (0.96, fitted to row E's loudness in D324) wants checking again.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

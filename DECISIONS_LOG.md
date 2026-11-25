@@ -7664,3 +7664,7 @@ Still alone, as D304; each with what else it could have been.
   sync has peers it wins and incoming MIDI clock is ignored (over the clock winning); aligned on one bar of 4 beats
   (over each pattern's own length); a SYNC key beside the tempo with the peer count, start/stop sharing in Options
   (over Options only).
+
+## D362. The 303's accent against Din Sync's unit: the recordings clip at the output stage (2026-11-25)
+
+- Claimed; written as the work lands.
