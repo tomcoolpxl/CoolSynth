@@ -186,8 +186,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     (2026-11-21, "amazingly good"). Left from D236: oversampling for the hardest Shape. The 909 is its circuit too
     (D237, built D238): the whole drum from the service notes, within 1 % of ngspice stage by stage, R8 read to -15 V (D239), checked against shoreline and
     mw909 (D240): Q8 a PNP switch and R495 give the real click, the triangle fitted near 4.9 V the real pitch and
-    harmonics. The 909 made cheaper, then priced: postponed by the user until after the whole 808 (D241, kept
-    in D250); its 33.3 % price stands. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
+    harmonics. Everything 909 parked by the user (2026-11-25): its cost pass and price (postponed until after the
+    whole 808 in D241, kept in D250; its 33.3 % price stands) and its open items below. The largest saving found: since Q8 is a PNP the click circuit never comes to rest (its C11 test),
     though Q8 and Q9 are back at rest by 50 ms. Open: H2 6 dB over the real units', the noise clock, and a 909 hit
     after a reset differs from a fresh one from its first sample (found 2026-11-21 by `V3KickTests`; no preset uses
     the 909, so the determinism tests do not see it). For those checks, a third 909 the user found (2026-11-22): one
@@ -208,7 +208,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     self-oscillation. The user's ear passed Acid, its accent and its slide (2026-11-21). Left: a check against a
     real 303's recordings when an owner's turn up;
     whether the 303's own step sequencer (accent and slide per step) comes into the layer's.
-    Its code made cheaper (the user, 2026-11-21), with the 909's cost pass after the whole 808: priced at 1.36 % a
+    Its code made cheaper (the user, 2026-11-21), after the whole 808 (the 909's pass parked): priced at 1.36 % a
     voice but never optimised. First bit for bit (the quarter-band filter's 12 states by a ring index, not shifted
     each core sample; work fixed within a block lifted out), then whether a polyphase half-band in place of the
     twelfth-order elliptic is worth its slightly different sound.
@@ -247,8 +247,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     circuits. Sixteen drums ringing at once stay over a block, struck or not (the overload rule's case).
     Each voice designed with the user (options) before it is built. The 808 Metal at 96 kHz: done (D259), the voices
     near 96 kHz at any host, so it costs there what it does at 48 kHz (29 % of real time, was 46); its five VCAs kept
-    running and its cowbell at 100 nV, as the user chose. Then the 909 made cheaper and priced (30), and the 303's
-    code made cheaper (32).
+    running and its cowbell at 100 nV, as the user chose. Then the 303's code made cheaper (32); everything 909 is
+    parked (30, the user, 2026-11-25).
 34. Parked (the user, 2026-11-21): in the app, the computer's keyboard plays the piano keys, for people without a
     MIDI keyboard. The notes only, not the panel's navigation. The usual layout: a row of letters for the white
     keys, the row above for the black ones, keys for the octave and the velocity (Ableton's computer MIDI
