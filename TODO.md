@@ -286,7 +286,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     Since then (D307 to D329): themes, the own Options window, the panel and Under the Lid live from the engine,
     Lift the Lid with the CPU board, every sheet live in real time, the CPU sheet, the VST3 (tried in FL Studio),
     learnable drum notes. Parked, the user's asides and what was left, so none is lost (2026-11-24):
-    - The VST3 in Bitwig (FL Studio done, D328; Ableton Live done, D357; Bitwig's window access declined by the user).
+    - The VST3 in Bitwig: all but one check done (D357); left, seeing a drum on its own output leave the main there.
     Done 2026-11-25 (D357): the Release build measured, the export's drum files from one render, the Load key's "01",
     FL's MIDI CC stand-ins kept.
 36. CoolSynth 303 (D275): a third app, `tomcoolpxl/CoolSynth303`, the TB-303 as its circuit in `coolsynth-engine`
