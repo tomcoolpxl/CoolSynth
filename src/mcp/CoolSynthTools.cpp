@@ -454,7 +454,10 @@ namespace coolsynth::mcp
                           "for checking the drawing itself (text cut off, overlaps, colours). read_screen gives what it shows as text.",
                           objectSchema({ { "area", typeSchema("string", "Optional: 'main screen', 'layer screen', 'knobs', 'faders', 'pads', 'keys', "
                                                                         "'left', or 'x,y,w,h' in the 1100 x 680 panel; empty: the whole window") },
-                                         { "zoom", typeSchema("number", "With an area: 1 to 3 times its size, 2 by default") } }),
+                                         { "zoom", typeSchema("number", "With an area: 1 to 3 times its size, 2 by default") },
+                                         { "scale", typeSchema("number", "The whole window: pixels per point, 1 to 4; 2 by default, "
+                                                                         "sharp enough for a README") },
+                                         { "file", typeSchema("string", "Optional: a full path to write the PNG to as well") } }),
                           [window](const juce::var& args)
                           {
                               auto* component = window ? window() : nullptr;
@@ -477,13 +480,27 @@ namespace coolsynth::mcp
                               }
                               else
                               {
-                                  image = component->createComponentSnapshot(component->getLocalBounds(), true, 1.0f);
-                                  what = "CoolSynth's window, ";
+                                  const float scale = args.hasProperty("scale")
+                                                          ? juce::jlimit(1.0f, 4.0f, static_cast<float>(static_cast<double>(args["scale"])))
+                                                          : 2.0f;
+                                  image = component->createComponentSnapshot(component->getLocalBounds(), true, scale);
+                                  what = "CoolSynth's window at " + juce::String(scale, 1) + " times its size, ";
                               }
                               juce::MemoryOutputStream png;
                               juce::PNGImageFormat().writeImageToStream(image, png);
+                              juce::String saved;
+                              if (const auto path = args["file"].toString(); path.isNotEmpty())
+                              {
+                                  if (! juce::File::isAbsolutePath(path))
+                                      return textResult("file must be a full path.", true);
+                                  const juce::File file(path);
+                                  (void) file.getParentDirectory().createDirectory();
+                                  if (! file.replaceWithData(png.getData(), png.getDataSize()))
+                                      return textResult("Cannot write " + file.getFullPathName() + ".", true);
+                                  saved = " Written to " + file.getFullPathName() + ".";
+                              }
                               return imageResult(png.getMemoryBlock(), what + juce::String(image.getWidth()) + " x "
-                                                                           + juce::String(image.getHeight()) + " pixels.");
+                                                                           + juce::String(image.getHeight()) + " pixels." + saved);
                           } });
 
         tools.push_back({ "read_screen",
