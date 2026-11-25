@@ -7445,4 +7445,20 @@ Still alone, as D304; each with what else it could have been.
 
 ## D353. CoolSynth 303: a hint line at the foot, and controls that light under the mouse (2026-11-25)
 
-- Claimed; written in full when it lands.
+- The user: a hint area in the space at the bottom; Generate and other controls do not say what they do. And
+  clickable things should light up under the mouse, as the 808's do.
+- The hint line: the strip at the panel's foot (where the removed tagline was) shows one plain sentence on what the
+  control under the mouse does and how to use it; with nothing under it, "Point at a control to see what it does."
+  Chosen over tooltips, which cover the controls and come late; Ableton Live's info view works the same way.
+  - The hints are one table (`src/ui/Hints.h`) by kind and name; the panel sets those a name alone cannot say (the
+    keyboard's Accent and Slide, the On keys, the two Stock keys, the locks, the tools' arrows). Painted places answer
+    for the spot under the mouse: each grid row per step, each pattern key, A and B, the chain, + and Loop, the
+    tabs, the piano (Write or Transpose), the picked step's display, the name, the tempo, the load.
+  - A test checks every key, knob, fader and value box has a hint, and that the line finds them from a place on the
+    board.
+- Hover lights, as the 808's (its caps lighter under the mouse, darker held, a knob's name white): a key's cap lights
+  and goes down a pixel while held; a knob's track lights and its name turns white; a fader's name; a display's edge;
+  the grid's cell, the pattern row's keys and the tabs lit by an outline; a piano key tinted; the tempo outlined. Each
+  repaints only its own place.
+- Seen on screen: step 4's slide cell lit under the mouse, the line reading "Step 4's slide into the next step.
+  Click to switch."
