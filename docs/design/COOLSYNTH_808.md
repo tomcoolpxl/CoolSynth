@@ -8,7 +8,7 @@ Nothing here is built yet. The draft's open questions are answered at the end; t
 
 - A standalone app first; the VST3 and CLAP formats come later.
 - The name is CoolSynth 808; the line under it on the panel is Beat Composer.
-  - Not searched in any trademark registry yet: to do before the first release.
+  - Searched by the user in the trademark registries before the first release: free to use (D366).
   - "TR-808" never appears on the panel. The README says the app is based on the TR-808's circuits and that the
     mark is Roland's.
 - The look is the mockup, `docs/design/mockups/coolsynth-808.html`, with colours, details and type still to fine-tune.

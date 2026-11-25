@@ -281,8 +281,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     with rails, ngspice's own currents and voltages on every wire (`tools/kick808/mockup_currents.py`), a time bar
     and a check of the drawing against the netlist. Every other drum is drawn the same way now (D278), each its own sheet (from
     `tools/tr808/*.cir`, each needing its own recording); the reduced board plays from the recordings too (D280). The realistic panel is still to draw. A UX and UI review is written (D283, `docs/design/COOLSYNTH_808_REVIEW.md`); three layouts follow as mockup views in the app.
-    Before a release: the name in the trademark registries, and the line that says whose mark
-    TR-808 is.
+    The name checked by the user and the line that says whose mark TR-808 is in the README; unsigned, as CoolSynth;
+    the theme Charcoal (D366). The release itself after the 303's (D363).
     Since then (D307 to D329): themes, the own Options window, the panel and Under the Lid live from the engine,
     Lift the Lid with the CPU board, every sheet live in real time, the CPU sheet, the VST3 (tried in FL Studio),
     learnable drum notes. Parked, the user's asides and what was left, so none is lost (2026-11-24):

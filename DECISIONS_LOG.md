@@ -7748,4 +7748,10 @@ Still alone, as D304; each with what else it could have been.
 
 ## D366. CoolSynth 808's release: the name checked, unsigned, the theme Charcoal (2026-11-25)
 
-- Claimed; the entry follows.
+- After D363, the user asked what is still missing for the 808's release.
+- The theme named "Roland" renamed "Charcoal" at the user's word (as D363's pick): id "charcoal", a setting saved as
+  "roland" opens it, the colours kept (CoolSynth808 f415dcd).
+- The name in the trademark registries, open since D263: the user searched and finds "CoolSynth 808" free to use
+  (over a search by Claude in EUIPO, BOIP, WIPO and the USPTO, or releasing without one).
+- Signing: unsigned, as CoolSynth (over the SignPath Foundation's free signing for open-source projects, about one
+  to two weeks and not sure to be granted, the foundation named as publisher; Microsoft lists it among its options).
