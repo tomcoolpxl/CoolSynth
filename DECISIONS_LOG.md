@@ -7562,3 +7562,7 @@ Still alone, as D304; each with what else it could have been.
   against itself solved to 1 pV: -196 dB (-2.5 dB at 100 nV). CoolSynth's 808 kit takes it with its next engine
   pointer. And the 808's library audition fixed as the 303's (D354): the shelf asks the editor, the transport
   judged by what it was asked.
+
+## D357. CoolSynth 808: the export's drum files from one render; tried in Ableton Live; the library key's pattern number (2026-11-25)
+
+- Claimed; the entry follows.
