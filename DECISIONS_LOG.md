@@ -7566,3 +7566,11 @@ Still alone, as D304; each with what else it could have been.
 ## D357. CoolSynth 808: the export's drum files from one render; tried in Ableton Live; the library key's pattern number (2026-11-25)
 
 - Claimed; the entry follows.
+
+## D358. CoolSynth 303: a click on a line no longer closes the library (2026-11-25)
+
+- The user: every click on a line in the library closed it, after the first load; asked before to fix the library.
+- The cause: D353's hover light on the list's rows made the shelf listen to the list's mouse events. Its mouseUp
+  closes the library on a click outside its box, and took the list's clicks, their positions in a row's own place,
+  for clicks on the veil. Fixed: mouseUp acts only on a click on the shelf itself; a test clicks a row and checks the
+  library stays open. The 808's library has no such listener.
