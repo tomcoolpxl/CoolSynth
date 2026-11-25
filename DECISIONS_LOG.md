@@ -7745,3 +7745,7 @@ Still alone, as D304; each with what else it could have been.
 - The user's picks: the TB-303 kept as it is (over the 303 app's circuit, some 60 % of a core a voice, or removing
   it); the 808 drum engines kept (over removing them); the Kick's 909 out of CoolSynth's menu, the 808 and modern
   kept (over keeping all three). Done quick, as the user asked: the Kick's model knob in CoolSynth snaps past the 909 (to 808 below three quarters, Modern above), so a sound saved with the 909 now plays as 808; the 909's code stays in the engine for its own tests.
+
+## D366. CoolSynth 808's release: the name checked, unsigned, the theme Charcoal (2026-11-25)
+
+- Claimed; the entry follows.
