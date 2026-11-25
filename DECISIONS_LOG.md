@@ -7565,7 +7565,21 @@ Still alone, as D304; each with what else it could have been.
 
 ## D357. CoolSynth 808: the export's drum files from one render; tried in Ableton Live; the library key's pattern number (2026-11-25)
 
-- Claimed; the entry follows.
+- The user picked all of the 808's parked items (TODO 35) and the Release build's measurement.
+- The VST3 in Ableton Live 12 Intro: it loads, plays with Live's transport, Live shows exactly the 28 parameters
+  (not JUCE's MIDI CC stand-ins), Live's moves turn the panel's knobs and the panel's turns reach Live, Live lists the
+  11 drum outputs by name, and a drum switched to its own output leaves the main (soloed, the main silent). Bitwig
+  not tried: the user declined access to its window.
+- The export's drum files from one render: each drum heard on its own output (D343), the mix the main plus those
+  outputs, so the files add up to it; the mix so made is the whole mix to -145 dB. A full-kit beat of 8 s with 11
+  files: 12.3 s against 19.4 s for the renders spread over 12 cores, a twelfth of the CPU.
+- The library's Load key says "Load into 01", as the panel names its patterns (was "pattern 1").
+- FL's 2048 "MIDI CC" parameters, JUCE's stand-ins for the DAW's CC (VST3 has no other way; JUCE forum threads 17858
+  and 33796): picked, kept as they are (over flagging them hidden in our JUCE, or turning them off, which would stop
+  learned knobs working in a DAW). Live hides them; FL lists them after our 28.
+- The Release build (whole-program optimised, D327) against the optimised Debug build: the cowbell 44 to 48 % of a
+  core against 51 to 57, the cymbal and open hat 2 to 9 points less, the lighter drums the same within the timing
+  noise of other sessions running. The DAWs keep loading the Debug build for now.
 
 ## D358. CoolSynth 303: a click on a line no longer closes the library (2026-11-25)
 
