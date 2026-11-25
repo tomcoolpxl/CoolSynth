@@ -7441,7 +7441,11 @@ Still alone, as D304; each with what else it could have been.
   - Steel: the 808's blue-grey anodised aluminium, white printing, keys in the metal's colour, the glass tinted blue,
     the 808's orange.
   - Olive: the 808's olive drab, cream printing, the glass tinted green, signal red for orange, the title's 303 too.
-- Open: the user's view of them; then the app (colours as roles, a Theme row on Options' Panel page).
+- Picked (each with options): all three into the app, Graphite staying the default. Built in CoolSynth303 (fcf2425):
+  every colour of the panel is a role in a palette per theme (`src/ui/Theme.h`), the plates' printing apart from the
+  screens', so on Silver the plates print dark and the screens stay light; the library, Options and the pop-up menus
+  stay dark glass in every theme. A Theme row on Options' Panel page, kept in the app's settings; chosen, the whole
+  panel redraws at once. The tests' pictures cover every theme (`303-themes/app-*.png`).
 
 ## D353. CoolSynth 303: a hint line at the foot, and controls that light under the mouse (2026-11-25)
 
@@ -7462,3 +7466,26 @@ Still alone, as D304; each with what else it could have been.
   repaints only its own place.
 - Seen on screen: step 4's slide cell lit under the mouse, the line reading "Step 4's slide into the next step.
   Click to switch."
+- The user: knobs turned all over, how back to a default without losing the patterns? New resets everything; a knob
+  alone resets with a double-click. Picked (each with options): an Init key in the top bar (over an Init sound in the
+  library, or a reset on a section's name): every knob and switch to its default, the Devil Fish off, the trimmers
+  stock, the patterns, chain, tempo and key kept; one undo step.
+
+## D354. CoolSynth 303: the library's audition held in one place; a tie drawn with its note (2026-11-25)
+
+- The user: the library's state is wrong, Audition plays and stops, lit or not out of step, and in the end you do not
+  know what is loaded (the 808's the same).
+- Two faults. The shelf kept its own copy of "auditioning" beside the editor's; walking the list while listening
+  first asked for the other kind of audition to stop (the editor gave yours back, stopped the transport and told the
+  shelf it was off) and then for the next to start, so the transport stopped and the key read Audition while it
+  played. And whether an audition had started the transport was read from the audio thread's state just after a stop
+  was asked for, so a following audition thought the transport its own and never stopped it.
+- Now the editor alone holds the audition and the shelf asks it; walking the list swaps the audition in one step,
+  the transport untouched; the transport is judged by what it was asked to do (`Processor::willPlay`). A test walks
+  lines and sounds while listening and checks the key, the transport and that Stop gives yours back.
+- The user, on a note placed before a tie: a note and then a bar, confusing. A tie holds the note before it on, drawn
+  as a darker bar. Picked (each with options): join them (over leaving it, or a link mark): the note runs to its
+  column's edge when a tie follows and the tie meets it, in the note's own colour a little darker.
+- The pitch lane's hover lights the note's slot under the mouse, not the whole column (the user).
+- Parked: the DSP load going past 100 % now and then on the Devil Fish sounds (the user: later); the 808's library
+  has the same audition fault (its session).
