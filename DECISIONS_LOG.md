@@ -7599,8 +7599,8 @@ Still alone, as D304; each with what else it could have been.
   MIDI output keeper and the two 96 kHz Rate keys. The keys: at 96 kHz the export's Rate row shows one key. The
   keeper: the 303's standalone keeps its MIDI output's own sending thread running, as the 808's, so each clock tick
   leaves at its own sample.
-- Together, the options: MIDI clock as it is, measured (picked); a local sync of our own; Ableton Link (GPL 2 or
-  later, or Ableton's proprietary licence on request); both in one app.
+- Together, the options: MIDI clock as it is, measured (picked); a local sync of our own; an existing network beat-sync
+  library (GPL 2 or later, or its maker's proprietary licence on request); both in one app.
 - The loopback, the options: Windows MIDI Services (picked; its Tools preview 14 installed by the user, a basic
   loopback needs the Transports package too, so a two-way pair "CoolSynth Clock (A)/(B)" made with `midi loopback
   create`, not saved, gone when the service restarts); loopMIDI; a MIDI cable through the UMC204HD; the user's own.
@@ -7619,3 +7619,22 @@ Still alone, as D304; each with what else it could have been.
   the two together and that a busy program can make the 808 stutter.
 - Asides: the 303's MCP `playing` reads false while it follows a clock; its MIDI output's help says it carries the
   sequencer's notes, but only the clock goes out.
+
+## D360. The 303's filter: the stand-in transistor's full physics; Din Sync's row B left as the recording's knob (2026-11-25)
+
+- The gap against `vcf.cir` (1.7 to 4.7 % on the three test cases, 10.4 % at cutoff 0.9 and full resonance with TM3
+  at 0.35; 0.14 to 0.36 dB per harmonic at most settings, 2.2 dB on the peak and the ring 15 cents high at the worst)
+  is not the rate or the solver: it is two things the netlist has and the engine leaves out. The 2N3904 stand-in's
+  base recombination (ISE 6.734f, NE 1.259), most on Q11, Q20, Q18 and Q19, and Q21's collector-base capacitance
+  (CJC 2.5 pF) times the pair's gain of about 225. Found by cutting the netlist's models down one term at a time.
+- The options: the full physics folded into the engine's diode and transistor, a second low-current base term that is
+  zero for every other circuit (picked; prototyped at 0.6, 0.4 and 1.1 %, harmonics within 0.21 dB, the ring within
+  about a cent, Din Sync's sets within 0.2 dB, so no refitting); the six ladder diodes as their own ports (the same,
+  some 8 points of a core more); fitted to the real 2SC945's datasheet instead (every reference rendered again);
+  leave it and correct the docs.
+- Set C2's resonance at a quarter turn: closed by D324's track (now within 1.3 dB).
+- Din Sync's row B, 3 dB brighter than both the engine and ngspice, like a cutoff about 300 cents lower than written;
+  five takes agree within 0.3 dB, Din Sync calls the positions approximate, another modelling found the same sets
+  about 250 cents high. The options: leave the circuit and note it as the recording's knob (picked); a compromise
+  cutoff taper; calibrated takes from an owner.
+- Building it: under way.
