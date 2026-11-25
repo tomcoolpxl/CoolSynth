@@ -318,7 +318,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     user: the real note falls faster with ENV MOD high and CUTOFF low (10 dB in 86 to 148 ms, ours 117 to 425); ACCENT
     at a quarter turn adds up to 1.6 dB of accent where the real one adds almost none; the loudest saw accents (full
     ACCENT, rows D and E) 1 dB under the unit since D362's clipping (the 16k load fit). Done: the CUTOFF and ENV MOD
-    knob curves (D364), the library's 12 sounds set anew so each plays as before. Aside: a player's own saved sounds,
+    knob curves (D364), the library's 12 sounds set anew so each plays as before. Released: 0.1.0 (2026-11-25,
+    without CLAP); CLAP built since (D367, de961ae), for the next release. Asides: the 303 gives a DAW no parameters
+    at all (VST3 and CLAP), so nothing can be automated from the host; its installer has fixed types (everything, app,
+    VST3, CLAP), where CoolSynth's lets each box be ticked. Aside: a player's own saved sounds,
     the panel's default and Init still sit on the new curve (brighter at mid turns than before D364). Set C2's
     resonance at a quarter turn: closed by D324's track (within 1.3 dB). Asides found there: the accent's loudness
     over a plain note runs 1 to 3 dB above the real unit in rows C and E (E2 at 25 %: +6.6 dB against +3.6); the
