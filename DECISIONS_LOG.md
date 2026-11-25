@@ -7430,4 +7430,15 @@ Still alone, as D304; each with what else it could have been.
 
 ## D352. CoolSynth 303: themes, Silver after the TB-303, the 808's Steel and Olive (2026-11-25)
 
-- Claimed; written in full when it lands.
+- The user: themes, a silver one after the TB-303's look, and the 808's Steel and Olive ported; mockups first if that
+  is faster.
+- Mockups first (the colours are the question, Silver above all): 
+  (source ), screenshots at twice the size in , all on layout B:
+  - Graphite: the look as the app has it (D348).
+  - Silver: the plates brushed aluminium printed in black, light grey keys as the TB-303's; the top bar, the title
+    strip, the displays, the bays and the sequencer's screens stay dark glass, as the TB-303's black boxes; printing
+    inside them stays light. Orange stays the signal.
+  - Steel: the 808's blue-grey anodised aluminium, white printing, keys in the metal's colour, the glass tinted blue,
+    the 808's orange.
+  - Olive: the 808's olive drab, cream printing, the glass tinted green, signal red for orange, the title's 303 too.
+- Open: the user's view of them; then the app (colours as roles, a Theme row on Options' Panel page).

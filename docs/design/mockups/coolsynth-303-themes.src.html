@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CoolSynth 303 themes</title>
+<!-- CoolSynth 303's themes (CoolSynth's D352) on layout B (D350): Graphite as the app is, Silver after the TB-303's face,
+     and CoolSynth 808's Steel and Olive. Built on coolsynth-303-relayout.src.html; 303-redesign/inline_fonts.py
+     coolsynth-303-themes writes the .html with the app's fonts inlined. -->
+<style>
+@font-face { font-family: 'ArchivoSC'; font-weight: 600; src: url(../../../../CoolSynth303/resources/fonts/ArchivoSemiCondensed-SemiBold.ttf); }
+@font-face { font-family: 'ArchivoSC'; font-weight: 700; src: url(../../../../CoolSynth303/resources/fonts/ArchivoSemiCondensed-Bold.ttf); }
+@font-face { font-family: 'ArchivoXB'; font-weight: 800; src: url(../../../../CoolSynth303/resources/fonts/Archivo-ExtraBold.ttf); }
+@font-face { font-family: 'ArchivoM'; font-weight: 500; src: url(../../../../CoolSynth303/resources/fonts/Archivo-Medium.ttf); }
+@font-face { font-family: 'ArchivoC'; font-weight: 600; src: url(../../../../CoolSynth303/resources/fonts/ArchivoCondensed-SemiBold.ttf); }
+@font-face { font-family: 'PlexMono'; font-weight: 500; src: url(../../../../CoolSynth303/resources/fonts/IBMPlexMono-Medium.ttf); }
+@font-face { font-family: 'PlexMono'; font-weight: 600; src: url(../../../../CoolSynth303/resources/fonts/IBMPlexMono-SemiBold.ttf); }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #0b0a09; overflow: hidden; font-family: 'ArchivoM', system-ui, sans-serif; }
+
+/* The mockup's own bar, not part of any design */
+#chrome { position: fixed; inset: 0 0 auto 0; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 14px;
+  background: #050505; border-bottom: 1px solid #222; font: 500 12px/1 system-ui, sans-serif; color: #999; z-index: 50; }
+#chrome b { color: #ddd; font-weight: 600; margin-right: 8px; white-space: nowrap; }
+#chrome .tab { white-space: nowrap; background: #1a1a1a; border: 1px solid #333; border-radius: 4px; padding: 6px 8px; cursor: pointer; color: #bbb; }
+#chrome .tab.is { background: #e8742a; border-color: #e8742a; color: #111; }
+#chrome .sp { flex: 1; }
+#chrome label { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+#about { position: fixed; inset: auto 0 0 0; min-height: 30px; padding: 7px 16px; background: #050505; border-top: 1px solid #222;
+  font: 400 12.5px/1.4 system-ui, sans-serif; color: #aaa; z-index: 50; }
+#about b { color: #eee; font-weight: 600; }
+#viewport { position: fixed; inset: 44px 0 30px 0; display: grid; place-items: center; }
+#stage { width: 1280px; height: 800px; position: relative; flex: none; overflow: hidden; transform-origin: center center; }
+#shot { position: absolute; inset: 0; width: 1280px; height: 800px; pointer-events: none; z-index: 40; opacity: 0; }
+
+/* Shared pieces: every skin places the same elements; its class styles them */
+.f { position: absolute; }
+.t { position: absolute; white-space: nowrap; line-height: 1; }
+.cap { position: absolute; display: flex; align-items: center; justify-content: center; gap: 5px; white-space: nowrap; cursor: pointer;
+  font: 700 9.7px/1 'ArchivoSC'; letter-spacing: .08em; text-transform: uppercase; user-select: none; }
+.cap .lens { display: none; }
+.lamp { position: absolute; width: 5px; height: 5px; border-radius: 50%; }
+.kname { position: absolute; width: 140px; text-align: center; font: 700 10.1px/1 'ArchivoSC'; letter-spacing: .08em; text-transform: uppercase; }
+.krange { position: absolute; width: 16px; text-align: center; font: 500 7px/1 'PlexMono'; }
+.mono { font-family: 'PlexMono'; font-weight: 500; }
+.lbl { font: 700 9.7px/1 'ArchivoSC'; letter-spacing: .1em; text-transform: uppercase; }
+.well { position: absolute; display: flex; align-items: center; justify-content: center; white-space: nowrap; font: 500 8.9px/1 'PlexMono'; }
+.cell, .slot, .chainb { position: absolute; display: flex; align-items: center; justify-content: center; font: 500 8.2px/1 'PlexMono'; cursor: pointer; }
+.slot, .chainb { font-size: 9.3px; }
+.note { position: absolute; border-radius: 2px; }
+.tail { position: absolute; height: 2px; }
+.hint { position: absolute; font: 500 10.6px/1.3 'ArchivoM'; letter-spacing: .02em; white-space: normal; }
+.title { position: absolute; left: 26px; top: 421px; width: 600px; margin-left: -300px; margin-top: -21px; text-align: center; transform: rotate(-90deg);
+  font: 800 36.8px/42px 'ArchivoXB'; letter-spacing: .08em; white-space: nowrap; }
+.foot { position: absolute; left: 860px; top: 780px; width: 404px; text-align: right; font: 500 9.7px/16px 'ArchivoM'; letter-spacing: .02em; }
+svg { display: block; overflow: visible; }
+
+/* =============================== 1 Now: the charcoal look as the app draws it (Theme.h) =============================== */
+.sk-now { background: #26272a; }
+.sk-now .topbar { background: #1c1d20; box-shadow: inset 0 -1px 0 #000; }
+.sk-now .strip { background: #1f2023; box-shadow: 1px 0 0 #111; }
+.sk-now .title { color: #d9d9d6; } .sk-now .title b { color: #e8742a; }
+.sk-now .foot { color: #75777c; }
+.sk-now .cap { background: #c9cacc; color: #1b1c1e; border-radius: 2px; box-shadow: 0 1px 0 #000; }
+.sk-now .cap.on, .sk-now .cap.hot { background: #e8742a; color: #1a120c; }
+.sk-now .cap.dis { opacity: .45; }
+.sk-now .lamp { background: #4a1c17; }
+.sk-now .lamp.on { background: #ff3b28; box-shadow: 0 0 0 3px rgba(255,59,40,.35); }
+.sk-now .frame { stroke: #6b6d72; }
+.sk-now .secname { color: #e9e9e6; font: 700 10.1px/1 'ArchivoSC'; letter-spacing: .12em; }
+.sk-now .kname { color: #d7d8da; } .sk-now .krange { color: #8d8f94; }
+.sk-now .arrow { color: #8d8f94; font: 500 12px/1 'ArchivoM'; }
+.sk-now .well { background: #111214; box-shadow: inset 0 0 0 1px #3a3b3f; border-radius: 3px; color: #e8742a; }
+.sk-now .namebox { color: #e6e6e6; font: 500 11.5px/1 'ArchivoM'; letter-spacing: .02em; }
+.sk-now .tempo { color: #e8742a; font: 500 13.1px/1 'PlexMono'; }
+.sk-now .bpm { color: #9fa1a5; }
+.sk-now .dsp { color: #8d8f94; font: 500 7.3px/1 'PlexMono'; }
+.sk-now .val { color: #e8742a; font: 500 9.2px/1 'PlexMono'; }
+.sk-now .hint { color: #9fa1a5; }
+.sk-now .octname { color: #8c8e93; font: 700 8.7px/1 'ArchivoSC'; letter-spacing: .1em; }
+.sk-now .octline { background: #55575c; }
+.sk-now .grp { color: #8d8f94; } .sk-now .sep { background: #45474c; }
+.sk-now .rowname { color: #ddd5c3; font: 700 10.1px/1 'ArchivoSC'; letter-spacing: .08em; }
+.sk-now .rowhint { color: #9d9583; font: 500 9.7px/13px 'ArchivoM'; }
+.sk-now .stepno { color: #8f8877; font: 500 7.3px/1 'PlexMono'; }
+.sk-now .notename { color: #f1ebde; font: 500 8.1px/1 'PlexMono'; }
+.sk-now .cell { background: #3a3b3f; color: #d7d8da; border-radius: 2px; box-shadow: 0 1px 0 #111; }
+.sk-now .cell.lit { background: #c9cacc; color: #1b1c1e; }
+.sk-now .cell.acc { background: #e8742a; }
+.sk-now .cell.dim { background: #3a3b3f; color: #a5a7ab; }
+.sk-now .cell.half { background: #6c6d71; color: #9c9da1; }
+.sk-now .slot { background: #45474c; color: #eee; border-radius: 2px; box-shadow: 0 1px 0 #111; }
+.sk-now .slot.edit { box-shadow: 0 0 0 2px #26272a, 0 0 0 3px #e9e9e6; }
+.sk-now .slot.empty { background: #333438; color: #9fa1a5; }
+.sk-re .slot.empty { background: linear-gradient(#26272b, #1f2023); color: #77797e; }
+.sk-808 .slot.empty { background: linear-gradient(var(--cap-b), var(--cap-c)); color: #a39b88; }
+.sk-tb .slot.empty { background: linear-gradient(#d6d8da, #aeb0b3); color: #4a4c50; }
+.sk-now .chainb { background: #45474c; color: #eee; border-radius: 2px; opacity: .55; }
+.sk-now .ab { background: #3a3b3f; color: #d7d8da; } .sk-now .ab.lit { background: #c9cacc; color: #1b1c1e; }
+.sk-now .lane0 { background: #2b2c2f; } .sk-now .lane1 { background: #222326; }
+.sk-now .note { background: #e8742a; } .sk-now .note.acc { background: #ffd2a6; } .sk-now .note.tie { background: #b9622a; }
+.sk-now .tail { background: var(--sig-light); }
+.sk-now .pick { box-shadow: inset 0 0 0 2px #e9e9e6; border-radius: 3px; }
+.sk-now .mbar { background: linear-gradient(#ffcf9a, #e8742a); border-radius: 2px; }
+.sk-now .mcell { background: #2d2e31; border-radius: 2px; }
+.sk-now .minikey.w { background: #d9d9d6; color: #2a2b2e; } .sk-now .minikey.b { background: #232427; color: #a9abaf; }
+.sk-now .minikey.lit { background: #e8742a; color: #1a120c; }
+.sk-now .locks { stroke: #6b6d72; }
+.sk-now .lockname { color: #f4efe4; }
+.sk-now .wk { background: linear-gradient(#f1f1ef, #cfd0d2); border: 1px solid #111; border-radius: 0 0 3px 3px; }
+.sk-now .wk.c { background: linear-gradient(#f6f6f4, #d6d7d9); }
+.sk-now .bk { background: linear-gradient(#3a3b3f, #121315); border: 1px solid #111; border-radius: 0 0 2px 2px; }
+.sk-now .wk span { color: #4a4c51; font: 700 8.7px/1 'ArchivoSC'; }
+.sk-now .wk.pk::after { content: ''; position: absolute; inset: 1px; border: 2px solid #e8742a; border-radius: 2px; }
+
+/* =============================== 2 Redesign: a machined instrument, graphite and amber =============================== */
+.sk-re { background:
+  radial-gradient(900px 300px at 55% -40px, rgba(255,255,255,.07), transparent 70%),
+  repeating-linear-gradient(90deg, rgba(255,255,255,.014) 0 1px, rgba(0,0,0,.025) 1px 2px),
+  linear-gradient(#1f2023, #18191b); }
+.sk-re .topbar { background: linear-gradient(#141517, #0f1012); box-shadow: inset 0 -1px 0 rgba(255,255,255,.06), 0 1px 0 #000; }
+.sk-re .strip { background: linear-gradient(90deg, #121315, #18191c); box-shadow: 1px 0 0 #000, 2px 0 0 rgba(255,255,255,.04); }
+.sk-re .title { color: #cfcfcb; text-shadow: 0 -1px 0 #000, 0 1px 0 rgba(255,255,255,.08); } .sk-re .title b { color: var(--sig); text-shadow: 0 0 14px rgba(var(--sig-rgb),.35); }
+.sk-re .foot { color: #66686d; }
+.sk-re .plate { position: absolute; border-radius: 7px; background: linear-gradient(#26272b, #212226); box-shadow: inset 0 1px 0 rgba(255,255,255,.07), inset 0 0 0 1px rgba(255,255,255,.025), 0 0 0 1px #0c0c0d, 0 4px 10px rgba(0,0,0,.45); }
+.sk-re .plate .band { position: absolute; left: 0; right: 0; top: 0; height: 22px; border-radius: 7px 7px 0 0; background: linear-gradient(rgba(255,255,255,.045), rgba(255,255,255,.015)); box-shadow: inset 0 -1px 0 rgba(0,0,0,.45), 0 1px 0 rgba(255,255,255,.04); }
+.sk-re .secname { color: #ecebe6; font: 800 9.6px/1 'ArchivoXB'; letter-spacing: .2em; }
+.sk-re .secname i { font-style: normal; color: var(--sig); margin-right: 7px; font: 600 8.4px/1 'PlexMono'; letter-spacing: .02em; }
+.sk-re .flow { position: absolute; height: 2px; background: linear-gradient(90deg, rgba(var(--sig-rgb),.15), rgba(var(--sig-rgb),.65), rgba(var(--sig-rgb),.15)); }
+.sk-re .flowhead { position: absolute; width: 0; height: 0; border-left: 6px solid var(--sig); border-top: 4px solid transparent; border-bottom: 4px solid transparent; filter: drop-shadow(0 0 3px rgba(var(--sig-rgb),.7)); }
+.sk-re .cap { color: #e7e5df; border-radius: 4px; background: linear-gradient(#3d3e43, #2b2c30 55%, #232427);
+  box-shadow: 0 0 0 1px #08090a, inset 0 1px 0 rgba(255,255,255,.14), inset 0 -2px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.5); text-shadow: 0 -1px 0 rgba(0,0,0,.6); }
+.sk-re .cap .lens { display: block; flex: none; width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a2a20, #1c0d09 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.7); }
+.sk-re .cap.on .lens { background: radial-gradient(circle at 38% 32%, #fff4e6, var(--sig-light) 40%, var(--sig) 75%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 8px 2px rgba(var(--sig-rgb),.75); }
+.sk-re .cap.on { color: #fff; }
+.sk-re .cap.hot { background: linear-gradient(var(--sig-hi), var(--sig) 52%, var(--sig-lo)); color: #1d0f05; text-shadow: 0 1px 0 rgba(255,255,255,.25); box-shadow: 0 0 0 1px #08090a, inset 0 1px 0 rgba(255,255,255,.4), 0 2px 8px rgba(var(--sig-rgb),.35); }
+.sk-re .cap.dis { opacity: .4; }
+.sk-re .lamp { display: none; }
+.sk-re .kname { color: #e2e1dc; } .sk-re .krange { color: #75777c; }
+.sk-re .arrow { display: none; }
+.sk-re .well, .sk-re .lcd { background: linear-gradient(#0a0b0b, #121314); border-radius: 4px; color: var(--amber); text-shadow: 0 0 6px rgba(var(--amber-rgb),.45);
+  box-shadow: inset 0 1px 3px #000, inset 0 0 0 1px rgba(255,255,255,.05), 0 1px 0 rgba(255,255,255,.06); }
+.sk-re .lcd { position: absolute; }
+.sk-re .lcd::after { content: ''; position: absolute; inset: 1px; border-radius: 3px; background: linear-gradient(170deg, rgba(255,255,255,.07), transparent 40%); pointer-events: none; }
+.sk-re .namebox { color: #f3e3cf; font: 500 11.5px/1 'ArchivoM'; text-shadow: 0 0 6px rgba(255,190,120,.25); }
+.sk-re .tempo { color: var(--amber); font: 600 15px/1 'PlexMono'; text-shadow: 0 0 8px rgba(var(--amber-rgb),.55); }
+.sk-re .bpm { color: #8a7a68; }
+.sk-re .dsp { color: #6f7176; font: 500 7.3px/1 'PlexMono'; }
+.sk-re .val { color: var(--amber); font: 600 9.2px/1 'PlexMono'; text-shadow: 0 0 6px rgba(var(--amber-rgb),.45); }
+.sk-re .hint { color: #8f9196; }
+.sk-re .octname { color: #77797e; font: 700 8.4px/1 'ArchivoSC'; letter-spacing: .14em; }
+.sk-re .octline { background: linear-gradient(90deg, transparent, #4a4c51 12%, #4a4c51 88%, transparent); }
+.sk-re .grp { color: #7d7f84; } .sk-re .sep { background: rgba(255,255,255,.07); }
+.sk-re .rowname { color: #d9d7d0; font: 700 9.6px/1 'ArchivoSC'; letter-spacing: .12em; }
+.sk-re .rowhint { color: #6f7176; font: 500 9.2px/12.5px 'ArchivoM'; }
+.sk-re .stepno { color: #6d6f74; font: 500 7.3px/1 'PlexMono'; }
+.sk-re .notename { color: #c9c4b8; font: 500 8.1px/1 'PlexMono'; }
+.sk-re .screen { position: absolute; border-radius: 6px; background: linear-gradient(#0f1012, #141518); box-shadow: inset 0 2px 6px rgba(0,0,0,.8), inset 0 0 0 1px rgba(0,0,0,.9), 0 1px 0 rgba(255,255,255,.06); }
+.sk-re .cell { background: linear-gradient(#2a2b2f, #222326); color: #8d8f94; border-radius: 3px; box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 1px 0 #000; }
+.sk-re .cell.lit { background: linear-gradient(#55575c, #44464b); color: #f2efe8; }
+.sk-re .cell.acc { background: radial-gradient(ellipse at 50% 30%, var(--sig-pale), var(--sig) 60%, var(--sig-lo)); box-shadow: 0 0 10px rgba(var(--sig-rgb),.45), inset 0 1px 0 rgba(255,255,255,.35); }
+.sk-re .cell.dim { color: #77797e; }
+.sk-re .cell.half { background: linear-gradient(#36373b, #2e2f33); color: #8d8f94; }
+.sk-re .cell .led { width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a2a20, #1c0d09 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.sk-re .cell.lit .led { background: radial-gradient(circle at 38% 32%, #fff4e6, var(--sig-light) 40%, var(--sig) 75%); box-shadow: 0 0 8px 2px rgba(var(--sig-rgb),.7); }
+.sk-re .slot { background: linear-gradient(#36373b, #2b2c30); color: #d9d7d0; border-radius: 3px; box-shadow: 0 0 0 1px #08090a, inset 0 1px 0 rgba(255,255,255,.08); }
+.sk-re .slot.edit { box-shadow: 0 0 0 1px #08090a, inset 0 0 0 1.5px var(--sig); color: var(--amber); }
+.sk-re .chainb { background: linear-gradient(#2f3034, #27282b); color: #a9aaa6; border-radius: 3px; box-shadow: 0 0 0 1px #08090a, inset 0 1px 0 rgba(255,255,255,.06); }
+.sk-re .ab { color: #a9aaa6; } .sk-re .ab.lit { background: linear-gradient(#55575c, #44464b); color: #fff; }
+.sk-re .lane0 { background: rgba(255,255,255,.035); } .sk-re .lane1 { background: rgba(255,255,255,.012); }
+.sk-re .note { background: linear-gradient(var(--sig-hi), var(--sig)); box-shadow: 0 0 6px rgba(var(--sig-rgb),.55); }
+.sk-re .note.acc { background: linear-gradient(#fff1e0, var(--sig-pale)); box-shadow: 0 0 9px rgba(255,190,120,.8); }
+.sk-re .note.tie { background: linear-gradient(#b2581f, #8e4416); box-shadow: none; }
+.sk-re .tail { background: var(--sig-light); box-shadow: 0 0 4px rgba(255,170,90,.8); }
+.sk-re .pick { box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.75), 0 0 0 3px rgba(255,255,255,.06); border-radius: 4px; }
+.sk-re .mbar { background: linear-gradient(var(--sig-pale), var(--sig)); border-radius: 2px; box-shadow: 0 0 6px rgba(var(--sig-rgb),.45); }
+.sk-re .mcell { background: rgba(255,255,255,.03); border-radius: 3px; }
+.sk-re .minikey.w { background: #c9c8c3; color: #2a2b2e; } .sk-re .minikey.b { background: #1b1c1f; color: #8d8f94; }
+.sk-re .minikey.lit { background: var(--sig); color: #1d0f05; }
+.sk-re .locks { stroke: rgba(255,255,255,.08); }
+.sk-re .lockname { color: #ecebe6; }
+.sk-re .wk { background: linear-gradient(#f7f5ef, #e6e3da 70%, #cfccc3); border-radius: 0 0 4px 4px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.12), inset -1px 0 0 rgba(0,0,0,.25), 0 2px 2px rgba(0,0,0,.5); }
+.sk-re .bk { background: linear-gradient(90deg, #0d0d0e, #2b2c30 45%, #111213); border-radius: 0 0 3px 3px; box-shadow: inset 0 -5px 0 #050505, inset 0 -6px 0 rgba(255,255,255,.12), 0 3px 4px rgba(0,0,0,.6); }
+.sk-re .wk span { color: #8a877e; font: 700 8.4px/1 'ArchivoSC'; }
+.sk-re .wk.pk { background: linear-gradient(#fff8f0, #ffd9b5 70%, var(--sig-light)); box-shadow: inset 0 -3px 0 rgba(0,0,0,.1), 0 0 12px rgba(var(--sig-rgb),.55); }
+.sk-re .wk.pk span { color: #8a3e10; }
+.sk-re .keybed { position: absolute; border-radius: 5px; background: #0b0b0c; box-shadow: inset 0 2px 4px #000, 0 1px 0 rgba(255,255,255,.06); }
+.sk-re .seg { position: absolute; border-radius: 5px; background: #0d0e0f; box-shadow: inset 0 1px 3px #000, 0 1px 0 rgba(255,255,255,.06); }
+
+/* =============================== 3 to 6: CoolSynth 808's skins (its Theme.h and layout 5's CSS) =============================== */
+.sk-808 { background:
+    radial-gradient(1200px 400px at 30% 0%, rgba(255,255,255,var(--sheen)), transparent 70%),
+    repeating-linear-gradient(90deg, rgba(255,255,255,var(--brushL)) 0 1px, rgba(0,0,0,var(--brushD)) 1px 3px),
+    linear-gradient(var(--metal-a), var(--metal-b)); }
+.sk-808 .strip { background: var(--name-strip); box-shadow: 1px 0 0 var(--name-edge), 2px 0 0 rgba(255,255,255,.05); }
+.sk-808 .title { color: #d9d9d6; } .sk-808 .title b { color: var(--hot-b); }
+.sk-808 .foot { color: var(--board-dim); }
+.sk-808 .tstrip { position: absolute; border-radius: 5px; background: linear-gradient(var(--glass-a), var(--glass-b));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 0 0 1px rgba(255,255,255,.05), 0 2px 6px rgba(0,0,0,.5); }
+.sk-808 .glass { position: absolute; border-radius: 6px; background: linear-gradient(170deg, rgba(255,255,255,.05), rgba(255,255,255,0) 30%), linear-gradient(var(--glass-a), var(--glass-b));
+  backdrop-filter: blur(1.5px); box-shadow: inset 0 1px 0 rgba(255,255,255,.09), inset 0 0 0 1px rgba(255,255,255,.05), 0 3px 12px rgba(0,0,0,.6); }
+.sk-808 .screw { position: absolute; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a857c, #3b3833 70%); box-shadow: 0 1px 1px #000; }
+.sk-808 .screw::after { content: ''; position: absolute; left: 2px; right: 2px; top: 5.5px; height: 1px; background: rgba(0,0,0,.6); transform: rotate(35deg); }
+.sk-808 .frame { stroke: var(--silk); }
+.sk-808 .secname { color: var(--board-ink); font: 700 11.8px/1 'ArchivoSC'; letter-spacing: .05em; }
+.sk-808 .glassname { color: #f4efe4; font: 700 9.2px/1 'ArchivoSC'; letter-spacing: .09em; }
+.sk-808 .cap { height: 24px; border-radius: 4px; color: #f1ebde; text-shadow: 0 -1px 0 rgba(0,0,0,.6); font-size: 9.2px; letter-spacing: .09em;
+  background: linear-gradient(var(--cap-a), var(--cap-b) 46%, var(--cap-c));
+  box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.17), inset 0 -2px 0 rgba(0,0,0,.38), 0 2px 3px rgba(0,0,0,.55); }
+.sk-808 .cap .lens { display: block; flex: none; width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #6b4a33, #241710 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.7), inset 0 0 1px #000; }
+.sk-808 .cap.on { filter: brightness(1.15); }
+.sk-808 .cap.on .lens { background: radial-gradient(circle at 35% 30%, #fff3dc, color-mix(in srgb, var(--hot-a) 70%, white) 42%, var(--hot-b) 78%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 7px 1px color-mix(in srgb, var(--hot-b) 85%, transparent); }
+.sk-808 .cap.hot { background: linear-gradient(var(--hot-a), var(--hot-b) 50%, var(--hot-c)); color: var(--hot-ink); text-shadow: 0 1px 0 rgba(255,255,255,.22); filter: none; }
+.sk-808 .cap.dis { opacity: .4; }
+.sk-808 .lamp { display: none; }
+.sk-808 .kname { color: var(--board-label); font-size: 9.2px; letter-spacing: .09em; }
+.sk-808 .krange { display: none; }
+.sk-808 .arrow { display: none; }
+.sk-808 .well { background: #0d0c0b; border-radius: 3px; color: var(--lit); box-shadow: inset 0 1px 2px #000, 0 0 0 1px rgba(255,255,255,.06); }
+.sk-808 .namebox { color: #f1ebde; font: 500 11.5px/1 'ArchivoM'; }
+.sk-808 .tempo { color: var(--lit); font: 500 14px/1 'PlexMono'; text-shadow: 0 0 6px color-mix(in srgb, var(--accent) 45%, transparent); }
+.sk-808 .bpm { color: #f4efe4; }
+.sk-808 .dsp { color: #8f8877; font: 500 7.3px/1 'PlexMono'; }
+.sk-808 .val { color: var(--board-ink); font: 600 9.2px/1 'PlexMono'; }
+.sk-808 .hint { color: #cfc7b3; }
+.sk-808 .octname { color: #8f8877; font: 700 8.7px/1 'ArchivoSC'; letter-spacing: .1em; }
+.sk-808 .octline { background: rgba(255,255,255,.12); }
+.sk-808 .grp { color: #ddd5c3; } .sk-808 .sep { background: rgba(255,255,255,.1); }
+.sk-808 .rowname { color: #ddd5c3; font: 700 9.2px/1 'ArchivoSC'; letter-spacing: .09em; }
+.sk-808 .rowhint { color: #8f8877; font: 500 9.2px/12.5px 'ArchivoM'; }
+.sk-808 .stepno { color: #8f8877; font: 500 7.3px/1 'PlexMono'; }
+.sk-808 .notename { color: #ddd5c3; font: 500 8.1px/1 'PlexMono'; }
+.sk-808 .cell { background: color-mix(in srgb, var(--g) 88%, transparent); color: #ece4d2; border-radius: 3px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.13), inset 0 -2px 0 rgba(0,0,0,.25), 0 1px 0 rgba(0,0,0,.6); }
+.sk-808 .cell.lit { background: color-mix(in srgb, var(--g) 50%, #ece4d2); color: #1a1714; }
+.sk-808 .cell.acc { background: linear-gradient(color-mix(in srgb, var(--gon) 72%, white), var(--gon) 50%, color-mix(in srgb, var(--gon) 75%, black)); color: #1a1714; }
+.sk-808 .cell.dim { color: #a39b88; }
+.sk-808 .cell.half { background: color-mix(in srgb, var(--g) 75%, #ece4d2); color: #3a352e; }
+.sk-808 .cell .led { width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.sk-808 .cell.lit .led { background: radial-gradient(circle at 40% 35%, #ffffff, #ffd6b4 22%, var(--hot-b) 52%, var(--hot-c) 85%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 5px 2px var(--hot-b); }
+.sk-808 .steplamp { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #5a3e2a, #1d130c 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.sk-808 .slot { background: linear-gradient(var(--cap-a), var(--cap-b)); color: #ece4d2; border-radius: 3px; box-shadow: 0 0 0 1px #0b0a09, inset 0 1px 0 rgba(255,255,255,.12); }
+.sk-808 .slot.edit { box-shadow: inset 0 0 0 2px #ece4d2; }
+.sk-808 .chainb { background: linear-gradient(var(--cap-a), var(--cap-b)); color: #ece4d2; border-radius: 3px; opacity: .6; }
+.sk-808 .ab { } .sk-808 .ab.lit { filter: brightness(1.3); }
+.sk-808 .lane0 { background: rgba(236,228,210,.05); } .sk-808 .lane1 { background: rgba(236,228,210,.02); }
+.sk-808 .note { background: linear-gradient(var(--hot-a), var(--hot-b) 50%, var(--hot-c)); }
+.sk-808 .note.acc { background: radial-gradient(ellipse at 50% 35%, #fff, color-mix(in srgb, var(--hot-b) 45%, white)); box-shadow: 0 0 8px color-mix(in srgb, var(--hot-b) 70%, transparent); }
+.sk-808 .note.tie { background: color-mix(in srgb, var(--hot-c) 75%, black); }
+.sk-808 .tail { background: var(--hot-a); }
+.sk-808 .pick { box-shadow: inset 0 0 0 2px #ece4d2; border-radius: 4px; }
+.sk-808 .mbar { background: linear-gradient(var(--hot-a), var(--hot-b)); border-radius: 2px; }
+.sk-808 .mcell { background: rgba(0,0,0,.28); border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+.sk-808 .minikey.w { background: #e2dccd; color: #2a2b2e; } .sk-808 .minikey.b { background: #1a1917; color: #a39b88; }
+.sk-808 .minikey.lit { background: var(--hot-b); color: var(--hot-ink); }
+.sk-808 .locks { stroke: rgba(255,255,255,.06); fill: rgba(0,0,0,.25); }
+.sk-808 .lockname { color: #f4efe4; }
+.sk-808 .wk { background: linear-gradient(#f4eee1, #c9c1af); border-radius: 0 0 3px 3px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), inset -1px 0 0 rgba(0,0,0,.35); }
+.sk-808 .bk { background: linear-gradient(var(--cap-b), var(--cap-c) 70%, #0b0a09); border-radius: 0 0 3px 3px; box-shadow: 0 0 0 1px #0b0a09, inset 0 -4px 0 rgba(0,0,0,.4), 0 2px 3px rgba(0,0,0,.5); }
+.sk-808 .wk span { color: #6c6558; font: 700 8.4px/1 'ArchivoSC'; }
+.sk-808 .wk.pk { background: linear-gradient(var(--hot-a), var(--hot-b)); } .sk-808 .wk.pk span { color: var(--hot-ink); }
+.sk-808 .swlabel { color: var(--board-dim); font: 700 9.2px/1 'ArchivoSC'; letter-spacing: .09em; } .sk-808 .swlabel.lit { color: var(--board-label); }
+.sk-808 .cu { fill: none; stroke: var(--copper); stroke-width: 1.3; }
+.sk-808 .cupad { fill: none; stroke: var(--pad); stroke-width: 1.2; }
+.sk-808 .silkpart { fill: none; stroke: var(--silk); stroke-width: 1; }
+.sk-808 .silktext { fill: var(--silk-text); font: 500 6.6px 'PlexMono'; }
+.sk-808 .cuflow { fill: none; stroke: rgba(var(--flow-rgb), .85); stroke-width: 1.6; stroke-dasharray: 2 4; filter: drop-shadow(0 0 2px rgba(var(--flow-rgb), .8)); }
+/* On the silver board the printing is dark, so the board's own labels flip (5.4) */
+.sk-808.light .kname, .sk-808.light .secname, .sk-808.light .val { text-shadow: none; }
+
+/* =============================== 7: TB-303 silver: the original's face, the 808's knobs and keys =============================== */
+.sk-tb { background:
+    radial-gradient(1100px 380px at 35% -60px, rgba(255,255,255,.35), transparent 70%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,.06) 0 1px, rgba(0,0,0,.035) 1px 2px, rgba(255,255,255,0) 2px 3px),
+    linear-gradient(#d7d9db, #bfc2c5); }
+.sk-tb .topbar { background: linear-gradient(#c9cccf, #b7babe); box-shadow: inset 0 -1px 0 #1a1a1a, inset 0 -2px 0 rgba(255,255,255,.35); }
+.sk-tb .strip { background: #1f2023; box-shadow: 1px 0 0 #000; }
+.sk-tb .title { color: #d9d9d6; } .sk-tb .title b { color: #e8742a; }
+.sk-tb .foot { color: #55585c; }
+.sk-tb .frame { stroke: #161616; stroke-width: 1.4; }
+.sk-tb .secname { color: #f2f2f0; font: 700 9.7px/1 'ArchivoSC'; letter-spacing: .12em; }
+.sk-tb .sectab { position: absolute; height: 15px; background: #161616; border-radius: 2px; }
+.sk-tb .cap { height: 24px; border-radius: 3px; color: #1a1b1d; font-size: 9.2px; letter-spacing: .09em;
+  background: linear-gradient(#eceded, #cfd1d3 46%, #b2b5b8);
+  box-shadow: 0 0 0 1px #2a2b2d, inset 0 1px 0 rgba(255,255,255,.9), inset 0 -2px 0 rgba(0,0,0,.18), 0 2px 3px rgba(0,0,0,.35); }
+.sk-tb .cap.on { }
+.sk-tb .cap.hot { background: linear-gradient(#f07a5c, #d93a22 52%, #a8250f); color: #fff; text-shadow: 0 -1px 0 rgba(0,0,0,.35); }
+.sk-tb .cap.dis { opacity: .5; }
+.sk-tb .lamp { background: radial-gradient(circle at 35% 30%, #7a2a20, #2a0a06 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.55); width: 6px; height: 6px; }
+.sk-tb .lamp.on { background: radial-gradient(circle at 40% 35%, #ffffff, #ffc2b4 22%, #ff4528 52%, #e8200f 85%); box-shadow: 0 0 0 1px rgba(0,0,0,.5), 0 0 5px 2px #ff4a2a, 0 0 12px 4px rgba(255,50,30,.45); }
+.sk-tb .kname { color: #161616; font-size: 9.7px; }
+.sk-tb .krange { color: #3a3c40; }
+.sk-tb .arrow { color: #161616; font: 500 12px/1 'ArchivoM'; }
+.sk-tb .well { background: #121212; border-radius: 2px; color: #ff5a3c; box-shadow: inset 0 1px 2px #000, 0 1px 0 rgba(255,255,255,.6); text-shadow: 0 0 5px rgba(255,70,40,.5); }
+.sk-tb .namebox { color: #f2f2f0; font: 500 11.5px/1 'ArchivoM'; text-shadow: none; }
+.sk-tb .tempo { color: #ff4a2a; font: 600 14px/1 'PlexMono'; text-shadow: 0 0 6px rgba(255,60,30,.6); }
+.sk-tb .bpm { color: #bdbdbd; }
+.sk-tb .dsp { color: #4a4c50; font: 500 7.3px/1 'PlexMono'; }
+.sk-tb .val { color: #161616; font: 600 9.2px/1 'PlexMono'; }
+.sk-tb .hint { color: #2a2c30; }
+.sk-tb .octname { color: #bcbcbc; font: 700 8.4px/1 'ArchivoSC'; letter-spacing: .1em; }
+.sk-tb .octline { background: #6a6a6a; }
+.sk-tb .grp { color: #161616; } .sk-tb .sep { background: rgba(0,0,0,.35); }
+.sk-tb .black { position: absolute; background: #151515; border-radius: 3px; box-shadow: 0 1px 0 rgba(255,255,255,.55); }
+.sk-tb .rowname { color: #f2f2f0; font: 700 9.7px/1 'ArchivoSC'; letter-spacing: .09em; }
+.sk-tb .rowhint { color: #9b9b9b; font: 500 9.2px/12.5px 'ArchivoM'; }
+.sk-tb .stepno { color: #bdbdbd; font: 500 7.3px/1 'PlexMono'; }
+.sk-tb .notename { color: #f2f2f0; font: 500 8.1px/1 'PlexMono'; }
+.sk-tb .cell { background: linear-gradient(#4a4b4e, #3a3b3e); color: #d0d0d0; border-radius: 2px; box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 1px 0 #000; }
+.sk-tb .cell.lit { background: linear-gradient(#eceded, #c0c2c5); color: #161616; }
+.sk-tb .cell.acc { background: linear-gradient(#f07a5c, #d93a22 52%, #a8250f); }
+.sk-tb .cell.dim { color: #9a9a9a; }
+.sk-tb .cell.half { background: linear-gradient(#8b8d90, #76787b); color: #dcdcdc; }
+.sk-tb .cell .led { width: 6px; height: 6px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #7a2a20, #2a0a06 72%); box-shadow: 0 0 0 1px rgba(0,0,0,.6); }
+.sk-tb .cell.lit .led { background: radial-gradient(circle at 40% 35%, #ffffff, #ffc2b4 22%, #ff4528 52%, #e8200f 85%); box-shadow: 0 0 5px 2px #ff4a2a; }
+.sk-tb .slot { background: linear-gradient(#eceded, #c0c2c5); color: #161616; border-radius: 3px; box-shadow: 0 0 0 1px #2a2b2d, inset 0 1px 0 #fff, 0 1px 2px rgba(0,0,0,.3); }
+.sk-tb .slot.edit { box-shadow: 0 0 0 1px #2a2b2d, inset 0 0 0 2px #d93a22; }
+.sk-tb .chainb { background: linear-gradient(#e2e3e4, #c0c2c5); color: #161616; border-radius: 3px; opacity: .6; box-shadow: 0 0 0 1px #2a2b2d; }
+.sk-tb .ab.lit { box-shadow: 0 0 0 1px #2a2b2d, inset 0 0 0 2px #161616; }
+.sk-tb .lane0 { background: #222224; } .sk-tb .lane1 { background: #1a1a1b; }
+.sk-tb .note { background: linear-gradient(#f07a5c, #d93a22); }
+.sk-tb .note.acc { background: linear-gradient(#fff, #ffb4a0); box-shadow: 0 0 8px rgba(255,90,60,.7); }
+.sk-tb .note.tie { background: #8a2412; }
+.sk-tb .tail { background: #ff8a70; }
+.sk-tb .pick { box-shadow: inset 0 0 0 2px #f2f2f0; border-radius: 3px; }
+.sk-tb .mbar { background: linear-gradient(#f59a82, #d93a22); border-radius: 1px; }
+.sk-tb .mcell { background: #222224; border-radius: 2px; }
+.sk-tb .minikey.w { background: #e8e8e6; color: #222; } .sk-tb .minikey.b { background: #0b0b0b; color: #9a9a9a; }
+.sk-tb .minikey.lit { background: #d93a22; color: #fff; }
+.sk-tb .locks { stroke: #161616; stroke-width: 1.4; }
+.sk-tb .lockname { color: #161616; }
+.sk-tb .wk { background: linear-gradient(#fbfbfa, #e3e3e0 70%, #cfcfcb); border-radius: 0 0 2px 2px; box-shadow: inset 0 -3px 0 rgba(0,0,0,.12), inset -1px 0 0 rgba(0,0,0,.4); }
+.sk-tb .bk { background: linear-gradient(#2a2a2b, #0a0a0a); border-radius: 0 0 2px 2px; box-shadow: inset 0 -4px 0 #000, inset 0 -5px 0 rgba(255,255,255,.12), 0 2px 2px rgba(0,0,0,.5); }
+.sk-tb .wk span { color: #555; font: 700 8.4px/1 'ArchivoSC'; }
+.sk-tb .wk.pk { box-shadow: inset 0 0 0 2px #d93a22, inset -1px 0 0 rgba(0,0,0,.4); }
+.sk-tb .swlabel { color: #161616; font: 700 9.2px/1 'ArchivoSC'; letter-spacing: .09em; }
+.sk-tb .glassname { color: #f2f2f0; font: 700 9.2px/1 'ArchivoSC'; letter-spacing: .09em; }
+.sk-tb .lockpanel { position: absolute; background: #151515; border-radius: 4px; }
+.sk-re .cap.small { font-size: 8.4px; border-radius: 3px; }
+.sk-re .cap.small .lens { width: 5px; height: 5px; }
+#stage .tabpage { display: none; }
+#stage[data-tab="locks"] .tabpage[data-page="locks"], #stage[data-tab="line"] .tabpage[data-page="line"] { display: block; }
+#stage[data-tab="locks"] .tabkey[data-tab="locks"] .cap, #stage[data-tab="line"] .tabkey[data-tab="line"] .cap { background: linear-gradient(#55575c, #44464b); color: #fff; }
+.tabkey { cursor: pointer; }
+
+/* =============================== The machined look's themes (D352) =============================== */
+.sk-re { --sig: #f0782a; --sig-rgb: 240,120,42; --sig-hi: #ffa25c; --sig-lo: #c95a17; --sig-pale: #ffc489; --sig-light: #ffb067;
+  --amber: #ffb35c; --amber-rgb: 255,150,60; }
+
+/* Silver: the TB-303's face. Brushed aluminium plates printed in black, light grey keys as the TB-303's; the top bar,
+   the title strip, the displays and the sequencer's screens stay dark glass, as its black boxes. */
+.sk-re.th-silver { background:
+  radial-gradient(900px 300px at 55% -40px, rgba(255,255,255,.45), transparent 70%),
+  repeating-linear-gradient(90deg, rgba(255,255,255,.10) 0 1px, rgba(0,0,0,.03) 1px 2px),
+  linear-gradient(#cfd2d5, #b3b7bb); }
+.sk-re.th-silver .plate { background: linear-gradient(#e7e9eb, #cbced2); box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 0 0 1px #868a90, 0 3px 8px rgba(0,0,0,.28); }
+.sk-re.th-silver .plate .band { background: linear-gradient(rgba(255,255,255,.55), rgba(255,255,255,.15)); box-shadow: inset 0 -1px 0 rgba(0,0,0,.2), 0 1px 0 rgba(255,255,255,.6); }
+.sk-re.th-silver .secname { color: #18191b; }
+.sk-re.th-silver .kname { color: #1c1d20; }
+.sk-re.th-silver .hint, .sk-re.th-silver .rowhint { color: #44474c; }
+.sk-re.th-silver .octname, .sk-re.th-silver .grp { color: #4b4e54; }
+.sk-re.th-silver .rowname { color: #1c1d20; }
+.sk-re.th-silver .octline { background: linear-gradient(90deg, transparent, #7b7f85 12%, #7b7f85 88%, transparent); }
+.sk-re.th-silver .cap { color: #1b1c1e; text-shadow: 0 1px 0 rgba(255,255,255,.65);
+  background: linear-gradient(#f4f5f6, #dcdee1 55%, #c2c5c9); box-shadow: 0 0 0 1px #5f6368, inset 0 1px 0 #fff, inset 0 -2px 0 rgba(0,0,0,.12), 0 2px 3px rgba(0,0,0,.3); }
+.sk-re.th-silver .cap.on { color: #000; }
+.sk-re.th-silver .cap.hot { color: #1d0f05; }
+.sk-re.th-silver .cap svg path { stroke: #1b1c1e !important; }
+/* inside the dark screens the printing stays light */
+.sk-re.th-silver .tabpage .grp, .sk-re.th-silver .tabpage .hint { color: #8f9196; }
+.sk-re.th-silver .tabpage .kname, .sk-re.th-silver .lockname { color: #ecebe6; }
+
+/* Steel: the 808's Steel, blue-grey anodised aluminium, white printing, the glass tinted blue, the same orange. */
+.sk-re.th-steel { --sig: #e8742a; --sig-rgb: 232,116,42; --sig-hi: #f5a066; --sig-lo: #c3581b; --amber: #ffa04a; --amber-rgb: 255,160,74;
+  background: radial-gradient(900px 300px at 55% -40px, rgba(255,255,255,.08), transparent 70%),
+  repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, rgba(0,0,0,.025) 1px 2px), linear-gradient(#56606a, #454e58); }
+.sk-re.th-steel .topbar { background: linear-gradient(#1a1f24, #14181c); }
+.sk-re.th-steel .strip { background: linear-gradient(90deg, #15191d, #1b2026); }
+.sk-re.th-steel .plate { background: linear-gradient(#636d78, #56606a); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px #262c32, 0 4px 10px rgba(0,0,0,.4); }
+.sk-re.th-steel .secname { color: #f5f8fa; }
+.sk-re.th-steel .kname, .sk-re.th-steel .rowname { color: #e8eef3; }
+.sk-re.th-steel .hint, .sk-re.th-steel .rowhint { color: #b8c2cb; }
+.sk-re.th-steel .octname, .sk-re.th-steel .grp { color: #a3aeb8; }
+.sk-re.th-steel .cap { background: linear-gradient(#6e7883, #56606a 55%, #47505a); color: #f3f6f8; box-shadow: 0 0 0 1px #20252a, inset 0 1px 0 rgba(255,255,255,.18), inset 0 -2px 0 rgba(0,0,0,.3), 0 2px 3px rgba(0,0,0,.45); }
+.sk-re.th-steel .screen, .sk-re.th-steel .seg, .sk-re.th-steel .keybed { background: linear-gradient(#10151a, #151b21); }
+.sk-re.th-steel .well, .sk-re.th-steel .lcd { background: linear-gradient(#0b0f13, #12171c); }
+.sk-re.th-steel .cell { background: linear-gradient(#2b333c, #232a32); }
+.sk-re.th-steel .cell.lit { background: linear-gradient(#5b6773, #4b5661); }
+.sk-re.th-steel .cell.half { background: linear-gradient(#38414b, #2f3740); }
+.sk-re.th-steel .slot { background: linear-gradient(#3a434d, #2e363f); } .sk-re.th-steel .slot.empty { background: linear-gradient(#262d35, #1f252c); }
+.sk-re.th-steel .chainb { background: linear-gradient(#323a43, #2a3139); }
+
+/* Olive: the 808's Olive, olive drab, cream printing, the glass tinted green, signal red. */
+.sk-re.th-olive { --sig: #e2512b; --sig-rgb: 226,81,43; --sig-hi: #f68866; --sig-lo: #b33a1a; --sig-pale: #ffb59c; --sig-light: #ff8a66;
+  --amber: #ff7a55; --amber-rgb: 255,110,70;
+  background: radial-gradient(900px 300px at 55% -40px, rgba(255,255,255,.07), transparent 70%),
+  repeating-linear-gradient(90deg, rgba(255,255,255,.015) 0 1px, rgba(0,0,0,.025) 1px 2px), linear-gradient(#5c5e49, #4a4c3a); }
+.sk-re.th-olive .topbar { background: linear-gradient(#1d1e16, #171812); }
+.sk-re.th-olive .strip { background: linear-gradient(90deg, #17180f, #1e1f16); }
+.sk-re.th-olive .title b { color: var(--sig); }
+.sk-re.th-olive .plate { background: linear-gradient(#686a55, #5a5c48); box-shadow: inset 0 1px 0 rgba(255,255,255,.12), 0 0 0 1px #24251b, 0 4px 10px rgba(0,0,0,.4); }
+.sk-re.th-olive .secname { color: #f7f4e8; }
+.sk-re.th-olive .kname, .sk-re.th-olive .rowname { color: #eeead6; }
+.sk-re.th-olive .hint, .sk-re.th-olive .rowhint { color: #c4c0a8; }
+.sk-re.th-olive .octname, .sk-re.th-olive .grp { color: #aaa78f; }
+.sk-re.th-olive .cap { background: linear-gradient(#74765e, #5d5f49 55%, #4c4e3b); color: #f7f4e8; box-shadow: 0 0 0 1px #1f2017, inset 0 1px 0 rgba(255,255,255,.17), inset 0 -2px 0 rgba(0,0,0,.3), 0 2px 3px rgba(0,0,0,.45); }
+.sk-re.th-olive .screen, .sk-re.th-olive .seg, .sk-re.th-olive .keybed { background: linear-gradient(#12130d, #171810); }
+.sk-re.th-olive .well, .sk-re.th-olive .lcd { background: linear-gradient(#0e0f0a, #14150f); }
+.sk-re.th-olive .cell { background: linear-gradient(#2d2f24, #25271d); }
+.sk-re.th-olive .cell.lit { background: linear-gradient(#5f6250, #4f5242); }
+.sk-re.th-olive .cell.half { background: linear-gradient(#3a3c2f, #313327); }
+.sk-re.th-olive .slot { background: linear-gradient(#3c3e31, #313327); } .sk-re.th-olive .slot.empty { background: linear-gradient(#292a20, #222319); }
+.sk-re.th-olive .chainb { background: linear-gradient(#34362a, #2c2e23); }
+.sk-re.th-olive .wk.pk { background: linear-gradient(#fff4f0, #ffc9b5 70%, #f08f70); }
+.sk-re.th-silver .cap.hot, .sk-re.th-steel .cap.hot, .sk-re.th-olive .cap.hot { background: linear-gradient(var(--sig-hi), var(--sig) 52%, var(--sig-lo)); color: #1d0f05; text-shadow: 0 1px 0 rgba(255,255,255,.25); }
+.sk-re.th-olive .cap.hot { color: #230b04; }
+.sk-re.th-steel .cell.acc, .sk-re.th-olive .cell.acc { background: radial-gradient(ellipse at 50% 30%, var(--sig-pale), var(--sig) 60%, var(--sig-lo)); }
+.sk-re.th-silver .kname .val { color: #b4501a; text-shadow: none; }
+</style>
+</head>
+<body>
+<div id="chrome">
+  <b>CoolSynth 303 look</b>
+  <button class="tab" data-v="t-graphite">Graphite (now)</button>
+  <button class="tab" data-v="t-silver">Silver</button>
+  <button class="tab" data-v="t-steel">Steel</button>
+  <button class="tab" data-v="t-olive">Olive</button>
+  <span class="sp"></span>
+  <label>app over it <input id="over" type="range" min="0" max="100" value="0"></label>
+</div>
+<div id="viewport"><div id="stage"></div></div>
+<div id="about"></div>
+<script>
+'use strict';
+// ------------------------------------------------------------------ what each mockup is, for the bar at the bottom
+const ABOUT = {
+  't-graphite': '<b>Graphite.</b> The machined look as the app has it now (D348), on layout B (D350).',
+  't-silver': '<b>Silver.</b> The TB-303\'s face: the plates brushed aluminium printed in black, the keys light grey as the TB-303\'s; the top bar, the title strip, the displays and the sequencer\'s screens stay dark glass, as its black boxes. Orange stays the signal.',
+  't-steel': '<b>Steel.</b> CoolSynth 808\'s Steel on the 303: blue-grey anodised aluminium, white printing, keys in the metal\'s colour, the glass tinted blue, the 808\'s orange.',
+  't-olive': '<b>Olive.</b> CoolSynth 808\'s Olive: olive drab, cream printing, the glass tinted green, signal red in place of orange (the title\'s 303 too).',
+};
+
+// ------------------------------------------------------------------ the 808's skins, from its Theme.h (D307) and layout 5's CSS
+const T808 = {
+  roland: { light: false, '--metal-a': '#333334', '--metal-b': '#242425', '--sheen': '.06', '--brushL': '.012', '--brushD': '.02',
+    '--glass-a': 'rgba(16,16,17,.80)', '--glass-b': 'rgba(11,11,12,.86)', '--board-ink': '#f4f4f2', '--board-label': '#ecebe6', '--board-dim': '#8d8c88', '--accent': '#f28a2c', '--lit': '#f6a25a',
+    '--cap-a': '#505052', '--cap-b': '#39393b', '--cap-c': '#2c2c2e', '--hot-a': '#f6a25a', '--hot-b': '#ee7d28', '--hot-c': '#c45a16', '--hot-ink': '#1c120a',
+    '--g1': '#6d2c27', '--g2': '#79492a', '--g3': '#7a6a35', '--g4': '#77746c', '--gon1': '#d8362c', '--gon2': '#ee7d28', '--gon3': '#f1c63c', '--gon4': '#ece7d6',
+    '--knob-a': '#6a6a6c', '--knob-b': '#242426', '--pointer': '#f28a2c', '--tick': '#dcdcd8', '--acc-a': '#f6a25a', '--acc-b': '#c45a16',
+    '--sw-a': '#555557', '--sw-b': '#38383a', '--sw-c': '#262628', '--th-a': '#f2f2ef', '--th-b': '#c9c9c4', '--th-c': '#8f8f8a',
+    '--copper': 'rgba(178,146,104,.30)', '--pad': 'rgba(178,146,104,.5)', '--silk': 'rgba(236,236,232,.26)', '--silk-text': 'rgba(232,232,228,.62)', '--flow-rgb': '240,120,40',
+    '--name-strip': '#1c1c1d', '--name-edge': '#0d0d0e' },
+  silver: { light: true, '--metal-a': '#c6c9cc', '--metal-b': '#a9adb1', '--sheen': '.18', '--brushL': '.05', '--brushD': '.025',
+    '--glass-a': 'rgba(26,27,30,.84)', '--glass-b': 'rgba(20,21,24,.9)', '--board-ink': '#1d2024', '--board-label': '#2a2e33', '--board-dim': '#6c7178', '--accent': '#ff7a2e', '--lit': '#ffa04a',
+    '--cap-a': '#5c6065', '--cap-b': '#45494e', '--cap-c': '#393c40', '--hot-a': '#f8a066', '--hot-b': '#ef6b21', '--hot-c': '#bf4f12', '--hot-ink': '#1f0e04',
+    '--g1': '#464a50', '--g2': '#51555b', '--g3': '#5c6066', '--g4': '#686c72', '--gon1': '#ef6b21', '--gon2': '#ef6b21', '--gon3': '#ef6b21', '--gon4': '#ef6b21',
+    '--knob-a': '#f4f4f4', '--knob-b': '#a2a6ab', '--pointer': '#1d2024', '--tick': '#2a2e33', '--acc-a': '#f8a066', '--acc-b': '#bf4f12',
+    '--gknob-a': '#3a3d42', '--gknob-b': '#131517', '--gpointer': '#ef6b21', '--gtick': '#c2c5c8',
+    '--sw-a': '#e4e6e8', '--sw-b': '#c2c5c8', '--sw-c': '#a2a6aa', '--th-a': '#2c2f33', '--th-b': '#1d2023', '--th-c': '#111315',
+    '--copper': 'rgba(150,104,52,.48)', '--pad': 'rgba(140,100,54,.7)', '--silk': 'rgba(30,32,36,.42)', '--silk-text': 'rgba(30,32,36,.78)', '--flow-rgb': '239,100,25',
+    '--name-strip': '#26292d', '--name-edge': '#121416' },
+  steel: { light: false, '--metal-a': '#5c6670', '--metal-b': '#4a535d', '--sheen': '.07', '--brushL': '.012', '--brushD': '.02',
+    '--glass-a': 'rgba(20,26,32,.80)', '--glass-b': 'rgba(15,20,25,.86)', '--board-ink': '#f5f8fa', '--board-label': '#e8eef3', '--board-dim': '#a3aeb8', '--accent': '#ffa04a', '--lit': '#ffa04a',
+    '--cap-a': '#626c77', '--cap-b': '#4b545e', '--cap-c': '#3e4650', '--hot-a': '#f5a066', '--hot-b': '#e8742a', '--hot-c': '#c3581b', '--hot-ink': '#1a120c',
+    '--g1': '#3c4550', '--g2': '#454e59', '--g3': '#4f5965', '--g4': '#5a6572', '--gon1': '#e8742a', '--gon2': '#e8742a', '--gon3': '#e8742a', '--gon4': '#e8742a',
+    '--knob-a': '#78828c', '--knob-b': '#2c333a', '--pointer': '#f3f7fa', '--tick': '#dfe7ee', '--acc-a': '#f3a066', '--acc-b': '#b9541a',
+    '--sw-a': '#6a747e', '--sw-b': '#4c5660', '--sw-c': '#3a434c', '--th-a': '#f5f8fa', '--th-b': '#c9d2da', '--th-c': '#8d98a3',
+    '--copper': 'rgba(214,182,118,.42)', '--pad': 'rgba(214,182,118,.6)', '--silk': 'rgba(236,244,250,.30)', '--silk-text': 'rgba(236,244,250,.72)', '--flow-rgb': '235,110,35',
+    '--name-strip': '#2a3037', '--name-edge': '#15191d' },
+  olive: { light: false, '--metal-a': '#646650', '--metal-b': '#50523e', '--sheen': '.06', '--brushL': '.012', '--brushD': '.02',
+    '--glass-a': 'rgba(24,25,17,.80)', '--glass-b': 'rgba(18,19,13,.86)', '--board-ink': '#f7f4e8', '--board-label': '#eeead6', '--board-dim': '#aaa78f', '--accent': '#ff6a43', '--lit': '#ff6a43',
+    '--cap-a': '#6a6c55', '--cap-b': '#535540', '--cap-c': '#464835', '--hot-a': '#f68866', '--hot-b': '#e2512b', '--hot-c': '#b33a1a', '--hot-ink': '#230b04',
+    '--g1': '#45473a', '--g2': '#4e5042', '--g3': '#585a4b', '--g4': '#636555', '--gon1': '#e2512b', '--gon2': '#e2512b', '--gon3': '#e2512b', '--gon4': '#e2512b',
+    '--knob-a': '#76785f', '--knob-b': '#2b2c21', '--pointer': '#f7f4e8', '--tick': '#e6e2cd', '--acc-a': '#f68866', '--acc-b': '#b33a1a',
+    '--sw-a': '#6c6e57', '--sw-b': '#505240', '--sw-c': '#3c3e2f', '--th-a': '#f7f4e8', '--th-b': '#d2cdb6', '--th-c': '#969179',
+    '--copper': 'rgba(222,186,122,.40)', '--pad': 'rgba(222,186,122,.6)', '--silk': 'rgba(244,240,222,.30)', '--silk-text': 'rgba(244,240,222,.72)', '--flow-rgb': '255,110,70',
+    '--name-strip': '#2a2b20', '--name-edge': '#141510' },
+};
+
+// ------------------------------------------------------------------ the panel, as the app lays it out (base 1280 by 800)
+const SECTIONS = [['Oscillator', 66, 150], ['Filter', 238, 280], ['Envelope', 540, 176], ['Amplifier', 738, 104], ['Drive', 864, 170], ['Delay', 1056, 214]];
+const SEC_Y = 62, SEC_H = 170;
+// name, diameter, centre x, centre y, value; Panel.cpp places each by its corner, the centre is what matters
+const KNOBS = [['Tuning', 44, 146, 132, .5], ['Cutoff', 60, 298, 134, .43], ['Resonance', 44, 388, 132, .74], ['Env mod', 44, 472, 132, .55],
+  ['Decay', 44, 590, 132, .48], ['Accent', 44, 670, 132, .61, { accent: true }], ['Volume', 44, 794, 132, .78],
+  ['Amount', 40, 908, 134, .33], ['Tone', 40, 986, 134, .6], ['Time', 40, 1094, 134, 1 / 3, { value: '1/8' }]];
+const ARROWS = [227, 529, 727, 853, 1045];
+const TOP_KEYS = [['<', 60, 30], ['>', 312, 30], ['New', 352, 56], ['Open', 414, 56], ['Save', 476, 56], ['Library', 544, 72], ['Options', 622, 72, 'tg'], ['Play', 838, 64, 'tg'], ['Tap', 1022, 50], ['Rec', 1080, 50, 'tg'], ['Lid', 1146, 50], ['Mods', 1204, 60, 'tg']];
+const KB_KEYS = [['Accent', 78, 290, 62], ['Slide', 78, 338, 62], ['Back', 836, 290, 62, 'plain'], ['Step', 906, 290, 62, 'plain'], ['Tie', 836, 338, 62, 'plain'], ['Rest', 906, 338, 62, 'plain'],
+  ['Write', 996, 290, 86, 'on'], ['Transpose', 996, 338, 86]];
+const PIANO_X = 164, PIANO_Y = 270, WW = 29;
+const TOOLS = { labels: [['New line', 73], ['Key', 336], ['Move', 614], ['Pitch', 751], ['Length', 889]], seps: [323, 603, 741, 878, 1020, 1158],
+  keys: [['Generate', 132, 82, 'hot'], ['Mutate', 219, 65], ['▾', 290, 24], ['Snap to key', 494, 98], ['◀', 652, 36], ['▶', 693, 36], ['−', 790, 36], ['+', 831, 36],
+    ['Undo', 1031, 56, 'dis'], ['Redo', 1092, 56, 'dis'], ['Drag MIDI', 1170, 88]],
+  boxes: [['C', 365, 33], ['minor', 404, 85], ['16 steps', 940, 68]] };
+const LETTERS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B', 'C′'];
+// the line on screen in the screenshot: note (0 to 12), octave, gate, accent, slide
+const STEPS = [[0, 1, 'note'], [0, 0, 'note'], [0, 0, 'rest'], [0, 1, 'tie'], [0, 0, 'note'], [0, -1, 'tie'], [5, 0, 'note'], [7, 1, 'note'],
+  [8, 0, 'note', 1, 1], [2, 0, 'note', 1, 1], [0, 0, 'note', 1, 0], [0, 1, 'tie', 0, 1], [8, 0, 'note'], [0, 0, 'note'], [0, 0, 'rest'], [0, 1, 'tie']];
+const colX = i => 180 + i * 56.8 + Math.floor(i / 4) * 2.4, COLW = 54;
+const ROW = { lights: 492, names: 510, pitch: [518, 620], octave: [623, 643], accent: [648, 668], slide: [672, 692], gate: [697, 717], motion: [722, 758] };
+
+// ------------------------------------------------------------------ helpers
+let uid = 0;
+const P = (x, y, w, h) => `left:${x}px;top:${y}px;` + (w != null ? `width:${w}px;` : '') + (h != null ? `height:${h}px;` : '');
+const ctx = document.createElement('canvas').getContext('2d');
+function textWidth(text, font) { ctx.font = font; return ctx.measureText(text).width; }
+const rad = d => d * Math.PI / 180;
+function framePath(x, y, w, h, r, g0, g1) {
+  x += .5; y += .5; w -= 1; h -= 1;
+  const top = g1 > g0 ? `M${x + g1},${y} H${x + w - r}` : `M${x + r},${y} H${x + w - r}`;
+  return `${top} A${r},${r} 0 0 1 ${x + w},${y + r} V${y + h - r} A${r},${r} 0 0 1 ${x + w - r},${y + h} H${x + r} A${r},${r} 0 0 1 ${x},${y + h - r} V${y + r} A${r},${r} 0 0 1 ${x + r},${y}` + (g1 > g0 ? ` H${x + g0}` : ' Z');
+}
+const svgAt = (x, y, w, h, inner, cls = '') => `<svg class="f ${cls}" style="${P(x, y, w, h)}" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${inner}</svg>`;
+const wave = (kind, w = 16, h = 8) => kind === 'saw' ? `M0,${h} L${w / 2},0 V${h} L${w},0 V${h}` : `M0,${h} V0 H${w / 3} V${h} H${2 * w / 3} V0 H${w} V${h}`;
+
+// ------------------------------------------------------------------ knobs: one function per family
+// The app's knob (Widgets.cpp): black, an orange pointer, eleven ticks over 270 degrees.
+function knobNow(v, size, o = {}) {
+  const r = size / 2, p = 12, W = size + 2 * p, c = W / 2, id = 'g' + uid++;
+  let ticks = '';
+  for (let i = 0; i <= 10; i++) {
+    const a = rad(-135 + 27 * i), dx = Math.sin(a), dy = -Math.cos(a), L = i % 5 === 0 ? 4 : 2.5;
+    ticks += `<line x1="${c + dx * (r + 4)}" y1="${c + dy * (r + 4)}" x2="${c + dx * (r + 4 + L)}" y2="${c + dy * (r + 4 + L)}"/>`;
+  }
+  const a = rad(-135 + 270 * v), dx = Math.sin(a), dy = -Math.cos(a);
+  const [g0, g1] = o.rim ? ['#f7a463', '#c4561a'] : ['#3a3b3e', '#0c0c0d'];
+  return { W, html: `<svg width="${W}" height="${W}"><defs><radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${c - .4 * r}" cy="${c - .6 * r}" r="${1.836 * r}"><stop offset="0" stop-color="${g0}"/><stop offset="1" stop-color="${g1}"/></radialGradient></defs>
+    <g stroke="#b5b6b9" stroke-opacity=".9" stroke-width="1.1">${ticks}</g>
+    <circle cx="${c}" cy="${c + 2}" r="${r + 1}" fill="#000" fill-opacity=".55"/><circle cx="${c}" cy="${c}" r="${r}" fill="url(#${id})"/>
+    <circle cx="${c}" cy="${c}" r="${r * .68}" fill="none" stroke="#fff" stroke-opacity=".07"/><circle cx="${c}" cy="${c}" r="${r - .5}" fill="none" stroke="#000"/>
+    <line x1="${c + dx * r * .18}" y1="${c + dy * r * .18}" x2="${c + dx * r * .9}" y2="${c + dy * r * .9}" stroke="${o.rim ? '#1a120c' : '#e8742a'}" stroke-width="${size >= 50 ? 3 : 2.4}"/></svg>` };
+}
+// The 808's knob (layout 5's knobSVG): a solid cap from the theme, a pointer, printed ticks over 300 degrees.
+function knob808(v, size, o = {}) {
+  const r = size / 2, p = 9, W = size + 2 * p, c = W / 2, id = 'k' + uid++;
+  const glass = o.glass ? 'g' : '';
+  let ticks = '';
+  for (let i = 0; i <= 10; i++) {
+    const a = rad(-150 + 30 * i - 90), r1 = r + 3, r2 = r + (i % 5 === 0 ? 7 : 5);
+    ticks += `<line x1="${c + r1 * Math.cos(a)}" y1="${c + r1 * Math.sin(a)}" x2="${c + r2 * Math.cos(a)}" y2="${c + r2 * Math.sin(a)}"/>`;
+  }
+  const a = rad(-150 + 300 * v - 90);
+  const top = o.accent ? 'var(--acc-a)' : `var(--${glass}knob-a, var(--knob-a))`, bot = o.accent ? 'var(--acc-b)' : `var(--${glass}knob-b, var(--knob-b))`;
+  const ptr = o.accent ? 'var(--acc-pointer, #1a1714)' : `var(--${glass}pointer, var(--pointer))`;
+  const metal = o.metal ? `<div style="position:absolute;left:${p + 1}px;top:${p + 1}px;width:${size - 2}px;height:${size - 2}px;border-radius:50%;
+      background:conic-gradient(from 20deg, rgba(255,255,255,.55), rgba(0,0,0,.18) 12%, rgba(255,255,255,.5) 25%, rgba(0,0,0,.2) 37%, rgba(255,255,255,.55) 50%, rgba(0,0,0,.18) 62%, rgba(255,255,255,.5) 75%, rgba(0,0,0,.2) 87%, rgba(255,255,255,.55));
+      mix-blend-mode:soft-light;"></div>` : '';
+  const flutes = o.metal && size >= 40 ? `<circle cx="${c}" cy="${c}" r="${r - 2.2}" fill="none" stroke="rgba(0,0,0,.28)" stroke-width="3" stroke-dasharray="1.2 2.1"/>` : '';
+  return { W, html: `<div style="position:relative;width:${W}px;height:${W}px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.7))">
+    <svg width="${W}" height="${W}" style="position:absolute;left:0;top:0"><defs><radialGradient id="${id}" cx="40%" cy="30%" r="80%"><stop offset="0" style="stop-color:${top}"/><stop offset="1" style="stop-color:${bot}"/></radialGradient></defs>
+    <g style="stroke:var(--${glass}tick, var(--tick))" stroke-width="1.1">${ticks}</g>
+    <circle cx="${c}" cy="${c + 1.5}" r="${r - 1}" fill="#000" opacity=".55"/><circle cx="${c}" cy="${c}" r="${r - 1}" fill="url(#${id})" stroke="#0e0d0c" stroke-width="1"/>
+    ${flutes}<circle cx="${c}" cy="${c}" r="${r * .62}" fill="none" stroke="rgba(255,255,255,.07)"/></svg>${metal}
+    <svg width="${W}" height="${W}" style="position:absolute;left:0;top:0"><line x1="${c + r * .2 * Math.cos(a)}" y1="${c + r * .2 * Math.sin(a)}" x2="${c + (r - 4) * Math.cos(a)}" y2="${c + (r - 4) * Math.sin(a)}" style="stroke:${ptr}" stroke-width="${size >= 50 ? 3 : 2.4}" stroke-linecap="round"/></svg></div>` };
+}
+// The redesign's knob: a knurled black skirt, a turned aluminium cap, an orange line, the value as a lit arc.
+function knobRe(v, size, o = {}) {
+  const r = size / 2, p = 11, W = size + 2 * p, c = W / 2, ar = r + 6, a0 = -135, a1 = -135 + 270 * v;
+  const pt = d => [c + ar * Math.sin(rad(d)), c - ar * Math.cos(rad(d))];
+  const arc = (d0, d1) => { const [x0, y0] = pt(d0), [x1, y1] = pt(d1); return `M${x0},${y0} A${ar},${ar} 0 ${d1 - d0 > 180 ? 1 : 0} 1 ${x1},${y1}`; };
+  const a = rad(a1), dx = Math.sin(a), dy = -Math.cos(a), cap = size * .6;
+  const accent = o.accent || o.rim;
+  const lit = accent ? 'var(--sig-pale)' : 'var(--sig)';
+  return { W, html: `<div style="position:relative;width:${W}px;height:${W}px">
+    <svg width="${W}" height="${W}" style="position:absolute;left:0;top:0">
+      <path d="${arc(-135, 135)}" fill="none" stroke="#0a0a0b" stroke-width="3.2" stroke-linecap="round"/>
+      <path d="${arc(-135, 135)}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="1" stroke-linecap="round" transform="translate(0,1)"/>
+      ${v > .005 ? `<path d="${arc(a0, a1)}" fill="none" stroke-width="2.4" stroke-linecap="round" style="stroke:${lit};filter:drop-shadow(0 0 3px ${lit})"/>` : ''}
+    </svg>
+    <div style="position:absolute;left:${p}px;top:${p}px;width:${size}px;height:${size}px;border-radius:50%;
+      background:radial-gradient(circle at 50% 30%, rgba(255,255,255,.12), transparent 60%), repeating-conic-gradient(${accent ? '#3a1a08 0 4deg, #5a2a0e 4deg 8deg' : '#0d0d0e 0 4deg, #232427 4deg 8deg'});
+      box-shadow:0 3px 5px rgba(0,0,0,.7), 0 0 0 1px #000, inset 0 0 0 1px rgba(255,255,255,.05)"></div>
+    <div style="position:absolute;left:${c - cap / 2}px;top:${c - cap / 2}px;width:${cap}px;height:${cap}px;border-radius:50%;
+      background:${accent ? 'radial-gradient(circle at 40% 30%, var(--sig-pale), var(--sig) 60%, var(--sig-lo))' : 'conic-gradient(from 30deg, #8e9196, #eef0f2 10%, #a3a6ab 22%, #e4e6e9 36%, #8e9196 50%, #f1f2f4 62%, #9fa2a7 75%, #e1e3e6 88%, #8e9196)'};
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.6), 0 1px 2px rgba(0,0,0,.8), 0 0 0 1px rgba(0,0,0,.6)"></div>
+    <svg width="${W}" height="${W}" style="position:absolute;left:0;top:0">
+      <line x1="${c + dx * cap * .5}" y1="${c + dy * cap * .5}" x2="${c + dx * (r - 1.5)}" y2="${c + dy * (r - 1.5)}" style="stroke:${accent ? '#fff2e4' : 'var(--sig)'}" stroke-width="2.6" stroke-linecap="round"/>
+      <line x1="${c + dx * cap * .12}" y1="${c + dy * cap * .12}" x2="${c + dx * cap * .42}" y2="${c + dy * cap * .42}" stroke="rgba(20,20,22,.75)" stroke-width="1.6" stroke-linecap="round"/>
+    </svg></div>` };
+}
+
+// ------------------------------------------------------------------ faders
+function faderNow(cx, top, v) {
+  let lines = '';
+  for (let y = 10; y < 112; y += 11) lines += `<line x1="${30 - 13}" x2="${30 + 13}" y1="${y + .5}" y2="${y + .5}"/>`;
+  const cy = (1 - v) * 98;
+  return svgAt(cx - 30, top, 60, 112, `<g stroke="#4b4d52">${lines}</g><rect x="28" y="0" width="4" height="112" fill="#0e0f10"/>
+    <defs><linearGradient id="fc${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b3c40"/><stop offset="1" stop-color="#16171a"/></linearGradient></defs>
+    <rect x="18" y="${cy + 2}" width="24" height="14" rx="2" fill="#000" fill-opacity=".6"/><rect x="18" y="${cy}" width="24" height="14" rx="2" fill="url(#fc${uid++})"/>
+    <rect x="21" y="${cy + 6}" width="18" height="2" fill="#e8742a"/>`);
+}
+function fader808(cx, top, v, o = {}) {
+  let lines = '';
+  for (let i = 0; i <= 10; i++) { const y = 8 + i * 9.6; lines += `<line x1="${i % 5 ? 21 : 18}" x2="${i % 5 ? 39 : 42}" y1="${y}" y2="${y}"/>`; }
+  const cy = 2 + (1 - v) * 92, id = 'fd' + uid++;
+  return svgAt(cx - 30, top, 60, 112, `<defs><linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--th-a)"/><stop offset=".55" style="stop-color:var(--th-b)"/><stop offset="1" style="stop-color:var(--th-c)"/></linearGradient></defs>
+    <g style="stroke:${o.ink || 'var(--silk)'}" stroke-width="1">${lines}</g>
+    <rect x="26" y="0" width="8" height="112" rx="2" fill="#0b0a09" stroke="rgba(255,255,255,.08)"/>
+    <rect x="19" y="${cy + 2}" width="22" height="16" rx="2.5" fill="#000" opacity=".55"/>
+    <rect x="19" y="${cy}" width="22" height="16" rx="2.5" fill="url(#${id}t)" stroke="#2a2724" stroke-width=".8"/>
+    <rect x="20" y="${cy + .8}" width="20" height="2" rx="1" fill="rgba(255,255,255,.55)"/>
+    ${[0, 1, 2].map(i => `<line x1="22" x2="38" y1="${cy + 5.5 + i * 2.8}" y2="${cy + 5.5 + i * 2.8}" stroke="rgba(0,0,0,.38)"/>`).join('')}
+    <line x1="21" x2="39" y1="${cy + 8}" y2="${cy + 8}" stroke="${o.line || 'var(--hot-b)'}" stroke-width="1.6"/>`);
+}
+function faderRe(cx, top, v) {
+  const cy = 2 + (1 - v) * 92, id = 'fr' + uid++;
+  let lines = '';
+  for (let i = 0; i <= 10; i++) { const y = 10 + i * 9.2; lines += `<line x1="${i % 5 ? 17 : 14}" x2="${i % 5 ? 21 : 21}" y1="${y}" y2="${y}"/><line x1="39" x2="${i % 5 ? 43 : 46}" y1="${y}" y2="${y}"/>`; }
+  return svgAt(cx - 30, top, 60, 112, `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f1f2f4"/><stop offset=".5" stop-color="#b6b9be"/><stop offset="1" stop-color="#8c8f94"/></linearGradient></defs>
+    <g stroke="#4a4c51">${lines}</g>
+    <rect x="26" y="2" width="8" height="108" rx="4" fill="#09090a" stroke="rgba(255,255,255,.06)"/>
+    <rect x="28.5" y="${cy + 9}" width="3" height="${108 - cy - 9}" rx="1.5" style="fill:var(--sig);filter:drop-shadow(0 0 3px rgba(var(--sig-rgb),.8))"/>
+    <rect x="18" y="${cy + 2}" width="24" height="16" rx="3" fill="#000" opacity=".6"/>
+    <rect x="18" y="${cy}" width="24" height="16" rx="3" fill="url(#${id})" stroke="#000" stroke-width=".8"/>
+    <rect x="21" y="${cy + 7}" width="18" height="2" rx="1" style="fill:var(--sig)"/>`);
+}
+
+// ------------------------------------------------------------------ the skins: what each draws differently
+const SKINS = {
+  now: { cls: 'sk-now', knob: knobNow, range: true, lampAbove: true, fader: faderNow, waveform: 'keys', frameR: 9 },
+  re: { cls: 'sk-re', knob: knobRe, range: false, lampAbove: false, fader: faderRe, waveform: 'segment', frameR: 7, plates: true },
+  tb: { cls: 'sk-tb', knob: (v, s, o) => knob808(v, s, { ...o, metal: true }), range: true, lampAbove: true, fader: (cx, t, v) => fader808(cx, t, v, { ink: '#161616', line: '#161616' }), waveform: 'switch', frameR: 3, tb: true,
+    vars: { '--knob-a': '#f6f6f6', '--knob-b': '#9a9ea3', '--pointer': '#161616', '--tick': '#161616', '--acc-a': '#f07a5c', '--acc-b': '#a8250f',
+      '--gtick': '#cfcfcf', '--th-a': '#f4f4f4', '--th-b': '#c9cbce', '--th-c': '#8f9296', '--hot-b': '#d93a22' } },
+};
+for (const L of ['fixed', 'A', 'B', 'C']) SKINS[L] = { ...SKINS.re, layout: L };
+for (const t of ['graphite', 'silver', 'steel', 'olive']) SKINS['t-' + t] = { ...SKINS.re, layout: 'B', cls: 'sk-re th-' + t };
+for (const k of Object.keys(T808)) SKINS[k] = { cls: 'sk-808' + (T808[k].light ? ' light' : ''), knob: knob808, range: false, lampAbove: false, fader: fader808, waveform: 'switch', frameR: 4, is808: true, vars: T808[k] };
+
+// ------------------------------------------------------------------ the pieces, placed
+function cap(S, text, x, y, w, h, kind = '', on = false) {
+  // kind: '' a toggle with its lamp, 'plain' no lamp, 'hot' the panel's one lit action, 'dis' greyed out
+  const lamped = kind === '' || kind === 'tg' || kind === 'on';
+  const isOn = on || kind === 'on';
+  let s = '';
+  if (S.lampAbove && lamped && kind !== 'tg') s += `<i class="lamp${isOn ? ' on' : ''}" style="${P(x + w / 2 - (S.tb ? 3 : 2.5), y - (S.tb ? 9 : 8))}"></i>`;
+  const lens = !S.lampAbove && lamped ? '<i class="lens"></i>' : '';
+  const cls = 'cap' + (isOn && (S.lampAbove ? !S.tb : true) ? ' on' : '') + (kind === 'hot' ? ' hot' : '') + (kind === 'dis' ? ' dis' : '');
+  s += `<div class="${cls}" style="${P(x, y, w, h)}">${lens}<span>${text}</span></div>`;
+  return s;
+}
+function knobAt(S, name, size, cx, cy, v, o = {}) {
+  const k = S.knob(v, size, o), r = size / 2;
+  let s = `<div class="f" style="${P(cx - k.W / 2, cy - k.W / 2)}">${k.html}</div>`;
+  const showRange = S.range && o.range !== false;
+  if (showRange) s += `<div class="krange" style="${P(cx - r - 8, cy + r + 1)}">0</div><div class="krange" style="${P(cx + r - 8, cy + r + 1)}">10</div>`;
+  if (name) s += `<div class="kname" style="${P(cx - 70, cy + r + (S.is808 ? 9 : 6) + (showRange ? 4 : 0) + 2)}">${name}${o.value ? ` <span class="val" style="font-size:9.2px">${o.value}</span>` : ''}</div>`;
+  return s;
+}
+function section(S, x, y, w, h, name) {
+  if (S.plates) {
+    const i = SECTIONS.findIndex(q => q[0] === name);
+    const no = i >= 0 ? `<i>0${i + 1}</i>` : '';
+    return `<div class="plate" style="${P(x, y - 8, w, h + 8)}"><div class="band"></div></div><div class="t secname" style="${P(x + 12, y - 8 + 7)}">${no}${name.toUpperCase()}</div>`;
+  }
+  if (S.tb) {
+    const tw = textWidth(name.toUpperCase(), "700 9.7px ArchivoSC") + name.length * 1.16 + 14;
+    return svgAt(0, 0, 1280, 800, `<path class="frame" fill="none" d="${framePath(x, y, w, h, S.frameR, 8, 8 + tw)}"/>`) +
+      `<div class="sectab" style="${P(x + 8, y - 7, tw)}"></div><div class="t secname" style="${P(x + 15, y - 3)}">${name.toUpperCase()}</div>`;
+  }
+  const font = S.is808 ? "700 11.8px ArchivoSC" : "700 10.1px ArchivoSC";
+  const tw = textWidth(name.toUpperCase(), font) + name.length * (S.is808 ? .6 : 1.2) + 12;
+  return svgAt(0, 0, 1280, 800, `<path class="frame" fill="none" stroke-width="1" d="${framePath(x, y, w, h, S.frameR, 10, 10 + tw)}"/>`) +
+    `<div class="t secname" style="${P(x + 16, y - (S.is808 ? 6 : 5))}">${name.toUpperCase()}</div>`;
+}
+
+// The 808's etched copper under the synth's sections: the signal path along a bus, traces down from each knob, parts
+// beside them; drawn in the spirit of a board, not from the TB-303's netlist (as the 808's own mockup does).
+function copper() {
+  let s = '', parts = '', labels = '';
+  let rn = 11;
+  const pad = (x, y) => `<circle class="cupad" cx="${x}" cy="${y}" r="2.2"/>`;
+  // the bus: the signal from the oscillator to the delay, just under the sections
+  s += `<path class="cu" d="M70,239 H1262"/>`;
+  for (const [, x, w] of SECTIONS) s += pad(x + w / 2, 239);
+  s += `<path class="cuflow" d="M141,239 H1163"/>`;
+  // the mix line along the top, under the transport
+  s += `<path class="cu" d="M60,46.5 H1264"/>`;
+  for (const [, x, w] of SECTIONS) s += pad(x + 14, 46.5) + pad(x + w - 14, 46.5);
+  // from under each knob's name down to the bus, a resistor on the way; where a key sits under the knob the trace
+  // steps aside to a clear column (Amount, Time), and the oscillator's comes from its switch
+  const aside = { Amount: 940, Time: 1062, Tuning: 141 };
+  KNOBS.forEach(([name, size, cx, cy]) => {
+    const r = size / 2, y0 = name === 'Tuning' ? 216 : cy + r + 26, x = aside[name] || cx;
+    s += x === cx || name === 'Tuning' ? `<path class="cu" d="M${x},${y0} V239"/>` : `<path class="cu" d="M${cx},${y0} V${y0 + 5} H${x} V239"/>`;
+    s += pad(cx === x || name === 'Tuning' ? x : cx, y0);
+    if (name !== 'Tuning') {
+      const ry = Math.max(y0 + 10, 193);
+      parts += `<rect class="silkpart" x="${x - 3.5}" y="${ry}" width="7" height="16" rx="1"/>`;
+      labels += `<text class="silktext" x="${x + 7}" y="${ry + 11}">R${rn}</text>`;
+    }
+    rn += 7;
+  });
+  // where the sections meet: a coupling capacitor each, on the bus
+  ARROWS.forEach((x, i) => {
+    parts += `<rect class="silkpart" x="${x - 7}" y="${150}" width="14" height="7" rx="1"/>`;
+    labels += `<text class="silktext" x="${x - 7}" y="${146}">C${30 + i * 4}</text>`;
+    s += `<path class="cu" d="M${x},${157} V${239}"/>` + pad(x, 157);
+  });
+  return svgAt(0, 0, 1280, 800, s + parts + labels);
+}
+
+// ------------------------------------------------------------------ the whole panel for one skin
+function panel(S) {
+  let h = '';
+  // the board's ground
+  if (S.is808) {
+    h += copper();
+    h += `<div class="tstrip" style="${P(55, 4, 570, 34)}"></div><div class="tstrip" style="${P(758, 4, 512, 34)}"></div>`;
+    h += `<div class="glass" style="${P(60, 248, 1210, 130)}"></div><div class="glass" style="${P(60, 386, 1210, 392)}"></div>`;
+    h += [[60, 236], [1258, 236]].map(([x, y]) => `<i class="screw" style="${P(x, y)}"></i>`).join('');
+  } else {
+    h += `<div class="f topbar" style="${P(0, 0, 1280, 42)}"></div>`;
+  }
+  h += `<div class="f strip" style="${P(0, 42, 52, 758)}"></div>`;
+  h += `<div class="title">COOLSYNTH <b>303</b></div>`;
+
+  // the top bar
+  for (const [t, x, w, kind] of TOP_KEYS) h += cap(S, t.toUpperCase(), x, 8, w, 26, kind === 'tg' ? 'tg' : 'plain', false);
+  const nameCls = S.plates ? 'lcd' : 'well';
+  h += `<div class="${nameCls}" style="${P(96, 8, 210, 26)};display:flex;align-items:center;justify-content:center"><span class="namebox">Untitled&nbsp; · &nbsp;01A&nbsp; Line 1</span></div>`;
+  if (S.plates || S.tb) h += `<div class="${S.plates ? 'lcd' : 'well'}" style="${P(908, 8, 108, 26)}"></div>`;
+  h += `<div class="t tempo" style="${P(910, 14, 64)};text-align:right">128.0</div><div class="t lbl bpm" style="${P(978, 17)}">BPM</div>`;
+  h += `<div class="t dsp" style="${P(764, 18, 64)};text-align:right">DSP 1%</div>`;
+
+  // the synth's sections
+  for (const [name, x, w] of SECTIONS) h += section(S, x, SEC_Y, w, SEC_H, name);
+  if (S.plates) {
+    // the signal path printed through the plates' heads: from each name on to the next plate, an arrow in the gap
+    SECTIONS.forEach(([name, x, w], i) => {
+      const start = x + 12 + 16 + textWidth(name.toUpperCase(), "800 9.6px ArchivoXB") + name.length * 1.92 + 6;
+      const next = SECTIONS[i + 1];
+      const end = next ? next[1] - 8 : x + w - 12;
+      h += `<div class="flow" style="${P(start, 64, end - start)}"></div>`;
+      if (next) h += `<div class="flowhead" style="${P(end, 61)}"></div>`;
+    });
+  }
+  for (const x of ARROWS) h += `<div class="t arrow" style="${P(x - 5, 141)}">▸</div>`;
+  for (const [name, size, cx, cy, v, o] of KNOBS) h += knobAt(S, name, size, cx, cy, v, { ...(o || {}), accent: S.is808 && o && o.accent });
+
+  // the waveform
+  if (S.waveform === 'keys') h += cap(S, 'SAW', 82, 190, 46, 24, 'on') + cap(S, 'SQUARE', 134, 190, 63, 24);
+  else if (S.waveform === 'switch') h += waveSwitch(S, 141, 202);
+  else h += waveSegment(141, 202);
+  h += cap(S, 'ON', 882, 190, 40, 24, 'on') + cap(S, 'ON', 1070, 190, 40, 24, 'on');
+  h += S.fader(1167, 80, .35) + S.fader(1221, 80, .21);
+  h += `<div class="kname" style="${P(1167 - 70, 199)}">FEEDBACK</div><div class="kname" style="${P(1221 - 70, 199)}">MIX</div>`;
+
+  h += lower(S);
+
+  return h;
+}
+
+function waveSwitch(S, cx, cy) {
+  // a slide switch lying on its side, the saw at its left: the 808's switch, and the TB-303's own WAVEFORM switch
+  const id = 'sw' + uid++, tx = 7;
+  const ridges = [0, 1, 2, 3].map(i => `<line y1="9" y2="19" x1="${tx + 4 + i * 2.6}" x2="${tx + 4 + i * 2.6}" stroke="rgba(0,0,0,.38)"/><line y1="9" y2="19" x1="${tx + 5 + i * 2.6}" x2="${tx + 5 + i * 2.6}" stroke="rgba(255,255,255,.45)" stroke-width=".7"/>`).join('');
+  const sw = `<defs><linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${S.tb ? '#2a2b2d' : 'var(--sw-a)'}"/><stop offset=".5" style="stop-color:${S.tb ? '#1a1a1b' : 'var(--sw-b)'}"/><stop offset="1" style="stop-color:${S.tb ? '#0d0d0d' : 'var(--sw-c)'}"/></linearGradient>
+    <linearGradient id="${id}t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:${S.tb ? '#f4f4f4' : 'var(--th-a)'}"/><stop offset=".55" style="stop-color:${S.tb ? '#c9cbce' : 'var(--th-b)'}"/><stop offset="1" style="stop-color:${S.tb ? '#8f9296' : 'var(--th-c)'}"/></linearGradient></defs>
+    <rect x=".5" y=".5" width="45" height="27" rx="3.5" fill="url(#${id}p)" stroke="#0b0a09"/>
+    <rect x="4" y="9" width="38" height="10" rx="2" fill="#000" stroke="rgba(0,0,0,.8)"/>
+    <rect x="${tx + 2}" y="6.5" width="16" height="15" rx="2.5" fill="#000" opacity=".55"/>
+    <rect x="${tx}" y="6" width="16" height="16" rx="2.5" fill="url(#${id}t)" stroke="#57514a" stroke-width=".8"/>${ridges}`;
+  const ink = S.tb ? '#161616' : 'var(--board-label)', dim = S.tb ? '#161616' : 'var(--board-dim)';
+  let s = svgAt(cx - 23, cy - 14, 46, 28, sw, '');
+  s += `<div class="t swlabel lit" style="${P(cx - 23 - 52, cy - 10, 46)};text-align:right">SAW</div>`;
+  s += `<div class="t swlabel" style="${P(cx + 29, cy - 10)}">SQUARE</div>`;
+  s += svgAt(cx - 23 - 26, cy + 2, 18, 9, `<path d="${wave('saw')}" fill="none" stroke="${ink}" stroke-width="1.3" transform="translate(1,0.5)"/>`);
+  s += svgAt(cx + 29, cy + 2, 18, 9, `<path d="${wave('square')}" fill="none" stroke="${dim}" stroke-width="1.3" transform="translate(1,0.5)"/>`);
+  return s;
+}
+function waveSegment(cx, cy) {
+  // the redesign's: one recessed bay, two keys in it, the waveform drawn on each and the chosen one lit
+  let s = `<div class="seg" style="${P(80, 186, 120, 32)}"></div>`;
+  s += `<div class="cap on" style="${P(83, 189, 56, 26)}"><i class="lens"></i><svg width="22" height="11"><path d="${wave('saw', 20, 10)}" fill="none" stroke="#fff" stroke-width="1.5" transform="translate(1,.5)"/></svg></div>`;
+  s += `<div class="cap" style="${P(141, 189, 56, 26)}"><i class="lens"></i><svg width="22" height="11"><path d="${wave('square', 20, 10)}" fill="none" stroke="#c9c8c3" stroke-width="1.5" transform="translate(1,.5)"/></svg></div>`;
+  s += `<div class="t lbl grp" style="${P(82, 222, 56)};text-align:center;font-size:8.4px">SAW</div><div class="t lbl grp" style="${P(140, 222, 56)};text-align:center;font-size:8.4px">SQUARE</div>`;
+  return s;
+}
+
+function piano(S, X = PIANO_X, ww = WW) {
+  let s = '';
+  if (S.plates) s += `<div class="keybed" style="${P(X - 6, PIANO_Y - 4, 22 * ww + 12, 88)}"></div>`;
+  if (S.tb) s += `<div class="black" style="${P(PIANO_X - 8, PIANO_Y - 6, 22 * WW + 16, 102)}"></div>`;
+  const isWhite = k => [0, 2, 4, 5, 7, 9, 11].includes(k % 12);
+  let whites = 0, blacks = '';
+  for (let k = 0; k < 37; k++) {
+    if (isWhite(k)) {
+      const pk = k === 24;
+      s += `<div class="f wk${k % 12 === 0 ? ' c' : ''}${pk ? ' pk' : ''}" style="${P(X + whites * ww, PIANO_Y - 4, ww, 84)}"><span class="t" style="left:0;right:0;bottom:6px;text-align:center">${LETTERS[k % 12]}</span></div>`;
+      whites++;
+    } else blacks += `<div class="f bk" style="${P(X + whites * ww - ww * 9 / 29, PIANO_Y - 4, ww * 18 / 29, 80 * .62 + 4)}"></div>`;
+  }
+  s += blacks;
+  for (const [name, a, n] of [['Octave down', 0, 7], ['As written', 7, 7], ['Octave up', 14, 8]]) {
+    s += `<div class="f octline" style="${P(X + a * ww + 3, 352, n * ww - 6, 1)}"></div>`;
+    s += `<div class="t octname" style="${P(X + a * ww + 3, 358, n * ww - 6)};text-align:center">${name.toUpperCase()}</div>`;
+  }
+  return s;
+}
+
+// ------------------------------------------------------------------ the lower half, in each layout
+// What every layout keeps: the synth's sections above, the step grid's rows. What moves: the keyboard plate's keys,
+// the pattern row and the tools.
+const bay = (x, y, w, h = 32) => `<div class="seg" style="${P(x, y, w, h)}"></div>`;
+const grp = (t, x, y, w) => `<div class="t lbl grp" style="${P(x, y, w)}${w ? ';text-align:center' : ''}">${t.toUpperCase()}</div>`;
+const disp = (t, x, y, w, h = 26, extra = '') => `<div class="well" style="${P(x, y, w, h)}${extra}">${t}</div>`;
+
+function lower(S) {
+  const L = S.layout || 'fixed';
+  let h = '';
+  if (L === 'fixed') {
+    h += section(S, 60, 254, 1210, 122, 'Keyboard');
+    for (const [t, x, y, w, kind] of KB_KEYS) h += cap(S, t.toUpperCase(), x, y, w, 24, kind === 'plain' ? 'plain' : kind === 'on' ? 'on' : '');
+    h += piano(S, PIANO_X, WW);
+    h += `<div class="hint" style="${P(1102, 279, 158)}">Write: a key sets step 1's note and octave, then moves on.</div>`;
+    h += section(S, 60, 392, 1210, 384, 'Sequencer · Editing 01');
+    h += patternRowNow(S) + toolsNow(S) + grid(S, 0, 0, 'locks');
+  }
+  if (L === 'A' || L === 'B') {
+    h += section(S, 60, 254, 1210, 122, 'Keyboard');
+    h += inspector(S) + piano(S, PIANO_X, WW) + entry(S, 836, 1012, true);
+    h += section(S, 60, 392, 1210, 384, 'Sequencer · Editing 01');
+    h += patternRowA(S);
+    if (L === 'A') h += toolsA(S, 447, true) + grid(S, 0, 0, 'locks');
+    else h += bandKeys(S) + grid(S, -36, 36, 'tabs');
+  }
+  if (L === 'C') {
+    h += section(S, 60, 254, 1210, 122, 'Keyboard · Patterns');
+    h += `<div class="t rowhint" style="${P(300, 251)};color:#6f7176">Write: a key sets step 1's note and octave, then moves on.</div>`;
+    h += inspector(S) + piano(S, PIANO_X, 24) + entryC(S) + bankC(S);
+    h += section(S, 60, 392, 1210, 384, 'Sequencer · Editing 01');
+    h += bandKeys(S) + toolsA(S, 411, false) + grid(S, -36, 36, 'locks');
+  }
+  return h;
+}
+
+// the picked step, shown where its keys are: its number and its note, then Accent and Slide for it
+function inspector(S) {
+  let s = disp(`<span style="color:#8a7a68;font-size:8px;margin-right:9px">STEP 01</span><span style="font-size:12px">C+</span>`, 72, 272, 84, 22);
+  s += cap(S, 'ACCENT', 72, 300, 84, 24, '') + cap(S, 'SLIDE', 72, 328, 84, 24, '');
+  return s;
+}
+// the keys that enter steps, in two rows beside the piano, and Write or Transpose as one switch
+function entry(S, x, mx, hint) {
+  let s = grp('Step entry', x, 280, 158);
+  s += cap(S, 'BACK', x, 300, 76, 24, 'plain') + cap(S, 'STEP', x + 82, 300, 76, 24, 'plain');
+  s += cap(S, 'TIE', x, 328, 76, 24, 'plain') + cap(S, 'REST', x + 82, 328, 76, 24, 'plain');
+  s += grp('Keys', mx, 280, 176);
+  s += bay(mx, 297, 176, 30) + cap(S, 'WRITE', mx + 3, 300, 84, 24, 'on') + cap(S, 'TRANSPOSE', mx + 89, 300, 84, 24, '');
+  if (hint) s += `<div class="hint" style="${P(mx, 332, 248)}">Write: a key sets step 1's note and octave, then moves on.</div>`;
+  return s;
+}
+function entryC(S) {
+  const x = 706;
+  let s = bay(x - 2, 269, 158, 30) + cap(S, 'WRITE', x + 1, 272, 74, 24, 'on') + cap(S, 'TRANSPOSE', x + 77, 272, 76, 24, '');
+  s += cap(S, 'BACK', x, 300, 74, 24, 'plain') + cap(S, 'STEP', x + 79, 300, 74, 24, 'plain');
+  s += cap(S, 'TIE', x, 328, 74, 24, 'plain') + cap(S, 'REST', x + 79, 328, 74, 24, 'plain');
+  return s;
+}
+// C: the pattern bank on the keyboard's plate, two rows of eight as the TB-303's pattern keys, the chain under them
+function bankC(S) {
+  let s = grp('Pattern', 874, 281) + grp('Chain', 892, 337);
+  s += bay(928, 269, 330, 58);
+  for (let i = 0; i < 16; i++) s += `<div class="slot${i === 0 ? ' edit' : ' empty'}" style="${P(932 + (i % 8) * 36, 272 + Math.floor(i / 8) * 28, 32, 24)}">${String(i + 1).padStart(2, '0')}</div>`;
+  s += `<div class="cell ab lit" style="${P(1224, 272, 30, 24)};font:700 10px/1 ArchivoSC">A</div><div class="cell ab" style="${P(1224, 300, 30, 24)};font:700 10px/1 ArchivoSC">B</div>`;
+  s += `<div class="f" style="${P(878, 337.5, 7, 7)};border-radius:50%;background:radial-gradient(circle at 35% 30%, #5a2a20, #1c0d09 72%);box-shadow:0 0 0 1px rgba(0,0,0,.7)"></div>`;
+  s += `<div class="lcd" style="${P(928, 325, 214, 30)}"></div>`;
+  ['01×2', '02', '01×2', '03'].forEach((t, i) => s += `<div class="chainb" style="${P(932 + i * 52, 328, 48, 24)}">${t}</div>`);
+  s += `<div class="cell" style="${P(1148, 328, 26, 24)};font:700 12px/1 ArchivoSC">+</div>` + cap(S, 'LOOP', 1180, 328, 78, 24, 'tg', true);
+  return s;
+}
+
+function patternRowNow(S) {
+  let s = '';
+  for (let i = 0; i < 16; i++) s += `<div class="slot${i === 0 ? ' edit' : ' empty'}" style="${P(72 + i * 31 + Math.floor(i / 4) * 8, 414, 28, 26)}">${String(i + 1).padStart(2, '0')}</div>`;
+  s += `<div class="cell ab lit" style="${P(601, 414, 27, 26)};font:700 10px/1 ArchivoSC">A</div><div class="cell ab" style="${P(631, 414, 27, 26)};font:700 10px/1 ArchivoSC">B</div>`;
+  s += `<div class="f" style="${P(681, 424, 7, 7)};border-radius:50%;background:radial-gradient(circle at 35% 30%, #5a2a20, #1c0d09 72%);box-shadow:0 0 0 1px rgba(0,0,0,.7)"></div>`;
+  s += `<div class="t rowname" style="${P(692, 423)}">CHAIN</div>`;
+  ['01×2', '02', '01×2', '03'].forEach((t, i) => s += `<div class="chainb" style="${P(744 + i * 49, 414, 46, 26)}">${t}</div>`);
+  s += `<div class="cell" style="${P(940, 414, 26, 26)};font:700 12px/1 ArchivoSC">+</div>` + cap(S, 'LOOP', 976, 414, 64, 26, 'tg', true);
+  return s;
+}
+function toolsNow(S) {
+  let s = '';
+  for (const [t, x] of TOOLS.labels) s += `<div class="t lbl grp" style="${P(x, 459)}">${t.toUpperCase()}</div>`;
+  for (const x of TOOLS.seps) s += `<div class="f sep" style="${P(x, 452, 1, 22)}"></div>`;
+  for (const [t, x, w, kind] of TOOLS.keys) s += cap(S, t.toUpperCase(), t === 'Drag MIDI' ? 1166 : x, 451, t === 'Drag MIDI' ? 92 : w, 24, kind || 'plain');
+  for (const [t, x, w] of TOOLS.boxes) s += disp(t, x, 451, w, 24);
+  return s;
+}
+// A and B: the pattern bank in one bay, A and B in another, the chain in a display, the pattern's length at the end
+function patternRowA(S) {
+  let s = grp('Pattern', 72, 423) + bay(130, 411, 504);
+  for (let i = 0; i < 16; i++) s += `<div class="slot${i === 0 ? ' edit' : ' empty'}" style="${P(134 + i * 30 + Math.floor(i / 4) * 6, 414, 27, 26)}">${String(i + 1).padStart(2, '0')}</div>`;
+  s += bay(646, 411, 64) + `<div class="cell ab lit" style="${P(649, 414, 28, 26)};font:700 10px/1 ArchivoSC">A</div><div class="cell ab" style="${P(679, 414, 28, 26)};font:700 10px/1 ArchivoSC">B</div>`;
+  s += `<div class="f" style="${P(724, 424, 7, 7)};border-radius:50%;background:radial-gradient(circle at 35% 30%, #5a2a20, #1c0d09 72%);box-shadow:0 0 0 1px rgba(0,0,0,.7)"></div>` + grp('Chain', 736, 423);
+  s += `<div class="lcd" style="${P(784, 411, 228, 32)}"></div>`;
+  ['01×2', '02', '01×2', '03'].forEach((t, i) => s += `<div class="chainb" style="${P(788 + i * 55, 415, 51, 24)}">${t}</div>`);
+  s += `<div class="cell" style="${P(1018, 414, 26, 26)};font:700 12px/1 ArchivoSC">+</div>` + cap(S, 'LOOP', 1050, 414, 66, 26, 'tg', true);
+  s += grp('Length', 1130, 423) + disp('16 steps', 1186, 414, 72);
+  return s;
+}
+// the tools in bays, each named inside its bay; with edit, Undo, Redo and Drag MIDI close the row
+function toolsA(S, y, edit) {
+  const k = y + 3, ty = y + 12;
+  let s = '';
+  s += bay(72, y, 260) + grp('New line', 80, ty) + cap(S, 'GENERATE', 140, k, 86, 26, 'hot') + cap(S, 'MUTATE', 230, k, 70, 26, 'plain') + cap(S, '▾', 304, k, 24, 26, 'plain');
+  s += bay(344, y, 262) + grp('Key', 352, ty) + disp('C', 380, k, 34) + disp('minor', 418, k, 84) + cap(S, 'SNAP TO KEY', 506, k, 96, 26, 'plain');
+  s += bay(618, y, 124) + grp('Move', 626, ty) + cap(S, '◀', 666, k, 34, 26, 'plain') + cap(S, '▶', 704, k, 34, 26, 'plain');
+  s += bay(754, y, 124) + grp('Pitch', 762, ty) + cap(S, '−', 802, k, 34, 26, 'plain') + cap(S, '+', 840, k, 34, 26, 'plain');
+  if (edit) {
+    s += bay(890, y, 136) + cap(S, 'UNDO', 894, k, 62, 26, 'plain') + cap(S, 'REDO', 960, k, 62, 26, 'dis');
+    s += cap(S, 'DRAG MIDI', 1150, k, 108, 26, 'plain');
+  } else s += bay(890, y, 136) + grp('Length', 898, ty) + disp('16 steps', 950, k, 72);
+  return s;
+}
+// B and C: Undo, Redo and Drag MIDI small in the sequencer's head band, at its right
+function bandKeys(S) {
+  return [['UNDO', 1036, 56, 'plain'], ['REDO', 1096, 56, 'dis'], ['DRAG MIDI', 1160, 98, 'plain']]
+    .map(([t, x, w, k]) => cap(S, t, x, 386, w, 18, k).replace('class="cap', 'class="cap small')).join('');
+}
+
+// the step grid: dy moves it, ph makes its pitch lanes taller; at its right the locks, or (B) a column with tabs
+function grid(S, dy, ph, right) {
+  const R = { lights: 492 + dy, names: 510 + dy, pitch: [518 + dy, 620 + dy + ph] };
+  for (const [k, a, b] of [['octave', 623, 643], ['accent', 648, 668], ['slide', 672, 692], ['gate', 697, 717], ['motion', 722, 758]]) R[k] = [a + dy + ph, b + dy + ph];
+  let s = `<div class="screen" style="${P(140, 484 + dy, 958, 278 - dy)}"></div>`;
+  const [pt, pb] = R.pitch, rh = (pb - pt) / 13;
+  s += `<div class="t rowname" style="${P(77, pt + 27 + ph / 2)}">PITCH</div>`;
+  s += `<div class="t rowhint" style="${P(77, pt + 41 + ph / 2, 64)};white-space:normal">Drag up or down, or wheel</div>`;
+  for (const [r, n] of [['octave', 'OCTAVE'], ['accent', 'ACCENT'], ['slide', 'SLIDE'], ['gate', 'GATE']]) s += `<div class="t rowname" style="${P(77, R[r][0] + 6)}">${n}</div>`;
+  s += `<div class="t rowname" style="${P(77, R.motion[0] - 2)}">MOTION</div>` + disp('Cutoff', 76, R.motion[0] + 14, 62, 20);
+  for (let n = 0; n <= 12; n++) {
+    const sharp = [1, 3, 6, 8, 10].includes(n), lit = n === 0;
+    s += `<div class="f minikey ${lit ? 'lit' : sharp ? 'b' : 'w'}" style="${P(145, pb - (n + 1) * rh, 30, rh)};font:500 ${Math.min(7, rh - 1)}px/${rh}px PlexMono;text-align:right;padding-right:3px;box-shadow:inset 0 -1px 0 rgba(0,0,0,.25)">${LETTERS[n]}</div>`;
+  }
+  STEPS.forEach(([n, oct, gate, acc, slide], i) => {
+    const x = colX(i);
+    s += `<i class="f" style="${P(x + COLW / 2 - 11, R.lights - 3, 6, 6)};border-radius:50%;background:radial-gradient(circle at 35% 30%, #5a2a20, #1c0d09 72%);box-shadow:0 0 0 1px rgba(0,0,0,.6)"></i>`;
+    s += `<div class="t stepno" style="${P(x + COLW / 2 - 3, R.lights - 4)}">${i + 1}</div>`;
+    const name = gate === 'rest' ? '·' : gate === 'tie' ? 'tie' : LETTERS[n] + (oct > 0 ? '+' : oct < 0 ? '−' : '');
+    s += `<div class="t notename" style="${P(x, R.names - 4, COLW)};text-align:center">${name}</div>`;
+    for (let k = 0; k < 13; k++) s += `<div class="f lane${k % 2}" style="${P(x, pb - (k + 1) * rh, COLW, rh)}"></div>`;
+    const prev = STEPS[i - 1];
+    const sounding = gate === 'note' ? n : gate === 'tie' && prev && prev[2] !== 'rest' ? prev[0] : -1;
+    if (sounding >= 0) {
+      const y = pb - (sounding + 1) * rh - 1;
+      s += `<div class="note ${gate === 'tie' ? 'tie' : acc ? 'acc' : ''}" style="${P(x + 3, y, COLW - 6, rh + 2)}"></div>`;
+      if (slide) s += `<div class="tail" style="${P(x + COLW - 3, y + rh / 2, 10)}"></div>`;
+    }
+    if (i === 0) s += `<div class="f pick" style="${P(x - 2, pt - 2, COLW + 4, pb - pt + 4)}"></div>`;
+    const dimmed = gate !== 'note';
+    s += `<div class="cell${oct ? (dimmed ? ' half' : ' lit') : ''}" style="${P(x, R.octave[0], COLW, 20)}">${oct > 0 ? 'Up' : oct < 0 ? 'Down' : ''}</div>`;
+    s += `<div class="cell${acc ? ' acc' : ''}" style="${P(x, R.accent[0], COLW, 20)}"></div>`;
+    s += `<div class="cell${slide ? ' lit' : ''}" style="${P(x, R.slide[0], COLW, 20)}"><i class="led"></i></div>`;
+    s += `<div class="cell${gate === 'note' ? ' lit' : ' dim'}" style="${P(x, R.gate[0], COLW, 20)}">${gate[0].toUpperCase() + gate.slice(1)}</div>`;
+    const [my0, my1] = R.motion, bh = 7 + i * 16 / 15;
+    s += `<div class="f mcell" style="${P(x, my0, COLW, my1 - my0)}"></div><div class="f mbar" style="${P(x + 3, my1 - 2 - bh, COLW - 6, bh)}"></div>`;
+  });
+  const top = 484 + dy;
+  s += `<div class="screen" style="${P(1108, top, 150, 762 - top)}"></div>`;
+  const locks = (y0) => {
+    let k = '';
+    [['Cutoff', 1149, y0 + 47, .35], ['Env mod', 1215, y0 + 47, .55], ['Decay', 1149, y0 + 109, .45], ['Accent', 1215, y0 + 109, .7, { rim: true }]].forEach(([n, x, y, v, o]) =>
+      k += knobAt(S, n, 30, x, y, v, { range: false, ...(o || {}) }));
+    return k + cap(S, 'CLEAR', 1122, y0 + 152, 122, 26, 'plain') + `<div class="hint" style="${P(1122, y0 + 188, 128)}">Turn a knob to hold its value on this step.</div>`;
+  };
+  if (right === 'locks') s += `<div class="t rowname lockname" style="${P(1122, top + 15)}">LOCKS · STEP 1</div>` + locks(top);
+  else {
+    // B: two tabs over the column, Locks for the picked step, Line for the tools that change the whole line
+    s += bay(1112, top + 4, 142, 30);
+    s += `<div class="tabkey" data-tab="locks">${cap(S, 'LOCKS', 1115, top + 7, 68, 24, 'plain')}</div><div class="tabkey" data-tab="line">${cap(S, 'LINE', 1185, top + 7, 66, 24, 'plain')}</div>`;
+    s += `<div class="tabpage" data-page="locks">` + `<div class="t rowname lockname" style="${P(1122, top + 46)}">STEP 1</div>` + locks(top + 30) + `</div>`;
+    const y = top + 44;
+    s += `<div class="tabpage" data-page="line">`;
+    s += grp('New line', 1120, y) + cap(S, 'GENERATE', 1120, y + 12, 126, 26, 'hot') + cap(S, 'MUTATE', 1120, y + 42, 94, 26, 'plain') + cap(S, '▾', 1218, y + 42, 28, 26, 'plain');
+    s += grp('Key', 1120, y + 82) + disp('C', 1120, y + 94, 34) + disp('minor', 1158, y + 94, 88) + cap(S, 'SNAP TO KEY', 1120, y + 124, 126, 26, 'plain');
+    s += grp('Move', 1120, y + 172) + cap(S, '◀', 1174, y + 164, 34, 26, 'plain') + cap(S, '▶', 1212, y + 164, 34, 26, 'plain');
+    s += grp('Pitch', 1120, y + 204) + cap(S, '−', 1174, y + 196, 34, 26, 'plain') + cap(S, '+', 1212, y + 196, 34, 26, 'plain');
+    s += `</div>`;
+  }
+  return s;
+}
+
+// ------------------------------------------------------------------ the page
+const stage = document.getElementById('stage');
+let current = location.hash.slice(1) || 't-graphite';
+function show(v) {
+  current = v;
+  history.replaceState(null, '', '#' + v);
+  document.querySelectorAll('#chrome .tab').forEach(b => b.classList.toggle('is', b.dataset.v === v));
+  document.getElementById('about').innerHTML = ABOUT[v];
+  const shot = `<img id="shot" src="303-redesign/app-fixed.png" alt="">`;
+  if (v === 'shot') { stage.className = ''; stage.removeAttribute('style'); stage.innerHTML = shot.replace('id="shot"', 'id="shot" style="opacity:1"'); fit(); return; }
+  const S = SKINS[v];
+  stage.className = S.cls;
+  stage.removeAttribute('style');
+  if (S.vars) for (const [k, val] of Object.entries(S.vars)) if (k.startsWith('--')) stage.style.setProperty(k, val);
+  stage.innerHTML = panel(S) + shot;
+  if (!stage.dataset.tab) stage.dataset.tab = 'line';
+  stage.querySelectorAll('.tabkey').forEach(t => t.onclick = () => { stage.dataset.tab = t.dataset.tab; });
+  document.getElementById('shot').style.opacity = document.getElementById('over').value / 100;
+  fit();
+}
+function fit() {
+  const vp = document.getElementById('viewport').getBoundingClientRect();
+  const k = Math.min(vp.width / 1280, vp.height / 800);
+  stage.style.transform = `scale(${k})`;
+}
+document.querySelectorAll('#chrome .tab').forEach(b => b.onclick = () => show(b.dataset.v));
+document.getElementById('over').oninput = e => { const s = document.getElementById('shot'); if (s && current !== 'shot') s.style.opacity = e.target.value / 100; };
+addEventListener('resize', fit);
+addEventListener('keydown', e => {
+  const order = [...document.querySelectorAll('#chrome .tab')].map(b => b.dataset.v), i = order.indexOf(current);
+  if (e.key === 'ArrowRight') show(order[(i + 1) % order.length]);
+  if (e.key === 'ArrowLeft') show(order[(i + order.length - 1) % order.length]);
+});
+// ?bare: the panel alone at 1280 by 800, for screenshots
+if (location.search.includes('bare')) {
+  document.getElementById('chrome').style.display = document.getElementById('about').style.display = 'none';
+  document.getElementById('viewport').style.inset = '0';
+}
+document.fonts.ready.then(() => show(current));
+</script>
+</body>
+</html>
