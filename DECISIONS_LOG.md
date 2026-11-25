@@ -7528,3 +7528,7 @@ Still alone, as D304; each with what else it could have been.
 - Tested: the lengths (a pattern, a chain by its repeats, 96 kHz), the ring-out ending quiet, the dry voice the
   same samples as the mix with Drive and Delay off, the seamless loop the same samples as a plain render's sixth
   time through, the 24-bit file read back. Next: the Export page.
+
+## D356. CoolSynth 808: every circuit solved to 1 nV in Best; the chord method left off (2026-11-25)
+
+- Claimed; the entry follows.
