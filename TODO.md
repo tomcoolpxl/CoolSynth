@@ -312,7 +312,9 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     base recombination and Q21's Miller capacitance); Din Sync's row B left as the recording's cutoff knob. The accent:
     the 303's output stage built (D362), the recordings' flattened accents explained. Next: a validation report of all
     25 sets. Asides from D362: Under the Lid does not draw the output stage yet (and its stored recording predates it);
-    the accent 0.7 dB loud at mid ACCENT, A5 and B5 at three quarters 2.5 to 3 dB quiet. Set C2's
+    the accent 0.7 dB loud at mid ACCENT, A5 and B5 at three quarters 2.5 to 3 dB quiet. The user's A/B against the
+    real unit (2026-11-25, five sets): "very very very close"; set A1 the real one a bit sharper; C2's first moment
+    differs (the note's start, D324; leave it unless clear). Set C2's
     resonance at a quarter turn: closed by D324's track (within 1.3 dB). Asides found there: the accent's loudness
     over a plain note runs 1 to 3 dB above the real unit in rows C and E (E2 at 25 %: +6.6 dB against +3.6); the
     voice's 0.3 to 0.7 dB loudness gap against `voice.cir` in 5 ms blocks is not the filter's, cause not found. The interface:
