@@ -7755,6 +7755,13 @@ Still alone, as D304; each with what else it could have been.
   (over a search by Claude in EUIPO, BOIP, WIPO and the USPTO, or releasing without one).
 - Signing: unsigned, as CoolSynth (over the SignPath Foundation's free signing for open-source projects, about one
   to two weeks and not sure to be granted, the foundation named as publisher; Microsoft lists it among its options).
+- A correction to D363 (and D263), from the registers themselves (EUIPO eSearch, DPMAregister, USPTO TSDR): Roland's
+  EU filing for the 808's key row, EUTM 018016158 (a position mark, 30/01/2019: sixteen keys, four red, four orange,
+  four yellow, four white, on a box drawn in dashes), was refused on 10/09/2019 under Article 7(1)(a) EUTMR, its
+  position not defined; no colours or description were ever claimed, and there was no appeal. The 303's panel,
+  018016159, is registered (2020, to 2029) but for tuners, chips, phone cases, records and clothing, not synthesizers.
+  In the US only the words "TR-808 RHYTHM COMPOSER" are registered (6077431); the TR-08's panel (88814423) was
+  abandoned in 2020; no US filing for the key row was found.
 
 ## D367. CLAP for the 303 and the 808, as CoolSynth's; the Mac paused (2026-11-25)
 
