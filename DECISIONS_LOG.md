@@ -7778,3 +7778,7 @@ Still alone, as D304; each with what else it could have been.
   CoolSynth 808 0.1.0 (v0.1.0 on 896436e, with CLAP, without ASIO: Steinberg's SDK is GPLv3 or their signed
   licence, neither fits a JUCE Starter binary) and CoolSynth 0.7.0 (v0.7.0 on b0b64cd, Windows only, Succession
   808's reset check set aside by the user, TODO 19). CoolSynth's notices now list everything it ships (37e0794).
+
+## D368. The MCP servers: full-resolution screenshots, read_screen and click, library and pattern steps, DSP load, CoolSynth's record (2026-11-25)
+
+- Claimed; the entry follows.
