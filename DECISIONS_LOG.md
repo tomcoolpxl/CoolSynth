@@ -7432,8 +7432,8 @@ Still alone, as D304; each with what else it could have been.
 
 - The user: themes, a silver one after the TB-303's look, and the 808's Steel and Olive ported; mockups first if that
   is faster.
-- Mockups first (the colours are the question, Silver above all): 
-  (source ), screenshots at twice the size in , all on layout B:
+- Mockups first (the colours are the question, Silver above all): `docs/design/mockups/coolsynth-303-themes.html`
+  (source `.src.html`), screenshots at twice the size in `303-themes/`, all on layout B:
   - Graphite: the look as the app has it (D348).
   - Silver: the plates brushed aluminium printed in black, light grey keys as the TB-303's; the top bar, the title
     strip, the displays, the bays and the sequencer's screens stay dark glass, as the TB-303's black boxes; printing
