@@ -7540,4 +7540,20 @@ Still alone, as D304; each with what else it could have been.
 
 ## D356. CoolSynth 808: every circuit solved to 1 nV in Best; the chord method left off (2026-11-25)
 
-- Claimed; the entry follows.
+- From the 303's sessions (TODO 36): the chord method on the 808's circuits, measured against a tight reference.
+  Measured on every circuit (each drum on every step for 8 s, and a busy beat of the whole kit), against the same
+  render solved to 1 pV: slower on 8 of the 11 drums (the snare 14.8 to 16.2 % of a core, the closed hat 26.3 to
+  30.9, the cymbal 37.5 to 40.3) and further from the reference on all but the bass drum. The 808's drums start
+  from rest, where a kept Jacobian goes stale; the TB-303's filter conducts all the time.
+- Found on the way: at the solver's 100 nV the bass drum's hits after the first, struck while the last still rang,
+  came out 12 ms early and up to 4 dB off; the busy beat was only 6 dB from the 1 pV render. Converged at 10 nV
+  (-138 dB, and cheaper: 7.2 % to 4.4). The open hat -71 dB at 100 nV, -98 at 10 nV, -110 at 1 nV; every other drum
+  -119 dB or better already. SPICE's default limit is 1 uV (VNTOL), u-he's Repro-1 stops near 150 nV.
+- Picked: every 808 circuit to 1 nV in Best (over 10 nV everywhere, the bass drum alone at 10 nV, or the bass drum
+  and the open hat); the chord method left off (over on for the clap and the rim shot, or measured again later).
+  The busy beat -125 dB from 1 pV, the kit costing what it did (134 % of a core in the Debug build), the bass drum
+  cheaper, the cymbal, open hat and high tom 2 to 4 points dearer. Lighter and Lightest keep the metal at 10 uV.
+- Built in the engine (`tr808Tolerance`, set in each drum's constructor); a test strikes the bass drum on every step
+  against itself solved to 1 pV: -196 dB (-2.5 dB at 100 nV). CoolSynth's 808 kit takes it with its next engine
+  pointer. And the 808's library audition fixed as the 303's (D354): the shelf asks the editor, the transport
+  judged by what it was asked.

@@ -344,7 +344,8 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     the 303's own as the 808's (Audio, MIDI, Panel, Export a placeholder; Host in a plugin). Next: the WAV export
     on that page. Aside: the 808's MIDI output keeper (the port's own thread, so each block's clock leaves at its
     time, not all at once) was not ported; some 30 lines if the 303's sent clock should be tighter. For the 808 and CoolSynth: the chord method on their circuits (they use
-    plain Newton), measured against their own tight references. The Devil Fish further by ear if the user wants (it
+    plain Newton), measured against their own tight references (the 808 done, D356: slower and less accurate there, left
+    off; the measuring found its bass drum off at 100 nV, every 808 circuit now at 1 nV; CoolSynth's own circuits left). The Devil Fish further by ear if the user wants (it
     is ours, the name stays). The look (D348): the app found a bit bland; seven mockups on one page
     (`docs/design/mockups/coolsynth-303-redesign.html`): the app now, a redesign, the 808's four skins, and an
     all-silver TB-303 face with the 808's knobs; the layout kept. The user picked 2, the redesign, one look (no skins
