@@ -7782,3 +7782,24 @@ Still alone, as D304; each with what else it could have been.
 ## D368. The MCP servers: full-resolution screenshots, read_screen and click, library and pattern steps, DSP load, CoolSynth's record (2026-11-25)
 
 - Claimed; the entry follows.
+## D369. The Mac back for CoolSynth: CI on push, the Mac in the release, 0.7.0's Mac files (2026-11-25)
+
+The user, on their Mac: get macOS back for CoolSynth (D367 had paused it), and check the README.
+
+- Found: the pause (D367) switched `macos.yml` to by hand and `release.yml`'s Mac job off, after the Mac run failed
+  the determinism test's reset check on Succession 808; the 0.7.0 commit since skips that check on every system
+  (TODO 19). The current code builds on the Mac as it is, and its whole suite passes here (Debug, 1,232 s).
+- The pause undone: `macos.yml` on every push to `main` again, the Mac job, its files and its install line back in
+  `release.yml`. Also changed: a Mac run in progress now finishes instead of being cancelled by the next push (on
+  2026-11-25 five of six runs were cancelled, so the Mac went untested on a busy day); of the pushes meanwhile only
+  the newest waits.
+- 0.7.0's Mac files (the user's choice; options: add them to 0.7.0, recommended; release 0.7.1 for both; CI only and
+  the Mac in the next release): built, tested and packaged by `macos.yml` from the `v0.7.0` tag itself, renamed to
+  the release's names and attached to the 0.7.0 release with their checksums, and the Mac's install line added to its
+  notes. Mac and Windows run the same 0.7.0; the README's ".pkg for a Mac" holds again.
+- The README: right about the Mac as it stood; only the latest release lacked the .pkg it promises.
+- Set aside, not lost: the Mac speed work of 2026-11-23 (sse2neon, the helper threads in the audio workgroup; drafted
+  as D274, a number CoolSynth 808 took since, so it gets a new one when it lands) waits in a `git stash` in both
+  repositories on the user's Mac. Its full suite hung in "An instrument read in the background
+  while an earlier sound rings does not click", once the helpers rendered the earlier sound on the Mac; to find before
+  it comes back (TODO J2).

@@ -89,6 +89,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     against Windows renders; AUv2 and auval; pluginval and clap-validator; Logic, GarageBand, FL Studio, Reaper,
     Bitwig (Ableton's VST3 loads, plays and shows its panel); sse2neon and the helper threads in the audio workgroup; the voice cap's costs on the Mac;
     the MiniLab; the knobs' wheel step with a Mac mouse and trackpad; the installer on a clean account.
+    Paused on 2026-11-25 (D367) and back the same day (D369): CI on every push again, the Mac in the release, 0.7.0's
+    Mac files attached. sse2neon and the helpers in the workgroup are built and wait in a `git stash` in both
+    repositories on the user's Mac: with the helpers on, the suite hung in the click test "An instrument read in the
+    background while an earlier sound rings"; find why before they land.
 
 ## The user's ear and hands
 

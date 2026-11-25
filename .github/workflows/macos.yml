@@ -4,8 +4,10 @@ name: macOS
 # It builds the app, the VST3 and the CLAP, runs the tests and keeps the installer and the zips as the run's
 # artifacts for a week. A version tag builds the Mac's release files in release.yml instead.
 
-# Paused on pushes (the user, 2026-11-25): the Mac comes back in a later release; it still runs by hand.
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       configuration:
@@ -25,9 +27,11 @@ on:
 permissions:
   contents: read
 
+# A run in progress finishes; of the pushes made meanwhile only the newest waits its turn. Cancelling on every push
+# left the Mac untested on busy days (2026-11-25: five of six runs cancelled).
 concurrency:
   group: macos-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-macos:
