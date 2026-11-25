@@ -7810,3 +7810,27 @@ The user, on their Mac: get macOS back for CoolSynth (D367 had paused it), and c
   repositories on the user's Mac. Its full suite hung in "An instrument read in the background
   while an earlier sound rings does not click", once the helpers rendered the earlier sound on the Mac; to find before
   it comes back (TODO J2).
+
+## D370. CoolSynth 303 and CoolSynth 808 on the Mac, and their releases for both systems (2026-11-26)
+
+The user, after the Mac came back for CoolSynth (D369): the 303 next, then the 808, each released on the Mac too.
+
+- Neither had been built on a Mac. Both failed in one place: the engine's beat sync gave its constructor a default
+  argument built from a nested struct's member defaults, inside its own class, which Clang refuses and MSVC takes.
+  Two constructors instead (engine `bdf48a2`); the 303's and the 808's engine pointers moved there (the 808's from
+  `76116a8`, bringing only that fix, the beat sync's test step-aside and two TB-303 changes it does not use).
+  CoolSynth's own engine pointer is older and left as it is.
+- Both then built as they were, and their whole test suites passed on the Mac (the 303 in 54 s, the 808 in 106 s).
+- The Mac as CoolSynth's (D234): Apple silicon, macOS 13, set before `project()`; `scripts/ci/BuildAndTestMac.sh`;
+  `installer/macos/package.py`, an unsigned .pkg for the current user with a choice per format (the app in
+  `~/Applications`, the VST3 and CLAP in `~/Library/Audio/Plug-Ins`), the zips as Windows' (the app, the VST3, the
+  licence and notices in one, the CLAP in another), their checksums. `macos.yml` on every push, a run finishing before
+  the next (D369); `release.yml` builds, waits for and publishes the Mac beside Windows. README and GEMINI: the Mac's
+  download and build.
+- New for these two: macOS asks before an app uses the local network, and the beat sync finds the others by multicast,
+  so each app's Info.plist carries the reason it shows (`NSLocalNetworkUsageDescription`), and the READMEs say to
+  allow it.
+- Seen on the Mac: the 303's panel draws as on Windows; its own title bar keeps minimise and close at the right, as
+  on Windows (the app's own window, D349), not the Mac's traffic lights at the left.
+- The releases (the user's choice for the 303; options: 0.2.0 now, recommended; 0.1.1; not yet): the 303's v0.1.0
+  tag cannot build on a Mac, so 0.2.0 for both systems, with the CLAP that 0.1.0 lacked. The 808 likewise.
