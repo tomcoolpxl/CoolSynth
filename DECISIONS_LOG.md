@@ -7402,4 +7402,23 @@ Still alone, as D304; each with what else it could have been.
 
 ## D351. CoolSynth 303: a press shows at once, as the 808 after D306; the library and pop-ups in the look (2026-11-25)
 
-- Claimed; written in full when it lands.
+- The user: the 808 once answered late to sequencer presses while it played, until the UI was changed; check what
+  it did and keep the 303 from the same mistake, the new look included.
+- What the 808 did (D306): its panel drew whole on every press (76 to 200 ms); words shaped once and kept, fonts
+  made once, shadows as solid shapes, and a press redrawing only the glass.
+- The 303 had the same: every edit redrew the whole panel, and while playing each step redrew the whole grid, every
+  key and every knob; the machined look (D348) made each redraw dearer. Measured with the software renderer at the
+  window's scale (EditorTests' what_a_paint_costs): a whole paint 134 ms, a step key's area 30 ms, a knob's 11 ms.
+- Now: the 808's kept words (, the 808's own) and fonts made once; the still parts drawn once into
+  images at the scale shown (the brushed ground, each knob's skirt and cap); the grid paints only the columns the
+  repaint reaches. A whole paint 34 ms, a step key 2.4 ms, a knob 2.6 ms.
+- And less redrawn: an edit redraws the synth's knobs and the Mods panel only when the panel's values changed (each
+  click had also redrawn everything twice, at once and on the next frame); while playing, a step redraws its two
+  columns, the pattern row only when the pattern changes, the piano only when its key changes, a knob only when the
+  pattern moved it.
+- The library and JUCE's own pieces in the look: the shelf a plate with a head band, its thumbs behind glass, the
+  preview under a dark screen with the grid's keys; pop-up menus, scroll bars (no longer JUCE's blue), text fields
+  and alert windows in the panel's colours, the shared look set on the editor too.
+- Alignment, seen in a full-resolution capture, case by case: the pattern bank's bay moved 10 px to stand on the
+  grid screen's edge, PATTERN on the row names' line; kept as they are: the faders' names below the knobs' (taller
+  controls), the cutoff's name lower (the big knob).
