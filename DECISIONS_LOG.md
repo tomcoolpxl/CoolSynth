@@ -7702,3 +7702,16 @@ Still alone, as D304; each with what else it could have been.
   refit: the resonance loop stays at 0.96. The voice in Best some 4 % more, in Light 3 %.
 - Left: the accent about 0.7 dB loud at mid ACCENT (row C), A5 and B5 at three quarters 2.5 to 3 dB quiet; Under the
   Lid does not draw the new stage yet (it shows the VCA's old 100k load), and its stored ngspice recording predates it.
+
+## D363. Releasing the 303 and the 808: what is needed, the user's picks (2026-11-25)
+
+- The user wants to start releasing. CoolSynth already ships (0.6.0: Inno Setup, a tagged release workflow, Windows
+  and Mac); the 303 and the 808 are at 0.1.0 with CI only. Needed: an installer and a release workflow each, the tests
+  in Release, the notices checked (JUCE's Starter licence, free to $20,000 a year and no splash screen since JUCE 8;
+  the VST3 SDK MIT since 3.8, its notice kept, the logo optional), the MCP server's default, the first-launch firewall
+  question, and the 303's export and library tried in the running app.
+- Found: Roland registered the TR-808's coloured button run and the TB-303's layout as trade dress (Germany, 2019);
+  the 808's default theme is named "Roland" with the 808's four colours on its step keys.
+- The user's picks: the 303 first (over both together, recommended, and the 808 first); the 808's theme renamed only,
+  its colours kept (over a rename with colours of our own, recommended, and keeping it); the MCP server off by
+  default with a switch in Options, as CoolSynth's; Windows asks about the firewall itself (over an installer rule).
