@@ -7667,4 +7667,22 @@ Still alone, as D304; each with what else it could have been.
 
 ## D362. The 303's accent against Din Sync's unit: the recordings clip at the output stage (2026-11-25)
 
-- Claimed; written as the work lands.
+- The accent's loudness (accented over plain) against Din Sync's unit: rows A, B and D within half a dB, rows C and E
+  0.5 to 2 dB loud (E2 at a quarter turn of resonance +6.6 against +3.6). The engine and `voice.cir` agree within 0.04
+  dB at every position: the circuit as drawn, not our code. `compare_sets.py` averaged ngspice's uneven time steps
+  (1.7 dB off on row E); now weighted by time.
+- The cause: every loud note's negative peaks in the recordings stop at one level (about 2.5 V below rest). The 303's
+  output mixer after VOLUME (Q33, Q34) can pull down only through R160 into a recorder's input; neither the engine nor
+  `voice.cir` had that stage. Also checked: the resonance pot is a dual 50k (the service notes), not Whittle's 100k.
+- The options: the output stage in the voice, VOLUME as the 303's own pot before it (picked); leave the sound and
+  treat the flattening as the recording's setup.
+- Built (engine `e363e13`, CoolSynth303 `512456f`): `Tb303Output.h`, C38, the 50k audio-taper VOLUME and the Q34/Q33
+  mixer as transistors, loaded by a 16k line input (fitted to the recordings' floor, within 0.01 dB) and the headphone
+  amp's 30k; `tools/tb303/out.cir` in `voice.cir` (now on Gear integration). The app's Volume drives the pot, the 8 Hz
+  high-pass gone (C38, C59, C56 do it), the level at the default Volume within 0.1 dB, full Volume some 2.5 dB louder
+  with the real unit's flattened accents; Drive now takes what Volume lets through.
+- All 25 sets: the accent's error 0.96 to 0.78 dB rms (row E 1.27 to 0.75 mean of absolute values, D 0.42 to 0.29);
+  plain harmonics 0.98 to 0.94, accented 0.83 to 0.85; row B's harmonics 3.04 to 3.17 (its cutoff knob, D360). No
+  refit: the resonance loop stays at 0.96. The voice in Best some 4 % more, in Light 3 %.
+- Left: the accent about 0.7 dB loud at mid ACCENT (row C), A5 and B5 at three quarters 2.5 to 3 dB quiet; Under the
+  Lid does not draw the new stage yet (it shows the VCA's old 100k load), and its stored ngspice recording predates it.

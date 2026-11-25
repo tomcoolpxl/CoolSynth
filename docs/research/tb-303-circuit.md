@@ -365,8 +365,8 @@ unit, the engine and ngspice's voice.cir (RESONANCE through the engine's track i
   sets, while the upward ones reach 17,000. The flat floor shows on the accented notes of row E and of A5 and B5 at
   full ACCENT; ours goes 3 to 8 dB past it there.
 - The likely clipper is the 303's own mixer after VOLUME (Q34 and Q33): it pulls its output down only through R160,
-  10k, against its load, so into a recorder's 10 to 16k input it can fall only about 2.3 to 2.8 V under its 5.3 V
-  rest. That matches the floor with VOLUME full. The x0xb0x wiki notes the same distortion at high volume and accent,
+  10k, against its load, so into a recorder's 16k input it falls only some 2.1 V under its 4.1 V rest while it
+  rises some 3 V. That matches the floor with VOLUME full. The x0xb0x wiki notes the same distortion at high volume and accent,
   cured by turning VOLUME down. Lemus fitted the same unit's flattened accents as the BA662 saturating at a fifth of
   its swing, cause unknown.
 - voice.cir with the mixer, VOLUME full, into 10k, on the 11 sets that reach the floor: row E's excess from 1.3 to
@@ -380,8 +380,21 @@ unit, the engine and ngspice's voice.cir (RESONANCE through the engine's track i
   quarters. Din Sync's five takes at every knob half give 1.2 to 2.2 dB, ours 2.4. An ACCENT track at 43 % at half
   turn brings rows B to D within 0.2 dB but A5 and B5 at three quarters, already 2.5 to 3 dB quiet, 0.5 to 0.8 dB
   further off, so no knob law brings every set closer.
-- Nothing was changed. Adding the output stage is open, with VOLUME before it and an assumed load; with it,
-  `Tb303Voice::resonanceLoop` (0.96, fitted to row E's loudness in D324) wants checking again.
+- Built at the user's pick: `Tb303Output.h`, VOLUME and the mixer as their transistors after the VCA's pin 8, out at
+  the jack, turned over as the real one; `out.cir` in the netlists and voice.cir.
+- The recorder's input fitted to the floor: over the 40 notes that reach it, ours sits 1.0 dB under it at 10k, 0.4 at
+  13k, within 0.01 dB at 16k and 0.5 over at 22k. 16k, a line input's usual figure.
+- Against all 25 sets, before and after: the accent's loudness 0.96 to 0.78 dB rms; row E's excess 1.3 to 0.6 dB,
+  D's 0.3 to 0.1, C's 0.7 to 0.7. Harmonics 2 to 8: plain 0.98 to 0.94 dB, accented 0.83 to 0.85 (C and D a little
+  further off, E closer). Loudness with one level fitted: plain 1.01 to 0.99 dB, accented 1.14 to 1.08 (row E 0.66
+  to 0.40). Pitch unmoved.
+- `resonanceLoop` checked again with the stage in: 0.98 brings D324's whistle above 12.8 kHz closer on row E but
+  harmonics further off on rows B to E, 1.0 worse on both, so 0.96 stays.
+- What is left: the mid-ACCENT excess (row C), and A5 and B5 at three quarters, 2.5 to 3 dB quiet.
+- The engine's stage within 2 mV of out.cir; the whole voice's jack within 0.3 dB rms of voice.cir's and its floor
+  within 4 mV; over all 25 sets the two within 0.07 dB in the accent's loudness and 0.1 dB in harmonics. With the stage in, ngspice's trapezoidal step stalled on the VCO's reset at some settings; voice.cir
+  now runs Gear, which moves the VCA's output 0.02 dB and the pitch 0.0002 cents against the trapezoidal reference.
+- The cost: the voice some 4 % more at Best (69 to 72 % of a core) and 3 % at Light (39 to 40 %).
 
 ## What this means for CoolSynth
 
