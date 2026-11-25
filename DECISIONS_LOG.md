@@ -7724,7 +7724,17 @@ Still alone, as D304; each with what else it could have been.
 
 ## D364. The 303's CUTOFF and ENV MOD knob curves against Din Sync's unit (2026-11-25)
 
-- Claimed; written as the work lands.
+- From the validation report: row B (others at 25 %) too bright, row D (others at 75 %) 0.58 octave too dark, rows C
+  and E right. Matched mark by mark, every row puts CUTOFF's 75 % mark at 0.81 to 0.87 of our old turn: the pot's
+  curve, not the recordings' marks; the 25 % mark disagrees between rows (partly the recordings).
+- Both pots are Roland 13219340, 50k A (Alps K161B0); our law was a plain exponential (40 % at three quarters). Built:
+  `Tb303Voice::audioTrack` on both knobs, 0.1 x turn to a quarter (2.5 %), 15 % at half, straight to the end (57.5 %
+  at three quarters), after Alps's segmented A taper; the netlists and tools take the pot shares too. Engine
+  `9ca0cee`, CoolSynth303 `d793542`; every other circuit bit for bit.
+- All 25 sets: brightness 0.197 to 0.110 octave (row D 0.28 to 0.56 down to 0.07 to 0.15), harmonics 2 to 12 1.34 to
+  0.88 dB (accented 1.20 to 0.66), levels closer; B3 to B5 0.05 to 0.08 octave further off in brightness with their
+  harmonics 1.8 dB closer. The library moves with it: most sounds 0.15 to 0.26 octave brighter, Devil Screamer +0.47
+  octave and +0.5 dB, Devil Muffled Bass 0.5 octave darker and 2.1 dB quieter, Rolling Sub 0.4 dB quieter.
 
 ## D365. CoolSynth's own 303, 808 and kick engines: kept, the 909 out of the menu (2026-11-25)
 
@@ -7734,4 +7744,4 @@ Still alone, as D304; each with what else it could have been.
   only while a sound plays it, and the circuits are in the shared engine for the 303 and 808 apps anyway.
 - The user's picks: the TB-303 kept as it is (over the 303 app's circuit, some 60 % of a core a voice, or removing
   it); the 808 drum engines kept (over removing them); the Kick's 909 out of CoolSynth's menu, the 808 and modern
-  kept (over keeping all three). The 909's code stays, so a sound saved with it still loads and plays.
+  kept (over keeping all three). Done quick, as the user asked: the Kick's model knob in CoolSynth snaps past the 909 (to 808 below three quarters, Modern above), so a sound saved with the 909 now plays as 808; the 909's code stays in the engine for its own tests.

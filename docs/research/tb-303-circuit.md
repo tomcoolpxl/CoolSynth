@@ -396,6 +396,23 @@ unit, the engine and ngspice's voice.cir (RESONANCE through the engine's track i
   now runs Gear, which moves the VCA's output 0.02 dB and the pitch 0.0002 cents against the trapezoidal reference.
 - The cost: the voice some 4 % more at Best (69 to 72 % of a core) and 3 % at Light (39 to 40 %).
 
+## CUTOFF's and ENV MOD's pots (D364)
+
+Measured on 2026-11-25 against all 25 of Din Sync's sets, each note matched by sweeping our knob.
+- Both knobs are one part, Roland 13219340, 50k A, made by Alps (service notes p. 8; Whittle's Devil Fish pages).
+- A carbon log pot is straight segments. Alps's catalogue A curve runs some 2.5 % at a fifth of the turn, 18 % at
+  half, 59 % at three quarters, all of it by 95 %; JIS 15A fixes only 10 to 25 % at half.
+- The voice had an exponential: 4.4 % at a quarter, 15 % at half, 40 % at three quarters.
+- Din Sync's three-quarter mark on CUTOFF falls at 50 to 62 % of the pot in every row, half at about 15 %, a quarter
+  mostly under 4.4 %.
+- The track now: 2.5 % at a quarter, 15 % at half, then straight to the end (57.5 % at three quarters), on both knobs
+  (`Tb303Voice::audioTrack`).
+- Over all 25 sets: brightness 0.20 to 0.11 octave off, row D (the others at three quarters) 0.58 to 0.14; harmonics 2
+  to 12 1.34 to 0.88 dB, row B (the others at a quarter) 3.9 to 2.2 dB; loudness 0.79 to 0.67 dB.
+- Either knob alone leaves row D dark, and Alps's curve as drawn is further off than the exponential.
+- The library's saved knobs move: most sounds under 0.2 octave, Devil Screamer 0.47 octave brighter, Devil Muffled
+  Bass 0.5 octave darker and 2.1 dB quieter.
+
 ## What this means for CoolSynth
 
 - Usable as code, credited: Open303's engine (MIT); TriggerFish's 303 code from release 2.3.1 or earlier (BSD-3); Faust's diode ladder (STK-4.3); Soundpipe's (MIT); the x0xb0x firmware (MIT).

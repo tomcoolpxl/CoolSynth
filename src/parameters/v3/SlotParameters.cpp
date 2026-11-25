@@ -170,6 +170,14 @@ namespace coolsynth::parameters::v3
         , table(typeTable)
         , typeChoice(typeParameter)
     {
+        // The Kick's first parameter is its model, 808 | 909 | Modern at 0, 0.5 and 1: the 909 is out of CoolSynth's
+        // menu (D365), so its position snaps to 808 below three quarters, to Modern above; a sound saved with it plays
+        // as 808. The 909's code stays in the engine.
+        if (index == 0)
+            range = juce::NormalisableRange<float>(
+                0.0f, 1.0f, [](float start, float end, float v) { return start + v * (end - start); },
+                [](float start, float end, float v) { return (v - start) / (end - start); },
+                [this](float, float, float v) { return juce::String(currentDescriptor().name) == "Kick" ? (v < 0.75f ? 0.0f : 1.0f) : v; });
     }
 
     const coolsynth::synth::v3::ModuleDescriptor& GenericSlotParameter::currentDescriptor() const noexcept
