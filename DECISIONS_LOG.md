@@ -7453,6 +7453,15 @@ Still alone, as D304; each with what else it could have been.
   The library's list and search field take a theme's change while open, and its chosen row is the dialog's ground
   warmed by the theme's orange. Options' page list a shade under the dialog's ground in every theme. The tests now
   also picture the library and Options' pages in every theme.
+- Then (the user): some keys and the grid's empty cells barely stood off the glass; measure it. Measured with WCAG 2's
+  contrast ratio (text 4.5:1, SC 1.4.3; a control 3:1 against what is next to it, SC 1.4.11) and APCA's Lc, in
+  `CoolSynth303/tools/contrast.py`: Silver's empty cells and slots stood 1.3:1 off the screen, Note on a lit cell
+  3.9:1, the step numbers 3.8:1, Tie and Rest 3.1:1. Three fixes drawn and measured
+  (`303-themes/silver-contrast-options.png`). Picked (each with options): light keys with dark ink, as the TB-303's
+  own step keys (over dark cells with light rims, or darker glass again); Silver only (over all four themes, or
+  Silver now and the rest later); text held to 4.5:1, the keys only clearly visible (over WCAG AA for both, or
+  APCA). Built: every Silver text pair now 4.5:1 or more, the empty cells 4.2:1 off the screen.
+- The motion lane's knob well sits on the grid's foot, its bottom level with the screen's (the user).
 
 ## D353. CoolSynth 303: a hint line at the foot, and controls that light under the mouse (2026-11-25)
 
