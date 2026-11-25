@@ -7470,6 +7470,10 @@ Still alone, as D304; each with what else it could have been.
   alone resets with a double-click. Picked (each with options): an Init key in the top bar (over an Init sound in the
   library, or a reset on a section's name): every knob and switch to its default, the Devil Fish off, the trimmers
   stock, the patterns, chain, tempo and key kept; one undo step.
+- The user: hover and hints in the dialogs too. The library and Options each have a hint line of their own at the
+  foot (on their dark glass), with a sentence for every key, picker, page, shelf and the list; the library's rows and
+  shelves light under the mouse, as Options' pages already did. The hint line and its watcher are shared
+  (src/ui/Hints.h).
 
 ## D354. CoolSynth 303: the library's audition held in one place; a tie drawn with its note (2026-11-25)
 

@@ -349,7 +349,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     (`docs/design/mockups/coolsynth-303-redesign.html`): the app now, a redesign, the 808's four skins, and an
     all-silver TB-303 face with the 808's knobs; the layout kept. The user picked 2, the redesign, one look (no skins
     yet). Built in the app as mockup 2, straight from the mockup; checked on screen, the Mods panel too. Then (D350)
-    its wonky spots fixed, and three layouts of the lower half mocked up (`coolsynth-303-relayout.html`); the user picked B, the inspector column, built. A press drawn as fast as the 808's (D351); the tagline and developer notes gone; a hint line and hover lights (D353). Themes (D352: Graphite, Silver, Steel, Olive) in the app, chosen in Options; an Init key; the library's audition fixed, ties drawn with their note (D354). Next: hover lights and hint lines in the dialogs (library, Options). Parked: the DSP load past 100 % now and then on the Devil Fish sounds (the user: later); the 808's library has the same audition fault as the 303's had (D354), for its session.
+    its wonky spots fixed, and three layouts of the lower half mocked up (`coolsynth-303-relayout.html`); the user picked B, the inspector column, built. A press drawn as fast as the 808's (D351); the tagline and developer notes gone; a hint line and hover lights (D353). Themes (D352: Graphite, Silver, Steel, Olive) in the app, chosen in Options; an Init key; the library's audition fixed, ties drawn with their note (D354). Hover lights and hint lines in the dialogs too. Parked: the DSP load past 100 % now and then on the Devil Fish sounds (the user: later); the 808's library has the same audition fault as the 303's had (D354), for its session.
 
 
 ## Standing notes
