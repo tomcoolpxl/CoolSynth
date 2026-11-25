@@ -179,6 +179,9 @@ public:
             {
                 auto p = std::make_unique<Player>();
                 p->synth->setMultiCore(multiCore);
+                // The sound, not how busy the computer is: on a slow runner (GitHub's Mac, D369) a block past three
+                // quarters of its time let the oldest earlier sound go in one render and not the other (D224).
+                p->synth->ignoreLoadForTesting(true);
                 juce::AudioBuffer<float> all(2, static_cast<int>(rate * 2.0));
                 all.clear();
                 int at = 0;

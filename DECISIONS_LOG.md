@@ -7782,6 +7782,7 @@ Still alone, as D304; each with what else it could have been.
 ## D368. The MCP servers: full-resolution screenshots, read_screen and click, library and pattern steps, DSP load, CoolSynth's record (2026-11-25)
 
 - Claimed; the entry follows.
+
 ## D369. The Mac back for CoolSynth: CI on push, the Mac in the release, 0.7.0's Mac files (2026-11-25)
 
 The user, on their Mac: get macOS back for CoolSynth (D367 had paused it), and check the README.
@@ -7794,9 +7795,15 @@ The user, on their Mac: get macOS back for CoolSynth (D367 had paused it), and c
   2026-11-25 five of six runs were cancelled, so the Mac went untested on a busy day); of the pushes meanwhile only
   the newest waits.
 - 0.7.0's Mac files (the user's choice; options: add them to 0.7.0, recommended; release 0.7.1 for both; CI only and
-  the Mac in the next release): built, tested and packaged by `macos.yml` from the `v0.7.0` tag itself, renamed to
-  the release's names and attached to the 0.7.0 release with their checksums, and the Mac's install line added to its
-  notes. Mac and Windows run the same 0.7.0; the README's ".pkg for a Mac" holds again.
+  the Mac in the next release): packaged by `macos.yml` from the `v0.7.0` tag itself, renamed to the release's names
+  and attached to the 0.7.0 release with their checksums, and the Mac's install line added to its notes. Mac and
+  Windows run the same 0.7.0; the README's ".pkg for a Mac" holds again.
+- Found on GitHub's Mac runner, testing the tag: "Three sounds ringing together render the same, bit for bit, on one
+  core and on several" failed, 72,704 samples apart, though it passed here in Debug and Release. Not the arithmetic:
+  the engine's load measure (D224) let the oldest earlier sound go when a block passed three quarters of its time,
+  which the slow three-core runner, on the plain paths, reached in one render and not the other. The test now
+  ignores the load, as the determinism tests do. The tag's code is the same as `main`'s, so its Mac files were
+  packaged without the tests, and the same code tested on `main` with the fixed test.
 - The README: right about the Mac as it stood; only the latest release lacked the .pkg it promises.
 - Set aside, not lost: the Mac speed work of 2026-11-23 (sse2neon, the helper threads in the audio workgroup; drafted
   as D274, a number CoolSynth 808 took since, so it gets a new one when it lands) waits in a `git stash` in both
