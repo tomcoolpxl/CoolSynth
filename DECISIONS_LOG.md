@@ -7710,7 +7710,7 @@ Still alone, as D304; each with what else it could have been.
   in Release, the notices checked (JUCE's Starter licence, free to $20,000 a year and no splash screen since JUCE 8;
   the VST3 SDK MIT since 3.8, its notice kept, the logo optional), the MCP server's default, the first-launch firewall
   question, and the 303's export and library tried in the running app.
-- Found: Roland registered the TR-808's coloured button run and the TB-303's layout as trade dress (Germany, 2019);
+- Found (corrected in D366: the EU filing for the 808's key row, EUTM 018016158, was refused in 2019 and never registered; the 303's panel, 018016159, is registered only for tuners, chips, phone cases, records and clothing, not synthesizers; in the US only the words TR-808 RHYTHM COMPOSER): Roland filed for the TR-808's coloured button run and the TB-303's layout as trade dress (Germany, 2019);
   the 808's default theme is named "Roland" with the 808's four colours on its step keys.
 - The user's picks: the 303 first (over both together, recommended, and the 808 first); the 808's theme renamed only,
   its colours kept (over a rename with colours of our own, recommended, and keeping it); the MCP server off by
