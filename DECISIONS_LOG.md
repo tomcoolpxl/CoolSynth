@@ -7571,8 +7571,9 @@ Still alone, as D304; each with what else it could have been.
   11 drum outputs by name, and a drum switched to its own output leaves the main (soloed, the main silent).
 - And in Bitwig Studio (the user allowed its window on a second ask): it loads, plays with Bitwig's transport at its
   tempo, Bitwig's moves turn the panel's knobs and the panel's turns reach Bitwig, the Options window opens, and "Add
-  Missing Chains" gives a chain per output, named as the plugin names them. Whether a drum leaves the main there was
-  not seen: the meters were too small to read and the check stopped so as not to disturb another session's MIDI test.
+  Missing Chains" gives a chain per output, named as the plugin names them. Checked after the other session's MIDI
+  test: the bass drum alone on its own output, the main chain soloed leaves the track silent and the BD chain soloed
+  carries the kicks: the drum leaves the main in Bitwig too.
 - The export's drum files from one render: each drum heard on its own output (D343), the mix the main plus those
   outputs, so the files add up to it; the mix so made is the whole mix to -145 dB. A full-kit beat of 8 s with 11
   files: 12.3 s against 19.4 s for the renders spread over 12 cores, a twelfth of the CPU.
