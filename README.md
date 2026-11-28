@@ -88,13 +88,19 @@ A sample can be sliced across the keys, in equal pieces or at its hits, on the s
 
 ## Controllers
 
-Any MIDI keyboard plays CoolSynth.
+Any MIDI keyboard plays CoolSynth. Its bend wheel bends each layer by that layer's **Bend range**, on Home's Voice page: 2 semitones unless the sound sets another, up to 24.
 
 Set your keyboard's size in **Prefs > Your keyboard** to see its keys marked on the screen's.
 
 In a DAW, the simplest way to put your controller's knobs on CoolSynth is the DAW's own mapping (MIDI Map in Live, Link to controller in FL Studio, Quick Controls in Cubase, learn in Bitwig or Reaper). CoolSynth lists its four macros, Glide, Brightness, Space and the master volume first, and the macros carry the sound's own names, such as "A1 Bite".
 
 CoolSynth can also learn your controller itself, so its knobs, faders and pads follow the panel's pages the way the MiniLab does. The Akai MPK mini mk3, Novation Launchkey Mini MK3 and MK4, Arturia KeyLab Essential mk3 and Native Instruments Komplete Kontrol M32 and A-series set themselves up when plugged in. For anything else, open **Prefs > Controller setup > Set up step by step**, or right-click a control and choose **Learn**. In FL Studio this needs your keyboard on a numbered MIDI port, the same in FL's MIDI settings and in the plugin wrapper's **Settings** tab.
+
+In FL Studio your keys play the channel selected in the Channel Rack, and FL moves that selection by itself: when a hardware synth or groovebox sends a program change (a patch or project switched on it), and when you click a clip in the Playlist. If your keys start playing another instrument:
+
+- right-click CoolSynth's channel button, choose **Receive notes from** and your keyboard: it then plays CoolSynth whatever is selected
+- or switch off program-change sending on the hardware (on a Novation Circuit Tracks: Setup View, the Program Change Tx pad)
+- or, in FL, switch off **Auto select linked modules** in the General settings and **Select from playlist/channel rack** in the Playlist menu's Picker panel
 
 In the app, **Prefs > Claude (MCP)** lets Claude Code read and set the sound and play notes while it helps you. It is off until you switch it on, and only this computer can reach it.
 

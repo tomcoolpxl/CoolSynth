@@ -397,7 +397,7 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     plain median, or the quickest round trips).
 
 41. A colleague's feedback (2026-11-28; they play FL Studio from a Novation Circuit, no keyboard controller).
-    Investigated, nothing built yet, no decision number claimed. Chosen by the user:
+    Investigated, nothing built yet, no decision number claimed. Chosen by the user, each from a pick list:
     - Layer A lost while setting up B: an A+B sound replaces both layers, and the first single sound picked after
       it empties the other layer (`loadIntoLayer`'s dissolve, D194). Chosen: a single sound never empties the other
       layer; an A+B sound still replaces both and the screen says so.
@@ -405,22 +405,32 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
       with a key kept down, every press is a step, the same key too, up to 64 (as Arturia's KeyStep mk2).
     - Reverb length: chosen, the Size knob of Reverb and Room shows the tail in seconds (the plate measured, at the
       mid range; Room is 0.1 to 1.2 s already); no new parameter.
-    Open, asked but not answered yet:
-    - The keys leaving CoolSynth in FL after Start/Stop on the Circuit, back only after closing and reopening its
+    - Pitch bend exists (Bend range on Home's Voice page; in the README now) but a Circuit has no wheel. Chosen: a
+      bend wheel that springs back and a mod wheel beside the screen's keyboard, for the mouse.
+    - Sound search. Chosen: a search row that filters every sound and My Sounds by name as you type, and a kind
+      per sound in its bank file (Bass, Lead, Pad, Keys and so on), the list by room or by kind. The kinds' own
+      list is still to choose; items 24 and 27 keep the full browser.
+    - Generator levels exist on each generator's last page (Mix: Level, Pan, Octave, Fine). Chosen: a Mixer page
+      per layer, the three generators' levels and the layer's own on four knobs, first in the Sound section. VA's
+      unison knob is also called Mix.
+    The order, one build, test and commit each: the layer rule (the processor), the arp (the engine), the reverb's
+    time (the value text and a measuring pass), then the three on the panel, which share `InterfaceModel` and
+    `PanelEditor`: the Mixer page first (it moves every generator's pages one back, on the MiniLab and in the
+    CLAP's pages), the wheels, the search and kinds last (it changes the list the other two leave alone).
+    The keys leaving CoolSynth in FL: FL's doing, not CoolSynth's. Chosen: a note for the colleague and a part in
+    the README (written, 2026-11-28); the FL test here and ignoring program changes were not picked.
+    - The keys left after Start/Stop on the Circuit, back only after closing and reopening CoolSynth's
       window. FL plays the selected channel only, and a program change from hardware makes FL select the next or
       previous channel in its rack (Image-Line's staff on their forum, 2026-09-14, thread p=2074474: FL has no
       setting to ignore them; the ways out are the channel's "Receive notes from", program-change sending off on
-      the device, or an FL script that marks status 0xC0 handled). A Circuit Tracks sends notes on channels 1, 2,
+      the device, or an FL script that marks status 0xC0 handled; a 2021 thread, p=1587525, has the same with a
+      Supernova and a JD-XA). FL also moves its selection at a click on a clip in the Playlist (thread p=1958183:
+      General settings' "Auto select linked modules" off and the Playlist's Picker panel "Select from
+      playlist/channel rack" off help partly; "Receive notes from" always holds). A Circuit Tracks sends notes on channels 1, 2,
       3, 4 and 10, clock and program changes, all on by default, each with a switch in its Setup View. Not shown
-      yet: that a Circuit sends a program change at Play or Stop. To try: a Circuit's messages replayed into FL
-      through a loopback port; the colleague with program-change sending off; whether a program change reaching
-      CoolSynth replaces the sound (JUCE's VST3 program parameter calls `setCurrentProgram`), a second way to lose
-      layer A.
-    - Pitch bend exists (Bend range on Home's Voice page) but a Circuit has no wheel: wheels on the screen, bend
-      from any knob through Learn, or both. The README says nothing about bend.
-    - Sound search: a name search in the list now, kinds per sound as well, or wait for the browser of items 24, 27.
-    - Generator levels exist on each generator's last page (Mix: Level, Pan, Octave, Fine): a Mixer page per layer,
-      that page first, or only explained. VA's unison knob is also called Mix.
+      yet: that a Circuit sends a program change at Play or Stop, and whether a program change reaching CoolSynth
+      replaces the sound (JUCE's VST3 program parameter calls `setCurrentProgram`), a second way to lose layer A.
+      The colleague's answer after switching program-change sending off will tell.
     Found on the way: the arp's Ratchet, Ratchet Chance, Accent, Rhythm, Euclidean and New Patterns are on no panel
     page though the README names them; on layer B the Layers page starts on "Copy B to A" and runs at one press;
     "Empty layer" cannot be undone and the player has no undo; the README does not say a sound loads into the
