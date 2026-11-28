@@ -7834,3 +7834,11 @@ The user, after the Mac came back for CoolSynth (D369): the 303 next, then the 8
   on Windows (the app's own window, D349), not the Mac's traffic lights at the left.
 - The releases (the user's choice for the 303; options: 0.2.0 now, recommended; 0.1.1; not yet): the 303's v0.1.0
   tag cannot build on a Mac, so 0.2.0 for both systems, with the CLAP that 0.1.0 lacked. The 808 likewise.
+
+## D371. CoolSynth after 0.7.0: the debug lines out of the Kick, the engine pointer forward (2026-11-28)
+
+Claimed; the entry follows.
+
+## D372. CoolSynth 303: the voice's overload while knobs turn (2026-11-28)
+
+Claimed; the entry follows.
