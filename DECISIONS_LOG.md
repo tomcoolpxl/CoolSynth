@@ -7855,4 +7855,27 @@ The user: the 0.7.0 release was rushed; is CoolSynth in a good state, and what i
 
 ## D372. CoolSynth 303: the voice's overload while knobs turn (2026-11-28)
 
-Claimed; the entry follows.
+The user, on the Mac: cracks and hisses with the Devil Fish, loading patterns and turning knobs fast; then found it
+themselves: the DSP meter over 100 %.
+
+- Measured here (the voice alone at Best, 96 kHz, 10 ms blocks): some 60 % of a core on average, single blocks over
+  100 % at a note's attack; a knob turned fast adds up to 10 % (CUTOFF, ENV MOD, OVERDRIVE), each change one
+  analysis. The voice runs with little headroom and a busy moment takes a block over its time; a slower Mac sooner.
+  By stage: oscillator 30 %, filter 30 to 35, VCA 22, envelope 12, output 5.
+- Researched: a single circuit with feedback cannot be split over cores (D281); hosts cover a plugin's peaks by
+  rendering ahead (REAPER's anticipative processing, 200 ms by default, 50 ms or more advised).
+- Picked, all four (options: make it cheaper; render ahead; a bigger buffer by default; Light when overloaded), then:
+  - Cheaper: the chord method on the oscillator's two circuits, both (over the shaper's only, recommended, or
+    neither): the oscillator some 8 % cheaper, the saw -109 dB from the exact solve, the square -95 dB; the engine's
+    TB-303 tests pass (engine `a0c5810`). The bigger savings were taken before (D281, D345, D349).
+  - Render ahead, 50 ms (over 20 or 100): `src/RenderAhead.h`, the standalone's only. A worker renders the blocks;
+    the callback hands samples and MIDI across; incoming MIDI reaches the next block at negative positions, the clock
+    out leaves with its samples, the beat sync is told when each block is heard, the clock follower runs on past its
+    last pulse by the lead. A test: the output is the direct render 2400 samples later, sample for sample, the clock
+    out with it.
+  - The bigger buffer dropped (over the Mac at 1024): Windows' shared mode keeps its 10 ms whatever is asked, the
+    Mac starts at 512 already, and render ahead does the job.
+  - Light while busy: at Best, the worker's buffer below half its lead switches the voice to Light; Light's load under
+    45 % on average for 5 s brings Best back, the calm doubling at each return. The voice starts again at each
+    switch, so its note ends. The top bar shows LIGHT in place of DSP.
+- Not measured on the Mac here: the user's ears there.
