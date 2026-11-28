@@ -398,12 +398,43 @@ public:
             restored->setStateInformation(state.getData(), static_cast<int>(state.getSize()));
             expect(restored->layerSound(0).program == keys && restored->layerSound(1).program == bass);
 
-            // A combination loads whole, from either layer; a single pick then takes it apart.
+            // A combination loads whole, from either layer; a single pick then leaves its other layer playing (D373).
             synth->loadSoundIntoLayer(juno, 1);
             expect(synth->layerSound(0).program == juno && synth->layerSound(1).program == juno);
+            const float junoType = value(*synth, "pB.g1.type"), junoLevel = value(*synth, "pB.mix.level");
+            const float junoMaster = value(*synth, "f1.type");
+            expect(junoType != 0.0f);
             synth->loadSoundIntoLayer(bass, 0);
-            expectEquals(value(*synth, "pB.g1.type"), 0.0f, "the combination's other layer empties");
-            expect(synth->layerSound(1).name.isEmpty());
+            expectEquals(value(*synth, "pB.g1.type"), junoType, "the combination's other layer plays on");
+            expectEquals(value(*synth, "pB.mix.level"), junoLevel);
+            expectEquals(value(*synth, "f1.type"), junoMaster, "and the chain at the end stays");
+            expect(synth->layerSound(1).name == "Juno Pad" && ! synth->layerSound(1).combination, "a sound of its own now");
+            expectEquals(synth->getPatchName(), juce::String("Moog Bass + Juno Pad"));
+
+            // Picked from the list, a sound of both layers says that it replaced both; a single sound says nothing.
+            {
+                auto picker = std::make_unique<InterfaceModel>(*synth);
+                auto press = [&](const juce::String& row)
+                {
+                    const auto l = picker->list();
+                    const int at = l.rows.indexOf(row);
+                    expect(at >= 0, row);
+                    picker->turnMain(at - l.cursor);
+                    picker->pressMain();
+                };
+                picker->back(); // up to the categories
+                press(coolsynth::presets::getFactoryPreset(juno).category);
+                const int said = picker->noticeSerial();
+                press("Juno Pad");
+                expect(synth->layerSound(0).program == juno && synth->layerSound(1).program == juno, "picked from the list");
+                expectEquals(picker->noticeSerial(), said + 1);
+                expectEquals(picker->noticeText(), juce::String("Juno Pad is an A+B sound: it replaced both layers."));
+                picker->back();
+                press(coolsynth::presets::getFactoryPreset(bass).category);
+                press("Moog Bass");
+                expect(synth->layerSound(0).program == bass && synth->layerSound(1).program == juno, "layer A alone");
+                expectEquals(picker->noticeSerial(), said + 1, "nothing said for a single sound");
+            }
 
             // Home: the first row of the categories empties the layer it is on.
             synth->loadSoundIntoLayer(keys, 1);

@@ -279,6 +279,12 @@ namespace coolsynth::ui
         }
         else
             synth.loadSoundIntoLayer(preset, currentPart); // into the layer Home is on; a combination whole (D194)
+        // A sound of both layers took the other layer's place too: the screen says so (D373).
+        if (const auto& a = synth.layerSound(0); a.combination && a.combinedWith(synth.layerSound(1)))
+        {
+            notice = a.name + " is an A+B sound: it replaced both layers.";
+            ++notices;
+        }
     }
 
     // ---- Hold and the octave, for the screen's keys when no MiniLab is connected (D184) -----------------------

@@ -2572,6 +2572,12 @@ public:
             shownSetupNotice = setup.noticeSerial();
             setNotice(setup.noticeText(), 9000);
         }
+        // The model's word: a sound of both layers just replaced both (D373).
+        if (model.noticeSerial() != shownModelNotice && ! learningHere)
+        {
+            shownModelNotice = model.noticeSerial();
+            setNotice(model.noticeText(), 6000);
+        }
         if (noticeUntil != 0 && static_cast<juce::int32>(juce::Time::getMillisecondCounter() - noticeUntil) >= 0)
             setNotice({}, 0);
         // The main knob and knob 5 turn with every step the model took, at most five detents at once (End, Home).
@@ -3151,6 +3157,7 @@ private:
     int learnToken = 0;                              // and which learning it is (review of D211)
     juce::uint32 noticeUntil = 0;                    // when the screen's notice goes; 0: it stays
     static inline int shownSetupNotice = 0;          // the setup's last notice shown, by any panel in this program
+    int shownModelNotice = model.noticeSerial();     // the model's last notice shown here; an older one stays unsaid (D373)
     std::array<juce::Rectangle<int>, 2> strips;
     bool updatingFaders = false;
     int shownPopup = -1; // the model's last pop-up already shown in a knob (D183)

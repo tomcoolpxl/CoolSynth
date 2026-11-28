@@ -35,7 +35,7 @@ It installs for your user only, without an administrator password: the app in `~
 
 There are 139 presets in 14 rooms: synthwave, techno, ambient, lo-fi, classic synths rebuilt in the Museum, a stock TR-808 kit, and 40 sampled acoustic instruments in the Conservatory.
 
-CoolSynth is **bi-timbral**. A preset can use layer A and layer B, stacked on every key, split across the keyboard, or switched by velocity. Right-click a layer on the screen to copy, swap or double it.
+CoolSynth is **bi-timbral**. A preset can use layer A and layer B, stacked on every key, split across the keyboard, or switched by velocity. A sound you pick loads into the layer Home is on and leaves the other layer as it is; a sound marked A+B fills both. Right-click a layer on the screen to copy, swap or double it.
 
 What the engine has:
 

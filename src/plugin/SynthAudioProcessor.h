@@ -237,8 +237,8 @@ public:
     /** A preset that fills both layers: it loads whole, wherever it is picked (D194). */
     [[nodiscard]] static bool isCombination(int program);
     /** Picks a factory sound for one layer (D194). A combination loads whole. A single sound fills `layer` and leaves
-        the other layer, the chain at the end and the master as they are; if a combination was playing, the pick takes
-        it apart: the other layer empties and the global settings become the sound's. One undo step. */
+        the other layer, the chain at the end and the master as they are; a combination's other half plays on too
+        (D373). One undo step. */
     void loadSoundIntoLayer(int program, int layer);
     /** The same for a saved sound: one that fills both layers loads whole. */
     bool loadMySoundIntoLayer(const juce::File& file, int layer);

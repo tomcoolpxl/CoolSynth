@@ -397,10 +397,10 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     plain median, or the quickest round trips).
 
 41. A colleague's feedback (2026-11-28; they play FL Studio from a Novation Circuit, no keyboard controller).
-    Investigated, nothing built yet, no decision number claimed. Chosen by the user, each from a pick list:
-    - Layer A lost while setting up B: an A+B sound replaces both layers, and the first single sound picked after
-      it empties the other layer (`loadIntoLayer`'s dissolve, D194). Chosen: a single sound never empties the other
-      layer; an A+B sound still replaces both and the screen says so.
+    Investigated and decided (D373), each choice the user's from a pick list:
+    - Layer A lost while setting up B: built (D373). A single sound never empties the other layer; an A+B sound
+      still replaces both and the screen says so. Left: that line looked at on a running panel; a saved sound of
+      layer B alone still loads whole and empties A.
     - The arp's As Played keeps a key once (16 at most; a key struck again moves to the end). Chosen: under Latch,
       with a key kept down, every press is a step, the same key too, up to 64 (as Arturia's KeyStep mk2).
     - Reverb length: chosen, the Size knob of Reverb and Room shows the tail in seconds (the plate measured, at the

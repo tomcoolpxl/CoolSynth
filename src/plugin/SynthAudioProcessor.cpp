@@ -1003,11 +1003,10 @@ void SynthAudioProcessor::updatePatchName()
 bool SynthAudioProcessor::loadIntoLayer(int layer, const std::function<bool()>& applyWhole, LayerSound sound)
 {
     layer = juce::jlimit(0, 1, layer);
-    // A combination playing is one sound: a single sound picked for one of its layers takes it apart (D194).
-    const bool dissolve = layerSounds[0].combination && layerSounds[1].combination && layerSounds[0].combinedWith(layerSounds[1])
-                          && layerHasSound(0) && layerHasSound(1);
-    // Beside an empty layer the pick is a whole new sound: its global settings (master, the chain at the end) come too.
-    const bool takeGlobals = dissolve || ! layerHasSound(1 - layer);
+    // A single sound never empties the other layer, a combination's other half included: it plays on (D373; D194
+    // took the combination apart). Beside an empty layer the pick is a whole new sound: its global settings (master,
+    // the chain at the end) come too.
+    const bool takeGlobals = ! layerHasSound(1 - layer);
     const auto& all = getParameters();
     std::map<juce::String, int> indexOf;
     for (int i = 0; i < all.size(); ++i)
@@ -1038,8 +1037,7 @@ bool SynthAudioProcessor::loadIntoLayer(int layer, const std::function<bool()>& 
         }
         else if (id.startsWith(other))
         {
-            if (dissolve) // the other layer empties: its defaults, every slot Off
-                target = id.matchesWildcard("p?.g?.type", true) || id.matchesWildcard("p?.p?.type", true) ? 0.0f : p->getDefaultValue();
+            // the other layer stays as it is
         }
         else if (id == ids::volumeA || id == ids::volumeB || id == ids::volumeFx || id == ids::volumeMaster || id == ids::masterBoost)
             target = before[static_cast<std::size_t>(i)]; // the player's faders stay (D184)
@@ -1049,8 +1047,7 @@ bool SynthAudioProcessor::loadIntoLayer(int layer, const std::function<bool()>& 
             p->setValueNotifyingHost(target);
     }
 
-    if (dissolve)
-        layerSounds[1 - layer] = {};
+    layerSounds[static_cast<std::size_t>(1 - layer)].combination = false; // half a combination is a sound of its own now
     layerSounds[static_cast<std::size_t>(layer)] = std::move(sound);
     playingMySoundFile = juce::File();
     updatePatchName();

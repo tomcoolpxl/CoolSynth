@@ -7889,7 +7889,11 @@ was looked up in the code and online first, then picked by the user from a list.
   first single sound picked after it emptied the other layer (D194's "takes it apart"). Omnisphere loads a patch
   into one part and only a Multi replaces all. Picked: a single sound never empties the other layer, an A+B sound
   still replaces both and the screen says so (over: keep the rules and say it; ask before replacing; ask the
-  colleague first).
+  colleague first). Built: `loadIntoLayer` no longer empties the other layer; a combination's other half plays on
+  as a sound of its own, with the chain at the end and the master as they were, and the sound's name becomes both
+  ("Moog Bass + Juno Pad"). A sound of both layers picked from the list says "Juno Pad is an A+B sound: it replaced
+  both layers." on the screen's hint line for six seconds. The InterfaceModel tests hold it; the line itself was
+  not looked at on a running panel. Left as it was: a saved sound of layer B alone still loads whole and empties A.
 - The keys leaving CoolSynth in FL after Start/Stop on the Circuit. Found: FL's doing. FL plays the channel selected
   in its rack and selects the next one at a program change from hardware (Image-Line's staff and two more threads on
   their forum, read with the user's login); it has no setting to ignore them. A Circuit Tracks sends program changes

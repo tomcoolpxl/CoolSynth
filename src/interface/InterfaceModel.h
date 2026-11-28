@@ -249,6 +249,9 @@ namespace coolsynth::ui
         [[nodiscard]] juce::String mainPressRole() const;
         [[nodiscard]] juce::String pageKnobRole() const;
         [[nodiscard]] juce::String hint() const;
+        /** A word for the screen when a pick did more than its layer (D373): how many so far, and the last one. */
+        [[nodiscard]] int noticeSerial() const noexcept { return notices; }
+        [[nodiscard]] const juce::String& noticeText() const noexcept { return notice; }
         /** True while the sound's sampled instrument is still being read in: Home glows, the screen says
             "Loading..." and the keys wait (D154, D156). */
         [[nodiscard]] bool loadingInstrument() const;
@@ -408,6 +411,8 @@ namespace coolsynth::ui
         void doLayerAction(int action) { doLayerAction(action, currentPart); }
         std::int64_t mainTurns = 0, pageTurns = 0; // steps turned, for the screen's knobs (D193)
         Popup lastPopup;
+        int notices = 0;      // D373
+        juce::String notice;
         int changeCount = 0;
         bool hardwareShift = false;
         std::optional<PendingChoice> pendingChoice;
