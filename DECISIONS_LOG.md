@@ -7879,3 +7879,35 @@ themselves: the DSP meter over 100 %.
     45 % on average for 5 s brings Best back, the calm doubling at each return. The voice starts again at each
     switch, so its note ends. The top bar shows LIGHT in place of DSP.
 - Not measured on the Mac here: the user's ears there.
+
+## D373. A colleague's feedback: the layer kept, the arp's repeated keys, the reverb's time, wheels, search, a mixer page (2026-11-28, under way)
+
+A colleague of the user's, playing FL Studio from a Novation Circuit, sent two bugs and five wishes (TODO 41). Each
+was looked up in the code and online first, then picked by the user from a list.
+
+- Layer A "forgotten" while setting up B. Found: an A+B sound replaces both layers wherever it is picked, and the
+  first single sound picked after it emptied the other layer (D194's "takes it apart"). Omnisphere loads a patch
+  into one part and only a Multi replaces all. Picked: a single sound never empties the other layer, an A+B sound
+  still replaces both and the screen says so (over: keep the rules and say it; ask before replacing; ask the
+  colleague first).
+- The keys leaving CoolSynth in FL after Start/Stop on the Circuit. Found: FL's doing. FL plays the channel selected
+  in its rack and selects the next one at a program change from hardware (Image-Line's staff and two more threads on
+  their forum, read with the user's login); it has no setting to ignore them. A Circuit Tracks sends program changes
+  by default (Novation's guide). Picked: a note for the colleague and a part in the README (over: a test in FL here
+  through a loopback port; CoolSynth ignoring program changes). Not shown: that the Circuit sends one at Play or
+  Stop, and whether one reaching CoolSynth replaces its sound.
+- The arp's As Played keeps a key once and 16 at most. Arturia's KeyStep mk2 adds notes under Hold while a key stays
+  down, up to 64; Sequential's Rev2 has "Arp Repeats" (each note 1 to 3 times). Picked: under Latch, with a key kept
+  down, every press is a step, the same key too, up to 64 (over: a Repeats setting; both; ask what they meant).
+- Reverb length. Found: Size is a percent that sets the tail; Pre-Delay is in ms already. Other reverbs give the tail
+  as a decay time in seconds (FabFilter, Valhalla). Picked: the Size knob of Reverb and Room shows the tail in
+  seconds, no new parameter (over: a real Decay knob with every preset remapped; leave it and explain).
+- Pitch bend. Found: it exists, with a Bend range per layer, and the README did not say so; a Circuit has no wheel.
+  Picked: a bend wheel that springs back and a mod wheel on the screen (over: bend from any knob through Learn;
+  both; the README only).
+- Categories and search. Picked: a name search across every sound, and a kind per sound (over: the search alone,
+  recommended; wait for the browser of TODO 24 and 27).
+- Levels of the parts in a sound. Found: each generator has Level and Pan on its last page. Picked: a Mixer page
+  per layer, first in the Sound section (over: that page first on each generator; only explained).
+- The order: the layer rule, the arp, the reverb's time, the Mixer page, the wheels, the search and kinds; one
+  build, test and commit each.
