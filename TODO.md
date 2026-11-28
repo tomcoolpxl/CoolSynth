@@ -407,11 +407,15 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
       mid range; Room is 0.1 to 1.2 s already); no new parameter.
     Open, asked but not answered yet:
     - The keys leaving CoolSynth in FL after Start/Stop on the Circuit, back only after closing and reopening its
-      window. FL plays the selected channel only; two FL forum threads show hardware program changes moving FL's
-      selection (their answers need a forum login); a Circuit sends notes on channels 1, 2, 3, 4 and 10, clock and
-      program changes, all on by default. To try: a Circuit's messages replayed into FL through a loopback port;
-      the colleague with the Circuit's program-change sending off; whether a program change reaching CoolSynth
-      replaces the sound (JUCE's VST3 program parameter calls `setCurrentProgram`), a second way to lose layer A.
+      window. FL plays the selected channel only, and a program change from hardware makes FL select the next or
+      previous channel in its rack (Image-Line's staff on their forum, 2026-09-14, thread p=2074474: FL has no
+      setting to ignore them; the ways out are the channel's "Receive notes from", program-change sending off on
+      the device, or an FL script that marks status 0xC0 handled). A Circuit Tracks sends notes on channels 1, 2,
+      3, 4 and 10, clock and program changes, all on by default, each with a switch in its Setup View. Not shown
+      yet: that a Circuit sends a program change at Play or Stop. To try: a Circuit's messages replayed into FL
+      through a loopback port; the colleague with program-change sending off; whether a program change reaching
+      CoolSynth replaces the sound (JUCE's VST3 program parameter calls `setCurrentProgram`), a second way to lose
+      layer A.
     - Pitch bend exists (Bend range on Home's Voice page) but a Circuit has no wheel: wheels on the screen, bend
       from any knob through Learn, or both. The README says nothing about bend.
     - Sound search: a name search in the list now, kinds per sound as well, or wait for the browser of items 24, 27.
