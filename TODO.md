@@ -150,6 +150,11 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     loopback): heap corruption before and after a freed block (2026-11-28, CoolSynth's Debug build, D371). Not
     repeated in two runs. A teardown race in the beat sync's network threads is the likely place; the 303 and the
     808 tear it down at every quit.
+40. The 303's knobs, measured on the way to D372 (the user heard nothing in those recordings, so notes only): the
+    app applies a knob's new value at once each block, no slew but VOLUME's; RESONANCE stepped moves the output by a
+    small DC step at once (a pot jumped through its wiper's DC), CUTOFF and ENV MOD change smoothly. With the Devil
+    Fish on, the app's note onsets carried a broadband click some 40 dB above the stock voice's at the same pattern,
+    and the output came 17 dB louder, peaking at full scale.
 23. Profile the heaviest sound there can be and optimise (`docs/research/profiling.md`). The user's choices (D235):
     Windows Performance Recorder and Analyzer, CPU first, before the Mac port so the Mac has a Windows baseline.
     A patch that fills everything (both layers, every slot at its costliest, sixteen voices, every effect slot),
