@@ -141,6 +141,15 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     left behind); the determinism test skips its reset checks until it is fixed. A first look was stopped unfinished:
     its uncommitted FreshRenderDump test and CMake change sit in E:\github\coolsynth-engine. Left: the user's hands on the cap and the emergency (a heavy preset, a
     slow block size), and multi-core by layer if a single sound ever needs more than its share.
+38. From the audit after 0.7.0 (D371), not picked yet: the 909 fallback (D365's snap in `SlotParameters.cpp` acts
+    only when the slot is already a Kick, and a loaded state sets `p1` before `type`, so a saved 909 Kick loading
+    into another slot probably still plays the 909; no test covers it); Windows CI on push (only the Mac runs on
+    push); the D368 entry claimed but never written; `docs/architecture.md:84` still offers the TR-909; TODO 36 still
+    says the 303 circuit replaces Open303 (D365 kept it).
+39. The engine's test program crashed once at exit after the beat sync's last network test (two apps on the
+    loopback): heap corruption before and after a freed block (2026-11-28, CoolSynth's Debug build, D371). Not
+    repeated in two runs. A teardown race in the beat sync's network threads is the likely place; the 303 and the
+    808 tear it down at every quit.
 23. Profile the heaviest sound there can be and optimise (`docs/research/profiling.md`). The user's choices (D235):
     Windows Performance Recorder and Analyzer, CPU first, before the Mac port so the Mac has a Windows baseline.
     A patch that fills everything (both layers, every slot at its costliest, sixteen voices, every effect slot),

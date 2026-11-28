@@ -7837,7 +7837,21 @@ The user, after the Mac came back for CoolSynth (D369): the 303 next, then the 8
 
 ## D371. CoolSynth after 0.7.0: the debug lines out of the Kick, the engine pointer forward (2026-11-28)
 
-Claimed; the entry follows.
+The user: the 0.7.0 release was rushed; is CoolSynth in a good state, and what is left?
+
+- A read-only audit. The release is sound: Windows and Mac files on it, its notes as the release page has them, the
+  README right. The Mac's files were built with the tests off (no Mac test run passed on the tagged code itself).
+- Found and picked (options: these two, recommended first; the 909 fallback; Windows CI on push):
+  - CoolSynth's engine checkout carried uncommitted debug lines in `KickGenerator.h`, left by the stopped look into
+    Succession 808 (TODO 19): prints from the audio thread, and a dangling `else` that played the unstruck 909 over
+    the Kick's 808 after its first six samples. The local Debug app and VST3 were built with them; CI and the
+    releases check out clean. Restored to the committed file and rebuilt.
+  - The engine pointer from `a2462c7` to `bdf48a2`, 14 commits, among them D356 (every TR-808 circuit to 1 nV: the
+    bass drum struck while it rings was 12 ms early and up to 4 dB off). CoolSynth's tests pass; the engine's own
+    pass too, once crashing at exit after the beat sync's last network test (heap corruption, not repeated; TODO 39).
+- Not picked, parked in TODO 38: the 909 fallback (a saved 909 Kick probably still plays the 909 when it loads into a
+  slot that is not yet a Kick), Windows CI on push, the D368 entry never written, `docs/architecture.md` still
+  offering the 909.
 
 ## D372. CoolSynth 303: the voice's overload while knobs turn (2026-11-28)
 
