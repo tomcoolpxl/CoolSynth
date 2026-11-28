@@ -396,6 +396,32 @@ J2. macOS, done by the user in a Claude Code session on their Mac. The plan, the
     up with a DAW (a cable loop from the outputs back in, or the user's sanity listen); the measurement's method (the
     plain median, or the quickest round trips).
 
+41. A colleague's feedback (2026-11-28; they play FL Studio from a Novation Circuit, no keyboard controller).
+    Investigated, nothing built yet, no decision number claimed. Chosen by the user:
+    - Layer A lost while setting up B: an A+B sound replaces both layers, and the first single sound picked after
+      it empties the other layer (`loadIntoLayer`'s dissolve, D194). Chosen: a single sound never empties the other
+      layer; an A+B sound still replaces both and the screen says so.
+    - The arp's As Played keeps a key once (16 at most; a key struck again moves to the end). Chosen: under Latch,
+      with a key kept down, every press is a step, the same key too, up to 64 (as Arturia's KeyStep mk2).
+    - Reverb length: chosen, the Size knob of Reverb and Room shows the tail in seconds (the plate measured, at the
+      mid range; Room is 0.1 to 1.2 s already); no new parameter.
+    Open, asked but not answered yet:
+    - The keys leaving CoolSynth in FL after Start/Stop on the Circuit, back only after closing and reopening its
+      window. FL plays the selected channel only; two FL forum threads show hardware program changes moving FL's
+      selection (their answers need a forum login); a Circuit sends notes on channels 1, 2, 3, 4 and 10, clock and
+      program changes, all on by default. To try: a Circuit's messages replayed into FL through a loopback port;
+      the colleague with the Circuit's program-change sending off; whether a program change reaching CoolSynth
+      replaces the sound (JUCE's VST3 program parameter calls `setCurrentProgram`), a second way to lose layer A.
+    - Pitch bend exists (Bend range on Home's Voice page) but a Circuit has no wheel: wheels on the screen, bend
+      from any knob through Learn, or both. The README says nothing about bend.
+    - Sound search: a name search in the list now, kinds per sound as well, or wait for the browser of items 24, 27.
+    - Generator levels exist on each generator's last page (Mix: Level, Pan, Octave, Fine): a Mixer page per layer,
+      that page first, or only explained. VA's unison knob is also called Mix.
+    Found on the way: the arp's Ratchet, Ratchet Chance, Accent, Rhythm, Euclidean and New Patterns are on no panel
+    page though the README names them; on layer B the Layers page starts on "Copy B to A" and runs at one press;
+    "Empty layer" cannot be undone and the player has no undo; the README does not say a sound loads into the
+    layer Home is on, nor that A+B sounds load whole; the layer's own level (`mix.level`) is on no page.
+
 ## Standing notes
 
 - Adding a bank file used to make the link fail (LNK1236 on the embedded bank library) because of stale
